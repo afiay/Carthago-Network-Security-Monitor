@@ -5,6 +5,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -31,34 +32,46 @@ namespace Carthago.Services
         public event Action<StatsSnapshot>? StatsUpdated;
 
         // ===== Capture device or source
+        private readonly object _lifecycleLock = new();
         private ILiveDevice? _device;
         private ICaptureSource? _captureSource;
-
-        // Service lifetime CTS (UI loop, maintenance, etc.)
-        private readonly CancellationTokenSource _serviceCts = new();
-
-        // Per-run CTS (captures and enrich tasks related to a running session)
         private CancellationTokenSource? _runCts;
+        private int _disposed;
 
-        // ===== L7 parser
+        // ETW emits traffic records rather than raw packets. Route those records
+        // through the same enrichment/detection path as Npcap packets.
+        private Channel<TrafficRecord>? _etwChannel;
+        private Task? _etwReaderTask;
+        private Task? _etwCaptureTask;
+
+        private readonly CancellationTokenSource _serviceCts = new();
         private readonly PacketHandler _packetHandler = new();
 
-        // ===== UI channel/batching
-        private const int UI_DRAIN_MAX_PER_TICK = 100;
-        private const int UI_CHANNEL_CAPACITY = 5000;
+        private const int UiBatchSize = 100;
+        private const int UiQueueCapacity = 5000;
+        private const int EnrichmentQueueCapacity = 4096;
+        private const int EnrichmentWorkerCount = 4;
+
+        private sealed record EnrichmentWork(TrafficRecord Record, CancellationToken RunToken);
 
         private readonly Channel<TrafficRecord> _uiChannel =
-            Channel.CreateBounded<TrafficRecord>(new BoundedChannelOptions(UI_CHANNEL_CAPACITY)
+            Channel.CreateBounded<TrafficRecord>(new BoundedChannelOptions(UiQueueCapacity)
             {
-                FullMode = BoundedChannelFullMode.Wait, // bounded memory, predictable latency
+                FullMode = BoundedChannelFullMode.Wait,
                 SingleReader = true,
                 SingleWriter = false
             });
 
-        private readonly DispatcherTimer _uiDrainTimer;
-        private Task? _uiReaderTask;
+        private readonly Channel<EnrichmentWork> _enrichmentChannel =
+            Channel.CreateBounded<EnrichmentWork>(new BoundedChannelOptions(EnrichmentQueueCapacity)
+            {
+                FullMode = BoundedChannelFullMode.Wait,
+                SingleReader = false,
+                SingleWriter = false
+            });
 
-        // ===== Maintenance (cache prune + stats publish)
+        private readonly Task[] _enrichmentWorkers = new Task[EnrichmentWorkerCount];
+        private readonly Task _uiReaderTask;
         private readonly TimeSpan _maintenanceInterval = TimeSpan.FromMinutes(2);
         private Timer? _maintenanceTimer;
 
@@ -70,6 +83,7 @@ namespace Carthago.Services
         private long _ruleEventsRaised;
         private long _whoisEnriched;
         private long _reputationEnriched;
+        private long _enrichmentFallbacks;
 
         // ===== Filters / UI
         private string? _currentFilter;
@@ -113,35 +127,18 @@ namespace Carthago.Services
 
         // ----- Constructors -----
         public TrafficCaptureService()
+            : this(null, Application.Current?.Dispatcher ?? Dispatcher.CurrentDispatcher)
         {
-            _dispatcher = Application.Current?.Dispatcher ?? Dispatcher.CurrentDispatcher;
-
-            _uiDrainTimer = new DispatcherTimer(DispatcherPriority.Background, _dispatcher)
-            {
-                Interval = TimeSpan.FromMilliseconds(75)
-            };
-            _uiDrainTimer.Tick += UiDrainTimer_Tick;
-            _uiDrainTimer.Start();
-
-            _uiReaderTask = Task.Run(UiChannelReaderLoop, _serviceCts.Token);
-
-            _maintenanceTimer = new Timer(_ => SafeMaintenanceTick(), null,
-                _maintenanceInterval, _maintenanceInterval);
         }
 
-        public TrafficCaptureService(BlacklistService blacklistService, Dispatcher dispatcher)
+        public TrafficCaptureService(BlacklistService? blacklistService, Dispatcher dispatcher)
         {
             _blacklistService = blacklistService;
             _dispatcher = dispatcher ?? (Application.Current?.Dispatcher ?? Dispatcher.CurrentDispatcher);
 
-            _uiDrainTimer = new DispatcherTimer(DispatcherPriority.Background, _dispatcher)
-            {
-                Interval = TimeSpan.FromMilliseconds(75)
-            };
-            _uiDrainTimer.Tick += UiDrainTimer_Tick;
-            _uiDrainTimer.Start();
-
-            _uiReaderTask = Task.Run(UiChannelReaderLoop, _serviceCts.Token);
+            _uiReaderTask = Task.Run(UiChannelReaderLoop);
+            for (int i = 0; i < _enrichmentWorkers.Length; i++)
+                _enrichmentWorkers[i] = Task.Run(EnrichmentWorkerLoop);
 
             _maintenanceTimer = new Timer(_ => SafeMaintenanceTick(), null,
                 _maintenanceInterval, _maintenanceInterval);
@@ -149,40 +146,77 @@ namespace Carthago.Services
 
         public void Dispose()
         {
-            try { _uiDrainTimer.Stop(); } catch { }
-            try { _maintenanceTimer?.Dispose(); } catch { }
+            if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
 
-            // Stop current run (if any) but keep service resources orderly
-            try
-            {
-                _runCts?.Cancel();
-                _runCts?.Dispose();
-                _runCts = null;
-            }
-            catch { }
+            StopCurrentCapture();
+            _maintenanceTimer?.Dispose();
+            _maintenanceTimer = null;
 
-            try
+            _serviceCts.Cancel();
+            _uiChannel.Writer.TryComplete();
+            _enrichmentChannel.Writer.TryComplete();
+
+            // Dispose shared resources only after workers have released them.
+            // Do not synchronously wait for the UI reader: it may be awaiting
+            // Dispatcher.InvokeAsync on the very thread calling Dispose().
+            _ = Task.WhenAll(_enrichmentWorkers).ContinueWith(_ =>
             {
-                if (_device is not null)
+                lock (_abuseClientLock)
                 {
-                    _device.OnPacketArrival -= OnPacketArrival;
-                    try { _device.StopCapture(); } catch { }
-                    try { _device.Close(); } catch { }
+                    try { _abuseClient?.Dispose(); } catch (Exception ex) { Log(ex); }
+                    _abuseClient = null;
                 }
+                _whoisLimiter.Dispose();
+                _reputationLimiter.Dispose();
+                _serviceCts.Dispose();
+            }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+        }
+
+        private CancellationToken GetRunToken()
+        {
+            lock (_lifecycleLock)
+                return _runCts?.Token ?? _serviceCts.Token;
+        }
+
+        private static void Log(Exception ex)
+            => Console.Error.WriteLine($"[TrafficCaptureService] {ex.GetType().Name}: {ex.Message}");
+
+        private void StopCurrentCapture()
+        {
+            CancellationTokenSource? run;
+            ILiveDevice? device;
+            ICaptureSource? source;
+            Channel<TrafficRecord>? etwChannel;
+
+            lock (_lifecycleLock)
+            {
+                run = _runCts;
+                _runCts = null;
+                device = _device;
+                _device = null;
+                source = _captureSource;
+                _captureSource = null;
+                etwChannel = _etwChannel;
+                _etwChannel = null;
             }
-            catch { }
 
-            try { _captureSource?.StopAsync(); } catch { }
-            try { _captureSource?.Dispose(); } catch { }
+            try { run?.Cancel(); } catch (Exception ex) { Log(ex); }
 
-            lock (_abuseClientLock) { try { _abuseClient?.Dispose(); } catch { } }
+            if (device != null)
+            {
+                try { device.OnPacketArrival -= OnPacketArrival; } catch (Exception ex) { Log(ex); }
+                try { device.StopCapture(); } catch (Exception ex) { Log(ex); }
+                try { device.Close(); } catch (Exception ex) { Log(ex); }
+            }
 
-            _whoisLimiter.Dispose();
-            _reputationLimiter.Dispose();
+            if (source != null)
+            {
+                try { source.StopAsync().GetAwaiter().GetResult(); } catch (Exception ex) { Log(ex); }
+                try { source.Dispose(); } catch (Exception ex) { Log(ex); }
+            }
 
-            // Now end service lifetime (UI reader will exit)
-            try { _serviceCts.Cancel(); } catch { }
-            try { _serviceCts.Dispose(); } catch { }
+            etwChannel?.Writer.TryComplete();
+            run?.Dispose();
         }
 
         // ---- capture start/stop ---------------------------------------
@@ -223,49 +257,56 @@ namespace Carthago.Services
 
         public void StartCapture(ComboBox deviceCombo, Button startButton, Button stopButton)
         {
-            if (deviceCombo?.SelectedItem is not ComboBoxItem cbi)
+            if (Volatile.Read(ref _disposed) != 0)
+                throw new ObjectDisposedException(nameof(TrafficCaptureService));
+
+            if (deviceCombo?.SelectedItem is not ComboBoxItem choice)
             {
                 MessageBox.Show("Select a capture source first.", "Capture",
                     MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
-            // Clean any previous run
-            try
-            {
-                _runCts?.Cancel();
-                _runCts?.Dispose();
-            }
-            catch { }
-            _runCts = new CancellationTokenSource();
-            var runToken = _runCts.Token;
+            // Capture sources must not overlap: release the previous session first.
+            StopCurrentCapture();
+            var run = CancellationTokenSource.CreateLinkedTokenSource(_serviceCts.Token);
+            lock (_lifecycleLock)
+                _runCts = run;
 
             try
             {
-                // Close any old device
-                if (_device is not null)
+                if (choice.Tag is string mode && mode.Equals("ETW", StringComparison.OrdinalIgnoreCase))
                 {
-                    _device.OnPacketArrival -= OnPacketArrival;
-                    try { _device.StopCapture(); } catch { }
-                    try { _device.Close(); } catch { }
-                    _device = null;
-                }
-                _captureSource?.StopAsync();
-                _captureSource?.Dispose();
-                _captureSource = null;
+                    var etwChannel = Channel.CreateBounded<TrafficRecord>(
+                        new BoundedChannelOptions(UiQueueCapacity)
+                        {
+                            FullMode = BoundedChannelFullMode.Wait,
+                            SingleReader = true,
+                            SingleWriter = false
+                        });
+                    var source = new EtwCapture(etwChannel);
+                    lock (_lifecycleLock)
+                    {
+                        _etwChannel = etwChannel;
+                        _captureSource = source;
+                    }
 
-                if (cbi.Tag is string s && s.Equals("ETW", StringComparison.OrdinalIgnoreCase))
-                {
-                    _captureSource = new EtwCapture(_uiChannel);
-                    _ = _captureSource.StartAsync(); // internal tokening in ICaptureSource
+                    _etwReaderTask = Task.Run(() => EtwReaderLoop(etwChannel.Reader, run.Token));
+                    _etwCaptureTask = source.StartAsync();
+                    _ = _etwCaptureTask.ContinueWith(t =>
+                    {
+                        if (t.Exception is not null)
+                            Log(t.Exception.GetBaseException());
+                    }, CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.Default);
                 }
-                else if (cbi.Tag is ILiveDevice dev)
+                else if (choice.Tag is ILiveDevice device)
                 {
-                    StartPcapCapture(dev, _currentFilter);
+                    StartPcapCapture(device, _currentFilter);
                 }
                 else
                 {
-                    MessageBox.Show("Invalid capture selection.", "Error",
+                    StopCurrentCapture();
+                    MessageBox.Show("Invalid capture selection.", "Capture",
                         MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
@@ -279,101 +320,131 @@ namespace Carthago.Services
             }
             catch (Exception ex)
             {
-                try
-                {
-                    MessageBox.Show($"Failed to start capture: {ex.Message}", "Error",
-                        MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-                catch { }
-                try { _runCts?.Cancel(); } catch { }
+                StopCurrentCapture();
+                Log(ex);
+                MessageBox.Show($"Failed to start capture: {ex.Message}", "Capture",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         public void StopCapture(Button startButton, Button stopButton, ComboBox deviceCombo)
         {
-            try
-            {
-                _runCts?.Cancel();
+            StopCurrentCapture();
+            if (Volatile.Read(ref _disposed) != 0) return;
 
-                if (_device is not null)
-                {
-                    _device.OnPacketArrival -= OnPacketArrival;
-                    try { _device.StopCapture(); } catch { }
-                    try { _device.Close(); } catch { }
-                }
-
-                _captureSource?.StopAsync();
-
-                _dispatcher.Invoke(() =>
-                {
-                    startButton.IsEnabled = true;
-                    stopButton.IsEnabled = false;
-                    deviceCombo.IsEnabled = true;
-                });
-            }
-            catch (Exception ex)
+            _dispatcher.Invoke(() =>
             {
-                MessageBox.Show($"Failed to stop capture: {ex.Message}", "Error",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            finally
-            {
-                try { _runCts?.Dispose(); } catch { }
-                _runCts = null;
-            }
+                startButton.IsEnabled = true;
+                stopButton.IsEnabled = false;
+                deviceCombo.IsEnabled = true;
+            });
         }
 
         private void StartPcapCapture(ILiveDevice device, string? captureFilter = null)
         {
-            _device = device ?? throw new ArgumentNullException(nameof(device));
+            if (device == null) throw new ArgumentNullException(nameof(device));
+            lock (_lifecycleLock) _device = device;
 
             try
             {
-                _device.OnPacketArrival += OnPacketArrival;
-                _device.Open();
+                device.OnPacketArrival += OnPacketArrival;
+                device.Open();
 
                 if (!string.IsNullOrWhiteSpace(captureFilter))
                 {
-                    try { _device.Filter = captureFilter; }
+                    try { device.Filter = captureFilter; }
                     catch (Exception ex) { Console.Error.WriteLine($"Failed to set capture filter '{captureFilter}': {ex.Message}"); }
                 }
 
-                _device.StartCapture();
+                device.StartCapture();
             }
             catch
             {
                 // detach if partially wired
-                try { _device.OnPacketArrival -= OnPacketArrival; } catch { }
+                try { device.OnPacketArrival -= OnPacketArrival; } catch { }
+                try { device.Close(); } catch { }
                 throw;
             }
         }
 
-        // ---- Packet arrival for SharpPcap ------------------------------
-        private void OnPacketArrival(object sender, PacketCapture e)
+        // ---- Capture pipelines ----------------------------------------
+        private void OnPacketArrival(object sender, PacketCapture packet)
         {
+            CancellationToken token;
+            lock (_lifecycleLock)
+            {
+                if (_runCts is null || _runCts.IsCancellationRequested || _disposed != 0)
+                    return;
+                if (sender is ILiveDevice senderDevice && !ReferenceEquals(senderDevice, _device))
+                    return; // ignore a late callback from a previous capture device
+                token = _runCts.Token;
+            }
+
             Interlocked.Increment(ref _packetsCaptured);
             try
             {
-                var rec = _packetHandler.ParsePacket(e);
-                if (rec is null) return;
+                var record = _packetHandler.ParsePacket(packet);
+                if (record is null) return;
 
                 Interlocked.Increment(ref _packetsParsedOk);
-
-                // Run-bound CT: if capture stopped, enrichment cancels quickly
-                var ct = _runCts?.Token ?? _serviceCts.Token;
-                _ = EnrichAsync(rec, ct);
-
-                if (!_uiChannel.Writer.TryWrite(rec))
-                {
-                    Interlocked.Increment(ref _packetsDroppedByQueue);
-                    RuleEngine.ReportCaptureDrops(1);
-                }
+                PublishRecord(record, token);
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine($"OnPacketArrival error: {ex.Message}");
                 Interlocked.Increment(ref _packetsParseErrors);
+                Log(ex);
             }
+        }
+
+        private async Task EtwReaderLoop(ChannelReader<TrafficRecord> reader, CancellationToken token)
+        {
+            try
+            {
+                await foreach (var record in reader.ReadAllAsync(token).ConfigureAwait(false))
+                {
+                    Interlocked.Increment(ref _packetsCaptured);
+                    Interlocked.Increment(ref _packetsParsedOk);
+                    PublishRecord(record, token);
+                }
+            }
+            catch (OperationCanceledException) { /* capture stopped */ }
+            catch (Exception ex) { Log(ex); }
+        }
+
+        private void PublishRecord(TrafficRecord record, CancellationToken runToken)
+        {
+            if (runToken.IsCancellationRequested || _serviceCts.IsCancellationRequested)
+                return;
+
+            // UI pressure must never suppress rule evaluation.
+            if (!_uiChannel.Writer.TryWrite(record))
+            {
+                Interlocked.Increment(ref _packetsDroppedByQueue);
+                RuleEngine.ReportCaptureDrops(1);
+            }
+
+            if (!_enrichmentChannel.Writer.TryWrite(new EnrichmentWork(record, runToken)))
+            {
+                // An overloaded enrichment queue must not silently suppress
+                // local detections. Evaluate basic rules without remote lookups.
+                Interlocked.Increment(ref _enrichmentFallbacks);
+                EvaluateRules(record);
+            }
+        }
+
+        private async Task EnrichmentWorkerLoop()
+        {
+            try
+            {
+                await foreach (var work in _enrichmentChannel.Reader.ReadAllAsync(_serviceCts.Token)
+                                   .ConfigureAwait(false))
+                {
+                    if (!work.RunToken.IsCancellationRequested)
+                        await EnrichAsync(work.Record, work.RunToken).ConfigureAwait(false);
+                }
+            }
+            catch (OperationCanceledException) { /* service disposed */ }
+            catch (Exception ex) { Log(ex); }
         }
 
         // ---- UI drain --------------------------------------------------
@@ -384,8 +455,8 @@ namespace Carthago.Services
             {
                 while (await reader.WaitToReadAsync(_serviceCts.Token).ConfigureAwait(false))
                 {
-                    var batch = new List<TrafficRecord>(UI_DRAIN_MAX_PER_TICK);
-                    while (batch.Count < UI_DRAIN_MAX_PER_TICK && reader.TryRead(out var rec))
+                    var batch = new List<TrafficRecord>(UiBatchSize);
+                    while (batch.Count < UiBatchSize && reader.TryRead(out var rec))
                         batch.Add(rec);
 
                     if (batch.Count > 0)
@@ -406,11 +477,6 @@ namespace Carthago.Services
             {
                 Console.Error.WriteLine($"UiChannelReaderLoop error: {ex.Message}");
             }
-        }
-
-        private void UiDrainTimer_Tick(object? sender, EventArgs e)
-        {
-            // Intentional no-op; UI reader loop performs the dispatch.
         }
 
         // ---- enrichment + rules ---------------------------------------
@@ -455,17 +521,7 @@ namespace Carthago.Services
                     }
                 }
 
-                var detections = RuleEngine.Evaluate(rec, PreferencesService.Sensitivity);
-                if (detections is { Count: > 0 })
-                {
-                    Interlocked.Add(ref _ruleEventsRaised, detections.Count);
-                    foreach (var evt in detections)
-                    {
-                        if (evt is null) continue; // static analyzer happiness
-                        try { OtelMetrics.CountRuleHit(evt.GetType().Name); } catch { /* optional metric */ }
-                        RaiseDetection(evt);
-                    }
-                }
+                EvaluateRules(rec);
             }
             catch (OperationCanceledException) { /* expected on stop */ }
             catch (Exception ex)
@@ -474,16 +530,33 @@ namespace Carthago.Services
             }
         }
 
+        private void EvaluateRules(TrafficRecord rec)
+        {
+            try
+            {
+                var detections = RuleEngine.Evaluate(rec, PreferencesService.Sensitivity);
+                if (detections is not { Count: > 0 }) return;
+
+                Interlocked.Add(ref _ruleEventsRaised, detections.Count);
+                foreach (var evt in detections)
+                {
+                    if (evt is null) continue;
+                    try { OtelMetrics.CountRuleHit(evt.GetType().Name); } catch { /* optional metrics */ }
+                    RaiseDetection(evt);
+                }
+            }
+            catch (Exception ex) { Log(ex); }
+        }
+
         public async Task ManualReputationLookup(TrafficRecord rec)
         {
-            if (rec is null) return;
+            if (rec is null || Volatile.Read(ref _disposed) != 0) return;
             var ip = GetWhoisTarget(rec) ?? rec.Source ?? rec.Destination;
             if (string.IsNullOrWhiteSpace(ip) || !IsEnrichablePublicIp(ip)) return;
 
-            var ct = _runCts?.Token ?? _serviceCts.Token;
-
+            var ct = GetRunToken();
             var rep = await EnrichWithReputationAsync(ip, ct).ConfigureAwait(false);
-            if (rep is null) return;
+            if (rep is null || ct.IsCancellationRequested) return;
 
             rec.ReputationScore = rep.AbuseConfidenceScore;
             rec.ReputationReports = rep.TotalReports;
@@ -491,17 +564,7 @@ namespace Carthago.Services
                 rec.ReputationLastSeen = dto.UtcDateTime;
             rec.ReputationIsMalicious = IsMalicious(rec.ReputationScore);
 
-            var detections = RuleEngine.Evaluate(rec, PreferencesService.Sensitivity);
-            if (detections is { Count: > 0 })
-            {
-                Interlocked.Add(ref _ruleEventsRaised, detections.Count);
-                foreach (var evt in detections)
-                {
-                    if (evt is null) continue;
-                    try { OtelMetrics.CountRuleHit(evt.GetType().Name); } catch { }
-                    RaiseDetection(evt);
-                }
-            }
+            EvaluateRules(rec);
         }
 
         private void RaiseDetection(DetectionEvent evt)
@@ -630,48 +693,34 @@ namespace Carthago.Services
         {
             SetDefaultFilter(bpf);
 
-            // ETW mode? Inform and bail – device-level BPF doesn't exist here.
-            if (_captureSource is not null && _device is null)
+            if (_captureSource != null && _device == null)
             {
-                try
-                {
-                    MessageBox.Show(
-                        "Filter applies only to Npcap devices. In ETW mode the driver does not support BPF. " +
-                        "Select an 'Npcap:' interface to use capture filters.",
-                        "Filter not applied (ETW mode)", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-                catch { /* non-UI contexts */ }
+                MessageBox.Show("BPF capture filters are available only with Npcap, not ETW.",
+                    "Capture filter", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
-            // No device yet – just store the filter for when capture starts
-            if (_device is null)
-                return;
+            var device = _device;
+            if (device == null) return;
 
             try
             {
-                bool wasRunning = _device.Started;
-
-                if (wasRunning)
+                bool running = device.Started;
+                if (running)
                 {
-                    _device.StopCapture();
-                    _device.Close();
+                    device.StopCapture();
+                    device.Close();
+                    device.Open();
                 }
-
-                _device.Open(); // open fresh handle
-                _device.Filter = _currentFilter ?? string.Empty; // set or clear
-                if (wasRunning)
-                    _device.StartCapture();
+                device.Filter = _currentFilter ?? string.Empty;
+                if (running)
+                    device.StartCapture();
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine($"ApplyFilter error: {ex.Message}");
-                try
-                {
-                    MessageBox.Show($"Failed to apply filter:\n{ex.Message}",
-                        "Capture filter", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-                catch { /* ignore */ }
+                Log(ex);
+                MessageBox.Show($"Failed to apply capture filter: {ex.Message}",
+                    "Capture filter", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -682,63 +731,49 @@ namespace Carthago.Services
 
         private static bool IsEnrichablePublicIp(string ip)
         {
-            if (string.IsNullOrWhiteSpace(ip)) return false;
-            if (!IPAddress.TryParse(ip, out var addr)) return false;
+            if (!IPAddress.TryParse(ip, out var address) || IPAddress.IsLoopback(address))
+                return false;
 
-            // Skip loopback, link-local, private, multicast, etc.
-            if (IPAddress.IsLoopback(addr)) return false;
+            if (address.IsIPv4MappedToIPv6)
+                address = address.MapToIPv4();
 
-            if (addr.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+            var bytes = address.GetAddressBytes();
+            if (address.AddressFamily == AddressFamily.InterNetwork)
             {
-                var b = addr.GetAddressBytes();
-                // Private
-                if (b[0] == 10 || (b[0] == 172 && b[1] >= 16 && b[1] <= 31) || (b[0] == 192 && b[1] == 168))
-                    return false;
-                // Link-local 169.254/16 or multicast 224.0.0.0/4
-                if (b[0] == 169 && b[1] == 254) return false;
-                if (b[0] >= 224 && b[0] <= 239) return false;
-            }
-            else if (addr.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
-            {
-                var s = addr.ToString().ToLowerInvariant();
-                if (addr.IsIPv6LinkLocal || addr.IsIPv6SiteLocal || s.StartsWith("fc") || s.StartsWith("fd"))
-                    return false; // ULA
-                if (s.StartsWith("fe80")) return false; // link-local
-                if (s.StartsWith("ff")) return false; // multicast
-                if (s == "::1") return false; // loopback
+                byte a = bytes[0], b = bytes[1], c = bytes[2];
+                if (a == 0 || a == 10 || a == 127 || a >= 224) return false;
+                if (a == 100 && b >= 64 && b <= 127) return false; // CGNAT
+                if (a == 169 && b == 254) return false; // link local
+                if (a == 172 && b >= 16 && b <= 31) return false;
+                if (a == 192 && b == 168) return false;
+                if (a == 192 && b == 0 && c == 0) return false;
+                if (a == 192 && b == 0 && c == 2) return false; // TEST-NET-1
+                if (a == 198 && (b == 18 || b == 19)) return false; // benchmarking
+                if (a == 198 && b == 51 && c == 100) return false; // TEST-NET-2
+                if (a == 203 && b == 0 && c == 113) return false; // TEST-NET-3
+                return true;
             }
 
+            if (address.AddressFamily != AddressFamily.InterNetworkV6)
+                return false;
+            if (address.Equals(IPAddress.IPv6None) || address.Equals(IPAddress.IPv6Any))
+                return false;
+            if (address.IsIPv6LinkLocal || address.IsIPv6SiteLocal || address.IsIPv6Multicast)
+                return false;
+            if ((bytes[0] & 0xFE) == 0xFC) return false; // ULA
+            if (bytes[0] == 0x20 && bytes[1] == 0x01 && bytes[2] == 0x0d && bytes[3] == 0xb8)
+                return false; // documentation range
             return true;
         }
 
-        private static string? GetWhoisTarget(TrafficRecord r)
+        private static string? GetWhoisTarget(TrafficRecord record)
         {
-            bool srcPriv = IsPrivateIp(r.Source);
-            bool dstPriv = IsPrivateIp(r.Destination);
-
-            if (srcPriv && !dstPriv) return r.Destination;
-            if (!srcPriv && dstPriv) return r.Source;
-            if (!srcPriv && !dstPriv) return string.IsNullOrWhiteSpace(r.Destination) ? r.Source : r.Destination;
+            bool srcPublic = IsEnrichablePublicIp(record.Source ?? string.Empty);
+            bool dstPublic = IsEnrichablePublicIp(record.Destination ?? string.Empty);
+            if (srcPublic && dstPublic) return record.Destination;
+            if (srcPublic) return record.Source;
+            if (dstPublic) return record.Destination;
             return null;
-        }
-
-        private static bool IsPrivateIp(string? ip)
-        {
-            if (string.IsNullOrWhiteSpace(ip)) return false;
-            if (!IPAddress.TryParse(ip, out var addr)) return false;
-
-            if (addr.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
-            {
-                var b = addr.GetAddressBytes();
-                return b[0] == 10 || (b[0] == 172 && b[1] >= 16 && b[1] <= 31) || (b[0] == 192 && b[1] == 168);
-            }
-
-            if (addr.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
-            {
-                var s = addr.ToString().ToLowerInvariant();
-                return addr.IsIPv6LinkLocal || addr.IsIPv6SiteLocal || s.StartsWith("fc") || s.StartsWith("fd");
-            }
-            return false;
         }
 
         private void SafeMaintenanceTick()
@@ -751,7 +786,13 @@ namespace Carthago.Services
 
                 // publish stats snapshot (non-blocking)
                 var snap = GetStats();
-                try { StatsUpdated?.Invoke(snap); } catch { }
+                try
+                {
+                    if (_dispatcher.CheckAccess()) StatsUpdated?.Invoke(snap);
+                    else _dispatcher.BeginInvoke(DispatcherPriority.Background,
+                        new Action(() => { if (Volatile.Read(ref _disposed) == 0) StatsUpdated?.Invoke(snap); }));
+                }
+                catch (Exception ex) { Log(ex); }
             }
             catch (Exception ex)
             {
@@ -777,6 +818,7 @@ namespace Carthago.Services
             RuleEventsRaised = Interlocked.Read(ref _ruleEventsRaised),
             WhoisEnriched = Interlocked.Read(ref _whoisEnriched),
             ReputationEnriched = Interlocked.Read(ref _reputationEnriched),
+            EnrichmentFallbacks = Interlocked.Read(ref _enrichmentFallbacks),
             WhoisCacheSize = _whoisCache.Count,
             ReputationCacheSize = _reputationCache.Count
         };
@@ -790,6 +832,7 @@ namespace Carthago.Services
             Interlocked.Exchange(ref _ruleEventsRaised, 0);
             Interlocked.Exchange(ref _whoisEnriched, 0);
             Interlocked.Exchange(ref _reputationEnriched, 0);
+            Interlocked.Exchange(ref _enrichmentFallbacks, 0);
         }
 
         // ===== simple cache envelope =====
@@ -825,6 +868,7 @@ namespace Carthago.Services
             public long RuleEventsRaised { get; init; }
             public long WhoisEnriched { get; init; }
             public long ReputationEnriched { get; init; }
+            public long EnrichmentFallbacks { get; init; }
             public int WhoisCacheSize { get; init; }
             public int ReputationCacheSize { get; init; }
         }
