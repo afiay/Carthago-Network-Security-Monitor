@@ -136,16 +136,11 @@
                            Margin="12,2,0,0"/>
               </DockPanel>
 
-              <Grid Margin="0,14,0,0">
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="158"/>
-                  <ColumnDefinition Width="158"/>
-                  <ColumnDefinition Width="150"/>
-                  <ColumnDefinition Width="*"/>
-                  <ColumnDefinition Width="42"/>
-                </Grid.ColumnDefinitions>
+              <WrapPanel Margin="0,14,0,0">
                 <ComboBox x:Name="SeverityFilter"
+                          Width="150"
                           Height="38"
+                          Margin="0,0,8,8"
                           VerticalContentAlignment="Center">
                   <ComboBoxItem Content="All severities" IsSelected="True"/>
                   <ComboBoxItem Content="Critical"/>
@@ -154,9 +149,9 @@
                   <ComboBoxItem Content="Low"/>
                 </ComboBox>
                 <ComboBox x:Name="StatusFilter"
-                          Grid.Column="1"
+                          Width="150"
                           Height="38"
-                          Margin="8,0,0,0"
+                          Margin="0,0,8,8"
                           VerticalContentAlignment="Center">
                   <ComboBoxItem Content="All statuses" IsSelected="True"/>
                   <ComboBoxItem Content="New"/>
@@ -165,28 +160,28 @@
                   <ComboBoxItem Content="Resolved"/>
                 </ComboBox>
                 <ComboBox x:Name="OwnerFilter"
-                          Grid.Column="2"
+                          Width="142"
                           Height="38"
-                          Margin="8,0,0,0"
+                          Margin="0,0,8,8"
                           VerticalContentAlignment="Center">
                   <ComboBoxItem Content="All owners" IsSelected="True"/>
                   <ComboBoxItem Content="Unassigned"/>
                 </ComboBox>
                 <TextBox x:Name="SearchBox"
-                         Grid.Column="3"
+                         Width="260"
                          Height="38"
-                         Margin="8,0,0,0"
+                         Margin="0,0,8,8"
                          Style="{StaticResource SearchBox}"
                          VerticalContentAlignment="Center"
                          ToolTip="Search incident titles, hosts, destinations, evidence, rules, or summary"/>
-                <Button Grid.Column="4"
+                <Button Width="42"
                         Height="38"
-                        Margin="8,0,0,0"
+                        Margin="0,0,0,8"
                         Style="{StaticResource SecondaryButton}"
                         Click="MoreActions_Click"
                         ToolTip="More queue actions"
                         Content="..."/>
-              </Grid>
+              </WrapPanel>
             </StackPanel>
 
             <ScrollViewer Grid.Row="1"

@@ -208,15 +208,11 @@
                            TextWrapping="Wrap"/>
               </DockPanel>
 
-              <Grid Margin="0,14,0,0">
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="160"/>
-                  <ColumnDefinition Width="168"/>
-                  <ColumnDefinition Width="*"/>
-                  <ColumnDefinition Width="72"/>
-                </Grid.ColumnDefinitions>
+              <WrapPanel Margin="0,14,0,0">
                 <ComboBox x:Name="SeverityFilter"
+                          Width="152"
                           Height="38"
+                          Margin="0,0,8,8"
                           VerticalContentAlignment="Center">
                   <ComboBoxItem Content="All severities" IsSelected="True"/>
                   <ComboBoxItem Content="Critical"/>
@@ -225,9 +221,9 @@
                   <ComboBoxItem Content="Low"/>
                 </ComboBox>
                 <ComboBox x:Name="SourceFilter"
-                          Grid.Column="1"
+                          Width="160"
                           Height="38"
-                          Margin="8,0,0,0"
+                          Margin="0,0,8,8"
                           VerticalContentAlignment="Center">
                   <ComboBoxItem Content="All feed sources" IsSelected="True"/>
                   <ComboBoxItem Content="AbuseIPDB"/>
@@ -237,21 +233,21 @@
                   <ComboBoxItem Content="Detection evidence"/>
                 </ComboBox>
                 <TextBox x:Name="SearchBox"
-                         Grid.Column="2"
+                         Width="260"
                          Height="38"
-                         Margin="8,0,0,0"
+                         Margin="0,0,8,8"
                          Style="{StaticResource SearchBox}"
                          VerticalContentAlignment="Center"
                          ToolTip="Search indicators, feed sources, classifications, hosts, incidents, rules, or tags"
                          TextChanged="SearchBox_TextChanged"/>
-                <Button Grid.Column="3"
+                <Button Width="72"
                         Height="38"
-                        Margin="8,0,0,0"
+                        Margin="0,0,0,8"
                         Style="{StaticResource SecondaryButton}"
                         Click="MoreActions_Click"
                         ToolTip="More actions"
                         Content="..."/>
-              </Grid>
+              </WrapPanel>
             </StackPanel>
 
             <ScrollViewer Grid.Row="1"

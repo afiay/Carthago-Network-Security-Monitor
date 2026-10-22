@@ -1284,11 +1284,14 @@
                   BorderThickness="1"
                   CornerRadius="10"
                   Padding="30"
+                  MaxWidth="800"
                   HorizontalAlignment="Center"
                   VerticalAlignment="Stretch">
-            <ScrollViewer VerticalScrollBarVisibility="Auto"
-                          HorizontalScrollBarVisibility="Disabled">
-              <StackPanel Width="720">
+            <ScrollViewer x:Name="SettingsScrollViewer"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled"
+                          HorizontalContentAlignment="Stretch">
+              <StackPanel>
               <TextBlock Text="Settings"
                          FontSize="20"
                          FontWeight="Bold"
@@ -1299,7 +1302,7 @@
                         Margin="0,4,0,0">
                 <Grid Margin="10">
                   <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition Width="160"/>
                     <ColumnDefinition Width="*"/>
                   </Grid.ColumnDefinitions>
                   <Grid.RowDefinitions>
@@ -1392,7 +1395,7 @@
                          Margin="0,8,0,0">
                 <Grid Margin="10">
                   <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition Width="160"/>
                     <ColumnDefinition Width="*"/>
                   </Grid.ColumnDefinitions>
                   <Grid.RowDefinitions>
@@ -1455,7 +1458,7 @@
                               Grid.Column="1"
                               Orientation="Horizontal">
                     <TextBox x:Name="DefaultFilterText"
-                             Width="380"
+                             Width="300"
                              ToolTip="Example: tcp or port 443"/>
                   </StackPanel>
 
@@ -1463,17 +1466,16 @@
                   <TextBlock Grid.Row="6"
                              Text="AbuseIPDB API Key"
                              VerticalAlignment="Center"/>
-                  <StackPanel Grid.Row="6"
-                              Grid.Column="1"
-                              Orientation="Horizontal">
+                  <WrapPanel Grid.Row="6"
+                             Grid.Column="1">
                     <PasswordBox x:Name="AbuseApiKeyBox"
                                  Width="300"
                                  ToolTip="Prefer .env / environment variables for persistence"
                                  Margin="0,0,8,0"/>
                     <Button Content="Use for this session"
                             Click="ApplyApiKey_Click"
-                            Width="160"/>
-                  </StackPanel>
+                            MinWidth="160"/>
+                  </WrapPanel>
 
                   <!-- Status line -->
                   <TextBlock x:Name="ApiKeyStatusText"
@@ -1567,9 +1569,8 @@
                               Unchecked="DashboardSectionToggle_Changed"/>
                   </UniformGrid>
 
-                  <StackPanel Grid.Row="2"
-                              Orientation="Horizontal"
-                              Margin="0,14,0,0">
+                  <WrapPanel Grid.Row="2"
+                             Margin="0,14,0,0">
                     <CheckBox x:Name="DashboardMinimalModeCheck"
                               Content="Use minimal dashboard"
                               Margin="0,0,18,0"
@@ -1579,22 +1580,27 @@
                               Content="Empty dashboard by default"
                               Checked="DashboardSectionToggle_Changed"
                               Unchecked="DashboardSectionToggle_Changed"/>
-                  </StackPanel>
+                  </WrapPanel>
 
                   <Border Grid.Row="3"
                           Style="{StaticResource PresetCard}"
                           Margin="0,14,0,0">
-                    <DockPanel LastChildFill="True">
-                      <StackPanel DockPanel.Dock="Left">
+                    <Grid>
+                      <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                      </Grid.RowDefinitions>
+                      <StackPanel>
                         <TextBlock Text="Recommended layouts"
                                    FontWeight="SemiBold"/>
                         <TextBlock Text="Apply a preset, then customize or reorder widgets."
                                    Foreground="{StaticResource TextMutedBrush}"
-                                   Margin="0,3,0,0"/>
+                                   Margin="0,3,0,0"
+                                   TextWrapping="Wrap"/>
                       </StackPanel>
-                      <StackPanel DockPanel.Dock="Right"
-                                  Orientation="Horizontal"
-                                  HorizontalAlignment="Right">
+                      <WrapPanel Grid.Row="1"
+                                 Margin="0,10,0,0"
+                                 HorizontalAlignment="Left">
                         <ComboBox x:Name="DashboardPresetCombo"
                                   Width="240"
                                   DisplayMemberPath="Name"/>
@@ -1608,8 +1614,8 @@
                                 Margin="8,0,0,0"
                                 Style="{StaticResource SecondaryButton}"
                                 Click="DashboardResetLayout_Click"/>
-                      </StackPanel>
-                    </DockPanel>
+                      </WrapPanel>
+                    </Grid>
                   </Border>
 
                   <TextBlock Grid.Row="4"
@@ -1642,9 +1648,8 @@
                              Foreground="{StaticResource TextMutedBrush}"
                              TextWrapping="Wrap"/>
 
-                  <StackPanel Grid.Row="2"
-                              Orientation="Horizontal"
-                              Margin="0,8,0,0">
+                  <WrapPanel Grid.Row="2"
+                             Margin="0,8,0,0">
                     <Button Content="Simulate compromised laptop"
                             Width="220"
                             Style="{StaticResource PrimaryButton}"
@@ -1659,7 +1664,7 @@
                             Margin="8,0,0,0"
                             Style="{StaticResource SecondaryButton}"
                             Click="OpenDemoIncidentQueue_Click"/>
-                  </StackPanel>
+                  </WrapPanel>
 
                   <Border Grid.Row="3"
                           Margin="0,8,0,0"
