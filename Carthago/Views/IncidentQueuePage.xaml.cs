@@ -16,7 +16,7 @@ using Carthago.Sinks;
 
 namespace Carthago.Views
 {
-    public partial class IncidentQueuePage : Page
+    public partial class IncidentQueuePage : Page, IResponsiveLayoutAware
     {
         private const int PageSize = 7;
 
@@ -25,9 +25,29 @@ namespace Carthago.Views
         private readonly IncidentQueueVm _vm = new();
         private List<IncidentVm> _filtered = new();
 
+        public void ApplyResponsiveLayout(ResponsiveLayoutMode mode)
+        {
+            ResponsiveLayout.ApplyAdaptiveColumns(
+                mode,
+                new[] { PrimaryWorkspaceQueueColumn, PrimaryWorkspaceDetailColumn },
+                new[] { PrimaryWorkspaceTopRow, PrimaryWorkspaceBottomRow },
+                new FrameworkElement[] { QueuePanel, InvestigationPanel },
+                new[] { 0.46, 0.54 },
+                14);
+
+            ResponsiveLayout.ApplyAdaptiveColumns(
+                mode,
+                new[] { SupportingWorkspaceFirstColumn, SupportingWorkspaceSecondColumn, SupportingWorkspaceThirdColumn },
+                new[] { SupportingWorkspaceFirstRow, SupportingWorkspaceSecondRow, SupportingWorkspaceThirdRow },
+                new FrameworkElement[] { TimelinePanel, AffectedHostsPanel, ResponseChecklistPanel },
+                new[] { 1.08, 1.05, 0.92 },
+                10);
+        }
+
         public IncidentQueuePage(SinkHost sinkHost)
         {
             InitializeComponent();
+            ResponsiveLayout.ApplyWhenLoaded(this, ApplyResponsiveLayout);
 
             _host = sinkHost ?? throw new ArgumentNullException(nameof(sinkHost));
             _ui = Dispatcher;

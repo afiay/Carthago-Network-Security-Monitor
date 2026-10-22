@@ -3,11 +3,12 @@
 <UserControl x:Class="Carthago.Views.Sidebar"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <Border Background="{StaticResource SidebarBgBrush}"
+  <Border x:Name="SidebarRoot"
+          Background="{StaticResource SidebarBgBrush}"
           BorderBrush="{StaticResource CardBorderBrush}"
           BorderThickness="0,0,1,0">
     <DockPanel>
-      <Border DockPanel.Dock="Top" Padding="18,18,16,16" Background="#071321">
+      <Border x:Name="BrandHeader" DockPanel.Dock="Top" Padding="18,18,16,16" Background="#071321">
         <Grid>
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="38"/>
@@ -16,14 +17,14 @@
           <Border Width="36" Height="36" CornerRadius="11" BorderBrush="{StaticResource AccentAltBrush}" BorderThickness="1" Background="#0A1B2F">
             <TextBlock Text="◈" Foreground="{StaticResource OkBrush}" FontSize="19" HorizontalAlignment="Center" VerticalAlignment="Center"/>
           </Border>
-          <StackPanel Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center">
+          <StackPanel x:Name="BrandText" Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center">
             <TextBlock Text="Carthago" FontWeight="Bold" FontSize="17"/>
             <TextBlock Text="AI Security Monitor" Foreground="{StaticResource TextSubtleBrush}" FontSize="11" Margin="0,1,0,0"/>
           </StackPanel>
         </Grid>
       </Border>
 
-      <Border DockPanel.Dock="Bottom" BorderBrush="{StaticResource SoftDividerBrush}" BorderThickness="0,1,0,0" Padding="16,10" Background="#07111F">
+      <Border x:Name="ProductFooter" DockPanel.Dock="Bottom" BorderBrush="{StaticResource SoftDividerBrush}" BorderThickness="0,1,0,0" Padding="16,10" Background="#07111F">
         <Grid>
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
@@ -38,9 +39,9 @@
       </Border>
 
       <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Margin="10,12,10,16">
+        <StackPanel x:Name="NavigationStack" Margin="10,12,10,16">
           <TextBlock Text="SECURITY VIEW" Style="{StaticResource SidebarSectionLabel}"/>
-          <Button x:Name="DashboardNavButton" Style="{StaticResource NavButton}" Click="Nav_Dashboard_Click">
+          <Button x:Name="DashboardNavButton" Style="{StaticResource NavButton}" Click="Nav_Dashboard_Click" ToolTip="Dashboard" AutomationProperties.Name="Dashboard">
             <Grid>
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="24"/>
@@ -52,7 +53,7 @@
               
             </Grid>
           </Button>
-          <Button x:Name="IncidentsNavButton" Style="{StaticResource NavButton}" Click="Nav_Incidents_Click">
+          <Button x:Name="IncidentsNavButton" Style="{StaticResource NavButton}" Click="Nav_Incidents_Click" ToolTip="Incidents" AutomationProperties.Name="Incidents">
             <Grid>
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="24"/>
@@ -64,7 +65,7 @@
               
             </Grid>
           </Button>
-          <Button x:Name="AnomaliesNavButton" Style="{StaticResource NavButton}" Click="Nav_Anomalies_Click">
+          <Button x:Name="AnomaliesNavButton" Style="{StaticResource NavButton}" Click="Nav_Anomalies_Click" ToolTip="Anomalies" AutomationProperties.Name="Anomalies">
             <Grid>
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="24"/>
@@ -73,12 +74,12 @@
               </Grid.ColumnDefinitions>
               <TextBlock Text="⌁" Foreground="{StaticResource TextMutedBrush}" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
               <TextBlock Grid.Column="1" Text="Anomalies" Style="{StaticResource SidebarNavTitle}" Margin="9,0,0,0"/>
-              <Border Grid.Column="2" Background="#203148" CornerRadius="999" Padding="7,2" VerticalAlignment="Center">
+              <Border Grid.Column="2" Style="{StaticResource SidebarNavBadge}">
                 <TextBlock Text="400" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSubtleBrush}"/>
               </Border>
             </Grid>
           </Button>
-          <Button x:Name="IncidentQueueNavButton" Style="{StaticResource NavButton}" Click="Nav_IncidentQueue_Click">
+          <Button x:Name="IncidentQueueNavButton" Style="{StaticResource NavButton}" Click="Nav_IncidentQueue_Click" ToolTip="Incident queue" AutomationProperties.Name="Incident Queue">
             <Grid>
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="24"/>
@@ -90,7 +91,7 @@
               
             </Grid>
           </Button>
-          <Button x:Name="ThreatFeedNavButton" Style="{StaticResource NavButton}" Click="Nav_ThreatFeed_Click">
+          <Button x:Name="ThreatFeedNavButton" Style="{StaticResource NavButton}" Click="Nav_ThreatFeed_Click" ToolTip="Threat intelligence" AutomationProperties.Name="Threat Intelligence Feed">
             <Grid>
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="24"/>
@@ -105,7 +106,7 @@
 
           <Separator Style="{StaticResource QuietSeparator}"/>
           <TextBlock Text="ADVANCED / FORENSICS" Style="{StaticResource SidebarSectionLabel}"/>
-          <Button x:Name="RawTrafficNavButton" Style="{StaticResource NavButton}" Click="Nav_LiveTraffic_Click">
+          <Button x:Name="RawTrafficNavButton" Style="{StaticResource NavButton}" Click="Nav_LiveTraffic_Click" ToolTip="Network traffic" AutomationProperties.Name="Network Traffic">
             <Grid>
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="24"/>
@@ -122,6 +123,7 @@
                     Header="Raw traffic filters"
                     Visibility="Collapsed"
                     IsExpanded="True"
+                    Collapsed="CompactFilterExpander_Collapsed"
                     Margin="6,0,6,6">
             <StackPanel Margin="6">
               <TextBlock Text="Search"
@@ -243,7 +245,7 @@
               </StackPanel>
             </StackPanel>
           </Expander>
-          <Button x:Name="RawDetectionsNavButton" Style="{StaticResource NavButton}" Click="Nav_Alerts_Click">
+          <Button x:Name="RawDetectionsNavButton" Style="{StaticResource NavButton}" Click="Nav_Alerts_Click" ToolTip="Detection events" AutomationProperties.Name="Detection Events">
             <Grid>
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="24"/>
@@ -262,6 +264,7 @@
                     Header="Raw detection filters"
                     Visibility="Collapsed"
                     IsExpanded="True"
+                    Collapsed="CompactFilterExpander_Collapsed"
                     Margin="6,0,6,6">
             <StackPanel Margin="6">
               <TextBlock Text="Search (rule or description)"
@@ -364,7 +367,7 @@
               </StackPanel>
             </StackPanel>
           </Expander>
-          <Button x:Name="SinkDeliveryNavButton" Style="{StaticResource NavButton}" Click="Nav_SinkEvents_Click">
+          <Button x:Name="SinkDeliveryNavButton" Style="{StaticResource NavButton}" Click="Nav_SinkEvents_Click" ToolTip="External delivery" AutomationProperties.Name="External Event Delivery">
             <Grid>
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="24"/>
@@ -383,6 +386,7 @@
                     Header="Sink delivery filters"
                     Visibility="Collapsed"
                     IsExpanded="True"
+                    Collapsed="CompactFilterExpander_Collapsed"
                     Margin="6,0,6,6">
             <StackPanel Margin="6">
               <TextBlock Text="Search (description or error)"
@@ -493,7 +497,7 @@
               </StackPanel>
             </StackPanel>
           </Expander>
-          <Button x:Name="PcapExplorerNavButton" Style="{StaticResource NavButton}" Click="Nav_LiveTraffic_Click">
+          <Button x:Name="PcapExplorerNavButton" Style="{StaticResource NavButton}" Click="Nav_LiveTraffic_Click" ToolTip="Packet capture explorer" AutomationProperties.Name="Packet Capture Explorer">
             <Grid>
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="24"/>
@@ -505,7 +509,7 @@
               
             </Grid>
           </Button>
-          <Button x:Name="ForensicsNavButton" Style="{StaticResource NavButton}" Click="Nav_Alerts_Click">
+          <Button x:Name="ForensicsNavButton" Style="{StaticResource NavButton}" Click="Nav_Alerts_Click" ToolTip="Forensics workspace" AutomationProperties.Name="Forensics Workspace">
             <Grid>
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="24"/>
@@ -520,7 +524,7 @@
 
           <Separator Style="{StaticResource QuietSeparator}"/>
           <TextBlock Text="PLATFORM" Style="{StaticResource SidebarSectionLabel}"/>
-          <Button x:Name="AnalyticsNavButton" Style="{StaticResource NavButton}" Click="Nav_Analytics_Click">
+          <Button x:Name="AnalyticsNavButton" Style="{StaticResource NavButton}" Click="Nav_Analytics_Click" ToolTip="Security analytics" AutomationProperties.Name="Security Analytics">
             <Grid>
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="24"/>
@@ -532,7 +536,7 @@
               
             </Grid>
           </Button>
-          <Button x:Name="IntegrationsNavButton" Style="{StaticResource NavButton}" Click="Nav_Integrations_Click">
+          <Button x:Name="IntegrationsNavButton" Style="{StaticResource NavButton}" Click="Nav_Integrations_Click" ToolTip="Integrations" AutomationProperties.Name="Integrations">
             <Grid>
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="24"/>
@@ -544,7 +548,7 @@
               
             </Grid>
           </Button>
-          <Button x:Name="HostIntegrityNavButton" Style="{StaticResource NavButton}" Click="Nav_HostIntegrity_Click">
+          <Button x:Name="HostIntegrityNavButton" Style="{StaticResource NavButton}" Click="Nav_HostIntegrity_Click" ToolTip="Host integrity" AutomationProperties.Name="Host Integrity">
             <Grid>
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="24"/>
@@ -556,7 +560,7 @@
               
             </Grid>
           </Button>
-          <Button x:Name="CiscoToolsNavButton" Style="{StaticResource NavButton}" Click="Nav_CiscoTools_Click">
+          <Button x:Name="CiscoToolsNavButton" Style="{StaticResource NavButton}" Click="Nav_CiscoTools_Click" ToolTip="Cisco device tools" AutomationProperties.Name="Cisco Device Tools">
             <Grid>
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="24"/>
@@ -571,7 +575,7 @@
 
           <Separator Style="{StaticResource QuietSeparator}"/>
           <TextBlock Text="SETTINGS" Style="{StaticResource SidebarSectionLabel}"/>
-          <Button x:Name="CaptureSourcesNavButton" Style="{StaticResource NavButton}" Click="Nav_Settings_Click">
+          <Button x:Name="CaptureSourcesNavButton" Style="{StaticResource NavButton}" Click="Nav_Settings_Click" ToolTip="Capture sources" AutomationProperties.Name="Capture Sources">
             <Grid>
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="24"/>
@@ -583,7 +587,7 @@
               
             </Grid>
           </Button>
-          <Button x:Name="DetectionRulesNavButton" Style="{StaticResource NavButton}" Click="Nav_Settings_Click">
+          <Button x:Name="DetectionRulesNavButton" Style="{StaticResource NavButton}" Click="Nav_Settings_Click" ToolTip="Detection rules" AutomationProperties.Name="Detection Rules">
             <Grid>
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="24"/>
@@ -595,7 +599,7 @@
               
             </Grid>
           </Button>
-          <Button x:Name="ReputationNavButton" Style="{StaticResource NavButton}" Click="Nav_Settings_Click">
+          <Button x:Name="ReputationNavButton" Style="{StaticResource NavButton}" Click="Nav_Settings_Click" ToolTip="Reputation settings" AutomationProperties.Name="Reputation Settings">
             <Grid>
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="24"/>
@@ -607,7 +611,7 @@
               
             </Grid>
           </Button>
-          <Button x:Name="UsersRolesNavButton" Style="{StaticResource NavButton}" Click="Nav_Settings_Click">
+          <Button x:Name="UsersRolesNavButton" Style="{StaticResource NavButton}" Click="Nav_Settings_Click" ToolTip="Users and roles" AutomationProperties.Name="Users and Roles">
             <Grid>
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="24"/>
@@ -619,7 +623,7 @@
               
             </Grid>
           </Button>
-          <Button x:Name="SystemSettingsNavButton" Style="{StaticResource NavButton}" Click="Nav_Settings_Click">
+          <Button x:Name="SystemSettingsNavButton" Style="{StaticResource NavButton}" Click="Nav_Settings_Click" ToolTip="System settings" AutomationProperties.Name="System Settings">
             <Grid>
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="24"/>

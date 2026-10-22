@@ -20,7 +20,7 @@ using Carthago.Sinks;
 
 namespace Carthago.Views
 {
-    public partial class ThreatFeedPage : Page
+    public partial class ThreatFeedPage : Page, IResponsiveLayoutAware
     {
         private const int PageSize = 6;
 
@@ -32,6 +32,25 @@ namespace Carthago.Views
         private readonly Action? _openRawDetections;
         private readonly Action? _openIncidentQueue;
         private List<ThreatMatchVm> _filtered = new();
+
+        public void ApplyResponsiveLayout(ResponsiveLayoutMode mode)
+        {
+            ResponsiveLayout.ApplyAdaptiveColumns(
+                mode,
+                new[] { PrimaryWorkspaceQueueColumn, PrimaryWorkspaceDetailColumn },
+                new[] { PrimaryWorkspaceTopRow, PrimaryWorkspaceBottomRow },
+                new FrameworkElement[] { QueuePanel, InvestigationPanel },
+                new[] { 0.44, 0.56 },
+                14);
+
+            ResponsiveLayout.ApplyAdaptiveColumns(
+                mode,
+                new[] { SupportingWorkspaceFirstColumn, SupportingWorkspaceSecondColumn, SupportingWorkspaceThirdColumn },
+                new[] { SupportingWorkspaceFirstRow, SupportingWorkspaceSecondRow, SupportingWorkspaceThirdRow },
+                new FrameworkElement[] { FeedSourcesPanel, IndicatorTypesPanel, FeedHealthPanel },
+                new[] { 1.0, 1.0, 1.12 },
+                10);
+        }
 
         public ThreatFeedPage(SinkHost sinkHost, ObservableCollection<DetectionEvent> detections)
             : this(sinkHost, detections, null, null, null)
@@ -46,6 +65,7 @@ namespace Carthago.Views
             Action? openIncidentQueue)
         {
             InitializeComponent();
+            ResponsiveLayout.ApplyWhenLoaded(this, ApplyResponsiveLayout);
 
             _host = sinkHost ?? throw new ArgumentNullException(nameof(sinkHost));
             _detections = detections ?? throw new ArgumentNullException(nameof(detections));

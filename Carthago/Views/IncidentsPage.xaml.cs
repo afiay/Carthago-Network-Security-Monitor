@@ -20,15 +20,42 @@ using Carthago.Sinks;
 
 namespace Carthago.Views
 {
-    public partial class IncidentsPage : Page
+    public partial class IncidentsPage : Page, IResponsiveLayoutAware
     {
         private readonly SinkHost _host;
         private readonly Dispatcher _ui;
         private readonly IncidentsVm _vm;
 
+        public void ApplyResponsiveLayout(ResponsiveLayoutMode mode)
+        {
+            KpiGrid.Columns = mode switch
+            {
+                ResponsiveLayoutMode.Compact => 2,
+                ResponsiveLayoutMode.Standard => 3,
+                _ => 5
+            };
+
+            ResponsiveLayout.ApplyAdaptiveColumns(
+                mode,
+                new[] { PrimaryWorkspaceQueueColumn, PrimaryWorkspaceDetailColumn },
+                new[] { PrimaryWorkspaceTopRow, PrimaryWorkspaceBottomRow },
+                new FrameworkElement[] { QueuePanel, InvestigationPanel },
+                new[] { 0.38, 0.62 },
+                14);
+
+            ResponsiveLayout.ApplyAdaptiveColumns(
+                mode,
+                new[] { SupportingWorkspaceFirstColumn, SupportingWorkspaceSecondColumn, SupportingWorkspaceThirdColumn, SupportingWorkspaceFourthColumn },
+                new[] { SupportingWorkspaceFirstRow, SupportingWorkspaceSecondRow, SupportingWorkspaceThirdRow, SupportingWorkspaceFourthRow },
+                new FrameworkElement[] { TimelinePanel, RelatedAnomaliesPanel, AffectedHostsPanel, ResponseChecklistPanel },
+                new[] { 1.05, 0.95, 0.95, 0.95 },
+                10);
+        }
+
         public IncidentsPage(SinkHost sinkHost, string workspaceTitle = "Incident Queue")
         {
             InitializeComponent();
+            ResponsiveLayout.ApplyWhenLoaded(this, ApplyResponsiveLayout);
 
             _host = sinkHost ?? throw new ArgumentNullException(nameof(sinkHost));
             _ui = Dispatcher;

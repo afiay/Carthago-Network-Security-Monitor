@@ -18,7 +18,7 @@ using Carthago.Sinks;
 
 namespace Carthago.Views
 {
-    public partial class AnomaliesPage : Page
+    public partial class AnomaliesPage : Page, IResponsiveLayoutAware
     {
         private readonly SinkHost _host;
         private readonly Dispatcher _ui;
@@ -33,6 +33,32 @@ namespace Carthago.Views
         private readonly Action? _openDetectionRules;
         private List<AnomalyVm> _filtered = new();
         private bool _suppressFilterRefresh;
+
+        public void ApplyResponsiveLayout(ResponsiveLayoutMode mode)
+        {
+            KpiGrid.Columns = mode switch
+            {
+                ResponsiveLayoutMode.Compact => 2,
+                ResponsiveLayoutMode.Standard => 3,
+                _ => 5
+            };
+
+            ResponsiveLayout.ApplyAdaptiveColumns(
+                mode,
+                new[] { PrimaryWorkspaceQueueColumn, PrimaryWorkspaceDetailColumn },
+                new[] { PrimaryWorkspaceTopRow, PrimaryWorkspaceBottomRow },
+                new FrameworkElement[] { QueuePanel, InvestigationPanel },
+                new[] { 0.45, 0.55 },
+                12);
+
+            ResponsiveLayout.ApplyAdaptiveColumns(
+                mode,
+                new[] { SupportingWorkspaceFirstColumn, SupportingWorkspaceSecondColumn, SupportingWorkspaceThirdColumn },
+                new[] { SupportingWorkspaceFirstRow, SupportingWorkspaceSecondRow, SupportingWorkspaceThirdRow },
+                new FrameworkElement[] { EntityHistoryPanel, BaselineDriftPanel, ModelSummaryPanel },
+                new[] { 0.35, 0.37, 0.28 },
+                12);
+        }
 
         public AnomaliesPage(SinkHost sinkHost)
             : this(sinkHost, null, null, null, null, null, null, null)
@@ -50,6 +76,7 @@ namespace Carthago.Views
             Action? openDetectionRules)
         {
             InitializeComponent();
+            ResponsiveLayout.ApplyWhenLoaded(this, ApplyResponsiveLayout);
 
             _host = sinkHost ?? throw new ArgumentNullException(nameof(sinkHost));
             _openRawTraffic = openRawTraffic;

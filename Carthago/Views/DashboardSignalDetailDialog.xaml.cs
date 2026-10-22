@@ -14,6 +14,30 @@ namespace Carthago.Views
         {
             InitializeComponent();
             DataContext = model;
+            SourceInitialized += (_, _) => ConstrainToOwner();
+            Loaded += (_, _) => ConstrainToOwner();
+            SizeChanged += (_, _) => MetadataGrid.Columns = ActualWidth < 800 ? 2 : 3;
+        }
+
+        private void ConstrainToOwner()
+        {
+            const double preferredMinWidth = 520;
+            const double preferredMinHeight = 400;
+            var workArea = SystemParameters.WorkArea;
+            var ownerWidth = Owner?.ActualWidth > 0 ? Owner.ActualWidth : workArea.Width;
+            var ownerHeight = Owner?.ActualHeight > 0 ? Owner.ActualHeight : workArea.Height;
+            var availableWidth = Math.Min(ownerWidth, workArea.Width);
+            var availableHeight = Math.Min(ownerHeight, workArea.Height);
+            var maximumWidth = availableWidth * 0.94;
+            var maximumHeight = availableHeight * 0.94;
+
+            MinWidth = Math.Min(preferredMinWidth, maximumWidth);
+            MinHeight = Math.Min(preferredMinHeight, maximumHeight);
+            MaxWidth = maximumWidth;
+            MaxHeight = maximumHeight;
+            Width = ResponsiveLayout.ConstrainDimension(Width, preferredMinWidth, availableWidth, 0.94);
+            Height = ResponsiveLayout.ConstrainDimension(Height, preferredMinHeight, availableHeight, 0.94);
+            MetadataGrid.Columns = Width < 800 ? 2 : 3;
         }
 
         public DashboardSignalDetailDialogAction RequestedAction { get; private set; }

@@ -39,7 +39,8 @@
                               ItemsSource="{Binding Emitted}"
                               EnableRowVirtualization="True"
                               VirtualizingPanel.IsVirtualizing="True"
-                              VirtualizingPanel.VirtualizationMode="Recycling">
+                              VirtualizingPanel.VirtualizationMode="Recycling"
+                              ScrollViewer.HorizontalScrollBarVisibility="Auto">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Time (UTC)"
                                     Binding="{Binding TimestampUtc, StringFormat={}{0:u}}"
@@ -85,7 +86,8 @@
                               ItemsSource="{Binding Failures}"
                               EnableRowVirtualization="True"
                               VirtualizingPanel.IsVirtualizing="True"
-                              VirtualizingPanel.VirtualizationMode="Recycling">
+                              VirtualizingPanel.VirtualizationMode="Recycling"
+                              ScrollViewer.HorizontalScrollBarVisibility="Auto">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Time (UTC)"
                                     Binding="{Binding TimestampUtc, StringFormat={}{0:u}}"

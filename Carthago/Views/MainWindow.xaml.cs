@@ -28,6 +28,7 @@ namespace Carthago
         public MainWindow()
         {
             InitializeComponent();
+            InitializeResponsiveLayout();
 
             // These fields are declared in another partial; we only assign here.
             _blacklistService = new BlacklistService();
@@ -124,6 +125,7 @@ namespace Carthago
             SidebarPanel?.ActivateNav("Integrations");
             if (IntegrationsFrame.Content is not IntegrationsPage)
                 IntegrationsFrame.Content = new IntegrationsPage(_sinkHost!);
+            ApplyResponsiveLayoutTo(IntegrationsFrame.Content);
         }
 
         private void Nav_Incidents_Click(object? sender, RoutedEventArgs e)
@@ -133,6 +135,7 @@ namespace Carthago
             SidebarPanel?.ActivateNav("Incidents");
             if (IncidentsFrame.Content is not IncidentsPage)
                 IncidentsFrame.Content = new IncidentsPage(_sinkHost!, "Incidents");
+            ApplyResponsiveLayoutTo(IncidentsFrame.Content);
         }
 
         private void Nav_IncidentQueue_Click(object? sender, RoutedEventArgs e)
@@ -142,6 +145,7 @@ namespace Carthago
             SidebarPanel?.ActivateNav("IncidentQueue");
             if (IncidentsFrame.Content is not IncidentQueuePage)
                 IncidentsFrame.Content = new IncidentQueuePage(_sinkHost!);
+            ApplyResponsiveLayoutTo(IncidentsFrame.Content);
         }
 
         private void Nav_ThreatFeed_Click(object? sender, RoutedEventArgs e)
@@ -155,6 +159,7 @@ namespace Carthago
                 openRawTraffic: () => Nav_LiveTraffic_Click(this, new RoutedEventArgs()),
                 openRawDetections: () => Nav_Alerts_Click(this, new RoutedEventArgs()),
                 openIncidentQueue: () => Nav_IncidentQueue_Click(this, new RoutedEventArgs()));
+            ApplyResponsiveLayoutTo(ThreatFeedFrame.Content);
         }
 
         private void Nav_Anomalies_Click(object? sender, RoutedEventArgs e)
@@ -174,6 +179,7 @@ namespace Carthago
                     openAnalytics: () => Nav_Analytics_Click2(this, new RoutedEventArgs()),
                     openDetectionRules: () => OpenDetectionRulesWorkspace());
             }
+            ApplyResponsiveLayoutTo(AnomaliesFrame.Content);
         }
 
         private void Nav_SinkEvents_Click(object? sender, RoutedEventArgs e)
@@ -183,6 +189,7 @@ namespace Carthago
             SidebarPanel?.ActivateNav("SinkEvents");
             if (SinkEventsFrame.Content is not SinkEventsPage)
                 SinkEventsFrame.Content = new SinkEventsPage(_sinkHost!);
+            ApplyResponsiveLayoutTo(SinkEventsFrame.Content);
         }
 
         // (optional) wire filter buttons for Sink Events – placeholders for now

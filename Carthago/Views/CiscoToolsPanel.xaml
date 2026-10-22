@@ -798,17 +798,16 @@
                     </DockPanel>
                 </GroupBox>
 
-                <GroupBox Header="Incidents • rules + export"
+                <GroupBox Header="Incidents &#x2022; Rules and Export"
                           Grid.Row="1"
                           Grid.Column="2">
                     <DockPanel Margin="4">
 
                         <!-- Toolbar -->
-                        <StackPanel DockPanel.Dock="Top"
-                                    Orientation="Horizontal"
-                                    VerticalAlignment="Center"
-                                    Margin="0,0,0,6">
-                            <Button Content="Load rules…"
+                        <WrapPanel DockPanel.Dock="Top"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,0,6">
+                            <Button Content="Load Rules"
                                     Width="110"
                                     Click="LoadRules_Click"/>
                             <Button Content="Apply to all"
@@ -830,14 +829,14 @@
                                        Text="0"/>
                             <Separator Width="12"
                                        Opacity="0"/>
-                            <Button Content="Export…"
-                                    Width="90"
+                            <Button Content="Export Incidents"
+                                    Width="118"
                                     Click="ExportIncidents_Click"/>
                             <Button Content="Copy MD"
                                     Width="90"
                                     Margin="6,0,0,0"
                                     Click="CopyIncidentsMarkdown_Click"/>
-                        </StackPanel>
+                        </WrapPanel>
 
                         <!-- Incidents grid -->
                         <DataGrid x:Name="IncidentsGrid"
@@ -887,7 +886,7 @@
                                     <MenuItem Header="Apply rules to selected"
                                               Click="ApplyRulesToSelected_Click"/>
                                     <Separator/>
-                                    <MenuItem Header="Export selected…"
+                                    <MenuItem Header="Export selected incidents"
                                               Click="ExportSelectedIncidents_Click"/>
                                     <MenuItem Header="Copy selected as Markdown"
                                               Click="CopySelectedMarkdown_Click"/>
