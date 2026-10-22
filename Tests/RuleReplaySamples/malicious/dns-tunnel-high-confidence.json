@@ -1,0 +1,15 @@
+﻿{
+  "name": "dns-tunnel-high-confidence",
+  "records": [
+    {
+      "source": "10.0.0.26",
+      "destination": "8.8.8.8",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "dnsQname": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.exfil.example",
+      "dnsQtype": "TXT"
+    }
+  ],
+  "expectedMatches": ["R102"],
+  "expectedMinimumConfidence": 0.75
+}

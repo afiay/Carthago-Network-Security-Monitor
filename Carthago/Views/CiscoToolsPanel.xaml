@@ -1,0 +1,930 @@
+<!-- SPDX-License-Identifier: MIT -->
+<!-- File: Views/CiscoToolsPanel.xaml -->
+<UserControl x:Class="Carthago.Views.CiscoToolsPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="clr-namespace:Carthago.Models"
+             xmlns:views="clr-namespace:Carthago.Views"
+             xmlns:conv="clr-namespace:Carthago.Converters"
+             Unloaded="UserControl_Unloaded">
+
+    <UserControl.Resources>
+        <!-- Topology link converter -->
+        <views:LinkToGeometryConverter x:Key="LinkToGeometryConverter"/>
+
+        <!-- Online/offline text converter -->
+        <conv:BoolToOnlineTextConverter x:Key="BoolToOnlineTextConverter"/>
+
+        <!-- Health history sparkline converter -->
+        <conv:HealthHistoryToPointsConverter x:Key="HealthHistoryToPointsConverter"
+                                             Width="70"
+                                             Height="16"/>
+    </UserControl.Resources>
+
+    <Border Background="{StaticResource CardBgBrush}"
+            BorderBrush="{StaticResource CardBorderBrush}"
+            BorderThickness="0"
+            Padding="12">
+        <DockPanel>
+
+            <DockPanel DockPanel.Dock="Top"
+                       Margin="0,0,0,8">
+                <StackPanel DockPanel.Dock="Left">
+                    <TextBlock Text="Cisco Tools"
+                               FontSize="16"
+                               FontWeight="SemiBold"
+                               Margin="0,0,0,4"/>
+                    <TextBlock Text="Rules-driven incidents, topology (CDP/SNMP), and live syslog in one console."
+                               TextWrapping="Wrap"
+                               Foreground="{StaticResource TextSubtleBrush}"
+                               FontSize="12"/>
+                </StackPanel>
+                <StackPanel DockPanel.Dock="Right"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <Button Content="Open analyzer"
+                            Width="130"
+                            Margin="8,0,0,0"
+                            Style="{StaticResource PrimaryButton}"
+                            Click="OpenAnalyzer_Click"/>
+                </StackPanel>
+            </DockPanel>
+
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="2*"/>
+                    <RowDefinition Height="3*"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2.2*"/>
+                    <ColumnDefinition Width="2.2*"/>
+                    <ColumnDefinition Width="2*"/>
+                </Grid.ColumnDefinitions>
+
+                <GroupBox Header="Devices"
+                          Grid.Row="0"
+                          Grid.Column="0"
+                          Margin="0,0,8,8">
+                    <DockPanel Margin="6">
+
+                        <!-- Device form + controls -->
+                        <StackPanel DockPanel.Dock="Top"
+                                    Margin="0,0,0,4">
+                            <TextBlock Text="Register / maintain Cisco endpoints"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,0,4"/>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="2*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- Name -->
+                                <StackPanel Grid.Row="0"
+                                            Grid.Column="0"
+                                            Margin="0,0,4,0">
+                                    <TextBlock Text="Name"
+                                               FontSize="11"
+                                               Foreground="{StaticResource TextSubtleBrush}"/>
+                                    <TextBox x:Name="NewDeviceNameBox"
+                                             Margin="0,2,0,0"/>
+                                </StackPanel>
+
+                                <!-- Host / IP -->
+                                <StackPanel Grid.Row="0"
+                                            Grid.Column="1"
+                                            Margin="4,0,0,0">
+                                    <TextBlock Text="Host / IP"
+                                               FontSize="11"
+                                               Foreground="{StaticResource TextSubtleBrush}"/>
+                                    <TextBox x:Name="NewDeviceHostBox"
+                                             Margin="0,2,0,0"/>
+                                </StackPanel>
+
+                                <!-- Role -->
+                                <StackPanel Grid.Row="1"
+                                            Grid.Column="0"
+                                            Margin="0,4,4,0">
+                                    <TextBlock Text="Role"
+                                               FontSize="11"
+                                               Foreground="{StaticResource TextSubtleBrush}"/>
+                                    <TextBox x:Name="NewDeviceRoleBox"
+                                             Margin="0,2,0,0"
+                                             ToolTip="e.g., Edge firewall, Core switch, VPN gateway"/>
+                                </StackPanel>
+
+                                <!-- Syslog port -->
+                                <StackPanel Grid.Row="1"
+                                            Grid.Column="1"
+                                            Margin="4,4,0,0">
+                                    <TextBlock Text="Syslog port"
+                                               FontSize="11"
+                                               Foreground="{StaticResource TextSubtleBrush}"/>
+                                    <TextBox x:Name="NewDevicePortBox"
+                                             Margin="0,2,0,0"
+                                             Text="5514"
+                                             ToolTip="UDP port where this app is listening for Cisco syslog (default 5514)"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <StackPanel Orientation="Horizontal"
+                                        HorizontalAlignment="Right"
+                                        Margin="0,6,0,0">
+                                <Button Content="Add"
+                                        Width="80"
+                                        Style="{StaticResource PrimaryButton}"
+                                        Click="AddDevice_Click"/>
+                                <Button Content="Clear"
+                                        Width="80"
+                                        Margin="8,0,0,0"
+                                        Click="ClearDeviceForm_Click"/>
+                                <Button Content="Sort by worst health"
+                                        Width="160"
+                                        Margin="12,0,0,0"
+                                        Click="SortByWorstHealth_Click"/>
+                                <CheckBox x:Name="OnlyDegradedDevicesCheckBox"
+                                          Content="Only degraded"
+                                          Margin="12,0,0,0"
+                                          VerticalAlignment="Center"
+                                          Checked="OnlyDegradedDevicesCheckBox_Changed"
+                                          Unchecked="OnlyDegradedDevicesCheckBox_Changed"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Devices grid -->
+                        <DataGrid x:Name="DevicesGrid"
+                                  ItemsSource="{Binding Devices}"
+                                  SelectedItem="{Binding SelectedDevice, Mode=TwoWay}"
+                                  AutoGenerateColumns="False"
+                                  Margin="0,4,0,0"
+                                  IsReadOnly="True"
+                                  HeadersVisibility="Column"
+                                  SelectionMode="Single"
+                                  SelectionUnit="FullRow"
+                                  CanUserAddRows="False"
+                                  CanUserDeleteRows="False"
+                                  CanUserResizeRows="False"
+                                  CanUserReorderColumns="False"
+                                  MouseDoubleClick="DevicesGrid_MouseDoubleClick"
+                                  SelectionChanged="DevicesGrid_SelectionChanged">
+                            <DataGrid.Resources>
+                                <!-- Row highlighting based on IOS + health -->
+                                <Style TargetType="DataGridRow"
+                                       BasedOn="{StaticResource {x:Type DataGridRow}}">
+                                    <Style.Triggers>
+                                        <!-- Bad IOS -->
+                                        <DataTrigger Binding="{Binding IosStatus}"
+                                                     Value="Update recommended">
+                                            <Setter Property="Background"
+                                                    Value="#33FF0000"/>
+                                        </DataTrigger>
+
+                                        <!-- Health buckets -->
+                                        <DataTrigger Binding="{Binding HealthState}"
+                                                     Value="Warning">
+                                            <Setter Property="Background"
+                                                    Value="#22FFC107"/>
+                                        </DataTrigger>
+
+                                        <DataTrigger Binding="{Binding HealthState}"
+                                                     Value="Critical">
+                                            <Setter Property="Background"
+                                                    Value="#33F44336"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.Resources>
+
+                            <DataGrid.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="Edit device…"
+                                              Click="EditDeviceMenuItem_Click"/>
+                                    <MenuItem Header="Edit SSH credentials…"
+                                              Click="EditCredentialsMenuItem_Click"/>
+                                    <MenuItem Header="Reload via SSH"
+                                              Click="ReloadDeviceMenuItem_Click"/>
+                                    <Separator/>
+                                    <MenuItem Header="Remove selected device"
+                                              Click="RemoveSelectedDevice_Click"/>
+                                </ContextMenu>
+                            </DataGrid.ContextMenu>
+
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Name"
+                                                    Binding="{Binding Name}"
+                                                    Width="2*"/>
+                                <DataGridTextColumn Header="Host / IP"
+                                                    Binding="{Binding Host}"
+                                                    Width="2*"/>
+                                <DataGridTextColumn Header="Role"
+                                                    Binding="{Binding Role}"
+                                                    Width="2*"/>
+                                <DataGridTextColumn Header="Syslog Port"
+                                                    Binding="{Binding SyslogPort}"
+                                                    Width="*"/>
+
+                                <!-- Online badge -->
+                                <DataGridTemplateColumn Header="Online"
+                                                        Width="*">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal"
+                                                        HorizontalAlignment="Center">
+                                                <Ellipse Width="8"
+                                                         Height="8">
+                                                    <Ellipse.Style>
+                                                        <Style TargetType="Ellipse">
+                                                            <Setter Property="Fill"
+                                                                    Value="#777777"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsOnline}"
+                                                                             Value="True">
+                                                                    <Setter Property="Fill"
+                                                                            Value="#4CAF50"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Ellipse.Style>
+                                                </Ellipse>
+                                                <TextBlock Text="{Binding IsOnline, Converter={StaticResource BoolToOnlineTextConverter}}"
+                                                           Margin="4,0,0,0"
+                                                           FontSize="11"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Health score + mini bar -->
+                                <DataGridTemplateColumn Header="Health"
+                                                        Width="90">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Grid>
+                                                <ProgressBar Minimum="0"
+                                                             Maximum="100"
+                                                             Value="{Binding HealthScore, Mode=OneWay}"
+                                                             IsHitTestVisible="False"
+                                                             Height="12"
+                                                             Margin="0,1,0,1">
+                                                    <ProgressBar.Style>
+                                                        <Style TargetType="ProgressBar">
+                                                            <Setter Property="Foreground"
+                                                                    Value="#4CAF50"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding HealthState}"
+                                                                             Value="Warning">
+                                                                    <Setter Property="Foreground"
+                                                                            Value="#FFC107"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding HealthState}"
+                                                                             Value="Critical">
+                                                                    <Setter Property="Foreground"
+                                                                            Value="#F44336"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </ProgressBar.Style>
+                                                </ProgressBar>
+
+                                                <TextBlock Text="{Binding HealthScore}"
+                                                           HorizontalAlignment="Center"
+                                                           VerticalAlignment="Center"
+                                                           FontSize="10"
+                                                           Foreground="White"/>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Tiny health trend sparkline -->
+                                <DataGridTemplateColumn Header="Trend"
+                                                        Width="80"
+                                                        IsReadOnly="True"
+                                                        SortMemberPath="HealthScore">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Canvas Width="70"
+                                                    Height="16">
+                                                <Polyline StrokeThickness="1"
+                                                          Stroke="White"
+                                                          Points="{Binding HealthHistory, Converter={StaticResource HealthHistoryToPointsConverter}}"/>
+                                            </Canvas>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <DataGridTextColumn Header="Last Seen (UTC)"
+                                                    Binding="{Binding LastSeenUtc, StringFormat=yyyy-MM-dd HH:mm:ss}"
+                                                    Width="2*"/>
+                                <DataGridTextColumn Header="Last Severity"
+                                                    Binding="{Binding LastEventSeverityName}"
+                                                    Width="*"/>
+                                <DataGridTextColumn Header="Last Category"
+                                                    Binding="{Binding LastEventCategory}"
+                                                    Width="2*"/>
+                                <DataGridTextColumn Header="IOS Version"
+                                                    Binding="{Binding IosVersion}"
+                                                    Width="2*"/>
+                                <DataGridTextColumn Header="IOS Status"
+                                                    Binding="{Binding IosStatus}"
+                                                    Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <!-- Summary -->
+                        <StackPanel DockPanel.Dock="Bottom"
+                                    Orientation="Horizontal"
+                                    HorizontalAlignment="Right"
+                                    Margin="0,6,0,0">
+                            <TextBlock x:Name="DevicesSummaryText"
+                                       FontSize="11"
+                                       Foreground="{StaticResource TextSubtleBrush}"/>
+                        </StackPanel>
+                    </DockPanel>
+                </GroupBox>
+
+                <GroupBox Header="Topology overview"
+                          Grid.Row="0"
+                          Grid.Column="1"
+                          Margin="0,0,8,8">
+                    <DockPanel Margin="6">
+
+                        <!-- SNMP discovery controls -->
+                        <StackPanel DockPanel.Dock="Top"
+                                    Orientation="Horizontal"
+                                    Margin="0,0,0,4"
+                                    VerticalAlignment="Center">
+                            <TextBlock Text="SNMP community:"
+                                       VerticalAlignment="Center"
+                                       Foreground="{StaticResource TextSubtleBrush}"
+                                       Margin="0,0,4,0"/>
+                            <TextBox x:Name="SnmpCommunityBox"
+                                     Width="120"
+                                     Margin="0,0,8,0"
+                                     Text="public"
+                                     ToolTip="SNMP v2c community used for CDP/LLDP neighbor discovery"/>
+                            <Button x:Name="DiscoverTopologyButton"
+                                    Content="Discover"
+                                    Width="90"
+                                    Style="{StaticResource PrimaryButton}"
+                                    Click="DiscoverTopology_Click"/>
+                        </StackPanel>
+
+                        <!-- Canvas-style topology -->
+                        <Grid MinHeight="220">
+                            <!-- Links -->
+                            <ItemsControl ItemsSource="{Binding Links}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <Canvas/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type models:CiscoLink}">
+                                        <Path Stroke="#66FFFFFF"
+                                              StrokeThickness="1.5">
+                                            <Path.Data>
+                                                <MultiBinding Converter="{StaticResource LinkToGeometryConverter}">
+                                                    <Binding Path="Local.TopologyX"/>
+                                                    <Binding Path="Local.TopologyY"/>
+                                                    <Binding Path="Remote.TopologyX"/>
+                                                    <Binding Path="Remote.TopologyY"/>
+                                                </MultiBinding>
+                                            </Path.Data>
+                                        </Path>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!-- Devices -->
+                            <ItemsControl ItemsSource="{Binding Devices}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <Canvas/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+
+                                <ItemsControl.ItemContainerStyle>
+                                    <Style TargetType="ContentPresenter">
+                                        <Setter Property="Canvas.Left"
+                                                Value="{Binding TopologyX}"/>
+                                        <Setter Property="Canvas.Top"
+                                                Value="{Binding TopologyY}"/>
+                                    </Style>
+                                </ItemsControl.ItemContainerStyle>
+
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type models:CiscoDevice}">
+                                        <Border CornerRadius="6"
+                                                Padding="4,2"
+                                                Margin="4"
+                                                MouseLeftButtonUp="TopologyDevice_MouseLeftButtonUp">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background"
+                                                            Value="#AA20232A"/>
+                                                    <Style.Triggers>
+                                                        <!-- Online/offline dimming -->
+                                                        <DataTrigger Binding="{Binding IsOnline}"
+                                                                     Value="False">
+                                                            <Setter Property="Opacity"
+                                                                    Value="0.6"/>
+                                                            <Setter Property="Background"
+                                                                    Value="#5520232A"/>
+                                                        </DataTrigger>
+
+                                                        <!-- Health-based coloring -->
+                                                        <DataTrigger Binding="{Binding HealthState}"
+                                                                     Value="Warning">
+                                                            <Setter Property="Background"
+                                                                    Value="#AA7A4C00"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding HealthState}"
+                                                                     Value="Critical">
+                                                            <Setter Property="Background"
+                                                                    Value="#AA8B0000"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+
+                                            <StackPanel Orientation="Horizontal"
+                                                        VerticalAlignment="Center">
+                                                <!-- Online dot -->
+                                                <Ellipse Width="10"
+                                                         Height="10"
+                                                         Margin="0,0,4,0">
+                                                    <Ellipse.Style>
+                                                        <Style TargetType="Ellipse">
+                                                            <Setter Property="Fill"
+                                                                    Value="#777777"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsOnline}"
+                                                                             Value="True">
+                                                                    <Setter Property="Fill"
+                                                                            Value="#4CAF50"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Ellipse.Style>
+                                                </Ellipse>
+
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Name}"
+                                                               FontWeight="SemiBold"
+                                                               FontSize="11"/>
+                                                    <TextBlock Text="{Binding Host}"
+                                                               FontSize="10"
+                                                               Foreground="{StaticResource TextSubtleBrush}"/>
+                                                    <TextBlock Text="{Binding IosStatus}"
+                                                               FontSize="10"/>
+                                                    <TextBlock Text="{Binding HealthScore, StringFormat=Health {0}%}"
+                                                               FontSize="10"
+                                                               Foreground="{StaticResource TextSubtleBrush}"/>
+                                                </StackPanel>
+                                            </StackPanel>
+
+                                            <Border.ToolTip>
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Role}"
+                                                               FontWeight="SemiBold"/>
+                                                    <TextBlock Text="{Binding IosVersion}"
+                                                               Margin="0,2,0,0"/>
+                                                    <TextBlock Text="{Binding LastEventSeverityName}"
+                                                               Margin="0,2,0,0"/>
+                                                    <TextBlock Text="{Binding LastEventSummary}"
+                                                               TextWrapping="Wrap"
+                                                               Margin="0,2,0,0"/>
+                                                </StackPanel>
+                                            </Border.ToolTip>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Grid>
+                    </DockPanel>
+                </GroupBox>
+
+                <GroupBox Header="Device insight"
+                          Grid.Row="0"
+                          Grid.Column="2"
+                          Margin="0,0,0,8">
+                    <DockPanel Margin="6">
+
+                        <!-- Selected device summary -->
+                        <StackPanel DockPanel.Dock="Top"
+                                    Margin="0,0,0,4">
+                            <TextBlock Text="{Binding SelectedDevice.Name, FallbackValue=(no device selected)}"
+                                       FontWeight="SemiBold"
+                                       FontSize="13"/>
+                            <TextBlock Text="{Binding SelectedDevice.Host, StringFormat=Host: {0}}"
+                                       FontSize="11"
+                                       Foreground="{StaticResource TextSubtleBrush}"/>
+                            <TextBlock Text="{Binding SelectedDevice.Role, StringFormat=Role: {0}}"
+                                       FontSize="11"
+                                       Foreground="{StaticResource TextSubtleBrush}"
+                                       Margin="0,0,0,2"/>
+
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="0,4,0,0">
+                                <TextBlock Text="Health:"
+                                           FontSize="11"
+                                           Foreground="{StaticResource TextSubtleBrush}"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,4,0"/>
+                                <ProgressBar Minimum="0"
+                                             Maximum="100"
+                                             Height="10"
+                                             Width="120"
+                                             Value="{Binding SelectedDevice.HealthScore}">
+                                    <ProgressBar.Style>
+                                        <Style TargetType="ProgressBar">
+                                            <Setter Property="Foreground"
+                                                    Value="#4CAF50"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SelectedDevice.HealthState}"
+                                                             Value="Warning">
+                                                    <Setter Property="Foreground"
+                                                            Value="#FFC107"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding SelectedDevice.HealthState}"
+                                                             Value="Critical">
+                                                    <Setter Property="Foreground"
+                                                            Value="#F44336"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ProgressBar.Style>
+                                </ProgressBar>
+                                <TextBlock Text="{Binding SelectedDevice.HealthScore, StringFormat={}{0}%}"
+                                           FontSize="11"
+                                           Margin="4,0,0,0"/>
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="0,4,0,0">
+                                <TextBlock Text="Events 5m:"
+                                           FontSize="11"
+                                           Foreground="{StaticResource TextSubtleBrush}"
+                                           Margin="0,0,4,0"/>
+                                <TextBlock Text="{Binding SelectedDeviceEventsLast5Minutes}"
+                                           FontSize="11"
+                                           Margin="0,0,8,0"/>
+                                <TextBlock Text="Events 60m:"
+                                           FontSize="11"
+                                           Foreground="{StaticResource TextSubtleBrush}"
+                                           Margin="0,0,4,0"/>
+                                <TextBlock Text="{Binding SelectedDeviceEventsLast60Minutes}"
+                                           FontSize="11"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Selected device log slice -->
+                        <DataGrid ItemsSource="{Binding SelectedDeviceEventsView}"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="True"
+                                  HeadersVisibility="Column"
+                                  CanUserAddRows="False"
+                                  CanUserDeleteRows="False"
+                                  CanUserReorderColumns="False">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Time (UTC)"
+                                                    Binding="{Binding Timestamp, StringFormat={}{0:u}}"
+                                                    Width="140"/>
+                                <DataGridTextColumn Header="Severity"
+                                                    Binding="{Binding SeverityName}"
+                                                    Width="80"/>
+                                <DataGridTextColumn Header="Category"
+                                                    Binding="{Binding Category}"
+                                                    Width="120"/>
+                                <DataGridTextColumn Header="Code"
+                                                    Binding="{Binding CiscoCode}"
+                                                    Width="100"/>
+                                <DataGridTextColumn Header="Message"
+                                                    Binding="{Binding ShortMessage}"
+                                                    Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                </GroupBox>
+
+                <GroupBox Header="Live Cisco syslog"
+                          Grid.Row="1"
+                          Grid.Column="0"
+                          Grid.ColumnSpan="2"
+                          Margin="0,0,8,0">
+                    <DockPanel Margin="6">
+
+                        <!-- Controls + filters + summary -->
+                        <StackPanel DockPanel.Dock="Top">
+
+                            <!-- Listener controls -->
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="0,0,0,4"
+                                        VerticalAlignment="Center">
+                                <TextBlock Text="Listener port:"
+                                           VerticalAlignment="Center"
+                                           Foreground="{StaticResource TextSubtleBrush}"
+                                           Margin="0,0,4,0"/>
+                                <TextBox x:Name="ListenerPortBox"
+                                         Width="70"
+                                         Margin="0,0,8,0"
+                                         Text="5514"/>
+                                <Button x:Name="StartListenerButton"
+                                        Content="Start"
+                                        Width="80"
+                                        Style="{StaticResource PrimaryButton}"
+                                        Click="StartListener_Click"/>
+                                <Button x:Name="StopListenerButton"
+                                        Content="Stop"
+                                        Width="80"
+                                        Margin="8,0,0,0"
+                                        Click="StopListener_Click"
+                                        IsEnabled="False"/>
+                                <Button Content="Clear"
+                                        Width="80"
+                                        Margin="8,0,0,0"
+                                        Click="ClearSyslog_Click"/>
+                            </StackPanel>
+
+                            <!-- Filters -->
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="0,2,0,4"
+                                        VerticalAlignment="Center">
+                                <TextBlock Text="Filter:"
+                                           VerticalAlignment="Center"
+                                           Foreground="{StaticResource TextSubtleBrush}"
+                                           Margin="0,0,4,0"/>
+                                <TextBox x:Name="SyslogSearchBox"
+                                         Width="180"
+                                         Margin="0,0,8,0"
+                                         ToolTip="Search in device, code, category, message"
+                                         TextChanged="SyslogSearchBox_TextChanged"/>
+                                <TextBlock Text="Severity ≥"
+                                           VerticalAlignment="Center"
+                                           Foreground="{StaticResource TextSubtleBrush}"
+                                           Margin="0,0,4,0"/>
+                                <ComboBox x:Name="SyslogSeverityFilterBox"
+                                          Width="150"
+                                          SelectionChanged="SyslogSeverityFilterBox_SelectionChanged">
+                                    <ComboBoxItem Content="Any"
+                                                  Tag=""
+                                                  IsSelected="True"/>
+                                    <ComboBoxItem Content="Notice (5) &amp; above"
+                                                  Tag="5"/>
+                                    <ComboBoxItem Content="Warning (4) &amp; above"
+                                                  Tag="4"/>
+                                    <ComboBoxItem Content="Error (3) &amp; above"
+                                                  Tag="3"/>
+                                </ComboBox>
+
+                                <TextBlock Text="Time:"
+                                           VerticalAlignment="Center"
+                                           Foreground="{StaticResource TextSubtleBrush}"
+                                           Margin="8,0,4,0"/>
+                                <ComboBox x:Name="SyslogTimeWindowBox"
+                                          Width="140"
+                                          SelectionChanged="SyslogTimeWindowBox_SelectionChanged">
+                                    <ComboBoxItem Content="Any time"
+                                                  Tag=""
+                                                  IsSelected="True"/>
+                                    <ComboBoxItem Content="Last 5 minutes"
+                                                  Tag="5m"/>
+                                    <ComboBoxItem Content="Last 30 minutes"
+                                                  Tag="30m"/>
+                                    <ComboBoxItem Content="Last 2 hours"
+                                                  Tag="2h"/>
+                                    <ComboBoxItem Content="Last 24 hours"
+                                                  Tag="24h"/>
+                                </ComboBox>
+
+                                <Button Content="Security focus"
+                                        Width="110"
+                                        Margin="8,0,0,0"
+                                        Click="SecurityFocus_Click"/>
+
+                                <Button Content="Reset"
+                                        Width="80"
+                                        Margin="8,0,0,0"
+                                        Click="SyslogFilterReset_Click"/>
+                            </StackPanel>
+
+                            <!-- Summary -->
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="0,0,0,4">
+                                <TextBlock Text="Events:"
+                                           Foreground="{StaticResource TextSubtleBrush}"
+                                           Margin="0,0,4,0"/>
+                                <TextBlock x:Name="SyslogCountText"
+                                           Margin="0,0,12,0"
+                                           Text="0"/>
+                                <TextBlock Text="Devices:"
+                                           Foreground="{StaticResource TextSubtleBrush}"
+                                           Margin="0,0,4,0"/>
+                                <TextBlock x:Name="SyslogDeviceCountText"
+                                           Margin="0,0,12,0"
+                                           Text="0"/>
+                                <TextBlock Text="Last:"
+                                           Foreground="{StaticResource TextSubtleBrush}"
+                                           Margin="0,0,4,0"/>
+                                <TextBlock x:Name="SyslogLastEventText"
+                                           Text="n/a"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Syslog grid -->
+                        <DataGrid x:Name="SyslogGrid"
+                                  ItemsSource="{Binding SyslogEvents}"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="True"
+                                  Margin="0,4,0,0">
+                            <DataGrid.Resources>
+                                <Style TargetType="DataGridRow">
+                                    <Setter Property="FontSize"
+                                            Value="12"/>
+                                    <Style.Triggers>
+                                        <!-- Make critical/error pop visually -->
+                                        <DataTrigger Binding="{Binding SeverityName}"
+                                                     Value="Critical">
+                                            <Setter Property="Background"
+                                                    Value="#5A0000"/>
+                                            <Setter Property="Foreground"
+                                                    Value="White"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding SeverityName}"
+                                                     Value="Error">
+                                            <Setter Property="Background"
+                                                    Value="#4B0000"/>
+                                            <Setter Property="Foreground"
+                                                    Value="White"/>
+                                        </DataTrigger>
+                                        <!-- Security-related logs bolded -->
+                                        <DataTrigger Binding="{Binding Category}"
+                                                     Value="Security / ACL">
+                                            <Setter Property="FontWeight"
+                                                    Value="SemiBold"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.Resources>
+
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Time (UTC)"
+                                                    Binding="{Binding Timestamp, StringFormat={}{0:u}}"
+                                                    Width="150"/>
+                                <DataGridTextColumn Header="Device"
+                                                    Binding="{Binding DeviceOrHost}"
+                                                    Width="130"/>
+                                <DataGridTextColumn Header="Severity"
+                                                    Binding="{Binding SeverityName}"
+                                                    Width="110"/>
+                                <DataGridTextColumn Header="Category"
+                                                    Binding="{Binding Category}"
+                                                    Width="140"/>
+                                <DataGridTextColumn Header="Code"
+                                                    Binding="{Binding CiscoCode}"
+                                                    Width="150"/>
+                                <DataGridTextColumn Header="Message"
+                                                    Binding="{Binding ShortMessage}"
+                                                    Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                </GroupBox>
+
+                <GroupBox Header="Incidents • rules + export"
+                          Grid.Row="1"
+                          Grid.Column="2">
+                    <DockPanel Margin="4">
+
+                        <!-- Toolbar -->
+                        <StackPanel DockPanel.Dock="Top"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Center"
+                                    Margin="0,0,0,6">
+                            <Button Content="Load rules…"
+                                    Width="110"
+                                    Click="LoadRules_Click"/>
+                            <Button Content="Apply to all"
+                                    Width="110"
+                                    Margin="6,0,0,0"
+                                    Click="ApplyRulesToAll_Click"/>
+                            <CheckBox x:Name="AutoApplyRulesCheck"
+                                      Content="Auto-apply"
+                                      IsChecked="True"
+                                      Margin="10,0,0,0"/>
+                            <Separator Width="12"
+                                       Opacity="0"/>
+                            <TextBlock Text="Rules:"
+                                       VerticalAlignment="Center"
+                                       Foreground="{StaticResource TextSubtleBrush}"
+                                       Margin="0,0,4,0"/>
+                            <TextBlock x:Name="RulesCountText"
+                                       VerticalAlignment="Center"
+                                       Text="0"/>
+                            <Separator Width="12"
+                                       Opacity="0"/>
+                            <Button Content="Export…"
+                                    Width="90"
+                                    Click="ExportIncidents_Click"/>
+                            <Button Content="Copy MD"
+                                    Width="90"
+                                    Margin="6,0,0,0"
+                                    Click="CopyIncidentsMarkdown_Click"/>
+                        </StackPanel>
+
+                        <!-- Incidents grid -->
+                        <DataGrid x:Name="IncidentsGrid"
+                                  ItemsSource="{Binding Incidents}"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="True"
+                                  HeadersVisibility="Column"
+                                  CanUserAddRows="False"
+                                  CanUserDeleteRows="False"
+                                  CanUserReorderColumns="False"
+                                  SelectionMode="Extended">
+                            <DataGrid.Resources>
+                                <Style TargetType="DataGridRow">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SeverityName}"
+                                                     Value="Critical">
+                                            <Setter Property="Background"
+                                                    Value="#5A0000"/>
+                                            <Setter Property="Foreground"
+                                                    Value="White"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding SeverityName}"
+                                                     Value="Error">
+                                            <Setter Property="Background"
+                                                    Value="#4B0000"/>
+                                            <Setter Property="Foreground"
+                                                    Value="White"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding State}"
+                                                     Value="Dormant">
+                                            <Setter Property="Opacity"
+                                                    Value="0.65"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Suppressed}"
+                                                     Value="True">
+                                            <Setter Property="Opacity"
+                                                    Value="0.4"/>
+                                            <Setter Property="FontStyle"
+                                                    Value="Italic"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.Resources>
+
+                            <DataGrid.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="Apply rules to selected"
+                                              Click="ApplyRulesToSelected_Click"/>
+                                    <Separator/>
+                                    <MenuItem Header="Export selected…"
+                                              Click="ExportSelectedIncidents_Click"/>
+                                    <MenuItem Header="Copy selected as Markdown"
+                                              Click="CopySelectedMarkdown_Click"/>
+                                </ContextMenu>
+                            </DataGrid.ContextMenu>
+
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="State"
+                                                    Width="70"
+                                                    Binding="{Binding State}"/>
+                                <DataGridTextColumn Header="Device"
+                                                    Width="*"
+                                                    Binding="{Binding DeviceLabel}"/>
+                                <DataGridTextColumn Header="Code"
+                                                    Width="90"
+                                                    Binding="{Binding CiscoCode}"/>
+                                <DataGridTextColumn Header="Cat."
+                                                    Width="120"
+                                                    Binding="{Binding Category}"/>
+                                <DataGridTextColumn Header="Count"
+                                                    Width="60"
+                                                    Binding="{Binding Count}"/>
+                                <DataGridTextColumn Header="Severity"
+                                                    Width="90"
+                                                    Binding="{Binding SeverityName}"/>
+                                <DataGridTextColumn Header="Tags"
+                                                    Width="*"
+                                                    Binding="{Binding TagsInline}"/>
+                                <DataGridTextColumn Header="Runbook"
+                                                    Width="*"
+                                                    Binding="{Binding RunbookUrl}"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                </GroupBox>
+
+            </Grid>
+        </DockPanel>
+    </Border>
+</UserControl>

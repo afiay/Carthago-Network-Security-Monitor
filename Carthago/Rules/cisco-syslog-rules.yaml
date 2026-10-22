@@ -1,0 +1,678 @@
+# SPDX-License-Identifier: MIT
+# File: rules/cisco-syslog-rules.yaml
+#
+# Priority convention (higher is evaluated earlier if engine sorts by priority):
+#   90–80 : Critical, security / anomaly / control-plane issues
+#   70–60 : High, routing / HA / major stability issues
+#   50–40 : Medium, performance / repeated flaps / noisy-but-important
+#   20–10 : Low and suppression / grooming rules
+#
+# Each rule:
+#   - groups noisy syslog into a smaller number of incidents
+#   - adds tags + hints + runbooks so an on-call can act fast
+
+# =====================================================================
+# SECURITY / AUTH / ACCESS CONTROL
+# =====================================================================
+
+- id: security-login-bruteforce
+  description: "Multiple failed logins -> tag security and escalate"
+  priority: 90
+  when:
+    category: "Security / ACL"
+    messageContains: [login, failed]
+    countAtLeast: 5
+    within: 10m
+  then:
+    addTags: [security, auth, bruteforce]
+    hint: "Investigate source IPs, block at edge; check AAA counters and lock offending accounts."
+    runbookUrl: "https://runbooks.example.local/cisco/auth-bruteforce"
+    escalateTo: "Error"
+    assign: [netsec-oncall]
+
+- id: security-login-failure-burst
+  description: "High rate of login failures on a device"
+  priority: 70
+  when:
+    category: "Security / ACL"
+    messageContains: [login, failed]
+    countAtLeast: 15
+    within: 30m
+  then:
+    addTags: [security, auth, anomaly]
+    hint: "Correlate with user directory; check for password spraying from multiple sources."
+    runbookUrl: "https://runbooks.example.local/cisco/auth-failure-burst"
+    escalateTo: "Error"
+
+- id: security-acl-deny-burst
+  description: "Spike in deny log hits -> possible scan or misrouted traffic"
+  priority: 75
+  when:
+    category: "Security / ACL"
+    messageContains: [denied]
+    countAtLeast: 50
+    within: 10m
+  then:
+    addTags: [security, acl, burst]
+    hint: "Use 'show access-list hitcount' or equivalent; determine if this is expected (new app) or hostile probing."
+    runbookUrl: "https://runbooks.example.local/cisco/acl-deny-burst"
+    escalateTo: "Error"
+
+- id: security-threatfeed-hit
+  description: "Traffic to or from known bad reputation endpoints"
+  priority: 90
+  when:
+    category: "Security / Threat"
+    messageContains: [reputation, threat]
+  then:
+    addTags: [security, threatfeed, reputation]
+    hint: "Identify internal hosts talking to reputation-listed IPs and isolate if needed; sync with SOC blocklists."
+    runbookUrl: "https://runbooks.example.local/cisco/threatfeed-hit"
+    escalateTo: "Critical"
+    assign: [soc-oncall]
+
+- id: security-vpn-auth-bruteforce
+  description: "Repeated VPN authentication failures"
+  priority: 80
+  when:
+    category: "VPN"
+    messageContains: [login, failed]
+    countAtLeast: 20
+    within: 10m
+  then:
+    addTags: [security, vpn, auth, bruteforce]
+    hint: "Look for patterns from single source IPs; consider blocking at firewall and forcing MFA re-enrolment."
+    runbookUrl: "https://runbooks.example.local/cisco/vpn-auth-bruteforce"
+    escalateTo: "Error"
+
+- id: security-crypto-failures
+  description: "Repeated IPsec or IKE negotiation failures"
+  priority: 70
+  when:
+    category: "Security / Crypto"
+    messageContains: [IKE, failed]
+    countAtLeast: 5
+    within: 15m
+  then:
+    addTags: [security, crypto, vpn]
+    hint: "Check IKE policies, pre-shared keys or certificates; verify peer IPs and NAT traversal settings."
+    runbookUrl: "https://runbooks.example.local/cisco/crypto-fail"
+    escalateTo: "Warning"
+
+- id: security-aaa-server-unreachable
+  description: "AAA or RADIUS/TACACS server unreachable"
+  priority: 85
+  when:
+    category: "Security / AAA"
+    messageContains: [server, unreachable]
+  then:
+    addTags: [security, aaa, infra]
+    hint: "Check AAA server health and routing; confirm device has fail-open vs fail-closed behaviour documented."
+    runbookUrl: "https://runbooks.example.local/cisco/aaa-outage"
+    escalateTo: "Error"
+
+# =====================================================================
+# STABILITY / INTERFACE / HA
+# =====================================================================
+
+- id: stability-interface-flap
+  description: "Interface flapping repeatedly"
+  priority: 70
+  when:
+    ciscoCode: "LINK-3-UPDOWN"
+    countAtLeast: 3
+    within: 15m
+  then:
+    addTags: [flapping, stability]
+    hint: "Collect 'show interface <X> | inc line|input rate|output rate'; check cabling, optics, and errdisable timers."
+    runbookUrl: "https://runbooks.example.local/cisco/if-flap"
+
+- id: stability-interface-errdisable
+  description: "Interface moved to err-disable"
+  priority: 75
+  when:
+    category: "Interface"
+    messageContains: [errdisable]
+  then:
+    addTags: [errdisable, stability]
+    hint: "Run 'show interface status err-disabled' and 'show log'; address root cause (BPDU guard, port-security, etc.) before re-enabling."
+    runbookUrl: "https://runbooks.example.local/cisco/if-errdisable"
+    escalateTo: "Error"
+
+- id: stability-stp-churn
+  description: "Frequent spanning tree topology changes"
+  priority: 65
+  when:
+    category: "Spanning Tree"
+    messageContains: [topology, change]
+    countAtLeast: 10
+    within: 10m
+  then:
+    addTags: [stp, stability]
+    hint: "Identify access ports causing STP TCNs; check for miswired loops, unmanaged switches or storm-control misconfig."
+    runbookUrl: "https://runbooks.example.local/cisco/stp-churn"
+    escalateTo: "Warning"
+
+- id: stability-hsrp-flap
+  description: "HSRP or VRRP group flapping"
+  priority: 70
+  when:
+    category: "First Hop Redundancy"
+    messageContains: [HSRP, VRRP, standby]
+    countAtLeast: 3
+    within: 15m
+  then:
+    addTags: [ha, hsrp, vrrp]
+    hint: "Check HSRP/VRRP priorities, track objects and interface health; ensure no asymmetric routing or access list blocking hellos."
+    runbookUrl: "https://runbooks.example.local/cisco/hsrp-flap"
+    escalateTo: "Error"
+
+- id: stability-power-supply-failure
+  description: "Power supply failure or removal"
+  priority: 80
+  when:
+    category: "Platform"
+    messageContains: [power, failure]
+  then:
+    addTags: [hardware, power]
+    hint: "Confirm remaining PSUs provide redundant capacity; check datacentre power feeds and open a hardware RMA if needed."
+    runbookUrl: "https://runbooks.example.local/cisco/power-supply"
+    escalateTo: "Error"
+
+# =====================================================================
+# ROUTING / CONTROL PLANE
+# =====================================================================
+
+- id: routing-bgp-neighbor-down
+  description: "BGP neighbor down"
+  priority: 85
+  when:
+    messageRegex: 'BGP.*(Neighbor|Nbr).*(Down|reset|Idle)'
+  then:
+    addTags: [routing, bgp]
+    hint: "Run 'show bgp summary' and 'show ip bgp neighbors'; check WAN link state and route-policy changes."
+    runbookUrl: "https://runbooks.example.local/cisco/bgp-neighbor-down"
+    escalateTo: "Error"
+
+- id: routing-bgp-flap
+  description: "BGP neighbor flapping repeatedly"
+  priority: 80
+  when:
+    messageRegex: 'BGP.*(Neighbor|Nbr).*(Down|reset|Idle)'
+    countAtLeast: 4
+    within: 20m
+  then:
+    addTags: [routing, bgp, flapping]
+    hint: "Look for MTU issues, unstable physical links, aggressive timers or route-policy causing session resets."
+    runbookUrl: "https://runbooks.example.local/cisco/bgp-flap"
+    escalateTo: "Error"
+
+- id: routing-ospf-neighbor-down
+  description: "OSPF neighbor down"
+  priority: 75
+  when:
+    messageRegex: 'OSPF.*Neighbor.*(DOWN|Down|LOADING|INIT)'
+  then:
+    addTags: [routing, ospf]
+    hint: "Check 'show ip ospf neighbor' and interface state; verify hello/dead timers and area configuration."
+    runbookUrl: "https://runbooks.example.local/cisco/ospf-neighbor-down"
+    escalateTo: "Warning"
+
+- id: routing-eigrp-neighbor-down
+  description: "EIGRP neighbor down"
+  priority: 70
+  when:
+    messageRegex: 'EIGRP.*Neighbor.*(DOWN|Down|reset)'
+  then:
+    addTags: [routing, eigrp]
+    hint: "Run 'show ip eigrp neighbors' and confirm interface MTU and K-values; check for ACLs blocking multicast."
+    runbookUrl: "https://runbooks.example.local/cisco/eigrp-neighbor-down"
+    escalateTo: "Warning"
+
+- id: routing-route-flap
+  description: "Frequent route installation/removal"
+  priority: 60
+  when:
+    category: "Routing"
+    messageContains: [flapping]
+  then:
+    addTags: [routing, flap]
+    hint: "Inspect routing table changes; confirm no misconfigured dynamic routing or unstable upstream provider."
+    runbookUrl: "https://runbooks.example.local/cisco/route-flap"
+
+# =====================================================================
+# VPN / REMOTE ACCESS
+# =====================================================================
+
+- id: vpn-tunnel-flap
+  description: "Site-to-site IPsec tunnel flapping"
+  priority: 80
+  when:
+    category: "VPN"
+    messageContains: [tunnel, down]
+    countAtLeast: 3
+    within: 20m
+  then:
+    addTags: [vpn, s2s, flapping]
+    hint: "Check IPsec SA lifetime, IKE timers and WAN link quality; verify both ends share identical crypto parameters."
+    runbookUrl: "https://runbooks.example.local/cisco/vpn-tunnel-flap"
+    escalateTo: "Error"
+
+- id: vpn-tunnel-down-critical
+  description: "Critical VPN hub or DC tunnel down"
+  priority: 90
+  when:
+    category: "VPN"
+    messageContains: [tunnel, down, HUB]
+    severityAtLeast: "Error"
+  then:
+    addTags: [vpn, hub, outage]
+    hint: "Prioritise hub/DC VPN tunnels; check WAN, crypto and routing; fail over to secondary hub if available."
+    runbookUrl: "https://runbooks.example.local/cisco/vpn-hub-down"
+    escalateTo: "Critical"
+    assign: [neteng-oncall]
+
+- id: vpn-ssl-vpn-failures
+  description: "SSL VPN login failure spike"
+  priority: 70
+  when:
+    category: "VPN"
+    messageContains: [SSLVPN, failed]
+    countAtLeast: 30
+    within: 15m
+  then:
+    addTags: [vpn, sslvpn, auth]
+    hint: "Check authentication backends, licensing limits and address pools for SSL VPN; verify portal certificates."
+    runbookUrl: "https://runbooks.example.local/cisco/sslvpn-fail"
+
+# =====================================================================
+# PERFORMANCE / CAPACITY
+# =====================================================================
+
+- id: perf-cpu-high
+  description: "Sustained high CPU on a network device"
+  priority: 80
+  when:
+    category: "Platform"
+    messageRegex: 'CPU.*(util|usage).*\b(9\d|100)\b'
+    severityAtLeast: "Warning"
+  then:
+    addTags: [performance, cpu-high]
+    hint: "Run 'show proc cpu sorted' and inspect top consumers; verify control-plane policing and DoS protections."
+    runbookUrl: "https://runbooks.example.local/cisco/cpu-high"
+    escalateTo: "Error"
+
+- id: perf-memory-low
+  description: "Low free memory or memory allocation failures"
+  priority: 75
+  when:
+    category: "Platform"
+    messageRegex: 'Memory.*(low|insufficient|failed)'
+  then:
+    addTags: [performance, memory]
+    hint: "Check 'show processes memory' and memory leaks; plan reload or upgrade if fragmentation or leaks persist."
+    runbookUrl: "https://runbooks.example.local/cisco/memory-low"
+    escalateTo: "Error"
+
+- id: perf-queue-drops
+  description: "Interface queue drops"
+  priority: 60
+  when:
+    category: "Interface"
+    messageContains: [output, drops]
+    severityAtLeast: "Warning"
+  then:
+    addTags: [performance, congestion]
+    hint: "Review QoS policy and traffic patterns; consider increasing queue depth or policing bursty sources."
+    runbookUrl: "https://runbooks.example.local/cisco/queue-drops"
+
+- id: perf-buffer-failures
+  description: "High number of buffer failures or misses"
+  priority: 55
+  when:
+    category: "Platform"
+    messageContains: [buffer, failures]
+  then:
+    addTags: [performance, buffers]
+    hint: "Check 'show buffers' for failures and trims; inspect microbursts and interface speeds versus hardware limits."
+    runbookUrl: "https://runbooks.example.local/cisco/buffer-failures"
+
+- id: perf-interface-errors
+  description: "Interface accumulating input/output errors"
+  priority: 55
+  when:
+    category: "Interface"
+    messageContains: [errors]
+  then:
+    addTags: [performance, interface, errors]
+    hint: "Investigate cabling, optics and duplex/MTU mismatches; look for CRC and alignment errors in 'show interface'."
+    runbookUrl: "https://runbooks.example.local/cisco/interface-errors"
+
+# =====================================================================
+# SERVICES (DHCP / NAT / NTP / LOGGING)
+# =====================================================================
+
+- id: svc-dhcp-pool-exhaustion
+  description: "DHCP pool or scope nearly exhausted"
+  priority: 80
+  when:
+    category: "DHCP"
+    messageContains: [pool, exhausted]
+  then:
+    addTags: [dhcp, capacity]
+    hint: "Check 'show ip dhcp binding' and pool utilisation; expand scopes or clean up stale leases and rogue clients."
+    runbookUrl: "https://runbooks.example.local/cisco/dhcp-exhaustion"
+    escalateTo: "Error"
+
+- id: svc-nat-port-exhaustion
+  description: "NAT translation or port exhaustion"
+  priority: 80
+  when:
+    category: "NAT"
+    messageContains: [exhausted]
+  then:
+    addTags: [nat, capacity]
+    hint: "Inspect 'show ip nat statistics'; increase NAT pool size or distribute connections across more public IPs."
+    runbookUrl: "https://runbooks.example.local/cisco/nat-exhaustion"
+    escalateTo: "Error"
+
+- id: svc-ntp-unsync
+  description: "Device lost NTP synchronisation"
+  priority: 60
+  when:
+    category: "Platform"
+    messageContains: [NTP, unsynchronized]
+  then:
+    addTags: [ntp, time]
+    hint: "Check reachability of NTP servers and key configuration; unsynchronised clocks break logging and security correlation."
+    runbookUrl: "https://runbooks.example.local/cisco/ntp-unsync"
+
+- id: svc-logging-failure
+  description: "Failure to send logs to remote syslog or collector"
+  priority: 75
+  when:
+    category: "Logging"
+    messageContains: [syslog, failure]
+  then:
+    addTags: [logging, observability]
+    hint: "Verify IP reachability to log collectors and ensure no firewall or TLS issues; logging gaps hurt incident response."
+    runbookUrl: "https://runbooks.example.local/cisco/logging-failure"
+    escalateTo: "Error"
+
+# =====================================================================
+# FLOW / ANOMALY DETECTOR INTEGRATION
+# These assume your flow/anomaly engine emits synthetic syslog with
+# CiscoCode like ANOMALY-PORTSCAN etc. They are safe even if not used yet.
+# =====================================================================
+
+- id: anomaly-port-scan
+  description: "Flow detector reports port scan activity"
+  priority: 90
+  when:
+    ciscoCode: "ANOMALY-PORTSCAN"
+  then:
+    addTags: [anomaly, port-scan, recon]
+    hint: "Identify internal source and target ranges; block or rate-limit at edge; correlate with firewall denies."
+    runbookUrl: "https://runbooks.example.local/cisco/anom-portscan"
+    escalateTo: "Critical"
+    assign: [soc-oncall]
+
+- id: anomaly-dos-flood
+  description: "Suspected DoS or DDoS flood"
+  priority: 90
+  when:
+    ciscoCode: "ANOMALY-FLOOD"
+  then:
+    addTags: [anomaly, dos, flood]
+    hint: "Confirm volumetrics with NetFlow; coordinate with ISP for scrubbing; enforce CoPP and ACLs to protect control-plane."
+    runbookUrl: "https://runbooks.example.local/cisco/anom-flood"
+    escalateTo: "Critical"
+    assign: [neteng-oncall]
+
+- id: anomaly-bruteforce
+  description: "Brute force patterns from flow or auth telemetry"
+  priority: 85
+  when:
+    ciscoCode: "ANOMALY-BRUTEFORCE"
+  then:
+    addTags: [anomaly, auth, bruteforce]
+    hint: "Block abusive sources at perimeter; check identity provider logs and consider temporary account locks."
+    runbookUrl: "https://runbooks.example.local/cisco/anom-bruteforce"
+    escalateTo: "Error"
+
+- id: anomaly-dns-tunnel
+  description: "Possible DNS tunnelling or high-entropy domains"
+  priority: 85
+  when:
+    ciscoCode: "ANOMALY-DNS-TUNNEL"
+  then:
+    addTags: [anomaly, dns, tunnel]
+    hint: "Inspect suspicious FQDNs and clients; consider blocking domains and inspecting payloads for exfiltration."
+    runbookUrl: "https://runbooks.example.local/cisco/anom-dns-tunnel"
+    escalateTo: "Error"
+
+- id: anomaly-dns-nxdomain-spike
+  description: "Spike in NXDOMAIN responses"
+  priority: 70
+  when:
+    ciscoCode: "ANOMALY-DNS-NXDOMAIN"
+  then:
+    addTags: [anomaly, dns, nxdomain]
+    hint: "Check for misconfigured apps or malware generating random domains; correlate with endpoint EDR."
+    runbookUrl: "https://runbooks.example.local/cisco/anom-dns-nx"
+    escalateTo: "Warning"
+
+- id: anomaly-beaconing
+  description: "Regular beacon-like connections detected"
+  priority: 80
+  when:
+    ciscoCode: "ANOMALY-BEACONING"
+  then:
+    addTags: [anomaly, c2, beacon]
+    hint: "Examine hosts with periodic connections to few destinations; may indicate command-and-control traffic."
+    runbookUrl: "https://runbooks.example.local/cisco/anom-beaconing"
+    escalateTo: "Error"
+
+- id: anomaly-exfiltration
+  description: "High-volume or unusual data exfiltration pattern"
+  priority: 90
+  when:
+    ciscoCode: "ANOMALY-EXFIL"
+  then:
+    addTags: [anomaly, exfiltration, data-loss]
+    hint: "Verify whether large transfers are legitimate; if not, block destinations and isolate hosts immediately."
+    runbookUrl: "https://runbooks.example.local/cisco/anom-exfil"
+    escalateTo: "Critical"
+    assign: [soc-oncall]
+
+- id: anomaly-vpn-proxy
+  description: "Suspected VPN or proxy bypass of egress policy"
+  priority: 80
+  when:
+    ciscoCode: "ANOMALY-VPN-PROXY"
+  then:
+    addTags: [anomaly, vpn, proxy]
+    hint: "Check endpoints using unmanaged VPNs or proxies; enforce TLS inspection and egress filtering where appropriate."
+    runbookUrl: "https://runbooks.example.local/cisco/anom-vpn-proxy"
+    escalateTo: "Error"
+
+- id: anomaly-geoip-blacklisted
+  description: "Traffic involving blacklisted GeoIP regions"
+  priority: 80
+  when:
+    ciscoCode: "ANOMALY-GEOIP-BL"
+  then:
+    addTags: [anomaly, geoip, blacklist]
+    hint: "Confirm policy for blocked geographies; consider dropping or sinkholing traffic not strictly required for business."
+    runbookUrl: "https://runbooks.example.local/cisco/anom-geoip"
+    escalateTo: "Error"
+
+- id: anomaly-dhcp-storm
+  description: "Unusual DHCP request volume"
+  priority: 70
+  when:
+    ciscoCode: "ANOMALY-DHCP-STORM"
+  then:
+    addTags: [anomaly, dhcp, storm]
+    hint: "Investigate loops, rogue DHCP servers or misbehaving clients; leverage DHCP snooping if available."
+    runbookUrl: "https://runbooks.example.local/cisco/anom-dhcp-storm"
+    escalateTo: "Warning"
+
+- id: anomaly-tls-issue
+  description: "TLS inspection or certificate anomaly"
+  priority: 70
+  when:
+    ciscoCode: "ANOMALY-TLS"
+  then:
+    addTags: [anomaly, tls, crypto]
+    hint: "Check TLS inspection policies and certificate chains; ensure no downgrade or intercept issues for critical apps."
+    runbookUrl: "https://runbooks.example.local/cisco/anom-tls"
+
+- id: anomaly-uncommon-ports
+  description: "Traffic on statistically uncommon ports"
+  priority: 65
+  when:
+    ciscoCode: "ANOMALY-UNCOMMON-PORTS"
+  then:
+    addTags: [anomaly, port, rare]
+    hint: "Review uncommon ports in context; may indicate tunnelling or shadow IT; align with application inventory."
+    runbookUrl: "https://runbooks.example.local/cisco/anom-uncommon-ports"
+
+- id: anomaly-cleartext-creds
+  description: "Cleartext credential patterns detected"
+  priority: 90
+  when:
+    ciscoCode: "ANOMALY-CLEARTEXT-CREDS"
+  then:
+    addTags: [anomaly, credentials, cleartext]
+    hint: "Identify protocols leaking credentials (e.g. HTTP, FTP, Telnet); migrate to secure alternatives and rotate passwords."
+    runbookUrl: "https://runbooks.example.local/cisco/anom-cleartext-creds"
+    escalateTo: "Critical"
+
+- id: anomaly-arp-spoofing
+  description: "Possible ARP spoofing or poisoning activity"
+  priority: 85
+  when:
+    ciscoCode: "ANOMALY-ARP-SPOOF"
+  then:
+    addTags: [anomaly, arp, spoofing]
+    hint: "Correlate with DHCP snooping and dynamic ARP inspection; look for MAC/IP inconsistencies on access ports."
+    runbookUrl: "https://runbooks.example.local/cisco/anom-arp-spoof"
+    escalateTo: "Error"
+
+- id: anomaly-reputation
+  description: "Connections to low reputation destinations by score"
+  priority: 80
+  when:
+    ciscoCode: "ANOMALY-REPUTATION"
+  then:
+    addTags: [anomaly, reputation]
+    hint: "Confirm if destinations are business critical; otherwise treat as compromise indicators and block."
+    runbookUrl: "https://runbooks.example.local/cisco/anom-reputation"
+    escalateTo: "Error"
+
+- id: anomaly-host-sweep
+  description: "L3 host sweep or ping sweep pattern"
+  priority: 80
+  when:
+    ciscoCode: "ANOMALY-HOSTSWEEP"
+  then:
+    addTags: [anomaly, recon, hostsweep]
+    hint: "Locate scanning host and evaluate if part of approved vulnerability scanning; otherwise treat as hostile recon."
+    runbookUrl: "https://runbooks.example.local/cisco/anom-host-sweep"
+    escalateTo: "Error"
+
+- id: anomaly-http-ip-no-host
+  description: "HTTP requests to IP with no Host header"
+  priority: 70
+  when:
+    ciscoCode: "ANOMALY-HTTP-IP-NO-HOST"
+  then:
+    addTags: [anomaly, http, evasive]
+    hint: "This can indicate evasion of hostname-based controls; inspect clients and consider blocking such traffic."
+    runbookUrl: "https://runbooks.example.local/cisco/anom-http-ip"
+
+- id: anomaly-http-uri-anomaly
+  description: "Suspiciously long or high-entropy HTTP URIs"
+  priority: 80
+  when:
+    ciscoCode: "ANOMALY-HTTP-URI"
+  then:
+    addTags: [anomaly, http, uri]
+    hint: "Look for exfiltration or tunnelling over HTTP; examine URIs and payloads with security tools."
+    runbookUrl: "https://runbooks.example.local/cisco/anom-http-uri"
+    escalateTo: "Error"
+
+- id: anomaly-smtp-egress25
+  description: "Unexpected SMTP egress on port 25"
+  priority: 75
+  when:
+    ciscoCode: "ANOMALY-SMTP-E25"
+  then:
+    addTags: [anomaly, smtp, spam]
+    hint: "Ensure only approved relays send mail directly to the internet; compromised hosts may send spam or phishing."
+    runbookUrl: "https://runbooks.example.local/cisco/anom-smtp-egress"
+    escalateTo: "Error"
+
+- id: anomaly-icmp-tunnel
+  description: "ICMP usage consistent with tunnelling"
+  priority: 75
+  when:
+    ciscoCode: "ANOMALY-ICMP-TUNNEL"
+  then:
+    addTags: [anomaly, icmp, tunnel]
+    hint: "Investigate hosts sending frequent large ICMP packets; consider limiting ICMP or inspecting payloads where feasible."
+    runbookUrl: "https://runbooks.example.local/cisco/anom-icmp-tunnel"
+    escalateTo: "Error"
+
+# =====================================================================
+# SUPPRESSION / NOISE GROOMING
+# These keep the incident view clean by hiding low-value messages.
+# =====================================================================
+
+- id: suppress-qos-chatter
+  description: "Suppress low-value QoS notifications"
+  priority: 10
+  when:
+    category: "QoS"
+  then:
+    suppress: true
+  stopProcessing: true
+
+- id: suppress-config-change-informational
+  description: "Suppress routine CONFIG_I messages"
+  priority: 10
+  when:
+    ciscoCode: "SYS-5-CONFIG_I"
+  then:
+    suppress: true
+  stopProcessing: true
+
+- id: suppress-snmp-polling
+  description: "Suppress SNMP polling informational logs"
+  priority: 10
+  when:
+    category: "SNMP"
+  then:
+    suppress: true
+  stopProcessing: true
+
+- id: suppress-ospf-hellos
+  description: "Suppress OSPF hello informational logs"
+  priority: 10
+  when:
+    category: "OSPF"
+    messageContains: [Hello]
+  then:
+    suppress: true
+  stopProcessing: true
+
+- id: suppress-bgp-keepalives
+  description: "Suppress BGP keepalive informational logs"
+  priority: 10
+  when:
+    category: "BGP"
+    messageContains: [KEEPALIVE]
+  then:
+    suppress: true
+  stopProcessing: true

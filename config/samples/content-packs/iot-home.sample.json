@@ -1,0 +1,40 @@
+{
+  "packId": "carthago.iot-home.v1",
+  "install": true,
+  "enable": false,
+  "profileDefaults": {
+    "IoTHeavy": "Alert",
+    "HomeLab": "Shadow",
+    "SmallBusiness": "Shadow",
+    "Research": "Alert"
+  },
+  "approvedAssets": {
+    "mqttBrokers": [
+      "10.60.0.5"
+    ],
+    "cameraNvrHosts": [
+      "10.60.0.25"
+    ],
+    "knownRemoteSupportTools": [
+      "support.example.com"
+    ]
+  },
+  "thresholds": {
+    "IOT006": {
+      "confidenceFloor": 0.7
+    }
+  },
+  "modeOverrides": {
+    "IOT006": "Alert",
+    "IOT021": "Shadow"
+  },
+  "benchmark": {
+    "requiredBeforeAlertPromotion": true,
+    "outputDirectory": "build-verify"
+  },
+  "responseRecommendations": {
+    "allowRecommendationOnly": true,
+    "allowApprovalRequired": true,
+    "allowAutomaticDestructive": false
+  }
+}

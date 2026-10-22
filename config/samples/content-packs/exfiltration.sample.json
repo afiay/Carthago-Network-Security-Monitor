@@ -1,0 +1,34 @@
+{
+  "packId": "carthago.exfiltration.v1",
+  "install": true,
+  "enable": false,
+  "profileDefaults": {
+    "Enterprise": "Alert",
+    "SmallBusiness": "Shadow",
+    "HomeLab": "Shadow",
+    "Research": "Alert"
+  },
+  "approvedAssets": {
+    "cloudStorageProviders": [
+      "backup.example.com"
+    ]
+  },
+  "thresholds": {
+    "EXFIL036": {
+      "confidenceFloor": 0.78
+    }
+  },
+  "modeOverrides": {
+    "EXFIL006": "Alert",
+    "EXFIL012": "Shadow"
+  },
+  "benchmark": {
+    "requiredBeforeAlertPromotion": true,
+    "outputDirectory": "build-verify"
+  },
+  "responseRecommendations": {
+    "allowRecommendationOnly": true,
+    "allowApprovalRequired": true,
+    "allowAutomaticDestructive": false
+  }
+}

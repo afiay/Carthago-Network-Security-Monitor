@@ -1,0 +1,117 @@
+# ----- OS cruft -----
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ----- Visual Studio / Rider / VS Code -----
+.vs/
+.idea/
+*.sln.iml
+*.DotSettings.user
+.vscode/
+
+# ----- Build output -----
+bin/
+obj/
+artifacts/
+[Bb]uild/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+*.log
+*.tlog
+
+# Publish output
+**/publish/
+**/AppPackages/
+**/BundleArtifacts/
+
+# ----- User-specific files -----
+*.user
+*.suo
+*.userosscache
+*.userprefs
+*.swp
+*.tmp
+
+# NuGet
+*.nupkg
+*.snupkg
+*.nuspec
+packages/
+.nuget/
+
+# ----- Test / Coverage -----
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+*.codecoverage
+
+# ----- ReSharper / NCrunch -----
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.ncrunch*
+*.ncrunchsolution
+*.ncrunchproject
+
+# ----- Cache / generated -----
+*.pidb
+*.svclog
+*.gpState
+*.dbmdl
+
+# ----- Tooling / local data & secrets -----
+.env
+# Threat intel cache written by ThreatFeedService (safe to ignore; recreated at runtime)
+Data/ThreatIntel/**
+!Data/ThreatIntel/.gitkeep
+
+# If you add other runtime caches under Data/, ignore them but keep config files:
+Data/**/*
+!Data/rules.json
+!Carthago/Data/GeoLite2-*.mmdb
+!Carthago/Data/custom.geo.json
+
+# Runtime detection platform state
+build-verify/tuning-benchmark.json
+build-verify/tuning-benchmark.md
+build-verify/**/*.json
+build-verify/**/*.md
+**/detections-*.jsonl
+**/outbox-*.jsonl
+**/feedback-*.jsonl
+**/baseline.json
+**/entity-graph/
+**/baseline/
+**/outbox/
+**/feedback/
+environment-tuning.json
+
+# ----- OS-specific crash / lock files -----
+*.lock
+*.orig
+*.rej
+
+# ----- Rider /.NET local settings -----
+*.DotSettings
+.idea/**/workspace.xml
+
+# ----- Misc -----
+*.bak
+*.old
+*.tmp
+*.temp
+**/.env
+**/.env.*
+!**/.env.example
+**/preferences.json
+**/bin/
+**/obj/
+*.zip
+*.pfx
+*.p12
+*.key
+*.pem
+*.pcap
+*.pcapng

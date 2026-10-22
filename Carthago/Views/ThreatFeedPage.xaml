@@ -1,0 +1,886 @@
+<!-- SPDX-License-Identifier: MIT -->
+<!-- File: Views/ThreatFeedPage.xaml -->
+<Page x:Class="Carthago.Views.ThreatFeedPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:local="clr-namespace:Carthago.Views"
+      Title="Threat Feed"
+      PreviewKeyDown="Page_PreviewKeyDown">
+
+  <Page.Resources>
+    <local:SeverityToBrushConverter x:Key="SeverityBrush"/>
+    <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+
+    <Style x:Key="ThreatSectionTitle" TargetType="TextBlock" BasedOn="{StaticResource SectionHeader}">
+      <Setter Property="FontSize" Value="15.5"/>
+      <Setter Property="Margin" Value="0,0,0,4"/>
+    </Style>
+
+    <Style x:Key="ThreatSectionMeta" TargetType="TextBlock" BasedOn="{StaticResource TinyStatusText}">
+      <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+
+    <Style x:Key="ThreatFieldLabel" TargetType="TextBlock" BasedOn="{StaticResource MicroLabel}">
+      <Setter Property="Margin" Value="0,0,0,6"/>
+    </Style>
+
+    <Style x:Key="ThreatFieldValue" TargetType="TextBlock" BasedOn="{StaticResource MonoValue}">
+      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="FontFamily" Value="Segoe UI Semibold"/>
+      <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+      <Setter Property="TextWrapping" Value="NoWrap"/>
+      <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+    </Style>
+
+    <Style x:Key="ThreatQueueHeader" TargetType="TextBlock" BasedOn="{StaticResource MicroLabel}">
+      <Setter Property="FontSize" Value="11.25"/>
+      <Setter Property="Margin" Value="0,0,8,0"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <Style x:Key="ThreatQueueCellText" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="12.5"/>
+      <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+      <Setter Property="TextWrapping" Value="NoWrap"/>
+      <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <Style x:Key="ThreatQueueCellSubtleText" TargetType="TextBlock" BasedOn="{StaticResource ThreatQueueCellText}">
+      <Setter Property="Foreground" Value="{StaticResource TextSubtleBrush}"/>
+      <Setter Property="FontSize" Value="11.5"/>
+    </Style>
+
+    <Style x:Key="ThreatQueueItemContainerStyle" TargetType="ListBoxItem">
+      <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+      <Setter Property="Padding" Value="0"/>
+      <Setter Property="Margin" Value="0"/>
+      <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ListBoxItem">
+            <Border x:Name="Chrome"
+                    Background="#081524"
+                    BorderBrush="#1C314A"
+                    BorderThickness="1"
+                    CornerRadius="10"
+                    Padding="8,6"
+                    Margin="0,0,0,6">
+              <Grid>
+                <Border x:Name="ActiveRail"
+                        Width="3"
+                        CornerRadius="2"
+                        Background="Transparent"
+                        HorizontalAlignment="Left"
+                        Margin="0,2,8,2"/>
+                <ContentPresenter Margin="10,0,0,0"/>
+              </Grid>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Chrome" Property="Background" Value="#0B1B2E"/>
+                <Setter TargetName="Chrome" Property="BorderBrush" Value="#29425F"/>
+              </Trigger>
+              <Trigger Property="IsSelected" Value="True">
+                <Setter TargetName="Chrome" Property="Background" Value="#0C233B"/>
+                <Setter TargetName="Chrome" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                <Setter TargetName="ActiveRail" Property="Background" Value="{StaticResource AccentBrush}"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style x:Key="ThreatPageChipButton" TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+      <Setter Property="Width" Value="34"/>
+      <Setter Property="Height" Value="28"/>
+      <Setter Property="Margin" Value="6,0,0,0"/>
+      <Setter Property="Padding" Value="0"/>
+      <Style.Triggers>
+        <DataTrigger Binding="{Binding IsCurrent}" Value="True">
+          <Setter Property="Background" Value="#143559"/>
+          <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+        </DataTrigger>
+      </Style.Triggers>
+    </Style>
+  </Page.Resources>
+
+  <ScrollViewer VerticalScrollBarVisibility="Auto"
+                HorizontalScrollBarVisibility="Disabled">
+    <Grid Margin="0"
+          MinWidth="1180">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+      </Grid.RowDefinitions>
+
+      <ItemsControl Grid.Row="0"
+                    ItemsSource="{Binding Kpis}"
+                    Margin="0,0,0,16">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <WrapPanel/>
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <Border Style="{StaticResource AnomalyKpiCard}"
+                    Width="251"
+                    Margin="0,0,12,12"
+                    BorderBrush="{Binding AccentBrush}">
+              <Grid>
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto"/>
+                  <RowDefinition Height="Auto"/>
+                  <RowDefinition Height="Auto"/>
+                  <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <DockPanel>
+                  <TextBlock Text="{Binding Title}"
+                             Style="{StaticResource TinyStatusText}"/>
+                  <TextBlock Text="{Binding Glyph}"
+                             Foreground="{Binding AccentBrush}"
+                             FontWeight="Bold"
+                             FontSize="13"
+                             DockPanel.Dock="Right"/>
+                </DockPanel>
+                <TextBlock Grid.Row="1"
+                           Text="{Binding Value}"
+                           FontSize="28"
+                           FontWeight="Bold"
+                           Margin="0,8,0,0"/>
+                <TextBlock Grid.Row="2"
+                           Text="{Binding Delta}"
+                           Foreground="{Binding AccentBrush}"
+                           FontSize="11.5"
+                           FontWeight="SemiBold"
+                           Margin="0,5,0,0"
+                           TextWrapping="Wrap"/>
+                <TextBlock Grid.Row="3"
+                           Text="{Binding Detail}"
+                           Foreground="{StaticResource TextMutedBrush}"
+                           FontSize="11.5"
+                           Margin="0,10,0,0"
+                           TextWrapping="Wrap"/>
+              </Grid>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <Grid Grid.Row="1"
+            Grid.IsSharedSizeScope="True"
+            Margin="0,0,0,14">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="0.44*" MinWidth="560"/>
+          <ColumnDefinition Width="0.56*" MinWidth="600"/>
+        </Grid.ColumnDefinitions>
+
+        <Border Grid.Column="0"
+                Style="{StaticResource AnomalyPageSurface}"
+                Margin="0,0,14,0">
+          <Grid>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <StackPanel>
+              <DockPanel>
+                <StackPanel DockPanel.Dock="Left">
+                  <TextBlock Text="Threat Feed Matches"
+                             Style="{StaticResource ThreatSectionTitle}"/>
+                  <TextBlock Text="Match indicators from threat intel, reputation evidence, and IOC-linked incidents to decide what needs action."
+                             Style="{StaticResource ThreatSectionMeta}"/>
+                </StackPanel>
+                <TextBlock Text="{Binding FooterText}"
+                           Foreground="{StaticResource TextMutedBrush}"
+                           FontSize="11.5"
+                           DockPanel.Dock="Right"
+                           Margin="12,4,0,0"
+                           TextWrapping="Wrap"/>
+              </DockPanel>
+
+              <Grid Margin="0,14,0,0">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="160"/>
+                  <ColumnDefinition Width="168"/>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="72"/>
+                </Grid.ColumnDefinitions>
+                <ComboBox x:Name="SeverityFilter"
+                          Height="38"
+                          VerticalContentAlignment="Center">
+                  <ComboBoxItem Content="All severities" IsSelected="True"/>
+                  <ComboBoxItem Content="Critical"/>
+                  <ComboBoxItem Content="High"/>
+                  <ComboBoxItem Content="Medium"/>
+                  <ComboBoxItem Content="Low"/>
+                </ComboBox>
+                <ComboBox x:Name="SourceFilter"
+                          Grid.Column="1"
+                          Height="38"
+                          Margin="8,0,0,0"
+                          VerticalContentAlignment="Center">
+                  <ComboBoxItem Content="All feed sources" IsSelected="True"/>
+                  <ComboBoxItem Content="AbuseIPDB"/>
+                  <ComboBoxItem Content="Threat feed"/>
+                  <ComboBoxItem Content="Local IOC List"/>
+                  <ComboBoxItem Content="Reputation"/>
+                  <ComboBoxItem Content="Detection evidence"/>
+                </ComboBox>
+                <TextBox x:Name="SearchBox"
+                         Grid.Column="2"
+                         Height="38"
+                         Margin="8,0,0,0"
+                         Style="{StaticResource SearchBox}"
+                         VerticalContentAlignment="Center"
+                         ToolTip="Search indicators, feed sources, classifications, hosts, incidents, rules, or tags"
+                         TextChanged="SearchBox_TextChanged"/>
+                <Button Grid.Column="3"
+                        Height="38"
+                        Margin="8,0,0,0"
+                        Style="{StaticResource SecondaryButton}"
+                        Click="MoreActions_Click"
+                        ToolTip="More actions"
+                        Content="..."/>
+              </Grid>
+            </StackPanel>
+
+            <Grid Grid.Row="1"
+                  Margin="0,16,0,0">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition SharedSizeGroup="ThreatScoreCol" Width="72"/>
+                <ColumnDefinition SharedSizeGroup="ThreatMatchCol" Width="2.0*"/>
+                <ColumnDefinition SharedSizeGroup="ThreatIndicatorCol" Width="1.45*"/>
+                <ColumnDefinition SharedSizeGroup="ThreatSourceCol" Width="1.55*"/>
+                <ColumnDefinition SharedSizeGroup="ThreatClassCol" Width="1.10*"/>
+                <ColumnDefinition SharedSizeGroup="ThreatStateCol" Width="96"/>
+                <ColumnDefinition SharedSizeGroup="ThreatTimeCol" Width="92"/>
+                <ColumnDefinition SharedSizeGroup="ThreatMenuCol" Width="44"/>
+              </Grid.ColumnDefinitions>
+              <TextBlock Text="Score" Style="{StaticResource ThreatQueueHeader}"/>
+              <TextBlock Grid.Column="1" Text="Match" Style="{StaticResource ThreatQueueHeader}"/>
+              <TextBlock Grid.Column="2" Text="Indicator" Style="{StaticResource ThreatQueueHeader}"/>
+              <TextBlock Grid.Column="3" Text="Feed source" Style="{StaticResource ThreatQueueHeader}"/>
+              <TextBlock Grid.Column="4" Text="Classification" Style="{StaticResource ThreatQueueHeader}"/>
+              <TextBlock Grid.Column="5" Text="State" Style="{StaticResource ThreatQueueHeader}"/>
+              <TextBlock Grid.Column="6" Text="Seen" Style="{StaticResource ThreatQueueHeader}"/>
+              <TextBlock Grid.Column="7" Text="" Style="{StaticResource ThreatQueueHeader}"/>
+            </Grid>
+
+            <Grid Grid.Row="2"
+                  Margin="0,8,0,0">
+              <ListBox x:Name="ThreatMatchesList"
+                       ItemsSource="{Binding VisibleMatches}"
+                       BorderThickness="0"
+                       Background="Transparent"
+                       ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                       ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                       ItemContainerStyle="{StaticResource ThreatQueueItemContainerStyle}">
+                <ListBox.ItemTemplate>
+                  <DataTemplate>
+                    <Grid>
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition SharedSizeGroup="ThreatScoreCol" Width="72"/>
+                        <ColumnDefinition SharedSizeGroup="ThreatMatchCol" Width="2.0*"/>
+                        <ColumnDefinition SharedSizeGroup="ThreatIndicatorCol" Width="1.45*"/>
+                        <ColumnDefinition SharedSizeGroup="ThreatSourceCol" Width="1.55*"/>
+                        <ColumnDefinition SharedSizeGroup="ThreatClassCol" Width="1.10*"/>
+                        <ColumnDefinition SharedSizeGroup="ThreatStateCol" Width="96"/>
+                        <ColumnDefinition SharedSizeGroup="ThreatTimeCol" Width="92"/>
+                        <ColumnDefinition SharedSizeGroup="ThreatMenuCol" Width="44"/>
+                      </Grid.ColumnDefinitions>
+
+                      <Grid Width="42"
+                            Height="42"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center">
+                        <Ellipse Width="42"
+                                 Height="42"
+                                 StrokeThickness="3"
+                                 Fill="#07111F"
+                                 Stroke="{Binding Severity, Converter={StaticResource SeverityBrush}}"/>
+                        <TextBlock Text="{Binding Score}"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   FontWeight="Bold"
+                                   FontSize="13"/>
+                      </Grid>
+
+                      <StackPanel Grid.Column="1"
+                                  Margin="8,0,10,0"
+                                  VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Title}"
+                                   Style="{StaticResource ThreatQueueCellText}"
+                                   FontWeight="SemiBold"
+                                   ToolTip="{Binding Title}"/>
+                        <TextBlock Text="{Binding Summary}"
+                                   Style="{StaticResource ThreatQueueCellSubtleText}"
+                                   Margin="0,3,0,0"
+                                   ToolTip="{Binding Summary}"/>
+                      </StackPanel>
+
+                      <StackPanel Grid.Column="2"
+                                  Margin="0,0,10,0"
+                                  VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Indicator}"
+                                   Style="{StaticResource ThreatQueueCellText}"
+                                   ToolTip="{Binding Indicator}"/>
+                        <TextBlock Text="{Binding IndicatorType}"
+                                   Style="{StaticResource ThreatQueueCellSubtleText}"
+                                   Margin="0,3,0,0"
+                                   ToolTip="{Binding IndicatorType}"/>
+                      </StackPanel>
+
+                      <StackPanel Grid.Column="3"
+                                  Margin="0,0,10,0"
+                                  VerticalAlignment="Center">
+                        <TextBlock Text="{Binding FeedSource}"
+                                   Style="{StaticResource ThreatQueueCellText}"
+                                   ToolTip="{Binding FeedSource}"/>
+                        <TextBlock Text="{Binding RelatedHost}"
+                                   Style="{StaticResource ThreatQueueCellSubtleText}"
+                                   Margin="0,3,0,0"
+                                   ToolTip="{Binding RelatedHost}"/>
+                      </StackPanel>
+
+                      <TextBlock Grid.Column="4"
+                                 Text="{Binding Classification}"
+                                 Style="{StaticResource ThreatQueueCellText}"
+                                 Margin="0,0,10,0"
+                                 ToolTip="{Binding Classification}"/>
+
+                      <Border Grid.Column="5"
+                              Style="{StaticResource RiskBadge}"
+                              BorderBrush="{Binding Severity, Converter={StaticResource SeverityBrush}}"
+                              Background="#0D1D31"
+                              HorizontalAlignment="Left"
+                              VerticalAlignment="Center"
+                              Padding="8,3">
+                        <TextBlock Text="{Binding FeedState}"
+                                   Foreground="{Binding Severity, Converter={StaticResource SeverityBrush}}"
+                                   FontWeight="Bold"
+                                   FontSize="10.5"
+                                   ToolTip="{Binding SeverityUpper}"/>
+                      </Border>
+
+                      <StackPanel Grid.Column="6"
+                                  VerticalAlignment="Center">
+                        <TextBlock Text="{Binding LastSeenLabel}"
+                                   Style="{StaticResource ThreatQueueCellText}"/>
+                        <TextBlock Text="{Binding FirstSeenUtc, StringFormat={}{0:MM-dd}}"
+                                   Style="{StaticResource ThreatQueueCellSubtleText}"
+                                   Margin="0,3,0,0"/>
+                      </StackPanel>
+
+                      <Button Grid.Column="7"
+                              Content="..."
+                              Style="{StaticResource SecondaryButton}"
+                              Width="34"
+                              Height="28"
+                              Padding="0"
+                              HorizontalAlignment="Right"
+                              VerticalAlignment="Center"
+                              Click="QueueRowMore_Click"
+                              ToolTip="Row actions"/>
+                    </Grid>
+                  </DataTemplate>
+                </ListBox.ItemTemplate>
+              </ListBox>
+
+              <Border x:Name="ThreatEmptyState"
+                      Style="{StaticResource EmptyStateCard}"
+                      Visibility="Collapsed">
+                <StackPanel HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            MaxWidth="360">
+                  <TextBlock Text="No threat feed matches"
+                             FontSize="18"
+                             FontWeight="SemiBold"
+                             TextAlignment="Center"/>
+                  <TextBlock Text="Carthago will show IOC and reputation matches here when detections, incidents, or anomalies reference suspicious indicators."
+                             Foreground="{StaticResource TextSubtleBrush}"
+                             TextWrapping="Wrap"
+                             TextAlignment="Center"
+                             Margin="0,10,0,0"/>
+                </StackPanel>
+              </Border>
+            </Grid>
+
+            <DockPanel Grid.Row="3"
+                       Margin="0,14,0,0">
+              <TextBlock Text="{Binding PageSummary}"
+                         Foreground="{StaticResource TextSubtleBrush}"
+                         VerticalAlignment="Center"/>
+              <StackPanel Orientation="Horizontal"
+                          DockPanel.Dock="Right">
+                <Button Content="Prev"
+                        Width="56"
+                        Margin="0,0,8,0"
+                        Style="{StaticResource SecondaryButton}"
+                        IsEnabled="{Binding HasPreviousPage}"
+                        Click="PreviousPage_Click"/>
+                <ItemsControl ItemsSource="{Binding PageNumbers}">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                      <StackPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Button Content="{Binding Label}"
+                              Style="{StaticResource ThreatPageChipButton}"
+                              Click="PageNumber_Click"/>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <Button Content="Next"
+                        Width="56"
+                        Margin="8,0,0,0"
+                        Style="{StaticResource SecondaryButton}"
+                        IsEnabled="{Binding HasNextPage}"
+                        Click="NextPage_Click"/>
+              </StackPanel>
+            </DockPanel>
+          </Grid>
+        </Border>
+
+        <Border Grid.Column="1"
+                Style="{StaticResource AnomalyPageSurface}">
+          <Grid>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <DockPanel Grid.Row="0"
+                       Margin="0,0,0,12">
+              <StackPanel DockPanel.Dock="Left">
+                <TextBlock Text="Selected Threat Match Investigation"
+                           Style="{StaticResource ThreatSectionTitle}"/>
+                <TextBlock Text="IOC source, classification, related host, and next actions for the currently selected match."
+                           Style="{StaticResource ThreatSectionMeta}"/>
+              </StackPanel>
+              <StackPanel DockPanel.Dock="Right"
+                          Orientation="Horizontal">
+                <Button Content="View Related Incident"
+                        Width="150"
+                        Style="{StaticResource SecondaryButton}"
+                        IsEnabled="{Binding Selected.HasRelatedIncident}"
+                        Click="ViewRelatedIncident_Click"/>
+                <Button Content="..."
+                        Width="40"
+                        Margin="8,0,0,0"
+                        Style="{StaticResource SecondaryButton}"
+                        Click="MoreActions_Click"/>
+              </StackPanel>
+            </DockPanel>
+
+            <StackPanel x:Name="InvestigationBody"
+                        Grid.Row="1">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="110"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0"
+                            Margin="0,0,16,0">
+                  <Border Width="4"
+                          Height="72"
+                          CornerRadius="2"
+                          Background="{Binding Selected.Severity, Converter={StaticResource SeverityBrush}}"
+                          HorizontalAlignment="Left"/>
+                  <TextBlock Text="{Binding Selected.Title}"
+                             FontSize="30"
+                             FontWeight="Bold"
+                             Margin="14,-64,0,0"
+                             TextWrapping="Wrap"/>
+                  <TextBlock Text="{Binding Selected.Summary}"
+                             Foreground="{StaticResource TextSubtleBrush}"
+                             Margin="14,8,0,0"
+                             TextWrapping="Wrap"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1"
+                            HorizontalAlignment="Center">
+                  <TextBlock Text="RISK SCORE"
+                             Style="{StaticResource TinyStatusText}"
+                             HorizontalAlignment="Center"/>
+                  <Grid Width="90"
+                        Height="90"
+                        Margin="0,8,0,0">
+                    <Ellipse Width="90"
+                             Height="90"
+                             StrokeThickness="6"
+                             Fill="#07111F"
+                             Stroke="{Binding Selected.Severity, Converter={StaticResource SeverityBrush}}"/>
+                    <TextBlock Text="{Binding Selected.Score}"
+                               FontSize="26"
+                               FontWeight="Bold"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"/>
+                  </Grid>
+                  <Border Style="{StaticResource RiskBadge}"
+                          BorderBrush="{Binding Selected.Severity, Converter={StaticResource SeverityBrush}}"
+                          Margin="0,10,0,0">
+                    <TextBlock Text="{Binding Selected.Severity}"
+                               Foreground="{Binding Selected.Severity, Converter={StaticResource SeverityBrush}}"
+                               FontWeight="Bold"/>
+                  </Border>
+                </StackPanel>
+              </Grid>
+
+              <Grid Margin="0,18,0,0">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto"/>
+                  <RowDefinition Height="Auto"/>
+                  <RowDefinition Height="Auto"/>
+                  <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource DetailGridCard}" Margin="0,0,8,8">
+                  <StackPanel>
+                    <TextBlock Text="Indicator" Style="{StaticResource ThreatFieldLabel}"/>
+                    <TextBlock Text="{Binding Selected.Indicator}"
+                               Style="{StaticResource ThreatFieldValue}"
+                               ToolTip="{Binding Selected.Indicator}"/>
+                  </StackPanel>
+                </Border>
+                <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource DetailGridCard}" Margin="8,0,0,8">
+                  <StackPanel>
+                    <TextBlock Text="Type" Style="{StaticResource ThreatFieldLabel}"/>
+                    <TextBlock Text="{Binding Selected.IndicatorType}"
+                               Style="{StaticResource ThreatFieldValue}"
+                               ToolTip="{Binding Selected.IndicatorType}"/>
+                  </StackPanel>
+                </Border>
+                <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource DetailGridCard}" Margin="0,0,8,8">
+                  <StackPanel>
+                    <TextBlock Text="Classification" Style="{StaticResource ThreatFieldLabel}"/>
+                    <TextBlock Text="{Binding Selected.Classification}"
+                               Style="{StaticResource ThreatFieldValue}"
+                               ToolTip="{Binding Selected.Classification}"/>
+                  </StackPanel>
+                </Border>
+                <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource DetailGridCard}" Margin="8,0,0,8">
+                  <StackPanel>
+                    <TextBlock Text="Feed source" Style="{StaticResource ThreatFieldLabel}"/>
+                    <TextBlock Text="{Binding Selected.FeedSource}"
+                               Style="{StaticResource ThreatFieldValue}"
+                               ToolTip="{Binding Selected.FeedSource}"/>
+                  </StackPanel>
+                </Border>
+                <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource DetailGridCard}" Margin="0,0,8,8">
+                  <StackPanel>
+                    <TextBlock Text="First seen" Style="{StaticResource ThreatFieldLabel}"/>
+                    <TextBlock Text="{Binding Selected.FirstSeenLabel}"
+                               Style="{StaticResource ThreatFieldValue}"
+                               ToolTip="{Binding Selected.FirstSeenLabel}"/>
+                  </StackPanel>
+                </Border>
+                <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource DetailGridCard}" Margin="8,0,0,8">
+                  <StackPanel>
+                    <TextBlock Text="Confidence" Style="{StaticResource ThreatFieldLabel}"/>
+                    <TextBlock Text="{Binding Selected.ConfidenceText}"
+                               Style="{StaticResource ThreatFieldValue}"
+                               Foreground="{StaticResource TextWarningBrush}"
+                               ToolTip="{Binding Selected.ConfidenceText}"/>
+                  </StackPanel>
+                </Border>
+                <Border Grid.Row="3" Grid.Column="0" Style="{StaticResource DetailGridCard}" Margin="0,0,8,0">
+                  <StackPanel>
+                    <TextBlock Text="Related host" Style="{StaticResource ThreatFieldLabel}"/>
+                    <TextBlock Text="{Binding Selected.RelatedHost}"
+                               Style="{StaticResource ThreatFieldValue}"
+                               ToolTip="{Binding Selected.RelatedHost}"/>
+                  </StackPanel>
+                </Border>
+                <Border Grid.Row="3" Grid.Column="1" Style="{StaticResource DetailGridCard}" Margin="8,0,0,0">
+                  <StackPanel>
+                    <TextBlock Text="Related incident" Style="{StaticResource ThreatFieldLabel}"/>
+                    <TextBlock Text="{Binding Selected.RelatedIncidentTitle}"
+                               Style="{StaticResource ThreatFieldValue}"
+                               Foreground="{StaticResource AccentBrush}"
+                               ToolTip="{Binding Selected.RelatedIncidentTitle}"/>
+                  </StackPanel>
+                </Border>
+              </Grid>
+
+              <Grid Margin="0,18,0,0">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="1.15*"/>
+                  <ColumnDefinition Width="0.85*"/>
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0"
+                        Style="{StaticResource BaselineComparisonCard}"
+                        Margin="0,0,10,0">
+                  <StackPanel>
+                    <TextBlock Text="Evidence / Observations"
+                               Style="{StaticResource ThreatSectionTitle}"/>
+                    <ItemsControl ItemsSource="{Binding Selected.Evidence}"
+                                  Margin="0,10,0,0">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                          <TextBlock Text="{Binding}"
+                                     Foreground="{StaticResource TextSubtleBrush}"
+                                     TextWrapping="Wrap"
+                                     Margin="0,0,0,6"/>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </StackPanel>
+                </Border>
+
+                <StackPanel Grid.Column="1">
+                  <Border Style="{StaticResource BaselineComparisonCard}">
+                    <StackPanel>
+                      <TextBlock Text="Tags"
+                                 Style="{StaticResource ThreatSectionTitle}"/>
+                      <ItemsControl ItemsSource="{Binding Selected.Tags}"
+                                    Margin="0,10,0,0">
+                        <ItemsControl.ItemsPanel>
+                          <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate>
+                            <Border Style="{StaticResource SmallPill}"
+                                    Margin="0,0,6,6">
+                              <TextBlock Text="{Binding}"
+                                         Foreground="{StaticResource TextSubtleBrush}"/>
+                            </Border>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </StackPanel>
+                  </Border>
+
+                  <Border Style="{StaticResource BaselineComparisonCard}"
+                          Margin="0,10,0,0">
+                    <StackPanel>
+                      <TextBlock Text="Related rules"
+                                 Style="{StaticResource ThreatSectionTitle}"/>
+                      <ItemsControl ItemsSource="{Binding Selected.RelatedRules}"
+                                    Margin="0,10,0,0">
+                        <ItemsControl.ItemsPanel>
+                          <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate>
+                            <Border Style="{StaticResource SmallPill}"
+                                    Margin="0,0,6,6">
+                              <TextBlock Text="{Binding}"
+                                         Foreground="{StaticResource TextSubtleBrush}"/>
+                            </Border>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </StackPanel>
+                  </Border>
+                </StackPanel>
+              </Grid>
+
+              <TextBlock Text="Recommended Actions"
+                         Style="{StaticResource ThreatSectionTitle}"
+                         Margin="0,18,0,10"/>
+              <WrapPanel>
+                <Button Content="Block Indicator"
+                        Width="136"
+                        Style="{StaticResource DangerButton}"
+                        Margin="0,0,8,8"
+                        IsEnabled="{Binding Selected.CanBlockIndicator}"
+                        ToolTip="Blocking is only enabled when a real suppression or blocking workflow is configured."/>
+                <Button Content="Investigate Host"
+                        Width="150"
+                        Style="{StaticResource PrimaryButton}"
+                        Margin="0,0,8,8"
+                        Click="InvestigateHost_Click"/>
+                <Button Content="View Related Incident"
+                        Width="170"
+                        Style="{StaticResource SecondaryButton}"
+                        Margin="0,0,8,8"
+                        IsEnabled="{Binding Selected.HasRelatedIncident}"
+                        Click="ViewRelatedIncident_Click"/>
+                <Button Content="Export IOC"
+                        Width="120"
+                        Style="{StaticResource SecondaryButton}"
+                        Margin="0,0,8,8"
+                        Click="ExportIoc_Click"/>
+                <Button Content="..."
+                        Width="44"
+                        Style="{StaticResource SecondaryButton}"
+                        Margin="0,0,8,8"
+                        Click="MoreActions_Click"/>
+              </WrapPanel>
+            </StackPanel>
+
+            <Border x:Name="DetailsEmptyState"
+                    Grid.Row="1"
+                    Style="{StaticResource EmptyStateCard}">
+              <StackPanel HorizontalAlignment="Center"
+                          VerticalAlignment="Center"
+                          MaxWidth="340">
+                <TextBlock Text="Select a threat match"
+                           FontSize="18"
+                           FontWeight="SemiBold"
+                           TextAlignment="Center"/>
+                <TextBlock Text="Indicator details, feed source, confidence, related host, and response actions will appear here."
+                           Foreground="{StaticResource TextSubtleBrush}"
+                           TextWrapping="Wrap"
+                           TextAlignment="Center"
+                           Margin="0,10,0,0"/>
+              </StackPanel>
+            </Border>
+          </Grid>
+        </Border>
+      </Grid>
+
+      <Grid Grid.Row="2">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="1.0*"/>
+          <ColumnDefinition Width="1.0*"/>
+          <ColumnDefinition Width="1.12*"/>
+        </Grid.ColumnDefinitions>
+
+        <Border Style="{StaticResource AnomalyPageSurface}"
+                Margin="0,0,10,0">
+          <StackPanel>
+            <TextBlock Text="Top Feed Sources"
+                       Style="{StaticResource ThreatSectionTitle}"/>
+            <ItemsControl ItemsSource="{Binding TopFeedSources}"
+                          Margin="0,12,0,0">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Border Style="{StaticResource DetailGridCard}"
+                          Margin="0,0,0,8">
+                    <Grid>
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="74"/>
+                        <ColumnDefinition Width="110"/>
+                      </Grid.ColumnDefinitions>
+                      <TextBlock Text="{Binding Name}"
+                                 Style="{StaticResource ThreatQueueCellText}"
+                                 ToolTip="{Binding Name}"/>
+                      <TextBlock Grid.Column="1"
+                                 Text="{Binding Count}"
+                                 Style="{StaticResource ThreatQueueCellText}"
+                                 Foreground="{Binding AccentBrush}"
+                                 FontWeight="SemiBold"/>
+                      <TextBlock Grid.Column="2"
+                                 Text="{Binding TrendText}"
+                                 Style="{StaticResource ThreatQueueCellSubtleText}"
+                                 ToolTip="{Binding TrendText}"/>
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+
+        <Border Grid.Column="1"
+                Style="{StaticResource AnomalyPageSurface}"
+                Margin="0,0,10,0">
+          <StackPanel>
+            <TextBlock Text="Recent IOC Types"
+                       Style="{StaticResource ThreatSectionTitle}"/>
+            <ItemsControl ItemsSource="{Binding RecentIocTypes}"
+                          Margin="0,12,0,0">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Border Style="{StaticResource DetailGridCard}"
+                          Margin="0,0,0,8">
+                    <Grid>
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="74"/>
+                        <ColumnDefinition Width="110"/>
+                      </Grid.ColumnDefinitions>
+                      <TextBlock Text="{Binding Name}"
+                                 Style="{StaticResource ThreatQueueCellText}"
+                                 ToolTip="{Binding Name}"/>
+                      <TextBlock Grid.Column="1"
+                                 Text="{Binding Count}"
+                                 Style="{StaticResource ThreatQueueCellText}"
+                                 Foreground="{Binding AccentBrush}"
+                                 FontWeight="SemiBold"/>
+                      <TextBlock Grid.Column="2"
+                                 Text="{Binding TrendText}"
+                                 Style="{StaticResource ThreatQueueCellSubtleText}"
+                                 ToolTip="{Binding TrendText}"/>
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+
+        <Border Grid.Column="2"
+                Style="{StaticResource AnomalyPageSurface}">
+          <StackPanel>
+            <TextBlock Text="Raw / Advanced Shortcuts"
+                       Style="{StaticResource ThreatSectionTitle}"/>
+            <TextBlock Text="Keep packet and rule evidence accessible, but secondary to the IOC triage view."
+                       Style="{StaticResource ThreatSectionMeta}"/>
+            <UniformGrid Columns="2"
+                         Margin="0,12,0,0">
+              <Button Style="{StaticResource ShortcutTile}"
+                      Margin="0,0,8,8"
+                      Click="OpenRawTraffic_Click">
+                <StackPanel>
+                  <TextBlock Text="Raw Traffic" FontWeight="SemiBold"/>
+                  <TextBlock Text="Inspect packets and flows"
+                             Foreground="{StaticResource TextSubtleBrush}"
+                             Margin="0,4,0,0"/>
+                </StackPanel>
+              </Button>
+              <Button Style="{StaticResource ShortcutTile}"
+                      Margin="0,0,0,8"
+                      Click="OpenRawDetections_Click">
+                <StackPanel>
+                  <TextBlock Text="Raw Detections" FontWeight="SemiBold"/>
+                  <TextBlock Text="Inspect IOC-linked rule hits"
+                             Foreground="{StaticResource TextSubtleBrush}"
+                             Margin="0,4,0,0"/>
+                </StackPanel>
+              </Button>
+              <Button Style="{StaticResource ShortcutTile}"
+                      Margin="0,0,8,0"
+                      IsEnabled="False"
+                      ToolTip="PCAP Explorer is available from the shell when deeper packet analysis is needed.">
+                <StackPanel>
+                  <TextBlock Text="PCAP Explorer" FontWeight="SemiBold"/>
+                  <TextBlock Text="Search and analyze captures"
+                             Foreground="{StaticResource TextSubtleBrush}"
+                             Margin="0,4,0,0"/>
+                </StackPanel>
+              </Button>
+              <Button Style="{StaticResource ShortcutTile}"
+                      IsEnabled="False"
+                      ToolTip="Forensics Workspace remains available from the shell for deeper evidence collection.">
+                <StackPanel>
+                  <TextBlock Text="Forensics Workspace" FontWeight="SemiBold"/>
+                  <TextBlock Text="Deep-dive investigations"
+                             Foreground="{StaticResource TextSubtleBrush}"
+                             Margin="0,4,0,0"/>
+                </StackPanel>
+              </Button>
+            </UniformGrid>
+          </StackPanel>
+        </Border>
+      </Grid>
+    </Grid>
+  </ScrollViewer>
+</Page>

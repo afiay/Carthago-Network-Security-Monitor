@@ -1,0 +1,35 @@
+{
+  "packId": "carthago.microsoft365.v1",
+  "install": true,
+  "enable": false,
+  "profileDefaults": {
+    "Enterprise": "Alert",
+    "SmallBusiness": "Shadow",
+    "HomeLab": "Shadow",
+    "Research": "Alert"
+  },
+  "approvedAssets": {
+    "cloudStorageProviders": [
+      "sharepoint.example.com",
+      "onedrive.example.com"
+    ]
+  },
+  "thresholds": {
+    "M365028": {
+      "confidenceFloor": 0.76
+    }
+  },
+  "modeOverrides": {
+    "M365014": "Alert",
+    "M365035": "Shadow"
+  },
+  "benchmark": {
+    "requiredBeforeAlertPromotion": true,
+    "outputDirectory": "build-verify"
+  },
+  "responseRecommendations": {
+    "allowRecommendationOnly": true,
+    "allowApprovalRequired": true,
+    "allowAutomaticDestructive": false
+  }
+}

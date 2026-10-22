@@ -1,0 +1,20 @@
+﻿{
+  "name": "normal-ot-approved-modbus-read",
+  "records": [
+    {
+      "source": "10.20.0.21",
+      "destination": "10.20.0.10",
+      "protocol": "TCP",
+      "destinationPort": 502,
+      "info": "Modbus function 3 read holding registers"
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": ["R120", "R240", "R476"],
+  "environmentTuning": {
+    "approved": {
+      "otSegments": ["10.20.0.0/24"],
+      "modbusControllers": ["10.20.0.10"]
+    }
+  }
+}

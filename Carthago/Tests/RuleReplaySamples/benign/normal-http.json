@@ -1,0 +1,24 @@
+{
+  "Name": "normal-http",
+  "Records": [
+    {
+      "Source": "10.0.0.22",
+      "Destination": "93.184.216.34",
+      "Protocol": "HTTP",
+      "DestinationPort": 80,
+      "HttpMethod": "GET",
+      "HttpHost": "example.com",
+      "HttpUri": "/index.html",
+      "HttpUserAgent": "Mozilla/5.0"
+    }
+  ],
+  "ExpectedMatches": [],
+  "ExpectedNonMatches": [
+    "R084",
+    "R085",
+    "R086",
+    "R089",
+    "R090"
+  ],
+  "ExpectedMinimumConfidence": 0.0
+}

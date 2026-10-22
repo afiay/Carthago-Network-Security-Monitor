@@ -1,0 +1,40 @@
+stages:
+  - build
+  - test
+  - benchmark
+
+variables:
+  DOTNET_NOLOGO: "true"
+
+build:
+  stage: build
+  tags: []
+  script:
+    - dotnet restore DOTNET.sln
+    - dotnet build DOTNET.sln --no-restore
+  artifacts:
+    when: always
+    paths:
+      - build-verify/
+
+test:
+  stage: test
+  tags: []
+  script:
+    - dotnet test DOTNET.sln --no-build
+  artifacts:
+    when: always
+    paths:
+      - TestResults/
+
+replay_benchmark:
+  stage: benchmark
+  tags: []
+  allow_failure: true
+  script:
+    - pwsh -File .\scripts\run-replay-benchmark.ps1 -NoBuild
+  artifacts:
+    when: always
+    paths:
+      - build-verify/tuning-benchmark.json
+      - build-verify/tuning-benchmark.md

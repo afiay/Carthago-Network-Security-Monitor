@@ -1,0 +1,15 @@
+﻿{
+  "name": "rclone-exfil",
+  "records": [
+    {
+      "source": "10.0.0.67",
+      "destination": "198.51.100.67",
+      "protocol": "HTTP",
+      "destinationPort": 443,
+      "httpHost": "storage.example.net",
+      "httpUserAgent": "rclone/v1.66.0"
+    }
+  ],
+  "expectedMatches": ["R508"],
+  "expectedMinimumConfidence": 0.65
+}

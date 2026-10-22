@@ -1,0 +1,18 @@
+{
+  "Name": "normal-dns",
+  "Records": [
+    {
+      "Source": "10.0.0.22",
+      "Destination": "8.8.8.8",
+      "Protocol": "DNS",
+      "DestinationPort": 53,
+      "DnsQname": "www.example.com",
+      "DnsQtype": "A"
+    }
+  ],
+  "ExpectedMatches": [],
+  "ExpectedNonMatches": [
+    "R102"
+  ],
+  "ExpectedMinimumConfidence": 0.0
+}

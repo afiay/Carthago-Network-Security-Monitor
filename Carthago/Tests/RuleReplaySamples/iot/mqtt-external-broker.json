@@ -1,0 +1,20 @@
+{
+  "Name": "mqtt-external-broker",
+  "Records": [
+    {
+      "Source": "10.0.0.30",
+      "Destination": "203.0.113.40",
+      "Protocol": "TCP",
+      "DestinationPort": 1883,
+      "ApplicationProtocol": "MQTT",
+      "Info": "MQTT CONNECT clientId=sensor-1"
+    }
+  ],
+  "ExpectedMatches": [
+    "R113"
+  ],
+  "ExpectedNonMatches": [
+    "R120"
+  ],
+  "ExpectedMinimumConfidence": 0.0
+}

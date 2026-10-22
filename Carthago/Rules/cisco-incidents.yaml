@@ -1,0 +1,45 @@
+- id: security-login-bruteforce
+  description: Multiple failed logins -> tag security and escalate
+  priority: 50
+  when:
+    category: Security / ACL
+    messageContains: [login, failed]
+    countAtLeast: 5
+    within: 10m
+  then:
+    addTags: [security, auth, bruteforce]
+    hint: Investigate source IPs, block at edge; check AAA counters.
+    runbookUrl: https://runbooks.example.local/cisco/auth-bruteforce
+    escalateTo: Error
+    assign: [netsec-oncall]
+
+- id: interface-flap
+  priority: 40
+  when:
+    ciscoCode: LINK-3-UPDOWN
+    countAtLeast: 3
+    within: 15m
+  then:
+    addTags: [flapping, stability]
+    hint: >
+      Collect 'show interface <X> | inc line|input rate|output rate'. Consider errdisable recovery.
+    runbookUrl: https://runbooks.example.local/cisco/if-flap
+
+- id: cpu-high
+  priority: 30
+  when:
+    category: Platform
+    messageRegex: "CPU.*(util|usage).*\\b(9\\d|100)\\b"
+    severityAtLeast: Warning
+  then:
+    addTags: [performance, cpu-high]
+    hint: "Run 'show proc cpu sorted', inspect top consumers; check control-plane policing."
+    escalateTo: Error
+
+- id: suppress-chatter
+  priority: 5
+  when:
+    category: QoS
+  then:
+    suppress: true
+  stopProcessing: true

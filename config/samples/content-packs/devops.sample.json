@@ -1,0 +1,34 @@
+{
+  "packId": "carthago.devops.v1",
+  "install": true,
+  "enable": false,
+  "profileDefaults": {
+    "Enterprise": "Alert",
+    "SmallBusiness": "Shadow",
+    "HomeLab": "Disabled",
+    "Research": "Alert"
+  },
+  "approvedAssets": {
+    "ciCdServers": [
+      "10.50.0.20"
+    ]
+  },
+  "thresholds": {
+    "DEVOPS013": {
+      "confidenceFloor": 0.76
+    }
+  },
+  "modeOverrides": {
+    "DEVOPS010": "Alert",
+    "DEVOPS017": "Shadow"
+  },
+  "benchmark": {
+    "requiredBeforeAlertPromotion": true,
+    "outputDirectory": "build-verify"
+  },
+  "responseRecommendations": {
+    "allowRecommendationOnly": true,
+    "allowApprovalRequired": true,
+    "allowAutomaticDestructive": false
+  }
+}

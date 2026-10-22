@@ -1,0 +1,17 @@
+﻿{
+  "name": "normal-browsing",
+  "records": [
+    {
+      "source": "10.0.0.15",
+      "destination": "93.184.216.34",
+      "protocol": "HTTP",
+      "destinationPort": 80,
+      "httpMethod": "GET",
+      "httpHost": "example.com",
+      "httpUri": "/index.html",
+      "httpUserAgent": "Mozilla/5.0"
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": ["R084", "R102", "R516"]
+}

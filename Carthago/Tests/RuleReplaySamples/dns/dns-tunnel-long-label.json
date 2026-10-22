@@ -1,0 +1,20 @@
+{
+  "Name": "dns-tunnel-long-label",
+  "Records": [
+    {
+      "Source": "10.0.0.26",
+      "Destination": "8.8.8.8",
+      "Protocol": "DNS",
+      "DestinationPort": 53,
+      "DnsQname": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.exfil.example",
+      "DnsQtype": "TXT"
+    }
+  ],
+  "ExpectedMatches": [
+    "R102"
+  ],
+  "ExpectedNonMatches": [
+    "R085"
+  ],
+  "ExpectedMinimumConfidence": 0.0
+}
