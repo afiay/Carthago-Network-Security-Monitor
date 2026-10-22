@@ -30,15 +30,15 @@
 
   <ScrollViewer VerticalScrollBarVisibility="Auto"
                 HorizontalScrollBarVisibility="Disabled">
-    <Grid Margin="0"
-          MinWidth="1180">
+    <Grid Margin="0">
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto"/>
         <RowDefinition Height="Auto"/>
         <RowDefinition Height="Auto"/>
       </Grid.RowDefinitions>
 
-      <UniformGrid Grid.Row="0"
+      <UniformGrid x:Name="KpiGrid"
+                   Grid.Row="0"
                    Columns="5"
                    Margin="0,0,0,16">
         <Border Style="{StaticResource AnomalyKpiCard}" Margin="0,0,10,0" BorderBrush="{StaticResource SeverityHighBrush}">
@@ -83,13 +83,17 @@
         </Border>
       </UniformGrid>
 
-      <Grid Grid.Row="1">
+      <Grid x:Name="PrimaryWorkspaceGrid" Grid.Row="1">
+        <Grid.RowDefinitions>
+          <RowDefinition x:Name="PrimaryWorkspaceTopRow" Height="Auto"/>
+          <RowDefinition x:Name="PrimaryWorkspaceBottomRow" Height="0"/>
+        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="0.38*" MinWidth="430"/>
-          <ColumnDefinition Width="0.62*" MinWidth="620"/>
+          <ColumnDefinition x:Name="PrimaryWorkspaceQueueColumn" Width="0.38*"/>
+          <ColumnDefinition x:Name="PrimaryWorkspaceDetailColumn" Width="0.62*"/>
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Column="0"
+        <Border x:Name="QueuePanel" Grid.Column="0"
                 Style="{StaticResource AnomalyPageSurface}"
                 Margin="0,0,14,0">
           <Grid>
@@ -265,7 +269,7 @@
           </Grid>
         </Border>
 
-        <Border Grid.Column="1"
+        <Border x:Name="InvestigationPanel" Grid.Column="1"
                 Style="{StaticResource AnomalyPageSurface}">
           <Grid>
             <Grid.RowDefinitions>
@@ -604,16 +608,22 @@
         </Border>
       </Grid>
 
-      <Grid Grid.Row="2"
+      <Grid x:Name="SupportingWorkspaceGrid" Grid.Row="2"
             Margin="0,14,0,0">
+        <Grid.RowDefinitions>
+          <RowDefinition x:Name="SupportingWorkspaceFirstRow" Height="Auto"/>
+          <RowDefinition x:Name="SupportingWorkspaceSecondRow" Height="0"/>
+          <RowDefinition x:Name="SupportingWorkspaceThirdRow" Height="0"/>
+          <RowDefinition x:Name="SupportingWorkspaceFourthRow" Height="0"/>
+        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="1.05*"/>
-          <ColumnDefinition Width="0.95*"/>
-          <ColumnDefinition Width="0.95*"/>
-          <ColumnDefinition Width="0.95*"/>
+          <ColumnDefinition x:Name="SupportingWorkspaceFirstColumn" Width="1.05*"/>
+          <ColumnDefinition x:Name="SupportingWorkspaceSecondColumn" Width="0.95*"/>
+          <ColumnDefinition x:Name="SupportingWorkspaceThirdColumn" Width="0.95*"/>
+          <ColumnDefinition x:Name="SupportingWorkspaceFourthColumn" Width="0.95*"/>
         </Grid.ColumnDefinitions>
 
-        <Border Style="{StaticResource AnomalyPageSurface}" Margin="0,0,10,0">
+        <Border x:Name="TimelinePanel" Style="{StaticResource AnomalyPageSurface}" Margin="0,0,10,0">
           <StackPanel>
             <TextBlock Text="Incident Timeline / Activity"
                        Style="{StaticResource AnomalySectionTitle}"/>
@@ -651,7 +661,7 @@
           </StackPanel>
         </Border>
 
-        <Border Grid.Column="1" Style="{StaticResource AnomalyPageSurface}" Margin="0,0,10,0">
+        <Border x:Name="RelatedAnomaliesPanel" Grid.Column="1" Style="{StaticResource AnomalyPageSurface}" Margin="0,0,10,0">
           <StackPanel>
             <TextBlock Text="Related Anomalies"
                        Style="{StaticResource AnomalySectionTitle}"/>
@@ -671,7 +681,7 @@
           </StackPanel>
         </Border>
 
-        <Border Grid.Column="2" Style="{StaticResource AnomalyPageSurface}" Margin="0,0,10,0">
+        <Border x:Name="AffectedHostsPanel" Grid.Column="2" Style="{StaticResource AnomalyPageSurface}" Margin="0,0,10,0">
           <StackPanel>
             <TextBlock Text="Affected Hosts"
                        Style="{StaticResource AnomalySectionTitle}"/>
@@ -708,7 +718,7 @@
           </StackPanel>
         </Border>
 
-        <Border Grid.Column="3" Style="{StaticResource AnomalyPageSurface}">
+        <Border x:Name="ResponseChecklistPanel" Grid.Column="3" Style="{StaticResource AnomalyPageSurface}">
           <StackPanel>
             <TextBlock Text="Response Checklist"
                        Style="{StaticResource AnomalySectionTitle}"/>

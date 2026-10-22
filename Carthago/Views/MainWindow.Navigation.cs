@@ -40,12 +40,7 @@ namespace Carthago
             SidebarPanel?.ActivateNav("Dashboard");
 
             // No filters in sidebar for dashboard
-            if (SidebarPanel != null)
-            {
-                SidebarPanel.TrafficFilterExpander.Visibility = Visibility.Collapsed;
-                SidebarPanel.IdsFilterExpander.Visibility = Visibility.Collapsed;
-                SidebarPanel.SinkEventsFilterExpander.Visibility = Visibility.Collapsed;
-            }
+            SidebarPanel?.HideAllFilters();
         }
 
         // ======================= NAV: LIVE TRAFFIC ========================
@@ -56,12 +51,7 @@ namespace Carthago
             SidebarPanel?.ActivateNav("LiveTraffic");
 
             // Only show the Live Traffic filter
-            if (SidebarPanel != null)
-            {
-                SidebarPanel.TrafficFilterExpander.Visibility = Visibility.Visible;
-                SidebarPanel.IdsFilterExpander.Visibility = Visibility.Collapsed;
-                SidebarPanel.SinkEventsFilterExpander.Visibility = Visibility.Collapsed;
-            }
+            SidebarPanel?.ShowTrafficFilters();
         }
 
         // ========================= NAV: ALERTS / IDS ======================
@@ -72,12 +62,7 @@ namespace Carthago
             SidebarPanel?.ActivateNav("Alerts");
 
             // Only show the IDS / Alerts filter
-            if (SidebarPanel != null)
-            {
-                SidebarPanel.TrafficFilterExpander.Visibility = Visibility.Collapsed;
-                SidebarPanel.IdsFilterExpander.Visibility = Visibility.Visible;
-                SidebarPanel.SinkEventsFilterExpander.Visibility = Visibility.Collapsed;
-            }
+            SidebarPanel?.ShowDetectionFilters();
         }
 
         // ======================== NAV: HOST INTEGRITY =====================
@@ -91,14 +76,10 @@ namespace Carthago
             // container, but without this assignment the page could open blank.
             if (HostIntegrityFrame.Content is not Carthago.Views.HostIntegrityPage)
                 HostIntegrityFrame.Content = new Carthago.Views.HostIntegrityPage();
+            ApplyResponsiveLayoutTo(HostIntegrityFrame.Content);
 
             // No sidebar filters for this view
-            if (SidebarPanel != null)
-            {
-                SidebarPanel.TrafficFilterExpander.Visibility = Visibility.Collapsed;
-                SidebarPanel.IdsFilterExpander.Visibility = Visibility.Collapsed;
-                SidebarPanel.SinkEventsFilterExpander.Visibility = Visibility.Collapsed;
-            }
+            SidebarPanel?.HideAllFilters();
         }
 
         // ========================= NAV: SETTINGS ==========================
@@ -108,12 +89,7 @@ namespace Carthago
             ShowView(SettingsView);
             SidebarPanel?.ActivateNav("SystemSettings");
 
-            if (SidebarPanel != null)
-            {
-                SidebarPanel.TrafficFilterExpander.Visibility = Visibility.Collapsed;
-                SidebarPanel.IdsFilterExpander.Visibility = Visibility.Collapsed;
-                SidebarPanel.SinkEventsFilterExpander.Visibility = Visibility.Collapsed;
-            }
+            SidebarPanel?.HideAllFilters();
         }
 
         // ======================== NAV: CISCO TOOLS ========================
@@ -124,24 +100,14 @@ namespace Carthago
             SidebarPanel?.ActivateNav("CiscoTools");
 
             // Cisco tools uses its own internal filtering, no sidebar filters
-            if (SidebarPanel != null)
-            {
-                SidebarPanel.TrafficFilterExpander.Visibility = Visibility.Collapsed;
-                SidebarPanel.IdsFilterExpander.Visibility = Visibility.Collapsed;
-                SidebarPanel.SinkEventsFilterExpander.Visibility = Visibility.Collapsed;
-            }
+            SidebarPanel?.HideAllFilters();
         }
 
         internal void OpenDetectionRulesWorkspace()
         {
             ShowView(SettingsView);
             SidebarPanel?.ActivateNav("DetectionRules");
-            if (SidebarPanel != null)
-            {
-                SidebarPanel.TrafficFilterExpander.Visibility = Visibility.Collapsed;
-                SidebarPanel.IdsFilterExpander.Visibility = Visibility.Collapsed;
-                SidebarPanel.SinkEventsFilterExpander.Visibility = Visibility.Collapsed;
-            }
+            SidebarPanel?.HideAllFilters();
         }
 
         internal void OpenRawTrafficWorkspace()
@@ -168,6 +134,7 @@ namespace Carthago
                 IncidentsFrame.Content = page;
             }
 
+            ApplyResponsiveLayoutTo(page);
             page.SelectIncident(incidentId);
         }
     }

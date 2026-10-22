@@ -35,15 +35,15 @@
 
   <ScrollViewer VerticalScrollBarVisibility="Auto"
                 HorizontalScrollBarVisibility="Disabled">
-    <Grid Margin="0"
-          MinWidth="1180">
+    <Grid Margin="0">
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto"/>
         <RowDefinition Height="Auto"/>
         <RowDefinition Height="Auto"/>
       </Grid.RowDefinitions>
 
-      <UniformGrid Grid.Row="0"
+      <UniformGrid x:Name="KpiGrid"
+                   Grid.Row="0"
                    Columns="5"
                    Margin="0,0,0,14">
         <Border Style="{StaticResource AnomalyKpiCard}" Margin="0,0,10,0">
@@ -98,13 +98,17 @@
         </Border>
       </UniformGrid>
 
-      <Grid Grid.Row="1" Margin="0,0,0,14">
+      <Grid x:Name="PrimaryWorkspaceGrid" Grid.Row="1" Margin="0,0,0,14">
+        <Grid.RowDefinitions>
+          <RowDefinition x:Name="PrimaryWorkspaceTopRow" Height="Auto"/>
+          <RowDefinition x:Name="PrimaryWorkspaceBottomRow" Height="0"/>
+        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="0.45*"/>
-          <ColumnDefinition Width="0.55*"/>
+          <ColumnDefinition x:Name="PrimaryWorkspaceQueueColumn" Width="0.45*"/>
+          <ColumnDefinition x:Name="PrimaryWorkspaceDetailColumn" Width="0.55*"/>
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Column="0"
+        <Border x:Name="QueuePanel" Grid.Column="0"
                 Style="{StaticResource AnomalyQueuePanel}"
                 Margin="0,0,12,0">
           <Grid>
@@ -187,7 +191,16 @@
                       Click="ResetFilters_Click"/>
             </Grid>
 
-            <Border Grid.Row="2"
+            <ScrollViewer Grid.Row="2"
+                          Grid.RowSpan="2"
+                          HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Disabled">
+              <Grid MinWidth="900">
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto"/>
+                  <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+            <Border Grid.Row="0"
                     Background="#081321"
                     BorderBrush="{StaticResource InputBorderBrush}"
                     BorderThickness="1"
@@ -219,7 +232,7 @@
               </Grid>
             </Border>
 
-            <Grid Grid.Row="3">
+            <Grid Grid.Row="1">
               <ListBox x:Name="AnomaliesList"
                        ItemsSource="{Binding Visible}"
                        ItemContainerStyle="{StaticResource AnomalyQueueItemContainerStyle}"
@@ -328,7 +341,7 @@
                       </Border>
 
                       <Button Grid.Column="8"
-                              Content="⋯"
+                              Content="&#x22EF;"
                               Width="28"
                               Height="28"
                               Padding="0"
@@ -358,6 +371,8 @@
                 </StackPanel>
               </Border>
             </Grid>
+              </Grid>
+            </ScrollViewer>
 
             <DockPanel Grid.Row="4" Margin="0,12,0,0" LastChildFill="False">
               <TextBlock Text="{Binding QueueCountText}"
@@ -405,7 +420,7 @@
           </Grid>
         </Border>
 
-        <Border Grid.Column="1"
+        <Border x:Name="InvestigationPanel" Grid.Column="1"
                 Style="{StaticResource AnomalyPageSurface}">
           <Grid>
             <Grid.RowDefinitions>
@@ -732,14 +747,19 @@
         </Border>
       </Grid>
 
-      <Grid Grid.Row="2">
+      <Grid x:Name="SupportingWorkspaceGrid" Grid.Row="2">
+        <Grid.RowDefinitions>
+          <RowDefinition x:Name="SupportingWorkspaceFirstRow" Height="Auto"/>
+          <RowDefinition x:Name="SupportingWorkspaceSecondRow" Height="0"/>
+          <RowDefinition x:Name="SupportingWorkspaceThirdRow" Height="0"/>
+        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="0.35*"/>
-          <ColumnDefinition Width="0.37*"/>
-          <ColumnDefinition Width="0.28*"/>
+          <ColumnDefinition x:Name="SupportingWorkspaceFirstColumn" Width="0.35*"/>
+          <ColumnDefinition x:Name="SupportingWorkspaceSecondColumn" Width="0.37*"/>
+          <ColumnDefinition x:Name="SupportingWorkspaceThirdColumn" Width="0.28*"/>
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Column="0" Style="{StaticResource AnomalyPageSurface}" Margin="0,0,12,0">
+        <Border x:Name="EntityHistoryPanel" Grid.Column="0" Style="{StaticResource AnomalyPageSurface}" Margin="0,0,12,0">
           <Grid>
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto"/>
@@ -796,7 +816,7 @@
           </Grid>
         </Border>
 
-        <Border Grid.Column="1" Style="{StaticResource AnomalyPageSurface}" Margin="0,0,12,0">
+        <Border x:Name="BaselineDriftPanel" Grid.Column="1" Style="{StaticResource AnomalyPageSurface}" Margin="0,0,12,0">
           <Grid>
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto"/>
@@ -849,7 +869,7 @@
           </Grid>
         </Border>
 
-        <Border Grid.Column="2" Style="{StaticResource AnomalyPageSurface}">
+        <Border x:Name="ModelSummaryPanel" Grid.Column="2" Style="{StaticResource AnomalyPageSurface}">
           <Grid>
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto"/>

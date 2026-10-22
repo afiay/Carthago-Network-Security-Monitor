@@ -7,10 +7,10 @@
         xmlns:views="clr-namespace:Carthago.Views"
         xmlns:controls="clr-namespace:Carthago.Controls"
         Title="Carthago AI Security Monitor"
-        Height="960"
-        Width="1820"
-        MinWidth="1180"
-        MinHeight="760"
+        Height="900"
+        Width="1440"
+        MinWidth="640"
+        MinHeight="480"
         WindowStartupLocation="CenterScreen"
         SnapsToDevicePixels="True"
         UseLayoutRounding="True">
@@ -23,22 +23,33 @@
       </ResourceDictionary.MergedDictionaries>
       <views:SeverityToBrushConverter x:Key="SeverityBrush"/>
       <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+      <ItemsPanelTemplate x:Key="DashboardKpiWidePanel">
+        <UniformGrid IsItemsHost="True" Columns="5"/>
+      </ItemsPanelTemplate>
+      <ItemsPanelTemplate x:Key="DashboardKpiStandardPanel">
+        <UniformGrid IsItemsHost="True" Columns="3"/>
+      </ItemsPanelTemplate>
+      <ItemsPanelTemplate x:Key="DashboardKpiCompactPanel">
+        <UniformGrid IsItemsHost="True" Columns="2"/>
+      </ItemsPanelTemplate>
     </ResourceDictionary>
   </Window.Resources>
 
   <!-- ======= LAYOUT: Sidebar + Main ======= -->
-  <Grid Background="{StaticResource AppBackdropGradient}">
+  <Grid x:Name="ApplicationShell" Background="{StaticResource AppBackdropGradient}">
     <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="216" MinWidth="212"/>
+      <ColumnDefinition x:Name="SidebarColumn" Width="216"/>
       <ColumnDefinition Width="*"/>
     </Grid.ColumnDefinitions>
 
     <!-- Sidebar -->
     <views:Sidebar x:Name="SidebarPanel"
-                   Grid.Column="0"/>
+                   Grid.Column="0"
+                   Panel.ZIndex="10"/>
 
     <!-- ===== Main Area ===== -->
-    <Grid Grid.Column="1"
+    <Grid x:Name="MainContentHost"
+          Grid.Column="1"
           Margin="18,0,18,0">
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto"/>
@@ -47,20 +58,28 @@
       </Grid.RowDefinitions>
 
       <!-- ===== Header bar ===== -->
-      <Border Grid.Row="0"
+      <Border x:Name="CommandHeader"
+              Grid.Row="0"
               Style="{StaticResource TopCommandSurface}"
               Margin="0,0,0,14"
               Padding="12,12,12,10"
               MinHeight="92">
-        <Grid>
+        <Grid x:Name="CommandHeaderGrid">
+          <Grid.RowDefinitions>
+            <RowDefinition x:Name="CommandHeaderPrimaryRow" Height="Auto"/>
+            <RowDefinition x:Name="CommandHeaderSecondaryRow" Height="0"/>
+            <RowDefinition x:Name="CommandHeaderTertiaryRow" Height="0"/>
+            <RowDefinition x:Name="CommandHeaderQuaternaryRow" Height="0"/>
+          </Grid.RowDefinitions>
           <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="350"/>
-            <ColumnDefinition Width="350" MinWidth="320"/>
-            <ColumnDefinition Width="260" MinWidth="220"/>
-            <ColumnDefinition Width="*"/>
+            <ColumnDefinition x:Name="CommandHeaderStatusColumn" Width="250"/>
+            <ColumnDefinition x:Name="CommandHeaderSourceColumn" Width="290"/>
+            <ColumnDefinition x:Name="CommandHeaderAnalysisColumn" Width="210"/>
+            <ColumnDefinition x:Name="CommandHeaderActionsColumn" Width="*"/>
           </Grid.ColumnDefinitions>
 
-          <Border Grid.Column="0"
+          <Border x:Name="CommandHeaderStatusGroup"
+                  Grid.Column="0"
                   BorderBrush="{StaticResource SoftDividerBrush}"
                   BorderThickness="0,0,1,0"
                   Padding="0,0,14,0"
@@ -88,7 +107,8 @@
             </StackPanel>
           </Border>
 
-          <Border Grid.Column="1"
+          <Border x:Name="CommandHeaderSourceGroup"
+                  Grid.Column="1"
                   BorderBrush="{StaticResource SoftDividerBrush}"
                   BorderThickness="0,0,1,0"
                   Padding="0,0,14,0"
@@ -101,9 +121,10 @@
               <TextBlock Text="Capture source" Style="{StaticResource MicroLabel}"/>
               <ComboBox x:Name="DeviceComboBox"
                         Grid.Row="1"
-                        Width="320"
+                        MinWidth="180"
+                        MaxWidth="320"
                         Height="32"
-                        HorizontalAlignment="Left"
+                        HorizontalAlignment="Stretch"
                         Margin="0,5,0,0"
                         Background="{StaticResource InputBgBrush}"
                         Foreground="{StaticResource TextBrush}"
@@ -123,7 +144,8 @@
             </Grid>
           </Border>
 
-          <Border Grid.Column="2"
+          <Border x:Name="CommandHeaderAnalysisGroup"
+                  Grid.Column="2"
                   BorderBrush="{StaticResource SoftDividerBrush}"
                   BorderThickness="0,0,1,0"
                   Padding="0,0,14,0"
@@ -134,21 +156,21 @@
                 <RowDefinition Height="Auto"/>
               </Grid.RowDefinitions>
               <TextBlock Text="Last analysis" Style="{StaticResource MicroLabel}"/>
-              <TextBlock x:Name="HeaderLastAnalysisText" Grid.Row="1" Text="Last analysis: waiting for traffic" Foreground="{StaticResource TextSubtleBrush}" FontSize="12" Margin="0,5,0,0"/>
+              <TextBlock x:Name="HeaderLastAnalysisText" Grid.Row="1" Text="Waiting for traffic" Foreground="{StaticResource TextSubtleBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,5,0,0"/>
             </Grid>
           </Border>
 
-          <StackPanel Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Right">
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                            <Button x:Name="StartButton" Content="&#x25B6;  Start Monitoring" Width="164" Height="36" Style="{StaticResource PrimaryButton}" Click="StartButton_Click"/>
-                            <Button x:Name="StopButton" Content="&#x23F8;  Pause" Width="104" Height="36" Style="{StaticResource SecondaryButton}" Click="StopButton_Click" IsEnabled="False" Visibility="Collapsed"/>
-              <Button x:Name="TestRepButton" Content="ðŸ›¡  Test Reputation" Width="150" Height="36" Style="{StaticResource SecondaryButton}" Click="TestReputation_Click" Margin="8,0,0,0"/>
-              <Button Content="â‹®" Width="40" Height="36" Style="{StaticResource SecondaryButton}" ToolTip="More dashboard actions" Margin="8,0,0,0"/>
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,5,0,0">
+          <StackPanel x:Name="CommandHeaderActionsGroup" Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Right">
+            <WrapPanel HorizontalAlignment="Right">
+              <Button x:Name="StartButton" Content="&#x25B6;  Start Monitoring" Width="164" Height="36" Style="{StaticResource PrimaryButton}" Click="StartButton_Click"/>
+              <Button x:Name="StopButton" Content="&#x23F8;  Pause Monitoring" Width="148" Height="36" Style="{StaticResource SecondaryButton}" Click="StopButton_Click" IsEnabled="False" Visibility="Collapsed"/>
+              <Button x:Name="TestRepButton" Content="Test Reputation" Width="132" Height="36" Style="{StaticResource SecondaryButton}" Click="TestReputation_Click" Margin="8,0,0,0"/>
+              <Button Content="&#x22EE;" Width="40" Height="36" Style="{StaticResource SecondaryButton}" ToolTip="More dashboard actions" AutomationProperties.Name="More dashboard actions" Margin="8,0,0,0"/>
+            </WrapPanel>
+            <WrapPanel HorizontalAlignment="Right" Margin="0,5,0,0">
               <CheckBox x:Name="AnomaliesOnlyToggle" Content="Show anomalies only" VerticalAlignment="Center" Checked="AnomaliesOnlyToggle_Changed" Unchecked="AnomaliesOnlyToggle_Changed"/>
               <Button Content="Customize" Width="104" Height="30" Style="{StaticResource SecondaryButton}" Click="DashboardOpenSettings_Click" Margin="12,0,0,0"/>
-            </StackPanel>
+            </WrapPanel>
           </StackPanel>
         </Grid>
       </Border>
@@ -215,7 +237,7 @@
                         Margin="14,0,0,0"
                         Background="#0B2035"
                         BorderBrush="#214465">
-                  <TextBlock Text="Minimal â€¢ anomaly-first â€¢ settings-driven"
+                  <TextBlock Text="Minimal &#x2022; anomaly-first &#x2022; settings-driven"
                              FontSize="11"
                              Foreground="{StaticResource TextSubtleBrush}"/>
                 </Border>
@@ -243,10 +265,11 @@
             </Grid>
           </Border>
 
-          <ScrollViewer Grid.Row="1"
+          <ScrollViewer x:Name="DashboardScrollViewer"
+                        Grid.Row="1"
                         VerticalScrollBarVisibility="Auto"
                         HorizontalScrollBarVisibility="Disabled">
-            <Grid>
+            <Grid Width="{Binding ViewportWidth, ElementName=DashboardScrollViewer}">
               <Border x:Name="DashboardEmptyStateCard"
                       Style="{StaticResource EmptyDashboardCard}"
                       Visibility="Collapsed"
@@ -296,7 +319,7 @@
                   </ItemsControl.ItemsPanel>
                   <ItemsControl.ItemContainerStyle>
                     <Style TargetType="{x:Type ContentPresenter}">
-                      <Setter Property="Margin" Value="0,0,12,0"/>
+                      <Setter Property="Margin" Value="0,0,10,10"/>
                     </Style>
                   </ItemsControl.ItemContainerStyle>
                   <ItemsControl.ItemTemplate>
@@ -311,12 +334,12 @@
 
                           <DockPanel LastChildFill="True">
                             <TextBlock DockPanel.Dock="Right"
-                                       Text="â‹®"
+                                       Text="&#x22EE;"
                                        Style="{StaticResource SocPanelMenuGlyph}"
                                        Margin="8,-4,0,0"/>
                             <StackPanel Orientation="Horizontal">
                               <TextBlock Text="{Binding Title}" Style="{StaticResource MicroLabel}"/>
-                              <TextBlock Text="  â“˜" Style="{StaticResource SocInfoGlyph}"/>
+                              <TextBlock Text="  &#x24D8;" Style="{StaticResource SocInfoGlyph}"/>
                             </StackPanel>
                           </DockPanel>
 
@@ -367,13 +390,18 @@
                 </ItemsControl>
 
                 <!-- Main triage area -->
-                <Grid Height="404" Margin="0,0,0,10">
+                <Grid x:Name="DashboardTriageGrid" Height="404" Margin="0,0,0,10">
+                  <Grid.RowDefinitions>
+                    <RowDefinition x:Name="DashboardTriagePrimaryRow" Height="*"/>
+                    <RowDefinition x:Name="DashboardTriageSecondaryRow" Height="0"/>
+                  </Grid.RowDefinitions>
                   <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="1.05*" MinWidth="360"/>
-                    <ColumnDefinition Width="1.65*" MinWidth="520"/>
+                    <ColumnDefinition x:Name="DashboardTriageTimelineColumn" Width="1.05*"/>
+                    <ColumnDefinition x:Name="DashboardTriageDetailColumn" Width="1.65*"/>
                   </Grid.ColumnDefinitions>
 
-                  <Border Grid.Column="0"
+                  <Border x:Name="DashboardTimelinePanel"
+                          Grid.Column="0"
                           Style="{StaticResource PageSurface}"
                           Padding="14"
                           Margin="0,0,12,0">
@@ -387,7 +415,7 @@
                       <StackPanel>
                         <StackPanel Orientation="Horizontal">
                           <TextBlock Text="Anomaly Timeline" Style="{StaticResource DashboardSectionTitle}"/>
-                          <TextBlock Text="  â“˜" Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"/>
+                          <TextBlock Text="  &#x24D8;" Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"/>
                         </StackPanel>
                         <TextBlock Text="Behavior shifts, detection novelty, threat matches, and baseline deviations."
                                    Foreground="{StaticResource TextMutedBrush}"
@@ -495,7 +523,8 @@
                     </Grid>
                   </Border>
 
-                  <Border Grid.Column="1"
+                  <Border x:Name="DashboardSignalPanel"
+                          Grid.Column="1"
                           Style="{StaticResource PageSurface}"
                           Padding="14">
                     <Grid>
@@ -514,7 +543,7 @@
                         <StackPanel>
                           <StackPanel Orientation="Horizontal">
                             <TextBlock Text="Signal Details" Style="{StaticResource DashboardSectionTitle}"/>
-                            <TextBlock Text="  â“˜" Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"/>
+                            <TextBlock Text="  &#x24D8;" Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"/>
                           </StackPanel>
                           <TextBlock Text="Explainable reasons, derived evidence, linked incident context, and next investigation steps."
                                      Foreground="{StaticResource TextMutedBrush}"
@@ -525,7 +554,7 @@
                           <TextBlock Text="RISK SCORE" Style="{StaticResource MicroLabel}" HorizontalAlignment="Right"/>
                           <Border x:Name="DashboardDetailRiskRing" Width="84" Height="84" CornerRadius="42" BorderThickness="6" BorderBrush="{StaticResource WarnBrush}" Margin="0,4,0,0">
                             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                              <TextBlock x:Name="DashboardDetailRiskText" Text="â€”" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center"/>
+                              <TextBlock x:Name="DashboardDetailRiskText" Text="&#x2014;" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center"/>
                               <TextBlock x:Name="DashboardDetailRiskBadgeText" Text="Learning" Foreground="{StaticResource WarnBrush}" FontSize="10" FontWeight="Bold" HorizontalAlignment="Center"/>
                             </StackPanel>
                           </Border>
@@ -552,37 +581,37 @@
                         <Border Style="{StaticResource DetailGridCard}" Margin="0,0,8,6">
                           <StackPanel>
                             <TextBlock Text="Source host" Style="{StaticResource MicroLabel}"/>
-                            <TextBlock x:Name="DashboardDetailSourceText" Text="â€”" Style="{StaticResource MonoValue}" Margin="0,4,0,0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                            <TextBlock x:Name="DashboardDetailSourceText" Text="&#x2014;" Style="{StaticResource MonoValue}" Margin="0,4,0,0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                           </StackPanel>
                         </Border>
                         <Border Style="{StaticResource DetailGridCard}" Margin="0,0,8,6">
                           <StackPanel>
                             <TextBlock Text="Destination" Style="{StaticResource MicroLabel}"/>
-                            <TextBlock x:Name="DashboardDetailDestinationText" Text="â€”" Style="{StaticResource MonoValue}" Margin="0,4,0,0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                            <TextBlock x:Name="DashboardDetailDestinationText" Text="&#x2014;" Style="{StaticResource MonoValue}" Margin="0,4,0,0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                           </StackPanel>
                         </Border>
                         <Border Style="{StaticResource DetailGridCard}" Margin="0,0,0,6">
                           <StackPanel>
                             <TextBlock Text="Protocol / port" Style="{StaticResource MicroLabel}"/>
-                            <TextBlock x:Name="DashboardDetailProtocolText" Text="â€”" Style="{StaticResource MonoValue}" Margin="0,4,0,0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                            <TextBlock x:Name="DashboardDetailProtocolText" Text="&#x2014;" Style="{StaticResource MonoValue}" Margin="0,4,0,0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                           </StackPanel>
                         </Border>
                         <Border Style="{StaticResource DetailGridCard}" Margin="0,0,8,0">
                           <StackPanel>
                             <TextBlock Text="Category" Style="{StaticResource MicroLabel}"/>
-                            <TextBlock x:Name="DashboardDetailCategoryText" Text="â€”" Style="{StaticResource MonoValue}" Margin="0,4,0,0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                            <TextBlock x:Name="DashboardDetailCategoryText" Text="&#x2014;" Style="{StaticResource MonoValue}" Margin="0,4,0,0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                           </StackPanel>
                         </Border>
                         <Border Style="{StaticResource DetailGridCard}" Margin="0,0,8,0">
                           <StackPanel>
                             <TextBlock Text="Detected" Style="{StaticResource MicroLabel}"/>
-                            <TextBlock x:Name="DashboardDetailDetectedText" Text="â€”" Style="{StaticResource MonoValue}" Margin="0,4,0,0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                            <TextBlock x:Name="DashboardDetailDetectedText" Text="&#x2014;" Style="{StaticResource MonoValue}" Margin="0,4,0,0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                           </StackPanel>
                         </Border>
                         <Border Style="{StaticResource DetailGridCard}">
                           <StackPanel>
                             <TextBlock Text="Related incident" Style="{StaticResource MicroLabel}"/>
-                            <TextBlock x:Name="DashboardDetailRelatedIncidentText" Text="â€”" Style="{StaticResource MonoValue}" Margin="0,4,0,0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                            <TextBlock x:Name="DashboardDetailRelatedIncidentText" Text="&#x2014;" Style="{StaticResource MonoValue}" Margin="0,4,0,0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                           </StackPanel>
                         </Border>
                       </UniformGrid>
@@ -667,19 +696,24 @@
                 </Grid>
 
                 <!-- Lower widgets -->
-                <Grid Height="202" Margin="0,0,0,10">
+                <Grid x:Name="DashboardSummaryGrid" Height="202" Margin="0,0,0,10">
+                  <Grid.RowDefinitions>
+                    <RowDefinition x:Name="DashboardSummaryFirstRow" Height="*"/>
+                    <RowDefinition x:Name="DashboardSummarySecondRow" Height="0"/>
+                    <RowDefinition x:Name="DashboardSummaryThirdRow" Height="0"/>
+                  </Grid.RowDefinitions>
                   <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="1.02*"/>
-                    <ColumnDefinition Width="1*"/>
-                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition x:Name="DashboardSummaryFirstColumn" Width="1.02*"/>
+                    <ColumnDefinition x:Name="DashboardSummarySecondColumn" Width="1*"/>
+                    <ColumnDefinition x:Name="DashboardSummaryThirdColumn" Width="1*"/>
                   </Grid.ColumnDefinitions>
-                  <Border Grid.Column="0" Style="{StaticResource PageSurface}" Padding="14" Margin="0,0,12,0">
+                  <Border x:Name="DashboardHostsPanel" Grid.Column="0" Style="{StaticResource PageSurface}" Padding="14" Margin="0,0,12,0">
                     <StackPanel>
                       <DockPanel LastChildFill="True">
-                        <TextBlock DockPanel.Dock="Right" Text="â†—" Style="{StaticResource SocPanelMenuGlyph}"/>
+                        <TextBlock DockPanel.Dock="Right" Text="&#x2197;" Style="{StaticResource SocPanelMenuGlyph}"/>
                         <StackPanel Orientation="Horizontal">
                           <TextBlock Text="High-Risk Hosts" Style="{StaticResource DashboardSectionTitle}"/>
-                          <TextBlock Text="  â“˜" Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"/>
+                          <TextBlock Text="  &#x24D8;" Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"/>
                         </StackPanel>
                       </DockPanel>
                       <Grid Margin="0,6,0,4">
@@ -742,17 +776,17 @@
                           </ItemsControl.ItemTemplate>
                         </ItemsControl>
                       </ScrollViewer>
-                      <Button Content="View all high-risk hosts  â†’" Width="190" Height="30" HorizontalAlignment="Left" Style="{StaticResource SecondaryButton}" Click="DashboardInvestigateHost_Click" Margin="0,8,0,0"/>
+                      <Button Content="View all high-risk hosts  &#x2192;" Width="190" Height="30" HorizontalAlignment="Left" Style="{StaticResource SecondaryButton}" Click="DashboardInvestigateHost_Click" Margin="0,8,0,0"/>
                     </StackPanel>
                   </Border>
 
-                  <Border Grid.Column="1" Style="{StaticResource PageSurface}" Padding="14" Margin="0,0,12,0">
+                  <Border x:Name="DashboardActionsPanel" Grid.Column="1" Style="{StaticResource PageSurface}" Padding="14" Margin="0,0,12,0">
                     <StackPanel>
                       <DockPanel LastChildFill="True">
-                        <TextBlock DockPanel.Dock="Right" Text="â†—" Style="{StaticResource SocPanelMenuGlyph}"/>
+                        <TextBlock DockPanel.Dock="Right" Text="&#x2197;" Style="{StaticResource SocPanelMenuGlyph}"/>
                         <StackPanel Orientation="Horizontal">
                           <TextBlock Text="Recommended Actions" Style="{StaticResource DashboardSectionTitle}"/>
-                          <TextBlock Text="  â“˜" Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"/>
+                          <TextBlock Text="  &#x24D8;" Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"/>
                         </StackPanel>
                       </DockPanel>
                       <ScrollViewer VerticalScrollBarVisibility="Auto"
@@ -786,20 +820,20 @@
                     </StackPanel>
                   </Border>
 
-                  <Border Grid.Column="2" Style="{StaticResource PageSurface}" Padding="12" Margin="0">
+                  <Border x:Name="DashboardOperationsPanel" Grid.Column="2" Style="{StaticResource PageSurface}" Padding="12" Margin="0">
                     <StackPanel>
                       <DockPanel LastChildFill="True">
-                        <TextBlock DockPanel.Dock="Right" Text="â†—" Style="{StaticResource SocPanelMenuGlyph}"/>
+                        <TextBlock DockPanel.Dock="Right" Text="&#x2197;" Style="{StaticResource SocPanelMenuGlyph}"/>
                         <StackPanel Orientation="Horizontal">
                           <TextBlock Text="Raw / Advanced Shortcuts" Style="{StaticResource DashboardSectionTitle}"/>
-                          <TextBlock Text="  â“˜" Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"/>
+                          <TextBlock Text="  &#x24D8;" Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"/>
                         </StackPanel>
                       </DockPanel>
                       <UniformGrid Columns="2" Margin="0,8,0,0">
                         <Button Style="{StaticResource ShortcutTile}" Click="DashboardRawTraffic_Click">
                           <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                            <TextBlock Text="âŒ" FontSize="20" Foreground="{StaticResource TextSubtleBrush}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            <TextBlock Text="&#x2301;" FontSize="20" Foreground="{StaticResource TextSubtleBrush}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                             <StackPanel Grid.Column="1">
                               <TextBlock Text="Raw Traffic" FontWeight="SemiBold" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
                               <TextBlock Text="Inspect packets &amp; flows" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
@@ -809,7 +843,7 @@
                         <Button Style="{StaticResource ShortcutTile}" Click="DashboardRawDetections_Click">
                           <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                            <TextBlock Text="â—‡" FontSize="20" Foreground="{StaticResource TextSubtleBrush}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            <TextBlock Text="&#x25C7;" FontSize="20" Foreground="{StaticResource TextSubtleBrush}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                             <StackPanel Grid.Column="1">
                               <TextBlock Text="Raw Detections" FontWeight="SemiBold" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
                               <TextBlock Text="View rule hits" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
@@ -819,7 +853,7 @@
                         <Button Style="{StaticResource ShortcutTile}" Click="DashboardPcapExplorer_Click">
                           <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                            <TextBlock Text="â–¤" FontSize="19" Foreground="{StaticResource TextSubtleBrush}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            <TextBlock Text="&#x25A4;" FontSize="19" Foreground="{StaticResource TextSubtleBrush}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                             <StackPanel Grid.Column="1">
                               <TextBlock Text="PCAP Explorer" FontWeight="SemiBold" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
                               <TextBlock Text="Search &amp; analyze PCAPs" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
@@ -829,7 +863,7 @@
                         <Button Style="{StaticResource ShortcutTile}" Click="DashboardForensicsWorkspace_Click">
                           <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                            <TextBlock Text="âŒ•" FontSize="20" Foreground="{StaticResource TextSubtleBrush}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            <TextBlock Text="&#x2315;" FontSize="20" Foreground="{StaticResource TextSubtleBrush}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                             <StackPanel Grid.Column="1">
                               <TextBlock Text="Forensics Workspace" FontWeight="SemiBold" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
                               <TextBlock Text="Deep-dive investigations" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
@@ -837,7 +871,7 @@
                           </Grid>
                         </Button>
                       </UniformGrid>
-                      <Button Content="Open advanced tools  â†’" Width="180" Height="30" HorizontalAlignment="Left" Style="{StaticResource SecondaryButton}" Click="DashboardRawTraffic_Click" Margin="0,8,0,0"/>
+                      <Button Content="Open advanced tools  &#x2192;" Width="180" Height="30" HorizontalAlignment="Left" Style="{StaticResource SecondaryButton}" Click="DashboardRawTraffic_Click" Margin="0,8,0,0"/>
                     </StackPanel>
                   </Border>
                 </Grid>
@@ -866,11 +900,11 @@
                                     Drop="DashboardWidgetCard_Drop">
                               <StackPanel>
                                 <DockPanel>
-                                  <TextBlock Text="â˜°" DockPanel.Dock="Left" Style="{StaticResource DragHandle}" ToolTip="Drag to reorder"/>
+                                  <TextBlock Text="&#x2630;" DockPanel.Dock="Left" Style="{StaticResource DragHandle}" ToolTip="Drag to reorder"/>
                                   <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                                    <Button Content="â†" Width="28" Height="26" Style="{StaticResource MinimalIconButton}" Tag="{Binding Id}" ToolTip="Move left" Click="DashboardWidgetMoveLeft_Click"/>
-                                    <Button Content="â†’" Width="28" Height="26" Style="{StaticResource MinimalIconButton}" Tag="{Binding Id}" ToolTip="Move right" Click="DashboardWidgetMoveRight_Click" Margin="4,0,0,0"/>
-                                    <Button Content="Ã—" Width="28" Height="26" Style="{StaticResource MinimalIconButton}" Tag="{Binding Id}" ToolTip="Remove widget" Click="DashboardWidgetRemove_Click" Margin="4,0,0,0"/>
+                                    <Button Content="&#x2190;" Width="28" Height="26" Style="{StaticResource MinimalIconButton}" Tag="{Binding Id}" ToolTip="Move left" Click="DashboardWidgetMoveLeft_Click"/>
+                                    <Button Content="&#x2192;" Width="28" Height="26" Style="{StaticResource MinimalIconButton}" Tag="{Binding Id}" ToolTip="Move right" Click="DashboardWidgetMoveRight_Click" Margin="4,0,0,0"/>
+                                    <Button Content="&#x00D7;" Width="28" Height="26" Style="{StaticResource MinimalIconButton}" Tag="{Binding Id}" ToolTip="Remove widget" Click="DashboardWidgetRemove_Click" Margin="4,0,0,0"/>
                                   </StackPanel>
                                   <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
                                 </DockPanel>
@@ -1187,7 +1221,7 @@
           </GroupBox>
         </Grid>
 
-        <!-- ===== Integrations (EDR/XDR) â€” side view (no popup) ===== -->
+        <!-- ===== Integrations (EDR/XDR) - side view (no popup) ===== -->
         <Grid x:Name="IntegrationsView"
               Visibility="Collapsed">
           <Border Background="{StaticResource CardBgBrush}"
@@ -1201,14 +1235,14 @@
           </Border>
         </Grid>
 
-        <!-- ===== Anomalies â€” side view ===== -->
+        <!-- ===== Anomalies - side view ===== -->
         <Grid x:Name="AnomaliesView"
               Visibility="Collapsed">
           <Frame x:Name="AnomaliesFrame"
                  NavigationUIVisibility="Hidden"/>
         </Grid>
 
-        <!-- ===== Incidents (AI) â€” side view (no popup) ===== -->
+        <!-- ===== Incidents (AI) - side view (no popup) ===== -->
         <Grid x:Name="IncidentsView"
               Visibility="Collapsed">
           <Border Background="{StaticResource CardBgBrush}"
@@ -1238,7 +1272,7 @@
                   BorderBrush="{StaticResource CardBorderBrush}"
                   BorderThickness="1"
                   Margin="5">
-            <views:CiscoToolsPanel/>
+            <views:CiscoToolsPanel x:Name="CiscoToolsPanel"/>
           </Border>
         </Grid>
 
@@ -1308,7 +1342,7 @@
                                    FontWeight="SemiBold"/>
                         <TextBlock Foreground="{StaticResource TextSubtleBrush}"
                                    Margin="0,4,0,0"
-                                   Text="Factor: 0.50&#x0a;AbuseIPDB cutoff: â‰¥ 90"/>
+                                   Text="Factor: 0.50&#x0a;AbuseIPDB cutoff: &#x2265; 90"/>
                       </StackPanel>
 
                       <StackPanel Grid.Column="1">
@@ -1316,7 +1350,7 @@
                                    FontWeight="SemiBold"/>
                         <TextBlock Foreground="{StaticResource TextSubtleBrush}"
                                    Margin="0,4,0,0"
-                                   Text="Factor: 1.00&#x0a;AbuseIPDB cutoff: â‰¥ 75"/>
+                                   Text="Factor: 1.00&#x0a;AbuseIPDB cutoff: &#x2265; 75"/>
                       </StackPanel>
 
                       <StackPanel Grid.Column="2">
@@ -1324,7 +1358,7 @@
                                    FontWeight="SemiBold"/>
                         <TextBlock Foreground="{StaticResource TextSubtleBrush}"
                                    Margin="0,4,0,0"
-                                   Text="Factor: 1.50&#x0a;AbuseIPDB cutoff: â‰¥ 50"/>
+                                   Text="Factor: 1.50&#x0a;AbuseIPDB cutoff: &#x2265; 50"/>
                       </StackPanel>
                     </Grid>
                   </Border>

@@ -1,7 +1,8 @@
 <!-- SPDX-License-Identifier: MIT -->
 <!-- File: Views/Theme.xaml -->
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:views="clr-namespace:Carthago.Views">
 
   <!-- Palette -->
   <SolidColorBrush x:Key="AppBgBrush" Color="#050B14"/>
@@ -76,6 +77,14 @@
   <SolidColorBrush x:Key="InputBorderBrush" Color="#24344B"/>
   <SolidColorBrush x:Key="SoftDividerBrush" Color="#17243A"/>
   <SolidColorBrush x:Key="SurfaceHoverBrush" Color="#10243A"/>
+  <SolidColorBrush x:Key="KeyboardFocusBrush" Color="#7DD3FC"/>
+
+  <!-- Layout scale -->
+  <Thickness x:Key="PagePaddingWide">18,0,18,0</Thickness>
+  <Thickness x:Key="PagePaddingStandard">14,0,14,0</Thickness>
+  <Thickness x:Key="PagePaddingCompact">10,0,10,0</Thickness>
+  <Thickness x:Key="CardPaddingComfortable">16,14</Thickness>
+  <Thickness x:Key="CardPaddingCompact">12,10</Thickness>
 
   <LinearGradientBrush x:Key="AccentGradient" StartPoint="0,0" EndPoint="1,0">
     <GradientStop Color="#38BDF8" Offset="0"/>
@@ -92,6 +101,19 @@
                     BlurRadius="32"
                     Opacity="0.28"
                     ShadowDepth="2"/>
+
+  <Style x:Key="KeyboardFocusVisual">
+    <Setter Property="Control.Template">
+      <Setter.Value>
+        <ControlTemplate>
+          <Border BorderBrush="{StaticResource KeyboardFocusBrush}"
+                  BorderThickness="2"
+                  CornerRadius="5"
+                  Margin="2"/>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
 
   <!-- Global defaults -->
   <Style TargetType="Window">
@@ -163,6 +185,7 @@
     <Setter Property="FontWeight" Value="SemiBold"/>
     <Setter Property="BorderThickness" Value="0"/>
     <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="FocusVisualStyle" Value="{StaticResource KeyboardFocusVisual}"/>
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="Button">
@@ -494,6 +517,7 @@
     <Setter Property="Margin" Value="0,2,0,0"/>
     <Setter Property="BorderThickness" Value="0"/>
     <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="FocusVisualStyle" Value="{StaticResource KeyboardFocusVisual}"/>
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="Button">
@@ -521,6 +545,12 @@
         </ControlTemplate>
       </Setter.Value>
     </Setter>
+    <Style.Triggers>
+      <DataTrigger Binding="{Binding IsCompact, RelativeSource={RelativeSource AncestorType={x:Type views:Sidebar}}}" Value="True">
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="Padding" Value="10,9"/>
+      </DataTrigger>
+    </Style.Triggers>
   </Style>
 
   <!-- GroupBox -->
@@ -570,6 +600,8 @@
     <Setter Property="EnableRowVirtualization" Value="True"/>
     <Setter Property="EnableColumnVirtualization" Value="True"/>
     <Setter Property="ScrollViewer.CanContentScroll" Value="True"/>
+    <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>
+    <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
     <Setter Property="SelectionMode" Value="Extended"/>
     <Setter Property="SelectionUnit" Value="FullRow"/>
     <Setter Property="RowHeight" Value="32"/>
@@ -1112,6 +1144,11 @@
     <Setter Property="FontSize" Value="10.5"/>
     <Setter Property="FontWeight" Value="Bold"/>
     <Setter Property="Margin" Value="8,16,8,7"/>
+    <Style.Triggers>
+      <DataTrigger Binding="{Binding IsCompact, RelativeSource={RelativeSource AncestorType={x:Type views:Sidebar}}}" Value="True">
+        <Setter Property="Visibility" Value="Collapsed"/>
+      </DataTrigger>
+    </Style.Triggers>
   </Style>
 
   <Style x:Key="SidebarNavTitle" TargetType="TextBlock">
@@ -1119,6 +1156,23 @@
     <Setter Property="FontWeight" Value="SemiBold"/>
     <Setter Property="Foreground" Value="{StaticResource TextSubtleBrush}"/>
     <Setter Property="VerticalAlignment" Value="Center"/>
+    <Style.Triggers>
+      <DataTrigger Binding="{Binding IsCompact, RelativeSource={RelativeSource AncestorType={x:Type views:Sidebar}}}" Value="True">
+        <Setter Property="Visibility" Value="Collapsed"/>
+      </DataTrigger>
+    </Style.Triggers>
+  </Style>
+
+  <Style x:Key="SidebarNavBadge" TargetType="Border">
+    <Setter Property="Background" Value="#203148"/>
+    <Setter Property="CornerRadius" Value="999"/>
+    <Setter Property="Padding" Value="7,2"/>
+    <Setter Property="VerticalAlignment" Value="Center"/>
+    <Style.Triggers>
+      <DataTrigger Binding="{Binding IsCompact, RelativeSource={RelativeSource AncestorType={x:Type views:Sidebar}}}" Value="True">
+        <Setter Property="Visibility" Value="Collapsed"/>
+      </DataTrigger>
+    </Style.Triggers>
   </Style>
 
 

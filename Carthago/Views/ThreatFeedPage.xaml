@@ -108,8 +108,7 @@
 
   <ScrollViewer VerticalScrollBarVisibility="Auto"
                 HorizontalScrollBarVisibility="Disabled">
-    <Grid Margin="0"
-          MinWidth="1180">
+    <Grid Margin="0">
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto"/>
         <RowDefinition Height="Auto"/>
@@ -137,7 +136,7 @@
                   <RowDefinition Height="Auto"/>
                   <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
-                <DockPanel>
+                <DockPanel LastChildFill="False">
                   <TextBlock Text="{Binding Title}"
                              Style="{StaticResource TinyStatusText}"/>
                   <TextBlock Text="{Binding Glyph}"
@@ -170,15 +169,19 @@
         </ItemsControl.ItemTemplate>
       </ItemsControl>
 
-      <Grid Grid.Row="1"
+      <Grid x:Name="PrimaryWorkspaceGrid" Grid.Row="1"
             Grid.IsSharedSizeScope="True"
             Margin="0,0,0,14">
+        <Grid.RowDefinitions>
+          <RowDefinition x:Name="PrimaryWorkspaceTopRow" Height="Auto"/>
+          <RowDefinition x:Name="PrimaryWorkspaceBottomRow" Height="0"/>
+        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="0.44*" MinWidth="560"/>
-          <ColumnDefinition Width="0.56*" MinWidth="600"/>
+          <ColumnDefinition x:Name="PrimaryWorkspaceQueueColumn" Width="0.44*"/>
+          <ColumnDefinition x:Name="PrimaryWorkspaceDetailColumn" Width="0.56*"/>
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Column="0"
+        <Border x:Name="QueuePanel" Grid.Column="0"
                 Style="{StaticResource AnomalyPageSurface}"
                 Margin="0,0,14,0">
           <Grid>
@@ -251,8 +254,17 @@
               </Grid>
             </StackPanel>
 
-            <Grid Grid.Row="1"
-                  Margin="0,16,0,0">
+            <ScrollViewer Grid.Row="1"
+                          Grid.RowSpan="2"
+                          Margin="0,16,0,0"
+                          HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Disabled">
+              <Grid MinWidth="860">
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto"/>
+                  <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+            <Grid Grid.Row="0">
               <Grid.ColumnDefinitions>
                 <ColumnDefinition SharedSizeGroup="ThreatScoreCol" Width="72"/>
                 <ColumnDefinition SharedSizeGroup="ThreatMatchCol" Width="2.0*"/>
@@ -273,7 +285,7 @@
               <TextBlock Grid.Column="7" Text="" Style="{StaticResource ThreatQueueHeader}"/>
             </Grid>
 
-            <Grid Grid.Row="2"
+            <Grid Grid.Row="1"
                   Margin="0,8,0,0">
               <ListBox x:Name="ThreatMatchesList"
                        ItemsSource="{Binding VisibleMatches}"
@@ -411,6 +423,8 @@
                 </StackPanel>
               </Border>
             </Grid>
+              </Grid>
+            </ScrollViewer>
 
             <DockPanel Grid.Row="3"
                        Margin="0,14,0,0">
@@ -450,7 +464,7 @@
           </Grid>
         </Border>
 
-        <Border Grid.Column="1"
+        <Border x:Name="InvestigationPanel" Grid.Column="1"
                 Style="{StaticResource AnomalyPageSurface}">
           <Grid>
             <Grid.RowDefinitions>
@@ -745,14 +759,19 @@
         </Border>
       </Grid>
 
-      <Grid Grid.Row="2">
+      <Grid x:Name="SupportingWorkspaceGrid" Grid.Row="2">
+        <Grid.RowDefinitions>
+          <RowDefinition x:Name="SupportingWorkspaceFirstRow" Height="Auto"/>
+          <RowDefinition x:Name="SupportingWorkspaceSecondRow" Height="0"/>
+          <RowDefinition x:Name="SupportingWorkspaceThirdRow" Height="0"/>
+        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="1.0*"/>
-          <ColumnDefinition Width="1.0*"/>
-          <ColumnDefinition Width="1.12*"/>
+          <ColumnDefinition x:Name="SupportingWorkspaceFirstColumn" Width="1.0*"/>
+          <ColumnDefinition x:Name="SupportingWorkspaceSecondColumn" Width="1.0*"/>
+          <ColumnDefinition x:Name="SupportingWorkspaceThirdColumn" Width="1.12*"/>
         </Grid.ColumnDefinitions>
 
-        <Border Style="{StaticResource AnomalyPageSurface}"
+        <Border x:Name="FeedSourcesPanel" Style="{StaticResource AnomalyPageSurface}"
                 Margin="0,0,10,0">
           <StackPanel>
             <TextBlock Text="Top Feed Sources"
@@ -789,7 +808,7 @@
           </StackPanel>
         </Border>
 
-        <Border Grid.Column="1"
+        <Border x:Name="IndicatorTypesPanel" Grid.Column="1"
                 Style="{StaticResource AnomalyPageSurface}"
                 Margin="0,0,10,0">
           <StackPanel>
@@ -827,7 +846,7 @@
           </StackPanel>
         </Border>
 
-        <Border Grid.Column="2"
+        <Border x:Name="FeedHealthPanel" Grid.Column="2"
                 Style="{StaticResource AnomalyPageSurface}">
           <StackPanel>
             <TextBlock Text="Raw / Advanced Shortcuts"

@@ -8,10 +8,40 @@ namespace Carthago.Views
 {
     public partial class Sidebar : UserControl
     {
+        public static readonly DependencyProperty IsCompactProperty = DependencyProperty.Register(
+            nameof(IsCompact),
+            typeof(bool),
+            typeof(Sidebar),
+            new PropertyMetadata(false, OnIsCompactChanged));
+
+        public bool IsCompact
+        {
+            get => (bool)GetValue(IsCompactProperty);
+            set => SetValue(IsCompactProperty, value);
+        }
+
         public Sidebar()
         {
             InitializeComponent();
             Loaded += (_, __) => SetActiveNavButton(DashboardNavButton);
+        }
+
+        private static void OnIsCompactChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
+        {
+            if (sender is Sidebar sidebar)
+                sidebar.UpdateCompactPresentation((bool)e.NewValue);
+        }
+
+        private void UpdateCompactPresentation(bool compact)
+        {
+            Width = double.NaN;
+            BrandText.Visibility = compact ? Visibility.Collapsed : Visibility.Visible;
+            ProductFooter.Visibility = compact ? Visibility.Collapsed : Visibility.Visible;
+            BrandHeader.Padding = compact ? new Thickness(12, 18, 12, 16) : new Thickness(18, 18, 16, 16);
+            NavigationStack.Margin = compact ? new Thickness(2, 12, 2, 16) : new Thickness(10, 12, 10, 16);
+
+            if (compact)
+                HideAllFilters();
         }
 
         // ======= Navigation events MainWindow subscribes to =======
@@ -220,13 +250,20 @@ namespace Carthago.Views
                 SinkEventsFilterExpander.Visibility = Visibility.Collapsed;
 
             if (toShow != null)
+            {
+                toShow.IsEnabled = true;
+                if (toShow is Expander expander)
+                    expander.IsExpanded = true;
                 toShow.Visibility = Visibility.Visible;
+            }
+
+            Width = IsCompact && toShow != null ? 320 : double.NaN;
         }
 
         /// <summary>
         /// Collapse all filter expanders.
         /// </summary>
-        private void HideAllFilters()
+        internal void HideAllFilters()
         {
             if (TrafficFilterExpander != null)
                 TrafficFilterExpander.Visibility = Visibility.Collapsed;
@@ -236,6 +273,21 @@ namespace Carthago.Views
 
             if (SinkEventsFilterExpander != null)
                 SinkEventsFilterExpander.Visibility = Visibility.Collapsed;
+
+            if (IsCompact)
+                Width = double.NaN;
+        }
+
+        internal void ShowTrafficFilters() => ShowOnly(TrafficFilterExpander);
+
+        internal void ShowDetectionFilters() => ShowOnly(IdsFilterExpander);
+
+        internal void ShowSinkDeliveryFilters() => ShowOnly(SinkEventsFilterExpander);
+
+        private void CompactFilterExpander_Collapsed(object sender, RoutedEventArgs e)
+        {
+            if (IsCompact)
+                HideAllFilters();
         }
     }
 }

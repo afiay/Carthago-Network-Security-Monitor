@@ -113,9 +113,11 @@
                                       AutoGenerateColumns="False"
                                       IsReadOnly="True"
                                       CanUserAddRows="False"
-                                      CanUserDeleteRows="False"
-                                      EnableRowVirtualization="True"
-                                      EnableColumnVirtualization="True">
+                                       CanUserDeleteRows="False"
+                                       EnableRowVirtualization="True"
+                                       EnableColumnVirtualization="True"
+                                       ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                       ScrollViewer.VerticalScrollBarVisibility="Auto">
                                 <DataGrid.ContextMenu>
                                     <ContextMenu>
                                         <MenuItem Header="Open driver location"
@@ -195,9 +197,11 @@
                                       AutoGenerateColumns="False"
                                       IsReadOnly="True"
                                       CanUserAddRows="False"
-                                      CanUserDeleteRows="False"
-                                      EnableRowVirtualization="True"
-                                      EnableColumnVirtualization="True">
+                                       CanUserDeleteRows="False"
+                                       EnableRowVirtualization="True"
+                                       EnableColumnVirtualization="True"
+                                       ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                       ScrollViewer.VerticalScrollBarVisibility="Auto">
                                 <DataGrid.ContextMenu>
                                     <ContextMenu>
                                         <MenuItem Header="Open install location"
