@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
     <UseWPF>true</UseWPF>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -23,15 +23,15 @@
     <PackageReference Include="Microsoft.ML" Version="3.0.1" />
     <PackageReference Include="Microsoft.ML.TimeSeries" Version="3.0.1" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3537.50" />
-    <PackageReference Include="OpenTelemetry" Version="1.13.0" />
-    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.13.0" />
-    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.13.0" />
+    <PackageReference Include="OpenTelemetry" Version="1.20.1" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.20.1" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.20.1" />
     <PackageReference Include="QuikGraph" Version="2.5.0" />
     <PackageReference Include="ScottPlot.WPF" Version="5.1.58" />
     <PackageReference Include="SharpPcap" Version="6.3.1" />
     <PackageReference Include="PacketDotNet" Version="1.4.8" />
-    <PackageReference Include="SnmpSharpNet" Version="0.9.7" />
-    <PackageReference Include="SSH.NET" Version="2025.1.0" />
+    <PackageReference Include="Lextm.SharpSnmpLib" Version="12.5.7" />
+    <PackageReference Include="SSH.NET" Version="2026.0.0" />
     <PackageReference Include="System.Management" Version="9.0.10" />
     <PackageReference Include="WhoisClient.NET" Version="6.1.0" />
     <PackageReference Include="YamlDotNet" Version="16.3.0" />

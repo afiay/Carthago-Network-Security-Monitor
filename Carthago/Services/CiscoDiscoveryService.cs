@@ -28,7 +28,7 @@ namespace Carthago.Services.Cisco
         private readonly ISnmpClientAdapter _snmpClient;
 
         public CiscoDiscoveryService(ISnmpClientAdapter? snmpClient = null)
-            => _snmpClient = snmpClient ?? new SnmpSharpNetClientAdapter();
+            => _snmpClient = snmpClient ?? new SharpSnmpClientAdapter();
 
         public Task<IReadOnlyList<CiscoNeighbor>> DiscoverNeighborsAsync(
             CiscoDevice device,
