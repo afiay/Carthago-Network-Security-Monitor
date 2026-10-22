@@ -35,6 +35,8 @@ namespace Carthago.Views
         private void UpdateCompactPresentation(bool compact)
         {
             Width = double.NaN;
+            HorizontalAlignment = HorizontalAlignment.Stretch;
+            Grid.SetColumnSpan(this, 1);
             BrandText.Visibility = compact ? Visibility.Collapsed : Visibility.Visible;
             ProductFooter.Visibility = compact ? Visibility.Collapsed : Visibility.Visible;
             BrandHeader.Padding = compact ? new Thickness(12, 18, 12, 16) : new Thickness(18, 18, 16, 16);
@@ -257,7 +259,10 @@ namespace Carthago.Views
                 toShow.Visibility = Visibility.Visible;
             }
 
-            Width = IsCompact && toShow != null ? 320 : double.NaN;
+            var showCompactDrawer = IsCompact && toShow != null;
+            Width = showCompactDrawer ? 320 : double.NaN;
+            HorizontalAlignment = showCompactDrawer ? HorizontalAlignment.Left : HorizontalAlignment.Stretch;
+            Grid.SetColumnSpan(this, showCompactDrawer ? 2 : 1);
         }
 
         /// <summary>
@@ -276,6 +281,9 @@ namespace Carthago.Views
 
             if (IsCompact)
                 Width = double.NaN;
+
+            HorizontalAlignment = HorizontalAlignment.Stretch;
+            Grid.SetColumnSpan(this, 1);
         }
 
         internal void ShowTrafficFilters() => ShowOnly(TrafficFilterExpander);
