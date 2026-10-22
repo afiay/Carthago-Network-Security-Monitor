@@ -1,0 +1,19 @@
+{
+  "Name": "modbus-outside-segment",
+  "Records": [
+    {
+      "Source": "10.0.0.40",
+      "Destination": "203.0.113.90",
+      "Protocol": "TCP",
+      "DestinationPort": 502,
+      "Info": "modbus function read coils"
+    }
+  ],
+  "ExpectedMatches": [
+    "R120"
+  ],
+  "ExpectedNonMatches": [
+    "R084"
+  ],
+  "ExpectedMinimumConfidence": 0.0
+}

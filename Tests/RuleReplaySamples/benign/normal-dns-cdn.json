@@ -1,0 +1,15 @@
+﻿{
+  "name": "normal-dns-cdn",
+  "records": [
+    {
+      "source": "10.0.0.18",
+      "destination": "1.1.1.1",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "dnsQname": "assets.github.com",
+      "dnsQtype": "A"
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": ["R098", "R102", "R148"]
+}

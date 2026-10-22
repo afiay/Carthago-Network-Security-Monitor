@@ -1,0 +1,19 @@
+﻿{
+  "name": "normal-mqtt-approved-broker",
+  "records": [
+    {
+      "source": "10.0.0.30",
+      "destination": "203.0.113.40",
+      "protocol": "TCP",
+      "destinationPort": 1883,
+      "applicationProtocol": "MQTT",
+      "info": "MQTT CONNECT clientId=thermostat-01"
+    }
+  ],
+  "expectedMatches": ["R113"],
+  "environmentTuning": {
+    "approved": {
+      "mqttBrokers": ["203.0.113.40"]
+    }
+  }
+}

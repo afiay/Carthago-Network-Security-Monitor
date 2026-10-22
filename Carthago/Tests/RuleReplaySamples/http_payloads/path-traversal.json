@@ -1,0 +1,20 @@
+{
+  "Name": "path-traversal",
+  "Records": [
+    {
+      "Source": "10.0.0.25",
+      "Destination": "198.51.100.12",
+      "Protocol": "HTTP",
+      "DestinationPort": 80,
+      "HttpMethod": "GET",
+      "HttpUri": "/download?file=../../../../etc/passwd"
+    }
+  ],
+  "ExpectedMatches": [
+    "R086"
+  ],
+  "ExpectedNonMatches": [
+    "R084"
+  ],
+  "ExpectedMinimumConfidence": 0.0
+}

@@ -1,0 +1,19 @@
+﻿{
+  "name": "modbus-write-function",
+  "records": [
+    {
+      "source": "10.20.0.43",
+      "destination": "10.20.0.10",
+      "protocol": "TCP",
+      "destinationPort": 502,
+      "info": "Modbus function 16 write multiple registers"
+    }
+  ],
+  "expectedMatches": ["R240"],
+  "expectedMinimumConfidence": 0.65,
+  "environmentTuning": {
+    "approved": {
+      "otSegments": ["10.20.0.0/24"]
+    }
+  }
+}

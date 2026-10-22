@@ -1,0 +1,33 @@
+{
+  "packId": "carthago.kubernetes.v1",
+  "install": true,
+  "enable": false,
+  "profileDefaults": {
+    "Enterprise": "Alert",
+    "HomeLab": "Disabled",
+    "Research": "Alert"
+  },
+  "approvedAssets": {
+    "kubernetesApiServers": [
+      "10.40.0.10"
+    ]
+  },
+  "thresholds": {
+    "K8S017": {
+      "confidenceFloor": 0.75
+    }
+  },
+  "modeOverrides": {
+    "K8S017": "Alert",
+    "K8S024": "Shadow"
+  },
+  "benchmark": {
+    "requiredBeforeAlertPromotion": true,
+    "outputDirectory": "build-verify"
+  },
+  "responseRecommendations": {
+    "allowRecommendationOnly": true,
+    "allowApprovalRequired": true,
+    "allowAutomaticDestructive": false
+  }
+}

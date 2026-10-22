@@ -1,0 +1,11 @@
+<!-- SPDX-License-Identifier: MIT -->
+<!-- File: Views/IncidentsWindow.xaml -->
+<Window x:Class="Carthago.Views.IncidentsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Incidents (Critical + LLM summary)"
+        Width="980"
+        Height="720"
+        WindowStartupLocation="CenterOwner">
+    <ContentPresenter/>
+</Window>

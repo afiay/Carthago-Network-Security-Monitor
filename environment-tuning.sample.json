@@ -1,0 +1,28 @@
+{
+  "approved": {
+    "mqttBrokers": [
+      "203.0.113.40"
+    ],
+    "dnsResolvers": [
+      "1.1.1.1",
+      "8.8.8.8"
+    ],
+    "proxyServers": [],
+    "vpnGateways": [],
+    "cloudStorageProviders": [],
+    "adminHosts": [
+      "10.0.0.10"
+    ],
+    "domainControllers": [],
+    "kubernetesApiServers": [],
+    "ciCdServers": [],
+    "otSegments": [
+      "10.20.0.0/24"
+    ],
+    "modbusControllers": [],
+    "bacnetControllers": [],
+    "cameraNvrHosts": [],
+    "knownDynamicDnsDomains": [],
+    "knownRemoteSupportTools": []
+  }
+}

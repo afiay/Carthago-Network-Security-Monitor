@@ -1,0 +1,40 @@
+{
+  "packId": "carthago.ot-industrial.v1",
+  "install": true,
+  "enable": false,
+  "profileDefaults": {
+    "OTSegment": "Alert",
+    "Enterprise": "Shadow",
+    "HomeLab": "Disabled",
+    "Research": "Alert"
+  },
+  "approvedAssets": {
+    "otSegments": [
+      "10.70.0.0/24"
+    ],
+    "modbusControllers": [
+      "10.70.0.20"
+    ],
+    "bacnetControllers": [
+      "10.70.0.21"
+    ]
+  },
+  "thresholds": {
+    "OT021": {
+      "confidenceFloor": 0.75
+    }
+  },
+  "modeOverrides": {
+    "OT021": "Alert",
+    "OT044": "Shadow"
+  },
+  "benchmark": {
+    "requiredBeforeAlertPromotion": true,
+    "outputDirectory": "build-verify"
+  },
+  "responseRecommendations": {
+    "allowRecommendationOnly": true,
+    "allowApprovalRequired": true,
+    "allowAutomaticDestructive": false
+  }
+}

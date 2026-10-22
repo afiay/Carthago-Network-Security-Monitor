@@ -1,0 +1,26 @@
+<!-- SPDX-License-Identifier: MIT -->
+<!-- File: Controls/WorldMapControl.xaml -->
+<UserControl x:Class="Carthago.Controls.WorldMapControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:wpf="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf">
+    <Grid>
+        <!-- Status overlay must be ABOVE the WebView to be visible -->
+        <Border x:Name="StatusOverlay"
+                Panel.ZIndex="99"
+                Background="#66000000"
+                CornerRadius="8"
+                Padding="6"
+                Margin="8"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
+                Visibility="Collapsed">
+            <TextBlock x:Name="StatusText"
+                    Foreground="White"
+                    FontSize="12"/>
+        </Border>
+
+        <!-- The actual map host -->
+        <wpf:WebView2 x:Name="MapView"/>
+    </Grid>
+</UserControl>

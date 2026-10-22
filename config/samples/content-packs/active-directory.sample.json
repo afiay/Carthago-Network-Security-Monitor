@@ -1,0 +1,38 @@
+{
+  "packId": "carthago.active-directory.v1",
+  "install": true,
+  "enable": false,
+  "profileDefaults": {
+    "Enterprise": "Alert",
+    "SmallBusiness": "Shadow",
+    "HomeLab": "Disabled",
+    "Research": "Alert"
+  },
+  "approvedAssets": {
+    "domainControllers": [
+      "10.0.0.10",
+      "10.0.0.11"
+    ],
+    "adminHosts": [
+      "10.0.1.20"
+    ]
+  },
+  "thresholds": {
+    "AD041": {
+      "confidenceFloor": 0.75
+    }
+  },
+  "modeOverrides": {
+    "AD031": "Shadow",
+    "AD041": "Alert"
+  },
+  "benchmark": {
+    "requiredBeforeAlertPromotion": true,
+    "outputDirectory": "build-verify"
+  },
+  "responseRecommendations": {
+    "allowRecommendationOnly": true,
+    "allowApprovalRequired": true,
+    "allowAutomaticDestructive": false
+  }
+}

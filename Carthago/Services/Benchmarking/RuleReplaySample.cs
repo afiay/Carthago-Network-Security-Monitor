@@ -1,0 +1,32 @@
+// SPDX-License-Identifier: MIT
+// File: Services/Benchmarking/RuleReplaySample.cs
+using System.Collections.Generic;
+using Carthago.Models;
+using Carthago.Services.EnvironmentTuning;
+
+namespace Carthago.Services.Benchmarking
+{
+    public enum ReplaySampleClassification
+    {
+        Benign,
+        Malicious
+    }
+
+    public sealed class RuleReplaySample
+    {
+        public string Name { get; set; } = string.Empty;
+        public ReplaySampleClassification? Classification { get; set; }
+        public Sensitivity? Sensitivity { get; set; }
+        public List<TrafficRecord> Records { get; set; } = new();
+        public List<string> ExpectedMatches { get; set; } = new();
+        public List<string> ExpectedEmittedMatches { get; set; } = new();
+        public List<string> ExpectedSuppressedMatches { get; set; } = new();
+        public List<string> ExpectedShadowedMatches { get; set; } = new();
+        public List<string> ExpectedNonMatches { get; set; } = new();
+        public List<RuleReplaySampleAssertion> Assertions { get; set; } = new();
+        public double ExpectedMinimumConfidence { get; set; }
+        public int? MaximumUnexpectedMatches { get; set; }
+        public bool BaselineLearningMode { get; set; }
+        public EnvironmentTuningOptions EnvironmentTuning { get; set; } = new();
+    }
+}

@@ -1,0 +1,43 @@
+{
+  "packId": "carthago.cloud-saas.v1",
+  "install": true,
+  "enable": false,
+  "profileDefaults": {
+    "Enterprise": "Alert",
+    "SmallBusiness": "Shadow",
+    "HomeLab": "Shadow",
+    "Research": "Alert"
+  },
+  "approvedAssets": {
+    "cloudStorageProviders": [
+      "storage.example.com"
+    ],
+    "adminHosts": [
+      "10.10.10.10"
+    ]
+  },
+  "thresholds": {
+    "CLOUD006": {
+      "confidenceFloor": 0.8
+    },
+    "CLOUD007": {
+      "confidenceFloor": 0.8
+    },
+    "CLOUD008": {
+      "confidenceFloor": 0.8
+    }
+  },
+  "modeOverrides": {
+    "CLOUD020": "Shadow",
+    "CLOUD046": "Alert"
+  },
+  "benchmark": {
+    "requiredBeforeAlertPromotion": true,
+    "outputDirectory": "build-verify"
+  },
+  "responseRecommendations": {
+    "allowRecommendationOnly": true,
+    "allowApprovalRequired": true,
+    "allowAutomaticDestructive": false
+  }
+}

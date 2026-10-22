@@ -1,0 +1,99 @@
+<!-- SPDX-License-Identifier: MIT -->
+<!-- File: Views/CiscoDeviceEditDialog.xaml -->
+<Window x:Class="Carthago.Views.CiscoDeviceEditDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Edit Cisco device"
+        SizeToContent="Height"
+        Width="420"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False">
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- Name -->
+            <RowDefinition Height="Auto"/>
+            <!-- Host -->
+            <RowDefinition Height="Auto"/>
+            <!-- Role -->
+            <RowDefinition Height="Auto"/>
+            <!-- Port -->
+            <RowDefinition Height="Auto"/>
+            <!-- Enabled -->
+            <RowDefinition Height="Auto"/>
+            <!-- Buttons -->
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Name -->
+        <TextBlock Grid.Row="0"
+                   Grid.Column="0"
+                   Margin="0,0,8,6"
+                   VerticalAlignment="Center"
+                   Text="Name"/>
+        <TextBox x:Name="NameBox"
+                 Grid.Row="0"
+                 Grid.Column="1"
+                 Margin="0,0,0,6"/>
+
+        <!-- Host / IP -->
+        <TextBlock Grid.Row="1"
+                   Grid.Column="0"
+                   Margin="0,0,8,6"
+                   VerticalAlignment="Center"
+                   Text="Host / IP"/>
+        <TextBox x:Name="HostBox"
+                 Grid.Row="1"
+                 Grid.Column="1"
+                 Margin="0,0,0,6"/>
+
+        <!-- Role -->
+        <TextBlock Grid.Row="2"
+                   Grid.Column="0"
+                   Margin="0,0,8,6"
+                   VerticalAlignment="Center"
+                   Text="Role"/>
+        <TextBox x:Name="RoleBox"
+                 Grid.Row="2"
+                 Grid.Column="1"
+                 Margin="0,0,0,6"/>
+
+        <!-- Syslog port -->
+        <TextBlock Grid.Row="3"
+                   Grid.Column="0"
+                   Margin="0,0,8,6"
+                   VerticalAlignment="Center"
+                   Text="Syslog port"/>
+        <TextBox x:Name="PortBox"
+                 Grid.Row="3"
+                 Grid.Column="1"
+                 Margin="0,0,0,6"
+                 Width="80"/>
+
+        <!-- Enabled -->
+        <CheckBox x:Name="EnabledCheckBox"
+                  Grid.Row="4"
+                  Grid.ColumnSpan="2"
+                  Content="Enabled"
+                  Margin="0,0,0,10"/>
+
+        <!-- Buttons -->
+        <StackPanel Grid.Row="5"
+                    Grid.ColumnSpan="2"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right">
+            <Button Content="OK"
+                    Width="80"
+                    Margin="0,0,8,0"
+                    IsDefault="True"
+                    Click="OkButton_Click"/>
+            <Button Content="Cancel"
+                    Width="80"
+                    IsCancel="True"/>
+        </StackPanel>
+    </Grid>
+</Window>

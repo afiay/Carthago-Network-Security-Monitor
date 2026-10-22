@@ -1,0 +1,21 @@
+﻿{
+  "name": "normal-cloud-upload-approved",
+  "records": [
+    {
+      "source": "10.0.0.45",
+      "destination": "198.51.100.90",
+      "protocol": "HTTP",
+      "destinationPort": 443,
+      "httpMethod": "PUT",
+      "httpHost": "backup.internal.example",
+      "httpUri": "/daily/backup.zip",
+      "httpUserAgent": "curl/8.8.0"
+    }
+  ],
+  "expectedMatches": [],
+  "environmentTuning": {
+    "approved": {
+      "cloudStorageProviders": ["backup.internal.example"]
+    }
+  }
+}

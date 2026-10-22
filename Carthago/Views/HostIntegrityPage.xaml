@@ -1,0 +1,266 @@
+<!-- SPDX-License-Identifier: MIT -->
+<!-- File: Views/HostIntegrityPage.xaml -->
+<Page x:Class="Carthago.Views.HostIntegrityPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="Host Integrity">
+
+    <Grid Background="{StaticResource AppBgBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- ===== Header / Summary ===== -->
+        <Border Grid.Row="0"
+                Background="{StaticResource HeaderGradient}"
+                CornerRadius="8"
+                Padding="10"
+                BorderBrush="{StaticResource CardBorderBrush}"
+                BorderThickness="1"
+                Margin="0,0,0,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Title + summary -->
+                <StackPanel Grid.Column="0"
+                            Orientation="Vertical">
+                    <TextBlock Text="Host Integrity &amp; Software Hygiene"
+                               FontSize="18"
+                               FontWeight="SemiBold"/>
+                    <TextBlock x:Name="SummaryText"
+                               Margin="0,4,0,0"
+                               Foreground="{StaticResource TextSubtleBrush}"
+                               FontSize="12"
+                               Text="Ready"/>
+                    <TextBlock x:Name="ScanTimeText"
+                               Margin="0,2,0,0"
+                               Foreground="{StaticResource TextSubtleBrush}"
+                               FontSize="11"
+                               Text="Last scan: -"/>
+                </StackPanel>
+
+                <!-- Score + risk + rescan -->
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal"
+                                Margin="0,0,16,0"
+                                VerticalAlignment="Center">
+                        <TextBlock Text="Score:"
+                                   Margin="0,0,4,0"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock x:Name="HostScoreText"
+                                   FontSize="18"
+                                   FontWeight="Bold"
+                                   VerticalAlignment="Center"
+                                   Text="0"/>
+                        <TextBlock Text="   Risk:"
+                                   Margin="12,0,4,0"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock x:Name="HostRiskText"
+                                   FontSize="18"
+                                   FontWeight="Bold"
+                                   VerticalAlignment="Center"
+                                   Text="Info"/>
+                    </StackPanel>
+
+                    <Button x:Name="RescanButton"
+                            Content="Rescan"
+                            Width="110"
+                            Height="28"
+                            Style="{StaticResource PrimaryButton}"
+                            Click="RescanButton_Click"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ===== Body: tabs ===== -->
+        <Border Grid.Row="1"
+                Background="{StaticResource CardBgBrush}"
+                BorderBrush="{StaticResource CardBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8">
+            <DockPanel Margin="6">
+
+                <TabControl x:Name="IntegrityTabControl">
+
+                    <!-- === Tab 1: Kernel & Drivers === -->
+                    <TabItem Header="Kernel &amp; Drivers">
+                        <Grid Margin="4">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Row="0"
+                                        Orientation="Horizontal"
+                                        HorizontalAlignment="Right"
+                                        Margin="0,0,0,4">
+                                <CheckBox x:Name="ShowOnlySuspiciousDriversCheck"
+                                          Content="Show only suspicious"
+                                          IsChecked="True"
+                                          Checked="ShowOnlySuspiciousDriversCheck_Changed"
+                                          Unchecked="ShowOnlySuspiciousDriversCheck_Changed"/>
+                            </StackPanel>
+
+                            <DataGrid x:Name="DriversGrid"
+                                      Grid.Row="1"
+                                      Margin="0,4,0,0"
+                                      AutoGenerateColumns="False"
+                                      IsReadOnly="True"
+                                      CanUserAddRows="False"
+                                      CanUserDeleteRows="False"
+                                      EnableRowVirtualization="True"
+                                      EnableColumnVirtualization="True">
+                                <DataGrid.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="Open driver location"
+                                                  Click="OpenDriverLocation_Click"/>
+                                        <MenuItem Header="Copy driver path"
+                                                  Click="CopyDriverPath_Click"/>
+                                    </ContextMenu>
+                                </DataGrid.ContextMenu>
+
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Name"
+                                                        Binding="{Binding Name}"
+                                                        Width="160"/>
+                                    <DataGridTextColumn Header="Display Name"
+                                                        Binding="{Binding DisplayName}"
+                                                        Width="220"/>
+                                    <DataGridTextColumn Header="Path"
+                                                        Binding="{Binding Path}"
+                                                        Width="260"/>
+                                    <DataGridTextColumn Header="State"
+                                                        Binding="{Binding State}"
+                                                        Width="90"/>
+                                    <DataGridTextColumn Header="Start"
+                                                        Binding="{Binding StartMode}"
+                                                        Width="90"/>
+                                    <DataGridTextColumn Header="Kernel"
+                                                        Binding="{Binding IsKernelDriver}"
+                                                        Width="70"/>
+                                    <DataGridTextColumn Header="Signed"
+                                                        Binding="{Binding IsSigned}"
+                                                        Width="70"/>
+                                    <DataGridTextColumn Header="Publisher"
+                                                        Binding="{Binding Publisher}"
+                                                        Width="180"/>
+                                    <DataGridTextColumn Header="Susp Path"
+                                                        Binding="{Binding SuspiciousPath}"
+                                                        Width="80"/>
+                                    <DataGridTextColumn Header="UnsigKernel"
+                                                        Binding="{Binding SuspiciousUnsigned}"
+                                                        Width="100"/>
+                                    <DataGridTextColumn Header="Score"
+                                                        Binding="{Binding Score}"
+                                                        Width="70"/>
+                                    <DataGridTextColumn Header="Risk"
+                                                        Binding="{Binding Risk}"
+                                                        Width="80"/>
+                                    <DataGridTextColumn Header="Flags"
+                                                        Binding="{Binding Flags}"
+                                                        Width="220"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </TabItem>
+
+                    <!-- === Tab 2: Installed Software === -->
+                    <TabItem Header="Installed Software">
+                        <Grid Margin="4">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Row="0"
+                                        Orientation="Horizontal"
+                                        HorizontalAlignment="Right"
+                                        Margin="0,0,0,4">
+                                <CheckBox x:Name="ShowOnlySuspiciousAppsCheck"
+                                          Content="Show only suspicious"
+                                          IsChecked="True"
+                                          Checked="ShowOnlySuspiciousAppsCheck_Changed"
+                                          Unchecked="ShowOnlySuspiciousAppsCheck_Changed"/>
+                            </StackPanel>
+
+                            <DataGrid x:Name="AppsGrid"
+                                      Grid.Row="1"
+                                      Margin="0,4,0,0"
+                                      AutoGenerateColumns="False"
+                                      IsReadOnly="True"
+                                      CanUserAddRows="False"
+                                      CanUserDeleteRows="False"
+                                      EnableRowVirtualization="True"
+                                      EnableColumnVirtualization="True">
+                                <DataGrid.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="Open install location"
+                                                  Click="OpenAppLocation_Click"/>
+                                        <MenuItem Header="Copy uninstall command"
+                                                  Click="CopyUninstallString_Click"/>
+                                        <Separator/>
+                                        <MenuItem Header="Uninstall..."
+                                                  Click="UninstallApp_Click"/>
+                                    </ContextMenu>
+                                </DataGrid.ContextMenu>
+
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Name"
+                                                        Binding="{Binding Name}"
+                                                        Width="220"/>
+                                    <DataGridTextColumn Header="Version"
+                                                        Binding="{Binding Version}"
+                                                        Width="120"/>
+                                    <DataGridTextColumn Header="Publisher"
+                                                        Binding="{Binding Publisher}"
+                                                        Width="180"/>
+                                    <DataGridTextColumn Header="Category"
+                                                        Binding="{Binding Category}"
+                                                        Width="110"/>
+                                    <DataGridTextColumn Header="Install Date"
+                                                        Binding="{Binding InstallDate, StringFormat={}{0:yyyy-MM-dd}}"
+                                                        Width="110"/>
+                                    <DataGridTextColumn Header="Age (days)"
+                                                        Binding="{Binding AgeInDays}"
+                                                        Width="80"/>
+                                    <DataGridTextColumn Header="Location"
+                                                        Binding="{Binding InstallLocation}"
+                                                        Width="260"/>
+                                    <DataGridTextColumn Header="Arch"
+                                                        Binding="{Binding Architecture}"
+                                                        Width="70"/>
+                                    <DataGridTextColumn Header="Source"
+                                                        Binding="{Binding Source}"
+                                                        Width="90"/>
+                                    <DataGridTextColumn Header="Exposure"
+                                                        Binding="{Binding ExposureScore}"
+                                                        Width="80"/>
+                                    <DataGridTextColumn Header="Hygiene"
+                                                        Binding="{Binding HygieneScore}"
+                                                        Width="80"/>
+                                    <DataGridTextColumn Header="Score"
+                                                        Binding="{Binding Score}"
+                                                        Width="70"/>
+                                    <DataGridTextColumn Header="Risk"
+                                                        Binding="{Binding Risk}"
+                                                        Width="80"/>
+                                    <DataGridTextColumn Header="Flags"
+                                                        Binding="{Binding Flags}"
+                                                        Width="260"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </TabItem>
+
+                </TabControl>
+            </DockPanel>
+        </Border>
+
+    </Grid>
+</Page>

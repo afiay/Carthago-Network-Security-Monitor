@@ -1,0 +1,431 @@
+<!-- File: Views/IntegrationsPage.xaml -->
+<!-- SPDX-License-Identifier: MIT -->
+<Page x:Class="Carthago.Views.IntegrationsPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="Integrations">
+
+        <!-- Theme is centralized via App.xaml (Themes/Theme.Blue.xaml). -->
+
+        <Grid Background="{StaticResource AppBackdropGradient}">
+                <Border Style="{StaticResource PageSurface}" Margin="0">
+
+                        <!-- Use the themed TabControl -->
+                        <TabControl Style="{StaticResource TabControl.Themed}"
+                                    TabStripPlacement="Top"
+                                    Margin="0">
+
+                                <!-- =============== OTLP ================= -->
+                                <TabItem Header="OTLP / OpenTelemetry">
+                                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                                      Background="Transparent">
+                                                <StackPanel Margin="12"
+                                                            Orientation="Vertical">
+                                                        <CheckBox Content="Enable OTLP"
+                                                                  IsChecked="{Binding EnableOtlp, Mode=TwoWay}"/>
+
+                                                        <StackPanel Orientation="Horizontal"
+                                                                    Margin="0,8,0,0">
+                                                                <TextBlock Text="Endpoint"
+                                                                           Width="140"
+                                                                           VerticalAlignment="Center"/>
+                                                                <!-- Examples:
+                                     http(s)://collector:4318/v1/metrics  -> HTTP/protobuf
+                                     grpc(s)://collector:4317              -> gRPC
+                                -->
+                                                                <TextBox Text="{Binding OtlpEndpoint, Mode=TwoWay}"
+                                                                         Width="420"/>
+                                                        </StackPanel>
+
+                                                        <StackPanel Orientation="Horizontal"
+                                                                    HorizontalAlignment="Right"
+                                                                    Margin="0,12,0,0">
+                                                                <Button Content="Save"
+                                                                        Width="120"
+                                                                        Style="{StaticResource PrimaryButton}"
+                                                                        Click="Otlp_Save_Click"/>
+                                                                <Button Content="Save + Reload"
+                                                                        Width="150"
+                                                                        Margin="8,0,0,0"
+                                                                        Style="{StaticResource PrimaryButton}"
+                                                                        Click="Otlp_Reload_Click"/>
+                                                                <!-- ✅ Test metric button (requires Otlp_Test_Click in code-behind) -->
+                                                                <Button Content="Send Test Metric"
+                                                                        Width="160"
+                                                                        Margin="8,0,0,0"
+                                                                        Style="{StaticResource PrimaryButton}"
+                                                                        Click="Otlp_Test_Click"/>
+                                                        </StackPanel>
+                                                </StackPanel>
+                                        </ScrollViewer>
+                                </TabItem>
+
+                                <!-- =============== Azure ================= -->
+                                <TabItem Header="Azure (DCE/DCR)">
+                                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                                      Background="Transparent">
+                                                <StackPanel Margin="12">
+                                                        <CheckBox Content="Enable Azure"
+                                                                  IsChecked="{Binding EnableAzure, Mode=TwoWay}"/>
+
+                                                        <StackPanel Orientation="Horizontal"
+                                                                    Margin="0,8,0,0">
+                                                                <TextBlock Text="DCE URI"
+                                                                           Width="140"
+                                                                           VerticalAlignment="Center"/>
+                                                                <TextBox Text="{Binding AzureDceUri, Mode=TwoWay}"
+                                                                         Width="420"/>
+                                                        </StackPanel>
+
+                                                        <StackPanel Orientation="Horizontal"
+                                                                    Margin="0,8,0,0">
+                                                                <TextBlock Text="DCR ID"
+                                                                           Width="140"
+                                                                           VerticalAlignment="Center"/>
+                                                                <TextBox Text="{Binding AzureDcrId, Mode=TwoWay}"
+                                                                         Width="420"/>
+                                                        </StackPanel>
+
+                                                        <StackPanel Orientation="Horizontal"
+                                                                    Margin="0,8,0,0">
+                                                                <TextBlock Text="Stream"
+                                                                           Width="140"
+                                                                           VerticalAlignment="Center"/>
+                                                                <TextBox Text="{Binding AzureStream, Mode=TwoWay}"
+                                                                         Width="420"/>
+                                                        </StackPanel>
+
+                                                        <StackPanel Orientation="Horizontal"
+                                                                    HorizontalAlignment="Right"
+                                                                    Margin="0,12,0,0">
+                                                                <Button Content="Save"
+                                                                        Width="120"
+                                                                        Style="{StaticResource PrimaryButton}"
+                                                                        Click="Azure_Save_Click"/>
+                                                                <Button Content="Save + Reload"
+                                                                        Width="150"
+                                                                        Margin="8,0,0,0"
+                                                                        Style="{StaticResource PrimaryButton}"
+                                                                        Click="Azure_Reload_Click"/>
+                                                        </StackPanel>
+                                                </StackPanel>
+                                        </ScrollViewer>
+                                </TabItem>
+
+                                <!-- =============== CEF (Syslog) ================= -->
+                                <TabItem Header="CEF (Syslog)">
+                                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                                      Background="Transparent">
+                                                <StackPanel Margin="12">
+                                                        <CheckBox Content="Enable CEF"
+                                                                  IsChecked="{Binding EnableCef, Mode=TwoWay}"/>
+
+                                                        <StackPanel Orientation="Horizontal"
+                                                                    Margin="0,8,0,0">
+                                                                <TextBlock Text="Host"
+                                                                           Width="140"
+                                                                           VerticalAlignment="Center"/>
+                                                                <TextBox Text="{Binding CefHost, Mode=TwoWay}"
+                                                                         Width="280"/>
+                                                        </StackPanel>
+
+                                                        <StackPanel Orientation="Horizontal"
+                                                                    Margin="0,8,0,0">
+                                                                <TextBlock Text="Port"
+                                                                           Width="140"
+                                                                           VerticalAlignment="Center"/>
+                                                                <TextBox Text="{Binding CefPort, Mode=TwoWay}"
+                                                                         Width="120"/>
+                                                        </StackPanel>
+
+                                                        <CheckBox Content="Use TLS"
+                                                                  Margin="0,8,0,0"
+                                                                  IsChecked="{Binding CefTls, Mode=TwoWay}"/>
+
+                                                        <StackPanel Orientation="Horizontal"
+                                                                    HorizontalAlignment="Right"
+                                                                    Margin="0,12,0,0">
+                                                                <Button Content="Save"
+                                                                        Width="120"
+                                                                        Style="{StaticResource PrimaryButton}"
+                                                                        Click="Cef_Save_Click"/>
+                                                                <Button Content="Save + Reload"
+                                                                        Width="150"
+                                                                        Margin="8,0,0,0"
+                                                                        Style="{StaticResource PrimaryButton}"
+                                                                        Click="Cef_Reload_Click"/>
+                                                        </StackPanel>
+                                                </StackPanel>
+                                        </ScrollViewer>
+                                </TabItem>
+
+                                <!-- =============== Splunk HEC ================= -->
+                                <TabItem Header="Splunk HEC">
+                                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                                      Background="Transparent">
+                                                <StackPanel Margin="12">
+                                                        <CheckBox Content="Enable Splunk HEC"
+                                                                  IsChecked="{Binding EnableSplunkHec, Mode=TwoWay}"/>
+
+                                                        <StackPanel Orientation="Horizontal"
+                                                                    Margin="0,8,0,0">
+                                                                <TextBlock Text="Base URL"
+                                                                           Width="140"
+                                                                           VerticalAlignment="Center"/>
+                                                                <TextBox Text="{Binding SplunkBaseUrl, Mode=TwoWay}"
+                                                                         Width="420"/>
+                                                        </StackPanel>
+
+                                                        <StackPanel Orientation="Horizontal"
+                                                                    Margin="0,8,0,0">
+                                                                <TextBlock Text="Index"
+                                                                           Width="140"
+                                                                           VerticalAlignment="Center"/>
+                                                                <TextBox Text="{Binding SplunkIndex, Mode=TwoWay}"
+                                                                         Width="220"/>
+                                                                <TextBlock Text="Source"
+                                                                           Margin="16,0,0,0"
+                                                                           Width="80"
+                                                                           VerticalAlignment="Center"/>
+                                                                <TextBox Text="{Binding SplunkSource, Mode=TwoWay}"
+                                                                         Width="220"/>
+                                                        </StackPanel>
+
+                                                        <StackPanel Orientation="Horizontal"
+                                                                    Margin="0,8,0,0">
+                                                                <TextBlock Text="Sourcetype"
+                                                                           Width="140"
+                                                                           VerticalAlignment="Center"/>
+                                                                <TextBox Text="{Binding SplunkSourcetype, Mode=TwoWay}"
+                                                                         Width="220"/>
+                                                                <TextBlock Text="Host"
+                                                                           Margin="16,0,0,0"
+                                                                           Width="80"
+                                                                           VerticalAlignment="Center"/>
+                                                                <TextBox Text="{Binding SplunkHost, Mode=TwoWay}"
+                                                                         Width="220"/>
+                                                        </StackPanel>
+
+                                                        <StackPanel Orientation="Horizontal"
+                                                                    Margin="0,8,0,0">
+                                                                <TextBlock Text="Token"
+                                                                           Width="140"
+                                                                           VerticalAlignment="Center"/>
+                                                                <PasswordBox x:Name="SplunkTokenBox"
+                                                                             Width="420"/>
+                                                        </StackPanel>
+
+                                                        <StackPanel Orientation="Horizontal"
+                                                                    HorizontalAlignment="Right"
+                                                                    Margin="0,12,0,0">
+                                                                <Button Content="Save"
+                                                                        Width="120"
+                                                                        Style="{StaticResource PrimaryButton}"
+                                                                        Click="Splunk_Save_Click"/>
+                                                                <Button Content="Save + Reload"
+                                                                        Width="150"
+                                                                        Margin="8,0,0,0"
+                                                                        Style="{StaticResource PrimaryButton}"
+                                                                        Click="Splunk_Reload_Click"/>
+                                                        </StackPanel>
+                                                </StackPanel>
+                                        </ScrollViewer>
+                                </TabItem>
+
+                                <!-- =============== Elastic ================= -->
+                                <TabItem Header="Elastic">
+                                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                                      Background="Transparent">
+                                                <StackPanel Margin="12">
+                                                        <CheckBox Content="Enable Elastic"
+                                                                  IsChecked="{Binding EnableElastic, Mode=TwoWay}"/>
+
+                                                        <StackPanel Orientation="Horizontal"
+                                                                    Margin="0,8,0,0">
+                                                                <TextBlock Text="Base URL"
+                                                                           Width="140"
+                                                                           VerticalAlignment="Center"/>
+                                                                <TextBox Text="{Binding ElasticBaseUrl, Mode=TwoWay}"
+                                                                         Width="420"/>
+                                                        </StackPanel>
+
+                                                        <StackPanel Orientation="Horizontal"
+                                                                    Margin="0,8,0,0">
+                                                                <TextBlock Text="Index"
+                                                                           Width="140"
+                                                                           VerticalAlignment="Center"/>
+                                                                <TextBox Text="{Binding ElasticIndex, Mode=TwoWay}"
+                                                                         Width="420"/>
+                                                        </StackPanel>
+
+                                                        <StackPanel Orientation="Horizontal"
+                                                                    Margin="0,8,0,0">
+                                                                <TextBlock Text="API Key"
+                                                                           Width="140"
+                                                                           VerticalAlignment="Center"/>
+                                                                <TextBox Text="{Binding ElasticApiKey, Mode=TwoWay}"
+                                                                         Width="420"/>
+                                                        </StackPanel>
+
+                                                        <StackPanel Orientation="Horizontal"
+                                                                    HorizontalAlignment="Right"
+                                                                    Margin="0,12,0,0">
+                                                                <Button Content="Save"
+                                                                        Width="120"
+                                                                        Style="{StaticResource PrimaryButton}"
+                                                                        Click="Elastic_Save_Click"/>
+                                                                <Button Content="Save + Reload"
+                                                                        Width="150"
+                                                                        Margin="8,0,0,0"
+                                                                        Style="{StaticResource PrimaryButton}"
+                                                                        Click="Elastic_Reload_Click"/>
+                                                        </StackPanel>
+                                                </StackPanel>
+                                        </ScrollViewer>
+                                </TabItem>
+
+                                <!-- =============== Kafka ================= -->
+                                <TabItem Header="Kafka">
+                                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                                      Background="Transparent">
+                                                <StackPanel Margin="12">
+                                                        <CheckBox Content="Enable Kafka"
+                                                                  IsChecked="{Binding EnableKafka, Mode=TwoWay}"/>
+
+                                                        <StackPanel Orientation="Horizontal"
+                                                                    Margin="0,8,0,0">
+                                                                <TextBlock Text="Bootstrap"
+                                                                           Width="140"
+                                                                           VerticalAlignment="Center"/>
+                                                                <TextBox Text="{Binding KafkaBootstrap, Mode=TwoWay}"
+                                                                         Width="420"/>
+                                                        </StackPanel>
+
+                                                        <StackPanel Orientation="Horizontal"
+                                                                    Margin="0,8,0,0">
+                                                                <TextBlock Text="Topic"
+                                                                           Width="140"
+                                                                           VerticalAlignment="Center"/>
+                                                                <TextBox Text="{Binding KafkaTopic, Mode=TwoWay}"
+                                                                         Width="420"/>
+                                                        </StackPanel>
+
+                                                        <StackPanel Orientation="Horizontal"
+                                                                    Margin="0,8,0,0">
+                                                                <TextBlock Text="SASL User"
+                                                                           Width="140"
+                                                                           VerticalAlignment="Center"/>
+                                                                <TextBox Text="{Binding KafkaSaslUser, Mode=TwoWay}"
+                                                                         Width="200"/>
+                                                                <TextBlock Text="SASL Pass"
+                                                                           Margin="16,0,0,0"
+                                                                           Width="100"
+                                                                           VerticalAlignment="Center"/>
+                                                                <PasswordBox x:Name="KafkaSaslPassBox"
+                                                                             Width="220"/>
+                                                        </StackPanel>
+
+                                                        <StackPanel Orientation="Horizontal"
+                                                                    HorizontalAlignment="Right"
+                                                                    Margin="0,12,0,0">
+                                                                <Button Content="Save"
+                                                                        Width="120"
+                                                                        Style="{StaticResource PrimaryButton}"
+                                                                        Click="Kafka_Save_Click"/>
+                                                                <Button Content="Save + Reload"
+                                                                        Width="150"
+                                                                        Margin="8,0,0,0"
+                                                                        Style="{StaticResource PrimaryButton}"
+                                                                        Click="Kafka_Reload_Click"/>
+                                                        </StackPanel>
+                                                </StackPanel>
+                                        </ScrollViewer>
+                                </TabItem>
+
+                                <!-- =============== File (JSONL) ================= -->
+                                <TabItem Header="File (JSONL)">
+                                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                                      Background="Transparent">
+                                                <StackPanel Margin="12">
+                                                        <CheckBox Content="Enable File Sink"
+                                                                  IsChecked="{Binding EnableFileSink, Mode=TwoWay}"/>
+
+                                                        <StackPanel Orientation="Horizontal"
+                                                                    Margin="0,8,0,0">
+                                                                <TextBlock Text="Directory"
+                                                                           Width="140"
+                                                                           VerticalAlignment="Center"/>
+                                                                <TextBox Text="{Binding FileSinkDirectory, Mode=TwoWay}"
+                                                                         Width="420"/>
+                                                        </StackPanel>
+
+                                                        <StackPanel Orientation="Horizontal"
+                                                                    Margin="0,8,0,0">
+                                                                <TextBlock Text="Max Size (MB)"
+                                                                           Width="140"
+                                                                           VerticalAlignment="Center"/>
+                                                                <TextBox Text="{Binding FileSinkMaxSizeMB, Mode=TwoWay}"
+                                                                         Width="120"/>
+                                                                <CheckBox Content="Roll Daily"
+                                                                          Margin="24,0,0,0"
+                                                                          IsChecked="{Binding FileSinkRollDaily, Mode=TwoWay}"/>
+                                                                <CheckBox Content="Compress on Rotate"
+                                                                          Margin="24,0,0,0"
+                                                                          IsChecked="{Binding FileSinkCompressOnRotate, Mode=TwoWay}"/>
+                                                        </StackPanel>
+
+                                                        <StackPanel Orientation="Horizontal"
+                                                                    HorizontalAlignment="Right"
+                                                                    Margin="0,12,0,0">
+                                                                <Button Content="Save"
+                                                                        Width="120"
+                                                                        Style="{StaticResource PrimaryButton}"
+                                                                        Click="File_Save_Click"/>
+                                                                <Button Content="Save + Reload"
+                                                                        Width="150"
+                                                                        Margin="8,0,0,0"
+                                                                        Style="{StaticResource PrimaryButton}"
+                                                                        Click="File_Reload_Click"/>
+                                                        </StackPanel>
+                                                </StackPanel>
+                                        </ScrollViewer>
+                                </TabItem>
+
+                                <!-- =============== Webhook ================= -->
+                                <TabItem Header="Webhook">
+                                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                                      Background="Transparent">
+                                                <StackPanel Margin="12">
+                                                        <CheckBox Content="Enable Webhook"
+                                                                  IsChecked="{Binding EnableWebhook, Mode=TwoWay}"/>
+
+                                                        <StackPanel Orientation="Horizontal"
+                                                                    Margin="0,8,0,0">
+                                                                <TextBlock Text="URL"
+                                                                           Width="140"
+                                                                           VerticalAlignment="Center"/>
+                                                                <TextBox Text="{Binding WebhookUrl, Mode=TwoWay}"
+                                                                         Width="420"/>
+                                                        </StackPanel>
+
+                                                        <StackPanel Orientation="Horizontal"
+                                                                    HorizontalAlignment="Right"
+                                                                    Margin="0,12,0,0">
+                                                                <Button Content="Save"
+                                                                        Width="120"
+                                                                        Style="{StaticResource PrimaryButton}"
+                                                                        Click="Webhook_Save_Click"/>
+                                                                <Button Content="Save + Reload"
+                                                                        Width="150"
+                                                                        Margin="8,0,0,0"
+                                                                        Style="{StaticResource PrimaryButton}"
+                                                                        Click="Webhook_Reload_Click"/>
+                                                        </StackPanel>
+                                                </StackPanel>
+                                        </ScrollViewer>
+                                </TabItem>
+
+                        </TabControl>
+                </Border>
+        </Grid>
+</Page>
