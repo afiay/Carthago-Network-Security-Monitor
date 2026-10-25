@@ -78,6 +78,18 @@ public sealed class SensitiveTelemetryContractTests
     }
 
     [Fact]
+    public async Task R118_Telnet_Password_Policy_Example_Is_Not_A_Login_Attempt()
+    {
+        var record = new TrafficRecord
+        {
+            Source = "10.1.1.25", Destination = "10.1.1.50", DestinationPort = 23,
+            Protocol = "TCP", Info = "telnet password policy: login must never use admin:admin"
+        };
+
+        Assert.False((await new R118_DefaultCredentialIoTAttemptRule().EvaluateAsync(Context(record))).Matched);
+    }
+
+    [Fact]
     public async Task R118_Telnet_Provisioning_Candidate_Stays_Shadow_Below_Existing_Precision_Floor()
     {
         var record = new TrafficRecord
