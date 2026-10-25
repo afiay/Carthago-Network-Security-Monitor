@@ -10,6 +10,30 @@ namespace Carthago.Tests;
 public sealed class AnalyticsPipelineTests
 {
     [Fact]
+    public void LocalStore_Incident_Save_Reports_Failure_When_Database_Is_Closed()
+    {
+        var path = Path.Combine(Path.GetTempPath(), "carthago-incident-failure-" + Guid.NewGuid().ToString("N") + ".db");
+        var store = new LocalStore(path);
+        store.Dispose();
+
+        Assert.False(store.SaveIncident(new Incident { Id = "incident-closed", Title = "Unsaved event" }));
+    }
+
+    [Fact]
+    public void AnalyticsHost_Reports_Incident_Save_Failure_To_Health_Counter()
+    {
+        var path = Path.Combine(Path.GetTempPath(), "carthago-incident-health-" + Guid.NewGuid().ToString("N") + ".db");
+        var store = new LocalStore(path);
+        Assert.True(store.SaveIncident(new Incident { Id = "incident-health", Title = "Existing incident" }));
+        using var host = new Carthago.Analytics.AnalyticsHost(TimeSpan.FromMinutes(5), store);
+        store.Dispose();
+
+        host.UpdateIncidentStatus("incident-health", "Investigating");
+
+        Assert.Equal(1, host.IncidentPersistenceFailures);
+    }
+
+    [Fact]
     public void LocalStore_Cannot_Preserve_Unreadable_Database_Does_Not_Delete_Its_Bytes()
     {
         var directory = Path.Combine(Path.GetTempPath(), "carthago-recovery-" + Guid.NewGuid().ToString("N"));
