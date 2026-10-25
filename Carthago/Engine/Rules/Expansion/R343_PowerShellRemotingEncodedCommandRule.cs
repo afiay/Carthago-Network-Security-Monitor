@@ -40,6 +40,7 @@ namespace Carthago.Engine.Rules.Expansion
             MinimumBytes = 0L,
             MinimumSignals = 2,
             MinimumConfidence = 78,
+            CorroboratedEvidenceWeight = 0.10,
             WindowThreshold = 1,
             Window = TimeSpan.FromMinutes(20),
             Cooldown = TimeSpan.FromMinutes(20),
@@ -54,6 +55,20 @@ namespace Carthago.Engine.Rules.Expansion
         public R343_PowerShellRemotingEncodedCommandRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            var record = context.Record;
+            var info = record.Info ?? string.Empty;
+            var hasEncodedCommand = info.Contains("encodedcommand", StringComparison.OrdinalIgnoreCase)
+                                    || info.Contains("-enc ", StringComparison.OrdinalIgnoreCase);
+            var hasRemoting = info.Contains("Invoke-Command", StringComparison.OrdinalIgnoreCase)
+                              || info.Contains("Enter-PSSession", StringComparison.OrdinalIgnoreCase)
+                              || info.Contains("New-PSSession", StringComparison.OrdinalIgnoreCase);
+            var usesWinRmPort = record.DestinationPort is 5985 or 5986 || record.SourcePort is 5985 or 5986;
+
+            if (!hasEncodedCommand || !hasRemoting || !usesWinRmPort)
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence, "REMOTING_ENCODED_COMMAND_NOT_CORROBORATED", "Encoded PowerShell requires a remoting command and WinRM endpoint context.");
+
+            return EvaluateSpec(context, Spec);
+        }
     }
 }
