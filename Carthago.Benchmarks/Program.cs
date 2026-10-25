@@ -113,6 +113,8 @@ if (explainShadow)
                                   $"(tier={trace.Tier}, profile={trace.DefaultMode}, precision={trace.PrecisionMode}, " +
                                   $"confidence={trace.Confidence:F2}, floor={trace.ConfidenceFloor?.ToString("F2") ?? "none"})");
                 Console.WriteLine($"    Reasons: {string.Join(", ", trace.Reasons)}");
+                foreach (var reason in trace.RuntimePrecisionReasons)
+                    Console.WriteLine($"    Precision: {reason}");
             }
         }
     }
