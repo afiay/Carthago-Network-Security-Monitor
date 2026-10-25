@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using Carthago.Models;
 
 namespace Carthago.Engine.Rules
@@ -19,6 +20,10 @@ namespace Carthago.Engine.Rules
             "admin:admin", "admin:password", "root:root", "root:admin",
             "user:user", "guest:guest", "ubnt:ubnt", "support:support"
         };
+
+        private static readonly Regex TelnetLoginWithDefaultPair = new(
+            @"\b(?:login|username|user)\s*[:=]?\s*(?:admin:admin|admin:password|root:root|root:admin|user:user|guest:guest|ubnt:ubnt|support:support)\b",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
         private static readonly string[] DeviceHostMarkers =
         {
@@ -45,11 +50,7 @@ namespace Carthago.Engine.Rules
             // An actual Telnet connection with a credential-bearing login transcript can be
             // evaluated without HTTP telemetry. Text from unrelated HTTP pages cannot qualify.
             if (record.DestinationPort == 23 && !string.IsNullOrWhiteSpace(record.Info))
-            {
-                var text = record.Info!;
-                return ContainsAny(text, new[] { "login", "username", "password" })
-                    && DefaultCredentials.Any(pair => text.Contains(pair, StringComparison.OrdinalIgnoreCase));
-            }
+                return TelnetLoginWithDefaultPair.IsMatch(record.Info);
 
             if (string.IsNullOrWhiteSpace(record.HttpMethod)
                 || string.IsNullOrWhiteSpace(record.HttpHost)
