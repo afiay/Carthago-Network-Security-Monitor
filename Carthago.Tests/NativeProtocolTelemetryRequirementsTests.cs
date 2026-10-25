@@ -37,4 +37,21 @@ public sealed class NativeProtocolTelemetryRequirementsTests
         Assert.True(result.CanRunSafely, string.Join(", ", result.MissingRequiredTelemetry));
         Assert.DoesNotContain("precision.Http", result.MissingRequiredTelemetry);
     }
+
+    [Fact]
+    public void Cloudflared_Process_And_Tls_Handshake_Do_Not_Require_Simultaneous_Http_And_Dns()
+    {
+        var rule = RuleRegistry.CreateDefaultRules().Single(rule => rule.Descriptor.RuleId == "R516");
+        var record = new TrafficRecord
+        {
+            Source = "10.0.0.68", Destination = "198.51.100.68", Protocol = "TCP",
+            DestinationPort = 443, ProcessName = "cloudflared.exe", Sni = "trycloudflare.com",
+            TlsVersion = "TLSv1.3", Info = "TLS client handshake to tunnel endpoint"
+        };
+
+        var result = RuleTelemetryValidator.Validate(rule, record);
+        Assert.True(result.CanRunSafely, string.Join(", ", result.MissingRequiredTelemetry));
+        Assert.DoesNotContain("precision.Http", result.MissingRequiredTelemetry);
+        Assert.DoesNotContain("precision.Dns", result.MissingRequiredTelemetry);
+    }
 }
