@@ -72,7 +72,8 @@ namespace Carthago.Engine.Rules.Tuning
             {
                 if (!HasRequiredEnvironmentConfiguration(baseDecision, environment, profile.Name, n))
                 {
-                    effectiveMode = baseDecision.Tier == RuleTuningTier.DisabledUntilConfigured ? RuleMode.Disabled : RuleMode.Shadow;
+                    var constrainedMode = baseDecision.Tier == RuleTuningTier.DisabledUntilConfigured ? RuleMode.Disabled : RuleMode.Shadow;
+                    effectiveMode = RulePrecisionCatalog.MostRestrictive(effectiveMode, constrainedMode);
                     reasons.Add(RuleTuningReason.MissingEnvironmentConfiguration);
                     details.Add("Required profile scope or approved asset configuration is missing, so the rule stays non-paging by default.");
                 }
@@ -91,7 +92,7 @@ namespace Carthago.Engine.Rules.Tuning
                 var approvedDecision = environment.Evaluate(descriptor.RuleId, evt, record, profile.Name);
                 if (approvedDecision != null && approvedDecision.Disposition == ApprovedAssetDisposition.Shadow)
                 {
-                    effectiveMode = RuleMode.Shadow;
+                    effectiveMode = RulePrecisionCatalog.MostRestrictive(effectiveMode, RuleMode.Shadow);
                     reasons.Add(RuleTuningReason.ApprovedAssetMatched);
                     details.Add($"{approvedDecision.Reason} ({approvedDecision.ConfigKey}: {approvedDecision.MatchedValue})");
                 }
