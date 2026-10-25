@@ -82,10 +82,9 @@ build-verify/**/*.md
 **/outbox-*.jsonl
 **/feedback-*.jsonl
 **/baseline.json
+**/baseline-journal.jsonl
 **/entity-graph/
-**/baseline/
 **/outbox/
-**/feedback/
 environment-tuning.json
 
 # ----- OS-specific crash / lock files -----
