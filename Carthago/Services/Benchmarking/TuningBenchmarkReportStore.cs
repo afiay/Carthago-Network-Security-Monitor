@@ -30,8 +30,7 @@ namespace Carthago.Services.Benchmarking
             Directory.CreateDirectory(outputDirectory);
             var jsonPath = GetJsonPath(outputDirectory);
             await File.WriteAllTextAsync(jsonPath, JsonSerializer.Serialize(report, JsonOptions), cancellationToken).ConfigureAwait(false);
-            var markdownPath = GetMarkdownPath(outputDirectory);
-            await File.WriteAllTextAsync(markdownPath, ToMarkdown(report), cancellationToken).ConfigureAwait(false);
+            await File.WriteAllTextAsync(GetMarkdownPath(outputDirectory), ToMarkdown(report), cancellationToken).ConfigureAwait(false);
         }
 
         public async Task<TuningBenchmarkReport?> LoadAsync(string outputDirectory, CancellationToken cancellationToken = default)

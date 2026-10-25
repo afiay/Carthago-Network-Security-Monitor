@@ -82,9 +82,17 @@ build-verify/**/*.md
 **/outbox-*.jsonl
 **/feedback-*.jsonl
 **/baseline.json
-**/baseline-journal.jsonl
-**/entity-graph/
-**/outbox/
+# Runtime state belongs under data directories, never source directories.
+# In particular, broad **/baseline/ and **/feedback/ patterns hide C#
+# files in Services/Baseline and Services/Feedback on Windows.
+**/data/entity-graph/
+**/data/baseline/
+**/data/outbox/
+**/data/feedback/
+**/Data/entity-graph/
+**/Data/baseline/
+**/Data/outbox/
+**/Data/feedback/
 environment-tuning.json
 
 # ----- OS-specific crash / lock files -----
@@ -114,3 +122,4 @@ environment-tuning.json
 *.pem
 *.pcap
 *.pcapng
+**/baseline-journal.jsonl
