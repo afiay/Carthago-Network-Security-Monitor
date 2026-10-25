@@ -724,6 +724,9 @@ namespace Carthago.Engine.Rules
                 "source" => HasAny(record.Source),
                 "destination" => HasAny(record.Destination),
                 "destination_or_host" => HasAny(record.Destination, record.HttpHost, record.Sni, record.DnsQname),
+                "process.name" => HasAny(record.ProcessName),
+                "device_authentication_attempt" => SensitiveTelemetryContracts.HasDefaultCredentialAuthenticationAttempt(record),
+                "metadata_credential_request" => SensitiveTelemetryContracts.HasCredentialBearingMetadataRequest(record),
                 "windows_protocol_context" => HasAny(record.Destination)
                     && Port(record, 5985, 5986)
                     && HasField("identity_context", record)
