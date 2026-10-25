@@ -60,6 +60,7 @@ namespace Carthago.Services.Benchmarking
         public double? ConfidenceFloor { get; set; }
         public List<string> Reasons { get; set; } = new();
         public List<string> ReasonDetails { get; set; } = new();
+        public List<string> RuntimePrecisionReasons { get; set; } = new();
     }
 
     public sealed class TuningBenchmarkSampleResult
