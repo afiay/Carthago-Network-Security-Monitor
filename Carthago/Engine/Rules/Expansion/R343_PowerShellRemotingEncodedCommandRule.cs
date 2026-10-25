@@ -23,8 +23,8 @@ namespace Carthago.Engine.Rules.Expansion
             Category = "ActiveDirectoryWindows",
             Description = "Detects PowerShell Remoting Encoded Command only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
             Severity = SeverityLevel.High,
-            RequiredTelemetry = new[] { RuleTelemetryKind.Flow, RuleTelemetryKind.Identity, RuleTelemetryKind.Process },
-            RequiredFields = new[] { "source", "destination", "windows_protocol_context" },
+            RequiredTelemetry = new[] { RuleTelemetryKind.Flow },
+            RequiredFields = new[] { "source", "destination_or_host", "protocol_or_port" },
             EvidenceFields = new[] { "ad.protocol", "network.source", "network.destination", "matched_conditions" },
             PositiveConditions = new[] { "PowerShell Remoting Encoded Command requires concrete ActiveDirectoryWindows telemetry, not descriptor text.", "The source and destination or identity context must be present.", "At least two independent rule-specific signals must be present, or the rule-specific threshold must be met." },
             NegativeConditions = new[] { "Do not match on rule names, category labels, or generic scanner banners alone.", "Do not match when source/destination context is absent.", "Do not match approved administrative, CI/CD, backup, mail migration, or monitoring paths unless explicit high-risk evidence is present." },
@@ -33,7 +33,7 @@ namespace Carthago.Engine.Rules.Expansion
             HostIndicators = Array.Empty<string>(),
             PathIndicators = Array.Empty<string>(),
             ProcessIndicators = new[] { "powershell", "pwsh", "wsmprovhost" },
-            ProtocolIndicators = new[] { "winrm", "wsman" },
+            ProtocolIndicators = new[] { "winrm", "wsman", "tcp" },
             Methods = Array.Empty<string>(),
             TokenKinds = Array.Empty<string>(),
             Ports = new[] { 5985, 5986 },
@@ -54,6 +54,23 @@ namespace Carthago.Engine.Rules.Expansion
         public R343_PowerShellRemotingEncodedCommandRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            var record = context.Record;
+            var text = Text(record);
+            var hasWinrmPort = record.SourcePort is 5985 or 5986 || record.DestinationPort is 5985 or 5986;
+            var hasWinrmTransport = IsWinrmContext(record) || (hasWinrmPort && ContainsAny(record.Protocol, "tcp"));
+            var hasPowerShell = ContainsAny(text, "powershell", "pwsh", "wsmprovhost", "invoke-command");
+            var hasEncodedCommand = ContainsAny(text, "encodedcommand", "-encodedcommand", "-enc ");
+
+            if (!hasWinrmTransport || !hasPowerShell || !hasEncodedCommand)
+            {
+                return NoMatch(
+                    RuleNoMatchReasonCategory.NotApplicableProtocol,
+                    "POWERSHELL_REMOTING_CONTEXT_REQUIRED",
+                    "Rule requires WinRM or WSMan transport plus explicit encoded PowerShell command evidence.");
+            }
+
+            return EvaluateSpec(context, Spec);
+        }
     }
 }
