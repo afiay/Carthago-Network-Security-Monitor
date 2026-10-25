@@ -53,6 +53,25 @@ public sealed class ApprovedAssetRegistryTests
     }
 
     [Fact]
+    public void External_Bacnet_Write_To_Approved_Controller_Is_Not_Allowlisted()
+    {
+        var registry = new ApprovedAssetRegistry(new EnvironmentTuningOptions
+        {
+            Approved = new ApprovedEnvironmentOptions
+            {
+                OtSegments = { "10.20.0.0/24" },
+                BacnetControllers = { "10.20.0.11" }
+            }
+        });
+        var evt = CreateEvent("R485", "203.0.113.44", "10.20.0.11", 47808,
+            "BACnet WriteProperty request", host: "10.20.0.11", protocol: "BACnet");
+        var decision = RuleTuningCatalog.Resolve("OTSegment", Descriptor("R485"), evt, CreateRecord(evt), registry);
+
+        Assert.Equal(RuleMode.Alert, decision.EffectiveMode);
+        Assert.DoesNotContain(RuleTuningReason.ApprovedAssetMatched, decision.Reasons);
+    }
+
+    [Fact]
     public void Approved_Ot_Controller_Does_Not_Reactivate_Disabled_HomeLab_Rule()
     {
         var registry = new ApprovedAssetRegistry(new EnvironmentTuningOptions
