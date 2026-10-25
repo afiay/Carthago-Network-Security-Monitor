@@ -57,9 +57,19 @@ namespace Carthago.Services.Benchmarking
         public List<string> MissingExpectedMatches { get; set; } = new();
         public List<string> UnexpectedMatches { get; set; } = new();
         public List<string> Errors { get; set; } = new();
+        public List<TuningBenchmarkExpectedRuleDiagnostic> ExpectedRuleDiagnostics { get; set; } = new();
         public double MaximumConfidence { get; set; }
         public double AverageConfidence { get; set; }
         public Dictionary<string, TuningBenchmarkProfileSampleSummary> Profiles { get; set; } = new();
+    }
+
+    public sealed class TuningBenchmarkExpectedRuleDiagnostic
+    {
+        public string RuleId { get; set; } = string.Empty;
+        // Matched, MissingTelemetry, NoMatch, EvaluationFailed or RuleUnavailable.
+        public string Outcome { get; set; } = string.Empty;
+        public List<string> MissingRequiredTelemetry { get; set; } = new();
+        public List<string> NoMatchReasons { get; set; } = new();
     }
 
     public sealed class TuningBenchmarkRuleCoverage
