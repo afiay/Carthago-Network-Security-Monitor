@@ -6,6 +6,7 @@ using Carthago.Services;
 
 var options = new TuningBenchmarkOptions();
 var verbose = false;
+var compareProfiles = false;
 for (var i = 0; i < args.Length; i++)
 {
     switch (args[i])
@@ -21,6 +22,9 @@ for (var i = 0; i < args.Length; i++)
             break;
         case "--verbose":
             verbose = true;
+            break;
+        case "--compare-profiles":
+            compareProfiles = true;
             break;
         default:
             Console.Error.WriteLine($"Unknown or incomplete argument: {args[i]}");
@@ -73,6 +77,17 @@ if (verbose)
         foreach (var error in sample.Errors)
             Console.WriteLine($"  Assertion: {error}");
     }
+}
+if (compareProfiles)
+{
+    Console.WriteLine("\nLabeled replay quality by alert profile (TP / FP / FN / TN):");
+    foreach (var pair in report.Summary.SampleLevelQualityByProfile.OrderBy(static pair => pair.Key, StringComparer.OrdinalIgnoreCase))
+    {
+        var q = pair.Value;
+        Console.WriteLine($"{pair.Key,-15} {q.TruePositives,2} / {q.FalsePositives,2} / {q.FalseNegatives,2} / {q.TrueNegatives,2}  " +
+                          $"precision={FormatMetric(q.Precision),6} recall={FormatMetric(q.Recall),6} F1={FormatMetric(q.F1Score),6}");
+    }
+    Console.WriteLine("Scope: labeled replay samples only; raw matches and shadow decisions are not alerts.");
 }
 
 static string FormatMetric(double? value) => value.HasValue ? value.Value.ToString("P1") : "N/A";
