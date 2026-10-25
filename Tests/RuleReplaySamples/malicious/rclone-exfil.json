@@ -6,7 +6,10 @@
       "destination": "198.51.100.67",
       "protocol": "HTTP",
       "destinationPort": 443,
+      "httpMethod": "POST",
       "httpHost": "storage.example.net",
+      "httpUri": "/archive/upload",
+      "processName": "rclone.exe",
       "httpUserAgent": "rclone/v1.66.0"
     }
   ],
