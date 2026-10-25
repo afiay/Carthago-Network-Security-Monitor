@@ -218,6 +218,27 @@ namespace Carthago.Services.Benchmarking
                             sample.BaselineLearningMode,
                             match.Event.ConfidenceScore);
 
+                        var precisionMode = RulePrecisionCatalog.GetProfile(match.Descriptor).DefaultMode;
+                        var existingTrace = profileSample.RuleDecisions.FirstOrDefault(item =>
+                            string.Equals(item.RuleId, match.Descriptor.RuleId, StringComparison.OrdinalIgnoreCase));
+                        if (existingTrace == null || existingTrace.Confidence < match.Event.ConfidenceScore)
+                        {
+                            if (existingTrace != null)
+                                profileSample.RuleDecisions.Remove(existingTrace);
+                            profileSample.RuleDecisions.Add(new TuningBenchmarkRuleDecision
+                            {
+                                RuleId = match.Descriptor.RuleId,
+                                Tier = decision.Tier.ToString(),
+                                DefaultMode = decision.DefaultMode.ToString(),
+                                PrecisionMode = precisionMode.ToString(),
+                                EffectiveMode = decision.EffectiveMode.ToString(),
+                                Confidence = match.Event.ConfidenceScore,
+                                ConfidenceFloor = decision.ConfidenceFloor,
+                                Reasons = decision.Reasons.Select(static reason => reason.ToString()).ToList(),
+                                ReasonDetails = decision.ReasonDetails.ToList()
+                            });
+                        }
+
                         switch (decision.EffectiveMode)
                         {
                             case RuleMode.Alert:
