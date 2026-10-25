@@ -538,7 +538,9 @@ namespace Carthago.Analytics
 
                     if (updated != null)
                     {
-                        _store.UpdateIncidentSummary(updated.Id, summary);
+                        // Persist the full incident so its summary, timeline event and
+                        // analysis state survive restart as one durable update.
+                        PersistIncident(updated);
                         SummaryReady?.Invoke(updated.Id, summary);
                         IncidentUpdated?.Invoke(CloneIncident(updated));
                     }
