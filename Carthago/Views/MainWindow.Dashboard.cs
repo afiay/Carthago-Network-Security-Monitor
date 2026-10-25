@@ -528,7 +528,7 @@ namespace Carthago
             var sourceHealth = _captureService.GetCaptureSourceHealth();
             var status = !string.IsNullOrWhiteSpace(captureError)
                 ? "Error"
-                : StopButton.IsEnabled && flow.State == Carthago.Services.CaptureFlowState.Stalled
+                : StopButton.IsEnabled && (flow.State == Carthago.Services.CaptureFlowState.Stalled || flow.Dropped > 0)
                 ? "Degraded"
                 : _sinkHost == null
                 ? "Offline"
@@ -573,7 +573,9 @@ namespace Carthago
             HeaderLastAnalysisText.Text = status == "Error"
                 ? $"Capture failed: {captureError}"
                 : status == "Degraded"
-                ? $"Capture health: {flow.Captured} received, {flow.Displayed} displayed — UI delivery may be stalled"
+                ? flow.State == Carthago.Services.CaptureFlowState.Stalled
+                    ? $"Capture health: {flow.Captured} received, {flow.Displayed} displayed — UI delivery stalled"
+                    : $"Capture health: {flow.Captured} received, {flow.Displayed} displayed, {flow.Dropped} UI records dropped"
                 : status == "Monitoring" && flow.State == Carthago.Services.CaptureFlowState.Idle
                 ? "Capture active · waiting for network traffic"
                 : status == "Monitoring" && flow.State == Carthago.Services.CaptureFlowState.Starting
@@ -581,7 +583,7 @@ namespace Carthago
                 : lastAnalysis.HasValue
                 ? $"●  {lastAnalysis.Value.ToLocalTime():yyyy-MM-dd HH:mm:ss}    (Live)"
                 : "Last analysis: waiting for traffic";
-            HeaderLastAnalysisText.ToolTip = sourceHealth.ToDisplayText();
+            HeaderLastAnalysisText.ToolTip = $"{sourceHealth.ToDisplayText()}\nFlow diagnostic: {flow.Reason}";
 
             if (status == "Monitoring" && sourceHealth.Running)
                 HeaderLastAnalysisText.Text += $"\n{sourceHealth.ToDisplayText()}";
