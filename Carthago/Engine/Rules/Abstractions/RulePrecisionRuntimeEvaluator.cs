@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Carthago.Models;
+using Carthago.Services.EnvironmentTuning;
 
 namespace Carthago.Engine.Rules
 {
@@ -36,7 +37,8 @@ namespace Carthago.Engine.Rules
             DetectionEvent evt,
             TrafficRecord record,
             RuleMode configuredMode,
-            string? runtimeProfileName)
+            string? runtimeProfileName,
+            ApprovedAssetRegistry? approvedAssets = null)
         {
             if (descriptor == null) throw new ArgumentNullException(nameof(descriptor));
             if (evt == null) throw new ArgumentNullException(nameof(evt));
@@ -77,7 +79,7 @@ namespace Carthago.Engine.Rules
                 effectiveMode = RulePrecisionCatalog.MostRestrictive(effectiveMode, RuleMode.Shadow);
             }
 
-            if (RequiresEnvironmentScope(profile) && !EnvironmentEvidencePresent(observedKinds, record))
+            if (RequiresEnvironmentScope(profile) && !EnvironmentEvidencePresent(observedKinds, record, profile, approvedAssets))
             {
                 effectiveMode = RulePrecisionCatalog.MostRestrictive(effectiveMode, RuleMode.Shadow);
                 reasons.Add("environment-scoped rule lacks approved asset/segment/controller evidence; non-paging until configured");
@@ -245,8 +247,14 @@ namespace Carthago.Engine.Rules
                || profile.RequiredEnvironmentConfig.Count > 0
                || profile.DefaultMode == RuleRuntimeMode.Disabled;
 
-        private static bool EnvironmentEvidencePresent(IReadOnlySet<string> observedKinds, TrafficRecord record)
-            => observedKinds.Contains("environment", StringComparer.OrdinalIgnoreCase)
+        private static bool EnvironmentEvidencePresent(IReadOnlySet<string> observedKinds, TrafficRecord record,
+            RulePrecisionProfile profile, ApprovedAssetRegistry? approvedAssets)
+            => (profile.RequiredTelemetry.Contains(RuleTelemetryKind.OtIcsProtocol)
+                && approvedAssets != null
+                && (approvedAssets.IsInApprovedOtSegment(record.Destination)
+                    || approvedAssets.IsApprovedModbusController(record.Destination)
+                    || approvedAssets.IsApprovedBacnetController(record.Destination)))
+               || observedKinds.Contains("environment", StringComparer.OrdinalIgnoreCase)
                || observedKinds.Contains("approved-asset", StringComparer.OrdinalIgnoreCase)
                || observedKinds.Contains("baseline", StringComparer.OrdinalIgnoreCase)
                || !string.IsNullOrWhiteSpace(record?.ProcessName)
