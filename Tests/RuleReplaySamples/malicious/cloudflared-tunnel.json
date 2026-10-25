@@ -7,7 +7,9 @@
       "protocol": "TCP",
       "destinationPort": 443,
       "processName": "cloudflared",
-      "sni": "trycloudflare.com"
+      "sni": "trycloudflare.com",
+      "tlsVersion": "TLSv1.3",
+      "info": "TLS client handshake to Cloudflare Tunnel endpoint"
     }
   ],
   "expectedMatches": ["R516"],
