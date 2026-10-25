@@ -692,7 +692,7 @@ namespace Carthago.Views
         public int ScoreValue { get; private set; }
         public string Score => ScoreValue.ToString();
         public int ConfidenceValue { get; private set; }
-        public string ConfidenceText => ConfidenceValue >= 85 ? "High" : ConfidenceValue >= 60 ? "Medium" : "Low";
+        public string ConfidenceText => ConfidenceValue == 0 ? "Unverified" : ConfidenceValue >= 85 ? "High" : ConfidenceValue >= 60 ? "Medium" : "Low";
         public string RelatedHost { get; private set; } = "Unknown host";
         public string RelatedIncidentTitle { get; private set; } = "No related incident";
         public string RelatedIncidentId { get; private set; } = string.Empty;
@@ -771,7 +771,8 @@ namespace Carthago.Views
             Classification = classification;
             Severity = severity;
             ScoreValue = score;
-            ConfidenceValue = Math.Clamp(threatMatch?.Confidence ?? score, 0, 100);
+            ConfidenceValue = Math.Clamp(threatMatch?.Confidence
+                ?? (detection.ConfidenceScore > 0 ? (int)Math.Round(detection.ConfidenceScore * 100) : 0), 0, 100);
             FeedSource = string.IsNullOrWhiteSpace(feed) ? "Detection evidence" : feed;
             FeedContext = $"{FeedSource} • {classification}";
             RelatedHost = detection.SourceIp ?? "Unknown host";
@@ -780,7 +781,9 @@ namespace Carthago.Views
             FirstSeenUtc = detection.Timestamp == default ? DateTime.UtcNow : detection.Timestamp.ToUniversalTime();
             LastSeenUtc = FirstSeenUtc;
             Title = BuildTitle(classification, IndicatorType);
-            Summary = "Traffic or detections were observed against an indicator present in reputation or detection evidence.";
+            Summary = threatMatch != null
+                ? "Observed traffic matched an external threat intelligence indicator."
+                : "Rule-generated observation; external threat intelligence did not confirm the indicator.";
             FeedState = threatMatch == null ? "Observed" : "Matched";
             Key = $"{IndicatorType}:{Indicator}:{Classification}".ToLowerInvariant();
 
@@ -898,6 +901,9 @@ namespace Carthago.Views
 
         private static string Classify(string description, string indicator, DetectionEvent detection, MatchInfo? threatMatch)
         {
+            if (threatMatch == null && string.Equals(detection.RuleId, "R006", StringComparison.OrdinalIgnoreCase))
+                return "DNS Activity";
+
             var text = $"{description} {indicator} {detection.RuleId} {string.Join(" ", threatMatch?.Tags ?? Array.Empty<string>())}".ToLowerInvariant();
 
             if (threatMatch != null && text.Contains("urlhaus", StringComparison.OrdinalIgnoreCase))
@@ -967,6 +973,10 @@ namespace Carthago.Views
 
         private static bool IsRelevant(string description, string classification, DetectionEvent detection)
         {
+            if (string.Equals(classification, "DNS Activity", StringComparison.OrdinalIgnoreCase)
+                && detection.Severity < SeverityLevel.High)
+                return false;
+
             if (detection.Severity is SeverityLevel.High or SeverityLevel.Critical)
                 return true;
 
@@ -987,6 +997,7 @@ namespace Carthago.Views
         private static string BuildTitle(string classification, string indicatorType)
             => classification switch
             {
+                "DNS Activity" => "DNS activity observed",
                 "Command & Control" => "Known C2 endpoint matched",
                 "Credential Theft" => "Malicious domain observed",
                 "Malware / Trojan" => "Known malware indicator detected",
@@ -997,7 +1008,9 @@ namespace Carthago.Views
 
         private static IEnumerable<string> BuildEvidence(DetectionEvent detection, Incident? incident, string classification, MatchInfo? threatMatch)
         {
-            yield return "Outbound connection or detection matched suspicious indicator evidence.";
+            yield return threatMatch != null
+                ? "Detection matched external threat-intelligence indicator evidence."
+                : "Rule-generated observation; no external threat-feed match was confirmed.";
             if (threatMatch != null)
             {
                 yield return $"Threat feed match: {threatMatch.Kind} {threatMatch.Value} with confidence {threatMatch.Confidence}.";
@@ -1028,7 +1041,7 @@ namespace Carthago.Views
             }
             foreach (var part in classification.Split('/', '&', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
                 yield return part;
-            yield return threatMatch != null ? "Threat feed" : "External IOC";
+            yield return threatMatch != null ? "Threat feed" : "Detection observation";
         }
 
         private static string StrongerSeverity(string a, string b)
