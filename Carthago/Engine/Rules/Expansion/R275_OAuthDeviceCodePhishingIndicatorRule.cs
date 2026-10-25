@@ -23,8 +23,8 @@ namespace Carthago.Engine.Rules.Expansion
             Category = "IdentityAdvanced",
             Description = "Detects OAuth Device Code Phishing Indicator only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
             Severity = SeverityLevel.High,
-            RequiredTelemetry = new[] { RuleTelemetryKind.Identity, RuleTelemetryKind.Http, RuleTelemetryKind.GeoIp },
-            RequiredFields = new[] { "source", "identity_or_user", "destination_or_host", "auth_or_http_context" },
+            RequiredTelemetry = new[] { RuleTelemetryKind.Flow, RuleTelemetryKind.Http },
+            RequiredFields = new[] { "source", "destination_or_host", "http_any", "payload_or_uri" },
             EvidenceFields = new[] { "identity.signal", "network.source", "network.destination", "matched_conditions", "rule.windowCount" },
             PositiveConditions = new[] { "OAuth Device Code Phishing Indicator requires concrete IdentityAdvanced telemetry, not descriptor text.", "The source and destination or identity context must be present.", "At least two independent rule-specific signals must be present, or the rule-specific threshold must be met." },
             NegativeConditions = new[] { "Do not match on rule names, category labels, or generic scanner banners alone.", "Do not match when source/destination context is absent.", "Do not match approved administrative, CI/CD, backup, mail migration, or monitoring paths unless explicit high-risk evidence is present." },
@@ -34,7 +34,7 @@ namespace Carthago.Engine.Rules.Expansion
             PathIndicators = new[] { "/devicecode", "/device/code", "/oauth2/devicecode" },
             ProcessIndicators = Array.Empty<string>(),
             ProtocolIndicators = Array.Empty<string>(),
-            Methods = Array.Empty<string>(),
+            Methods = new[] { "POST" },
             TokenKinds = Array.Empty<string>(),
             Ports = Array.Empty<int>(),
             MinimumBytes = 0L,
@@ -44,6 +44,7 @@ namespace Carthago.Engine.Rules.Expansion
             Window = TimeSpan.FromMinutes(20),
             Cooldown = TimeSpan.FromMinutes(20),
             DistinctBy = "source+destination+identityadvanced+behavior",
+            RequireHttp = true,
             TuningKnobs = new[] { "Mode", "Threshold", "WindowSeconds", "CooldownSeconds", "ApprovedSources", "ApprovedDestinations", "ApprovedProcesses", "ApprovedServiceAccounts" },
             RequiredTests = new[] { "positive R275 evidence-gated sample", "negative R275 descriptor-only sample", "negative R275 missing telemetry sample" },
 
@@ -54,6 +55,21 @@ namespace Carthago.Engine.Rules.Expansion
         public R275_OAuthDeviceCodePhishingIndicatorRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            var record = context.Record;
+            var text = Text(record);
+            var hasIssuedDeviceCode = ContainsAny(text, "device_code=") && ContainsAny(text, "user_code=");
+            var hasVerificationChallenge = ContainsAny(text, "verification_uri") && ContainsAny(text, "user_code=");
+
+            if (!HasHttpContext(record) || !HasMethod(record, "POST") || (!hasIssuedDeviceCode && !hasVerificationChallenge))
+            {
+                return NoMatch(
+                    RuleNoMatchReasonCategory.InsufficientEvidence,
+                    "DEVICE_CODE_PHISHING_EVIDENCE_REQUIRED",
+                    "Rule requires a POST request containing issued device-code and user-code challenge evidence.");
+            }
+
+            return EvaluateSpec(context, Spec);
+        }
     }
 }
