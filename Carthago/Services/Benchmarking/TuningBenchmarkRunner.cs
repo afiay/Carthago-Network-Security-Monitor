@@ -221,7 +221,7 @@ namespace Carthago.Services.Benchmarking
                         // capture. Alert is the unconstrained input here because
                         // each replay profile already supplies its own policy mode.
                         var precision = RulePrecisionRuntimeEvaluator.Evaluate(
-                            match.Descriptor, match.Event, match.Record, RuleMode.Alert, profile.ProfileName);
+                            match.Descriptor, match.Event, match.Record, RuleMode.Alert, profile.ProfileName, approvedAssets);
                         var evaluatedMode = RulePrecisionCatalog.MostRestrictive(
                             decision.EffectiveMode, precision.EffectiveMode);
 
