@@ -101,18 +101,20 @@ namespace Carthago.Analytics.Services
             }
         }
 
-        public void SaveIncident(Incident incident)
+        public bool SaveIncident(Incident incident)
         {
-            if (incident == null) return;
+            if (incident == null) return false;
 
             try
             {
                 _incidents.Upsert(NormalizeIncident(incident));
                 PruneIncidentsIfNeeded();
+                return true;
             }
             catch (Exception ex)
             {
                 Console.Error.WriteLine($"[LocalStore] Failed to save incident {incident.Id}: {ex.Message}");
+                return false;
             }
         }
 
