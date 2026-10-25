@@ -244,15 +244,19 @@ public sealed class IotOtPrecisionRuleTests
     public async Task R118_matches_default_credential_attempt_to_device()
     {
         var rule = new R118_DefaultCredentialIoTAttemptRule();
-        var result = await rule.EvaluateAsync(CreateContext(CreateIotRecord(
+        var record = CreateIotRecord(
             source: "10.40.1.60",
             destination: "10.40.1.70",
             destinationPort: 8080,
             protocol: "HTTP",
             service: "HTTP",
             host: "camera.internal.local",
-            info: "camera login admin:admin Authorization: Basic",
-            process: "curl.exe")));
+            info: "camera management request",
+            process: "curl.exe");
+        record.HttpMethod = "GET";
+        record.HttpUri = "/admin";
+        record.HttpRequestHeaders = "Authorization: Basic YWRtaW46YWRtaW4=";
+        var result = await rule.EvaluateAsync(CreateContext(record));
 
         var evt = AssertSingleEvent(result, "R118", SeverityLevel.Critical, 0.76);
         AssertEvidence(evt, "matched_conditions", "iot.protocolFamily");
