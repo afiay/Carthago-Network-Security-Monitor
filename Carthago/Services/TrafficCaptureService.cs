@@ -30,6 +30,7 @@ namespace Carthago.Services
         public event Action<TrafficRecord>? TrafficRecordReceived;
         public event Action<DetectionEvent>? DetectionEventRaised;
         public event Action<StatsSnapshot>? StatsUpdated;
+        public event Action<Exception>? CaptureFailed;
 
         // ===== Capture device or source
         private readonly object _lifecycleLock = new();
@@ -37,6 +38,9 @@ namespace Carthago.Services
         private ICaptureSource? _captureSource;
         private CancellationTokenSource? _runCts;
         private int _disposed;
+        private string? _lastCaptureError;
+
+        public string? LastCaptureError => Volatile.Read(ref _lastCaptureError);
 
         // ETW emits traffic records rather than raw packets. Route those records
         // through the same enrichment/detection path as Npcap packets.
@@ -84,6 +88,14 @@ namespace Carthago.Services
         private long _whoisEnriched;
         private long _reputationEnriched;
         private long _enrichmentFallbacks;
+        private long _uiRecordsDelivered;
+        private long _captureStartedTicks;
+        private long _lastCapturedTicks;
+        private long _lastUiDeliveredTicks;
+        private long _capturedAtStart;
+        private long _deliveredAtStart;
+        private long _parsedAtStart;
+        private long _parseErrorsAtStart;
 
         // ===== Filters / UI
         private string? _currentFilter;
@@ -137,6 +149,7 @@ namespace Carthago.Services
             _dispatcher = dispatcher ?? (Application.Current?.Dispatcher ?? Dispatcher.CurrentDispatcher);
 
             _uiReaderTask = Task.Run(UiChannelReaderLoop);
+            CaptureTaskFailureObserver.Observe(_uiReaderTask, HandleUiDrainFailure);
             for (int i = 0; i < _enrichmentWorkers.Length; i++)
                 _enrichmentWorkers[i] = Task.Run(EnrichmentWorkerLoop);
 
@@ -269,6 +282,14 @@ namespace Carthago.Services
 
             // Capture sources must not overlap: release the previous session first.
             StopCurrentCapture();
+            Volatile.Write(ref _lastCaptureError, null);
+            Interlocked.Exchange(ref _capturedAtStart, Interlocked.Read(ref _packetsCaptured));
+            Interlocked.Exchange(ref _deliveredAtStart, Interlocked.Read(ref _uiRecordsDelivered));
+            Interlocked.Exchange(ref _parsedAtStart, Interlocked.Read(ref _packetsParsedOk));
+            Interlocked.Exchange(ref _parseErrorsAtStart, Interlocked.Read(ref _packetsParseErrors));
+            Interlocked.Exchange(ref _lastCapturedTicks, 0);
+            Interlocked.Exchange(ref _lastUiDeliveredTicks, 0);
+            Interlocked.Exchange(ref _captureStartedTicks, DateTime.UtcNow.Ticks);
             var run = CancellationTokenSource.CreateLinkedTokenSource(_serviceCts.Token);
             lock (_lifecycleLock)
                 _runCts = run;
@@ -293,11 +314,12 @@ namespace Carthago.Services
 
                     _etwReaderTask = Task.Run(() => EtwReaderLoop(etwChannel.Reader, run.Token));
                     _etwCaptureTask = source.StartAsync();
-                    _ = _etwCaptureTask.ContinueWith(t =>
-                    {
-                        if (t.Exception is not null)
-                            Log(t.Exception.GetBaseException());
-                    }, CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.Default);
+                    CapturePipelineFailureObserver.Observe(_etwCaptureTask, _etwReaderTask,
+                        (stage, error) =>
+                        {
+                            Log(new InvalidOperationException($"ETW {stage} failed", error));
+                            HandleCaptureTaskFailure(run, error, deviceCombo, startButton, stopButton);
+                        });
                 }
                 else if (choice.Tag is ILiveDevice device)
                 {
@@ -322,6 +344,8 @@ namespace Carthago.Services
             {
                 StopCurrentCapture();
                 Log(ex);
+                Volatile.Write(ref _lastCaptureError, ex.Message);
+                CaptureFailed?.Invoke(ex);
                 MessageBox.Show($"Failed to start capture: {ex.Message}", "Capture",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
@@ -331,6 +355,7 @@ namespace Carthago.Services
         {
             StopCurrentCapture();
             if (Volatile.Read(ref _disposed) != 0) return;
+            Volatile.Write(ref _lastCaptureError, null);
 
             _dispatcher.Invoke(() =>
             {
@@ -338,6 +363,31 @@ namespace Carthago.Services
                 stopButton.IsEnabled = false;
                 deviceCombo.IsEnabled = true;
             });
+        }
+
+        private void HandleCaptureTaskFailure(
+            CancellationTokenSource run, Exception error,
+            ComboBox deviceCombo, Button startButton, Button stopButton)
+        {
+            Log(error);
+            if (_dispatcher.HasShutdownStarted || _dispatcher.HasShutdownFinished) return;
+
+            _ = _dispatcher.BeginInvoke(new Action(() =>
+            {
+                // A stopped or replaced capture must not corrupt the new session's UI.
+                lock (_lifecycleLock)
+                {
+                    if (!ReferenceEquals(_runCts, run) || _disposed != 0)
+                        return;
+                }
+
+                StopCurrentCapture();
+                Volatile.Write(ref _lastCaptureError, error.Message);
+                startButton.IsEnabled = true;
+                stopButton.IsEnabled = false;
+                deviceCombo.IsEnabled = true;
+                CaptureFailed?.Invoke(error);
+            }), DispatcherPriority.Normal);
         }
 
         private void StartPcapCapture(ILiveDevice device, string? captureFilter = null)
@@ -381,6 +431,7 @@ namespace Carthago.Services
             }
 
             Interlocked.Increment(ref _packetsCaptured);
+            Interlocked.Exchange(ref _lastCapturedTicks, DateTime.UtcNow.Ticks);
             try
             {
                 var record = _packetHandler.ParsePacket(packet);
@@ -403,12 +454,17 @@ namespace Carthago.Services
                 await foreach (var record in reader.ReadAllAsync(token).ConfigureAwait(false))
                 {
                     Interlocked.Increment(ref _packetsCaptured);
+                    Interlocked.Exchange(ref _lastCapturedTicks, DateTime.UtcNow.Ticks);
                     Interlocked.Increment(ref _packetsParsedOk);
                     PublishRecord(record, token);
                 }
             }
             catch (OperationCanceledException) { /* capture stopped */ }
-            catch (Exception ex) { Log(ex); }
+            catch (Exception ex)
+            {
+                Log(ex);
+                throw; // A dead record reader must be surfaced as capture failure.
+            }
         }
 
         private void PublishRecord(TrafficRecord record, CancellationToken runToken)
@@ -450,33 +506,45 @@ namespace Carthago.Services
         // ---- UI drain --------------------------------------------------
         private async Task UiChannelReaderLoop()
         {
-            var reader = _uiChannel.Reader;
             try
             {
-                while (await reader.WaitToReadAsync(_serviceCts.Token).ConfigureAwait(false))
+                await CaptureUiDrain.RunAsync(_uiChannel.Reader, UiBatchSize, async batch =>
                 {
-                    var batch = new List<TrafficRecord>(UiBatchSize);
-                    while (batch.Count < UiBatchSize && reader.TryRead(out var rec))
-                        batch.Add(rec);
-
-                    if (batch.Count > 0)
+                    await _dispatcher.InvokeAsync(() =>
                     {
-                        await _dispatcher.InvokeAsync(() =>
+                        foreach (var r in batch)
                         {
-                            foreach (var r in batch)
+                            try
                             {
-                                try { TrafficRecordReceived?.Invoke(r); }
-                                catch { /* never throw to UI loop */ }
+                                TrafficRecordReceived?.Invoke(r);
+                                Interlocked.Increment(ref _uiRecordsDelivered);
+                                Interlocked.Exchange(ref _lastUiDeliveredTicks, DateTime.UtcNow.Ticks);
                             }
-                        }, DispatcherPriority.Background);
-                    }
-                }
+                            catch (Exception ex) { Log(ex); /* keep other records flowing */ }
+                        }
+                    }, DispatcherPriority.Background);
+                }, _serviceCts.Token).ConfigureAwait(false);
             }
-            catch (OperationCanceledException) { /* service shutting down */ }
             catch (Exception ex)
             {
-                Console.Error.WriteLine($"UiChannelReaderLoop error: {ex.Message}");
+                Log(ex);
+                throw; // Observer reports the terminal UI-drain failure.
             }
+        }
+
+        private void HandleUiDrainFailure(Exception error)
+        {
+            Log(error);
+            if (Volatile.Read(ref _disposed) != 0 || _dispatcher.HasShutdownStarted || _dispatcher.HasShutdownFinished)
+                return;
+
+            _ = _dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (Volatile.Read(ref _disposed) != 0) return;
+                StopCurrentCapture();
+                Volatile.Write(ref _lastCaptureError, $"UI record delivery stopped: {error.Message}");
+                CaptureFailed?.Invoke(error);
+            }), DispatcherPriority.Normal);
         }
 
         // ---- enrichment + rules ---------------------------------------
@@ -860,6 +928,46 @@ namespace Carthago.Services
             WhoisCacheSize = _whoisCache.Count,
             ReputationCacheSize = _reputationCache.Count
         };
+
+        public CaptureFlowSnapshot GetCaptureFlowSnapshot()
+        {
+            bool running;
+            lock (_lifecycleLock) running = _runCts is { IsCancellationRequested: false };
+
+            var started = Interlocked.Read(ref _captureStartedTicks);
+            var lastCaptured = Interlocked.Read(ref _lastCapturedTicks);
+            var lastDisplayed = Interlocked.Read(ref _lastUiDeliveredTicks);
+            var captured = Math.Max(0, Interlocked.Read(ref _packetsCaptured) - Interlocked.Read(ref _capturedAtStart));
+            var displayed = Math.Max(0, Interlocked.Read(ref _uiRecordsDelivered) - Interlocked.Read(ref _deliveredAtStart));
+            var state = CaptureFlowHealth.Evaluate(running && started != 0,
+                ToUtcOffset(started) ?? DateTimeOffset.UtcNow, captured, displayed,
+                ToUtcOffset(lastCaptured), ToUtcOffset(lastDisplayed), DateTimeOffset.UtcNow);
+            return new CaptureFlowSnapshot(state, captured, displayed);
+        }
+
+        private static DateTimeOffset? ToUtcOffset(long ticks)
+            => ticks > 0 ? new DateTimeOffset(new DateTime(ticks, DateTimeKind.Utc)) : null;
+
+        public sealed record CaptureFlowSnapshot(CaptureFlowState State, long Captured, long Displayed);
+
+        public CaptureSourceHealth GetCaptureSourceHealth()
+        {
+            lock (_lifecycleLock)
+            {
+                if (_captureSource is EtwCapture etw)
+                    return new CaptureSourceHealth("ETW", etw.IsRunning,
+                        etw.EventsObserved, etw.EventsPublished, etw.EventsDropped, etw.LastError);
+
+                if (_device != null)
+                    return new CaptureSourceHealth("Npcap", _runCts is { IsCancellationRequested: false },
+                        Math.Max(0, Interlocked.Read(ref _packetsCaptured) - Interlocked.Read(ref _capturedAtStart)),
+                        Math.Max(0, Interlocked.Read(ref _packetsParsedOk) - Interlocked.Read(ref _parsedAtStart)),
+                        Math.Max(0, Interlocked.Read(ref _packetsParseErrors) - Interlocked.Read(ref _parseErrorsAtStart)),
+                        null);
+            }
+
+            return new CaptureSourceHealth("Capture source", false, 0, 0, 0, LastCaptureError);
+        }
 
         public void ResetStats()
         {
