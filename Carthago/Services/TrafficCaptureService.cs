@@ -58,8 +58,8 @@ namespace Carthago.Services
 
         private sealed record EnrichmentWork(TrafficRecord Record, CancellationToken RunToken);
 
-        private readonly Channel<TrafficRecord> _uiChannel =
-            Channel.CreateBounded<TrafficRecord>(new BoundedChannelOptions(UiQueueCapacity)
+        private readonly Channel<CaptureSessionRecord<TrafficRecord>> _uiChannel =
+            Channel.CreateBounded<CaptureSessionRecord<TrafficRecord>>(new BoundedChannelOptions(UiQueueCapacity)
             {
                 FullMode = BoundedChannelFullMode.Wait,
                 SingleReader = true,
@@ -473,7 +473,7 @@ namespace Carthago.Services
                 return;
 
             // UI pressure must never suppress rule evaluation.
-            if (!_uiChannel.Writer.TryWrite(record))
+            if (!_uiChannel.Writer.TryWrite(new CaptureSessionRecord<TrafficRecord>(record, runToken)))
             {
                 Interlocked.Increment(ref _packetsDroppedByQueue);
                 RuleEngine.ReportCaptureDrops(1);
@@ -512,13 +512,16 @@ namespace Carthago.Services
                 {
                     await _dispatcher.InvokeAsync(() =>
                     {
-                        foreach (var r in batch)
+                        foreach (var pending in batch)
                         {
                             try
                             {
-                                TrafficRecordReceived?.Invoke(r);
-                                Interlocked.Increment(ref _uiRecordsDelivered);
-                                Interlocked.Exchange(ref _lastUiDeliveredTicks, DateTime.UtcNow.Ticks);
+                                pending.TryDeliver(r =>
+                                {
+                                    TrafficRecordReceived?.Invoke(r);
+                                    Interlocked.Increment(ref _uiRecordsDelivered);
+                                    Interlocked.Exchange(ref _lastUiDeliveredTicks, DateTime.UtcNow.Ticks);
+                                });
                             }
                             catch (Exception ex) { Log(ex); /* keep other records flowing */ }
                         }
@@ -979,6 +982,12 @@ namespace Carthago.Services
             Interlocked.Exchange(ref _whoisEnriched, 0);
             Interlocked.Exchange(ref _reputationEnriched, 0);
             Interlocked.Exchange(ref _enrichmentFallbacks, 0);
+            // Keep the per-session flow diagnostics aligned with the reset counters.
+            Interlocked.Exchange(ref _uiRecordsDelivered, 0);
+            Interlocked.Exchange(ref _capturedAtStart, 0);
+            Interlocked.Exchange(ref _deliveredAtStart, 0);
+            Interlocked.Exchange(ref _parsedAtStart, 0);
+            Interlocked.Exchange(ref _parseErrorsAtStart, 0);
         }
 
         // ===== simple cache envelope =====

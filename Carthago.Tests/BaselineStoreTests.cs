@@ -5,6 +5,23 @@ namespace Carthago.Tests;
 public sealed class BaselineStoreTests
 {
     [Fact]
+    public async Task ObserveAsync_AppendsDurablyWithoutRewritingTheEntireSnapshot()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "carthago-baseline-tests", Guid.NewGuid().ToString("N"));
+        var store = new BaselineStore(new BaselineOptions { DirectoryPath = directory });
+        var observation = new BaselineObservation("dns", "machine", "example.org",
+            new DateTime(2026, 10, 25, 12, 0, 0, DateTimeKind.Utc), "test");
+
+        await store.ObserveAsync(observation);
+        await store.ObserveAsync(observation);
+
+        Assert.True(File.Exists(Path.Combine(directory, "baseline-journal.jsonl")));
+        Assert.False(File.Exists(Path.Combine(directory, "baseline.json")));
+        var reopened = new BaselineStore(new BaselineOptions { DirectoryPath = directory });
+        Assert.Equal(3, (await reopened.ObserveAsync(observation)).ObservationCount);
+    }
+
+    [Fact]
     public async Task ObserveAsync_PersistsKnownObservationsAcrossInstances()
     {
         var directory = Path.Combine(Path.GetTempPath(), "carthago-baseline-tests", Guid.NewGuid().ToString("N"));

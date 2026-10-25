@@ -64,12 +64,21 @@ namespace Carthago.Services.Feedback
                 throw new ArgumentException("Feedback needs an event ID and rule ID.", nameof(feedback));
 
             var utc = feedback.TimestampUtc == default ? DateTime.UtcNow : feedback.TimestampUtc.ToUniversalTime();
+            var normalizedFeedback = new DetectionFeedback
+            {
+                EventId = feedback.EventId,
+                RuleId = feedback.RuleId,
+                IncidentId = feedback.IncidentId,
+                Verdict = feedback.Verdict,
+                Note = feedback.Note,
+                TimestampUtc = utc
+            };
             var path = Path.Combine(_options.DirectoryPath, $"feedback-{utc:yyyy-MM}.jsonl");
             await _writeGate.WaitAsync(cancellationToken).ConfigureAwait(false);
             try
             {
                 Directory.CreateDirectory(_options.DirectoryPath);
-                await File.AppendAllTextAsync(path, JsonSerializer.Serialize(feedback, _jsonOptions) + Environment.NewLine,
+                await File.AppendAllTextAsync(path, JsonSerializer.Serialize(normalizedFeedback, _jsonOptions) + Environment.NewLine,
                     cancellationToken).ConfigureAwait(false);
             }
             finally { _writeGate.Release(); }
