@@ -57,6 +57,20 @@ namespace Carthago.Services.Benchmarking
             sb.AppendLine($"- True-positive pass rate: {summary.TruePositivePassRate:P1}");
             sb.AppendLine($"- Benign false positives: {summary.BenignFalsePositiveCount}");
             sb.AppendLine($"- Benign critical alerts: {summary.BenignCriticalAlertCount}");
+            if (summary.SampleLevelQuality is { } quality)
+            {
+                sb.AppendLine();
+                sb.AppendLine("## Sample-level Detection Quality (SmallBusiness alert profile)");
+                sb.AppendLine($"- True positives: {quality.TruePositives}");
+                sb.AppendLine($"- False positives: {quality.FalsePositives}");
+                sb.AppendLine($"- False negatives: {quality.FalseNegatives}");
+                sb.AppendLine($"- True negatives: {quality.TrueNegatives}");
+                sb.AppendLine($"- Precision: {FormatRatio(quality.Precision)}");
+                sb.AppendLine($"- Recall: {FormatRatio(quality.Recall)}");
+                sb.AppendLine($"- Specificity: {FormatRatio(quality.Specificity)}");
+                sb.AppendLine($"- F1: {FormatRatio(quality.F1Score)}");
+                sb.AppendLine("- Scope: labeled offline replay samples, not field prevalence or detection accuracy in production.");
+            }
             sb.AppendLine();
             sb.AppendLine("## Profile Results");
             foreach (var profile in report.ProfileResults.Values.OrderBy(static item => item.ProfileName, StringComparer.OrdinalIgnoreCase))
@@ -94,6 +108,8 @@ namespace Carthago.Services.Benchmarking
 
             return sb.ToString();
         }
+
+        private static string FormatRatio(double? value) => value.HasValue ? value.Value.ToString("P1") : "N/A";
 
         private static void AppendList(StringBuilder sb, string title, System.Collections.Generic.IReadOnlyList<string> items)
         {
