@@ -131,25 +131,34 @@ namespace Carthago.Analytics.Services
             }
         }
 
-        public void SaveBaselineSnapshots(IEnumerable<BaselineSnapshot> snapshots)
+        public bool SaveBaselineSnapshots(IEnumerable<BaselineSnapshot> snapshots)
         {
-            if (snapshots == null) return;
+            if (snapshots == null) return false;
 
             try
             {
+                // Legacy records have generated ObjectId _id values. Preserve those
+                // IDs when updating by HostId rather than inserting a conflicting row.
+                var documents = _db.GetCollection("baseline_snapshots");
                 foreach (var snapshot in snapshots)
                 {
                     if (snapshot == null || string.IsNullOrWhiteSpace(snapshot.HostId))
                         continue;
 
-                    _baselines.Upsert(NormalizeBaselineSnapshot(snapshot));
+                    var normalized = NormalizeBaselineSnapshot(snapshot);
+                    var previous = documents.FindOne(Query.EQ("HostId", normalized.HostId));
+                    var document = BsonMapper.Global.ToDocument(normalized);
+                    document["_id"] = previous != null ? previous["_id"] : new BsonValue(normalized.HostId);
+                    documents.Upsert(document);
                 }
 
                 PruneBaselinesIfNeeded();
+                return true;
             }
             catch (Exception ex)
             {
                 Console.Error.WriteLine($"[LocalStore] Failed to save baseline snapshots: {ex.Message}");
+                return false;
             }
         }
 
@@ -283,7 +292,7 @@ namespace Carthago.Analytics.Services
         {
             var cutoff = DateTime.UtcNow.AddDays(-DefaultBaselineRetentionDays);
             foreach (var stale in _baselines.Query().Where(x => x.LastUpdatedUtc < cutoff).ToList())
-                _baselines.Delete(stale.HostId);
+                _db.GetCollection("baseline_snapshots").DeleteMany(Query.EQ("HostId", stale.HostId));
         }
 
         private static Incident NormalizeIncident(Incident incident)
