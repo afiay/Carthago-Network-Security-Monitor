@@ -57,6 +57,7 @@ namespace Carthago.Engine.Rules.Expansion
             public long MinimumBytes { get; init; }
             public int MinimumSignals { get; init; } = 2;
             public int MinimumConfidence { get; init; } = 76;
+            public double CorroboratedEvidenceWeight { get; init; }
             public int WindowThreshold { get; init; } = 1;
             public TimeSpan Window { get; init; } = TimeSpan.FromMinutes(20);
             public TimeSpan Cooldown { get; init; } = TimeSpan.FromMinutes(20);
@@ -187,6 +188,8 @@ namespace Carthago.Engine.Rules.Expansion
                         confidence.AddEvidence(0.12, "network-boundary-gate");
                     if (spec.TokenKinds.Length > 0)
                         confidence.AddEvidence(0.18, "secret-token-pattern");
+                    if (spec.CorroboratedEvidenceWeight > 0)
+                        confidence.AddEvidence(spec.CorroboratedEvidenceWeight, "rule-specific-corroboration");
                 },
                 count: count,
                 window: spec.Window,
