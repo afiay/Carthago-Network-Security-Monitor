@@ -36,6 +36,7 @@ namespace Carthago
         private IReadOnlyList<AnomalySignal> _dashboardAnomalySnapshot = Array.Empty<AnomalySignal>();
         private BaselineStatus _dashboardBaselineStatus = new();
         private readonly DispatcherTimer _dashboardHeaderTimer = new() { Interval = TimeSpan.FromSeconds(5) };
+        private readonly DashboardCallbackGate _dashboardCallbackGate = new();
         private bool _dashboardInitialized;
         private bool _syncingAnomalyPreference;
         private bool _syncingDashboardWidgets;
@@ -46,7 +47,7 @@ namespace Carthago
 
         private void InitializeDashboardExperience()
         {
-            if (_dashboardInitialized)
+            if (_dashboardInitialized || !_dashboardCallbackGate.IsOpen)
                 return;
 
             _dashboardInitialized = true;
@@ -92,44 +93,44 @@ namespace Carthago
         }
 
         private void DashboardIncidentChanged(Incident incident)
-            => Dispatcher.BeginInvoke(new Action(() =>
+            => Dispatcher.BeginInvoke(new Action(() => _dashboardCallbackGate.RunIfOpen(() =>
             {
                 RefreshDashboardIncidents();
                 UpdateMonitoringHeader();
-            }), DispatcherPriority.Background);
+            })), DispatcherPriority.Background);
 
         private void DashboardAnomalyObserved(AnomalySignal anomaly)
-            => Dispatcher.BeginInvoke(new Action(() =>
+            => Dispatcher.BeginInvoke(new Action(() => _dashboardCallbackGate.RunIfOpen(() =>
             {
                 RefreshDashboardAnomalies();
                 UpdateMonitoringHeader();
-            }), DispatcherPriority.Background);
+            })), DispatcherPriority.Background);
 
         private void DashboardBaselineChanged(BaselineStatus status)
-            => Dispatcher.BeginInvoke(new Action(() =>
+            => Dispatcher.BeginInvoke(new Action(() => _dashboardCallbackGate.RunIfOpen(() =>
             {
                 _dashboardBaselineStatus = status ?? new BaselineStatus();
                 RefreshDashboardLayoutFromPreferences();
                 UpdateMonitoringHeader();
-            }), DispatcherPriority.Background);
+            })), DispatcherPriority.Background);
 
         private void DashboardStateReset()
-            => Dispatcher.BeginInvoke(new Action(() =>
+            => Dispatcher.BeginInvoke(new Action(() => _dashboardCallbackGate.RunIfOpen(() =>
             {
                 RefreshDashboardIncidents();
                 RefreshDashboardAnomalies();
                 RefreshDashboardBaseline();
                 UpdateMonitoringHeader();
-            }), DispatcherPriority.Background);
+            })), DispatcherPriority.Background);
 
         private void DashboardPreferencesChanged(AppPreferences prefs)
-            => Dispatcher.BeginInvoke(new Action(() =>
+            => Dispatcher.BeginInvoke(new Action(() => _dashboardCallbackGate.RunIfOpen(() =>
             {
                 ApplyAnomalyPreferenceState(prefs);
                 RefreshDashboardCustomizationSources();
                 RefreshDashboardLayoutFromPreferences();
                 UpdateMonitoringHeader();
-            }), DispatcherPriority.Background);
+            })), DispatcherPriority.Background);
 
         private void ApplyAnomalyPreferenceState(AppPreferences prefs)
         {
@@ -151,7 +152,7 @@ namespace Carthago
 
         private void RefreshDashboardIncidents()
         {
-            if (_sinkHost == null)
+            if (!_dashboardCallbackGate.IsOpen || _sinkHost == null)
                 return;
 
             _dashboardIncidentSnapshot = _sinkHost.Analytics
@@ -166,7 +167,7 @@ namespace Carthago
 
         private void RefreshDashboardAnomalies()
         {
-            if (_sinkHost == null)
+            if (!_dashboardCallbackGate.IsOpen || _sinkHost == null)
                 return;
 
             _dashboardAnomalySnapshot = _sinkHost.Analytics.GetRecentAnomalies(160);
@@ -175,7 +176,7 @@ namespace Carthago
 
         private void RefreshDashboardBaseline()
         {
-            if (_sinkHost == null)
+            if (!_dashboardCallbackGate.IsOpen || _sinkHost == null)
                 return;
 
             _dashboardBaselineStatus = _sinkHost.Analytics.GetBaselineStatus();
@@ -198,7 +199,7 @@ namespace Carthago
 
         private void RefreshDashboardLayoutFromPreferences()
         {
-            if (!_dashboardInitialized)
+            if (!_dashboardCallbackGate.IsOpen || !_dashboardInitialized)
                 return;
 
             var prefs = PreferencesService.Current.Dashboard?.Clone() ?? new DashboardPreferences();
@@ -523,6 +524,9 @@ namespace Carthago
 
         private void UpdateMonitoringHeader()
         {
+            if (!_dashboardCallbackGate.IsOpen)
+                return;
+
             var captureError = _captureService.LastCaptureError;
             var flow = _captureService.GetCaptureFlowSnapshot();
             var sourceHealth = _captureService.GetCaptureSourceHealth();
@@ -1556,6 +1560,7 @@ namespace Carthago
 
         private void CleanupDashboardExperience()
         {
+            _dashboardCallbackGate.Close();
             PreferencesService.PreferencesChanged -= DashboardPreferencesChanged;
             DeviceComboBox.SelectionChanged -= DeviceComboBox_SelectionChanged;
             _dashboardHeaderTimer.Stop();
