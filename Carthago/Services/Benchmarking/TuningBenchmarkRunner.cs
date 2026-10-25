@@ -217,6 +217,13 @@ namespace Carthago.Services.Benchmarking
                             approvedAssets,
                             sample.BaselineLearningMode,
                             match.Event.ConfidenceScore);
+                        // Apply the same independent precision checks used by live
+                        // capture. Alert is the unconstrained input here because
+                        // each replay profile already supplies its own policy mode.
+                        var precision = RulePrecisionRuntimeEvaluator.Evaluate(
+                            match.Descriptor, match.Event, match.Record, RuleMode.Alert, profile.ProfileName);
+                        var evaluatedMode = RulePrecisionCatalog.MostRestrictive(
+                            decision.EffectiveMode, precision.EffectiveMode);
 
                         var precisionMode = RulePrecisionCatalog.GetProfile(match.Descriptor).DefaultMode;
                         var existingTrace = profileSample.RuleDecisions.FirstOrDefault(item =>
@@ -231,15 +238,16 @@ namespace Carthago.Services.Benchmarking
                                 Tier = decision.Tier.ToString(),
                                 DefaultMode = decision.DefaultMode.ToString(),
                                 PrecisionMode = precisionMode.ToString(),
-                                EffectiveMode = decision.EffectiveMode.ToString(),
+                                EffectiveMode = evaluatedMode.ToString(),
                                 Confidence = match.Event.ConfidenceScore,
                                 ConfidenceFloor = decision.ConfidenceFloor,
                                 Reasons = decision.Reasons.Select(static reason => reason.ToString()).ToList(),
-                                ReasonDetails = decision.ReasonDetails.ToList()
+                                ReasonDetails = decision.ReasonDetails.ToList(),
+                                RuntimePrecisionReasons = precision.Reasons.ToList()
                             });
                         }
 
-                        switch (decision.EffectiveMode)
+                        switch (evaluatedMode)
                         {
                             case RuleMode.Alert:
                                 profileSample.AlertRuleIds.Add(match.Descriptor.RuleId);
