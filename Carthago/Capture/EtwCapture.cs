@@ -18,6 +18,9 @@ namespace Carthago.Capture
 
         private sealed class CaptureRun
         {
+            public TaskCompletionSource Startup { get; } =
+                new(TaskCreationOptions.RunContinuationsAsynchronously);
+
             public Task Completion { get; set; } =
                 System.Threading.Tasks.Task.CompletedTask;
 
@@ -79,7 +82,7 @@ namespace Carthago.Capture
                             "ETW capture is stopping; wait for " +
                             "StopAsync before restarting.");
 
-                    return _run.Completion;
+                    return _run.Startup.Task;
                 }
 
                 Volatile.Write(ref _lastError, null);
@@ -90,7 +93,7 @@ namespace Carthago.Capture
                 run.Completion =
                     Task.Run(() => CaptureLoop(run));
 
-                return run.Completion;
+                return run.Startup.Task;
             }
         }
 
@@ -112,6 +115,15 @@ namespace Carthago.Capture
 
                     run.Session = session;
                 }
+
+                // Kernel subscriptions are only valid after the provider has
+                // been enabled for the session.
+                session.EnableKernelProvider(
+                    KernelTraceEventParser.Keywords.NetworkTCPIP);
+
+                if (Volatile.Read(
+                        ref run.StopRequested) != 0)
+                    return;
 
                 session.Source.Kernel.TcpIpRecv += data =>
                     Publish(
@@ -149,14 +161,8 @@ namespace Carthago.Capture
                         ref run.StopRequested) != 0)
                     return;
 
-                session.EnableKernelProvider(
-                    KernelTraceEventParser.Keywords.NetworkTCPIP);
-
-                if (Volatile.Read(
-                        ref run.StopRequested) != 0)
-                    return;
-
                 Volatile.Write(ref _running, 1);
+                run.Startup.TrySetResult();
 
                 // Blocks while the ETW session is active.
                 session.Source.Process();
@@ -188,11 +194,14 @@ namespace Carthago.Capture
                             observerError.Message);
                     }
 
-                    throw;
+                    run.Startup.TrySetException(ex);
                 }
             }
             finally
             {
+                if (!run.Startup.Task.IsCompleted)
+                    run.Startup.TrySetCanceled();
+
                 Volatile.Write(ref _running, 0);
 
                 var session =

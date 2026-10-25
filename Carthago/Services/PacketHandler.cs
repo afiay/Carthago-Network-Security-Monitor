@@ -5,6 +5,7 @@
 // Early bytes are inspected; this is not general TCP stream reassembly.
 
 using SharpPcap;
+using PacketDotNet;
 using Carthago.Models;
 using Carthago.Services.Flow;
 using Carthago.Services.Fingerprints;
@@ -47,21 +48,76 @@ namespace Carthago.Services
 
         public TrafficRecord? ParsePacket(PacketCapture e)
         {
+            var raw = e.GetPacket();
+            return raw?.Data is null
+                ? null
+                : ParseFrame(raw.Data, raw.LinkLayerType);
+        }
+
+        internal TrafficRecord? ParseFrame(byte[] data, LinkLayers linkLayerType)
+        {
             try
             {
-                var raw = e.GetPacket();
-                if (raw?.Data == null || raw.Data.Length < 14)
+                if (data.Length == 0)
                     return null;
 
-                ReadOnlySpan<byte> frame = raw.Data;
+                ReadOnlySpan<byte> frame = data;
 
-                // ====== L2: Ethernet (with VLAN awareness) ======
-                string macDst = MacToString(frame.Slice(0, 6));
-                string macSrc = MacToString(frame.Slice(6, 6));
+                string macDst = string.Empty;
+                string macSrc = string.Empty;
+                int off;
+                ushort etherType;
 
-                int off = 12;
-                ushort etherType = BinaryPrimitives.ReadUInt16BigEndian(frame.Slice(off, 2));
-                off += 2;
+                switch ((int)linkLayerType)
+                {
+                    case 1: // Ethernet
+                        if (frame.Length < 14) return null;
+                        macDst = MacToString(frame.Slice(0, 6));
+                        macSrc = MacToString(frame.Slice(6, 6));
+                        off = 12;
+                        etherType = BinaryPrimitives.ReadUInt16BigEndian(frame.Slice(off, 2));
+                        off += 2;
+                        break;
+
+                    case 0: // BSD loopback/null
+                        if (frame.Length < 5) return null;
+                        uint family = BinaryPrimitives.ReadUInt32LittleEndian(frame.Slice(0, 4));
+                        off = 4;
+                        etherType = family == 2
+                            ? (ushort)0x0800
+                            : family is 23 or 24 or 28 or 30
+                                ? (ushort)0x86DD
+                                : (ushort)0;
+                        break;
+
+                    case 12:  // DLT_RAW
+                    case 101: // LINKTYPE_RAW
+                    case 228: // LINKTYPE_IPV4
+                    case 229: // LINKTYPE_IPV6
+                        off = 0;
+                        etherType = (frame[0] >> 4) switch
+                        {
+                            4 => (ushort)0x0800,
+                            6 => (ushort)0x86DD,
+                            _ => (ushort)0
+                        };
+                        break;
+
+                    case 113: // Linux cooked capture v1
+                        if (frame.Length < 16) return null;
+                        off = 16;
+                        etherType = BinaryPrimitives.ReadUInt16BigEndian(frame.Slice(14, 2));
+                        break;
+
+                    case 276: // Linux cooked capture v2
+                        if (frame.Length < 20) return null;
+                        off = 20;
+                        etherType = BinaryPrimitives.ReadUInt16BigEndian(frame.Slice(0, 2));
+                        break;
+
+                    default:
+                        return null;
+                }
 
                 // VLAN tags (802.1Q/AD stacked)
                 int vlanDepth = 0;
@@ -297,21 +353,6 @@ namespace Carthago.Services
 
                 // Service guess from ports
                 rec.ApplicationService = ResolveService(protoLabel, sport, dport);
-
-                // Local process + VPN/Proxy enrichment (unchanged policy)
-                var det = VpnProxyResolver.CheckIp(srcIp);
-                rec.IsVpn = det.IsVpn;
-                rec.IsProxy = det.IsProxy;
-                rec.NetworkType = det.NetworkType;
-
-                WindowsProcessResolver.ProcessInfo? proc = null;
-                if (IpUtils.IsPrivateIp(srcIp) || IpUtils.IsPrivateIp(dstIp))
-                {
-                    proc = WindowsProcessResolver.ResolveProcess(srcIp, sport, dstIp, dport, protoLabel);
-                    rec.ProcessId = proc?.ProcessId ?? 0;
-                    rec.ProcessName = proc?.ProcessName ?? "Unknown";
-                    if (proc != null) AppendInfo(rec, $"\nLocal Process: {proc.ProcessName} (PID {proc.ProcessId})");
-                }
 
                 // ====== TCP flow identity, direction and latency ======
                 FlowKey tcpFlow = default;
