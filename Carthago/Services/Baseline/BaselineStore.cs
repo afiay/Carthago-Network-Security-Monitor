@@ -25,8 +25,8 @@ namespace Carthago.Services.Baseline
         int ObservationCount, DateTime? FirstSeenUtc, DateTime? LastSeenUtc);
 
     /// <summary>
-    /// Durable, independently keyed observations. The snapshot is written atomically
-    /// so a failed write cannot replace the last known-good baseline.
+    /// Durable, independently keyed observations. Historical JSON snapshots remain
+    /// readable; new observations use an append-only journal to avoid full-file writes.
     /// </summary>
     public sealed class BaselineStore
     {
@@ -35,6 +35,13 @@ namespace Carthago.Services.Baseline
             public int Count { get; set; }
             public DateTime FirstSeenUtc { get; set; }
             public DateTime LastSeenUtc { get; set; }
+        }
+
+        private sealed class JournalRecord
+        {
+            public string Operation { get; set; } = string.Empty;
+            public string? Key { get; set; }
+            public DateTime TimestampUtc { get; set; }
         }
 
         private static BaselineStore _current = new(new BaselineOptions());
@@ -68,15 +75,14 @@ namespace Carthago.Services.Baseline
                 await LoadIfNeededAsync(cancellationToken).ConfigureAwait(false);
                 var key = JsonSerializer.Serialize(new[] { observation.Kind, observation.Subject, observation.Value });
                 var timestamp = observation.TimestampUtc == default ? DateTime.UtcNow : observation.TimestampUtc.ToUniversalTime();
-                var first = !_entries.TryGetValue(key, out var entry);
-                if (first)
-                    entry = new Entry { FirstSeenUtc = timestamp, LastSeenUtc = timestamp };
-
-                entry!.Count++;
-                if (timestamp < entry.FirstSeenUtc) entry.FirstSeenUtc = timestamp;
-                if (timestamp > entry.LastSeenUtc) entry.LastSeenUtc = timestamp;
-                _entries[key] = entry;
-                await SaveAsync(cancellationToken).ConfigureAwait(false);
+                // Persist first so an I/O failure cannot leave an unpersisted
+                // observation counted as known in the live process.
+                await AppendJournalAsync(new JournalRecord
+                {
+                    Operation = "observe", Key = key, TimestampUtc = timestamp
+                }, cancellationToken).ConfigureAwait(false);
+                var first = !_entries.TryGetValue(key, out _);
+                var entry = AddObservation(key, timestamp);
 
                 return new BaselineDecision(first, !first, IsLearningMode,
                     first ? "first seen" : "previously observed", entry.Count,
@@ -90,14 +96,28 @@ namespace Carthago.Services.Baseline
             await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
             try
             {
+                await AppendJournalAsync(new JournalRecord { Operation = "clear" }, cancellationToken)
+                    .ConfigureAwait(false);
                 _entries.Clear();
                 _loaded = true;
-                await SaveAsync(cancellationToken).ConfigureAwait(false);
             }
             finally { _gate.Release(); }
         }
 
         private string SnapshotPath => Path.Combine(_options.DirectoryPath, "baseline.json");
+        private string JournalPath => Path.Combine(_options.DirectoryPath, "baseline-journal.jsonl");
+
+        private Entry AddObservation(string key, DateTime timestamp)
+        {
+            if (!_entries.TryGetValue(key, out var entry))
+                entry = new Entry { FirstSeenUtc = timestamp, LastSeenUtc = timestamp };
+
+            entry.Count++;
+            if (timestamp < entry.FirstSeenUtc) entry.FirstSeenUtc = timestamp;
+            if (timestamp > entry.LastSeenUtc) entry.LastSeenUtc = timestamp;
+            _entries[key] = entry;
+            return entry;
+        }
 
         private async Task LoadIfNeededAsync(CancellationToken cancellationToken)
         {
@@ -109,23 +129,33 @@ namespace Carthago.Services.Baseline
                 if (saved != null)
                     foreach (var item in saved) _entries[item.Key] = item.Value;
             }
+            if (File.Exists(JournalPath))
+            {
+                using var reader = new StreamReader(JournalPath);
+                while (true)
+                {
+                    var line = await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false);
+                    if (line == null) break;
+                    if (string.IsNullOrWhiteSpace(line)) continue;
+                    JournalRecord? record;
+                    try { record = JsonSerializer.Deserialize<JournalRecord>(line); }
+                    catch (JsonException) { continue; } // Ignore an incomplete journal line.
+                    if (record?.Operation == "clear") _entries.Clear();
+                    else if (record?.Operation == "observe" && !string.IsNullOrWhiteSpace(record.Key))
+                        AddObservation(record.Key, record.TimestampUtc);
+                }
+            }
             _loaded = true;
         }
 
-        private async Task SaveAsync(CancellationToken cancellationToken)
+        private async Task AppendJournalAsync(JournalRecord record, CancellationToken cancellationToken)
         {
             Directory.CreateDirectory(_options.DirectoryPath);
-            var temporaryPath = SnapshotPath + "." + Guid.NewGuid().ToString("N") + ".tmp";
-            try
-            {
-                await File.WriteAllTextAsync(temporaryPath, JsonSerializer.Serialize(_entries), cancellationToken)
-                    .ConfigureAwait(false);
-                File.Move(temporaryPath, SnapshotPath, overwrite: true);
-            }
-            finally
-            {
-                if (File.Exists(temporaryPath)) File.Delete(temporaryPath);
-            }
+            // A leading newline ensures the next valid event is independently
+            // readable even if the previous append was interrupted mid-record.
+            await File.AppendAllTextAsync(JournalPath,
+                Environment.NewLine + JsonSerializer.Serialize(record) + Environment.NewLine,
+                cancellationToken).ConfigureAwait(false);
         }
     }
 }
