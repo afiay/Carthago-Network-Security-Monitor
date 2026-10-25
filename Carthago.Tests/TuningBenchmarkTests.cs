@@ -95,6 +95,25 @@ namespace Carthago.Tests
         }
 
         [Fact]
+        public async Task Benchmark_Explains_Shadowed_Expected_Rules_Without_Changing_Their_Mode()
+        {
+            var report = await new TuningBenchmarkRunner().RunAsync(new TuningBenchmarkOptions
+            {
+                ReplayDirectory = GetReplayDirectory()
+            });
+
+            var dns = report.SampleResults.Single(sample => sample.Name == "dns-tunnel-high-confidence");
+            var decision = Assert.Single(dns.Profiles["SmallBusiness"].RuleDecisions,
+                item => item.RuleId == "R102");
+
+            Assert.Equal("Shadow", decision.EffectiveMode);
+            Assert.Equal("BaselineRequired", decision.Tier);
+            Assert.Contains("R102", dns.Profiles["SmallBusiness"].ShadowRuleIds);
+            Assert.NotEmpty(decision.Reasons);
+            Assert.InRange(decision.Confidence, 0, 1);
+        }
+
+        [Fact]
         public async Task Benchmark_Explains_Why_Expected_Rules_Did_Not_Match()
         {
             var runner = new TuningBenchmarkRunner();
