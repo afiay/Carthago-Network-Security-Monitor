@@ -23,17 +23,17 @@ namespace Carthago.Engine.Rules.IotOt
             maturity: RulePrecisionMaturity.Validated,
             defaultMode: RuleRuntimeMode.Alert,
             requiredTelemetry: new[] { RuleTelemetryKind.OtIcsProtocol, RuleTelemetryKind.Flow, RuleTelemetryKind.Payload },
-            requiredFields: new[] { "source", "destination_or_host", "iot_or_ot_context", "payload_or_uri" },
+            requiredFields: new[] { "source", "destination_or_host", "iot_or_ot_context", "device_authentication_attempt" },
             evidenceFields: new[] { "matched_conditions", "process.name" },
             positiveConditions: new[]
             {
-                "The record must contain a known default credential token.",
-                "Authentication context must be present.",
+                "A Telnet login transcript or decoded HTTP Basic Authorization must contain a known default credential pair.",
+                "An HTTP request must identify an IoT device host; free-form descriptions do not establish authentication.",
                 "The destination should resemble an IoT, camera, router, or similar device target."
             },
             negativeConditions: new[]
             {
-                "Do not alert on default-credential strings without auth context.",
+                "Do not alert on default-credential strings in documentation, URLs, or other unstructured descriptions.",
                 "Do not alert on default-credential strings that lack device-target indicators."
             },
             minimumConfidence: 86,
@@ -49,7 +49,8 @@ namespace Carthago.Engine.Rules.IotOt
             requiredTests: new[]
             {
                 "positive default credential sample",
-                "negative unrelated adminadmin string sample"
+                "negative unrelated adminadmin string sample",
+                "negative ordinary device administration without observed default credentials"
             });
 
         public R118_DefaultCredentialIoTAttemptRule()
@@ -60,7 +61,8 @@ namespace Carthago.Engine.Rules.IotOt
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!HasDefaultCredentialToken(record) || !IsDefaultCredentialContext(record) || !IsLikelyIotDeviceTarget(record))
+            if (!SensitiveTelemetryContracts.HasDefaultCredentialAuthenticationAttempt(record)
+                || !IsLikelyIotDeviceTarget(record))
                 return NoMatch();
 
             var matchedConditions = new List<string> { "default_credential_token", "authentication_context", "device_target_context" };
