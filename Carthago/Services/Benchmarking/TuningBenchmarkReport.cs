@@ -13,6 +13,7 @@ namespace Carthago.Services.Benchmarking
         public int ExpectedMatchCount { get; set; }
         public int MatchedExpectedCount { get; set; }
         public double TruePositivePassRate { get; set; }
+        public DetectionQualityMetrics? SampleLevelQuality { get; set; }
         public int BenignFalsePositiveCount { get; set; }
         public int BenignCriticalAlertCount { get; set; }
         public List<string> NoisyRules { get; set; } = new();
