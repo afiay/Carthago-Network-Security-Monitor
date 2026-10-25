@@ -14,6 +14,7 @@ namespace Carthago.Services.Benchmarking
         public int MatchedExpectedCount { get; set; }
         public double TruePositivePassRate { get; set; }
         public DetectionQualityMetrics? SampleLevelQuality { get; set; }
+        public Dictionary<string, DetectionQualityMetrics> SampleLevelQualityByProfile { get; set; } = new(StringComparer.OrdinalIgnoreCase);
         public int BenignFalsePositiveCount { get; set; }
         public int BenignCriticalAlertCount { get; set; }
         public List<string> NoisyRules { get; set; } = new();
