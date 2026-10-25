@@ -68,16 +68,43 @@ namespace Carthago.Services.Benchmarking
                 RuleEngine.ResetRuntimeStateForReplay();
 
                 var matches = new List<ReplayMatch>();
+                var expectedMatchIds = NormalizeRuleIds(sample.ExpectedMatches);
+                var expectedDiagnostics = expectedMatchIds.ToDictionary(
+                    static id => id,
+                    static id => new TuningBenchmarkExpectedRuleDiagnostic { RuleId = id, Outcome = "RuleUnavailable" },
+                    StringComparer.OrdinalIgnoreCase);
+                var evaluatedExpected = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var matchedExpected = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var failedExpected = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 foreach (var record in sample.Records)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
                     foreach (var rule in rules)
                     {
                         var telemetry = RuleTelemetryValidator.Validate(rule, record);
+                        var isExpected = expectedDiagnostics.TryGetValue(rule.Descriptor.RuleId, out var diagnostic);
+                        if (isExpected && diagnostic != null)
+                        {
+                            if (diagnostic.Outcome == "RuleUnavailable") diagnostic.Outcome = "MissingTelemetry";
+                            diagnostic.MissingRequiredTelemetry.AddRange(telemetry.MissingRequiredTelemetry);
+                        }
                         if (!telemetry.CanRunSafely)
                             continue;
 
                         var result = await rule.EvaluateAsync(new RuleEvaluationContext(record, Sensitivity.Balanced, DateTime.UtcNow)).ConfigureAwait(false);
+                        if (isExpected && diagnostic != null)
+                        {
+                            evaluatedExpected.Add(rule.Descriptor.RuleId);
+                            if (result.Matched && result.Events.Count > 0)
+                                matchedExpected.Add(rule.Descriptor.RuleId);
+                            if (result.Failed)
+                            {
+                                failedExpected.Add(rule.Descriptor.RuleId);
+                                diagnostic.NoMatchReasons.Add(result.FailureMessage ?? "Rule evaluation failed.");
+                            }
+                            diagnostic.NoMatchReasons.AddRange(result.NoMatchReasons.Select(static reason =>
+                                $"{reason.Category}/{reason.Code}: {reason.Message}"));
+                        }
                         if (!result.Matched || result.Events.Count == 0)
                             continue;
 
@@ -94,7 +121,16 @@ namespace Carthago.Services.Benchmarking
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .OrderBy(static id => id, StringComparer.OrdinalIgnoreCase)
                     .ToList();
-                var expectedMatchIds = NormalizeRuleIds(sample.ExpectedMatches);
+                foreach (var diagnostic in expectedDiagnostics.Values)
+                {
+                    if (matchedExpected.Contains(diagnostic.RuleId)) diagnostic.Outcome = "Matched";
+                    else if (evaluatedExpected.Contains(diagnostic.RuleId))
+                        diagnostic.Outcome = failedExpected.Contains(diagnostic.RuleId) ? "EvaluationFailed" : "NoMatch";
+                    diagnostic.MissingRequiredTelemetry = diagnostic.MissingRequiredTelemetry
+                        .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(static value => value, StringComparer.OrdinalIgnoreCase).ToList();
+                    diagnostic.NoMatchReasons = diagnostic.NoMatchReasons
+                        .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+                }
                 var expectedNonMatchIds = NormalizeRuleIds(sample.ExpectedNonMatches);
                 var missingExpected = expectedMatchIds.Where(id => !actualMatchIds.Contains(id, StringComparer.OrdinalIgnoreCase)).ToList();
                 var unexpected = expectedNonMatchIds.Where(id => actualMatchIds.Contains(id, StringComparer.OrdinalIgnoreCase)).ToList();
@@ -108,6 +144,7 @@ namespace Carthago.Services.Benchmarking
                     Classification = classification,
                     ExpectedMatches = expectedMatchIds,
                     ActualMatches = actualMatchIds,
+                    ExpectedRuleDiagnostics = expectedDiagnostics.Values.OrderBy(static item => item.RuleId, StringComparer.OrdinalIgnoreCase).ToList(),
                     MissingExpectedMatches = missingExpected,
                     UnexpectedMatches = unexpected,
                     MaximumConfidence = maxConfidence,
