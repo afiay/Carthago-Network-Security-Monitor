@@ -7,6 +7,7 @@ using Carthago.Services;
 var options = new TuningBenchmarkOptions();
 var verbose = false;
 var compareProfiles = false;
+var explainShadow = false;
 for (var i = 0; i < args.Length; i++)
 {
     switch (args[i])
@@ -25,6 +26,9 @@ for (var i = 0; i < args.Length; i++)
             break;
         case "--compare-profiles":
             compareProfiles = true;
+            break;
+        case "--explain-shadow":
+            explainShadow = true;
             break;
         default:
             Console.Error.WriteLine($"Unknown or incomplete argument: {args[i]}");
@@ -88,6 +92,30 @@ if (compareProfiles)
                           $"precision={FormatMetric(q.Precision),6} recall={FormatMetric(q.Recall),6} F1={FormatMetric(q.F1Score),6}");
     }
     Console.WriteLine("Scope: labeled replay samples only; raw matches and shadow decisions are not alerts.");
+}
+if (explainShadow)
+{
+    Console.WriteLine("\nExpected malicious rules not alerting (profile policy diagnostics):");
+    foreach (var sample in report.SampleResults.Where(static item => item.Classification == ReplaySampleClassification.Malicious))
+    {
+        foreach (var profile in sample.Profiles.OrderBy(static pair => pair.Key, StringComparer.OrdinalIgnoreCase))
+        {
+            foreach (var ruleId in sample.ExpectedMatches.Where(id => !profile.Value.AlertRuleIds.Contains(id, StringComparer.OrdinalIgnoreCase)))
+            {
+                var trace = profile.Value.RuleDecisions.FirstOrDefault(item => string.Equals(item.RuleId, ruleId, StringComparison.OrdinalIgnoreCase));
+                if (trace == null)
+                {
+                    Console.WriteLine($"  {profile.Key} / {sample.Name} / {ruleId}: no rule match");
+                    continue;
+                }
+
+                Console.WriteLine($"  {profile.Key} / {sample.Name} / {ruleId}: {trace.EffectiveMode} " +
+                                  $"(tier={trace.Tier}, profile={trace.DefaultMode}, precision={trace.PrecisionMode}, " +
+                                  $"confidence={trace.Confidence:F2}, floor={trace.ConfidenceFloor?.ToString("F2") ?? "none"})");
+                Console.WriteLine($"    Reasons: {string.Join(", ", trace.Reasons)}");
+            }
+        }
+    }
 }
 
 static string FormatMetric(double? value) => value.HasValue ? value.Value.ToString("P1") : "N/A";
