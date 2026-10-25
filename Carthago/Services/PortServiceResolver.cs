@@ -89,7 +89,8 @@ namespace Carthago.Services
 
         private static readonly object _gate = new();
         private static volatile IndexSnapshot _idx = IndexSnapshot.Empty();
-        private static volatile bool _scheduledRefresh;
+        private static int _scheduledRefresh;
+        private static long _nextRefreshAttemptTicks;
         private static DateTimeOffset _lastRefresh = DateTimeOffset.MinValue;
 
         // Lightweight learned frequencies: (port,proto,name) -> count
@@ -456,25 +457,40 @@ namespace Carthago.Services
         private static void MaybeScheduleRefresh()
         {
             if (DateTimeOffset.UtcNow - _lastRefresh < RefreshInterval) return;
-            if (_scheduledRefresh) return;
-            _scheduledRefresh = true;
+            if (DateTime.UtcNow.Ticks < Interlocked.Read(ref _nextRefreshAttemptTicks)) return;
+            if (Interlocked.CompareExchange(ref _scheduledRefresh, 1, 0) != 0) return;
 
             // add jittered backoff if fetch fails repeatedly
             _ = Task.Run(async () =>
             {
-                int attempt = 0;
-                while (true)
+                try
                 {
-                    try { await RefreshFromIanaAsync(); break; }
-                    catch (Exception ex)
+                    int attempt = 0;
+                    while (true)
                     {
-                        attempt++;
-                        Console.Error.WriteLine($"[PortServiceResolver] Background refresh attempt {attempt} failed: {ex.Message}");
-                        var delay = TimeSpan.FromMinutes(Math.Min(90, 5 * attempt)) + TimeSpan.FromSeconds(Random.Shared.Next(0, 30));
-                        try { await Task.Delay(delay); } catch { break; }
+                        try
+                        {
+                            await RefreshFromIanaAsync().ConfigureAwait(false);
+                            Interlocked.Exchange(ref _nextRefreshAttemptTicks, 0);
+                            break;
+                        }
+                        catch (Exception ex)
+                        {
+                            attempt++;
+                            Interlocked.Exchange(ref _nextRefreshAttemptTicks,
+                                DateTime.UtcNow.Add(PortRefreshRetryPolicy.FailureCooldown(ex)).Ticks);
+                            Console.Error.WriteLine($"[PortServiceResolver] Background refresh attempt {attempt} failed: {ex.Message}");
+                            if (!PortRefreshRetryPolicy.ShouldRetry(ex, attempt)) break;
+
+                            await Task.Delay(PortRefreshRetryPolicy.RetryDelay(attempt)
+                                + TimeSpan.FromSeconds(Random.Shared.Next(0, 5))).ConfigureAwait(false);
+                        }
                     }
                 }
-                _scheduledRefresh = false;
+                finally
+                {
+                    Interlocked.Exchange(ref _scheduledRefresh, 0);
+                }
             });
         }
 
