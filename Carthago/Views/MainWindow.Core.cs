@@ -73,7 +73,13 @@ namespace Carthago
             // Hook capture service events
             _captureService.TrafficRecordReceived += CaptureService_TrafficRecordReceived;
             _captureService.DetectionEventRaised += CaptureService_DetectionEventRaised;
-            _captureService.CaptureFailed += _ => UpdateMonitoringHeader();
+            _captureService.CaptureFailed += _ =>
+            {
+                StartButton.IsEnabled = true;
+                StopButton.IsEnabled = false;
+                DeviceComboBox.IsEnabled = true;
+                UpdateMonitoringHeader();
+            };
 
             // Bind grids
             TrafficGrid.ItemsSource = _traffic;
