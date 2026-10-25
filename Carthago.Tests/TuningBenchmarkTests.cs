@@ -76,6 +76,25 @@ namespace Carthago.Tests
         }
 
         [Fact]
+        public async Task Benchmark_Compares_Alert_Quality_For_Every_Profile()
+        {
+            var report = await new TuningBenchmarkRunner().RunAsync(new TuningBenchmarkOptions
+            {
+                ReplayDirectory = GetReplayDirectory()
+            });
+
+            Assert.Equal(report.ProfileResults.Keys.OrderBy(name => name),
+                report.Summary.SampleLevelQualityByProfile.Keys.OrderBy(name => name));
+            foreach (var quality in report.Summary.SampleLevelQualityByProfile.Values)
+            {
+                Assert.Equal(report.SampleResults.Count,
+                    quality.TruePositives + quality.FalsePositives + quality.FalseNegatives + quality.TrueNegatives);
+            }
+            Assert.Equal(report.Summary.SampleLevelQuality,
+                report.Summary.SampleLevelQualityByProfile["SmallBusiness"]);
+        }
+
+        [Fact]
         public async Task Benchmark_Explains_Why_Expected_Rules_Did_Not_Match()
         {
             var runner = new TuningBenchmarkRunner();
