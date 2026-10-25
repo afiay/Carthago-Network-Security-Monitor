@@ -298,12 +298,14 @@ namespace Carthago
 
         protected override void OnClosed(EventArgs e)
         {
-            base.OnClosed(e);
             PreferencesService.PreferencesChanged -= MainWindowPreferencesChanged;
+            // Unsubscribe UI callbacks while analytics is still alive. The Closed event
+            // disposes SinkHost, so cleanup must run before base.OnClosed.
             CleanupDashboardExperience();
             _captureService.Dispose();
             _ppsTimer?.Stop();
             _dashboardHeaderTimer?.Stop();
+            base.OnClosed(e);
         }
 
         // ===== Added to replace deleted handlers from MainWindow.Commands.cs =====
