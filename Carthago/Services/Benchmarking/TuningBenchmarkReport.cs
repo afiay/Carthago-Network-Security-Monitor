@@ -42,10 +42,24 @@ namespace Carthago.Services.Benchmarking
     public sealed class TuningBenchmarkProfileSampleSummary
     {
         public string ProfileName { get; set; } = string.Empty;
+        public List<TuningBenchmarkRuleDecision> RuleDecisions { get; set; } = new();
         public List<string> AlertRuleIds { get; set; } = new();
         public List<string> ShadowRuleIds { get; set; } = new();
         public List<string> SuppressedRuleIds { get; set; } = new();
         public int CriticalAlertCount { get; set; }
+    }
+
+    public sealed class TuningBenchmarkRuleDecision
+    {
+        public string RuleId { get; set; } = string.Empty;
+        public string Tier { get; set; } = string.Empty;
+        public string DefaultMode { get; set; } = string.Empty;
+        public string PrecisionMode { get; set; } = string.Empty;
+        public string EffectiveMode { get; set; } = string.Empty;
+        public double Confidence { get; set; }
+        public double? ConfidenceFloor { get; set; }
+        public List<string> Reasons { get; set; } = new();
+        public List<string> ReasonDetails { get; set; } = new();
     }
 
     public sealed class TuningBenchmarkSampleResult
