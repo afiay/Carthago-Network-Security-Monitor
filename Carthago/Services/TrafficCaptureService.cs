@@ -147,6 +147,7 @@ namespace Carthago.Services
             _dispatcher = dispatcher ?? (Application.Current?.Dispatcher ?? Dispatcher.CurrentDispatcher);
 
             _uiReaderTask = Task.Run(UiChannelReaderLoop);
+            CaptureTaskFailureObserver.Observe(_uiReaderTask, HandleUiDrainFailure);
             for (int i = 0; i < _enrichmentWorkers.Length; i++)
                 _enrichmentWorkers[i] = Task.Run(EnrichmentWorkerLoop);
 
@@ -501,38 +502,45 @@ namespace Carthago.Services
         // ---- UI drain --------------------------------------------------
         private async Task UiChannelReaderLoop()
         {
-            var reader = _uiChannel.Reader;
             try
             {
-                while (await reader.WaitToReadAsync(_serviceCts.Token).ConfigureAwait(false))
+                await CaptureUiDrain.RunAsync(_uiChannel.Reader, UiBatchSize, async batch =>
                 {
-                    var batch = new List<TrafficRecord>(UiBatchSize);
-                    while (batch.Count < UiBatchSize && reader.TryRead(out var rec))
-                        batch.Add(rec);
-
-                    if (batch.Count > 0)
+                    await _dispatcher.InvokeAsync(() =>
                     {
-                        await _dispatcher.InvokeAsync(() =>
+                        foreach (var r in batch)
                         {
-                            foreach (var r in batch)
+                            try
                             {
-                                try
-                                {
-                                    TrafficRecordReceived?.Invoke(r);
-                                    Interlocked.Increment(ref _uiRecordsDelivered);
-                                    Interlocked.Exchange(ref _lastUiDeliveredTicks, DateTime.UtcNow.Ticks);
-                                }
-                                catch (Exception ex) { Log(ex); /* keep other records flowing */ }
+                                TrafficRecordReceived?.Invoke(r);
+                                Interlocked.Increment(ref _uiRecordsDelivered);
+                                Interlocked.Exchange(ref _lastUiDeliveredTicks, DateTime.UtcNow.Ticks);
                             }
-                        }, DispatcherPriority.Background);
-                    }
-                }
+                            catch (Exception ex) { Log(ex); /* keep other records flowing */ }
+                        }
+                    }, DispatcherPriority.Background);
+                }, _serviceCts.Token).ConfigureAwait(false);
             }
-            catch (OperationCanceledException) { /* service shutting down */ }
             catch (Exception ex)
             {
-                Console.Error.WriteLine($"UiChannelReaderLoop error: {ex.Message}");
+                Log(ex);
+                throw; // Observer reports the terminal UI-drain failure.
             }
+        }
+
+        private void HandleUiDrainFailure(Exception error)
+        {
+            Log(error);
+            if (Volatile.Read(ref _disposed) != 0 || _dispatcher.HasShutdownStarted || _dispatcher.HasShutdownFinished)
+                return;
+
+            _ = _dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (Volatile.Read(ref _disposed) != 0) return;
+                StopCurrentCapture();
+                Volatile.Write(ref _lastCaptureError, $"UI record delivery stopped: {error.Message}");
+                CaptureFailed?.Invoke(error);
+            }), DispatcherPriority.Normal);
         }
 
         // ---- enrichment + rules ---------------------------------------
