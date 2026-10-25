@@ -23,8 +23,8 @@ namespace Carthago.Engine.Rules.Expansion
             Category = "IdentityAdvanced",
             Description = "Detects OAuth Device Code Phishing Indicator only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
             Severity = SeverityLevel.High,
-            RequiredTelemetry = new[] { RuleTelemetryKind.Identity, RuleTelemetryKind.Http, RuleTelemetryKind.GeoIp },
-            RequiredFields = new[] { "source", "identity_or_user", "destination_or_host", "auth_or_http_context" },
+            RequiredTelemetry = new[] { RuleTelemetryKind.Http },
+            RequiredFields = new[] { "source", "destination_or_host", "http_any" },
             EvidenceFields = new[] { "identity.signal", "network.source", "network.destination", "matched_conditions", "rule.windowCount" },
             PositiveConditions = new[] { "OAuth Device Code Phishing Indicator requires concrete IdentityAdvanced telemetry, not descriptor text.", "The source and destination or identity context must be present.", "At least two independent rule-specific signals must be present, or the rule-specific threshold must be met." },
             NegativeConditions = new[] { "Do not match on rule names, category labels, or generic scanner banners alone.", "Do not match when source/destination context is absent.", "Do not match approved administrative, CI/CD, backup, mail migration, or monitoring paths unless explicit high-risk evidence is present." },
@@ -54,6 +54,15 @@ namespace Carthago.Engine.Rules.Expansion
         public R275_OAuthDeviceCodePhishingIndicatorRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            // A normal device-code initiation is not phishing evidence. Require
+            // both a device-code and user-code indicator before scoring.
+            var uri = context.Record.HttpUri ?? string.Empty;
+            if (!uri.Contains("device_code=", StringComparison.OrdinalIgnoreCase)
+                || !uri.Contains("user_code=", StringComparison.OrdinalIgnoreCase))
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence, "DEVICE_CODE_ABUSE_NOT_OBSERVED", "Device-code initiation alone does not establish phishing.");
+
+            return EvaluateSpec(context, Spec);
+        }
     }
 }
