@@ -94,6 +94,7 @@ namespace Carthago.Services
         private long _lastUiDeliveredTicks;
         private long _capturedAtStart;
         private long _deliveredAtStart;
+        private long _droppedAtStart;
         private long _parsedAtStart;
         private long _parseErrorsAtStart;
 
@@ -285,6 +286,7 @@ namespace Carthago.Services
             Volatile.Write(ref _lastCaptureError, null);
             Interlocked.Exchange(ref _capturedAtStart, Interlocked.Read(ref _packetsCaptured));
             Interlocked.Exchange(ref _deliveredAtStart, Interlocked.Read(ref _uiRecordsDelivered));
+            Interlocked.Exchange(ref _droppedAtStart, Interlocked.Read(ref _packetsDroppedByQueue));
             Interlocked.Exchange(ref _parsedAtStart, Interlocked.Read(ref _packetsParsedOk));
             Interlocked.Exchange(ref _parseErrorsAtStart, Interlocked.Read(ref _packetsParseErrors));
             Interlocked.Exchange(ref _lastCapturedTicks, 0);
@@ -942,16 +944,17 @@ namespace Carthago.Services
             var lastDisplayed = Interlocked.Read(ref _lastUiDeliveredTicks);
             var captured = Math.Max(0, Interlocked.Read(ref _packetsCaptured) - Interlocked.Read(ref _capturedAtStart));
             var displayed = Math.Max(0, Interlocked.Read(ref _uiRecordsDelivered) - Interlocked.Read(ref _deliveredAtStart));
-            var state = CaptureFlowHealth.Evaluate(running && started != 0,
-                ToUtcOffset(started) ?? DateTimeOffset.UtcNow, captured, displayed,
+            var dropped = Math.Max(0, Interlocked.Read(ref _packetsDroppedByQueue) - Interlocked.Read(ref _droppedAtStart));
+            var assessment = CaptureFlowHealth.Assess(running && started != 0,
+                ToUtcOffset(started) ?? DateTimeOffset.UtcNow, captured, displayed, dropped,
                 ToUtcOffset(lastCaptured), ToUtcOffset(lastDisplayed), DateTimeOffset.UtcNow);
-            return new CaptureFlowSnapshot(state, captured, displayed);
+            return new CaptureFlowSnapshot(assessment.State, captured, displayed, dropped, assessment.Reason);
         }
 
         private static DateTimeOffset? ToUtcOffset(long ticks)
             => ticks > 0 ? new DateTimeOffset(new DateTime(ticks, DateTimeKind.Utc)) : null;
 
-        public sealed record CaptureFlowSnapshot(CaptureFlowState State, long Captured, long Displayed);
+        public sealed record CaptureFlowSnapshot(CaptureFlowState State, long Captured, long Displayed, long Dropped, string Reason);
 
         public CaptureSourceHealth GetCaptureSourceHealth()
         {
@@ -986,6 +989,7 @@ namespace Carthago.Services
             Interlocked.Exchange(ref _uiRecordsDelivered, 0);
             Interlocked.Exchange(ref _capturedAtStart, 0);
             Interlocked.Exchange(ref _deliveredAtStart, 0);
+            Interlocked.Exchange(ref _droppedAtStart, 0);
             Interlocked.Exchange(ref _parsedAtStart, 0);
             Interlocked.Exchange(ref _parseErrorsAtStart, 0);
         }
