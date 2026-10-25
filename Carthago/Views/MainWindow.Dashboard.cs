@@ -524,8 +524,11 @@ namespace Carthago
         private void UpdateMonitoringHeader()
         {
             var captureError = _captureService.LastCaptureError;
+            var flow = _captureService.GetCaptureFlowSnapshot();
             var status = !string.IsNullOrWhiteSpace(captureError)
                 ? "Error"
+                : StopButton.IsEnabled && flow.State == Carthago.Services.CaptureFlowState.Stalled
+                ? "Degraded"
                 : _sinkHost == null
                 ? "Offline"
                 : StopButton.IsEnabled
@@ -541,6 +544,10 @@ namespace Carthago
                 case "Error":
                     MonitoringStatusBadge.Background = new SolidColorBrush(Color.FromRgb(65, 24, 33));
                     MonitoringStatusBadge.BorderBrush = Brushes.IndianRed;
+                    break;
+                case "Degraded":
+                    MonitoringStatusBadge.Background = new SolidColorBrush(Color.FromRgb(54, 34, 15));
+                    MonitoringStatusBadge.BorderBrush = Brushes.Orange;
                     break;
                 case "Monitoring":
                     MonitoringStatusBadge.Background = (Brush)(TryFindResource("StatusMonitoringBgBrush") ?? new SolidColorBrush(Color.FromRgb(22, 49, 33)));
@@ -564,6 +571,12 @@ namespace Carthago
             var lastAnalysis = _sinkHost?.Analytics.LastAnalysisUtc;
             HeaderLastAnalysisText.Text = status == "Error"
                 ? $"Capture failed: {captureError}"
+                : status == "Degraded"
+                ? $"Capture health: {flow.Captured} received, {flow.Displayed} displayed — UI delivery may be stalled"
+                : status == "Monitoring" && flow.State == Carthago.Services.CaptureFlowState.Idle
+                ? "Capture active · waiting for network traffic"
+                : status == "Monitoring" && flow.State == Carthago.Services.CaptureFlowState.Starting
+                ? "Capture starting · waiting for first events"
                 : lastAnalysis.HasValue
                 ? $"●  {lastAnalysis.Value.ToLocalTime():yyyy-MM-dd HH:mm:ss}    (Live)"
                 : "Last analysis: waiting for traffic";
@@ -573,6 +586,7 @@ namespace Carthago
                 "Monitoring" => "On",
                 "Paused" => "Paused",
                 "Error" => "Error",
+                "Degraded" => "Degraded",
                 _ => "Offline"
             };
             FooterTelemetryStateText.Foreground = status switch
@@ -580,6 +594,7 @@ namespace Carthago
                 "Monitoring" => (Brush)(TryFindResource("OkBrush") ?? Brushes.LimeGreen),
                 "Paused" => (Brush)(TryFindResource("WarningBrush") ?? Brushes.Orange),
                 "Error" => Brushes.IndianRed,
+                "Degraded" => Brushes.Orange,
                 _ => (Brush)(TryFindResource("TextMutedBrush") ?? Brushes.LightSlateGray)
             };
             FooterUtcText.Text = $"UTC {DateTime.UtcNow:HH:mm:ss}";

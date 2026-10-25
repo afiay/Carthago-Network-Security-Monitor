@@ -88,6 +88,12 @@ namespace Carthago.Services
         private long _whoisEnriched;
         private long _reputationEnriched;
         private long _enrichmentFallbacks;
+        private long _uiRecordsDelivered;
+        private long _captureStartedTicks;
+        private long _lastCapturedTicks;
+        private long _lastUiDeliveredTicks;
+        private long _capturedAtStart;
+        private long _deliveredAtStart;
 
         // ===== Filters / UI
         private string? _currentFilter;
@@ -274,6 +280,11 @@ namespace Carthago.Services
             // Capture sources must not overlap: release the previous session first.
             StopCurrentCapture();
             Volatile.Write(ref _lastCaptureError, null);
+            Interlocked.Exchange(ref _capturedAtStart, Interlocked.Read(ref _packetsCaptured));
+            Interlocked.Exchange(ref _deliveredAtStart, Interlocked.Read(ref _uiRecordsDelivered));
+            Interlocked.Exchange(ref _lastCapturedTicks, 0);
+            Interlocked.Exchange(ref _lastUiDeliveredTicks, 0);
+            Interlocked.Exchange(ref _captureStartedTicks, DateTime.UtcNow.Ticks);
             var run = CancellationTokenSource.CreateLinkedTokenSource(_serviceCts.Token);
             lock (_lifecycleLock)
                 _runCts = run;
@@ -415,6 +426,7 @@ namespace Carthago.Services
             }
 
             Interlocked.Increment(ref _packetsCaptured);
+            Interlocked.Exchange(ref _lastCapturedTicks, DateTime.UtcNow.Ticks);
             try
             {
                 var record = _packetHandler.ParsePacket(packet);
@@ -437,6 +449,7 @@ namespace Carthago.Services
                 await foreach (var record in reader.ReadAllAsync(token).ConfigureAwait(false))
                 {
                     Interlocked.Increment(ref _packetsCaptured);
+                    Interlocked.Exchange(ref _lastCapturedTicks, DateTime.UtcNow.Ticks);
                     Interlocked.Increment(ref _packetsParsedOk);
                     PublishRecord(record, token);
                 }
@@ -503,8 +516,13 @@ namespace Carthago.Services
                         {
                             foreach (var r in batch)
                             {
-                                try { TrafficRecordReceived?.Invoke(r); }
-                                catch { /* never throw to UI loop */ }
+                                try
+                                {
+                                    TrafficRecordReceived?.Invoke(r);
+                                    Interlocked.Increment(ref _uiRecordsDelivered);
+                                    Interlocked.Exchange(ref _lastUiDeliveredTicks, DateTime.UtcNow.Ticks);
+                                }
+                                catch (Exception ex) { Log(ex); /* keep other records flowing */ }
                             }
                         }, DispatcherPriority.Background);
                     }
@@ -860,6 +878,27 @@ namespace Carthago.Services
             WhoisCacheSize = _whoisCache.Count,
             ReputationCacheSize = _reputationCache.Count
         };
+
+        public CaptureFlowSnapshot GetCaptureFlowSnapshot()
+        {
+            bool running;
+            lock (_lifecycleLock) running = _runCts is { IsCancellationRequested: false };
+
+            var started = Interlocked.Read(ref _captureStartedTicks);
+            var lastCaptured = Interlocked.Read(ref _lastCapturedTicks);
+            var lastDisplayed = Interlocked.Read(ref _lastUiDeliveredTicks);
+            var captured = Math.Max(0, Interlocked.Read(ref _packetsCaptured) - Interlocked.Read(ref _capturedAtStart));
+            var displayed = Math.Max(0, Interlocked.Read(ref _uiRecordsDelivered) - Interlocked.Read(ref _deliveredAtStart));
+            var state = CaptureFlowHealth.Evaluate(running && started != 0,
+                ToUtcOffset(started) ?? DateTimeOffset.UtcNow, captured, displayed,
+                ToUtcOffset(lastCaptured), ToUtcOffset(lastDisplayed), DateTimeOffset.UtcNow);
+            return new CaptureFlowSnapshot(state, captured, displayed);
+        }
+
+        private static DateTimeOffset? ToUtcOffset(long ticks)
+            => ticks > 0 ? new DateTimeOffset(new DateTime(ticks, DateTimeKind.Utc)) : null;
+
+        public sealed record CaptureFlowSnapshot(CaptureFlowState State, long Captured, long Displayed);
 
         public void ResetStats()
         {
