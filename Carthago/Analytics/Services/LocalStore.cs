@@ -428,26 +428,41 @@ namespace Carthago.Analytics.Services
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine($"[LocalStore] Analytics DB open failed, recreating store: {ex.Message}");
-                TryBackupCorruptFile(path);
+                Console.Error.WriteLine($"[LocalStore] Analytics DB open failed: {ex.Message}");
+                if (!File.Exists(path))
+                    throw new IOException("Analytics database could not be opened; no existing file was found to preserve.", ex);
+
+                var recoveryPath = PreserveCorruptDatabase(path);
+                Console.Error.WriteLine($"[LocalStore] Unreadable database preserved at {recoveryPath}; opening a fresh store.");
                 return new LiteDatabase(path);
             }
         }
 
-        private static void TryBackupCorruptFile(string path)
+        internal static string PreserveCorruptDatabase(string path, Action<string, string>? moveFile = null)
         {
+            if (!File.Exists(path))
+                throw new FileNotFoundException("The database to preserve does not exist.", path);
+
+            // Never overwrite an older recovery copy, even on repeated failures
+            // in the same second. A failed rename must leave the original intact.
+            var recoveryPath = path + ".corrupt-" + DateTime.UtcNow.ToString("yyyyMMddHHmmss")
+                + "-" + Guid.NewGuid().ToString("N");
             try
             {
-                if (!File.Exists(path))
-                    return;
-
-                var backup = path + ".corrupt-" + DateTime.UtcNow.ToString("yyyyMMddHHmmss");
-                File.Move(path, backup, overwrite: true);
+                if (moveFile == null)
+                    File.Move(path, recoveryPath);
+                else
+                    moveFile(path, recoveryPath);
             }
-            catch
+            catch (Exception ex)
             {
-                try { File.Delete(path); } catch { }
+                throw new IOException("Unable to preserve unreadable analytics database; the original was not deleted.", ex);
             }
+
+            if (File.Exists(path) || !File.Exists(recoveryPath))
+                throw new IOException("Analytics database preservation did not complete; refusing to replace the original.");
+
+            return recoveryPath;
         }
     }
 }
