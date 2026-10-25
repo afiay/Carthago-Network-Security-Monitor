@@ -22,7 +22,7 @@ namespace Carthago.Engine.Rules.IotOt
             ruleId: "R118",
             maturity: RulePrecisionMaturity.Validated,
             defaultMode: RuleRuntimeMode.Alert,
-            requiredTelemetry: new[] { RuleTelemetryKind.OtIcsProtocol, RuleTelemetryKind.Flow, RuleTelemetryKind.Http },
+            requiredTelemetry: new[] { RuleTelemetryKind.OtIcsProtocol, RuleTelemetryKind.Flow, RuleTelemetryKind.Payload },
             requiredFields: new[] { "source", "destination_or_host", "iot_or_ot_context", "payload_or_uri" },
             evidenceFields: new[] { "matched_conditions", "process.name" },
             positiveConditions: new[]
