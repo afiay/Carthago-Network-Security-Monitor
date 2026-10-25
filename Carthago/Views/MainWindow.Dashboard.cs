@@ -523,7 +523,10 @@ namespace Carthago
 
         private void UpdateMonitoringHeader()
         {
-            var status = _sinkHost == null
+            var captureError = _captureService.LastCaptureError;
+            var status = !string.IsNullOrWhiteSpace(captureError)
+                ? "Error"
+                : _sinkHost == null
                 ? "Offline"
                 : StopButton.IsEnabled
                     ? "Monitoring"
@@ -535,6 +538,10 @@ namespace Carthago
 
             switch (status)
             {
+                case "Error":
+                    MonitoringStatusBadge.Background = new SolidColorBrush(Color.FromRgb(65, 24, 33));
+                    MonitoringStatusBadge.BorderBrush = Brushes.IndianRed;
+                    break;
                 case "Monitoring":
                     MonitoringStatusBadge.Background = (Brush)(TryFindResource("StatusMonitoringBgBrush") ?? new SolidColorBrush(Color.FromRgb(22, 49, 33)));
                     MonitoringStatusBadge.BorderBrush = (Brush)(TryFindResource("StatusMonitoringBorderBrush") ?? new SolidColorBrush(Color.FromRgb(34, 197, 94)));
@@ -555,7 +562,9 @@ namespace Carthago
                 : $"Source: {selectedSource}";
 
             var lastAnalysis = _sinkHost?.Analytics.LastAnalysisUtc;
-            HeaderLastAnalysisText.Text = lastAnalysis.HasValue
+            HeaderLastAnalysisText.Text = status == "Error"
+                ? $"Capture failed: {captureError}"
+                : lastAnalysis.HasValue
                 ? $"●  {lastAnalysis.Value.ToLocalTime():yyyy-MM-dd HH:mm:ss}    (Live)"
                 : "Last analysis: waiting for traffic";
 
@@ -563,12 +572,14 @@ namespace Carthago
             {
                 "Monitoring" => "On",
                 "Paused" => "Paused",
+                "Error" => "Error",
                 _ => "Offline"
             };
             FooterTelemetryStateText.Foreground = status switch
             {
                 "Monitoring" => (Brush)(TryFindResource("OkBrush") ?? Brushes.LimeGreen),
                 "Paused" => (Brush)(TryFindResource("WarningBrush") ?? Brushes.Orange),
+                "Error" => Brushes.IndianRed,
                 _ => (Brush)(TryFindResource("TextMutedBrush") ?? Brushes.LightSlateGray)
             };
             FooterUtcText.Text = $"UTC {DateTime.UtcNow:HH:mm:ss}";
