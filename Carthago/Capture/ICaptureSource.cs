@@ -15,7 +15,10 @@ namespace Carthago.Capture
         string Name { get; }
         bool IsRunning { get; }
 
-        /// <summary>Start asynchronous capture loop.</summary>
+        /// <summary>Raised when an initialized capture backend stops because of an error.</summary>
+        event Action<Exception>? CaptureFaulted;
+
+        /// <summary>Start capture and complete when the backend confirms initialization.</summary>
         Task StartAsync();
 
         /// <summary>Stop capture loop gracefully.</summary>

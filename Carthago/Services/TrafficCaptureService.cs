@@ -484,6 +484,44 @@ namespace Carthago.Services
         {
             try
             {
+                WindowsProcessResolver.ProcessInfo? process = null;
+                if (IpUtils.IsPrivateIp(rec.Source ?? string.Empty) ||
+                    IpUtils.IsPrivateIp(rec.Destination ?? string.Empty))
+                {
+                    process = await Task.Run(
+                        () => WindowsProcessResolver.ResolveProcess(
+                            rec.Source ?? string.Empty,
+                            rec.SourcePort,
+                            rec.Destination ?? string.Empty,
+                            rec.DestinationPort,
+                            rec.Protocol ?? string.Empty),
+                        ct).ConfigureAwait(false);
+
+                    rec.ProcessId = process?.ProcessId ?? 0;
+                    rec.ProcessName = process?.ProcessName ?? "Unknown";
+                }
+
+                var classificationTarget = GetWhoisTarget(rec) ?? rec.Source;
+                if (!string.IsNullOrWhiteSpace(classificationTarget))
+                {
+                    var classification = await VpnProxyResolver.CheckAsync(
+                        new VpnContext
+                        {
+                            Ip = classificationTarget,
+                            DstPort = rec.DestinationPort,
+                            Protocol = rec.Protocol,
+                            Ja4h = rec.HttpJa4h,
+                            Ja4x = rec.TlsJa4x,
+                            ProcessName = process?.ProcessName,
+                            AbuseScore = rec.ReputationScore
+                        },
+                        ct).ConfigureAwait(false);
+
+                    rec.IsVpn = classification.IsVpn;
+                    rec.IsProxy = classification.IsProxy;
+                    rec.NetworkType = classification.NetworkType;
+                }
+
                 var prefs = PreferencesService.Current;
                 bool enableWhois = prefs.EnableWhois;
                 bool enableReputation = prefs.EnableReputation;
