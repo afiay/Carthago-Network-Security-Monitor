@@ -22,7 +22,7 @@ namespace Carthago.Engine.Rules.Expansion
             maturity: RulePrecisionMaturity.Validated,
             defaultMode: RuleRuntimeMode.Alert,
             requiredTelemetry: new[] { RuleTelemetryKind.Flow, RuleTelemetryKind.OtIcsProtocol },
-            requiredFields: new[] { "source", "destination_or_host", "modbus_context", "write_function" },
+            requiredFields: new[] { "source", "destination_or_host", "protocol_or_port", "iot_or_ot_context", "payload_or_uri" },
             evidenceFields: new[] { "matched_conditions", "network.destinationPort", "modbus.function" },
             positiveConditions: new[]
             {
