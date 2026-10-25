@@ -884,11 +884,16 @@ namespace Carthago.Services
                         if (list[i].Item2 >= cutoff) list[write++] = list[i];
                     if (write != list.Count) list.RemoveRange(write, list.Count - write);
 
-                    var distinctRules = list.Select(x => x.Item1).Distinct().Count();
-                    if (distinctRules >= 2 && evt.Severity < SeverityLevel.Critical)
+                    // R006 DNS volume and R031 DNS TXT volume can describe the same
+                    // burst. Treat them as one evidence family, not two independent
+                    // reasons to escalate a detection to Critical.
+                    var corroboratingFamilies = list.Select(x => x.Item1 is "R006" or "R031"
+                            ? "DNS_VOLUME"
+                            : x.Item1)
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .Count();
+                    if (corroboratingFamilies >= 2 && evt.Severity < SeverityLevel.Critical)
                         evt.Severity = SeverityLevel.Critical;
-                    else if (evt.Severity == SeverityLevel.Low && distinctRules >= 2)
-                        evt.Severity = SeverityLevel.High;
                 }
             }
             catch { /* best-effort */ }
