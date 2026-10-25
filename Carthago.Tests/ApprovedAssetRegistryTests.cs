@@ -53,6 +53,40 @@ public sealed class ApprovedAssetRegistryTests
     }
 
     [Fact]
+    public void Approved_Ot_Controller_Does_Not_Reactivate_Disabled_HomeLab_Rule()
+    {
+        var registry = new ApprovedAssetRegistry(new EnvironmentTuningOptions
+        {
+            Approved = new ApprovedEnvironmentOptions
+            {
+                OtSegments = { "10.20.0.0/24" },
+                BacnetControllers = { "10.20.0.11" }
+            }
+        });
+        var evt = CreateEvent("R485", "10.20.0.20", "10.20.0.11", 47808,
+            "BACnet write property", host: "10.20.0.11", protocol: "BACnet");
+
+        var decision = RuleTuningCatalog.Resolve("HomeLab", Descriptor("R485"), evt, CreateRecord(evt), registry);
+
+        Assert.Equal(RuleMode.Disabled, decision.DefaultMode);
+        Assert.Equal(RuleMode.Disabled, decision.EffectiveMode);
+        Assert.Contains(RuleTuningReason.ApprovedAssetMatched, decision.Reasons);
+    }
+
+    [Fact]
+    public void Missing_Environment_Configuration_Does_Not_Reactivate_Disabled_HomeLab_Rule()
+    {
+        var evt = CreateEvent("R118", "10.40.0.20", "10.40.0.30", 23,
+            "Telnet default credential attempt", host: "10.40.0.30", protocol: "Telnet");
+        var decision = RuleTuningCatalog.Resolve("HomeLab", Descriptor("R118"), evt, CreateRecord(evt),
+            new ApprovedAssetRegistry(new EnvironmentTuningOptions()));
+
+        Assert.Equal(RuleMode.Disabled, decision.DefaultMode);
+        Assert.Equal(RuleMode.Disabled, decision.EffectiveMode);
+        Assert.Contains(RuleTuningReason.MissingEnvironmentConfiguration, decision.Reasons);
+    }
+
+    [Fact]
     public void Unapproved_Modbus_Write_Alerts_In_OtSegment()
     {
         var registry = new ApprovedAssetRegistry(new EnvironmentTuningOptions
