@@ -10,6 +10,22 @@ namespace Carthago.Tests;
 public sealed class AnalyticsPipelineTests
 {
     [Fact]
+    public void LocalStore_Cannot_Preserve_Unreadable_Database_Does_Not_Delete_Its_Bytes()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "carthago-recovery-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        var path = Path.Combine(directory, "analytics.db");
+        var original = new byte[] { 0x43, 0x41, 0x52, 0x54, 0x48, 0x41, 0x47, 0x4F };
+        File.WriteAllBytes(path, original);
+
+        Assert.Throws<IOException>(() => LocalStore.PreserveCorruptDatabase(path,
+            (_, _) => throw new IOException("simulated storage or file-lock failure")));
+
+        Assert.Equal(original, File.ReadAllBytes(path));
+        Assert.Single(Directory.GetFiles(directory));
+    }
+
+    [Fact]
     public void LocalStore_Updates_Existing_Legacy_Baseline_Without_Duplicate_HostId()
     {
         var path = Path.Combine(Path.GetTempPath(), "carthago-legacy-baseline-" + Guid.NewGuid().ToString("N") + ".db");
