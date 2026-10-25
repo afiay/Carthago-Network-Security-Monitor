@@ -6,7 +6,8 @@
       "destination": "10.0.0.20",
       "protocol": "TCP",
       "destinationPort": 5985,
-      "info": "powershell -enc SQBFAFgA encodedcommand Invoke-Command"
+      "processName": "powershell.exe",
+      "info": "WinRM WSMan powershell -enc SQBFAFgA encodedcommand Invoke-Command"
     }
   ],
   "expectedMatches": ["R343"],
