@@ -64,8 +64,12 @@ namespace Carthago.Engine.Rules.Expansion
 
             var path = HttpPath(record);
             var matchedConditions = new List<string> { "metadata_service_target", "credential_path" };
+            var hasImdsV2Token = TryGetHeaderValue(record, "X-aws-ec2-metadata-token", out var imdsV2Token)
+                                 && !string.IsNullOrWhiteSpace(imdsV2Token);
             if (HeaderContains(record, "Metadata", "true") || HeaderContains(record, "Metadata-Flavor", "Google"))
                 matchedConditions.Add("metadata_header");
+            if (hasImdsV2Token)
+                matchedConditions.Add("imds_v2_token_header");
 
             var evidenceItems = new List<DetectionEvidenceItem>
             {
@@ -91,6 +95,8 @@ namespace Carthago.Engine.Rules.Expansion
                     confidence.AddEvidence(0.28, "credential-path");
                     if (HeaderContains(record, "Metadata", "true") || HeaderContains(record, "Metadata-Flavor", "Google"))
                         confidence.AddCorrelation(0.08, "metadata-header");
+                    if (hasImdsV2Token)
+                        confidence.AddCorrelation(0.08, "imds-v2-token-header");
                 },
                 cooldownKey: $"{record.Source}:{record.Destination}:{path}");
         }
