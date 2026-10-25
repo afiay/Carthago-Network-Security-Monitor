@@ -522,12 +522,15 @@ namespace Carthago.Services
                     var q = record.DnsQname;
                     if (!string.IsNullOrWhiteSpace(q))
                     {
-                        var label = q.Length > 63 ? q.AsSpan(0, 63).ToString() : q;
-                        var ent = ShannonEntropy(label);
                         var labels = q.Split('.', StringSplitOptions.RemoveEmptyEntries);
                         double avgLen = labels.Length > 0 ? labels.Average(l => l.Length) : 0;
+                        var longestLabel = labels.OrderByDescending(l => l.Length).FirstOrDefault() ?? string.Empty;
+                        var ent = ShannonEntropy(longestLabel);
 
-                        if (ent > entropyThresh || avgLen > avgLabelLenThresh || q.Length > queryLenThresh)
+                        // Whole-hostname entropy is high even for ordinary dotted DNS names.
+                        // Require unusually long, encoded-looking labels before calling it tunneling.
+                        if ((longestLabel.Length >= Math.Max(20, avgLabelLenThresh) && ent > entropyThresh)
+                            || (q.Length > queryLenThresh * 2 && avgLen > avgLabelLenThresh))
                             suspiciousContent = true;
                     }
 
