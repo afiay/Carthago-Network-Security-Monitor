@@ -26,8 +26,14 @@ namespace Carthago.Tests
 
             Assert.NotNull(report);
             Assert.True(report.SampleResults.Count >= 16);
+            var quality = Assert.IsType<DetectionQualityMetrics>(report.Summary.SampleLevelQuality);
+            Assert.Equal(report.SampleResults.Count, quality.TruePositives + quality.FalsePositives + quality.FalseNegatives + quality.TrueNegatives);
             Assert.True(File.Exists(store.GetJsonPath(tempOutput)));
             Assert.True(File.Exists(store.GetMarkdownPath(tempOutput)));
+            var markdown = await File.ReadAllTextAsync(store.GetMarkdownPath(tempOutput));
+            Assert.Contains("Precision:", markdown);
+            Assert.Contains("Recall:", markdown);
+            Assert.Contains("F1:", markdown);
         }
 
         [Fact]
