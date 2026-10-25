@@ -84,11 +84,28 @@ namespace Carthago.Tests
             var powerShell = report.SampleResults.Single(sample => sample.Name == "ad-psremoting-encoded-command");
             var diagnostic = Assert.Single(powerShell.ExpectedRuleDiagnostics);
             Assert.Equal("R343", diagnostic.RuleId);
-            Assert.Equal("MissingTelemetry", diagnostic.Outcome);
-            Assert.NotEmpty(diagnostic.MissingRequiredTelemetry);
+            Assert.Equal("Matched", diagnostic.Outcome);
+            Assert.Empty(diagnostic.MissingRequiredTelemetry);
 
             var oauth = report.SampleResults.Single(sample => sample.Name == "oauth-device-code-phishing");
             Assert.Contains(oauth.ExpectedRuleDiagnostics, item => item.RuleId == "R275" && item.Outcome == "Matched");
+        }
+
+        [Fact]
+        public async Task Incomplete_PowerShell_Replay_Reports_Missing_Telemetry()
+        {
+            var folder = CreateTempDirectory();
+            var json = """
+                {"name":"missing-process","records":[{"source":"10.0.0.70","destination":"10.0.0.20","protocol":"TCP","destinationPort":5985,"info":"WinRM Invoke-Command -EncodedCommand SQBFAFgA"}],"expectedMatches":["R343"]}
+                """;
+            await File.WriteAllTextAsync(Path.Combine(folder, "missing-process.json"), json);
+
+            var report = await new TuningBenchmarkRunner().RunAsync(new TuningBenchmarkOptions { ReplayDirectory = folder });
+            var sample = Assert.Single(report.SampleResults);
+            var diagnostic = Assert.Single(sample.ExpectedRuleDiagnostics);
+            Assert.Equal("R343", diagnostic.RuleId);
+            Assert.Equal("MissingTelemetry", diagnostic.Outcome);
+            Assert.Contains("precision.Process", diagnostic.MissingRequiredTelemetry);
         }
 
         [Fact]
