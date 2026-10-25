@@ -519,36 +519,34 @@ namespace Carthago.Services
                     list.Add(now);
                     TrimAndCount(list, now, window);
 
-                    var info = record.Info;
-                    if (!string.IsNullOrEmpty(info))
+                    var q = record.DnsQname;
+                    if (!string.IsNullOrWhiteSpace(q))
                     {
-                        var tokens = info.Split(new[] { ' ', '\t', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                        var q = tokens.Length > 0 ? tokens[^1] : null;
+                        var label = q.Length > 63 ? q.AsSpan(0, 63).ToString() : q;
+                        var ent = ShannonEntropy(label);
+                        var labels = q.Split('.', StringSplitOptions.RemoveEmptyEntries);
+                        double avgLen = labels.Length > 0 ? labels.Average(l => l.Length) : 0;
 
-                        if (!string.IsNullOrEmpty(q))
-                        {
-                            var label = q.Length > 63 ? q.AsSpan(0, 63).ToString() : q;
-                            var ent = ShannonEntropy(label);
-                            var labels = q.Split('.', StringSplitOptions.RemoveEmptyEntries);
-                            double avgLen = labels.Length > 0 ? labels.Average(l => l.Length) : 0;
-
-                            if (ent > entropyThresh || avgLen > avgLabelLenThresh || q.Length > queryLenThresh)
-                                suspiciousContent = true;
-                        }
+                        if (ent > entropyThresh || avgLen > avgLabelLenThresh || q.Length > queryLenThresh)
+                            suspiciousContent = true;
                     }
 
-                    if (list.Count >= threshold || suspiciousContent)
+                    // Burst volume alone is not evidence of DNS tunneling; a high-severity
+                    // tunneling hypothesis also requires suspicious query-name telemetry.
+                    if (list.Count >= threshold)
                     {
                         if (SuppressRepeat(now, "R006", src, record.Destination, record.DestinationPort)) return false;
 
                         detection = new DetectionEvent
                         {
                             RuleId = "R006",
-                            Description = $"Possible DNS tunneling from {src} ({list.Count}/{window}s{(suspiciousContent ? ", high-entropy/long query" : string.Empty)})",
+                            Description = suspiciousContent
+                                ? $"Possible DNS tunneling from {src} ({list.Count}/{window}s, high-entropy/long query)"
+                                : $"Elevated DNS request volume from {src} ({list.Count}/{window}s; query content not corroborated)",
                             SourceIp = src,
                             DestinationIp = record.Destination,
                             Protocol = NP(record.Protocol),
-                            Severity = SeverityLevel.High,
+                            Severity = suspiciousContent ? SeverityLevel.High : SeverityLevel.Medium,
                             Count = list.Count,
                             WindowSeconds = window
                         };
