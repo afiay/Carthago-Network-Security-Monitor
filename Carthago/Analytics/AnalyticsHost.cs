@@ -574,8 +574,8 @@ namespace Carthago.Analytics
             if (!force && now - _lastBaselinePersistUtc < _baselinePersistInterval)
                 return;
 
-            _store.SaveBaselineSnapshots(_baselineEngine.GetSnapshots());
-            _lastBaselinePersistUtc = now;
+            if (_store.SaveBaselineSnapshots(_baselineEngine.GetSnapshots()))
+                _lastBaselinePersistUtc = now;
         }
 
         private void PublishBaselineStatus()
