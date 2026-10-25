@@ -75,6 +75,22 @@ namespace Carthago.Tests
             Assert.NotEmpty(report.Summary.ConfidenceDistribution);
         }
 
+        [Fact]
+        public async Task Benchmark_Explains_Why_Expected_Rules_Did_Not_Match()
+        {
+            var runner = new TuningBenchmarkRunner();
+            var report = await runner.RunAsync(new TuningBenchmarkOptions { ReplayDirectory = GetReplayDirectory() });
+
+            var powerShell = report.SampleResults.Single(sample => sample.Name == "ad-psremoting-encoded-command");
+            var diagnostic = Assert.Single(powerShell.ExpectedRuleDiagnostics);
+            Assert.Equal("R343", diagnostic.RuleId);
+            Assert.Equal("MissingTelemetry", diagnostic.Outcome);
+            Assert.NotEmpty(diagnostic.MissingRequiredTelemetry);
+
+            var oauth = report.SampleResults.Single(sample => sample.Name == "oauth-device-code-phishing");
+            Assert.Contains(oauth.ExpectedRuleDiagnostics, item => item.RuleId == "R275" && item.Outcome == "Matched");
+        }
+
         private static string GetReplayDirectory()
             => Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "Tests", "RuleReplaySamples");
 
