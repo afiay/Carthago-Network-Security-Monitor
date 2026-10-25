@@ -23,7 +23,9 @@ namespace Carthago.Engine.Rules.Expansion
             Category = "EvasionTunnel",
             Description = "Detects Cloudflared Tunnel Handshake only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
             Severity = SeverityLevel.High,
-            RequiredTelemetry = new[] { RuleTelemetryKind.Flow, RuleTelemetryKind.Http, RuleTelemetryKind.Dns, RuleTelemetryKind.Tls, RuleTelemetryKind.Process },
+            // HTTP and DNS are optional corroboration: a TLS handshake record cannot
+            // inherently contain both an HTTP request and a DNS answer.
+            RequiredTelemetry = new[] { RuleTelemetryKind.Flow, RuleTelemetryKind.Tls, RuleTelemetryKind.Process },
             RequiredFields = new[] { "source", "external_destination_or_resolver", "tunnel_or_proxy_indicator" },
             EvidenceFields = new[] { "network.destination", "http.host", "tls.sni", "matched_conditions" },
             PositiveConditions = new[] { "Cloudflared Tunnel Handshake requires observable EvasionTunnel telemetry and will not match descriptor text alone.", "Source and destination, host, process, protocol, path, port, or payload evidence must be present.", "The configured signal count and time-window threshold must be satisfied before a DetectionEvent is emitted." },
@@ -54,6 +56,20 @@ namespace Carthago.Engine.Rules.Expansion
         public R516_CloudflaredTunnelHandshakeRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            var record = context.Record;
+            var hasCloudflaredProcess = (record.ProcessName ?? string.Empty).Contains("cloudflared", StringComparison.OrdinalIgnoreCase);
+            var endpoint = string.Join(" ", record.Sni, record.TlsSni, record.HttpHost);
+            var hasTunnelEndpoint = endpoint.Contains("trycloudflare.com", StringComparison.OrdinalIgnoreCase)
+                                    || endpoint.Contains("argotunnel.com", StringComparison.OrdinalIgnoreCase)
+                                    || endpoint.Contains("cloudflare.com", StringComparison.OrdinalIgnoreCase);
+
+            if (!hasCloudflaredProcess || !hasTunnelEndpoint)
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                    "CLOUDFLARED_HANDSHAKE_NOT_CORROBORATED",
+                    "Rule requires both a cloudflared process and a Cloudflare tunnel TLS endpoint.");
+
+            return EvaluateSpec(context, Spec);
+        }
     }
 }
