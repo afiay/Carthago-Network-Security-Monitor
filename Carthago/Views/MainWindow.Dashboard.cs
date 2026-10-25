@@ -525,6 +525,7 @@ namespace Carthago
         {
             var captureError = _captureService.LastCaptureError;
             var flow = _captureService.GetCaptureFlowSnapshot();
+            var sourceHealth = _captureService.GetCaptureSourceHealth();
             var status = !string.IsNullOrWhiteSpace(captureError)
                 ? "Error"
                 : StopButton.IsEnabled && flow.State == Carthago.Services.CaptureFlowState.Stalled
@@ -580,6 +581,10 @@ namespace Carthago
                 : lastAnalysis.HasValue
                 ? $"●  {lastAnalysis.Value.ToLocalTime():yyyy-MM-dd HH:mm:ss}    (Live)"
                 : "Last analysis: waiting for traffic";
+            HeaderLastAnalysisText.ToolTip = sourceHealth.ToDisplayText();
+
+            if (status == "Monitoring" && sourceHealth.Running)
+                HeaderLastAnalysisText.Text += $"\n{sourceHealth.ToDisplayText()}";
 
             FooterTelemetryStateText.Text = status switch
             {

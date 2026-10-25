@@ -94,6 +94,8 @@ namespace Carthago.Services
         private long _lastUiDeliveredTicks;
         private long _capturedAtStart;
         private long _deliveredAtStart;
+        private long _parsedAtStart;
+        private long _parseErrorsAtStart;
 
         // ===== Filters / UI
         private string? _currentFilter;
@@ -283,6 +285,8 @@ namespace Carthago.Services
             Volatile.Write(ref _lastCaptureError, null);
             Interlocked.Exchange(ref _capturedAtStart, Interlocked.Read(ref _packetsCaptured));
             Interlocked.Exchange(ref _deliveredAtStart, Interlocked.Read(ref _uiRecordsDelivered));
+            Interlocked.Exchange(ref _parsedAtStart, Interlocked.Read(ref _packetsParsedOk));
+            Interlocked.Exchange(ref _parseErrorsAtStart, Interlocked.Read(ref _packetsParseErrors));
             Interlocked.Exchange(ref _lastCapturedTicks, 0);
             Interlocked.Exchange(ref _lastUiDeliveredTicks, 0);
             Interlocked.Exchange(ref _captureStartedTicks, DateTime.UtcNow.Ticks);
@@ -907,6 +911,25 @@ namespace Carthago.Services
             => ticks > 0 ? new DateTimeOffset(new DateTime(ticks, DateTimeKind.Utc)) : null;
 
         public sealed record CaptureFlowSnapshot(CaptureFlowState State, long Captured, long Displayed);
+
+        public CaptureSourceHealth GetCaptureSourceHealth()
+        {
+            lock (_lifecycleLock)
+            {
+                if (_captureSource is EtwCapture etw)
+                    return new CaptureSourceHealth("ETW", etw.IsRunning,
+                        etw.EventsObserved, etw.EventsPublished, etw.EventsDropped, etw.LastError);
+
+                if (_device != null)
+                    return new CaptureSourceHealth("Npcap", _runCts is { IsCancellationRequested: false },
+                        Math.Max(0, Interlocked.Read(ref _packetsCaptured) - Interlocked.Read(ref _capturedAtStart)),
+                        Math.Max(0, Interlocked.Read(ref _packetsParsedOk) - Interlocked.Read(ref _parsedAtStart)),
+                        Math.Max(0, Interlocked.Read(ref _packetsParseErrors) - Interlocked.Read(ref _parseErrorsAtStart)),
+                        null);
+            }
+
+            return new CaptureSourceHealth("Capture source", false, 0, 0, 0, LastCaptureError);
+        }
 
         public void ResetStats()
         {
