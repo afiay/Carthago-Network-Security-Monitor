@@ -111,6 +111,7 @@ namespace Carthago.Tests
             Assert.Contains("R102", dns.Profiles["SmallBusiness"].ShadowRuleIds);
             Assert.NotEmpty(decision.Reasons);
             Assert.InRange(decision.Confidence, 0, 1);
+            Assert.NotEmpty(decision.RuntimePrecisionReasons);
         }
 
         [Fact]
