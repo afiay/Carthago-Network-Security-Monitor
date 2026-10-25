@@ -91,6 +91,27 @@ namespace Carthago.Tests
             Assert.Contains(oauth.ExpectedRuleDiagnostics, item => item.RuleId == "R275" && item.Outcome == "Matched");
         }
 
+        [Fact]
+        public async Task Evidence_Rich_Replays_Match_Their_Specific_Rules()
+        {
+            var runner = new TuningBenchmarkRunner();
+            var report = await runner.RunAsync(new TuningBenchmarkOptions { ReplayDirectory = GetReplayDirectory() });
+
+            var names = new[]
+            {
+                "ad-psremoting-encoded-command", "bacnet-write-property", "cloudflared-tunnel",
+                "kubernetes-pod-exec", "rclone-exfil", "redis-config-set", "ssrf-imds"
+            };
+            foreach (var name in names)
+            {
+                var sample = report.SampleResults.Single(item => item.Name == name);
+                Assert.True(sample.ExpectedMatches.All(rule => sample.ActualMatches.Contains(rule)),
+                    $"{name}: missing {string.Join(", ", sample.MissingExpectedMatches)}; " +
+                    string.Join("; ", sample.ExpectedRuleDiagnostics.Select(item =>
+                        $"{item.RuleId}={item.Outcome} ({string.Join(", ", item.MissingRequiredTelemetry)}; {string.Join(", ", item.NoMatchReasons)})")));
+            }
+        }
+
         private static string GetReplayDirectory()
             => Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "Tests", "RuleReplaySamples");
 
