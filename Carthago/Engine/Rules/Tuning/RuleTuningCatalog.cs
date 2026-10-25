@@ -50,7 +50,7 @@ namespace Carthago.Engine.Rules.Tuning
             return decision;
         }
 
-        public static RuleTuningDecision Resolve(string? profileName, RuleDescriptor descriptor, DetectionEvent? evt = null, TrafficRecord? record = null, ApprovedAssetRegistry? approvedAssets = null, bool baselineLearningMode = false, double? effectiveConfidenceScore = null)
+        public static RuleTuningDecision Resolve(string? profileName, RuleDescriptor descriptor, DetectionEvent? evt = null, TrafficRecord? record = null, ApprovedAssetRegistry? approvedAssets = null, bool baselineLearningMode = false, double? effectiveConfidenceScore = null, bool baselineReady = false)
         {
             var profile = GetProfile(profileName);
             var baseDecision = GetBaseDecision(descriptor.RuleId);
@@ -60,6 +60,25 @@ namespace Carthago.Engine.Rules.Tuning
             var reasons = baseDecision.Reasons.ToList();
             var details = baseDecision.ReasonDetails.ToList();
             var environment = approvedAssets ?? ApprovedAssetRegistry.Current;
+
+            // Only explicitly designated baseline rules may graduate. Eligibility
+            // never bypasses the independent rule precision confidence floor.
+            if ((n is 102 or 103) && baseDecision.RequiresBaseline && baselineReady
+                && !baselineLearningMode && effectiveMode == RuleMode.Shadow)
+            {
+                var confidenceForPromotion = effectiveConfidenceScore ?? evt?.ConfidenceScore ?? 0.0;
+                var requiredConfidence = Math.Max(baseDecision.ConfidenceFloor ?? 0.0,
+                    RulePrecisionCatalog.GetProfile(descriptor).MinimumConfidence / 100.0);
+                if (confidenceForPromotion >= requiredConfidence)
+                {
+                    effectiveMode = RuleMode.Alert;
+                    details.Add($"Baseline ready; corroborated confidence {confidenceForPromotion:F2} meets precision promotion floor {requiredConfidence:F2}.");
+                }
+                else
+                {
+                    details.Add($"Baseline ready but confidence {confidenceForPromotion:F2} is below precision promotion floor {requiredConfidence:F2}.");
+                }
+            }
 
             if (baseDecision.RequiresBaseline && baselineLearningMode && effectiveMode == RuleMode.Alert)
             {
