@@ -22,16 +22,23 @@ namespace Carthago.Services
 
             var descriptor = rule.Descriptor;
             var approvedAssets = ApprovedAssetRegistry.Current;
+            var baseline = BaselineStore.Current;
+            var readiness = baseline.Readiness;
             var decision = RuleTuningCatalog.Resolve(
                 _cfg.Profile,
                 descriptor,
                 evt,
                 record,
                 approvedAssets,
-                baselineLearningMode: BaselineStore.Current.IsLearningMode,
-                effectiveConfidenceScore: evt.ConfidenceScore);
+                baselineLearningMode: baseline.IsLearningMode,
+                effectiveConfidenceScore: evt.ConfidenceScore,
+                baselineReady: readiness.IsReady);
 
-            var effectiveMode = configuredMode switch
+            var baselinePromotion = decision.RequiresBaseline && readiness.IsReady
+                && decision.EffectiveMode == RuleMode.Alert && configuredMode == RuleMode.Shadow
+                && !TryGetRuleModeOverride(descriptor.RuleId).HasValue;
+            var precisionConfiguredMode = baselinePromotion ? RuleMode.Alert : configuredMode;
+            var effectiveMode = precisionConfiguredMode switch
             {
                 RuleMode.Disabled => RuleMode.Disabled,
                 RuleMode.Shadow => RuleMode.Shadow,
@@ -42,13 +49,20 @@ namespace Carthago.Services
                 descriptor,
                 evt,
                 record,
-                configuredMode,
+                precisionConfiguredMode,
                 _cfg.Profile);
 
             effectiveMode = RulePrecisionCatalog.MostRestrictive(effectiveMode, precisionDecision.EffectiveMode);
 
             var reasonDetails = decision.ReasonDetails
                 .Concat(precisionDecision.Reasons.Select(static reason => "Precision: " + reason))
+                .Concat(decision.RequiresBaseline ? new[]
+                {
+                    $"Baseline readiness: {(readiness.IsReady ? "ready" : "not ready")}; " +
+                    $"observations={readiness.ObservationCount}; distinct={readiness.DistinctKeys}; " +
+                    $"spanHours={readiness.ObservationSpan.TotalHours:F1}; " +
+                    $"blockers={string.Join(", ", readiness.Blockers)}"
+                } : Array.Empty<string>())
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToArray();
 
