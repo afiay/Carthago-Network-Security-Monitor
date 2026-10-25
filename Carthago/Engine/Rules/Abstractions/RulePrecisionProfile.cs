@@ -722,7 +722,34 @@ namespace Carthago.Engine.Rules
             return field.ToLowerInvariant() switch
             {
                 "source" => HasAny(record.Source),
+                "destination" => HasAny(record.Destination),
                 "destination_or_host" => HasAny(record.Destination, record.HttpHost, record.Sni, record.DnsQname),
+                "windows_protocol_context" => HasAny(record.Destination)
+                    && Port(record, 5985, 5986)
+                    && HasField("identity_context", record)
+                    && HasTelemetryKind(RuleTelemetryKind.Process, record),
+                "ot_asset_destination" => HasAny(record.Destination) && HasField("iot_or_ot_context", record),
+                "ics_protocol_function" => HasField("iot_or_ot_context", record)
+                    && ContainsAny(text, "writeproperty", "write property", "function 05", "function 06", "function 15", "function 16", "function 0x05", "function 0x06", "function 0x0f", "function 0x10", "readproperty", "read property", "devicecommunicationcontrol", "forwardopen", "setname", "start cpu", "stop cpu", "force listen", "read device identification"),
+                "external_destination_or_resolver" => HasAny(record.Destination)
+                    && HasAny(record.Sni, record.HttpHost, record.DnsQname)
+                    && (HasField("tunnel_or_proxy_context", record) || HasField("cloud_context", record)),
+                "tunnel_or_proxy_indicator" => HasField("tunnel_or_proxy_context", record),
+                "devops_or_secret_context" => HasField("devops_or_cloud_context", record)
+                    && (HasTelemetryKind(RuleTelemetryKind.Http, record) || HasTelemetryKind(RuleTelemetryKind.Process, record)),
+                "kubernetes_or_container_context" => HasField("kubernetes_context", record)
+                    && (HasTelemetryKind(RuleTelemetryKind.Http, record) || HasTelemetryKind(RuleTelemetryKind.Process, record)),
+                "external_destination_or_upload_host" => HasAny(record.Destination, record.HttpHost)
+                    && HasField("http_upload_or_large_flow", record)
+                    && HasAny(record.HttpHost, record.Sni),
+                "file_or_payload_indicator" => HasField("http_upload_or_large_flow", record)
+                    && (ContainsAny(text, "upload", "archive", "multipart", "file=", "filename=", "export", "dump", "backup")
+                        || Math.Max(record.Length, record.L4Len ?? 0) >= 500_000),
+                "database_destination" => HasAny(record.Destination)
+                    && Port(record, 3306, 5432, 6379, 9200, 11211, 27017, 7687, 5672, 4222)
+                    && HasAny(record.ApplicationProtocol, record.ApplicationService, record.Info),
+                "database_protocol_or_query_marker" => HasAny(record.Destination)
+                    && ContainsAny(text, "redis", "config set", "postgres", "mysql", "mongodb", "memcached", "select ", "query", "export", "dump", "replication", "rabbitmq", "neo4j", "nats", "zookeeper", "auth "),
                 "protocol_or_port" => HasAny(record.Protocol, record.ApplicationProtocol, record.ApplicationService) || record.SourcePort.HasValue || record.DestinationPort.HasValue,
                 "asset_identity" => HasAny(record.MacSource, record.MacDestination, record.Source, record.ProcessName),
                 "ipv6_or_multicast" => record.IpVersion == 6 || ContainsAny(text, "icmpv6", "router advertisement", "neighbor solicitation", "ff02", "multicast", "teredo", "6to4", "isatap"),
