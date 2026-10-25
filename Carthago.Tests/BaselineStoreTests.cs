@@ -80,4 +80,58 @@ public sealed class BaselineStoreTests
         Assert.False(afterClear.IsKnown);
         Assert.Equal(1, afterClear.ObservationCount);
     }
+
+    [Fact]
+    public async Task Readiness_Requires_Durable_Diverse_Observations_Across_Time_And_Survives_Restart()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "carthago-baseline-tests", Guid.NewGuid().ToString("N"));
+        var options = new BaselineOptions { DirectoryPath = directory, MinimumObservations = 4,
+            MinimumDistinctKeys = 3, MinimumObservationSpan = TimeSpan.FromHours(2) };
+        var store = new BaselineStore(options);
+        var now = DateTime.UtcNow;
+        Assert.False(store.Readiness.IsReady);
+        for (var i = 0; i < 3; i++)
+            await store.ObserveAsync(new BaselineObservation("dns.domain", $"host-{i}", $"domain-{i}.test",
+                now.AddHours(-3 + i), "qtype=A"));
+        Assert.False(store.Readiness.IsReady);
+        await store.ObserveAsync(new BaselineObservation("dns.domain", "host-0", "domain-0.test", now, "qtype=A"));
+        Assert.True(store.Readiness.IsReady);
+
+        var reopened = new BaselineStore(options);
+        Assert.False(reopened.Readiness.IsReady); // Unloaded state is never trusted.
+        Assert.True((await reopened.GetReadinessAsync()).IsReady);
+    }
+
+    [Fact]
+    public async Task Readiness_Fails_Closed_When_Journal_Contains_Malformed_Records()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "carthago-baseline-tests", Guid.NewGuid().ToString("N"));
+        var options = new BaselineOptions { DirectoryPath = directory, MinimumObservations = 2,
+            MinimumDistinctKeys = 2, MinimumObservationSpan = TimeSpan.FromMinutes(1) };
+        var store = new BaselineStore(options);
+        var now = DateTime.UtcNow;
+        await store.ObserveAsync(new BaselineObservation("dns.domain", "host-1", "one.test", now.AddHours(-1), "qtype=A"));
+        await store.ObserveAsync(new BaselineObservation("dns.domain", "host-2", "two.test", now, "qtype=A"));
+        Assert.True(store.Readiness.IsReady);
+
+        await File.AppendAllTextAsync(Path.Combine(directory, "baseline-journal.jsonl"), "not-valid-json\n");
+        var reopened = new BaselineStore(options);
+        var readiness = await reopened.GetReadinessAsync();
+        Assert.False(readiness.IsReady);
+        Assert.Contains(readiness.Blockers, item => item.Contains("corrupt", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task Readiness_Rejects_Corrupt_Legacy_Snapshot_Without_Deleting_It()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "carthago-baseline-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        var snapshot = Path.Combine(directory, "baseline.json");
+        await File.WriteAllTextAsync(snapshot, "{invalid historical baseline");
+
+        var readiness = await new BaselineStore(new BaselineOptions { DirectoryPath = directory }).GetReadinessAsync();
+        Assert.False(readiness.IsReady);
+        Assert.Contains(readiness.Blockers, item => item.Contains("corrupt", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal("{invalid historical baseline", await File.ReadAllTextAsync(snapshot));
+    }
 }
