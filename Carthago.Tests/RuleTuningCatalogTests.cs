@@ -174,6 +174,25 @@ public sealed class RuleTuningCatalogTests
         Assert.Equal(RuleMode.Shadow, decision.EffectiveMode);
     }
 
+    [Fact]
+    public void Mature_Baseline_Promotes_R102_Only_When_Independent_Precision_Floor_Is_Met()
+    {
+        var descriptor = Descriptor("R102");
+        var registry = new ApprovedAssetRegistry(new EnvironmentTuningOptions());
+        var weak = CreateEvent("R102", 0.78, "10.0.0.20", "8.8.8.8", 53, "long encoded DNS label");
+        var strong = CreateEvent("R102", 0.85, "10.0.0.20", "8.8.8.8", 53, "long encoded DNS label");
+
+        Assert.Equal(RuleMode.Shadow, RuleTuningCatalog.Resolve("SmallBusiness", descriptor, strong,
+            CreateRecord(strong), registry, baselineReady: false).EffectiveMode);
+        Assert.Equal(RuleMode.Shadow, RuleTuningCatalog.Resolve("SmallBusiness", descriptor, strong,
+            CreateRecord(strong), registry, baselineLearningMode: true, baselineReady: true).EffectiveMode);
+        Assert.Equal(RuleMode.Shadow, RuleTuningCatalog.Resolve("SmallBusiness", descriptor, weak,
+            CreateRecord(weak), registry, baselineReady: true).EffectiveMode);
+        var eligible = RuleTuningCatalog.Resolve("SmallBusiness", descriptor, strong,
+            CreateRecord(strong), registry, baselineReady: true);
+        Assert.Equal(RuleMode.Alert, eligible.EffectiveMode);
+    }
+
     private static RuleDescriptor Descriptor(string ruleId)
         => RuleCatalog.Find(ruleId) ?? throw new InvalidOperationException($"Missing descriptor for {ruleId}.");
 
