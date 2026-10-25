@@ -3,11 +3,45 @@ using Carthago.Analytics.Services;
 using Carthago.Models;
 using System.IO;
 using System.Text.Json;
+using LiteDB;
 
 namespace Carthago.Tests;
 
 public sealed class AnalyticsPipelineTests
 {
+    [Fact]
+    public void LocalStore_Updates_Existing_Legacy_Baseline_Without_Duplicate_HostId()
+    {
+        var path = Path.Combine(Path.GetTempPath(), "carthago-legacy-baseline-" + Guid.NewGuid().ToString("N") + ".db");
+        const string host = "192.168.1.44";
+        // Previous releases stored auto-generated document IDs rather than HostId as _id.
+        using (var db = new LiteDatabase(path))
+        {
+            var collection = db.GetCollection("baseline_snapshots");
+            collection.Insert(new BsonDocument { ["HostId"] = host, ["ObservationWindows"] = 1 });
+        }
+
+        using (var store = new LocalStore(path))
+        {
+            Assert.True(store.SaveBaselineSnapshots(new[] { new BaselineSnapshot { HostId = host, ObservationWindows = 3 } }));
+            var snapshot = Assert.Single(store.LoadBaselineSnapshots());
+            Assert.Equal(3, snapshot.ObservationWindows);
+        }
+
+        using var reopened = new LiteDatabase(path);
+        Assert.Single(reopened.GetCollection("baseline_snapshots").FindAll());
+    }
+
+    [Fact]
+    public void LocalStore_Returns_Failure_If_Baseline_Cannot_Be_Persisted()
+    {
+        var path = Path.Combine(Path.GetTempPath(), "carthago-baseline-failure-" + Guid.NewGuid().ToString("N") + ".db");
+        var store = new LocalStore(path);
+        store.Dispose();
+
+        Assert.False(store.SaveBaselineSnapshots(new[] { new BaselineSnapshot { HostId = "10.0.0.42" } }));
+    }
+
     [Fact]
     public void BaselineEngine_Emits_Explainable_Novelty_Anomalies()
     {
