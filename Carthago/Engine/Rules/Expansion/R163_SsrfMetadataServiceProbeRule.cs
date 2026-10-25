@@ -22,18 +22,20 @@ namespace Carthago.Engine.Rules.Expansion
             maturity: RulePrecisionMaturity.Validated,
             defaultMode: RuleRuntimeMode.Alert,
             requiredTelemetry: new[] { RuleTelemetryKind.Http, RuleTelemetryKind.Payload },
-            requiredFields: new[] { "source", "destination_or_host", "http_any", "payload_or_uri" },
+            requiredFields: new[] { "source", "destination_or_host", "http_any", "metadata_credential_request", "process.name" },
             evidenceFields: new[] { "matched_conditions", "http.path", "process.name" },
             positiveConditions: new[]
             {
-                "The request must target a concrete cloud metadata host and credential-bearing metadata path.",
+                "The HTTP destination and host must identify a cloud metadata service and the path must request credentials.",
                 "Known metadata agent or cloud guest processes should remain suppressed.",
-                "Free-form references to metadata hosts without real HTTP destination context should remain suppressed."
+                "Missing process attribution must prevent Alert promotion even if the request is suspicious.",
+                "Free-form references and metadata protocol headers alone are not indicators of credential theft."
             },
             negativeConditions: new[]
             {
                 "Do not alert on ordinary guest-agent metadata retrieval.",
-                "Do not alert when the destination is not a metadata service host."
+                "Do not alert when the destination is not a metadata service host.",
+                "Do not alert on ordinary instance metadata lookups or authorized IMDSv2 token use."
             },
             minimumConfidence: 84,
             threshold: 1,
@@ -48,7 +50,9 @@ namespace Carthago.Engine.Rules.Expansion
             requiredTests: new[]
             {
                 "positive metadata credential path sample",
-                "negative known guest agent metadata sample"
+                "negative known guest agent metadata sample",
+                "negative ordinary instance metadata request sample",
+                "negative forged metadata host header sample"
             });
 
         public R163_SsrfMetadataServiceProbeRule()
@@ -59,7 +63,9 @@ namespace Carthago.Engine.Rules.Expansion
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!HasHttpContext(record) || !HasMethod(record, "GET", "HEAD") || !IsMetadataServiceProbe(record) || IsKnownMetadataProcess(record))
+            if (!HasHttpContext(record) || !HasMethod(record, "GET", "HEAD")
+                || !SensitiveTelemetryContracts.HasCredentialBearingMetadataRequest(record)
+                || SensitiveTelemetryContracts.IsKnownCloudMetadataAgent(record.ProcessName))
                 return NoMatch();
 
             var path = HttpPath(record);
