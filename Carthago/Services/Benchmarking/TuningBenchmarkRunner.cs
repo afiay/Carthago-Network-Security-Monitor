@@ -283,6 +283,7 @@ namespace Carthago.Services.Benchmarking
                 .ToList();
 
             report.Summary.ReplaySampleCount = report.SampleResults.Count;
+            report.Summary.SampleLevelQuality = DetectionQualityMetrics.FromReplaySamples(report.SampleResults, defaultProfileName);
             report.Summary.TruePositivePassRate = report.Summary.ExpectedMatchCount == 0
                 ? 0.0
                 : (double)report.Summary.MatchedExpectedCount / report.Summary.ExpectedMatchCount;
