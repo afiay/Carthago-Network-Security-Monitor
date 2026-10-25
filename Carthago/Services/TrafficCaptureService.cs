@@ -14,6 +14,7 @@ using System.Windows.Controls;
 using System.Windows.Threading;
 using Carthago.Capture;
 using Carthago.Models;
+using Carthago.Services.Benchmarking;
 using Carthago.Telemetry; // OtelMetrics.CountRuleHit
 using SharpPcap;
 
@@ -949,6 +950,12 @@ namespace Carthago.Services
                 ToUtcOffset(started) ?? DateTimeOffset.UtcNow, captured, displayed, dropped,
                 ToUtcOffset(lastCaptured), ToUtcOffset(lastDisplayed), DateTimeOffset.UtcNow);
             return new CaptureFlowSnapshot(assessment.State, captured, displayed, dropped, assessment.Reason);
+        }
+
+        public PerformanceCounterSnapshot GetPerformanceCounterSnapshot()
+        {
+            var flow = GetCaptureFlowSnapshot();
+            return PerformanceCounterSnapshot.Capture(flow.Captured, flow.Displayed, flow.Dropped);
         }
 
         private static DateTimeOffset? ToUtcOffset(long ticks)
