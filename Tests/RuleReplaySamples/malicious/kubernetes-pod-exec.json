@@ -6,6 +6,7 @@
       "destination": "10.10.0.10",
       "protocol": "HTTP",
       "destinationPort": 6443,
+      "processName": "kubectl.exe",
       "httpMethod": "POST",
       "httpUri": "/api/v1/namespaces/default/pods/web/exec?command=/bin/sh&container=web"
     }
