@@ -36,6 +36,7 @@ namespace Carthago.Analytics
         private readonly TimeSpan _baselinePersistInterval = TimeSpan.FromSeconds(30);
         private readonly bool _enableMlAnomalyScoring;
         private DateTime _lastBaselinePersistUtc = DateTime.MinValue;
+        private long _incidentPersistenceFailures;
 
         public event Action<Incident>? IncidentCreated;
         public event Action<Incident>? IncidentUpdated;
@@ -46,6 +47,7 @@ namespace Carthago.Analytics
         public event Action? StateReset;
 
         public DateTime? LastAnalysisUtc { get; private set; }
+        public long IncidentPersistenceFailures => Interlocked.Read(ref _incidentPersistenceFailures);
 
         public AnalyticsHost(
             TimeSpan window,
@@ -217,7 +219,7 @@ namespace Carthago.Analytics
                 return;
 
             _correlationEngine.UpdateStatus(incidentId, incident.Status);
-            _store.SaveIncident(incident);
+            PersistIncident(incident);
             IncidentUpdated?.Invoke(CloneIncident(incident));
         }
 
@@ -243,7 +245,7 @@ namespace Carthago.Analytics
             if (incident == null)
                 return;
 
-            _store.SaveIncident(incident);
+            PersistIncident(incident);
             IncidentUpdated?.Invoke(CloneIncident(incident));
         }
 
@@ -482,7 +484,7 @@ namespace Carthago.Analytics
                 _incidentCache[incident.Id] = CloneIncident(incident);
             }
 
-            _store.SaveIncident(incident);
+            PersistIncident(incident);
 
             if (result.IsNew)
                 IncidentCreated?.Invoke(CloneIncident(incident));
@@ -508,7 +510,7 @@ namespace Carthago.Analytics
 
                 live.IsAnalyzing = true;
                 _incidentCache[incident.Id] = live;
-                _store.SaveIncident(live);
+                PersistIncident(live);
             }
 
             AnalysisProgress?.Invoke(incident.Id, "queued");
@@ -562,10 +564,16 @@ namespace Carthago.Analytics
                     }
 
                     if (updated != null)
-                        _store.SaveIncident(updated);
+                        PersistIncident(updated);
                     AnalysisProgress?.Invoke(snapshot.Id, "failed: " + ex.Message);
                 }
             }, _cts.Token);
+        }
+
+        private void PersistIncident(Incident incident)
+        {
+            if (!_store.SaveIncident(incident))
+                Interlocked.Increment(ref _incidentPersistenceFailures);
         }
 
         private void PersistBaselines(bool force = false)
@@ -634,7 +642,7 @@ namespace Carthago.Analytics
 
             foreach (var incident in refreshed)
             {
-                _store.SaveIncident(incident);
+                PersistIncident(incident);
                 IncidentUpdated?.Invoke(CloneIncident(incident));
             }
         }
