@@ -60,7 +60,12 @@ namespace Carthago.Tests
             Assert.True(dnsTunnel.MaximumConfidence >= 0.75, $"Expected high confidence for dns-tunnel-high-confidence, got {dnsTunnel.MaximumConfidence:F2}.");
             Assert.Contains("R275", oauth.ActualMatches);
             Assert.True(report.ProfileResults["Enterprise"].AlertCount >= report.ProfileResults["HomeLab"].AlertCount);
-            Assert.Contains("R240", modbus.Profiles["OTSegment"].AlertRuleIds);
+            Assert.Contains("R240", modbus.ActualMatches);
+            Assert.Contains("R240", modbus.Profiles["OTSegment"].ShadowRuleIds);
+            var modbusDecision = Assert.Single(modbus.Profiles["OTSegment"].RuleDecisions,
+                item => item.RuleId == "R240");
+            Assert.Contains(modbusDecision.RuntimePrecisionReasons,
+                reason => reason.Contains("below precision floor", StringComparison.OrdinalIgnoreCase));
             Assert.DoesNotContain("R240", modbus.Profiles["HomeLab"].AlertRuleIds);
         }
 
