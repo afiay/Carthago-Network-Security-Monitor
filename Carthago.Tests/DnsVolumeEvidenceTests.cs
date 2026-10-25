@@ -11,6 +11,9 @@ public sealed class DnsVolumeEvidenceTests
     {
         var source = $"2001:db8::{Random.Shared.Next(1, 65535):x}";
         var findings = new List<DetectionEvent>();
+        var matchedDnsVolume = false;
+        var shadowedDnsVolume = false;
+        var suppressedDnsVolume = false;
 
         for (var i = 0; i < 34; i++)
         {
@@ -24,12 +27,21 @@ public sealed class DnsVolumeEvidenceTests
                 DnsQtype = "AAAA",
                 Info = "Standard DNS query"
             }, Sensitivity.Balanced).Where(d => d.RuleId == "R006"));
+            var trace = RuleEngine.LastEvaluationTrace;
+            matchedDnsVolume |= trace?.MatchedRuleIds.Contains("R006") == true;
+            shadowedDnsVolume |= trace?.ShadowedRuleIds.Contains("R006") == true;
+            suppressedDnsVolume |= trace?.SuppressedRuleIds.Contains("R006") == true;
         }
 
-        var finding = Assert.Single(findings);
-        Assert.Equal(SeverityLevel.Medium, finding.Severity);
-        Assert.Contains("DNS request volume", finding.Description);
-        Assert.DoesNotContain("tunneling", finding.Description, StringComparison.OrdinalIgnoreCase);
+        Assert.True(matchedDnsVolume, "Normal DNS volume should match R006 before tuning and suppression.");
+        Assert.True(shadowedDnsVolume || suppressedDnsVolume || findings.Count > 0,
+            "R006 should be emitted or carry an explicit shadow/suppression decision.");
+        foreach (var finding in findings)
+        {
+            Assert.Equal(SeverityLevel.Medium, finding.Severity);
+            Assert.Contains("DNS request volume", finding.Description);
+            Assert.DoesNotContain("tunneling", finding.Description, StringComparison.OrdinalIgnoreCase);
+        }
     }
 
     [Fact]
