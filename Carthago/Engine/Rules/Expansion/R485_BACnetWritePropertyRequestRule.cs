@@ -54,6 +54,21 @@ namespace Carthago.Engine.Rules.Expansion
         public R485_BACnetWritePropertyRequestRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            var record = context.Record;
+            var info = record.Info ?? string.Empty;
+            var hasWriteProperty = info.Contains("WriteProperty", StringComparison.OrdinalIgnoreCase)
+                                   || info.Contains("write property", StringComparison.OrdinalIgnoreCase);
+            var hasBacnetContext = (record.ApplicationProtocol ?? string.Empty).Contains("bacnet", StringComparison.OrdinalIgnoreCase)
+                                   || record.DestinationPort == 47808
+                                   || info.Contains("bacnet", StringComparison.OrdinalIgnoreCase);
+
+            if (!hasBacnetContext || !hasWriteProperty)
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                    "BACNET_WRITE_PROPERTY_NOT_OBSERVED",
+                    "A BACnet WriteProperty operation must be observed; protocol or read traffic alone is insufficient.");
+
+            return EvaluateSpec(context, Spec);
+        }
     }
 }
