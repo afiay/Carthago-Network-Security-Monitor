@@ -140,8 +140,10 @@ namespace Carthago.Services.EnvironmentTuning
                 "R472" when _services.IsKnownRemoteSupportTool(destination) || _services.IsKnownRemoteSupportTool(record.ProcessName) =>
                     new ApprovedAssetDecision(ApprovedAssetDisposition.Shadow, "Approved remote support tool.", "Approved.KnownRemoteSupportTools", destination ?? record.ProcessName ?? string.Empty),
 
-                "R485" when IsApprovedBacnetController(source) || IsApprovedBacnetController(destination) || IsInApprovedOtSegment(record.Source) || IsInApprovedOtSegment(record.Destination) =>
-                    new ApprovedAssetDecision(ApprovedAssetDisposition.Shadow, "Approved BACnet controller or OT segment.", IsApprovedBacnetController(source) || IsApprovedBacnetController(destination) ? "Approved.BacnetControllers" : "Approved.OtSegments", source ?? destination ?? string.Empty),
+                "R485" when (IsAdminHost(source) || IsApprovedBacnetController(source) || IsInApprovedOtSegment(record.Source))
+                            && (IsApprovedBacnetController(destination) || IsInApprovedOtSegment(record.Destination)) =>
+                    new ApprovedAssetDecision(ApprovedAssetDisposition.Shadow, "BACnet write between approved management/OT source and approved controller/OT destination.",
+                        "Approved.BacnetControllers+Approved.OtSegments", $"{source} -> {destination}"),
 
                 "R516" when _services.IsKnownRemoteSupportTool(destination) || _services.IsApprovedProxyServer(destination) || _services.IsApprovedVpnGateway(destination) =>
                     new ApprovedAssetDecision(ApprovedAssetDisposition.Shadow, "Approved tunnel or remote-support destination.", _services.IsKnownRemoteSupportTool(destination) ? "Approved.KnownRemoteSupportTools" : _services.IsApprovedVpnGateway(destination) ? "Approved.VpnGateways" : "Approved.ProxyServers", destination ?? string.Empty),
