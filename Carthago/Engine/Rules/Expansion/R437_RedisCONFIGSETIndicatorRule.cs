@@ -23,7 +23,7 @@ namespace Carthago.Engine.Rules.Expansion
             Category = "DatabaseServiceExposure",
             Description = "Detects Redis CONFIG SET Indicator only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
             Severity = SeverityLevel.Critical,
-            RequiredTelemetry = new[] { RuleTelemetryKind.Flow, RuleTelemetryKind.Http, RuleTelemetryKind.Payload },
+            RequiredTelemetry = new[] { RuleTelemetryKind.Flow, RuleTelemetryKind.Payload },
             RequiredFields = new[] { "source", "database_destination", "database_protocol_or_query_marker" },
             EvidenceFields = new[] { "network.destinationPort", "database.service", "http.path", "matched_conditions" },
             PositiveConditions = new[] { "Redis CONFIG SET Indicator requires observable DatabaseServiceExposure telemetry and will not match descriptor text alone.", "Source and destination, host, process, protocol, path, port, or payload evidence must be present.", "The configured signal count and time-window threshold must be satisfied before a DetectionEvent is emitted." },
