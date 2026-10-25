@@ -50,7 +50,8 @@ namespace Carthago.Services
                 evt,
                 record,
                 precisionConfiguredMode,
-                _cfg.Profile);
+                _cfg.Profile,
+                approvedAssets);
 
             effectiveMode = RulePrecisionCatalog.MostRestrictive(effectiveMode, precisionDecision.EffectiveMode);
 
