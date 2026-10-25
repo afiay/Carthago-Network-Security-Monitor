@@ -10,6 +10,36 @@ namespace Carthago.Tests;
 public sealed class AnalyticsPipelineTests
 {
     [Fact]
+    public async Task AnalyticsHost_Persists_Summary_Timeline_Alongside_Incident_Summary()
+    {
+        var path = Path.Combine(Path.GetTempPath(), "carthago-summary-timeline-" + Guid.NewGuid().ToString("N") + ".db");
+        using var store = new LocalStore(path);
+        using var host = new Carthago.Analytics.AnalyticsHost(
+            TimeSpan.FromMinutes(5), store,
+            llm: new LlmSummarizer(LlmSummarizer.Backend.None),
+            enableMlAnomalyScoring: false);
+        var summaryReady = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+        host.SummaryReady += (id, _) => summaryReady.TrySetResult(id);
+
+        host.OnDetection(new DetectionEvent
+        {
+            Timestamp = DateTime.UtcNow,
+            RuleId = "R016",
+            Description = "Threat intelligence match",
+            SourceIp = "10.10.12.11",
+            DestinationIp = "203.0.113.12",
+            DestinationPort = 443,
+            Protocol = "TCP",
+            Severity = SeverityLevel.High
+        });
+
+        var id = await summaryReady.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        var persisted = Assert.Single(store.LoadIncidents().Where(incident => incident.Id == id));
+        Assert.False(string.IsNullOrWhiteSpace(persisted.Summary));
+        Assert.Contains(persisted.TimelineItems, item => item.Type == "Summary" && item.Description == persisted.Summary);
+    }
+
+    [Fact]
     public void LocalStore_Incident_Save_Reports_Failure_When_Database_Is_Closed()
     {
         var path = Path.Combine(Path.GetTempPath(), "carthago-incident-failure-" + Guid.NewGuid().ToString("N") + ".db");
