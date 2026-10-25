@@ -54,6 +54,19 @@ public sealed class AdvancedIdentityAndWindowsExpansionRuleTests
     }
 
     [Fact]
+    public async Task R275_ignores_device_code_without_user_code_abuse()
+    {
+        var result = await new R275_OAuthDeviceCodePhishingIndicatorRule().EvaluateAsync(CreateContext(new TrafficRecord
+        {
+            Source = "10.0.0.62", Destination = "198.51.100.62", Protocol = "HTTPS",
+            HttpMethod = "POST", HttpHost = "login.microsoftonline.com",
+            HttpUri = "/oauth2/v2.0/devicecode?client_id=x&device_code=y"
+        }));
+
+        Assert.False(result.Matched);
+    }
+
+    [Fact]
     public async Task R343_matches_powershell_remoting_encoded_command()
     {
         var rule = new R343_PowerShellRemotingEncodedCommandRule();
@@ -85,6 +98,18 @@ public sealed class AdvancedIdentityAndWindowsExpansionRuleTests
             Protocol = "TCP",
             Info = "powershell -enc SQBFAFgA encodedcommand",
             IsTcp = true
+        }));
+
+        Assert.False(result.Matched);
+    }
+
+    [Fact]
+    public async Task R343_ignores_winrm_port_without_remoting_command()
+    {
+        var result = await new R343_PowerShellRemotingEncodedCommandRule().EvaluateAsync(CreateContext(new TrafficRecord
+        {
+            Source = "10.0.0.72", Destination = "10.0.0.20", DestinationPort = 5985,
+            Protocol = "TCP", Info = "powershell -enc SQBFAFgA encodedcommand", IsTcp = true
         }));
 
         Assert.False(result.Matched);
