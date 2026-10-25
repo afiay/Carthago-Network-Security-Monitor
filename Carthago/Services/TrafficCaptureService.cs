@@ -30,6 +30,7 @@ namespace Carthago.Services
         public event Action<TrafficRecord>? TrafficRecordReceived;
         public event Action<DetectionEvent>? DetectionEventRaised;
         public event Action<StatsSnapshot>? StatsUpdated;
+        public event Action<Exception>? CaptureFailed;
 
         // ===== Capture device or source
         private readonly object _lifecycleLock = new();
@@ -37,6 +38,9 @@ namespace Carthago.Services
         private ICaptureSource? _captureSource;
         private CancellationTokenSource? _runCts;
         private int _disposed;
+        private string? _lastCaptureError;
+
+        public string? LastCaptureError => Volatile.Read(ref _lastCaptureError);
 
         // ETW emits traffic records rather than raw packets. Route those records
         // through the same enrichment/detection path as Npcap packets.
@@ -269,6 +273,7 @@ namespace Carthago.Services
 
             // Capture sources must not overlap: release the previous session first.
             StopCurrentCapture();
+            Volatile.Write(ref _lastCaptureError, null);
             var run = CancellationTokenSource.CreateLinkedTokenSource(_serviceCts.Token);
             lock (_lifecycleLock)
                 _runCts = run;
@@ -293,11 +298,8 @@ namespace Carthago.Services
 
                     _etwReaderTask = Task.Run(() => EtwReaderLoop(etwChannel.Reader, run.Token));
                     _etwCaptureTask = source.StartAsync();
-                    _ = _etwCaptureTask.ContinueWith(t =>
-                    {
-                        if (t.Exception is not null)
-                            Log(t.Exception.GetBaseException());
-                    }, CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.Default);
+                    CaptureTaskFailureObserver.Observe(_etwCaptureTask,
+                        error => HandleCaptureTaskFailure(run, error, deviceCombo, startButton, stopButton));
                 }
                 else if (choice.Tag is ILiveDevice device)
                 {
@@ -322,6 +324,8 @@ namespace Carthago.Services
             {
                 StopCurrentCapture();
                 Log(ex);
+                Volatile.Write(ref _lastCaptureError, ex.Message);
+                CaptureFailed?.Invoke(ex);
                 MessageBox.Show($"Failed to start capture: {ex.Message}", "Capture",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
@@ -331,6 +335,7 @@ namespace Carthago.Services
         {
             StopCurrentCapture();
             if (Volatile.Read(ref _disposed) != 0) return;
+            Volatile.Write(ref _lastCaptureError, null);
 
             _dispatcher.Invoke(() =>
             {
@@ -338,6 +343,31 @@ namespace Carthago.Services
                 stopButton.IsEnabled = false;
                 deviceCombo.IsEnabled = true;
             });
+        }
+
+        private void HandleCaptureTaskFailure(
+            CancellationTokenSource run, Exception error,
+            ComboBox deviceCombo, Button startButton, Button stopButton)
+        {
+            Log(error);
+            if (_dispatcher.HasShutdownStarted || _dispatcher.HasShutdownFinished) return;
+
+            _ = _dispatcher.BeginInvoke(new Action(() =>
+            {
+                // A stopped or replaced capture must not corrupt the new session's UI.
+                lock (_lifecycleLock)
+                {
+                    if (!ReferenceEquals(_runCts, run) || _disposed != 0)
+                        return;
+                }
+
+                StopCurrentCapture();
+                Volatile.Write(ref _lastCaptureError, error.Message);
+                startButton.IsEnabled = true;
+                stopButton.IsEnabled = false;
+                deviceCombo.IsEnabled = true;
+                CaptureFailed?.Invoke(error);
+            }), DispatcherPriority.Normal);
         }
 
         private void StartPcapCapture(ILiveDevice device, string? captureFilter = null)
