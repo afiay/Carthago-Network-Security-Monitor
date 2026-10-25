@@ -298,8 +298,12 @@ namespace Carthago.Services
 
                     _etwReaderTask = Task.Run(() => EtwReaderLoop(etwChannel.Reader, run.Token));
                     _etwCaptureTask = source.StartAsync();
-                    CaptureTaskFailureObserver.Observe(_etwCaptureTask,
-                        error => HandleCaptureTaskFailure(run, error, deviceCombo, startButton, stopButton));
+                    CapturePipelineFailureObserver.Observe(_etwCaptureTask, _etwReaderTask,
+                        (stage, error) =>
+                        {
+                            Log(new InvalidOperationException($"ETW {stage} failed", error));
+                            HandleCaptureTaskFailure(run, error, deviceCombo, startButton, stopButton);
+                        });
                 }
                 else if (choice.Tag is ILiveDevice device)
                 {
@@ -438,7 +442,11 @@ namespace Carthago.Services
                 }
             }
             catch (OperationCanceledException) { /* capture stopped */ }
-            catch (Exception ex) { Log(ex); }
+            catch (Exception ex)
+            {
+                Log(ex);
+                throw; // A dead record reader must be surfaced as capture failure.
+            }
         }
 
         private void PublishRecord(TrafficRecord record, CancellationToken runToken)
