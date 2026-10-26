@@ -13,13 +13,16 @@
       "httpMethod": "GET",
       "httpHost": "portal.example.invalid",
       "httpUri": "/support/faq",
-      "httpRequestHeaders": "Host: portal.example.invalid\r\nX-Forwarded-Host: camera-lab.internal\r\nAuthorization: Basic YWRtaW46YWRtaW4=",
+      "httpRequestHeaders": "Host: portal.example.invalid\r\nX-Forwarded-Host: camera-lab.internal\r\nAuthorization: [REDACTED]",
       "processName": "approved-browser.exe",
-      "info": "Synthetic decrypted HTTPS request to an ordinary portal. A client-controlled forwarded hostname must not establish an IoT device target or successful login."
+      "info": "Synthetic HTTPS-decrypted test request to an ordinary portal. Parser-derived default Basic evidence must be redacted; an untrusted X-Forwarded-Host camera label cannot establish an IoT target."
     }
   ],
   "expectedNonMatches": [
     "R118",
     "R163"
-  ]
+  ],
+  "rawHttpRequestsByRecordIndex": {
+    "0": "GET /support/faq HTTP/1.1\r\nHost: portal.example.invalid\r\nX-Forwarded-Host: camera-lab.internal\r\nAuthorization: Basic YWRtaW46YWRtaW4=\r\n\r\n"
+  }
 }
