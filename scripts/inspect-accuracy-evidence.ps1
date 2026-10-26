@@ -34,6 +34,15 @@ Write-Host 'Use balanced accuracy to avoid hiding malicious misses behind plenti
 
 $rows = foreach ($profile in @($data.summary.sampleLevelQualityByProfile.PSObject.Properties | Sort-Object Name)) {
     $q = $profile.Value
+    # Keep the inspector useful on zero-alert profiles, where precision and
+    # its Wilson bounds are correctly undefined.
+    $precisionBounds = $q.PSObject.Properties['precision95']
+    $fprBounds = $q.PSObject.Properties['falsePositiveRate95']
+    if ($null -eq $precisionBounds -or $null -eq $fprBounds) {
+        throw 'This JSON predates confidence-bound reporting. Rerun the updated benchmark.'
+    }
+    $precisionLower = if ($null -eq $precisionBounds.Value) { $null } else { $precisionBounds.Value.lower }
+    $fprUpper = if ($null -eq $fprBounds.Value) { $null } else { $fprBounds.Value.upper }
     [pscustomobject]@{
         Profile = $profile.Name
         TP = [int]$q.truePositives
@@ -41,11 +50,11 @@ $rows = foreach ($profile in @($data.summary.sampleLevelQualityByProfile.PSObjec
         FN = [int]$q.falseNegatives
         TN = [int]$q.trueNegatives
         Precision = (Format-Ratio $q.precision)
-        'P95 lower' = (Format-Ratio $q.precision95.lower)
+        'P95 lower' = (Format-Ratio $precisionLower)
         Recall = (Format-Ratio $q.recall)
         Balanced = (Format-Ratio $q.balancedAccuracy)
         'FP-rate' = (Format-Ratio $q.falsePositiveRate)
-        'FP95 upper' = (Format-Ratio $q.falsePositiveRate95.upper)
+        'FP95 upper' = (Format-Ratio $fprUpper)
     }
 }
 $rows | Format-Table -AutoSize | Out-Host
