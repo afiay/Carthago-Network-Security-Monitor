@@ -196,6 +196,43 @@ public sealed class R118R163PairedReplayQualityTests
             Assert.True(r163.Confidence < 0.84, $"{profile}: GCP IPv6 batch unexpectedly promotes R163.");
         }
 
+        // Third paired batch: device identity must be a host-label signal,
+        // not a keyword embedded in a marketing domain. An executable with
+        // a guest-agent basename in a writable path must not be silently
+        // suppressed as an approved cloud agent.
+        var r118Marketing = report.SampleResults.Single(sample =>
+            sample.Name == "r118-camera-marketing-host-substring");
+        var r118Router02 = report.SampleResults.Single(sample =>
+            sample.Name == "r118-router02-inventory-label-default-basic");
+        var r163ApprovedAgent = report.SampleResults.Single(sample =>
+            sample.Name == "r163-approved-cloud-init-install-path");
+        var r163SpoofedAgent = report.SampleResults.Single(sample =>
+            sample.Name == "r163-cloud-init-writable-path-spoof");
+
+        Assert.True(report.SampleResults.Count >= 71);
+        Assert.Equal(ReplaySampleClassification.Benign, r118Marketing.Classification);
+        Assert.Equal(ReplaySampleClassification.Malicious, r118Router02.Classification);
+        Assert.Equal(ReplaySampleClassification.Benign, r163ApprovedAgent.Classification);
+        Assert.Equal(ReplaySampleClassification.Malicious, r163SpoofedAgent.Classification);
+        Assert.DoesNotContain("R118", r118Marketing.ActualMatches);
+        Assert.Contains("R118", r118Router02.ActualMatches);
+        Assert.DoesNotContain("R163", r163ApprovedAgent.ActualMatches);
+        Assert.Contains("R163", r163SpoofedAgent.ActualMatches);
+        Assert.All(new[] { r118Marketing, r118Router02, r163ApprovedAgent, r163SpoofedAgent },
+            sample => Assert.Empty(sample.Errors));
+
+        foreach (var profile in report.ProfileResults.Keys)
+        {
+            Assert.DoesNotContain("R118", r118Router02.Profiles[profile].AlertRuleIds);
+            Assert.DoesNotContain("R163", r163SpoofedAgent.Profiles[profile].AlertRuleIds);
+            var r118Decision = Assert.Single(r118Router02.Profiles[profile].RuleDecisions,
+                decision => decision.RuleId == "R118");
+            var r163Decision = Assert.Single(r163SpoofedAgent.Profiles[profile].RuleDecisions,
+                decision => decision.RuleId == "R163");
+            Assert.True(r118Decision.Confidence < 0.86, $"{profile}: R118 unexpectedly promoted.");
+            Assert.True(r163Decision.Confidence < 0.84, $"{profile}: R163 unexpectedly promoted.");
+        }
+
         // Sample-level metrics count actual alerts, not raw detector matches.
         // A benign alert in any profile is a regression requiring investigation.
         Assert.All(report.Summary.SampleLevelQualityByProfile.Values,
