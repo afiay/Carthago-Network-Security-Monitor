@@ -18,6 +18,33 @@ namespace Carthago.Tests;
 public sealed class R118R163PairedReplayQualityTests
 {
     [Fact]
+    public async Task Redacted_Onvif_Replay_Uses_Actual_Http_Parser_Derived_Flag()
+    {
+        var replayDirectory = Path.Combine(
+            AppContext.BaseDirectory, "..", "..", "..", "..", "Tests", "RuleReplaySamples");
+        var report = await new TuningBenchmarkRunner().RunAsync(
+            new TuningBenchmarkOptions { ReplayDirectory = replayDirectory });
+
+        var positive = Assert.Single(report.SampleResults, sample =>
+            sample.Name == "r118-onvif-default-basic-redacted");
+        var negative = Assert.Single(report.SampleResults, sample =>
+            sample.Name == "r118-onvif-unknown-basic-redacted");
+
+        Assert.Contains("R118", positive.ActualMatches);
+        Assert.DoesNotContain("R118", negative.ActualMatches);
+        Assert.Empty(positive.Errors);
+        Assert.Empty(negative.Errors);
+        Assert.True(positive.MaximumConfidence >= 0.75);
+
+        // The known synthetic Basic wire token must not appear in exported
+        // benchmark observations after parser-level redaction.
+        var json = System.Text.Json.JsonSerializer.Serialize(report);
+        Assert.DoesNotContain("YWRtaW46YWRtaW4=", json);
+        foreach (var profile in report.ProfileResults.Keys)
+            Assert.DoesNotContain("R118", positive.Profiles[profile].AlertRuleIds);
+    }
+
+    [Fact]
     public async Task Host_Authority_And_Iot_Target_Replays_Separate_Raw_Matches_From_Alerts()
     {
         var replayDirectory = Path.Combine(
