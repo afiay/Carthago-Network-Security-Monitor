@@ -69,6 +69,31 @@ public sealed class CatalogWideConfidenceSafetyTests
         }
     }
 
+    [Fact]
+    public void Genuine_Internal_Engine_Health_Event_Remains_Alertable_Without_Packet_Telemetry()
+    {
+        // R050-R056 depend on RuleEvaluationContext.HealthSnapshot,
+        // not a captured network TrafficRecord. Reject fabricated network
+        // events without blocking genuine engine-health notifications.
+        var descriptor = RuleCatalog.Find("R050")!;
+        var evt = Event(descriptor, 1.0);
+        evt.Protocol = "health";
+        evt.SourceIp = "carthago-engine";
+        evt.DestinationIp = "carthago-local";
+        evt.Summary = "Rule execution gap detected: 30s since last evaluation.";
+
+        var decision = RulePrecisionRuntimeEvaluator.Evaluate(
+            descriptor, evt, new TrafficRecord(), RuleMode.Alert, "Enterprise");
+        Assert.True(decision.TelemetrySatisfied);
+        Assert.True(decision.ConfidenceSatisfied);
+        Assert.True(decision.AllowsAlert);
+
+        evt.SourceIp = "untrusted-external-source";
+        var rejected = RulePrecisionRuntimeEvaluator.Evaluate(
+            descriptor, evt, new TrafficRecord(), RuleMode.Alert, "Enterprise");
+        Assert.False(rejected.AllowsAlert);
+    }
+
     [Theory]
     [InlineData("R102")]
     [InlineData("R118")]
