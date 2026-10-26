@@ -21,6 +21,48 @@ namespace Carthago.Engine.Rules
             "user:user", "guest:guest", "ubnt:ubnt", "support:support"
         };
 
+        // Canonical Base64 wire tokens are precomputed once. Comparing captured
+        // bytes avoids materializing any observed password in a managed string.
+        private static readonly byte[][] EncodedDefaultCredentialTokens = DefaultCredentials
+            .Select(pair => Encoding.ASCII.GetBytes(Convert.ToBase64String(Encoding.UTF8.GetBytes(pair))))
+            .ToArray();
+
+        private static bool IsAsciiIgnoreCase(ReadOnlySpan<byte> candidate, ReadOnlySpan<byte> expected)
+        {
+            if (candidate.Length != expected.Length) return false;
+            for (var i = 0; i < candidate.Length; i++)
+            {
+                var a = candidate[i];
+                var b = expected[i];
+                if ((a >= 'A' && a <= 'Z' ? a + 32 : a) !=
+                    (b >= 'A' && b <= 'Z' ? b + 32 : b))
+                    return false;
+            }
+            return true;
+        }
+
+        // Receives only the Authorization value as a span over the capture buffer.
+        // No untrusted credential bytes or their Base64 encoding are persisted.
+        internal static bool IsKnownDefaultBasicAuthorizationValue(ReadOnlySpan<byte> value)
+        {
+            while (!value.IsEmpty && (value[0] == (byte)' ' || value[0] == (byte)'\\t'))
+                value = value[1..];
+            if (value.Length < 7 || !IsAsciiIgnoreCase(value[..5], "Basic"u8)
+                || (value[5] != (byte)' ' && value[5] != (byte)'\\t'))
+                return false;
+
+            value = value[6..];
+            while (!value.IsEmpty && (value[0] == (byte)' ' || value[0] == (byte)'\\t'))
+                value = value[1..];
+            while (!value.IsEmpty && (value[^1] == (byte)' ' || value[^1] == (byte)'\\t'))
+                value = value[..^1];
+
+            foreach (var token in EncodedDefaultCredentialTokens)
+                if (value.SequenceEqual(token))
+                    return true;
+            return false;
+        }
+
         private static readonly Regex TelnetLoginWithDefaultPair = new(
             @"\b(?:login|username|user)\s*[:=]?\s*(?:admin:admin|admin:password|root:root|root:admin|user:user|guest:guest|ubnt:ubnt|support:support)\b",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
@@ -54,8 +96,12 @@ namespace Carthago.Engine.Rules
 
             if (string.IsNullOrWhiteSpace(record.HttpMethod)
                 || string.IsNullOrWhiteSpace(record.HttpHost)
-                || string.IsNullOrWhiteSpace(record.HttpRequestHeaders)
                 || !IsDeviceHost(record.HttpHost))
+                return false;
+
+            if (record.HttpBasicDefaultCredentialObserved)
+                return true;
+            if (string.IsNullOrWhiteSpace(record.HttpRequestHeaders))
                 return false;
 
             foreach (var line in record.HttpRequestHeaders.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))
