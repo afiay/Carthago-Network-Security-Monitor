@@ -175,13 +175,31 @@ try {
                 $failures.Add('rule-catalog-audit-artifact')
                 Write-Host 'FAIL: the complete rule-hardening-audit.md export was not generated.'
             }
-            if ($Details) {
-                foreach ($sample in @($report.sampleResults | Where-Object { $_.classification -eq 'Benign' })) {
-                    foreach ($profile in $sample.profiles.PSObject.Properties) {
-                        if ([int]$profile.Value.criticalAlertCount -gt 0) {
-                            Write-Host "  Benign critical: $($sample.name) / $($profile.Name): $($profile.Value.criticalAlertCount)"
-                        }
+            # A successful benchmark process is not a successful detection-quality
+            # result. Reject any newly alerting benign replay, and show the exact
+            # offending rule IDs to prevent unrelated thresholds being loosened.
+            $benignAlerts = [System.Collections.Generic.List[string]]::new()
+            foreach ($sample in @($report.sampleResults | Where-Object { $_.classification -eq 'Benign' })) {
+                foreach ($profile in $sample.profiles.PSObject.Properties) {
+                    $alertIds = @($profile.Value.alertRuleIds | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) } |
+                        Sort-Object -Unique)
+                    if ($alertIds.Count -gt 0) {
+                        $detail = "{0} / {1}: rules={2}; critical={3}" -f
+                            $sample.name, $profile.Name, ($alertIds -join ','),
+                            [int]$profile.Value.criticalAlertCount
+                        $benignAlerts.Add($detail)
                     }
+                }
+            }
+            if ($benignAlerts.Count -gt 0) {
+                $failures.Add('benign-alert-regression')
+                Write-Host "FAIL: $($benignAlerts.Count) benign sample/profile combinations emitted simulated alerts:"
+                foreach ($detail in $benignAlerts) { Write-Host "  $detail" }
+            }
+            foreach ($entry in $report.summary.sampleLevelQualityByProfile.PSObject.Properties) {
+                if ([int]$entry.Value.falsePositives -gt 0 -and $benignAlerts.Count -eq 0) {
+                    $failures.Add('benign-alert-accounting')
+                    Write-Host "FAIL: $($entry.Name) reports $($entry.Value.falsePositives) false-positive samples without corresponding alert details."
                 }
             }
         } catch {
