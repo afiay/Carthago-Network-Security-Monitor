@@ -98,6 +98,9 @@ namespace Carthago.Services.Benchmarking
         public string SampleName { get; set; } = string.Empty;
         public string RuleId { get; set; } = string.Empty;
         public string Cause { get; set; } = string.Empty;
+        // More than one independent policy/evidence gate can block the alert.
+        // Cause is the most actionable gate; BlockingFactors lists every observed gate.
+        public List<string> BlockingFactors { get; set; } = new();
         public string DetectionOutcome { get; set; } = string.Empty;
         public string EffectiveMode { get; set; } = string.Empty;
         public double? Confidence { get; set; }
