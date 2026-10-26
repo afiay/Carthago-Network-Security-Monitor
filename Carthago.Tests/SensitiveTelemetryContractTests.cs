@@ -232,6 +232,20 @@ public sealed class SensitiveTelemetryContractTests
     }
 
     [Fact]
+    public async Task R163_Requires_Observed_Ip_Destination_Not_Only_Metadata_Dns_Name()
+    {
+        // A DNS label in the network destination is not evidence of the
+        // actual remote socket address. Keep metadata.google.internal valid
+        // as an HTTP Host alias only when capture supplies its real IP.
+        var record = MetadataRecord("/computeMetadata/v1/instance/service-accounts/default/token", "webapp.exe");
+        record.Destination = "metadata.google.internal";
+        record.HttpHost = "metadata.google.internal";
+
+        Assert.False((await new R163_SsrfMetadataServiceProbeRule().EvaluateAsync(Context(record))).Matched);
+        Assert.False(RulePrecisionCatalog.Validate("R163", record).CanEvaluate);
+    }
+
+    [Fact]
     public async Task R163_Accepts_Google_Metadata_Dns_Name_At_Shared_LinkLocal_Address()
     {
         // GCP resolves metadata.google.internal to 169.254.169.254.
