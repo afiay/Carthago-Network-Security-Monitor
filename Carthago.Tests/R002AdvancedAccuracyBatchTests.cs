@@ -95,6 +95,21 @@ public sealed class R002AdvancedAccuracyBatchTests : IDisposable
     }
 
     [Fact]
+    public async Task Future_Packets_Inside_The_Same_Time_Bucket_Are_Not_Present_Evidence()
+    {
+        // All timestamps belong to the same 100 ms bucket. A bucket's
+        // start time alone cannot establish that its contents are current.
+        for (var ms = 95; ms < 99; ms++)
+            Assert.False((await See(Packet(), ms)).Matched);
+        for (var ms = 0; ms < 4; ms++)
+            Assert.False((await See(Packet(), ms)).Matched);
+
+        var hit = await See(Packet(), 4);
+        Assert.True(hit.Matched);
+        Assert.Equal(5, Assert.Single(hit.Events).Count);
+    }
+
+    [Fact]
     public async Task Historical_Bytes_Cannot_Convert_A_Low_Byte_Current_Window_Into_A_Flood()
     {
         // A continuous trickle prevents the old aggregate's idle-gap reset,

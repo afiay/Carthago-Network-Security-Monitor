@@ -85,6 +85,7 @@ namespace Carthago.Services
             public int Syn;
             public int Ack;
             public long Bytes;
+            public long LatestTimestampTicks;
         }
 
         private sealed class FloodWindow
@@ -349,7 +350,9 @@ namespace Carthago.Services
 
                     // Remove expired and future observations. Future timestamps
                     // must never contribute to an out-of-order replay window.
-                    foreach (var key in state.Buckets.Keys.Where(k => k < cutoff || k > now.Ticks).ToList())
+                    foreach (var key in state.Buckets
+                        .Where(kv => kv.Key < cutoff || kv.Value.LatestTimestampTicks > now.Ticks)
+                        .Select(kv => kv.Key).ToList())
                         state.Buckets.Remove(key);
 
                     if (!state.Buckets.TryGetValue(bucketStart, out var bucket))
@@ -358,6 +361,7 @@ namespace Carthago.Services
                     if (syn) bucket.Syn++;
                     if (ack) bucket.Ack++;
                     bucket.Bytes += Math.Max(0, record.Length);
+                    bucket.LatestTimestampTicks = Math.Max(bucket.LatestTimestampTicks, now.Ticks);
                     state.LastObserved = now;
 
                     // Bounded even if a deployment configures a very long
