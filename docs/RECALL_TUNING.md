@@ -46,6 +46,8 @@ Causes are *observed explanations*, not proof that an alert should have been emi
 
 R102 now records `dns.distinctSuspiciousTxtNames` for structured DNS TXT questions. A new behavioral correlation contributes **0.08** to the candidate confidence only after three different long, high-entropy TXT QNAMEs are observed from the same source to the same root domain within the configured observation window (five minutes by default). Each name must qualify independently. A repeated identical QNAME does not increase the distinct count.
 
+The offline replay set now includes two **paired** fixtures. `r102-distinct-txt-burst-candidate` contains three different synthetic, high-entropy TXT names from one source to one root; `r102-retried-txt-verification-control` repeats the same synthetic TXT name three times. The paired integration test checks R102's actual per-rule confidence, verifies the distinct burst scores higher than identical retries, and requires **both to remain non-alerting** until baseline readiness and production eligibility are established. The candidate has a malicious scenario label for investigative coverage; that label is not proof of exfiltration or a reason to override the baseline policy.
+
 The additional evidence does **not** apply to DNS NULL queries, `_acme-challenge` and other excluded validation names, or known telemetry roots. The rule's **80% confidence floor**, cooldown behavior and requirement for a mature baseline before production alert promotion remain unchanged. A matched or high-confidence replay candidate is not an alert unless its profile, baseline, runtime precision and suppression gates all permit emission.
 
 Run `dotnet test Carthago.Tests/Carthago.Tests.csproj -c Release --filter FullyQualifiedName~R102DistinctTxtCorrelationTests` to exercise paired positive/negative scenarios, source and window isolation, and preservation of baseline promotion gating. Recompute all replay profile metrics using `.\verify-local.ps1 -Details` after updating. Until local verification passes, treat this change as an unverified candidate. It should not be described as an increase in measured alert-level recall unless new, correctly labeled replay alerts demonstrate one.
@@ -57,6 +59,6 @@ Run `dotnet test Carthago.Tests/Carthago.Tests.csproj -c Release --filter FullyQ
 3. Confirm the expected raw match, confidence evidence, and alert-policy decision separately.
 4. Require no new benign alert-level false positives across the curated replay profiles.
 5. Recompute true positives, false positives, false negatives, precision, recall, and F1 before discussing any rule promotion.
-6. Do not generalize the curated replay precision (52 labeled cases at the latest verified baseline) to production prevalence or effectiveness.
+6. Do not generalize the curated replay precision (52 labeled cases at the previous verified baseline; the new paired R102 fixtures bring the candidate set to 54 pending verification) to production prevalence or effectiveness.
 
 Benchmarks use isolated baseline storage and must not reset the live application's baseline journal.
