@@ -186,6 +186,29 @@ namespace Carthago.Engine.Rules.Expansion
                     "PYPI_PROVIDER_EVIDENCE_REQUIRED",
                     "R370 requires PyPI-specific upload or credential evidence.");
 
+            // Credential-exposure detections require observed provider-specific
+            // token bytes. Name words, a cloud endpoint, or a generic
+            // "Authorization" header are NOT independent evidence of a leak.
+            // R359 is specifically a PAT-in-URL rule: a token in Info or an
+            // unrelated request header must never satisfy its core predicate.
+            if (string.Equals(spec.RuleId, "R353", StringComparison.OrdinalIgnoreCase)
+                && !HasTokenPattern(record, new[] { "github" }))
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                    "GITHUB_PAT_PATTERN_NOT_OBSERVED",
+                    "R353 requires an observed GitHub token pattern, not provider vocabulary.");
+
+            if (string.Equals(spec.RuleId, "R354", StringComparison.OrdinalIgnoreCase)
+                && !HasTokenPattern(record, new[] { "gitlab" }))
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                    "GITLAB_PRIVATE_TOKEN_PATTERN_NOT_OBSERVED",
+                    "R354 requires an observed GitLab private token pattern.");
+
+            if (string.Equals(spec.RuleId, "R359", StringComparison.OrdinalIgnoreCase)
+                && !HasAzureDevOpsPatInUrl(record))
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                    "AZURE_DEVOPS_PAT_URL_NOT_OBSERVED",
+                    "R359 requires a token-shaped URL parameter on an Azure DevOps host.");
+
             // A Vault-token exposure cannot be inferred from generic metadata
             // "token" words, Vault hostnames, or endpoint names alone.
             // Require an observed Vault token pattern before scoring R365.
@@ -245,7 +268,7 @@ namespace Carthago.Engine.Rules.Expansion
                         confidence.AddEvidence(0.18, "window-threshold-met");
                     if (spec.RequireCrossBoundary || spec.RequireInboundExternal || spec.RequireOutboundExternal)
                         confidence.AddEvidence(0.12, "network-boundary-gate");
-                    if (spec.TokenKinds.Length > 0)
+                    if (spec.TokenKinds.Length > 0 && HasTokenPattern(record, spec.TokenKinds))
                         confidence.AddEvidence(0.18, "secret-token-pattern");
                     if (spec.CorroboratedEvidenceWeight > 0)
                         confidence.AddEvidence(spec.CorroboratedEvidenceWeight, "rule-specific-corroboration");
@@ -345,6 +368,20 @@ namespace Carthago.Engine.Rules.Expansion
                     || (record.SourcePort ?? -1) == 143 || (record.DestinationPort ?? -1) == 143
                     || (record.SourcePort ?? -1) == 389 || (record.DestinationPort ?? -1) == 389)
                    && ContainsAny(text, "password", "login", "auth", "bind", "plain", "basic", "user");
+        }
+
+        // Never use free-form Info or header descriptions as proof of a PAT
+        // located in a URL. This is a syntactic candidate only, not evidence
+        // of unauthorized use or successful exfiltration.
+        private static bool HasAzureDevOpsPatInUrl(TrafficRecord record)
+        {
+            var host = BestHost(record);
+            if (!HostMatchesAny(host, new[] { "dev.azure.com", "visualstudio.com" }))
+                return false;
+            var uri = record.HttpUri ?? string.Empty;
+            return Regex.IsMatch(uri,
+                @"(?:[?&])(?:pat|token|access_token|personal_access_token)=[A-Za-z0-9_\-]{52,}(?:[&#]|$)",
+                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         }
 
         private static bool HasTokenPattern(TrafficRecord record, IEnumerable<string> tokenKinds)
