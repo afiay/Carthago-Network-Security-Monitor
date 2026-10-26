@@ -1,0 +1,25 @@
+{
+  "name": "r118-onvif-unknown-basic-redacted",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "198.51.100.181",
+      "destination": "192.0.2.181",
+      "sourcePort": 54181,
+      "destinationPort": 8080,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "POST",
+      "httpHost": "nvr-lab.internal",
+      "httpUri": "/onvif/device_service",
+      "httpRequestHeaders": "Host: nvr-lab.internal\r\nAuthorization: [REDACTED]",
+      "httpBasicDefaultCredentialObserved": false,
+      "processName": "approved-device-admin.exe",
+      "info": "Synthetic authorized NVR management request. Authorization value is redacted and the capture parser did not observe a known default Basic pair; no login outcome inferred."
+    }
+  ],
+  "expectedNonMatches": [
+    "R118",
+    "R163"
+  ]
+}
