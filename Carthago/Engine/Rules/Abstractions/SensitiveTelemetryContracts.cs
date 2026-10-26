@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
 using Carthago.Models;
@@ -78,6 +80,13 @@ namespace Carthago.Engine.Rules
             "169.254.169.254", "169.254.170.2", "100.100.100.200", "metadata.google.internal"
         };
 
+        // Provider-documented IPv6 metadata endpoints. Do not classify arbitrary
+        // IPv6 ULA or link-local addresses as cloud metadata services.
+        private static readonly IPAddress AwsImdsIpv6 = IPAddress.Parse("fd00:ec2::254");
+        private static readonly IPAddress GoogleMetadataIpv6 = IPAddress.Parse("fd20:ce::254");
+        private const string AwsImdsIpv6Host = "fd00:ec2::254";
+        private const string GoogleMetadataIpv6Host = "fd20:ce::254";
+
         private static readonly HashSet<string> TrustedMetadataAgents = new(StringComparer.OrdinalIgnoreCase)
         {
             "waagent", "waagent.exe", "amazon-ssm-agent", "amazon-ssm-agent.exe",
@@ -130,30 +139,19 @@ namespace Carthago.Engine.Rules
                 || string.IsNullOrWhiteSpace(record.HttpUri))
                 return false;
 
-            // A forged HTTP Host header on an unrelated destination is not metadata access.
-            var destination = record.Destination.Trim().TrimEnd('.');
-            var host = record.HttpHost.Trim().TrimEnd('.');
-
-            // Host is an HTTP authority, not a URI. Parsing "http://" + Host
-            // would silently accept userinfo (attacker@169.254.169.254) and
-            // embedded paths. Allow only the known literal metadata hosts,
-            // optionally followed by the standard cleartext HTTP port.
-            var explicitHttpPort = host.EndsWith(":80", StringComparison.OrdinalIgnoreCase);
-            if (explicitHttpPort)
-            {
-                host = host[..^3];
-                if (record.DestinationPort.HasValue && record.DestinationPort.Value != 80)
-                    return false;
-            }
-            if (!MetadataHosts.Contains(destination) || !MetadataHosts.Contains(host))
+            // Host is an HTTP authority, while Destination is the observed
+            // network endpoint. IPv6 Host literals require brackets; observed
+            // socket addresses do not. Neither field is resolved via DNS.
+            if (!TryNormalizeMetadataDestination(record.Destination, out var destination)
+                || !TryNormalizeMetadataHost(record.HttpHost, record.DestinationPort, out var host))
                 return false;
 
-            // A metadata-looking Host header is not evidence that the TCP
-            // destination belongs to that provider. Only accept the same
-            // endpoint, or Google's documented DNS alias for 169.254.169.254.
-            // Do not resolve untrusted Host values during rule evaluation.
-            var isGoogleAlias = destination.Equals("169.254.169.254", StringComparison.OrdinalIgnoreCase)
-                                && host.Equals("metadata.google.internal", StringComparison.OrdinalIgnoreCase);
+            // A forged Host cannot authenticate another provider's endpoint.
+            // GCP's documented metadata.google.internal alias is accepted at
+            // its IPv4 and IPv6 metadata addresses, but never at AWS IMDSv6.
+            var isGoogleAlias = host.Equals("metadata.google.internal", StringComparison.OrdinalIgnoreCase)
+                && (destination.Equals("169.254.169.254", StringComparison.OrdinalIgnoreCase)
+                    || destination.Equals(GoogleMetadataIpv6Host, StringComparison.OrdinalIgnoreCase));
             if (!destination.Equals(host, StringComparison.OrdinalIgnoreCase) && !isGoogleAlias)
                 return false;
 
@@ -163,9 +161,16 @@ namespace Carthago.Engine.Rules
                 // An absolute-form request target must identify the same
                 // authority as the observed Host and network destination.
                 // Merely naming some other metadata endpoint is insufficient.
+                // Uri.Host can include IPv6 brackets; DnsSafeHost strips them.
+                // Normalize the parsed authority without accepting userinfo,
+                // zone IDs, alternate ports, or a different provider endpoint.
+                var absoluteAuthorityHost = absolute.HostNameType == UriHostNameType.IPv6
+                    ? $"[{absolute.DnsSafeHost}]"
+                    : absolute.Host;
                 if ((absolute.Scheme != Uri.UriSchemeHttp && absolute.Scheme != Uri.UriSchemeHttps)
                     || !string.IsNullOrEmpty(absolute.UserInfo)
-                    || !absolute.Host.Equals(host, StringComparison.OrdinalIgnoreCase)
+                    || !TryNormalizeMetadataHost(absoluteAuthorityHost, record.DestinationPort, out var absoluteHost)
+                    || !absoluteHost.Equals(host, StringComparison.OrdinalIgnoreCase)
                     || (record.DestinationPort.HasValue && absolute.Port != record.DestinationPort.Value))
                     return false;
                 uri = absolute.AbsolutePath;
@@ -190,11 +195,15 @@ namespace Carthago.Engine.Rules
             if (host.Equals("100.100.100.200", StringComparison.OrdinalIgnoreCase))
                 return MatchesPath(uri, "/latest/meta-data/ram/security-credentials");
 
+            if (host.Equals(AwsImdsIpv6Host, StringComparison.OrdinalIgnoreCase))
+                return MatchesPath(uri, "/latest/meta-data/iam/security-credentials");
+
             var googleCredentialPath =
                 uri.StartsWith("/computeMetadata/v1/instance/service-accounts/", StringComparison.OrdinalIgnoreCase)
                 && uri.EndsWith("/token", StringComparison.OrdinalIgnoreCase);
 
-            if (host.Equals("metadata.google.internal", StringComparison.OrdinalIgnoreCase))
+            if (host.Equals("metadata.google.internal", StringComparison.OrdinalIgnoreCase)
+                || host.Equals(GoogleMetadataIpv6Host, StringComparison.OrdinalIgnoreCase))
                 return googleCredentialPath;
 
             // At this point the validated Host/destination pair is the shared
@@ -202,6 +211,70 @@ namespace Carthago.Engine.Rules
             return MatchesPath(uri, "/latest/meta-data/iam/security-credentials")
                 || MatchesPath(uri, "/metadata/identity/oauth2/token")
                 || googleCredentialPath;
+        }
+
+        private static bool TryNormalizeMetadataDestination(string value, out string normalized)
+        {
+            normalized = value.Trim().TrimEnd('.');
+            if (MetadataHosts.Contains(normalized))
+                return true;
+
+            // Captured IP destinations have no brackets or scope identifiers.
+            if (normalized.Contains('%') || normalized.Contains('[') || normalized.Contains(']')
+                || !IPAddress.TryParse(normalized, out var address)
+                || address.AddressFamily != AddressFamily.InterNetworkV6)
+                return false;
+
+            if (address.Equals(AwsImdsIpv6))
+                normalized = AwsImdsIpv6Host;
+            else if (address.Equals(GoogleMetadataIpv6))
+                normalized = GoogleMetadataIpv6Host;
+            else
+                return false;
+            return true;
+        }
+
+        private static bool TryNormalizeMetadataHost(string authority, int? destinationPort, out string normalized)
+        {
+            normalized = string.Empty;
+            var value = authority.Trim();
+            if (value.StartsWith("[", StringComparison.Ordinal))
+            {
+                var end = value.IndexOf(']');
+                if (end < 2)
+                    return false;
+                var literal = value[1..end];
+                var suffix = value[(end + 1)..];
+                if ((suffix.Length > 0 && suffix != ":80")
+                    || (suffix.Length > 0 && destinationPort.HasValue && destinationPort.Value != 80)
+                    || literal.Contains('%')
+                    || !IPAddress.TryParse(literal, out var address)
+                    || address.AddressFamily != AddressFamily.InterNetworkV6)
+                    return false;
+
+                if (address.Equals(AwsImdsIpv6))
+                    normalized = AwsImdsIpv6Host;
+                else if (address.Equals(GoogleMetadataIpv6))
+                    normalized = GoogleMetadataIpv6Host;
+                else
+                    return false;
+                return true;
+            }
+
+            // Bare IPv6 is invalid in HTTP Host; keep the existing strict
+            // IPv4/DNS authority allowlist, with optional explicit port 80.
+            var explicitHttpPort = value.EndsWith(":80", StringComparison.OrdinalIgnoreCase);
+            if (explicitHttpPort)
+            {
+                value = value[..^3];
+                if (destinationPort.HasValue && destinationPort.Value != 80)
+                    return false;
+            }
+            value = value.TrimEnd('.');
+            if (!MetadataHosts.Contains(value))
+                return false;
+            normalized = value;
+            return true;
         }
 
         private static bool MatchesPath(string path, string prefix)
