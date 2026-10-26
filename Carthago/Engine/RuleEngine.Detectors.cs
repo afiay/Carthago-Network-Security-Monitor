@@ -239,7 +239,7 @@ namespace Carthago.Services
                 bool ack = TcpAckToken.IsMatch(record.Flags ?? string.Empty);
                 if (!syn || ack) return false;
 
-                if (record.DestinationPort is not int dport) return false;
+                if (record.DestinationPort is not int dport || dport is < 1 or > 65535) return false;
 
                 int window = _cfg.PortScanWindowSeconds ?? PortScanWindowSeconds;
                 int threshold = ScaleCount(_cfg.PortScanThreshold ?? PortScanThreshold, s);
@@ -252,7 +252,7 @@ namespace Carthago.Services
                 if (map.Count > maxPortsPerPair)
                 {
                     var cutoffHard = now.AddSeconds(-window);
-                    foreach (var k in map.Where(kv => kv.Value < cutoffHard).Select(kv => kv.Key).ToList())
+                    foreach (var k in map.Where(kv => kv.Value < cutoffHard || kv.Value > now).Select(kv => kv.Key).ToList())
                         map.TryRemove(k, out _);
 
                     // If still oversized, drop oldest few
@@ -265,7 +265,7 @@ namespace Carthago.Services
 
                 // evict old ports for this (src,dst)
                 var cutoff = now.AddSeconds(-window);
-                foreach (var k in map.Where(kv => kv.Value < cutoff).Select(kv => kv.Key).ToList())
+                foreach (var k in map.Where(kv => kv.Value < cutoff || kv.Value > now).Select(kv => kv.Key).ToList())
                     map.TryRemove(k, out _);
 
                 int uniquePorts = map.Count;
@@ -311,7 +311,9 @@ namespace Carthago.Services
                     || string.IsNullOrWhiteSpace(record.Destination)) return false;
                 // SYN volume toward one service must not be manufactured by
                 // aggregating unrelated destinations from a busy scanner.
-                var floodKey = $"R002:{src}->{record.Destination}";
+                // Distinct destination services may be busy independently. Do
+                // not combine their SYN/ACK, packet or byte counters.
+                var floodKey = $"R002:{src}->{record.Destination}:{record.DestinationPort}";
 
                 var window = _cfg.FloodWindowSeconds ?? FloodWindowSeconds;
                 var pktThreshold = ScaleCount(_cfg.FloodThreshold ?? FloodThreshold, s);
@@ -376,7 +378,9 @@ namespace Carthago.Services
             {
                 if (string.IsNullOrEmpty(record.Destination)) return false;
 
-                var host = record.Destination.ToLowerInvariant();
+                // Absolute FQDNs may carry a trailing DNS root dot; preserve
+                // exact-indicator matching while normalizing that equivalent form.
+                var host = record.Destination.Trim().TrimEnd('.').ToLowerInvariant();
                 if (ThreatFeedService.MaliciousHosts.Contains(host))
                 {
                     if (SuppressRepeat(now, "R003", NS(record.Source), record.Destination, record.DestinationPort)) return false;
