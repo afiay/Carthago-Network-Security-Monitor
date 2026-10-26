@@ -172,6 +172,7 @@ namespace Carthago.Services.Benchmarking
                     FilePath = file,
                     Classification = classification,
                     ExpectedMatches = expectedMatchIds,
+                    ExpectedNonMatches = expectedNonMatchIds,
                     ActualMatches = actualMatchIds,
                     ExpectedRuleDiagnostics = expectedDiagnostics.Values.OrderBy(static item => item.RuleId, StringComparer.OrdinalIgnoreCase).ToList(),
                     MissingExpectedMatches = missingExpected,
@@ -414,6 +415,7 @@ namespace Carthago.Services.Benchmarking
             // no alert; Shadow matches are not counted as alert true positives.
             report.RecallGaps = TuningBenchmarkRecallGapAnalyzer.Analyze(report);
             report.DetectionFunnelByProfile = TuningBenchmarkDetectionFunnelAnalyzer.Analyze(report);
+            report.RuleEvidenceCoverage = TuningBenchmarkRuleEvidenceAnalyzer.Analyze(report);
             RuleEngine.ResetRuntimeStateForReplay();
             return report;
         }
