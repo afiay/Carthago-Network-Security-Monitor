@@ -1,0 +1,26 @@
+{
+  "name": "r163-azure-vault-token-unapproved",
+  "classification": "Malicious",
+  "records": [
+    {
+      "source": "10.64.0.23",
+      "destination": "169.254.169.254",
+      "sourcePort": 55202,
+      "destinationPort": 80,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "GET",
+      "httpHost": "169.254.169.254",
+      "httpUri": "/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https%3A%2F%2Fvault.azure.net",
+      "httpRequestHeaders": "Host: 169.254.169.254\r\nMetadata: true",
+      "processName": "unapproved-webapp.exe",
+      "info": "Synthetic unapproved Azure managed identity token endpoint probe for a Key Vault resource. No response token or independent inbound-to-egress causal chain is present."
+    }
+  ],
+  "expectedMatches": [
+    "R163"
+  ],
+  "expectedNonMatches": [
+    "R118"
+  ]
+}
