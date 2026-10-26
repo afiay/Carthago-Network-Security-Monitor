@@ -233,6 +233,40 @@ public sealed class R118R163PairedReplayQualityTests
             Assert.True(r163Decision.Confidence < 0.84, $"{profile}: R163 unexpectedly promoted.");
         }
 
+        // Fourth paired batch uses capture-time redacted Basic evidence and
+        // GCP guest-agent path attribution. Neither header redaction nor a
+        // familiar executable basename may substitute for trusted evidence.
+        var r118UnknownBasic = report.SampleResults.Single(sample =>
+            sample.Name == "r118-onvif-unknown-basic-redacted");
+        var r118DefaultBasic = report.SampleResults.Single(sample =>
+            sample.Name == "r118-onvif-default-basic-redacted");
+        var r163InstalledAgent = report.SampleResults.Single(sample =>
+            sample.Name == "r163-gcp-guest-agent-installed-path");
+        var r163WritableSpoof = report.SampleResults.Single(sample =>
+            sample.Name == "r163-gcp-user-writable-agent-spoof");
+
+        Assert.True(report.SampleResults.Count >= 78);
+        Assert.Equal(ReplaySampleClassification.Benign, r118UnknownBasic.Classification);
+        Assert.Equal(ReplaySampleClassification.Malicious, r118DefaultBasic.Classification);
+        Assert.Equal(ReplaySampleClassification.Benign, r163InstalledAgent.Classification);
+        Assert.Equal(ReplaySampleClassification.Malicious, r163WritableSpoof.Classification);
+        Assert.DoesNotContain("R118", r118UnknownBasic.ActualMatches);
+        Assert.Contains("R118", r118DefaultBasic.ActualMatches);
+        Assert.DoesNotContain("R163", r163InstalledAgent.ActualMatches);
+        Assert.Contains("R163", r163WritableSpoof.ActualMatches);
+        Assert.All(new[] { r118UnknownBasic, r118DefaultBasic, r163InstalledAgent, r163WritableSpoof },
+            sample => Assert.Empty(sample.Errors));
+
+        foreach (var profile in report.ProfileResults.Keys)
+        {
+            Assert.DoesNotContain("R118", r118DefaultBasic.Profiles[profile].AlertRuleIds);
+            Assert.DoesNotContain("R163", r163WritableSpoof.Profiles[profile].AlertRuleIds);
+            Assert.True(Assert.Single(r118DefaultBasic.Profiles[profile].RuleDecisions,
+                decision => decision.RuleId == "R118").Confidence < 0.86);
+            Assert.True(Assert.Single(r163WritableSpoof.Profiles[profile].RuleDecisions,
+                decision => decision.RuleId == "R163").Confidence < 0.84);
+        }
+
         // Sample-level metrics count actual alerts, not raw detector matches.
         // A benign alert in any profile is a regression requiring investigation.
         Assert.All(report.Summary.SampleLevelQualityByProfile.Values,
