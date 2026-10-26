@@ -174,6 +174,32 @@ public sealed class RuleTuningCatalogTests
         Assert.Equal(RuleMode.Shadow, decision.EffectiveMode);
     }
 
+    [Theory]
+    [InlineData("Research")]
+    [InlineData("Enterprise")]
+    [InlineData("HomeLab")]
+    public void Baseline_Dependent_R102_Cannot_Alert_Without_Readiness_In_Any_Profile(string profile)
+    {
+        var descriptor = Descriptor("R102");
+        var registry = new ApprovedAssetRegistry(new EnvironmentTuningOptions());
+        var evt = CreateEvent("R102", 0.98, "10.0.0.20", "8.8.8.8", 53,
+            "Multiple independently observed high-entropy DNS TXT queries");
+        var record = CreateRecord(evt);
+
+        var unready = RuleTuningCatalog.Resolve(profile, descriptor, evt, record,
+            registry, baselineReady: false);
+        Assert.Equal(RuleMode.Shadow, unready.EffectiveMode);
+        Assert.Contains(RuleTuningReason.BaselineLearningMode, unready.Reasons);
+
+        var explicitLearning = RuleTuningCatalog.Resolve(profile, descriptor, evt, record,
+            registry, baselineLearningMode: true, baselineReady: true);
+        Assert.Equal(RuleMode.Shadow, explicitLearning.EffectiveMode);
+
+        var mature = RuleTuningCatalog.Resolve(profile, descriptor, evt, record,
+            registry, baselineLearningMode: false, baselineReady: true);
+        Assert.Equal(RuleMode.Alert, mature.EffectiveMode);
+    }
+
     [Fact]
     public void Mature_Baseline_Promotes_R102_Only_When_Independent_Precision_Floor_Is_Met()
     {
