@@ -409,19 +409,25 @@ namespace Carthago.Services
                     !string.Equals(record.Protocol, "TCP", StringComparison.OrdinalIgnoreCase)) // must be TCP
                     return false;
 
-                // Require an auth context
+                // TCP handshakes, SSH banners, remote-admin port traffic,
+                // and FTP USER/PASS command strings do NOT establish failed
+                // credentials. Corroborate with an observed failure outcome
+                // before counting a brute-force attempt. Do not assume that
+                // an encrypted SSH/RDP session is a login failure.
                 bool authPort = AuthPorts.Contains(dstPort);
-                bool authBanner = (record.Info?.StartsWith("SSH-", StringComparison.OrdinalIgnoreCase) == true)
-                               || (record.Info?.IndexOf("USER ", StringComparison.OrdinalIgnoreCase) >= 0)
-                               || (record.Info?.IndexOf("PASS ", StringComparison.OrdinalIgnoreCase) >= 0)
-                               || (record.Info?.IndexOf("RDP", StringComparison.OrdinalIgnoreCase) >= 0)
-                               || (record.ApplicationService?.Equals("WINRM", StringComparison.OrdinalIgnoreCase) == true)
-                               || (record.ApplicationService?.Equals("FTP", StringComparison.OrdinalIgnoreCase) == true)
-                               || (record.ApplicationService?.Equals("IMAP", StringComparison.OrdinalIgnoreCase) == true)
-                               || (record.ApplicationService?.Equals("POP3", StringComparison.OrdinalIgnoreCase) == true)
-                               || (record.ApplicationService?.Equals("SMTP", StringComparison.OrdinalIgnoreCase) == true);
+                bool authService = record.ApplicationService is { } service
+                    && (service.Equals("SSH", StringComparison.OrdinalIgnoreCase)
+                        || service.Equals("RDP", StringComparison.OrdinalIgnoreCase)
+                        || service.Equals("WINRM", StringComparison.OrdinalIgnoreCase)
+                        || service.Equals("FTP", StringComparison.OrdinalIgnoreCase)
+                        || service.Equals("IMAP", StringComparison.OrdinalIgnoreCase)
+                        || service.Equals("POP3", StringComparison.OrdinalIgnoreCase)
+                        || service.Equals("SMTP", StringComparison.OrdinalIgnoreCase));
 
-                if (!authPort && !authBanner)
+                if ((!authPort && !authService)
+                    || !Regex.IsMatch(record.Info ?? string.Empty,
+                        @"\b(?:failed password|authentication failed|authentication failure|login failed|invalid credentials|invalid password|login incorrect)\b",
+                        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
                     return false;
 
                 // Track per (src,dstIp,dstPort) so scans across many hosts don’t look like brute force
@@ -438,7 +444,7 @@ namespace Carthago.Services
                     // keep only attempts to THIS dstKey in-window
                     int write = 0;
                     for (int i = 0; i < attempts.Count; i++)
-                        if (attempts[i] >= now.AddSeconds(-window)) attempts[write++] = attempts[i];
+                        if (attempts[i] <= now && attempts[i] >= now.AddSeconds(-window)) attempts[write++] = attempts[i];
                     if (write != attempts.Count) attempts.RemoveRange(write, attempts.Count - write);
 
                     int count = attempts.Count;
