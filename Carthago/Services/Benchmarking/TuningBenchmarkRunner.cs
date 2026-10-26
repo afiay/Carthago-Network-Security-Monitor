@@ -416,6 +416,7 @@ namespace Carthago.Services.Benchmarking
             report.RecallGaps = TuningBenchmarkRecallGapAnalyzer.Analyze(report);
             report.DetectionFunnelByProfile = TuningBenchmarkDetectionFunnelAnalyzer.Analyze(report);
             report.RuleEvidenceCoverage = TuningBenchmarkRuleEvidenceAnalyzer.Analyze(report);
+            report.RuleHardeningAudit = TuningBenchmarkRuleHardeningAudit.Analyze(report);
             RuleEngine.ResetRuntimeStateForReplay();
             return report;
         }
