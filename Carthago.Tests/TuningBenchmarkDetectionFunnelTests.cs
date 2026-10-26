@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using Carthago.Services.Benchmarking;
 using Xunit;
@@ -154,8 +155,11 @@ public sealed class TuningBenchmarkDetectionFunnelTests
         Assert.Null(funnel.EligibleAlertEmissionRate);
     }
 
-    [Fact]
-    public void Markdown_Explains_Separate_Denominators_And_NA()
+    [Theory]
+    [InlineData("sv-SE")]
+    [InlineData("fr-FR")]
+    [InlineData("en-US")]
+    public void Markdown_Explains_Separate_Denominators_And_NA(string cultureName)
     {
         var report = new TuningBenchmarkReport
         {
@@ -175,11 +179,21 @@ public sealed class TuningBenchmarkDetectionFunnelTests
             }
         };
 
-        var markdown = new TuningBenchmarkReportStore().ToMarkdown(report);
-        Assert.Contains("## Detection, Policy, and Alert Funnel", markdown);
-        Assert.Contains("100.0%", markdown);
-        Assert.Contains("0.0%", markdown);
-        Assert.Contains("N/A", markdown);
-        Assert.Contains("not live notification delivery", markdown);
+        var previousCulture = CultureInfo.CurrentCulture;
+        try
+        {
+            CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo(cultureName);
+            var markdown = new TuningBenchmarkReportStore().ToMarkdown(report);
+            Assert.Contains("## Detection, Policy, and Alert Funnel", markdown);
+            Assert.Contains("100.0%", markdown);
+            Assert.Contains("0.0%", markdown);
+            Assert.Contains("N/A", markdown);
+            Assert.Contains("not live notification delivery", markdown);
+            Assert.DoesNotContain("100,0", markdown);
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = previousCulture;
+        }
     }
 }
