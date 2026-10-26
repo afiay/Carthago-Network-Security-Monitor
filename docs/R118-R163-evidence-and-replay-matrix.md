@@ -1,15 +1,16 @@
 # R118 and R163: evidence contracts and replay matrix
 
-Status: **validation candidate**, not a rule-promotion request. The
-feature-branch tree currently contains **78 JSON replay fixtures (42 benign,
-36 malicious)**, including four new paired controls for redacted ONVIF Basic
-telemetry and GCP guest-agent executable-path spoofing. Earlier sections document historical
-52/58/63/67-fixture milestones, not the current inventory. All four newly
-added JSON files were retrieved and parsed successfully. This is structural
-verification only, **not** a 78-sample benchmark PASS. Windows compilation,
-xUnit tests, and updated per-profile alert-level precision/recall/F1 remain
-unverified. Do not promote any rule until those checks and policy-accounting
-gates pass.
+Status: **validation candidate**, not a rule-promotion request. As of
+2026-10-26, the feature-branch tree contains **80 JSON replay fixtures
+(43 benign, 37 malicious)**. Two new controls exercise parser-redacted
+non-default ONVIF Basic authentication and an unapproved IMDSv2 HEAD
+credential-path probe. Earlier sections document historical 52/58/63/67/74/78
+milestones, not the current inventory. New fixtures were JSON-parsed and
+committed individually; these are **static checks only**, not a passing
+80-sample benchmark. The latest supplied Windows run covered 78 fixtures
+and failed build-tests, tests, and replay expectations. Do not promote any
+rule until a clean build, test run, and per-profile alert-quality comparison
+have been verified.
 
 ## Non-negotiable gates
 
@@ -316,6 +317,60 @@ synthetic samples is not production precision.
 
 If tests or replay expectations fail, retain the previous policy and
 diagnose the failing fixture; do not promote R118, R163 or R102.
+
+## 80-fixture candidate: parser-negative Basic and IMDSv2 HEAD probe (2026-10-26)
+
+| Fixture | Label | Expected raw rule result | Alert decision |
+| --- | --- | --- | --- |
+| `r118-onvif-nondefault-basic-wire-redacted` | Benign | No R118 | No benign alert in any profile |
+| `r163-unapproved-aws-imdsv2-head-credential-probe` | Malicious unauthorized probe | R163 candidate | Shadow; a HEAD request is not proof of credential retrieval or SSRF |
+
+The R118 negative control supplies a **test-only** synthetic Basic header
+(`admin:strong-pass`) through `rawHttpRequestsByRecordIndex`. The
+benchmark uses the production `HttpLight` parser to derive the credential
+indicator and replace the header with `[REDACTED]` before detection. A
+non-default pair must not be promoted into a default-credential observation.
+The synthetic Base64 value must not appear in the serialized benchmark report.
+This fixture complements the positive parser-derived ONVIF case, rather than
+trusting a replay JSON boolean with an internal setter.
+
+The R163 probe uses a valid EC2 IMDS credential path, an observed metadata
+socket destination, a matching Host, and a non-agent process. Its IMDSv2 token
+header is redacted and supplies **no** confidence bonus. The method is HEAD:
+this tests suspicious endpoint probing, not successful credential extraction.
+Without independent inbound-request-to-process-to-egress attribution, the
+candidate must remain non-paging below R163's 84% floor. R118 remains at 86%
+and R102 at 80%; no thresholds or default modes were changed.
+
+A paired xUnit regression was added to the existing replay test method to
+avoid another full benchmark execution per test. It asserts classifications,
+raw matches, no benign alerts, redaction, and per-profile Shadow decisions.
+**It has not yet been executed on Windows.**
+
+### Last supplied local verification (78 fixtures; not a passing baseline)
+
+The Windows output supplied on 2026-10-26 showed successful restore and
+benchmark execution, but **build-tests failed**, **tests failed**, and one
+R118 ONVIF replay expectation failed (0.68 observed versus 0.75 expected).
+Seven failing xUnit test cases were reported by the local diagnosis script.
+A subsequent branch change routed synthetic ONVIF HTTP through the real parser;
+this fix has not yet been validated by a fresh Windows run. Do not use stale
+`--no-build` test binaries as evidence that the updated source passed.
+
+| Profile | 78-fixture alert TP/FP/FN | Precision | Recall | F1 |
+| --- | --- | ---: | ---: | ---: |
+| Enterprise | 5/0/31 | 100.0% | 13.9% | 24.4% |
+| HomeLab | 1/0/35 | 100.0% | 2.8% | 5.4% |
+| IoTHeavy | 1/0/35 | 100.0% | 2.8% | 5.4% |
+| OTSegment | 6/0/30 | 100.0% | 16.7% | 28.6% |
+| Research | 8/0/28 | 100.0% | 22.2% | 36.4% |
+| SmallBusiness | 4/0/32 | 100.0% | 11.1% | 20.0% |
+
+These are **historical, incomplete-quality-gate, labeled offline alert-rule
+metrics**, not results for the current 80-fixture branch and not production
+prevalence. Raw recognition and Shadow decisions are not counted as alerts.
+Recompute TP/FP/FN, precision, recall and F1 for all six profiles after a
+successful Windows build, xUnit run and replay-expectation gate.
 
 ## References
 
