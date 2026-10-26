@@ -1,0 +1,74 @@
+{
+  "name": "holdout-r102-office-dns-mixed-a-aaaa",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "10.241.91.11",
+      "destination": "1.1.1.1",
+      "destinationPort": 53,
+      "protocol": "DNS",
+      "applicationProtocol": "DNS",
+      "dnsQname": "status1.ops-holdout.example",
+      "dnsQtype": "A"
+    },
+    {
+      "source": "10.241.91.11",
+      "destination": "1.1.1.1",
+      "destinationPort": 53,
+      "protocol": "DNS",
+      "applicationProtocol": "DNS",
+      "dnsQname": "status2.ops-holdout.example",
+      "dnsQtype": "A"
+    },
+    {
+      "source": "10.241.91.11",
+      "destination": "1.1.1.1",
+      "destinationPort": 53,
+      "protocol": "DNS",
+      "applicationProtocol": "DNS",
+      "dnsQname": "api.ops-holdout.example",
+      "dnsQtype": "A"
+    },
+    {
+      "source": "10.241.91.11",
+      "destination": "1.1.1.1",
+      "destinationPort": 53,
+      "protocol": "DNS",
+      "applicationProtocol": "DNS",
+      "dnsQname": "assets.ops-holdout.example",
+      "dnsQtype": "A"
+    },
+    {
+      "source": "10.241.91.11",
+      "destination": "1.1.1.1",
+      "destinationPort": 53,
+      "protocol": "DNS",
+      "applicationProtocol": "DNS",
+      "dnsQname": "git.ops-holdout.example",
+      "dnsQtype": "A"
+    },
+    {
+      "source": "10.241.91.11",
+      "destination": "1.1.1.1",
+      "destinationPort": 53,
+      "protocol": "DNS",
+      "applicationProtocol": "DNS",
+      "dnsQname": "patch.ops-holdout.example",
+      "dnsQtype": "A"
+    },
+    {
+      "source": "10.241.91.11",
+      "destination": "1.1.1.1",
+      "destinationPort": 53,
+      "protocol": "DNS",
+      "applicationProtocol": "DNS",
+      "dnsQname": "ipv6.ops-holdout.example",
+      "dnsQtype": "AAAA"
+    }
+  ],
+  "expectedNonMatches": [
+    "R102",
+    "R118",
+    "R163"
+  ]
+}
