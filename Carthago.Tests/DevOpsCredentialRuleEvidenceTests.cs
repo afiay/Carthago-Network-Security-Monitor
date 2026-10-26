@@ -71,9 +71,19 @@ public sealed class DevOpsCredentialRuleEvidenceTests
         Assert.False((await new R359_AzureDevOpsPATInURLRule()
             .EvaluateAsync(Context(benign))).Matched);
 
-        benign.HttpUri = "/example/_apis/projects?pat=" + new string('A', 52);
-        Assert.True((await new R359_AzureDevOpsPATInURLRule()
-            .EvaluateAsync(Context(benign))).Matched);
+        var syntheticToken = new string('A', 52);
+        benign.HttpUri = "/example/_apis/projects?pat=" + syntheticToken;
+        var result = await new R359_AzureDevOpsPATInURLRule()
+            .EvaluateAsync(Context(benign));
+        Assert.True(result.Matched);
+
+        // The URL query is inspection input, never materialized in
+        // structured/legacy evidence or detection summaries.
+        var evt = Assert.Single(result.Events);
+        Assert.DoesNotContain(syntheticToken, evt.Evidence ?? string.Empty);
+        Assert.DoesNotContain(syntheticToken, evt.Summary ?? string.Empty);
+        Assert.DoesNotContain(evt.StructuredEvidence!.Items, item =>
+            item.Value.Contains(syntheticToken, StringComparison.Ordinal));
     }
 
     private static TrafficRecord Record(string host, string uri, string info)
