@@ -19,6 +19,19 @@ The benchmark writes:
 
 A gap contains the sample and rule ID, profile, detector outcome, effective policy mode, observed confidence/floor when available, and diagnostic evidence. `cause` is the prioritized primary explanation; `blockingFactors` retains every observed independent gate. A raw match can simultaneously face a confidence floor, a missing approved environment, and a Shadow profile.
 
+## Three-stage detection quality accounting
+
+The benchmark reports **three separate measures** under `detectionFunnelByProfile` in its JSON and **Detection, Policy, and Alert Funnel** in Markdown. Run `./scripts/inspect-detection-funnel.ps1` (PowerShell syntax: `.\\scripts\\inspect-detection-funnel.ps1`) to inspect all profiles, or append `-Profile Research`.
+
+- **Detector recognition** = labeled malicious expected (sample, rule) pairs with raw rule matches / all labeled malicious expected pairs. This is independent of whether the rule is Shadowed, Disabled, or allowed to alert. Benign raw matches are counted separately; they are **not** alert-level false positives.
+- **Alert-level recall** = labeled malicious expected pairs included in the replay profile's simulated `AlertRuleIds` / all labeled malicious expected pairs. Shadow and Disabled decisions count as alert-level misses; this preserves the existing metric.
+- **Policy-eligible emission** = simulated alerts for recognized expected rules with recorded `EffectiveMode=Alert` / recognized expected rules with recorded `EffectiveMode=Alert`. This is a *conditional replay consistency check*, not detector recall and not live notification delivery. A profile with no eligible decisions reports `N/A`, not 100%.
+- **Policy-constrained candidates** are recognized malicious expected pairs with `EffectiveMode=Shadow` or `Disabled` (`Suppressed` included in the disabled/suppressed bucket). They remain separately visible, not false detector misses. `MissingPolicyDecisions`, `EligibleButNotAlerted`, and `AlertDecisionMismatches` identify suspicious accounting states rather than silently inflating metrics.
+
+The denominator is **expected (sample, rule) pairs**, not total individual event counts. The same rule in multiple labeled samples creates multiple opportunities, and the same expected pair is reported separately per profile. A missing expected raw match counts as a *detector miss*, even if any simulated alert is erroneously present; that inconsistency is flagged.
+
+The benchmark evaluates alert decisions with the **same in-process policy implementation** that defines policy eligibility, so an eligible emission rate near 100% is not independent evidence of production alert delivery. Compare source telemetry, detector recognition, confidence and baseline requirements, and replay policy decisions before modifying any rules. The previous sample-level TP/FP/FN, precision, recall, and F1 calculations are left intact, including zero-benign-alert guardrails.
+
 ## How to use the causes
 
 | Cause | What is known | Next investigation |
