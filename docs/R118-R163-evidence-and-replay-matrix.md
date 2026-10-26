@@ -51,9 +51,11 @@ The second paired batch adds four fixtures on top of the verified 52:
 **R118:** The wire parser and legacy/replay contract now require exactly one
 origin `Authorization` field before deriving a default-pair observation.
 Duplicate headers are ambiguous across HTTP intermediaries and device
-implementations. The parser continues to redact *all* credential-bearing
-header values, and neither the token nor the decoded password enters the
-detection event. The known default-pair set and R118's 86% confidence floor
+implementations. The wire-derived flag also requires a **complete HTTP
+header section** (the terminating empty CRLF line), so a partial TCP
+segment cannot be misclassified before a later duplicate field arrives.
+The parser continues to redact *all* credential-bearing header values,
+and neither the token nor the decoded password enters the detection event. The known default-pair set and R118's 86% confidence floor
 are unchanged. A valid singleton remains detectable; duplicate headers do
 not establish which credentials a device accepted.
 
