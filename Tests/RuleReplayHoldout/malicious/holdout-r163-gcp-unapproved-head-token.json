@@ -1,0 +1,29 @@
+{
+  "name": "holdout-r163-gcp-unapproved-head-token",
+  "classification": "Malicious",
+  "records": [
+    {
+      "source": "10.241.91.24",
+      "destination": "fd20:ce::254",
+      "destinationPort": 80,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "HEAD",
+      "httpHost": "[fd20:ce::254]",
+      "httpUri": "/computeMetadata/v1/instance/service-accounts/default/token",
+      "httpRequestHeaders": "Host: [fd20:ce::254]\r\nMetadata-Flavor: Google",
+      "processName": "unapproved-metadata-prober.exe",
+      "info": "Synthetic sandbox cloud metadata observation; no separately corroborated SSRF causality."
+    }
+  ],
+  "expectedMatches": [
+    "R163"
+  ],
+  "expectedNonMatches": [
+    "R118",
+    "R353",
+    "R354",
+    "R359"
+  ],
+  "expectedMinimumConfidence": 0.6
+}
