@@ -500,8 +500,8 @@ namespace Carthago.Services
                     || record.DestinationPort is not int port || port <= 0 || port > 65535)
                     return false;
 
-                string proto = record.ApplicationService?.ToUpperInvariant()
-                               ?? record.Protocol?.ToUpperInvariant()
+                string proto = record.ApplicationService?.Trim().ToUpperInvariant()
+                               ?? record.Protocol?.Trim().ToUpperInvariant()
                                ?? string.Empty;
 
                 if (proto is "TELNET" or "FTP" or "SMB" or "SNMP")
