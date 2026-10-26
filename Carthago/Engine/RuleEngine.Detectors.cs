@@ -479,6 +479,14 @@ namespace Carthago.Services
             detection = null!;
             try
             {
+                // Protocol classification without a source, destination and
+                // observed service endpoint is insufficient to attribute a
+                // network exposure finding to a real traffic flow.
+                if (string.IsNullOrWhiteSpace(record.Source)
+                    || string.IsNullOrWhiteSpace(record.Destination)
+                    || record.DestinationPort is not int port || port <= 0 || port > 65535)
+                    return false;
+
                 string proto = record.ApplicationService?.ToUpperInvariant()
                                ?? record.Protocol?.ToUpperInvariant()
                                ?? string.Empty;
