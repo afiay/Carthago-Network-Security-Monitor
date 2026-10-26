@@ -1,16 +1,16 @@
 # R118 and R163: evidence contracts and replay matrix
 
-Status: **validation candidate**, not a rule-promotion request. As of
-2026-10-26, the feature-branch tree contains **80 JSON replay fixtures
-(43 benign, 37 malicious)**. Two new controls exercise parser-redacted
-non-default ONVIF Basic authentication and an unapproved IMDSv2 HEAD
-credential-path probe. Earlier sections document historical 52/58/63/67/74/78
-milestones, not the current inventory. New fixtures were JSON-parsed and
-committed individually; these are **static checks only**, not a passing
-80-sample benchmark. The latest supplied Windows run covered 78 fixtures
-and failed build-tests, tests, and replay expectations. Do not promote any
-rule until a clean build, test run, and per-profile alert-quality comparison
-have been verified.
+Status: **84-fixture validation candidate; promotion HOLD**. The latest
+user-supplied Windows verification log confirms that the previous **80-fixture**
+revision passed **958/958 xUnit tests** and the replay benchmark, with zero
+benign simulated alerts and no missing expected malicious raw matches. That
+verified run is a historical baseline, **not evidence that the four new
+fixtures, benchmark recommendation fix, or added xUnit assertions pass**.
+The current branch adds four labeled controls (two benign, two malicious),
+bringing the candidate inventory to **84 (45 benign, 39 malicious)**. Their
+JSON was parsed before publication; updated Windows compilation, xUnit and
+per-profile alert-quality measurements remain pending. Do not promote R118,
+R163, or R102 before all verification gates pass.
 
 ## Non-negotiable gates
 
@@ -371,6 +371,63 @@ metrics**, not results for the current 80-fixture branch and not production
 prevalence. Raw recognition and Shadow decisions are not counted as alerts.
 Recompute TP/FP/FN, precision, recall and F1 for all six profiles after a
 successful Windows build, xUnit run and replay-expectation gate.
+
+## 84-fixture candidate: authority provenance and IMDSv2 method pair (2026-10-26)
+
+| Fixture | Label | Expected raw result | Alert expectation |
+| --- | --- | --- | --- |
+| `r118-forwarded-camera-host-unrelated-https` | Benign | No R118 | No alerts |
+| `r118-camera-default-basic-wire-probe` | Malicious scenario | R118 | Shadow, no authentication outcome |
+| `r163-approved-imdsv2-session-put` | Benign | No R163 | No alerts |
+| `r163-unapproved-imdsv2-get-credential-path` | Malicious scenario | R163 | Shadow, no SSRF causal proof |
+
+The forwarded-Host fixture uses a real HTTP `Host` value for an unrelated
+HTTPS portal and a client-controlled `X-Forwarded-Host` naming a camera.
+Forwarded request fields are not authoritative device-inventory evidence.
+The positive R118 fixture feeds a complete synthetic Basic request through
+the production parser, which must redact the credential before reporting;
+no authentication success is claimed. The AWS pair distinguishes a routine
+IMDSv2 session-token `PUT /latest/api/token` by an installed agent from a
+suspicious `GET /latest/meta-data/iam/security-credentials/...` by an
+unapproved application. Even the latter does not prove that an inbound
+attacker-controlled request caused the outbound metadata request. Never
+persist an IMDSv2 session token or credential response body.
+
+The benchmark's advisory `RulesRecommendedForAlert` heuristic previously
+used a generic 75% match threshold. It now also enforces the **rule-specific
+minimum confidence** before suggesting a rule for review. This is a
+recommendation guard, not a rule-mode or runtime detection change. A
+recommendation is never authorization to page; independent evidence and
+profile-policy gates still apply. New xUnit assertions cover both pairs,
+redaction expectations, profile alert decisions, and sub-floor recommendation
+behavior. They have **not been run on Windows** for the 84-fixture revision.
+
+### Verified 80-fixture Windows baseline (user-supplied output)
+
+The supplied local log reports **958 passed, 0 failed, 0 skipped** tests,
+`PASS: benchmark`, 80 samples (43 benign, 37 malicious), no benign
+simulated alerts, no missing expected malicious raw matches, and
+`PASS: local build, tests and replay validation.` The historical
+**alert-rule-level** counts below are distinct from sample-level metrics:
+
+| Profile | TP / FP / FN | Precision | Recall | F1 |
+| --- | --- | ---: | ---: | ---: |
+| Enterprise | 5 / 0 / 32 | 100.0% | 13.5% | 23.8% |
+| HomeLab | 1 / 0 / 36 | 100.0% | 2.7% | 5.3% |
+| IoTHeavy | 1 / 0 / 36 | 100.0% | 2.7% | 5.3% |
+| OTSegment | 6 / 0 / 31 | 100.0% | 16.2% | 27.9% |
+| Research | 8 / 0 / 29 | 100.0% | 21.6% | 35.6% |
+| SmallBusiness | 4 / 0 / 33 | 100.0% | 10.8% | 19.5% |
+
+R118, R163 and R102 each had **zero actual alerts** in all six profiles:
+precision **N/A**, alert recall **0%**, F1 **0%** on this labeled corpus.
+That is deliberate gating, not evidence of production accuracy. The
+84-fixture revision needs a fresh Windows run to compare TP/FP/FN and
+precision/recall/F1 for all profiles and these three rules.
+
+Official references: [RFC 9110 Authorization and authority](https://www.rfc-editor.org/rfc/rfc9110.html),
+[RFC 9112 Host requirements](https://www.rfc-editor.org/rfc/rfc9112.html#section-3.2),
+[AWS IMDSv2 protocol](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html).
 
 ## References
 
