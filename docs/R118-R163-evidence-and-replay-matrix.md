@@ -1,12 +1,12 @@
 # R118 and R163: evidence contracts and replay matrix
 
 Status: **validation candidate**, not a rule-promotion request. The
-feature-branch tree currently contains **74 JSON replay fixtures (40 benign,
-34 malicious)**, including four new controls for IoT hostname specificity
-and cloud-agent executable-path spoofing. Earlier sections document historical
+feature-branch tree currently contains **78 JSON replay fixtures (42 benign,
+36 malicious)**, including four new paired controls for redacted ONVIF Basic
+telemetry and GCP guest-agent executable-path spoofing. Earlier sections document historical
 52/58/63/67-fixture milestones, not the current inventory. All four newly
 added JSON files were retrieved and parsed successfully. This is structural
-verification only, **not** a 74-sample benchmark PASS. Windows compilation,
+verification only, **not** a 78-sample benchmark PASS. Windows compilation,
 xUnit tests, and updated per-profile alert-level precision/recall/F1 remain
 unverified. Do not promote any rule until those checks and policy-accounting
 gates pass.
@@ -203,6 +203,69 @@ accepting an outdated fixed minimum. It also reports TP/FP/FN and alert-level
 precision/recall/F1 for all six profiles and R118/R163/R102 separately.
 These measurements remain **pending Windows execution**. With no alerts,
 precision is `N/A`, not 100%. Never treat raw matches as alert-level TP.
+
+## Fourth paired batch: redacted ONVIF Basic and GCP guest-agent provenance (78 fixtures)
+
+| Fixture | Label | Expected raw match | What it establishes |
+| --- | --- | --- | --- |
+| `r118-onvif-unknown-basic-redacted` | Benign | No R118 | A redacted Authorization field with a **false** capture-time default-pair indicator is not evidence of default credentials. |
+| `r118-onvif-default-basic-redacted` | Malicious scenario | R118 | The **true** trusted capture-time default-pair indicator plus an NVR/ONVIF device target preserves raw recognition without storing a Basic token or password. |
+| `r163-gcp-guest-agent-installed-path` | Benign | No R163 | A normal installed Google guest agent requesting a documented token path is not evidence of SSRF. |
+| `r163-gcp-user-writable-agent-spoof` | Malicious scenario | R163 | A user-writable executable using a familiar agent basename must not be suppressed; the request is a **raw candidate**, not causally proven SSRF. |
+
+The R118 pair uses identical redacted Authorization headers and differs in
+the **trusted parser-derived boolean**, making it a privacy-safe replay
+contract test. This boolean must be derived from complete, unambiguous
+wire data by the capture parser; it must never be trusted merely because
+an untrusted external record asserts it. These synthetic replays exercise
+the current contract, **not provenance authentication of imported records**.
+
+The R163 pair uses the GCP metadata alias at its documented IPv4 endpoint
+and the service-account token path. The Google metadata protocol header is
+ordinary provider mechanics and contributes **no independent SSRF causality**.
+The spoofed-path case must remain below R163's 84% alert threshold. The
+installed-path case must not match R163. The ONVIF case must remain below
+R118's 86% alert threshold. R102 remains at 80%.
+
+A fourth paired-batch xUnit assertion was added, but **no Windows tests or
+78-fixture benchmark have been run and verified** in this environment.
+
+### Latest observed Windows baseline and known blocker
+
+The latest user-provided 74-fixture Windows output showed successful restore,
+build, and benchmark stages, but **failed xUnit tests**. Its labeled
+*rule-level alert* metrics were:
+
+| Profile | TP | FP | FN | Precision | Recall | F1 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Enterprise | 5 | 3 | 29 | 62.5% | 14.7% | 23.8% |
+| HomeLab | 1 | 0 | 33 | 100.0% | 2.9% | 5.7% |
+| IoTHeavy | 1 | 0 | 33 | 100.0% | 2.9% | 5.7% |
+| OTSegment | 6 | 0 | 28 | 100.0% | 17.6% | 30.0% |
+| Research | 8 | 3 | 26 | 72.7% | 23.5% | 35.6% |
+| SmallBusiness | 4 | 0 | 30 | 100.0% | 11.8% | 21.1% |
+
+These numbers are **historical** (74 samples, not the 78-fixture branch),
+and count unique alerted rule IDs against labeled expected matches. They
+are not the same as sample-level TP/FP/FN and do not estimate live
+production prevalence. The benign
+`r163-approved-cloud-init-install-path` fixture produced **three critical
+alert-rule IDs** in Enterprise and Research. R163 itself was explicitly
+expected not to match; determine the offending rule IDs before changing
+any detector. The 74-fixture report also showed only nine rules with
+paired synthetic controls among 544 registered rules.
+
+The manually dispatched Windows quality workflow now verifies that the
+benchmark sample count equals the checked-out JSON inventory and reports
+sample-level alert precision, recall and F1 for all six profiles. It fails
+on any benign alert. It has **not been executed** for this revision, and
+the repository's Actions billing/storage restrictions remain a blocker.
+The local `verify-local.ps1` also prints per-rule alert-level metrics.
+
+**Promotion decision: HOLD.** Preserve the 86%/84%/80% floors and
+privacy redaction. Obtain the failing xUnit assertion names and benign
+alert rule IDs, fix the actual causes, and rerun the complete Windows
+verification before considering promotion.
 
 ## What independent R163 corroboration would require
 
