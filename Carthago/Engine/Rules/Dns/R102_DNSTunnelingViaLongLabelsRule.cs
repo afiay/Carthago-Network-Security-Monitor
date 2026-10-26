@@ -99,10 +99,20 @@ namespace Carthago.Engine.Rules.Dns
             var entropyThreshold = DoubleSetting(Descriptor.RuleId, "EntropyThreshold", 3.50, 2.0, 8.0);
             var repeatThreshold = IntSetting(Descriptor.RuleId, "RepeatThreshold", 2, 1, 20);
             var window = TimeSpan.FromSeconds(IntSetting(Descriptor.RuleId, "WindowSeconds", 300, 30, 3600));
-            var repeatCount = CountWindowEvents($"{Descriptor.RuleId}:{context.Record.Source}:{root}", context.TimestampUtc, window);
             var txtLikeQuery = IsTxtLikeDnsQueryType(context.Record.DnsQtype);
             var exceptionallyLongLabel = maxLabelLength >= Math.Min(63, labelThreshold + 8);
             var monolithicTxtLabel = txtLikeQuery && maxLabelLength >= labelThreshold + 4 && uniqueCharacterCount <= 3;
+            // A benign short query from the same source/root must not
+            // prime the suspicious burst counter. Record only candidates
+            // with a long, high-entropy shape; repeat evidence then means
+            // repeated suspicious observations, not general DNS activity.
+            var suspiciousRepeatCandidate =
+                maxLabelLength >= Math.Max(20, labelThreshold - 4)
+                && (monolithicTxtLabel || longestLabelEntropy >= entropyThreshold);
+            var repeatCount = suspiciousRepeatCandidate
+                ? CountWindowEvents($"{Descriptor.RuleId}:{context.Record.Source}:{root}",
+                    context.TimestampUtc, window)
+                : 0;
             var strongSingleQuery = monolithicTxtLabel || (maxLabelLength >= labelThreshold
                 && longestLabelEntropy >= entropyThreshold
                 && (txtLikeQuery || exceptionallyLongLabel || longLabelCount >= 2));
