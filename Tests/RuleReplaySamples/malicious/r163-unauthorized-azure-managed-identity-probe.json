@@ -1,0 +1,26 @@
+{
+  "name": "r163-unauthorized-azure-managed-identity-probe",
+  "classification": "Malicious",
+  "records": [
+    {
+      "source": "10.0.4.23",
+      "destination": "169.254.169.254",
+      "sourcePort": 48912,
+      "destinationPort": 80,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "GET",
+      "httpHost": "169.254.169.254",
+      "httpUri": "/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https%3A%2F%2Fmanagement.azure.com%2F",
+      "httpRequestHeaders": "Host: 169.254.169.254\r\nMetadata: true",
+      "processName": "unapproved-webapp.exe",
+      "info": "Synthetic unauthorized managed-identity token endpoint access from an unapproved process; no response token captured and no independent SSRF causal chain."
+    }
+  ],
+  "expectedMatches": [
+    "R163"
+  ],
+  "expectedNonMatches": [
+    "R118"
+  ]
+}
