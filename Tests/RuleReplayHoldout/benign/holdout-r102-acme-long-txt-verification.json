@@ -1,0 +1,29 @@
+{
+  "name": "holdout-r102-acme-long-txt-verification",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "10.241.91.12",
+      "destination": "1.1.1.1",
+      "destinationPort": 53,
+      "protocol": "DNS",
+      "applicationProtocol": "DNS",
+      "dnsQname": "_acme-challenge.b7t3f9m1a8p5q2v6x0h4j9c7s1d5z8w2k6n3r0y4e9g5u7l2i8.holdout.example",
+      "dnsQtype": "TXT"
+    },
+    {
+      "source": "10.241.91.12",
+      "destination": "1.1.1.1",
+      "destinationPort": 53,
+      "protocol": "DNS",
+      "applicationProtocol": "DNS",
+      "dnsQname": "_acme-challenge.c6w4n9q2x7e3m5v0p8t1k6a4j9d2f7y3z5r8s0h1u6b4l9.holdout.example",
+      "dnsQtype": "TXT"
+    }
+  ],
+  "expectedNonMatches": [
+    "R102",
+    "R118",
+    "R163"
+  ]
+}
