@@ -35,6 +35,15 @@ namespace Carthago.Tests
             Assert.Contains("Precision:", markdown);
             Assert.Contains("Recall:", markdown);
             Assert.Contains("F1:", markdown);
+            Assert.Contains("## Alert-Level Recall Gaps", markdown);
+            var expectedAlertGaps = report.SampleResults
+                .Where(sample => sample.Classification == ReplaySampleClassification.Malicious)
+                .Sum(sample => sample.Profiles.Values.Sum(profile =>
+                    sample.ExpectedMatches.Count(ruleId =>
+                        !profile.AlertRuleIds.Contains(ruleId, StringComparer.OrdinalIgnoreCase))));
+            Assert.Equal(expectedAlertGaps, report.RecallGaps.Count);
+            Assert.All(report.RecallGaps, gap =>
+                Assert.False(string.IsNullOrWhiteSpace(gap.Cause)));
         }
 
         [Fact]
@@ -140,6 +149,17 @@ namespace Carthago.Tests
 
             Assert.True(violations.Length == 0,
                 "Benign replay produced critical alerts: " + string.Join("; ", violations));
+
+            // The current curated benign replay suite has zero alert-level
+            // false positives across all profiles. Preserve that baseline as
+            // recall tuning evolves; a Shadow match is not counted as an alert.
+            var benignAlerts = report.SampleResults
+                .Where(sample => sample.Classification == ReplaySampleClassification.Benign)
+                .SelectMany(sample => sample.Profiles.SelectMany(profile =>
+                    profile.Value.AlertRuleIds.Select(ruleId =>
+                        $"{sample.Name} [{profile.Key}]: {ruleId}")))
+                .ToArray();
+            Assert.Empty(benignAlerts);
         }
 
         [Fact]
