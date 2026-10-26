@@ -1,0 +1,40 @@
+{
+  "name": "r102-retried-txt-verification-control",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "10.248.20.20",
+      "destination": "8.8.8.8",
+      "destinationPort": 53,
+      "protocol": "DNS",
+      "applicationProtocol": "DNS",
+      "dnsQname": "x9q8v7m6n5p4t3k2rz0h1w2c3v4b5n6m7l8k9j0i1u2y3t4r5s6.verification.example",
+      "dnsQtype": "TXT"
+    },
+    {
+      "source": "10.248.20.20",
+      "destination": "8.8.8.8",
+      "destinationPort": 53,
+      "protocol": "DNS",
+      "applicationProtocol": "DNS",
+      "dnsQname": "x9q8v7m6n5p4t3k2rz0h1w2c3v4b5n6m7l8k9j0i1u2y3t4r5s6.verification.example",
+      "dnsQtype": "TXT"
+    },
+    {
+      "source": "10.248.20.20",
+      "destination": "8.8.8.8",
+      "destinationPort": 53,
+      "protocol": "DNS",
+      "applicationProtocol": "DNS",
+      "dnsQname": "x9q8v7m6n5p4t3k2rz0h1w2c3v4b5n6m7l8k9j0i1u2y3t4r5s6.verification.example",
+      "dnsQtype": "TXT"
+    }
+  ],
+  "expectedMatches": [
+    "R102"
+  ],
+  "expectedNonMatches": [
+    "R118",
+    "R163"
+  ]
+}
