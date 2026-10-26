@@ -173,7 +173,9 @@ namespace Carthago.Services.Benchmarking
         // Markdown reports must be stable across Windows locale settings,
         // including Swedish comma decimals and localized percent spacing.
         private static string FormatRatio(double? value)
-            => value.HasValue ? value.Value.ToString("P1", CultureInfo.InvariantCulture) : "N/A";
+            => value.HasValue
+                ? (value.Value * 100.0).ToString("F1", CultureInfo.InvariantCulture) + "%"
+                : "N/A";
 
         private static void AppendList(StringBuilder sb, string title, System.Collections.Generic.IReadOnlyList<string> items)
         {
