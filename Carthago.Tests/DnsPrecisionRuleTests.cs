@@ -1,4 +1,5 @@
 using System.Linq;
+using Carthago.Services.Baseline;
 using Carthago.Engine.Rules;
 using Carthago.Engine.Rules.Dns;
 using Carthago.Models;
@@ -84,16 +85,36 @@ public sealed class DnsPrecisionRuleTests
     [Fact]
     public async Task R094_matches_dga_like_dns_query_with_structured_evidence()
     {
-        var rule = new R094_DGALikeDomainQueryRule();
-        var context = CreateContext(CreateDnsRecord(
-            "x9q8v7m6n5p4t3k2rz.example",
-            qtype: "A",
-            source: "10.0.1.10"));
+        // R094 suppresses an established source/domain baseline after three
+        // observations. Reusing ProgramData made this test depend on previous
+        // runs (and could collide with a live Carthago instance).
+        var directory = Path.Combine(Path.GetTempPath(), "carthago-r094-test-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            using (BaselineStore.UseScoped(new BaselineStore(new BaselineOptions { DirectoryPath = directory })))
+            {
+                var rule = new R094_DGALikeDomainQueryRule();
+                var context = CreateContext(CreateDnsRecord(
+                    "x9q8v7m6n5p4t3k2rz.example",
+                    qtype: "A",
+                    source: "10.0.1.10"));
 
-        var result = await rule.EvaluateAsync(context);
+                var result = await rule.EvaluateAsync(context);
+                var evt = AssertSingleEvent(result, "R094", SeverityLevel.High, 0.70);
+                AssertEvidence(evt, "dns.qname", "analyst.whyMatched", "response.recommended.1");
 
-        var evt = AssertSingleEvent(result, "R094", SeverityLevel.High, 0.70);
-        AssertEvidence(evt, "dns.qname", "analyst.whyMatched", "response.recommended.1");
+                // A persistent known DGA-shaped domain should still be
+                // suppressed: isolation fixes the test, not detector policy.
+                await rule.EvaluateAsync(context);
+                await rule.EvaluateAsync(context);
+                Assert.False((await rule.EvaluateAsync(context)).Matched);
+            }
+        }
+        finally
+        {
+            if (Directory.Exists(directory))
+                Directory.Delete(directory, recursive: true);
+        }
     }
 
     [Fact]
