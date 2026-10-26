@@ -65,6 +65,48 @@ public sealed class R118R163PairedReplayQualityTests
     }
 
     [Fact]
+    public async Task Matched_Iot_Default_And_Gcp_Token_Pairs_Stay_Shadow_While_Decoys_Do_Not_Match()
+    {
+        var replayDirectory = Path.Combine(
+            AppContext.BaseDirectory, "..", "..", "..", "..", "Tests", "RuleReplaySamples");
+        var report = await new TuningBenchmarkRunner().RunAsync(
+            new TuningBenchmarkOptions { ReplayDirectory = replayDirectory });
+
+        var r118Decoy = report.SampleResults.Single(sample =>
+            sample.Name == "r118-iot-x-authorization-lookalike");
+        var r118Attempt = report.SampleResults.Single(sample =>
+            sample.Name == "r118-camera-support-default-basic-attempt");
+        var r163Email = report.SampleResults.Single(sample =>
+            sample.Name == "r163-gcp-service-account-email-not-token");
+        var r163Token = report.SampleResults.Single(sample =>
+            sample.Name == "r163-gcp-service-account-token-direct-shadow");
+
+        Assert.True(report.SampleResults.Count >= 67);
+        Assert.Equal(ReplaySampleClassification.Benign, r118Decoy.Classification);
+        Assert.Equal(ReplaySampleClassification.Malicious, r118Attempt.Classification);
+        Assert.Equal(ReplaySampleClassification.Benign, r163Email.Classification);
+        Assert.Equal(ReplaySampleClassification.Malicious, r163Token.Classification);
+        Assert.DoesNotContain("R118", r118Decoy.ActualMatches);
+        Assert.Contains("R118", r118Attempt.ActualMatches);
+        Assert.DoesNotContain("R163", r163Email.ActualMatches);
+        Assert.Contains("R163", r163Token.ActualMatches);
+        Assert.All(new[] { r118Decoy, r118Attempt, r163Email, r163Token },
+            sample => Assert.Empty(sample.Errors));
+
+        Assert.Equal(86, new R118_DefaultCredentialIoTAttemptRule().PrecisionProfile.MinimumConfidence);
+        Assert.Equal(84, new R163_SsrfMetadataServiceProbeRule().PrecisionProfile.MinimumConfidence);
+        foreach (var profile in report.ProfileResults.Keys)
+        {
+            Assert.DoesNotContain("R118", r118Attempt.Profiles[profile].AlertRuleIds);
+            Assert.DoesNotContain("R163", r163Token.Profiles[profile].AlertRuleIds);
+            Assert.True(Assert.Single(r118Attempt.Profiles[profile].RuleDecisions,
+                decision => decision.RuleId == "R118").Confidence < 0.86);
+            Assert.True(Assert.Single(r163Token.Profiles[profile].RuleDecisions,
+                decision => decision.RuleId == "R163").Confidence < 0.84);
+        }
+    }
+
+    [Fact]
     public async Task New_Labeled_Replays_Preserve_R118_R163_Confidence_Gates_And_Alert_Precision()
     {
         var replayDirectory = Path.Combine(
