@@ -42,7 +42,16 @@ precision has been measured.
   **84% minimum confidence**.
 - **Negative controls:** routine instance inventory, approved guest agents,
   custom bootstrap clients using IMDSv2, forged Host headers, and requests
-  that merely mention metadata endpoints in documentation.
+  that merely mention metadata endpoints in documentation. HTTP `Host` must be
+  a literal metadata authority, never a parsed URI with userinfo, an embedded
+  path, or an unrelated port. An absolute-form request target must agree with
+  the observed Host and destination; cross-provider authorities are rejected.
+- **Trace trust boundary:** an inbound `traceparent` header is caller-supplied
+  and must never, on its own, count as independent proof of SSRF. Promote
+  causality only from trusted application/ingress instrumentation that binds
+  an accepted inbound request to the outbound client span, with consistent
+  process-instance identity, validated endpoint, and a credible timeline.
+  Reject missing, forged, or unverified trace ancestry; preserve Shadow.
 
 ## Cross-cutting privacy and quality rules
 
@@ -85,3 +94,4 @@ precision has been measured.
 - Azure Instance Metadata Service: https://learn.microsoft.com/en-us/azure/virtual-machines/instance-metadata-service
 - Google Compute Engine metadata: https://docs.cloud.google.com/compute/docs/metadata/querying-metadata
 - OWASP SSRF Prevention: https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html
+- OpenTelemetry context propagation and untrusted trace headers: https://opentelemetry.io/docs/concepts/context-propagation/
