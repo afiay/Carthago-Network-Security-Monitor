@@ -949,10 +949,20 @@ namespace Carthago.Engine.Rules
 
         private static DetectionEvent? DetectMalwareHttpPattern(RuleDescriptor d, RuleEvaluationContext c)
         {
-            var payload = PayloadNormalizer.FromTrafficRecord(c.Record);
-            var text = payload.Normalized + " " + payload.Original;
-            if (ContainsAny(text, "cobaltstrike", "beacon", "emotet", "qakbot", "trickbot", "mimikatz", "/gate.php", "/panel/", "/bot/", "/cnc/", "malware", "rat"))
-                return Event(d, c, SeverityLevel.Critical, "Known malware/C2 HTTP URI pattern", Short(text));
+            // Evaluate the observed HTTP request target, not Info, hostnames,
+            // process names, authorization headers or descriptive replay notes.
+            var r = c.Record;
+            if (string.IsNullOrWhiteSpace(r.HttpUri)
+                || (string.IsNullOrWhiteSpace(r.HttpMethod)
+                    && !string.Equals(r.ApplicationProtocol, "HTTP", StringComparison.OrdinalIgnoreCase)))
+                return null;
+
+            var uri = r.HttpUri!;
+            // Only explicit, path-delimited malware/C2 endpoint indicators.
+            // Generic words such as "rat", "beacon" and "malware" in commentary
+            // are not proof of a malicious HTTP request.
+            if (Regex.IsMatch(uri, @"(?:^|[/?#])(?:gate\.php|cnc|bot|panel)(?:[/?#]|$)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+                return Event(d, c, SeverityLevel.Critical, "Known malware/C2 HTTP URI pattern", Short(uri));
             return null;
         }
 
