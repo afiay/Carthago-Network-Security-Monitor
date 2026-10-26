@@ -334,6 +334,65 @@ public sealed class SensitiveTelemetryContractTests
         Assert.Equal(84, rule.PrecisionProfile.MinimumConfidence);
     }
 
+    [Theory]
+    [InlineData("fd00:ec2::254", "[fd00:ec2::254]", "/latest/meta-data/iam/security-credentials/example-role")]
+    [InlineData("fd20:ce::254", "[fd20:ce::254]", "/computeMetadata/v1/instance/service-accounts/default/token")]
+    public async Task R163_Recognizes_Documented_Ipv6_Metadata_Credential_Endpoints(
+        string destination, string host, string path)
+    {
+        // AWS EC2 and GCP publish different IPv6 metadata endpoints. A
+        // bracketed HTTP Host must correspond to the observed IPv6 destination.
+        var record = MetadataRecord(path, "webapp.exe");
+        record.Destination = destination;
+        record.HttpHost = host;
+        var rule = new R163_SsrfMetadataServiceProbeRule();
+
+        var result = await rule.EvaluateAsync(Context(record));
+
+        Assert.True(result.Matched);
+        Assert.True(RulePrecisionCatalog.Validate("R163", record).CanEvaluate);
+        Assert.Equal(RuleMode.Shadow,
+            RulePrecisionRuntimeEvaluator.Evaluate(
+                rule.Descriptor, Assert.Single(result.Events), record, RuleMode.Alert, "Research").EffectiveMode);
+        Assert.Equal(84, rule.PrecisionProfile.MinimumConfidence);
+    }
+
+    [Theory]
+    [InlineData("fd00:ec2::254", "[fd00:ec2::254]", "/computeMetadata/v1/instance/service-accounts/default/token")]
+    [InlineData("fd20:ce::254", "[fd20:ce::254]", "/latest/meta-data/iam/security-credentials/example-role")]
+    [InlineData("fd00:ec2::254", "[fd20:ce::254]", "/latest/meta-data/iam/security-credentials/example-role")]
+    [InlineData("fd00:ec2::254", "fd00:ec2::254", "/latest/meta-data/iam/security-credentials/example-role")]
+    [InlineData("fd00:ec2::254", "[fd00:ec2::254%25eth0]", "/latest/meta-data/iam/security-credentials/example-role")]
+    [InlineData("fd00:ec2::254", "[fd00:ec2::254]:8080", "/latest/meta-data/iam/security-credentials/example-role")]
+    public async Task R163_Rejects_Ipv6_Provider_Spoofing_And_Invalid_Host_Authorities(
+        string destination, string host, string path)
+    {
+        var record = MetadataRecord(path, "webapp.exe");
+        record.Destination = destination;
+        record.HttpHost = host;
+
+        Assert.False((await new R163_SsrfMetadataServiceProbeRule().EvaluateAsync(Context(record))).Matched);
+        Assert.False(RulePrecisionCatalog.Validate("R163", record).CanEvaluate);
+    }
+
+    [Theory]
+    [InlineData("fd00:ec2::254", "[fd00:ec2::254]",
+        "http://[fd00:ec2::254]/latest/meta-data/iam/security-credentials/example-role", true)]
+    [InlineData("fd00:ec2::254", "[fd00:ec2::254]",
+        "http://[fd20:ce::254]/latest/meta-data/iam/security-credentials/example-role", false)]
+    public async Task R163_Validates_Absolute_Form_Ipv6_Request_Targets(
+        string destination, string host, string target, bool expectedMatch)
+    {
+        var record = MetadataRecord(target, "webapp.exe");
+        record.Destination = destination;
+        record.HttpHost = host;
+
+        var result = await new R163_SsrfMetadataServiceProbeRule().EvaluateAsync(Context(record));
+
+        Assert.Equal(expectedMatch, result.Matched);
+        Assert.Equal(expectedMatch, RulePrecisionCatalog.Validate("R163", record).CanEvaluate);
+    }
+
     private static TrafficRecord MetadataRecord(string path, string? process) => new()
     {
         Source = "10.1.1.30", Destination = "169.254.169.254", DestinationPort = 80,
