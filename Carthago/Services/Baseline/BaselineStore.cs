@@ -58,6 +58,9 @@ namespace Carthago.Services.Baseline
         }
 
         private static BaselineStore _current = new(new BaselineOptions());
+        // Replay/benchmark execution needs an isolated store without replacing
+        // the live process default or touching ProgramData baseline history.
+        private static readonly AsyncLocal<BaselineStore?> ScopedCurrent = new();
         private readonly BaselineOptions _options;
         private readonly SemaphoreSlim _gate = new(1, 1);
         private readonly Dictionary<string, Entry> _entries = new(StringComparer.Ordinal);
@@ -68,7 +71,32 @@ namespace Carthago.Services.Baseline
         public BaselineStore(BaselineOptions options)
             => _options = options ?? throw new ArgumentNullException(nameof(options));
 
-        public static BaselineStore Current => Volatile.Read(ref _current);
+        public static BaselineStore Current => ScopedCurrent.Value ?? Volatile.Read(ref _current);
+
+        // Nestable async-local override: unrelated tasks continue to use their
+        // own baseline, and disposing the scope restores the previous store.
+        public static IDisposable UseScoped(BaselineStore store)
+        {
+            if (store == null) throw new ArgumentNullException(nameof(store));
+            var previous = ScopedCurrent.Value;
+            ScopedCurrent.Value = store;
+            return new ScopedBaseline(previous);
+        }
+
+        private sealed class ScopedBaseline : IDisposable
+        {
+            private readonly BaselineStore? _previous;
+            private bool _disposed;
+
+            public ScopedBaseline(BaselineStore? previous) => _previous = previous;
+
+            public void Dispose()
+            {
+                if (_disposed) return;
+                ScopedCurrent.Value = _previous;
+                _disposed = true;
+            }
+        }
 
         public static void SetCurrent(BaselineStore store)
             => Interlocked.Exchange(ref _current, store ?? throw new ArgumentNullException(nameof(store)));
