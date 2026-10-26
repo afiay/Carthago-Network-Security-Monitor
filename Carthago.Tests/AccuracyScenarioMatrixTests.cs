@@ -117,21 +117,28 @@ public sealed class AccuracyScenarioMatrixTests
 
     public static IEnumerable<object[]> CloudCredentialCandidates()
     {
-        yield return new object[] { "ec2-ipv4", "169.254.169.254", "169.254.169.254", "/latest/meta-data/iam/security-credentials/test-role" };
-        yield return new object[] { "azure-ipv4", "169.254.169.254", "169.254.169.254", "/metadata/identity/oauth2/token?api-version=2018-02-01&resource=x" };
-        yield return new object[] { "gcp-ipv4", "169.254.169.254", "metadata.google.internal", "/computeMetadata/v1/instance/service-accounts/default/token" };
-        yield return new object[] { "ecs-ipv4", "169.254.170.2", "169.254.170.2", "/v2/credentials/container123" };
-        yield return new object[] { "alibaba-ipv4", "100.100.100.200", "100.100.100.200", "/latest/meta-data/ram/security-credentials/test-role" };
-        yield return new object[] { "ec2-ipv6", "fd00:ec2::254", "[fd00:ec2::254]", "/latest/meta-data/iam/security-credentials/test-role" };
-        yield return new object[] { "gcp-ipv6", "fd20:ce::254", "[fd20:ce::254]", "/computeMetadata/v1/instance/service-accounts/default/token" };
+        var cases = new[]
+        {
+            new[] { "ec2-ipv4", "169.254.169.254", "169.254.169.254", "/latest/meta-data/iam/security-credentials/test-role" },
+            new[] { "azure-ipv4", "169.254.169.254", "169.254.169.254", "/metadata/identity/oauth2/token?api-version=2018-02-01&resource=x" },
+            new[] { "gcp-ipv4", "169.254.169.254", "metadata.google.internal", "/computeMetadata/v1/instance/service-accounts/default/token" },
+            new[] { "ecs-ipv4", "169.254.170.2", "169.254.170.2", "/v2/credentials/container123" },
+            new[] { "alibaba-ipv4", "100.100.100.200", "100.100.100.200", "/latest/meta-data/ram/security-credentials/test-role" },
+            new[] { "ec2-ipv6", "fd00:ec2::254", "[fd00:ec2::254]", "/latest/meta-data/iam/security-credentials/test-role" },
+            new[] { "gcp-ipv6", "fd20:ce::254", "[fd20:ce::254]", "/computeMetadata/v1/instance/service-accounts/default/token" }
+        };
+        foreach (var item in cases)
+        foreach (var method in new[] { "GET", "HEAD" })
+            yield return new object[] { item[0], item[1], item[2], item[3], method };
     }
 
     [Theory]
     [MemberData(nameof(CloudCredentialCandidates))]
     public async Task R163_Recognizes_Provider_Consistent_Metadata_Without_Inferring_Ssrf(
-        string scenario, string ip, string host, string uri)
+        string scenario, string ip, string host, string uri, string method)
     {
         var record = MetadataRecord(ip, host, uri);
+        record.HttpMethod = method;
         var rule = new R163_SsrfMetadataServiceProbeRule();
         var result = await rule.EvaluateAsync(Context(record));
         Assert.True(result.Matched, $"Expected metadata-path recognition: {scenario}");
