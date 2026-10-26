@@ -1,0 +1,24 @@
+{
+  "name": "r118-bearer-token-looks-like-default-basic",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "192.0.2.85",
+      "destination": "192.0.2.50",
+      "sourcePort": 53120,
+      "destinationPort": 8080,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "GET",
+      "httpHost": "camera-lab.internal",
+      "httpUri": "/api/status",
+      "httpRequestHeaders": "Host: camera-lab.internal\r\nAuthorization: Bearer dWJudDp1Ym50",
+      "processName": "camera-inventory-agent.exe",
+      "info": "Synthetic authorized status request. Bearer token characters resemble a factory-default Basic pair but are not HTTP Basic authentication; no secret is real."
+    }
+  ],
+  "expectedNonMatches": [
+    "R118",
+    "R163"
+  ]
+}
