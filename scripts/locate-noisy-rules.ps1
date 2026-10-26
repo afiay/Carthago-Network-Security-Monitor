@@ -11,7 +11,7 @@ $files = @(Get-ChildItem -LiteralPath $source -Recurse -File -Filter "*.cs" |
     Where-Object { $_.FullName -notmatch '[\\/](bin|obj|\.git)[\\/]' })
 foreach ($rule in $RuleIds) {
     Write-Host "`n=== ${rule}: source references ===" -ForegroundColor Cyan
-    $hits = @($files | Select-String -Pattern ("\\b" + [regex]::Escape($rule) + "\\b"))
+    $hits = @($files | Select-String -Pattern ("\b" + [regex]::Escape($rule) + "\b"))
     if ($hits.Count -eq 0) {
         Write-Host "No C# references found."
         continue
