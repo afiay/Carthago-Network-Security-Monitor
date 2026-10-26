@@ -798,14 +798,19 @@ namespace Carthago.Services
                 {
                     var name = ToAscii(line.Slice(0, colon));
                     headerNames.Add(name);
-                    var val = TrimHeaderValue(line, colon + 1);
-                    // Keep parsed host/UA, but never persist authentication headers.
+                    // Avoid allocating a managed string for bearer secrets at all.
+                    // Preserve only the header name and a redaction marker in telemetry.
                     bool sensitive = name.Equals("Authorization", StringComparison.OrdinalIgnoreCase) ||
                                      name.Equals("Proxy-Authorization", StringComparison.OrdinalIgnoreCase) ||
                                      name.Equals("Cookie", StringComparison.OrdinalIgnoreCase) ||
                                      name.Equals("Set-Cookie", StringComparison.OrdinalIgnoreCase) ||
-                                     name.Equals("X-Api-Key", StringComparison.OrdinalIgnoreCase);
-                    sbJoin.Append(name).Append(": ").Append(sensitive ? "[REDACTED]" : val).Append("\r\n");
+                                     name.Equals("X-Api-Key", StringComparison.OrdinalIgnoreCase) ||
+                                     name.Equals("X-aws-ec2-metadata-token", StringComparison.OrdinalIgnoreCase) ||
+                                     name.Equals("X-Identity-Header", StringComparison.OrdinalIgnoreCase) ||
+                                     name.Equals("X-Auth-Token", StringComparison.OrdinalIgnoreCase) ||
+                                     name.Equals("X-Amz-Security-Token", StringComparison.OrdinalIgnoreCase);
+                    var val = sensitive ? "[REDACTED]" : TrimHeaderValue(line, colon + 1);
+                    sbJoin.Append(name).Append(": ").Append(val).Append("\r\n");
                     if (name.Equals("Host", StringComparison.OrdinalIgnoreCase)) host = val;
                     else if (name.Equals("User-Agent", StringComparison.OrdinalIgnoreCase)) ua = val;
                 }
