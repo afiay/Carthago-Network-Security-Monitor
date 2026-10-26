@@ -42,7 +42,15 @@ namespace Carthago.Tests
             var runner = new TuningBenchmarkRunner();
             var report = await runner.RunAsync(new TuningBenchmarkOptions { ReplayDirectory = GetReplayDirectory() });
 
-            Assert.True(report.Summary.BenignCriticalAlertCount <= 1, $"Expected benign critical alert spam to stay near zero, but saw {report.Summary.BenignCriticalAlertCount}.");
+            var benignCritical = report.SampleResults
+                .Where(sample => sample.Classification == ReplaySampleClassification.Benign)
+                .Select(sample => new { sample.Name, Profile = sample.Profiles["SmallBusiness"] })
+                .Where(item => item.Profile.CriticalAlertCount > 0)
+                .Select(item => $"{item.Name} (critical={item.Profile.CriticalAlertCount}, alert-rules={string.Join(",", item.Profile.AlertRuleIds)})")
+                .ToArray();
+            Assert.True(report.Summary.BenignCriticalAlertCount <= 1,
+                $"Expected benign critical alert spam to stay near zero, but saw {report.Summary.BenignCriticalAlertCount}. " +
+                $"Affected labeled samples: {string.Join("; ", benignCritical)}.");
             Assert.True(report.ProfileResults["HomeLab"].BenignCriticalAlertCount <= report.ProfileResults["Research"].BenignCriticalAlertCount);
         }
 
