@@ -53,6 +53,40 @@ precision has been measured.
   process-instance identity, validated endpoint, and a credible timeline.
   Reject missing, forged, or unverified trace ancestry; preserve Shadow.
 
+## October 2026 regression and event-privacy hardening
+
+- R118 event creation now omits raw `TrafficRecord.Info` from both
+  `DetectionEvent.Evidence` and `StructuredEvidence`. Telnet login
+  transcripts and HTTP diagnostic notes can contain passwords. Rule matches
+  continue to use the original in-memory record, while emitted evidence uses
+  non-secret `matched_conditions`, host, port and confidence fields.
+  This prevents the rule's own evidence path from copying credential text;
+  it does **not** establish that all upstream logs, other rules or sinks are
+  redacted. Audit those paths separately.
+- Unit tests exercise both Telnet and HTTP Basic R118 matches, assert that
+  known default credentials and diagnostic notes do not appear in either
+  event-evidence representation, and preserve positive matching.
+- New paired replay samples distinguish synthetic non-default camera
+  administration from an observed known-default Basic attempt. The JSON
+  replay loader cannot set `HttpBasicDefaultCredentialObserved` through
+  its internal setter, so these fixtures deliberately use synthetic Base64
+  Basic headers to exercise the legacy replay fallback. **Production packet
+  capture must continue to redact Authorization and retain only the
+  wire-derived boolean.** Never use real credentials in replay files.
+- New paired R163 samples contrast an approved AWS IMDSv2 guest-agent role
+  lookup with an unapproved process accessing the same credential endpoint.
+  An IMDSv2 token header is normal protocol context, **not** proof of SSRF.
+  Unit tests require a direct uncorrelated credential read to remain Shadow
+  across all six tuning profiles, with the 84% floor intact and token values
+  absent from detection evidence.
+- These fixtures describe known synthetic intent, not proof of real-world
+  compromise. R163 still lacks a trusted inbound-to-outbound causal trace
+  contract; do not promote its direct-access observations to SSRF alerts.
+- The expanded replay corpus must be rebuilt and remeasured on Windows
+  before any claim of improved alert-level precision, recall or F1.
+  Existing false positives from R092 and R365 also require verification;
+  changing R118/R163 does not by itself validate unrelated rules.
+
 ## Provider-specific credential endpoint matrix
 
 The R163 request classifier now validates **the observed destination, the
@@ -122,9 +156,11 @@ boundary; passive capture cannot manufacture missing causality.
    matches in **malicious** fixtures. Benign raw matches must not inflate it.
 5. Keep R102's **80% minimum confidence** unchanged. Do not lower any
    threshold or silently promote a rule to improve headline recall.
-6. Use the Windows CI workflow to build, run xUnit and publish labeled replay
-   reports. A passing unit suite is not a substitute for production capture
-   validation or a representative field confusion matrix.
+6. Run the local Windows `verify-local.ps1 -Details` workflow to build,
+   execute xUnit and regenerate labeled replay reports. GitHub-hosted Actions
+   may be unavailable; do not treat an unexecuted workflow as a passing test.
+   A passing unit suite is not a substitute for production capture validation
+   or a representative field confusion matrix.
 
 ## Known limitations and next implementation gates
 
