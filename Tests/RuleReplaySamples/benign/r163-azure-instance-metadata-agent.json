@@ -1,0 +1,24 @@
+{
+  "name": "r163-azure-instance-metadata-agent",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "10.64.0.22",
+      "destination": "169.254.169.254",
+      "sourcePort": 55202,
+      "destinationPort": 80,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "GET",
+      "httpHost": "169.254.169.254",
+      "httpUri": "/metadata/instance?api-version=2025-04-07",
+      "httpRequestHeaders": "Host: 169.254.169.254\r\nMetadata: true",
+      "processName": "waagent.exe",
+      "info": "Synthetic approved Azure instance metadata inspection. The provider-required Metadata header and an ordinary instance path are not credential access or SSRF evidence."
+    }
+  ],
+  "expectedNonMatches": [
+    "R118",
+    "R163"
+  ]
+}
