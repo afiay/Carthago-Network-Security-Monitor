@@ -69,6 +69,7 @@ namespace Carthago.Services.Benchmarking
         public string FilePath { get; set; } = string.Empty;
         public ReplaySampleClassification Classification { get; set; }
         public List<string> ExpectedMatches { get; set; } = new();
+        public List<string> ExpectedNonMatches { get; set; } = new();
         public List<string> ActualMatches { get; set; } = new();
         public List<string> MissingExpectedMatches { get; set; } = new();
         public List<string> UnexpectedMatches { get; set; } = new();
@@ -136,6 +137,27 @@ namespace Carthago.Services.Benchmarking
         public double? EligibleAlertEmissionRate { get; set; }
     }
 
+    /// <summary>
+    /// Explicit, labeled replay controls for each rule. Malicious expected
+    /// matches are positives, and explicit expected nonmatches are negatives.
+    /// The absence of a label is never treated as a negative control.
+    /// </summary>
+    public sealed class TuningBenchmarkRuleEvidenceCoverage
+    {
+        public string RuleId { get; set; } = string.Empty;
+        public int PositiveCases { get; set; }
+        public int PositiveRecognized { get; set; }
+        public int PositiveMissed { get; set; }
+        public int ExplicitNegativeCases { get; set; }
+        public int ExplicitNegativePassed { get; set; }
+        public int ExplicitNegativeFailed { get; set; }
+        // Benign raw matches are not necessarily alert-level false positives.
+        public int BenignRawMatches { get; set; }
+        public double? PositiveRecognitionRate { get; set; }
+        public double? ExplicitNegativePassRate { get; set; }
+        public bool HasPairedControls => PositiveCases > 0 && ExplicitNegativeCases > 0;
+    }
+
     public sealed class TuningBenchmarkRuleCoverage
     {
         public string RuleId { get; set; } = string.Empty;
@@ -160,5 +182,6 @@ namespace Carthago.Services.Benchmarking
         public Dictionary<string, TuningBenchmarkDetectionFunnel> DetectionFunnelByProfile { get; set; }
             = new(StringComparer.OrdinalIgnoreCase);
         public List<TuningBenchmarkRuleCoverage> RuleCoverage { get; set; } = new();
+        public List<TuningBenchmarkRuleEvidenceCoverage> RuleEvidenceCoverage { get; set; } = new();
     }
 }
