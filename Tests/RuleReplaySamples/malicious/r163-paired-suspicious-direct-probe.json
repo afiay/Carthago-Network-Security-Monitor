@@ -1,0 +1,23 @@
+{
+  "name": "r163-paired-suspicious-direct-probe",
+  "classification": "Malicious",
+  "records": [
+    {
+      "source": "10.0.0.33",
+      "destination": "169.254.169.254",
+      "sourcePort": 51020,
+      "destinationPort": 80,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "GET",
+      "httpHost": "169.254.169.254",
+      "httpUri": "/latest/meta-data/iam/security-credentials/approved-role",
+      "httpRequestHeaders": "Host: 169.254.169.254\r\nX-aws-ec2-metadata-token: [REDACTED]",
+      "processName": "unapproved-webapp.exe",
+      "info": "Synthetic unauthorized direct metadata credential lookup; no inbound request attribution, no observed response or credential exfiltration."
+    }
+  ],
+  "expectedMatches": [
+    "R163"
+  ]
+}
