@@ -9,8 +9,8 @@
       "destinationPort": 443,
       "httpMethod": "POST",
       "httpHost": "login.microsoftonline.com",
-      "httpUri": "/oauth2/v2.0/devicecode?client_id=synthetic&device_code=synthetic",
-      "info": "Routine device-code initiation; no user_code or independent phishing evidence."
+      "httpUri": "/oauth2/v2.0/devicecode?client_id=synthetic&scope=openid%20profile",
+      "info": "Normal OAuth device-code initiation without a separate user_code and device_code pairing or observed phishing behavior."
     }
   ],
   "expectedMatches": [],
