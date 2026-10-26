@@ -72,6 +72,40 @@ namespace Carthago.Services.Benchmarking
                 sb.AppendLine("- Scope: labeled offline replay samples, not field prevalence or detection accuracy in production.");
             }
             sb.AppendLine();
+            sb.AppendLine("## Alert-Level Recall Gaps");
+            sb.AppendLine("- Unit: one expected malicious (sample, rule, profile) without an alert.");
+            sb.AppendLine("- A raw detector match in Shadow mode remains a missed alert for this report.");
+            sb.AppendLine("- Causes identify evidence and policy bottlenecks; they do not authorize automatic rule promotion.");
+            if (report.RecallGaps.Count == 0)
+            {
+                sb.AppendLine("- No missed expected malicious alerts in the labeled replays.");
+            }
+            else
+            {
+                sb.AppendLine();
+                sb.AppendLine("| Profile | Cause | Missed expected alerts |");
+                sb.AppendLine("| --- | --- | ---: |");
+                foreach (var group in report.RecallGaps.GroupBy(static gap => new { gap.ProfileName, gap.Cause })
+                    .OrderBy(static group => group.Key.ProfileName, StringComparer.OrdinalIgnoreCase)
+                    .ThenByDescending(static group => group.Count())
+                    .ThenBy(static group => group.Key.Cause, StringComparer.OrdinalIgnoreCase))
+                {
+                    sb.AppendLine($"| {EscapeCell(group.Key.ProfileName)} | {EscapeCell(group.Key.Cause)} | {group.Count()} |");
+                }
+                sb.AppendLine();
+                sb.AppendLine("### Missed alert examples");
+                sb.AppendLine("| Profile | Sample | Rule | Cause | Mode | Confidence / floor | Evidence |");
+                sb.AppendLine("| --- | --- | --- | --- | --- | --- | --- |");
+                foreach (var gap in report.RecallGaps.Take(50))
+                {
+                    var confidence = gap.Confidence.HasValue ? gap.Confidence.Value.ToString("F2") : "N/A";
+                    var floor = gap.ConfidenceFloor.HasValue ? gap.ConfidenceFloor.Value.ToString("F2") : "N/A";
+                    sb.AppendLine($"| {EscapeCell(gap.ProfileName)} | {EscapeCell(gap.SampleName)} | {EscapeCell(gap.RuleId)} | {EscapeCell(gap.Cause)} | {EscapeCell(gap.EffectiveMode)} | {confidence} / {floor} | {EscapeCell(string.Join("; ", gap.Evidence))} |");
+                }
+                if (report.RecallGaps.Count > 50)
+                    sb.AppendLine($"- Showing 50 of {report.RecallGaps.Count} gaps. The JSON report includes every gap.");
+            }
+            sb.AppendLine();
             sb.AppendLine("## Profile Results");
             foreach (var profile in report.ProfileResults.Values.OrderBy(static item => item.ProfileName, StringComparer.OrdinalIgnoreCase))
             {
@@ -107,6 +141,12 @@ namespace Carthago.Services.Benchmarking
             }
 
             return sb.ToString();
+        }
+
+        private static string EscapeCell(string? value)
+        {
+            var clean = (value ?? string.Empty).Replace("\r", " ").Replace("\n", " ").Replace("|", "\\|");
+            return clean.Length > 180 ? clean.Substring(0, 177) + "..." : clean;
         }
 
         private static string FormatRatio(double? value) => value.HasValue ? value.Value.ToString("P1") : "N/A";
