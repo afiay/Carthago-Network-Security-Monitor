@@ -1,0 +1,27 @@
+{
+  "name": "r118-camera-support-default-basic-attempt",
+  "classification": "Malicious",
+  "records": [
+    {
+      "source": "203.0.113.140",
+      "destination": "192.0.2.50",
+      "sourcePort": 51441,
+      "destinationPort": 80,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "POST",
+      "httpHost": "camera-lab.internal",
+      "httpUri": "/admin/login",
+      "httpRequestHeaders": "Host: camera-lab.internal\r\nAuthorization: Basic c3VwcG9ydDpzdXBwb3J0",
+      "processName": "unattributed-client.exe",
+      "info": "Synthetic unauthorized camera default credential attempt. No login outcome is observed; alert policy remains unchanged."
+    }
+  ],
+  "expectedMatches": [
+    "R118"
+  ],
+  "expectedNonMatches": [
+    "R163"
+  ],
+  "expectedMinimumConfidence": 0.75
+}
