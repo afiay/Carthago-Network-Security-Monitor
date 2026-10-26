@@ -88,6 +88,46 @@ public sealed class R102DistinctTxtCorrelationTests
     }
 
     [Fact]
+    public async Task R102_Normal_Dns_Browsing_Cannot_Prime_A_Suspicious_Query_Burst()
+    {
+        var rule = new R102_DNSTunnelingViaLongLabelsRule();
+        var root = "short-noise-" + Guid.NewGuid().ToString("N")[..8] + ".example";
+        var source = "10.248.11.90";
+        var start = BaseTime.AddHours(1);
+
+        // Ten ordinary lookups under the same registrable root are not
+        // independent tunneling evidence, even with a shared client IP.
+        for (var i = 0; i < 10; i++)
+        {
+            var ordinary = await rule.EvaluateAsync(new RuleEvaluationContext(
+                Record(source, $"status{i}." + root, "A"),
+                Sensitivity.Balanced, start.AddSeconds(i * 10)));
+            Assert.False(ordinary.Matched);
+        }
+
+        // This is high entropy and close to the length threshold, but one
+        // subthreshold A query alone must not inherit the ten ordinary
+        // DNS observations as a suspicious burst.
+        var label = Labels[0][..48];
+        var first = await rule.EvaluateAsync(new RuleEvaluationContext(
+            Record(source, label + "." + root, "A"),
+            Sensitivity.Balanced, start.AddSeconds(110)));
+        Assert.False(first.Matched);
+
+        // A second independently observed candidate with the same shape is
+        // legitimate repeated-shape evidence (still subject to precision
+        // and baseline controls, not automatic alert promotion).
+        var second = await rule.EvaluateAsync(new RuleEvaluationContext(
+            Record(source, Labels[1][..48] + "." + root, "A"),
+            Sensitivity.Balanced, start.AddSeconds(130)));
+        Assert.True(second.Matched);
+        var evt = Assert.Single(second.Events);
+        Assert.Equal("2", EvidenceValue(evt, "count"));
+        Assert.Contains("repeated_long_query_shape",
+            EvidenceValue(evt, "matched_conditions"), StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task R102_Null_Dns_Query_Type_Does_Not_Claim_Txt_Corroboration()
     {
         var rule = new R102_DNSTunnelingViaLongLabelsRule();
