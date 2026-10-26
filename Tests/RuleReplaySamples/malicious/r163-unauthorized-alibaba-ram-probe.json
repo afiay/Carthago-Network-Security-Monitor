@@ -12,7 +12,7 @@
       "httpMethod": "GET",
       "httpHost": "100.100.100.200",
       "httpUri": "/latest/meta-data/ram/security-credentials/example-role",
-      "httpRequestHeaders": "Host: 100.100.100.200\\r\\nX-aliyun-ecs-metadata-token: [REDACTED]",
+      "httpRequestHeaders": "Host: 100.100.100.200\r\nX-aliyun-ecs-metadata-token: [REDACTED]",
       "processName": "unapproved-webapp.exe",
       "info": "Synthetic unauthorized Alibaba ECS RAM-role credential probe. Ground-truth intent is malicious; session token redacted and no independently verified inbound-to-outbound SSRF causality."
     }
