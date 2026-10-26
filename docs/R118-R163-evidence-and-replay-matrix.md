@@ -494,3 +494,47 @@ Sources:
 - [RFC 7616 Digest authentication](https://www.rfc-editor.org/rfc/rfc7616.html)
 - [Microsoft Sysmon process/connection telemetry](https://learn.microsoft.com/sysinternals/downloads/sysmon)
 
+
+## 96-fixture candidate: authority-port integrity and Azure IMDS (26 October 2026)
+
+This paired batch adds **two benign controls and two malicious-scenario controls**
+to the 92-fixture corpus (now 51 benign / 45 malicious). The samples are
+synthetic, and malicious labels describe ground-truth scenario intent rather
+than proven authentication success or SSRF exploitation.
+
+| Fixture | Label | Expected result | Independent-evidence boundary |
+| --- | --- | --- | --- |
+| `r118-router-authority-port-mismatch` | Benign control | R118 no match | HTTP Host declares `:9443`, observed destination socket is `:8443`; the capture parser still redacts the synthetic Basic value |
+| `r118-router-authority-port-match` | Malicious scenario | R118 raw match, non-paging | The same synthetic default Basic attempt has a matching Host/socket port; no login outcome telemetry |
+| `r163-azure-instance-metadata-agent` | Benign control | R163 no match | Approved Azure guest agent requests `/metadata/instance`, not a credential endpoint |
+| `r163-azure-vault-token-unapproved` | Malicious scenario | R163 raw match, non-paging | Unapproved application requests `/metadata/identity/oauth2/token` for a Key Vault audience; no response token or independently attributed inbound trigger |
+
+HTTP/1.1 Host includes an optional port and cannot override the independently
+observed destination socket. The R118 pair specifically exercises the live
+HTTP parser, which derives a capture-time default-Basic indicator and replaces
+the Authorization value with `[REDACTED]`. Azure IMDS requires the
+`Metadata: true` header for both ordinary metadata and managed-identity token
+requests; that header is a protocol requirement, **not** evidence of SSRF.
+A token-endpoint request without trusted ingress-to-egress attribution remains
+investigative evidence only.
+
+Added `Carthago.Tests/R118R163AuthorityAndAzureReplayTests.cs` to assert the
+four classifications, raw matches/nonmatches, exported Basic-token redaction,
+all six profile gates, and unchanged minimum confidence floors
+(R118 86%, R163 84%, R102 80%). The new fixtures were retrieved and
+successfully parsed as JSON, and all five corresponding GitHub commits were
+checked to modify one file each. **The new xUnit test and 96-fixture benchmark
+have not been executed on Windows; no updated precision, recall, or F1 values
+are available.** Do not promote either rule.
+
+Next: execute `./verify-local.ps1 -Details` in Windows PowerShell, retain
+the verified JSON report, and use
+`scripts/compare-replay-quality.py --baseline <verified-old.json> --candidate <verified-new.json> --strict`
+to compare full and shared cohorts. Report both sample-level and alert-rule-level
+confusion matrices, and treat zero-alert precision as N/A.
+
+References:
+- [RFC 9112 HTTP/1.1 Host authority](https://www.rfc-editor.org/rfc/rfc9112.html#section-3.2)
+- [Azure VM instance metadata](https://learn.microsoft.com/en-us/azure/virtual-machines/instance-metadata-service)
+- [Microsoft managed identity token request](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/how-to-use-vm-token)
+- [Azure SDK for .NET managed identity implementation guidance](https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/identity/Azure.Identity/TROUBLESHOOTING.md)
