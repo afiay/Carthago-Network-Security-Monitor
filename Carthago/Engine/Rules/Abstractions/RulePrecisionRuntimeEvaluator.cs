@@ -63,8 +63,14 @@ namespace Carthago.Engine.Rules
                 if (telemetry.MissingFields.Count > 0) reasons.Add("missing fields: " + string.Join(", ", telemetry.MissingFields));
             }
 
-            var confidencePercent = (int)Math.Round(Math.Max(0.0, Math.Min(1.0, evt.ConfidenceScore)) * 100.0);
-            var confidenceSatisfied = confidencePercent >= profile.MinimumConfidence;
+            // A rounded display percentage must never authorize an alert
+            // below the configured exact floor (e.g. 83.6% < 84%). Non-finite
+            // scores are invalid and are treated as zero-confidence candidates.
+            var normalizedConfidence = double.IsFinite(evt.ConfidenceScore)
+                ? Math.Clamp(evt.ConfidenceScore, 0.0, 1.0)
+                : 0.0;
+            var confidencePercent = (int)Math.Round(normalizedConfidence * 100.0);
+            var confidenceSatisfied = normalizedConfidence >= profile.MinimumConfidence / 100.0;
             if (!confidenceSatisfied)
             {
                 effectiveMode = RulePrecisionCatalog.MostRestrictive(effectiveMode, RuleMode.Shadow);
