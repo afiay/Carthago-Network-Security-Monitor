@@ -119,6 +119,12 @@ namespace Carthago.Models
         public string? HttpUserAgent { get; set; }
         public string? HttpRequestHeaders { get; set; }
 
+        // Derived from a wire-observed HTTP Authorization header before redaction.
+        // The original credential and its Base64 representation are never retained.
+        // Internal setter prevents arbitrary external record construction from claiming
+        // this trusted capture-path observation.
+        public bool HttpBasicDefaultCredentialObserved { get; internal set; }
+
         // JA4H (HTTP)
         private string? _ja4H;
         public string? Ja4H { get => _ja4H; set { _ja4H = value; OnChanged(nameof(Ja4H)); } }
