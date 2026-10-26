@@ -1,0 +1,27 @@
+{
+  "name": "r163-cloud-init-writable-path-spoof",
+  "classification": "Malicious",
+  "records": [
+    {
+      "source": "10.0.0.152",
+      "destination": "169.254.169.254",
+      "sourcePort": 51152,
+      "destinationPort": 80,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "GET",
+      "httpHost": "169.254.169.254",
+      "httpUri": "/latest/meta-data/iam/security-credentials/synthetic-role",
+      "httpRequestHeaders": "Host: 169.254.169.254\r\nX-aws-ec2-metadata-token: [REDACTED]",
+      "processName": "C:\\Users\\Public\\cloud-init.exe",
+      "info": "Synthetic metadata credential request from a user-writable executable path with a guest-agent basename. Suspicious direct access, not independently proven SSRF."
+    }
+  ],
+  "expectedMatches": [
+    "R163"
+  ],
+  "expectedNonMatches": [
+    "R118"
+  ],
+  "expectedMinimumConfidence": 0.6
+}
