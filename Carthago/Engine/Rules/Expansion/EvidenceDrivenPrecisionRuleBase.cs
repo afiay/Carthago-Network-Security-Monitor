@@ -136,6 +136,15 @@ namespace Carthago.Engine.Rules.Expansion
             if (spec.SuppressLikelyBrowserOnly && IsLikelyBrowserProcess(record.ProcessName) && !ContainsAny(Text(record), "admin", "token", "export", "download", "api", "oauth", "consent", "forwarding"))
                 return NoMatch(RuleNoMatchReasonCategory.AssetAllowed, "LIKELY_BROWSER_NO_HIGH_RISK_ACTION", "Likely browser traffic did not contain high-risk administrative, token, export, OAuth, or forwarding evidence.");
 
+            // A Vault-token exposure cannot be inferred from generic metadata
+            // "token" words, Vault hostnames, or endpoint names alone.
+            // Require an observed Vault token pattern before scoring R365.
+            if (string.Equals(spec.RuleId, "R365", StringComparison.OrdinalIgnoreCase)
+                && !HasTokenPattern(record, spec.TokenKinds))
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                    "VAULT_TOKEN_NOT_OBSERVED",
+                    "R365 requires a concrete Vault token pattern in observed telemetry.");
+
             var signalReasons = CollectSignals(record, spec).ToList();
             if (signalReasons.Count < Math.Max(1, spec.MinimumSignals))
                 return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence, "MINIMUM_SIGNAL_COUNT_NOT_MET", $"Rule requires at least {Math.Max(1, spec.MinimumSignals)} independent signal(s), but observed {signalReasons.Count}.");
