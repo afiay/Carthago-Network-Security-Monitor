@@ -104,6 +104,36 @@ public sealed class CatalogWideConfidenceSafetyTests
         Assert.NotEqual(RuleMode.Alert, decision.EffectiveMode);
     }
 
+    [Theory]
+    [InlineData("R102", "Research")]
+    [InlineData("R102", "Enterprise")]
+    [InlineData("R163", "Research")]
+    [InlineData("R118", "Research")]
+    public void Tuning_Rejects_NonFinite_Confidence_Without_Baseline_Or_Profile_Bypass(
+        string ruleId, string profileName)
+    {
+        var descriptor = RuleCatalog.Find(ruleId)!;
+        var registry = new ApprovedAssetRegistry(new EnvironmentTuningOptions());
+        var record = new TrafficRecord
+        {
+            Source = "10.220.0.10", Destination = "198.51.100.20",
+            DestinationPort = 443, Protocol = "HTTP",
+            HttpMethod = "POST", HttpHost = "security.example",
+            HttpUri = "/api/test"
+        };
+
+        foreach (var score in new[] { double.NaN, double.PositiveInfinity, double.NegativeInfinity })
+        {
+            var decision = RuleTuningCatalog.Resolve(
+                profileName, descriptor, Event(descriptor, score), record,
+                registry, effectiveConfidenceScore: score, baselineReady: true);
+            Assert.NotEqual(RuleMode.Alert, decision.EffectiveMode);
+            Assert.Contains(decision.ReasonDetails, reason =>
+                reason.Contains("Invalid or non-finite confidence",
+                    StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
     [Fact]
     public void Confidence_Builder_Never_Serializes_Invalid_Numeric_Values()
     {
