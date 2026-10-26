@@ -6,7 +6,13 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 Push-Location $root
+$transcriptStarted = $false
+$transcriptFile = Join-Path $root ('build-verify/rule-batches/batch-001-005-' +
+    (Get-Date -Format 'yyyy-MM-dd_HH-mm-ss') + '.txt')
 try {
+    New-Item -ItemType Directory -Force -Path (Split-Path -Parent $transcriptFile) | Out-Null
+    Start-Transcript -Path $transcriptFile -ErrorAction Stop | Out-Host
+    $transcriptStarted = $true
     $classNames = @(
         'R001Tests','R002Tests','R003Tests','R004Tests','R005Tests',
         'R001AdvancedAccuracyBatchTests','R002AdvancedAccuracyBatchTests',
@@ -66,5 +72,7 @@ try {
     Write-Host ("Batch result file: " + (Join-Path $root $trxPath))
 }
 finally {
+    if ($transcriptStarted) { Stop-Transcript | Out-Host }
     Pop-Location
+    Write-Host ("Complete batch TXT transcript: " + $transcriptFile)
 }
