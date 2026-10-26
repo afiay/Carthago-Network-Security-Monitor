@@ -18,6 +18,11 @@ namespace Carthago.Services.Benchmarking
         public ReplaySampleClassification? Classification { get; set; }
         public Sensitivity? Sensitivity { get; set; }
         public List<TrafficRecord> Records { get; set; } = new();
+        // Optional offline-only, synthetic HTTP request bytes by record index.
+        // The benchmark parses them through the same HttpLight parser as live
+        // capture, deriving trusted credential flags before header redaction.
+        // Never deserialize an arbitrary trust flag directly from replay JSON.
+        public Dictionary<int, string> RawHttpRequestsByRecordIndex { get; set; } = new();
         public List<string> ExpectedMatches { get; set; } = new();
         public List<string> ExpectedEmittedMatches { get; set; } = new();
         public List<string> ExpectedSuppressedMatches { get; set; } = new();
