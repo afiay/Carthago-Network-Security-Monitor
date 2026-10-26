@@ -1,0 +1,29 @@
+{
+  "name": "holdout-r118-embedded-camera-default-root",
+  "classification": "Malicious",
+  "records": [
+    {
+      "source": "198.51.100.73",
+      "destination": "192.0.2.61",
+      "destinationPort": 8080,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "POST",
+      "httpHost": "camera-warehouse7.internal",
+      "httpUri": "/onvif/device_service",
+      "processName": "unmanaged-admin-client.exe",
+      "info": "Unauthorized synthetic Basic root/root login against a camera; no result or account compromise is assumed.",
+      "httpRequestHeaders": "Host: camera-warehouse7.internal\r\nAuthorization: [REDACTED]"
+    }
+  ],
+  "rawHttpRequestsByRecordIndex": {
+    "0": "POST /onvif/device_service HTTP/1.1\r\nHost: camera-warehouse7.internal\r\nAuthorization: Basic cm9vdDpyb290\r\n\r\n"
+  },
+  "expectedMatches": [
+    "R118"
+  ],
+  "expectedNonMatches": [
+    "R163"
+  ],
+  "expectedMinimumConfidence": 0.6
+}
