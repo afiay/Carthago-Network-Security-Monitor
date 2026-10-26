@@ -69,12 +69,6 @@ namespace Carthago.Engine.Rules
             @"\b(?:login|username|user)\s*[:=]?\s*(?:admin:admin|admin:password|root:root|root:admin|user:user|guest:guest|ubnt:ubnt|support:support)\b",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
-        private static readonly string[] DeviceHostMarkers =
-        {
-            "camera", "nvr", "dvr", "onvif", "hikvision", "dahua", "router",
-            "gateway", "iot", "ubiquiti", "tplink", "netgear", "mikrotik"
-        };
-
         private static readonly HashSet<string> MetadataHosts = new(StringComparer.OrdinalIgnoreCase)
         {
             "169.254.169.254", "169.254.170.2", "100.100.100.200", "metadata.google.internal"
