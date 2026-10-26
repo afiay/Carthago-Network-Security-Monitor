@@ -183,5 +183,6 @@ namespace Carthago.Services.Benchmarking
             = new(StringComparer.OrdinalIgnoreCase);
         public List<TuningBenchmarkRuleCoverage> RuleCoverage { get; set; } = new();
         public List<TuningBenchmarkRuleEvidenceCoverage> RuleEvidenceCoverage { get; set; } = new();
+        public List<TuningBenchmarkRuleHardeningEntry> RuleHardeningAudit { get; set; } = new();
     }
 }
