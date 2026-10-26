@@ -13,7 +13,17 @@ Holdout scenarios represent candidate interpretations and benign counterexamples
 
 ## Commands
 
-From a PowerShell terminal in the repo root:
+From a PowerShell terminal in the repo root, the easiest full check (including a timestamped private TXT transcript) is:
+
+```powershell
+git fetch origin feature/carthago-reliability-hardening
+git merge --ff-only FETCH_HEAD
+.\scripts\run-accuracy-verification.ps1
+```
+
+The transcript is saved under `build-verify/accuracy-logs/`. Review its contents for identifiers before sharing it with anyone.
+
+Alternatively, run the stages individually:
 
 ```powershell
 git fetch origin feature/carthago-reliability-hardening
