@@ -73,8 +73,26 @@ namespace Carthago.Services.Benchmarking
                 sb.AppendLine($"- Precision: {FormatRatio(quality.Precision)}");
                 sb.AppendLine($"- Recall: {FormatRatio(quality.Recall)}");
                 sb.AppendLine($"- Specificity: {FormatRatio(quality.Specificity)}");
+                sb.AppendLine($"- False-positive rate: {FormatRatio(quality.FalsePositiveRate)}");
+                sb.AppendLine($"- Balanced accuracy: {FormatRatio(quality.BalancedAccuracy)}");
+                sb.AppendLine($"- Matthews correlation coefficient: {FormatNumber(quality.MatthewsCorrelationCoefficient)}");
                 sb.AppendLine($"- F1: {FormatRatio(quality.F1Score)}");
+                sb.AppendLine($"- Precision Wilson 95% interval: {FormatInterval(quality.Precision95)}");
+                sb.AppendLine($"- Recall Wilson 95% interval: {FormatInterval(quality.Recall95)}");
+                sb.AppendLine($"- Benign false-positive-rate Wilson 95% interval: {FormatInterval(quality.FalsePositiveRate95)}");
                 sb.AppendLine("- Scope: labeled offline replay samples, not field prevalence or detection accuracy in production.");
+                sb.AppendLine("- Related synthetic variants are NOT independent trials. Wilson intervals illustrate sampling uncertainty and can understate it when fixtures are correlated.");
+                sb.AppendLine("- A measured 100% precision with few emitted alerts is not proof of 100% field precision.");
+            }
+            sb.AppendLine();
+            sb.AppendLine("## Profile Comparison — Alert-level Quality and Uncertainty");
+            sb.AppendLine("| Profile | TP | FP | FN | TN | Precision | Precision 95% | Recall | Balanced accuracy | MCC | Benign FPR | Benign FPR 95% |");
+            sb.AppendLine("| --- | ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | --- |");
+            foreach (var row in summary.SampleLevelQualityByProfile
+                .OrderBy(static pair => pair.Key, StringComparer.OrdinalIgnoreCase))
+            {
+                var metrics = row.Value;
+                sb.AppendLine($"| {EscapeCell(row.Key)} | {metrics.TruePositives} | {metrics.FalsePositives} | {metrics.FalseNegatives} | {metrics.TrueNegatives} | {FormatRatio(metrics.Precision)} | {FormatInterval(metrics.Precision95)} | {FormatRatio(metrics.Recall)} | {FormatRatio(metrics.BalancedAccuracy)} | {FormatNumber(metrics.MatthewsCorrelationCoefficient)} | {FormatRatio(metrics.FalsePositiveRate)} | {FormatInterval(metrics.FalsePositiveRate95)} |");
             }
             sb.AppendLine();
             sb.AppendLine("## Detection, Policy, and Alert Funnel");
@@ -246,6 +264,16 @@ namespace Carthago.Services.Benchmarking
         private static string FormatRatio(double? value)
             => value.HasValue
                 ? (value.Value * 100.0).ToString("F1", CultureInfo.InvariantCulture) + "%"
+                : "N/A";
+
+        private static string FormatInterval(DetectionRatioInterval? interval)
+            => interval == null
+                ? "N/A"
+                : $"{FormatRatio(interval.Lower)}–{FormatRatio(interval.Upper)} (n={interval.Observations})";
+
+        private static string FormatNumber(double? value)
+            => value.HasValue
+                ? value.Value.ToString("F3", CultureInfo.InvariantCulture)
                 : "N/A";
 
         private static void AppendList(StringBuilder sb, string title, System.Collections.Generic.IReadOnlyList<string> items)
