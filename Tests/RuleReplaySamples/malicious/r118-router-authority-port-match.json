@@ -1,0 +1,31 @@
+{
+  "name": "r118-router-authority-port-match",
+  "classification": "Malicious",
+  "records": [
+    {
+      "source": "203.0.113.202",
+      "destination": "192.0.2.201",
+      "sourcePort": 54201,
+      "destinationPort": 8443,
+      "protocol": "TLS",
+      "applicationProtocol": "HTTPS",
+      "tlsVersion": "TLS1.3",
+      "httpMethod": "POST",
+      "httpHost": "router02.lab.internal:8443",
+      "httpUri": "/admin/login",
+      "httpRequestHeaders": "Host: router02.lab.internal:8443\r\nAuthorization: [REDACTED]",
+      "processName": "unattributed-client.exe",
+      "info": "Synthetic unapproved default Basic request has a single device Host authority matching the observed socket. Parser must redact the credential; no successful login is established."
+    }
+  ],
+  "rawHttpRequestsByRecordIndex": {
+    "0": "POST /admin/login HTTP/1.1\r\nHost: router02.lab.internal:8443\r\nAuthorization: Basic YWRtaW46cGFzc3dvcmQ=\r\n\r\n"
+  },
+  "expectedMatches": [
+    "R118"
+  ],
+  "expectedNonMatches": [
+    "R163"
+  ],
+  "expectedMinimumConfidence": 0.6
+}
