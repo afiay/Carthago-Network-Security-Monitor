@@ -1,0 +1,24 @@
+{
+  "name": "r118-strong-camera-login",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "192.0.2.26",
+      "destination": "192.0.2.50",
+      "sourcePort": 51001,
+      "destinationPort": 8080,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "GET",
+      "httpHost": "camera-lab.internal",
+      "httpUri": "/admin",
+      "httpRequestHeaders": "Host: camera-lab.internal\r\nAuthorization: Basic YWRtaW46c3Ryb25nLXBhc3M=",
+      "processName": "browser.exe",
+      "info": "Routine camera administration with a synthetic non-default password."
+    }
+  ],
+  "expectedNonMatches": [
+    "R118",
+    "R163"
+  ]
+}
