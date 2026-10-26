@@ -784,6 +784,7 @@ namespace Carthago.Services
         {
             string? host = null, ua = null;
             bool defaultBasicObserved = false;
+            int authorizationHeaderCount = 0;
             int idx = offset;
             var headerNames = new List<string>();
             var sbJoin = new StringBuilder();
@@ -802,9 +803,16 @@ namespace Carthago.Services
                 {
                     var name = ToAscii(line.Slice(0, colon));
                     headerNames.Add(name);
-                    if (name.Equals("Authorization", StringComparison.OrdinalIgnoreCase) &&
-                        SensitiveTelemetryContracts.IsKnownDefaultBasicAuthorizationValue(line.Slice(colon + 1)))
-                        defaultBasicObserved = true;
+                    if (name.Equals("Authorization", StringComparison.OrdinalIgnoreCase))
+                    {
+                        authorizationHeaderCount++;
+                        // Duplicate Authorization fields are ambiguous: a proxy or
+                        // origin may select a different value. Never promote a
+                        // default-pair observation from one of several headers.
+                        // Inspect wire bytes before redaction; retain no value.
+                        if (SensitiveTelemetryContracts.IsKnownDefaultBasicAuthorizationValue(line.Slice(colon + 1)))
+                            defaultBasicObserved = true;
+                    }
 
                     // Avoid allocating a managed string for bearer secrets at all.
                     // Preserve only the header name and a redaction marker in telemetry.
@@ -831,7 +839,7 @@ namespace Carthago.Services
                 UserAgent = ua,
                 HttpVersion = httpVersion,
                 JoinedHeaderLines = sbJoin.ToString(),
-                ObservedDefaultBasicCredential = defaultBasicObserved,
+                ObservedDefaultBasicCredential = defaultBasicObserved && authorizationHeaderCount == 1,
                 HeaderNames = headerNames
             };
         }
