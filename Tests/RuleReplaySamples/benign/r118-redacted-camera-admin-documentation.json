@@ -1,0 +1,26 @@
+{
+  "name": "r118-redacted-camera-admin-documentation",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "192.0.2.41",
+      "destination": "192.0.2.50",
+      "sourcePort": 51280,
+      "destinationPort": 8080,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "GET",
+      "httpHost": "camera-office.internal",
+      "httpUri": "/admin/status",
+      "httpRequestHeaders": "Host: camera-office.internal\r\nAuthorization: [REDACTED]",
+      "httpBasicDefaultCredentialObserved": false,
+      "processName": "camera-management.exe",
+      "info": "Authorized camera maintenance. Support documentation mentions factory defaults, but the observed credential is not a known default."
+    }
+  ],
+  "expectedNonMatches": [
+    "R118",
+    "R163",
+    "R092"
+  ]
+}
