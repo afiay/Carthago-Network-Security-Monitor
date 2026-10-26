@@ -182,6 +182,7 @@ public sealed class TuningBenchmarkRecallGapTests
         {
             ProfileName = "Research", SampleName = "proof|sample",
             RuleId = "R163", Cause = "ProfileShadow",
+            BlockingFactors = new List<string> { "ProfileShadow", "PrecisionConfidenceFloor" },
             DetectionOutcome = "Matched", EffectiveMode = "Shadow",
             Confidence = 0.77, ConfidenceFloor = 0.84,
             Evidence = new List<string> { "Shadow|no promotion" }
@@ -191,6 +192,8 @@ public sealed class TuningBenchmarkRecallGapTests
 
         Assert.Contains("## Alert-Level Recall Gaps", markdown);
         Assert.Contains("Research | ProfileShadow | 1", markdown);
+        Assert.Contains("Additional blocking factors", markdown);
+        Assert.Contains("PrecisionConfidenceFloor", markdown);
         Assert.Contains("proof\\|sample", markdown);
         Assert.Contains("Shadow\\|no promotion", markdown);
         Assert.Contains("raw detector match in Shadow mode", markdown);
