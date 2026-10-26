@@ -1,16 +1,14 @@
 # R118 and R163: evidence contracts and replay matrix
 
-Status: **84-fixture validation candidate; promotion HOLD**. The latest
-user-supplied Windows verification log confirms that the previous **80-fixture**
-revision passed **958/958 xUnit tests** and the replay benchmark, with zero
-benign simulated alerts and no missing expected malicious raw matches. That
-verified run is a historical baseline, **not evidence that the four new
-fixtures, benchmark recommendation fix, or added xUnit assertions pass**.
-The current branch adds four labeled controls (two benign, two malicious),
-bringing the candidate inventory to **84 (45 benign, 39 malicious)**. Their
-JSON was parsed before publication; updated Windows compilation, xUnit and
-per-profile alert-quality measurements remain pending. Do not promote R118,
-R163, or R102 before all verification gates pass.
+Status (26 October 2026): **92 labeled replay fixtures (49 benign, 43 malicious); promotion HOLD**.
+The last supplied Windows verification covers the **80-fixture** revision:
+958/958 xUnit tests passed and its replay benchmark completed with no benign
+simulated alerts. This is a historical baseline only. The subsequent 84-, 88-,
+and current 92-fixture revisions have **not** been verified by a Windows build,
+xUnit run, or replay benchmark in this environment. Four new 92-fixture controls
+were independently JSON-parsed and committed, but their detector expectations
+remain unexecuted. No updated precision, recall, or F1 values are claimed.
+R118, R163 and R102 promotion remains blocked pending fresh evidence.
 
 ## Non-negotiable gates
 
@@ -443,3 +441,56 @@ Official references: [RFC 9110 Authorization and authority](https://www.rfc-edit
 
 - RFC 9110 §5.3 on duplicate field lines: https://www.rfc-editor.org/rfc/rfc9110.html#section-5.3
 - Zeek optional full-header logging (privacy caution): https://github.com/sethhall/zeek-log-all-http-headers
+
+
+## 92-fixture candidate: Digest authentication and ECS task-role paths (26 October 2026)
+
+Four new synthetic, paired replays distinguish **authentication scheme** from
+device login evidence, and **ECS task metadata** from ECS credential access:
+
+| Fixture | Label | Expected R118 | Expected R163 | Why |
+| --- | --- | --- | --- | --- |
+| `r118-digest-camera-auth-not-basic` | Benign | No match | No match | Digest `username=admin` is not Basic default-pair evidence; wire parser must redact Authorization |
+| `r118-ubiquiti-basic-https-wire-probe` | Malicious scenario | Raw match, non-paging | No match | Synthetic HTTPS Basic default pair on an IoT gateway; no login outcome |
+| `r163-ecs-task-metadata-not-credentials` | Benign | No match | No match | ECS v2 `/v2/metadata` is a task metadata lookup |
+| `r163-ecs-unapproved-task-credential-probe` | Malicious scenario | No match | Raw match, non-paging | ECS `/v2/credentials/<synthetic-id>` from an unapproved caller; no inbound-to-egress causal proof |
+
+AWS documents the ECS v2 task metadata endpoint separately from the task-role
+credential URI supplied through `AWS_CONTAINER_CREDENTIALS_RELATIVE_URI`.
+The v2 task metadata endpoint is legacy; v4 is recommended for new ECS deployments.
+These controls are intended to validate the current R163 contract, not to assert
+that an ECS metadata request proves SSRF or credential theft.
+
+The R118 wire fixtures contain **synthetic** authorization values only in the
+private replay inputs; exported benchmark records must contain redacted
+Authorization fields. The regression test checks that synthetic Basic/Digest
+values are absent from the serialized report. Never log real authorization
+headers, IMDSv2 session tokens, or credential response bodies.
+
+A new **privacy-minimizing report comparator** can be run after a fresh Windows
+verification. It recomputes confusion matrices from alert decisions, compares
+both the full datasets and the **shared fixture cohort** (avoiding artificial
+recall drops from added malicious samples), and shows explicitly labeled
+R118/R163/R102 rule-level opportunities. A rule with zero alerts has precision
+**N/A**, not 100%.
+
+```powershell
+# Preserve a locally verified historical report before running verification.
+Copy-Item build-verify/tuning-benchmark.json build-verify/baseline-verified.json
+.\verify-local.ps1 -Details
+python scripts/compare-replay-quality.py --baseline build-verify/baseline-verified.json --candidate build-verify/tuning-benchmark.json --strict
+```
+
+The comparator was syntax-checked and exercised against synthetic passing and
+false-positive reports on Linux. That is **not** .NET or Windows verification.
+It intentionally prints only aggregate metrics, not fixture contents or secrets.
+If a previously verified baseline JSON was not saved, do not fabricate one from
+a historical table; the full shared-cohort comparison must remain pending.
+
+Sources:
+- [AWS ECS task metadata v2](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-metadata-endpoint-v2.html)
+- [AWS ECS task IAM roles and credential URI](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html)
+- [RFC 7617 Basic authentication](https://www.rfc-editor.org/rfc/rfc7617.html)
+- [RFC 7616 Digest authentication](https://www.rfc-editor.org/rfc/rfc7616.html)
+- [Microsoft Sysmon process/connection telemetry](https://learn.microsoft.com/sysinternals/downloads/sysmon)
+
