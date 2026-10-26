@@ -785,6 +785,7 @@ namespace Carthago.Services
             string? host = null, ua = null;
             bool defaultBasicObserved = false;
             int authorizationHeaderCount = 0;
+            bool headerSectionComplete = false;
             int idx = offset;
             var headerNames = new List<string>();
             var sbJoin = new StringBuilder();
@@ -793,7 +794,11 @@ namespace Carthago.Services
             {
                 int end = data.Slice(idx).IndexOf(CRLF);
                 if (end < 0) break;
-                if (end == 0) break; // end of headers
+                if (end == 0)
+                {
+                    headerSectionComplete = true;
+                    break; // complete CRLF-terminated header section
+                }
 
                 var line = data.Slice(idx, end);
                 idx += end + CRLF.Length;
@@ -839,7 +844,7 @@ namespace Carthago.Services
                 UserAgent = ua,
                 HttpVersion = httpVersion,
                 JoinedHeaderLines = sbJoin.ToString(),
-                ObservedDefaultBasicCredential = defaultBasicObserved && authorizationHeaderCount == 1,
+                ObservedDefaultBasicCredential = headerSectionComplete && defaultBasicObserved && authorizationHeaderCount == 1,
                 HeaderNames = headerNames
             };
         }
