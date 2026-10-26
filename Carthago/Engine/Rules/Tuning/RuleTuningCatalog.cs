@@ -60,11 +60,21 @@ namespace Carthago.Engine.Rules.Tuning
             var reasons = baseDecision.Reasons.ToList();
             var details = baseDecision.ReasonDetails.ToList();
             var environment = approvedAssets ?? ApprovedAssetRegistry.Current;
+            var inputConfidence = effectiveConfidenceScore ?? evt?.ConfidenceScore;
+            var invalidConfidence = inputConfidence.HasValue
+                && (!double.IsFinite(inputConfidence.Value)
+                    || inputConfidence.Value < 0.0 || inputConfidence.Value > 1.0);
+            if (invalidConfidence)
+            {
+                effectiveMode = RulePrecisionCatalog.MostRestrictive(effectiveMode, RuleMode.Shadow);
+                reasons.Add(RuleTuningReason.ConfidenceFloorApplied);
+                details.Add("Invalid or non-finite confidence score; candidate cannot be promoted to Alert.");
+            }
 
             // Only explicitly designated baseline rules may graduate. Eligibility
             // never bypasses the independent rule precision confidence floor.
             if ((n is 102 or 103) && baseDecision.RequiresBaseline && baselineReady
-                && !baselineLearningMode && effectiveMode == RuleMode.Shadow)
+                && !invalidConfidence && !baselineLearningMode && effectiveMode == RuleMode.Shadow)
             {
                 var confidenceForPromotion = SanitizeConfidence(effectiveConfidenceScore ?? evt?.ConfidenceScore ?? 0.0);
                 var requiredConfidence = Math.Max(baseDecision.ConfidenceFloor ?? 0.0,
