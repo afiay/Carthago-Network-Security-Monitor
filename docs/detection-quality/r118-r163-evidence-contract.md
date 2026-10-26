@@ -53,6 +53,22 @@ precision has been measured.
   process-instance identity, validated endpoint, and a credible timeline.
   Reject missing, forged, or unverified trace ancestry; preserve Shadow.
 
+## Open-source implementation comparison
+
+The Falco project's *Contact cloud metadata service from container* rule
+observes an outbound connection to the metadata address, includes process
+and container context, and offers a known-access exception. Its priority is
+NOTICE and its maturity is incubating: this is an access observation, not
+proof that an inbound attacker-controlled request caused the connection.
+Carthago should retain that distinction while going further: join trusted
+server-side inbound spans to outbound client spans, validate actual socket
+destination and process instance, and account for authorized workloads.
+Never upgrade confidence from a shared timestamp or externally supplied
+`traceparent` alone. OpenTelemetry's ASP.NET Core and HttpClient
+instrumentation are useful reference implementations for producing the
+independent spans, but the instrumented service must establish the trust
+boundary; passive capture cannot manufacture missing causality.
+
 ## Cross-cutting privacy and quality rules
 
 1. Never persist Basic credentials, IMDS session-token values, cookies, API
@@ -95,3 +111,6 @@ precision has been measured.
 - Google Compute Engine metadata: https://docs.cloud.google.com/compute/docs/metadata/querying-metadata
 - OWASP SSRF Prevention: https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html
 - OpenTelemetry context propagation and untrusted trace headers: https://opentelemetry.io/docs/concepts/context-propagation/
+- Falco official metadata-access rule: https://falco.org/docs/reference/rules/default-rules/
+- OpenTelemetry .NET ASP.NET Core instrumentation: https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Instrumentation.AspNetCore
+- OpenTelemetry .NET HttpClient instrumentation: https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Instrumentation.Http
