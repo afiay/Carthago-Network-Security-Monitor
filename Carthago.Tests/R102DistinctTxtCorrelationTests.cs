@@ -82,8 +82,8 @@ public sealed class R102DistinctTxtCorrelationTests
             Assert.True(evaluated.Matched);
             var evt = Assert.Single(evaluated.Events);
             Assert.Equal("1", EvidenceValue(evt, "dns.distinctSuspiciousTxtNames"));
-            Assert.DoesNotContain("multiple_distinct_suspicious_txt_names",
-                EvidenceValue(evt, "matched_conditions"), StringComparison.OrdinalIgnoreCase);
+            Assert.False(EvidenceValue(evt, "matched_conditions").Contains(
+                "multiple_distinct_suspicious_txt_names", StringComparison.OrdinalIgnoreCase));
         }
     }
 
@@ -100,8 +100,8 @@ public sealed class R102DistinctTxtCorrelationTests
             Assert.True(result.Matched);
             var evt = Assert.Single(result.Events);
             Assert.Equal("0", EvidenceValue(evt, "dns.distinctSuspiciousTxtNames"));
-            Assert.DoesNotContain("multiple_distinct_suspicious_txt_names",
-                EvidenceValue(evt, "matched_conditions"), StringComparison.OrdinalIgnoreCase);
+            Assert.False(EvidenceValue(evt, "matched_conditions").Contains(
+                "multiple_distinct_suspicious_txt_names", StringComparison.OrdinalIgnoreCase));
         }
     }
 
@@ -125,16 +125,16 @@ public sealed class R102DistinctTxtCorrelationTests
         var differentSource = await Evaluate(
             "10.248.10.41", Labels[2], BaseTime.AddSeconds(40));
         Assert.Equal("1", EvidenceValue(differentSource, "dns.distinctSuspiciousTxtNames"));
-        Assert.DoesNotContain("multiple_distinct_suspicious_txt_names",
-            EvidenceValue(differentSource, "matched_conditions"), StringComparison.OrdinalIgnoreCase);
+        Assert.False(EvidenceValue(differentSource, "matched_conditions").Contains(
+                "multiple_distinct_suspicious_txt_names", StringComparison.OrdinalIgnoreCase));
 
         // A third distinct query for the original source arrives outside the
         // five-minute observation window and must not complete the old burst.
         var expired = await Evaluate(
             "10.248.10.40", Labels[2], BaseTime.AddMinutes(6));
         Assert.Equal("1", EvidenceValue(expired, "dns.distinctSuspiciousTxtNames"));
-        Assert.DoesNotContain("multiple_distinct_suspicious_txt_names",
-            EvidenceValue(expired, "matched_conditions"), StringComparison.OrdinalIgnoreCase);
+        Assert.False(EvidenceValue(expired, "matched_conditions").Contains(
+                "multiple_distinct_suspicious_txt_names", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -156,8 +156,8 @@ public sealed class R102DistinctTxtCorrelationTests
             {
                 var evt = Assert.Single(known.Events);
                 Assert.Equal("0", EvidenceValue(evt, "dns.distinctSuspiciousTxtNames"));
-                Assert.DoesNotContain("multiple_distinct_suspicious_txt_names",
-                    EvidenceValue(evt, "matched_conditions"), StringComparison.OrdinalIgnoreCase);
+                Assert.False(EvidenceValue(evt, "matched_conditions").Contains(
+                "multiple_distinct_suspicious_txt_names", StringComparison.OrdinalIgnoreCase));
             }
         }
     }
