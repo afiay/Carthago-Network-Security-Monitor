@@ -210,6 +210,31 @@ public sealed class SensitiveTelemetryContractTests
             RulePrecisionCatalog.Validate("R118", record).MissingFields);
     }
 
+    [Fact]
+    public async Task R118_Incomplete_Http_Headers_Cannot_Claim_Default_Basic_Authentication()
+    {
+        // The final empty CRLF line is intentionally missing. A subsequent
+        // TCP segment could still contain another Authorization header.
+        var partial = "POST /admin/login HTTP/1.1\r\n"
+                    + "Host: camera-lab.internal\r\n"
+                    + "Authorization: Basic YWRtaW46YWRtaW4=\r\n";
+        Assert.True(HttpLight.TryParseHttp(Encoding.ASCII.GetBytes(partial), out var parsed));
+        Assert.False(parsed.ObservedDefaultBasicCredential);
+        Assert.DoesNotContain("YWRtaW46YWRtaW4=", parsed.JoinedHeaderLines);
+
+        var record = new TrafficRecord
+        {
+            Source = "192.0.2.102", Destination = "192.0.2.50",
+            DestinationPort = 80, Protocol = "HTTP",
+            HttpMethod = parsed.Method, HttpHost = parsed.Host,
+            HttpUri = parsed.Path, HttpRequestHeaders = parsed.JoinedHeaderLines,
+            HttpBasicDefaultCredentialObserved = parsed.ObservedDefaultBasicCredential
+        };
+        Assert.False((await new R118_DefaultCredentialIoTAttemptRule().EvaluateAsync(Context(record))).Matched);
+        Assert.Contains("device_authentication_attempt",
+            RulePrecisionCatalog.Validate("R118", record).MissingFields);
+    }
+
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
