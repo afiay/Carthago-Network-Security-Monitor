@@ -1,0 +1,27 @@
+{
+  "name": "r118-ubiquiti-default-basic-observed",
+  "classification": "Malicious",
+  "records": [
+    {
+      "source": "198.51.100.86",
+      "destination": "192.0.2.86",
+      "sourcePort": 54418,
+      "destinationPort": 80,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "POST",
+      "httpHost": "ubiquiti-router.lab.internal",
+      "httpUri": "/login",
+      "httpRequestHeaders": "Host: ubiquiti-router.lab.internal\r\nAuthorization: Basic dWJudDp1Ym50",
+      "processName": "unapproved-maintenance-client.exe",
+      "info": "Synthetic unauthorized HTTP Basic login attempt using a documented factory-default fixture pair; no successful login or credential response is asserted."
+    }
+  ],
+  "expectedMatches": [
+    "R118"
+  ],
+  "expectedNonMatches": [
+    "R163"
+  ],
+  "expectedMinimumConfidence": 0.75
+}
