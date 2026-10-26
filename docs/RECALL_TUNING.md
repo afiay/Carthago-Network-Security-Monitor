@@ -21,7 +21,7 @@ A gap contains the sample and rule ID, profile, detector outcome, effective poli
 
 ## Three-stage detection quality accounting
 
-The benchmark reports **three separate measures** under `detectionFunnelByProfile` in its JSON and **Detection, Policy, and Alert Funnel** in Markdown. Run `./scripts/inspect-detection-funnel.ps1` (PowerShell syntax: `.\\scripts\\inspect-detection-funnel.ps1`) to inspect all profiles, or append `-Profile Research`.
+The benchmark reports **three separate measures** under `detectionFunnelByProfile` in its JSON and **Detection, Policy, and Alert Funnel** in Markdown. Run `./scripts/inspect-detection-funnel.ps1` (PowerShell syntax: `.\scripts\inspect-detection-funnel.ps1`) to inspect all profiles, or append `-Profile Research`.
 
 - **Detector recognition** = labeled malicious expected (sample, rule) pairs with raw rule matches / all labeled malicious expected pairs. This is independent of whether the rule is Shadowed, Disabled, or allowed to alert. Benign raw matches are counted separately; they are **not** alert-level false positives.
 - **Alert-level recall** = labeled malicious expected pairs included in the replay profile's simulated `AlertRuleIds` / all labeled malicious expected pairs. Shadow and Disabled decisions count as alert-level misses; this preserves the existing metric.
