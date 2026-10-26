@@ -160,7 +160,9 @@ A current R118 raw match requires a recognizable origin Basic default pair or
 Telnet login transcript **and** a likely IoT device target. A keyword buried
 inside an unrelated hostname is not device inventory evidence. The HTTP host
 contract now recognizes labels such as `camera-office`, `router02`, and
-`ubiquiti-router`, but rejects `cameradeals.example.invalid`. This reduces
+`ubiquiti-router`, but rejects `cameradeals.example.invalid`. A numeric
+HTTP Host port is accepted only when it agrees with the observed destination
+port; ambiguous userinfo or URL-like authorities are rejected. This reduces
 false positives; it does **not** verify device ownership or prove login success.
 An inventory mapping and authenticated outcome telemetry are still needed for
 an 86%-eligible R118 alert.
