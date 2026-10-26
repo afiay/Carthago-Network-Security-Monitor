@@ -14,7 +14,6 @@
       "httpHost": "nvr-lab.internal:8443",
       "httpUri": "/admin/login",
       "httpRequestHeaders": "Host: nvr-lab.internal:8443\r\nAuthorization: [REDACTED]",
-      "httpBasicDefaultCredentialObserved": true,
       "processName": "unapproved-nvr-admin-client.exe",
       "info": "Synthetic unauthorized NVR login attempt with a parser-derived default-credential indicator. No credential value, response, or successful authentication is asserted."
     }
@@ -25,5 +24,8 @@
   "expectedNonMatches": [
     "R163"
   ],
-  "expectedMinimumConfidence": 0.6
+  "expectedMinimumConfidence": 0.6,
+  "rawHttpRequestsByRecordIndex": {
+    "0": "POST /admin/login HTTP/1.1\r\nHost: nvr-lab.internal:8443\r\nAuthorization: Basic Z3Vlc3Q6Z3Vlc3Q=\r\n\r\n"
+  }
 }
