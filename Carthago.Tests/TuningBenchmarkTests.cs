@@ -55,6 +55,43 @@ namespace Carthago.Tests
         }
 
         [Fact]
+        public async Task R163_Paired_Metadata_Replays_Distinguish_Recognition_From_Alert_Eligibility()
+        {
+            var report = await new TuningBenchmarkRunner().RunAsync(new TuningBenchmarkOptions
+            {
+                ReplayDirectory = GetReplayDirectory()
+            });
+
+            var authorized = report.SampleResults.Single(sample => sample.Name == "r163-paired-authorized-agent");
+            var suspicious = report.SampleResults.Single(sample => sample.Name == "r163-paired-suspicious-direct-probe");
+            var candidate = report.SampleResults.Single(sample => sample.Name == "r163-paired-correlated-ssrf-candidate");
+
+            Assert.Equal(ReplaySampleClassification.Benign, authorized.Classification);
+            Assert.DoesNotContain("R163", authorized.ActualMatches);
+
+            foreach (var sample in new[] { suspicious, candidate })
+            {
+                Assert.Equal(ReplaySampleClassification.Malicious, sample.Classification);
+                Assert.Contains("R163", sample.ActualMatches);
+                Assert.Contains(sample.ExpectedRuleDiagnostics,
+                    diagnostic => diagnostic.RuleId == "R163" && diagnostic.Outcome == "Matched");
+
+                foreach (var profile in sample.Profiles.Values)
+                {
+                    var decision = Assert.Single(profile.RuleDecisions,
+                        item => item.RuleId == "R163");
+                    // An inbound fetch and subsequent metadata request are not,
+                    // by themselves, a verified causal trace. Do not automatically
+                    // promote either fixture to an alert or lower the 84% floor.
+                    Assert.Equal("Shadow", decision.EffectiveMode);
+                    Assert.True(decision.Confidence < 0.84,
+                        $"{sample.Name} [{profile.ProfileName}] confidence {decision.Confidence} unexpectedly reached the 84% floor.");
+                    Assert.DoesNotContain("R163", profile.AlertRuleIds);
+                }
+            }
+        }
+
+        [Fact]
         public async Task Benign_Replays_Have_No_Critical_Alerts_In_Any_Profile()
         {
             var report = await new TuningBenchmarkRunner().RunAsync(new TuningBenchmarkOptions
