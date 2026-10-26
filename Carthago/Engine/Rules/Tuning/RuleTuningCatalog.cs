@@ -80,13 +80,12 @@ namespace Carthago.Engine.Rules.Tuning
                 }
             }
 
-            // High confidence alone cannot make a baseline-dependent rule page.
-            // Even Research's broad Alert default must honor missing readiness,
-            // regardless of whether the caller explicitly sets learning mode.
-            if (baseDecision.RequiresBaseline && (!baselineReady || baselineLearningMode)
-                && effectiveMode == RuleMode.Alert)
+            // Readiness is an independent alert gate, even if the profile
+            // already defaults to Shadow or Disabled. Always record why the
+            // baseline-dependent rule cannot page; never promote a disabled rule.
+            if (baseDecision.RequiresBaseline && (!baselineReady || baselineLearningMode))
             {
-                effectiveMode = RuleMode.Shadow;
+                effectiveMode = RulePrecisionCatalog.MostRestrictive(effectiveMode, RuleMode.Shadow);
                 reasons.Add(RuleTuningReason.BaselineLearningMode);
                 details.Add(baselineLearningMode
                     ? "Baseline learning mode is active, so this baseline-dependent rule remains in Shadow until the environment has enough observations."
