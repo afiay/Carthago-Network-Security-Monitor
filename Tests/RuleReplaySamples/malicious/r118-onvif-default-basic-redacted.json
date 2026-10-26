@@ -13,9 +13,8 @@
       "httpHost": "nvr-lab.internal",
       "httpUri": "/onvif/device_service",
       "httpRequestHeaders": "Host: nvr-lab.internal\r\nAuthorization: [REDACTED]",
-      "httpBasicDefaultCredentialObserved": true,
       "processName": "unapproved-device-admin.exe",
-      "info": "Synthetic attempted NVR login: trusted capture-time boolean indicates a known default Basic pair, but the credential itself was redacted. Authentication success and authorization are not established."
+      "info": "Synthetic default Basic HTTP authentication attempt against NVR ONVIF. The benchmark runs the raw synthetic request through the live HTTP parser, derives the default-pair flag, and then retains only redacted headers. Authentication success is not established."
     }
   ],
   "expectedMatches": [
@@ -24,5 +23,8 @@
   "expectedNonMatches": [
     "R163"
   ],
-  "expectedMinimumConfidence": 0.75
+  "expectedMinimumConfidence": 0.75,
+  "rawHttpRequestsByRecordIndex": {
+    "0": "POST /onvif/device_service HTTP/1.1\r\nHost: nvr-lab.internal\r\nAuthorization: Basic YWRtaW46YWRtaW4=\r\n\r\n"
+  }
 }
