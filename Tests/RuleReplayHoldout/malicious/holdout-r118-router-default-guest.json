@@ -1,0 +1,29 @@
+{
+  "name": "holdout-r118-router-default-guest",
+  "classification": "Malicious",
+  "records": [
+    {
+      "source": "198.51.100.73",
+      "destination": "192.0.2.61",
+      "destinationPort": 8080,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "POST",
+      "httpHost": "router07.internal",
+      "httpUri": "/onvif/device_service",
+      "processName": "unmanaged-admin-client.exe",
+      "info": "Unapproved synthetic Basic guest/guest credential attempt against a router.",
+      "httpRequestHeaders": "Host: router07.internal\r\nAuthorization: [REDACTED]"
+    }
+  ],
+  "rawHttpRequestsByRecordIndex": {
+    "0": "POST /onvif/device_service HTTP/1.1\r\nHost: router07.internal\r\nAuthorization: Basic Z3Vlc3Q6Z3Vlc3Q=\r\n\r\n"
+  },
+  "expectedMatches": [
+    "R118"
+  ],
+  "expectedNonMatches": [
+    "R163"
+  ],
+  "expectedMinimumConfidence": 0.6
+}
