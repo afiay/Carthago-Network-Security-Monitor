@@ -370,11 +370,32 @@ namespace Carthago.Engine.Rules
 
             var normalized = processName.Trim().Replace('\\', '/');
             var basename = normalized[(normalized.LastIndexOf('/') + 1)..];
-            return TrustedMetadataAgents.Contains(basename);
+            if (!TrustedMetadataAgents.Contains(basename))
+                return false;
+
+            // A familiar executable basename is not sufficient to suppress a
+            // suspicious metadata request when the observed executable path is
+            // in a commonly user-writable location. Keep basename-only legacy
+            // telemetry behavior unchanged, but do not allow path spoofing to
+            // masquerade as a recognized guest agent.
+            if (normalized.Contains('/')
+                && Regex.IsMatch(normalized,
+                    @"(?:^|/)(?:tmp|temp|downloads|desktop|appdata|public)(?:/|$)|(?:^|/)dev/shm(?:/|$)",
+                    RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+                return false;
+
+            return true;
         }
 
+        // A device label is evidence; a keyword buried inside an unrelated
+        // domain (e.g. "camerastore.example") is not. Accept common inventory
+        // forms such as camera-office, router02 and ubiquiti-router.
+        private static readonly Regex DeviceHostLabel = new(
+            @"(?:^|[.\-])(?:camera|nvr|dvr|onvif|hikvision|dahua|router|gateway|iot|ubiquiti|tplink|netgear|mikrotik)[0-9]*(?=$|[.\-])",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
         private static bool IsDeviceHost(string host)
-            => ContainsAny(host, DeviceHostMarkers);
+            => !string.IsNullOrWhiteSpace(host) && DeviceHostLabel.IsMatch(host);
 
         private static bool ContainsAny(string text, string[] values)
             => values.Any(value => text.Contains(value, StringComparison.OrdinalIgnoreCase));
