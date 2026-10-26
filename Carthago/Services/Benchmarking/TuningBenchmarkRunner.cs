@@ -413,6 +413,7 @@ namespace Carthago.Services.Benchmarking
             // Each gap is an expected malicious (sample, rule, profile) with
             // no alert; Shadow matches are not counted as alert true positives.
             report.RecallGaps = TuningBenchmarkRecallGapAnalyzer.Analyze(report);
+            report.DetectionFunnelByProfile = TuningBenchmarkDetectionFunnelAnalyzer.Analyze(report);
             RuleEngine.ResetRuntimeStateForReplay();
             return report;
         }
