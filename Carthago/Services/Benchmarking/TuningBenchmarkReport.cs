@@ -108,6 +108,34 @@ namespace Carthago.Services.Benchmarking
         public List<string> Evidence { get; set; } = new();
     }
 
+    /// <summary>
+    /// Per-profile accounting of labeled malicious (sample, expected rule)
+    /// opportunities. These are simulated replay policy decisions, not live
+    /// incident counts or a claim about production sensitivity.
+    /// </summary>
+    public sealed class TuningBenchmarkDetectionFunnel
+    {
+        public string ProfileName { get; set; } = string.Empty;
+        public int ExpectedMaliciousRules { get; set; }
+        public int RecognizedByDetector { get; set; }
+        public int DetectorMisses { get; set; }
+        public int SimulatedAlerted { get; set; }
+        public int PolicyShadowed { get; set; }
+        public int PolicyDisabled { get; set; }
+        public int MissingPolicyDecisions { get; set; }
+        public int EligibleButNotAlerted { get; set; }
+        public int AlertDecisionMismatches { get; set; }
+        public int BenignRawRuleMatches { get; set; }
+        public int BenignSimulatedAlerts { get; set; }
+        public int PolicyEligibleRules { get; set; }
+        // Nullable ratios distinguish "not measurable" from 0% performance.
+        public double? DetectorRecognitionRate { get; set; }
+        public double? AlertLevelRecall { get; set; }
+        // Conditional emission consistency among recognized, policy-eligible
+        // expected matches. NOT detector recall and NOT production precision.
+        public double? EligibleAlertEmissionRate { get; set; }
+    }
+
     public sealed class TuningBenchmarkRuleCoverage
     {
         public string RuleId { get; set; } = string.Empty;
@@ -129,6 +157,8 @@ namespace Carthago.Services.Benchmarking
         public Dictionary<string, TuningBenchmarkProfileSummary> ProfileResults { get; set; } = new();
         public List<TuningBenchmarkSampleResult> SampleResults { get; set; } = new();
         public List<TuningBenchmarkRecallGap> RecallGaps { get; set; } = new();
+        public Dictionary<string, TuningBenchmarkDetectionFunnel> DetectionFunnelByProfile { get; set; }
+            = new(StringComparer.OrdinalIgnoreCase);
         public List<TuningBenchmarkRuleCoverage> RuleCoverage { get; set; } = new();
     }
 }
