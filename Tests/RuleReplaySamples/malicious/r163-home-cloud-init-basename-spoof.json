@@ -1,0 +1,30 @@
+{
+  "name": "r163-home-cloud-init-basename-spoof",
+  "classification": "Malicious",
+  "records": [
+    {
+      "source": "10.42.0.222",
+      "destination": "169.254.169.254",
+      "sourcePort": 54223,
+      "destinationPort": 80,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "GET",
+      "httpHost": "169.254.169.254",
+      "httpUri": "/latest/meta-data/iam/security-credentials/synthetic-role",
+      "httpRequestHeaders": "Host: 169.254.169.254\r\nX-aws-ec2-metadata-token: [REDACTED]",
+      "processName": "/home/guest/.local/bin/cloud-init",
+      "info": "Synthetic unattributed metadata credential-path request by a user-writable executable spoofing a cloud-init basename; direct probe, not established SSRF causality."
+    }
+  ],
+  "expectedMatches": [
+    "R163"
+  ],
+  "expectedNonMatches": [
+    "R118",
+    "R353",
+    "R354",
+    "R359"
+  ],
+  "expectedMinimumConfidence": 0.6
+}
