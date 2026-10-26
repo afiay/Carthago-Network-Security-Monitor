@@ -1,0 +1,23 @@
+{
+  "name": "holdout-r118-nvr-mismatched-host-with-auth",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "198.51.100.73",
+      "destination": "192.0.2.61",
+      "destinationPort": 8080,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "POST",
+      "httpHost": "nvr-workshop.internal",
+      "httpUri": "/onvif/device_service",
+      "processName": "unmanaged-admin-client.exe",
+      "info": "Proxy forwarded a Basic Authorization header, but captured Host contradicts the normalized device authority.",
+      "httpRequestHeaders": "Host: nondevice.example\r\nAuthorization: Basic YWRtaW46YWRtaW4="
+    }
+  ],
+  "expectedNonMatches": [
+    "R118",
+    "R163"
+  ]
+}
