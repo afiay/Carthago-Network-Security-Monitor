@@ -1,0 +1,36 @@
+{
+  "name": "r163-paired-correlated-ssrf-candidate",
+  "classification": "Malicious",
+  "records": [
+    {
+      "source": "198.51.100.45",
+      "destination": "10.0.0.33",
+      "sourcePort": 53110,
+      "destinationPort": 8080,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "GET",
+      "httpHost": "webapp.internal",
+      "httpUri": "/fetch?url=http%3A%2F%2F169.254.169.254%2Flatest%2Fmeta-data%2Fiam%2Fsecurity-credentials%2Fapproved-role",
+      "processName": "webapp.exe",
+      "info": "Synthetic inbound user-controlled fetch request; same workload as following metadata request; correlation asserted by fixture narrative only, not verified by engine."
+    },
+    {
+      "source": "10.0.0.33",
+      "destination": "169.254.169.254",
+      "sourcePort": 51020,
+      "destinationPort": 80,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "GET",
+      "httpHost": "169.254.169.254",
+      "httpUri": "/latest/meta-data/iam/security-credentials/approved-role",
+      "httpRequestHeaders": "Host: 169.254.169.254\r\nX-aws-ec2-metadata-token: [REDACTED]",
+      "processName": "unapproved-webapp.exe",
+      "info": "Synthetic outbound credential request after inbound fetch; no verified trace ID, process causality, response token or exfiltration evidence."
+    }
+  ],
+  "expectedMatches": [
+    "R163"
+  ]
+}
