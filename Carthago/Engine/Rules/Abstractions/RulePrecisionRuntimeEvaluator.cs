@@ -67,7 +67,8 @@ namespace Carthago.Engine.Rules
             // below the configured exact floor (e.g. 83.6% < 84%). Non-finite
             // scores are invalid and are treated as zero-confidence candidates.
             var normalizedConfidence = double.IsFinite(evt.ConfidenceScore)
-                ? Math.Clamp(evt.ConfidenceScore, 0.0, 1.0)
+                && evt.ConfidenceScore >= 0.0 && evt.ConfidenceScore <= 1.0
+                ? evt.ConfidenceScore
                 : 0.0;
             var confidencePercent = (int)Math.Round(normalizedConfidence * 100.0);
             var confidenceSatisfied = normalizedConfidence >= profile.MinimumConfidence / 100.0;
