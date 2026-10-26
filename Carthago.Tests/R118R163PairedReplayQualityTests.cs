@@ -217,12 +217,15 @@ public sealed class R118R163PairedReplayQualityTests
         Assert.DoesNotContain("R118", r118Marketing.ActualMatches);
         Assert.Contains("R118", r118Router02.ActualMatches);
         Assert.DoesNotContain("R163", r163ApprovedAgent.ActualMatches);
+        foreach (var unrelatedTokenRule in new[] { "R353", "R354", "R359" })
+            Assert.DoesNotContain(unrelatedTokenRule, r163ApprovedAgent.ActualMatches);
         Assert.Contains("R163", r163SpoofedAgent.ActualMatches);
         Assert.All(new[] { r118Marketing, r118Router02, r163ApprovedAgent, r163SpoofedAgent },
             sample => Assert.Empty(sample.Errors));
 
         foreach (var profile in report.ProfileResults.Keys)
         {
+            Assert.Empty(r163ApprovedAgent.Profiles[profile].AlertRuleIds);
             Assert.DoesNotContain("R118", r118Router02.Profiles[profile].AlertRuleIds);
             Assert.DoesNotContain("R163", r163SpoofedAgent.Profiles[profile].AlertRuleIds);
             var r118Decision = Assert.Single(r118Router02.Profiles[profile].RuleDecisions,
