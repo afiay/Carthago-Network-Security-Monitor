@@ -1,0 +1,24 @@
+{
+  "name": "r163-approved-imdsv2-session-put",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "10.0.0.214",
+      "destination": "169.254.169.254",
+      "sourcePort": 52214,
+      "destinationPort": 80,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "PUT",
+      "httpHost": "169.254.169.254",
+      "httpUri": "/latest/api/token",
+      "httpRequestHeaders": "Host: 169.254.169.254\r\nX-aws-ec2-metadata-token-ttl-seconds: 21600",
+      "processName": "/usr/bin/cloud-init",
+      "info": "Synthetic authorized AWS IMDSv2 token-session initialization by a normal cloud guest agent. A PUT token request is not a credential-path GET/HEAD and proves no SSRF."
+    }
+  ],
+  "expectedNonMatches": [
+    "R163",
+    "R118"
+  ]
+}
