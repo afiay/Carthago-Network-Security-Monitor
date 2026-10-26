@@ -1,0 +1,37 @@
+{
+  "name": "r163-paired-unrelated-gcp-agent",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "198.51.100.87",
+      "destination": "10.8.0.87",
+      "sourcePort": 54010,
+      "destinationPort": 8080,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "GET",
+      "httpHost": "webapp.lab.internal",
+      "httpUri": "/fetch?url=http%3A%2F%2Fmetadata.google.internal%2FcomputeMetadata%2Fv1%2Finstance%2Fservice-accounts%2Fdefault%2Ftoken",
+      "processName": "webapp.exe",
+      "info": "Synthetic untrusted inbound URL parameter rejected by application; no execution or shared causal trace observed."
+    },
+    {
+      "source": "10.8.0.87",
+      "destination": "169.254.169.254",
+      "sourcePort": 51130,
+      "destinationPort": 80,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "GET",
+      "httpHost": "metadata.google.internal",
+      "httpUri": "/computeMetadata/v1/instance/service-accounts/default/token",
+      "httpRequestHeaders": "Host: metadata.google.internal\r\nMetadata-Flavor: Google",
+      "processName": "google-guest-agent.exe",
+      "info": "Separate routine guest-agent metadata call. Proximity to inbound URL is not evidence of SSRF."
+    }
+  ],
+  "expectedNonMatches": [
+    "R163",
+    "R118"
+  ]
+}
