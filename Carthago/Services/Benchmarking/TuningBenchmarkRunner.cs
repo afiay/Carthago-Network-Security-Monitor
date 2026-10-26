@@ -405,6 +405,9 @@ namespace Carthago.Services.Benchmarking
                 .ToList();
             report.Summary.ConfidenceDistribution = confidenceDistribution;
 
+            // Each gap is an expected malicious (sample, rule, profile) with
+            // no alert; Shadow matches are not counted as alert true positives.
+            report.RecallGaps = TuningBenchmarkRecallGapAnalyzer.Analyze(report);
             RuleEngine.ResetRuntimeStateForReplay();
             return report;
         }
