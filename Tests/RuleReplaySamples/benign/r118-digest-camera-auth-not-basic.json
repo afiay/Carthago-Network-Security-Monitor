@@ -1,0 +1,28 @@
+{
+  "name": "r118-digest-camera-auth-not-basic",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "192.0.2.64",
+      "destination": "192.0.2.65",
+      "sourcePort": 54861,
+      "destinationPort": 443,
+      "protocol": "TLS",
+      "applicationProtocol": "HTTPS",
+      "tlsVersion": "TLS1.3",
+      "httpMethod": "GET",
+      "httpHost": "camera-east.internal",
+      "httpUri": "/onvif/device_service",
+      "httpRequestHeaders": "Host: camera-east.internal\r\nAuthorization: [REDACTED]",
+      "processName": "approved-nvr-client.exe",
+      "info": "Synthetic decrypted HTTPS camera management request using Digest authentication. Username text alone is not evidence of a default HTTP Basic credential. No login outcome is asserted."
+    }
+  ],
+  "rawHttpRequestsByRecordIndex": {
+    "0": "GET /onvif/device_service HTTP/1.1\r\nHost: camera-east.internal\r\nAuthorization: Digest username=\"admin\", realm=\"camera\", nonce=\"synthetic\", response=\"synthetic\"\r\n\r\n"
+  },
+  "expectedNonMatches": [
+    "R118",
+    "R163"
+  ]
+}
