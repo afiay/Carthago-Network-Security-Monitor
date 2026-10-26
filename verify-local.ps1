@@ -149,6 +149,32 @@ try {
             Write-Host "Replay quality: $($report.summary.replaySampleCount) samples; benign critical alerts: $($report.summary.benignCriticalAlertCount)"
             Show-AlertRuleQuality $report
             Show-DetectionFunnel $report
+            $auditProperty = $report.PSObject.Properties['ruleHardeningAudit']
+            if ($null -eq $auditProperty -or $null -eq $auditProperty.Value) {
+                throw 'Full rule hardening audit is missing from benchmark JSON.'
+            }
+            $audit = @($auditProperty.Value)
+            $auditIssues = @($audit | Where-Object { @($_.contractIssues).Count -gt 0 })
+            $paired = @($audit | Where-Object { $_.pairedSyntheticControls -eq $true }).Count
+            $noControls = @($audit | Where-Object { $_.evidenceStatus -eq 'NoExplicitReplayControls' }).Count
+            Write-Host ("Rule catalog audit: {0} rules; paired synthetic controls={1}; no explicit controls={2}; contract issues={3}" -f
+                $audit.Count, $paired, $noControls, $auditIssues.Count)
+            if ($audit.Count -ne 544) {
+                $failures.Add('rule-catalog-count')
+                Write-Host "FAIL: expected 544 registered rules, report contains $($audit.Count)."
+            }
+            if ($auditIssues.Count -gt 0) {
+                $failures.Add('rule-catalog-contracts')
+                Write-Host "FAIL: $($auditIssues.Count) rule contract(s) require repair."
+                foreach ($entry in @($auditIssues | Select-Object -First 15)) {
+                    Write-Host "  $($entry.ruleId): $($entry.contractIssues -join ', ')"
+                }
+            }
+            $auditPath = Join-Path $outputDir 'rule-hardening-audit.md'
+            if (-not (Test-Path -LiteralPath $auditPath -PathType Leaf)) {
+                $failures.Add('rule-catalog-audit-artifact')
+                Write-Host 'FAIL: the complete rule-hardening-audit.md export was not generated.'
+            }
             if ($Details) {
                 foreach ($sample in @($report.sampleResults | Where-Object { $_.classification -eq 'Benign' })) {
                     foreach ($profile in $sample.profiles.PSObject.Properties) {
