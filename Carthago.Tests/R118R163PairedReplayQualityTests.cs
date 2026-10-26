@@ -40,6 +40,9 @@ public sealed class R118R163PairedReplayQualityTests
         Assert.Equal(ReplaySampleClassification.Malicious, r163Malicious.Classification);
 
         Assert.DoesNotContain("R118", r118Benign.ActualMatches);
+        // This authorized Bearer request is TLS-protected, so it is neither
+        // a Basic default-credential attempt nor a cleartext Bearer exposure.
+        Assert.DoesNotContain("R135", r118Benign.ActualMatches);
         Assert.DoesNotContain("R163", r163Benign.ActualMatches);
         Assert.Contains("R118", r118Malicious.ActualMatches);
         Assert.Contains("R163", r163Malicious.ActualMatches);
