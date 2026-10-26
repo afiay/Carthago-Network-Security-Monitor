@@ -36,7 +36,8 @@ public sealed class CatalogWideConfidenceSafetyTests
             Assert.InRange(profile.MinimumConfidence, 1, 100);
 
             foreach (var corruptScore in new[]
-                { double.NaN, double.PositiveInfinity, double.NegativeInfinity })
+                { double.NaN, double.PositiveInfinity, double.NegativeInfinity,
+                  -0.01, 1.01 })
             {
                 var evt = Event(descriptor, corruptScore);
                 var precision = RulePrecisionRuntimeEvaluator.Evaluate(
@@ -139,7 +140,8 @@ public sealed class CatalogWideConfidenceSafetyTests
             HttpUri = "/api/test"
         };
 
-        foreach (var score in new[] { double.NaN, double.PositiveInfinity, double.NegativeInfinity })
+        foreach (var score in new[] { double.NaN, double.PositiveInfinity, double.NegativeInfinity,
+            -0.01, 1.01 })
         {
             var decision = RuleTuningCatalog.Resolve(
                 profileName, descriptor, Event(descriptor, score), record,
