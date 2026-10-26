@@ -1,0 +1,18 @@
+{
+  "name": "r485-bacnet-readproperty-no-write",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "10.20.0.45",
+      "destination": "10.20.0.66",
+      "protocol": "UDP",
+      "applicationProtocol": "BACnet",
+      "destinationPort": 47808,
+      "info": "BACnet ReadProperty request object=analogOutput from authorized building telemetry client"
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R485"
+  ]
+}
