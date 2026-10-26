@@ -66,7 +66,7 @@ namespace Carthago.Engine.Rules.Tuning
             if ((n is 102 or 103) && baseDecision.RequiresBaseline && baselineReady
                 && !baselineLearningMode && effectiveMode == RuleMode.Shadow)
             {
-                var confidenceForPromotion = effectiveConfidenceScore ?? evt?.ConfidenceScore ?? 0.0;
+                var confidenceForPromotion = SanitizeConfidence(effectiveConfidenceScore ?? evt?.ConfidenceScore ?? 0.0);
                 var requiredConfidence = Math.Max(baseDecision.ConfidenceFloor ?? 0.0,
                     RulePrecisionCatalog.GetProfile(descriptor).MinimumConfidence / 100.0);
                 if (confidenceForPromotion >= requiredConfidence)
@@ -103,7 +103,7 @@ namespace Carthago.Engine.Rules.Tuning
                 }
             }
 
-            var confidence = effectiveConfidenceScore ?? evt?.ConfidenceScore ?? 0.0;
+            var confidence = SanitizeConfidence(effectiveConfidenceScore ?? evt?.ConfidenceScore ?? 0.0);
             if (effectiveMode == RuleMode.Alert && baseDecision.ConfidenceFloor.HasValue && confidence < baseDecision.ConfidenceFloor.Value)
             {
                 effectiveMode = RuleMode.Shadow;
@@ -138,6 +138,11 @@ namespace Carthago.Engine.Rules.Tuning
                 ResearchOnly = profile.ResearchOnly
             };
         }
+
+        // The tuning tier is a second independent gate, so it must use
+        // the same finite, exact (unrounded) score contract as runtime precision.
+        private static double SanitizeConfidence(double score)
+            => double.IsFinite(score) ? Math.Clamp(score, 0.0, 1.0) : 0.0;
 
         public static RuleMode ResolveProfileMode(string? profileName, RuleDescriptor descriptor)
         {
