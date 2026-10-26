@@ -31,6 +31,37 @@ public sealed class SsrfImdsConfidenceTests
         Assert.Equal(84, rule.PrecisionProfile.MinimumConfidence);
     }
 
+    [Theory]
+    [InlineData("Host: 169.254.169.254\\r\\nHost: portal.example.invalid")]
+    [InlineData("Host: 169.254.169.254\\r\\nHost: 169.254.169.254")]
+    [InlineData("Host: portal.example.invalid")]
+    [InlineData("Host: 169.254.169.254, portal.example.invalid")]
+    public async Task Ambiguous_Captured_Host_Authority_Is_Not_Metadata_Credential_Evidence(
+        string headers)
+    {
+        // A normalized HttpHost alone must not override contradictory
+        // wire-observed Host fields. RFC 9112 prohibits duplicate Host lines.
+        var record = MetadataRequest(headers.Replace("\\r", "\r").Replace("\\n", "\n"));
+        var result = await new R163_SsrfMetadataServiceProbeRule().EvaluateAsync(Context(record));
+        Assert.False(result.Matched);
+    }
+
+    [Fact]
+    public async Task Single_Consistent_Captured_Host_Remains_A_NonPaging_Raw_Candidate()
+    {
+        var record = MetadataRequest("Host: 169.254.169.254\\r\\nX-aws-ec2-metadata-token: [REDACTED]"
+            .Replace("\\r", "\r").Replace("\\n", "\n"));
+        var rule = new R163_SsrfMetadataServiceProbeRule();
+        var result = await rule.EvaluateAsync(Context(record));
+        Assert.True(result.Matched);
+        var evt = Assert.Single(result.Events);
+        var precision = RulePrecisionRuntimeEvaluator.Evaluate(
+            rule.Descriptor, evt, record, RuleMode.Alert, "Research");
+        Assert.Equal(RuleMode.Shadow, precision.EffectiveMode);
+        Assert.False(precision.ConfidenceSatisfied);
+        Assert.Equal(84, rule.PrecisionProfile.MinimumConfidence);
+    }
+
     [Fact]
     public async Task Metadata_Credential_Access_Without_Independent_Causality_Stays_Shadow()
     {
