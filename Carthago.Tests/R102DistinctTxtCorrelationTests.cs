@@ -77,6 +77,38 @@ public sealed class R102DistinctTxtCorrelationTests
     }
 
     [Fact]
+    public async Task R102_Does_Not_Combine_Different_Sources_Or_Expired_Windows()
+    {
+        var rule = new R102_DNSTunnelingViaLongLabelsRule();
+        var root = "window-" + Guid.NewGuid().ToString("N")[..8] + ".example";
+
+        async Task<DetectionEvent> Evaluate(string source, string label, DateTime timestamp)
+        {
+            var result = await rule.EvaluateAsync(new RuleEvaluationContext(
+                Record(source, label + "." + root, "TXT"), Sensitivity.Balanced, timestamp));
+            Assert.True(result.Matched);
+            return Assert.Single(result.Events);
+        }
+
+        await Evaluate("10.248.10.40", Labels[0], BaseTime);
+        await Evaluate("10.248.10.40", Labels[1], BaseTime.AddSeconds(20));
+
+        var differentSource = await Evaluate(
+            "10.248.10.41", Labels[2], BaseTime.AddSeconds(40));
+        Assert.Equal("1", EvidenceValue(differentSource, "dns.distinctSuspiciousTxtNames"));
+        Assert.DoesNotContain("multiple_distinct_suspicious_txt_names",
+            EvidenceValue(differentSource, "matched_conditions"), StringComparison.OrdinalIgnoreCase);
+
+        // A third distinct query for the original source arrives outside the
+        // five-minute observation window and must not complete the old burst.
+        var expired = await Evaluate(
+            "10.248.10.40", Labels[2], BaseTime.AddMinutes(6));
+        Assert.Equal("1", EvidenceValue(expired, "dns.distinctSuspiciousTxtNames"));
+        Assert.DoesNotContain("multiple_distinct_suspicious_txt_names",
+            EvidenceValue(expired, "matched_conditions"), StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task R102_Does_Not_Boost_Validation_Or_Known_Telemetry_Txt_Queries()
     {
         var rule = new R102_DNSTunnelingViaLongLabelsRule();
