@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Carthago.Services.Benchmarking;
+using Carthago.Services.Baseline;
 using Xunit;
 
 namespace Carthago.Tests
@@ -34,6 +35,37 @@ namespace Carthago.Tests
             Assert.Contains("Precision:", markdown);
             Assert.Contains("Recall:", markdown);
             Assert.Contains("F1:", markdown);
+        }
+
+        [Fact]
+        public async Task Benchmark_Replays_Never_Clear_The_Active_Baseline_Journal()
+        {
+            var root = CreateTempDirectory();
+            var activeDirectory = Path.Combine(root, "active-baseline");
+            var active = new BaselineStore(new BaselineOptions { DirectoryPath = activeDirectory });
+            await active.ObserveAsync(new BaselineObservation(
+                "dns.domain", "10.200.1.40", "production.example.test",
+                DateTime.UtcNow.AddMinutes(-1), "existing live observation"));
+
+            var journalPath = Path.Combine(activeDirectory, "baseline-journal.jsonl");
+            var originalJournal = await File.ReadAllTextAsync(journalPath);
+
+            var replayDirectory = Path.Combine(root, "replay");
+            Directory.CreateDirectory(replayDirectory);
+            File.Copy(Path.Combine(GetReplayDirectory(), "benign", "normal-dns-cdn.json"),
+                Path.Combine(replayDirectory, "normal-dns-cdn.json"));
+
+            // Emulate a caller with an active baseline in the same async flow.
+            // Nested replay scope must supersede it and restore it afterward.
+            using (BaselineStore.UseScoped(active))
+            {
+                var report = await new TuningBenchmarkRunner().RunAsync(
+                    new TuningBenchmarkOptions { ReplayDirectory = replayDirectory });
+                Assert.Single(report.SampleResults);
+                Assert.Same(active, BaselineStore.Current);
+            }
+
+            Assert.Equal(originalJournal, await File.ReadAllTextAsync(journalPath));
         }
 
         [Fact]
