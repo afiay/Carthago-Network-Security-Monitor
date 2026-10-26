@@ -6,15 +6,17 @@
       "source": "192.0.2.85",
       "destination": "192.0.2.50",
       "sourcePort": 53120,
-      "destinationPort": 8080,
+      "destinationPort": 443,
       "protocol": "TCP",
-      "applicationProtocol": "HTTP",
+      "applicationProtocol": "HTTPS",
       "httpMethod": "GET",
       "httpHost": "camera-lab.internal",
       "httpUri": "/api/status",
       "httpRequestHeaders": "Host: camera-lab.internal\r\nAuthorization: Bearer dWJudDp1Ym50",
       "processName": "camera-inventory-agent.exe",
-      "info": "Synthetic authorized status request. Bearer token characters resemble a factory-default Basic pair but are not HTTP Basic authentication; no secret is real."
+      "info": "Authorized device-inventory status request over TLS; no authentication failure or login attempt observed.",
+      "sni": "camera-lab.internal",
+      "tlsVersion": "TLS 1.3"
     }
   ],
   "expectedNonMatches": [
