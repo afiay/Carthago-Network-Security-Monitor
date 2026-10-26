@@ -538,3 +538,49 @@ References:
 - [Azure VM instance metadata](https://learn.microsoft.com/en-us/azure/virtual-machines/instance-metadata-service)
 - [Microsoft managed identity token request](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/how-to-use-vm-token)
 - [Azure SDK for .NET managed identity implementation guidance](https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/identity/Azure.Identity/TROUBLESHOOTING.md)
+
+## 100-fixture candidate: NVR redaction and EC2 IMDS IPv6 attribution (26 October 2026)
+
+Four synthetic paired replay scenarios extend the corpus to **53 benign and
+47 malicious-scenario fixtures**. The labels are independent test-ground-truth
+descriptions; they are not conclusions established by network telemetry alone.
+
+| Fixture | Label | Expected raw detection | Why this matters |
+| --- | --- | --- | --- |
+| `r118-nvr-nondefault-redacted-basic` | Benign | R118 no match | The live HTTP parser redacts a synthetic non-default Basic credential and must not infer a default pair from an Authorization field alone. |
+| `r118-nvr-default-redacted-basic` | Malicious scenario | R118 match; non-paging | The same NVR and HTTPS authority receives a synthetic default Basic pair; parser-derived evidence must be used without storing the credential or claiming login success. |
+| `r163-imdsv6-approved-ssm-credential-read` | Benign | R163 no match | An installed, recognized EC2 guest agent accesses a role-credential path over the documented IPv6 IMDS endpoint. |
+| `r163-imdsv6-unapproved-credential-read` | Malicious scenario | R163 match; non-paging | An unapproved application accesses the same IPv6 credential path, but no ingress request, response contents, or independent SSRF causal chain is supplied. |
+
+Both NVR fixtures pass **synthetic** raw HTTP requests through the production
+`HttpLight` parser; their records contain only redacted Authorization headers.
+The JSON fixtures do not set `HttpBasicDefaultCredentialObserved`: the replay
+loader requires that flag to originate from the parser, not from arbitrary JSON.
+The paired IMDSv6 records contain neither session tokens nor credential response
+bodies. IMDSv2 protocol headers alone must not increase SSRF confidence.
+
+The added `Carthago.Tests/R118R163NvrAndImdsV6ReplayTests.cs` asserts
+classifications, expected matches, exported-credential redaction, all six
+profile decisions, and unchanged rule floors: **R118 86%, R163 84%, R102 80%**.
+These are regression **assertions**, not evidence that the test has passed.
+
+**Verification boundary:** the four JSON files were structurally checked and
+the repository inventory confirmed 100 fixtures. Windows compilation, xUnit,
+and the 100-fixture benchmark have **not** been executed for this revision.
+Alert-level TP/FP/FN and precision/recall/F1 by profile are therefore pending.
+Do not promote R118 or R163 based on these additions.
+
+EC2 IMDS IPv6 `fd00:ec2::254` is available only when explicitly enabled on
+supported Nitro instances and IPv6-capable subnets. A metadata credential-path
+request can be legitimate for an authorized agent; a nonstandard caller is a
+candidate for investigation, not proof of SSRF. Trusted process GUID/socket
+attribution and a request-level ingress-to-egress causal chain are required
+before stronger SSRF claims. Sysmon Event ID 3 and Zeek HTTP/connection UIDs
+provide useful attribution components, not causality by themselves.
+
+References:
+- [AWS EC2 instance metadata retrieval and IPv6](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html)
+- [AWS EC2 IAM role credential metadata](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-metadata-security-credentials.html)
+- [RFC 7617 HTTP Basic authentication](https://www.rfc-editor.org/rfc/rfc7617.html)
+- [Microsoft Sysmon process GUID and network connection telemetry](https://learn.microsoft.com/sysinternals/downloads/sysmon)
+- [Zeek HTTP log UID correlation](https://docs.zeek.org/en/current/reference/logs/http.html)
