@@ -55,7 +55,10 @@ namespace Carthago.Tests
             });
             var coverage = report.RuleEvidenceCoverage;
 
-            Assert.Equal(report.RuleCoverage.Count, coverage.Count);
+            Assert.True(coverage.Count >= report.RuleCoverage.Count);
+            Assert.All(report.RuleCoverage, rule =>
+                Assert.Contains(coverage, entry => string.Equals(
+                    entry.RuleId, rule.RuleId, StringComparison.OrdinalIgnoreCase)));
             Assert.Equal(report.Summary.ExpectedMatchCount, coverage.Sum(rule => rule.PositiveCases));
             Assert.Equal(report.Summary.MatchedExpectedCount, coverage.Sum(rule => rule.PositiveRecognized));
             Assert.Equal(0, coverage.Sum(rule => rule.PositiveMissed));
