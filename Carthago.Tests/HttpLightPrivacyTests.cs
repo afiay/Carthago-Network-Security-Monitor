@@ -89,9 +89,9 @@ public sealed class HttpLightPrivacyTests
     [Fact]
     public void Synthetic_Onvif_Wire_Request_Derives_Trust_Before_Header_Redaction()
     {
-        var raw = "POST /onvif/device_service HTTP/1.1\\r\\n"
-                + "Host: nvr-lab.internal\\r\\n"
-                + "Authorization: Basic YWRtaW46YWRtaW4=\\r\\n\\r\\n";
+        var raw = "POST /onvif/device_service HTTP/1.1\r\n"
+                + "Host: nvr-lab.internal\r\n"
+                + "Authorization: Basic YWRtaW46YWRtaW4=\r\n\r\n";
 
         Assert.True(HttpLight.TryParseHttp(Encoding.ASCII.GetBytes(raw), out var parsed));
         Assert.True(parsed.ObservedDefaultBasicCredential);
