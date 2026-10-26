@@ -253,6 +253,33 @@ public sealed class SensitiveTelemetryContractTests
     }
 
     [Theory]
+    [InlineData("HomeLab")]
+    [InlineData("SmallBusiness")]
+    [InlineData("Enterprise")]
+    [InlineData("Research")]
+    [InlineData("IoTHeavy")]
+    [InlineData("OTSegment")]
+    public async Task R163_Direct_ImdsV2_Credential_Access_Without_Causal_Trace_Stays_Shadow(string tuningProfile)
+    {
+        var record = MetadataRecord("/latest/meta-data/iam/security-credentials/production-role", "unapproved-webapp.exe");
+        record.HttpRequestHeaders = "X-aws-ec2-metadata-token: synthetic-imdsv2-session-secret";
+
+        var rule = new R163_SsrfMetadataServiceProbeRule();
+        var result = await rule.EvaluateAsync(Context(record));
+        Assert.True(result.Matched);
+
+        var evt = Assert.Single(result.Events);
+        var decision = RulePrecisionRuntimeEvaluator.Evaluate(
+            rule.Descriptor, evt, record, RuleMode.Alert, tuningProfile);
+        Assert.Equal(RuleMode.Shadow, decision.EffectiveMode);
+        Assert.False(decision.ConfidenceSatisfied);
+        Assert.Equal(84, rule.PrecisionProfile.MinimumConfidence);
+        var evidence = string.Join(" ", new[] { evt.Evidence ?? string.Empty }
+            .Concat(evt.StructuredEvidence!.Items.Select(item => item.Value)));
+        Assert.DoesNotContain("synthetic-imdsv2-session-secret", evidence);
+    }
+
+    [Theory]
     [InlineData("169.254.170.2")]
     [InlineData("100.100.100.200")]
     public async Task R163_Does_Not_Trust_CrossProvider_Metadata_Host(string destination)
