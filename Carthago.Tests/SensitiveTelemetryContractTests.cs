@@ -141,6 +141,41 @@ public sealed class SensitiveTelemetryContractTests
                 rule.Descriptor, Assert.Single(result.Events), record, RuleMode.Alert, "Research").EffectiveMode);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task R118_Does_Not_Persist_Credential_Bearing_Info_In_Either_Evidence_Format(bool telnet)
+    {
+        var record = telnet
+            ? new TrafficRecord
+            {
+                Source = "192.0.2.30", Destination = "192.0.2.50",
+                DestinationPort = 23, Protocol = "TCP",
+                Info = "telnet login admin:admin factory default; private diagnostic note"
+            }
+            : new TrafficRecord
+            {
+                Source = "192.0.2.30", Destination = "192.0.2.50",
+                DestinationPort = 8080, Protocol = "HTTP",
+                HttpMethod = "GET", HttpHost = "camera-lab.internal",
+                HttpUri = "/admin",
+                HttpRequestHeaders = "Authorization: Basic YWRtaW46YWRtaW4=",
+                Info = "support ticket contains admin:admin and private diagnostic note"
+            };
+
+        var result = await new R118_DefaultCredentialIoTAttemptRule().EvaluateAsync(Context(record));
+        Assert.True(result.Matched);
+        var evt = Assert.Single(result.Events);
+        Assert.NotNull(evt.StructuredEvidence);
+
+        var evidence = string.Join(" ", new[] { evt.Evidence ?? string.Empty }
+            .Concat(evt.StructuredEvidence!.Items.Select(item => item.Value)));
+        Assert.DoesNotContain("admin:admin", evidence);
+        Assert.DoesNotContain("private diagnostic note", evidence);
+        Assert.DoesNotContain("YWRtaW46YWRtaW4=", evidence);
+        Assert.DoesNotContain(evt.StructuredEvidence.Items, item => item.Key == "iot.info");
+    }
+
     [Fact]
     public async Task R163_Does_Not_Mistake_Normal_Azure_Metadata_Lookup_For_Credential_Theft()
     {
