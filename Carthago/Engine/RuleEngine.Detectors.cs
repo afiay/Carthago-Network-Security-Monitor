@@ -298,14 +298,18 @@ namespace Carthago.Services
                 BoundDictionary(_packetTimes, 50000);
                 BoundDictionary(_floodStats, 50000);
 
-                if (record.Source is not { Length: > 0 } src) return false;
+                if (record.Source is not { Length: > 0 } src
+                    || string.IsNullOrWhiteSpace(record.Destination)) return false;
+                // SYN volume toward one service must not be manufactured by
+                // aggregating unrelated destinations from a busy scanner.
+                var floodKey = $"R002:{src}->{record.Destination}";
 
                 var window = _cfg.FloodWindowSeconds ?? FloodWindowSeconds;
                 var pktThreshold = ScaleCount(_cfg.FloodThreshold ?? FloodThreshold, s);
                 var byteThreshold = ScaleBytes(_cfg.FloodByteThreshold ?? FloodByteThreshold, s);
                 var synAckRatioThresh = ScaleFloat(_cfg.SynAckRatioThreshold ?? SynAckRatioThreshold, s);
 
-                var list = _packetTimes.GetOrAdd(src, _ => new List<DateTime>(capacity: Math.Max(pktThreshold * 2, 32)));
+                var list = _packetTimes.GetOrAdd(floodKey, _ => new List<DateTime>(capacity: Math.Max(pktThreshold * 2, 32)));
                 int pktCount;
                 lock (list)
                 {
@@ -317,9 +321,12 @@ namespace Carthago.Services
                 bool ack = record.Flags?.Contains("ACK") == true;
 
                 var stats = _floodStats.AddOrUpdate(
-                    src,
+                    floodKey,
                     _ => (Syn: syn ? 1 : 0, Ack: ack ? 1 : 0, Bytes: (long)Math.Max(0, record.Length), Ts: now),
-                    (_, prev) => (prev.Syn + (syn ? 1 : 0), prev.Ack + (ack ? 1 : 0), prev.Bytes + Math.Max(0, record.Length), now)
+                    (_, prev) => now >= prev.Ts && now - prev.Ts <= TimeSpan.FromSeconds(window)
+                        ? (prev.Syn + (syn ? 1 : 0), prev.Ack + (ack ? 1 : 0),
+                            prev.Bytes + Math.Max(0, record.Length), now)
+                        : (Syn: syn ? 1 : 0, Ack: ack ? 1 : 0, Bytes: (long)Math.Max(0, record.Length), Ts: now)
                 );
 
                 if (pktCount >= pktThreshold && stats.Bytes >= byteThreshold)
@@ -343,7 +350,7 @@ namespace Carthago.Services
                         };
 
                         lock (list) list.Clear();
-                        _floodStats[src] = (0, 0, 0, now);
+                        _floodStats[floodKey] = (0, 0, 0, now);
                         return true;
                     }
                 }
