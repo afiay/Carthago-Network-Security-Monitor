@@ -16,10 +16,19 @@ try {
     $failures = [System.Collections.Generic.List[string]]::new()
     function Invoke-Stage([string]$Name, [string[]]$Arguments) {
         $logFile = Join-Path $logDir ($Name + '.log')
-        & dotnet @Arguments *> $logFile
-        if ($LASTEXITCODE -ne 0) {
+        # PowerShell 7 can promote native stderr to an error record when
+        # ErrorActionPreference is Stop. Capture native output without aborting.
+        $previousPreference = $ErrorActionPreference
+        $ErrorActionPreference = 'Continue'
+        try {
+            & dotnet @Arguments *> $logFile
+            $exitCode = $LASTEXITCODE
+        } finally {
+            $ErrorActionPreference = $previousPreference
+        }
+        if ($exitCode -ne 0) {
             $script:failures.Add($Name)
-            Write-Host "FAIL: $Name (exit $LASTEXITCODE); see build-verify/local-logs/$Name.log"
+            Write-Host "FAIL: $Name (exit $exitCode); see build-verify/local-logs/$Name.log"
             if ($Details) { Get-Content $logFile | Select-Object -Last 40 }
             return $false
         }
