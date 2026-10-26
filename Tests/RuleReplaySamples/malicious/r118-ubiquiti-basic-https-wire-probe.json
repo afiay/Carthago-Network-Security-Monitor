@@ -1,0 +1,31 @@
+{
+  "name": "r118-ubiquiti-basic-https-wire-probe",
+  "classification": "Malicious",
+  "records": [
+    {
+      "source": "203.0.113.64",
+      "destination": "192.0.2.66",
+      "sourcePort": 54862,
+      "destinationPort": 443,
+      "protocol": "TLS",
+      "applicationProtocol": "HTTPS",
+      "tlsVersion": "TLS1.3",
+      "httpMethod": "POST",
+      "httpHost": "ubiquiti-edge.internal",
+      "httpUri": "/admin/login",
+      "httpRequestHeaders": "Host: ubiquiti-edge.internal\r\nAuthorization: [REDACTED]",
+      "processName": "unattributed-client.exe",
+      "info": "Synthetic unauthorized HTTPS Basic attempt against an IoT gateway using a known vendor-default pair. Parser must derive the flag and redact the header; successful login is not established."
+    }
+  ],
+  "rawHttpRequestsByRecordIndex": {
+    "0": "POST /admin/login HTTP/1.1\r\nHost: ubiquiti-edge.internal\r\nAuthorization: Basic dWJudDp1Ym50\r\n\r\n"
+  },
+  "expectedMatches": [
+    "R118"
+  ],
+  "expectedNonMatches": [
+    "R163"
+  ],
+  "expectedMinimumConfidence": 0.6
+}
