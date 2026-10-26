@@ -55,6 +55,25 @@ namespace Carthago.Tests
         }
 
         [Fact]
+        public async Task Benign_Replays_Have_No_Critical_Alerts_In_Any_Profile()
+        {
+            var report = await new TuningBenchmarkRunner().RunAsync(new TuningBenchmarkOptions
+            {
+                ReplayDirectory = GetReplayDirectory()
+            });
+
+            var violations = report.SampleResults
+                .Where(sample => sample.Classification == ReplaySampleClassification.Benign)
+                .SelectMany(sample => sample.Profiles
+                    .Where(profile => profile.Value.CriticalAlertCount > 0)
+                    .Select(profile => $"{sample.Name} [{profile.Key}]: critical={profile.Value.CriticalAlertCount}, alerted={string.Join(",", profile.Value.AlertRuleIds)}"))
+                .ToArray();
+
+            Assert.True(violations.Length == 0,
+                "Benign replay produced critical alerts: " + string.Join("; ", violations));
+        }
+
+        [Fact]
         public async Task Malicious_Samples_Trigger_Expected_HighConfidence_Rules_And_Profiles_Differ()
         {
             var runner = new TuningBenchmarkRunner();
