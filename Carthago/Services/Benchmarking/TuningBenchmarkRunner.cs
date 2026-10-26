@@ -163,8 +163,15 @@ namespace Carthago.Services.Benchmarking
                 if (sample.ExpectedMinimumConfidence > 0 && maxConfidence < sample.ExpectedMinimumConfidence)
                     sampleResult.Errors.Add($"Maximum confidence {maxConfidence:F2} was below the expected floor {sample.ExpectedMinimumConfidence:F2}.");
 
-                report.Summary.ExpectedMatchCount += expectedMatchIds.Count;
-                report.Summary.MatchedExpectedCount += expectedMatchIds.Count(id => actualMatchIds.Contains(id, StringComparer.OrdinalIgnoreCase));
+                // Benign fixtures can deliberately exercise a raw rule match while
+                // policy correctly keeps it in Shadow. Those matches must not inflate
+                // the metric named "true-positive pass rate".
+                if (classification == ReplaySampleClassification.Malicious)
+                {
+                    report.Summary.ExpectedMatchCount += expectedMatchIds.Count;
+                    report.Summary.MatchedExpectedCount += expectedMatchIds.Count(
+                        id => actualMatchIds.Contains(id, StringComparer.OrdinalIgnoreCase));
+                }
 
                 foreach (var ruleId in actualMatchIds)
                 {
