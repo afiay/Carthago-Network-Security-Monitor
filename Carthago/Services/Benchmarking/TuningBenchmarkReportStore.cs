@@ -2,6 +2,7 @@
 // File: Services/Benchmarking/TuningBenchmarkReportStore.cs
 using System;
 using System.IO;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -54,7 +55,7 @@ namespace Carthago.Services.Benchmarking
             sb.AppendLine();
             sb.AppendLine("## Summary");
             sb.AppendLine($"- Replay samples: {summary.ReplaySampleCount}");
-            sb.AppendLine($"- True-positive pass rate: {summary.TruePositivePassRate:P1}");
+            sb.AppendLine($"- True-positive pass rate: {FormatRatio(summary.TruePositivePassRate)}");
             sb.AppendLine($"- Benign false positives: {summary.BenignFalsePositiveCount}");
             sb.AppendLine($"- Benign critical alerts: {summary.BenignCriticalAlertCount}");
             if (summary.SampleLevelQuality is { } quality)
@@ -116,8 +117,8 @@ namespace Carthago.Services.Benchmarking
                 sb.AppendLine("| --- | --- | --- | --- | --- | --- | --- | --- |");
                 foreach (var gap in report.RecallGaps.Take(50))
                 {
-                    var confidence = gap.Confidence.HasValue ? gap.Confidence.Value.ToString("F2") : "N/A";
-                    var floor = gap.ConfidenceFloor.HasValue ? gap.ConfidenceFloor.Value.ToString("F2") : "N/A";
+                    var confidence = gap.Confidence.HasValue ? gap.Confidence.Value.ToString("F2", CultureInfo.InvariantCulture) : "N/A";
+                    var floor = gap.ConfidenceFloor.HasValue ? gap.ConfidenceFloor.Value.ToString("F2", CultureInfo.InvariantCulture) : "N/A";
                     var otherFactors = gap.BlockingFactors.Where(factor =>
                         !string.Equals(factor, gap.Cause, StringComparison.OrdinalIgnoreCase));
                     sb.AppendLine($"| {EscapeCell(gap.ProfileName)} | {EscapeCell(gap.SampleName)} | {EscapeCell(gap.RuleId)} | {EscapeCell(gap.Cause)} | {EscapeCell(string.Join(", ", otherFactors))} | {EscapeCell(gap.EffectiveMode)} | {confidence} / {floor} | {EscapeCell(string.Join("; ", gap.Evidence))} |");
@@ -134,7 +135,7 @@ namespace Carthago.Services.Benchmarking
                 sb.AppendLine($"- Shadows: {profile.ShadowCount}");
                 sb.AppendLine($"- Suppressed: {profile.SuppressedCount}");
                 sb.AppendLine($"- Benign alerts: {profile.BenignAlertCount}");
-                sb.AppendLine($"- Malicious pass rate: {profile.TruePositivePassRate:P1}");
+                sb.AppendLine($"- Malicious pass rate: {FormatRatio(profile.TruePositivePassRate)}");
                 if (profile.AlertRuleIds.Count > 0)
                     sb.AppendLine($"- Alerting rules: {string.Join(", ", profile.AlertRuleIds.Take(20))}");
                 sb.AppendLine();
@@ -169,7 +170,10 @@ namespace Carthago.Services.Benchmarking
             return clean.Length > 180 ? clean.Substring(0, 177) + "..." : clean;
         }
 
-        private static string FormatRatio(double? value) => value.HasValue ? value.Value.ToString("P1") : "N/A";
+        // Markdown reports must be stable across Windows locale settings,
+        // including Swedish comma decimals and localized percent spacing.
+        private static string FormatRatio(double? value)
+            => value.HasValue ? value.Value.ToString("P1", CultureInfo.InvariantCulture) : "N/A";
 
         private static void AppendList(StringBuilder sb, string title, System.Collections.Generic.IReadOnlyList<string> items)
         {
