@@ -1,0 +1,30 @@
+{
+  "name": "r118-camera-default-basic-wire-probe",
+  "classification": "Malicious",
+  "records": [
+    {
+      "source": "203.0.113.212",
+      "destination": "192.0.2.213",
+      "sourcePort": 52212,
+      "destinationPort": 8080,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "POST",
+      "httpHost": "camera-north.internal",
+      "httpUri": "/admin/login",
+      "httpRequestHeaders": "Host: camera-north.internal\r\nAuthorization: [REDACTED]",
+      "processName": "unattributed-client.exe",
+      "info": "Synthetic unauthorized default Basic credential probe targeting an embedded camera. The replay parser must derive the credential flag from the complete request and redact it; no login outcome is known."
+    }
+  ],
+  "rawHttpRequestsByRecordIndex": {
+    "0": "POST /admin/login HTTP/1.1\r\nHost: camera-north.internal\r\nAuthorization: Basic YWRtaW46YWRtaW4=\r\n\r\n"
+  },
+  "expectedMatches": [
+    "R118"
+  ],
+  "expectedNonMatches": [
+    "R163"
+  ],
+  "expectedMinimumConfidence": 0.6
+}
