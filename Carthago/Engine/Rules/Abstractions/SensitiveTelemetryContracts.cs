@@ -113,23 +113,26 @@ namespace Carthago.Engine.Rules
             if (string.IsNullOrWhiteSpace(record.HttpRequestHeaders))
                 return false;
 
+            var authorizationHeaderCount = 0;
+            var defaultPairObserved = false;
             foreach (var line in record.HttpRequestHeaders.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))
             {
                 var separator = line.IndexOf(':');
                 if (separator < 0 || !line[..separator].Trim().Equals("Authorization", StringComparison.OrdinalIgnoreCase))
                     continue;
 
-                // The synthetic replay/legacy-header path must use the same
-                // canonical wire-token comparison as live capture. Never decode
-                // observed credentials into a managed plaintext password string.
+                authorizationHeaderCount++;
+                // Legacy/replay headers must obey the same unambiguous singleton
+                // contract as live capture. Do not trust a default credential
+                // when multiple Authorization fields could be interpreted
+                // differently by intermediaries or the target device.
                 var authorization = line[(separator + 1)..].Trim();
-                if (authorization.Length is < 7 or > 518)
-                    continue;
-                if (IsKnownDefaultBasicAuthorizationValue(Encoding.ASCII.GetBytes(authorization)))
-                    return true;
+                if (authorization.Length is >= 7 and <= 518
+                    && IsKnownDefaultBasicAuthorizationValue(Encoding.ASCII.GetBytes(authorization)))
+                    defaultPairObserved = true;
             }
 
-            return false;
+            return authorizationHeaderCount == 1 && defaultPairObserved;
         }
 
         public static bool HasCredentialBearingMetadataRequest(TrafficRecord record)
