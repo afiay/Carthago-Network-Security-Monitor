@@ -395,7 +395,32 @@ namespace Carthago.Engine.Rules
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
         private static bool IsDeviceHost(string host)
-            => !string.IsNullOrWhiteSpace(host) && DeviceHostLabel.IsMatch(host);
+        {
+            if (string.IsNullOrWhiteSpace(host))
+                return false;
+
+            var authority = host.Trim();
+            // An HTTP Host is an authority, not a free-form URL or userinfo.
+            // Reject parser-confusing values before looking for device labels.
+            if (authority.IndexOfAny(new[] { '@', '/', '\\', ',', ' ', '\t', '\r', '\n' }) >= 0)
+                return false;
+
+            // HTTP/1.1 Host can include a numeric port. A valid device label
+            // must remain recognizable in "router02.lab.internal:8080".
+            var colon = authority.IndexOf(':');
+            if (colon >= 0)
+            {
+                if (colon != authority.LastIndexOf(':')
+                    || colon == authority.Length - 1
+                    || !Regex.IsMatch(authority[(colon + 1)..], @"^[0-9]{1,5}$")
+                    || !int.TryParse(authority[(colon + 1)..], out var port)
+                    || port is < 1 or > 65535)
+                    return false;
+                authority = authority[..colon];
+            }
+
+            return DeviceHostLabel.IsMatch(authority.TrimEnd('.'));
+        }
 
         private static bool ContainsAny(string text, string[] values)
             => values.Any(value => text.Contains(value, StringComparison.OrdinalIgnoreCase));
