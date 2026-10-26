@@ -1,0 +1,25 @@
+{
+  "name": "r118-default-basic-unrelated-https-host",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "192.0.2.24",
+      "destination": "192.0.2.80",
+      "sourcePort": 51910,
+      "destinationPort": 443,
+      "protocol": "TLS",
+      "applicationProtocol": "HTTPS",
+      "tlsVersion": "TLS1.3",
+      "httpMethod": "GET",
+      "httpHost": "portal.example.invalid",
+      "httpUri": "/docs/router-admin",
+      "httpRequestHeaders": "Host: portal.example.invalid\r\nAuthorization: Basic YWRtaW46YWRtaW4=",
+      "processName": "browser.exe",
+      "info": "Synthetic authorized decrypted HTTPS request to an ordinary portal. A known Basic token without an IoT target is not R118 device authentication evidence."
+    }
+  ],
+  "expectedNonMatches": [
+    "R118",
+    "R163"
+  ]
+}
