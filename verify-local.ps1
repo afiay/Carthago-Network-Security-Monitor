@@ -42,7 +42,18 @@ try {
             $script:failures.Add($Name)
             Write-Host ("FAIL: {0} (exit {1}, elapsed {2:n1}s); see build-verify/local-logs/{0}.log" -f
                 $Name, $exitCode, $stopwatch.Elapsed.TotalSeconds)
-            if ($Details -and -not $LiveOutput) { Get-Content $logFile | Select-Object -Last 40 }
+            # Always expose compiler/test failures, including under
+            # -LiveOutput with quiet dotnet verbosity. A failed build must
+            # not be mistaken for a failing new test or an old TRX result.
+            $errorLines = @(Get-Content -LiteralPath $logFile |
+                Where-Object { $_ -match '(?i)(\berror\s+(?:CS|NU|NETSDK|MSB)\d+|:\s*error\b|\berror TESTERROR\b)' } |
+                Select-Object -First 20)
+            if ($errorLines.Count -gt 0) {
+                Write-Host "  First $($errorLines.Count) build/test error line(s):"
+                foreach ($line in $errorLines) { Write-Host "  $line" }
+            } elseif ($Details -and -not $LiveOutput) {
+                Get-Content -LiteralPath $logFile | Select-Object -Last 40
+            }
             return $false
         }
         Write-Host ("PASS: {0} (elapsed {1:n1}s)" -f $Name, $stopwatch.Elapsed.TotalSeconds)
