@@ -133,8 +133,18 @@ namespace Carthago.Engine.Rules
             // A forged HTTP Host header on an unrelated destination is not metadata access.
             var destination = record.Destination.Trim().TrimEnd('.');
             var host = record.HttpHost.Trim().TrimEnd('.');
-            if (Uri.TryCreate("http://" + host, UriKind.Absolute, out var parsedHost) && parsedHost.Port == 80)
-                host = parsedHost.Host;
+
+            // Host is an HTTP authority, not a URI. Parsing "http://" + Host
+            // would silently accept userinfo (attacker@169.254.169.254) and
+            // embedded paths. Allow only the known literal metadata hosts,
+            // optionally followed by the standard cleartext HTTP port.
+            var explicitHttpPort = host.EndsWith(":80", StringComparison.OrdinalIgnoreCase);
+            if (explicitHttpPort)
+            {
+                host = host[..^3];
+                if (record.DestinationPort.HasValue && record.DestinationPort.Value != 80)
+                    return false;
+            }
             if (!MetadataHosts.Contains(destination) || !MetadataHosts.Contains(host))
                 return false;
 
@@ -150,9 +160,19 @@ namespace Carthago.Engine.Rules
             var uri = record.HttpUri.Trim();
             if (Uri.TryCreate(uri, UriKind.Absolute, out var absolute))
             {
-                if (!MetadataHosts.Contains(absolute.Host))
+                // An absolute-form request target must identify the same
+                // authority as the observed Host and network destination.
+                // Merely naming some other metadata endpoint is insufficient.
+                if ((absolute.Scheme != Uri.UriSchemeHttp && absolute.Scheme != Uri.UriSchemeHttps)
+                    || !string.IsNullOrEmpty(absolute.UserInfo)
+                    || !absolute.Host.Equals(host, StringComparison.OrdinalIgnoreCase)
+                    || (record.DestinationPort.HasValue && absolute.Port != record.DestinationPort.Value))
                     return false;
                 uri = absolute.AbsolutePath;
+            }
+            else if (!uri.StartsWith("/", StringComparison.Ordinal) || uri.StartsWith("//", StringComparison.Ordinal))
+            {
+                return false;
             }
 
             var queryIndex = uri.IndexOf('?');
