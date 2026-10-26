@@ -117,6 +117,7 @@ namespace Carthago.Engine.Rules
 
             var authorizationHeaderCount = 0;
             var defaultPairObserved = false;
+            var redactedAuthorizationObserved = false;
             foreach (var line in record.HttpRequestHeaders.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))
             {
                 var separator = line.IndexOf(':');
@@ -130,6 +131,7 @@ namespace Carthago.Engine.Rules
                 // when multiple Authorization fields could be interpreted
                 // differently by intermediaries or the target device.
                 var authorization = line[(separator + 1)..].Trim();
+                redactedAuthorizationObserved = authorization.Equals("[REDACTED]", StringComparison.OrdinalIgnoreCase);
                 if (authorization.Length is >= 7 and <= 518
                     && IsKnownDefaultBasicAuthorizationValue(Encoding.ASCII.GetBytes(authorization)))
                     defaultPairObserved = true;
@@ -139,7 +141,9 @@ namespace Carthago.Engine.Rules
             // derived flag remains authoritative for the credential identity,
             // but never overrides contradictory duplicate header evidence.
             return record.HttpBasicDefaultCredentialObserved
-                ? authorizationHeaderCount <= 1
+                ? authorizationHeaderCount == 0
+                    || (authorizationHeaderCount == 1
+                        && (redactedAuthorizationObserved || defaultPairObserved))
                 : authorizationHeaderCount == 1 && defaultPairObserved;
         }
 
