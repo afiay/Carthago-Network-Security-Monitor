@@ -1,0 +1,27 @@
+{
+  "name": "r118-unauthorized-router-basic-login",
+  "classification": "Malicious",
+  "records": [
+    {
+      "source": "203.0.113.77",
+      "destination": "192.0.2.1",
+      "sourcePort": 51234,
+      "destinationPort": 80,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "GET",
+      "httpHost": "router-lab.internal",
+      "httpUri": "/admin",
+      "httpRequestHeaders": "Host: router-lab.internal\r\nAuthorization: Basic cm9vdDpyb290",
+      "processName": "unattributed-client.exe",
+      "info": "Synthetic unauthorized router administration attempt with known factory default Basic credentials. No login outcome or maintenance authorization is asserted."
+    }
+  ],
+  "expectedMatches": [
+    "R118"
+  ],
+  "expectedNonMatches": [
+    "R163"
+  ],
+  "expectedMinimumConfidence": 0.75
+}
