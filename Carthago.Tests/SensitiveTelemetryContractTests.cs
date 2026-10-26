@@ -176,6 +176,95 @@ public sealed class SensitiveTelemetryContractTests
         Assert.DoesNotContain(evt.StructuredEvidence.Items, item => item.Key == "iot.info");
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task R118_Duplicate_Authorization_Is_Ambiguous_And_Remains_Redacted(bool defaultFirst)
+    {
+        const string basic = "Authorization: Basic YWRtaW46YWRtaW4=";
+        const string bearer = "Authorization: Bearer synthetic-token-not-a-credential";
+        var first = defaultFirst ? basic : bearer;
+        var second = defaultFirst ? bearer : basic;
+        var request = "POST /admin/login HTTP/1.1\r\n"
+                    + "Host: camera-lab.internal\r\n"
+                    + first + "\r\n" + second + "\r\n\r\n";
+
+        Assert.True(HttpLight.TryParseHttp(Encoding.ASCII.GetBytes(request), out var parsed));
+        Assert.False(parsed.ObservedDefaultBasicCredential);
+        Assert.DoesNotContain("YWRtaW46YWRtaW4=", parsed.JoinedHeaderLines);
+        Assert.DoesNotContain("synthetic-token-not-a-credential", parsed.JoinedHeaderLines);
+        Assert.Equal(2, parsed.HeaderNames.Count(name =>
+            name.Equals("Authorization", StringComparison.OrdinalIgnoreCase)));
+
+        var record = new TrafficRecord
+        {
+            Source = "192.0.2.100", Destination = "192.0.2.50",
+            DestinationPort = 80, Protocol = "HTTP", HttpMethod = parsed.Method,
+            HttpHost = parsed.Host, HttpUri = parsed.Path,
+            HttpRequestHeaders = parsed.JoinedHeaderLines,
+            HttpBasicDefaultCredentialObserved = parsed.ObservedDefaultBasicCredential
+        };
+
+        Assert.False((await new R118_DefaultCredentialIoTAttemptRule().EvaluateAsync(Context(record))).Matched);
+        Assert.Contains("device_authentication_attempt",
+            RulePrecisionCatalog.Validate("R118", record).MissingFields);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task R118_Legacy_Duplicate_Authorization_Never_Qualifies(bool defaultFirst)
+    {
+        const string basic = "Authorization: Basic YWRtaW46YWRtaW4=";
+        const string other = "Authorization: Basic YWRtaW46c3Ryb25nLXBhc3M=";
+        var record = new TrafficRecord
+        {
+            Source = "192.0.2.101", Destination = "192.0.2.50",
+            DestinationPort = 80, Protocol = "HTTP", HttpMethod = "POST",
+            HttpHost = "camera-lab.internal", HttpUri = "/admin/login",
+            HttpRequestHeaders = defaultFirst
+                ? basic + "\r\n" + other
+                : other + "\r\n" + basic
+        };
+
+        Assert.False((await new R118_DefaultCredentialIoTAttemptRule().EvaluateAsync(Context(record))).Matched);
+        Assert.Contains("device_authentication_attempt",
+            RulePrecisionCatalog.Validate("R118", record).MissingFields);
+    }
+
+    [Theory]
+    [InlineData("/latest/meta-data/iam/security-credentials/../instance-id")]
+    [InlineData("/latest/meta-data/iam/security-credentials/%2e%2e/instance-id")]
+    [InlineData("/latest/meta-data/iam/security-credentials/%2F..%2Finstance-id")]
+    [InlineData("/latest/meta-data/iam/security-credentials/%252e%252e/instance-id")]
+    [InlineData("/latest/meta-data/iam/security-credentials/./example-role")]
+    [InlineData("http://169.254.169.254/latest/meta-data/iam/security-credentials/../instance-id")]
+    public async Task R163_Rejects_Ambiguous_Metadata_Path_That_Can_Normalize_Away(string path)
+    {
+        var record = MetadataRecord(path, "unapproved-webapp.exe");
+        var result = await new R163_SsrfMetadataServiceProbeRule().EvaluateAsync(Context(record));
+
+        Assert.False(result.Matched);
+        Assert.False(RulePrecisionCatalog.Validate("R163", record).CanEvaluate);
+    }
+
+    [Fact]
+    public async Task R163_Valid_Azure_Token_Query_Still_Requires_Independent_Causality()
+    {
+        var record = MetadataRecord("/metadata/identity/oauth2/token?api-version=2018-02-01", "unapproved-webapp.exe");
+        record.HttpRequestHeaders = "Metadata: true";
+        var rule = new R163_SsrfMetadataServiceProbeRule();
+        var result = await rule.EvaluateAsync(Context(record));
+
+        Assert.True(result.Matched);
+        var evt = Assert.Single(result.Events);
+        var decision = RulePrecisionRuntimeEvaluator.Evaluate(
+            rule.Descriptor, evt, record, RuleMode.Alert, "Research");
+        Assert.Equal(RuleMode.Shadow, decision.EffectiveMode);
+        Assert.False(decision.ConfidenceSatisfied);
+        Assert.Equal(84, rule.PrecisionProfile.MinimumConfidence);
+    }
+
     [Fact]
     public async Task R163_Does_Not_Mistake_Normal_Azure_Metadata_Lookup_For_Credential_Theft()
     {
