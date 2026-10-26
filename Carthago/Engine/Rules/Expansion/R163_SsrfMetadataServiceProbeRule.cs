@@ -12,7 +12,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId: "R163",
             Name: "SSRF Metadata Service Probe",
             Category: "HttpApi",
-            Description: "Detects HTTP requests to cloud metadata credential paths from non-standard callers instead of alerting on every metadata lookup.",
+            Description: "Observes cloud metadata credential requests from non-standard callers; SSRF requires separate causal evidence.",
             DefaultSeverity: SeverityLevel.Critical,
             ConfigKey: "Rules.R163.Enabled",
             EnabledByDefault: true);
@@ -83,11 +83,11 @@ namespace Carthago.Engine.Rules.Expansion
                 new("http.path", string.IsNullOrWhiteSpace(path) ? "/" : path, "http")
             };
             evidenceItems.AddRange(AnalystContext(
-                "A non-standard HTTP caller reached a cloud metadata credential path.",
-                "Severity is Critical because metadata credential endpoints are frequently targeted by SSRF for token and instance-profile theft.",
+                "A non-standard HTTP caller requested a cloud metadata credential path; this alone does not prove SSRF.",
+                "Potential impact is Critical if independently corroborated SSRF exposes instance credentials; direct metadata access is not sufficient proof.",
                 "Legitimate bootstrap agents or cloud guest tooling may query metadata. Validate the source process carefully before escalating.",
-                "Review the source process and recent web requests for SSRF indicators, open redirects, or server-side fetch behavior.",
-                "Confirm whether the caller is an approved cloud agent or a user-facing application process."));
+                "Correlate inbound untrusted requests with outbound metadata access using trace or process identity, redirect chain and timing; do not infer causality from timing alone.",
+                "Confirm whether the caller is an approved agent, bootstrap task or user-facing application, and verify independent causal evidence before promotion."));
 
             return MatchHttpApi(
                 context,
@@ -99,10 +99,9 @@ namespace Carthago.Engine.Rules.Expansion
                 {
                     confidence.AddEvidence(0.34, "metadata-service-target");
                     confidence.AddEvidence(0.28, "credential-path");
-                    if (HeaderContains(record, "Metadata", "true") || HeaderContains(record, "Metadata-Flavor", "Google"))
-                        confidence.AddCorrelation(0.08, "metadata-header");
-                    if (hasImdsV2Token)
-                        confidence.AddCorrelation(0.08, "imds-v2-token-header");
+                    // IMDSv2 tokens and provider-required headers are normal protocol
+                    // mechanics, not independent evidence of attacker-controlled SSRF.
+                    // Keep them as context above but never boost detection confidence.
                 },
                 cooldownKey: $"{record.Source}:{record.Destination}:{path}");
         }
