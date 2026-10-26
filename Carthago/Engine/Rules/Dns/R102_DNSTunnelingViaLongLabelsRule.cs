@@ -27,7 +27,7 @@ namespace Carthago.Engine.Rules.Dns
             requiredFields: new[] { "source", "dns_qname", "dns_qtype" },
             evidenceFields: new[]
             {
-                "dns.qname", "dns.maxLabelLength", "dns.queryLength", "dns.entropy", "dns.longestLabelEntropy", "dns.longLabelCount", "dns.uniqueCharactersInLongestLabel",
+                "dns.qname", "dns.maxLabelLength", "dns.queryLength", "dns.entropy", "dns.longestLabelEntropy", "dns.longLabelCount", "dns.uniqueCharactersInLongestLabel", "dns.distinctSuspiciousTxtNames",
                 "count", "window_seconds", "matched_conditions"
             },
             positiveConditions: new[]
@@ -116,12 +116,29 @@ namespace Carthago.Engine.Rules.Dns
             if (!strongSingleQuery && !repeatedLongQuery)
                 return NoMatch();
 
+            // A repeated identical TXT query is not independent corroboration.
+            // Only distinct, long, high-entropy TXT names for the SAME source
+            // and root can strengthen confidence, never unrelated traffic.
+            // Existing baseline readiness and precision gates remain mandatory.
+            var independentlySuspiciousTxt =
+                txtLikeQuery
+                && maxLabelLength >= labelThreshold
+                && longestLabelEntropy >= entropyThreshold
+                && uniqueCharacterCount >= 12
+                && !IsKnownTelemetryRoot(root);
+            var distinctSuspiciousTxtNames = independentlySuspiciousTxt
+                ? CountDistinctValues($"{Descriptor.RuleId}:suspicious-txt:{context.Record.Source}:{root}",
+                    query, context.TimestampUtc, window)
+                : 0;
+            var multipleDistinctTxtNames = distinctSuspiciousTxtNames >= 3;
+
             var matchedConditions = new List<string> { "dns_qname_present", "dns_tunneling_label_shape" };
             if (longestLabelEntropy >= entropyThreshold) matchedConditions.Add("high_entropy_dns_query");
             if (strongSingleQuery) matchedConditions.Add("long_single_label");
             if (repeatedLongQuery) matchedConditions.Add("repeated_long_query_shape");
             if (txtLikeQuery) matchedConditions.Add("tunnel_favored_qtype");
             if (monolithicTxtLabel) matchedConditions.Add("monolithic_txt_label");
+            if (multipleDistinctTxtNames) matchedConditions.Add("multiple_distinct_suspicious_txt_names");
 
             var whyMatched = monolithicTxtLabel
                 ? $"The DNS query '{query}' contains an unusually long TXT-style label with only {uniqueCharacterCount} distinct characters, which is consistent with padded or chunked tunnel content."
@@ -139,6 +156,7 @@ namespace Carthago.Engine.Rules.Dns
                 new("dns.longestLabelEntropy", longestLabelEntropy.ToString("F2", System.Globalization.CultureInfo.InvariantCulture), "dns"),
                 new("dns.longLabelCount", longLabelCount.ToString(System.Globalization.CultureInfo.InvariantCulture), "dns"),
                 new("dns.uniqueCharactersInLongestLabel", uniqueCharacterCount.ToString(System.Globalization.CultureInfo.InvariantCulture), "dns"),
+                new("dns.distinctSuspiciousTxtNames", distinctSuspiciousTxtNames.ToString(System.Globalization.CultureInfo.InvariantCulture), "dns"),
                 new("count", repeatCount.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
                 new("window_seconds", ((int)window.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
                 new("matched_conditions", string.Join(",", matchedConditions), "rule")
@@ -164,6 +182,11 @@ namespace Carthago.Engine.Rules.Dns
                     if (strongSingleQuery) confidence.AddEvidence(0.22, "long-single-label");
                     if (maxLabelLength >= labelThreshold + 4) confidence.AddEvidence(0.10, "very-long-label");
                     if (repeatedLongQuery) confidence.AddEvidence(0.18, "repeated-long-query-shape");
+                    // Three independently observed encoded-looking TXT QNAMEs
+                    // within a bounded source/root window provide additional
+                    // behavioral evidence; do not reward a single query repeated.
+                    if (multipleDistinctTxtNames)
+                        confidence.AddCorrelation(0.08, "multiple-distinct-high-entropy-txt-queries");
                     if (txtLikeQuery)
                     {
                         confidence.AddCorrelation(0.10, "tunnel-favored-qtype");
