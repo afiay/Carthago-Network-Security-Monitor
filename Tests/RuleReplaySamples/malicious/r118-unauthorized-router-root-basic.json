@@ -1,0 +1,27 @@
+{
+  "name": "r118-unauthorized-router-root-basic",
+  "classification": "Malicious",
+  "records": [
+    {
+      "source": "198.51.100.107",
+      "destination": "192.0.2.107",
+      "sourcePort": 54107,
+      "destinationPort": 80,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "POST",
+      "httpHost": "router-lab.internal",
+      "httpUri": "/login",
+      "httpRequestHeaders": "Host: router-lab.internal\r\nAuthorization: Basic cm9vdDpyb290",
+      "processName": "unapproved-admin-client.exe",
+      "info": "Synthetic unapproved origin Basic authentication attempt at a router login endpoint. Login success is not asserted."
+    }
+  ],
+  "expectedMatches": [
+    "R118"
+  ],
+  "expectedNonMatches": [
+    "R163"
+  ],
+  "expectedMinimumConfidence": 0.75
+}
