@@ -3,7 +3,8 @@
 param(
     [string]$ReportPath = ".\\build-verify\\tuning-benchmark.json",
     [string]$SamplePattern = "r163-paired-*",
-    [switch]$AllBenign
+    [switch]$AllBenign,
+    [switch]$Detailed
 )
 
 Set-StrictMode -Version Latest
@@ -41,7 +42,11 @@ $rows = foreach ($sample in $samples) {
 if (@($rows).Count -eq 0) {
     Write-Host "No alert-level false positives in $($samples.Count) matching benign samples."
 } else {
-    $rows | Sort-Object Sample, Profile, Rule | Format-Table -AutoSize -Wrap
+    if ($Detailed) {
+        $rows | Sort-Object Sample, Profile, Rule | Format-List Sample, Profile, Rule, Confidence, Mode, Reasons, PrecisionReasons
+    } else {
+        $rows | Sort-Object Sample, Profile, Rule | Select-Object Sample, Profile, Rule, @{Name="Confidence";Expression={ if ($null -ne $_.Confidence) { "{0:P0}" -f [double]$_.Confidence } else { "" } }} | Format-Table -AutoSize
+    }
     Write-Host "`nAlert counts by rule and profile:"
     $rows | Group-Object Rule, Profile | Sort-Object Count -Descending |
         Select-Object Count, Name | Format-Table -AutoSize
