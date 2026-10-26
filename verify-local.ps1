@@ -77,6 +77,34 @@ try {
         }
         Write-Host 'Scope: unique alerted rule IDs per labeled sample, not event counts or production prevalence.'
     }
+    function Show-DetectionFunnel([object]$Report) {
+        $property = $Report.PSObject.Properties['detectionFunnelByProfile']
+        if ($null -eq $property) { throw 'Replay report has no detectionFunnelByProfile metrics' }
+        Write-Host 'Detection funnel: raw recognition vs policy gates vs simulated alerts (per expected malicious sample/rule):'
+        foreach ($entry in @($property.Value.PSObject.Properties | Sort-Object Name)) {
+            $funnel = $entry.Value
+            $expected = [int]$funnel.expectedMaliciousRules
+            $recognized = [int]$funnel.recognizedByDetector
+            $missed = [int]$funnel.detectorMisses
+            $alerted = [int]$funnel.simulatedAlerted
+            $shadowed = [int]$funnel.policyShadowed
+            $disabled = [int]$funnel.policyDisabled
+            $missingPolicy = [int]$funnel.missingPolicyDecisions
+            $eligibleMissing = [int]$funnel.eligibleButNotAlerted
+            $mismatches = [int]$funnel.alertDecisionMismatches
+            if ($expected -ne ($recognized + $missed) -or
+                $recognized -ne ($alerted + $shadowed + $disabled + $missingPolicy + $eligibleMissing) -or
+                $missingPolicy -ne 0 -or $eligibleMissing -ne 0 -or $mismatches -ne 0) {
+                throw "Detection funnel has inconsistent policy accounting for $($entry.Name)"
+            }
+
+            $detectorRate = if ($expected -gt 0) { '{0:P1}' -f ($recognized / $expected) } else { 'N/A' }
+            $alertRate = if ($expected -gt 0) { '{0:P1}' -f ($alerted / $expected) } else { 'N/A' }
+            Write-Host ("  {0,-15} detected={1}/{2} ({3}) alerted={4}/{2} ({5}) shadow={6} disabled={7} eligible={8}" -f
+                $entry.Name,$recognized,$expected,$detectorRate,$alerted,$alertRate,$shadowed,$disabled,$funnel.policyEligibleRules)
+        }
+        Write-Host 'Policy eligibility is conditional; it does not measure independent detection recall or live alert delivery.'
+    }
     if (-not (Invoke-Stage 'restore-tests' @('restore','Carthago.Tests/Carthago.Tests.csproj','--verbosity','quiet','--nologo'))) { exit 1 }
     if (-not (Invoke-Stage 'restore-benchmarks' @('restore','Carthago.Benchmarks/Carthago.Benchmarks.csproj','--verbosity','quiet','--nologo'))) { exit 1 }
     if (-not (Invoke-Stage 'build-tests' @('build','Carthago.Tests/Carthago.Tests.csproj','-c','Release','--no-restore','-v','quiet','--nologo'))) { exit 1 }
@@ -101,6 +129,7 @@ try {
             }
             Write-Host "Replay quality: $($report.summary.replaySampleCount) samples; benign critical alerts: $($report.summary.benignCriticalAlertCount)"
             Show-AlertRuleQuality $report
+            Show-DetectionFunnel $report
             if ($Details) {
                 foreach ($sample in @($report.sampleResults | Where-Object { $_.classification -eq 'Benign' })) {
                     foreach ($profile in $sample.profiles.PSObject.Properties) {
