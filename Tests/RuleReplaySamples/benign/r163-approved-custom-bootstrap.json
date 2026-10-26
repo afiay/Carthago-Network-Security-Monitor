@@ -1,0 +1,26 @@
+{
+  "name": "r163-approved-custom-bootstrap",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "10.0.0.16",
+      "destination": "169.254.169.254",
+      "sourcePort": 42001,
+      "destinationPort": 80,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "GET",
+      "httpHost": "169.254.169.254",
+      "httpUri": "/latest/meta-data/iam/security-credentials/approved-role",
+      "httpRequestHeaders": "Host: 169.254.169.254\r\nX-aws-ec2-metadata-token: synthetic-token-not-a-secret",
+      "processName": "bootstrap-helper.exe",
+      "info": "Synthetic approved bootstrap fetch using IMDSv2; must not page solely for metadata access."
+    }
+  ],
+  "expectedMatches": [
+    "R163"
+  ],
+  "expectedNonMatches": [
+    "R118"
+  ]
+}
