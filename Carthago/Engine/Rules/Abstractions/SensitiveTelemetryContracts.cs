@@ -110,24 +110,14 @@ namespace Carthago.Engine.Rules
                 if (separator < 0 || !line[..separator].Trim().Equals("Authorization", StringComparison.OrdinalIgnoreCase))
                     continue;
 
+                // The synthetic replay/legacy-header path must use the same
+                // canonical wire-token comparison as live capture. Never decode
+                // observed credentials into a managed plaintext password string.
                 var authorization = line[(separator + 1)..].Trim();
-                if (!authorization.StartsWith("Basic ", StringComparison.OrdinalIgnoreCase))
+                if (authorization.Length is < 7 or > 518)
                     continue;
-
-                var encoded = authorization[6..].Trim();
-                if (encoded.Length is < 4 or > 512)
-                    continue;
-
-                try
-                {
-                    var credentials = Encoding.UTF8.GetString(Convert.FromBase64String(encoded));
-                    if (DefaultCredentials.Contains(credentials))
-                        return true;
-                }
-                catch (FormatException)
-                {
-                    // An invalid Basic value is not proof that a default credential was used.
-                }
+                if (IsKnownDefaultBasicAuthorizationValue(Encoding.ASCII.GetBytes(authorization)))
+                    return true;
             }
 
             return false;
