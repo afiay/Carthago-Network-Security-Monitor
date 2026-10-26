@@ -155,6 +155,21 @@ namespace Carthago.Engine.Rules.Expansion
                     "MAVEN_PROVIDER_EVIDENCE_REQUIRED",
                     "R371 requires Maven, Nexus, or Artifactory-specific request evidence.");
 
+            if (string.Equals(spec.RuleId, "R367", StringComparison.OrdinalIgnoreCase)
+                && !HasTokenPattern(record, new[] { "terraform" })
+                && !HostMatchesAny(BestHost(record), new[] { "app.terraform.io", "terraform.io" })
+                && !ContainsAny(Text(record), "app.terraform.io", "terraform-token", "TF_TOKEN", "atlasv1."))
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                    "TERRAFORM_PROVIDER_EVIDENCE_REQUIRED",
+                    "R367 requires Terraform-specific host, token, or request evidence.");
+
+            if (string.Equals(spec.RuleId, "R370", StringComparison.OrdinalIgnoreCase)
+                && !HostMatchesAny(BestHost(record), new[] { "upload.pypi.org", "pypi.org" })
+                && !ContainsAny(Text(record), "upload.pypi.org", "pypi.org", "twine", "__token__"))
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                    "PYPI_PROVIDER_EVIDENCE_REQUIRED",
+                    "R370 requires PyPI-specific upload or credential evidence.");
+
             // A Vault-token exposure cannot be inferred from generic metadata
             // "token" words, Vault hostnames, or endpoint names alone.
             // Require an observed Vault token pattern before scoring R365.
