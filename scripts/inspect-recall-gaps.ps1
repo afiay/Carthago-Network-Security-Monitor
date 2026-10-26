@@ -38,6 +38,7 @@ Write-Host ("`nFirst {0} gaps (of {1}):" -f ([Math]::Min($Top, $gaps.Count)), $g
 $gaps |
     Select-Object -First $Top |
     Select-Object profileName, sampleName, ruleId, cause, effectiveMode,
+        @{Name='OtherGates';Expression={$primary = $_.cause; @($_.blockingFactors | Where-Object { $_ -ne $primary }) -join ', '}},
         @{Name='Confidence';Expression={if ($null -eq $_.confidence) {'N/A'} else {'{0:N2}' -f $_.confidence}}},
         @{Name='Floor';Expression={if ($null -eq $_.confidenceFloor) {'N/A'} else {'{0:N2}' -f $_.confidenceFloor}}} |
     Format-Table -AutoSize |
@@ -47,6 +48,9 @@ if ($Detailed) {
     foreach ($gap in @($gaps | Select-Object -First $Top)) {
         Write-Host ("`n{0} / {1} / {2}: {3} [{4}]" -f $gap.profileName, $gap.sampleName,
             $gap.ruleId, $gap.cause, $gap.detectionOutcome)
+        if ($null -ne $gap.PSObject.Properties['blockingFactors']) {
+            Write-Host ("  Blocking gates: {0}" -f (@($gap.blockingFactors) -join ', '))
+        }
         foreach ($reason in @($gap.evidence)) {
             Write-Host ("  - {0}" -f $reason)
         }
