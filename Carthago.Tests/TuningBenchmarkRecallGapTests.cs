@@ -156,6 +156,50 @@ public sealed class TuningBenchmarkRecallGapTests
     }
 
     [Fact]
+    public void Analyzer_Identifies_Unready_Baseline_Even_When_Detector_Confidence_Is_High()
+    {
+        var sample = new TuningBenchmarkSampleResult
+        {
+            Name = "corroborated-dns-txt-burst",
+            Classification = ReplaySampleClassification.Malicious,
+            ExpectedMatches = new List<string> { "R102" },
+            ActualMatches = new List<string> { "R102" },
+            Profiles = new Dictionary<string, TuningBenchmarkProfileSampleSummary>
+            {
+                ["Research"] = new()
+                {
+                    RuleDecisions = new List<TuningBenchmarkRuleDecision>
+                    {
+                        new()
+                        {
+                            RuleId = "R102",
+                            DefaultMode = "Alert",
+                            PrecisionMode = "Alert",
+                            EffectiveMode = "Shadow",
+                            Confidence = 0.98,
+                            ConfidenceFloor = 0.80,
+                            Reasons = new List<string> { "BaselineLearningMode" },
+                            ReasonDetails = new List<string> {
+                                "Baseline readiness is not established, so this baseline-dependent rule remains in Shadow."
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        var gap = Assert.Single(TuningBenchmarkRecallGapAnalyzer.Analyze(new TuningBenchmarkReport
+        {
+            SampleResults = new List<TuningBenchmarkSampleResult> { sample }
+        }));
+        Assert.Equal("BaselineNotReady", gap.Cause);
+        Assert.Equal("Matched", gap.DetectionOutcome);
+        Assert.Equal("Shadow", gap.EffectiveMode);
+        Assert.Equal(0.98, gap.Confidence);
+        Assert.Contains("BaselineNotReady", gap.BlockingFactors);
+    }
+
+    [Fact]
     public void Analyzer_Ignores_Benign_Matches_And_Leaves_Report_Unmodified()
     {
         var report = new TuningBenchmarkReport
