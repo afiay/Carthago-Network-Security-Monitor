@@ -99,7 +99,8 @@ namespace Carthago.Engine.Rules
 
             if (string.IsNullOrWhiteSpace(record.HttpMethod)
                 || string.IsNullOrWhiteSpace(record.HttpHost)
-                || !IsDeviceHost(record.HttpHost, record.DestinationPort))
+                || !IsDeviceHost(record.HttpHost, record.DestinationPort)
+                || !HasConsistentDeviceHostHeader(record))
                 return false;
 
             // The capture parser derives this flag without retaining credentials.
@@ -139,6 +140,37 @@ namespace Carthago.Engine.Rules
                     || (authorizationHeaderCount == 1
                         && (redactedAuthorizationObserved || defaultPairObserved))
                 : authorizationHeaderCount == 1 && defaultPairObserved;
+        }
+
+        // A normalized HttpHost must not override a contradictory or
+        // duplicated wire-observed Host field. Otherwise a proxy-bound HTTP
+        // Basic login could be mislabeled as authentication to a device.
+        // Records without header telemetry keep their existing behavior.
+        private static bool HasConsistentDeviceHostHeader(TrafficRecord record)
+        {
+            if (string.IsNullOrWhiteSpace(record.HttpRequestHeaders))
+                return true;
+
+            var hostFields = 0;
+            foreach (var line in record.HttpRequestHeaders.Split(
+                new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                var separator = line.IndexOf(':');
+                if (separator <= 0
+                    || !line[..separator].Trim().Equals("Host", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                if (++hostFields > 1)
+                    return false;
+                // Do not interpret comma-separated authorities, userinfo,
+                // or ambiguous ports as a single trusted HTTP Host.
+                var observed = line[(separator + 1)..].Trim();
+                if (observed.Length == 0 || observed.Contains(',')
+                    || !observed.Equals(record.HttpHost.Trim(), StringComparison.OrdinalIgnoreCase))
+                    return false;
+            }
+
+            return true;
         }
 
         public static bool HasCredentialBearingMetadataRequest(TrafficRecord record)
@@ -374,7 +406,7 @@ namespace Carthago.Engine.Rules
             // masquerade as a recognized guest agent.
             if (normalized.Contains('/')
                 && Regex.IsMatch(normalized,
-                    @"(?:^|/)(?:tmp|temp|downloads|desktop|appdata|public)(?:/|$)|(?:^|/)dev/shm(?:/|$)",
+                    @"(?:^|/)(?:tmp|temp|downloads|desktop|appdata|public|users?|home|workspace|workspaces|mnt|media|run/user|var/tmp)(?:/|$)|(?:^|/)dev/shm(?:/|$)",
                     RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
                 return false;
 
