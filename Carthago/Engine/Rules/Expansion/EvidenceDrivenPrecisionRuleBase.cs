@@ -136,6 +136,25 @@ namespace Carthago.Engine.Rules.Expansion
             if (spec.SuppressLikelyBrowserOnly && IsLikelyBrowserProcess(record.ProcessName) && !ContainsAny(Text(record), "admin", "token", "export", "download", "api", "oauth", "consent", "forwarding"))
                 return NoMatch(RuleNoMatchReasonCategory.AssetAllowed, "LIKELY_BROWSER_NO_HIGH_RISK_ACTION", "Likely browser traffic did not contain high-risk administrative, token, export, OAuth, or forwarding evidence.");
 
+            // Provider-specific DevOps detections must not infer credential use from
+            // generic HTTP, identity, repository, or metadata request vocabulary.
+            // Keep genuine provider evidence eligible for the normal signal gates.
+            if (string.Equals(spec.RuleId, "R360", StringComparison.OrdinalIgnoreCase)
+                && !HasTokenPattern(record, new[] { "circleci" })
+                && !ContainsAny(Text(record), "circleci.com", "circle-token", "CIRCLECI_TOKEN")
+                && !HostMatchesAny(BestHost(record), new[] { "circleci.com" }))
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                    "CIRCLECI_PROVIDER_EVIDENCE_REQUIRED",
+                    "R360 requires CircleCI-specific host, token, or request evidence.");
+
+            if (string.Equals(spec.RuleId, "R371", StringComparison.OrdinalIgnoreCase)
+                && !HostMatchesAny(BestHost(record), new[] { "repo.maven.apache.org", "maven.pkg.github.com", "nexus", "artifactory" })
+                && !ContainsAny(HttpPath(record), "/repository", "/maven2")
+                && !ContainsAny(Text(record), "maven", "nexus", "artifactory"))
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                    "MAVEN_PROVIDER_EVIDENCE_REQUIRED",
+                    "R371 requires Maven, Nexus, or Artifactory-specific request evidence.");
+
             // A Vault-token exposure cannot be inferred from generic metadata
             // "token" words, Vault hostnames, or endpoint names alone.
             // Require an observed Vault token pattern before scoring R365.
