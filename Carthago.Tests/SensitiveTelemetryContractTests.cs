@@ -79,6 +79,51 @@ public sealed class SensitiveTelemetryContractTests
         Assert.Contains("device_authentication_attempt", RulePrecisionCatalog.Validate("R118", record).MissingFields);
     }
 
+    [Theory]
+    [InlineData("cameradeals.example.invalid")]
+    [InlineData("routerdocumentation.example.invalid")]
+    [InlineData("mygateway.example.invalid")]
+    public async Task R118_Default_Basic_On_Keyword_Substring_Host_Is_Not_Device_Authentication(string host)
+    {
+        var record = new TrafficRecord
+        {
+            Source = "198.51.100.40", Destination = "192.0.2.40",
+            DestinationPort = 443, Protocol = "HTTPS",
+            HttpMethod = "GET", HttpHost = host, HttpUri = "/account",
+            HttpRequestHeaders = "Authorization: Basic YWRtaW46YWRtaW4=",
+            ProcessName = "browser.exe"
+        };
+
+        Assert.False((await new R118_DefaultCredentialIoTAttemptRule().EvaluateAsync(Context(record))).Matched);
+        Assert.False(RulePrecisionCatalog.Validate("R118", record).CanEvaluate);
+    }
+
+    [Theory]
+    [InlineData("router02.lab.internal")]
+    [InlineData("camera-office.internal")]
+    [InlineData("ubiquiti-router.lab.internal")]
+    public async Task R118_Recognizes_Inventory_Device_Label_With_Synthetic_Default_Basic(string host)
+    {
+        var record = new TrafficRecord
+        {
+            Source = "198.51.100.41", Destination = "192.0.2.41",
+            DestinationPort = 80, Protocol = "HTTP",
+            HttpMethod = "POST", HttpHost = host, HttpUri = "/admin/login",
+            HttpRequestHeaders = "Authorization: Basic YWRtaW46YWRtaW4=",
+            ProcessName = "unapproved-admin-client.exe"
+        };
+        var rule = new R118_DefaultCredentialIoTAttemptRule();
+        var result = await rule.EvaluateAsync(Context(record));
+
+        Assert.True(result.Matched);
+        Assert.True(RulePrecisionCatalog.Validate("R118", record).CanEvaluate);
+        var decision = RulePrecisionRuntimeEvaluator.Evaluate(
+            rule.Descriptor, Assert.Single(result.Events), record, RuleMode.Alert, "Research");
+        Assert.Equal(86, rule.PrecisionProfile.MinimumConfidence);
+        Assert.Equal(RuleMode.Shadow, decision.EffectiveMode);
+        Assert.False(decision.ConfidenceSatisfied);
+    }
+
     [Fact]
     public async Task R118_Telnet_Password_Policy_Example_Is_Not_A_Login_Attempt()
     {
@@ -361,6 +406,41 @@ public sealed class SensitiveTelemetryContractTests
         var record = MetadataRecord("/latest/meta-data/iam/security-credentials/app", process);
         record.HttpRequestHeaders = "X-aws-ec2-metadata-token: routine-imdsv2-token";
 
+        Assert.False((await new R163_SsrfMetadataServiceProbeRule().EvaluateAsync(Context(record))).Matched);
+    }
+
+    [Theory]
+    [InlineData(@"C:\Users\Public\cloud-init.exe")]
+    [InlineData(@"C:\Windows\Temp\amazon-ssm-agent.exe")]
+    [InlineData("/tmp/google-guest-agent")]
+    [InlineData("/dev/shm/cloud-init")]
+    public async Task R163_User_Writable_Agent_Basename_Is_Not_Trusted_Suppression(string process)
+    {
+        var record = MetadataRecord(
+            "/latest/meta-data/iam/security-credentials/synthetic-role", process);
+        record.HttpRequestHeaders = "Host: 169.254.169.254\\r\\nX-aws-ec2-metadata-token: [REDACTED]"
+            .Replace("\\r", "\r").Replace("\\n", "\n");
+        var rule = new R163_SsrfMetadataServiceProbeRule();
+        var result = await rule.EvaluateAsync(Context(record));
+
+        Assert.True(result.Matched);
+        var evt = Assert.Single(result.Events);
+        var decision = RulePrecisionRuntimeEvaluator.Evaluate(
+            rule.Descriptor, evt, record, RuleMode.Alert, "Research");
+        Assert.Equal(84, rule.PrecisionProfile.MinimumConfidence);
+        Assert.Equal(RuleMode.Shadow, decision.EffectiveMode);
+        Assert.False(decision.ConfidenceSatisfied);
+        Assert.DoesNotContain("X-aws-ec2-metadata-token", evt.Evidence ?? string.Empty,
+            StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Theory]
+    [InlineData("/usr/bin/cloud-init")]
+    [InlineData(@"C:\Program Files\Amazon\SSM\amazon-ssm-agent.exe")]
+    public async Task R163_Normal_Agent_Installation_Path_Retains_Benign_Suppression(string process)
+    {
+        var record = MetadataRecord(
+            "/latest/meta-data/iam/security-credentials/synthetic-role", process);
         Assert.False((await new R163_SsrfMetadataServiceProbeRule().EvaluateAsync(Context(record))).Matched);
     }
 
