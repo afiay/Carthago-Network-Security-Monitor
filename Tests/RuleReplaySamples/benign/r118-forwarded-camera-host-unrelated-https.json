@@ -1,0 +1,25 @@
+{
+  "name": "r118-forwarded-camera-host-unrelated-https",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "192.0.2.211",
+      "destination": "192.0.2.212",
+      "sourcePort": 52211,
+      "destinationPort": 443,
+      "protocol": "TLS",
+      "applicationProtocol": "HTTPS",
+      "tlsVersion": "TLS1.3",
+      "httpMethod": "GET",
+      "httpHost": "portal.example.invalid",
+      "httpUri": "/support/faq",
+      "httpRequestHeaders": "Host: portal.example.invalid\r\nX-Forwarded-Host: camera-lab.internal\r\nAuthorization: Basic YWRtaW46YWRtaW4=",
+      "processName": "approved-browser.exe",
+      "info": "Synthetic decrypted HTTPS request to an ordinary portal. A client-controlled forwarded hostname must not establish an IoT device target or successful login."
+    }
+  ],
+  "expectedNonMatches": [
+    "R118",
+    "R163"
+  ]
+}
