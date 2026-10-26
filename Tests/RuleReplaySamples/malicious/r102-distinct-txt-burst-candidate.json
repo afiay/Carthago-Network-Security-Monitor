@@ -1,0 +1,41 @@
+{
+  "name": "r102-distinct-txt-burst-candidate",
+  "classification": "Malicious",
+  "records": [
+    {
+      "source": "10.248.20.10",
+      "destination": "8.8.8.8",
+      "destinationPort": 53,
+      "protocol": "DNS",
+      "applicationProtocol": "DNS",
+      "dnsQname": "x9q8v7m6n5p4t3k2rz0h1w2c3v4b5n6m7l8k9j0i1u2y3t4r5s6.exfil-candidate.example",
+      "dnsQtype": "TXT"
+    },
+    {
+      "source": "10.248.20.10",
+      "destination": "8.8.8.8",
+      "destinationPort": 53,
+      "protocol": "DNS",
+      "applicationProtocol": "DNS",
+      "dnsQname": "v6n1z7m3q9w4t0p5k8c2r6b1s7x3j9d4h0f5l8y2g6a1e7o3u9.exfil-candidate.example",
+      "dnsQtype": "TXT"
+    },
+    {
+      "source": "10.248.20.10",
+      "destination": "8.8.8.8",
+      "destinationPort": 53,
+      "protocol": "DNS",
+      "applicationProtocol": "DNS",
+      "dnsQname": "q4n8v2x6k0s5p9h3t7w1r4m8y2c6j0d5f9g3b7l1z4a8e2u6i0.exfil-candidate.example",
+      "dnsQtype": "TXT"
+    }
+  ],
+  "expectedMatches": [
+    "R102"
+  ],
+  "expectedNonMatches": [
+    "R118",
+    "R163"
+  ],
+  "expectedMinimumConfidence": 0.9
+}
