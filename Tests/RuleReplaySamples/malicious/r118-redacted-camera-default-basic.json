@@ -1,0 +1,28 @@
+{
+  "name": "r118-redacted-camera-default-basic",
+  "classification": "Malicious",
+  "records": [
+    {
+      "source": "203.0.113.41",
+      "destination": "192.0.2.50",
+      "sourcePort": 51281,
+      "destinationPort": 8080,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "GET",
+      "httpHost": "camera-office.internal",
+      "httpUri": "/admin",
+      "httpRequestHeaders": "Host: camera-office.internal\r\nAuthorization: [REDACTED]",
+      "httpBasicDefaultCredentialObserved": true,
+      "processName": "unattributed-client.exe",
+      "info": "Synthetic unauthorized camera administration request. Parser observed a known default Basic credential before redacting the header; no password or login outcome retained."
+    }
+  ],
+  "expectedMatches": [
+    "R118"
+  ],
+  "expectedNonMatches": [
+    "R163"
+  ],
+  "expectedMinimumConfidence": 0.75
+}
