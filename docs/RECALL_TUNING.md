@@ -42,6 +42,14 @@ A gap contains the sample and rule ID, profile, detector outcome, effective poli
 
 Causes are *observed explanations*, not proof that an alert should have been emitted. A rule can have several simultaneous blocking factors. Investigate all of them; removing one gate would not necessarily produce an alert, and no gate should be disabled automatically.
 
+## R102 distinct DNS TXT-name corroboration
+
+R102 now records `dns.distinctSuspiciousTxtNames` for structured DNS TXT questions. A new behavioral correlation contributes **0.08** to the candidate confidence only after three different long, high-entropy TXT QNAMEs are observed from the same source to the same root domain within the configured observation window (five minutes by default). Each name must qualify independently. A repeated identical QNAME does not increase the distinct count.
+
+The additional evidence does **not** apply to DNS NULL queries, `_acme-challenge` and other excluded validation names, or known telemetry roots. The rule's **80% confidence floor**, cooldown behavior and requirement for a mature baseline before production alert promotion remain unchanged. A matched or high-confidence replay candidate is not an alert unless its profile, baseline, runtime precision and suppression gates all permit emission.
+
+Run `dotnet test Carthago.Tests/Carthago.Tests.csproj -c Release --filter FullyQualifiedName~R102DistinctTxtCorrelationTests` to exercise paired positive/negative scenarios, source and window isolation, and preservation of baseline promotion gating. Recompute all replay profile metrics using `.\\verify-local.ps1 -Details` after updating. Until local verification passes, treat this change as an unverified candidate. It should not be described as an increase in measured alert-level recall unless new, correctly labeled replay alerts demonstrate one.
+
 ## Safety criteria
 
 1. Preserve R118 and R163 in Shadow mode, including their current confidence floors, until independently validated malicious and benign evidence supports a change.
