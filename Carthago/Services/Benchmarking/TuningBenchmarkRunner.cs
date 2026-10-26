@@ -13,6 +13,7 @@ using Carthago.Engine.Rules.Catalog;
 using Carthago.Engine.Rules.Tuning;
 using Carthago.Models;
 using Carthago.Services.EnvironmentTuning;
+using Carthago.Services.Baseline;
 
 namespace Carthago.Services.Benchmarking
 {
@@ -24,10 +25,38 @@ namespace Carthago.Services.Benchmarking
             Converters = { new JsonStringEnumConverter() }
         };
 
+        // RuleEngine replay resets additional process-level detector state, so
+        // two benchmark runs inside one process must not overlap.
+        private static readonly SemaphoreSlim ReplayGate = new(1, 1);
+
         public async Task<TuningBenchmarkReport> RunAsync(TuningBenchmarkOptions options, CancellationToken cancellationToken = default)
         {
             if (options == null) throw new ArgumentNullException(nameof(options));
 
+            await ReplayGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+            var baselineDirectory = Path.Combine(Path.GetTempPath(), "carthago-replay-baseline-" + Guid.NewGuid().ToString("N"));
+            try
+            {
+                // Never clear or append to the live baseline journal in ProgramData.
+                // The scope flows through awaits and is restored on success/failure.
+                using (BaselineStore.UseScoped(new BaselineStore(new BaselineOptions { DirectoryPath = baselineDirectory })))
+                    return await RunIsolatedAsync(options, cancellationToken).ConfigureAwait(false);
+            }
+            finally
+            {
+                try
+                {
+                    if (Directory.Exists(baselineDirectory))
+                        Directory.Delete(baselineDirectory, recursive: true);
+                }
+                catch (IOException) { /* Safe to leave an isolated temporary baseline on disk. */ }
+                catch (UnauthorizedAccessException) { /* Do not mask the benchmark failure. */ }
+                finally { ReplayGate.Release(); }
+            }
+        }
+
+        private async Task<TuningBenchmarkReport> RunIsolatedAsync(TuningBenchmarkOptions options, CancellationToken cancellationToken)
+        {
             var rules = RuleRegistry.CreateDefaultRules()
                 .OrderBy(static rule => rule.Descriptor.RuleId, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
