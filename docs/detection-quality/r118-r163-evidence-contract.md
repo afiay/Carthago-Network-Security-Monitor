@@ -53,6 +53,33 @@ precision has been measured.
   process-instance identity, validated endpoint, and a credible timeline.
   Reject missing, forged, or unverified trace ancestry; preserve Shadow.
 
+## Provider-specific credential endpoint matrix
+
+The R163 request classifier now validates **the observed destination, the
+HTTP Host authority, and the credential path together**. An arbitrary
+credential-looking path on a real metadata IP is not evidence that the
+provider would return credentials.
+
+| Observed destination / validated Host | Credential path accepted for an access observation |
+| --- | --- |
+| `169.254.169.254` | AWS EC2 `/latest/meta-data/iam/security-credentials[/...]`; Azure `/metadata/identity/oauth2/token`; GCP `/computeMetadata/v1/instance/service-accounts/.../token` |
+| `169.254.170.2` | AWS ECS task credentials `/v2/credentials[/...]` |
+| `100.100.100.200` | Alibaba ECS RAM role `/latest/meta-data/ram/security-credentials[/...]` |
+| `metadata.google.internal` as Host, with observed `169.254.169.254` destination | GCP service-account token path only |
+
+The shared `169.254.169.254` address does **not** establish which cloud
+provider hosts the VM. The classifier deliberately recognizes multiple
+documented provider-specific paths at that address without assigning
+provider identity or SSRF causality. ECS and Alibaba paths are not accepted
+at that shared address. A recognized path is still **Shadow** without
+independent inbound-to-outbound evidence and the 84% confidence floor.
+
+Regression controls include an ECS destination paired with an EC2
+instance-credential path, legitimate provider/path combinations, and
+synthetic unauthorized ECS and Alibaba credential probes. The malicious
+labels describe the synthetic scenario's known intent, not a proven
+SSRF causal chain. None of these fixtures contains a real cloud token.
+
 ## Open-source implementation comparison
 
 The Falco project's *Contact cloud metadata service from container* rule
@@ -107,6 +134,8 @@ boundary; passive capture cannot manufacture missing causality.
 
 - RFC 7617, HTTP Basic authentication: https://www.rfc-editor.org/rfc/rfc7617
 - AWS EC2 IMDSv2: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html
+- AWS ECS task-role credential endpoint: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/security-iam-roles.html
+- Alibaba ECS RAM-role metadata endpoint: https://www.alibabacloud.com/help/en/ecs/user-guide/attach-an-instance-ram-role-to-an-ecs-instance
 - Azure Instance Metadata Service: https://learn.microsoft.com/en-us/azure/virtual-machines/instance-metadata-service
 - Google Compute Engine metadata: https://docs.cloud.google.com/compute/docs/metadata/querying-metadata
 - OWASP SSRF Prevention: https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html
