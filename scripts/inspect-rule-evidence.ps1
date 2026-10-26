@@ -60,14 +60,16 @@ if ($selected.Count -eq 0) {
     exit 0
 }
 
+# Compact headings prevent the paired status from being truncated to
+# "ue"/"se" on an 80-column Windows PowerShell terminal.
 $selected | ForEach-Object {
     [pscustomobject]@{
         Rule = $_.ruleId
-        'Positive' = "$($_.positiveRecognized)/$($_.positiveCases)"
-        'Recognition' = (Format-Ratio $_ 'positiveRecognitionRate')
-        'Negative' = "$($_.explicitNegativePassed)/$($_.explicitNegativeCases)"
-        'Negative pass' = (Format-Ratio $_ 'explicitNegativePassRate')
-        'Benign raw' = $_.benignRawMatches
-        Paired = ($_.positiveCases -gt 0 -and $_.explicitNegativeCases -gt 0)
+        Pos = "$($_.positiveRecognized)/$($_.positiveCases)"
+        Neg = "$($_.explicitNegativePassed)/$($_.explicitNegativeCases)"
+        'Pos %' = (Format-Ratio $_ 'positiveRecognitionRate')
+        'Neg %' = (Format-Ratio $_ 'explicitNegativePassRate')
+        Benign = $_.benignRawMatches
+        Paired = if ($_.positiveCases -gt 0 -and $_.explicitNegativeCases -gt 0) { 'Yes' } else { 'No' }
     }
 } | Format-Table -AutoSize | Out-Host
