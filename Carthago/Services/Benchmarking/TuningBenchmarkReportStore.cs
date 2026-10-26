@@ -75,6 +75,7 @@ namespace Carthago.Services.Benchmarking
             sb.AppendLine("## Alert-Level Recall Gaps");
             sb.AppendLine("- Unit: one expected malicious (sample, rule, profile) without an alert.");
             sb.AppendLine("- A raw detector match in Shadow mode remains a missed alert for this report.");
+            sb.AppendLine("- The primary cause is prioritized for triage; additional factors may independently block the same alert.");
             sb.AppendLine("- Causes identify evidence and policy bottlenecks; they do not authorize automatic rule promotion.");
             if (report.RecallGaps.Count == 0)
             {
@@ -94,13 +95,15 @@ namespace Carthago.Services.Benchmarking
                 }
                 sb.AppendLine();
                 sb.AppendLine("### Missed alert examples");
-                sb.AppendLine("| Profile | Sample | Rule | Cause | Mode | Confidence / floor | Evidence |");
-                sb.AppendLine("| --- | --- | --- | --- | --- | --- | --- |");
+                sb.AppendLine("| Profile | Sample | Rule | Primary cause | Additional blocking factors | Mode | Confidence / floor | Evidence |");
+                sb.AppendLine("| --- | --- | --- | --- | --- | --- | --- | --- |");
                 foreach (var gap in report.RecallGaps.Take(50))
                 {
                     var confidence = gap.Confidence.HasValue ? gap.Confidence.Value.ToString("F2") : "N/A";
                     var floor = gap.ConfidenceFloor.HasValue ? gap.ConfidenceFloor.Value.ToString("F2") : "N/A";
-                    sb.AppendLine($"| {EscapeCell(gap.ProfileName)} | {EscapeCell(gap.SampleName)} | {EscapeCell(gap.RuleId)} | {EscapeCell(gap.Cause)} | {EscapeCell(gap.EffectiveMode)} | {confidence} / {floor} | {EscapeCell(string.Join("; ", gap.Evidence))} |");
+                    var otherFactors = gap.BlockingFactors.Where(factor =>
+                        !string.Equals(factor, gap.Cause, StringComparison.OrdinalIgnoreCase));
+                    sb.AppendLine($"| {EscapeCell(gap.ProfileName)} | {EscapeCell(gap.SampleName)} | {EscapeCell(gap.RuleId)} | {EscapeCell(gap.Cause)} | {EscapeCell(string.Join(", ", otherFactors))} | {EscapeCell(gap.EffectiveMode)} | {confidence} / {floor} | {EscapeCell(string.Join("; ", gap.Evidence))} |");
                 }
                 if (report.RecallGaps.Count > 50)
                     sb.AppendLine($"- Showing 50 of {report.RecallGaps.Count} gaps. The JSON report includes every gap.");
