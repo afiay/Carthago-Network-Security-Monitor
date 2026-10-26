@@ -1,0 +1,40 @@
+{
+  "name": "r163-paired-gcp-unattributed-fetch-candidate",
+  "classification": "Malicious",
+  "records": [
+    {
+      "source": "198.51.100.88",
+      "destination": "10.8.0.88",
+      "sourcePort": 54110,
+      "destinationPort": 8080,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "GET",
+      "httpHost": "webapp.lab.internal",
+      "httpUri": "/fetch?url=http%3A%2F%2Fmetadata.google.internal%2FcomputeMetadata%2Fv1%2Finstance%2Fservice-accounts%2Fdefault%2Ftoken",
+      "processName": "webapp.exe",
+      "info": "Synthetic suspicious inbound user-controlled URL. No trusted request ID, response data, or verified causal link is present."
+    },
+    {
+      "source": "10.8.0.88",
+      "destination": "169.254.169.254",
+      "sourcePort": 51131,
+      "destinationPort": 80,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "GET",
+      "httpHost": "metadata.google.internal",
+      "httpUri": "/computeMetadata/v1/instance/service-accounts/default/token",
+      "httpRequestHeaders": "Host: metadata.google.internal\r\nMetadata-Flavor: Google",
+      "processName": "unapproved-webapp.exe",
+      "info": "Synthetic suspicious metadata credential path lookup; temporal adjacency alone is not independently corroborated SSRF and must remain non-paging."
+    }
+  ],
+  "expectedMatches": [
+    "R163"
+  ],
+  "expectedNonMatches": [
+    "R118"
+  ],
+  "expectedMinimumConfidence": 0.6
+}
