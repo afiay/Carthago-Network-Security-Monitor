@@ -67,6 +67,46 @@ public sealed class R118R163PairedReplayQualityTests
             Assert.True(r163.Confidence < 0.84, $"{profile}: R163 unexpectedly reached its 84% floor.");
         }
 
+        // Second paired batch: an ambiguous duplicate Authorization header is
+        // not proof of a device login; a single origin Basic header still is.
+        // Likewise, normalized-away metadata paths are not credential reads,
+        // while the provider-documented GCP IPv6 token path is a raw candidate.
+        var duplicateAuth = report.SampleResults.Single(sample =>
+            sample.Name == "r118-duplicate-authorization-ambiguous");
+        var singleAuth = report.SampleResults.Single(sample =>
+            sample.Name == "r118-unauthorized-router-root-basic");
+        var normalizedPath = report.SampleResults.Single(sample =>
+            sample.Name == "r163-encoded-dot-segment-metadata-decoy");
+        var ipv6CredentialPath = report.SampleResults.Single(sample =>
+            sample.Name == "r163-gcp-ipv6-credential-fetch-unattributed");
+
+        Assert.Equal(ReplaySampleClassification.Benign, duplicateAuth.Classification);
+        Assert.Equal(ReplaySampleClassification.Malicious, singleAuth.Classification);
+        Assert.Equal(ReplaySampleClassification.Benign, normalizedPath.Classification);
+        Assert.Equal(ReplaySampleClassification.Malicious, ipv6CredentialPath.Classification);
+        Assert.DoesNotContain("R118", duplicateAuth.ActualMatches);
+        Assert.DoesNotContain("R135", duplicateAuth.ActualMatches);
+        Assert.Contains("R118", singleAuth.ActualMatches);
+        Assert.DoesNotContain("R163", normalizedPath.ActualMatches);
+        Assert.Contains("R163", ipv6CredentialPath.ActualMatches);
+        Assert.Empty(duplicateAuth.Errors);
+        Assert.Empty(singleAuth.Errors);
+        Assert.Empty(normalizedPath.Errors);
+        Assert.Empty(ipv6CredentialPath.Errors);
+
+        foreach (var profile in report.ProfileResults.Keys)
+        {
+            Assert.DoesNotContain("R118", singleAuth.Profiles[profile].AlertRuleIds);
+            Assert.DoesNotContain("R163", ipv6CredentialPath.Profiles[profile].AlertRuleIds);
+
+            var r118 = Assert.Single(singleAuth.Profiles[profile].RuleDecisions,
+                decision => decision.RuleId == "R118");
+            var r163 = Assert.Single(ipv6CredentialPath.Profiles[profile].RuleDecisions,
+                decision => decision.RuleId == "R163");
+            Assert.True(r118.Confidence < 0.86, $"{profile}: duplicate-auth batch unexpectedly promotes R118.");
+            Assert.True(r163.Confidence < 0.84, $"{profile}: GCP IPv6 batch unexpectedly promotes R163.");
+        }
+
         // Sample-level metrics count actual alerts, not raw detector matches.
         // A benign alert in any profile is a regression requiring investigation.
         Assert.All(report.Summary.SampleLevelQualityByProfile.Values,
