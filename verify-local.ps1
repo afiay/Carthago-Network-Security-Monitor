@@ -28,7 +28,11 @@ try {
             if ($LiveOutput) {
                 # Optional interactive diagnostics: also show the full output
                 # while saving exactly the same per-stage log.
-                & dotnet @Arguments *>&1 | Tee-Object -FilePath $logFile
+                # Consume tool output at the host instead of leaking it
+                # into Invoke-Stage's return pipeline. Otherwise callers
+                # receive [log lines, $false] and an if(-not (...)) condition
+                # can mistakenly treat a failed build as successful.
+                & dotnet @Arguments *>&1 | Tee-Object -FilePath $logFile | Out-Host
             } else {
                 & dotnet @Arguments *> $logFile
             }
