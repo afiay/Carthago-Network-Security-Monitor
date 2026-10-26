@@ -322,6 +322,45 @@ public sealed class R118R163PairedReplayQualityTests
                 decision => decision.RuleId == "R163").Confidence < 0.84);
         }
 
+        // Sixth paired batch: a forwarded Host cannot establish an IoT target,
+        // and a legitimate IMDSv2 token PUT cannot establish SSRF. Their
+        // positive counterparts remain non-paging until independently verified.
+        var forwardedHost = report.SampleResults.Single(sample =>
+            sample.Name == "r118-forwarded-camera-host-unrelated-https");
+        var wireDefault = report.SampleResults.Single(sample =>
+            sample.Name == "r118-camera-default-basic-wire-probe");
+        var imdsSession = report.SampleResults.Single(sample =>
+            sample.Name == "r163-approved-imdsv2-session-put");
+        var imdsCredentialGet = report.SampleResults.Single(sample =>
+            sample.Name == "r163-unapproved-imdsv2-get-credential-path");
+
+        Assert.Equal(ReplaySampleClassification.Benign, forwardedHost.Classification);
+        Assert.Equal(ReplaySampleClassification.Malicious, wireDefault.Classification);
+        Assert.Equal(ReplaySampleClassification.Benign, imdsSession.Classification);
+        Assert.Equal(ReplaySampleClassification.Malicious, imdsCredentialGet.Classification);
+        Assert.DoesNotContain("R118", forwardedHost.ActualMatches);
+        Assert.Contains("R118", wireDefault.ActualMatches);
+        Assert.DoesNotContain("R163", imdsSession.ActualMatches);
+        Assert.Contains("R163", imdsCredentialGet.ActualMatches);
+        Assert.All(new[] { forwardedHost, wireDefault, imdsSession, imdsCredentialGet },
+            sample => Assert.Empty(sample.Errors));
+
+        foreach (var profile in report.ProfileResults.Keys)
+        {
+            Assert.Empty(forwardedHost.Profiles[profile].AlertRuleIds);
+            Assert.Empty(imdsSession.Profiles[profile].AlertRuleIds);
+            Assert.DoesNotContain("R118", wireDefault.Profiles[profile].AlertRuleIds);
+            Assert.DoesNotContain("R163", imdsCredentialGet.Profiles[profile].AlertRuleIds);
+            Assert.True(Assert.Single(wireDefault.Profiles[profile].RuleDecisions,
+                decision => decision.RuleId == "R118").Confidence < 0.86);
+            Assert.True(Assert.Single(imdsCredentialGet.Profiles[profile].RuleDecisions,
+                decision => decision.RuleId == "R163").Confidence < 0.84);
+        }
+        // Recommendation heuristics must not override the rule-specific
+        // precision floors simply because a raw match exceeded 75%.
+        Assert.DoesNotContain("R118", report.Summary.RulesRecommendedForAlert);
+        Assert.DoesNotContain("R163", report.Summary.RulesRecommendedForAlert);
+
         // Sample-level metrics count actual alerts, not raw detector matches.
         // A benign alert in any profile is a regression requiring investigation.
         Assert.All(report.Summary.SampleLevelQualityByProfile.Values,
