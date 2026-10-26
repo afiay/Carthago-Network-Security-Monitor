@@ -1,0 +1,26 @@
+{
+  "name": "r163-unauthorized-ec2-imdsv6-probe",
+  "classification": "Malicious",
+  "records": [
+    {
+      "source": "fd00:abcd::20",
+      "destination": "fd00:ec2::254",
+      "sourcePort": 48201,
+      "destinationPort": 80,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "GET",
+      "httpHost": "[fd00:ec2::254]",
+      "httpUri": "/latest/meta-data/iam/security-credentials/example-role",
+      "httpRequestHeaders": "Host: [fd00:ec2::254]",
+      "processName": "unapproved-webapp.exe",
+      "info": "Synthetic unauthorized EC2 IPv6 metadata credential-path probe. Intent is labeled malicious; no verified inbound-to-outbound SSRF causality or credential response."
+    }
+  ],
+  "expectedMatches": [
+    "R163"
+  ],
+  "expectedNonMatches": [
+    "R118"
+  ]
+}
