@@ -88,6 +88,23 @@ namespace Carthago.Services.Benchmarking
         public List<string> NoMatchReasons { get; set; } = new();
     }
 
+    /// <summary>
+    /// One expected malicious (sample, rule, profile) that did not produce an
+    /// alert. A detector match is intentionally not counted as an alert.
+    /// </summary>
+    public sealed class TuningBenchmarkRecallGap
+    {
+        public string ProfileName { get; set; } = string.Empty;
+        public string SampleName { get; set; } = string.Empty;
+        public string RuleId { get; set; } = string.Empty;
+        public string Cause { get; set; } = string.Empty;
+        public string DetectionOutcome { get; set; } = string.Empty;
+        public string EffectiveMode { get; set; } = string.Empty;
+        public double? Confidence { get; set; }
+        public double? ConfidenceFloor { get; set; }
+        public List<string> Evidence { get; set; } = new();
+    }
+
     public sealed class TuningBenchmarkRuleCoverage
     {
         public string RuleId { get; set; } = string.Empty;
@@ -108,6 +125,7 @@ namespace Carthago.Services.Benchmarking
         public TuningBenchmarkSummary Summary { get; set; } = new();
         public Dictionary<string, TuningBenchmarkProfileSummary> ProfileResults { get; set; } = new();
         public List<TuningBenchmarkSampleResult> SampleResults { get; set; } = new();
+        public List<TuningBenchmarkRecallGap> RecallGaps { get; set; } = new();
         public List<TuningBenchmarkRuleCoverage> RuleCoverage { get; set; } = new();
     }
 }
