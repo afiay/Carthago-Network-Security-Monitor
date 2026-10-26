@@ -5,6 +5,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Threading;
 using System.Text.RegularExpressions;
 using Carthago.Models;
 
@@ -12,7 +13,22 @@ namespace Carthago.Engine.Rules.Expansion
 {
     public abstract class EvidenceDrivenPrecisionRuleBase : CloudDevPrecisionDetectionRuleBase
     {
+        // Stateful burst counters are shared by evidence-driven rule families.
+        // Bound both cardinality and samples per key to avoid long-running
+        // traffic using unlimited memory. Saturation is fail-closed: no
+        // artificial threshold may be claimed for an untracked new key.
+        private const int MaxWindowKeys = 16384;
+        private const int MaxObservationsPerKey = 512;
+        private static readonly TimeSpan StaleWindowRetention = TimeSpan.FromHours(24);
         private static readonly ConcurrentDictionary<string, List<DateTime>> TimeWindows = new(StringComparer.OrdinalIgnoreCase);
+        private static readonly object WindowCreationGate = new();
+        private static int _rejectedWindowKeys;
+
+        public new static void ResetSharedStateForReplay()
+        {
+            TimeWindows.Clear();
+            Interlocked.Exchange(ref _rejectedWindowKeys, 0);
+        }
 
         private static readonly Regex GitHubTokenRegex = new(@"\b(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9_]{20,}\b|\bgithub_pat_[A-Za-z0-9_]{30,}\b", RegexOptions.Compiled | RegexOptions.CultureInvariant);
         private static readonly Regex GitLabTokenRegex = new(@"\bglpat-[A-Za-z0-9_\-]{20,}\b", RegexOptions.Compiled | RegexOptions.CultureInvariant);
@@ -358,10 +374,53 @@ namespace Carthago.Engine.Rules.Expansion
 
         private static int ObserveCount(string key, DateTime now, TimeSpan window)
         {
-            var list = TimeWindows.GetOrAdd(key, _ => new List<DateTime>());
-            lock (list)
+            if (window <= TimeSpan.Zero)
+                return 0;
+
+            if (!TimeWindows.TryGetValue(key, out var list))
             {
-                list.RemoveAll(timestamp => now - timestamp > window);
+                lock (WindowCreationGate)
+                {
+                    if (!TimeWindows.TryGetValue(key, out list))
+                    {
+                        if (TimeWindows.Count >= MaxWindowKeys)
+                        {
+                            // Retain potentially active windows. Evict only
+                            // observations long outside any supported interval.
+                            // Never clear every counter during live traffic.
+                            foreach (var candidate in TimeWindows)
+                            {
+                                lock (candidate.Value)
+                                {
+                                    if (candidate.Value.Count == 0 ||
+                                        candidate.Value.All(timestamp => now >= timestamp &&
+                                            now - timestamp > StaleWindowRetention))
+                                        TimeWindows.TryRemove(candidate.Key, out _);
+                                }
+                            }
+
+                            if (TimeWindows.Count >= MaxWindowKeys)
+                            {
+                                Interlocked.Increment(ref _rejectedWindowKeys);
+                                return 0;
+                            }
+                        }
+
+                        list = new List<DateTime>();
+                        TimeWindows.TryAdd(key, list);
+                    }
+                }
+            }
+
+            lock (list!)
+            {
+                // Future timestamps can occur on clock jumps or when replay
+                // fixtures are evaluated out of order. They must not count as
+                // observations in the current interval.
+                list.RemoveAll(timestamp => timestamp > now ||
+                    now - timestamp > window);
+                if (list.Count >= MaxObservationsPerKey)
+                    list.RemoveAt(0);
                 list.Add(now);
                 return list.Count;
             }
