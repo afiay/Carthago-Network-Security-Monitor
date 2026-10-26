@@ -60,11 +60,99 @@ public sealed class TuningBenchmarkRecallGapTests
             && gap.DetectionOutcome == "Matched");
         Assert.Contains(gaps, gap => gap.RuleId == "R163" && gap.Cause == "MissingTelemetry"
             && gap.Evidence.Contains("Missing telemetry: precision.Http"));
-        Assert.Contains(gaps, gap => gap.RuleId == "R102" && gap.Cause == "PrecisionShadow");
+        Assert.Contains(gaps, gap => gap.RuleId == "R102" && gap.Cause == "BaselineNotReady"
+            && gap.BlockingFactors.Contains("PrecisionShadow"));
         Assert.Contains(gaps, gap => gap.RuleId == "R200" && gap.Cause == "ConfidenceFloor"
             && gap.ConfidenceFloor == 0.85);
         Assert.DoesNotContain(gaps, gap => gap.RuleId == "R240");
         Assert.All(gaps, gap => Assert.Equal("Enterprise", gap.ProfileName));
+    }
+
+    [Fact]
+    public void Analyzer_Reports_Every_Independent_Precision_And_Environment_Gate()
+    {
+        var sample = new TuningBenchmarkSampleResult
+        {
+            Name = "policy-gated-malicious",
+            Classification = ReplaySampleClassification.Malicious,
+            ExpectedMatches = new List<string> { "R118", "R163", "R102", "R356" },
+            ActualMatches = new List<string> { "R118", "R163", "R102", "R356" },
+            Profiles = new Dictionary<string, TuningBenchmarkProfileSampleSummary>
+            {
+                ["Research"] = new()
+                {
+                    RuleDecisions = new List<TuningBenchmarkRuleDecision>
+                    {
+                        new() { RuleId = "R118", DefaultMode = "Alert", PrecisionMode = "Alert",
+                            EffectiveMode = "Shadow", Confidence = 0.76,
+                            RuntimePrecisionReasons = new List<string>
+                            { "confidence 76% below precision floor 86%" } },
+                        new() { RuleId = "R163", DefaultMode = "Alert", PrecisionMode = "Alert",
+                            EffectiveMode = "Shadow", Confidence = 0.62, ConfidenceFloor = 0.75,
+                            Reasons = new List<string> { "ConfidenceFloorApplied" },
+                            RuntimePrecisionReasons = new List<string>
+                            { "confidence 62% below precision floor 84%" } },
+                        new() { RuleId = "R102", DefaultMode = "Alert", PrecisionMode = "Alert",
+                            EffectiveMode = "Shadow", Confidence = 0.78,
+                            RuntimePrecisionReasons = new List<string>
+                            { "confidence 78% below precision floor 80%" } },
+                        new() { RuleId = "R356", DefaultMode = "Alert", PrecisionMode = "Alert",
+                            EffectiveMode = "Shadow", Confidence = 0.91,
+                            RuntimePrecisionReasons = new List<string>
+                            { "environment-scoped rule lacks approved asset/segment/controller evidence; non-paging until configured" } }
+                    }
+                },
+                ["Enterprise"] = new()
+                {
+                    RuleDecisions = new List<TuningBenchmarkRuleDecision>
+                    {
+                        new() { RuleId = "R118", DefaultMode = "Shadow", PrecisionMode = "Alert",
+                            EffectiveMode = "Shadow", Confidence = 0.76,
+                            Reasons = new List<string> { "MissingEnvironmentConfiguration" },
+                            RuntimePrecisionReasons = new List<string>
+                            { "confidence 76% below precision floor 86%" } },
+                        new() { RuleId = "R163", DefaultMode = "Alert", PrecisionMode = "Alert",
+                            EffectiveMode = "Shadow", Confidence = 0.62, ConfidenceFloor = 0.75,
+                            Reasons = new List<string> { "ConfidenceFloorApplied" },
+                            RuntimePrecisionReasons = new List<string>
+                            { "confidence 62% below precision floor 84%" } },
+                        new() { RuleId = "R102", DefaultMode = "Shadow", PrecisionMode = "Alert",
+                            EffectiveMode = "Shadow", Confidence = 0.78,
+                            RuntimePrecisionReasons = new List<string>
+                            { "confidence 78% below precision floor 80%" } },
+                        new() { RuleId = "R356", DefaultMode = "Shadow", PrecisionMode = "Alert",
+                            EffectiveMode = "Shadow", Confidence = 0.91,
+                            RuntimePrecisionReasons = new List<string>
+                            { "environment-scoped rule lacks approved asset/segment/controller evidence; non-paging until configured" } }
+                    }
+                }
+            }
+        };
+        var report = new TuningBenchmarkReport
+        {
+            SampleResults = new List<TuningBenchmarkSampleResult> { sample }
+        };
+
+        var gaps = TuningBenchmarkRecallGapAnalyzer.Analyze(report);
+
+        Assert.Equal(8, gaps.Count);
+        Assert.Contains(gaps, gap => gap.ProfileName == "Research" && gap.RuleId == "R118"
+            && gap.Cause == "PrecisionConfidenceFloor"
+            && gap.BlockingFactors.Count == 1);
+        Assert.Contains(gaps, gap => gap.ProfileName == "Research" && gap.RuleId == "R163"
+            && gap.Cause == "ConfidenceFloor"
+            && gap.BlockingFactors.Contains("PrecisionConfidenceFloor"));
+        Assert.Contains(gaps, gap => gap.ProfileName == "Research" && gap.RuleId == "R102"
+            && gap.Cause == "PrecisionConfidenceFloor");
+        Assert.Contains(gaps, gap => gap.ProfileName == "Research" && gap.RuleId == "R356"
+            && gap.Cause == "EnvironmentApprovalRequired");
+        Assert.Contains(gaps, gap => gap.ProfileName == "Enterprise" && gap.RuleId == "R118"
+            && gap.Cause == "PrecisionConfidenceFloor"
+            && gap.BlockingFactors.Contains("EnvironmentConfigurationRequired")
+            && gap.BlockingFactors.Contains("ProfileShadow"));
+        Assert.Contains(gaps, gap => gap.ProfileName == "Enterprise" && gap.RuleId == "R356"
+            && gap.BlockingFactors.Contains("ProfileShadow"));
+        Assert.All(gaps, gap => Assert.Equal("Matched", gap.DetectionOutcome));
     }
 
     [Fact]
