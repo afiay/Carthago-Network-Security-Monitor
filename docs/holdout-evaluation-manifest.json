@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "title": "Separate synthetic accuracy holdout (not field-independent)",
+  "frozenDateUtc": "2026-10-26",
+  "rules": [
+    "R102",
+    "R118",
+    "R163"
+  ],
+  "classificationNotes": "Scenario labels are analyst-authored synthetic hypotheses. Metadata direct probes are not proven SSRF; default credential attempts are not proven compromises. Keep independent of development replay tuning.",
+  "samples": [
+    {
+      "file": "Tests/RuleReplayHoldout/benign/holdout-r102-acme-long-txt-verification.json",
+      "gitBlobSha": "ffcb51d7b4eb75bfe16a015e9b77e56cdeca9747",
+      "classification": "Benign",
+      "primaryRule": "R102"
+    },
+    {
+      "file": "Tests/RuleReplayHoldout/benign/holdout-r102-office-dns-mixed-a-aaaa.json",
+      "gitBlobSha": "cf93797bea6b881bff4c6fa7e2fc38703b9c0988",
+      "classification": "Benign",
+      "primaryRule": "R102"
+    },
+    {
+      "file": "Tests/RuleReplayHoldout/benign/holdout-r118-camera-nondefault-basic.json",
+      "gitBlobSha": "f72836971898e2264600c3da98e2afe4d04576c4",
+      "classification": "Benign",
+      "primaryRule": "R118"
+    },
+    {
+      "file": "Tests/RuleReplayHoldout/benign/holdout-r118-nvr-mismatched-host-with-auth.json",
+      "gitBlobSha": "3093e132f202def0535eb1cf407bc7ead5349ffd",
+      "classification": "Benign",
+      "primaryRule": "R118"
+    },
+    {
+      "file": "Tests/RuleReplayHoldout/benign/holdout-r163-ec2-cloud-init-maintenance.json",
+      "gitBlobSha": "bda3db3c92f6974c5f52b8f9eb89888aec520a50",
+      "classification": "Benign",
+      "primaryRule": "R163"
+    },
+    {
+      "file": "Tests/RuleReplayHoldout/benign/holdout-r163-gcp-identity-email-lookup.json",
+      "gitBlobSha": "9bb44da0a4d3350480379c3ca75e05c973fd6d78",
+      "classification": "Benign",
+      "primaryRule": "R163"
+    },
+    {
+      "file": "Tests/RuleReplayHoldout/malicious/holdout-r102-multistage-encoded-txt.json",
+      "gitBlobSha": "715199a2a70cd470344a8276ff6141da88ee73d1",
+      "classification": "Malicious",
+      "primaryRule": "R102"
+    },
+    {
+      "file": "Tests/RuleReplayHoldout/malicious/holdout-r102-second-client-encoded-txt.json",
+      "gitBlobSha": "4f63a3809072669f4a019714c67762e14eaae9bc",
+      "classification": "Malicious",
+      "primaryRule": "R102"
+    },
+    {
+      "file": "Tests/RuleReplayHoldout/malicious/holdout-r118-embedded-camera-default-root.json",
+      "gitBlobSha": "54d4604c480205ae3161f365cf09b77881631997",
+      "classification": "Malicious",
+      "primaryRule": "R118"
+    },
+    {
+      "file": "Tests/RuleReplayHoldout/malicious/holdout-r118-router-default-guest.json",
+      "gitBlobSha": "f7d569cf9fcdcadaf1bfc451f5f35ddaa54405f6",
+      "classification": "Malicious",
+      "primaryRule": "R118"
+    },
+    {
+      "file": "Tests/RuleReplayHoldout/malicious/holdout-r163-gcp-unapproved-head-token.json",
+      "gitBlobSha": "d668d6af55dea5668b1c91451627421dca44c2da",
+      "classification": "Malicious",
+      "primaryRule": "R163"
+    },
+    {
+      "file": "Tests/RuleReplayHoldout/malicious/holdout-r163-userhome-guest-agent-spoof.json",
+      "gitBlobSha": "c9a962677cac93119cf73480df7eaf6c2b54515b",
+      "classification": "Malicious",
+      "primaryRule": "R163"
+    }
+  ]
+}
