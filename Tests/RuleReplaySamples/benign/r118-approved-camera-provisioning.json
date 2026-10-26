@@ -1,0 +1,26 @@
+{
+  "name": "r118-approved-camera-provisioning",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "192.0.2.25",
+      "destination": "192.0.2.50",
+      "sourcePort": 51000,
+      "destinationPort": 8080,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "GET",
+      "httpHost": "camera-lab.internal",
+      "httpUri": "/admin",
+      "httpRequestHeaders": "Host: camera-lab.internal\r\nAuthorization: Basic YWRtaW46YWRtaW4=",
+      "processName": "provisioning-client.exe",
+      "info": "Authorized factory-reset provisioning window; authorization is synthetic fixture data."
+    }
+  ],
+  "expectedMatches": [
+    "R118"
+  ],
+  "expectedNonMatches": [
+    "R163"
+  ]
+}
