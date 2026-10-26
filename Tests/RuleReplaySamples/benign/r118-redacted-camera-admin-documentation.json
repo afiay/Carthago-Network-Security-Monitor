@@ -12,10 +12,9 @@
       "httpMethod": "GET",
       "httpHost": "camera-office.internal",
       "httpUri": "/admin/status",
-      "httpRequestHeaders": "Host: camera-office.internal\r\nAuthorization: [REDACTED]",
-      "httpBasicDefaultCredentialObserved": false,
+      "httpRequestHeaders": "Host: camera-office.internal\r\nAuthorization: Basic YWRtaW46c3Ryb25nLXBhc3M=",
       "processName": "camera-management.exe",
-      "info": "Authorized camera maintenance. Support documentation mentions factory defaults, but the observed credential is not a known default."
+      "info": "Authorized camera maintenance with a non-default synthetic Basic pair. Documentation references to factory defaults are not authentication evidence."
     }
   ],
   "expectedNonMatches": [
