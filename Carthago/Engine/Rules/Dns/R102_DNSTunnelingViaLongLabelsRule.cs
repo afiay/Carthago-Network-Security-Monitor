@@ -121,7 +121,7 @@ namespace Carthago.Engine.Rules.Dns
             // and root can strengthen confidence, never unrelated traffic.
             // Existing baseline readiness and precision gates remain mandatory.
             var independentlySuspiciousTxt =
-                txtLikeQuery
+                string.Equals(context.Record.DnsQtype, "TXT", StringComparison.OrdinalIgnoreCase)
                 && maxLabelLength >= labelThreshold
                 && longestLabelEntropy >= entropyThreshold
                 && uniqueCharacterCount >= 12
