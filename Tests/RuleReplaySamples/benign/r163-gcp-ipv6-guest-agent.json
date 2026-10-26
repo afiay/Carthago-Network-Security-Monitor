@@ -1,0 +1,24 @@
+{
+  "name": "r163-gcp-ipv6-guest-agent",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "fd20:ce::10",
+      "destination": "fd20:ce::254",
+      "sourcePort": 48202,
+      "destinationPort": 80,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "GET",
+      "httpHost": "[fd20:ce::254]",
+      "httpUri": "/computeMetadata/v1/instance/service-accounts/default/token",
+      "httpRequestHeaders": "Host: [fd20:ce::254]\r\nMetadata-Flavor: Google",
+      "processName": "google-guest-agent",
+      "info": "Synthetic authorized Google guest-agent credential metadata retrieval over documented IPv6 endpoint; normal protocol activity, not SSRF."
+    }
+  ],
+  "expectedNonMatches": [
+    "R163",
+    "R118"
+  ]
+}
