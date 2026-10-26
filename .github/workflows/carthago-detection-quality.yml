@@ -117,11 +117,20 @@ jobs:
               Write-Host "::error title=Replay validation failed::$reason"
             }
           }
+          if ($benchOk -and $testsOk -and $failures.Count -eq 0) {
+            # Run a distinct, pinned synthetic holdout. Only aggregate gate
+            # status is published; full details stay on the Windows runner.
+            $holdoutOk = Invoke-Quiet 'holdout' 'pwsh' @(
+              '-NoProfile','-File','scripts/evaluate-holdout.ps1','-NoBuild')
+            if (-not $holdoutOk) {
+              Write-Host '::error title=Synthetic holdout regression::Frozen holdout did not satisfy rule recognition, label, or zero-benign-alert invariants.'
+            }
+          }
           if ($failures.Count -gt 0) {
             Write-Host ("::error title=Verification summary::Failed stages: " + ($failures -join ', '))
             exit 1
           }
-          Write-Host 'Carthago verification passed.'
+          Write-Host 'Carthago development replays and separate synthetic holdout passed.'
 
       # Artifact uploads are temporarily disabled: the account has reached
       # its Actions artifact storage quota. Restore uploads only after
