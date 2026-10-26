@@ -179,18 +179,29 @@ namespace Carthago.Engine.Rules
             if (queryIndex >= 0)
                 uri = uri[..queryIndex];
 
-            // Google's named endpoint cannot legitimately serve an AWS,
-            // Azure, Alibaba or ECS credential path.
-            if (host.Equals("metadata.google.internal", StringComparison.OrdinalIgnoreCase)
-                && !uri.StartsWith("/computeMetadata/v1/", StringComparison.OrdinalIgnoreCase))
-                return false;
+            // A credential-looking path on the wrong provider's endpoint is
+            // not proof of credential retrieval. AWS ECS and Alibaba ECS have
+            // distinct metadata addresses; AWS EC2, Azure and GCP share the
+            // link-local address, so distinguish those services by their paths.
+            // This classifies observable metadata access, never SSRF causality.
+            if (host.Equals("169.254.170.2", StringComparison.OrdinalIgnoreCase))
+                return MatchesPath(uri, "/v2/credentials");
 
+            if (host.Equals("100.100.100.200", StringComparison.OrdinalIgnoreCase))
+                return MatchesPath(uri, "/latest/meta-data/ram/security-credentials");
+
+            var googleCredentialPath =
+                uri.StartsWith("/computeMetadata/v1/instance/service-accounts/", StringComparison.OrdinalIgnoreCase)
+                && uri.EndsWith("/token", StringComparison.OrdinalIgnoreCase);
+
+            if (host.Equals("metadata.google.internal", StringComparison.OrdinalIgnoreCase))
+                return googleCredentialPath;
+
+            // At this point the validated Host/destination pair is the shared
+            // 169.254.169.254 address, used by EC2 IMDS, Azure IMDS and GCP.
             return MatchesPath(uri, "/latest/meta-data/iam/security-credentials")
-                || MatchesPath(uri, "/latest/meta-data/ram/security-credentials")
-                || MatchesPath(uri, "/v2/credentials")
                 || MatchesPath(uri, "/metadata/identity/oauth2/token")
-                || (uri.StartsWith("/computeMetadata/v1/instance/service-accounts/", StringComparison.OrdinalIgnoreCase)
-                    && uri.EndsWith("/token", StringComparison.OrdinalIgnoreCase));
+                || googleCredentialPath;
         }
 
         private static bool MatchesPath(string path, string prefix)
