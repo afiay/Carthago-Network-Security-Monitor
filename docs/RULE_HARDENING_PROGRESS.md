@@ -1,0 +1,49 @@
+# Detection-rule hardening progress
+
+This ledger is the durable handoff for sequential five-rule development on
+`feature/carthago-reliability-hardening`. Automated development must update it
+in the same commit as each batch's code, tests and technical assessment.
+
+| Batch | Rules | Development status | Test evidence |
+| --- | --- | --- | --- |
+| 01 | R001–R005 | Accepted for synthetic development gates | Windows 2026-10-27: targeted 62/62, advanced 28/28, full local regression PASS, frozen holdout 12/12 and expected matches 6/6 |
+
+**Next batch to author: R006–R010.** Continue in exact ascending groups of five.
+Do not mark a subsequent batch accepted until the user explicitly initiates
+the deferred consolidated Windows verification and the corresponding evidence
+is reviewed. The hourly automation must not run any tests or builds meanwhile.
+
+## Candidate-batch contract
+
+1. Read the latest remote HEAD and this ledger before selecting a batch.
+2. Inspect actual code, configuration, dependencies, rule adapters and tests.
+3. Add at least five meaningful advanced xUnit scenarios per rule, using the
+   filename `Carthago.Tests/RNNNAdvancedAccuracyBatchTests.cs`; use additional
+   cases and labeled development replays wherever warranted.
+4. Cover real positives, convincing benign negatives, evasive variants,
+   incomplete/contradictory evidence and stateful operational boundaries.
+5. Preserve policy/confidence floors, source attribution, privacy controls,
+   frozen holdout identities and baseline readiness safeguards.
+6. Publish candidate changes with a branch-head lease, never force-push or
+   overwrite concurrent changes. Record the exact batch and commit SHA here.
+7. Label all unexecuted work **CANDIDATE — UNVERIFIED**. No synthetic scores
+   or production-quality claims without fresh verification evidence.
+
+## Deferred one-run acceptance
+
+When the user says it is test time, freeze the branch head, then run on Windows:
+
+```powershell
+git fetch origin feature/carthago-reliability-hardening
+git merge --ff-only FETCH_HEAD
+.\scripts\verify-all-rule-batches.ps1
+```
+
+The consolidated command runs the full xUnit suite once (including all
+authored advanced rule cases), the development replay once, and the frozen
+holdout once. It enforces contiguous rule coverage and at least five passing
+advanced cases per authored rule, and exports one timestamped complete TXT
+under `build-verify/rule-batches/` with separate stage logs.
+
+Passing these synthetic gates does not establish independently labeled
+field precision, operational alert recall or authorization to promote rules.
