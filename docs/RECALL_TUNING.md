@@ -48,7 +48,7 @@ R102 now records `dns.distinctSuspiciousTxtNames` for structured DNS TXT questio
 
 The additional evidence does **not** apply to DNS NULL queries, `_acme-challenge` and other excluded validation names, or known telemetry roots. The rule's **80% confidence floor**, cooldown behavior and requirement for a mature baseline before production alert promotion remain unchanged. A matched or high-confidence replay candidate is not an alert unless its profile, baseline, runtime precision and suppression gates all permit emission.
 
-Run `dotnet test Carthago.Tests/Carthago.Tests.csproj -c Release --filter FullyQualifiedName~R102DistinctTxtCorrelationTests` to exercise paired positive/negative scenarios, source and window isolation, and preservation of baseline promotion gating. Recompute all replay profile metrics using `.\\verify-local.ps1 -Details` after updating. Until local verification passes, treat this change as an unverified candidate. It should not be described as an increase in measured alert-level recall unless new, correctly labeled replay alerts demonstrate one.
+Run `dotnet test Carthago.Tests/Carthago.Tests.csproj -c Release --filter FullyQualifiedName~R102DistinctTxtCorrelationTests` to exercise paired positive/negative scenarios, source and window isolation, and preservation of baseline promotion gating. Recompute all replay profile metrics using `.\verify-local.ps1 -Details` after updating. Until local verification passes, treat this change as an unverified candidate. It should not be described as an increase in measured alert-level recall unless new, correctly labeled replay alerts demonstrate one.
 
 ## Safety criteria
 
