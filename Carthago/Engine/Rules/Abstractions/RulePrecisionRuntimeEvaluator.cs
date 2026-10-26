@@ -56,6 +56,23 @@ namespace Carthago.Engine.Rules
             if (profile.RequiredEnvironmentConfig.Count > 0)
                 reasons.Add("environment config required: " + string.Join(", ", profile.RequiredEnvironmentConfig));
 
+            // R050-R056 use the in-process HealthSnapshot rather than packet
+            // telemetry. Record-level validation intentionally permits them,
+            // so require an engine-origin health event here instead. An
+            // arbitrary packet or synthetic high-score event is not proof of
+            // a genuine engine-health condition.
+            var n = RuleNumber(descriptor.RuleId);
+            if (n is >= 50 and <= 56 &&
+                (!string.Equals(evt.Protocol, "health", StringComparison.OrdinalIgnoreCase)
+                 || !string.Equals(evt.SourceIp, "carthago-engine", StringComparison.OrdinalIgnoreCase)
+                 || !string.Equals(evt.DestinationIp, "carthago-local", StringComparison.OrdinalIgnoreCase)
+                 || !string.Equals(evt.RuleId, descriptor.RuleId, StringComparison.OrdinalIgnoreCase)
+                 || string.IsNullOrWhiteSpace(evt.Summary)))
+            {
+                effectiveMode = RulePrecisionCatalog.MostRestrictive(effectiveMode, RuleMode.Shadow);
+                reasons.Add("engine-health rule requires an attributable internal health event, not network telemetry");
+            }
+
             if (!telemetry.CanEvaluate)
             {
                 effectiveMode = RulePrecisionCatalog.MostRestrictive(effectiveMode, profile.DefaultMode == RuleRuntimeMode.Disabled ? RuleMode.Disabled : RuleMode.Shadow);
@@ -78,7 +95,6 @@ namespace Carthago.Engine.Rules
                 reasons.Add($"confidence {confidencePercent}% below precision floor {profile.MinimumConfidence}%");
             }
 
-            var n = RuleNumber(descriptor.RuleId);
             var evidenceSatisfied = HasAlertableEvidence(profile, evt, observedKinds, record, out var evidenceReason);
             reasons.Add(evidenceReason);
             if (!evidenceSatisfied)
