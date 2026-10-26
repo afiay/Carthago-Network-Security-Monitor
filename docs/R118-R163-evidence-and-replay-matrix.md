@@ -1,13 +1,13 @@
 # R118 and R163: evidence contracts and replay matrix
 
-Status: **validation candidate**, not a rule-promotion request. Earlier
-Windows verification was reported for the 58-sample branch state, but the
-five newly added R118/R163 controls bring this branch to **63 JSON replay
-fixtures (33 benign, 30 malicious)**. This count was checked from the
-repository tree and each new fixture was parsed as JSON; it is **not**
-evidence of a 63-sample benchmark PASS. The new C# tests and Windows build
-remain unexecuted at this branch head. Do not promote any rule until those
-checks and per-profile alert-level metrics have been rerun.
+Status: **validation candidate**, not a rule-promotion request. The
+63-fixture candidate was extended with four paired controls to **67 JSON
+replay fixtures (35 benign, 32 malicious)**. The count and new fixture JSON
+syntax were checked against the feature-branch tree. These are structural
+checks only, **not** a 67-sample benchmark PASS. Windows compilation,
+xUnit tests, and per-profile alert-level precision/recall/F1 remain
+unverified at this branch head. Do not promote any rule until those
+checks and policy-accounting gates pass.
 
 ## Non-negotiable gates
 
@@ -107,6 +107,51 @@ and the expected replay modes for both R118 and R163. These tests are
 **committed but not yet executed on Windows**. A malicious scenario label
 is not a claim that the engine has proved unauthorized access or SSRF.
 
+## Derived authentication provenance and GCP token-vs-identity controls (67 fixtures)
+
+The R118 legacy/replay contract previously accepted
+`HttpBasicDefaultCredentialObserved=true` before inspecting a concurrently
+provided `HttpRequestHeaders` field. This could let an imported or
+inconsistent record claim a trusted derived indicator despite duplicate
+Authorization fields or a contradictory Bearer/non-default Basic header.
+The detector now rejects duplicate origin Authorization lines even when
+the derived flag is set. If a singleton header value is present, it must
+be the privacy-safe `[REDACTED]` placeholder or a known synthetic default
+Basic pair; a conflicting explicit scheme or value cannot be overridden.
+A derived flag without retained header lines remains supported for
+privacy-minimized capture sources. No credential bytes are added to
+events or logs.
+
+Four additional labeled controls were committed:
+
+| Fixture | Label | Expected raw match | Evidence distinction |
+| --- | --- | --- | --- |
+| `r118-iot-x-authorization-lookalike` | Benign | No R118 | TLS-protected custom `X-Authorization` is not origin `Authorization` |
+| `r118-camera-support-default-basic-attempt` | Malicious | R118, Shadow | Synthetic default `support:support` Basic credential aimed at a camera; no authentication outcome |
+| `r163-gcp-service-account-email-not-token` | Benign | No R163 | GCP service-account email endpoint is not the token endpoint |
+| `r163-gcp-service-account-token-direct-shadow` | Malicious | R163, Shadow | Token endpoint accessed by an unapproved workload, but no independent SSRF causal trace |
+
+Six parameterized R118 cases cover redacted singleton, known default,
+Bearer contradiction, non-default Basic contradiction, and two forms of
+duplicate Authorization. The paired benchmark regression checks the
+four new fixtures and the unchanged 86% R118 and 84% R163 floors in
+each replay profile. The R102 80% floor is unchanged.
+
+**Verification boundary:** all four fixture files were retrieved and
+JSON-parsed; the feature-branch tree contained 35 benign and 32 malicious
+JSON samples. These static checks do not establish detector behavior.
+No updated Windows test results or 67-fixture TP/FP/FN metrics are
+available. Preserve Shadow decisions and report `N/A` for precision
+when a rule has no alert-level positive predictions. Do not present
+raw recognition as alert recall.
+
+The provenance distinction follows RFC 9110 field-line semantics and
+the practice of minimizing sensitive HTTP header retention (compare
+Zeek's default HTTP telemetry with optional full-header logging).
+The GCP control follows the provider's distinction between
+service-account identity and access-token endpoints. An observed
+metadata token request alone is not SSRF causality.
+
 ## What independent R163 corroboration would require
 
 A future promotion path must be based on **trusted provenance** rather than
@@ -168,3 +213,6 @@ diagnose the failing fixture; do not promote R118, R163 or R102.
 - OWASP SSRF Prevention Cheat Sheet: https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html
 - MITRE ATT&CK T1078.001 default accounts: https://attack.mitre.org/techniques/T1078/001/
 - Zeek open-source HTTP connection UID and 4-tuple schema: https://docs.zeek.org/en/lts/scripts/base/protocols/http/main.zeek.html
+
+- RFC 9110 §5.3 on duplicate field lines: https://www.rfc-editor.org/rfc/rfc9110.html#section-5.3
+- Zeek optional full-header logging (privacy caution): https://github.com/sethhall/zeek-log-all-http-headers
