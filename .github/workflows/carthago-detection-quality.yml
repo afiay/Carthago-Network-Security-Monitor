@@ -22,7 +22,7 @@ concurrency:
 jobs:
   windows-detection-quality:
     name: Windows build, tests and alert-level replay
-    runs-on: windows-latest
+    runs-on: [self-hosted, Windows, X64]
     timeout-minutes: 35
     env:
       VSTEST_CONNECTION_TIMEOUT: '300'
