@@ -1,0 +1,28 @@
+{
+  "name": "r118-onvif-default-basic-redacted",
+  "classification": "Malicious",
+  "records": [
+    {
+      "source": "198.51.100.182",
+      "destination": "192.0.2.181",
+      "sourcePort": 54182,
+      "destinationPort": 8080,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "POST",
+      "httpHost": "nvr-lab.internal",
+      "httpUri": "/onvif/device_service",
+      "httpRequestHeaders": "Host: nvr-lab.internal\r\nAuthorization: [REDACTED]",
+      "httpBasicDefaultCredentialObserved": true,
+      "processName": "unapproved-device-admin.exe",
+      "info": "Synthetic attempted NVR login: trusted capture-time boolean indicates a known default Basic pair, but the credential itself was redacted. Authentication success and authorization are not established."
+    }
+  ],
+  "expectedMatches": [
+    "R118"
+  ],
+  "expectedNonMatches": [
+    "R163"
+  ],
+  "expectedMinimumConfidence": 0.75
+}
