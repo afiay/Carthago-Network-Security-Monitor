@@ -105,7 +105,7 @@ namespace Carthago.Engine.Rules
 
             if (string.IsNullOrWhiteSpace(record.HttpMethod)
                 || string.IsNullOrWhiteSpace(record.HttpHost)
-                || !IsDeviceHost(record.HttpHost))
+                || !IsDeviceHost(record.HttpHost, record.DestinationPort))
                 return false;
 
             // The capture parser derives this flag without retaining credentials.
@@ -394,7 +394,7 @@ namespace Carthago.Engine.Rules
             @"(?:^|[.\-])(?:camera|nvr|dvr|onvif|hikvision|dahua|router|gateway|iot|ubiquiti|tplink|netgear|mikrotik)[0-9]*(?=$|[.\-])",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
-        private static bool IsDeviceHost(string host)
+        private static bool IsDeviceHost(string host, int? destinationPort)
         {
             if (string.IsNullOrWhiteSpace(host))
                 return false;
@@ -414,7 +414,8 @@ namespace Carthago.Engine.Rules
                     || colon == authority.Length - 1
                     || !Regex.IsMatch(authority[(colon + 1)..], @"^[0-9]{1,5}$")
                     || !int.TryParse(authority[(colon + 1)..], out var port)
-                    || port is < 1 or > 65535)
+                    || port is < 1 or > 65535
+                    || (destinationPort.HasValue && port != destinationPort.Value))
                     return false;
                 authority = authority[..colon];
             }
