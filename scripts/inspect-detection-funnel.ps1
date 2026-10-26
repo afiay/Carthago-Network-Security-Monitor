@@ -55,7 +55,14 @@ if ($rows.Count -eq 0) {
 Write-Host 'Detector recognition counts raw matches, including Shadow candidates.'
 Write-Host 'Eligible emission is conditional on an effective Alert decision, NOT overall recall.'
 Write-Host 'Simulated replay alert decisions do not confirm live notifications or production accuracy.'
-$rows | Format-Table -AutoSize | Out-Host
+# Keep the default terminal table readable; display all counters when a
+# single profile is requested.
+$rows | Select-Object Profile, Expected, Detected, 'Detector recall', Alerts,
+    'Alert recall', Shadow, Disabled, Eligible, 'Eligible emission' |
+    Format-Table -AutoSize | Out-Host
+if (-not [string]::IsNullOrWhiteSpace($Profile)) {
+    $rows | Format-List | Out-Host
+}
 
 if (@($rows | Where-Object { $_.'Eligible missing' -gt 0 -or $_.'No policy decision' -gt 0 -or $_.'Policy mismatch' -gt 0 }).Count -gt 0) {
     Write-Warning 'Unexpected policy-accounting gaps detected. Inspect per-rule decisions before changing alert modes.'
