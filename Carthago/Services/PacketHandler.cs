@@ -7,6 +7,7 @@
 using SharpPcap;
 using PacketDotNet;
 using Carthago.Models;
+using Carthago.Engine.Rules;
 using Carthago.Services.Flow;
 using Carthago.Services.Fingerprints;
 using System;
@@ -392,6 +393,7 @@ namespace Carthago.Services
                                 rec.HttpHost = http.Host ?? rec.HttpHost;
                                 rec.HttpUserAgent = http.UserAgent ?? rec.HttpUserAgent;
                                 rec.HttpRequestHeaders = http.JoinedHeaderLines ?? rec.HttpRequestHeaders;
+                                rec.HttpBasicDefaultCredentialObserved = c2s && http.ObservedDefaultBasicCredential;
 
                                 var (readable, tag) = HttpJa4H.Compute(http.Method, http.HttpVersion, http.HeaderNames, http.UserAgent);
                                 rec.HttpJa4h = $"{readable}|{tag}";
@@ -753,6 +755,7 @@ namespace Carthago.Services
             public string? HttpVersion { get; init; }
             public List<string> HeaderNames { get; init; } = new();
             public string? JoinedHeaderLines { get; init; }
+            public bool ObservedDefaultBasicCredential { get; init; }
         }
 
         public static bool TryParseHttp(ReadOnlySpan<byte> data, out HttpInfo info)
@@ -780,6 +783,7 @@ namespace Carthago.Services
         private static HttpInfo ParseHeaders(ReadOnlySpan<byte> data, int offset, string? method, string? path, string? httpVersion)
         {
             string? host = null, ua = null;
+            bool defaultBasicObserved = false;
             int idx = offset;
             var headerNames = new List<string>();
             var sbJoin = new StringBuilder();
@@ -798,6 +802,10 @@ namespace Carthago.Services
                 {
                     var name = ToAscii(line.Slice(0, colon));
                     headerNames.Add(name);
+                    if (name.Equals("Authorization", StringComparison.OrdinalIgnoreCase) &&
+                        SensitiveTelemetryContracts.IsKnownDefaultBasicAuthorizationValue(line.Slice(colon + 1)))
+                        defaultBasicObserved = true;
+
                     // Avoid allocating a managed string for bearer secrets at all.
                     // Preserve only the header name and a redaction marker in telemetry.
                     bool sensitive = name.Equals("Authorization", StringComparison.OrdinalIgnoreCase) ||
@@ -823,6 +831,7 @@ namespace Carthago.Services
                 UserAgent = ua,
                 HttpVersion = httpVersion,
                 JoinedHeaderLines = sbJoin.ToString(),
+                ObservedDefaultBasicCredential = defaultBasicObserved,
                 HeaderNames = headerNames
             };
         }
