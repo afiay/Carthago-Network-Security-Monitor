@@ -18,6 +18,53 @@ namespace Carthago.Tests;
 public sealed class R118R163PairedReplayQualityTests
 {
     [Fact]
+    public async Task Host_Authority_And_Iot_Target_Replays_Separate_Raw_Matches_From_Alerts()
+    {
+        var replayDirectory = Path.Combine(
+            AppContext.BaseDirectory, "..", "..", "..", "..", "Tests", "RuleReplaySamples");
+        var report = await new TuningBenchmarkRunner().RunAsync(
+            new TuningBenchmarkOptions { ReplayDirectory = replayDirectory });
+
+        var r163Duplicate = report.SampleResults.Single(sample =>
+            sample.Name == "r163-duplicate-host-metadata-decoy");
+        var r163Disagreement = report.SampleResults.Single(sample =>
+            sample.Name == "r163-parsed-host-header-disagreement");
+        var r163Azure = report.SampleResults.Single(sample =>
+            sample.Name == "r163-azure-single-host-credential-probe");
+        var r118Benign = report.SampleResults.Single(sample =>
+            sample.Name == "r118-default-basic-unrelated-https-host");
+        var r118Router = report.SampleResults.Single(sample =>
+            sample.Name == "r118-router-lowercase-single-basic");
+
+        Assert.True(report.SampleResults.Count >= 63);
+        Assert.Equal(ReplaySampleClassification.Benign, r163Duplicate.Classification);
+        Assert.Equal(ReplaySampleClassification.Benign, r163Disagreement.Classification);
+        Assert.Equal(ReplaySampleClassification.Benign, r118Benign.Classification);
+        Assert.Equal(ReplaySampleClassification.Malicious, r163Azure.Classification);
+        Assert.Equal(ReplaySampleClassification.Malicious, r118Router.Classification);
+
+        Assert.DoesNotContain("R163", r163Duplicate.ActualMatches);
+        Assert.DoesNotContain("R163", r163Disagreement.ActualMatches);
+        Assert.DoesNotContain("R118", r118Benign.ActualMatches);
+        Assert.Contains("R163", r163Azure.ActualMatches);
+        Assert.Contains("R118", r118Router.ActualMatches);
+        Assert.All(new[] { r163Duplicate, r163Disagreement, r163Azure, r118Benign, r118Router },
+            sample => Assert.Empty(sample.Errors));
+
+        Assert.Equal(86, new R118_DefaultCredentialIoTAttemptRule().PrecisionProfile.MinimumConfidence);
+        Assert.Equal(84, new R163_SsrfMetadataServiceProbeRule().PrecisionProfile.MinimumConfidence);
+        foreach (var profile in report.ProfileResults.Keys)
+        {
+            Assert.DoesNotContain("R163", r163Azure.Profiles[profile].AlertRuleIds);
+            Assert.DoesNotContain("R118", r118Router.Profiles[profile].AlertRuleIds);
+            Assert.True(Assert.Single(r163Azure.Profiles[profile].RuleDecisions,
+                decision => decision.RuleId == "R163").Confidence < 0.84);
+            Assert.True(Assert.Single(r118Router.Profiles[profile].RuleDecisions,
+                decision => decision.RuleId == "R118").Confidence < 0.86);
+        }
+    }
+
+    [Fact]
     public async Task New_Labeled_Replays_Preserve_R118_R163_Confidence_Gates_And_Alert_Precision()
     {
         var replayDirectory = Path.Combine(
