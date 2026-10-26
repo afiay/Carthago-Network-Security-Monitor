@@ -355,7 +355,12 @@ namespace Carthago.Services.Benchmarking
                     {
                         if (!defaultProfileSample.AlertRuleIds.Contains(expectedRuleId, StringComparer.OrdinalIgnoreCase)
                             && rulesById.TryGetValue(expectedRuleId, out var rule)
-                            && matches.Any(match => string.Equals(match.Descriptor.RuleId, expectedRuleId, StringComparison.OrdinalIgnoreCase) && match.Event.ConfidenceScore >= 0.75))
+                            && matches.Any(match =>
+                                string.Equals(match.Descriptor.RuleId, expectedRuleId, StringComparison.OrdinalIgnoreCase)
+                                // Advisory recommendations must not bypass a rule-specific
+                                // precision floor. A raw Shadow match is not an alert.
+                                && match.Event.ConfidenceScore >= Math.Max(
+                                    0.75, RulePrecisionCatalog.GetProfile(rule.Descriptor).MinimumConfidence / 100.0)))
                         {
                             recommendAlert.Add(rule.Descriptor.RuleId);
                         }
