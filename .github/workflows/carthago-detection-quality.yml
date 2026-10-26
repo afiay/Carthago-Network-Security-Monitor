@@ -39,48 +39,59 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Restore test and benchmark projects
+      - name: Quiet restore, build, tests and replay validation
         shell: pwsh
         run: |
-          dotnet restore Carthago.Tests/Carthago.Tests.csproj
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          dotnet restore Carthago.Benchmarks/Carthago.Benchmarks.csproj
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $ErrorActionPreference = 'Stop'
+          $ProgressPreference = 'SilentlyContinue'
+          $logs = Join-Path $env:RUNNER_TEMP 'carthago-private-verify'
+          New-Item -ItemType Directory -Force -Path $logs | Out-Null
+          $failures = [System.Collections.Generic.List[string]]::new()
 
-      - name: Build Release binaries
-        shell: pwsh
-        run: |
-          dotnet build Carthago.Tests/Carthago.Tests.csproj --configuration Release --no-restore
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          dotnet build Carthago.Benchmarks/Carthago.Benchmarks.csproj --configuration Release --no-restore
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-      - name: Run xUnit suite
-        shell: pwsh
-        run: |
-          dotnet test Carthago.Tests/Carthago.Tests.csproj --configuration Release --no-build --no-restore --logger 'trx;LogFileName=carthago-tests.trx' --results-directory build-verify/test-results
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-      - name: Benchmark all alert profiles (not raw matches)
-        shell: pwsh
-        run: |
-          dotnet run --project Carthago.Benchmarks --configuration Release --no-build --no-restore -- --replay-dir Tests/RuleReplaySamples --output-dir build-verify --compare-profiles --explain-shadow
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-      - name: Reject invalid replay expectations
-        shell: pwsh
-        run: |
-          $report = Get-Content 'build-verify/tuning-benchmark.json' -Raw | ConvertFrom-Json
-          if ($report.summary.replaySampleCount -lt 19) { throw 'Replay corpus unexpectedly shrank below the 19-sample baseline.' }
-          $invalid = @($report.sampleResults | Where-Object { @($_.errors).Count -gt 0 })
-          foreach ($sample in $invalid) {
-            Write-Host ("Replay '{0}' failed: {1}" -f $sample.name, ($sample.errors -join '; '))
+          function Invoke-Quiet([string]$label, [string]$file, [string[]]$arguments) {
+            $output = Join-Path $logs ($label + '.log')
+            & $file @arguments *> $output
+            if ($LASTEXITCODE -ne 0) {
+              $script:failures.Add($label)
+              Write-Host "::error title=Carthago verification failed::$label failed (exit code $LASTEXITCODE). Details retained locally on runner, not published."
+              if ($label -eq 'tests') {
+                Get-Content $output | Where-Object { $_ -match '^(Failed!|Passed!|Test Run Failed)' } | Select-Object -Last 3 | ForEach-Object {
+                  $safe = $_ -replace '[A-Za-z]:\\[^ ]+', '[redacted-path]'
+                  Write-Host "::error::$safe"
+                }
+              }
+              return $false
+            }
+            return $true
           }
-          if ($invalid.Count -gt 0) { throw "$($invalid.Count) replay samples failed their explicit expectations." }
-          foreach ($profile in $report.summary.sampleLevelQualityByProfile.PSObject.Properties) {
-            $q = $profile.Value
-            Write-Host ("{0}: TP={1} FP={2} FN={3} TN={4} precision={5} recall={6} F1={7}" -f $profile.Name, $q.truePositives, $q.falsePositives, $q.falseNegatives, $q.trueNegatives, $q.precision, $q.recall, $q.f1Score)
+
+          $ok = Invoke-Quiet 'restore-tests' 'dotnet' @('restore','Carthago.Tests/Carthago.Tests.csproj','--verbosity','quiet','--nologo')
+          if (-not $ok) { exit 1 }
+          $ok = Invoke-Quiet 'restore-benchmarks' 'dotnet' @('restore','Carthago.Benchmarks/Carthago.Benchmarks.csproj','--verbosity','quiet','--nologo')
+          if (-not $ok) { exit 1 }
+          $ok = Invoke-Quiet 'build-tests' 'dotnet' @('build','Carthago.Tests/Carthago.Tests.csproj','--configuration','Release','--no-restore','--verbosity','quiet','--nologo')
+          if (-not $ok) { exit 1 }
+          $ok = Invoke-Quiet 'build-benchmarks' 'dotnet' @('build','Carthago.Benchmarks/Carthago.Benchmarks.csproj','--configuration','Release','--no-restore','--verbosity','quiet','--nologo')
+          if (-not $ok) { exit 1 }
+
+          $testsOk = Invoke-Quiet 'tests' 'dotnet' @('test','Carthago.Tests/Carthago.Tests.csproj','--configuration','Release','--no-build','--no-restore','--verbosity','quiet','--logger','trx;LogFileName=carthago-tests.trx','--results-directory','build-verify/test-results')
+          $benchOk = Invoke-Quiet 'benchmark' 'dotnet' @('run','--project','Carthago.Benchmarks','--configuration','Release','--no-build','--no-restore','--','--replay-dir','Tests/RuleReplaySamples','--output-dir','build-verify','--compare-profiles','--explain-shadow')
+          if ($benchOk) {
+            try {
+              $report = Get-Content 'build-verify/tuning-benchmark.json' -Raw | ConvertFrom-Json
+              if ($report.summary.replaySampleCount -lt 19) { throw 'Replay sample count below minimum.' }
+              $invalid = @($report.sampleResults | Where-Object { @($_.errors).Count -gt 0 })
+              if ($invalid.Count -gt 0) { throw "$($invalid.Count) replay samples failed expectations." }
+            } catch {
+              $failures.Add('replay-validation')
+              Write-Host '::error title=Replay validation failed::Replay expectations or report validation failed. Details are not published.'
+            }
           }
+          if ($failures.Count -gt 0) {
+            Write-Host ("::error title=Verification summary::Failed stages: " + ($failures -join ', '))
+            exit 1
+          }
+          Write-Host 'Carthago verification passed.'
 
       # Artifact uploads are temporarily disabled: the account has reached
       # its Actions artifact storage quota. Restore uploads only after
