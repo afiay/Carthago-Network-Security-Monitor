@@ -4,7 +4,7 @@
 param(
     [string]$Benchmark = (Join-Path $PSScriptRoot '..\build-verify\tuning-benchmark.json'),
     [string]$TestResults = (Join-Path $PSScriptRoot '..\build-verify\test-results\carthago-tests.trx'),
-    [string]$Sample = 'r163-approved-cloud-init-install-path'
+    [string]$Sample = ''
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -62,4 +62,4 @@ if (-not [string]::IsNullOrWhiteSpace($Sample)) {
             ($one[0].unexpectedMatches -join ','))
     }
 }
-Write-Host 'To inspect all benign fixtures, run with -Sample "".'
+Write-Host 'Use -Sample r163-approved-cloud-init-install-path to inspect only that fixture.'
