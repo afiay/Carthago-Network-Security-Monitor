@@ -29,7 +29,7 @@ namespace Carthago.Services
             _sourceToPorts.Clear();
             _srcDstToPorts.Clear();
             _packetTimes.Clear();
-            _floodStats.Clear();
+            _floodWindows.Clear();
             _authAttempts.Clear();
             _dnsQueries.Clear();
             _beaconing.Clear();

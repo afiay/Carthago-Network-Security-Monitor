@@ -637,7 +637,6 @@ namespace Carthago.Services
                     _packetTimes.TryRemove(kv.Key, out _);
                     _dnsQueries.TryRemove(kv.Key, out _);
                     _exfilBytes.TryRemove(kv.Key, out _);
-                    _floodStats.TryRemove(kv.Key, out _);
 
                     _lastSeenSrc.TryRemove(kv.Key, out _);
                 }
@@ -646,6 +645,15 @@ namespace Carthago.Services
                     _beaconing.TryRemove(k, out _);
                 foreach (var k in _authAttempts.Keys.Where(k => !_lastSeenSrc.ContainsKey(k.Src)).ToList())
                     _authAttempts.TryRemove(k, out _);
+
+                // R002's keys include the entire source/target/service tuple,
+                // so removing them by bare source IP would never clean them.
+                foreach (var entry in _floodWindows.ToArray())
+                {
+                    DateTime last;
+                    lock (entry.Value) last = entry.Value.LastObserved;
+                    if (last < cutoff) _floodWindows.TryRemove(entry.Key, out _);
+                }
 
                 foreach (var ip in _arpTable.Keys.Where(ip => !_lastSeenSrc.ContainsKey(ip)).ToList())
                     _arpTable.TryRemove(ip, out _);

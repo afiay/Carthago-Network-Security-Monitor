@@ -79,4 +79,30 @@ public sealed class R002AdvancedAccuracyBatchTests : IDisposable
             Assert.False((await See(Packet(), 100 + i * 100)).Matched);
         Assert.True((await See(Packet(), 700)).Matched);
     }
+
+    [Fact]
+    public async Task Future_Dated_Packets_Cannot_Preload_A_Current_Flood_Window()
+    {
+        for (var i = 0; i < 4; i++)
+            Assert.False((await See(Packet(), 100_000 + i * 100)).Matched);
+
+        for (var i = 0; i < 4; i++)
+            Assert.False((await See(Packet(), i * 100)).Matched);
+
+        var currentFifth = await See(Packet(), 400);
+        Assert.True(currentFifth.Matched);
+        Assert.Equal(5, Assert.Single(currentFifth.Events).Count);
+    }
+
+    [Fact]
+    public async Task Historical_Bytes_Cannot_Convert_A_Low_Byte_Current_Window_Into_A_Flood()
+    {
+        // A continuous trickle prevents the old aggregate's idle-gap reset,
+        // yet no 10-second window contains enough bytes for an alert.
+        foreach (var second in new[] { 0, 4, 8, 12 })
+            Assert.False((await See(Packet(bytes: 270_000), second * 1000)).Matched);
+
+        for (var second = 13; second <= 17; second++)
+            Assert.False((await See(Packet(bytes: 64), second * 1000)).Matched);
+    }
 }

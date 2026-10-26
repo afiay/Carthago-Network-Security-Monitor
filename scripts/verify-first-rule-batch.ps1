@@ -24,7 +24,7 @@ try {
     }) -join '|'
     $resultsDir = 'build-verify/rule-batches'
     New-Item -ItemType Directory -Force -Path $resultsDir | Out-Null
-    Write-Host '=== Batch 01 R001-R005: legacy suites + 25 new cases ==='
+    Write-Host '=== Batch 01 R001-R005: legacy suites + at least 25 advanced cases ==='
     $argsForTests = @(
         'test','Carthago.Tests/Carthago.Tests.csproj','--configuration','Release',
         '--verbosity','normal','--filter',$filter,
@@ -45,8 +45,8 @@ try {
     })
     Write-Host ("Batch results: total={0}; advanced={1}; not passed={2}" -f
         $results.Count, $advanced.Count, $bad.Count)
-    if ($bad.Count -gt 0 -or $advanced.Count -ne 25) {
-        throw "Batch requires all passing and exactly 25 advanced tests; found $($advanced.Count)."
+    if ($bad.Count -gt 0 -or $advanced.Count -lt 25) {
+        throw "Batch requires all passing and at least 25 advanced tests; found $($advanced.Count)."
     }
 
     if ($SkipFullRegression) {

@@ -42,7 +42,7 @@ namespace Carthago.Services
             {
                 total += _srcDstToPorts.Count;
                 total += _packetTimes.Count;
-                total += _floodStats.Count;
+                total += _floodWindows.Count;
                 total += _authAttempts.Count;
                 total += _dnsQueries.Count;
                 total += _beaconing.Count;
@@ -78,8 +78,26 @@ namespace Carthago.Services
         // ===== Existing per-rule state (R001–R022) =====
         private static readonly ConcurrentDictionary<string, ConcurrentDictionary<int, DateTime>> _sourceToPorts = new(StringComparer.Ordinal); // R001 (legacy)
         private static readonly ConcurrentDictionary<(string Src, string Dst), ConcurrentDictionary<int, DateTime>> _srcDstToPorts = new(); // R001 (per (src,dst) -> ports)
-        private static readonly ConcurrentDictionary<string, List<DateTime>> _packetTimes = new(StringComparer.Ordinal);                        // R002 (+ light rate-limiters, R023, R029, R038)
-        private static readonly ConcurrentDictionary<string, (int Syn, int Ack, long Bytes, DateTime Ts)> _floodStats = new(StringComparer.Ordinal); // R002
+        private static readonly ConcurrentDictionary<string, List<DateTime>> _packetTimes = new(StringComparer.Ordinal); // R023/R029/R038 light rate-limiters
+        private sealed class FloodBucket
+        {
+            public int Packets;
+            public int Syn;
+            public int Ack;
+            public long Bytes;
+        }
+
+        private sealed class FloodWindow
+        {
+            // One bucket per 100 ms limits state under dense, benign traffic.
+            // A bucket starting before the cutoff is conservatively excluded,
+            // so boundary approximation cannot inflate the evidence score.
+            public readonly SortedDictionary<long, FloodBucket> Buckets = new();
+            public DateTime LastObserved;
+        }
+
+        private static readonly ConcurrentDictionary<string, FloodWindow> _floodWindows =
+            new(StringComparer.Ordinal);
         private static readonly ConcurrentDictionary<(string Src, string Dst, int DstPort), List<DateTime>> _authAttempts = new();
         private static readonly ConcurrentDictionary<string, List<DateTime>> _dnsQueries = new(StringComparer.Ordinal);   // R006
         private static readonly ConcurrentDictionary<(string Src, string Dst), List<(DateTime ts, int bytes)>> _beaconing = new();        // R007
@@ -304,11 +322,11 @@ namespace Carthago.Services
             detection = null!;
             try
             {
-                BoundDictionary(_packetTimes, 50000);
-                BoundDictionary(_floodStats, 50000);
+                BoundDictionary(_floodWindows, 50000);
 
-                if (record.Source is not { Length: > 0 } src
+                if (string.IsNullOrWhiteSpace(record.Source)
                     || string.IsNullOrWhiteSpace(record.Destination)) return false;
+                var src = record.Source;
                 // SYN volume toward one service must not be manufactured by
                 // aggregating unrelated destinations from a busy scanner.
                 // Distinct destination services may be busy independently. Do
@@ -320,50 +338,63 @@ namespace Carthago.Services
                 var byteThreshold = ScaleBytes(_cfg.FloodByteThreshold ?? FloodByteThreshold, s);
                 var synAckRatioThresh = ScaleFloat(_cfg.SynAckRatioThreshold ?? SynAckRatioThreshold, s);
 
-                var list = _packetTimes.GetOrAdd(floodKey, _ => new List<DateTime>(capacity: Math.Max(pktThreshold * 2, 32)));
-                int pktCount;
-                lock (list)
-                {
-                    list.Add(now);
-                    pktCount = TrimAndCount(list, now, window);
-                }
-
                 bool syn = TcpSynToken.IsMatch(record.Flags ?? string.Empty);
                 bool ack = TcpAckToken.IsMatch(record.Flags ?? string.Empty);
-
-                var stats = _floodStats.AddOrUpdate(
-                    floodKey,
-                    _ => (Syn: syn ? 1 : 0, Ack: ack ? 1 : 0, Bytes: (long)Math.Max(0, record.Length), Ts: now),
-                    (_, prev) => now >= prev.Ts && now - prev.Ts <= TimeSpan.FromSeconds(window)
-                        ? (prev.Syn + (syn ? 1 : 0), prev.Ack + (ack ? 1 : 0),
-                            prev.Bytes + Math.Max(0, record.Length), now)
-                        : (Syn: syn ? 1 : 0, Ack: ack ? 1 : 0, Bytes: (long)Math.Max(0, record.Length), Ts: now)
-                );
-
-                if (pktCount >= pktThreshold && stats.Bytes >= byteThreshold)
+                var state = _floodWindows.GetOrAdd(floodKey, _ => new FloodWindow());
+                lock (state)
                 {
-                    double synAckRatio = (stats.Ack > 0) ? (double)stats.Syn / stats.Ack : stats.Syn;
-                    if (synAckRatio >= synAckRatioThresh)
+                    const long bucketTicks = TimeSpan.TicksPerMillisecond * 100;
+                    long bucketStart = now.Ticks - now.Ticks % bucketTicks;
+                    long cutoff = now.AddSeconds(-window).Ticks;
+
+                    // Remove expired and future observations. Future timestamps
+                    // must never contribute to an out-of-order replay window.
+                    foreach (var key in state.Buckets.Keys.Where(k => k < cutoff || k > now.Ticks).ToList())
+                        state.Buckets.Remove(key);
+
+                    if (!state.Buckets.TryGetValue(bucketStart, out var bucket))
+                        state.Buckets[bucketStart] = bucket = new FloodBucket();
+                    bucket.Packets++;
+                    if (syn) bucket.Syn++;
+                    if (ack) bucket.Ack++;
+                    bucket.Bytes += Math.Max(0, record.Length);
+                    state.LastObserved = now;
+
+                    // Bounded even if a deployment configures a very long
+                    // window. Losing oldest evidence can reduce recall, but
+                    // must never manufacture a positive.
+                    const int maxBucketsPerFlow = 4096;
+                    while (state.Buckets.Count > maxBucketsPerFlow)
+                        state.Buckets.Remove(state.Buckets.Keys.First());
+
+                    long pktCount = 0, synCount = 0, ackCount = 0, byteCount = 0;
+                    foreach (var sample in state.Buckets.Values)
                     {
-                        if (SuppressRepeat(now, "R002", src, record.Destination, record.DestinationPort)) return false;
-
-                        detection = new DetectionEvent
-                        {
-                            RuleId = "R002",
-                            Description = $"Possible flood/DoS from {src} (pkts={pktCount}, bytes={stats.Bytes}/{window}s, SYN/ACK={synAckRatio:F1})",
-                            SourceIp = src,
-                            DestinationIp = record.Destination,
-                            DestinationPort = record.DestinationPort,
-                            Protocol = NP(record.Protocol),
-                            Severity = SeverityLevel.Critical,
-                            Count = pktCount,
-                            WindowSeconds = window
-                        };
-
-                        lock (list) list.Clear();
-                        _floodStats[floodKey] = (0, 0, 0, now);
-                        return true;
+                        pktCount += sample.Packets;
+                        synCount += sample.Syn;
+                        ackCount += sample.Ack;
+                        byteCount += sample.Bytes;
                     }
+
+                    if (pktCount < pktThreshold || byteCount < byteThreshold) return false;
+                    double synAckRatio = ackCount > 0 ? (double)synCount / ackCount : synCount;
+                    if (synAckRatio < synAckRatioThresh) return false;
+                    if (SuppressRepeat(now, "R002", src, record.Destination, record.DestinationPort)) return false;
+
+                    detection = new DetectionEvent
+                    {
+                        RuleId = "R002",
+                        Description = $"Possible flood/DoS from {src} (pkts={pktCount}, bytes={byteCount}/{window}s, SYN/ACK={synAckRatio:F1})",
+                        SourceIp = src,
+                        DestinationIp = record.Destination,
+                        DestinationPort = record.DestinationPort,
+                        Protocol = NP(record.Protocol),
+                        Severity = SeverityLevel.Critical,
+                        Count = (int)Math.Min(pktCount, int.MaxValue),
+                        WindowSeconds = window
+                    };
+                    state.Buckets.Clear();
+                    return true;
                 }
             }
             catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] DetectFlood error: {ex}"); }
