@@ -216,6 +216,49 @@ namespace Carthago.Tests
         }
 
         [Fact]
+        public async Task Benchmark_Detection_Funnel_Accounts_For_Every_Expected_Malicious_Rule()
+        {
+            var report = await new TuningBenchmarkRunner().RunAsync(new TuningBenchmarkOptions
+            {
+                ReplayDirectory = GetReplayDirectory()
+            });
+
+            Assert.Equal(report.ProfileResults.Keys.OrderBy(name => name),
+                report.DetectionFunnelByProfile.Keys.OrderBy(name => name));
+
+            foreach (var profile in report.ProfileResults.Keys)
+            {
+                var funnel = report.DetectionFunnelByProfile[profile];
+                var accumulated = report.ProfileResults[profile];
+                Assert.Equal(report.Summary.ExpectedMatchCount, funnel.ExpectedMaliciousRules);
+                Assert.Equal(report.Summary.MatchedExpectedCount, funnel.RecognizedByDetector);
+                Assert.Equal(funnel.ExpectedMaliciousRules,
+                    funnel.RecognizedByDetector + funnel.DetectorMisses);
+                Assert.Equal(accumulated.MaliciousExpectedMatchCount, funnel.ExpectedMaliciousRules);
+                Assert.Equal(accumulated.MaliciousAlertMatchCount, funnel.SimulatedAlerted);
+                Assert.Equal(accumulated.BenignAlertCount, funnel.BenignSimulatedAlerts);
+
+                // Every detector-recognized, expected malicious rule must
+                // have exactly one accounting outcome in the replay.
+                Assert.Equal(funnel.RecognizedByDetector,
+                    funnel.SimulatedAlerted + funnel.PolicyShadowed +
+                    funnel.PolicyDisabled + funnel.MissingPolicyDecisions +
+                    funnel.EligibleButNotAlerted);
+                Assert.Equal(0, funnel.MissingPolicyDecisions);
+                Assert.Equal(0, funnel.EligibleButNotAlerted);
+                Assert.Equal(0, funnel.AlertDecisionMismatches);
+                Assert.Equal(0, funnel.BenignSimulatedAlerts);
+            }
+
+            var dns = report.SampleResults.Single(sample => sample.Name == "r102-distinct-txt-burst-candidate");
+            var research = report.DetectionFunnelByProfile["Research"];
+            Assert.Contains("R102", dns.ActualMatches);
+            Assert.DoesNotContain("R102", dns.Profiles["Research"].AlertRuleIds);
+            Assert.True(research.RecognizedByDetector > research.SimulatedAlerted,
+                "A correctly shadowed raw detection must not count as an emitted alert.");
+        }
+
+        [Fact]
         public async Task Benchmark_Explains_Shadowed_Expected_Rules_Without_Changing_Their_Mode()
         {
             var report = await new TuningBenchmarkRunner().RunAsync(new TuningBenchmarkOptions
