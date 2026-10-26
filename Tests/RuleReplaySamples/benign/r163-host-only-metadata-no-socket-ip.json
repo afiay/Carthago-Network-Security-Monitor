@@ -1,0 +1,24 @@
+{
+  "name": "r163-host-only-metadata-no-socket-ip",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "10.0.0.20",
+      "destination": "metadata.google.internal",
+      "sourcePort": 49216,
+      "destinationPort": 80,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "GET",
+      "httpHost": "metadata.google.internal",
+      "httpUri": "/computeMetadata/v1/instance/service-accounts/default/token",
+      "httpRequestHeaders": "Host: metadata.google.internal\r\nMetadata-Flavor: Google",
+      "processName": "webapp.exe",
+      "info": "Synthetic uncorroborated host-only telemetry; no observed numeric socket destination. The Host value is not independent network evidence."
+    }
+  ],
+  "expectedNonMatches": [
+    "R163",
+    "R118"
+  ]
+}
