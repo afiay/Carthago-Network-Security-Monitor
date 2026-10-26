@@ -72,6 +72,23 @@ namespace Carthago.Services.Benchmarking
                 sb.AppendLine("- Scope: labeled offline replay samples, not field prevalence or detection accuracy in production.");
             }
             sb.AppendLine();
+            sb.AppendLine("## Detection, Policy, and Alert Funnel");
+            sb.AppendLine("- Unit: one labeled malicious (sample, expected rule) per replay profile; the same expected rule may appear in multiple samples.");
+            sb.AppendLine("- Recognized: the detector matched, regardless of policy. Shadow/Suppressed are not alerts.");
+            sb.AppendLine("- Policy-blocked: recognized matches held in Shadow or Disabled, not missing detections.");
+            sb.AppendLine("- Eligible emission: among recognized expected rules with an effective Alert policy decision, the fraction actually recorded as simulated alerts.");
+            sb.AppendLine("- N/A means there were no eligible decisions; it must not be presented as either 0% or 100% recall.");
+            sb.AppendLine("- This is offline policy simulation, not live notification delivery or production precision.");
+            sb.AppendLine();
+            sb.AppendLine("| Profile | Expected | Recognized | Detector recall | Simulated alerts | Alert recall | Shadow | Disabled | No decision | Eligible | Eligible missing | Eligible emission | Policy inconsistencies | Benign alerts |");
+            sb.AppendLine("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |");
+            foreach (var funnel in report.DetectionFunnelByProfile.Values
+                .OrderBy(static entry => entry.ProfileName, StringComparer.OrdinalIgnoreCase))
+            {
+                sb.AppendLine($"| {EscapeCell(funnel.ProfileName)} | {funnel.ExpectedMaliciousRules} | {funnel.RecognizedByDetector} | {FormatRatio(funnel.DetectorRecognitionRate)} | {funnel.SimulatedAlerted} | {FormatRatio(funnel.AlertLevelRecall)} | {funnel.PolicyShadowed} | {funnel.PolicyDisabled} | {funnel.MissingPolicyDecisions} | {funnel.PolicyEligibleRules} | {funnel.EligibleButNotAlerted} | {FormatRatio(funnel.EligibleAlertEmissionRate)} | {funnel.AlertDecisionMismatches} | {funnel.BenignSimulatedAlerts} |");
+            }
+
+            sb.AppendLine();
             sb.AppendLine("## Alert-Level Recall Gaps");
             sb.AppendLine("- Unit: one expected malicious (sample, rule, profile) without an alert.");
             sb.AppendLine("- A raw detector match in Shadow mode remains a missed alert for this report.");
