@@ -1,0 +1,24 @@
+{
+  "name": "r163-approved-cloud-guest-agent",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "10.0.0.15",
+      "destination": "169.254.169.254",
+      "sourcePort": 42000,
+      "destinationPort": 80,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "GET",
+      "httpHost": "169.254.169.254",
+      "httpUri": "/latest/meta-data/iam/security-credentials/approved-role",
+      "httpRequestHeaders": "Host: 169.254.169.254",
+      "processName": "amazon-ssm-agent.exe",
+      "info": "Synthetic approved guest-agent metadata retrieval."
+    }
+  ],
+  "expectedNonMatches": [
+    "R163",
+    "R118"
+  ]
+}
