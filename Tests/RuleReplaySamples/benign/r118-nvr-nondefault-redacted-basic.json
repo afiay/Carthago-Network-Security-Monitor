@@ -14,7 +14,6 @@
       "httpHost": "nvr-lab.internal:8443",
       "httpUri": "/admin/login",
       "httpRequestHeaders": "Host: nvr-lab.internal:8443\r\nAuthorization: [REDACTED]",
-      "httpBasicDefaultCredentialObserved": false,
       "processName": "inventory-provisioner.exe",
       "info": "Synthetic authorized NVR provisioning request. Capture-time parser did not observe a known default Basic credential. No authentication outcome is asserted."
     }
@@ -22,5 +21,8 @@
   "expectedNonMatches": [
     "R118",
     "R163"
-  ]
+  ],
+  "rawHttpRequestsByRecordIndex": {
+    "0": "POST /admin/login HTTP/1.1\r\nHost: nvr-lab.internal:8443\r\nAuthorization: Basic Z3Vlc3Q6dGVtcG9yYXJ5LXByb3Zpc2lvbmluZy1zZWNyZXQ=\r\n\r\n"
+  }
 }
