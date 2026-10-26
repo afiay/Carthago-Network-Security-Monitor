@@ -21,12 +21,12 @@ only a Shadow match because the evidence does not meet the alert standard.
 
 | Fixture | Label | R118 raw match | R163 raw match | Expected alert behavior |
 | --- | --- | --- | --- | --- |
-| `r118-bearer-token-looks-like-default-basic` | Benign | No | No | No R118 alert |
+| `r118-bearer-token-looks-like-default-basic` | Benign | No | No | TLS-protected Bearer request: neither R118 nor cleartext-token R135 should match |
 | `r118-ubiquiti-default-basic-observed` | Malicious | Yes | No | R118 stays below 86% pending additional evidence |
 | `r163-paired-unrelated-gcp-agent` | Benign | No | No | Known GCP guest agent does not become SSRF because an unrelated inbound URL exists |
 | `r163-paired-gcp-unattributed-fetch-candidate` | Malicious | No | Yes | R163 stays below 84%; an inbound fetch and outbound metadata request do not establish verified causality |
 
-All examples use documentation IP blocks and synthetic credentials. The R118
+The benign R118 Bearer control must use HTTPS/TLS. A Bearer authorization header sent over cleartext HTTP is a separate security exposure and may correctly trigger R135; labeling that traffic benign and expecting zero alerts would invalidate the precision test. The encrypted control instead isolates the HTTP authentication scheme distinction (Bearer versus Basic).\n\nAll examples use documentation IP blocks and synthetic credentials. The R118
 fixture contains a synthetic Base64 Basic value for legacy offline replay;
 **live capture must retain only the trusted derived boolean and redact
 Authorization bytes**. Never persist HTTP Authorization, IMDSv2 session tokens,
