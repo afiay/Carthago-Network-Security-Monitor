@@ -121,6 +121,24 @@ public sealed class R001Tests : IDisposable
     }
 
     [Fact]
+    public async Task Malformed_Flag_Words_Never_Prime_Scan_But_Lowercase_Syn_Is_Recognized()
+    {
+        for (var i = 0; i < 16; i++)
+            Assert.False((await Evaluate(
+                Packet("10.240.1.8", "10.240.2.8", 8000 + i, "SYNTHETIC"), i)).Matched);
+
+        RuleEvaluationResult? observedScan = null;
+        for (var i = 0; i < 16; i++)
+        {
+            var result = await Evaluate(
+                Packet("10.240.1.8", "10.240.2.8", 8100 + i, "syn"), 30 + i);
+            if (result.Matched && result.Events.Count > 0) { observedScan = result; break; }
+        }
+        Assert.NotNull(observedScan);
+        Assert.InRange(Assert.Single(observedScan!.Events).Count, 5, 16);
+    }
+
+    [Fact]
     public async Task Udp_NonSyn_And_Missing_Endpoint_Telemetry_Do_Not_Look_Like_Tcp_Port_Scans()
     {
         for (var i = 0; i < 12; i++)
