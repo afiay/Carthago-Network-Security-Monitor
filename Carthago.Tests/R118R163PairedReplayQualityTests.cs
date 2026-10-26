@@ -297,6 +297,31 @@ public sealed class R118R163PairedReplayQualityTests
                 decision => decision.RuleId == "R163").Confidence < 0.84);
         }
 
+        // Fifth paired batch: the real HTTP parser must redact a non-default
+        // ONVIF Basic value without manufacturing R118 evidence. An unapproved
+        // IMDSv2 HEAD request is a raw metadata-path probe, not SSRF proof.
+        var r118NonDefault = report.SampleResults.Single(sample =>
+            sample.Name == "r118-onvif-nondefault-basic-wire-redacted");
+        var r163HeadProbe = report.SampleResults.Single(sample =>
+            sample.Name == "r163-unapproved-aws-imdsv2-head-credential-probe");
+
+        Assert.True(report.SampleResults.Count >= 80);
+        Assert.Equal(ReplaySampleClassification.Benign, r118NonDefault.Classification);
+        Assert.Equal(ReplaySampleClassification.Malicious, r163HeadProbe.Classification);
+        Assert.DoesNotContain("R118", r118NonDefault.ActualMatches);
+        Assert.Contains("R163", r163HeadProbe.ActualMatches);
+        Assert.Empty(r118NonDefault.Errors);
+        Assert.Empty(r163HeadProbe.Errors);
+        Assert.DoesNotContain("YWRtaW46c3Ryb25nLXBhc3M=",
+            System.Text.Json.JsonSerializer.Serialize(report));
+        foreach (var profile in report.ProfileResults.Keys)
+        {
+            Assert.Empty(r118NonDefault.Profiles[profile].AlertRuleIds);
+            Assert.DoesNotContain("R163", r163HeadProbe.Profiles[profile].AlertRuleIds);
+            Assert.True(Assert.Single(r163HeadProbe.Profiles[profile].RuleDecisions,
+                decision => decision.RuleId == "R163").Confidence < 0.84);
+        }
+
         // Sample-level metrics count actual alerts, not raw detector matches.
         // A benign alert in any profile is a regression requiring investigation.
         Assert.All(report.Summary.SampleLevelQualityByProfile.Values,
