@@ -245,14 +245,19 @@ namespace Carthago.Services.Benchmarking
 
                     foreach (var match in matches)
                     {
+                        // Mirror live RuleEngine baseline eligibility: a replay
+                        // cannot page from a fresh isolated baseline simply because
+                        // a broad profile defaults to Alert.
+                        var readiness = BaselineStore.Current.Readiness;
                         var decision = RuleTuningCatalog.Resolve(
                             profile.ProfileName,
                             match.Descriptor,
                             match.Event,
                             match.Record,
                             approvedAssets,
-                            sample.BaselineLearningMode,
-                            match.Event.ConfidenceScore);
+                            baselineLearningMode: sample.BaselineLearningMode || BaselineStore.Current.IsLearningMode,
+                            effectiveConfidenceScore: match.Event.ConfidenceScore,
+                            baselineReady: readiness.IsReady);
                         // Apply the same independent precision checks used by live
                         // capture. Alert is the unconstrained input here because
                         // each replay profile already supplies its own policy mode.
