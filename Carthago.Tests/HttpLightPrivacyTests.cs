@@ -91,7 +91,7 @@ public sealed class HttpLightPrivacyTests
             HttpMethod = "GET",
             HttpHost = "camera-lab.internal",
             HttpUri = "/admin",
-            HttpRequestHeaders = "Host: camera-lab.internal\\r\\nAuthorization: Basic " + defaultBasic,
+            HttpRequestHeaders = "Host: camera-lab.internal\r\nAuthorization: Basic " + defaultBasic,
             ProcessName = "unattributed-client.exe"
         };
         var metadata = new TrafficRecord
@@ -104,7 +104,7 @@ public sealed class HttpLightPrivacyTests
             HttpMethod = "GET",
             HttpHost = "169.254.169.254",
             HttpUri = "/latest/meta-data/iam/security-credentials/test-role",
-            HttpRequestHeaders = "Host: 169.254.169.254\\r\\nX-aws-ec2-metadata-token: " + metadataToken,
+            HttpRequestHeaders = "Host: 169.254.169.254\r\nX-aws-ec2-metadata-token: " + metadataToken,
             ProcessName = "unapproved-webapp.exe"
         };
 
