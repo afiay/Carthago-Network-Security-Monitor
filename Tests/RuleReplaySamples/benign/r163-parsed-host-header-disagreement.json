@@ -1,0 +1,24 @@
+{
+  "name": "r163-parsed-host-header-disagreement",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "198.51.100.61",
+      "destination": "169.254.169.254",
+      "sourcePort": 54121,
+      "destinationPort": 80,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "GET",
+      "httpHost": "169.254.169.254",
+      "httpUri": "/latest/meta-data/iam/security-credentials/role-name",
+      "httpRequestHeaders": "Host: portal.example.invalid\r\nX-aws-ec2-metadata-token: [REDACTED]",
+      "processName": "webapp.exe",
+      "info": "Synthetic conflicting normalized Host and captured HTTP authority; metadata endpoint cannot be authenticated by a forged parsed Host."
+    }
+  ],
+  "expectedNonMatches": [
+    "R163",
+    "R118"
+  ]
+}
