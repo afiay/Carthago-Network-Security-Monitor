@@ -37,7 +37,7 @@ public sealed class R001Tests : IDisposable
             record, Sensitivity.Balanced, T0.AddSeconds(second)));
 
     [Fact]
-    public async Task Five_Distinct_TCP_SYN_Ports_Trigger_One_Precisely_Attributed_Scan()
+    public async Task Configured_Distinct_TCP_SYN_Threshold_Triggers_One_Attributed_Scan()
     {
         RuleEvaluationResult? matched = null;
         for (var i = 0; i < 16; i++)
