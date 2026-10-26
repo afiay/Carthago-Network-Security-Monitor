@@ -90,6 +90,31 @@ namespace Carthago.Services.Benchmarking
             }
 
             sb.AppendLine();
+            sb.AppendLine("## Explicit Rule Evidence Coverage");
+            sb.AppendLine("- Unit: (replay sample, rule) pairs; positives are expected matches from malicious samples; negatives are explicitly labeled ExpectedNonMatches in either class.");
+            sb.AppendLine("- Do not infer rule-level specificity or precision from unlabeled benign traffic. A benign raw detector match can be intentionally Shadowed.");
+            sb.AppendLine("- N/A means no explicit positive or negative test exists for the denominator. Both control types are needed for paired evidence.");
+            var coverage = report.RuleEvidenceCoverage;
+            sb.AppendLine($"- Rules in inventory: {coverage.Count}");
+            sb.AppendLine($"- With positive controls: {coverage.Count(static entry => entry.PositiveCases > 0)}");
+            sb.AppendLine($"- With explicit negative controls: {coverage.Count(static entry => entry.ExplicitNegativeCases > 0)}");
+            sb.AppendLine($"- With paired controls: {coverage.Count(static entry => entry.HasPairedControls)}");
+            sb.AppendLine();
+            sb.AppendLine("| Rule | Positive matched / cases | Recognition | Explicit negatives passed / cases | Negative pass rate | Benign raw matches | Paired |");
+            sb.AppendLine("| --- | ---: | ---: | ---: | ---: | ---: | --- |");
+            foreach (var entry in coverage.Where(static item =>
+                    item.PositiveCases > 0 || item.ExplicitNegativeCases > 0)
+                .OrderByDescending(static item => item.PositiveCases)
+                .ThenByDescending(static item => item.ExplicitNegativeCases)
+                .ThenBy(static item => item.RuleId, StringComparer.OrdinalIgnoreCase)
+                .Take(40))
+            {
+                sb.AppendLine($"| {EscapeCell(entry.RuleId)} | {entry.PositiveRecognized}/{entry.PositiveCases} | {FormatRatio(entry.PositiveRecognitionRate)} | {entry.ExplicitNegativePassed}/{entry.ExplicitNegativeCases} | {FormatRatio(entry.ExplicitNegativePassRate)} | {entry.BenignRawMatches} | {(entry.HasPairedControls ? "Yes" : "No")} |");
+            }
+            if (coverage.Count(static item => item.PositiveCases > 0 || item.ExplicitNegativeCases > 0) > 40)
+                sb.AppendLine("- Showing 40 tested rules. Full per-rule inventory and zero-coverage rules are available in the JSON report.");
+
+            sb.AppendLine();
             sb.AppendLine("## Alert-Level Recall Gaps");
             sb.AppendLine("- Unit: one expected malicious (sample, rule, profile) without an alert.");
             sb.AppendLine("- A raw detector match in Shadow mode remains a missed alert for this report.");
