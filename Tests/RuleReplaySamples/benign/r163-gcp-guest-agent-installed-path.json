@@ -1,0 +1,24 @@
+{
+  "name": "r163-gcp-guest-agent-installed-path",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "10.0.0.183",
+      "destination": "169.254.169.254",
+      "sourcePort": 51183,
+      "destinationPort": 80,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "GET",
+      "httpHost": "metadata.google.internal",
+      "httpUri": "/computeMetadata/v1/instance/service-accounts/default/token",
+      "httpRequestHeaders": "Host: metadata.google.internal\r\nMetadata-Flavor: Google",
+      "processName": "/usr/bin/google-guest-agent",
+      "info": "Synthetic routine Google guest-agent metadata token lookup from an installed executable path; protocol header is normal, not independent SSRF evidence."
+    }
+  ],
+  "expectedNonMatches": [
+    "R163",
+    "R118"
+  ]
+}
