@@ -1,0 +1,26 @@
+{
+  "name": "r118-nvr-nondefault-redacted-basic",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "198.51.100.160",
+      "destination": "192.0.2.160",
+      "sourcePort": 53260,
+      "destinationPort": 8443,
+      "protocol": "TLS",
+      "applicationProtocol": "HTTPS",
+      "tlsVersion": "TLS1.3",
+      "httpMethod": "POST",
+      "httpHost": "nvr-lab.internal:8443",
+      "httpUri": "/admin/login",
+      "httpRequestHeaders": "Host: nvr-lab.internal:8443\r\nAuthorization: [REDACTED]",
+      "httpBasicDefaultCredentialObserved": false,
+      "processName": "inventory-provisioner.exe",
+      "info": "Synthetic authorized NVR provisioning request. Capture-time parser did not observe a known default Basic credential. No authentication outcome is asserted."
+    }
+  ],
+  "expectedNonMatches": [
+    "R118",
+    "R163"
+  ]
+}
