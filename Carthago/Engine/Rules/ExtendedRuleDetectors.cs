@@ -643,6 +643,11 @@ namespace Carthago.Engine.Rules
         {
             var r = c.Record;
             if (!IsInternal(r.Source) || !IsExternal(r.Destination)) return null;
+            // A DNS lookup to an external resolver is not evidence that the
+            // originating host is a sensitive server.
+            if (string.Equals(r.Protocol, "DNS", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(r.ApplicationProtocol, "DNS", StringComparison.OrdinalIgnoreCase))
+                return null;
             var sensitive = (r.SourcePort.HasValue && SensitivePorts.Contains(r.SourcePort.Value)) ||
                             (r.DestinationPort.HasValue && SensitivePorts.Contains(r.DestinationPort.Value)) ||
                             ContainsAny(Text(r), "domain controller", "ldap", "kerberos", "sql server", "postgres", "mysql", "redis", "mongodb", "elasticsearch");
@@ -664,6 +669,17 @@ namespace Carthago.Engine.Rules
         {
             var r = c.Record;
             if (!IsInternal(r.Destination) || !r.DestinationPort.HasValue || !ServerPorts.Contains(r.DestinationPort.Value)) return null;
+            // Cloud instance metadata endpoints are link-local services, not
+            // workstations unexpectedly accepting connections from peers.
+            if (IPAddress.TryParse(r.Destination, out var destinationAddress)
+                && destinationAddress.IsIPv6LinkLocal)
+                return null;
+            if (IPAddress.TryParse(r.Destination, out destinationAddress)
+                && destinationAddress.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+            {
+                var octets = destinationAddress.GetAddressBytes();
+                if (octets[0] == 169 && octets[1] == 254) return null;
+            }
             if (LooksLikeKnownServer(r.Destination, r.ProcessName, Text(r))) return null;
             var key = $"R063:{r.Destination}:{r.DestinationPort}";
             var srcs = AddDistinct(PerKeyDistinct, key, r.Source ?? "unknown", c.TimestampUtc, DefaultWindow);
