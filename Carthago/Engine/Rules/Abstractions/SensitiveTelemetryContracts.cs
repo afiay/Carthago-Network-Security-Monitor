@@ -45,16 +45,16 @@ namespace Carthago.Engine.Rules
         // No untrusted credential bytes or their Base64 encoding are persisted.
         internal static bool IsKnownDefaultBasicAuthorizationValue(ReadOnlySpan<byte> value)
         {
-            while (!value.IsEmpty && (value[0] == (byte)' ' || value[0] == (byte)'\\t'))
+            while (!value.IsEmpty && (value[0] == (byte)' ' || value[0] == (byte)'\t'))
                 value = value[1..];
             if (value.Length < 7 || !IsAsciiIgnoreCase(value[..5], "Basic"u8)
-                || (value[5] != (byte)' ' && value[5] != (byte)'\\t'))
+                || (value[5] != (byte)' ' && value[5] != (byte)'\t'))
                 return false;
 
             value = value[6..];
-            while (!value.IsEmpty && (value[0] == (byte)' ' || value[0] == (byte)'\\t'))
+            while (!value.IsEmpty && (value[0] == (byte)' ' || value[0] == (byte)'\t'))
                 value = value[1..];
-            while (!value.IsEmpty && (value[^1] == (byte)' ' || value[^1] == (byte)'\\t'))
+            while (!value.IsEmpty && (value[^1] == (byte)' ' || value[^1] == (byte)'\t'))
                 value = value[..^1];
 
             foreach (var token in EncodedDefaultCredentialTokens)
