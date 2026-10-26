@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Carthago.Engine.Rules;
 using Carthago.Engine.Rules.Dns;
+using Carthago.Engine.Rules.Tuning;
+using Carthago.Services.EnvironmentTuning;
 using Carthago.Models;
 using Xunit;
 
@@ -56,6 +58,15 @@ public sealed class R102DistinctTxtCorrelationTests
         Assert.True(last!.ConfidenceScore > first!.ConfidenceScore);
         Assert.True(last.ConfidenceScore >= 0.80);
         Assert.Equal(80, rule.PrecisionProfile.MinimumConfidence);
+
+        // Behavioral corroboration alone is not mature-baseline evidence.
+        // Do not change the existing 80% floor or baseline promotion contract.
+        var policy = RuleTuningCatalog.Resolve(
+            "SmallBusiness", rule.Descriptor, last,
+            Record(source, Labels[2] + "." + root, "TXT"),
+            new ApprovedAssetRegistry(new EnvironmentTuningOptions()),
+            baselineReady: false);
+        Assert.Equal(RuleMode.Shadow, policy.EffectiveMode);
     }
 
     [Fact]
@@ -71,6 +82,24 @@ public sealed class R102DistinctTxtCorrelationTests
             Assert.True(evaluated.Matched);
             var evt = Assert.Single(evaluated.Events);
             Assert.Equal("1", EvidenceValue(evt, "dns.distinctSuspiciousTxtNames"));
+            Assert.DoesNotContain("multiple_distinct_suspicious_txt_names",
+                EvidenceValue(evt, "matched_conditions"), StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    [Fact]
+    public async Task R102_Null_Dns_Query_Type_Does_Not_Claim_Txt_Corroboration()
+    {
+        var rule = new R102_DNSTunnelingViaLongLabelsRule();
+        var root = "nulltype-" + Guid.NewGuid().ToString("N")[..8] + ".example";
+        for (var index = 0; index < Labels.Length; index++)
+        {
+            var result = await rule.EvaluateAsync(new RuleEvaluationContext(
+                Record("10.248.10.50", Labels[index] + "." + root, "NULL"),
+                Sensitivity.Balanced, BaseTime.AddSeconds(index * 20)));
+            Assert.True(result.Matched);
+            var evt = Assert.Single(result.Events);
+            Assert.Equal("0", EvidenceValue(evt, "dns.distinctSuspiciousTxtNames"));
             Assert.DoesNotContain("multiple_distinct_suspicious_txt_names",
                 EvidenceValue(evt, "matched_conditions"), StringComparison.OrdinalIgnoreCase);
         }
