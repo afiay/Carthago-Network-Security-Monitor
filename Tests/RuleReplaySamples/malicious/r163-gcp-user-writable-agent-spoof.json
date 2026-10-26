@@ -1,0 +1,27 @@
+{
+  "name": "r163-gcp-user-writable-agent-spoof",
+  "classification": "Malicious",
+  "records": [
+    {
+      "source": "10.0.0.184",
+      "destination": "169.254.169.254",
+      "sourcePort": 51184,
+      "destinationPort": 80,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "GET",
+      "httpHost": "metadata.google.internal",
+      "httpUri": "/computeMetadata/v1/instance/service-accounts/default/token",
+      "httpRequestHeaders": "Host: metadata.google.internal\r\nMetadata-Flavor: Google",
+      "processName": "C:\\Users\\Public\\google-guest-agent.exe",
+      "info": "Synthetic suspicious Google metadata credential request by an executable with a guest-agent basename in a user-writable path. This is not independently corroborated SSRF causality."
+    }
+  ],
+  "expectedMatches": [
+    "R163"
+  ],
+  "expectedNonMatches": [
+    "R118"
+  ],
+  "expectedMinimumConfidence": 0.6
+}
