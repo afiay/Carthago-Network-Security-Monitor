@@ -66,6 +66,18 @@ provider would return credentials.
 | `169.254.170.2` | AWS ECS task credentials `/v2/credentials[/...]` |
 | `100.100.100.200` | Alibaba ECS RAM role `/latest/meta-data/ram/security-credentials[/...]` |
 | `metadata.google.internal` as Host, with observed `169.254.169.254` destination | GCP service-account token path only |
+| AWS EC2 IPv6 `fd00:ec2::254` with bracketed HTTP Host `[fd00:ec2::254]` | EC2 IAM security-credential path only |
+| GCP IPv6 `fd20:ce::254` with bracketed HTTP Host `[fd20:ce::254]`, or the documented `metadata.google.internal` alias | GCP service-account token path only |
+
+The IPv6 addresses above are **different provider-specific endpoints**, not
+interchangeable aliases. A captured IPv6 socket destination is unbracketed,
+while its HTTP Host authority must use RFC-compliant brackets. The classifier
+rejects scope IDs, unsupported ports, bare IPv6 Host values, and cross-provider
+Host/path combinations. Absolute-form HTTP request targets must agree with
+the Host and observed destination. The regression suite covers these cases,
+and the replay corpus includes one synthetic malicious AWS IPv6 credential
+probe plus benign GCP guest-agent and cross-provider controls. These fixtures
+do not establish real-world exploitability or production precision.
 
 The shared `169.254.169.254` address does **not** establish which cloud
 provider hosts the VM. The classifier deliberately recognizes multiple
@@ -134,6 +146,8 @@ boundary; passive capture cannot manufacture missing causality.
 
 - RFC 7617, HTTP Basic authentication: https://www.rfc-editor.org/rfc/rfc7617
 - AWS EC2 IMDSv2: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html
+- AWS EC2 IMDS IPv6 address: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html
+- Google Compute Engine metadata IPv6 endpoint: https://docs.cloud.google.com/compute/docs/metadata/overview
 - AWS ECS task-role credential endpoint: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/security-iam-roles.html
 - Alibaba ECS RAM-role metadata endpoint: https://www.alibabacloud.com/help/en/ecs/user-guide/attach-an-instance-ram-role-to-an-ecs-instance
 - Azure Instance Metadata Service: https://learn.microsoft.com/en-us/azure/virtual-machines/instance-metadata-service
