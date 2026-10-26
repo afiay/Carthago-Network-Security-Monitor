@@ -1,0 +1,24 @@
+{
+  "name": "r163-aws-imdsv2-token-negotiation",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "10.0.0.18",
+      "destination": "169.254.169.254",
+      "sourcePort": 51800,
+      "destinationPort": 80,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "PUT",
+      "httpHost": "169.254.169.254",
+      "httpUri": "/latest/api/token",
+      "httpRequestHeaders": "Host: 169.254.169.254\r\nX-aws-ec2-metadata-token-ttl-seconds: 21600",
+      "processName": "cloud-init",
+      "info": "Authorized AWS IMDSv2 session-token negotiation; no credential retrieval or SSRF attribution."
+    }
+  ],
+  "expectedNonMatches": [
+    "R163",
+    "R118"
+  ]
+}
