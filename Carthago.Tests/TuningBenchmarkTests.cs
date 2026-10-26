@@ -31,6 +31,12 @@ namespace Carthago.Tests
             Assert.Equal(report.SampleResults.Count, quality.TruePositives + quality.FalsePositives + quality.FalseNegatives + quality.TrueNegatives);
             Assert.True(File.Exists(store.GetJsonPath(tempOutput)));
             Assert.True(File.Exists(store.GetMarkdownPath(tempOutput)));
+            Assert.True(File.Exists(store.GetHardeningAuditPath(tempOutput)));
+            Assert.Equal(544, report.RuleHardeningAudit.Count);
+            Assert.Equal(0, report.RuleHardeningAudit.Count(entry => entry.ContractIssues.Count > 0));
+            var auditMarkdown = await File.ReadAllTextAsync(store.GetHardeningAuditPath(tempOutput));
+            Assert.Contains("Registered rules reviewed: 544", auditMarkdown);
+            Assert.Contains("## All registered rules", auditMarkdown);
             var markdown = await File.ReadAllTextAsync(store.GetMarkdownPath(tempOutput));
             Assert.Contains("Precision:", markdown);
             Assert.Contains("Recall:", markdown);
@@ -40,6 +46,7 @@ namespace Carthago.Tests
             var loaded = await store.LoadAsync(tempOutput);
             Assert.NotNull(loaded);
             Assert.Equal(report.RuleEvidenceCoverage.Count, loaded!.RuleEvidenceCoverage.Count);
+            Assert.Equal(544, loaded.RuleHardeningAudit.Count);
             Assert.Equal(report.SampleResults.Sum(sample => sample.ExpectedNonMatches.Count),
                 loaded.SampleResults.Sum(sample => sample.ExpectedNonMatches.Count));
             var expectedAlertGaps = report.SampleResults
