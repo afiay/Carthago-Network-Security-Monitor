@@ -31,7 +31,7 @@ namespace Carthago.Engine.Rules
             evt.ConfidenceLabel = Label(evt.ConfidenceScore);
             if (_reasons.Count > 0)
             {
-                var summary = "confidence=" + evt.ConfidenceScore.ToString("0.00") + " (" + string.Join("; ", _reasons.Take(6)) + ")";
+                var summary = "confidence=" + evt.ConfidenceScore.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + " (" + string.Join("; ", _reasons.Take(6)) + ")";
                 if (evt.StructuredEvidence == null)
                 {
                     evt.StructuredEvidence = new DetectionEvidenceSet(new[] { new DetectionEvidenceItem("confidence", summary, "confidence") }, evt.Evidence ?? evt.Description ?? summary);
@@ -62,6 +62,7 @@ namespace Carthago.Engine.Rules
 
         public static DetectionConfidenceLabel Label(double score)
         {
+            if (!double.IsFinite(score)) return DetectionConfidenceLabel.Unknown;
             if (score >= 0.75) return DetectionConfidenceLabel.High;
             if (score >= 0.45) return DetectionConfidenceLabel.Medium;
             if (score > 0.0) return DetectionConfidenceLabel.Low;
@@ -73,6 +74,9 @@ namespace Carthago.Engine.Rules
             if (!string.IsNullOrWhiteSpace(reason)) _reasons.Add(reason.Trim());
         }
 
-        private static double Clamp(double value) => Math.Max(0.0, Math.Min(1.0, value));
+        // Corrupt/non-finite score input must not leak into serialization,
+        // nor be treated as a high-confidence finding.
+        private static double Clamp(double value)
+            => double.IsFinite(value) ? Math.Clamp(value, 0.0, 1.0) : 0.0;
     }
 }
