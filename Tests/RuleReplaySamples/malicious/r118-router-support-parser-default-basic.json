@@ -1,0 +1,30 @@
+{
+  "name": "r118-router-support-parser-default-basic",
+  "classification": "Malicious",
+  "records": [
+    {
+      "source": "198.51.100.222",
+      "destination": "192.0.2.52",
+      "sourcePort": 54222,
+      "destinationPort": 8080,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "POST",
+      "httpHost": "router02.lab.internal",
+      "httpUri": "/admin/login",
+      "httpRequestHeaders": "Host: router02.lab.internal\r\nAuthorization: [REDACTED]",
+      "processName": "unapproved-network-admin.exe",
+      "info": "Synthetic unauthorized default support/support Basic authentication toward a router; benchmark parser derives the default-pair flag, no login outcome assumed."
+    }
+  ],
+  "rawHttpRequestsByRecordIndex": {
+    "0": "POST /admin/login HTTP/1.1\r\nHost: router02.lab.internal\r\nAuthorization: Basic c3VwcG9ydDpzdXBwb3J0\r\n\r\n"
+  },
+  "expectedMatches": [
+    "R118"
+  ],
+  "expectedNonMatches": [
+    "R163"
+  ],
+  "expectedMinimumConfidence": 0.6
+}
