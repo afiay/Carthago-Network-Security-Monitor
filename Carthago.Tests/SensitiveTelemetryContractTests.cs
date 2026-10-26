@@ -83,6 +83,8 @@ public sealed class SensitiveTelemetryContractTests
     [InlineData("cameradeals.example.invalid")]
     [InlineData("routerdocumentation.example.invalid")]
     [InlineData("mygateway.example.invalid")]
+    [InlineData("cameradeals.example.invalid:443")]
+    [InlineData("router02.lab.internal@attacker.example.invalid")]
     public async Task R118_Default_Basic_On_Keyword_Substring_Host_Is_Not_Device_Authentication(string host)
     {
         var record = new TrafficRecord
@@ -102,13 +104,14 @@ public sealed class SensitiveTelemetryContractTests
     [InlineData("router02.lab.internal")]
     [InlineData("camera-office.internal")]
     [InlineData("ubiquiti-router.lab.internal")]
+    [InlineData("router02.lab.internal:8080")]
     public async Task R118_Recognizes_Inventory_Device_Label_With_Synthetic_Default_Basic(string host)
     {
         var record = new TrafficRecord
         {
             Source = "198.51.100.41", Destination = "192.0.2.41",
-            DestinationPort = 80, Protocol = "HTTP",
-            HttpMethod = "POST", HttpHost = host, HttpUri = "/admin/login",
+            DestinationPort = host.EndsWith(":8080", StringComparison.Ordinal) ? 8080 : 80,
+            Protocol = "HTTP", HttpMethod = "POST", HttpHost = host, HttpUri = "/admin/login",
             HttpRequestHeaders = "Authorization: Basic YWRtaW46YWRtaW4=",
             ProcessName = "unapproved-admin-client.exe"
         };
@@ -122,6 +125,23 @@ public sealed class SensitiveTelemetryContractTests
         Assert.Equal(86, rule.PrecisionProfile.MinimumConfidence);
         Assert.Equal(RuleMode.Shadow, decision.EffectiveMode);
         Assert.False(decision.ConfidenceSatisfied);
+    }
+
+    [Fact]
+    public async Task R118_Host_Port_Disagreement_Does_Not_Establish_Device_Authentication()
+    {
+        var record = new TrafficRecord
+        {
+            Source = "198.51.100.42", Destination = "192.0.2.42",
+            DestinationPort = 80, Protocol = "HTTP",
+            HttpMethod = "POST", HttpHost = "router02.lab.internal:8080",
+            HttpUri = "/admin/login",
+            HttpRequestHeaders = "Authorization: Basic YWRtaW46YWRtaW4=",
+            ProcessName = "unapproved-admin-client.exe"
+        };
+
+        Assert.False((await new R118_DefaultCredentialIoTAttemptRule().EvaluateAsync(Context(record))).Matched);
+        Assert.False(RulePrecisionCatalog.Validate("R118", record).CanEvaluate);
     }
 
     [Fact]
