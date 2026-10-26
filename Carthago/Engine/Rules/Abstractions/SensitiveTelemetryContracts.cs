@@ -159,6 +159,13 @@ namespace Carthago.Engine.Rules
                 return false;
 
             var uri = record.HttpUri.Trim();
+            // Credential-path evidence must survive normalization. Dot segments
+            // and encoded separators can resolve to a different resource at the
+            // metadata server or an intermediary. Do not infer credential access
+            // from a textual prefix that may disappear after URI normalization.
+            if (HasAmbiguousMetadataPath(uri))
+                return false;
+
             if (Uri.TryCreate(uri, UriKind.Absolute, out var absolute))
             {
                 // An absolute-form request target must identify the same
@@ -283,6 +290,26 @@ namespace Carthago.Engine.Rules
                 return false;
             normalized = value;
             return true;
+        }
+
+        private static bool HasAmbiguousMetadataPath(string requestTarget)
+        {
+            // Inspect the original request target BEFORE Uri.TryCreate can
+            // canonicalize absolute-form dot segments. Never inspect the query
+            // string: Azure's documented credential endpoint needs one.
+            var question = requestTarget.IndexOf('?');
+            var rawPath = question < 0 ? requestTarget : requestTarget[..question];
+            if (rawPath.IndexOf('#') >= 0 || rawPath.IndexOf('\\') >= 0
+                || rawPath.Contains("%2e", StringComparison.OrdinalIgnoreCase)
+                || rawPath.Contains("%2f", StringComparison.OrdinalIgnoreCase)
+                || rawPath.Contains("%5c", StringComparison.OrdinalIgnoreCase)
+                || rawPath.Contains("%00", StringComparison.OrdinalIgnoreCase)
+                || rawPath.Contains("%25", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            // A path that looks credential-bearing before normalization must
+            // not match after an intermediate "/../" or "/./" resolution.
+            return rawPath.Split('/').Any(static segment => segment is "." or "..");
         }
 
         private static bool MatchesPath(string path, string prefix)
