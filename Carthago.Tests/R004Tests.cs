@@ -32,7 +32,7 @@ public sealed class R004Tests : IDisposable
             record, Sensitivity.Balanced, T0.AddSeconds(seconds)));
 
     [Fact]
-    public async Task Five_Explicit_Failed_Logins_Produce_One_Attributed_Brute_Force_Event()
+    public async Task Configured_Number_Of_Explicit_Failed_Logins_Produces_One_Brute_Force_Event()
     {
         RuleEvaluationResult? result = null;
         for (var i = 0; i < 30; i++)
