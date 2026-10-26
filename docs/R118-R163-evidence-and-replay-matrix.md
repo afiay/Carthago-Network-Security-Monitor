@@ -2,9 +2,10 @@
 
 Status: **validation candidate**, not a rule-promotion request. The user
 confirmed a Windows PASS for the 52-sample benchmark at commit `4617691`,
-including five focused R102 tests (5 passed, 0 failed). The four additional
-R118/R163 controls in this batch bring the candidate set to **56**.
-**Do not claim the 56-sample run passes until Windows build, tests and
+including five focused R102 tests (5 passed, 0 failed). Two independently added R102 controls and four additional R118/R163
+controls bring the branch to **58 JSON replay fixtures**. This is a
+file-count inspection, **not** a 58-sample benchmark result.
+**Do not claim the expanded run passes until Windows build, tests and
 benchmark complete at the new branch head.**
 
 ## Non-negotiable gates
@@ -39,7 +40,9 @@ or benchmark artifacts.
 
 ## Additional precision controls: ambiguous authentication and URI normalization
 
-The second paired batch adds four fixtures on top of the verified 52:
+This R118/R163 paired batch adds four fixtures on top of the verified 52.
+Two additional R102 fixtures were committed independently in the same branch,
+so the combined candidate dataset contains 58 JSON files:
 
 | Fixture | Label | Rule under test | Expected raw match | Alert eligibility |
 | --- | --- | --- | --- | --- |
