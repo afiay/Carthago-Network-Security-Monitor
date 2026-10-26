@@ -50,4 +50,23 @@ public sealed class HttpLightPrivacyTests
         Assert.Contains("Metadata-Flavor: Google", parsed.JoinedHeaderLines);
         Assert.Equal("metadata.google.internal", parsed.Host);
     }
+
+    [Theory]
+    [InlineData("Basic YWRtaW46YWRtaW4=", true)]
+    [InlineData("bAsIc YWRtaW46YWRtaW4=", true)]
+    [InlineData("Basic YWRtaW46c3Ryb25nLXBhc3M=", false)]
+    [InlineData("Basic invalid!!", false)]
+    public void Basic_Authentication_Produces_Only_A_Derived_Default_Credential_Indicator(
+        string authorization, bool expected)
+    {
+        var request = "GET /admin HTTP/1.1\r\n"
+                    + "Host: camera-lab.internal\r\n"
+                    + "Authorization: " + authorization + "\r\n"
+                    + "\r\n";
+
+        Assert.True(HttpLight.TryParseHttp(Encoding.ASCII.GetBytes(request), out var parsed));
+        Assert.Equal(expected, parsed.ObservedDefaultBasicCredential);
+        Assert.Contains("Authorization: [REDACTED]", parsed.JoinedHeaderLines);
+        Assert.DoesNotContain(authorization, parsed.JoinedHeaderLines);
+    }
 }
