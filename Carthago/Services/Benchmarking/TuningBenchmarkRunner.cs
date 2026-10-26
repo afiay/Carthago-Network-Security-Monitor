@@ -4,7 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.Json;
+using Carthago.Services;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
@@ -430,6 +432,38 @@ namespace Carthago.Services.Benchmarking
 
             if (string.IsNullOrWhiteSpace(sample.Name))
                 sample.Name = Path.GetFileNameWithoutExtension(filePath);
+
+            // Replay fixtures cannot assign the internal capture-trust flag
+            // HttpBasicDefaultCredentialObserved through JSON. It must come
+            // from the actual HTTP parser, just as it does in live capture.
+            // Raw requests are synthetic local test inputs only; overwrite
+            // headers with redacted parser output before any rule evaluates.
+            foreach (var (recordIndex, request) in sample.RawHttpRequestsByRecordIndex)
+            {
+                if (recordIndex < 0 || recordIndex >= sample.Records.Count
+                    || string.IsNullOrWhiteSpace(request) || request.Length > 16_384
+                    || request.Any(static c => c > 127))
+                    throw new InvalidDataException(
+                        $"Replay '{sample.Name}' has an invalid synthetic HTTP request at record {recordIndex}.");
+
+                if (!HttpLight.TryParseHttp(Encoding.ASCII.GetBytes(request), out var parsed)
+                    || string.IsNullOrWhiteSpace(parsed.Method)
+                    || string.IsNullOrWhiteSpace(parsed.Host)
+                    || string.IsNullOrWhiteSpace(parsed.Path))
+                    throw new InvalidDataException(
+                        $"Replay '{sample.Name}' contains an incomplete or invalid HTTP request at record {recordIndex}.");
+
+                var record = sample.Records[recordIndex];
+                if (!string.Equals(record.HttpMethod, parsed.Method, StringComparison.OrdinalIgnoreCase)
+                    || !string.Equals(record.HttpHost, parsed.Host, StringComparison.OrdinalIgnoreCase)
+                    || !string.Equals(record.HttpUri, parsed.Path, StringComparison.Ordinal))
+                    throw new InvalidDataException(
+                        $"Replay '{sample.Name}' HTTP parser disagrees with the declared method/host/path at record {recordIndex}.");
+
+                record.HttpRequestHeaders = parsed.JoinedHeaderLines;
+                record.HttpUserAgent = parsed.UserAgent ?? record.HttpUserAgent;
+                record.HttpBasicDefaultCredentialObserved = parsed.ObservedDefaultBasicCredential;
+            }
 
             return sample;
         }
