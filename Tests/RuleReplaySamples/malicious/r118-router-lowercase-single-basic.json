@@ -1,0 +1,27 @@
+{
+  "name": "r118-router-lowercase-single-basic",
+  "classification": "Malicious",
+  "records": [
+    {
+      "source": "203.0.113.52",
+      "destination": "192.0.2.1",
+      "sourcePort": 51911,
+      "destinationPort": 80,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "POST",
+      "httpHost": "router-lab.internal",
+      "httpUri": "/admin/login",
+      "httpRequestHeaders": "Host: router-lab.internal\r\nauthorization: bAsIc YWRtaW46YWRtaW4=",
+      "processName": "unattributed-client.exe",
+      "info": "Synthetic unauthorized router default-credential attempt. Basic scheme and header casing vary; no login success or consent inferred."
+    }
+  ],
+  "expectedMatches": [
+    "R118"
+  ],
+  "expectedNonMatches": [
+    "R163"
+  ],
+  "expectedMinimumConfidence": 0.75
+}
