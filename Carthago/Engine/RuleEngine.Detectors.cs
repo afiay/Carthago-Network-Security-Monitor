@@ -213,6 +213,15 @@ namespace Carthago.Services
                 map.TryRemove(key, out _);
         }
 
+        // TCP flag tokens are not arbitrary substrings ("SYNTHETIC" must not
+        // impersonate SYN, and lowercase packet-decoder flags remain valid).
+        private static readonly Regex TcpSynToken = new(
+            @"(?<![A-Za-z0-9])SYN(?![A-Za-z0-9])",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+        private static readonly Regex TcpAckToken = new(
+            @"(?<![A-Za-z0-9])ACK(?![A-Za-z0-9])",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
         // ===== R001 Port Scan (TCP SYN only, per (src,dst)) =====
         private static bool DetectPortScan(DateTime now, TrafficRecord record, Sensitivity s, out DetectionEvent detection)
         {
@@ -226,8 +235,8 @@ namespace Carthago.Services
                 if (!string.Equals(record.Protocol, "TCP", StringComparison.OrdinalIgnoreCase)) return false;
 
                 // SYN w/o ACK is a scan signal; ignore pure ACKs/data
-                bool syn = record.Flags?.Contains("SYN") == true;
-                bool ack = record.Flags?.Contains("ACK") == true;
+                bool syn = TcpSynToken.IsMatch(record.Flags ?? string.Empty);
+                bool ack = TcpAckToken.IsMatch(record.Flags ?? string.Empty);
                 if (!syn || ack) return false;
 
                 if (record.DestinationPort is not int dport) return false;
@@ -317,8 +326,8 @@ namespace Carthago.Services
                     pktCount = TrimAndCount(list, now, window);
                 }
 
-                bool syn = record.Flags?.Contains("SYN") == true;
-                bool ack = record.Flags?.Contains("ACK") == true;
+                bool syn = TcpSynToken.IsMatch(record.Flags ?? string.Empty);
+                bool ack = TcpAckToken.IsMatch(record.Flags ?? string.Empty);
 
                 var stats = _floodStats.AddOrUpdate(
                     floodKey,
