@@ -158,6 +158,15 @@ namespace Carthago.Engine.Rules
             if (!destination.Equals(host, StringComparison.OrdinalIgnoreCase) && !isGoogleAlias)
                 return false;
 
+            // A parsed Host property must not hide contradictory wire headers.
+            // RFC 9112 requires HTTP/1.1 recipients to reject duplicate Host
+            // fields. If captured header lines are available, require every
+            // observed Host field to agree with the validated authority and
+            // reject even identical duplicates. Headerless normalized records
+            // (e.g. HTTP/2 :authority) retain the existing strict socket check.
+            if (!HasConsistentMetadataHostHeader(record, host))
+                return false;
+
             var uri = record.HttpUri.Trim();
             // Credential-path evidence must survive normalization. Dot segments
             // and encoded separators can resolve to a different resource at the
@@ -221,6 +230,32 @@ namespace Carthago.Engine.Rules
             return MatchesPath(uri, "/latest/meta-data/iam/security-credentials")
                 || MatchesPath(uri, "/metadata/identity/oauth2/token")
                 || googleCredentialPath;
+        }
+
+        private static bool HasConsistentMetadataHostHeader(TrafficRecord record, string validatedHost)
+        {
+            if (string.IsNullOrWhiteSpace(record.HttpRequestHeaders))
+                return true;
+
+            var observedHostFields = 0;
+            foreach (var line in record.HttpRequestHeaders.Split(
+                new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                var separator = line.IndexOf(':');
+                if (separator <= 0 || !line[..separator].Trim().Equals(
+                    "Host", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                if (++observedHostFields > 1)
+                    return false;
+
+                if (!TryNormalizeMetadataHost(line[(separator + 1)..].Trim(),
+                        record.DestinationPort, out var headerHost)
+                    || !headerHost.Equals(validatedHost, StringComparison.OrdinalIgnoreCase))
+                    return false;
+            }
+
+            return true;
         }
 
         private static bool TryNormalizeMetadataDestination(string value, out string normalized)
