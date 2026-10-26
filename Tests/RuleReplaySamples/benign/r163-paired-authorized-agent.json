@@ -1,0 +1,23 @@
+{
+  "name": "r163-paired-authorized-agent",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "10.0.0.33",
+      "destination": "169.254.169.254",
+      "sourcePort": 51020,
+      "destinationPort": 80,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "GET",
+      "httpHost": "169.254.169.254",
+      "httpUri": "/latest/meta-data/iam/security-credentials/approved-role",
+      "httpRequestHeaders": "Host: 169.254.169.254\r\nX-aws-ec2-metadata-token: [REDACTED]",
+      "processName": "amazon-ssm-agent.exe",
+      "info": "Synthetic authorized agent credential lookup; request token redacted; no externally initiated request."
+    }
+  ],
+  "expectedNonMatches": [
+    "R163"
+  ]
+}
