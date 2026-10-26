@@ -24,6 +24,8 @@ namespace Carthago.Services.Benchmarking
 
         public string GetJsonPath(string outputDirectory) => Path.Combine(outputDirectory, "tuning-benchmark.json");
         public string GetMarkdownPath(string outputDirectory) => Path.Combine(outputDirectory, "tuning-benchmark.md");
+        public string GetHardeningAuditPath(string outputDirectory)
+            => Path.Combine(outputDirectory, "rule-hardening-audit.md");
 
         public async Task SaveAsync(TuningBenchmarkReport report, string outputDirectory, CancellationToken cancellationToken = default)
         {
@@ -32,6 +34,8 @@ namespace Carthago.Services.Benchmarking
             var jsonPath = GetJsonPath(outputDirectory);
             await File.WriteAllTextAsync(jsonPath, JsonSerializer.Serialize(report, JsonOptions), cancellationToken).ConfigureAwait(false);
             await File.WriteAllTextAsync(GetMarkdownPath(outputDirectory), ToMarkdown(report), cancellationToken).ConfigureAwait(false);
+            await File.WriteAllTextAsync(GetHardeningAuditPath(outputDirectory),
+                ToHardeningAuditMarkdown(report), cancellationToken).ConfigureAwait(false);
         }
 
         public async Task<TuningBenchmarkReport?> LoadAsync(string outputDirectory, CancellationToken cancellationToken = default)
@@ -186,6 +190,48 @@ namespace Carthago.Services.Benchmarking
                 sb.AppendLine();
             }
 
+            return sb.ToString();
+        }
+
+        public string ToHardeningAuditMarkdown(TuningBenchmarkReport report)
+        {
+            if (report == null) throw new ArgumentNullException(nameof(report));
+
+            var audit = report.RuleHardeningAudit;
+            var sb = new StringBuilder();
+            sb.AppendLine("# Carthago — full rule hardening audit");
+            sb.AppendLine();
+            sb.AppendLine("Evidence status here is only the scope of explicit offline replay controls. "
+                + "It is not production certification, independent field precision, or approval to promote alerts.");
+            sb.AppendLine("Shared numerical, telemetry and policy guards protect the detection engine, "
+                + "but each rule requires independently validated real-world positive, benign, ambiguous and malformed cases.");
+            sb.AppendLine();
+            sb.AppendLine($"- Registered rules reviewed: {audit.Count}");
+            sb.AppendLine($"- Contract issues: {audit.Count(static entry => entry.ContractIssues.Count > 0)}");
+            sb.AppendLine($"- Paired synthetic controls: {audit.Count(static entry => entry.PairedSyntheticControls)}");
+            sb.AppendLine($"- Positive only: {audit.Count(static entry => entry.EvidenceStatus == "PositiveOnly")}");
+            sb.AppendLine($"- Negative only: {audit.Count(static entry => entry.EvidenceStatus == "NegativeOnly")}");
+            sb.AppendLine($"- No explicit controls: {audit.Count(static entry => entry.EvidenceStatus == "NoExplicitReplayControls")}");
+            sb.AppendLine();
+            sb.AppendLine("## Coverage by detection family");
+            sb.AppendLine("| Category | Rules | Paired | Positive-only | Negative-only | No controls | Contract issues |");
+            sb.AppendLine("| --- | ---: | ---: | ---: | ---: | ---: | ---: |");
+            foreach (var family in audit.GroupBy(static entry => entry.Category)
+                .OrderByDescending(static group => group.Count())
+                .ThenBy(static group => group.Key, StringComparer.OrdinalIgnoreCase))
+            {
+                sb.AppendLine($"| {EscapeCell(family.Key)} | {family.Count()} | {family.Count(static entry => entry.PairedSyntheticControls)} | {family.Count(static entry => entry.EvidenceStatus == "PositiveOnly")} | {family.Count(static entry => entry.EvidenceStatus == "NegativeOnly")} | {family.Count(static entry => entry.EvidenceStatus == "NoExplicitReplayControls")} | {family.Count(static entry => entry.ContractIssues.Count > 0)} |");
+            }
+            sb.AppendLine();
+            sb.AppendLine("## All registered rules");
+            sb.AppendLine("| Rule | Category | Maturity | Mode | Floor | + controls | - controls | Evidence status | Contract issues |");
+            sb.AppendLine("| --- | --- | --- | --- | ---: | ---: | ---: | --- | --- |");
+            foreach (var entry in audit.OrderByDescending(static item => item.ContractIssues.Count)
+                .ThenBy(static item => item.PairedSyntheticControls)
+                .ThenBy(static item => item.RuleId, StringComparer.OrdinalIgnoreCase))
+            {
+                sb.AppendLine($"| {EscapeCell(entry.RuleId)} | {EscapeCell(entry.Category)} | {EscapeCell(entry.Maturity)} | {EscapeCell(entry.PrecisionDefaultMode)} | {entry.MinimumConfidence}% | {entry.PositiveRecognized}/{entry.PositiveCases} | {entry.ExplicitNegativePassed}/{entry.ExplicitNegativeCases} | {EscapeCell(entry.EvidenceStatus)} | {EscapeCell(string.Join(", ", entry.ContractIssues))} |");
+            }
             return sb.ToString();
         }
 
