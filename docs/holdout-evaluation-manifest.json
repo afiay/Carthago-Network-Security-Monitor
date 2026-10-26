@@ -47,13 +47,13 @@
     },
     {
       "file": "Tests/RuleReplayHoldout/malicious/holdout-r102-multistage-encoded-txt.json",
-      "gitBlobSha": "715199a2a70cd470344a8276ff6141da88ee73d1",
+      "gitBlobSha": "4997b6cf9b9b52b89155af1c5d0a86ff9f16ddc1",
       "classification": "Malicious",
       "primaryRule": "R102"
     },
     {
       "file": "Tests/RuleReplayHoldout/malicious/holdout-r102-second-client-encoded-txt.json",
-      "gitBlobSha": "4f63a3809072669f4a019714c67762e14eaae9bc",
+      "gitBlobSha": "07aef90e024e12bd404fbaeb0fbef7d2e3b33bcb",
       "classification": "Malicious",
       "primaryRule": "R102"
     },
