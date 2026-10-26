@@ -163,6 +163,27 @@ public sealed class TuningBenchmarkDetectionFunnelTests
     {
         var report = new TuningBenchmarkReport
         {
+            Summary = new TuningBenchmarkSummary { TruePositivePassRate = 0.5 },
+            ProfileResults = new Dictionary<string, TuningBenchmarkProfileSummary>
+            {
+                ["Research"] = new()
+                {
+                    ProfileName = "Research",
+                    TruePositivePassRate = 0.25
+                }
+            },
+            RecallGaps = new List<TuningBenchmarkRecallGap>
+            {
+                new()
+                {
+                    ProfileName = "Research",
+                    SampleName = "example",
+                    RuleId = "R102",
+                    Cause = "PrecisionConfidenceFloor",
+                    Confidence = 0.85,
+                    ConfidenceFloor = 0.90
+                }
+            },
             DetectionFunnelByProfile = new Dictionary<string, TuningBenchmarkDetectionFunnel>
             {
                 ["Research"] = new()
@@ -189,7 +210,11 @@ public sealed class TuningBenchmarkDetectionFunnelTests
             Assert.Contains("0.0%", markdown);
             Assert.Contains("N/A", markdown);
             Assert.Contains("not live notification delivery", markdown);
+            Assert.Contains("- True-positive pass rate: 50.0%", markdown);
+            Assert.Contains("- Malicious pass rate: 25.0%", markdown);
+            Assert.Contains("0.85 / 0.90", markdown);
             Assert.DoesNotContain("100,0", markdown);
+            Assert.DoesNotContain("0,85", markdown);
         }
         finally
         {
