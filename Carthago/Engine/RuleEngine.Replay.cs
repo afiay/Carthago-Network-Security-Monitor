@@ -63,6 +63,7 @@ namespace Carthago.Services
             IdentityAccessPrecisionDetectionRuleBase.ResetSharedStateForReplay();
             HttpApiPrecisionDetectionRuleBase.ResetSharedStateForReplay();
             CloudDevPrecisionDetectionRuleBase.ResetSharedStateForReplay();
+            EvidenceDrivenPrecisionRuleBase.ResetSharedStateForReplay();
             PlatformHealthAdvancedPrecisionDetectionRuleBase.ResetSharedStateForReplay();
             TlsPkiPrecisionDetectionRuleBase.ResetSharedStateForReplay();
             EvasionInfraPrecisionDetectionRuleBase.ResetSharedStateForReplay();
