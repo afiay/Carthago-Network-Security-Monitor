@@ -356,6 +356,36 @@ public sealed class R118R163PairedReplayQualityTests
             Assert.True(Assert.Single(imdsCredentialGet.Profiles[profile].RuleDecisions,
                 decision => decision.RuleId == "R163").Confidence < 0.84);
         }
+        // Seventh paired batch: source authority and executable path
+        // ambiguity must not manufacture evidence. Both provider-specific
+        // positive candidates still remain non-paging at existing floors.
+        var conflictingHost = report.SampleResults.Single(sample =>
+            sample.Name == "r118-conflicting-host-default-basic-over-tls");
+        var supportPair = report.SampleResults.Single(sample =>
+            sample.Name == "r118-router-support-parser-default-basic");
+        var cloudInitHomeSpoof = report.SampleResults.Single(sample =>
+            sample.Name == "r163-home-cloud-init-basename-spoof");
+        var cloudInitHead = report.SampleResults.Single(sample =>
+            sample.Name == "r163-approved-cloud-init-imdsv2-head");
+
+        Assert.True(report.SampleResults.Count >= 88);
+        Assert.DoesNotContain("R118", conflictingHost.ActualMatches);
+        Assert.Contains("R118", supportPair.ActualMatches);
+        Assert.Contains("R163", cloudInitHomeSpoof.ActualMatches);
+        Assert.DoesNotContain("R163", cloudInitHead.ActualMatches);
+        Assert.All(new[] { conflictingHost, supportPair, cloudInitHomeSpoof, cloudInitHead },
+            sample => Assert.Empty(sample.Errors));
+        Assert.DoesNotContain("c3VwcG9ydDpzdXBwb3J0",
+            System.Text.Json.JsonSerializer.Serialize(report), StringComparison.Ordinal);
+
+        foreach (var profile in report.ProfileResults.Keys)
+        {
+            Assert.Empty(conflictingHost.Profiles[profile].AlertRuleIds);
+            Assert.Empty(cloudInitHead.Profiles[profile].AlertRuleIds);
+            Assert.DoesNotContain("R118", supportPair.Profiles[profile].AlertRuleIds);
+            Assert.DoesNotContain("R163", cloudInitHomeSpoof.Profiles[profile].AlertRuleIds);
+        }
+
         // Recommendation heuristics must not override the rule-specific
         // precision floors simply because a raw match exceeded 75%.
         Assert.DoesNotContain("R118", report.Summary.RulesRecommendedForAlert);
