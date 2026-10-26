@@ -12,10 +12,9 @@
       "httpMethod": "GET",
       "httpHost": "camera-office.internal",
       "httpUri": "/admin",
-      "httpRequestHeaders": "Host: camera-office.internal\r\nAuthorization: [REDACTED]",
-      "httpBasicDefaultCredentialObserved": true,
+      "httpRequestHeaders": "Host: camera-office.internal\r\nAuthorization: Basic YWRtaW46YWRtaW4=",
       "processName": "unattributed-client.exe",
-      "info": "Synthetic unauthorized camera administration request. Parser observed a known default Basic credential before redacting the header; no password or login outcome retained."
+      "info": "Synthetic unauthorized camera login attempt using a known fake default Basic pair. The live parser would redact this header and retain only the observed-default flag; replay JSON uses the legacy synthetic-header path."
     }
   ],
   "expectedMatches": [
