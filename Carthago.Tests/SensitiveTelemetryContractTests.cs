@@ -337,6 +337,8 @@ public sealed class SensitiveTelemetryContractTests
     [Theory]
     [InlineData("fd00:ec2::254", "[fd00:ec2::254]", "/latest/meta-data/iam/security-credentials/example-role")]
     [InlineData("fd20:ce::254", "[fd20:ce::254]", "/computeMetadata/v1/instance/service-accounts/default/token")]
+    [InlineData("fd20:ce::254", "metadata.google.internal", "/computeMetadata/v1/instance/service-accounts/default/token")]
+    [InlineData("fd00:0ec2:0:0:0:0:0:0254", "[fd00:ec2::254]", "/latest/meta-data/iam/security-credentials/example-role")]
     public async Task R163_Recognizes_Documented_Ipv6_Metadata_Credential_Endpoints(
         string destination, string host, string path)
     {
@@ -361,6 +363,7 @@ public sealed class SensitiveTelemetryContractTests
     [InlineData("fd00:ec2::254", "[fd00:ec2::254]", "/computeMetadata/v1/instance/service-accounts/default/token")]
     [InlineData("fd20:ce::254", "[fd20:ce::254]", "/latest/meta-data/iam/security-credentials/example-role")]
     [InlineData("fd00:ec2::254", "[fd20:ce::254]", "/latest/meta-data/iam/security-credentials/example-role")]
+    [InlineData("fd00:ec2::254", "metadata.google.internal", "/latest/meta-data/iam/security-credentials/example-role")]
     [InlineData("fd00:ec2::254", "fd00:ec2::254", "/latest/meta-data/iam/security-credentials/example-role")]
     [InlineData("fd00:ec2::254", "[fd00:ec2::254%25eth0]", "/latest/meta-data/iam/security-credentials/example-role")]
     [InlineData("fd00:ec2::254", "[fd00:ec2::254]:8080", "/latest/meta-data/iam/security-credentials/example-role")]
