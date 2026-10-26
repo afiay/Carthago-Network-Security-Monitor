@@ -1,0 +1,26 @@
+{
+  "name": "holdout-r118-camera-nondefault-basic",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "198.51.100.73",
+      "destination": "192.0.2.61",
+      "destinationPort": 8080,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "POST",
+      "httpHost": "camera-factory7.internal",
+      "httpUri": "/onvif/device_service",
+      "processName": "unmanaged-admin-client.exe",
+      "info": "Approved camera management uses non-default Basic credentials.",
+      "httpRequestHeaders": "Host: camera-factory7.internal\r\nAuthorization: [REDACTED]"
+    }
+  ],
+  "rawHttpRequestsByRecordIndex": {
+    "0": "POST /onvif/device_service HTTP/1.1\r\nHost: camera-factory7.internal\r\nAuthorization: Basic b3BlcmF0b3I6c3Ryb25nLXBhc3M=\r\n\r\n"
+  },
+  "expectedNonMatches": [
+    "R118",
+    "R163"
+  ]
+}
