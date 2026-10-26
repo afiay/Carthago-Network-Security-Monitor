@@ -82,14 +82,6 @@ jobs:
             Write-Host ("{0}: TP={1} FP={2} FN={3} TN={4} precision={5} recall={6} F1={7}" -f $profile.Name, $q.truePositives, $q.falsePositives, $q.falseNegatives, $q.trueNegatives, $q.precision, $q.recall, $q.f1Score)
           }
 
-      - name: Preserve test and benchmark evidence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: carthago-detection-quality-${{ github.run_id }}
-          path: |
-            build-verify/test-results/**/*.trx
-            build-verify/tuning-benchmark.json
-            build-verify/tuning-benchmark.md
-          if-no-files-found: warn
-          retention-days: 14
+      # Artifact uploads are temporarily disabled: the account has reached
+      # its Actions artifact storage quota. Restore uploads only after
+      # reviewing output for sensitive information and storage availability.
