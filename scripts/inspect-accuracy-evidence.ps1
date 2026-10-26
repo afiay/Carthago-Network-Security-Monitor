@@ -25,6 +25,25 @@ function Format-Interval($interval) {
     return "$(Format-Ratio $interval.lower)-$(Format-Ratio $interval.upper)"
 }
 
+# Compute bounds from the authoritative confusion-matrix counts rather
+# than depending on optional, serializer-specific computed JSON properties.
+function Get-Wilson95([int]$successes, [int]$observations) {
+    if ($observations -le 0 -or $successes -lt 0 -or $successes -gt $observations) {
+        return $null
+    }
+    $z = 1.959963984540054
+    $n = [double]$observations
+    $p = $successes / $n
+    $zSquared = $z * $z
+    $denominator = 1.0 + $zSquared / $n
+    $centre = ($p + $zSquared / (2.0 * $n)) / $denominator
+    $radius = $z * [Math]::Sqrt($p * (1.0 - $p) / $n + $zSquared / (4.0 * $n * $n)) / $denominator
+    return [pscustomobject]@{
+        Lower = [Math]::Max(0.0, $centre - $radius)
+        Upper = [Math]::Min(1.0, $centre + $radius)
+    }
+}
+
 Write-Host ("Offline replay cases: {0}; malicious: {1}; benign: {2}" -f
     $data.summary.replaySampleCount, $data.summary.maliciousSampleCount,
     $data.summary.benignSampleCount)
@@ -34,15 +53,14 @@ Write-Host 'Use balanced accuracy to avoid hiding malicious misses behind plenti
 
 $rows = foreach ($profile in @($data.summary.sampleLevelQualityByProfile.PSObject.Properties | Sort-Object Name)) {
     $q = $profile.Value
-    # Keep the inspector useful on zero-alert profiles, where precision and
-    # its Wilson bounds are correctly undefined.
-    $precisionBounds = $q.PSObject.Properties['precision95']
-    $fprBounds = $q.PSObject.Properties['falsePositiveRate95']
-    if ($null -eq $precisionBounds -or $null -eq $fprBounds) {
-        throw 'This JSON predates confidence-bound reporting. Rerun the updated benchmark.'
-    }
-    $precisionLower = if ($null -eq $precisionBounds.Value) { $null } else { $precisionBounds.Value.lower }
-    $fprUpper = if ($null -eq $fprBounds.Value) { $null } else { $fprBounds.Value.upper }
+    $tp = [int]$q.truePositives
+    $fp = [int]$q.falsePositives
+    $fn = [int]$q.falseNegatives
+    $tn = [int]$q.trueNegatives
+    $precision95 = Get-Wilson95 $tp ($tp + $fp)
+    $fpr95 = Get-Wilson95 $fp ($fp + $tn)
+    $precisionLower = if ($null -eq $precision95) { $null } else { $precision95.Lower }
+    $fprUpper = if ($null -eq $fpr95) { $null } else { $fpr95.Upper }
     [pscustomobject]@{
         Profile = $profile.Name
         TP = [int]$q.truePositives
