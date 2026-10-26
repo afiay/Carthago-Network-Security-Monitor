@@ -217,6 +217,42 @@ public sealed class SensitiveTelemetryContractTests
         Assert.False(decision.ConfidenceSatisfied);
     }
 
+    [Theory]
+    [InlineData("169.254.170.2")]
+    [InlineData("100.100.100.200")]
+    public async Task R163_Does_Not_Trust_CrossProvider_Metadata_Host(string destination)
+    {
+        // A Host header naming AWS EC2 IMDS must not authenticate an
+        // unrelated ECS or Alibaba metadata destination.
+        var record = MetadataRecord("/latest/meta-data/iam/security-credentials/app", "webapp.exe");
+        record.Destination = destination;
+
+        Assert.False((await new R163_SsrfMetadataServiceProbeRule().EvaluateAsync(Context(record))).Matched);
+        Assert.False(RulePrecisionCatalog.Validate("R163", record).CanEvaluate);
+    }
+
+    [Fact]
+    public async Task R163_Accepts_Google_Metadata_Dns_Name_At_Shared_LinkLocal_Address()
+    {
+        // GCP resolves metadata.google.internal to 169.254.169.254.
+        // The hostname and destination differ but represent one endpoint.
+        var record = MetadataRecord("/computeMetadata/v1/instance/service-accounts/default/token", "webapp.exe");
+        record.HttpHost = "metadata.google.internal";
+
+        Assert.True((await new R163_SsrfMetadataServiceProbeRule().EvaluateAsync(Context(record))).Matched);
+    }
+
+    [Fact]
+    public async Task R163_Rejects_Google_Metadata_Host_With_Aws_Credential_Path()
+    {
+        // Do not let a cross-provider Host/path combination stand in
+        // for a validated metadata-service request.
+        var record = MetadataRecord("/latest/meta-data/iam/security-credentials/app", "webapp.exe");
+        record.HttpHost = "metadata.google.internal";
+
+        Assert.False((await new R163_SsrfMetadataServiceProbeRule().EvaluateAsync(Context(record))).Matched);
+    }
+
     private static TrafficRecord MetadataRecord(string path, string? process) => new()
     {
         Source = "10.1.1.30", Destination = "169.254.169.254", DestinationPort = 80,
