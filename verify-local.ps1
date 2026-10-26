@@ -34,6 +34,49 @@ try {
         }
         return $true
     }
+    function Show-AlertRuleQuality([object]$Report) {
+        # Each (replay sample, rule ID, profile) is counted once, even when
+        # the detector emits multiple events. Shadow/raw matches are NOT alerts.
+        # TP/FN: expected malicious rule alerts; FP: benign alerts plus
+        # explicitly forbidden rule matches on malicious samples.
+        # Unlabeled alerts on malicious samples are not scored as false positives.
+        Write-Host 'Alert-rule quality by profile (labeled offline replays; TP/FP/FN, precision/recall/F1):'
+        foreach ($profileName in @($Report.profileResults.PSObject.Properties.Name | Sort-Object)) {
+            foreach ($ruleId in @('ALL','R118','R163','R102')) {
+                $tp = 0; $fp = 0; $fn = 0
+                foreach ($sample in @($Report.sampleResults)) {
+                    $profileEntry = $sample.profiles.PSObject.Properties[$profileName]
+                    if ($null -eq $profileEntry) { throw "Missing profile $profileName on sample $($sample.name)" }
+                    $alertIds = @($profileEntry.Value.alertRuleIds)
+                    if ($ruleId -ne 'ALL') {
+                        $alertIds = @($alertIds | Where-Object { $_ -eq $ruleId })
+                    }
+                    if ($sample.classification -eq 'Malicious') {
+                        $expected = @($sample.expectedMatches)
+                        if ($ruleId -ne 'ALL') {
+                            $expected = @($expected | Where-Object { $_ -eq $ruleId })
+                        }
+                        foreach ($expectedId in $expected) {
+                            if ($alertIds -contains $expectedId) { $tp++ } else { $fn++ }
+                        }
+                        foreach ($forbiddenId in @($sample.unexpectedMatches)) {
+                            if ($alertIds -contains $forbiddenId) { $fp++ }
+                        }
+                    } elseif ($sample.classification -eq 'Benign') {
+                        $fp += $alertIds.Count
+                    } else {
+                        throw "Unrecognized replay classification on sample $($sample.name)"
+                    }
+                }
+                $precision = 'N/A'; $recall = 'N/A'; $f1 = 'N/A'
+                if (($tp + $fp) -gt 0) { $precision = '{0:P1}' -f ($tp / ($tp + $fp)) }
+                if (($tp + $fn) -gt 0) { $recall = '{0:P1}' -f ($tp / ($tp + $fn)) }
+                if ((2 * $tp + $fp + $fn) -gt 0) { $f1 = '{0:P1}' -f ((2 * $tp) / (2 * $tp + $fp + $fn)) }
+                Write-Host ("  {0,-15} {1,-4} TP={2} FP={3} FN={4} precision={5} recall={6} F1={7}" -f $profileName,$ruleId,$tp,$fp,$fn,$precision,$recall,$f1)
+            }
+        }
+        Write-Host 'Scope: unique alerted rule IDs per labeled sample, not event counts or production prevalence.'
+    }
     if (-not (Invoke-Stage 'restore-tests' @('restore','Carthago.Tests/Carthago.Tests.csproj','--verbosity','quiet','--nologo'))) { exit 1 }
     if (-not (Invoke-Stage 'restore-benchmarks' @('restore','Carthago.Benchmarks/Carthago.Benchmarks.csproj','--verbosity','quiet','--nologo'))) { exit 1 }
     if (-not (Invoke-Stage 'build-tests' @('build','Carthago.Tests/Carthago.Tests.csproj','-c','Release','--no-restore','-v','quiet','--nologo'))) { exit 1 }
@@ -57,6 +100,7 @@ try {
                 }
             }
             Write-Host "Replay quality: $($report.summary.replaySampleCount) samples; benign critical alerts: $($report.summary.benignCriticalAlertCount)"
+            Show-AlertRuleQuality $report
             if ($Details) {
                 foreach ($sample in @($report.sampleResults | Where-Object { $_.classification -eq 'Benign' })) {
                     foreach ($profile in $sample.profiles.PSObject.Properties) {
