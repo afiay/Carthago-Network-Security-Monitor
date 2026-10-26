@@ -36,6 +36,12 @@ namespace Carthago.Tests
             Assert.Contains("Recall:", markdown);
             Assert.Contains("F1:", markdown);
             Assert.Contains("## Alert-Level Recall Gaps", markdown);
+            Assert.Contains("## Explicit Rule Evidence Coverage", markdown);
+            var loaded = await store.LoadAsync(tempOutput);
+            Assert.NotNull(loaded);
+            Assert.Equal(report.RuleEvidenceCoverage.Count, loaded!.RuleEvidenceCoverage.Count);
+            Assert.Equal(report.SampleResults.Sum(sample => sample.ExpectedNonMatches.Count),
+                loaded.SampleResults.Sum(sample => sample.ExpectedNonMatches.Count));
             var expectedAlertGaps = report.SampleResults
                 .Where(sample => sample.Classification == ReplaySampleClassification.Malicious)
                 .Sum(sample => sample.Profiles.Values.Sum(profile =>
