@@ -1,0 +1,27 @@
+{
+  "name": "r118-onvif-nondefault-basic-wire-redacted",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "198.51.100.183",
+      "destination": "192.0.2.181",
+      "sourcePort": 54183,
+      "destinationPort": 8080,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "POST",
+      "httpHost": "nvr-lab.internal",
+      "httpUri": "/onvif/device_service",
+      "httpRequestHeaders": "Host: nvr-lab.internal\r\nAuthorization: [REDACTED]",
+      "processName": "approved-device-admin.exe",
+      "info": "Synthetic authorized ONVIF administration using a non-default HTTP Basic pair. Raw test-only wire input is parsed and redacted; no known default pair or login outcome is observed."
+    }
+  ],
+  "rawHttpRequestsByRecordIndex": {
+    "0": "POST /onvif/device_service HTTP/1.1\r\nHost: nvr-lab.internal\r\nAuthorization: Basic YWRtaW46c3Ryb25nLXBhc3M=\r\n\r\n"
+  },
+  "expectedNonMatches": [
+    "R118",
+    "R163"
+  ]
+}
