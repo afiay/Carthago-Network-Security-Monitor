@@ -1,6 +1,12 @@
 // SPDX-License-Identifier: MIT
 using System;
 using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
+using Carthago.Engine.Rules;
+using Carthago.Engine.Rules.Expansion;
+using Carthago.Engine.Rules.IotOt;
+using Carthago.Models;
 using Carthago.Services;
 using Xunit;
 
@@ -69,4 +75,53 @@ public sealed class HttpLightPrivacyTests
         Assert.Contains("Authorization: [REDACTED]", parsed.JoinedHeaderLines);
         Assert.DoesNotContain(authorization, parsed.JoinedHeaderLines);
     }
+    [Fact]
+    public async Task R118_And_R163_Events_Do_Not_Expose_Synthetic_Credential_Bytes()
+    {
+        const string defaultBasic = "YWRtaW46YWRtaW4="; // Synthetic admin:admin fixture only.
+        const string metadataToken = "synthetic-secret-token-do-not-persist";
+
+        var iot = new TrafficRecord
+        {
+            Source = "198.51.100.70",
+            Destination = "192.0.2.50",
+            DestinationPort = 80,
+            Protocol = "HTTP",
+            ApplicationProtocol = "HTTP",
+            HttpMethod = "GET",
+            HttpHost = "camera-lab.internal",
+            HttpUri = "/admin",
+            HttpRequestHeaders = "Host: camera-lab.internal\\r\\nAuthorization: Basic " + defaultBasic,
+            ProcessName = "unattributed-client.exe"
+        };
+        var metadata = new TrafficRecord
+        {
+            Source = "10.0.0.20",
+            Destination = "169.254.169.254",
+            DestinationPort = 80,
+            Protocol = "HTTP",
+            ApplicationProtocol = "HTTP",
+            HttpMethod = "GET",
+            HttpHost = "169.254.169.254",
+            HttpUri = "/latest/meta-data/iam/security-credentials/test-role",
+            HttpRequestHeaders = "Host: 169.254.169.254\\r\\nX-aws-ec2-metadata-token: " + metadataToken,
+            ProcessName = "unapproved-webapp.exe"
+        };
+
+        var iotResult = await new R118_DefaultCredentialIoTAttemptRule().EvaluateAsync(
+            new RuleEvaluationContext(iot, Sensitivity.Balanced, DateTime.UtcNow));
+        var metadataResult = await new R163_SsrfMetadataServiceProbeRule().EvaluateAsync(
+            new RuleEvaluationContext(metadata, Sensitivity.Balanced, DateTime.UtcNow));
+        Assert.True(iotResult.Matched);
+        Assert.True(metadataResult.Matched);
+
+        var iotEvent = JsonSerializer.Serialize(Assert.Single(iotResult.Events));
+        var metadataEvent = JsonSerializer.Serialize(Assert.Single(metadataResult.Events));
+        Assert.DoesNotContain(defaultBasic, iotEvent, StringComparison.Ordinal);
+        Assert.DoesNotContain("admin:admin", iotEvent, StringComparison.Ordinal);
+        Assert.DoesNotContain("Authorization:", iotEvent, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(metadataToken, metadataEvent, StringComparison.Ordinal);
+        Assert.DoesNotContain("X-aws-ec2-metadata-token:", metadataEvent, StringComparison.OrdinalIgnoreCase);
+    }
+
 }
