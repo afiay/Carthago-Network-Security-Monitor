@@ -45,7 +45,7 @@ public sealed class R102DistinctTxtCorrelationTests
             var evt = Assert.Single(evaluated.Events);
             first ??= evt;
             last = evt;
-            Assert.Equal(index + 1, EvidenceValue(evt, "dns.distinctSuspiciousTxtNames"));
+            Assert.Equal((index + 1).ToString(System.Globalization.CultureInfo.InvariantCulture), EvidenceValue(evt, "dns.distinctSuspiciousTxtNames"));
             Assert.Equal(index == 2,
                 EvidenceValue(evt, "matched_conditions").Contains(
                     "multiple_distinct_suspicious_txt_names", StringComparison.OrdinalIgnoreCase));
@@ -70,7 +70,7 @@ public sealed class R102DistinctTxtCorrelationTests
                 record, Sensitivity.Balanced, BaseTime.AddSeconds(index * 20)));
             Assert.True(evaluated.Matched);
             var evt = Assert.Single(evaluated.Events);
-            Assert.Equal(1, EvidenceValue(evt, "dns.distinctSuspiciousTxtNames"));
+            Assert.Equal("1", EvidenceValue(evt, "dns.distinctSuspiciousTxtNames"));
             Assert.DoesNotContain("multiple_distinct_suspicious_txt_names",
                 EvidenceValue(evt, "matched_conditions"), StringComparison.OrdinalIgnoreCase);
         }
@@ -94,7 +94,7 @@ public sealed class R102DistinctTxtCorrelationTests
             if (known.Matched)
             {
                 var evt = Assert.Single(known.Events);
-                Assert.Equal(0, EvidenceValue(evt, "dns.distinctSuspiciousTxtNames"));
+                Assert.Equal("0", EvidenceValue(evt, "dns.distinctSuspiciousTxtNames"));
                 Assert.DoesNotContain("multiple_distinct_suspicious_txt_names",
                     EvidenceValue(evt, "matched_conditions"), StringComparison.OrdinalIgnoreCase);
             }
