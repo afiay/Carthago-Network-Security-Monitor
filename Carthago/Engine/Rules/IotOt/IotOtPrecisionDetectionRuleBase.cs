@@ -83,7 +83,11 @@ namespace Carthago.Engine.Rules.IotOt
                 items.Add(new DetectionEvidenceItem("network.destinationPort", record.DestinationPort.Value.ToString(System.Globalization.CultureInfo.InvariantCulture), "network"));
             if (!string.IsNullOrWhiteSpace(record.ProcessName))
                 items.Add(new DetectionEvidenceItem("process.name", record.ProcessName!, "process"));
-            if (!string.IsNullOrWhiteSpace(record.Info))
+            // R118 may inspect a Telnet login transcript or other credential-bearing
+            // telemetry in Info. Never copy those raw bytes into either the legacy
+            // event Evidence string or StructuredEvidence (including shadow events).
+            // The rule emits non-secret matched_conditions instead.
+            if (Descriptor.RuleId != "R118" && !string.IsNullOrWhiteSpace(record.Info))
                 items.Add(new DetectionEvidenceItem("iot.info", ShortText(record.Info!, 220), "iot-ot"));
 
             if (evidenceItems != null)
