@@ -253,6 +253,43 @@ public sealed class SensitiveTelemetryContractTests
         Assert.False((await new R163_SsrfMetadataServiceProbeRule().EvaluateAsync(Context(record))).Matched);
     }
 
+    [Theory]
+    [InlineData("attacker@169.254.169.254")]
+    [InlineData("169.254.169.254/credential-path")]
+    [InlineData("169.254.169.254:8080")]
+    public async Task R163_Rejects_Malformed_Or_Ambiguous_Http_Host(string host)
+    {
+        // A Host field is an authority, not an arbitrary URI. Never allow
+        // userinfo, path segments, or an unrelated port to authenticate IMDS.
+        var record = MetadataRecord("/latest/meta-data/iam/security-credentials/app", "webapp.exe");
+        record.HttpHost = host;
+
+        Assert.False((await new R163_SsrfMetadataServiceProbeRule().EvaluateAsync(Context(record))).Matched);
+        Assert.False(RulePrecisionCatalog.Validate("R163", record).CanEvaluate);
+    }
+
+    [Theory]
+    [InlineData("http://169.254.170.2/latest/meta-data/iam/security-credentials/app")]
+    [InlineData("http://attacker@169.254.169.254/latest/meta-data/iam/security-credentials/app")]
+    public async Task R163_Rejects_Absolute_Request_Target_With_Mismatched_Or_Userinfo_Authority(string target)
+    {
+        var record = MetadataRecord(target, "webapp.exe");
+
+        Assert.False((await new R163_SsrfMetadataServiceProbeRule().EvaluateAsync(Context(record))).Matched);
+        Assert.False(RulePrecisionCatalog.Validate("R163", record).CanEvaluate);
+    }
+
+    [Fact]
+    public async Task R163_Accepts_Absolute_Request_Target_At_Observed_Metadata_Endpoint()
+    {
+        var record = MetadataRecord(
+            "http://169.254.169.254/latest/meta-data/iam/security-credentials/app",
+            "webapp.exe");
+
+        Assert.True((await new R163_SsrfMetadataServiceProbeRule().EvaluateAsync(Context(record))).Matched);
+        Assert.True(RulePrecisionCatalog.Validate("R163", record).CanEvaluate);
+    }
+
     private static TrafficRecord MetadataRecord(string path, string? process) => new()
     {
         Source = "10.1.1.30", Destination = "169.254.169.254", DestinationPort = 80,
