@@ -1,0 +1,26 @@
+{
+  "name": "r163-unauthorized-alibaba-ram-probe",
+  "classification": "Malicious",
+  "records": [
+    {
+      "source": "10.0.0.33",
+      "destination": "100.100.100.200",
+      "sourcePort": 48143,
+      "destinationPort": 80,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "GET",
+      "httpHost": "100.100.100.200",
+      "httpUri": "/latest/meta-data/ram/security-credentials/example-role",
+      "httpRequestHeaders": "Host: 100.100.100.200\\r\\nX-aliyun-ecs-metadata-token: [REDACTED]",
+      "processName": "unapproved-webapp.exe",
+      "info": "Synthetic unauthorized Alibaba ECS RAM-role credential probe. Ground-truth intent is malicious; session token redacted and no independently verified inbound-to-outbound SSRF causality."
+    }
+  ],
+  "expectedMatches": [
+    "R163"
+  ],
+  "expectedNonMatches": [
+    "R118"
+  ]
+}
