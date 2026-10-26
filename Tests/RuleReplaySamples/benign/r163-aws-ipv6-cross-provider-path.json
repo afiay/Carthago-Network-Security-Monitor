@@ -1,0 +1,24 @@
+{
+  "name": "r163-aws-ipv6-cross-provider-path",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "fd00:abcd::21",
+      "destination": "fd00:ec2::254",
+      "sourcePort": 48203,
+      "destinationPort": 80,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "GET",
+      "httpHost": "[fd00:ec2::254]",
+      "httpUri": "/computeMetadata/v1/instance/service-accounts/default/token",
+      "httpRequestHeaders": "Host: [fd00:ec2::254]",
+      "processName": "webapp.exe",
+      "info": "Synthetic cross-provider negative control. An AWS IPv6 metadata destination cannot serve GCP service-account tokens."
+    }
+  ],
+  "expectedNonMatches": [
+    "R163",
+    "R118"
+  ]
+}
