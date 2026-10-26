@@ -53,24 +53,28 @@ namespace Carthago.Services.Benchmarking
                         }
                         else if (decision != null)
                         {
-                            evidence.AddRange(decision.ReasonDetails);
+                            // Keep actionable precision diagnostics ahead of
+                            // generic tuning-tier descriptions in bounded reports.
                             evidence.AddRange(decision.RuntimePrecisionReasons);
+                            evidence.AddRange(decision.ReasonDetails);
                             if (evidence.Count == 0)
                                 evidence.AddRange(decision.Reasons);
                         }
 
+                        var blockingFactors = GetBlockingFactors(matched, outcome, decision);
                         gaps.Add(new TuningBenchmarkRecallGap
                         {
                             ProfileName = profile.Key,
                             SampleName = sample.Name,
                             RuleId = ruleId,
-                            Cause = Classify(matched, outcome, decision),
+                            Cause = blockingFactors[0],
+                            BlockingFactors = blockingFactors,
                             DetectionOutcome = outcome,
                             EffectiveMode = decision?.EffectiveMode ?? "NoDecision",
                             Confidence = decision?.Confidence,
                             ConfidenceFloor = decision?.ConfidenceFloor,
                             Evidence = evidence.Where(static item => !string.IsNullOrWhiteSpace(item))
-                                .Distinct(StringComparer.OrdinalIgnoreCase).Take(5).ToList()
+                                .Distinct(StringComparer.OrdinalIgnoreCase).Take(8).ToList()
                         });
                     }
                 }
@@ -83,35 +87,59 @@ namespace Carthago.Services.Benchmarking
                 .ToList();
         }
 
-        private static string Classify(bool matched, string outcome, TuningBenchmarkRuleDecision? decision)
+        private static List<string> GetBlockingFactors(
+            bool matched, string outcome, TuningBenchmarkRuleDecision? decision)
         {
             if (!matched)
-                return outcome switch
+            {
+                return new List<string>
                 {
-                    "MissingTelemetry" => "MissingTelemetry",
-                    "EvaluationFailed" => "DetectorFailure",
-                    "RuleUnavailable" => "RuleUnavailable",
-                    _ => "NoMatch"
+                    outcome switch
+                    {
+                        "MissingTelemetry" => "MissingTelemetry",
+                        "EvaluationFailed" => "DetectorFailure",
+                        "RuleUnavailable" => "RuleUnavailable",
+                        _ => "NoMatch"
+                    }
                 };
+            }
 
             if (decision == null)
-                return "NoPolicyDecision";
-            if (decision.Reasons.Any(static reason =>
-                reason.Contains("ApprovedAssetMatched", StringComparison.OrdinalIgnoreCase)))
-                return "ApprovedAsset";
-            if (decision.Reasons.Any(static reason =>
-                reason.Contains("ConfidenceFloorApplied", StringComparison.OrdinalIgnoreCase)))
-                return "ConfidenceFloor";
-            if (string.Equals(decision.EffectiveMode, "Disabled", StringComparison.OrdinalIgnoreCase))
-                return "Disabled";
-            if (!string.Equals(decision.DefaultMode, "Alert", StringComparison.OrdinalIgnoreCase))
-                return "ProfileShadow";
-            if (!string.Equals(decision.PrecisionMode, "Alert", StringComparison.OrdinalIgnoreCase))
-                return "PrecisionShadow";
-            if (!string.Equals(decision.EffectiveMode, "Alert", StringComparison.OrdinalIgnoreCase))
-                return "RuntimeGate";
+                return new List<string> { "NoPolicyDecision" };
 
-            return "AlertNotEmitted";
+            var factors = new List<string>();
+            if (HasReason(decision.Reasons, "ApprovedAssetMatched"))
+                factors.Add("ApprovedAsset");
+            if (HasReason(decision.Reasons, "ConfidenceFloorApplied"))
+                factors.Add("ConfidenceFloor");
+            if (HasReason(decision.RuntimePrecisionReasons, "below precision floor"))
+                factors.Add("PrecisionConfidenceFloor");
+            if (HasReason(decision.RuntimePrecisionReasons, "environment-scoped rule lacks"))
+                factors.Add("EnvironmentApprovalRequired");
+            if (HasReason(decision.Reasons, "MissingEnvironmentConfiguration"))
+                factors.Add("EnvironmentConfigurationRequired");
+            if (HasReason(decision.RuntimePrecisionReasons, "baseline not ready")
+                || HasReason(decision.RuntimePrecisionReasons, "baseline readiness required"))
+                factors.Add("BaselineNotReady");
+            if (string.Equals(decision.EffectiveMode, "Disabled", StringComparison.OrdinalIgnoreCase))
+                factors.Add("Disabled");
+            if (!string.Equals(decision.DefaultMode, "Alert", StringComparison.OrdinalIgnoreCase))
+                factors.Add("ProfileShadow");
+            if (!string.Equals(decision.PrecisionMode, "Alert", StringComparison.OrdinalIgnoreCase))
+                factors.Add("PrecisionShadow");
+            if (!string.Equals(decision.EffectiveMode, "Alert", StringComparison.OrdinalIgnoreCase)
+                && factors.Count == 0)
+                factors.Add("RuntimeGate");
+            if (factors.Count == 0)
+                factors.Add("AlertNotEmitted");
+
+            // One gap can have multiple independent, simultaneously active gates.
+            // The first cause is prioritized for sorting; the others remain visible
+            // and must never be interpreted as automatic promotion eligibility.
+            return factors;
         }
+
+        private static bool HasReason(IEnumerable<string> reasons, string term)
+            => reasons.Any(reason => reason.Contains(term, StringComparison.OrdinalIgnoreCase));
     }
 }
