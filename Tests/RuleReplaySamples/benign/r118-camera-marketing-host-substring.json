@@ -1,0 +1,24 @@
+{
+  "name": "r118-camera-marketing-host-substring",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "198.51.100.140",
+      "destination": "192.0.2.140",
+      "sourcePort": 54140,
+      "destinationPort": 443,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTPS",
+      "httpMethod": "GET",
+      "httpHost": "cameradeals.example.invalid",
+      "httpUri": "/account",
+      "httpRequestHeaders": "Host: cameradeals.example.invalid\r\nAuthorization: Basic YWRtaW46YWRtaW4=",
+      "processName": "browser.exe",
+      "info": "Synthetic account request to a non-device site whose hostname merely contains camera. No IoT target is established."
+    }
+  ],
+  "expectedNonMatches": [
+    "R118",
+    "R163"
+  ]
+}
