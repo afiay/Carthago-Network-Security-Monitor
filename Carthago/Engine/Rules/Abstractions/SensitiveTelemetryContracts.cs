@@ -216,8 +216,13 @@ namespace Carthago.Engine.Rules
         private static bool TryNormalizeMetadataDestination(string value, out string normalized)
         {
             normalized = value.Trim().TrimEnd('.');
+            // Destination is the observed network endpoint, never a Host header
+            // or a DNS name supplied by an application. Accept only the
+            // documented numeric IPv4 addresses here; DNS aliases belong in
+            // TryNormalizeMetadataHost and require a corroborating socket IP.
             if (MetadataHosts.Contains(normalized))
-                return true;
+                return IPAddress.TryParse(normalized, out var ipv4)
+                    && ipv4.AddressFamily == AddressFamily.InterNetwork;
 
             // Captured IP destinations have no brackets or scope identifiers.
             if (normalized.Contains('%') || normalized.Contains('[') || normalized.Contains(']')
