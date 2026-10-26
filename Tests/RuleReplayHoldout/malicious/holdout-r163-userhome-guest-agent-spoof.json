@@ -1,0 +1,29 @@
+{
+  "name": "holdout-r163-userhome-guest-agent-spoof",
+  "classification": "Malicious",
+  "records": [
+    {
+      "source": "10.241.91.23",
+      "destination": "169.254.169.254",
+      "destinationPort": 80,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "GET",
+      "httpHost": "169.254.169.254",
+      "httpUri": "/latest/meta-data/iam/security-credentials/holdout-role",
+      "httpRequestHeaders": "Host: 169.254.169.254\r\nX-aws-ec2-metadata-token: [REDACTED]",
+      "processName": "/home/user/.cache/amazon-ssm-agent",
+      "info": "Synthetic sandbox cloud metadata observation; no separately corroborated SSRF causality."
+    }
+  ],
+  "expectedMatches": [
+    "R163"
+  ],
+  "expectedNonMatches": [
+    "R118",
+    "R353",
+    "R354",
+    "R359"
+  ],
+  "expectedMinimumConfidence": 0.6
+}
