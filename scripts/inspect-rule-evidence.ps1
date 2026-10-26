@@ -27,7 +27,8 @@ $items = @($property.Value)
 function Format-Ratio($item, [string]$name) {
     $ratio = $item.PSObject.Properties[$name]
     if ($null -eq $ratio -or $null -eq $ratio.Value) { return 'N/A' }
-    return '{0:F1}%' -f (100 * [double]$ratio.Value)
+    return ((100 * [double]$ratio.Value).ToString('F1',
+        [System.Globalization.CultureInfo]::InvariantCulture) + '%')
 }
 
 $positiveCount = @($items | Where-Object { $_.positiveCases -gt 0 }).Count
