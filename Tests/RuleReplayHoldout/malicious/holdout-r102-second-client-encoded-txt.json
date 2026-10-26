@@ -8,7 +8,7 @@
       "destinationPort": 53,
       "protocol": "DNS",
       "applicationProtocol": "DNS",
-      "dnsQname": "v2c8y3m7s0q5k9n1t4f8a2z6p0x3r7b1h9e5d4j8u2w6l0.untrusted-holdout.example",
+      "dnsQname": "v2c8y3m7s0q5k9n1t4f8a2z6p0x3r7b1h9e5d4j8u2w6l0k7m2q9v4n1.untrusted-holdout.example",
       "dnsQtype": "TXT"
     },
     {
@@ -17,7 +17,7 @@
       "destinationPort": 53,
       "protocol": "DNS",
       "applicationProtocol": "DNS",
-      "dnsQname": "p4z9x1n7t3d8v2c6q0k5m9a1r8y4j7w3e6b2h0f5u9s1.untrusted-holdout.example",
+      "dnsQname": "p4z9x1n7t3d8v2c6q0k5m9a1r8y4j7w3e6b2h0f5u9s1u3z8f5p1c6.untrusted-holdout.example",
       "dnsQtype": "TXT"
     },
     {
@@ -26,7 +26,7 @@
       "destinationPort": 53,
       "protocol": "DNS",
       "applicationProtocol": "DNS",
-      "dnsQname": "h8m2q7a0x5p9w3v6n1k4e8r2c7j0z5d9b3u6t1s4f8y2.untrusted-holdout.example",
+      "dnsQname": "h8m2q7a0x5p9w3v6n1k4e8r2c7j0z5d9b3u6t1s4f8y2a6h2r9e4x7.untrusted-holdout.example",
       "dnsQtype": "TXT"
     }
   ],
