@@ -1,0 +1,26 @@
+{
+  "name": "r163-approved-cloud-init-imdsv2-head",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "10.42.0.223",
+      "destination": "169.254.169.254",
+      "sourcePort": 54224,
+      "destinationPort": 80,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "HEAD",
+      "httpHost": "169.254.169.254",
+      "httpUri": "/latest/meta-data/iam/security-credentials/synthetic-role",
+      "httpRequestHeaders": "Host: 169.254.169.254\r\nX-aws-ec2-metadata-token: [REDACTED]",
+      "processName": "/usr/bin/cloud-init",
+      "info": "Synthetic benign HEAD metadata request from an installed trusted agent; IMDSv2 session token is normal protocol context, no SSRF evidence."
+    }
+  ],
+  "expectedNonMatches": [
+    "R163",
+    "R353",
+    "R354",
+    "R359"
+  ]
+}
