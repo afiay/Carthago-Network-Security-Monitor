@@ -1,0 +1,24 @@
+{
+  "name": "r118-camera-help-page",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "192.0.2.24",
+      "destination": "192.0.2.50",
+      "sourcePort": 51900,
+      "destinationPort": 8080,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "GET",
+      "httpHost": "camera-lab.internal",
+      "httpUri": "/admin/help/default-passwords",
+      "httpRequestHeaders": "Host: camera-lab.internal",
+      "processName": "browser.exe",
+      "info": "Documentation only: example default password admin:admin; no Authorization header."
+    }
+  ],
+  "expectedNonMatches": [
+    "R118",
+    "R163"
+  ]
+}
