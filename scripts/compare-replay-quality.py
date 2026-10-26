@@ -105,6 +105,10 @@ def main(argv=None):
     baseline, candidate = load(args.baseline), load(args.candidate)
     shared = sorted(baseline.keys() & candidate.keys())
     added, removed = candidate.keys() - baseline.keys(), baseline.keys() - candidate.keys()
+    if not shared:
+        raise InvalidReport("reports have no shared replay samples")
+    if args.strict and removed:
+        raise InvalidReport("strict comparison refuses removed baseline fixtures")
     if any(baseline[name]["classification"] != candidate[name]["classification"] for name in shared):
         raise InvalidReport("classification changed for an existing sample")
     print(f"Samples: baseline={len(baseline)} candidate={len(candidate)} shared={len(shared)} added={len(added)} removed={len(removed)}")
