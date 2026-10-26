@@ -1,0 +1,20 @@
+{
+  "name": "r275-routine-device-code-initiation",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "10.0.0.160",
+      "destination": "198.51.100.60",
+      "protocol": "HTTP",
+      "destinationPort": 443,
+      "httpMethod": "POST",
+      "httpHost": "login.microsoftonline.com",
+      "httpUri": "/oauth2/v2.0/devicecode?client_id=synthetic&device_code=synthetic",
+      "info": "Routine device-code initiation; no user_code or independent phishing evidence."
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R275"
+  ]
+}
