@@ -118,7 +118,9 @@ namespace Carthago.Services.Benchmarking
                 factors.Add("EnvironmentApprovalRequired");
             if (HasReason(decision.Reasons, "MissingEnvironmentConfiguration"))
                 factors.Add("EnvironmentConfigurationRequired");
-            if (HasReason(decision.RuntimePrecisionReasons, "baseline not ready")
+            if (HasReason(decision.Reasons, "BaselineLearningMode")
+                || HasReason(decision.ReasonDetails, "Baseline readiness is not established")
+                || HasReason(decision.RuntimePrecisionReasons, "baseline not ready")
                 || HasReason(decision.RuntimePrecisionReasons, "baseline readiness required"))
                 factors.Add("BaselineNotReady");
             if (string.Equals(decision.EffectiveMode, "Disabled", StringComparison.OrdinalIgnoreCase))
