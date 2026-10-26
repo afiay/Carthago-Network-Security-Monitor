@@ -28,29 +28,31 @@ public sealed class R001AdvancedAccuracyBatchTests : IDisposable
             record, Sensitivity.Balanced, Origin.AddSeconds(second)));
 
     [Fact]
-    public async Task Five_Valid_Unique_Syn_Ports_Detect_Exactly_One_Attributed_Scan()
+    public async Task Eight_Configured_Unique_Syn_Ports_Detect_Exactly_One_Attributed_Scan()
     {
-        for (var i = 0; i < 4; i++)
+        // The checked-in rules.json explicitly sets PortScanThreshold=8.
+        // The detector must not alert at its lower built-in fallback of five.
+        for (var i = 0; i < 7; i++)
             Assert.False((await See(Tcp(27000 + i), i)).Matched);
-        var hit = await See(Tcp(27004), 4);
+        var hit = await See(Tcp(27007), 7);
         Assert.True(hit.Matched);
         var evt = Assert.Single(hit.Events);
         Assert.Equal("R001", evt.RuleId);
-        Assert.Equal(5, evt.Count);
+        Assert.Equal(8, evt.Count);
         Assert.Equal("10.251.1.1", evt.SourceIp);
         Assert.Equal("10.251.2.1", evt.DestinationIp);
-        Assert.Equal(27004, evt.DestinationPort);
+        Assert.Equal(27007, evt.DestinationPort);
     }
 
     [Fact]
     public async Task Future_Dated_Packet_Cannot_Preload_A_Current_Scan_Window()
     {
         Assert.False((await See(Tcp(28000), 500)).Matched);
-        for (var i = 0; i < 4; i++)
+        for (var i = 0; i < 7; i++)
             Assert.False((await See(Tcp(28001 + i), i)).Matched);
-        var result = await See(Tcp(28005), 5);
+        var result = await See(Tcp(28008), 7);
         Assert.True(result.Matched);
-        Assert.Equal(5, Assert.Single(result.Events).Count);
+        Assert.Equal(8, Assert.Single(result.Events).Count);
     }
 
     [Fact]
@@ -62,11 +64,11 @@ public sealed class R001AdvancedAccuracyBatchTests : IDisposable
             Assert.False((await See(Tcp(29001 + i, "ACK"), i)).Matched);
             Assert.False((await See(Tcp(29100 + i, "SYN,ACK"), i)).Matched);
         }
-        for (var i = 0; i < 3; i++)
+        for (var i = 0; i < 6; i++)
             Assert.False((await See(Tcp(29002 + i), 14 + i)).Matched);
-        var hit = await See(Tcp(29005), 18);
+        var hit = await See(Tcp(29008), 20);
         Assert.True(hit.Matched);
-        Assert.Equal(5, Assert.Single(hit.Events).Count);
+        Assert.Equal(8, Assert.Single(hit.Events).Count);
     }
 
     [Fact]
@@ -76,7 +78,11 @@ public sealed class R001AdvancedAccuracyBatchTests : IDisposable
             Assert.False((await See(Tcp(port), 0)).Matched);
         for (var i = 0; i < 4; i++)
             Assert.False((await See(Tcp(30000 + i), i + 1)).Matched);
-        Assert.True((await See(Tcp(30004), 5)).Matched);
+        for (var i = 4; i < 7; i++)
+            Assert.False((await See(Tcp(30000 + i), i + 1)).Matched);
+        var hit = await See(Tcp(30007), 8);
+        Assert.True(hit.Matched);
+        Assert.Equal(8, Assert.Single(hit.Events).Count);
     }
 
     [Fact]
@@ -88,8 +94,11 @@ public sealed class R001AdvancedAccuracyBatchTests : IDisposable
             Assert.False((await See(Tcp(31000 + i, source: "10.251.1.9", dest: "10.251.2.10"), i)).Matched);
             Assert.False((await See(Tcp(31000 + i, source: "10.251.1.10", dest: "10.251.2.9"), i)).Matched);
         }
-        var result = await See(Tcp(31004, source: "10.251.1.9", dest: "10.251.2.9"), 4);
+        for (var i = 4; i < 7; i++)
+            Assert.False((await See(Tcp(31000 + i, source: "10.251.1.9", dest: "10.251.2.9"), i)).Matched);
+        var result = await See(Tcp(31007, source: "10.251.1.9", dest: "10.251.2.9"), 7);
         Assert.True(result.Matched);
         Assert.Equal("10.251.1.9", Assert.Single(result.Events).SourceIp);
+        Assert.Equal(8, result.Events[0].Count);
     }
 }

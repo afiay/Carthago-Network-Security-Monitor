@@ -41,10 +41,15 @@ public sealed class R004AdvancedAccuracyBatchTests : IDisposable
         };
         for (var i = 0; i < 4; i++)
             Assert.False((await See(Login(outcomes[i]), i)).Matched);
-        var result = await See(Login(outcomes[4]), 4);
+        Assert.False((await See(Login(outcomes[4]), 4)).Matched);
+        // rules.json sets BruteForceThreshold=25; known authentication ports
+        // use the existing integer-half policy, yielding 12 failures.
+        for (var i = 5; i < 11; i++)
+            Assert.False((await See(Login(), i)).Matched);
+        var result = await See(Login(), 11);
         Assert.True(result.Matched);
         var evt = Assert.Single(result.Events);
-        Assert.Equal(5, evt.Count);
+        Assert.Equal(12, evt.Count);
         Assert.DoesNotContain("guest", evt.Description, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -56,7 +61,11 @@ public sealed class R004AdvancedAccuracyBatchTests : IDisposable
             Assert.False((await See(Login(), i * 2)).Matched);
             Assert.False((await See(Login("Accepted publickey for service account"), i * 2 + 1)).Matched);
         }
-        Assert.True((await See(Login("Authentication failure"), 9)).Matched);
+        for (var i = 4; i < 11; i++)
+            Assert.False((await See(Login(), 9 + i)).Matched);
+        var hit = await See(Login("Authentication failure"), 20);
+        Assert.True(hit.Matched);
+        Assert.Equal(12, Assert.Single(hit.Events).Count);
     }
 
     [Fact]
@@ -67,20 +76,23 @@ public sealed class R004AdvancedAccuracyBatchTests : IDisposable
             Assert.False((await See(Login(port: 22, service: "SSH"), i)).Matched);
             Assert.False((await See(Login(port: 3389, service: "RDP"), i)).Matched);
         }
-        var detected = await See(Login(port: 22, service: "SSH"), 5);
+        for (var i = 4; i < 11; i++)
+            Assert.False((await See(Login(port: 22, service: "SSH"), i + 1)).Matched);
+        var detected = await See(Login(port: 22, service: "SSH"), 12);
         Assert.True(detected.Matched);
         Assert.Equal(22, Assert.Single(detected.Events).DestinationPort);
+        Assert.Equal(12, detected.Events[0].Count);
     }
 
     [Fact]
     public async Task Out_Of_Order_Future_Login_Does_Not_Create_False_Brute_Force_Count()
     {
         Assert.False((await See(Login(), 500)).Matched);
-        for (var i = 0; i < 4; i++)
+        for (var i = 0; i < 11; i++)
             Assert.False((await See(Login(), i)).Matched);
-        var current = await See(Login(), 5);
+        var current = await See(Login(), 11);
         Assert.True(current.Matched);
-        Assert.Equal(5, Assert.Single(current.Events).Count);
+        Assert.Equal(12, Assert.Single(current.Events).Count);
     }
 
     [Fact]
@@ -91,8 +103,10 @@ public sealed class R004AdvancedAccuracyBatchTests : IDisposable
             Assert.False((await See(Login(protocol: "UDP"), i)).Matched);
             Assert.False((await See(Login(port: 8080, service: "HTTPS"), i)).Matched);
         }
-        for (var i = 0; i < 4; i++)
+        for (var i = 0; i < 11; i++)
             Assert.False((await See(Login(), i + 10)).Matched);
-        Assert.True((await See(Login(), 15)).Matched);
+        var hit = await See(Login(), 21);
+        Assert.True(hit.Matched);
+        Assert.Equal(12, Assert.Single(hit.Events).Count);
     }
 }

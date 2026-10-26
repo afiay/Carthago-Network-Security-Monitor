@@ -2,6 +2,8 @@
 
 **State:** Candidate implementation; **Windows build, expanded advanced test suite, full 544-rule regression and isolated synthetic holdout pending**. No rule has been promoted to Alert, no precision floor lowered, and R006–R010 must not begin until this batch is verified and reviewed.
 
+The first Windows run of the expanded 62-test targeted suite compiled successfully but reported **52 passed, 10 failed, 0 skipped**. All ten failures were in the advanced R001/R004 fixtures: those cases incorrectly expected detection after five observations, even though the checked-in `rules.json` sets `PortScanThreshold=8` and `BruteForceThreshold=25` (12 observed failures after the existing authentication-port half-threshold rule at Balanced sensitivity). The advanced fixtures now exercise those configured boundaries explicitly, including negative assertions before the threshold. **This correction changes tests only; no production thresholds or policy modes were changed.** A fresh Windows run is required before marking the correction verified.
+
 The five rules already had baseline unit tests. This batch **adds at least five deliberately adversarial tests for each**, retaining the original tests. Stateful tests use the isolated `Legacy rules R001-R005 isolated` collection and reset detector state before/after each case.
 
 | Rule | Detection behavior | Advanced acceptance scenarios (five minimum) | Corrective code |
