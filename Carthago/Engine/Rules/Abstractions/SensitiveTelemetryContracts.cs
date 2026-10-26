@@ -138,6 +138,15 @@ namespace Carthago.Engine.Rules
             if (!MetadataHosts.Contains(destination) || !MetadataHosts.Contains(host))
                 return false;
 
+            // A metadata-looking Host header is not evidence that the TCP
+            // destination belongs to that provider. Only accept the same
+            // endpoint, or Google's documented DNS alias for 169.254.169.254.
+            // Do not resolve untrusted Host values during rule evaluation.
+            var isGoogleAlias = destination.Equals("169.254.169.254", StringComparison.OrdinalIgnoreCase)
+                                && host.Equals("metadata.google.internal", StringComparison.OrdinalIgnoreCase);
+            if (!destination.Equals(host, StringComparison.OrdinalIgnoreCase) && !isGoogleAlias)
+                return false;
+
             var uri = record.HttpUri.Trim();
             if (Uri.TryCreate(uri, UriKind.Absolute, out var absolute))
             {
@@ -149,6 +158,12 @@ namespace Carthago.Engine.Rules
             var queryIndex = uri.IndexOf('?');
             if (queryIndex >= 0)
                 uri = uri[..queryIndex];
+
+            // Google's named endpoint cannot legitimately serve an AWS,
+            // Azure, Alibaba or ECS credential path.
+            if (host.Equals("metadata.google.internal", StringComparison.OrdinalIgnoreCase)
+                && !uri.StartsWith("/computeMetadata/v1/", StringComparison.OrdinalIgnoreCase))
+                return false;
 
             return MatchesPath(uri, "/latest/meta-data/iam/security-credentials")
                 || MatchesPath(uri, "/latest/meta-data/ram/security-credentials")
