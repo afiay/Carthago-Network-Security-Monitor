@@ -47,6 +47,37 @@ namespace Carthago.Tests
         }
 
         [Fact]
+        public async Task Benchmark_Rule_Evidence_Coverage_Reconciles_With_Labeled_Replays()
+        {
+            var report = await new TuningBenchmarkRunner().RunAsync(new TuningBenchmarkOptions
+            {
+                ReplayDirectory = GetReplayDirectory()
+            });
+            var coverage = report.RuleEvidenceCoverage;
+
+            Assert.Equal(report.RuleCoverage.Count, coverage.Count);
+            Assert.Equal(report.Summary.ExpectedMatchCount, coverage.Sum(rule => rule.PositiveCases));
+            Assert.Equal(report.Summary.MatchedExpectedCount, coverage.Sum(rule => rule.PositiveRecognized));
+            Assert.Equal(0, coverage.Sum(rule => rule.PositiveMissed));
+            Assert.Equal(report.SampleResults.Sum(sample => sample.ExpectedNonMatches.Count),
+                coverage.Sum(rule => rule.ExplicitNegativeCases));
+            Assert.Equal(report.SampleResults.Sum(sample => sample.UnexpectedMatches.Count),
+                coverage.Sum(rule => rule.ExplicitNegativeFailed));
+            Assert.Equal(report.SampleResults
+                    .Where(sample => sample.Classification == ReplaySampleClassification.Benign)
+                    .Sum(sample => sample.ActualMatches.Count),
+                coverage.Sum(rule => rule.BenignRawMatches));
+
+            // The existence of a matched rule alone never creates a labeled
+            // negative control; specifically check R118/R163 metadata.
+            foreach (var ruleId in new[] { "R102", "R118", "R163" })
+            {
+                var entry = Assert.Single(coverage, rule => rule.RuleId == ruleId);
+                Assert.True(entry.PositiveCases > 0);
+            }
+        }
+
+        [Fact]
         public async Task Benchmark_Replays_Never_Clear_The_Active_Baseline_Journal()
         {
             var root = CreateTempDirectory();
