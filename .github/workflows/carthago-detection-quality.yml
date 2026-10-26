@@ -1,15 +1,8 @@
 name: Carthago detection quality
 
+# Automatic GitHub Actions runs disabled while account billing is locked.
+# Use .\\verify-local.ps1 from PowerShell on Windows instead.
 on:
-  push:
-    branches:
-      - feature/carthago-reliability-hardening
-    paths:
-      - 'Carthago/**'
-      - 'Carthago.Tests/**'
-      - 'Carthago.Benchmarks/**'
-      - 'Tests/RuleReplaySamples/**'
-      - '.github/workflows/carthago-detection-quality.yml'
   workflow_dispatch:
 
 permissions:
