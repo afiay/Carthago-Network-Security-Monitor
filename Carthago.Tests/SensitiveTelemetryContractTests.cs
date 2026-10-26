@@ -236,6 +236,33 @@ public sealed class SensitiveTelemetryContractTests
     }
 
     [Theory]
+    [InlineData("Authorization: [REDACTED]", true)]
+    [InlineData("Authorization: Basic YWRtaW46YWRtaW4=", true)]
+    [InlineData("Authorization: Bearer synthetic-test-token", false)]
+    [InlineData("Authorization: Basic YWRtaW46c3Ryb25nLXBhc3M=", false)]
+    [InlineData("Authorization: [REDACTED]\\r\\nAuthorization: [REDACTED]", false)]
+    [InlineData("Authorization: [REDACTED]\\r\\nAuthorization: Bearer synthetic-test-token", false)]
+    public async Task R118_Derived_Flag_Cannot_Override_Contradictory_Authorization(
+        string authorizationLines, bool expectedMatch)
+    {
+        // Imported telemetry may contain a derived credential indicator and
+        // independently supplied header names. Reject contradictory evidence
+        // without exposing actual passwords or persisting credential values.
+        var record = new TrafficRecord
+        {
+            Source = "192.0.2.109", Destination = "192.0.2.50",
+            DestinationPort = 80, Protocol = "HTTP", HttpMethod = "POST",
+            HttpHost = "camera-lab.internal", HttpUri = "/admin/login",
+            HttpBasicDefaultCredentialObserved = true,
+            HttpRequestHeaders = "Host: camera-lab.internal\\r\\n" + authorizationLines
+        };
+
+        var result = await new R118_DefaultCredentialIoTAttemptRule().EvaluateAsync(Context(record));
+        Assert.Equal(expectedMatch, result.Matched);
+        Assert.Equal(expectedMatch, RulePrecisionCatalog.Validate("R118", record).CanEvaluate);
+    }
+
+    [Theory]
     [InlineData(true)]
     [InlineData(false)]
     public async Task R118_Legacy_Duplicate_Authorization_Never_Qualifies(bool defaultFirst)
