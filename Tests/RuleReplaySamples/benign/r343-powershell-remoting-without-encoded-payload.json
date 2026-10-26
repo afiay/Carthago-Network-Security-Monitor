@@ -1,0 +1,18 @@
+{
+  "name": "r343-powershell-remoting-without-encoded-payload",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "10.0.0.170",
+      "destination": "10.0.0.20",
+      "protocol": "TCP",
+      "destinationPort": 5985,
+      "processName": "powershell.exe",
+      "info": "WinRM WSMan PowerShell Invoke-Command -ScriptBlock { Get-Service } routine remote maintenance without an encoded payload"
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R343"
+  ]
+}
