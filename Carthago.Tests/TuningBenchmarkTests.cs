@@ -173,6 +173,24 @@ namespace Carthago.Tests
             }
         }
 
+        [Fact]
+        public async Task True_Positive_Pass_Rate_Only_Counts_Malicious_Expected_Matches()
+        {
+            var report = await new TuningBenchmarkRunner().RunAsync(new TuningBenchmarkOptions
+            {
+                ReplayDirectory = GetReplayDirectory()
+            });
+
+            var malicious = report.SampleResults
+                .Where(sample => sample.Classification == ReplaySampleClassification.Malicious)
+                .ToArray();
+            Assert.Equal(malicious.Sum(sample => sample.ExpectedMatches.Count),
+                report.Summary.ExpectedMatchCount);
+            Assert.Equal(malicious.Sum(sample => sample.ExpectedMatches.Count(
+                    id => sample.ActualMatches.Contains(id, StringComparer.OrdinalIgnoreCase))),
+                report.Summary.MatchedExpectedCount);
+        }
+
         private static string GetReplayDirectory()
             => Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "Tests", "RuleReplaySamples");
 
