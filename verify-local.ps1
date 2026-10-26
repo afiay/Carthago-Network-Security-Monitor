@@ -129,9 +129,14 @@ try {
         try {
             $report = Get-Content (Join-Path $outputDir 'tuning-benchmark.json') -Raw | ConvertFrom-Json
             if ($null -eq $report.summary -or $null -eq $report.sampleResults) { throw 'Report schema missing summary or samples' }
-            if ([int]$report.summary.replaySampleCount -lt 19) {
+            # The runner enumerates every JSON fixture recursively. Verify the
+            # report contains all checked-out fixtures, not merely an old
+            # minimum that could hide silently skipped regression controls.
+            $fixtureDirectory = Join-Path $root 'Tests/RuleReplaySamples'
+            $fixtureCount = @(Get-ChildItem -LiteralPath $fixtureDirectory -Filter '*.json' -Recurse -File).Count
+            if ([int]$report.summary.replaySampleCount -ne $fixtureCount) {
                 $failures.Add('replay-sample-count')
-                Write-Host "FAIL: only $($report.summary.replaySampleCount) replay samples (minimum 19)."
+                Write-Host "FAIL: benchmark reported $($report.summary.replaySampleCount) samples but $fixtureCount JSON fixtures exist."
             }
             $invalid = @($report.sampleResults | Where-Object { @($_.errors | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) }).Count -gt 0 })
             if ($invalid.Count -gt 0) {
