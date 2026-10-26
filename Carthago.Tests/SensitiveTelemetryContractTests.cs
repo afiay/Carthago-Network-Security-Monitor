@@ -1,6 +1,8 @@
 using System;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
+using Carthago.Services;
 using Carthago.Engine.Rules;
 using Carthago.Engine.Rules.Expansion;
 using Carthago.Engine.Rules.IotOt;
@@ -106,6 +108,37 @@ public sealed class SensitiveTelemetryContractTests
         Assert.Equal(RuleMode.Shadow, decision.EffectiveMode);
         Assert.False(decision.ConfidenceSatisfied);
         Assert.Equal(86, rule.PrecisionProfile.MinimumConfidence);
+    }
+
+    [Fact]
+    public async Task R118_Uses_Wire_Derived_Evidence_After_Authorization_Is_Redacted()
+    {
+        var request = "GET /admin HTTP/1.1\r\n"
+                    + "Host: camera-lab.internal\r\n"
+                    + "Authorization: Basic YWRtaW46YWRtaW4=\r\n\r\n";
+        Assert.True(HttpLight.TryParseHttp(Encoding.ASCII.GetBytes(request), out var parsed));
+
+        var record = new TrafficRecord
+        {
+            Source = "192.0.2.21",
+            Destination = "192.0.2.50",
+            DestinationPort = 8080,
+            Protocol = "HTTP",
+            HttpMethod = parsed.Method,
+            HttpHost = parsed.Host,
+            HttpUri = parsed.Path,
+            HttpRequestHeaders = parsed.JoinedHeaderLines,
+            HttpBasicDefaultCredentialObserved = parsed.ObservedDefaultBasicCredential
+        };
+
+        Assert.DoesNotContain("YWRtaW46YWRtaW4=", record.HttpRequestHeaders);
+        Assert.True(RulePrecisionCatalog.Validate("R118", record).CanEvaluate);
+        var rule = new R118_DefaultCredentialIoTAttemptRule();
+        var result = await rule.EvaluateAsync(Context(record));
+        Assert.True(result.Matched);
+        Assert.Equal(RuleMode.Shadow,
+            RulePrecisionRuntimeEvaluator.Evaluate(
+                rule.Descriptor, Assert.Single(result.Events), record, RuleMode.Alert, "Research").EffectiveMode);
     }
 
     [Fact]
