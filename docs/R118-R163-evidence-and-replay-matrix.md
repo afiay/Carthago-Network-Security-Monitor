@@ -1,12 +1,13 @@
 # R118 and R163: evidence contracts and replay matrix
 
-Status: **validation candidate**, not a rule-promotion request. The user
-confirmed a Windows PASS for the 52-sample benchmark at commit `4617691`,
-including five focused R102 tests (5 passed, 0 failed). Two independently added R102 controls and four additional R118/R163
-controls bring the branch to **58 JSON replay fixtures**. This is a
-file-count inspection, **not** a 58-sample benchmark result.
-**Do not claim the expanded run passes until Windows build, tests and
-benchmark complete at the new branch head.**
+Status: **validation candidate**, not a rule-promotion request. Earlier
+Windows verification was reported for the 58-sample branch state, but the
+five newly added R118/R163 controls bring this branch to **63 JSON replay
+fixtures (33 benign, 30 malicious)**. This count was checked from the
+repository tree and each new fixture was parsed as JSON; it is **not**
+evidence of a 63-sample benchmark PASS. The new C# tests and Windows build
+remain unexecuted at this branch head. Do not promote any rule until those
+checks and per-profile alert-level metrics have been rerun.
 
 ## Non-negotiable gates
 
@@ -75,6 +76,37 @@ redacted/fictional credentials only. These fixtures **do not** measure
 real-world prevalence or authorize raising confidence. No R118/R163/R102
 mode or floor has changed.
 
+## HTTP Host authority ambiguity controls (63-fixture candidate)
+
+RFC 9112 §3.2 requires HTTP/1.1 servers to reject a request with duplicate
+`Host` fields, even if the values are identical. The R163 metadata evidence
+contract now checks any captured `Host` lines against the validated
+`HttpHost` and numeric destination. Duplicate, conflicting, and comma-joined
+authorities cannot establish a metadata credential read. If no header lines
+are available (for example, normalized HTTP/2 `:authority` telemetry), the
+existing strict parsed-authority/socket validation still applies. This
+changes **raw recognition only** for ambiguous requests, never alert floors,
+mode defaults, or independent SSRF causality requirements.
+
+| Fixture | Label | Rule | Expected raw match | Why |
+| --- | --- | --- | --- | --- |
+| `r163-duplicate-host-metadata-decoy` | Benign control | R163 | No | Two conflicting Host lines |
+| `r163-parsed-host-header-disagreement` | Benign control | R163 | No | Parsed authority disagrees with observed Host |
+| `r163-azure-single-host-credential-probe` | Malicious scenario | R163 | Yes, Shadow | Single matching authority, Azure token path; SSRF causal chain not independently established |
+| `r118-default-basic-unrelated-https-host` | Benign control | R118 | No | Synthetic decrypted HTTPS Basic credential, but no IoT device target |
+| `r118-router-lowercase-single-basic` | Malicious scenario | R118 | Yes, Shadow | Unambiguous lowercase origin Authorization on router target; no login outcome proven |
+
+All credential strings in these fixtures are **synthetic test tokens**, not
+captured production secrets. The HTTP parser's existing redaction path must
+remain enabled; never log Basic credentials, bearer tokens, IMDSv2 tokens,
+or metadata response bodies. The new Host guard does not use credentials.
+
+The new unit tests cover duplicate Host (identical and conflicting),
+comma-joined Host, mismatched parsed/captured authority, a valid singleton,
+and the expected replay modes for both R118 and R163. These tests are
+**committed but not yet executed on Windows**. A malicious scenario label
+is not a claim that the engine has proved unauthorized access or SSRF.
+
 ## What independent R163 corroboration would require
 
 A future promotion path must be based on **trusted provenance** rather than
@@ -127,6 +159,7 @@ diagnose the failing fixture; do not promote R118, R163 or R102.
 
 ## References
 
+- RFC 9112 §3.2 (HTTP/1.1 Host and duplicate fields): https://www.rfc-editor.org/rfc/rfc9112.html#section-3.2
 - RFC 9110 §5.3 on ambiguous repeated HTTP field lines: https://www.rfc-editor.org/rfc/rfc9110.html#section-5.3
 - RFC 7617 on HTTP Basic authentication and Base64 credentials: https://www.rfc-editor.org/rfc/rfc7617.html
 - Zeek HTTP logging (connection UID and password-capture defaults): https://docs.zeek.org/en/current/scripts/base/protocols/http/main.zeek.html
