@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Local Windows verification; no GitHub Actions or paid runner required.
 [CmdletBinding()]
-param([switch]$Details)
+param([switch]$Details, [switch]$LiveOutput)
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 $env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'
@@ -16,22 +16,36 @@ try {
     $failures = [System.Collections.Generic.List[string]]::new()
     function Invoke-Stage([string]$Name, [string[]]$Arguments) {
         $logFile = Join-Path $logDir ($Name + '.log')
-        # PowerShell 7 can promote native stderr to an error record when
-        # ErrorActionPreference is Stop. Capture native output without aborting.
+        $started = Get-Date
+        $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+        Write-Host ("START: {0} at {1:HH:mm:ss} (log: build-verify/local-logs/{0}.log)" -f $Name, $started)
+
+        # Native stderr handling is different in Windows PowerShell and
+        # PowerShell 7; preserve the existing exit-code and log semantics.
         $previousPreference = $ErrorActionPreference
         $ErrorActionPreference = 'Continue'
         try {
-            & dotnet @Arguments *> $logFile
+            if ($LiveOutput) {
+                # Optional interactive diagnostics: also show the full output
+                # while saving exactly the same per-stage log.
+                & dotnet @Arguments *>&1 | Tee-Object -FilePath $logFile
+            } else {
+                & dotnet @Arguments *> $logFile
+            }
             $exitCode = $LASTEXITCODE
         } finally {
             $ErrorActionPreference = $previousPreference
+            $stopwatch.Stop()
         }
+
         if ($exitCode -ne 0) {
             $script:failures.Add($Name)
-            Write-Host "FAIL: $Name (exit $exitCode); see build-verify/local-logs/$Name.log"
-            if ($Details) { Get-Content $logFile | Select-Object -Last 40 }
+            Write-Host ("FAIL: {0} (exit {1}, elapsed {2:n1}s); see build-verify/local-logs/{0}.log" -f
+                $Name, $exitCode, $stopwatch.Elapsed.TotalSeconds)
+            if ($Details -and -not $LiveOutput) { Get-Content $logFile | Select-Object -Last 40 }
             return $false
         }
+        Write-Host ("PASS: {0} (elapsed {1:n1}s)" -f $Name, $stopwatch.Elapsed.TotalSeconds)
         return $true
     }
     function Show-AlertRuleQuality([object]$Report) {
