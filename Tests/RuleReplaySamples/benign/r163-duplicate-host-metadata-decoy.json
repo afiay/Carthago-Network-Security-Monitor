@@ -1,0 +1,24 @@
+{
+  "name": "r163-duplicate-host-metadata-decoy",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "198.51.100.60",
+      "destination": "169.254.169.254",
+      "sourcePort": 54120,
+      "destinationPort": 80,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "httpMethod": "GET",
+      "httpHost": "169.254.169.254",
+      "httpUri": "/latest/meta-data/iam/security-credentials/role-name",
+      "httpRequestHeaders": "Host: 169.254.169.254\r\nHost: example.invalid\r\nX-aws-ec2-metadata-token: [REDACTED]",
+      "processName": "webapp.exe",
+      "info": "Synthetic ambiguous HTTP/1.1 request with two Host fields; no trusted metadata credential read or SSRF causality established."
+    }
+  ],
+  "expectedNonMatches": [
+    "R163",
+    "R118"
+  ]
+}
