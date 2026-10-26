@@ -51,6 +51,23 @@ public sealed class CatalogWideConfidenceSafetyTests
         }
     }
 
+    [Fact]
+    public void All_544_Rules_Stay_NonAlerting_Without_Real_Telemetry()
+    {
+        var registry = new ApprovedAssetRegistry(new EnvironmentTuningOptions());
+        var empty = new TrafficRecord();
+        Assert.Equal(544, RuleCatalog.Rules.Count);
+
+        foreach (var rule in RuleCatalog.Rules)
+        {
+            var evt = Event(rule.Descriptor, 1.0);
+            var policy = RulePrecisionRuntimeEvaluator.Evaluate(
+                rule.Descriptor, evt, empty, RuleMode.Alert, "Research", registry);
+            Assert.False(policy.AllowsAlert,
+                $"{rule.Descriptor.RuleId}: missing all telemetry must never be alertable.");
+        }
+    }
+
     [Theory]
     [InlineData("R102")]
     [InlineData("R118")]
