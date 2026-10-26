@@ -290,6 +290,50 @@ public sealed class SensitiveTelemetryContractTests
         Assert.True(RulePrecisionCatalog.Validate("R163", record).CanEvaluate);
     }
 
+    [Theory]
+    [InlineData("169.254.170.2", "/latest/meta-data/iam/security-credentials/example-role")]
+    [InlineData("169.254.170.2", "/metadata/identity/oauth2/token")]
+    [InlineData("100.100.100.200", "/v2/credentials/ecs-task-id")]
+    [InlineData("100.100.100.200", "/computeMetadata/v1/instance/service-accounts/default/token")]
+    [InlineData("169.254.169.254", "/v2/credentials/ecs-task-id")]
+    [InlineData("169.254.169.254", "/latest/meta-data/ram/security-credentials/example-role")]
+    public async Task R163_Rejects_CrossProvider_Credential_Paths(string destination, string path)
+    {
+        // The socket destination and Host agree, but the credential endpoint
+        // belongs to another provider. This is not an observed credential read.
+        var record = MetadataRecord(path, "webapp.exe");
+        record.Destination = destination;
+        record.HttpHost = destination;
+
+        Assert.False((await new R163_SsrfMetadataServiceProbeRule().EvaluateAsync(Context(record))).Matched);
+        Assert.False(RulePrecisionCatalog.Validate("R163", record).CanEvaluate);
+    }
+
+    [Theory]
+    [InlineData("169.254.170.2", "/v2/credentials/ecs-task-id")]
+    [InlineData("100.100.100.200", "/latest/meta-data/ram/security-credentials/example-role")]
+    [InlineData("169.254.169.254", "/latest/meta-data/iam/security-credentials/example-role")]
+    [InlineData("169.254.169.254", "/metadata/identity/oauth2/token?api-version=2018-02-01")]
+    [InlineData("169.254.169.254", "/computeMetadata/v1/instance/service-accounts/default/token")]
+    public async Task R163_Recognizes_Documented_Provider_Credential_Endpoints(string destination, string path)
+    {
+        // A raw metadata credential request may match, but must remain Shadow
+        // without independently verified inbound-to-outbound causality.
+        var record = MetadataRecord(path, "webapp.exe");
+        record.Destination = destination;
+        record.HttpHost = destination;
+        var rule = new R163_SsrfMetadataServiceProbeRule();
+
+        var result = await rule.EvaluateAsync(Context(record));
+
+        Assert.True(result.Matched);
+        Assert.True(RulePrecisionCatalog.Validate("R163", record).CanEvaluate);
+        Assert.Equal(RuleMode.Shadow,
+            RulePrecisionRuntimeEvaluator.Evaluate(
+                rule.Descriptor, Assert.Single(result.Events), record, RuleMode.Alert, "Research").EffectiveMode);
+        Assert.Equal(84, rule.PrecisionProfile.MinimumConfidence);
+    }
+
     private static TrafficRecord MetadataRecord(string path, string? process) => new()
     {
         Source = "10.1.1.30", Destination = "169.254.169.254", DestinationPort = 80,
