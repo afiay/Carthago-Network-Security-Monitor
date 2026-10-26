@@ -194,10 +194,12 @@ public sealed class RuleTuningCatalogTests
         var explicitLearning = RuleTuningCatalog.Resolve(profile, descriptor, evt, record,
             registry, baselineLearningMode: true, baselineReady: true);
         Assert.Equal(RuleMode.Shadow, explicitLearning.EffectiveMode);
+        Assert.Contains(RuleTuningReason.BaselineLearningMode, explicitLearning.Reasons);
 
         var mature = RuleTuningCatalog.Resolve(profile, descriptor, evt, record,
             registry, baselineLearningMode: false, baselineReady: true);
         Assert.Equal(RuleMode.Alert, mature.EffectiveMode);
+        Assert.DoesNotContain(RuleTuningReason.BaselineLearningMode, mature.Reasons);
     }
 
     [Fact]
