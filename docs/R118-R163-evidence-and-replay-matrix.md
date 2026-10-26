@@ -1,13 +1,15 @@
 # R118 and R163: evidence contracts and replay matrix
 
 Status: **validation candidate**, not a rule-promotion request. The
-63-fixture candidate was extended with four paired controls to **67 JSON
-replay fixtures (35 benign, 32 malicious)**. The count and new fixture JSON
-syntax were checked against the feature-branch tree. These are structural
-checks only, **not** a 67-sample benchmark PASS. Windows compilation,
-xUnit tests, and per-profile alert-level precision/recall/F1 remain
-unverified at this branch head. Do not promote any rule until those
-checks and policy-accounting gates pass.
+feature-branch tree currently contains **74 JSON replay fixtures (40 benign,
+34 malicious)**, including four new controls for IoT hostname specificity
+and cloud-agent executable-path spoofing. Earlier sections document historical
+52/58/63/67-fixture milestones, not the current inventory. All four newly
+added JSON files were retrieved and parsed successfully. This is structural
+verification only, **not** a 74-sample benchmark PASS. Windows compilation,
+xUnit tests, and updated per-profile alert-level precision/recall/F1 remain
+unverified. Do not promote any rule until those checks and policy-accounting
+gates pass.
 
 ## Non-negotiable gates
 
@@ -151,6 +153,54 @@ Zeek's default HTTP telemetry with optional full-header logging).
 The GCP control follows the provider's distinction between
 service-account identity and access-token endpoints. An observed
 metadata token request alone is not SSRF causality.
+
+## Device-host specificity and guest-agent executable-path controls (74-fixture candidate)
+
+A current R118 raw match requires a recognizable origin Basic default pair or
+Telnet login transcript **and** a likely IoT device target. A keyword buried
+inside an unrelated hostname is not device inventory evidence. The HTTP host
+contract now recognizes labels such as `camera-office`, `router02`, and
+`ubiquiti-router`, but rejects `cameradeals.example.invalid`. This reduces
+false positives; it does **not** verify device ownership or prove login success.
+An inventory mapping and authenticated outcome telemetry are still needed for
+an 86%-eligible R118 alert.
+
+R163 previously suppressed known guest-agent **basenames** even when the
+captured process path pointed to a common user-writable directory. A request
+from `C:\\Users\\Public\\cloud-init.exe` or `/tmp/google-guest-agent` now
+remains a raw metadata candidate instead of being silently discarded. Ordinary
+installation paths such as `/usr/bin/cloud-init` retain the prior benign
+suppression. This is a narrow spoofing defense, not signed-binary validation:
+basename-only records and unknown writable paths remain a residual limitation.
+
+| Fixture | Label | Expected raw result | Alert decision |
+| --- | --- | --- | --- |
+| `r118-camera-marketing-host-substring` | Benign | No R118 | No R118 alert |
+| `r118-router02-inventory-label-default-basic` | Malicious scenario | R118 match | Shadow; below 86% |
+| `r163-approved-cloud-init-install-path` | Benign | No R163 | No R163 alert |
+| `r163-cloud-init-writable-path-spoof` | Malicious scenario | R163 match | Shadow; below 84%; **SSRF not causally proven** |
+
+The four fixtures use documentation IP ranges, fictional roles, synthetic
+Basic tokens, and a redacted IMDSv2 header. They never establish successful
+authentication, credential disclosure, or SSRF causality. Their expected
+results are **assertions to execute**, not observed xUnit or benchmark passes.
+
+**Telemetry next step:** collect signed process-image identity and stable
+process-to-socket attribution (for example, Sysmon process-creation event 1
+and network event 3 with `ProcessGuid`) before considering trusted agent
+allowlisting. To prove R163 causality, a collector-assigned ingress request
+identity must also be connected to the outbound metadata socket through
+application tracing. Matching host/process and timestamps alone is not enough.
+See Microsoft's Sysmon documentation:
+https://learn.microsoft.com/sysinternals/downloads/sysmon and Zeek's HTTP
+connection fields: https://docs.zeek.org/en/current/reference/logs/http.html .
+
+**Verification:** `verify-local.ps1` now fails when the benchmark sample
+count differs from the number of checked-out JSON fixtures, rather than
+accepting an outdated fixed minimum. It also reports TP/FP/FN and alert-level
+precision/recall/F1 for all six profiles and R118/R163/R102 separately.
+These measurements remain **pending Windows execution**. With no alerts,
+precision is `N/A`, not 100%. Never treat raw matches as alert-level TP.
 
 ## What independent R163 corroboration would require
 
