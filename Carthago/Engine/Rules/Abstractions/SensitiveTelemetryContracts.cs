@@ -108,10 +108,12 @@ namespace Carthago.Engine.Rules
                 || !IsDeviceHost(record.HttpHost))
                 return false;
 
-            if (record.HttpBasicDefaultCredentialObserved)
-                return true;
+            // The capture parser derives this flag without retaining credentials.
+            // If header names are also present, they must not contradict the
+            // parser's singleton Authorization contract. A replay or imported
+            // record can otherwise claim a trusted flag alongside duplicates.
             if (string.IsNullOrWhiteSpace(record.HttpRequestHeaders))
-                return false;
+                return record.HttpBasicDefaultCredentialObserved;
 
             var authorizationHeaderCount = 0;
             var defaultPairObserved = false;
@@ -121,7 +123,8 @@ namespace Carthago.Engine.Rules
                 if (separator < 0 || !line[..separator].Trim().Equals("Authorization", StringComparison.OrdinalIgnoreCase))
                     continue;
 
-                authorizationHeaderCount++;
+                if (++authorizationHeaderCount > 1)
+                    return false;
                 // Legacy/replay headers must obey the same unambiguous singleton
                 // contract as live capture. Do not trust a default credential
                 // when multiple Authorization fields could be interpreted
@@ -132,7 +135,12 @@ namespace Carthago.Engine.Rules
                     defaultPairObserved = true;
             }
 
-            return authorizationHeaderCount == 1 && defaultPairObserved;
+            // Live parser output has redacted Authorization values, so the
+            // derived flag remains authoritative for the credential identity,
+            // but never overrides contradictory duplicate header evidence.
+            return record.HttpBasicDefaultCredentialObserved
+                ? authorizationHeaderCount <= 1
+                : authorizationHeaderCount == 1 && defaultPairObserved;
         }
 
         public static bool HasCredentialBearingMetadataRequest(TrafficRecord record)
