@@ -76,6 +76,32 @@ public sealed class HttpLightPrivacyTests
         Assert.DoesNotContain(authorization, parsed.JoinedHeaderLines);
     }
     [Fact]
+    public void Imported_Json_Cannot_Assert_Trusted_Default_Basic_Capture_Flag()
+    {
+        // The trusted bit is capture-path-only. A replay/imported JSON record
+        // cannot bypass redacted-header verification by claiming it is true.
+        var imported = JsonSerializer.Deserialize<TrafficRecord>(
+            "{\"Source\":\"198.51.100.182\",\"HttpBasicDefaultCredentialObserved\":true}");
+        Assert.NotNull(imported);
+        Assert.False(imported!.HttpBasicDefaultCredentialObserved);
+    }
+
+    [Fact]
+    public void Synthetic_Onvif_Wire_Request_Derives_Trust_Before_Header_Redaction()
+    {
+        var raw = "POST /onvif/device_service HTTP/1.1\\r\\n"
+                + "Host: nvr-lab.internal\\r\\n"
+                + "Authorization: Basic YWRtaW46YWRtaW4=\\r\\n\\r\\n";
+
+        Assert.True(HttpLight.TryParseHttp(Encoding.ASCII.GetBytes(raw), out var parsed));
+        Assert.True(parsed.ObservedDefaultBasicCredential);
+        Assert.Equal("nvr-lab.internal", parsed.Host);
+        Assert.Equal("/onvif/device_service", parsed.Path);
+        Assert.Contains("Authorization: [REDACTED]", parsed.JoinedHeaderLines);
+        Assert.DoesNotContain("YWRtaW46YWRtaW4=", parsed.JoinedHeaderLines);
+    }
+
+    [Fact]
     public async Task R118_And_R163_Events_Do_Not_Expose_Synthetic_Credential_Bytes()
     {
         const string defaultBasic = "YWRtaW46YWRtaW4="; // Synthetic admin:admin fixture only.
