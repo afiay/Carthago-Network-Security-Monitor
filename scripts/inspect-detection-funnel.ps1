@@ -16,9 +16,12 @@ if ($null -eq $reportData.PSObject.Properties['detectionFunnelByProfile']) {
     throw 'This report predates the detection funnel. Pull the latest feature branch and rerun verification.'
 }
 
-function Format-Ratio($value) {
-    if ($null -eq $value) { return 'N/A' }
-    return '{0:P1}' -f [double]$value
+function Format-Ratio($record, [string]$propertyName) {
+    # Null-valued ratio properties are omitted by JSON serialization.
+    # Under StrictMode we must not dereference a missing field.
+    $field = $record.PSObject.Properties[$propertyName]
+    if ($null -eq $field -or $null -eq $field.Value) { return 'N/A' }
+    return '{0:P1}' -f [double]$field.Value
 }
 
 $rows = @(
@@ -31,14 +34,14 @@ $rows = @(
             Expected = $funnel.expectedMaliciousRules
             Detected = $funnel.recognizedByDetector
             Missed = $funnel.detectorMisses
-            'Detector recall' = Format-Ratio $funnel.detectorRecognitionRate
+            'Detector recall' = Format-Ratio $funnel 'detectorRecognitionRate'
             Alerts = $funnel.simulatedAlerted
-            'Alert recall' = Format-Ratio $funnel.alertLevelRecall
+            'Alert recall' = Format-Ratio $funnel 'alertLevelRecall'
             Shadow = $funnel.policyShadowed
             Disabled = $funnel.policyDisabled
             Eligible = $funnel.policyEligibleRules
             'Eligible missing' = $funnel.eligibleButNotAlerted
-            'Eligible emission' = Format-Ratio $funnel.eligibleAlertEmissionRate
+            'Eligible emission' = Format-Ratio $funnel 'eligibleAlertEmissionRate'
             'No policy decision' = $funnel.missingPolicyDecisions
             'Policy mismatch' = $funnel.alertDecisionMismatches
             'Benign alerts' = $funnel.benignSimulatedAlerts
