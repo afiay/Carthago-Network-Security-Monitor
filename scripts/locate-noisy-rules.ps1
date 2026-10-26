@@ -18,7 +18,7 @@ foreach ($rule in $RuleIds) {
     }
     $hits | Select-Object -First 25 |
         ForEach-Object {
-            $relative = [System.IO.Path]::GetRelativePath($source, $_.Path)
+            $relative = $_.Path.Substring($source.TrimEnd('\', '/').Length).TrimStart('\', '/')
             [pscustomobject]@{
                 File = $relative
                 Line = $_.LineNumber
