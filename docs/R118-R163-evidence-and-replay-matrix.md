@@ -1,9 +1,11 @@
 # R118 and R163: evidence contracts and replay matrix
 
-Status: **validation candidate**, not a rule-promotion request. The last user-confirmed
-Windows run passed with 48 labeled replays; the four fixtures introduced after
-that run bring the candidate set to 52. **Do not claim the expanded run passes
-until the Windows build, tests, and benchmark have actually completed.**
+Status: **validation candidate**, not a rule-promotion request. The user
+confirmed a Windows PASS for the 52-sample benchmark at commit `4617691`,
+including five focused R102 tests (5 passed, 0 failed). The four additional
+R118/R163 controls in this batch bring the candidate set to **56**.
+**Do not claim the 56-sample run passes until Windows build, tests and
+benchmark complete at the new branch head.**
 
 ## Non-negotiable gates
 
@@ -34,6 +36,39 @@ fixture contains a synthetic Base64 Basic value for legacy offline replay;
 Authorization bytes**. Never persist HTTP Authorization, IMDSv2 session tokens,
 credential responses, or decoded passwords in evidence, logs, replay reports,
 or benchmark artifacts.
+
+## Additional precision controls: ambiguous authentication and URI normalization
+
+The second paired batch adds four fixtures on top of the verified 52:
+
+| Fixture | Label | Rule under test | Expected raw match | Alert eligibility |
+| --- | --- | --- | --- | --- |
+| `r118-duplicate-authorization-ambiguous` | Benign | R118 | No | No |
+| `r118-unauthorized-router-root-basic` | Malicious | R118 | Yes | Below 86%; Shadow |
+| `r163-encoded-dot-segment-metadata-decoy` | Benign | R163 | No | No |
+| `r163-gcp-ipv6-credential-fetch-unattributed` | Malicious | R163 | Yes | Below 84%; Shadow |
+
+**R118:** The wire parser and legacy/replay contract now require exactly one
+origin `Authorization` field before deriving a default-pair observation.
+Duplicate headers are ambiguous across HTTP intermediaries and device
+implementations. The parser continues to redact *all* credential-bearing
+header values, and neither the token nor the decoded password enters the
+detection event. The known default-pair set and R118's 86% confidence floor
+are unchanged. A valid singleton remains detectable; duplicate headers do
+not establish which credentials a device accepted.
+
+**R163:** Provider credential paths must remain credential paths after
+canonicalization. Reject literal `.`/`..` segments and ambiguous encoded
+dot/separator forms before `Uri.TryCreate` can normalize absolute-form
+request targets. This is a **false-positive prevention** measure, not SSRF
+causal proof. A valid Google IPv6 metadata service-account token path
+remains a raw match; a validated ingress-to-egress trace is still absent.
+Azure's documented `?api-version=` token-query form remains supported.
+
+The new fixtures are synthetic and use documentation IP ranges and
+redacted/fictional credentials only. These fixtures **do not** measure
+real-world prevalence or authorize raising confidence. No R118/R163/R102
+mode or floor has changed.
 
 ## What independent R163 corroboration would require
 
@@ -87,6 +122,9 @@ diagnose the failing fixture; do not promote R118, R163 or R102.
 
 ## References
 
+- RFC 9110 §5.3 on ambiguous repeated HTTP field lines: https://www.rfc-editor.org/rfc/rfc9110.html#section-5.3
+- RFC 7617 on HTTP Basic authentication and Base64 credentials: https://www.rfc-editor.org/rfc/rfc7617.html
+- Zeek HTTP logging (connection UID and password-capture defaults): https://docs.zeek.org/en/current/scripts/base/protocols/http/main.zeek.html
 - AWS EC2 IMDSv2 request semantics: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html
 - Google Cloud metadata HTTP headers: https://docs.cloud.google.com/compute/docs/metadata/querying-metadata
 - OWASP SSRF Prevention Cheat Sheet: https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html
