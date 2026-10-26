@@ -1,0 +1,26 @@
+{
+  "name": "r118-iot-x-authorization-lookalike",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "192.0.2.140",
+      "destination": "192.0.2.50",
+      "sourcePort": 51440,
+      "destinationPort": 443,
+      "protocol": "TCP",
+      "applicationProtocol": "HTTPS",
+      "httpMethod": "POST",
+      "httpHost": "camera-lab.internal",
+      "httpUri": "/admin/login",
+      "httpRequestHeaders": "Host: camera-lab.internal\r\nX-Authorization: Basic c3VwcG9ydDpzdXBwb3J0",
+      "processName": "qa-proxy.exe",
+      "sni": "camera-lab.internal",
+      "tlsVersion": "TLS 1.3",
+      "info": "Synthetic proxy extension field, not an origin Authorization credential. Header names must match exactly."
+    }
+  ],
+  "expectedNonMatches": [
+    "R118",
+    "R163"
+  ]
+}
