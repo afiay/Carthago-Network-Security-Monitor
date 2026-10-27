@@ -39,7 +39,7 @@ public sealed class R170AdvancedAccuracyBatchTests
     }
     [Fact] public async Task Encoded_Query_And_Secret_Are_Not_Emitted()
     {
-        var r=NetworkBatch166175Context.Xml(NetworkBatch166175Context.XxePath()+"&token=SECRET170");var x=await new R170_XxePayloadIndicatorRule().EvaluateAsync(NetworkBatch166175Context.At(r));Assert.True(x.Matched);Assert.DoesNotContain(Assert.Single(x.Events).StructuredEvidence!.Items,i=>i.Value.Contains("SECRET170",StringComparison.Ordinal)||i.Value.Contains("DOCTYPE",StringComparison.Ordinal));
+        var r=NetworkBatch166175Context.Xml(NetworkBatch166175Context.XxePath()+"&token=SECRET170");var x=await new R170_XxePayloadIndicatorRule().EvaluateAsync(NetworkBatch166175Context.At(r));Assert.True(x.Matched);Assert.DoesNotContain(Assert.Single(x.Events).StructuredEvidence!.Items,i=>i.Value.Contains("SECRET170",StringComparison.Ordinal)||i.Value.Contains("/etc/passwd",StringComparison.Ordinal));
     }
     [Fact] public void Runtime_Policy_And_Confidence_Floor_Are_Preserved()
     {
