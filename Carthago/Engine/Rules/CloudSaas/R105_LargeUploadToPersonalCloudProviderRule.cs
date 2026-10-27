@@ -9,6 +9,7 @@ namespace Carthago.Engine.Rules.CloudSaas
 {
     public sealed class R105_LargeUploadToPersonalCloudProviderRule : CloudSaasPrecisionDetectionRuleBase
     {
+        private readonly NetworkBatch081085Dedup _seen = new();
         private static readonly RuleDescriptor Rule = new(
             RuleId: "R105",
             Name: "Large Upload to Personal Cloud Provider",
@@ -72,6 +73,8 @@ namespace Carthago.Engine.Rules.CloudSaas
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
+            if (!NetworkBatch101105Evidence.CloudUpload(context))
+                return NoMatch();
             var host = BestHost(record);
             if (string.IsNullOrWhiteSpace(host)
                 || !IsInternalAddress(record.Source)
@@ -82,7 +85,7 @@ namespace Carthago.Engine.Rules.CloudSaas
             }
 
             var bytes = TransferBytes(record);
-            if (bytes <= 0 || !HasUploadShape(record, 300_000))
+            if (bytes <= 0 || !_seen.First(record.Id, context.TimestampUtc))
                 return NoMatch();
 
             var provider = ProviderIdentity(host);
@@ -102,7 +105,7 @@ namespace Carthago.Engine.Rules.CloudSaas
             if (!strongThresholdMet)
                 return NoMatch();
 
-            if (enterpriseHost && !automation && !HasUploadMetadata(record) && !personalCloud)
+            if (enterpriseHost && !automation && !NetworkBatch101105Evidence.UploadMetadata(record) && !personalCloud)
                 return NoMatch();
 
             var matchedConditions = new List<string> { "large_cloud_upload", "windowed_upload_volume" };
@@ -141,11 +144,12 @@ namespace Carthago.Engine.Rules.CloudSaas
                     confidence.AddEvidence(0.20, "windowed-upload-volume");
                     if (personalCloud) confidence.AddCorrelation(0.12, "consumer-cloud-provider");
                     if (automation) confidence.AddCorrelation(0.10, "automation-process");
-                    if (HasUploadMetadata(record)) confidence.AddEvidence(0.08, "upload-metadata");
+                    if (NetworkBatch101105Evidence.UploadMetadata(record)) confidence.AddEvidence(0.08, "upload-metadata");
                 },
                 count: totalUploadBytes >= windowUploadBytes ? 2 : 1,
                 window: window,
-                cooldownKey: $"{record.Source}:{provider}");
+                cooldownKey: $"{record.Source}:{provider}",
+                redactHttpUri: true);
         }
     }
 }

@@ -117,7 +117,8 @@ namespace Carthago.Engine.Rules.CloudSaas
             Action<ConfidenceBuilder> configureConfidence,
             int count = 1,
             TimeSpan? window = null,
-            string? cooldownKey = null)
+            string? cooldownKey = null,
+            bool redactHttpUri = false)
         {
             var bytes = TransferBytes(context.Record);
             var items = new List<DetectionEvidenceItem>
@@ -128,7 +129,9 @@ namespace Carthago.Engine.Rules.CloudSaas
 
             if (!string.IsNullOrWhiteSpace(context.Record.HttpMethod))
                 items.Add(new DetectionEvidenceItem("http.method", context.Record.HttpMethod!, "http"));
-            if (!string.IsNullOrWhiteSpace(context.Record.HttpUri))
+            // R104/R105 omit raw URI because query parameters may contain
+            // credentials, signed URLs, filenames or user identifiers.
+            if (!redactHttpUri && !string.IsNullOrWhiteSpace(context.Record.HttpUri))
                 items.Add(new DetectionEvidenceItem("http.uri", ShortText(context.Record.HttpUri!, 220), "http"));
             if (!string.IsNullOrWhiteSpace(context.Record.ProcessName))
                 items.Add(new DetectionEvidenceItem("process.name", context.Record.ProcessName!, "process"));

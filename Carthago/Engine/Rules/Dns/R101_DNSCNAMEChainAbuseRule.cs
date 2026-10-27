@@ -78,13 +78,15 @@ namespace Carthago.Engine.Rules.Dns
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!TryGetDnsQuestion(context, out var query))
+            if (!NetworkBatch096100Evidence.Dns(context, response: true)
+                || !TryGetDnsQuestion(context, out var query))
                 return NoMatch();
 
             if (!context.Record.DnsIsResponse || string.IsNullOrWhiteSpace(context.Record.DnsAnswers))
                 return NoMatch();
 
-            var cnameCount = CountCnames(context.Record.DnsAnswers);
+            // Count only connected aliases, not unrelated CNAME words/records.
+            var cnameCount = NetworkBatch101105Evidence.CnameChainDepth(context.Record.DnsAnswers);
             var threshold = IntSetting(Descriptor.RuleId, "Threshold", 3, 2, 20);
             if (cnameCount < threshold)
                 return NoMatch();

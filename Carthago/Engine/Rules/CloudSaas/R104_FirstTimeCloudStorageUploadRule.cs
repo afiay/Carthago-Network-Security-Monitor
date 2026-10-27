@@ -72,6 +72,8 @@ namespace Carthago.Engine.Rules.CloudSaas
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
+            if (!NetworkBatch101105Evidence.CloudUpload(context))
+                return NoMatch();
             var host = BestHost(record);
             if (string.IsNullOrWhiteSpace(host)
                 || !IsInternalAddress(record.Source)
@@ -86,7 +88,7 @@ namespace Carthago.Engine.Rules.CloudSaas
             var minimumUploadBytes = IntSetting(Descriptor.RuleId, "MinimumUploadBytes", 250_000, 32_000, 50_000_000);
             var enterpriseUploadBytes = IntSetting(Descriptor.RuleId, "EnterpriseUploadBytes", 1_000_000, 128_000, 100_000_000);
             var automation = IsLikelyAutomationProcess(record);
-            var explicitUploadMetadata = HasUploadMetadata(record);
+            var explicitUploadMetadata = NetworkBatch101105Evidence.UploadMetadata(record);
             if (!automation && !explicitUploadMetadata && bytes < minimumUploadBytes)
                 return NoMatch();
 
@@ -96,11 +98,10 @@ namespace Carthago.Engine.Rules.CloudSaas
             var provider = ProviderIdentity(host);
             var baselineSubject = $"{record.Source}:{record.ProcessName ?? "unknown-process"}";
             var baseline = ObserveBaseline("cloud_upload_provider", baselineSubject, provider, context, $"host={host}; method={record.HttpMethod}; bytes={bytes}");
-            var firstSeenWindow = TimeSpan.FromDays(30);
-            var fallbackFirstSeen = CountWindowEvents($"{Descriptor.RuleId}:first-seen:{baselineSubject}:{provider}", context.TimestampUtc, firstSeenWindow) == 1;
-            var baselineUnavailable = string.Equals(baseline.Reason, "baseline unavailable", StringComparison.OrdinalIgnoreCase);
-            var firstSeen = baseline.IsFirstSeen || (baselineUnavailable && fallbackFirstSeen);
-            if (!firstSeen)
+            // In-memory fallback cannot prove that a provider is genuinely
+            // first-seen across process restarts or storage failures.
+            if (string.Equals(baseline.Reason, "baseline unavailable", StringComparison.OrdinalIgnoreCase)
+                || !baseline.IsFirstSeen)
                 return NoMatch();
 
             var severity = automation || bytes >= enterpriseUploadBytes * 2L ? SeverityLevel.High : SeverityLevel.Medium;
@@ -108,7 +109,6 @@ namespace Carthago.Engine.Rules.CloudSaas
             if (automation) matchedConditions.Add("automation_process");
             if (explicitUploadMetadata) matchedConditions.Add("upload_metadata");
             if (bytes >= minimumUploadBytes) matchedConditions.Add("non_trivial_payload");
-            if (baselineUnavailable && !baseline.IsFirstSeen) matchedConditions.Add("baseline_unavailable_fallback");
 
             var whyMatched = $"{record.Source} uploaded to first-seen provider {provider} using {record.HttpMethod} with {bytes} bytes of request volume.";
             var severityReason = severity == SeverityLevel.High
@@ -139,14 +139,14 @@ namespace Carthago.Engine.Rules.CloudSaas
                 {
                     confidence.AddEvidence(0.22, "first-seen-provider");
                     if (baseline.IsFirstSeen) confidence.AddBaseline(0.16, "first-seen-baseline");
-                    else if (baselineUnavailable) confidence.AddCorrelation(0.14, "baseline-unavailable-fallback");
                     confidence.AddEvidence(0.18, "explicit-upload-method");
                     if (bytes >= minimumUploadBytes) confidence.AddEvidence(0.10, "non-trivial-payload");
                     if (explicitUploadMetadata) confidence.AddEvidence(0.10, "upload-metadata");
                     if (automation) confidence.AddCorrelation(0.14, "automation-process");
                     if (IsPersonalCloudHost(host)) confidence.AddCorrelation(0.08, "consumer-cloud-provider");
                 },
-                cooldownKey: $"{record.Source}:{provider}");
+                cooldownKey: $"{record.Source}:{provider}",
+                redactHttpUri: true);
         }
     }
 }

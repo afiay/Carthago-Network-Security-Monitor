@@ -10,6 +10,7 @@ namespace Carthago.Engine.Rules.Dns
 {
     public sealed class R103_DNSBeaconingWithStableIntervalRule : DnsPrecisionDetectionRuleBase
     {
+        private readonly NetworkBatch081085Dedup _seen = new();
         private static readonly RuleDescriptor Rule = new(
             RuleId: "R103",
             Name: "DNS Beaconing With Stable Interval",
@@ -79,7 +80,11 @@ namespace Carthago.Engine.Rules.Dns
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!TryGetDnsQuestion(context, out var query))
+            if (!NetworkBatch096100Evidence.Dns(context)
+                || !TryGetDnsQuestion(context, out var query))
+                return NoMatch();
+            // Count unique packet observations, not duplicate record delivery.
+            if (!_seen.First(context.Record.Id, context.TimestampUtc))
                 return NoMatch();
 
             var root = RootDomain(query);

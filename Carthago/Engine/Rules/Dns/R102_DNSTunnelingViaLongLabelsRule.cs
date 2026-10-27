@@ -10,6 +10,7 @@ namespace Carthago.Engine.Rules.Dns
 {
     public sealed class R102_DNSTunnelingViaLongLabelsRule : DnsPrecisionDetectionRuleBase
     {
+        private readonly NetworkBatch081085Dedup _seen = new();
         private static readonly RuleDescriptor Rule = new(
             RuleId: "R102",
             Name: "DNS Tunneling via Long Labels",
@@ -79,7 +80,12 @@ namespace Carthago.Engine.Rules.Dns
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!TryGetDnsQuestion(context, out var query))
+            if (!NetworkBatch096100Evidence.Dns(context)
+                || !TryGetDnsQuestion(context, out var query))
+                return NoMatch();
+            // A captured record can be replayed; it must not increase either
+            // the burst count or distinct-query confidence twice.
+            if (!_seen.First(context.Record.Id, context.TimestampUtc))
                 return NoMatch();
 
             if (LooksLikeBenignValidationQuery(query))
