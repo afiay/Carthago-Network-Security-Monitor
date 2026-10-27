@@ -6,6 +6,7 @@ param(
     [Parameter(Mandatory=$true)][string]$CapturePath,
     [string]$DnsRoot='',
     [switch]$ShowSourceAddresses,
+    [switch]$ShowDnsRoots,
     [int]$MaximumPacketsToScan=100000,
     [string]$TsharkPath='tshark',
     [string]$OutputDirectory='build-verify/holdout-v2-profiles'
@@ -95,7 +96,7 @@ foreach ($key in @($groups.Keys | Sort-Object)) {
     $clientLabel='Client-'+('{0:000}' -f $ordinal)
     $profile=[ordered]@{
         client=$clientLabel
-        domain=$observations[0].Root
+        domain=$(if ($ShowDnsRoots) { $observations[0].Root } else { 'Domain-'+('{0:000}' -f $ordinal) })
         recordCount=$observations.Count
         uniqueFrameCount=@($observations | Select-Object -ExpandProperty Frame -Unique).Count
         txtQueries=$txt.Count
@@ -129,6 +130,7 @@ $summary=[ordered]@{
     maximumPacketsToScan=$MaximumPacketsToScan
     analysisMayBeTruncated=$true
     rawSourceAddressesIncluded=[bool]$ShowSourceAddresses
+    rawDnsRootsIncluded=[bool]$ShowDnsRoots
     distinctSourceRootGroups=$profiles.Count
     skippedOrInvalidFrames=$skipped
     groups=@($profiles.ToArray())
@@ -142,5 +144,6 @@ $summary=[ordered]@{
 Write-Host ("Source inspection: {0} DNS source/root group(s), {1} skipped/invalid frame(s)." -f $profiles.Count,$skipped)
 Write-Host ("Groups with >=3 distinct long TXT QNAMEs: {0}" -f @($profiles | Where-Object { $_.meetsBasicThreeDistinctLongTxtShape }).Count)
 Write-Host "Privacy-conscious local report: $destination"
+Write-Host 'Raw QNAMEs are not exported; source IPs and DNS roots are hidden unless explicitly requested.'
 Write-Host "At most $MaximumPacketsToScan input packets were scanned; this is not a whole-capture coverage claim."
 Write-Host 'No alert evaluation, label approval, corpus change or test was performed.'
