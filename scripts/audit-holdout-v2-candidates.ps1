@@ -43,7 +43,10 @@ foreach ($entry in $entries) {
         -not $p.capturedTransportEvidence -or
         [string]::IsNullOrWhiteSpace($p.independentLabelBasis) -or
         [string]::IsNullOrWhiteSpace($p.sourceUri) -or
-        [string]::IsNullOrWhiteSpace($p.sourceLicense)) {
+        [string]::IsNullOrWhiteSpace($p.sourceLicenseEvidenceUri) -or
+        $p.sourceLicenseEvidenceUri -notmatch '^https://' -or
+        $p.sourceUri -notmatch '^https://' -or
+        $p.sourceLicense -notin @('Apache-2.0','CC-BY-4.0','CC0-1.0')) {
         throw "Source audit: incomplete external attribution or label review for $name."
     }
     $fileName=[string]$p.captureFileName
