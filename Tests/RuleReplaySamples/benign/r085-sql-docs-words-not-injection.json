@@ -1,0 +1,25 @@
+{
+  "name": "r085-sql-docs-words-not-injection",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "10.85.0.10",
+      "destination": "10.85.1.10",
+      "ipVersion": 4,
+      "protocol": "TCP",
+      "isTcp": true,
+      "tcpFlags": 24,
+      "sourcePort": 52000,
+      "destinationPort": 80,
+      "length": 256,
+      "httpMethod": "GET",
+      "httpHost": "app.example.test",
+      "httpUri": "/docs?topic=sql+union+select+from&filter=1=1"
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R085"
+  ],
+  "maximumUnexpectedMatches": 0
+}

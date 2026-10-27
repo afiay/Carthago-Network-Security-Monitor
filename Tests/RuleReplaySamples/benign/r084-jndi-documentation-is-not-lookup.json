@@ -1,0 +1,25 @@
+{
+  "name": "r084-jndi-documentation-is-not-lookup",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "10.84.0.10",
+      "destination": "10.84.1.10",
+      "ipVersion": 4,
+      "protocol": "TCP",
+      "isTcp": true,
+      "tcpFlags": 24,
+      "sourcePort": 52000,
+      "destinationPort": 80,
+      "length": 256,
+      "httpMethod": "GET",
+      "httpHost": "app.example.test",
+      "httpUri": "/help?topic=jndi+ldap+configuration"
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R084"
+  ],
+  "maximumUnexpectedMatches": 0
+}
