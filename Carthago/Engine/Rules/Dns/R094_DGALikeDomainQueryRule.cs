@@ -79,7 +79,10 @@ namespace Carthago.Engine.Rules.Dns
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!TryGetDnsQuestion(context, out var query))
+            // Require a coherent DNS question on a real, attributable transport,
+            // rather than a qname copied into unrelated packet metadata.
+            if (!NetworkBatch091095Evidence.DnsQuestion(context)
+                || !TryGetDnsQuestion(context, out var query))
                 return NoMatch();
 
             var root = RootDomain(query);

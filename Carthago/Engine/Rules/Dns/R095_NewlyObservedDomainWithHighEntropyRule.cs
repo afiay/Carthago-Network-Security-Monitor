@@ -78,11 +78,15 @@ namespace Carthago.Engine.Rules.Dns
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!TryGetDnsQuestion(context, out var query))
+            // Require a coherent DNS question on a real, attributable transport,
+            // rather than a qname copied into unrelated packet metadata.
+            if (!NetworkBatch091095Evidence.DnsQuestion(context)
+                || !TryGetDnsQuestion(context, out var query))
                 return NoMatch();
 
             var root = RootDomain(query);
-            if (LooksLikeBenignValidationQuery(query) || IsKnownTelemetryRoot(root))
+            if (LooksLikeBenignValidationQuery(query) || IsKnownTelemetryRoot(root)
+                || LooksLikePunycodeLabel(SecondLevelLabel(query)))
                 return NoMatch();
 
             var minimumLength = IntSetting(Descriptor.RuleId, "MinimumQueryLength", 32, 16, 255);
@@ -95,6 +99,11 @@ namespace Carthago.Engine.Rules.Dns
                 return NoMatch();
 
             var baseline = ObserveBaseline("dns.high-entropy-domain", context.Record.Source ?? "unknown", query, context, $"qtype={context.Record.DnsQtype}");
+
+            // Failure to read durable baseline history must never be treated
+            // as novelty evidence. Keep baseline learning/shadow policy intact.
+            if (string.Equals(baseline.Reason, "baseline unavailable", StringComparison.OrdinalIgnoreCase))
+                return NoMatch();
 
             var firstSeenNow = FirstTimeSeen(query, context.TimestampUtc);
             if (!firstSeenNow && !baseline.IsFirstSeen)
