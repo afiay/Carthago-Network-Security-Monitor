@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 // File: Engine/Rules/Health/R056_TimeSkewClockJumpRule.cs
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Carthago.Models;
@@ -9,6 +10,8 @@ namespace Carthago.Engine.Rules.Health
 {
     public sealed class R056_TimeSkewClockJumpRule : DetectionRuleBase
     {
+        private readonly ClockSkewEpisodeTransition _transition = new();
+
         public override RuleDescriptor Descriptor => new(
             RuleId: "R056",
             Name: "Time Skew / Clock Jump",
@@ -21,23 +24,25 @@ namespace Carthago.Engine.Rules.Health
         public override ValueTask<RuleEvaluationResult> EvaluateAsync(RuleEvaluationContext context, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (System.Math.Abs(context.HealthSnapshot.ClockSkew.TotalSeconds) < 60)
+            if (!HealthEvidenceGate.IsFresh(context)
+                || !_transition.Observe(context.HealthSnapshot.ClockSkew, context.HealthSnapshot.TimestampUtc))
                 return ValueTask.FromResult(RuleEvaluationResult.NoMatch(Descriptor.RuleId));
-            return ValueTask.FromResult(RuleEvaluationResult.Match(Descriptor.RuleId, CreateHealthEvent(context, $"Clock jump/skew detected: {context.HealthSnapshot.ClockSkew.TotalSeconds:F0}s.")));
-        }
 
-        private DetectionEvent CreateHealthEvent(RuleEvaluationContext context, string summary) => new()
-        {
-            RuleId = Descriptor.RuleId,
-            RuleName = Descriptor.Name,
-            TimestampUtc = context.TimestampUtc,
-            Severity = Descriptor.DefaultSeverity,
-            SourceIp = "carthago-engine",
-            DestinationIp = "carthago-local",
-            Protocol = "health",
-            Summary = summary,
-            Description = summary,
-            Evidence = summary
-        };
+            // Do not include exact clock offsets or host identifiers in the alert.
+            const string summary = "Clock skew exceeded the existing 60-second health threshold.";
+            return ValueTask.FromResult(RuleEvaluationResult.Match(Descriptor.RuleId, new DetectionEvent
+            {
+                RuleId = Descriptor.RuleId,
+                RuleName = Descriptor.Name,
+                TimestampUtc = context.TimestampUtc,
+                Severity = Descriptor.DefaultSeverity,
+                SourceIp = "carthago-engine",
+                DestinationIp = "carthago-local",
+                Protocol = "health",
+                Summary = summary,
+                Description = summary,
+                Evidence = "Fresh health snapshot; skew threshold crossed."
+            }));
+        }
     }
 }
