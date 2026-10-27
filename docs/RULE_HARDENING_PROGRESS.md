@@ -232,6 +232,45 @@ Neither v1 evidence nor R102 production detection logic was altered.
 holdout, Windows runner or production data capture was executed.
 No synthetic results establish production precision or alert recall.
 
+## V2 source acquisition and safer PCAP preparation — 2026-10-27
+
+The v2 manifest remains PENDING_EXTERNAL_CAPTURE_AND_REVIEW and the
+original v1 evaluation remains FAILED (R102 4/6). No new PCAP has yet
+been downloaded, imported, labeled, reviewed or frozen by this stream.
+No Carthago build, xUnit suite, benchmark, live monitoring or Windows
+runner was executed.
+
+Candidate additions and repairs, all UNVERIFIED:
+
+- scripts/acquire-holdout-v2-source-candidates.ps1 pins the Elastic iodine
+  example PCAP to immutable commit 6d86454ebb7a850bcd7e80abe86fe683370018a6,
+  blob f43152b995d0eb9127d5a8fcaf13e5c26595ce69 (77,524 bytes).
+  Downloads stay in private build-verify paths; acquisition is not approval.
+- scripts/inspect-holdout-v2-pcap.ps1 provides source/client and DNS QTYPE
+  summary without emitting raw QNAMEs or IPs by default. Bounded
+  packet scans avoid unbounded memory use on large captures.
+- scripts/audit-holdout-v2-candidates.ps1 now limits TShark output to
+  **selected pinned frame numbers** instead of materializing every DNS
+  query from a large source PCAP.
+- scripts/import-holdout-v2-r102.ps1 restricts input decoding volume,
+  documents a bounded source selection and requires an explicit
+  approved license identifier plus HTTPS license evidence.
+- Source audit, freeze and v2 evaluator independently enforce license
+  evidence fields; audit rejects noncommercial license identifiers for
+  potentially commercial data incorporation. A cited code license
+  alone still does not establish rights over a third-party capture.
+- Import, inspection and acquisition output directories are constrained
+  to build-verify/, preventing accidental public Git check-in of
+  unreviewed packet data via output-path overrides.
+- docs/HOLDOUT_V2_SOURCE_REVIEW.md screens multiple external sources;
+  Apache-2.0 repository license for Elastic was checked at the pinned
+  source revision; actual packet attributes and independent labels
+  remain unknown until the capture is acquired and decoded.
+
+**CANDIDATE — UNVERIFIED.** Authored changes do not constitute
+independent field evidence or permission to promote R102. No frozen
+v1 blobs, thresholds, Shadow/Disabled policy or detector code changed.
+
 ## Deferred one-run acceptance
 
 When the user says it is test time, freeze the branch head, then run on Windows:
