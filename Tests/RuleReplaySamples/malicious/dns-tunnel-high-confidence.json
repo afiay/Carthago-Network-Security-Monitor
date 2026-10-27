@@ -5,7 +5,10 @@
       "source": "10.0.0.26",
       "destination": "8.8.8.8",
       "protocol": "DNS",
+      "sourcePort": 53000,
       "destinationPort": 53,
+      "ipVersion": 4,
+      "isUdp": true,
       "dnsQname": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.exfil.example",
       "dnsQtype": "TXT"
     }
