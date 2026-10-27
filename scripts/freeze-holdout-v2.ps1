@@ -72,7 +72,10 @@ try {
             $p.captureSha256 -notmatch '^[0-9a-fA-F]{64}$' -or
             [string]::IsNullOrWhiteSpace($p.independentLabelBasis) -or
             [string]::IsNullOrWhiteSpace($p.sourceUri) -or
-            [string]::IsNullOrWhiteSpace($p.sourceLicense)) {
+            [string]::IsNullOrWhiteSpace($p.sourceLicenseEvidenceUri) -or
+            $p.sourceLicenseEvidenceUri -notmatch '^https://' -or
+            $p.sourceUri -notmatch '^https://' -or
+            $p.sourceLicense -notin @('Apache-2.0','CC-BY-4.0','CC0-1.0')) {
             throw "Missing external capture evidence or explicit independent label approval: $name"
         }
         if (@($sample.records).Count -lt 3 -or
