@@ -115,13 +115,20 @@ namespace Carthago.Engine.Rules
 
         internal static bool Rdp(TrafficRecord r)
             => RemoteTcp(r)
-                && (r.DestinationPort == 3389 || Classified(r, "RDP"))
+                && (Classified(r, "RDP")
+                    || r.DestinationPort == 3389 && r.ProcessName != null
+                        && r.ProcessName.Contains("mstsc", StringComparison.OrdinalIgnoreCase))
                 && (r.ApplicationProtocol == null || Same(r.ApplicationProtocol, "TCP") || Same(r.ApplicationProtocol, "RDP"))
                 && (r.ApplicationService == null || Same(r.ApplicationService, "RDP"));
 
         internal static bool Winrm(TrafficRecord r)
             => RemoteTcp(r)
-                && (r.DestinationPort is 5985 or 5986 || Classified(r, "WinRM") || Classified(r, "WSMAN"))
+                && (Classified(r, "WinRM") || Classified(r, "WSMAN")
+                    || (r.DestinationPort is 5985 or 5986)
+                        && r.ProcessName != null
+                        && (r.ProcessName.Contains("pwsh", StringComparison.OrdinalIgnoreCase)
+                            || r.ProcessName.Contains("powershell", StringComparison.OrdinalIgnoreCase)
+                            || r.ProcessName.Contains("wsmprovhost", StringComparison.OrdinalIgnoreCase)))
                 && (r.ApplicationProtocol == null || Same(r.ApplicationProtocol, "TCP") || Same(r.ApplicationProtocol, "WinRM") || Same(r.ApplicationProtocol, "WSMAN"))
                 && (r.ApplicationService == null || Same(r.ApplicationService, "WinRM") || Same(r.ApplicationService, "WSMAN"));
     }

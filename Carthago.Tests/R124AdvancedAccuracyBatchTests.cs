@@ -49,4 +49,11 @@ public sealed class R124AdvancedAccuracyBatchTests
         Assert.DoesNotContain(secret, evt.Evidence);
         Assert.DoesNotContain(evt.StructuredEvidence!.Items, x => x.Value.Contains(secret, StringComparison.Ordinal));
     }
+    [Fact] public async Task Port_Only_Without_Rdp_Attribution_Fails_Closed()
+    {
+        var r = NetworkBatch121125Context.Rdp(); r.ApplicationProtocol = "TCP";
+        r.ApplicationService = null; r.ProcessName = null;
+        Assert.False((await _rule.EvaluateAsync(NetworkBatch121125Context.At(r))).Matched);
+    }
+
 }

@@ -357,7 +357,7 @@ Authored against exact remote HEAD `85996ab87dc83863922ffb9de1f23ad86c2467a8` af
 R116–R120 ledger and absence of R121–R125 advanced files. Five rule
 implementations, one shared protocol-evidence contract, two narrow evidence
 privacy changes, five new advanced test classes and one isolated fixture
-were prepared. **35 xUnit facts authored; 0 executed.**
+were prepared. **37 xUnit facts authored; 0 executed.**
 
 **CANDIDATE — UNVERIFIED.** The single Windows entry point discovers
 R121–R125 automatically and remains unchanged. No builds, tests, replay,

@@ -72,7 +72,7 @@ namespace Carthago.Engine.Rules.Expansion
             var evidenceItems = new List<DetectionEvidenceItem>
             {
                 new("matched_conditions", string.Join(",", matchedConditions), "rule"),
-                new("http.path", "/vpn/login", "rule")
+                new("http.path", "[vpn-login-route]", "rule")
             };
             evidenceItems.AddRange(AnalystContext(
                 "An internal client reached an external VPN login path with explicit VPN portal indicators.",
