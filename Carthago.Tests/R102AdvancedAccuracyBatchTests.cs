@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using Carthago.Engine.Rules.Dns;
 using Xunit;
 namespace Carthago.Tests;
+
+[Collection("R102 distinct TXT correlation")]
 public sealed class R102AdvancedAccuracyBatchTests
 {
     private readonly R102_DNSTunnelingViaLongLabelsRule _rule=new();
