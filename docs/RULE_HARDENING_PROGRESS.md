@@ -447,3 +447,20 @@ benchmark, V1/V2 holdout or Windows runner executed by this work.
 Previously passing R001-R125 regressions do not verify R126-R145.
 Frozen V1 remains FAILED (R102 4/6); V2 awaits independent reviewed
 PCAP evidence. **Next contiguous batch: R146-R150.**
+
+## R146-R150 candidate implementation - 2026-10-27
+
+Manually advanced the five TLS/PKI rules after the automation was paused.
+Hardened TLS/transport attribution and summary provenance, keyed replay-
+resistant failure bursts by observed source+destination+port, anchored
+dynamic DNS and IP-literal names to SNI and an external socket, and
+retained R150's existing Alert floor while disclosing that its Info
+label is untrusted. **40 xUnit facts authored, 0 executed.**
+Source commit `03561a9e83dac813fe2212e4c8cf01df6d904861`;
+test commit `9fb2caee6190682234d635ee577b31f17b389d48`.
+See `docs/RULE_BATCH_146-150.md`.
+
+**CANDIDATE - UNVERIFIED.** No build, xUnit, benchmark, replay, holdout or
+Windows runner used; R102 frozen V1 remains FAILED 4/6 and V2 pending
+independent PCAP. Same branch, no extra branches or automation resume.
+**Next contiguous batch: R151-R155.**
