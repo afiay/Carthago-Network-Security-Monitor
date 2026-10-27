@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using Carthago.Engine.Rules.Dns;
 using Xunit;
 namespace Carthago.Tests;
+
+[Collection("R102 distinct TXT correlation")]
 public sealed class R103AdvancedAccuracyBatchTests
 {
     private readonly R103_DNSBeaconingWithStableIntervalRule _rule=new();
