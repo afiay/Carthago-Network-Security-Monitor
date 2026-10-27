@@ -59,36 +59,31 @@ namespace Carthago.Engine.Rules.Expansion
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!HasHttpContext(record) || !TryGetSensitiveQueryParameter(record, out var parameterName, out var parameterValue))
+            if (!NetworkBatch131135Evidence.SensitiveQuery(record))
                 return NoMatch();
 
-            var path = HttpPath(record);
             var evidenceItems = new List<DetectionEvidenceItem>
             {
                 new("matched_conditions", "sensitive_query_parameter,opaque_token_value", "rule"),
-                new("http.path", string.IsNullOrWhiteSpace(path) ? "/" : path, "http"),
-                new("token.parameter", parameterName, "rule")
+                new("http.path", "[token-query]", "rule"),
+                new("token.parameter", "[sensitive-credential-query]", "rule")
             };
             evidenceItems.AddRange(AnalystContext(
-                "A sensitive token-like parameter was placed in the request query string.",
-                "Severity is High because URL query strings are widely logged, cached, and leaked through referrers.",
-                "Legacy integrations may still embed tokens in URLs. Validate whether the token is expected and whether a header-based flow is available.",
-                "Identify the system that generated the URL and whether the token is still valid.",
-                "Check logs, proxies, and referrer chains for broader exposure of the same token."));
+                "A high-entropy credential-like parameter appeared in a captured HTTP request query.",
+                "Severity is High because URL query values can leak through logs, browser history and referrers.",
+                "Some legacy integrations use URL tokens; verify whether the value grants access.",
+                "Move credentials to an appropriate authenticated header or server-side channel.",
+                "Review logs and caches for exposure without copying the token into incident evidence."));
 
-            return MatchIdentityAccess(
-                context,
-                SeverityLevel.High,
-                "Sensitive API token found in URL query",
-                "TokenInQuery",
-                evidenceItems,
-                confidence =>
+            return MatchIdentityAccess(context, SeverityLevel.High,
+                "Sensitive API token found in URL query", "TokenInQuery",
+                evidenceItems, confidence =>
                 {
                     confidence.AddEvidence(0.36, "http-query-parameter");
                     confidence.AddEvidence(0.28, "sensitive-parameter-name");
-                    if (!string.IsNullOrWhiteSpace(parameterValue)) confidence.AddCorrelation(0.10, "opaque-token-value");
-                },
-                cooldownKey: $"{BestHost(record)}:{path}:{parameterName}");
+                    confidence.AddCorrelation(0.10, "opaque-token-value");
+                }, cooldownKey: $"{BestHost(record)}:{NetworkBatch131135Evidence.Fingerprint(HttpPath(record))}:token-query");
         }
+
     }
 }

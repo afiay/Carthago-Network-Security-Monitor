@@ -59,35 +59,31 @@ namespace Carthago.Engine.Rules.Expansion
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!IsCleartextHttp(record) || !TryGetBasicAuthorization(record, out var token))
+            if (!NetworkBatch131135Evidence.CleartextHttpRequest(record)
+                || !NetworkBatch131135Evidence.AuthorizationHeader(record, "Basic"))
                 return NoMatch();
 
-            var path = HttpPath(record);
             var evidenceItems = new List<DetectionEvidenceItem>
             {
                 new("matched_conditions", "cleartext_http,basic_authorization_header", "rule"),
-                new("http.path", string.IsNullOrWhiteSpace(path) ? "/" : path, "http")
+                new("http.path", "[http-request]", "rule")
             };
             evidenceItems.AddRange(AnalystContext(
-                "A Basic Authorization header was observed on cleartext HTTP.",
-                "Severity is High because credentials encoded with Basic authentication are trivially exposed without TLS.",
-                "Some legacy devices still use Basic auth over HTTP. Validate whether the service is expected and whether TLS can be enforced.",
-                "Identify the application or device sending Basic credentials over HTTP.",
-                "Review whether the same credentials were reused elsewhere or exposed on additional paths."));
+                "A valid Basic Authorization header was observed on an attributed cleartext HTTP request.",
+                "Severity is High because Base64-encoded Basic credentials are not encrypted by HTTP.",
+                "Legacy devices and approved test systems can use Basic over HTTP; confirm the trust boundary.",
+                "Identify the application and enforce TLS where possible.",
+                "Review whether the exposed credential was reused."));
 
-            return MatchIdentityAccess(
-                context,
-                SeverityLevel.High,
-                "Basic Authorization header sent over cleartext HTTP",
-                "CleartextBasicAuth",
-                evidenceItems,
-                confidence =>
+            return MatchIdentityAccess(context, SeverityLevel.High,
+                "Basic Authorization header sent over cleartext HTTP", "CleartextBasicAuth",
+                evidenceItems, confidence =>
                 {
                     confidence.AddEvidence(0.44, "cleartext-http");
                     confidence.AddEvidence(0.30, "basic-authorization-header");
-                    if (!string.IsNullOrWhiteSpace(token)) confidence.AddCorrelation(0.08, "credential-material-present");
-                },
-                cooldownKey: $"{record.Source}:{BestHost(record)}:{path}");
+                    confidence.AddCorrelation(0.08, "credential-material-present");
+                }, cooldownKey: $"{record.Source}:{BestHost(record)}:{NetworkBatch131135Evidence.Fingerprint(HttpPath(record))}");
         }
+
     }
 }

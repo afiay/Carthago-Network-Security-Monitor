@@ -8,6 +8,7 @@ namespace Carthago.Engine.Rules.Expansion
 {
     public sealed class R131_HttpAuthenticationFailureSpikeRule : IdentityAccessPrecisionDetectionRuleBase
     {
+        private readonly NetworkBatch126130Window _observations = new();
         private static readonly RuleDescriptor Rule = new(
             RuleId: "R131",
             Name: "HTTP Authentication Failure Spike",
@@ -59,19 +60,21 @@ namespace Carthago.Engine.Rules.Expansion
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!HasHttpContext(record) || !HasAuthFailureContext(record) || !(HasAuthHeaderContext(record) || HasLoginContext(record)))
+            var path = HttpPath(record);
+            if (!NetworkBatch131135Evidence.AuthenticationFailure(record, path))
                 return NoMatch();
 
             var window = TimeSpan.FromSeconds(IntSetting(Rule.RuleId, "WindowSeconds", 300, 60, 3600));
             var threshold = IntSetting(Rule.RuleId, "Threshold", 15, 5, 500);
-            var path = HttpPath(record);
-            var key = $"{Rule.RuleId}:{record.Source}:{BestHost(record)}:{path}";
-            var count = CountWindowEvents(key, context.TimestampUtc, window);
+            var routeKey = NetworkBatch131135Evidence.Fingerprint(path);
+            var key = $"{Rule.RuleId}:{record.Source}:{BestHost(record)}:{routeKey}";
+            var count = _observations.Add(key, record.Id, string.Empty, true, context.TimestampUtc, window).Count;
             if (count < threshold)
                 return NoMatch();
 
+            var hasHeader = NetworkBatch131135Evidence.AuthHeaderContext(record);
             var matchedConditions = new List<string> { "http_auth_failure_burst", "threshold_reached" };
-            if (HasAuthHeaderContext(record)) matchedConditions.Add("auth_header_context");
+            if (hasHeader) matchedConditions.Add("auth_header_context");
             if (HasLoginContext(record)) matchedConditions.Add("login_path_context");
 
             var evidenceItems = new List<DetectionEvidenceItem>
@@ -79,31 +82,25 @@ namespace Carthago.Engine.Rules.Expansion
                 new("matched_conditions", string.Join(",", matchedConditions), "rule"),
                 new("count", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
                 new("window_seconds", ((int)window.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
-                new("http.path", string.IsNullOrWhiteSpace(path) ? "/" : path, "http")
+                new("http.path", "[auth-endpoint]", "rule")
             };
             evidenceItems.AddRange(AnalystContext(
-                "HTTP authentication failures accumulated quickly against the same path or destination with real auth context.",
-                "Severity is Medium because this pattern can indicate repeated credential abuse, broken secrets, or failing auth integrations.",
-                "Broken API clients, expired credentials, or integration outages can look similar. Validate whether the source is a sanctioned client or automation job.",
-                "Confirm whether the failures come from a known client, service account, or test harness.",
-                "Inspect for any successful follow-on authentication after the failure spike."));
+                "Independent HTTP authentication failures accumulated against the same endpoint.",
+                "Severity is Medium because repeated failures can indicate credential abuse or broken authentication integrations.",
+                "Approved tests, expired integration credentials, or failing API clients may produce this pattern.",
+                "Confirm the source and service owner before escalation.",
+                "Correlate the burst with successful logins and MFA outcomes."));
 
-            return MatchIdentityAccess(
-                context,
-                SeverityLevel.Medium,
-                "HTTP authentication failure spike observed",
-                "HttpAuthFailures",
-                evidenceItems,
-                confidence =>
+            return MatchIdentityAccess(context, SeverityLevel.Medium,
+                "HTTP authentication failure spike observed", "HttpAuthFailures",
+                evidenceItems, confidence =>
                 {
                     confidence.AddEvidence(0.26, "auth-failure-context");
                     confidence.AddEvidence(0.20, "threshold-reached");
-                    if (HasAuthHeaderContext(record)) confidence.AddEvidence(0.16, "auth-header-context");
+                    if (hasHeader) confidence.AddEvidence(0.16, "auth-header-context");
                     if (HasLoginContext(record)) confidence.AddCorrelation(0.10, "login-path-context");
-                },
-                count,
-                window,
-                $"{record.Source}:{BestHost(record)}:{path}");
+                }, count, window, $"{record.Source}:{BestHost(record)}:{routeKey}");
         }
+
     }
 }

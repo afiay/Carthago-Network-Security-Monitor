@@ -59,35 +59,31 @@ namespace Carthago.Engine.Rules.Expansion
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!IsCleartextHttp(record) || !TryGetBearerAuthorization(record, out var token))
+            if (!NetworkBatch131135Evidence.CleartextHttpRequest(record)
+                || !NetworkBatch131135Evidence.AuthorizationHeader(record, "Bearer"))
                 return NoMatch();
 
-            var path = HttpPath(record);
             var evidenceItems = new List<DetectionEvidenceItem>
             {
                 new("matched_conditions", "cleartext_http,bearer_authorization_header", "rule"),
-                new("http.path", string.IsNullOrWhiteSpace(path) ? "/" : path, "http")
+                new("http.path", "[http-request]", "rule")
             };
             evidenceItems.AddRange(AnalystContext(
-                "A Bearer Authorization header was observed on cleartext HTTP.",
-                "Severity is High because bearer tokens usually confer direct API or session access and are exposed without TLS.",
-                "Legacy or internal test systems can match. Validate whether the destination is expected to accept bearer headers over HTTP.",
-                "Determine whether the same bearer token remains valid and where else it was used.",
-                "Review upstream proxies, logs, and network captures for wider token exposure."));
+                "A Bearer Authorization header was observed on an attributed cleartext HTTP request.",
+                "Severity is High because bearer credentials may grant access without additional authentication.",
+                "Internal test systems and legacy proxies can send bearer tokens over HTTP; validate ownership.",
+                "Identify the service and enforce TLS for credential-bearing requests.",
+                "Check whether the token needs revocation without persisting its value."));
 
-            return MatchIdentityAccess(
-                context,
-                SeverityLevel.High,
-                "Bearer Authorization header sent over cleartext HTTP",
-                "CleartextBearerToken",
-                evidenceItems,
-                confidence =>
+            return MatchIdentityAccess(context, SeverityLevel.High,
+                "Bearer Authorization header sent over cleartext HTTP", "CleartextBearerToken",
+                evidenceItems, confidence =>
                 {
                     confidence.AddEvidence(0.44, "cleartext-http");
                     confidence.AddEvidence(0.32, "bearer-authorization-header");
-                    if (!string.IsNullOrWhiteSpace(token)) confidence.AddCorrelation(0.08, "token-material-present");
-                },
-                cooldownKey: $"{record.Source}:{BestHost(record)}:{path}");
+                    confidence.AddCorrelation(0.08, "token-material-present");
+                }, cooldownKey: $"{record.Source}:{BestHost(record)}:{NetworkBatch131135Evidence.Fingerprint(HttpPath(record))}");
         }
+
     }
 }
