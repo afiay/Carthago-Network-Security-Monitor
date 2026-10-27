@@ -69,9 +69,13 @@ foreach ($entry in $entries) {
         if (-not $maliciousSources.Add([string]$p.sourceAddress)) {
             throw "Source audit: v2 malicious cases must use distinct captured client IPs: $name."
         }
-        if (@($records | ForEach-Object { $_.dnsQname } | Sort-Object -Unique).Count -lt 3 -or
+        $distinctLongTxt=@($records | Where-Object {
+            $_.dnsQtype -eq 'TXT' -and
+            (@([string]$_.dnsQname -split '\.' | Where-Object { $_.Length -ge 50 }).Count -gt 0)
+        } | Select-Object -ExpandProperty dnsQname -Unique)
+        if ($distinctLongTxt.Count -lt 3 -or
             @($records | Where-Object { $_.dnsQtype -ne 'TXT' }).Count -gt 0) {
-            throw "Source audit: R102 malicious encoded-TXT case lacks three distinct captured TXT QNAMEs: $name."
+            throw "Source audit: R102 malicious encoded-TXT requires three distinct captured TXT QNAMEs with a label >=50: $name."
         }
     } else { $benignCount++ }
     if ($records.Count -lt 3 -or $records.Count -ne $frames.Count -or
