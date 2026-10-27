@@ -396,3 +396,30 @@ Shadow/Alert/Disabled policy, baseline approvals, frozen v1 labels and
 v2 pending status were not changed. The last user-run regression cannot
 certify this batch. The frozen v1 R102 4/6 failure remains.
 **Next contiguous batch: R136-R140.**
+
+## R136-R140 candidate implementation - 2026-10-27
+
+Authored the next contiguous five-rule batch after verifying R131-R135 at
+`af10ebe187bd4559f3117190dca38529496333a9`. R136 now requires
+wire-attributed cleartext HTTP and a real Cookie request header; R137
+requires independent, duplicate-resistant recovery/enrollment submissions;
+R138 requires an external destination IP and exact certificate issuer/subject
+DN equality (self-issued indicator, **not** signature verification); R139
+accepts only canonical weak negotiated-version field values; R140 requires
+an exact suspicious issuer CN rather than a substring in an arbitrary DN.
+
+Shared evidence helper `NetworkBatch136140Evidence.cs` and identity
+event-builder redaction avoid raw session tokens, recovery paths and
+certificate distinguished names. Five advanced xUnit classes contain
+**40 new facts (eight per rule)** plus one isolated fixture. Source commit
+`70a8db22cc27de593e7fd18feb3e2ab86dffa7e5`; test commit
+`2d40c469ebe49e6656c7a3a5873caffee6601fac`.
+See `docs/RULE_BATCH_136-140.md`.
+
+**CANDIDATE - UNVERIFIED.** No builds, xUnit, replay, benchmark, holdout
+or runner jobs executed. Existing confidence floors, configured thresholds,
+default modes, Disabled/Shadow behavior, approvals, baseline readiness and
+frozen holdout data remain unchanged. The previous user-run verification
+does not validate these new changes. Frozen V1 R102 remains FAILED 4/6;
+V2 still awaits independently sourced, licensed, reviewed typed PCAP evidence.
+**Next contiguous batch: R141-R145.**
