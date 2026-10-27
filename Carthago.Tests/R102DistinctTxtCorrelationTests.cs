@@ -214,6 +214,8 @@ public sealed class R102DistinctTxtCorrelationTests
             Source = source,
             Destination = "8.8.8.8",
             DestinationPort = 53,
+            SourcePort = 53000,
+            IpVersion = 4,
             Protocol = "DNS",
             ApplicationProtocol = "DNS",
             ApplicationService = "DNS",
