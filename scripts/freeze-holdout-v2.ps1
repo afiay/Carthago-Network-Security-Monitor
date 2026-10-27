@@ -5,10 +5,15 @@
 param(
     [Parameter(Mandatory=$true)][switch]$ApproveFreeze,
     [Parameter(Mandatory=$true)][switch]$ReviewedSensitiveTelemetry,
-    [string]$CandidateDirectory='build-verify/holdout-v2-import'
+    [Parameter(Mandatory=$true)][string]$CaptureDirectory,
+    [string]$CandidateDirectory='build-verify/holdout-v2-import',
+    [string]$TsharkPath='tshark'
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
+if (-not $ApproveFreeze.IsPresent -or -not $ReviewedSensitiveTelemetry.IsPresent) {
+    throw 'Both explicit -ApproveFreeze and -ReviewedSensitiveTelemetry switches are required.'
+}
 $root=(Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 Push-Location $root
 try {
@@ -22,6 +27,10 @@ try {
     if ($pending.Count -ne 4 -or @($manifest.samples).Count -ne 12) {
         throw 'Expected precisely four new R102 candidate fixtures and eight preserved v1 samples.'
     }
+    # Re-decode all four original PCAPs and compare exact packet fields
+    # against candidate JSON before *any* frozen repository file is written.
+    # Metadata attestations alone are not sufficient evidence.
+    & (Join-Path $PSScriptRoot 'audit-holdout-v2-candidates.ps1') -CaptureDirectory $CaptureDirectory -CandidateDirectory $CandidateDirectory -TsharkPath $TsharkPath
     $staging=(Resolve-Path -LiteralPath $CandidateDirectory -ErrorAction Stop).Path
     $ready=[System.Collections.Generic.List[object]]::new()
     foreach ($entry in $pending) {
