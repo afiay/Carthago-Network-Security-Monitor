@@ -60,6 +60,14 @@ review. The separate source review ledger is
 The Elastic iodine PCAP can be acquired reproducibly at its immutable
 Git source commit and checked against its published Git blob hash with:
 
+**Important:** a third-party packet analysis of a same-named, same-sized
+sample reports 222 NULL-only DNS queries, no TXT. Only consider it an
+R102 protocol-diversity control if the actual downloaded SHA-256 matches
+the published analysis. It is **not** suitable for the encoded-TXT v2
+slots if the report's hash matches. Use the independently documented
+TXT-mode source candidates in HOLDOUT_V2_SOURCE_REVIEW.md for further
+rights and packet inspection.
+
 ~~~powershell
 .\scripts\acquire-holdout-v2-source-candidates.ps1 -Source ElasticIodine
 ~~~
@@ -86,13 +94,14 @@ The names MUST match all four pending R102 entries in the v2 manifest.
 Example, with illustrative values to be replaced by real evidence:
 
 ~~~powershell
-.\scripts\import-holdout-v2-r102.ps1 -CapturePath 'C:\evidence\reviewed-malicious-1.pcapng' -SourceAddress '10.10.10.5' -DnsRoot 'example.invalid' -Classification Malicious -Name 'holdout-v2-r102-encoded-txt-first-client' -SourceUri 'https://github.com/elastic/examples/blob/6d86454ebb7a850bcd7e80abe86fe683370018a6/Security%20Analytics/dns_tunnel_detection/dns-tunnel-iodine.pcap' -SourceLicense 'Apache-2.0' -SourceLicenseEvidenceUri 'https://github.com/elastic/examples/blob/6d86454ebb7a850bcd7e80abe86fe683370018a6/LICENSE' -IndependentLabelBasis 'Independently documented controlled exfiltration scenario from this source capture' -AnalystReviewedLabel
+.\scripts\import-holdout-v2-r102.ps1 -CapturePath 'C:\evidence\reviewed-malicious-1.pcapng' -SourceAddress '10.10.10.5' -DnsRoot 'example.invalid' -Classification Malicious -Name 'holdout-v2-r102-encoded-txt-first-client' -SourceUri 'https://DATA_SOURCE.example.org/real-capture.pcapng' -SourceLicense 'Apache-2.0' -SourceLicenseEvidenceUri 'https://DATA_SOURCE.example.org/explicit-capture-license' -IndependentLabelBasis 'Independently documented controlled exfiltration scenario from this source capture' -AnalystReviewedLabel
 ~~~
 
 The source-license field accepts only Apache-2.0, CC-BY-4.0 or
 CC0-1.0, with a separate HTTPS license-evidence URL. This example
-shows source attribution syntax **only**; the referenced iodine capture
-has NOT been shown to meet R102 TXT, privacy or label criteria.
+shows source attribution syntax **only**. The illustrative source
+URLs, addresses, domain, label statement and license must all be replaced
+with independently reviewed values before any candidate is admissible.
 Code-repository licenses are not automatic proof of rights to every
 third-party capture file.
 
