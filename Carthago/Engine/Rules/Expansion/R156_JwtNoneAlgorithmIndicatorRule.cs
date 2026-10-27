@@ -56,10 +56,12 @@ namespace Carthago.Engine.Rules.Expansion
         {
         }
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!HasHttpContext(record) || !TryFindJwtWithNoneAlgorithm(record, out var source))
+            if (!NetworkBatch156165Evidence.Http(record) || !NetworkBatch156165Evidence.JwtNone(record, out var source))
                 return NoMatch();
 
             var matchedConditions = new List<string> { "jwt_context", "decoded_alg_none" };
@@ -74,6 +76,8 @@ namespace Carthago.Engine.Rules.Expansion
                 "Lab harnesses, fuzzing, and security validation workflows may deliberately exercise alg=none tokens.",
                 "Review the source request path, headers, and target application behavior to confirm whether the token was accepted or rejected.",
                 "Check for adjacent authentication bypass, admin API access, or open redirect activity from the same source."));
+
+            if (!_replay.Observe(record, context.TimestampUtc)) return NoMatch();
 
             return MatchHttpApi(
                 context,

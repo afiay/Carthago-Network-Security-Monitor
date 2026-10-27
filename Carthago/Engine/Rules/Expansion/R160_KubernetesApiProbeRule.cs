@@ -56,20 +56,22 @@ namespace Carthago.Engine.Rules.Expansion
         {
         }
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!HasHttpContext(record) || !IsKubernetesApiProbe(record))
+            if (!NetworkBatch156165Evidence.Http(record) || !NetworkBatch156165Evidence.Kubernetes(record))
                 return NoMatch();
 
-            if (!IsCrossBoundary(record, out _, out _))
+            if (!NetworkBatch126130Evidence.CrossBoundary(record, out _, out var inbound) || !inbound)
                 return NoMatch();
 
             var path = HttpPath(record);
             var evidenceItems = new List<DetectionEvidenceItem>
             {
                 new("matched_conditions", "kubernetes_api_path,boundary_crossing", "rule"),
-                new("http.path", string.IsNullOrWhiteSpace(path) ? "/" : path, "http"),
+                new("http.routeCategory", "kubernetes_api", "http"),
                 new("network.destinationPort", (record.DestinationPort ?? 0).ToString(System.Globalization.CultureInfo.InvariantCulture), "network")
             };
             evidenceItems.AddRange(AnalystContext(
@@ -78,6 +80,8 @@ namespace Carthago.Engine.Rules.Expansion
                 "Approved cluster automation, CI/CD agents, and operators can legitimately access these endpoints.",
                 "Confirm whether the source host or process is an approved cluster administration path.",
                 "Review for adjacent service account, secret, or pod-management requests."));
+
+            if (!_replay.Observe(record, context.TimestampUtc)) return NoMatch();
 
             return MatchHttpApi(
                 context,

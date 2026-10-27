@@ -56,20 +56,22 @@ namespace Carthago.Engine.Rules.Expansion
         {
         }
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!HasHttpContext(record) || !HasMethod(record, "GET", "HEAD", "OPTIONS") || !IsSwaggerExposurePath(record) || IsBenignSwaggerHost(record))
+            if (!NetworkBatch156165Evidence.Http(record) || !HasMethod(record, "GET", "HEAD", "OPTIONS") || !NetworkBatch156165Evidence.Swagger(record) || IsBenignSwaggerHost(record))
                 return NoMatch();
 
-            if (!IsCrossBoundary(record, out _, out _))
+            if (!NetworkBatch126130Evidence.CrossBoundary(record, out _, out var inbound) || !inbound)
                 return NoMatch();
 
             var path = HttpPath(record);
             var evidenceItems = new List<DetectionEvidenceItem>
             {
                 new("matched_conditions", "swagger_or_openapi_path,boundary_crossing", "rule"),
-                new("http.path", string.IsNullOrWhiteSpace(path) ? "/" : path, "http")
+                new("http.routeCategory", "swagger_openapi", "http")
             };
             evidenceItems.AddRange(AnalystContext(
                 "A cross-boundary request targeted a Swagger or OpenAPI discovery endpoint.",
@@ -77,6 +79,8 @@ namespace Carthago.Engine.Rules.Expansion
                 "Some partner-facing APIs intentionally publish OpenAPI docs. Validate whether the host is meant to expose interactive or raw API specs.",
                 "Confirm whether the target host should publicly expose Swagger or OpenAPI definitions.",
                 "Review follow-on API enumeration, token abuse, or admin-path access from the same source."));
+
+            if (!_replay.Observe(record, context.TimestampUtc)) return NoMatch();
 
             return MatchHttpApi(
                 context,

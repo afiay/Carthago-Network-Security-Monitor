@@ -56,20 +56,22 @@ namespace Carthago.Engine.Rules.Expansion
         {
         }
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!HasHttpContext(record) || !HasMethod(record, "GET", "HEAD") || !IsSensitiveActuatorPath(record))
+            if (!NetworkBatch156165Evidence.Http(record) || !HasMethod(record, "GET", "HEAD") || !NetworkBatch156165Evidence.Actuator(record))
                 return NoMatch();
 
-            if (!IsCrossBoundary(record, out _, out _))
+            if (!NetworkBatch126130Evidence.CrossBoundary(record, out _, out var inbound) || !inbound)
                 return NoMatch();
 
             var path = HttpPath(record);
             var evidenceItems = new List<DetectionEvidenceItem>
             {
                 new("matched_conditions", "actuator_sensitive_path,boundary_crossing", "rule"),
-                new("http.path", string.IsNullOrWhiteSpace(path) ? "/" : path, "http")
+                new("http.routeCategory", "actuator_sensitive", "http")
             };
             evidenceItems.AddRange(AnalystContext(
                 "A cross-boundary request reached a sensitive Spring Actuator endpoint.",
@@ -77,6 +79,8 @@ namespace Carthago.Engine.Rules.Expansion
                 "Approved diagnostics and SRE workflows can generate similar requests. Validate whether the source is a sanctioned operator or monitoring path.",
                 "Confirm whether the actuator endpoint should be exposed beyond trusted management networks.",
                 "Review adjacent attempts to fetch docs, config files, or admin APIs from the same source."));
+
+            if (!_replay.Observe(record, context.TimestampUtc)) return NoMatch();
 
             return MatchHttpApi(
                 context,

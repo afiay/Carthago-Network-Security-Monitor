@@ -56,10 +56,12 @@ namespace Carthago.Engine.Rules.Expansion
         {
         }
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!HasHttpContext(record) || !TryGetJwtQueryParameter(record, out var parameterName))
+            if (!NetworkBatch156165Evidence.Http(record) || !NetworkBatch156165Evidence.JwtQuery(record, out var parameterName))
                 return NoMatch();
 
             var matchedConditions = new List<string> { "jwt_query_parameter", "structured_jwt" };
@@ -74,6 +76,8 @@ namespace Carthago.Engine.Rules.Expansion
                 "Some older OAuth or implicit-flow integrations still surface id_token values in URLs. Validate whether the application is expected to do this.",
                 "Review web server logs, browser telemetry, and referrer propagation risk for the affected application.",
                 "Confirm whether the application should move the token to Authorization headers or secure POST bodies."));
+
+            if (!_replay.Observe(record, context.TimestampUtc)) return NoMatch();
 
             return MatchHttpApi(
                 context,
