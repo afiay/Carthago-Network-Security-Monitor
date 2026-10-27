@@ -9,7 +9,9 @@ param(
     [Parameter(Mandatory=$true)][ValidateSet('Benign','Malicious')][string]$Classification,
     [Parameter(Mandatory=$true)][ValidatePattern('^holdout-v2-r102-[a-z0-9-]+$')][string]$Name,
     [Parameter(Mandatory=$true)][string]$SourceUri,
-    [Parameter(Mandatory=$true)][string]$SourceLicense,
+    [Parameter(Mandatory=$true)]
+    [ValidateSet('Apache-2.0','CC-BY-4.0','CC0-1.0')][string]$SourceLicense,
+    [Parameter(Mandatory=$true)][string]$SourceLicenseEvidenceUri,
     [Parameter(Mandatory=$true)][string]$IndependentLabelBasis,
     [Parameter(Mandatory=$true)][switch]$AnalystReviewedLabel,
     [int]$MaximumRecords=50,
@@ -27,6 +29,16 @@ if ($MaximumPacketsToScan -lt 100 -or $MaximumPacketsToScan -gt 500000) {
 }
 if ($Classification -eq 'Malicious' -and $IndependentLabelBasis.Trim().Length -lt 20) {
     throw 'Malicious classification needs a substantive independent label basis.'
+}
+# SPDX classification and evidence URL are necessary but not sufficient:
+# a code-repository license may not grant rights to third-party PCAP data.
+$licenseEvidence=[Uri]$SourceLicenseEvidenceUri
+$sourcePage=[Uri]$SourceUri
+if ($licenseEvidence.Scheme -ne 'https' -or $sourcePage.Scheme -ne 'https') {
+    throw 'Source and specific license evidence must use HTTPS URLs.'
+}
+if ($SourceUri -match '(^|/)source\.example([/:]|$)') {
+    throw 'Placeholder source metadata is not admissible evidence.'
 }
 $root=(Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $pcap=(Resolve-Path -LiteralPath $CapturePath).Path
@@ -126,6 +138,7 @@ $sample=[ordered]@{
 $provenance=[ordered]@{
     schemaVersion=1;sample=$Name;classification=$Classification;
     sourceKind='external-pcap-reviewed';sourceUri=$SourceUri;sourceLicense=$SourceLicense;
+    sourceLicenseEvidenceUri=$SourceLicenseEvidenceUri;
     independentLabelBasis=$IndependentLabelBasis;analystReviewedLabel=[bool]$AnalystReviewedLabel;
     captureFileName=[IO.Path]::GetFileName($pcap);
     captureSha256=(Get-FileHash -LiteralPath $pcap -Algorithm SHA256).Hash.ToLowerInvariant();
