@@ -499,3 +499,7 @@ The source detector code and frozen holdout were not modified.
 **No tests run.** All R126-R155 recent authored work remains
 **CANDIDATE - UNVERIFIED** pending user-initiated consolidated Windows
 validation. **Next batch: R156-R160; hourly automation PAUSED.**
+
+## R156-R160 candidate implementation - 2026-10-27
+
+Authored the first resumed hourly five-rule subbatch from HEAD `dbb636acbc9b9d840117867d0f30005e6304a940`: typed HTTP and structural JWT attribution, anchored Swagger/Actuator/Kubernetes routes, scoped HTTP path redaction and instance-owned bounded replay guards. **41 advanced xUnit facts authored; zero executed.** See `docs/RULE_BATCH_156-160.md`. Code and tests remain CANDIDATE / UNVERIFIED. The single deferred Windows verifier is unchanged. Frozen V1 R102 still FAILED 4/6, V2 pending independent licensed captures/review. No threshold, confidence floor, Shadow/Disabled policy or approval/baseline gates changed. **Next: R161-R165.**
