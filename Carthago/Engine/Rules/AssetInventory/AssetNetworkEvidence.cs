@@ -48,7 +48,7 @@ internal static class AssetNetworkEvidence
         var r = c.Record;
         if (!Private(r.Source, out src) || !Public(r.Destination, out dst)
             || !string.Equals(r.Protocol, "TCP", StringComparison.OrdinalIgnoreCase)
-            || r.DestinationPort is not int destinationPort || destinationPort < 1 || destinationPort > 65535
+            || !r.DestinationPort.HasValue || r.DestinationPort.Value < 1 || r.DestinationPort.Value > 65535
             || r.DnsIsResponse || r.DnsQname is not null
             || string.Equals(r.ApplicationProtocol, "DNS", StringComparison.OrdinalIgnoreCase))
             return false;
@@ -72,9 +72,9 @@ internal static class AssetNetworkEvidence
         host = ""; port = 0;
         var r = c.Record;
         if (!Private(r.Source, out host) || !Private(r.Destination, out var peer) || host == peer
-            || !Equals(r.Protocol,"TCP") || r.SourcePort is not int p || !Ports.Contains(p)
-            || r.TcpFlags is not ushort flags || (flags & 0x17) != 0x12) return false;
-        port = p;
+            || !Equals(r.Protocol,"TCP") || !r.SourcePort.HasValue || !Ports.Contains(r.SourcePort.Value)
+            || !r.TcpFlags.HasValue || (r.TcpFlags.Value & 0x17) != 0x12) return false;
+        port = r.SourcePort.Value;
         return true;
     }
     internal static bool Inbound(RuleEvaluationContext c, out string host, out string peer, out int port)
@@ -82,7 +82,7 @@ internal static class AssetNetworkEvidence
         host = peer = ""; port = 0;
         var r = c.Record;
         if (!Private(r.Source, out peer) || !Private(r.Destination, out host) || host == peer
-            || !Equals(r.Protocol,"TCP") || r.DestinationPort is not int p || !Ports.Contains(p))
+            || !Equals(r.Protocol,"TCP") || !r.DestinationPort.HasValue || !Ports.Contains(r.DestinationPort.Value))
             return false;
         if (r.TcpFlags is ushort flags)
         {
@@ -93,7 +93,7 @@ internal static class AssetNetworkEvidence
                  StringComparison.OrdinalIgnoreCase) ?? false)) return false;
         if (new[] { "nginx","apache","httpd","iis","sqlservr","postgres","mysqld" }
             .Contains(r.ProcessName?.Trim(), StringComparer.OrdinalIgnoreCase)) return false;
-        port = p;
+        port = r.DestinationPort.Value;
         return true;
     }
     internal static bool Asn(string? raw, out string value)
