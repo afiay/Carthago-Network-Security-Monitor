@@ -45,9 +45,11 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R179_DnsQueryForTorOnionGatewayRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!TryGetDnsQuestion(context, out var query) || !IsTorGatewayQuery(query))
+            if (!NetworkBatch176180Evidence.Dns(context.Record, out var query) || !IsTorGatewayQuery(query) || !_replay.Observe(context.Record, context.TimestampUtc))
                 return NoMatch();
 
             var evidence = new List<DetectionEvidenceItem>
@@ -64,14 +66,14 @@ namespace Carthago.Engine.Rules.Expansion
             return MatchDns(
                 context,
                 SeverityLevel.Medium,
-                $"Tor onion gateway DNS query observed: {query}",
+                "Tor onion gateway DNS query observed",
                 query,
                 evidence,
                 confidence =>
                 {
                     confidence.AddEvidence(0.30, "tor-gateway-or-onion-pattern");
                 },
-                cooldownKey: $"{context.Record.Source}:{query}");
+                cooldownKey: $"{context.Record.Source}:{NetworkBatch166170Evidence.Key(query)}");
         }
     }
 }

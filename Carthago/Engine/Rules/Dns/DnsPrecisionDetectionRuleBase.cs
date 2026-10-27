@@ -99,8 +99,8 @@ namespace Carthago.Engine.Rules.Dns
         {
             var items = new List<DetectionEvidenceItem>
             {
-                new("dns.qname", query, "dns"),
-                new("dns.rootDomain", RootDomain(query), "dns")
+                new("dns.qname", Descriptor.RuleId is "R178" or "R179" or "R180" or "R181" or "R182" or "R183" or "R184" or "R185" ? "[REDACTED]" : query, "dns"),
+                new("dns.rootDomain", Descriptor.RuleId is "R178" or "R179" or "R180" or "R181" or "R182" or "R183" or "R184" or "R185" ? "[REDACTED]" : RootDomain(query), "dns")
             };
 
             if (!string.IsNullOrWhiteSpace(context.Record.DnsQtype))
@@ -109,7 +109,7 @@ namespace Carthago.Engine.Rules.Dns
                 items.Add(new DetectionEvidenceItem("dns.rcode", context.Record.DnsRcode!, "dns"));
             if (context.Record.DnsTtl.HasValue)
                 items.Add(new DetectionEvidenceItem("dns.ttl", context.Record.DnsTtl.Value.ToString(System.Globalization.CultureInfo.InvariantCulture), "dns"));
-            if (!string.IsNullOrWhiteSpace(context.Record.DnsAnswers))
+            if (!string.IsNullOrWhiteSpace(context.Record.DnsAnswers) && Descriptor.RuleId is not ("R178" or "R179" or "R180" or "R181" or "R182" or "R183" or "R184" or "R185"))
                 items.Add(new DetectionEvidenceItem("dns.answers", ShortText(context.Record.DnsAnswers!, 240), "dns"));
 
             if (evidenceItems != null)

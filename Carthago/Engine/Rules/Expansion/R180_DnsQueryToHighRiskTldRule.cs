@@ -46,9 +46,11 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R180_DnsQueryToHighRiskTldRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!TryGetDnsQuestion(context, out var query) || !IsHighRiskTldQuery(query) || LooksLikeBenignValidationQuery(query) || IsKnownTelemetryRoot(RootDomain(query)))
+            if (!NetworkBatch176180Evidence.Dns(context.Record, out var query) || !IsHighRiskTldQuery(query) || LooksLikeBenignValidationQuery(query) || IsKnownTelemetryRoot(RootDomain(query)))
                 return NoMatch();
 
             var secondLevel = SecondLevelLabel(query);
@@ -75,10 +77,12 @@ namespace Carthago.Engine.Rules.Expansion
                 "Check whether the domain is newly observed for this source or environment.",
                 "Review follow-on web or TLS activity to the resolved destination."));
 
+            if (!_replay.Observe(context.Record, context.TimestampUtc)) return NoMatch();
+
             return MatchDns(
                 context,
                 SeverityLevel.Low,
-                $"High-risk TLD DNS query observed: {query}",
+                "High-risk TLD DNS query observed",
                 query,
                 evidence,
                 confidence =>

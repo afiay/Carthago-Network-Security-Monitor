@@ -56,18 +56,19 @@ namespace Carthago.Engine.Rules.Expansion
         {
         }
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!HasHttpContext(record) || !TryGetHighRiskUploadName(record, out var fileName))
+            if (!NetworkBatch176180Evidence.Http(record) || !NetworkBatch176180Evidence.Upload(record, out var fileName) || !_replay.Observe(record, context.TimestampUtc))
                 return NoMatch();
 
-            var path = HttpPath(record);
             var evidenceItems = new List<DetectionEvidenceItem>
             {
                 new("matched_conditions", "upload_context,high_risk_extension", "rule"),
-                new("upload.filename", fileName, "http"),
-                new("http.path", string.IsNullOrWhiteSpace(path) ? "/" : path, "http")
+                new("upload.filenameFingerprint", NetworkBatch166170Evidence.Key(fileName), "rule"),
+                new("http.path", "[REDACTED]", "rule")
             };
             evidenceItems.AddRange(AnalystContext(
                 "An HTTP upload workflow carried a filename with a high-risk executable or web-shell style extension.",
@@ -87,7 +88,7 @@ namespace Carthago.Engine.Rules.Expansion
                     confidence.AddEvidence(0.24, "upload-context");
                     confidence.AddEvidence(0.30, "high-risk-extension");
                 },
-                cooldownKey: $"{record.Source}:{BestHost(record)}:{fileName}");
+                cooldownKey: $"{record.Source}:{BestHost(record)}:{NetworkBatch166170Evidence.Key(fileName)}");
         }
     }
 }

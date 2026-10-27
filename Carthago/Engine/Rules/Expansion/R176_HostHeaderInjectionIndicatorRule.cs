@@ -56,10 +56,12 @@ namespace Carthago.Engine.Rules.Expansion
         {
         }
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!HasHttpContext(record) || !TryGetHostHeaderInjectionDetail(record, out var detail))
+            if (!NetworkBatch176180Evidence.Http(record) || !NetworkBatch176180Evidence.HostAbuse(record, out var detail) || !_replay.Observe(record, context.TimestampUtc))
                 return NoMatch();
 
             var evidenceItems = new List<DetectionEvidenceItem>

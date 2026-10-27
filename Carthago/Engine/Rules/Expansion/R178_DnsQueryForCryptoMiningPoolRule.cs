@@ -46,9 +46,11 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R178_DnsQueryForCryptoMiningPoolRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!TryGetDnsQuestion(context, out var query) || !IsMiningPoolQuery(query) || !HasExplicitMiningPoolSignal(query))
+            if (!NetworkBatch176180Evidence.Dns(context.Record, out var query) || !IsMiningPoolQuery(query) || !HasExplicitMiningPoolSignal(query) || !_replay.Observe(context.Record, context.TimestampUtc))
                 return NoMatch();
 
             var root = RootDomain(query);
@@ -67,7 +69,7 @@ namespace Carthago.Engine.Rules.Expansion
             return MatchDns(
                 context,
                 SeverityLevel.High,
-                $"Mining-pool DNS query observed: {query}",
+                "Mining-pool DNS query observed",
                 query,
                 evidence,
                 confidence =>
