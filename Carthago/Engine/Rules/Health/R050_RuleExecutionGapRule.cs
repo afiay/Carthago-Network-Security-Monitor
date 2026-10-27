@@ -22,11 +22,15 @@ namespace Carthago.Engine.Rules.Health
         {
             cancellationToken.ThrowIfCancellationRequested();
             var last = context.HealthSnapshot.LastEvaluationUtc;
-            if (last.HasValue && (context.TimestampUtc - last.Value).TotalSeconds <= 10)
+            // An absent, contradictory or future-dated health snapshot cannot establish a gap.
+            if (!last.HasValue || context.HealthSnapshot.EvaluationCount <= 0
+                || last.Value.Kind != DateTimeKind.Utc || last.Value > context.TimestampUtc)
                 return ValueTask.FromResult(RuleEvaluationResult.NoMatch(Descriptor.RuleId));
-            if (!last.HasValue)
+            double gapSeconds = (context.TimestampUtc - last.Value).TotalSeconds;
+            if (gapSeconds <= 10)
                 return ValueTask.FromResult(RuleEvaluationResult.NoMatch(Descriptor.RuleId));
-            return ValueTask.FromResult(RuleEvaluationResult.Match(Descriptor.RuleId, CreateHealthEvent(context, $"Rule execution gap detected: {(context.TimestampUtc - last.Value).TotalSeconds:F0}s since last evaluation.")));
+            return ValueTask.FromResult(RuleEvaluationResult.Match(Descriptor.RuleId,
+                CreateHealthEvent(context, $"Rule execution gap detected: {gapSeconds:F0}s since last evaluation.")));
         }
 
         private DetectionEvent CreateHealthEvent(RuleEvaluationContext context, string summary) => new()

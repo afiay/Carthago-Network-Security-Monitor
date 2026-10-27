@@ -1,0 +1,19 @@
+{
+  "name": "r047-bearer-auth-not-basic",
+  "records": [
+    {
+      "source": "10.47.0.2",
+      "destination": "8.8.8.8",
+      "protocol": "HTTP",
+      "destinationPort": 80,
+      "httpMethod": "GET",
+      "httpHost": "8.8.8.8",
+      "httpRequestHeaders": "Host: 8.8.8.8\r\nAuthorization: Bearer synthetic-token\r\n\r\n",
+      "length": 200
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R47"
+  ]
+}

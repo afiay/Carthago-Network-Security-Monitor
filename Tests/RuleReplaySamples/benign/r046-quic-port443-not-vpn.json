@@ -1,0 +1,18 @@
+{
+  "name": "r046-quic-port443-not-vpn",
+  "records": [
+    {
+      "source": "10.46.0.2",
+      "destination": "8.8.8.8",
+      "protocol": "UDP",
+      "destinationPort": 443,
+      "isVpn": false,
+      "applicationService": "QUIC",
+      "length": 220
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R46"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "r048-provider-substring-spoof",
+  "records": [
+    {
+      "source": "10.48.0.2",
+      "destination": "8.8.8.8",
+      "protocol": "HTTP",
+      "destinationPort": 443,
+      "httpMethod": "GET",
+      "httpHost": "dns.google.attacker.example",
+      "httpUri": "/dns-query?dns=QWJjZEVmR2gxMjM0",
+      "length": 250
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R48"
+  ]
+}
