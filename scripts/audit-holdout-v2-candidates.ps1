@@ -71,7 +71,7 @@ foreach ($entry in $entries) {
         }
         $distinctLongTxt=@($records | Where-Object {
             $_.dnsQtype -eq 'TXT' -and
-            (@([string]$_.dnsQname -split '\.' | Where-Object { $_.Length -ge 50 }).Count -gt 0)
+            (@(([string]$_.dnsQname).Split('.') | Where-Object { $_.Length -ge 50 }).Count -gt 0)
         } | Select-Object -ExpandProperty dnsQname -Unique)
         if ($distinctLongTxt.Count -lt 3 -or
             @($records | Where-Object { $_.dnsQtype -ne 'TXT' }).Count -gt 0) {
