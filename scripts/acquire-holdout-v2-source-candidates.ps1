@@ -75,9 +75,21 @@ try {
         receivedAtUtc=[DateTime]::UtcNow.ToString('o')
     }
     $json=($metadata | ConvertTo-Json -Depth 8)+[Environment]::NewLine
-    [IO.File]::WriteAllText($receipt,$json,[Text.UTF8Encoding]::new($false))
-    Move-Item -LiteralPath $temp -Destination $output -ErrorAction Stop
-    $temp=$null
+    # A receipt must never attest to a missing source file if a disk move
+    # fails. Roll back files created by this invocation on either failure.
+    try {
+        Move-Item -LiteralPath $temp -Destination $output -ErrorAction Stop
+        $temp=$null
+        [IO.File]::WriteAllText($receipt,$json,[Text.UTF8Encoding]::new($false))
+    } catch {
+        if (Test-Path -LiteralPath $receipt -PathType Leaf) {
+            Remove-Item -LiteralPath $receipt -Force -ErrorAction SilentlyContinue
+        }
+        if (Test-Path -LiteralPath $output -PathType Leaf) {
+            Remove-Item -LiteralPath $output -Force -ErrorAction SilentlyContinue
+        }
+        throw
+    }
     Write-Host 'ACQUIRED, HASH-VERIFIED, NOT YET APPROVED FOR HOLDOUT:'
     Write-Host "  Capture: $output"
     Write-Host "  Receipt: $receipt"
