@@ -13,7 +13,7 @@ namespace Carthago.Engine.Rules.Dns
             RuleId: "R096",
             Name: "Fast-Flux DNS Pattern",
             Category: "Dns",
-            Description: "Flags DNS responses that return many public IP answers with unusually low TTL values, consistent with fast-flux-style rotation rather than host text matching.",
+            Description: "Flags DNS responses that return many distinct IP address answers with unusually low TTL values, consistent with fast-flux-style rotation rather than host text matching.",
             DefaultSeverity: SeverityLevel.High,
             ConfigKey: "Rules.R096.Enabled",
             EnabledByDefault: true);
@@ -31,7 +31,7 @@ namespace Carthago.Engine.Rules.Dns
             positiveConditions: new[]
             {
                 "A DNS response with answers and TTL data must be present.",
-                "The answer set must contain multiple distinct IPs.",
+                "The answer set must contain multiple distinct, syntactically valid IP address records.",
                 "TTL must be low enough to indicate rapid answer churn."
             },
             negativeConditions: new[]
@@ -77,13 +77,14 @@ namespace Carthago.Engine.Rules.Dns
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!TryGetDnsQuestion(context, out var query))
+            if (!NetworkBatch096100Evidence.Dns(context, response: true)
+                || !TryGetDnsQuestion(context, out var query))
                 return NoMatch();
 
             if (!context.Record.DnsIsResponse || string.IsNullOrWhiteSpace(context.Record.DnsAnswers) || !context.Record.DnsTtl.HasValue)
                 return NoMatch();
 
-            var answerCount = CountAnswerIps(context.Record.DnsAnswers);
+            var answerCount = NetworkBatch096100Evidence.AddressAnswerCount(context.Record.DnsAnswers, context.Record.DnsQtype);
             var threshold = IntSetting(Descriptor.RuleId, "Threshold", 4, 2, 32);
             var maximumTtl = IntSetting(Descriptor.RuleId, "MaximumTtlSeconds", 120, 10, 3600);
             if (answerCount < threshold || context.Record.DnsTtl.Value <= 0 || context.Record.DnsTtl.Value > maximumTtl)

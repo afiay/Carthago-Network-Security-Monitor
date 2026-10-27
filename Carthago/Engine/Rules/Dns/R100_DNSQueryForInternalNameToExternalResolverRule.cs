@@ -77,10 +77,14 @@ namespace Carthago.Engine.Rules.Dns
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!TryGetDnsQuestion(context, out var query))
+            if (!NetworkBatch096100Evidence.Dns(context, singleLabel: true)
+                || !TryGetDnsQuestion(context, out var query))
                 return NoMatch();
 
-            if (!IsExternalDestination(context.Record.Destination))
+            // Internal namespace leakage requires a private client and a
+            // globally routable resolver address, not an arbitrary host string.
+            if (!NetworkBatch096100Evidence.PrivateClient(context.Record.Source)
+                || !NetworkBatch096100Evidence.PublicResolver(context.Record.Destination))
                 return NoMatch();
 
             var suffix = query.Contains('.')
@@ -92,7 +96,7 @@ namespace Carthago.Engine.Rules.Dns
 
             var window = TimeSpan.FromSeconds(IntSetting(Descriptor.RuleId, "WindowSeconds", 600, 30, 3600));
             var threshold = IntSetting(Descriptor.RuleId, "Threshold", 3, 2, 100);
-            var count = CountWindowEvents($"{Descriptor.RuleId}:{context.Record.Source}:{context.Record.Destination}:{query}", context.TimestampUtc, window);
+            var count = CountDistinctValues($"{Descriptor.RuleId}:{context.Record.Source}:{context.Record.Destination}:{query}", context.Record.Id.ToString("N"), context.TimestampUtc, window);
             if (count < threshold)
                 return NoMatch();
 

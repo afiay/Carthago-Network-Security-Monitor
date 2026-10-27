@@ -78,7 +78,8 @@ namespace Carthago.Engine.Rules.Dns
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!TryGetDnsQuestion(context, out var query))
+            if (!NetworkBatch096100Evidence.Dns(context)
+                || !TryGetDnsQuestion(context, out var query))
                 return NoMatch();
 
             var root = RootDomain(query);

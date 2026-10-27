@@ -13,7 +13,7 @@ namespace Carthago.Engine.Rules.Dns
             RuleId: "R099",
             Name: "DNS Query to Newly Registered Domain",
             Category: "Dns",
-            Description: "Flags DNS questions to recently observed domains when structured reputation timing and DNS telemetry indicate the domain is newly registered or newly surfaced.",
+            Description: "Flags DNS questions with recent reputation observation timing and DNS evidence; registration age is not available from this record.",
             DefaultSeverity: SeverityLevel.High,
             ConfigKey: "Rules.R099.Enabled",
             EnabledByDefault: true);
@@ -31,7 +31,7 @@ namespace Carthago.Engine.Rules.Dns
             positiveConditions: new[]
             {
                 "A DNS qname must be present in structured DNS telemetry.",
-                "Reputation or enrichment timing must indicate the domain was first seen recently.",
+                "A recent, timestamped reputation observation must be present; this is not registration age.",
                 "The query should be first-seen or infrequent for the source."
             },
             negativeConditions: new[]
@@ -77,7 +77,8 @@ namespace Carthago.Engine.Rules.Dns
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!TryGetDnsQuestion(context, out var query))
+            if (!NetworkBatch096100Evidence.Dns(context)
+                || !TryGetDnsQuestion(context, out var query))
                 return NoMatch();
 
             var root = RootDomain(query);
@@ -88,23 +89,25 @@ namespace Carthago.Engine.Rules.Dns
                 return NoMatch();
 
             var recentDaysThreshold = IntSetting(Descriptor.RuleId, "RecentDaysThreshold", 7, 1, 60);
-            var daysSinceSeen = Math.Max(0.0, (context.TimestampUtc - context.Record.ReputationLastSeen.Value.ToUniversalTime()).TotalDays);
-            if (daysSinceSeen > recentDaysThreshold)
+            var daysSinceSeen = (context.TimestampUtc - context.Record.ReputationLastSeen.Value.ToUniversalTime()).TotalDays;
+            if (daysSinceSeen < 0 || daysSinceSeen > recentDaysThreshold
+                || context.Record.ReputationScore is int score && (score < 0 || score > 100))
                 return NoMatch();
 
             var baseline = ObserveBaseline("dns.recent-domain", context.Record.Source ?? "unknown", query, context, $"recentDays={daysSinceSeen:F1}");
-            if (baseline.IsKnown && baseline.ObservationCount > 2 && daysSinceSeen > 3.0)
+            if (string.Equals(baseline.Reason, "baseline unavailable", StringComparison.OrdinalIgnoreCase)
+                || baseline.IsKnown && baseline.ObservationCount > 2 && daysSinceSeen > 3.0)
                 return NoMatch();
 
             var highSeverity = daysSinceSeen <= 3.0 || (context.Record.ReputationScore.HasValue && context.Record.ReputationScore.Value >= 70);
-            var matchedConditions = new List<string> { "recent_domain_enrichment", "dns_qname_present" };
+            var matchedConditions = new List<string> { "recent_reputation_observation", "dns_qname_present" };
             if (baseline.IsFirstSeen || !baseline.IsKnown) matchedConditions.Add("first_seen_for_source");
-            if (highSeverity) matchedConditions.Add("very_recent_or_high_risk");
+            if (highSeverity) matchedConditions.Add("very_recent_reputation_or_high_risk");
 
-            var whyMatched = $"The domain '{query}' appears newly seen in enrichment data ({daysSinceSeen:F1} days) and is not yet established for {context.Record.Source}.";
+            var whyMatched = $"The domain '{query}' has recent reputation activity ({daysSinceSeen:F1} days); baseline status for {context.Record.Source}: {baseline.Reason} ({baseline.ObservationCount} observations).";
             var severityReason = highSeverity
-                ? "Severity is High because the domain is very recent or already carries elevated reputation risk, which increases the likelihood of attacker-controlled infrastructure."
-                : "Severity is Medium because the domain is recent, but the risk depends on business context and follow-on activity.";
+                ? "Severity is High because the reputation observation is very recent or the recorded risk score is elevated; this is not evidence of registration age."
+                : "Severity is Medium because reputation activity was observed recently; domain age and malicious intent remain unverified.";
             var falsePositives = "Brand-new vendor, campaign, or software-update domains can look suspiciously recent. Confirm ownership and planned changes before escalating.";
 
             var evidence = new List<DetectionEvidenceItem>
@@ -129,7 +132,7 @@ namespace Carthago.Engine.Rules.Dns
             return MatchDns(
                 context,
                 highSeverity ? SeverityLevel.High : SeverityLevel.Medium,
-                $"Query to recently observed domain detected: {query}",
+                $"Query with recent reputation observation detected: {query}",
                 query,
                 evidence,
                 confidence =>

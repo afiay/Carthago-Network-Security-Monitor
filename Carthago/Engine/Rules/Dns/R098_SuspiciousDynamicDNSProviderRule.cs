@@ -78,7 +78,8 @@ namespace Carthago.Engine.Rules.Dns
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!TryGetDnsQuestion(context, out var query))
+            if (!NetworkBatch096100Evidence.Dns(context)
+                || !TryGetDnsQuestion(context, out var query))
                 return NoMatch();
 
             if (!IsDynamicDnsProvider(query))
@@ -96,8 +97,10 @@ namespace Carthago.Engine.Rules.Dns
             var minimumLeftLabelLength = IntSetting(Descriptor.RuleId, "MinimumLeftLabelLength", 10, 4, 63);
             var window = TimeSpan.FromSeconds(IntSetting(Descriptor.RuleId, "WindowSeconds", 900, 60, 3600));
             var repeatThreshold = IntSetting(Descriptor.RuleId, "RepeatThreshold", 2, 2, 20);
-            var repeatCount = CountWindowEvents($"{Descriptor.RuleId}:{context.Record.Source}:{provider}:{query}", context.TimestampUtc, window);
-            var firstSeen = baseline.IsFirstSeen || FirstTimeSeen(query, context.TimestampUtc);
+            var repeatCount = CountDistinctValues($"{Descriptor.RuleId}:{context.Record.Source}:{provider}:{query}", context.Record.Id.ToString("N"), context.TimestampUtc, window);
+            // Only a persisted baseline observation can establish first-seen status.
+            // An in-process cache must not invent novelty when persistence fails.
+            var firstSeen = baseline.IsFirstSeen;
             var randomLabel = entropy >= entropyThreshold;
             var longLeftLabel = leftOfRoot.Length >= minimumLeftLabelLength;
             var txtLikeLongLabel = IsTxtLikeDnsQueryType(context.Record.DnsQtype) && longLeftLabel;
@@ -119,7 +122,7 @@ namespace Carthago.Engine.Rules.Dns
 
             var whyMatched = repeatedSuspiciousQuery
                 ? $"The DNS question '{query}' targets a known dynamic-DNS provider and repeated {repeatCount} times within {window.TotalMinutes:F0} minutes with suspicious label characteristics."
-                : $"The DNS question '{query}' targets a known dynamic-DNS provider and the left-hand label is unusually random-looking for a first-seen domain.";
+                : $"The DNS question '{query}' targets a known dynamic-DNS provider and the left-hand label is unusually random-looking; baseline status: {baseline.Reason}.";
             var severityReason = highSeverity
                 ? "Severity is High because the provider domain is both suspiciously shaped and repeated, which is more consistent with beaconing or operator-managed infrastructure than casual remote access."
                 : "Severity is Medium because the provider is consumer-friendly and can be legitimate, but the DNS evidence still merits investigation when the label is random-looking or repeats unusually.";
