@@ -271,6 +271,43 @@ Candidate additions and repairs, all UNVERIFIED:
 independent field evidence or permission to promote R102. No frozen
 v1 blobs, thresholds, Shadow/Disabled policy or detector code changed.
 
+## V2 candidate qualification and fail-closed evaluation — 2026-10-27
+
+External evidence discovery identified an important mismatch: a public
+A-Packets analysis of a same-named and same-sized iodine capture reports
+222 NULL (DNS type 10) queries and zero TXT. The source downloader now
+compares the published SHA-256 before flagging that sample as NULL-only;
+without a matching hash and local decode, its identity is not proven.
+Do not use the NULL-only capture in the encoded-TXT v2 cases.
+
+Source-only changes published since the prior checkpoint:
+
+- V2 PCAP inspector now redacts source IPs, DNS root labels and explicit
+  filter root metadata by default; raw DNS QNAMEs are not exported.
+- Elastic source acquisition remains hash-pinned, but emits a visible
+  ineligibility warning when the downloaded SHA-256 matches the
+  published NULL-only analysis. No capture was downloaded in this stream.
+- Korving-F TXT-mode iodine scenario metadata for BIND9/base32 and
+  BIND9/base64 was inspected. Rights, packets and source independence
+  remain unverified; scripted lab clients reuse 192.168.0.30.
+- R102 malicious importer and original-PCAP audit now require three
+  distinct, captured TXT names with labels at least 50 characters.
+  A NULL/CNAME-only capture cannot be relabeled as an encoded-TXT case.
+- scripts/evaluate-holdout-v2.ps1 independently checks the unchanged
+  0.75 minimum R102 fixture confidence floor, distinct malicious client
+  sources, no repeated original capture/frame keys and source/root
+  correlation even if normal freeze flow is bypassed.
+- docs/HOLDOUT_V2_SOURCE_REVIEW.md and HOLDOUT_V2_PROTOCOL.md now
+  identify the NULL-vs-TXT mismatch, exact TXT-mode scenario references,
+  the rights/label limitations and non-executable illustrative values.
+
+**STATUS: CANDIDATE — UNVERIFIED.** V2 remains
+PENDING_EXTERNAL_CAPTURE_AND_REVIEW (zero frozen new R102 samples).
+The last passing xUnit evidence still applies only to the older R001-R110
+snapshot. The frozen v1 4/6 failure and all production confidence/
+baseline/Shadow safeguards are unchanged. No Carthago builds, tests,
+benchmark runs or Windows runner jobs were executed by this work.
+
 ## Deferred one-run acceptance
 
 When the user says it is test time, freeze the branch head, then run on Windows:
