@@ -162,7 +162,7 @@ public sealed class SensitiveTelemetryContractTests
         var record = new TrafficRecord
         {
             Source = "10.1.1.23", Destination = "10.1.1.50", DestinationPort = 23,
-            Protocol = "TCP", Info = "telnet login admin:admin factory default"
+            Protocol = "TCP", IsTcp = true, Info = "telnet login admin:admin factory default"
         };
 
         var rule = new R118_DefaultCredentialIoTAttemptRule();
@@ -215,7 +215,7 @@ public sealed class SensitiveTelemetryContractTests
             ? new TrafficRecord
             {
                 Source = "192.0.2.30", Destination = "192.0.2.50",
-                DestinationPort = 23, Protocol = "TCP",
+                DestinationPort = 23, Protocol = "TCP", IsTcp = true,
                 Info = "telnet login admin:admin factory default; private diagnostic note"
             }
             : new TrafficRecord
