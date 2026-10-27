@@ -21,6 +21,8 @@ try {
     $v1Lookup=@{}
     foreach ($old in $v1.samples) { $v1Lookup[[string]$old.file]=[string]$old.gitBlobSha }
     $seen=@{}
+    $externalFrameKeys=[System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+    $maliciousSources=[System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
     $benign=0; $malicious=0; $external=0; $reused=0
     foreach ($entry in $manifest.samples) {
         $relative=[string]$entry.file
@@ -84,7 +86,31 @@ try {
                 @($p.frameNumbers | Sort-Object -Unique).Count -ne @($fixture.records).Count) {
                 throw "R102 v2 missing packet or label provenance: $relative"
             }
-            foreach ($record in $fixture.records) {
+            if ($entry.classification -eq 'Malicious') {
+                if ([double]$fixture.expectedMinimumConfidence -lt 0.75 -or
+                    -not $maliciousSources.Add([string]$p.sourceAddress)) {
+                    throw "R102 v2 malicious confidence floor was lowered or clients overlap: $relative"
+                }
+                $distinctLongTxt=@($fixture.records | Where-Object {
+                    $_.dnsQtype -eq 'TXT' -and
+                    (@(([string]$_.dnsQname).Split('.') | Where-Object { $_.Length -ge 50 }).Count -gt 0)
+                } | Select-Object -ExpandProperty dnsQname -Unique)
+                if ($distinctLongTxt.Count -lt 3 -or
+                    @($fixture.records | Where-Object { $_.dnsQtype -ne 'TXT' }).Count -gt 0) {
+                    throw "R102 v2 malicious fixture lacks three distinct long-label TXT names: $relative"
+                }
+            }
+            for ($i=0; $i -lt @($fixture.records).Count; $i++) {
+                $record=$fixture.records[$i]
+                $packetFrame=[int]$p.frameNumbers[$i]
+                $frameKey=([string]$p.captureSha256).ToLowerInvariant()+':'+$packetFrame
+                if ($packetFrame -lt 1 -or -not $externalFrameKeys.Add($frameKey) -or
+                    [string]$record.source -ne [string]$p.sourceAddress -or
+                    (-not ([string]$record.dnsQname).EndsWith(
+                        '.'+[string]$p.queryRoot,[StringComparison]::OrdinalIgnoreCase) -and
+                     [string]$record.dnsQname -ne [string]$p.queryRoot)) {
+                    throw "R102 v2 frame reuse or source/root provenance mismatch: $relative"
+                }
                 if ($record.isUdp -eq $record.isTcp -or
                     ($record.isUdp -ne $true -and $record.isTcp -ne $true) -or
                     $record.destinationPort -ne 53 -or
