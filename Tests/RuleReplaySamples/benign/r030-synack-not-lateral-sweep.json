@@ -1,0 +1,73 @@
+{
+  "name": "r030-synack-not-lateral-sweep",
+  "records": [
+    {
+      "source": "10.30.0.2",
+      "destination": "10.30.1.10",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "SYN,ACK",
+      "length": 72
+    },
+    {
+      "source": "10.30.0.2",
+      "destination": "10.30.1.11",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "SYN,ACK",
+      "length": 72
+    },
+    {
+      "source": "10.30.0.2",
+      "destination": "10.30.1.12",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "SYN,ACK",
+      "length": 72
+    },
+    {
+      "source": "10.30.0.2",
+      "destination": "10.30.1.13",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "SYN,ACK",
+      "length": 72
+    },
+    {
+      "source": "10.30.0.2",
+      "destination": "10.30.1.14",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "SYN,ACK",
+      "length": 72
+    },
+    {
+      "source": "10.30.0.2",
+      "destination": "10.30.1.15",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "SYN,ACK",
+      "length": 72
+    },
+    {
+      "source": "10.30.0.2",
+      "destination": "10.30.1.16",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "SYN,ACK",
+      "length": 72
+    },
+    {
+      "source": "10.30.0.2",
+      "destination": "10.30.1.17",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "SYN,ACK",
+      "length": 72
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R030"
+  ]
+}

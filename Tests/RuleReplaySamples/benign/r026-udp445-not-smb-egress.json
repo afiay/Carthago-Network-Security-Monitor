@@ -1,0 +1,17 @@
+{
+  "name": "r026-udp445-not-smb-egress",
+  "records": [
+    {
+      "source": "10.26.0.2",
+      "destination": "8.8.8.8",
+      "protocol": "UDP",
+      "destinationPort": 445,
+      "length": 72,
+      "info": "SMB diagnostic text"
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R026"
+  ]
+}

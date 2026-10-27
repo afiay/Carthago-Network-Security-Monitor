@@ -1794,193 +1794,195 @@ namespace Carthago.Services
             return false;
         }
 
-        // ===== R026 SMB/RPC to Internet =====
+        // R026-R030 use validated endpoints; leave AuthPorts unchanged for R004.
+        private static readonly HashSet<int> AdminEgressPorts = new() { 21, 22, 23, 3389, 5985, 5986 };
+
+        private static bool IsAttributablePrivateHostIp(string? value)
+        {
+            if (!IPAddress.TryParse(value, out var ip)) return false;
+            if (ip.IsIPv4MappedToIPv6) ip = ip.MapToIPv4();
+            return !IPAddress.IsLoopback(ip) && !ip.IsIPv6LinkLocal
+                && !ip.IsIPv6SiteLocal && IsPrivateIp(ip.ToString());
+        }
+
+        private static bool IsInitialTcpSyn(TrafficRecord r)
+        {
+            if (r.TcpFlags is ushort flags)
+                return (flags & 0x02) != 0 && (flags & 0x10) == 0;
+            return TcpSynToken.IsMatch(r.Flags ?? string.Empty)
+                && !TcpAckToken.IsMatch(r.Flags ?? string.Empty);
+        }
+
+        private static bool IsAdminServiceForPort(int port, string? service) => port switch
+        {
+            21 => string.Equals(service, "FTP", StringComparison.OrdinalIgnoreCase),
+            22 => string.Equals(service, "SSH", StringComparison.OrdinalIgnoreCase),
+            23 => string.Equals(service, "TELNET", StringComparison.OrdinalIgnoreCase),
+            3389 => string.Equals(service, "RDP", StringComparison.OrdinalIgnoreCase),
+            5985 or 5986 => string.Equals(service, "WINRM", StringComparison.OrdinalIgnoreCase),
+            _ => false
+        };
+
+        // ===== R026 SMB/NetBIOS connection to public endpoint =====
         private static bool DetectSmbToInternet(DateTime now, TrafficRecord r, out DetectionEvent det)
         {
             det = null!;
             try
             {
-                int? p = r.DestinationPort;
-                if (p is not (139 or 445)) return false;
-                if (IsPrivateIp(r.Destination)) return false;
-
-                if (SuppressRepeat(now, "R026", NS(r.Source), r.Destination, r.DestinationPort)) return false;
+                if (r.DestinationPort is not (139 or 445) || r.Length <= 0 || r.IsQuic
+                    || !string.Equals(r.Protocol, "TCP", StringComparison.OrdinalIgnoreCase)
+                    || !IsAttributablePrivateHostIp(r.Source) || !IsPublicLegacyEgressIp(r.Destination))
+                    return false;
+                bool classified = string.Equals(r.ApplicationService, "SMB", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(r.ApplicationService, "NETBIOS-SSN", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(r.ApplicationService, "RPC", StringComparison.OrdinalIgnoreCase);
+                if (!string.IsNullOrWhiteSpace(r.ApplicationService) && !classified) return false;
+                if (!IsInitialTcpSyn(r) && !classified) return false;
+                if (SuppressRepeat(now, "R026", r.Source!, r.Destination, r.DestinationPort)) return false;
                 det = new DetectionEvent
                 {
-                    RuleId = "R026",
-                    Description = "SMB/RPC traffic to Internet (likely misconfiguration or data leakage risk)",
-                    SourceIp = NS(r.Source),
-                    DestinationIp = r.Destination,
-                    DestinationPort = p,
-                    Protocol = NP(r.Protocol),
-                    Severity = SeverityLevel.High,
-                    Count = 1
+                    RuleId = "R026", Description = "Outbound SMB/NetBIOS connection to a public endpoint",
+                    SourceIp = r.Source, DestinationIp = r.Destination, DestinationPort = r.DestinationPort,
+                    Protocol = "TCP", Severity = SeverityLevel.High, Count = 1
                 };
                 return true;
             }
-            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] R026 error: {ex}"); }
+            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] R026 error: {ex.GetType().Name}"); }
             return false;
         }
 
-        // ===== R027 Admin service egress to Internet (RDP/SSH/WinRM/Telnet/FTP) =====
+        // ===== R027 Admin-service egress, excluding mail authentication =====
         private static bool DetectAdminEgress(DateTime now, TrafficRecord r, out DetectionEvent det)
         {
             det = null!;
             try
             {
-                if (r.DestinationPort is null) return false;
-                int p = r.DestinationPort.Value;
-                if (!AuthPorts.Contains(p)) return false;
-                if (IsPrivateIp(r.Destination)) return false;
-
-                if (SuppressRepeat(now, "R027", NS(r.Source), r.Destination, p)) return false;
+                if (r.DestinationPort is not int port || !AdminEgressPorts.Contains(port)
+                    || r.Length <= 0 || r.IsQuic
+                    || !string.Equals(r.Protocol, "TCP", StringComparison.OrdinalIgnoreCase)
+                    || !IsAttributablePrivateHostIp(r.Source) || !IsPublicLegacyEgressIp(r.Destination))
+                    return false;
+                bool classified = IsAdminServiceForPort(port, r.ApplicationService);
+                if (!string.IsNullOrWhiteSpace(r.ApplicationService) && !classified) return false;
+                if (!IsInitialTcpSyn(r) && !classified) return false;
+                if (SuppressRepeat(now, "R027", r.Source!, r.Destination, port)) return false;
                 det = new DetectionEvent
                 {
-                    RuleId = "R027",
-                    Description = $"Administrative service egress to Internet on port {p}",
-                    SourceIp = NS(r.Source),
-                    DestinationIp = r.Destination,
-                    DestinationPort = p,
-                    Protocol = NP(r.Protocol),
-                    Severity = SeverityLevel.Medium,
-                    Count = 1
+                    RuleId = "R027", Description = $"Administrative service connection to public endpoint on TCP/{port}",
+                    SourceIp = r.Source, DestinationIp = r.Destination, DestinationPort = port,
+                    Protocol = "TCP", Severity = SeverityLevel.Medium, Count = 1
                 };
                 return true;
             }
-            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] R027 error: {ex}"); }
+            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] R027 error: {ex.GetType().Name}"); }
             return false;
         }
 
-        // ===== R028 Direct external DNS (bypassing resolver) =====
+        // ===== R028 Direct public DNS query, not a response =====
         private static bool DetectExternalDnsDirect(DateTime now, TrafficRecord r, out DetectionEvent det)
         {
             det = null!;
             try
             {
-                if (!(string.Equals(r.Protocol, "UDP", StringComparison.OrdinalIgnoreCase) || string.Equals(r.Protocol, "DNS", StringComparison.OrdinalIgnoreCase)))
+                if (r.DestinationPort != 53 || r.Length <= 0 || r.IsQuic || r.DnsIsResponse
+                    || string.IsNullOrWhiteSpace(r.DnsQname) || r.DnsQname.Length > 253
+                    || !IsAttributablePrivateHostIp(r.Source) || !IsPublicLegacyEgressIp(r.Destination))
                     return false;
-                if (r.DestinationPort != 53) return false;
-
-                if (IsPrivateIp(NS(r.Source)) && !IsPrivateIp(r.Destination))
+                bool udp = string.Equals(r.Protocol, "UDP", StringComparison.OrdinalIgnoreCase);
+                bool dns = string.Equals(r.Protocol, "DNS", StringComparison.OrdinalIgnoreCase);
+                bool tcp = string.Equals(r.Protocol, "TCP", StringComparison.OrdinalIgnoreCase);
+                bool classified = string.Equals(r.ApplicationService, "DNS", StringComparison.OrdinalIgnoreCase);
+                if (!(udp || dns || (tcp && classified))) return false;
+                if (!string.IsNullOrWhiteSpace(r.ApplicationService) && !classified) return false;
+                if (SuppressRepeat(now, "R028", r.Source!, r.Destination, 53)) return false;
+                det = new DetectionEvent
                 {
-                    if (SuppressRepeat(now, "R028", NS(r.Source), r.Destination, 53)) return false;
-                    det = new DetectionEvent
-                    {
-                        RuleId = "R028",
-                        Description = "Direct DNS to Internet (resolver bypass)",
-                        SourceIp = NS(r.Source),
-                        DestinationIp = r.Destination,
-                        DestinationPort = 53,
-                        Protocol = NP(r.Protocol),
-                        Severity = SeverityLevel.Medium,
-                        Count = 1
-                    };
-                    return true;
-                }
+                    RuleId = "R028", Description = "Direct DNS query to a public resolver candidate",
+                    SourceIp = r.Source, DestinationIp = r.Destination, DestinationPort = 53,
+                    Protocol = tcp ? "TCP" : "DNS", Severity = SeverityLevel.Medium, Count = 1
+                };
+                return true;
             }
-            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] R028 error: {ex}"); }
+            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] R028 error: {ex.GetType().Name}"); }
             return false;
         }
 
-        // ===== R029 QUIC anomaly (require non-443 AND missing ALPN; light rate-limit) =====
+        // ===== R029 QUIC anomaly with per-flow bounded debounce =====
         private static bool DetectQuicAnomaly(DateTime now, TrafficRecord r, out DetectionEvent det)
         {
             det = null!;
             try
             {
-                // Only proceed if it looks QUIC-ish at all
-                bool quicish =
-                    r.IsQuic ||
-                    r.QuicVersion is not null ||
-                    r.QuicAlpn is not null ||
-                    string.Equals(r.Protocol, "QUIC", StringComparison.OrdinalIgnoreCase);
-                if (!quicish) return false;
-
-                if (r.DestinationPort is not int dp)
+                bool udp = string.Equals(r.Protocol, "UDP", StringComparison.OrdinalIgnoreCase);
+                bool quicProtocol = string.Equals(r.Protocol, "QUIC", StringComparison.OrdinalIgnoreCase);
+                if (!(udp || quicProtocol)
+                    || !(r.IsQuic || (quicProtocol && !string.IsNullOrWhiteSpace(r.QuicVersion)))
+                    || r.Length <= 0 || r.DestinationPort is not int port || port is < 1 or > 65535
+                    || port is 53 or 123 or 443 || !string.IsNullOrWhiteSpace(r.QuicAlpn)
+                    || !IsAttributablePrivateHostIp(r.Source) || !IsPublicLegacyEgressIp(r.Destination))
                     return false;
-
-                // *** NEW: obvious non-QUIC well-known ports (DNS/NTP) are noise for this rule.
-                if (dp == 53 || dp == 123)
-                    return false;
-
-                bool nonStandardPort = dp != 443;
-                bool missingAlpn = string.IsNullOrWhiteSpace(r.QuicAlpn);
-
-                // Require BOTH for precision
-                if (!(nonStandardPort && missingAlpn))
-                    return false;
-
-                // Light per-source debounce (max 3/minute)
-                var rlKey = $"R029:{NS(r.Source)}";
-                var times = _packetTimes.GetOrAdd(rlKey, _ => new List<DateTime>(16));
+                BoundDictionary(_packetTimes, 20000);
+                string key = $"R029:{r.Source}->{r.Destination}:{port}";
+                var times = _packetTimes.GetOrAdd(key, _ => new List<DateTime>(4));
                 lock (times)
                 {
-                    times.Add(now);
-                    if (TrimAndCount(times, now, 60) > 3)
-                        return false;
+                    var cutoff = now.AddSeconds(-60);
+                    times.RemoveAll(ts => ts < cutoff || ts > now);
+                    if (!times.Contains(now)) times.Add(now);
+                    if (times.Count > 3) return false;
                 }
-
-                if (SuppressRepeat(now, "R029", NS(r.Source), r.Destination, r.DestinationPort)) return false;
-
+                if (SuppressRepeat(now, "R029", r.Source!, r.Destination, port)) return false;
                 det = new DetectionEvent
                 {
-                    RuleId = "R029",
-                    Description = "QUIC anomaly: non-443 port AND missing ALPN",
-                    SourceIp = NS(r.Source),
-                    DestinationIp = r.Destination,
-                    DestinationPort = dp,
-                    Protocol = "QUIC",
-                    Severity = SeverityLevel.Low,
-                    Count = 1
+                    RuleId = "R029", Description = "Observed QUIC on nonstandard UDP port without ALPN",
+                    SourceIp = r.Source, DestinationIp = r.Destination, DestinationPort = port,
+                    Protocol = "QUIC", Severity = SeverityLevel.Low, Count = 1
                 };
                 return true;
             }
-            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] R029 error: {ex}"); }
+            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] R029 error: {ex.GetType().Name}"); }
             return false;
         }
 
-        // ===== R030 Internal admin lateral sweep =====
+        // ===== R030 Distinct internal administrative SYN sweep =====
         private static bool DetectAdminLateralSweep(DateTime now, TrafficRecord r, out DetectionEvent det)
         {
             det = null!;
             try
             {
+                if (r.DestinationPort is not int port || !AdminEgressPorts.Contains(port)
+                    || r.Length <= 0 || r.IsQuic
+                    || !string.Equals(r.Protocol, "TCP", StringComparison.OrdinalIgnoreCase)
+                    || !IsInitialTcpSyn(r) || !IsAttributablePrivateHostIp(r.Source)
+                    || !IsAttributablePrivateHostIp(r.Destination)
+                    || !IPAddress.TryParse(r.Source, out var srcIp)
+                    || !IPAddress.TryParse(r.Destination, out var dstIp) || srcIp.Equals(dstIp))
+                    return false;
+                const int window = 60, threshold = 8;
                 BoundDictionary(_adminSweeps, 10000);
-
-                if (r.Source is not { Length: > 0 } src || r.DestinationPort is not int p) return false;
-                if (!AuthPorts.Contains(p)) return false;
-                if (string.IsNullOrWhiteSpace(r.Destination) || !IsPrivateIp(r.Destination)) return false;
-
-                const int window = 60;
-                const int threshold = 8;
-
-                var map = _adminSweeps.GetOrAdd((src, p), _ => new ConcurrentDictionary<string, DateTime>());
-                map[r.Destination] = now;
-
-                var cutoff = now.AddSeconds(-window);
-                foreach (var k in map.Where(kv => kv.Value < cutoff).Select(kv => kv.Key).ToList())
-                    map.TryRemove(k, out _);
-
-                int uniq = map.Count;
-                if (uniq >= threshold)
+                var map = _adminSweeps.GetOrAdd((r.Source!, port),
+                    _ => new ConcurrentDictionary<string, DateTime>());
+                int distinct;
+                lock (map)
                 {
-                    if (SuppressRepeat(now, "R030", src, null, p)) return false;
-                    det = new DetectionEvent
-                    {
-                        RuleId = "R030",
-                        Description = $"Admin lateral sweep from {src} on {p} ({uniq} hosts/{window}s)",
-                        SourceIp = src,
-                        DestinationPort = p,
-                        Protocol = NP(r.Protocol),
-                        Severity = SeverityLevel.High,
-                        Count = uniq,
-                        WindowSeconds = window
-                    };
-                    map.Clear();
-                    return true;
+                    var cutoff = now.AddSeconds(-window);
+                    foreach (var stale in map.Where(kv => kv.Value < cutoff || kv.Value > now)
+                        .Select(kv => kv.Key).ToList()) map.TryRemove(stale, out _);
+                    map[r.Destination!] = now;
+                    distinct = map.Count;
+                    if (distinct < threshold) return false;
+                    map.Clear(); // Also clear a completed window when cooldown suppresses it.
                 }
+                if (SuppressRepeat(now, "R030", r.Source!, null, port)) return false;
+                det = new DetectionEvent
+                {
+                    RuleId = "R030", Description = $"Internal administrative sweep across {distinct} hosts on TCP/{port}",
+                    SourceIp = r.Source, DestinationPort = port, Protocol = "TCP",
+                    Severity = SeverityLevel.High, Count = distinct, WindowSeconds = window
+                };
+                return true;
             }
-            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] R030 error: {ex}"); }
+            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] R030 error: {ex.GetType().Name}"); }
             return false;
         }
 

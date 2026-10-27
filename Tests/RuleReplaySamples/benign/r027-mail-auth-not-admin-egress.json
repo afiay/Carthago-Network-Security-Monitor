@@ -1,0 +1,17 @@
+{
+  "name": "r027-mail-auth-not-admin-egress",
+  "records": [
+    {
+      "source": "10.27.0.2",
+      "destination": "8.8.8.8",
+      "protocol": "TCP",
+      "destinationPort": 993,
+      "flags": "SYN",
+      "length": 72
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R027"
+  ]
+}
