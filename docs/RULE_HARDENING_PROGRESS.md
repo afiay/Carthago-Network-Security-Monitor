@@ -376,3 +376,23 @@ Existing default Shadow, confidence floors, approval/baseline gates and
 frozen holdout were not changed. The consolidated Windows entry point
 remains unchanged. See `docs/RULE_BATCH_126-130.md` for scope and risks.
 **Next contiguous batch: R131-R135.**
+
+## R131-R135 candidate implementation - 2026-10-27
+
+Authored five HTTP identity/credential rules against remote HEAD
+`dfa8883313b63397edded2f25ddec8d548a083c8`: R131 independent
+HTTP auth-failure bursts, R132 pseudonymized source-country churn,
+R133 Basic cleartext exposure, R134 opaque token query exposure and
+R135 Bearer cleartext exposure. Added one narrowly scoped shared
+HTTP/credential evidence contract, reused existing per-instance bounded
+duplicate-resistant windows, and redacted raw HTTP paths for these
+five rules in the shared identity-access event builder. Added 40 new
+advanced xUnit facts (eight per rule) and one shared fixture.
+See `docs/RULE_BATCH_131-135.md`.
+
+**CANDIDATE - UNVERIFIED.** Zero new tests or builds executed; no
+replay/holdout/runner invocation. Existing confidence floors, thresholds,
+Shadow/Alert/Disabled policy, baseline approvals, frozen v1 labels and
+v2 pending status were not changed. The last user-run regression cannot
+certify this batch. The frozen v1 R102 4/6 failure remains.
+**Next contiguous batch: R136-R140.**
