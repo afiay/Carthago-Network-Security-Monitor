@@ -59,13 +59,14 @@ namespace Carthago.Engine.Rules.Expansion
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!IsTls(record) || !IsWeakTlsVersion(record.TlsVersion))
+            if (!NetworkBatch136140Evidence.TlsSession(record)
+                || !NetworkBatch136140Evidence.WeakVersion(record.TlsVersion, out var version))
                 return NoMatch();
 
             var evidenceItems = new List<DetectionEvidenceItem>
             {
                 new("matched_conditions", "tls_context,weak_tls_version", "rule"),
-                new("tls.version", record.TlsVersion ?? "unknown", "tls")
+                new("tls.version", version, "tls")
             };
             evidenceItems.AddRange(AnalystContext(
                 "The TLS session negotiated a weak legacy protocol version.",
@@ -85,7 +86,7 @@ namespace Carthago.Engine.Rules.Expansion
                     confidence.AddEvidence(0.42, "tls-context");
                     confidence.AddEvidence(0.32, "weak-version");
                 },
-                cooldownKey: $"{BestHost(record)}:{record.TlsVersion}");
+                cooldownKey: $"{BestHost(record)}:{version}");
         }
     }
 }

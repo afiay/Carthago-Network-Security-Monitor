@@ -59,7 +59,7 @@ namespace Carthago.Engine.Rules.Expansion
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!IsCleartextHttp(record) || !TryGetSessionCookie(record, out var cookieName))
+            if (!NetworkBatch136140Evidence.SessionCookie(record, out var cookieName))
                 return NoMatch();
 
             var path = HttpPath(record);
@@ -67,7 +67,7 @@ namespace Carthago.Engine.Rules.Expansion
             {
                 new("matched_conditions", "cleartext_http,session_cookie", "rule"),
                 new("session.cookieName", cookieName, "http"),
-                new("http.path", string.IsNullOrWhiteSpace(path) ? "/" : path, "http")
+                new("http.path", "[http-request]", "rule")
             };
             evidenceItems.AddRange(AnalystContext(
                 "A recognizable session cookie was observed on cleartext HTTP.",
@@ -87,7 +87,7 @@ namespace Carthago.Engine.Rules.Expansion
                     confidence.AddEvidence(0.38, "cleartext-http");
                     confidence.AddEvidence(0.24, "session-cookie-name");
                 },
-                cooldownKey: $"{record.Source}:{BestHost(record)}:{path}:{cookieName}");
+                cooldownKey: $"{record.Source}:{BestHost(record)}:{NetworkBatch131135Evidence.Fingerprint(path)}:{cookieName}");
         }
     }
 }

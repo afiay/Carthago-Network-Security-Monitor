@@ -59,13 +59,14 @@ namespace Carthago.Engine.Rules.Expansion
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!IsTls(record) || !HasSuspiciousIssuer(record))
+            if (!NetworkBatch136140Evidence.TlsSession(record)
+                || !NetworkBatch136140Evidence.SuspiciousIssuer(record))
                 return NoMatch();
 
             var evidenceItems = new List<DetectionEvidenceItem>
             {
                 new("matched_conditions", "tls_context,suspicious_certificate_issuer", "rule"),
-                new("tls.certIssuer", ShortText(record.CertIssuer ?? string.Empty), "tls")
+                new("tls.certIssuer", "[suspicious-issuer-category]", "rule")
             };
             evidenceItems.AddRange(AnalystContext(
                 "The TLS certificate issuer matched a suspicious local, test, or interception-oriented pattern.",
@@ -85,7 +86,7 @@ namespace Carthago.Engine.Rules.Expansion
                     confidence.AddEvidence(0.32, "tls-context");
                     confidence.AddEvidence(0.24, "suspicious-issuer");
                 },
-                cooldownKey: $"{BestHost(record)}:{record.CertIssuer}");
+                cooldownKey: $"{BestHost(record)}:{NetworkBatch136140Evidence.Fingerprint(record.CertIssuer)}");
         }
     }
 }

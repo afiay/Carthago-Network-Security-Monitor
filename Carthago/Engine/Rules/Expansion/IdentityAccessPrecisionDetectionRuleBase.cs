@@ -119,7 +119,7 @@ namespace Carthago.Engine.Rules.Expansion
             // R123 may carry authentication tokens in path segments. Its rule
             // emits only a fixed, non-sensitive route category instead.
             if (!string.IsNullOrWhiteSpace(path) && Descriptor.RuleId != "R123"
-                && Descriptor.RuleId is not ("R127" or "R128" or "R129" or "R130" or "R131" or "R132" or "R133" or "R134" or "R135"))
+                && Descriptor.RuleId is not ("R127" or "R128" or "R129" or "R130" or "R131" or "R132" or "R133" or "R134" or "R135" or "R136" or "R137"))
                 items.Add(new DetectionEvidenceItem("http.path", path, "http"));
             if (!string.IsNullOrWhiteSpace(record.HttpMethod))
                 items.Add(new DetectionEvidenceItem("http.method", record.HttpMethod!, "http"));

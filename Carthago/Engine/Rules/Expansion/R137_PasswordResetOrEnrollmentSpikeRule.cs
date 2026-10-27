@@ -8,6 +8,7 @@ namespace Carthago.Engine.Rules.Expansion
 {
     public sealed class R137_PasswordResetOrEnrollmentSpikeRule : IdentityAccessPrecisionDetectionRuleBase
     {
+        private readonly NetworkBatch126130Window _observations = new();
         private static readonly RuleDescriptor Rule = new(
             RuleId: "R137",
             Name: "Password Reset Or Enrollment Spike",
@@ -59,52 +60,48 @@ namespace Carthago.Engine.Rules.Expansion
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!HasResetOrEnrollmentContext(record))
-                return NoMatch();
-
-            if (!UsesCredentialSubmissionMethod(record) && !ContainsAny(Text(record), "submit", "verify", "challenge", "recover account", "password reset"))
+            if (!NetworkBatch136140Evidence.RecoverySubmission(record, out var enrollment))
                 return NoMatch();
 
             var window = TimeSpan.FromSeconds(IntSetting(Rule.RuleId, "WindowSeconds", 300, 60, 3600));
             var threshold = IntSetting(Rule.RuleId, "Threshold", 8, 3, 200);
-            var path = HttpPath(record);
-            var key = $"{Rule.RuleId}:{record.Source}:{BestHost(record)}:{path}";
-            var count = CountWindowEvents(key, context.TimestampUtc, window);
+            var routeKey = NetworkBatch131135Evidence.Fingerprint(HttpPath(record));
+            var key = $"{Rule.RuleId}:{record.Source}:{BestHost(record)}:{routeKey}";
+            var count = _observations.Add(key, record.Id, string.Empty, false, context.TimestampUtc, window).Count;
             if (count < threshold)
                 return NoMatch();
 
-            var matchedConditions = new List<string> { "reset_or_enrollment_burst", "threshold_reached" };
-            if (ContainsAny(Text(record), "mfa", "totp", "webauthn")) matchedConditions.Add("mfa_or_enrollment_context");
-
             var evidenceItems = new List<DetectionEvidenceItem>
             {
-                new("matched_conditions", string.Join(",", matchedConditions), "rule"),
+                new("matched_conditions", enrollment
+                    ? "recovery_submission_burst,threshold_reached,enrollment_route"
+                    : "recovery_submission_burst,threshold_reached", "rule"),
                 new("count", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
                 new("window_seconds", ((int)window.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
-                new("http.path", string.IsNullOrWhiteSpace(path) ? "/" : path, "http")
+                new("http.path", "[recovery-endpoint]", "rule")
             };
             evidenceItems.AddRange(AnalystContext(
-                "Password reset or enrollment actions accumulated into a short-window burst.",
-                "Severity is Medium because clustered recovery or enrollment activity can indicate account takeover preparation or spray-and-reset workflows.",
-                "Helpdesk migrations, MFA campaigns, or user onboarding can match. Validate whether the burst aligns with an approved change window.",
-                "Confirm whether the activity matches a sanctioned helpdesk or MFA rollout.",
-                "Inspect the targeted accounts for successful logins, recovery completions, or MFA device changes."));
+                "Independent HTTP recovery or enrollment submissions accumulated within a bounded window.",
+                "Severity is Medium because repeated account recovery submissions can indicate abuse or broken automation.",
+                "Helpdesk resets, MFA enrollment campaigns and approved migration tools may generate similar requests.",
+                "Confirm the activity against an approved helpdesk or MFA rollout.",
+                "Correlate actual identity outcomes before treating requests as successful changes."));
 
             return MatchIdentityAccess(
                 context,
                 SeverityLevel.Medium,
-                "Password reset or enrollment burst observed",
+                "Password reset or enrollment submission burst observed",
                 "ResetEnrollmentBurst",
                 evidenceItems,
                 confidence =>
                 {
-                    confidence.AddEvidence(0.24, "reset-enrollment-context");
+                    confidence.AddEvidence(0.24, "attributed-recovery-submission");
                     confidence.AddEvidence(0.20, "threshold-reached");
-                    if (ContainsAny(Text(record), "mfa", "totp", "webauthn")) confidence.AddCorrelation(0.08, "mfa-enrollment-context");
+                    if (enrollment) confidence.AddCorrelation(0.08, "enrollment-route");
                 },
                 count,
                 window,
-                $"{record.Source}:{BestHost(record)}:{path}");
+                $"{record.Source}:{BestHost(record)}:{routeKey}");
         }
     }
 }
