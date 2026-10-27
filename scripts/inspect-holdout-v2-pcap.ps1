@@ -6,6 +6,7 @@ param(
     [Parameter(Mandatory=$true)][string]$CapturePath,
     [string]$DnsRoot='',
     [switch]$ShowSourceAddresses,
+    [int]$MaximumPacketsToScan=100000,
     [string]$TsharkPath='tshark',
     [string]$OutputDirectory='build-verify/holdout-v2-profiles'
 )
@@ -14,6 +15,9 @@ $ErrorActionPreference='Stop'
 $root=(Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $capture=(Resolve-Path -LiteralPath $CapturePath).Path
 $exe=Get-Command $TsharkPath -ErrorAction Stop
+if ($MaximumPacketsToScan -lt 100 -or $MaximumPacketsToScan -gt 500000) {
+    throw 'MaximumPacketsToScan must be 100..500000.'
+}
 $domain=$DnsRoot.Trim().Trim('.').ToLowerInvariant()
 if ($domain.Length -gt 0 -and
     $domain -notmatch '^[a-z0-9][a-z0-9-]*(?:\.[a-z0-9][a-z0-9-]*)+$') {
@@ -21,7 +25,7 @@ if ($domain.Length -gt 0 -and
 }
 $fields=@('frame.number','ip.src','ip.dst','ipv6.src','ipv6.dst',
     'udp.srcport','udp.dstport','tcp.srcport','tcp.dstport','dns.qry.name','dns.qry.type')
-$argsTshark=@('-n','-r',$capture,'-Y',
+$argsTshark=@('-n','-r',$capture,'-c',"$MaximumPacketsToScan",'-Y',
     'dns.flags.response == 0 && (udp.dstport == 53 || tcp.dstport == 53)',
     '-T','fields','-E','separator=|','-E','quote=n','-E','occurrence=f')
 foreach ($f in $fields) { $argsTshark+=@('-e',$f) }
@@ -117,6 +121,8 @@ $summary=[ordered]@{
     captureSha256=(Get-FileHash -LiteralPath $capture -Algorithm SHA256).Hash.ToLowerInvariant()
     tsharkVersion=((& $exe.Source -v | Select-Object -First 1) -join '')
     filterRoot=$(if ($domain) { $domain } else { '(approximate last two labels)' })
+    maximumPacketsToScan=$MaximumPacketsToScan
+    analysisMayBeTruncated=$true
     rawSourceAddressesIncluded=[bool]$ShowSourceAddresses
     distinctSourceRootGroups=$profiles.Count
     skippedOrInvalidFrames=$skipped
@@ -131,4 +137,5 @@ $summary=[ordered]@{
 Write-Host ("Source inspection: {0} DNS source/root group(s), {1} skipped/invalid frame(s)." -f $profiles.Count,$skipped)
 Write-Host ("Groups with >=3 distinct long TXT QNAMEs: {0}" -f @($profiles | Where-Object { $_.meetsBasicThreeDistinctLongTxtShape }).Count)
 Write-Host "Privacy-conscious local report: $destination"
+Write-Host "At most $MaximumPacketsToScan input packets were scanned; this is not a whole-capture coverage claim."
 Write-Host 'No alert evaluation, label approval, corpus change or test was performed.'
