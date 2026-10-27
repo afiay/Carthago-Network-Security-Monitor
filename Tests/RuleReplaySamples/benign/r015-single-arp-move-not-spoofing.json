@@ -1,0 +1,25 @@
+{
+  "name": "r015-single-arp-move-not-spoofing",
+  "records": [
+    {
+      "source": "10.15.1.1",
+      "destination": "10.15.1.2",
+      "protocol": "ARP",
+      "macSource": "02:AA:BB:CC:DD:01",
+      "info": "ARP reply 10.15.1.1 is-at 02:AA:BB:CC:DD:01",
+      "length": 60
+    },
+    {
+      "source": "10.15.1.1",
+      "destination": "10.15.1.2",
+      "protocol": "ARP",
+      "macSource": "06:AA:BB:CC:DD:01",
+      "info": "ARP reply 10.15.1.1 is-at 06:AA:BB:CC:DD:01",
+      "length": 60
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R015"
+  ]
+}

@@ -103,8 +103,18 @@ namespace Carthago.Services
         private static readonly ConcurrentDictionary<string, List<DateTime>> _dnsQueries = new(StringComparer.Ordinal);   // R006
         private static readonly ConcurrentDictionary<(string Src, string Dst, int Port, string Protocol), List<(DateTime ts, int bytes)>> _beaconing = new();        // R007
         private static readonly ConcurrentDictionary<string, List<(DateTime ts, int bytes)>> _exfilBytes = new(StringComparer.Ordinal); // R008
-        private static readonly ConcurrentDictionary<string, string> _arpTable = new(StringComparer.Ordinal);             // R015
-        private static readonly ConcurrentDictionary<string, List<DateTime>> _dhcpActivity = new(StringComparer.Ordinal); // R011 key "DHCP"
+        private sealed class ArpClaimState
+        {
+            public ArpClaimState(string mac, DateTime now) { ConfirmedMac = mac; LastSeen = now; }
+            public string ConfirmedMac;
+            public string? CandidateMac;
+            public DateTime CandidateSince;
+            public int CandidateCount;
+            public DateTime LastSeen;
+        }
+
+        private static readonly ConcurrentDictionary<string, ArpClaimState> _arpTable = new(StringComparer.Ordinal); // R015, per claimed IPv4
+        private static readonly ConcurrentDictionary<string, List<DateTime>> _dhcpActivity = new(StringComparer.Ordinal); // R011, per client
 
         // Noisy-but-legit high ports to ignore in R013
         private static readonly HashSet<int> _uncommonPortAllow = new()
@@ -143,8 +153,13 @@ namespace Carthago.Services
         private static readonly ConcurrentDictionary<string, List<DateTime>> _nxdomain = new(StringComparer.Ordinal);  // R022
 
         // ===== ARP parsing hints =====
+        // Only parse explicit ARP is-at claims, not arbitrary IP/MAC pairs in logs.
+        // Both common wire-summary orders are supported.
         private static readonly Regex _arpIsAtRegex = new(
-            @"(?i)\b(is-at|reply)\b.*?(?<ip>\d{1,3}(?:\.\d{1,3}){3}).*?(?<mac>(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2})",
+            @"(?i)\b(?<ip>\d{1,3}(?:\.\d{1,3}){3})\s+is-at\s+(?<mac>(?:[0-9a-f]{2}[:-]){5}[0-9a-f]{2})\b",
+            RegexOptions.Compiled);
+        private static readonly Regex _arpAlternateIsAtRegex = new(
+            @"(?i)\bis-at\s+(?<ip>\d{1,3}(?:\.\d{1,3}){3})\s+(?<mac>(?:[0-9a-f]{2}[:-]){5}[0-9a-f]{2})\b",
             RegexOptions.Compiled);
 
         // ===== HTTP header parsing aids =====
@@ -885,79 +900,119 @@ namespace Carthago.Services
             return false;
         }
 
-        // ===== R011 DHCP Abuse =====
+        // ===== R011–R015: precision-oriented legacy detectors =====
+        private static bool TryNormalizeUnicastMac(string? value, out string normalized)
+        {
+            normalized = string.Empty;
+            if (string.IsNullOrWhiteSpace(value) ||
+                !Regex.IsMatch(value.Trim(), @"^(?:[0-9a-fA-F]{2}[:-]){5}[0-9a-fA-F]{2}$"))
+                return false;
+
+            normalized = value.Trim().Replace(":", "").Replace("-", "").ToUpperInvariant();
+            int firstOctet = Convert.ToInt32(normalized.Substring(0, 2), 16);
+            return (firstOctet & 1) == 0 && normalized != "000000000000";
+        }
+
+        // R011: count client-originated DHCP requests per stable client, not all
+        // DHCP traffic on the segment. Server responses and free-text labels do
+        // not establish abuse; this remains a rate candidate, not a rogue-server verdict.
         private static bool DetectDhcpAbuse(DateTime now, TrafficRecord record, Sensitivity s, out DetectionEvent detection)
         {
             detection = null!;
             try
             {
-                bool isDhcp =
-                    (string.Equals(record.Protocol, "UDP", StringComparison.OrdinalIgnoreCase) &&
-                     ((record.SourcePort == 68 && record.DestinationPort == 67) ||
-                      (record.SourcePort == 67 && record.DestinationPort == 68)))
-                    || string.Equals(record.ApplicationService, "DHCP", StringComparison.OrdinalIgnoreCase);
+                if (!string.Equals(record.Protocol, "UDP", StringComparison.OrdinalIgnoreCase) ||
+                    record.SourcePort != 68 || record.DestinationPort != 67 || record.Length <= 0)
+                    return false;
 
-                if (!isDhcp) return false;
+                string clientKey;
+                if (!string.IsNullOrWhiteSpace(record.MacSource))
+                {
+                    if (!TryNormalizeUnicastMac(record.MacSource, out var mac)) return false;
+                    clientKey = "mac:" + mac;
+                }
+                else if (IsPrivateIp(record.Source) &&
+                         IPAddress.TryParse(record.Source, out var sourceIp) &&
+                         sourceIp.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                {
+                    clientKey = "ip:" + sourceIp;
+                }
+                else
+                {
+                    // DHCP discover packets can have 0.0.0.0 source; without a
+                    // link-layer identity they cannot be attributed safely.
+                    return false;
+                }
 
-                BoundDictionary(_dhcpActivity, 128);
-
-                var window = _cfg.DhcpWindowSeconds ?? DhcpWindowSeconds;
-                var threshold = ScaleCount(_cfg.DhcpThreshold ?? DhcpThreshold, s);
-
-                var list = _dhcpActivity.GetOrAdd("DHCP", _ => new List<DateTime>(capacity: Math.Max(threshold * 2, 64)));
+                int window = _cfg.DhcpWindowSeconds ?? DhcpWindowSeconds;
+                int threshold = ScaleCount(_cfg.DhcpThreshold ?? DhcpThreshold, s);
+                BoundDictionary(_dhcpActivity, 4096);
+                var list = _dhcpActivity.GetOrAdd(clientKey, _ => new List<DateTime>(Math.Max(threshold, 32)));
+                int count;
                 lock (list)
                 {
+                    DateTime cutoff = now.AddSeconds(-window);
+                    list.RemoveAll(ts => ts < cutoff || ts > now);
                     list.Add(now);
-                    int count = TrimAndCount(list, now, window);
-
-                    if (count >= threshold)
-                    {
-                        if (SuppressRepeat(now, "R011", NS(record.Source), record.Destination, record.DestinationPort)) return false;
-
-                        detection = new DetectionEvent
-                        {
-                            RuleId = "R011",
-                            Description = $"Suspicious DHCP activity — {count}/{window}s",
-                            SourceIp = NS(record.Source),
-                            DestinationIp = record.Destination,
-                            Protocol = NP(record.Protocol),
-                            Severity = SeverityLevel.High,
-                            Count = count,
-                            WindowSeconds = window
-                        };
-                        list.Clear();
-                        return true;
-                    }
+                    count = list.Count;
+                    if (count < threshold) return false;
+                    list.Clear(); // bounded even while the cooldown suppresses output
                 }
+
+                if (SuppressRepeat(now, "R011", clientKey, null, null)) return false;
+                detection = new DetectionEvent
+                {
+                    RuleId = "R011",
+                    Description = $"High DHCP client-request rate ({count} in {window}s); authorization and cause unknown.",
+                    SourceIp = NS(record.Source),
+                    DestinationIp = record.Destination,
+                    DestinationPort = 67,
+                    Protocol = "UDP",
+                    Severity = SeverityLevel.High,
+                    Count = count,
+                    WindowSeconds = window
+                };
+                return true;
             }
             catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] DetectDhcpAbuse error: {ex}"); }
             return false;
         }
 
-        // ===== R012 Suspicious TLS (flags surfaced in Info) =====
+        // R012: a textual certificate flag alone is not certificate evidence.
+        // Structured validity/issuer metadata is necessary, and a self-issued
+        // certificate is a trust-review candidate, not proof of interception.
         private static bool DetectSuspiciousTls(DateTime now, TrafficRecord record, out DetectionEvent detection)
         {
             detection = null!;
             try
             {
-                if (record.DestinationPort != 443) return false;
+                if (record.DestinationPort != 443 ||
+                    !string.Equals(record.Protocol, "TCP", StringComparison.OrdinalIgnoreCase) ||
+                    !IPAddress.TryParse(record.Source, out _) ||
+                    !IPAddress.TryParse(record.Destination, out _))
+                    return false;
 
-                var info = record.Info ?? string.Empty;
-                bool flagged = info.Contains("SelfSigned", StringComparison.OrdinalIgnoreCase)
-                               || info.Contains("InvalidCert", StringComparison.OrdinalIgnoreCase)
-                               || info.Contains("ExpiredCert", StringComparison.OrdinalIgnoreCase);
-                if (!flagged) return false;
+                bool expired = record.CertValidTo.HasValue &&
+                               record.CertValidTo.Value.ToUniversalTime() < now.ToUniversalTime();
+                bool notYetValid = record.CertValidFrom.HasValue &&
+                                   record.CertValidFrom.Value.ToUniversalTime() > now.ToUniversalTime();
+                bool selfIssued = !string.IsNullOrWhiteSpace(record.TlsVersion) &&
+                                  !string.IsNullOrWhiteSpace(record.CertIssuer) &&
+                                  !string.IsNullOrWhiteSpace(record.CertSubject) &&
+                                  string.Equals(record.CertIssuer.Trim(), record.CertSubject.Trim(),
+                                      StringComparison.OrdinalIgnoreCase);
+                if (!expired && !notYetValid && !selfIssued) return false;
 
-                if (SuppressRepeat(now, "R012", NS(record.Source), record.Destination, record.DestinationPort)) return false;
-
+                if (SuppressRepeat(now, "R012", NS(record.Source), record.Destination, 443)) return false;
+                string reason = expired ? "expired" : notYetValid ? "not yet valid" : "self-issued";
                 detection = new DetectionEvent
                 {
                     RuleId = "R012",
-                    Description = $"Suspicious TLS certificate observed ({ExtractTlsFlag(info)})",
+                    Description = $"TLS certificate anomaly ({reason}); trust and authorization require validation.",
                     SourceIp = NS(record.Source),
                     DestinationIp = record.Destination,
-                    DestinationPort = record.DestinationPort,
-                    Protocol = NP(record.Protocol),
+                    DestinationPort = 443,
+                    Protocol = "TCP",
                     Severity = SeverityLevel.Medium,
                     Count = 1,
                     WindowSeconds = 0
@@ -968,136 +1023,130 @@ namespace Carthago.Services
             return false;
         }
 
-        // ===== R013 Uncommon ports / Service–Port Anomaly (learner + IANA CSV) =====
+        // R013: unknown high ports are not evidence by themselves. Require a
+        // TCP initial SYN or an explicitly identified UDP service. Do not echo
+        // attacker-controlled application-service labels in alert descriptions.
         private static bool DetectUncommonPorts(DateTime now, TrafficRecord record, out DetectionEvent detection)
         {
             detection = null!;
             try
             {
-                if (!record.DestinationPort.HasValue) return false;
-                int port = record.DestinationPort.Value;
+                if (!record.DestinationPort.HasValue ||
+                    record.DestinationPort.Value is <= 1024 or > 65535 ||
+                    !IPAddress.TryParse(record.Source, out _) ||
+                    !IPAddress.TryParse(record.Destination, out _))
+                    return false;
 
-                // Fast path: only care about high ports; system ports flagged elsewhere
-                if (port <= 1024) return false;
+                int port = record.DestinationPort.Value;
                 if (_uncommonPortAllow.Contains(port)) return false;
 
-                string proto = string.IsNullOrWhiteSpace(record.Protocol)
-                    ? "TCP"
-                    : record.Protocol.Trim().ToUpperInvariant();
-
+                string proto = record.Protocol?.Trim().ToUpperInvariant() ?? "";
+                if (proto != "TCP" && proto != "UDP") return false;
                 bool isTcp = proto == "TCP";
-                bool isUdp = proto == "UDP";
-                bool isEphemeral = port >= 49152; // IANA dynamic/private range 49152–65535 :contentReference[oaicite:4]{index=4}
+                bool ephemeral = port >= 49152;
+                if (!isTcp && ephemeral) return false;
+                if (AllowListLearner.IsAllowed(port, proto, now)) return false;
 
-                // *** NEW: UDP on ephemeral dest ports is almost always client-side noise.
-                if (isUdp && isEphemeral)
+                bool tcpInitialSyn = isTcp &&
+                    (record.TcpFlags.HasValue
+                        ? (record.TcpFlags.Value & 0x16) == 0x02
+                        : Regex.IsMatch(record.Flags ?? "", @"(?i)\bSYN\b") &&
+                          !Regex.IsMatch(record.Flags ?? "", @"(?i)\b(ACK|RST|FIN)\b"));
+                bool udpService = !isTcp && record.Length > 0 &&
+                                  !string.IsNullOrWhiteSpace(record.ApplicationService);
+                if (!tcpInitialSyn && !udpService) return false;
+                if (ephemeral && string.IsNullOrWhiteSpace(record.ApplicationService))
                     return false;
 
-                // Baseline gate: if our learner says this (port,proto) is common/legit *here*, don't alert
-                if (AllowListLearner.IsAllowed(port, proto, now))
-                    return false;
-
-                // Prefer strong "new service" signal
-                bool tcpSyn = isTcp && (record.Flags?.Contains("SYN") == true);
-
-                // For UDP, require banner/service hint (to avoid noise)
-                bool udpLikelyService =
-                    !isTcp &&
-                    (!string.IsNullOrWhiteSpace(record.ApplicationService) || record.Length > 0);
-
-                if (!(tcpSyn || udpLikelyService))
-                    return false;
-
-                // Use the shared resolver so uncommon-port detection does not depend on a separate uninitialized map.
                 string standardName =
                     PortServiceResolver.TryGetServiceInfo(port, proto, out var standardInfo) &&
-                    !string.Equals(standardInfo.Source, "Heuristic", StringComparison.OrdinalIgnoreCase)
-                        ? standardInfo.Name
-                        : "unknown";
-                string? observedService = record.ApplicationService;
+                    !standardInfo.Source.StartsWith("Heuristic", StringComparison.OrdinalIgnoreCase)
+                        ? standardInfo.Name : "unknown";
+                bool unknown = string.Equals(standardName, "unknown", StringComparison.OrdinalIgnoreCase);
+                bool mismatch = !unknown &&
+                                !string.IsNullOrWhiteSpace(record.ApplicationService) &&
+                                !string.Equals(standardName.Trim(), record.ApplicationService.Trim(),
+                                    StringComparison.OrdinalIgnoreCase);
+                if (!unknown && !mismatch) return false;
 
-                bool isUnknown = string.Equals(standardName, "unknown", StringComparison.OrdinalIgnoreCase);
-                bool mismatch = !isUnknown &&
-                                !string.IsNullOrWhiteSpace(observedService) &&
-                                !string.Equals(standardName, observedService, StringComparison.OrdinalIgnoreCase);
-
-                double anomaly = 0.0;
-                var reasons = new List<string>(3);
-
-                if (isUnknown)
-                {
-                    anomaly = Math.Max(anomaly, 0.85);
-                    reasons.Add("Port not assigned/recognized in IANA registry");
-                }
-                if (mismatch)
-                {
-                    anomaly = Math.Max(anomaly, 0.75);
-                    reasons.Add($"Observed service '{observedService}' ≠ standard '{standardName}'");
-                }
-
-                // Heuristics: non-ephemeral high ports acting like servers are more suspicious
-                if (isEphemeral && !mismatch && isTcp && tcpSyn == false)
-                    anomaly = Math.Max(anomaly, 0.60);
-
+                double anomaly = unknown ? 0.85 : 0.75;
                 if (!IsPrivateIp(record.Destination))
                     anomaly = Math.Min(1.0, anomaly + 0.05);
-
-                double threshold = _cfg?.UncommonPortsAnomalyThreshold ?? UncommonPortsAnomalyThresholdDefault;
+                double threshold = _cfg.UncommonPortsAnomalyThreshold ?? UncommonPortsAnomalyThresholdDefault;
                 if (anomaly < threshold) return false;
 
-                if (SuppressRepeat(now, "R013", NS(record.Source), record.Destination, record.DestinationPort))
+                if (SuppressRepeat(now, "R013", NS(record.Source), record.Destination, port))
                     return false;
-
-                var why = reasons.Count > 0 ? $" Why: {string.Join("; ", reasons)}." : string.Empty;
-                string desc = isUnknown
-                    ? $"Uncommon/unknown service on {port}/{proto}. Standard: unknown. Anomaly={anomaly:F2}.{why}"
-                    : $"Service/port mismatch on {port}/{proto}. Standard: {standardName}, Observed: {observedService ?? "n/a"}. Anomaly={anomaly:F2}.{why}";
-
                 detection = new DetectionEvent
                 {
                     RuleId = "R013",
-                    Description = desc,
+                    Description = unknown
+                        ? $"Unrecognized service on {port}/{proto} (local registry); anomaly={anomaly:F2}."
+                        : $"Service/port classification mismatch on {port}/{proto}; anomaly={anomaly:F2}.",
                     SourceIp = NS(record.Source),
                     DestinationIp = record.Destination,
                     DestinationPort = port,
-                    Protocol = NP(record.Protocol),
-                    Severity = isUnknown
-                        ? SeverityLevel.Low
-                        : (anomaly >= 0.85 ? SeverityLevel.High : SeverityLevel.Medium),
+                    Protocol = proto,
+                    Severity = unknown ? SeverityLevel.Low :
+                        (anomaly >= 0.85 ? SeverityLevel.High : SeverityLevel.Medium),
                     Count = 1,
                     WindowSeconds = 0
                 };
                 return true;
             }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"[RuleEngine] DetectUncommonPorts error: {ex}");
-                return false;
-            }
+            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] DetectUncommonPorts error: {ex}"); }
+            return false;
         }
 
-        // ===== R014 Cleartext creds =====
-        private static readonly Regex _cleartextRegex = new(
-            @"\b(USER\s+\S+|PASS\s+\S+|AUTH\s+LOGIN|MAIL\s+FROM:|RCPT\s+TO:)\b",
-            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        // R014: SMTP envelope addresses and AUTH LOGIN negotiation are not
+        // passwords. Match a credential-bearing command only on an explicitly
+        // unencrypted service, without persisting or echoing any secret.
+        private static readonly Regex _ftpPassCommand = new(
+            @"(?im)^\s*PASS\s+\S{1,256}\s*$", RegexOptions.Compiled);
+        private static readonly Regex _smtpAuthPlainCommand = new(
+            @"(?im)^\s*AUTH\s+PLAIN\s+[A-Za-z0-9+/=]{8,}\s*$", RegexOptions.Compiled);
+        private static readonly Regex _httpBasicHeader = new(
+            @"(?im)^\s*Authorization\s*:\s*Basic\s+[A-Za-z0-9+/=]{8,}\s*$", RegexOptions.Compiled);
 
         private static bool DetectCleartextCreds(DateTime now, TrafficRecord record, out DetectionEvent detection)
         {
             detection = null!;
             try
             {
-                var info = record.Info ?? string.Empty;
-                if (!_cleartextRegex.IsMatch(info)) return false;
+                if (!IPAddress.TryParse(record.Source, out _) ||
+                    !IPAddress.TryParse(record.Destination, out _) ||
+                    record.Length <= 0 || !record.DestinationPort.HasValue ||
+                    !string.IsNullOrWhiteSpace(record.TlsVersion) ||
+                    !string.IsNullOrWhiteSpace(record.Sni) || record.IsQuic)
+                    return false;
 
-                if (SuppressRepeat(now, "R014", NS(record.Source), record.Destination, record.DestinationPort)) return false;
+                int port = record.DestinationPort.Value;
+                bool tcp = string.Equals(record.Protocol, "TCP", StringComparison.OrdinalIgnoreCase);
+                bool http = string.Equals(record.Protocol, "HTTP", StringComparison.OrdinalIgnoreCase);
+                if (!tcp && !http) return false;
 
+                string info = record.Info ?? "";
+                string headers = record.HttpRequestHeaders ?? "";
+                if (info.Length > 4096 || headers.Length > 4096) return false;
+
+                string? service = null;
+                if (tcp && port == 21 && _ftpPassCommand.IsMatch(info))
+                    service = "FTP";
+                else if (tcp && (port == 25 || port == 587) && _smtpAuthPlainCommand.IsMatch(info))
+                    service = "SMTP";
+                else if ((tcp || http) && (port == 80 || port == 8080 || port == 8000) &&
+                         _httpBasicHeader.IsMatch(headers))
+                    service = "HTTP";
+
+                if (service == null) return false;
+                if (SuppressRepeat(now, "R014", NS(record.Source), record.Destination, port)) return false;
                 detection = new DetectionEvent
                 {
                     RuleId = "R014",
-                    Description = $"Possible cleartext credentials observed (heuristic match)",
+                    Description = $"Possible cleartext credential submission on {service}; credential material not retained.",
                     SourceIp = NS(record.Source),
                     DestinationIp = record.Destination,
-                    DestinationPort = record.DestinationPort,
+                    DestinationPort = port,
                     Protocol = NP(record.Protocol),
                     Severity = SeverityLevel.Critical,
                     Count = 1,
@@ -1109,55 +1158,78 @@ namespace Carthago.Services
             return false;
         }
 
-        // ===== R015 ARP Spoofing =====
+        // R015: a single changed ARP mapping can be a legitimate lease or
+        // failover. Require two temporally distinct, header-consistent claims
+        // of the new MAC within 30s before reporting a candidate conflict.
         private static bool DetectArpSpoofing(DateTime now, TrafficRecord record, out DetectionEvent detection)
         {
             detection = null!;
             try
             {
-                if (!string.Equals(record.Protocol, "ARP", StringComparison.OrdinalIgnoreCase))
+                if (!string.Equals(record.Protocol, "ARP", StringComparison.OrdinalIgnoreCase) ||
+                    string.IsNullOrWhiteSpace(record.MacSource))
+                    return false;
+
+                string info = record.Info ?? "";
+                if (info.Length > 2048) return false;
+                var match = _arpIsAtRegex.Match(info);
+                if (!match.Success) match = _arpAlternateIsAtRegex.Match(info);
+                if (!match.Success) return false;
+
+                string ip = match.Groups["ip"].Value;
+                if (!IPAddress.TryParse(ip, out var claimedIp) ||
+                    claimedIp.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork ||
+                    !IsPrivateIp(ip) ||
+                    !TryNormalizeUnicastMac(match.Groups["mac"].Value, out var claimedMac) ||
+                    !TryNormalizeUnicastMac(record.MacSource, out var headerMac) ||
+                    claimedMac != headerMac)
+                    return false;
+
+                // Contradictory sender attribution cannot seed a trusted mapping.
+                if (IPAddress.TryParse(record.Source, out var sourceIp) &&
+                    !sourceIp.Equals(IPAddress.Any) && !sourceIp.Equals(claimedIp))
                     return false;
 
                 BoundDictionary(_arpTable, 50000);
-
-                var info = record.Info ?? string.Empty;
-
-                var m = _arpIsAtRegex.Match(info);
-                if (!m.Success) return false;
-
-                string ip = m.Groups["ip"].Value;
-                string mac = m.Groups["mac"].Value.ToUpperInvariant();
-
-                if (string.IsNullOrWhiteSpace(ip) || string.IsNullOrWhiteSpace(mac))
-                    return false;
-
-                if (!IsPrivateIp(ip)) return false;
-
-                if (_arpTable.TryGetValue(ip, out var prevMac))
+                var state = _arpTable.GetOrAdd(ip, _ => new ArpClaimState(claimedMac, now));
+                lock (state)
                 {
-                    if (!string.Equals(prevMac, mac, StringComparison.OrdinalIgnoreCase))
+                    if (now < state.LastSeen) return false;
+                    state.LastSeen = now;
+                    if (claimedMac == state.ConfirmedMac)
                     {
-                        if (SuppressRepeat(now, "R015", ip, null, null)) return false;
-
-                        detection = new DetectionEvent
-                        {
-                            RuleId = "R015",
-                            Description = $"ARP spoofing suspected: {ip} previously at {prevMac}, now claims {mac}",
-                            SourceIp = ip,
-                            Protocol = "ARP",
-                            Severity = SeverityLevel.High,
-                            Count = 1,
-                            WindowSeconds = 0
-                        };
-
-                        _arpTable[ip] = mac;
-                        return true;
+                        state.CandidateMac = null;
+                        state.CandidateCount = 0;
+                        return false;
                     }
+                    if (claimedMac != state.CandidateMac ||
+                        (now - state.CandidateSince).TotalSeconds > 30)
+                    {
+                        state.CandidateMac = claimedMac;
+                        state.CandidateCount = 1;
+                        state.CandidateSince = now;
+                        return false;
+                    }
+                    if (now <= state.CandidateSince) return false;
+                    state.CandidateCount++;
+                    if (state.CandidateCount < 2) return false;
+                    state.ConfirmedMac = claimedMac;
+                    state.CandidateMac = null;
+                    state.CandidateCount = 0;
                 }
-                else
+
+                if (SuppressRepeat(now, "R015", ip, null, null)) return false;
+                detection = new DetectionEvent
                 {
-                    _arpTable[ip] = mac;
-                }
+                    RuleId = "R015",
+                    Description = "Repeated conflicting ARP is-at claims for a private IPv4 address; verify authorized address movement.",
+                    SourceIp = ip,
+                    Protocol = "ARP",
+                    Severity = SeverityLevel.High,
+                    Count = 2,
+                    WindowSeconds = 30
+                };
+                return true;
             }
             catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] DetectArpSpoofing error: {ex}"); }
             return false;

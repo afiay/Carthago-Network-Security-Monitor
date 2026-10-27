@@ -655,11 +655,25 @@ namespace Carthago.Services
                     if (last < cutoff) _floodWindows.TryRemove(entry.Key, out _);
                 }
 
-                foreach (var ip in _arpTable.Keys.Where(ip => !_lastSeenSrc.ContainsKey(ip)).ToList())
-                    _arpTable.TryRemove(ip, out _);
+                foreach (var entry in _arpTable.ToArray())
+                {
+                    lock (entry.Value)
+                    {
+                        if (entry.Value.LastSeen < cutoff)
+                            _arpTable.TryRemove(entry.Key, out _);
+                    }
+                }
 
-                if (_dhcpActivity.TryGetValue("DHCP", out var dhcpList))
-                    TrimAndCount(dhcpList, now, _cfg.DhcpWindowSeconds ?? DhcpWindowSeconds);
+                int dhcpWindow = _cfg.DhcpWindowSeconds ?? DhcpWindowSeconds;
+                foreach (var entry in _dhcpActivity.ToArray())
+                {
+                    lock (entry.Value)
+                    {
+                        entry.Value.RemoveAll(ts => ts < now.AddSeconds(-dhcpWindow) || ts > now);
+                        if (entry.Value.Count == 0)
+                            _dhcpActivity.TryRemove(entry.Key, out _);
+                    }
+                }
 
                 // Evict old cooldown keys to cap growth
                 int cooldown = _cfg.AlertCooldownSeconds ?? AlertCooldownSecondsDefault;

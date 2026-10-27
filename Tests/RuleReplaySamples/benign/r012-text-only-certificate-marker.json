@@ -1,0 +1,18 @@
+{
+  "name": "r012-text-only-certificate-marker",
+  "records": [
+    {
+      "source": "10.12.1.1",
+      "destination": "93.184.216.34",
+      "protocol": "TCP",
+      "destinationPort": 443,
+      "tlsVersion": "TLS 1.3",
+      "info": "Documentation: ExpiredCert",
+      "length": 500
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R012"
+  ]
+}

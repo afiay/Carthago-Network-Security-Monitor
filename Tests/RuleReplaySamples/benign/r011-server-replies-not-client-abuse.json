@@ -1,0 +1,49 @@
+{
+  "name": "r011-server-replies-not-client-abuse",
+  "records": [
+    {
+      "source": "10.11.1.1",
+      "destination": "10.11.1.9",
+      "protocol": "UDP",
+      "sourcePort": 67,
+      "destinationPort": 68,
+      "macSource": "02:11:22:33:44:55",
+      "applicationService": "DHCP",
+      "length": 300
+    },
+    {
+      "source": "10.11.1.1",
+      "destination": "10.11.1.9",
+      "protocol": "UDP",
+      "sourcePort": 67,
+      "destinationPort": 68,
+      "macSource": "02:11:22:33:44:55",
+      "applicationService": "DHCP",
+      "length": 300
+    },
+    {
+      "source": "10.11.1.1",
+      "destination": "10.11.1.9",
+      "protocol": "UDP",
+      "sourcePort": 67,
+      "destinationPort": 68,
+      "macSource": "02:11:22:33:44:55",
+      "applicationService": "DHCP",
+      "length": 300
+    },
+    {
+      "source": "10.11.1.1",
+      "destination": "10.11.1.9",
+      "protocol": "UDP",
+      "sourcePort": 67,
+      "destinationPort": 68,
+      "macSource": "02:11:22:33:44:55",
+      "applicationService": "DHCP",
+      "length": 300
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R011"
+  ]
+}
