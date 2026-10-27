@@ -60,10 +60,12 @@ namespace Carthago.Engine.Rules.Expansion
         {
         }
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!HasHttpContext(record) || !HasMethod(record, "GET", "HEAD")
+            if (!HasHttpContext(record) || record.IsUdp || record.IsQuic || record.DnsQname != null || !HasMethod(record, "GET", "HEAD")
                 || !SensitiveTelemetryContracts.HasCredentialBearingMetadataRequest(record)
                 || SensitiveTelemetryContracts.IsKnownCloudMetadataAgent(record.ProcessName))
                 return NoMatch();
@@ -80,7 +82,7 @@ namespace Carthago.Engine.Rules.Expansion
             var evidenceItems = new List<DetectionEvidenceItem>
             {
                 new("matched_conditions", string.Join(",", matchedConditions), "rule"),
-                new("http.path", string.IsNullOrWhiteSpace(path) ? "/" : path, "http")
+                new("http.routeCategory", "metadata_credential", "http")
             };
             evidenceItems.AddRange(AnalystContext(
                 "A non-standard HTTP caller requested a cloud metadata credential path; this alone does not prove SSRF.",
@@ -88,6 +90,8 @@ namespace Carthago.Engine.Rules.Expansion
                 "Legitimate bootstrap agents or cloud guest tooling may query metadata. Validate the source process carefully before escalating.",
                 "Correlate inbound untrusted requests with outbound metadata access using trace or process identity, redirect chain and timing; do not infer causality from timing alone.",
                 "Confirm whether the caller is an approved agent, bootstrap task or user-facing application, and verify independent causal evidence before promotion."));
+
+            if (!_replay.Observe(record, context.TimestampUtc)) return NoMatch();
 
             return MatchHttpApi(
                 context,

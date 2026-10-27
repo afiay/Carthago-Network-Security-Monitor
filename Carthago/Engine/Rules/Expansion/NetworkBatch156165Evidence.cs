@@ -9,7 +9,7 @@ namespace Carthago.Engine.Rules.Expansion
     // R156-R165: parser-attributed HTTP only; no packet Info as proof.
     internal static class NetworkBatch156165Evidence
     {
-        internal static bool Http(TrafficRecord r) => NetworkBatch151155Evidence.HttpRequest(r);
+        internal static bool Http(TrafficRecord r) => NetworkBatch151155Evidence.HttpRequest(r) && Authority(r);
         internal static bool UriOf(TrafficRecord r, out Uri uri)
         {
             uri=null!;
@@ -100,6 +100,45 @@ namespace Carthago.Engine.Rules.Expansion
             foreach(var item in Query(r))if(Jwt(item.Value,false)){name=item.Key;return true;}
             return false;
         }
+        // A parser-provided Host cannot contradict a captured Host header.
+        internal static bool Authority(TrafficRecord r)
+        {
+            if(string.IsNullOrWhiteSpace(r.HttpHost)||r.HttpHost!.Length>255)return false;
+            var headers=r.HttpRequestHeaders;
+            if(string.IsNullOrWhiteSpace(headers))return true;
+            if(headers!.Length>8192)return false;
+            var found=false;
+            foreach(var line in headers.Split('\n'))
+            {
+                var index=line.IndexOf(':');
+                if(index<0||!line[..index].Trim().Equals("Host",StringComparison.OrdinalIgnoreCase))continue;
+                if(found||!line[(index+1)..].Trim().Equals(r.HttpHost,StringComparison.OrdinalIgnoreCase))return false;
+                found=true;
+            }
+            return true;
+        }
+        internal static bool Docker(TrafficRecord r)
+        {
+            var host=r.HttpHost??"";
+            var label=host.Split('.')[0];
+            var docker=label.Equals("docker",StringComparison.OrdinalIgnoreCase)
+                || label.StartsWith("docker-",StringComparison.OrdinalIgnoreCase);
+            return (r.DestinationPort is 2375 or 2376 || docker)
+                && NamedPath(r,"/containers/json","/containers/create","/images/json","/images/create","/version","/volumes","/networks","/swarm","/plugins");
+        }
+        internal static bool Cache(TrafficRecord r)
+        {
+            var label=(r.HttpHost??"").Split('.')[0];
+            var named=label.Equals("redis",StringComparison.OrdinalIgnoreCase)
+                || label.Equals("memcached",StringComparison.OrdinalIgnoreCase)
+                || label.StartsWith("redis-",StringComparison.OrdinalIgnoreCase)
+                || label.StartsWith("memcached-",StringComparison.OrdinalIgnoreCase);
+            return (r.DestinationPort is 6379 or 11211 || named)
+                && NamedPath(r,"/stats","/slabs","/items","/flush_all","/redis","/memcached");
+        }
+        internal static bool PhpInfo(TrafficRecord r)
+            => Path(r,out var path)&&(path.Equals("/phpinfo.php",StringComparison.OrdinalIgnoreCase)
+                || path.Equals("/phpinfo",StringComparison.OrdinalIgnoreCase));
         internal static bool Swagger(TrafficRecord r)=>NamedPath(r,"/swagger","/swagger-ui","/swagger-ui.html","/swagger.json","/openapi.json","/v3/api-docs","/v2/api-docs","/api-docs");
         internal static bool Actuator(TrafficRecord r)=>NamedPath(r,"/actuator/env","/actuator/heapdump","/actuator/jolokia","/actuator/metrics","/actuator/prometheus","/actuator/threaddump","/actuator/loggers","/actuator/beans","/actuator/mappings","/actuator/configprops","/actuator/scheduledtasks");
         internal static bool Kubernetes(TrafficRecord r)

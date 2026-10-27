@@ -56,20 +56,22 @@ namespace Carthago.Engine.Rules.Expansion
         {
         }
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!HasHttpContext(record) || !IsDockerApiProbe(record))
+            if (!NetworkBatch156165Evidence.Http(record) || !NetworkBatch156165Evidence.Docker(record))
                 return NoMatch();
 
-            if (!IsCrossBoundary(record, out _, out _))
+            if (!NetworkBatch126130Evidence.CrossBoundary(record, out _, out var inbound) || !inbound)
                 return NoMatch();
 
             var path = HttpPath(record);
             var evidenceItems = new List<DetectionEvidenceItem>
             {
                 new("matched_conditions", "docker_api_path,boundary_crossing", "rule"),
-                new("http.path", string.IsNullOrWhiteSpace(path) ? "/" : path, "http"),
+                new("http.routeCategory", "docker_daemon", "http"),
                 new("network.destinationPort", (record.DestinationPort ?? 0).ToString(System.Globalization.CultureInfo.InvariantCulture), "network")
             };
             evidenceItems.AddRange(AnalystContext(
@@ -78,6 +80,8 @@ namespace Carthago.Engine.Rules.Expansion
                 "Approved automation or container management tooling may legitimately access Docker APIs.",
                 "Confirm whether the source belongs to a sanctioned container administration workflow.",
                 "Review for follow-on container create, exec, or image pull calls from the same source."));
+
+            if (!_replay.Observe(record, context.TimestampUtc)) return NoMatch();
 
             return MatchHttpApi(
                 context,

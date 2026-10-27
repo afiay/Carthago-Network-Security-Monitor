@@ -56,20 +56,22 @@ namespace Carthago.Engine.Rules.Expansion
         {
         }
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!HasHttpContext(record) || !HasMethod(record, "GET", "HEAD") || !IsPhpInfoProbe(record))
+            if (!NetworkBatch156165Evidence.Http(record) || !HasMethod(record, "GET", "HEAD") || !NetworkBatch156165Evidence.PhpInfo(record))
                 return NoMatch();
 
-            if (!IsCrossBoundary(record, out _, out _))
+            if (!NetworkBatch126130Evidence.CrossBoundary(record, out _, out var inbound) || !inbound)
                 return NoMatch();
 
             var path = HttpPath(record);
             var evidenceItems = new List<DetectionEvidenceItem>
             {
                 new("matched_conditions", "phpinfo_path,boundary_crossing", "rule"),
-                new("http.path", string.IsNullOrWhiteSpace(path) ? "/" : path, "http")
+                new("http.routeCategory", "phpinfo", "http")
             };
             evidenceItems.AddRange(AnalystContext(
                 "A cross-boundary request targeted a phpinfo exposure path.",
@@ -77,6 +79,8 @@ namespace Carthago.Engine.Rules.Expansion
                 "Support teams may intentionally browse phpinfo during troubleshooting. Validate whether the target host is an approved maintenance target.",
                 "Confirm whether the phpinfo page should exist on the target environment.",
                 "Review for follow-on .env, .git, backup, or upload-related probes from the same source."));
+
+            if (!_replay.Observe(record, context.TimestampUtc)) return NoMatch();
 
             return MatchHttpApi(
                 context,

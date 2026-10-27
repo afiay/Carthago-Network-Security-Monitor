@@ -56,20 +56,22 @@ namespace Carthago.Engine.Rules.Expansion
         {
         }
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!HasHttpContext(record) || !IsRedisMemcachedProbe(record))
+            if (!NetworkBatch156165Evidence.Http(record) || !NetworkBatch156165Evidence.Cache(record))
                 return NoMatch();
 
-            if (!IsCrossBoundary(record, out _, out _))
+            if (!NetworkBatch126130Evidence.CrossBoundary(record, out _, out var inbound) || !inbound)
                 return NoMatch();
 
             var path = HttpPath(record);
             var evidenceItems = new List<DetectionEvidenceItem>
             {
                 new("matched_conditions", "redis_or_memcached_context,boundary_crossing", "rule"),
-                new("http.path", string.IsNullOrWhiteSpace(path) ? "/" : path, "http"),
+                new("http.routeCategory", "cache_admin", "http"),
                 new("network.destinationPort", (record.DestinationPort ?? 0).ToString(System.Globalization.CultureInfo.InvariantCulture), "network")
             };
             evidenceItems.AddRange(AnalystContext(
@@ -78,6 +80,8 @@ namespace Carthago.Engine.Rules.Expansion
                 "Approved cache administration and troubleshooting tools may query these endpoints.",
                 "Confirm whether the target cache surface is expected to be reachable from the requesting source.",
                 "Review for follow-on configuration, credential, or backup file probes from the same source."));
+
+            if (!_replay.Observe(record, context.TimestampUtc)) return NoMatch();
 
             return MatchHttpApi(
                 context,

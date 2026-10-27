@@ -56,10 +56,12 @@ namespace Carthago.Engine.Rules.Expansion
         {
         }
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!HasHttpContext(record) || !TryGetSuspiciousRedirectTarget(record, out var parameterName, out var target))
+            if (!NetworkBatch156165Evidence.Http(record) || !TryGetSuspiciousRedirectTarget(record, out var parameterName, out var target))
                 return NoMatch();
 
             var matchedConditions = new List<string> { "redirect_parameter", "suspicious_target" };
@@ -67,7 +69,7 @@ namespace Carthago.Engine.Rules.Expansion
             {
                 new("matched_conditions", string.Join(",", matchedConditions), "rule"),
                 new("query.parameter", parameterName, "http"),
-                new("redirect.target", ShortText(target), "http")
+                new("redirect.targetCategory", "suspicious_external_or_internal", "http")
             };
             evidenceItems.AddRange(AnalystContext(
                 "A redirect-style query parameter pointed to a suspicious target host or insecure absolute URL.",
@@ -75,6 +77,8 @@ namespace Carthago.Engine.Rules.Expansion
                 "Some multi-domain apps or auth brokers legitimately use redirect parameters. Validate whether the target is approved for the requesting application.",
                 "Confirm whether the redirect target belongs to an approved application domain or trust boundary.",
                 "Review adjacent token, callback, or phishing-related traffic from the same source."));
+
+            if (!_replay.Observe(record, context.TimestampUtc)) return NoMatch();
 
             return MatchHttpApi(
                 context,
