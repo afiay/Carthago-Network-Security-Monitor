@@ -53,6 +53,8 @@ namespace Carthago.Engine.Rules.IotOt
                 "negative single local upnp sample"
             });
 
+        private readonly NetworkBatch116120Window _events = new();
+
         public R116_UPnPExposureDiscoveryAbuseRule()
             : base(Rule, Profile)
         {
@@ -61,19 +63,12 @@ namespace Carthago.Engine.Rules.IotOt
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!IsUpnp(record))
-                return NoMatch();
-
-            var text = Text(record);
-            var discoveryContext = text.IndexOf("m-search", StringComparison.OrdinalIgnoreCase) >= 0
-                                   || text.IndexOf("ssdp:discover", StringComparison.OrdinalIgnoreCase) >= 0
-                                   || text.IndexOf("upnp", StringComparison.OrdinalIgnoreCase) >= 0;
-            if (!discoveryContext)
+            if (!NetworkBatch116120Evidence.SsdpDiscovery(context))
                 return NoMatch();
 
             var window = TimeSpan.FromSeconds(IntSetting(Descriptor.RuleId, "WindowSeconds", 60, 10, 3600));
             var threshold = IntSetting(Descriptor.RuleId, "Threshold", 25, 5, 5000);
-            var count = CountWindowEvents($"{Descriptor.RuleId}:{record.Source}", context.TimestampUtc, window);
+            var count = _events.Count(record.Source!, record.Id, context.TimestampUtc, window);
             var externalDestination = IsExternalAddress(record.Destination);
             if (!externalDestination && count < threshold)
                 return NoMatch();

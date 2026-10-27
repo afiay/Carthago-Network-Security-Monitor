@@ -60,17 +60,10 @@ namespace Carthago.Engine.Rules.IotOt
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!IsModbusContext(record))
+            if (!NetworkBatch116120Evidence.ModbusTcp(context))
                 return NoMatch();
 
-            var text = Text(record);
-            var writeLike = text.IndexOf("write", StringComparison.OrdinalIgnoreCase) >= 0
-                            || text.IndexOf("coil", StringComparison.OrdinalIgnoreCase) >= 0
-                            || text.IndexOf("register", StringComparison.OrdinalIgnoreCase) >= 0
-                            || text.IndexOf("function 5", StringComparison.OrdinalIgnoreCase) >= 0
-                            || text.IndexOf("function 6", StringComparison.OrdinalIgnoreCase) >= 0
-                            || text.IndexOf("function 15", StringComparison.OrdinalIgnoreCase) >= 0
-                            || text.IndexOf("function 16", StringComparison.OrdinalIgnoreCase) >= 0;
+            var writeLike = NetworkBatch116120Evidence.ModbusWrite(record.Info);
             var externalBoundary = IsExternalAddress(record.Source) || IsExternalAddress(record.Destination);
             var crossLocalSegment = IsInternalAddress(record.Source) && IsInternalAddress(record.Destination) && !SharesSame24(record.Source, record.Destination);
             if (!externalBoundary && !(crossLocalSegment && writeLike))

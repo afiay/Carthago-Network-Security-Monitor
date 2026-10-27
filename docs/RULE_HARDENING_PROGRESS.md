@@ -39,6 +39,7 @@ in the same commit as each batch's code, tests and technical assessment.
 
 | 22 | R106–R110 | **CANDIDATE — UNVERIFIED** (25 advanced xUnit cases; typed sweep, cloud transfer, dedup, URI privacy) | No build, xUnit, replay, holdout or Windows runner executed; candidate changes in this commit |
 | 23 | R111–R115 | **CANDIDATE — UNVERIFIED** (39 advanced xUnit facts; typed HTTP export/upload and MQTT protocol/action evidence; dedup and privacy) | No build, xUnit, replay, holdout or Windows runner executed; candidate source/tests/docs in this commit |
+| 24 | R116–R120 | **CANDIDATE — UNVERIFIED** (35 advanced xUnit facts; typed SSDP/Telnet/Modbus contracts, camera source evidence, duplicate-resistant bounded per-detector windows, credential transport and privacy) | No build, xUnit, replay, holdout or Windows runner executed; candidate source/tests/docs in this commit |
 
 ## CARTHAGE acceptance checkpoint — 2026-10-27 18:06
 
@@ -106,7 +107,7 @@ tests were run. The existing single Windows verification script remains
 unchanged. **CANDIDATE — UNVERIFIED**; prior 2,028/2,030 regression evidence
 is not evidence for this new batch.
 
-**Next batch to author: R116–R120.** R006–R115 is authored but remains unverified; do not treat those batches as accepted. Continue in exact ascending groups of five.
+**Next batch to author: R121–R125.** R006–R115 is authored but remains unverified; do not treat those batches as accepted. Continue in exact ascending groups of five.
 Do not mark a subsequent batch accepted until the user explicitly initiates
 the deferred consolidated Windows verification and the corresponding evidence
 is reviewed. The hourly automation must not run any tests or builds meanwhile.
@@ -249,3 +250,27 @@ under `build-verify/rule-batches/` with separate stage logs.
 
 Passing these synthetic gates does not establish independently labeled
 field precision, operational alert recall or authorization to promote rules.
+
+## R116–R120 candidate implementation — 2026-10-27
+
+Authored against remote branch HEAD `ead1471cc86052b0b5fa51d6772ea21e4ce39154` after checking the
+contiguous batch ledger and existing R111–R115 tests. The candidate includes
+five rule changes, a narrowly scoped shared evidence/window helper, an
+IoT/OT raw-Info privacy fix, one isolated test context and 35 new xUnit facts
+(7 per rule). R116/R119 now use per-instance, bounded duplicate-resistant
+observations; R117 and R120 require coherent parser-attributed protocol
+evidence, while R118 retains the existing default-credential matcher and
+86% floor with additional contradictory-transport/authority rejection.
+
+**CANDIDATE — UNVERIFIED.** No build, xUnit, development replay, frozen
+holdout, Windows runner or automated tests were executed. The single
+deferred verification entry point remains
+`scripts/verify-all-rule-batches.ps1`, unchanged. No holdout files,
+manifest hashes, replay labels, approval gates, thresholds, modes or
+confidence floors were modified.
+
+The existing v1 synthetic holdout failure (R102 4/6) is not cured by
+this batch. V2 still awaits independent captures and approval. Detector
+changes and tests require a future owner-authorized consolidated run;
+review real SSDP/Telnet/RTSP/Modbus parser mappings and any IoT/OT
+false-negative impact before acceptance. **Next batch: R121–R125.**

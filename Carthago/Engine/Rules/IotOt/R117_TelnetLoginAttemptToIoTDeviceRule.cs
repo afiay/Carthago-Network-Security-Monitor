@@ -60,14 +60,8 @@ namespace Carthago.Engine.Rules.IotOt
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!IsTelnetContext(record))
-                return NoMatch();
-
-            var text = Text(record);
-            var authContext = text.IndexOf("login:", StringComparison.OrdinalIgnoreCase) >= 0
-                              || text.IndexOf("password:", StringComparison.OrdinalIgnoreCase) >= 0
-                              || text.IndexOf("username", StringComparison.OrdinalIgnoreCase) >= 0;
-            if (!authContext || !IsLikelyIotDeviceTarget(record))
+            if (!NetworkBatch116120Evidence.TelnetAuthentication(context)
+                || !IsLikelyIotDeviceTarget(record))
                 return NoMatch();
 
             var matchedConditions = new List<string> { "telnet_context", "authentication_prompt", "device_target_context" };

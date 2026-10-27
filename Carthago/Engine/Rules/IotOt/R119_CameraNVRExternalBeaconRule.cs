@@ -52,6 +52,8 @@ namespace Carthago.Engine.Rules.IotOt
                 "negative one-off camera egress sample"
             });
 
+        private readonly NetworkBatch116120Window _events = new();
+
         public R119_CameraNVRExternalBeaconRule()
             : base(Rule, Profile)
         {
@@ -60,13 +62,14 @@ namespace Carthago.Engine.Rules.IotOt
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!IsCameraNvrContext(record) || !IsInternalAddress(record.Source) || !IsExternalAddress(record.Destination))
+            if (!NetworkBatch116120Evidence.CameraSource(context)
+                || !IsInternalAddress(record.Source) || !IsExternalAddress(record.Destination))
                 return NoMatch();
 
             var window = TimeSpan.FromSeconds(IntSetting(Descriptor.RuleId, "WindowSeconds", 900, 60, 7200));
             var threshold = IntSetting(Descriptor.RuleId, "Threshold", 5, 2, 500);
-            var count = CountWindowEvents($"{Descriptor.RuleId}:{record.Source}:{record.Destination}", context.TimestampUtc, window);
-            var directRtsp = record.SourcePort is 554 or 8554 || record.DestinationPort is 554 or 8554;
+            var count = _events.Count($"{record.Source}:{record.Destination}", record.Id, context.TimestampUtc, window);
+            var directRtsp = NetworkBatch116120Evidence.DirectRtsp(record);
             if (!directRtsp && count < threshold)
                 return NoMatch();
 

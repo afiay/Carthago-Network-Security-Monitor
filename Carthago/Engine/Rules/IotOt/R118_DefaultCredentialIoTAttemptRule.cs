@@ -61,7 +61,8 @@ namespace Carthago.Engine.Rules.IotOt
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!SensitiveTelemetryContracts.HasDefaultCredentialAuthenticationAttempt(record)
+            if (!NetworkBatch116120Evidence.CredentialTransport(context)
+                || !SensitiveTelemetryContracts.HasDefaultCredentialAuthenticationAttempt(record)
                 || !IsLikelyIotDeviceTarget(record))
                 return NoMatch();
 
