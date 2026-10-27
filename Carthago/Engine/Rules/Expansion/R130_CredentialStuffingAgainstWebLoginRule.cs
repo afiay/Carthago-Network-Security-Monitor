@@ -8,6 +8,7 @@ namespace Carthago.Engine.Rules.Expansion
 {
     public sealed class R130_CredentialStuffingAgainstWebLoginRule : IdentityAccessPrecisionDetectionRuleBase
     {
+        private readonly NetworkBatch126130Window _observations = new();
         private static readonly RuleDescriptor Rule = new(
             RuleId: "R130",
             Name: "Credential Stuffing Against Web Login",
@@ -59,27 +60,28 @@ namespace Carthago.Engine.Rules.Expansion
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!HasLoginContext(record) || !UsesCredentialSubmissionMethod(record))
+            if (!NetworkBatch126130Evidence.WebLoginSubmission(record, HttpPath(record)))
                 return NoMatch();
 
             var window = TimeSpan.FromSeconds(IntSetting(Rule.RuleId, "WindowSeconds", 300, 60, 3600));
             var threshold = IntSetting(Rule.RuleId, "Threshold", 20, 5, 500);
             var path = HttpPath(record);
-            var key = $"{Rule.RuleId}:{record.Source}:{BestHost(record)}:{path}";
-            var count = CountWindowEvents(key, context.TimestampUtc, window);
+            var key = $"{Rule.RuleId}:{record.Source}:{BestHost(record)}:web-login";
+            var identity = ExtractIdentity(record);
+            var failureContext = NetworkBatch126130Evidence.ExplicitWebFailure(record);
+            if (!failureContext && string.IsNullOrWhiteSpace(identity))
+                return NoMatch();
+            var stats = _observations.Add(key, record.Id, identity, failureContext, context.TimestampUtc, window);
+            var count = stats.Count;
             if (count < threshold)
                 return NoMatch();
-
-            var identity = ExtractIdentity(record);
-            var distinctIdentities = string.IsNullOrWhiteSpace(identity)
-                ? 0
-                : CountDistinctValues(key + ":identity", identity, context.TimestampUtc, window);
-            var failureContext = HasAuthFailureContext(record);
-            if (!failureContext && distinctIdentities < 5)
+            var distinctIdentities = stats.Distinct;
+            var failureBurst = stats.Failures >= threshold;
+            if (!failureBurst && distinctIdentities < 5)
                 return NoMatch();
 
             var matchedConditions = new List<string> { "login_submission_burst", "threshold_reached" };
-            if (failureContext) matchedConditions.Add("auth_failure_context");
+            if (failureBurst) matchedConditions.Add("auth_failure_context");
             if (distinctIdentities >= 5) matchedConditions.Add("many_identities");
 
             var evidenceItems = new List<DetectionEvidenceItem>
@@ -88,7 +90,7 @@ namespace Carthago.Engine.Rules.Expansion
                 new("count", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
                 new("window_seconds", ((int)window.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
                 new("web.distinctIdentities", distinctIdentities.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
-                new("http.path", string.IsNullOrWhiteSpace(path) ? "/" : path, "http")
+                new("http.path", "[web-login]", "rule")
             };
             evidenceItems.AddRange(AnalystContext(
                 "A web login path received a burst of credential submissions with failure context or many distinct identities.",
@@ -107,12 +109,12 @@ namespace Carthago.Engine.Rules.Expansion
                 {
                     confidence.AddEvidence(0.28, "login-submission-context");
                     confidence.AddEvidence(0.22, "threshold-reached");
-                    if (failureContext) confidence.AddEvidence(0.18, "auth-failure-context");
+                    if (failureBurst) confidence.AddEvidence(0.18, "auth-failure-context");
                     if (distinctIdentities >= 5) confidence.AddCorrelation(0.16, "many-identities");
                 },
                 count,
                 window,
-                $"{record.Source}:{BestHost(record)}:{path}");
+                $"{record.Source}:{BestHost(record)}:web-login");
         }
     }
 }

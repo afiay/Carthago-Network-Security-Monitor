@@ -59,18 +59,18 @@ namespace Carthago.Engine.Rules.Expansion
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!HasSuspiciousSamlOidcCallback(record))
+            if (!NetworkBatch126130Evidence.SuspiciousCallback(record, out var insecureRedirect))
                 return NoMatch();
 
             var path = HttpPath(record);
             var matchedConditions = new List<string> { "saml_oidc_callback", "token_or_redirect_leakage" };
-            if (ContainsAny(record.HttpUri, "redirect_uri=http://", "post_logout_redirect_uri=http://", "RelayState=http"))
+            if (insecureRedirect)
                 matchedConditions.Add("insecure_redirect");
 
             var evidenceItems = new List<DetectionEvidenceItem>
             {
                 new("matched_conditions", string.Join(",", matchedConditions), "rule"),
-                new("http.path", string.IsNullOrWhiteSpace(path) ? "/" : path, "http")
+                new("http.path", "[sso-callback]", "rule")
             };
             evidenceItems.AddRange(AnalystContext(
                 "A SAML or OIDC callback carried token-like parameters or insecure redirect material in the request URI.",
@@ -89,10 +89,10 @@ namespace Carthago.Engine.Rules.Expansion
                 {
                     confidence.AddEvidence(0.34, "callback-path");
                     confidence.AddEvidence(0.24, "token-leakage");
-                    if (ContainsAny(record.HttpUri, "redirect_uri=http://", "post_logout_redirect_uri=http://", "RelayState=http"))
+                    if (insecureRedirect)
                         confidence.AddCorrelation(0.12, "insecure-redirect");
                 },
-                cooldownKey: $"{BestHost(record)}:{path}");
+                cooldownKey: $"{BestHost(record)}:sso-callback");
         }
     }
 }

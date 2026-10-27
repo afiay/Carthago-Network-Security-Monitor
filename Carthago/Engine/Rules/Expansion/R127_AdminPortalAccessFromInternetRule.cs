@@ -59,13 +59,14 @@ namespace Carthago.Engine.Rules.Expansion
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!HasHttpContext(record))
+            if (!NetworkBatch126130Evidence.HttpRequest(record))
                 return NoMatch();
 
-            if (!IsCrossBoundary(record, out var outboundToExternal, out var inboundFromExternal))
+            if (!NetworkBatch126130Evidence.CrossBoundary(record, out var outboundToExternal, out var inboundFromExternal))
                 return NoMatch();
 
-            if (!HasAdminPortalPath(record) || IsApplianceManagementPortal(record))
+            if (!NetworkBatch126130Evidence.AdminPortal(HttpPath(record))
+                || NetworkBatch126130Evidence.AppliancePortal(record, HttpPath(record)))
                 return NoMatch();
 
             var path = HttpPath(record);
@@ -76,7 +77,7 @@ namespace Carthago.Engine.Rules.Expansion
             var evidenceItems = new List<DetectionEvidenceItem>
             {
                 new("matched_conditions", string.Join(",", matchedConditions), "rule"),
-                new("http.path", string.IsNullOrWhiteSpace(path) ? "/" : path, "http")
+                new("http.path", "[admin-route]", "rule")
             };
             evidenceItems.AddRange(AnalystContext(
                 outboundToExternal
@@ -99,7 +100,7 @@ namespace Carthago.Engine.Rules.Expansion
                     confidence.AddEvidence(0.24, "admin-portal-path");
                     confidence.AddEvidence(0.20, "boundary-crossing");
                 },
-                cooldownKey: $"{record.Source}:{BestHost(record)}:{path}");
+                cooldownKey: $"{record.Source}:{BestHost(record)}:admin-route");
         }
     }
 }

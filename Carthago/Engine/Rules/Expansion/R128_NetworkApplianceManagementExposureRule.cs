@@ -59,25 +59,25 @@ namespace Carthago.Engine.Rules.Expansion
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!HasHttpContext(record))
+            if (!NetworkBatch126130Evidence.HttpRequest(record))
                 return NoMatch();
 
-            if (!IsCrossBoundary(record, out var outboundToExternal, out var inboundFromExternal))
+            if (!NetworkBatch126130Evidence.CrossBoundary(record, out var outboundToExternal, out var inboundFromExternal))
                 return NoMatch();
 
-            if (!IsApplianceManagementPortal(record))
+            if (!NetworkBatch126130Evidence.AppliancePortal(record, HttpPath(record)))
                 return NoMatch();
 
             var path = HttpPath(record);
             var matchedConditions = new List<string> { "appliance_management_portal", "cross_boundary" };
-            if (ContainsAny(Text(record), "vpn", "sslvpn", "webvpn")) matchedConditions.Add("vpn_appliance");
+            if (NetworkBatch126130Evidence.VpnApplianceHost(record.HttpHost)) matchedConditions.Add("vpn_appliance");
             if (outboundToExternal) matchedConditions.Add("outbound_to_external");
             if (inboundFromExternal) matchedConditions.Add("inbound_from_external");
 
             var evidenceItems = new List<DetectionEvidenceItem>
             {
                 new("matched_conditions", string.Join(",", matchedConditions), "rule"),
-                new("http.path", string.IsNullOrWhiteSpace(path) ? "/" : path, "http")
+                new("http.path", "[appliance-management-route]", "rule")
             };
             evidenceItems.AddRange(AnalystContext(
                 outboundToExternal
@@ -99,9 +99,9 @@ namespace Carthago.Engine.Rules.Expansion
                     confidence.AddEvidence(0.34, "http-context");
                     confidence.AddEvidence(0.26, "appliance-management-context");
                     confidence.AddEvidence(0.18, "boundary-crossing");
-                    if (ContainsAny(Text(record), "vpn", "sslvpn", "webvpn")) confidence.AddCorrelation(0.10, "vpn-appliance");
+                    if (NetworkBatch126130Evidence.VpnApplianceHost(record.HttpHost)) confidence.AddCorrelation(0.10, "vpn-appliance");
                 },
-                cooldownKey: $"{record.Source}:{BestHost(record)}:{path}");
+                cooldownKey: $"{record.Source}:{BestHost(record)}:appliance-management-route");
         }
     }
 }

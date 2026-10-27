@@ -8,6 +8,7 @@ namespace Carthago.Engine.Rules.Expansion
 {
     public sealed class R126_ExternalSshBruteCandidateRule : IdentityAccessPrecisionDetectionRuleBase
     {
+        private readonly NetworkBatch126130Window _observations = new();
         private static readonly RuleDescriptor Rule = new(
             RuleId: "R126",
             Name: "External SSH Brute Candidate",
@@ -59,26 +60,22 @@ namespace Carthago.Engine.Rules.Expansion
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!IsSshContext(record))
+            if (!NetworkBatch126130Evidence.SshFailure(record))
                 return NoMatch();
 
-            if (!IsCrossBoundary(record, out var outboundToExternal, out var inboundFromExternal))
+            if (!NetworkBatch126130Evidence.CrossBoundary(record, out var outboundToExternal, out var inboundFromExternal))
                 return NoMatch();
 
-            if (!HasAuthFailureContext(record))
-                return NoMatch();
 
             var window = TimeSpan.FromSeconds(IntSetting(Rule.RuleId, "WindowSeconds", 120, 30, 1800));
             var threshold = IntSetting(Rule.RuleId, "Threshold", 8, 4, 200);
             var windowKey = $"{Rule.RuleId}:{record.Source}:{record.Destination}";
-            var count = CountWindowEvents(windowKey, context.TimestampUtc, window);
+            var identity = ExtractIdentity(record);
+            var stats = _observations.Add(windowKey, record.Id, identity, true, context.TimestampUtc, window);
+            var count = stats.Count;
             if (count < threshold)
                 return NoMatch();
-
-            var identity = ExtractIdentity(record);
-            var distinctUsers = string.IsNullOrWhiteSpace(identity)
-                ? 0
-                : CountDistinctValues(windowKey + ":identity", identity, context.TimestampUtc, window);
+            var distinctUsers = stats.Distinct;
 
             var matchedConditions = new List<string> { "ssh_failure_burst", "cross_boundary" };
             if (distinctUsers > 0) matchedConditions.Add("distinct_identities");
