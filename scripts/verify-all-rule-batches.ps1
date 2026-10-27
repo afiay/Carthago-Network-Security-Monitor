@@ -55,7 +55,7 @@ try {
             throw "Missing advanced test file for R$('{0:000}' -f $id)."
         }
     }
-    Write-Host ("Advanced rule coverage: R001–R{0:000}, {1} authored rule files." -f
+    Write-Host ("Advanced rule coverage: R001-R{0:000}, {1} authored rule files." -f
         $lastRule, $authored.Count)
 
     $psExe = Join-Path $PSHOME 'powershell.exe'
@@ -117,7 +117,7 @@ try {
     }
     if ($holdoutExit -ne 0) { throw "Frozen $HoldoutVersion holdout failed. Do not approve batches." }
 
-    Write-Host ("PASS: one full verification; {0} xUnit results, {1} advanced cases over R001–R{2:000}, development replay and holdout $HoldoutVersion." -f
+    Write-Host ("PASS: one full verification; {0} xUnit results, {1} advanced cases over R001-R{2:000}, development replay and holdout $HoldoutVersion." -f
         $results.Count, $advancedTotal, $lastRule)
     Write-Host 'Synthetic results are not field precision. Keep Shadow/Disabled and approval safeguards intact.'
 }
