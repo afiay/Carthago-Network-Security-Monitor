@@ -15,10 +15,11 @@ public sealed class R103AdvancedAccuracyBatchTests
     // Match the established R103 DNS positive fixture: six independent
     // A-question observations, exactly 30 seconds apart, with no unrelated
     // transport or enrichment fields. Distinct TrafficRecord IDs are essential.
+    private const string DefaultBeaconSource = "10.103.0.10";
     private static readonly DateTime Origin = new(2026, 4, 29, 15, 0, 0, DateTimeKind.Utc);
     private static RuleEvaluationContext DnsFixture(int seconds, string query,
         string type = "A", bool response = false, string? answers = null,
-        string source = "10.101.0.10")
+        string source = DefaultBeaconSource)
         => new(new TrafficRecord
         {
             Source = source, Destination = "8.8.8.8", DestinationPort = 53,
@@ -33,7 +34,7 @@ public sealed class R103AdvancedAccuracyBatchTests
            + $"MinAverageIntervalSeconds={RuleEngine.GetRuleIntSetting("R103", "MinAverageIntervalSeconds", 10, 1, 3600)}.";
 
     private readonly R103_DNSBeaconingWithStableIntervalRule _rule=new();
-    private async Task<bool> Hit(int t,string q,string source="10.103.0.10")
+    private async Task<bool> Hit(int t,string q,string source=DefaultBeaconSource)
         =>(await _rule.EvaluateAsync(DnsFixture(t,q,source:source))).Matched;
     [Fact] public async Task Six_Independent_Stable_Intervals_Produce_Beacon_Candidate()
     {
