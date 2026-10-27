@@ -31,7 +31,9 @@ in the same commit as each batch's code, tests and technical assessment.
 
 | 18 | R086–R090 | **CANDIDATE — UNVERIFIED** (35 advanced xUnit facts; bounded HTTP request-target evidence and typed upload/deserialization classification; no manufactured replay controls) | No build, xUnit, replay, holdout or Windows runner executed; candidate source/test/docs commit 10b658263de484e9a727dcb0e4eb2f0b9c2f4c1a |
 
-**Next batch to author: R091–R095.** R006–R090 is authored but remains unverified; do not treat those batches as accepted. Continue in exact ascending groups of five.
+| 19 | R091–R095 | **CANDIDATE — UNVERIFIED** (35 advanced xUnit facts; corroborated HTTP indicators and strengthened typed DNS question evidence; mature DNS precision profiles retained) | No build, xUnit, replay, holdout or Windows runner executed; candidate source/test/docs commit d9b259f1a572a4fb1228cc313c8bda855963e1b2 |
+
+**Next batch to author: R096–R100.** R006–R095 is authored but remains unverified; do not treat those batches as accepted. Continue in exact ascending groups of five.
 Do not mark a subsequent batch accepted until the user explicitly initiates
 the deferred consolidated Windows verification and the corresponding evidence
 is reviewed. The hourly automation must not run any tests or builds meanwhile.
