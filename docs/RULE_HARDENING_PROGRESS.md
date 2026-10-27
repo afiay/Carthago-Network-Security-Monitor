@@ -39,6 +39,24 @@ in the same commit as each batch's code, tests and technical assessment.
 
 | 22 | R106–R110 | **CANDIDATE — UNVERIFIED** (25 advanced xUnit cases; typed sweep, cloud transfer, dedup, URI privacy) | No build, xUnit, replay, holdout or Windows runner executed; candidate changes in this commit |
 
+## CARTHAGE acceptance checkpoint — 2026-10-27 18:06
+
+At source HEAD `6a11c049f2273b830c3093f090c973b36039556b`,
+the user ran the consolidated Windows acceptance command. Test and benchmark
+projects built successfully (four test-build warnings). Full xUnit:
+**2,004 passed, 25 failed, 0 skipped (2,029 total)**. Development replay
+reported four unsatisfied positive match expectations (R102-related and R084).
+The benchmark processed 146 labeled samples, but the replay expectation
+stage failed; the frozen holdout was **not accepted or evidenced** by that run.
+
+Subsequent repair commits correct the isolated baseline test scope, legacy
+R092/R109 test contracts, R102 duplicate-ID tests and structured DNS replay
+transport, serialize shared DNS state tests against replay resets, and extend
+bounded R084 Log4j lookup normalization with an explicit regression test.
+These repairs are **UNVERIFIED** until a fresh consolidated CARTHAGE run.
+No malicious labels, confidence floors, baseline approvals, disabled/shadow
+policy or frozen holdout identities have been relaxed.
+
 **Next batch to author: R111–R115.** R006–R110 is authored but remains unverified; do not treat those batches as accepted. Continue in exact ascending groups of five.
 Do not mark a subsequent batch accepted until the user explicitly initiates
 the deferred consolidated Windows verification and the corresponding evidence
