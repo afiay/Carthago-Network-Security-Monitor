@@ -111,7 +111,14 @@ if ($Classification -eq 'Malicious' -and
     @($records | ForEach-Object { $_.dnsQname } | Sort-Object -Unique).Count -lt 3) {
     throw 'Malicious candidate requires >=3 distinct captured QNAMEs; do not synthesize repeats.'
 }
-$dir=Join-Path $root $OutputDirectory
+# Never permit unreviewed DNS QNAME/IP captures to be written into
+# tracked corpus paths by overriding the candidate directory.
+$dir=[IO.Path]::GetFullPath((Join-Path $root $OutputDirectory))
+$privateRoot=[IO.Path]::GetFullPath((Join-Path $root 'build-verify'))
+if (-not $dir.StartsWith($privateRoot+[IO.Path]::DirectorySeparatorChar,
+                        [StringComparison]::OrdinalIgnoreCase)) {
+    throw 'Candidate output must remain under the private build-verify directory.'
+}
 New-Item -ItemType Directory -Force -Path $dir | Out-Null
 $samplePath=Join-Path $dir ($Name+'.json')
 $provenancePath=Join-Path $dir ($Name+'.provenance.json')
