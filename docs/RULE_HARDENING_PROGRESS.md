@@ -75,6 +75,25 @@ lower the six-observation default threshold or remove negative/duplicate tests.
 **Candidate — unverified** until a fresh run; all R006–R110 batches remain
 unaccepted.
 
+## R103 source-correlation correction — 2026-10-27 18:45 run
+
+At HEAD `7d51e48df6b3d8b7614b9a7621fe787da5e59684`, CARTHAGE
+restored and built both projects with zero warnings/errors. The xUnit suite
+reported **2,028 passed, 2 failed, 0 skipped (2,030 total)**. Both failures
+were in `R103AdvancedAccuracyBatchTests`, while the 146-sample development
+replay benchmark recognized 48/48 expected malicious rules and reported zero
+benign false-positive alerts. Consolidated acceptance remains **FAILED**;
+the frozen holdout is not certified by this run.
+
+Root cause of the two R103 failures: the test's `Hit(...)` method used
+source `10.103.0.10`, whereas direct `DnsFixture(...)` calls defaulted to
+`10.101.0.10`. R103 correctly partitions its six-observation windows by
+source IP, so the last sample was not part of the first five. Commit
+`4935b5630eef4c889970bfd030b9f06c0940eb6f` makes both paths
+share one source constant. Only the test fixture changed; **no detector
+logic, threshold, confidence or policy changes**. **UNVERIFIED** until the
+next fresh targeted and consolidated run.
+
 **Next batch to author: R111–R115.** R006–R110 is authored but remains unverified; do not treat those batches as accepted. Continue in exact ascending groups of five.
 Do not mark a subsequent batch accepted until the user explicitly initiates
 the deferred consolidated Windows verification and the corresponding evidence
