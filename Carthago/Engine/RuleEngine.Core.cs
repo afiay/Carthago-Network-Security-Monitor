@@ -705,15 +705,14 @@ namespace Carthago.Services
                 {
                     if (_sniJa4Drift.TryGetValue(sni, out var inner))
                     {
-                        // Drop JA4 entries not seen within TTL
-                        foreach (var kv in inner.ToList())
+                        // Drift observations are synchronized timestamp/fingerprint tuples.
+                        // Prune under the same lock used by the R037 detector.
+                        lock (inner)
                         {
-                            if (kv.Value.LastSeen < cutoff)
-                                inner.TryRemove(kv.Key, out _);
+                            inner.RemoveAll(observation => observation.Ts < cutoff);
+                            if (inner.Count == 0)
+                                _sniJa4Drift.TryRemove(sni, out _);
                         }
-
-                        if (inner.IsEmpty)
-                            _sniJa4Drift.TryRemove(sni, out _);
                     }
                 }
 
