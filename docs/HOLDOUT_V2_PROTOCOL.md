@@ -37,7 +37,14 @@ approval safeguard or Shadow/Disabled configuration has been modified.
 Public sources to examine (not imported or independently validated here):
 - https://github.com/Korving-F/dns-tunnel-dataset — controlled iodine,
   dns2tcp and dnscat2 datasets. Verify scenario and reuse rights.
-- https://wiki.wireshark.org/SampleCaptures — candidate benign DNS traces.
+- https://wiki.wireshark.org/SampleCaptures — candidate benign DNS traces;
+  check source-specific terms and captured-field suitability.
+- https://github.com/CborgesUFU/DNS-360-Dataset documents actual PCAPs,
+  but its dataset license is CC BY-NC 4.0 (non-commercial); do not
+  incorporate it into a potentially commercial Carthago dataset without
+  separately established permission. The MIT statement in the
+  Korving-F project describes DACA software; do not infer the same
+  license automatically covers each capture archive.
 - https://data.mendeley.com/datasets/v2cy9y58t7/2 — controlled DNS
   exfiltration dataset. The published download is CSV feature data, not
   a verified PCAP; it is unsuitable for this packet-attributed importer
