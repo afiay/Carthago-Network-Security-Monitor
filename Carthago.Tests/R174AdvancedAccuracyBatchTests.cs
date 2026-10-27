@@ -47,6 +47,11 @@ public sealed class R174AdvancedAccuracyBatchTests
     {
         var r=Dav();r.HttpUri="/webdav/SECRET174?token=HIDDEN174";var x=await new R174_WebdavMethodAbuseRule().EvaluateAsync(NetworkBatch166175Context.At(r));Assert.True(x.Matched);Assert.DoesNotContain(Assert.Single(x.Events).StructuredEvidence!.Items,i=>i.Value.Contains("SECRET174",StringComparison.Ordinal)||i.Value.Contains("HIDDEN174",StringComparison.Ordinal));
     }
+    [Fact] public async Task Webdav_Prefix_In_Unrelated_Path_Is_Not_Abuse()
+    {
+        var r=Dav();r.HttpUri="/webdavlike";
+        Assert.False((await new R174_WebdavMethodAbuseRule().EvaluateAsync(NetworkBatch166175Context.At(r))).Matched);
+    }
     [Fact] public void Runtime_Policy_And_Confidence_Floor_Are_Preserved()
     {
         var p=new R174_WebdavMethodAbuseRule().PrecisionProfile;

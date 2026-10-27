@@ -7,9 +7,9 @@
 | R171 | Attributed SOAP request, exact action tokens, redacted action | 9 |
 | R172 | Scanner/browser User-Agent token boundaries, contradictory header rejection, privacy | 9 |
 | R173 | Cross-origin management API preflight, requested method and sensitive header names | 9 |
-| R174 | Typed WebDAV methods, explicit deep discovery or management-path context | 9 |
+| R174 | Typed WebDAV methods, explicit deep discovery or management-path context | 10 |
 | R175 | Structured Content-Length and Transfer-Encoding consistency checks | 10 |
-| **Total** | | **46** |
+| **Total** | | **47** |
 
 Source: `Carthago/Engine/Rules/Expansion/R171_*Rule.cs` through `R175_*Rule.cs`, `NetworkBatch171175Evidence.cs` and scoped event-builder path redaction. Tests: `Carthago.Tests/R171AdvancedAccuracyBatchTests.cs` through `R175AdvancedAccuracyBatchTests.cs`, using `NetworkBatch166175Context.cs`. Tests cover positive and benign equivalents, contradictory or partial metadata, duplicate records, confidentiality and unchanged policy.
 
@@ -19,6 +19,6 @@ Known limitations: SOAP action names, User-Agent claims and CORS preflights do n
 
 Single deferred Windows verification entry point: `scripts/verify-all-rule-batches.ps1`, unchanged. No xUnit, builds, replay, benchmark, holdout, runner or CI executed. No baseline readiness, approvals, thresholds, runtime policy or frozen data changed. Frozen V1 R102 still FAILED at 4/6; V2 pending independent reviewed licensed PCAP evidence.
 
-**R166-R175 total: 91 authored advanced test facts, zero executed.**
+**R166-R175 total: 92 authored advanced test facts, zero executed.**
 
 **Next batches: R176-R180 and R181-R185.**

@@ -109,9 +109,11 @@ namespace Carthago.Engine.Rules.Expansion
             if (path.Equals("/.well-known/caldav", StringComparison.OrdinalIgnoreCase)
                 || path.Equals("/.well-known/carddav", StringComparison.OrdinalIgnoreCase))
                 return false;
-            var dav = path.StartsWith("/webdav", StringComparison.OrdinalIgnoreCase)
+            var dav = path.Equals("/webdav", StringComparison.OrdinalIgnoreCase)
+                || path.StartsWith("/webdav/", StringComparison.OrdinalIgnoreCase)
                 || path.StartsWith("/dav/", StringComparison.OrdinalIgnoreCase)
-                || path.StartsWith("/remote.php/dav", StringComparison.OrdinalIgnoreCase);
+                || path.Equals("/remote.php/dav", StringComparison.OrdinalIgnoreCase)
+                || path.StartsWith("/remote.php/dav/", StringComparison.OrdinalIgnoreCase);
             var admin = path.StartsWith("/admin/", StringComparison.OrdinalIgnoreCase);
             var deep = NetworkBatch166170Evidence.Header(r, "Depth", out var depth)
                 && depth.Equals("infinity", StringComparison.OrdinalIgnoreCase);
