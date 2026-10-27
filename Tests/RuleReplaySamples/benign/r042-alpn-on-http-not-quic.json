@@ -1,0 +1,17 @@
+{
+  "name": "r042-alpn-on-http-not-quic",
+  "records": [
+    {
+      "source": "10.42.0.2",
+      "destination": "8.8.8.8",
+      "protocol": "HTTP",
+      "destinationPort": 443,
+      "quicAlpn": "custom-quic/1",
+      "length": 230
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R42"
+  ]
+}

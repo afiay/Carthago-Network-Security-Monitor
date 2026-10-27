@@ -1,0 +1,19 @@
+{
+  "name": "r045-truncated-post-headers",
+  "records": [
+    {
+      "source": "10.45.0.2",
+      "destination": "8.8.8.8",
+      "protocol": "HTTP",
+      "destinationPort": 80,
+      "httpMethod": "POST",
+      "httpHost": "upload.example.org",
+      "httpRequestHeaders": "Host: upload.example.org\r\nUser-Agent: uploader/1\r\n",
+      "length": 200
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R45"
+  ]
+}

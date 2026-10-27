@@ -1,0 +1,19 @@
+{
+  "name": "r043-http-host-without-correlated-tls",
+  "records": [
+    {
+      "source": "10.43.0.2",
+      "destination": "8.8.8.8",
+      "protocol": "HTTP",
+      "sourcePort": 51443,
+      "destinationPort": 443,
+      "httpMethod": "GET",
+      "httpHost": "other.example.net",
+      "length": 210
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R43"
+  ]
+}

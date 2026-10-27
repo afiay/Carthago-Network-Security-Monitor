@@ -1,0 +1,19 @@
+{
+  "name": "r041-ja4-text-on-tcp-not-tls",
+  "records": [
+    {
+      "source": "10.41.0.2",
+      "destination": "8.8.8.8",
+      "protocol": "TCP",
+      "sourcePort": 50141,
+      "destinationPort": 443,
+      "ja4": "t13d1516h2_abcd1234",
+      "sni": "host.example.org",
+      "length": 220
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R41"
+  ]
+}

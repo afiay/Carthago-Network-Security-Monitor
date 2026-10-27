@@ -1,0 +1,17 @@
+{
+  "name": "r044-trace-in-info-only",
+  "records": [
+    {
+      "source": "10.44.0.2",
+      "destination": "8.8.8.8",
+      "protocol": "HTTP",
+      "destinationPort": 80,
+      "info": "TRACE / HTTP/1.1",
+      "length": 250
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R44"
+  ]
+}
