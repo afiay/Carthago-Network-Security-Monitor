@@ -774,9 +774,9 @@ public sealed class HttpApiPrecisionRuleTests
             destinationPort: 443,
             host: "soap.internal.local",
             method: "POST",
-            uri: "/soap/order",
+            uri: "/soap/order?xml=%3C!DOCTYPE%20foo%20%5B%3C!ENTITY%20xxe%20SYSTEM%20%22file:///etc/passwd%22%3E%5D%3E",
             headers: "Host: soap.internal.local\r\nContent-Type: text/xml",
-            info: "<!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]>",
+            info: "xml request with query-encoded declaration",
             service: "HTTPS",
             protocol: "HTTPS")));
 

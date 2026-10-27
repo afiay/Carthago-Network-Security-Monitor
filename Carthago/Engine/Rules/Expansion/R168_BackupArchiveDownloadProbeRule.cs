@@ -51,6 +51,8 @@ namespace Carthago.Engine.Rules.Expansion
                 "negative ordinary report archive sample"
             });
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         public R168_BackupArchiveDownloadProbeRule()
             : base(Rule, Profile)
         {
@@ -59,17 +61,18 @@ namespace Carthago.Engine.Rules.Expansion
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!HasHttpContext(record) || !HasMethod(record, "GET", "HEAD") || !IsSuspiciousBackupArchivePath(record))
+            if (!NetworkBatch166170Evidence.Http(record) || !HasMethod(record, "GET", "HEAD") || !NetworkBatch166170Evidence.Backup(record))
                 return NoMatch();
 
-            if (!IsCrossBoundary(record, out _, out _))
+            if (!NetworkBatch166170Evidence.Inbound(record))
                 return NoMatch();
 
+            if (!_replay.Observe(record, context.TimestampUtc)) return NoMatch();
             var path = HttpPath(record);
             var evidenceItems = new List<DetectionEvidenceItem>
             {
                 new("matched_conditions", "backup_archive_filename,boundary_crossing", "rule"),
-                new("http.path", string.IsNullOrWhiteSpace(path) ? "/" : path, "http")
+                new("http.path", "[REDACTED]", "http")
             };
             evidenceItems.AddRange(AnalystContext(
                 "A cross-boundary request targeted a filename that strongly resembles a database or site backup archive.",
@@ -89,7 +92,7 @@ namespace Carthago.Engine.Rules.Expansion
                     confidence.AddEvidence(0.26, "backup-archive-filename");
                     confidence.AddEvidence(0.16, "boundary-crossing");
                 },
-                cooldownKey: $"{record.Source}:{BestHost(record)}:{path}");
+                cooldownKey: $"{record.Source}:{BestHost(record)}:{NetworkBatch166170Evidence.Key(path)}");
         }
     }
 }

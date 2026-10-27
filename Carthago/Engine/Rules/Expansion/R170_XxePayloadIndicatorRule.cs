@@ -51,6 +51,8 @@ namespace Carthago.Engine.Rules.Expansion
                 "negative ordinary xml sample"
             });
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         public R170_XxePayloadIndicatorRule()
             : base(Rule, Profile)
         {
@@ -59,21 +61,22 @@ namespace Carthago.Engine.Rules.Expansion
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!HasHttpContext(record) || !HasMethod(record, "POST", "PUT", "PATCH"))
+            if (!NetworkBatch166170Evidence.Http(record) || !HasMethod(record, "POST", "PUT", "PATCH"))
                 return NoMatch();
 
-            if (!(HasXmlContentType(record) || HasSoapContext(record)) || !HasXxeIndicator(record))
+            if (!NetworkBatch166170Evidence.XxeQuery(record))
                 return NoMatch();
 
+            if (!_replay.Observe(record, context.TimestampUtc)) return NoMatch();
             var path = HttpPath(record);
             var matchedConditions = new List<string> { "xml_or_soap_context", "xxe_indicator" };
             var evidenceItems = new List<DetectionEvidenceItem>
             {
                 new("matched_conditions", string.Join(",", matchedConditions), "rule"),
-                new("http.path", string.IsNullOrWhiteSpace(path) ? "/" : path, "http")
+                new("http.path", "[REDACTED]", "http")
             };
             evidenceItems.AddRange(AnalystContext(
-                "An XML or SOAP HTTP request carried explicit XXE constructs such as DOCTYPE or ENTITY with local file retrieval semantics.",
+                "A typed XML HTTP request carried query-encoded DOCTYPE, ENTITY and SYSTEM indicators; the request body was unavailable.",
                 "Severity is High because XXE payloads can expose local files, cloud metadata, or backend network services.",
                 "Security testing tools and lab replay traffic can intentionally submit XXE payloads.",
                 "Confirm whether the target parser should ever receive arbitrary XML or SOAP content from this source.",
@@ -90,7 +93,7 @@ namespace Carthago.Engine.Rules.Expansion
                     confidence.AddEvidence(0.24, "xml-or-soap-context");
                     confidence.AddEvidence(0.30, "xxe-indicator");
                 },
-                cooldownKey: $"{record.Source}:{BestHost(record)}:{path}");
+                cooldownKey: $"{record.Source}:{BestHost(record)}:{NetworkBatch166170Evidence.Key(path)}");
         }
     }
 }

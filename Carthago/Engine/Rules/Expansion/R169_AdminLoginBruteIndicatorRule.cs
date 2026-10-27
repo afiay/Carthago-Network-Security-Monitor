@@ -51,6 +51,9 @@ namespace Carthago.Engine.Rules.Expansion
                 "negative successful admin login sample"
             });
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+        private readonly NetworkBatch126130Window _window = new();
+
         public R169_AdminLoginBruteIndicatorRule()
             : base(Rule, Profile)
         {
@@ -59,23 +62,24 @@ namespace Carthago.Engine.Rules.Expansion
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!HasHttpContext(record) || !IsAdminLoginPath(record) || !HasAuthFailureContext(record))
+            if (!NetworkBatch166170Evidence.Http(record) || !NetworkBatch166170Evidence.AdminFailure(record))
                 return NoMatch();
 
-            if (!IsCrossBoundary(record, out _, out _))
+            if (!NetworkBatch166170Evidence.Inbound(record))
                 return NoMatch();
 
             var window = TimeSpan.FromSeconds(IntSetting(Rule.RuleId, "WindowSeconds", 600, 120, 7200));
             var threshold = IntSetting(Rule.RuleId, "Threshold", 6, 3, 100);
             var path = HttpPath(record);
-            var count = CountWindowEvents($"{Rule.RuleId}:{record.Source}:{BestHost(record)}:{path}", context.TimestampUtc, window);
+            if (!_replay.Observe(record, context.TimestampUtc)) return NoMatch();
+            var count = _window.Add(Rule.RuleId + ":" + record.Source + ":" + record.Destination + ":" + record.DestinationPort + ":" + NetworkBatch166170Evidence.Key(path), record.Id, string.Empty, true, context.TimestampUtc, window).Count;
             if (count < threshold)
                 return NoMatch();
 
             var evidenceItems = new List<DetectionEvidenceItem>
             {
                 new("matched_conditions", "admin_login_path,auth_failure_context,threshold_reached", "rule"),
-                new("http.path", string.IsNullOrWhiteSpace(path) ? "/" : path, "http"),
+                new("http.path", "[REDACTED]", "http"),
                 new("count", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
                 new("window_seconds", ((int)window.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture), "rule")
             };
@@ -100,7 +104,7 @@ namespace Carthago.Engine.Rules.Expansion
                 },
                 count,
                 window,
-                $"{record.Source}:{BestHost(record)}:{path}");
+                $"{record.Source}:{BestHost(record)}:{NetworkBatch166170Evidence.Key(path)}");
         }
     }
 }

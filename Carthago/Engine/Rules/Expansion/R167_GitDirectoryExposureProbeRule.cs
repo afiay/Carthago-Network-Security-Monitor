@@ -51,6 +51,8 @@ namespace Carthago.Engine.Rules.Expansion
                 "negative repository web path sample"
             });
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         public R167_GitDirectoryExposureProbeRule()
             : base(Rule, Profile)
         {
@@ -59,17 +61,18 @@ namespace Carthago.Engine.Rules.Expansion
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!HasHttpContext(record) || !HasMethod(record, "GET", "HEAD") || !IsGitExposurePath(record))
+            if (!NetworkBatch166170Evidence.Http(record) || !HasMethod(record, "GET", "HEAD") || !NetworkBatch166170Evidence.Git(record))
                 return NoMatch();
 
-            if (!IsCrossBoundary(record, out _, out _))
+            if (!NetworkBatch166170Evidence.Inbound(record))
                 return NoMatch();
 
+            if (!_replay.Observe(record, context.TimestampUtc)) return NoMatch();
             var path = HttpPath(record);
             var evidenceItems = new List<DetectionEvidenceItem>
             {
                 new("matched_conditions", "git_internal_path,boundary_crossing", "rule"),
-                new("http.path", string.IsNullOrWhiteSpace(path) ? "/" : path, "http")
+                new("http.path", "[REDACTED]", "http")
             };
             evidenceItems.AddRange(AnalystContext(
                 "A cross-boundary request targeted exposed .git internals.",
@@ -89,7 +92,7 @@ namespace Carthago.Engine.Rules.Expansion
                     confidence.AddEvidence(0.32, "git-internal-path");
                     confidence.AddEvidence(0.18, "boundary-crossing");
                 },
-                cooldownKey: $"{record.Source}:{BestHost(record)}:{path}");
+                cooldownKey: $"{record.Source}:{BestHost(record)}:{NetworkBatch166170Evidence.Key(path)}");
         }
     }
 }
