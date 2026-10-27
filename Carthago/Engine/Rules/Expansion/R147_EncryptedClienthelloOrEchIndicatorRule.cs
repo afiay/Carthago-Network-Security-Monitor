@@ -59,32 +59,27 @@ namespace Carthago.Engine.Rules.Expansion
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!IsTls(record) || !ContainsAny(Text(record), "encrypted client hello", "encrypted_client_hello", " ech "))
+            if (!NetworkBatch141145Evidence.TlsSession(context)
+                || !NetworkBatch146152Evidence.EchSummary(record))
                 return NoMatch();
 
             var evidenceItems = new List<DetectionEvidenceItem>
             {
-                new("matched_conditions", "tls_context,ech_indicator", "rule")
+                new("matched_conditions", "attributed_tls_tcp,explicit_ech_summary", "rule")
             };
             evidenceItems.AddRange(AnalystContext(
-                "The TLS telemetry explicitly indicated ECH or Encrypted ClientHello usage.",
-                "Severity is Low because ECH is a modern privacy signal that is useful for context but not inherently malicious.",
-                "Modern browsers and privacy-preserving services can legitimately use ECH. Treat this as context unless correlated with other suspicious signals.",
-                "Review whether the source process and destination are expected to use privacy-enhancing TLS features.",
-                "Correlate with other suspicious destinations or fingerprints before escalating."));
-
-            return MatchTls(
-                context,
-                SeverityLevel.Low,
-                "ECH or Encrypted ClientHello indicator observed",
-                "EchIndicator",
-                evidenceItems,
+                "TLS/TCP telemetry reported an explicit ECH or Encrypted ClientHello summary.",
+                "Severity is Low: ECH is a privacy technology, not a malware indicator.",
+                "This adapter currently uses a bounded parser summary rather than a typed ECH extension flag.",
+                "Verify whether the sensor extracts ECH extensions from ClientHello.",
+                "Correlate with other independent signals before treating privacy features as suspicious."));
+            return MatchTls(context, SeverityLevel.Low, "ECH indicator observed in TLS summary",
+                "EchIndicator", evidenceItems,
                 confidence =>
                 {
                     confidence.AddEvidence(0.20, "tls-context");
                     confidence.AddEvidence(0.12, "ech-indicator");
-                },
-                cooldownKey: $"{BestHost(record)}:{record.Source}");
+                }, cooldownKey: NetworkBatch136140Evidence.Fingerprint($"{record.Source}:{record.Destination}:{record.DestinationPort}"));
         }
     }
 }

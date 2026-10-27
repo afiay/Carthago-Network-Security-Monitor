@@ -56,46 +56,44 @@ namespace Carthago.Engine.Rules.Expansion
         {
         }
 
+        private readonly NetworkBatch141145Window _observations = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!IsTls(record) || !HasHandshakeFailure(record))
+            // The current adapter has no typed failure-status field. Only a bounded
+            // parser summary on an otherwise attributed TLS/TCP record is considered.
+            if (!NetworkBatch141145Evidence.TlsSession(context)
+                || !NetworkBatch146152Evidence.HandshakeFailure(record))
                 return NoMatch();
 
             var window = TimeSpan.FromSeconds(IntSetting(Rule.RuleId, "WindowSeconds", 300, 60, 3600));
             var threshold = IntSetting(Rule.RuleId, "Threshold", 12, 3, 500);
-            var count = CountWindowEvents($"{Rule.RuleId}:{record.Source}:{BestHost(record)}", context.TimestampUtc, window);
-            if (count < threshold)
+            var key = $"{record.Source}:{record.Destination}:{record.DestinationPort}";
+            if (!_observations.Observe(key, record.Id, context.TimestampUtc, window, out var count)
+                || count < threshold)
                 return NoMatch();
 
             var evidenceItems = new List<DetectionEvidenceItem>
             {
-                new("matched_conditions", "tls_context,handshake_failure,threshold_reached", "rule"),
+                new("matched_conditions", "attributed_tls_tcp,handshake_failure_summary,independent_threshold", "rule"),
                 new("count", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
                 new("window_seconds", ((int)window.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture), "rule")
             };
             evidenceItems.AddRange(AnalystContext(
-                "TLS handshake failures accumulated rapidly for the same source and destination.",
-                "Severity is Medium because failure spikes can indicate scanning, interception issues, or broken certificate trust.",
-                "Certificate rollovers, proxy outages, and trust-store drift can create similar bursts. Validate whether the failures align with maintenance or outages.",
-                "Identify whether the failure spike aligns with a certificate or proxy change.",
-                "Review neighboring destinations and processes for broader TLS failures from the same source."));
-
-            return MatchTls(
-                context,
-                SeverityLevel.Medium,
-                "TLS handshake failure spike observed",
-                "TlsHandshakeFailures",
-                evidenceItems,
+                "A single source produced repeated attributed TLS handshake failure summaries for one destination socket.",
+                "Severity is Medium: failures can reflect scanning or ordinary certificate/configuration outages.",
+                "A packet summary is not an independently verified TLS alert. Investigate capture provenance before escalation.",
+                "Correlate error codes with full TLS parser events and certificate rollover schedules.",
+                "Review whether other clients are encountering the same server issue."));
+            return MatchTls(context, SeverityLevel.Medium, "TLS handshake failure burst observed",
+                "TlsHandshakeFailures", evidenceItems,
                 confidence =>
                 {
                     confidence.AddEvidence(0.26, "tls-context");
                     confidence.AddEvidence(0.18, "handshake-failure");
                     confidence.AddEvidence(0.18, "threshold-reached");
-                },
-                count,
-                window,
-                $"{record.Source}:{BestHost(record)}");
+                }, count, window, NetworkBatch136140Evidence.Fingerprint(key));
         }
     }
 }

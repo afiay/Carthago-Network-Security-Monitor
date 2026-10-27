@@ -59,35 +59,33 @@ namespace Carthago.Engine.Rules.Expansion
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            var sni = string.IsNullOrWhiteSpace(record.Sni) ? record.TlsSni : record.Sni;
-            if (!IsTls(record) || !IsIpLiteralName(sni))
+            var sni = string.IsNullOrWhiteSpace(record.TlsSni) ? record.Sni : record.TlsSni;
+            if (!NetworkBatch141145Evidence.TlsSession(context)
+                || string.IsNullOrWhiteSpace(sni)
+                || !string.IsNullOrWhiteSpace(record.Sni) && !string.IsNullOrWhiteSpace(record.TlsSni)
+                    && !string.Equals(record.Sni.Trim(), record.TlsSni.Trim(), StringComparison.OrdinalIgnoreCase)
+                || !IsIpLiteralName(sni))
                 return NoMatch();
 
-            var normalized = BestHost(record);
+            var normalized = sni.Trim();
             var evidenceItems = new List<DetectionEvidenceItem>
             {
-                new("matched_conditions", "tls_context,ip_literal_sni", "rule"),
+                new("matched_conditions", "attributed_tls_tcp,explicit_ip_literal_sni", "rule"),
                 new("tls.sni", normalized, "tls")
             };
             evidenceItems.AddRange(AnalystContext(
-                "The TLS session explicitly used an IP literal as the SNI name.",
-                "Severity is Medium because IP-literal TLS names can indicate evasive tooling, direct-to-host access, or poorly managed services.",
-                "Legacy direct-IP management and diagnostics can look similar. Validate whether the client is expected to address the service by IP.",
-                "Identify whether the destination is meant to be reached by hostname instead of raw IP.",
-                "Review whether the same source uses normal SNI names for related destinations."));
-
-            return MatchTls(
-                context,
-                SeverityLevel.Medium,
-                "IP literal used as TLS SNI",
-                "IpLiteralSni",
-                evidenceItems,
+                "The TLS parser reported an IP literal in SNI rather than a normal hostname.",
+                "Severity is Medium because direct-IP TLS naming may merit configuration review.",
+                "Diagnostics and legacy clients may legitimately use IP names in TLS.",
+                "Confirm the destination IP is expected and certificate name validation is appropriate.",
+                "Correlate with sanctioned direct-IP management."));
+            return MatchTls(context, SeverityLevel.Medium, "IP literal observed as TLS SNI",
+                "IpLiteralSni", evidenceItems,
                 confidence =>
                 {
                     confidence.AddEvidence(0.30, "tls-context");
                     confidence.AddEvidence(0.24, "ip-literal-sni");
-                },
-                cooldownKey: $"{normalized}:{record.Source}");
+                }, cooldownKey: NetworkBatch136140Evidence.Fingerprint($"{record.Source}:{normalized}"));
         }
     }
 }
