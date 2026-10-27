@@ -19,6 +19,11 @@ if ($manifest.schemaVersion -ne 2 -or $manifest.approvalState -ne 'PENDING_EXTER
 }
 $entries=@($manifest.samples | Where-Object { $_.sourceKind -eq 'external-pcap-reviewed' })
 if ($entries.Count -ne 4) { throw 'Exactly four external R102 slots must be declared.' }
+# Prevent laundering the same original frames into multiple "independent" cases.
+$globalFrameKeys=[System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+$maliciousSources=[System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+$maliciousCount=0
+$benignCount=0
 $types=@{'1'='A';'28'='AAAA';'16'='TXT';'5'='CNAME';'15'='MX';'12'='PTR';'2'='NS';'33'='SRV';'6'='SOA';'10'='NULL'}
 $fields=@('frame.number','ip.src','ip.dst','ipv6.src','ipv6.dst',
     'udp.srcport','udp.dstport','tcp.srcport','tcp.dstport','dns.qry.name','dns.qry.type')
@@ -56,6 +61,16 @@ foreach ($entry in $entries) {
     }
     $records=@($sample.records)
     $frames=@($p.frameNumbers)
+    if ($entry.classification -eq 'Malicious') {
+        $maliciousCount++
+        if (-not $maliciousSources.Add([string]$p.sourceAddress)) {
+            throw "Source audit: v2 malicious cases must use distinct captured client IPs: $name."
+        }
+        if (@($records | ForEach-Object { $_.dnsQname } | Sort-Object -Unique).Count -lt 3 -or
+            @($records | Where-Object { $_.dnsQtype -ne 'TXT' }).Count -gt 0) {
+            throw "Source audit: R102 malicious encoded-TXT case lacks three distinct captured TXT QNAMEs: $name."
+        }
+    } else { $benignCount++ }
     if ($records.Count -lt 3 -or $records.Count -ne $frames.Count -or
         $records.Count -ne [int]$p.selectedRecordCount -or
         @($frames | Sort-Object -Unique).Count -ne $frames.Count) {
@@ -66,6 +81,10 @@ foreach ($entry in $entries) {
         $frame=[int]$frames[$i]
         if ($frame -le 0 -or $expected.ContainsKey($frame)) {
             throw "Source audit: invalid frame number for $name."
+        }
+        $captureFrameKey=$hash.ToLowerInvariant()+':'+$frame
+        if (-not $globalFrameKeys.Add($captureFrameKey)) {
+            throw "Source audit: same original PCAP packet frame reused across two v2 cases: $name, frame $frame."
         }
         $expected[$frame]=$records[$i]
     }
@@ -124,5 +143,8 @@ foreach ($entry in $entries) {
     }
     Write-Host "SOURCE AUDIT PASS: $name; $($matched.Count) packet frames verified against original PCAP SHA-256."
 }
-Write-Host 'SOURCE AUDIT COMPLETE: four declared R102 candidate traces have captured transport provenance.'
+if ($maliciousCount -ne 2 -or $benignCount -ne 2) {
+    throw 'Source audit: required exactly two benign and two malicious independently attributed R102 candidates.'
+}
+Write-Host 'SOURCE AUDIT COMPLETE: two benign and two malicious R102 candidate traces have unique captured frames and explicit transport provenance.'
 Write-Host 'This verifies packet attribution only, not classification truth, privacy approval or rule accuracy.'
