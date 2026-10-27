@@ -57,55 +57,50 @@ namespace Carthago.Engine.Rules.Expansion
         {
         }
 
+        private readonly NetworkBatch141145Window _observations = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            var host = BestHost(record);
-            var fingerprint = string.IsNullOrWhiteSpace(record.Ja4) ? record.Ja3 : record.Ja4;
-            if (!IsTls(record)
-                || string.IsNullOrWhiteSpace(host)
-                || string.IsNullOrWhiteSpace(fingerprint)
-                || !IsExternalAddress(host)
+            var host = NetworkBatch141145Evidence.Sni(record);
+            var fingerprint = NetworkBatch141145Evidence.Fingerprint(record);
+            if (!NetworkBatch141145Evidence.TlsSession(context)
+                || host == null || fingerprint == null
+                || !NetworkBatch136140Evidence.ExternalDestination(record)
                 || IsLikelyBrowserProcess(record.ProcessName))
-            {
                 return NoMatch();
-            }
 
             var window = TimeSpan.FromSeconds(IntSetting(Rule.RuleId, "WindowSeconds", 900, 60, 7200));
             var threshold = IntSetting(Rule.RuleId, "Threshold", 3, 2, 50);
-            var count = CountWindowEvents($"{Rule.RuleId}:{fingerprint}:{host}", context.TimestampUtc, window);
-            if (count < threshold)
+            var key = $"{record.Source}:{fingerprint}:{host}";
+            if (!_observations.Observe(key, record.Id, context.TimestampUtc, window, out var count)
+                || count < threshold)
                 return NoMatch();
 
             var evidenceItems = new List<DetectionEvidenceItem>
             {
-                new("matched_conditions", "tls_context,external_destination,repeated_fingerprint_to_sni", "rule"),
+                new("matched_conditions", "observed_tls_tcp,external_destination,distinct_repeated_fingerprint_sni", "rule"),
                 new("count", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
                 new("window_seconds", ((int)window.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
                 new("tls.sni", host, "tls")
             };
             evidenceItems.AddRange(AnalystContext(
-                "A non-browser TLS fingerprint repeatedly connected to the same external SNI within a short window.",
-                "Severity is Medium because stable uncommon fingerprints against targeted SNIs can indicate bespoke tooling or malware C2 staging.",
-                "Custom enterprise agents and niche SaaS clients can look similar. Validate whether the process and destination are approved.",
-                "Review the process, user, and host lineage for the fingerprinted client.",
-                "Check whether the same fingerprint appears against other unusual destinations."));
+                "Distinct TLS/TCP observations from one client repeatedly used the same fingerprint and external SNI.",
+                "Severity is Medium because repeated fingerprint/SNI pairing may warrant C2 triage; rarity and first-seen status are not established by this detector.",
+                "Approved agents can maintain stable fingerprints. Confirm process ownership and endpoint authorization.",
+                "Correlate the fingerprint with baseline frequency and approved outbound services.",
+                "Inspect process lineage and independent destination reputation before escalation."));
 
-            return MatchTls(
-                context,
-                SeverityLevel.Medium,
-                "Repeated rare TLS fingerprint observed against external SNI",
-                "RareFingerprintSni",
-                evidenceItems,
+            return MatchTls(context, SeverityLevel.Medium,
+                "Repeated client TLS fingerprint observed against external SNI",
+                "RareFingerprintSni", evidenceItems,
                 confidence =>
                 {
                     confidence.AddEvidence(0.28, "tls-fingerprint");
                     confidence.AddEvidence(0.20, "external-destination");
                     confidence.AddEvidence(0.18, "threshold-reached");
-                },
-                count,
-                window,
-                $"{fingerprint}:{host}");
+                }, count, window,
+                NetworkBatch136140Evidence.Fingerprint(key));
         }
     }
 }

@@ -60,42 +60,36 @@ namespace Carthago.Engine.Rules.Expansion
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            var host = BestHost(record);
-            var subject = CertificateSubjectName(record);
-            if (!IsTls(record)
-                || !IsExternalAddress(host)
-                || string.IsNullOrWhiteSpace(subject)
+            var host = NetworkBatch141145Evidence.Sni(record);
+            if (!NetworkBatch141145Evidence.TlsSession(context)
+                || host == null || !NetworkBatch136140Evidence.ExternalDestination(record)
+                || !NetworkBatch141145Evidence.CertificateSubject(record)
                 || !SubjectMismatchsSni(record))
-            {
                 return NoMatch();
-            }
 
             var evidenceItems = new List<DetectionEvidenceItem>
             {
-                new("matched_conditions", "tls_context,external_destination,sni_subject_mismatch", "rule"),
+                new("matched_conditions", "observed_tls_tcp,external_socket,sni_subject_root_mismatch", "rule"),
                 new("tls.sni", host, "tls"),
-                new("tls.certSubject", subject, "tls")
+                new("tls.certSubject", "[REDACTED]", "tls")
             };
             evidenceItems.AddRange(AnalystContext(
-                "The external TLS SNI did not plausibly match the certificate subject.",
-                "Severity is Medium because strong name mismatches can indicate interception, misconfiguration, or suspicious infrastructure.",
-                "Load balancers, SAN-based certificates, and middleboxes can create apparent mismatches. Validate with the full certificate when possible.",
-                "Review the complete certificate chain and SAN values if available.",
-                "Check whether the destination is fronted by a proxy or CDN expected to present alternate names."));
+                "Observed TLS SNI and a supplied certificate subject belong to different apparent domain roots.",
+                "Severity is Medium: a mismatch may indicate interception or configuration drift, but absent SAN fields prevent certificate name validation.",
+                "SAN-covered certificates, proxies and intercepting devices can appear mismatched. Review actual SAN coverage.",
+                "Obtain the complete certificate and handshake attribution before escalating.",
+                "Check whether enterprise TLS interception or CDN routing is approved."));
 
-            return MatchTls(
-                context,
-                SeverityLevel.Medium,
-                "External TLS session showed strong SNI/subject mismatch",
-                "SniSubjectMismatch",
-                evidenceItems,
+            return MatchTls(context, SeverityLevel.Medium,
+                "External TLS session showed apparent SNI/subject mismatch",
+                "SniSubjectMismatch", evidenceItems,
                 confidence =>
                 {
                     confidence.AddEvidence(0.30, "tls-context");
                     confidence.AddEvidence(0.20, "external-destination");
                     confidence.AddEvidence(0.22, "sni-subject-mismatch");
-                },
-                cooldownKey: $"{host}:{subject}");
+                }, cooldownKey: NetworkBatch136140Evidence.Fingerprint(
+                    $"{record.Source}:{host}:{record.CertSubject}"));
         }
     }
 }

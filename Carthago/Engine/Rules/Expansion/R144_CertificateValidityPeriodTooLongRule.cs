@@ -60,36 +60,34 @@ namespace Carthago.Engine.Rules.Expansion
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            var host = BestHost(record);
-            var validityDays = CertificateValidityDays(record);
-            if (!IsTls(record) || !IsExternalAddress(host) || !IsValidityTooLong(record))
+            if (!NetworkBatch141145Evidence.TlsSession(context)
+                || !NetworkBatch136140Evidence.ExternalDestination(record)
+                || !NetworkBatch141145Evidence.CertificateLifetime(record, out var validityDays)
+                || validityDays < 825)
                 return NoMatch();
 
             var evidenceItems = new List<DetectionEvidenceItem>
             {
-                new("matched_conditions", "tls_context,external_destination,long_validity_certificate", "rule"),
+                new("matched_conditions", "observed_tls_tcp,external_socket,long_validity_certificate", "rule"),
                 new("tls.validityDays", Math.Round(validityDays).ToString(System.Globalization.CultureInfo.InvariantCulture), "tls")
             };
             evidenceItems.AddRange(AnalystContext(
-                "An external TLS certificate had an unusually long validity period.",
-                "Severity is Medium because very long-lived certificates can weaken revocation and key-rotation hygiene.",
-                "Legacy public services and some enterprise PKI models still use longer cert lifetimes. Validate whether the duration is an approved exception.",
-                "Identify the certificate owner and whether the long validity period is expected.",
-                "Review the same host for additional certificate hygiene issues such as issuer anomalies or subject mismatches."));
+                "A TLS certificate observed on an external socket has a validity interval exceeding the configured hygiene threshold.",
+                "Severity is Medium because exceptionally long validity intervals warrant certificate lifecycle review.",
+                "Historical certificates and enterprise PKI exceptions can have long validity periods.",
+                "Confirm certificate issuance context and whether the validity is an approved exception.",
+                "Compare the interval with current PKI lifecycle requirements."));
 
-            return MatchTls(
-                context,
-                SeverityLevel.Medium,
+            return MatchTls(context, SeverityLevel.Medium,
                 "External TLS certificate validity period unusually long",
-                "LongValidityCertificate",
-                evidenceItems,
+                "LongValidityCertificate", evidenceItems,
                 confidence =>
                 {
                     confidence.AddEvidence(0.28, "tls-context");
                     confidence.AddEvidence(0.18, "external-destination");
                     confidence.AddEvidence(0.20, "long-validity");
-                },
-                cooldownKey: $"{host}:{Math.Round(validityDays)}");
+                }, cooldownKey: NetworkBatch136140Evidence.Fingerprint(
+                    $"{record.Source}:{record.Destination}:{record.CertValidFrom:O}:{record.CertValidTo:O}"));
         }
     }
 }

@@ -57,58 +57,53 @@ namespace Carthago.Engine.Rules.Expansion
         {
         }
 
+        private readonly NetworkBatch141145Window _observations = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            var host = BestHost(record);
-            var fingerprint = string.IsNullOrWhiteSpace(record.Ja4) ? record.Ja3 : record.Ja4;
-            if (!IsTls(record)
-                || string.IsNullOrWhiteSpace(host)
-                || string.IsNullOrWhiteSpace(fingerprint)
-                || !IsExternalAddress(host)
-                || !IsShortLivedCertificate(record)
+            var host = NetworkBatch141145Evidence.Sni(record);
+            var fingerprint = NetworkBatch141145Evidence.Fingerprint(record);
+            if (!NetworkBatch141145Evidence.TlsSession(context)
+                || host == null || fingerprint == null
+                || !NetworkBatch136140Evidence.ExternalDestination(record)
+                || !NetworkBatch141145Evidence.CertificateLifetime(record, out var validityDays)
+                || validityDays > 30
                 || IsLikelyBrowserProcess(record.ProcessName))
-            {
                 return NoMatch();
-            }
 
             var window = TimeSpan.FromSeconds(IntSetting(Rule.RuleId, "WindowSeconds", 900, 60, 7200));
             var threshold = IntSetting(Rule.RuleId, "Threshold", 3, 2, 50);
-            var count = CountWindowEvents($"{Rule.RuleId}:{fingerprint}:{host}", context.TimestampUtc, window);
-            if (count < threshold)
+            // Do not combine different certificate lifetimes into one apparent repetition.
+            var key = $"{record.Source}:{fingerprint}:{host}:{record.CertValidFrom:O}:{record.CertValidTo:O}";
+            if (!_observations.Observe(key, record.Id, context.TimestampUtc, window, out var count)
+                || count < threshold)
                 return NoMatch();
 
-            var validityDays = CertificateValidityDays(record);
             var evidenceItems = new List<DetectionEvidenceItem>
             {
-                new("matched_conditions", "tls_context,external_destination,short_lived_cert,repeated_fingerprint_to_sni", "rule"),
+                new("matched_conditions", "observed_tls_tcp,external_socket,short_certificate,distinct_repeated_fingerprint_sni", "rule"),
                 new("count", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
                 new("window_seconds", ((int)window.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
                 new("tls.validityDays", Math.Round(validityDays, 1).ToString(System.Globalization.CultureInfo.InvariantCulture), "tls")
             };
             evidenceItems.AddRange(AnalystContext(
-                "A non-browser TLS fingerprint repeatedly reached the same external SNI with a very short-lived certificate.",
-                "Severity is Medium because ephemeral certificates plus stable rare client fingerprints can indicate fast-rotating infrastructure or covert channels.",
-                "Automated short-cert deployments can look similar. Validate whether the client and external SNI are part of an approved workflow.",
-                "Review the certificate rotation cadence and the owning process for the fingerprint.",
-                "Check whether the same fingerprint communicates with additional short-lived certificate hosts."));
+                "One client repeatedly presented the same fingerprint/SNI pair with the same short certificate validity interval.",
+                "Severity is Medium: this pattern warrants review, but neither new SNI nor a suspicious certificate issuer is independently established.",
+                "Short-lived certificates are common in automated authorized environments.",
+                "Verify process ownership, certificate identity and approved short-certificate automation.",
+                "Correlate with historical first-seen telemetry before classifying as new infrastructure."));
 
-            return MatchTls(
-                context,
-                SeverityLevel.Medium,
-                "Short-lived certificate repeatedly used with external SNI",
-                "ShortLivedCertSni",
-                evidenceItems,
+            return MatchTls(context, SeverityLevel.Medium,
+                "Short-lived certificate repeatedly observed with external SNI",
+                "ShortLivedCertSni", evidenceItems,
                 confidence =>
                 {
                     confidence.AddEvidence(0.26, "tls-fingerprint");
                     confidence.AddEvidence(0.18, "external-destination");
                     confidence.AddEvidence(0.18, "short-lived-certificate");
                     confidence.AddEvidence(0.12, "threshold-reached");
-                },
-                count,
-                window,
-                $"{fingerprint}:{host}");
+                }, count, window, NetworkBatch136140Evidence.Fingerprint(key));
         }
     }
 }
