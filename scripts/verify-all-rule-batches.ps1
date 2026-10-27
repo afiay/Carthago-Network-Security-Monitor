@@ -2,7 +2,9 @@
 # One deferred Windows acceptance run for every authored five-rule batch.
 # Do not invoke until the project owner explicitly declares test time.
 [CmdletBinding()]
-param()
+param(
+    [ValidateSet('v1','v2')][string]$HoldoutVersion='v1'
+)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -85,20 +87,25 @@ try {
         $advancedTotal += $cases
     }
 
-    Write-Host '=== Independent frozen synthetic holdout ==='
+    Write-Host "=== Separately pinned synthetic holdout ($HoldoutVersion) ==="
+    $holdoutScript = if ($HoldoutVersion -eq 'v2') {
+        'scripts/evaluate-holdout-v2.ps1'
+    } else {
+        'scripts/evaluate-holdout.ps1'
+    }
     $priorPreference = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
     try {
-        & $psExe -NoProfile -File 'scripts/evaluate-holdout.ps1' -NoBuild *>&1 |
+        & $psExe -NoProfile -File $holdoutScript -NoBuild *>&1 |
             Tee-Object -FilePath ($stageLogs['Frozen synthetic holdout']) | Out-Host
         $holdoutExit = $LASTEXITCODE
     } finally { $ErrorActionPreference = $priorPreference }
     if (-not (Test-Path -LiteralPath $stageLogs['Frozen synthetic holdout'] -PathType Leaf)) {
         throw 'Missing synthetic holdout output log.'
     }
-    if ($holdoutExit -ne 0) { throw 'Frozen holdout failed. Do not approve batches.' }
+    if ($holdoutExit -ne 0) { throw "Frozen $HoldoutVersion holdout failed. Do not approve batches." }
 
-    Write-Host ("PASS: one full verification; {0} xUnit results, {1} advanced cases over R001–R{2:000}, development replay and holdout." -f
+    Write-Host ("PASS: one full verification; {0} xUnit results, {1} advanced cases over R001–R{2:000}, development replay and holdout $HoldoutVersion." -f
         $results.Count, $advancedTotal, $lastRule)
     Write-Host 'Synthetic results are not field precision. Keep Shadow/Disabled and approval safeguards intact.'
 }
