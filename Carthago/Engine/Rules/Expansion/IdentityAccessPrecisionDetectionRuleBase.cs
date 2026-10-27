@@ -116,7 +116,9 @@ namespace Carthago.Engine.Rules.Expansion
                 new("identity.host", string.IsNullOrWhiteSpace(host) ? record.Destination ?? "unknown" : host, "identity-access")
             };
 
-            if (!string.IsNullOrWhiteSpace(path))
+            // R123 may carry authentication tokens in path segments. Its rule
+            // emits only a fixed, non-sensitive route category instead.
+            if (!string.IsNullOrWhiteSpace(path) && Descriptor.RuleId != "R123")
                 items.Add(new DetectionEvidenceItem("http.path", path, "http"));
             if (!string.IsNullOrWhiteSpace(record.HttpMethod))
                 items.Add(new DetectionEvidenceItem("http.method", record.HttpMethod!, "http"));

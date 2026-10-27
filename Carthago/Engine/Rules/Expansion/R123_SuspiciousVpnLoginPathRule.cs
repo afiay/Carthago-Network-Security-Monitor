@@ -62,10 +62,9 @@ namespace Carthago.Engine.Rules.Expansion
             if (!HasHttpContext(record) || !IsInternalAddress(record.Source) || !IsExternalAddress(BestHost(record)))
                 return NoMatch();
 
-            if (!HasVpnLoginPath(record))
+            if (!NetworkBatch121125Evidence.VpnPortal(record, HttpPath(record)) || !HasVpnLoginPath(record))
                 return NoMatch();
 
-            var path = HttpPath(record);
             var ssoContext = ContainsAny(Text(record), "saml", "oauth", "oidc", "idp");
             var matchedConditions = new List<string> { "external_destination", "vpn_portal_login_path" };
             if (ssoContext) matchedConditions.Add("sso_context");
@@ -73,7 +72,7 @@ namespace Carthago.Engine.Rules.Expansion
             var evidenceItems = new List<DetectionEvidenceItem>
             {
                 new("matched_conditions", string.Join(",", matchedConditions), "rule"),
-                new("http.path", string.IsNullOrWhiteSpace(path) ? "/" : path, "http")
+                new("http.path", "/vpn/login", "rule")
             };
             evidenceItems.AddRange(AnalystContext(
                 "An internal client reached an external VPN login path with explicit VPN portal indicators.",
@@ -95,7 +94,7 @@ namespace Carthago.Engine.Rules.Expansion
                     confidence.AddEvidence(0.22, "vpn-portal-login-path");
                     if (ssoContext) confidence.AddCorrelation(0.12, "sso-context");
                 },
-                cooldownKey: $"{record.Source}:{BestHost(record)}:{path}");
+                cooldownKey: $"{record.Source}:{BestHost(record)}");
         }
     }
 }

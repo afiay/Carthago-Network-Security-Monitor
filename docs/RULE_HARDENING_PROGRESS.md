@@ -350,3 +350,18 @@ this batch. V2 still awaits independent captures and approval. Detector
 changes and tests require a future owner-authorized consolidated run;
 review real SSDP/Telnet/RTSP/Modbus parser mappings and any IoT/OT
 false-negative impact before acceptance. **Next batch: R121–R125.**
+
+## R121–R125 candidate implementation — 2026-10-27
+
+Authored against exact remote HEAD `85996ab87dc83863922ffb9de1f23ad86c2467a8` after confirming the
+R116–R120 ledger and absence of R121–R125 advanced files. Five rule
+implementations, one shared protocol-evidence contract, two narrow evidence
+privacy changes, five new advanced test classes and one isolated fixture
+were prepared. **35 xUnit facts authored; 0 executed.**
+
+**CANDIDATE — UNVERIFIED.** The single Windows entry point discovers
+R121–R125 automatically and remains unchanged. No builds, tests, replay,
+holdout or runner were invoked. No confidence floors, approval policy,
+thresholds, frozen inputs or labels were changed. The R102 frozen v1
+holdout remains failed, v2 pending. See `docs/RULE_BATCH_121-125.md`.
+**Next contiguous batch: R126–R130.**

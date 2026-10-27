@@ -62,22 +62,14 @@ namespace Carthago.Engine.Rules.IotOt
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!IsBacnetContext(record))
+            if (!NetworkBatch121125Evidence.BacnetDiscovery(context))
                 return NoMatch();
 
-            var text = Text(record);
-            var discoveryContext = text.IndexOf("who-is", StringComparison.OrdinalIgnoreCase) >= 0
-                                   || text.IndexOf("whois", StringComparison.OrdinalIgnoreCase) >= 0
-                                   || text.IndexOf("discover", StringComparison.OrdinalIgnoreCase) >= 0
-                                   || IsMulticastOrBroadcast(record.Destination);
-            var iamOnly = !discoveryContext
-                          && (text.IndexOf("i-am", StringComparison.OrdinalIgnoreCase) >= 0
-                              || text.IndexOf("iam", StringComparison.OrdinalIgnoreCase) >= 0);
-            if (!discoveryContext || iamOnly)
-                return NoMatch();
+            // Transport, BACnet parser attribution and a bounded Who-Is action
+            // have already been verified; broadcast alone is not discovery.
 
             var externalBoundary = IsExternalAddress(record.Source) || IsExternalAddress(record.Destination);
-            var adminLike = IsLikelyBacnetAdminProcess(record.ProcessName, record.Info);
+            var adminLike = IsLikelyBacnetAdminProcess(record.ProcessName, null);
             if (!externalBoundary && adminLike)
                 return NoMatch();
 

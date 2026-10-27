@@ -9,6 +9,7 @@ namespace Carthago.Engine.Rules.IotOt
 {
     public sealed class R122_CoAPZigbeeGatewaySuspiciousEgressRule : IotOtPrecisionDetectionRuleBase
     {
+        private readonly NetworkBatch116120Window _observations = new();
         private static readonly RuleDescriptor Rule = new(
             RuleId: "R122",
             Name: "CoAP / Zigbee Gateway Suspicious Egress",
@@ -60,17 +61,16 @@ namespace Carthago.Engine.Rules.IotOt
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!IsCoapZigbeeContext(record) || !IsInternalAddress(record.Source) || !IsExternalAddress(record.Destination))
+            if (!IsInternalAddress(record.Source) || !IsExternalAddress(record.Destination)
+                || !NetworkBatch121125Evidence.CoapOrGateway(context, out var directCoap, out var gatewayContext))
                 return NoMatch();
 
-            var text = Text(record);
             var window = TimeSpan.FromSeconds(IntSetting(Descriptor.RuleId, "WindowSeconds", 600, 60, 3600));
             var threshold = IntSetting(Descriptor.RuleId, "Threshold", 3, 2, 500);
-            var count = CountWindowEvents($"{Descriptor.RuleId}:{record.Source}:{record.Destination}", context.TimestampUtc, window);
-            var gatewayContext = text.IndexOf("gateway", StringComparison.OrdinalIgnoreCase) >= 0
-                                 || text.IndexOf("zigbee2mqtt", StringComparison.OrdinalIgnoreCase) >= 0
-                                 || text.IndexOf("zigbee", StringComparison.OrdinalIgnoreCase) >= 0;
-            var directCoap = record.SourcePort is 5683 or 5684 || record.DestinationPort is 5683 or 5684;
+            // Only validated observations enter the bounded, instance-owned
+            // window; replays of the same packet identity cannot raise count.
+            var count = _observations.Count($"{record.Source}:{record.Destination}",
+                record.Id, context.TimestampUtc, window);
             if (!gatewayContext && !directCoap && count < threshold)
                 return NoMatch();
 

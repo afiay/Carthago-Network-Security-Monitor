@@ -59,7 +59,7 @@ namespace Carthago.Engine.Rules.Expansion
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!IsRdpContext(record))
+            if (!NetworkBatch121125Evidence.Rdp(record))
                 return NoMatch();
 
             if (!IsCrossBoundary(record, out var outboundToExternal, out var inboundFromExternal))

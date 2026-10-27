@@ -84,9 +84,9 @@ namespace Carthago.Engine.Rules.IotOt
             if (!string.IsNullOrWhiteSpace(record.ProcessName))
                 items.Add(new DetectionEvidenceItem("process.name", record.ProcessName!, "process"));
             // IoT/OT Info may contain credentials, device identifiers, RTSP URLs or
-            // private discovery payloads. For R113-R120 never persist raw Info
+            // private discovery payloads. For R113-R122 never persist raw Info
             // in either legacy or structured evidence, including shadow events.
-            if (Descriptor.RuleId is not ("R113" or "R114" or "R115" or "R116" or "R117" or "R118" or "R119" or "R120")
+            if (Descriptor.RuleId is not ("R113" or "R114" or "R115" or "R116" or "R117" or "R118" or "R119" or "R120" or "R121" or "R122")
                 && !string.IsNullOrWhiteSpace(record.Info))
                 items.Add(new DetectionEvidenceItem("iot.info", ShortText(record.Info!, 220), "iot-ot"));
 
