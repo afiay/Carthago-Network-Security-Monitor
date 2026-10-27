@@ -168,6 +168,42 @@ retroactively make this v1 evaluation pass. Until an evidence-valid
 holdout passes, no new batch is promoted on the strength of the
 green regression alone.
 
+## Separately versioned R102 holdout v2 — candidate infrastructure, 2026-10-27
+
+After CARTHAGE passed 2,030/2,030 regression tests and 48/48
+development replay recognitions, frozen v1 holdout remained FAILED (4/6)
+because two R102 positive cases lacked parser-attributed UDP/TCP evidence.
+The v1 corpus and its manifest remain unchanged and failed.
+
+New opt-in **v2 candidate infrastructure**, with no new capture files
+fabricated or evaluated:
+
+- docs/holdout-evaluation-v2-manifest.json: twelve separately specified
+  cases. Eight original R118/R163 synthetic cases are reused by their
+  immutable v1 Git blob SHA; four R102 entries are deliberately
+  PENDING_EXTERNAL_CAPTURE_AND_REVIEW.
+- scripts/import-holdout-v2-r102.ps1: TShark import from an externally
+  obtained PCAP, requiring explicit port-53 UDP/TCP decode, packet frames,
+  source attribution, dataset license and independent analyst label rationale;
+  outputs only under build-verify until reviewed.
+- scripts/freeze-holdout-v2.ps1: explicit local freeze after review,
+  restricted to four candidate R102 cases and provenance, pinning hashes.
+- scripts/evaluate-holdout-v2.ps1: **fail-closed until frozen**; validates
+  every pinned fixture, provenance and transport contract before replay,
+  then enforces 6/6 malicious recognition, 0 benign alerts and profile
+  accounting.
+- scripts/verify-all-rule-batches.ps1: new optional
+  -HoldoutVersion v2 switch, with v1 deliberately remaining the default.
+- docs/HOLDOUT_V2_PROTOCOL.md: source, privacy, label, evidence and
+  manual acceptance procedure.
+
+This is a **CANDIDATE — UNVERIFIED / AWAITING REAL CAPTURES**, not a
+passing v2 evaluation, independently labeled field dataset or authorization
+to change production rules. The hourly rule-development automation remains
+bound by its separate no-tests/no-builds instruction. No tests or Windows
+runner were executed by this work. The original v1 evaluation remains failed
+regardless of any future v2 outcome.
+
 ## Deferred one-run acceptance
 
 When the user says it is test time, freeze the branch head, then run on Windows:
