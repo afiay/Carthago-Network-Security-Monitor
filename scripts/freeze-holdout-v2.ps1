@@ -24,8 +24,28 @@ try {
         throw 'V2 manifest is not in an unfrozen candidate state.'
     }
     $pending=@($manifest.samples | Where-Object { $_.sourceKind -eq 'external-pcap-reviewed' })
-    if ($pending.Count -ne 4 -or @($manifest.samples).Count -ne 12) {
+    $reused=@($manifest.samples | Where-Object { $_.sourceKind -eq 'pinned-v1-synthetic' })
+    if ($pending.Count -ne 4 -or $reused.Count -ne 8 -or @($manifest.samples).Count -ne 12) {
         throw 'Expected precisely four new R102 candidate fixtures and eight preserved v1 samples.'
+    }
+    # Reject an altered v1 or incorrect v2 reference before copying new files.
+    $original=Get-Content -LiteralPath 'docs/holdout-evaluation-manifest.json' -Raw | ConvertFrom-Json
+    $oldHashes=@{}
+    foreach ($originalEntry in $original.samples) {
+        $oldHashes[[string]$originalEntry.file]=[string]$originalEntry.gitBlobSha
+    }
+    foreach ($entry in $reused) {
+        $relative=[string]$entry.file
+        if ($entry.primaryRule -eq 'R102' -or
+            -not $oldHashes.ContainsKey($relative) -or
+            [string]$entry.gitBlobSha -ne $oldHashes[$relative] -or
+            -not (Test-Path -LiteralPath $relative -PathType Leaf)) {
+            throw "V2 cannot freeze against modified or missing v1 fixture: $relative"
+        }
+        $actual=(& git hash-object "--path=$relative" -- "$relative" | Select-Object -Last 1).Trim()
+        if ($LASTEXITCODE -ne 0 -or $actual -ne [string]$entry.gitBlobSha) {
+            throw "V2 original v1 fixture hash mismatch: $relative"
+        }
     }
     # Re-decode all four original PCAPs and compare exact packet fields
     # against candidate JSON before *any* frozen repository file is written.
