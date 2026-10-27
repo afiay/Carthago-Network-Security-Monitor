@@ -127,6 +127,47 @@ is reviewed. The hourly automation must not run any tests or builds meanwhile.
 7. Label all unexecuted work **CANDIDATE — UNVERIFIED**. No synthetic scores
    or production-quality claims without fresh verification evidence.
 
+## CARTHAGE full verification — 2026-10-27 19:02
+
+The user-run consolidated transcript
+`build-verify/rule-batches/all-rule-batches-2026-10-27_19-02-08.txt`
+covered **R001–R110** (110 authored advanced rule files). Test and benchmark
+restores/builds passed, with **zero build warnings and errors in that run**.
+Full xUnit **2,030/2,030 passed; 0 skipped**. The 146-sample development
+replay passed, recognizing **48/48** labeled malicious rule expectations
+with no benign critical alerts. These results verify the R001–R110
+regression and development replay stages for that local snapshot; they
+**do not** verify any subsequently authored R111–R115 candidate changes
+and do **not** establish production precision.
+
+The separate pinned synthetic holdout **FAILED**: detector recognition
+**4/6**, expected **6/6**, with no benign simulated alerts. Both missed
+positives belong to **R102**:
+`holdout-r102-multistage-encoded-txt` and
+`holdout-r102-second-client-encoded-txt`. Each reported no match
+and confidence 0.00 (required floor 0.75). The cause is a **frozen
+fixture telemetry/schema gap**, not evidence justifying a weaker rule:
+all six records in these two scenarios explicitly declare
+`protocol: "DNS"`, `applicationProtocol: "DNS"`, `dnsQtype: "TXT"`,
+and `destinationPort: 53`, but **none contains an explicit
+`isUdp: true` or `isTcp: true` transport assertion**.
+`NetworkBatch096100Evidence.Dns` deliberately requires an attributed
+UDP or TCP transport and fails closed for records missing both flags;
+`R102` therefore cannot match. The prior development DNS fixtures
+were corrected to carry explicit transport attribution. Both affected
+holdout JSON blob SHAs still match their frozen manifest entries.
+
+**Disposition: consolidated acceptance NOT COMPLETE.** Do not relax
+production transport validation, manufacture absent transport evidence
+during holdout replay, reduce confidence floors, or silently edit
+pinned holdout labels/data/hashes. Keep v1 immutable and retain the
+failed result. If a new holdout is commissioned, it needs a separately
+approved, newly frozen version with independently sourced **typed**
+DNS transport evidence and its own manifest; that would **not**
+retroactively make this v1 evaluation pass. Until an evidence-valid
+holdout passes, no new batch is promoted on the strength of the
+green regression alone.
+
 ## Deferred one-run acceptance
 
 When the user says it is test time, freeze the branch head, then run on Windows:
