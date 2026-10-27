@@ -1,0 +1,17 @@
+{
+  "name": "r018-host-present-not-hostless",
+  "records": [
+    {
+      "source": "10.18.0.2",
+      "destination": "8.8.8.8",
+      "destinationPort": 8080,
+      "protocol": "HTTP",
+      "length": 150,
+      "info": "GET /health HTTP/1.1\r\nHost: example.net\r\n\r\n"
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R018"
+  ]
+}

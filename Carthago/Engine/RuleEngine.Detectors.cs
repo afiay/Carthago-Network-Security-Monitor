@@ -145,7 +145,7 @@ namespace Carthago.Services
         };
 
         // ===== New per-rule state (R017–R022, already present) =====
-        private static readonly ConcurrentDictionary<(string Src, int Port), ConcurrentDictionary<string, DateTime>> _hostSweeps = new(); // R017
+        private static readonly ConcurrentDictionary<(string Src, int Port, string Protocol), ConcurrentDictionary<string, DateTime>> _hostSweeps = new(); // R017
         private static readonly Regex _b64Like = new(@"[A-Za-z0-9+/_-]{80,}={0,2}", RegexOptions.Compiled); // R019
         private static readonly ConcurrentDictionary<string, List<DateTime>> _icmpTimes = new(StringComparer.Ordinal); // R021
         private static readonly ConcurrentDictionary<string, List<(DateTime ts, int bytes)>> _icmpWindow = new(StringComparer.Ordinal); // R021 per-source samples for windowed ICMP analysis
@@ -165,6 +165,29 @@ namespace Carthago.Services
         // ===== HTTP header parsing aids =====
         private static readonly Regex _httpHostHeaderRx =
             new(@"(?im)^\s*Host\s*:\s*\S+", RegexOptions.Compiled);
+
+        private static readonly Regex _httpRequestLineRx = new(
+            @"\A(?<method>GET|POST|PUT|DELETE|HEAD|PATCH|OPTIONS)\s+(?<uri>\S+)\s+HTTP/1\.(?<minor>[01])\r?\n",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        private static readonly Regex _httpAuthorityHeaderRx = new(
+            @"(?im)^\s*:authority\s*:\s*\S+", RegexOptions.Compiled);
+
+        private static bool TryObservedHttpRequestLine(string? info, out string method, out string uri, out bool http11)
+        {
+            method = uri = string.Empty;
+            http11 = false;
+            if (string.IsNullOrWhiteSpace(info) || info.Length > 65536) return false;
+            var match = _httpRequestLineRx.Match(info);
+            if (!match.Success) return false;
+            method = match.Groups["method"].Value.ToUpperInvariant();
+            uri = match.Groups["uri"].Value;
+            http11 = match.Groups["minor"].Value == "1";
+            return true;
+        }
+
+        private static bool IsRecognizedHttpMethod(string? method)
+            => method != null && Regex.IsMatch(method, @"\A(GET|POST|PUT|DELETE|HEAD|PATCH|OPTIONS)\z",
+                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
         // ===== Extra regex helpers for R040–R049 =====
         private static readonly Regex _httpHostCaptureRx =
@@ -1241,32 +1264,47 @@ namespace Carthago.Services
             detection = null!;
             try
             {
-                if (!record.ReputationScore.HasValue) return false;
+                if (!IPAddress.TryParse(record.Source, out _) ||
+                    !IsPublicLegacyEgressIp(record.Destination) ||
+                    record.ReputationScore is not int score || score is < 0 or > 100 ||
+                    record.ReputationIsMalicious == false ||
+                    (record.ReputationReports.HasValue && record.ReputationReports.Value <= 0))
+                    return false;
+
+                // An explicit enrichment timestamp must be plausible and fresh.
+                // Missing optional enrichment metadata preserves legacy score-only detection.
+                if (record.ReputationLastSeen is DateTime lastSeen &&
+                    (lastSeen.ToUniversalTime() > now.ToUniversalTime().AddMinutes(5) ||
+                     lastSeen.ToUniversalTime() < now.ToUniversalTime().AddDays(-30)))
+                    return false;
+
                 int cutoff = s.AbuseIpdbThreshold();
+                if (score < cutoff) return false;
+                string src = record.Source!.Trim(), dst = record.Destination!.Trim();
+                if (SuppressRepeat(now, "R016", src, dst, record.DestinationPort)) return false;
 
-                if (record.ReputationScore.Value >= cutoff)
+                detection = new DetectionEvent
                 {
-                    if (SuppressRepeat(now, "R016", NS(record.Source), record.Destination, record.DestinationPort)) return false;
+                    RuleId = "R016",
+                    Description = $"AbuseIPDB destination reputation score {score} ≥ {cutoff} (enrichment requires review)",
+                    SourceIp = src,
+                    DestinationIp = dst,
+                    DestinationPort = record.DestinationPort,
+                    Protocol = NP(record.Protocol),
+                    Severity = score >= 90 ? SeverityLevel.Critical : SeverityLevel.High,
+                    Count = score,
+                    WindowSeconds = 0
+                };
 
-                    detection = new DetectionEvent
-                    {
-                        RuleId = "R016",
-                        Description = $"AbuseIPDB score {record.ReputationScore} ≥ {cutoff}",
-                        SourceIp = NS(record.Source),
-                        DestinationIp = record.Destination,
-                        DestinationPort = record.DestinationPort,
-                        Protocol = NP(record.Protocol),
-                        Severity = record.ReputationScore.Value >= 90 ? SeverityLevel.Critical : SeverityLevel.High,
-                        Count = record.ReputationScore.Value,
-                        WindowSeconds = 0
-                    };
+                // A score alone must not poison the service learner.
+                if (record.ReputationIsMalicious == true &&
+                    record.ReputationReports.GetValueOrDefault() > 0 &&
+                    record.DestinationPort is int port && port is >= 1 and <= 65535 &&
+                    (string.Equals(record.Protocol, "TCP", StringComparison.OrdinalIgnoreCase) ||
+                     string.Equals(record.Protocol, "UDP", StringComparison.OrdinalIgnoreCase)))
+                    AllowListLearner.MarkBad(port, record.Protocol!, now, "reputation");
 
-                    // Penalize service to resist poisoning
-                    if (record.DestinationPort is int p && !string.IsNullOrWhiteSpace(record.Protocol))
-                        AllowListLearner.MarkBad(p, record.Protocol, now, "reputation");
-
-                    return true;
-                }
+                return true;
             }
             catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] DetectReputation error: {ex}"); }
             return false;
@@ -1278,37 +1316,58 @@ namespace Carthago.Services
             det = null!;
             try
             {
+                if (!IPAddress.TryParse(record.Source, out var sourceIp) ||
+                    !IPAddress.TryParse(record.Destination, out var destinationIp) ||
+                    !IsPrivateIp(record.Source) || !IsPrivateIp(record.Destination) ||
+                    sourceIp.Equals(destinationIp) ||
+                    record.DestinationPort is not int dport || dport is < 1 or > 65535 ||
+                    record.Length <= 0)
+                    return false;
+
+                bool tcp = string.Equals(record.Protocol, "TCP", StringComparison.OrdinalIgnoreCase);
+                bool udp = string.Equals(record.Protocol, "UDP", StringComparison.OrdinalIgnoreCase);
+                if (!tcp && !udp) return false;
+                if (tcp && !(record.TcpFlags.HasValue
+                    ? (record.TcpFlags.Value & 0x16) == 0x02
+                    : Regex.IsMatch(record.Flags ?? "", @"(?i)\bSYN\b") &&
+                      !Regex.IsMatch(record.Flags ?? "", @"(?i)\b(ACK|RST|FIN)\b")))
+                    return false;
+
                 BoundDictionary(_hostSweeps, 10000);
-
-                if (record.Source is not { Length: > 0 } src || record.DestinationPort is not int dport) return false;
-                if (string.IsNullOrWhiteSpace(record.Destination) || !IsPrivateIp(record.Destination)) return false;
-
-                var window = _cfg.HostSweepWindowSeconds ?? HostSweepWindowSeconds;
-                var threshold = ScaleCount(_cfg.HostSweepDistinctHostsThreshold ?? HostSweepDistinctHostsThreshold, s);
-
-                var map = _hostSweeps.GetOrAdd((src, dport), _ => new ConcurrentDictionary<string, DateTime>());
-                map[record.Destination] = now;
-
-                var cutoff = now.AddSeconds(-window);
-                foreach (var k in map.Where(kv => kv.Value < cutoff).Select(kv => kv.Key).ToList())
-                    map.TryRemove(k, out _);
-
-                int uniq = map.Count;
-                if (uniq >= threshold)
+                string src = sourceIp.ToString(), dst = destinationIp.ToString();
+                string protocol = tcp ? "TCP" : "UDP";
+                int window = _cfg.HostSweepWindowSeconds ?? HostSweepWindowSeconds;
+                int threshold = ScaleCount(_cfg.HostSweepDistinctHostsThreshold ?? HostSweepDistinctHostsThreshold, s);
+                var key = (Src: src, Port: dport, Protocol: protocol);
+                var map = _hostSweeps.GetOrAdd(key, _ => new ConcurrentDictionary<string, DateTime>());
+                lock (map)
                 {
+                    DateTime cutoff = now.AddSeconds(-window);
+                    foreach (var old in map.Where(kv => kv.Value < cutoff || kv.Value > now).Select(kv => kv.Key).ToArray())
+                        map.TryRemove(old, out _);
+                    map.AddOrUpdate(dst, now, (_, previous) => previous > now ? previous : now);
+
+                    // Bounded per-key memory even when a configured threshold is very high.
+                    int cap = Math.Max(256, Math.Min(8192, threshold * 2));
+                    if (map.Count > cap)
+                        foreach (var old in map.OrderBy(kv => kv.Value).Take(map.Count - cap).Select(kv => kv.Key).ToArray())
+                            map.TryRemove(old, out _);
+
+                    int uniq = map.Count;
+                    if (uniq < threshold) return false;
+                    map.Clear(); // Suppression must not allow unlimited accumulation.
                     if (SuppressRepeat(now, "R017", src, null, dport)) return false;
                     det = new DetectionEvent
                     {
                         RuleId = "R017",
-                        Description = $"Likely internal host sweep from {src} on port {dport} ({uniq} hosts/{window}s)",
+                        Description = $"Internal same-port host sweep candidate ({uniq} hosts/{window}s)",
                         SourceIp = src,
                         DestinationPort = dport,
-                        Protocol = NP(record.Protocol),
+                        Protocol = protocol,
                         Severity = SeverityLevel.High,
                         Count = uniq,
                         WindowSeconds = window
                     };
-                    map.Clear();
                     return true;
                 }
             }
@@ -1322,29 +1381,48 @@ namespace Carthago.Services
             det = null!;
             try
             {
-                var info = r.Info ?? string.Empty;
-                bool looksHttp = string.Equals(r.Protocol, "HTTP", StringComparison.OrdinalIgnoreCase)
-                                 || (r.HttpMethod is not null)
-                                 || info.Contains("HTTP/1.", StringComparison.OrdinalIgnoreCase)
-                                 || info.StartsWith("GET ", StringComparison.OrdinalIgnoreCase)
-                                 || info.StartsWith("POST ", StringComparison.OrdinalIgnoreCase)
-                                 || info.StartsWith("HEAD ", StringComparison.OrdinalIgnoreCase)
-                                 || info.StartsWith("PUT ", StringComparison.OrdinalIgnoreCase)
-                                 || info.StartsWith("DELETE ", StringComparison.OrdinalIgnoreCase);
+                if (!IPAddress.TryParse(r.Source, out _) ||
+                    !IPAddress.TryParse(r.Destination, out _) ||
+                    r.DestinationPort is not int port || port is < 1 or > 65535 ||
+                    r.Length <= 0 || r.IsQuic ||
+                    !string.IsNullOrWhiteSpace(r.TlsVersion) ||
+                    !string.IsNullOrWhiteSpace(r.Sni) ||
+                    !(string.Equals(r.Protocol, "HTTP", StringComparison.OrdinalIgnoreCase) ||
+                      string.Equals(r.Protocol, "TCP", StringComparison.OrdinalIgnoreCase)))
+                    return false;
 
-                if (!looksHttp) return false;
-                if (string.IsNullOrWhiteSpace(r.Destination) || !IPAddress.TryParse(r.Destination, out _)) return false;
-                if (_httpHostHeaderRx.IsMatch(info)) return false;
+                bool raw = TryObservedHttpRequestLine(r.Info, out string rawMethod, out string rawUri, out bool http11);
+                bool structured = IsRecognizedHttpMethod(r.HttpMethod) &&
+                                  !string.IsNullOrWhiteSpace(r.HttpUri) &&
+                                  r.HttpRequestHeaders != null;
+                if (!raw && !structured) return false;
+                if (raw && !http11) return false; // HTTP/1.0 legitimately omits Host.
+                if (raw && !(r.Info!.Contains("\r\n\r\n", StringComparison.Ordinal) ||
+                             r.Info.Contains("\n\n", StringComparison.Ordinal)) &&
+                    !structured) return false; // Partial capture cannot prove absence.
+                if (raw && !string.IsNullOrWhiteSpace(r.HttpMethod) &&
+                    !string.Equals(r.HttpMethod, rawMethod, StringComparison.OrdinalIgnoreCase))
+                    return false;
+                if (raw && !string.IsNullOrWhiteSpace(r.HttpUri) &&
+                    !string.Equals(r.HttpUri, rawUri, StringComparison.Ordinal))
+                    return false;
+                if (!string.IsNullOrWhiteSpace(r.HttpHost) ||
+                    _httpHostHeaderRx.IsMatch(r.Info ?? "") ||
+                    _httpHostHeaderRx.IsMatch(r.HttpRequestHeaders ?? "") ||
+                    _httpAuthorityHeaderRx.IsMatch(r.Info ?? "") ||
+                    _httpAuthorityHeaderRx.IsMatch(r.HttpRequestHeaders ?? ""))
+                    return false;
 
-                if (SuppressRepeat(now, "R018", NS(r.Source), r.Destination, r.DestinationPort)) return false;
+                string src = r.Source!.Trim(), dst = r.Destination!.Trim();
+                if (SuppressRepeat(now, "R018", src, dst, port)) return false;
                 det = new DetectionEvent
                 {
                     RuleId = "R018",
-                    Description = "HTTP request to IP literal without Host header",
-                    SourceIp = NS(r.Source),
-                    DestinationIp = r.Destination,
-                    DestinationPort = r.DestinationPort,
-                    Protocol = NP(r.Protocol),
+                    Description = "Observed HTTP/1.1 request to IP literal with no Host header (review candidate)",
+                    SourceIp = src,
+                    DestinationIp = dst,
+                    DestinationPort = port,
+                    Protocol = "HTTP",
                     Severity = SeverityLevel.Medium,
                     Count = 1
                 };
@@ -1360,38 +1438,47 @@ namespace Carthago.Services
             det = null!;
             try
             {
-                var info = r.Info ?? string.Empty;
-                bool looksHttp = string.Equals(r.Protocol, "HTTP", StringComparison.OrdinalIgnoreCase)
-                                 || (r.HttpMethod is not null)
-                                 || info.Contains("HTTP/1.", StringComparison.OrdinalIgnoreCase);
-                if (!looksHttp) return false;
+                if (!IPAddress.TryParse(r.Source, out _) ||
+                    !IPAddress.TryParse(r.Destination, out _) ||
+                    r.DestinationPort is not int port || port is < 1 or > 65535 ||
+                    r.Length <= 0 || r.IsQuic ||
+                    !string.IsNullOrWhiteSpace(r.TlsVersion) ||
+                    !string.IsNullOrWhiteSpace(r.Sni) ||
+                    !(string.Equals(r.Protocol, "HTTP", StringComparison.OrdinalIgnoreCase) ||
+                      string.Equals(r.Protocol, "TCP", StringComparison.OrdinalIgnoreCase)))
+                    return false;
 
-                var firstLine = info.Split('\n').FirstOrDefault() ?? string.Empty;
-                var parts = firstLine.Split(' ');
-                var uri = parts.Length >= 2 ? parts[1] : string.Empty;
-                if (uri.Length == 0) return false;
+                bool raw = TryObservedHttpRequestLine(r.Info, out string rawMethod, out string rawUri, out _);
+                bool structured = IsRecognizedHttpMethod(r.HttpMethod) && !string.IsNullOrWhiteSpace(r.HttpUri);
+                if (!raw && !structured) return false;
+                if (raw && structured &&
+                    (!string.Equals(rawMethod, r.HttpMethod, StringComparison.OrdinalIgnoreCase) ||
+                     !string.Equals(rawUri, r.HttpUri, StringComparison.Ordinal)))
+                    return false;
+                string uri = structured ? r.HttpUri! : rawUri;
+                if (uri.Length == 0 || uri.Length > 65536) return false;
 
                 int lenThresh = ScaleCount(_cfg.HttpUriLenThreshold ?? HttpUriLenThreshold, s);
                 int chunkThresh = ScaleCount(_cfg.HttpUriChunkLenThreshold ?? HttpUriChunkLenThreshold, s);
                 double entThresh = ScaleFloat(_cfg.HttpUriEntropyThreshold ?? HttpUriEntropyThreshold, s);
-
                 bool tooLong = uri.Length >= lenThresh;
                 bool hasChunk = false;
-                foreach (Match m in _b64Like.Matches(uri))
-                {
-                    if (m.Length >= chunkThresh && ShannonEntropy(m.Value) >= entThresh) { hasChunk = true; break; }
-                }
-                if (!(tooLong || hasChunk)) return false;
+                if (!tooLong)
+                    foreach (Match match in _b64Like.Matches(uri))
+                        if (match.Length >= chunkThresh && ShannonEntropy(match.Value) >= entThresh)
+                        { hasChunk = true; break; }
+                if (!tooLong && !hasChunk) return false;
 
-                if (SuppressRepeat(now, "R019", NS(r.Source), r.Destination, r.DestinationPort)) return false;
+                string src = r.Source!.Trim(), dst = r.Destination!.Trim();
+                if (SuppressRepeat(now, "R019", src, dst, port)) return false;
                 det = new DetectionEvent
                 {
                     RuleId = "R019",
-                    Description = $"Suspicious HTTP URI (len={uri.Length}{(hasChunk ? ", high-entropy chunk" : "")})",
-                    SourceIp = NS(r.Source),
-                    DestinationIp = r.Destination,
-                    DestinationPort = r.DestinationPort,
-                    Protocol = NP(r.Protocol),
+                    Description = $"Suspicious observed HTTP URI (length={uri.Length}{(hasChunk ? ", high-entropy chunk" : "")}); review context",
+                    SourceIp = src,
+                    DestinationIp = dst,
+                    DestinationPort = port,
+                    Protocol = "HTTP",
                     Severity = tooLong ? SeverityLevel.High : SeverityLevel.Medium,
                     Count = uri.Length
                 };
@@ -1407,21 +1494,34 @@ namespace Carthago.Services
             det = null!;
             try
             {
-                if (r.DestinationPort != 25 || IsPrivateIp(r.Destination)) return false;
-
-                var allow = _cfg.SmtpAllowedSources ?? new List<string>();
-                if (!string.IsNullOrEmpty(r.Source) && allow.Exists(x => string.Equals(x, r.Source, StringComparison.OrdinalIgnoreCase)))
+                if (!IPAddress.TryParse(r.Source, out var srcIp) ||
+                    !IsPrivateIp(r.Source) || !IsPublicLegacyEgressIp(r.Destination) ||
+                    !string.Equals(r.Protocol, "TCP", StringComparison.OrdinalIgnoreCase) ||
+                    r.DestinationPort != 25 || r.Length <= 0)
                     return false;
 
-                if (SuppressRepeat(now, "R020", NS(r.Source), r.Destination, r.DestinationPort)) return false;
+                bool initialSyn = r.TcpFlags.HasValue
+                    ? (r.TcpFlags.Value & 0x16) == 0x02
+                    : Regex.IsMatch(r.Flags ?? "", @"(?i)\bSYN\b") &&
+                      !Regex.IsMatch(r.Flags ?? "", @"(?i)\b(ACK|RST|FIN)\b");
+                bool observedSmtp = string.Equals(r.ApplicationService, "SMTP", StringComparison.OrdinalIgnoreCase) ||
+                                    string.Equals(r.ApplicationProtocol, "SMTP", StringComparison.OrdinalIgnoreCase);
+                if (!initialSyn && !observedSmtp) return false;
+
+                string src = srcIp.ToString(), dst = IPAddress.Parse(r.Destination!).ToString();
+                var allow = _cfg.SmtpAllowedSources ?? new List<string>();
+                if (allow.Any(entry => IPAddress.TryParse(entry, out var allowedIp) && allowedIp.Equals(srcIp)))
+                    return false;
+
+                if (SuppressRepeat(now, "R020", src, dst, 25)) return false;
                 det = new DetectionEvent
                 {
                     RuleId = "R020",
-                    Description = "Direct outbound SMTP (port 25) to Internet from non-allowed source",
-                    SourceIp = NS(r.Source),
-                    DestinationIp = r.Destination,
+                    Description = "Direct outbound SMTP (port 25) to public Internet from unapproved private source",
+                    SourceIp = src,
+                    DestinationIp = dst,
                     DestinationPort = 25,
-                    Protocol = NP(r.Protocol),
+                    Protocol = "TCP",
                     Severity = SeverityLevel.High,
                     Count = 1
                 };

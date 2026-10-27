@@ -1,0 +1,105 @@
+{
+  "name": "r017-ack-only-not-host-sweep",
+  "records": [
+    {
+      "source": "10.17.0.2",
+      "destination": "10.17.1.10",
+      "destinationPort": 445,
+      "protocol": "TCP",
+      "flags": "ACK",
+      "length": 64
+    },
+    {
+      "source": "10.17.0.2",
+      "destination": "10.17.1.11",
+      "destinationPort": 445,
+      "protocol": "TCP",
+      "flags": "ACK",
+      "length": 64
+    },
+    {
+      "source": "10.17.0.2",
+      "destination": "10.17.1.12",
+      "destinationPort": 445,
+      "protocol": "TCP",
+      "flags": "ACK",
+      "length": 64
+    },
+    {
+      "source": "10.17.0.2",
+      "destination": "10.17.1.13",
+      "destinationPort": 445,
+      "protocol": "TCP",
+      "flags": "ACK",
+      "length": 64
+    },
+    {
+      "source": "10.17.0.2",
+      "destination": "10.17.1.14",
+      "destinationPort": 445,
+      "protocol": "TCP",
+      "flags": "ACK",
+      "length": 64
+    },
+    {
+      "source": "10.17.0.2",
+      "destination": "10.17.1.15",
+      "destinationPort": 445,
+      "protocol": "TCP",
+      "flags": "ACK",
+      "length": 64
+    },
+    {
+      "source": "10.17.0.2",
+      "destination": "10.17.1.16",
+      "destinationPort": 445,
+      "protocol": "TCP",
+      "flags": "ACK",
+      "length": 64
+    },
+    {
+      "source": "10.17.0.2",
+      "destination": "10.17.1.17",
+      "destinationPort": 445,
+      "protocol": "TCP",
+      "flags": "ACK",
+      "length": 64
+    },
+    {
+      "source": "10.17.0.2",
+      "destination": "10.17.1.18",
+      "destinationPort": 445,
+      "protocol": "TCP",
+      "flags": "ACK",
+      "length": 64
+    },
+    {
+      "source": "10.17.0.2",
+      "destination": "10.17.1.19",
+      "destinationPort": 445,
+      "protocol": "TCP",
+      "flags": "ACK",
+      "length": 64
+    },
+    {
+      "source": "10.17.0.2",
+      "destination": "10.17.1.20",
+      "destinationPort": 445,
+      "protocol": "TCP",
+      "flags": "ACK",
+      "length": 64
+    },
+    {
+      "source": "10.17.0.2",
+      "destination": "10.17.1.21",
+      "destinationPort": 445,
+      "protocol": "TCP",
+      "flags": "ACK",
+      "length": 64
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R017"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "r016-contradictory-benign-reputation",
+  "records": [
+    {
+      "source": "10.16.0.2",
+      "destination": "8.8.8.8",
+      "destinationPort": 443,
+      "protocol": "TCP",
+      "length": 120,
+      "reputationScore": 95,
+      "reputationIsMalicious": false,
+      "reputationReports": 8
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R016"
+  ]
+}

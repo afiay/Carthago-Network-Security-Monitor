@@ -1,0 +1,17 @@
+{
+  "name": "r020-udp-port25-not-smtp-egress",
+  "records": [
+    {
+      "source": "10.20.0.2",
+      "destination": "8.8.8.8",
+      "destinationPort": 25,
+      "protocol": "UDP",
+      "length": 64,
+      "info": "SMTP mention in diagnostic text"
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R020"
+  ]
+}
