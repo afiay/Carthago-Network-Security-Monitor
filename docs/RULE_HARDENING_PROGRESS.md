@@ -464,3 +464,25 @@ See `docs/RULE_BATCH_146-150.md`.
 Windows runner used; R102 frozen V1 remains FAILED 4/6 and V2 pending
 independent PCAP. Same branch, no extra branches or automation resume.
 **Next contiguous batch: R151-R155.**
+
+## R151-R155 candidate implementation - 2026-10-27
+
+Completed the second half of the user-requested **10-rule manual
+continuation**, R146-R155 inclusive, without restarting the paused
+automation. Added typed HTTP/2 ALPN, source-isolated deduplicated ASN
+fan-out, explicit GraphQL GET introspection parameter matching, bounded
+deduplicated GraphQL batch POST counters and distinct REST API path
+enumeration with endpoint isolation. Scoped R153-R155 HTTP path redaction
+in the shared event builder. **40 xUnit facts authored, none executed**.
+Source commit `3faabf8577416865bd934077764b8d8d428cb540`;
+test commit `05ccac85e793126dd8ae69dae9cb405e1cc11049`.
+See `docs/RULE_BATCH_151-155.md`.
+
+**MANUAL R146-R155 TOTAL: 10 consecutive rules, 80 authored advanced
+test facts, all UNVERIFIED.** No builds, tests, benchmark, replay, holdout,
+Windows runner or CI invoked. No thresholds, confidence floors, Shadow
+or Alert policies, asset approvals, baseline gates or frozen holdout
+samples modified. Frozen V1 R102 failure remains 4/6; V2 independent
+capture review pending. Same branch throughout.
+
+**Next contiguous batch: R156-R160. Automation remains PAUSED.**
