@@ -307,7 +307,8 @@ public sealed class CloudSaasPrecisionRuleTests
             process: "powershell.exe")));
 
         var evt = AssertSingleEvent(result, "R109", SeverityLevel.High, 0.72);
-        AssertEvidence(evt, "host.classifier", "http.uri", "matched_conditions");
+        AssertEvidence(evt, "host.classifier", "matched_conditions");
+        Assert.DoesNotContain(evt.StructuredEvidence!.Items, item => item.Key == "http.uri");
     }
 
     [Fact]
