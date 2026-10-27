@@ -1,0 +1,209 @@
+{
+  "name": "r006-simulated-tunnel-burst",
+  "records": [
+    {
+      "source": "10.206.99.1",
+      "destination": "1.1.1.1",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "dnsQname": "cdn0.example.invalid",
+      "dnsQtype": "A",
+      "dnsIsResponse": false,
+      "length": 90
+    },
+    {
+      "source": "10.206.99.1",
+      "destination": "1.1.1.1",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "dnsQname": "cdn1.example.invalid",
+      "dnsQtype": "A",
+      "dnsIsResponse": false,
+      "length": 90
+    },
+    {
+      "source": "10.206.99.1",
+      "destination": "1.1.1.1",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "dnsQname": "cdn2.example.invalid",
+      "dnsQtype": "A",
+      "dnsIsResponse": false,
+      "length": 90
+    },
+    {
+      "source": "10.206.99.1",
+      "destination": "1.1.1.1",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "dnsQname": "cdn3.example.invalid",
+      "dnsQtype": "A",
+      "dnsIsResponse": false,
+      "length": 90
+    },
+    {
+      "source": "10.206.99.1",
+      "destination": "1.1.1.1",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "dnsQname": "cdn4.example.invalid",
+      "dnsQtype": "A",
+      "dnsIsResponse": false,
+      "length": 90
+    },
+    {
+      "source": "10.206.99.1",
+      "destination": "1.1.1.1",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "dnsQname": "cdn5.example.invalid",
+      "dnsQtype": "A",
+      "dnsIsResponse": false,
+      "length": 90
+    },
+    {
+      "source": "10.206.99.1",
+      "destination": "1.1.1.1",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "dnsQname": "cdn6.example.invalid",
+      "dnsQtype": "A",
+      "dnsIsResponse": false,
+      "length": 90
+    },
+    {
+      "source": "10.206.99.1",
+      "destination": "1.1.1.1",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "dnsQname": "cdn7.example.invalid",
+      "dnsQtype": "A",
+      "dnsIsResponse": false,
+      "length": 90
+    },
+    {
+      "source": "10.206.99.1",
+      "destination": "1.1.1.1",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "dnsQname": "cdn8.example.invalid",
+      "dnsQtype": "A",
+      "dnsIsResponse": false,
+      "length": 90
+    },
+    {
+      "source": "10.206.99.1",
+      "destination": "1.1.1.1",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "dnsQname": "cdn9.example.invalid",
+      "dnsQtype": "A",
+      "dnsIsResponse": false,
+      "length": 90
+    },
+    {
+      "source": "10.206.99.1",
+      "destination": "1.1.1.1",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "dnsQname": "cdn10.example.invalid",
+      "dnsQtype": "A",
+      "dnsIsResponse": false,
+      "length": 90
+    },
+    {
+      "source": "10.206.99.1",
+      "destination": "1.1.1.1",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "dnsQname": "cdn11.example.invalid",
+      "dnsQtype": "A",
+      "dnsIsResponse": false,
+      "length": 90
+    },
+    {
+      "source": "10.206.99.1",
+      "destination": "1.1.1.1",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "dnsQname": "cdn12.example.invalid",
+      "dnsQtype": "A",
+      "dnsIsResponse": false,
+      "length": 90
+    },
+    {
+      "source": "10.206.99.1",
+      "destination": "1.1.1.1",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "dnsQname": "cdn13.example.invalid",
+      "dnsQtype": "A",
+      "dnsIsResponse": false,
+      "length": 90
+    },
+    {
+      "source": "10.206.99.1",
+      "destination": "1.1.1.1",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "dnsQname": "cdn14.example.invalid",
+      "dnsQtype": "A",
+      "dnsIsResponse": false,
+      "length": 90
+    },
+    {
+      "source": "10.206.99.1",
+      "destination": "1.1.1.1",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "dnsQname": "cdn15.example.invalid",
+      "dnsQtype": "A",
+      "dnsIsResponse": false,
+      "length": 90
+    },
+    {
+      "source": "10.206.99.1",
+      "destination": "1.1.1.1",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "dnsQname": "cdn16.example.invalid",
+      "dnsQtype": "A",
+      "dnsIsResponse": false,
+      "length": 90
+    },
+    {
+      "source": "10.206.99.1",
+      "destination": "1.1.1.1",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "dnsQname": "cdn17.example.invalid",
+      "dnsQtype": "A",
+      "dnsIsResponse": false,
+      "length": 90
+    },
+    {
+      "source": "10.206.99.1",
+      "destination": "1.1.1.1",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "dnsQname": "cdn18.example.invalid",
+      "dnsQtype": "A",
+      "dnsIsResponse": false,
+      "length": 90
+    },
+    {
+      "source": "10.206.99.1",
+      "destination": "1.1.1.1",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "dnsQname": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.exfil.invalid",
+      "dnsQtype": "A",
+      "dnsIsResponse": false,
+      "length": 90
+    }
+  ],
+  "expectedMatches": [
+    "R006"
+  ],
+  "expectedMinimumConfidence": 0.65
+}

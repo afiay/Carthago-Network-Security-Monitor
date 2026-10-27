@@ -1,0 +1,19 @@
+{
+  "name": "r006-dns-response-is-not-query",
+  "records": [
+    {
+      "source": "10.206.99.1",
+      "destination": "1.1.1.1",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "dnsQname": "www.example.invalid",
+      "dnsQtype": "A",
+      "dnsIsResponse": true,
+      "length": 90
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R006"
+  ]
+}

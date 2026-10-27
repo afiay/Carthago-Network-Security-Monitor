@@ -101,7 +101,7 @@ namespace Carthago.Services
             new(StringComparer.Ordinal);
         private static readonly ConcurrentDictionary<(string Src, string Dst, int DstPort), List<DateTime>> _authAttempts = new();
         private static readonly ConcurrentDictionary<string, List<DateTime>> _dnsQueries = new(StringComparer.Ordinal);   // R006
-        private static readonly ConcurrentDictionary<(string Src, string Dst), List<(DateTime ts, int bytes)>> _beaconing = new();        // R007
+        private static readonly ConcurrentDictionary<(string Src, string Dst, int Port, string Protocol), List<(DateTime ts, int bytes)>> _beaconing = new();        // R007
         private static readonly ConcurrentDictionary<string, List<(DateTime ts, int bytes)>> _exfilBytes = new(StringComparer.Ordinal); // R008
         private static readonly ConcurrentDictionary<string, string> _arpTable = new(StringComparer.Ordinal);             // R015
         private static readonly ConcurrentDictionary<string, List<DateTime>> _dhcpActivity = new(StringComparer.Ordinal); // R011 key "DHCP"
@@ -562,239 +562,324 @@ namespace Carthago.Services
             return false;
         }
 
-        // ===== R006 DNS Anomalies (entropy/length) =====
+        // R007/R008/R010 need a real Internet endpoint. A null, hostname,
+        // loopback, RFC1918, carrier NAT, documentation or multicast address
+        // must not be silently treated as publicly routable evidence.
+        // This intentionally does not alter the legacy IsPrivateIp helper
+        // used by other detectors.
+        private static bool IsPublicLegacyEgressIp(string? endpoint)
+        {
+            if (string.IsNullOrWhiteSpace(endpoint)
+                || !IPAddress.TryParse(endpoint, out var ip))
+                return false;
+
+            if (ip.IsIPv4MappedToIPv6) ip = ip.MapToIPv4();
+            if (IPAddress.IsLoopback(ip)) return false;
+
+            var bytes = ip.GetAddressBytes();
+            if (bytes.Length == 4)
+            {
+                int a = bytes[0], b = bytes[1], c = bytes[2];
+                return a != 0 && a != 10 && a != 127 && a < 224
+                    && !(a == 100 && b >= 64 && b <= 127)
+                    && !(a == 169 && b == 254)
+                    && !(a == 172 && b >= 16 && b <= 31)
+                    && !(a == 192 && (b == 168 || (b == 0 && c == 0) || (b == 0 && c == 2)))
+                    && !(a == 198 && (b == 18 || b == 19 || (b == 51 && c == 100)))
+                    && !(a == 203 && b == 0 && c == 113);
+            }
+
+            if (bytes.Length != 16 || ip.Equals(IPAddress.IPv6Any)
+                || ip.IsIPv6LinkLocal || ip.IsIPv6SiteLocal
+                || ip.IsIPv6Multicast)
+                return false;
+            // fc00::/7 ULA and 2001:db8::/32 documentation.
+            if ((bytes[0] & 0xFE) == 0xFC
+                || (bytes[0] == 0x20 && bytes[1] == 0x01
+                    && bytes[2] == 0x0D && bytes[3] == 0xB8))
+                return false;
+            return true;
+        }
+
+        // ===== R006 DNS Anomalies (query volume / content hypothesis) =====
         private static bool DetectDnsAnomaly(DateTime now, TrafficRecord record, Sensitivity s, out DetectionEvent detection)
         {
             detection = null!;
             try
             {
                 bool isDns = string.Equals(record.Protocol, "DNS", StringComparison.OrdinalIgnoreCase)
-                             || (string.Equals(record.Protocol, "UDP", StringComparison.OrdinalIgnoreCase) && record.DestinationPort == 53);
-                if (!isDns || record.Source is not { Length: > 0 } src) return false;
+                             || (string.Equals(record.Protocol, "UDP", StringComparison.OrdinalIgnoreCase)
+                                 && record.DestinationPort == 53);
+                // Responses, missing query names and port-only UDP traffic
+                // cannot be counted as distinct observed DNS requests.
+                if (!isDns || record.DnsIsResponse
+                    || string.IsNullOrWhiteSpace(record.Source)
+                    || string.IsNullOrWhiteSpace(record.Destination)
+                    || string.IsNullOrWhiteSpace(record.DnsQname)
+                    || (record.DestinationPort.HasValue
+                        && (record.DestinationPort.Value < 1 || record.DestinationPort.Value > 65535)))
+                    return false;
+
+                string src = record.Source.Trim();
+                string qname = record.DnsQname.Trim().TrimEnd('.');
+                if (qname.Length == 0 || qname.Length > 253
+                    || qname.Any(char.IsWhiteSpace)
+                    || qname.Split('.').Any(label => label.Length is < 1 or > 63))
+                    return false;
 
                 BoundDictionary(_dnsQueries, 20000);
-
-                var window = _cfg.DnsWindowSeconds ?? DnsWindowSeconds;
-                var threshold = ScaleCount(_cfg.DnsThreshold ?? DnsThreshold, s);
-
-                var entropyThresh = ScaleFloat(_cfg.DnsEntropyThreshold ?? DnsEntropyThreshold, s);
-                var avgLabelLenThresh = ScaleFloat(_cfg.DnsAvgLabelLenThreshold ?? DnsAvgLabelLenThreshold, s);
-                var queryLenThresh = ScaleCount(_cfg.DnsQueryLenThreshold ?? DnsQueryLenThreshold, s);
+                int window = _cfg.DnsWindowSeconds ?? DnsWindowSeconds;
+                int threshold = ScaleCount(_cfg.DnsThreshold ?? DnsThreshold, s);
+                double entropyThresh = ScaleFloat(_cfg.DnsEntropyThreshold ?? DnsEntropyThreshold, s);
+                double avgLabelLenThresh = ScaleFloat(_cfg.DnsAvgLabelLenThreshold ?? DnsAvgLabelLenThreshold, s);
+                int queryLenThresh = ScaleCount(_cfg.DnsQueryLenThreshold ?? DnsQueryLenThreshold, s);
 
                 var list = _dnsQueries.GetOrAdd(src, _ => new List<DateTime>(capacity: Math.Max(threshold * 2, 32)));
-                bool suspiciousContent = false;
                 lock (list)
                 {
+                    // The evaluation clock may move backwards during replay,
+                    // capture recovery or reordering. Never count future events.
+                    DateTime cutoff = now.AddSeconds(-window);
+                    list.RemoveAll(ts => ts < cutoff || ts > now);
                     list.Add(now);
-                    TrimAndCount(list, now, window);
+                    if (list.Count < threshold) return false;
 
-                    var q = record.DnsQname;
-                    if (!string.IsNullOrWhiteSpace(q))
+                    var labels = qname.Split('.');
+                    double avgLen = labels.Average(label => label.Length);
+                    string longest = labels.OrderByDescending(label => label.Length).First();
+                    bool suspiciousContent =
+                        (longest.Length >= Math.Max(20, avgLabelLenThresh)
+                            && ShannonEntropy(longest) > entropyThresh)
+                        || (qname.Length > queryLenThresh * 2 && avgLen > avgLabelLenThresh);
+
+                    int count = list.Count;
+                    // Clear even when cooldown suppresses an event. Otherwise
+                    // repeated benign requests grow state throughout cooldown.
+                    list.Clear();
+                    if (SuppressRepeat(now, "R006", src, record.Destination, record.DestinationPort))
+                        return false;
+
+                    detection = new DetectionEvent
                     {
-                        var labels = q.Split('.', StringSplitOptions.RemoveEmptyEntries);
-                        double avgLen = labels.Length > 0 ? labels.Average(l => l.Length) : 0;
-                        var longestLabel = labels.OrderByDescending(l => l.Length).FirstOrDefault() ?? string.Empty;
-                        var ent = ShannonEntropy(longestLabel);
-
-                        // Whole-hostname entropy is high even for ordinary dotted DNS names.
-                        // Require unusually long, encoded-looking labels before calling it tunneling.
-                        if ((longestLabel.Length >= Math.Max(20, avgLabelLenThresh) && ent > entropyThresh)
-                            || (q.Length > queryLenThresh * 2 && avgLen > avgLabelLenThresh))
-                            suspiciousContent = true;
-                    }
-
-                    // Burst volume alone is not evidence of DNS tunneling; a high-severity
-                    // tunneling hypothesis also requires suspicious query-name telemetry.
-                    if (list.Count >= threshold)
-                    {
-                        if (SuppressRepeat(now, "R006", src, record.Destination, record.DestinationPort)) return false;
-
-                        detection = new DetectionEvent
-                        {
-                            RuleId = "R006",
-                            Description = suspiciousContent
-                                ? $"Possible DNS tunneling from {src} ({list.Count}/{window}s, high-entropy/long query)"
-                                : $"Elevated DNS request volume from {src} ({list.Count}/{window}s; query content not corroborated)",
-                            SourceIp = src,
-                            DestinationIp = record.Destination,
-                            Protocol = NP(record.Protocol),
-                            Severity = suspiciousContent ? SeverityLevel.High : SeverityLevel.Medium,
-                            Count = list.Count,
-                            WindowSeconds = window
-                        };
-                        list.Clear();
-                        return true;
-                    }
+                        RuleId = "R006",
+                        Description = suspiciousContent
+                            ? $"Possible DNS tunneling from {src} ({count}/{window}s, high-entropy/long query)"
+                            : $"Elevated DNS request volume from {src} ({count}/{window}s; query content not corroborated)",
+                        SourceIp = src,
+                        DestinationIp = record.Destination,
+                        DestinationPort = record.DestinationPort,
+                        Protocol = NP(record.Protocol),
+                        Severity = suspiciousContent ? SeverityLevel.High : SeverityLevel.Medium,
+                        Count = count,
+                        WindowSeconds = window
+                    };
+                    return true;
                 }
             }
             catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] DetectDnsAnomaly error: {ex}"); }
             return false;
         }
 
-        // ===== R007 C2 Beaconing (tightened) =====
+        // ===== R007 C2 Beaconing (periodicity candidate, not proof of C2) =====
         private static bool DetectBeaconing(DateTime now, TrafficRecord record, Sensitivity s, out DetectionEvent detection)
         {
             detection = null!;
             try
             {
+                if (string.IsNullOrWhiteSpace(record.Source)
+                    || !IsPublicLegacyEgressIp(record.Destination)
+                    || record.Length <= 0
+                    || record.DestinationPort is not int port || port is < 1 or > 65535
+                    || !(string.Equals(record.Protocol, "TCP", StringComparison.OrdinalIgnoreCase)
+                         || string.Equals(record.Protocol, "UDP", StringComparison.OrdinalIgnoreCase)))
+                    return false;
+
+                string src = record.Source.Trim(), dst = record.Destination!.Trim();
                 BoundDictionary(_beaconing, 20000);
-
-                if (record.Source is not { Length: > 0 } src || record.Destination is not { Length: > 0 } dst) return false;
-                if (IsPrivateIp(dst)) return false; // focus on Internet beacons; remove if you want internal C2 too
-
-                var key = (Src: src, Dst: dst);
+                var key = (Src: src, Dst: dst, Port: port, Protocol: record.Protocol!.ToUpperInvariant());
                 var list = _beaconing.GetOrAdd(key, _ => new List<(DateTime ts, int bytes)>(capacity: 64));
 
                 lock (list)
                 {
-                    list.Add((now, Math.Max(0, record.Length)));
+                    // Bound stale and future observations before considering
+                    // cadence. Preserve ordering under out-of-order ingestion.
+                    DateTime cutoff = now.AddMinutes(-30);
+                    list.RemoveAll(sample => sample.ts < cutoff || sample.ts > now);
+                    list.Add((now, record.Length));
+                    list.Sort((a, b) => a.ts.CompareTo(b.ts));
+                    if (list.Count > 128) list.RemoveRange(0, list.Count - 128);
+
                     int minSamples = ScaleCount(_cfg.BeaconMinSamples ?? BeaconMinSamples, s);
                     if (list.Count < minSamples) return false;
-
-                    var elapsed = (list[^1].ts - list[0].ts).TotalSeconds;
+                    double elapsed = (list[^1].ts - list[0].ts).TotalSeconds;
                     int minObs = ScaleCount(_cfg.BeaconMinObservationSeconds ?? BeaconMinObservationSeconds, s);
                     if (elapsed < minObs) return false;
 
-                    // intervals + jitter
                     var intervals = new List<double>(list.Count - 1);
-                    for (int i = 1; i < list.Count; i++) intervals.Add((list[i].ts - list[i - 1].ts).TotalSeconds);
+                    for (int i = 1; i < list.Count; i++)
+                        intervals.Add((list[i].ts - list[i - 1].ts).TotalSeconds);
+                    // Packet bursts and duplicate timestamps are not beacons.
+                    if (intervals.Any(seconds => seconds < 1)) return false;
+
                     double avg = intervals.Average();
-                    double variance = intervals.Select(x => (x - avg) * (x - avg)).Sum();
-                    if (variance <= 0) return false;
+                    double variance = intervals.Sum(x => (x - avg) * (x - avg));
                     double stddev = Math.Sqrt(variance / intervals.Count);
                     double frac = _cfg.BeaconStdDevFraction ?? BeaconStdDevFraction;
+                    bool lowJitter = stddev < Math.Max(0.5, avg * frac);
+                    // A mathematically perfect cadence has zero variance.
+                    // Autocorrelation is undefined there, not negative.
+                    bool periodic = variance <= 1e-12
+                        || AutocorrSpike(intervals, _cfg.BeaconAutocorrLags ?? BeaconAutocorrLags);
+                    double avgBytes = list.Average(sample => (double)sample.bytes);
+                    if (!lowJitter || !periodic || avgBytes > 600) return false;
 
-                    bool lowJitter = stddev < Math.Max(0.5, avg * frac); // add absolute floor (0.5s) to avoid μ≈0.2s noise
-                    bool periodic = AutocorrSpike(intervals, _cfg.BeaconAutocorrLags ?? BeaconAutocorrLags);
+                    int count = list.Count;
+                    list.Clear();
+                    if (SuppressRepeat(now, "R007", src, dst, record.DestinationPort))
+                        return false;
 
-                    // small keep-alives are more beacon-like
-                    double avgBytes = list.Average(t => t.bytes);
-                    bool smallPayload = avgBytes <= 600; // tweak if needed
-
-                    if (lowJitter && periodic && smallPayload)
+                    detection = new DetectionEvent
                     {
-                        if (SuppressRepeat(now, "R007", src, dst, record.DestinationPort)) return false;
-
-                        var sev = avg >= 30 && avg <= 600 ? SeverityLevel.High : SeverityLevel.Medium;
-
-                        detection = new DetectionEvent
-                        {
-                            RuleId = "R007",
-                            Description = $"Possible C2 beacon {src} → {dst} (μ={avg:F1}s, σ={stddev:F2}, avgB={avgBytes:F0}, autocorr=yes)",
-                            SourceIp = src,
-                            DestinationIp = dst,
-                            Protocol = NP(record.Protocol),
-                            Severity = sev,
-                            Count = list.Count,
-                            WindowSeconds = (int)Math.Round(elapsed)
-                        };
-                        list.Clear();
-                        return true;
-                    }
+                        RuleId = "R007",
+                        Description = $"Possible periodic outbound beacon {src} → {dst} (mean={avg:F1}s, jitter={stddev:F2}, avgBytes={avgBytes:F0})",
+                        SourceIp = src,
+                        DestinationIp = dst,
+                        DestinationPort = record.DestinationPort,
+                        Protocol = NP(record.Protocol),
+                        Severity = avg >= 30 && avg <= 600 ? SeverityLevel.High : SeverityLevel.Medium,
+                        Count = count,
+                        WindowSeconds = (int)Math.Round(elapsed)
+                    };
+                    return true;
                 }
             }
             catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] DetectBeaconing error: {ex}"); }
             return false;
         }
 
-        // ===== R008 Exfiltration (per-src to Internet) =====
+        // ===== R008 Exfiltration (egress volume candidate, not proof of theft) =====
         private static bool DetectExfiltration(DateTime now, TrafficRecord record, Sensitivity s, out DetectionEvent detection)
         {
             detection = null!;
             try
             {
+                if (string.IsNullOrWhiteSpace(record.Source)
+                    || !IsPublicLegacyEgressIp(record.Destination)
+                    || record.Length <= 0
+                    || record.DestinationPort is not int port || port is < 1 or > 65535
+                    || !(string.Equals(record.Protocol, "TCP", StringComparison.OrdinalIgnoreCase)
+                         || string.Equals(record.Protocol, "UDP", StringComparison.OrdinalIgnoreCase)))
+                    return false;
+
+                string src = record.Source.Trim();
                 BoundDictionary(_exfilBytes, 20000);
-
-                if (record.Source is not { Length: > 0 } src || record.Length <= 0) return false;
-                if (IsPrivateIp(record.Destination)) return false;
-
-                var window = _cfg.ExfilWindowSeconds ?? ExfilWindowSeconds;
-                var thresholdBytes = ScaleBytes(_cfg.ExfilThresholdBytes ?? ExfilThresholdBytes, s);
-
-                var list = _exfilBytes.GetOrAdd(src, _ => new List<(DateTime, int)>(capacity: 32));
+                int window = _cfg.ExfilWindowSeconds ?? ExfilWindowSeconds;
+                long thresholdBytes = ScaleBytes(_cfg.ExfilThresholdBytes ?? ExfilThresholdBytes, s);
+                var list = _exfilBytes.GetOrAdd(src, _ => new List<(DateTime ts, int bytes)>(capacity: 32));
                 lock (list)
                 {
+                    DateTime cutoff = now.AddSeconds(-window);
+                    list.RemoveAll(sample => sample.ts < cutoff || sample.ts > now);
                     list.Add((now, record.Length));
-                    var cutoff = now.AddSeconds(-window);
-                    list.RemoveAll(t => t.ts < cutoff);
 
-                    int totalBytes = 0;
-                    for (int i = 0; i < list.Count; i++) totalBytes += list[i].bytes;
-                    if (totalBytes >= thresholdBytes)
+                    // Length is int, but the sum can exceed Int32.MaxValue.
+                    long totalBytes = list.Sum(sample => (long)sample.bytes);
+                    if (totalBytes < thresholdBytes) return false;
+
+                    list.Clear();
+                    if (SuppressRepeat(now, "R008", src, record.Destination, record.DestinationPort))
+                        return false;
+
+                    detection = new DetectionEvent
                     {
-                        if (SuppressRepeat(now, "R008", src, record.Destination, record.DestinationPort)) return false;
-
-                        detection = new DetectionEvent
-                        {
-                            RuleId = "R008",
-                            Description = $"Possible data exfiltration from {src} ({totalBytes} bytes / {window}s)",
-                            SourceIp = src,
-                            DestinationIp = record.Destination,
-                            Protocol = NP(record.Protocol),
-                            Severity = SeverityLevel.Critical,
-                            Count = totalBytes,
-                            WindowSeconds = window
-                        };
-                        list.Clear();
-                        return true;
-                    }
+                        RuleId = "R008",
+                        Description = $"High outbound volume from {src} ({totalBytes} bytes / {window}s; exfiltration unconfirmed)",
+                        SourceIp = src,
+                        DestinationIp = record.Destination,
+                        DestinationPort = record.DestinationPort,
+                        Protocol = NP(record.Protocol),
+                        Severity = SeverityLevel.Critical,
+                        Count = (int)Math.Min(int.MaxValue, totalBytes),
+                        WindowSeconds = window
+                    };
+                    return true;
                 }
             }
             catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] DetectExfiltration error: {ex}"); }
             return false;
         }
 
-        // ===== R009 VPN/Proxy =====
+        // ===== R009 VPN/Proxy usage (classification candidate) =====
         private static bool DetectVpnProxy(DateTime now, TrafficRecord record, out DetectionEvent detection)
         {
             detection = null!;
             try
             {
-                if ((record.IsVpn == true) || (record.IsProxy == true))
-                {
-                    if (SuppressRepeat(now, "R009", NS(record.Source), record.Destination, record.DestinationPort)) return false;
+                if (record.IsVpn != true && record.IsProxy != true) return false;
+                if (string.IsNullOrWhiteSpace(record.Source)
+                    || string.IsNullOrWhiteSpace(record.Destination)
+                    || record.DestinationPort is not int port || port is < 1 or > 65535
+                    || !(string.Equals(record.Protocol, "TCP", StringComparison.OrdinalIgnoreCase)
+                         || string.Equals(record.Protocol, "UDP", StringComparison.OrdinalIgnoreCase)))
+                    return false;
 
-                    detection = new DetectionEvent
-                    {
-                        RuleId = "R009",
-                        Description = $"Traffic from VPN/Proxy detected: {NS(record.Source)}",
-                        SourceIp = NS(record.Source),
-                        DestinationIp = record.Destination,
-                        Protocol = NP(record.Protocol),
-                        Severity = SeverityLevel.Medium,
-                        Count = 1,
-                        WindowSeconds = 0
-                    };
-                    return true;
-                }
+                string src = record.Source.Trim();
+                if (SuppressRepeat(now, "R009", src, record.Destination, port)) return false;
+
+                detection = new DetectionEvent
+                {
+                    RuleId = "R009",
+                    Description = $"VPN/proxy usage observed from {src} (authorization not determined)",
+                    SourceIp = src,
+                    DestinationIp = record.Destination,
+                    DestinationPort = port,
+                    Protocol = NP(record.Protocol),
+                    Severity = SeverityLevel.Medium,
+                    Count = 1,
+                    WindowSeconds = 0
+                };
+                return true;
             }
             catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] DetectVpnProxy error: {ex}"); }
             return false;
         }
 
-        // ===== R010 GeoIP =====
+        // ===== R010 Destination GeoIP policy (not WHOIS registration) =====
         private static bool DetectBlacklistedCountry(DateTime now, TrafficRecord record, out DetectionEvent detection)
         {
             detection = null!;
             try
             {
-                if (!string.IsNullOrEmpty(record.WhoisCountry) && _blacklistedCountries.Contains(record.WhoisCountry))
-                {
-                    if (SuppressRepeat(now, "R010", NS(record.Source), record.Destination, record.DestinationPort)) return false;
+                if (string.IsNullOrWhiteSpace(record.Source)
+                    || !IsPublicLegacyEgressIp(record.Destination)
+                    || string.IsNullOrWhiteSpace(record.DstCountryIso2))
+                    return false;
 
-                    detection = new DetectionEvent
-                    {
-                        RuleId = "R010",
-                        Description = $"Traffic to/from blacklisted country {record.WhoisCountry}",
-                        SourceIp = NS(record.Source),
-                        DestinationIp = record.Destination,
-                        Protocol = NP(record.Protocol),
-                        Severity = SeverityLevel.High,
-                        Count = 1,
-                        WindowSeconds = 0
-                    };
-                    return true;
-                }
+                string country = record.DstCountryIso2.Trim().ToUpperInvariant();
+                // WHOIS country is registration metadata, not the destination
+                // geolocation. Source country alone is also not egress evidence.
+                if (country.Length != 2 || !country.All(c => c is >= 'A' and <= 'Z')
+                    || !_blacklistedCountries.Contains(country))
+                    return false;
+
+                string src = record.Source.Trim();
+                if (SuppressRepeat(now, "R010", src, record.Destination, record.DestinationPort))
+                    return false;
+
+                detection = new DetectionEvent
+                {
+                    RuleId = "R010",
+                    Description = $"Outbound destination GeoIP policy country {country} (geolocation is approximate)",
+                    SourceIp = src,
+                    DestinationIp = record.Destination,
+                    DestinationPort = record.DestinationPort,
+                    Country = country,
+                    Protocol = NP(record.Protocol),
+                    Severity = SeverityLevel.High,
+                    Count = 1,
+                    WindowSeconds = 0
+                };
+                return true;
             }
             catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] DetectBlacklistedCountry error: {ex}"); }
             return false;

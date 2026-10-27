@@ -1,0 +1,18 @@
+{
+  "name": "r010-whois-registration-not-geoip",
+  "records": [
+    {
+      "source": "10.210.99.1",
+      "destination": "8.8.8.8",
+      "protocol": "TCP",
+      "destinationPort": 443,
+      "length": 120,
+      "whoisCountry": "RU",
+      "dstCountryIso2": "SE"
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R010"
+  ]
+}

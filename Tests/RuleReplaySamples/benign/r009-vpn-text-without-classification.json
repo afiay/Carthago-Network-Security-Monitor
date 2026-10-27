@@ -1,0 +1,19 @@
+{
+  "name": "r009-vpn-text-without-classification",
+  "records": [
+    {
+      "source": "10.209.99.1",
+      "destination": "1.1.1.1",
+      "protocol": "TCP",
+      "destinationPort": 443,
+      "length": 250,
+      "info": "Documentation about VPN proxy detection; no observed VPN or proxy flag.",
+      "isVpn": false,
+      "isProxy": false
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R009"
+  ]
+}
