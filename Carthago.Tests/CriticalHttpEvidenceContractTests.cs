@@ -33,6 +33,10 @@ public sealed class CriticalHttpEvidenceContractTests
     public async Task R092_Explicit_C2_Endpoint_Remains_Detected()
     {
         var record = Http("/gate.php", "HTTP request observed");
+        // Explicit parsed HTTP request telemetry, not a URI on an unclassified packet.
+        record.IsTcp = true;
+        record.SourcePort = 50000;
+        record.Length = 256;
         Assert.True((await new R092_KnownMalwareHTTPURIPatternRule().EvaluateAsync(Context(record))).Matched);
     }
 
