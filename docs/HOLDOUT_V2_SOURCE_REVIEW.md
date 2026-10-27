@@ -13,7 +13,7 @@ frame attribution. Avoid claiming that mere DNS shape proves malignancy.
 
 | Source | Available evidence | Limitation and decision |
 | --- | --- | --- |
-| **Elastic iodine DNS tunnel** | The Apache-2.0-licensed [elastic/examples](https://github.com/elastic/examples) repository contains a 77,524-byte demonstration capture at [dns-tunnel-iodine.pcap](https://github.com/elastic/examples/blob/master/Security%20Analytics/dns_tunnel_detection/dns-tunnel-iodine.pcap). Source README describes Packetbeat demonstration of iodine tunneling. Pinned commit: 6d86454ebb7a850bcd7e80abe86fe683370018a6. Pinned file Git blob: f43152b995d0eb9127d5a8fcaf13e5c26595ce69. | **Candidate for one malicious scenario only.** Actual DNS QTYPE, long TXT evidence, clients, privacy and specific archive rights still need inspection. |
+| **Elastic iodine DNS tunnel** | The Apache-2.0-licensed [elastic/examples](https://github.com/elastic/examples) repository contains a 77,524-byte demonstration [dns-tunnel-iodine.pcap](https://github.com/elastic/examples/blob/master/Security%20Analytics/dns_tunnel_detection/dns-tunnel-iodine.pcap), pinned at commit 6d86454ebb7a850bcd7e80abe86fe683370018a6, Git blob f43152b995d0eb9127d5a8fcaf13e5c26595ce69. A [third-party report](https://apackets.com/reports/iodine-dns-tunnel) for a same-named 75.71-KB capture (SHA-256 91fd221e07107507c8327a9d9487cd7f7531a1fd87cf543b1a76160ff0609b7b) documents **222 NULL-only (type 10) DNS queries; zero TXT**. | **Protocol-diversity control, NOT an eligible encoded-TXT candidate if hashes match.** Recheck source SHA-256 and QTYPE locally; privacy and archive-specific rights still need review. |
 | **Thapar campus DNS** | [Mendeley DOI 10.17632/zh3wnddzxy.2](https://data.mendeley.com/datasets/zh3wnddzxy/2) describes hourly campus DNS PCAPs under CC BY 4.0. | Candidate benign traffic, but campus captures may expose browsing habits and source identities. Benign label, privacy and packets need review. No automatic publication. |
 | **GraphTunnel** | [Repository](https://github.com/ggyggy666/DNS-Tunnel-Datasets) describes large benign, known-tunnel and unknown-tunnel PCAP groups. | Data rights are not established by the README's citation request alone. **Do not import** before licensing review. |
 | **Korving-F DNS tunnel captures** | [Repository](https://github.com/Korving-F/dns-tunnel-dataset) publishes port-53 controlled iodine, dns2tcp and dnscat2 captures. | Raw archive redistribution rights and actual TXT evidence are not verified. **Do not import** before review. |
@@ -43,9 +43,12 @@ full DNS QNAME strings. It does NOT classify, test or freeze any record.
 .\scripts\inspect-holdout-v2-pcap.ps1 -CapturePath 'build-verify/holdout-v2-sources/elastic-iodine-6d86454ebb7a.pcap' -MaximumPacketsToScan 100000
 ~~~
 
-The source metadata status remains ACQUIRED_UNREVIEWED_SOURCE_CANDIDATE.
-A candidate containing fewer than three distinct long TXT queries, only
-CNAME/NULL traffic, or unapproved private identifiers is **not eligible**
+The downloader now records whether the acquired SHA-256 matches the
+published NULL-only report and warns if so. This iodine capture is useful
+as a protocol-diversity negative/control, but **must not** be entered into
+a malicious encoded-TXT slot. Its status remains an unreviewed candidate.
+A different source containing fewer than three distinct long TXT queries,
+only CNAME/NULL traffic, or unapproved private identifiers is **not eligible**
 for either frozen malicious encoded-TXT slot.
 
 ## Mandatory acceptance chain
