@@ -75,8 +75,10 @@ try {
             if ($p.sourceKind -ne 'external-pcap-reviewed' -or -not $p.analystReviewedLabel -or
                 $p.captureSha256 -notmatch '^[0-9a-fA-F]{64}$' -or
                 [string]::IsNullOrWhiteSpace($p.independentLabelBasis) -or
-                [string]::IsNullOrWhiteSpace($p.sourceLicense) -or
-                [string]::IsNullOrWhiteSpace($p.sourceUri) -or
+                $p.sourceLicense -notin @('Apache-2.0','CC-BY-4.0','CC0-1.0') -or
+                [string]::IsNullOrWhiteSpace($p.sourceLicenseEvidenceUri) -or
+                $p.sourceLicenseEvidenceUri -notmatch '^https://' -or
+                $p.sourceUri -notmatch '^https://' -or
                 $p.sample -ne $fixture.name -or $p.classification -ne $entry.classification -or
                 @($p.frameNumbers).Count -ne @($fixture.records).Count -or
                 @($p.frameNumbers | Sort-Object -Unique).Count -ne @($fixture.records).Count) {
