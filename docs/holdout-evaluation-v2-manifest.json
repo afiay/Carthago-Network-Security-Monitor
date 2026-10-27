@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 2,
+  "title": "Candidate v2 transport-attributed synthetic holdout (NOT field-independent precision)",
+  "approvalState": "PENDING_EXTERNAL_CAPTURE_AND_REVIEW",
+  "createdDateUtc": "2026-10-27",
+  "predecessorManifest": "docs/holdout-evaluation-manifest.json",
+  "predecessorOutcome": "FAILED: 4/6 recognized; two R102 cases omitted transport attribution",
+  "rules": [
+    "R102",
+    "R118",
+    "R163"
+  ],
+  "classificationNotes": "R118/R163 remain v1 synthetic and are reused by immutable blob reference. R102 must come from external PCAP evidence with actual UDP/TCP source/destination ports and captured DNS qname/qtype; labels require independent analyst review. This remains a synthetic holdout, not production field validation.",
+  "samples": [
+    {
+      "file": "Tests/RuleReplayHoldout/benign/holdout-r118-camera-nondefault-basic.json",
+      "gitBlobSha": "f72836971898e2264600c3da98e2afe4d04576c4",
+      "classification": "Benign",
+      "primaryRule": "R118",
+      "sourceKind": "pinned-v1-synthetic",
+      "provenanceFile": null,
+      "provenanceBlobSha": null
+    },
+    {
+      "file": "Tests/RuleReplayHoldout/benign/holdout-r118-nvr-mismatched-host-with-auth.json",
+      "gitBlobSha": "3093e132f202def0535eb1cf407bc7ead5349ffd",
+      "classification": "Benign",
+      "primaryRule": "R118",
+      "sourceKind": "pinned-v1-synthetic",
+      "provenanceFile": null,
+      "provenanceBlobSha": null
+    },
+    {
+      "file": "Tests/RuleReplayHoldout/benign/holdout-r163-ec2-cloud-init-maintenance.json",
+      "gitBlobSha": "bda3db3c92f6974c5f52b8f9eb89888aec520a50",
+      "classification": "Benign",
+      "primaryRule": "R163",
+      "sourceKind": "pinned-v1-synthetic",
+      "provenanceFile": null,
+      "provenanceBlobSha": null
+    },
+    {
+      "file": "Tests/RuleReplayHoldout/benign/holdout-r163-gcp-identity-email-lookup.json",
+      "gitBlobSha": "9bb44da0a4d3350480379c3ca75e05c973fd6d78",
+      "classification": "Benign",
+      "primaryRule": "R163",
+      "sourceKind": "pinned-v1-synthetic",
+      "provenanceFile": null,
+      "provenanceBlobSha": null
+    },
+    {
+      "file": "Tests/RuleReplayHoldout/malicious/holdout-r118-embedded-camera-default-root.json",
+      "gitBlobSha": "54d4604c480205ae3161f365cf09b77881631997",
+      "classification": "Malicious",
+      "primaryRule": "R118",
+      "sourceKind": "pinned-v1-synthetic",
+      "provenanceFile": null,
+      "provenanceBlobSha": null
+    },
+    {
+      "file": "Tests/RuleReplayHoldout/malicious/holdout-r118-router-default-guest.json",
+      "gitBlobSha": "f7d569cf9fcdcadaf1bfc451f5f35ddaa54405f6",
+      "classification": "Malicious",
+      "primaryRule": "R118",
+      "sourceKind": "pinned-v1-synthetic",
+      "provenanceFile": null,
+      "provenanceBlobSha": null
+    },
+    {
+      "file": "Tests/RuleReplayHoldout/malicious/holdout-r163-gcp-unapproved-head-token.json",
+      "gitBlobSha": "d668d6af55dea5668b1c91451627421dca44c2da",
+      "classification": "Malicious",
+      "primaryRule": "R163",
+      "sourceKind": "pinned-v1-synthetic",
+      "provenanceFile": null,
+      "provenanceBlobSha": null
+    },
+    {
+      "file": "Tests/RuleReplayHoldout/malicious/holdout-r163-userhome-guest-agent-spoof.json",
+      "gitBlobSha": "c9a962677cac93119cf73480df7eaf6c2b54515b",
+      "classification": "Malicious",
+      "primaryRule": "R163",
+      "sourceKind": "pinned-v1-synthetic",
+      "provenanceFile": null,
+      "provenanceBlobSha": null
+    },
+    {
+      "file": "Tests/RuleReplayHoldoutV2/benign/holdout-v2-r102-benign-validation-txt.json",
+      "gitBlobSha": null,
+      "classification": "Benign",
+      "primaryRule": "R102",
+      "sourceKind": "external-pcap-reviewed",
+      "provenanceFile": "docs/holdout-v2-provenance/holdout-v2-r102-benign-validation-txt.json",
+      "provenanceBlobSha": null
+    },
+    {
+      "file": "Tests/RuleReplayHoldoutV2/benign/holdout-v2-r102-benign-workstation-queries.json",
+      "gitBlobSha": null,
+      "classification": "Benign",
+      "primaryRule": "R102",
+      "sourceKind": "external-pcap-reviewed",
+      "provenanceFile": "docs/holdout-v2-provenance/holdout-v2-r102-benign-workstation-queries.json",
+      "provenanceBlobSha": null
+    },
+    {
+      "file": "Tests/RuleReplayHoldoutV2/malicious/holdout-v2-r102-encoded-txt-first-client.json",
+      "gitBlobSha": null,
+      "classification": "Malicious",
+      "primaryRule": "R102",
+      "sourceKind": "external-pcap-reviewed",
+      "provenanceFile": "docs/holdout-v2-provenance/holdout-v2-r102-encoded-txt-first-client.json",
+      "provenanceBlobSha": null
+    },
+    {
+      "file": "Tests/RuleReplayHoldoutV2/malicious/holdout-v2-r102-encoded-txt-second-client.json",
+      "gitBlobSha": null,
+      "classification": "Malicious",
+      "primaryRule": "R102",
+      "sourceKind": "external-pcap-reviewed",
+      "provenanceFile": "docs/holdout-v2-provenance/holdout-v2-r102-encoded-txt-second-client.json",
+      "provenanceBlobSha": null
+    }
+  ]
+}
