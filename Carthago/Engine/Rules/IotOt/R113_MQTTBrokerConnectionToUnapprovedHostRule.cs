@@ -69,7 +69,7 @@ namespace Carthago.Engine.Rules.IotOt
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!IsMqtt(record) || !IsInternalAddress(record.Source))
+            if (!NetworkBatch111115Evidence.Mqtt(context) || !IsInternalAddress(record.Source))
                 return NoMatch();
 
             var host = BestHost(record);
@@ -78,8 +78,6 @@ namespace Carthago.Engine.Rules.IotOt
             if (!externalDestination && !publicBroker)
                 return NoMatch();
 
-            if (IsLikelyBrowserProcess(record.ProcessName) && !Contains("mqtt", Text(record)))
-                return NoMatch();
 
             var matchedConditions = new List<string> { "mqtt_protocol_context", "external_or_public_broker" };
             if (externalDestination) matchedConditions.Add("external_destination");
@@ -117,7 +115,5 @@ namespace Carthago.Engine.Rules.IotOt
                 cooldownKey: $"{record.Source}:{host}:{record.Destination}");
         }
 
-        private static bool Contains(string value, string text)
-            => text.IndexOf(value, StringComparison.OrdinalIgnoreCase) >= 0;
     }
 }

@@ -87,7 +87,8 @@ namespace Carthago.Engine.Rules.IotOt
             // telemetry in Info. Never copy those raw bytes into either the legacy
             // event Evidence string or StructuredEvidence (including shadow events).
             // The rule emits non-secret matched_conditions instead.
-            if (Descriptor.RuleId != "R118" && !string.IsNullOrWhiteSpace(record.Info))
+            if (Descriptor.RuleId is not ("R113" or "R114" or "R115" or "R118")
+                && !string.IsNullOrWhiteSpace(record.Info))
                 items.Add(new DetectionEvidenceItem("iot.info", ShortText(record.Info!, 220), "iot-ot"));
 
             if (evidenceItems != null)

@@ -73,7 +73,8 @@ namespace Carthago.Engine.Rules.CloudSaas
         {
             var record = context.Record;
             var host = BestHost(record);
-            if (string.IsNullOrWhiteSpace(host)
+            if (!NetworkBatch111115Evidence.HttpUpload(context)
+                || string.IsNullOrWhiteSpace(host)
                 || !IsInternalAddress(record.Source)
                 || !IsExternalAddress(record.Destination)
                 || !IsPasteOrDropHost(host))
@@ -83,12 +84,9 @@ namespace Carthago.Engine.Rules.CloudSaas
 
             var bytes = TransferBytes(record);
             var minimumPayloadBytes = IntSetting(Descriptor.RuleId, "MinimumPayloadBytes", 200_000, 8_000, 50_000_000);
-            var uploadHint = HasPasteUploadHint(record) || IsUploadMethod(record);
+            var uploadHint = NetworkBatch111115Evidence.PasteUploadContext(record);
             var automation = IsLikelyAutomationProcess(record);
-            if (!uploadHint && !automation && bytes < minimumPayloadBytes)
-                return NoMatch();
-
-            if (string.Equals(record.HttpMethod, "GET", StringComparison.OrdinalIgnoreCase) && !automation && bytes < minimumPayloadBytes * 2L)
+            if (!uploadHint && bytes < minimumPayloadBytes)
                 return NoMatch();
 
             var matchedConditions = new List<string> { "paste_or_drop_provider", "supporting_upload_context" };
@@ -102,7 +100,9 @@ namespace Carthago.Engine.Rules.CloudSaas
 
             var evidence = new List<DetectionEvidenceItem>
             {
-                new("matched_conditions", string.Join(",", matchedConditions), "rule")
+                new("matched_conditions", string.Join(",", matchedConditions), "rule"),
+                new("http.uri", "[redacted]", "http"),
+                new("http.pathClassifier", uploadHint ? "upload-context" : "payload-threshold", "rule")
             };
             evidence.AddRange(AnalystContext(
                 whyMatched,
@@ -125,7 +125,8 @@ namespace Carthago.Engine.Rules.CloudSaas
                     if (automation) confidence.AddCorrelation(0.14, "automation-process");
                     if (bytes >= minimumPayloadBytes) confidence.AddEvidence(0.10, "non-trivial-payload");
                 },
-                cooldownKey: $"{record.Source}:{ProviderIdentity(host)}");
+                cooldownKey: $"{record.Source}:{ProviderIdentity(host)}",
+                redactHttpUri: true);
         }
     }
 }

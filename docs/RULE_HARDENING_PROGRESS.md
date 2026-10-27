@@ -38,6 +38,7 @@ in the same commit as each batch's code, tests and technical assessment.
 | 21 | R101–R105 | **CANDIDATE — UNVERIFIED** (35 advanced xUnit facts; connected CNAME chains, typed DNS/state dedup, durable cloud first-seen, typed upload/URI privacy) | No build, xUnit, replay, holdout or Windows runner executed; candidate source/test/docs commit d7af63d19de25f37583233b33d33f0790fdee5c2 |
 
 | 22 | R106–R110 | **CANDIDATE — UNVERIFIED** (25 advanced xUnit cases; typed sweep, cloud transfer, dedup, URI privacy) | No build, xUnit, replay, holdout or Windows runner executed; candidate changes in this commit |
+| 23 | R111–R115 | **CANDIDATE — UNVERIFIED** (39 advanced xUnit facts; typed HTTP export/upload and MQTT protocol/action evidence; dedup and privacy) | No build, xUnit, replay, holdout or Windows runner executed; candidate source/tests/docs in this commit |
 
 ## CARTHAGE acceptance checkpoint — 2026-10-27 18:06
 
@@ -94,7 +95,18 @@ share one source constant. Only the test fixture changed; **no detector
 logic, threshold, confidence or policy changes**. **UNVERIFIED** until the
 next fresh targeted and consolidated run.
 
-**Next batch to author: R111–R115.** R006–R110 is authored but remains unverified; do not treat those batches as accepted. Continue in exact ascending groups of five.
+## R111–R115 candidate implementation — 2026-10-27
+
+The next contiguous batch was authored against remote HEAD `72a1266b4d953d54e018171d24f187365f45d049`.
+Seven rule/infrastructure source files, one shared test fixture, five advanced
+test files (39 xUnit facts), and `docs/RULE_BATCH_111-115.md` describe
+narrowly scoped typed HTTP and MQTT precision hardening, duplicate-ID
+resistance, source/broker separation and URI/topic redaction. No builds or
+tests were run. The existing single Windows verification script remains
+unchanged. **CANDIDATE — UNVERIFIED**; prior 2,028/2,030 regression evidence
+is not evidence for this new batch.
+
+**Next batch to author: R116–R120.** R006–R115 is authored but remains unverified; do not treat those batches as accepted. Continue in exact ascending groups of five.
 Do not mark a subsequent batch accepted until the user explicitly initiates
 the deferred consolidated Windows verification and the corresponding evidence
 is reviewed. The hourly automation must not run any tests or builds meanwhile.

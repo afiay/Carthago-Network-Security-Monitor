@@ -9,6 +9,7 @@ namespace Carthago.Engine.Rules.IotOt
 {
     public sealed class R114_MQTTTopicEnumerationRule : IotOtPrecisionDetectionRuleBase
     {
+        private readonly NetworkBatch081085Dedup _seen = new();
         private static readonly RuleDescriptor Rule = new(
             RuleId: "R114",
             Name: "MQTT Topic Enumeration",
@@ -62,26 +63,20 @@ namespace Carthago.Engine.Rules.IotOt
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!IsMqtt(record))
+            if (!NetworkBatch111115Evidence.Mqtt(context)
+                || !NetworkBatch111115Evidence.TryAction(record, "subscribe", out var topic)
+                || !_seen.First(record.Id, context.TimestampUtc))
                 return NoMatch();
-
-            var text = Text(record);
-            var subscribeContext = text.IndexOf("subscribe", StringComparison.OrdinalIgnoreCase) >= 0
-                                   || text.IndexOf("suback", StringComparison.OrdinalIgnoreCase) >= 0
-                                   || text.IndexOf("topic", StringComparison.OrdinalIgnoreCase) >= 0;
-            if (!subscribeContext)
-                return NoMatch();
-
-            var topic = NormalizeTopic(ExtractTopic(text));
             var window = TimeSpan.FromSeconds(IntSetting(Descriptor.RuleId, "WindowSeconds", 300, 30, 3600));
             var threshold = IntSetting(Descriptor.RuleId, "Threshold", 20, 5, 500);
-            var wildcard = LooksLikeWildcardTopic(topic) || text.Contains("/#", StringComparison.Ordinal) || text.Contains("/+", StringComparison.Ordinal);
+            var wildcard = NetworkBatch111115Evidence.Wildcard(topic);
 
             if (wildcard)
             {
                 var evidence = new List<DetectionEvidenceItem>
                 {
-                    new("mqtt.topic", string.IsNullOrWhiteSpace(topic) ? "#" : topic, "iot-ot"),
+                    new("mqtt.topic", "[redacted]", "iot-ot"),
+                    new("mqtt.topicKind", "wildcard", "iot-ot"),
                     new("matched_conditions", "wildcard_subscription,topic_discovery_context", "rule")
                 };
                 evidence.AddRange(AnalystContext(
@@ -108,14 +103,16 @@ namespace Carthago.Engine.Rules.IotOt
             if (string.IsNullOrWhiteSpace(topic))
                 return NoMatch();
 
-            var count = CountDistinctValues($"{Descriptor.RuleId}:{record.Source}", topic, context.TimestampUtc, window);
+            var count = CountDistinctValues($"{Descriptor.RuleId}:{record.Source}:{record.Destination}",
+                NetworkBatch111115Evidence.TopicFingerprint(topic), context.TimestampUtc, window);
             if (count < threshold)
                 return NoMatch();
 
             var matchedConditions = new List<string> { "distinct_topic_threshold", "topic_discovery_context" };
             var evidenceItems = new List<DetectionEvidenceItem>
             {
-                new("mqtt.topic", topic, "iot-ot"),
+                new("mqtt.topic", "[redacted]", "iot-ot"),
+                new("mqtt.topicKind", "exact", "iot-ot"),
                 new("count", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
                 new("window_seconds", ((int)window.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
                 new("matched_conditions", string.Join(",", matchedConditions), "rule")

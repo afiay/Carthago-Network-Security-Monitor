@@ -9,6 +9,7 @@ namespace Carthago.Engine.Rules.CloudSaas
 {
     public sealed class R112_SaaSExportLikeTrafficPatternRule : CloudSaasPrecisionDetectionRuleBase
     {
+        private readonly NetworkBatch081085Dedup _seen = new();
         private static readonly RuleDescriptor Rule = new(
             RuleId: "R112",
             Name: "SaaS Export-Like Traffic Pattern",
@@ -73,7 +74,8 @@ namespace Carthago.Engine.Rules.CloudSaas
         {
             var record = context.Record;
             var host = BestHost(record);
-            if (string.IsNullOrWhiteSpace(host)
+            if (!NetworkBatch111115Evidence.HttpUpload(context)
+                || string.IsNullOrWhiteSpace(host)
                 || !IsInternalAddress(record.Source)
                 || !IsExternalAddress(record.Destination)
                 || !IsSaasBusinessHost(host))
@@ -81,7 +83,8 @@ namespace Carthago.Engine.Rules.CloudSaas
                 return NoMatch();
             }
 
-            if (!HasExportMetadata(record))
+            if (!NetworkBatch111115Evidence.ExportPath(record.HttpUri)
+                || !_seen.First(record.Id, context.TimestampUtc))
                 return NoMatch();
 
             var bytes = TransferBytes(record);
@@ -90,7 +93,8 @@ namespace Carthago.Engine.Rules.CloudSaas
             var repeatThreshold = IntSetting(Descriptor.RuleId, "RepeatThreshold", 2, 1, 64);
             var repeatCount = CountWindowEvents($"{Descriptor.RuleId}:{record.Source}:{ProviderIdentity(host)}", context.TimestampUtc, repeatWindow);
             var automation = IsLikelyAutomationProcess(record);
-            var uploadLike = HasUploadShape(record, minimumPayloadBytes);
+            var uploadLike = bytes >= minimumPayloadBytes
+                || NetworkBatch111115Evidence.HttpUploadMetadata(record);
             if (!uploadLike && !automation && bytes < minimumPayloadBytes && repeatCount < repeatThreshold)
                 return NoMatch();
 
@@ -111,7 +115,9 @@ namespace Carthago.Engine.Rules.CloudSaas
             {
                 new("count", repeatCount.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
                 new("window_seconds", ((int)repeatWindow.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
-                new("matched_conditions", string.Join(",", matchedConditions), "rule")
+                new("matched_conditions", string.Join(",", matchedConditions), "rule"),
+                new("http.uri", "[redacted]", "http"),
+                new("http.pathClassifier", "export-endpoint", "rule")
             };
             evidence.AddRange(AnalystContext(
                 whyMatched,
@@ -137,7 +143,8 @@ namespace Carthago.Engine.Rules.CloudSaas
                 },
                 count: repeatCount,
                 window: repeatWindow,
-                cooldownKey: $"{record.Source}:{provider}");
+                cooldownKey: $"{record.Source}:{provider}",
+                redactHttpUri: true);
         }
     }
 }

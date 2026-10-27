@@ -9,6 +9,7 @@ namespace Carthago.Engine.Rules.IotOt
 {
     public sealed class R115_MQTTHighFrequencyPublishBurstRule : IotOtPrecisionDetectionRuleBase
     {
+        private readonly NetworkBatch081085Dedup _seen = new();
         private static readonly RuleDescriptor Rule = new(
             RuleId: "R115",
             Name: "MQTT High-Frequency Publish Burst",
@@ -62,14 +63,10 @@ namespace Carthago.Engine.Rules.IotOt
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            var text = Text(record);
-            if (!IsMqtt(record)
-                || text.IndexOf("publish", StringComparison.OrdinalIgnoreCase) < 0
-                   && text.IndexOf("pubrel", StringComparison.OrdinalIgnoreCase) < 0
-                   && text.IndexOf("puback", StringComparison.OrdinalIgnoreCase) < 0)
-            {
+            if (!NetworkBatch111115Evidence.Mqtt(context)
+                || !NetworkBatch111115Evidence.TryAction(record, "publish", out var topic)
+                || !_seen.First(record.Id, context.TimestampUtc))
                 return NoMatch();
-            }
 
             var window = TimeSpan.FromSeconds(IntSetting(Descriptor.RuleId, "WindowSeconds", 60, 10, 3600));
             var threshold = IntSetting(Descriptor.RuleId, "Threshold", 90, 10, 5000);
@@ -77,10 +74,9 @@ namespace Carthago.Engine.Rules.IotOt
             var distinctTopicThreshold = IntSetting(Descriptor.RuleId, "DistinctTopicThreshold", 8, 1, 500);
             var host = BestHost(record);
             var count = CountWindowEvents($"{Descriptor.RuleId}:{record.Source}:{record.Destination}:{host}", context.TimestampUtc, window);
-            var topic = NormalizeTopic(ExtractTopic(text));
-            var distinctTopics = string.IsNullOrWhiteSpace(topic)
-                ? 0
-                : CountDistinctValues($"{Descriptor.RuleId}:topics:{record.Source}:{record.Destination}:{host}", topic, context.TimestampUtc, window);
+            var distinctTopics = CountDistinctValues(
+                $"{Descriptor.RuleId}:topics:{record.Source}:{record.Destination}:{host}",
+                NetworkBatch111115Evidence.TopicFingerprint(topic), context.TimestampUtc, window);
             var externalOrPublicBroker = IsExternalAddress(record.Destination) || IsPublicMqttBroker(host);
             if (count < threshold)
                 return NoMatch();
