@@ -83,11 +83,18 @@ try {
         })
     }
     if ($ready.Count -ne 4) { throw 'V2 freeze must be all-or-nothing.' }
+    # No repository output is written until every source capture has passed
+    # packet-level audit and every candidate has been validated.
+    $createdFiles=[System.Collections.Generic.List[string]]::new()
+    $temporaryManifest=$null
+    try {
     foreach ($item in $ready) {
         foreach ($target in @([string]$item.entry.file,[string]$item.entry.provenanceFile)) {
             New-Item -ItemType Directory -Force -Path (Split-Path -Parent $target) | Out-Null
         }
+        $createdFiles.Add([string]$item.entry.file)
         Copy-Item -LiteralPath $item.sample -Destination ([string]$item.entry.file) -ErrorAction Stop
+        $createdFiles.Add([string]$item.entry.provenanceFile)
         Copy-Item -LiteralPath $item.provenance -Destination ([string]$item.entry.provenanceFile) -ErrorAction Stop
         $samplePath=[string]$item.entry.file
         $provenancePath=[string]$item.entry.provenanceFile
@@ -103,7 +110,23 @@ try {
     $manifest | Add-Member -MemberType NoteProperty -Name frozenDateUtc -Value ([DateTime]::UtcNow.ToString('o')) -Force
     $manifest | Add-Member -MemberType NoteProperty -Name freezeApproval -Value 'Explicit -ApproveFreeze -ReviewedSensitiveTelemetry; classification remains synthetic' -Force
     $encoded=($manifest | ConvertTo-Json -Depth 16)+[Environment]::NewLine
-    [IO.File]::WriteAllText((Join-Path $root $manifestPath), $encoded, [Text.UTF8Encoding]::new($false))
+    $temporaryManifest=Join-Path $root ('docs/holdout-v2-'+[Guid]::NewGuid().ToString('N')+'.tmp')
+    [IO.File]::WriteAllText($temporaryManifest, $encoded, [Text.UTF8Encoding]::new($false))
+    # Same-volume atomic replacement, never leave a truncated frozen manifest.
+    [IO.File]::Replace($temporaryManifest, (Join-Path $root $manifestPath), $null)
+    $temporaryManifest=$null
+    } catch {
+        # Only remove paths this invocation created; never touch frozen v1.
+        foreach ($created in $createdFiles) {
+            if (Test-Path -LiteralPath $created -PathType Leaf) {
+                Remove-Item -LiteralPath $created -Force -ErrorAction SilentlyContinue
+            }
+        }
+        if ($null -ne $temporaryManifest -and (Test-Path -LiteralPath $temporaryManifest)) {
+            Remove-Item -LiteralPath $temporaryManifest -Force -ErrorAction SilentlyContinue
+        }
+        throw
+    }
     Write-Host 'V2 corpus frozen locally: 12 manifest entries (8 v1 hashes reused, 4 separately captured R102 candidates).'
     Write-Host 'REVIEW and COMMIT candidate files, provenance and v2 manifest TOGETHER before evaluation.'
     Write-Host 'No build, benchmark, holdout run or security-rule promotion was performed.'
