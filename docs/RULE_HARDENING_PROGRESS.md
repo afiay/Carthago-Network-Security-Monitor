@@ -204,6 +204,33 @@ bound by its separate no-tests/no-builds instruction. No tests or Windows
 runner were executed by this work. The original v1 evaluation remains failed
 regardless of any future v2 outcome.
 
+## V2 provenance hardening — continued, 2026-10-27
+
+V2 remains PENDING_EXTERNAL_CAPTURE_AND_REVIEW. No new external PCAP
+was imported, frozen, evaluated or labeled as field independent.
+Neither v1 evidence nor R102 production detection logic was altered.
+
+- scripts/audit-holdout-v2-candidates.ps1 re-decodes the original
+  PCAPs, verifies SHA-256 and every referenced packet frame, checks
+  typed UDP/TCP/DNS fields and rejects reused frames or overlapping
+  malicious-client source IPs.
+- scripts/freeze-holdout-v2.ps1 now requires original captures and
+  successful packet audit before any file copy, checks eight reused v1
+  blobs, requires both approval switches, rolls back copied files on
+  failure and atomically updates only the v2 manifest.
+- scripts/verify-all-rule-batches.ps1 fails early when v2 is pending,
+  before expensive builds or tests; v1 remains the default.
+- Six new unexecuted xUnit facts in
+  Carthago.Tests/SyntheticHoldoutV2ContractTests.cs check manifest
+  version separation, v1 hash reuse, new R102 slots, label balance,
+  pending/frozen hash discipline and opt-in holdout selection.
+- docs/HOLDOUT_V2_PROTOCOL.md documents packet audit and recognizes
+  that CSV-only features cannot establish raw PCAP transport.
+
+**CANDIDATE — UNVERIFIED.** No Carthago build, xUnit, benchmark,
+holdout, Windows runner or production data capture was executed.
+No synthetic results establish production precision or alert recall.
+
 ## Deferred one-run acceptance
 
 When the user says it is test time, freeze the branch head, then run on Windows:
