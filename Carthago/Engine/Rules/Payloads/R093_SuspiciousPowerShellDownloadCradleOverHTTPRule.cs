@@ -20,7 +20,7 @@ namespace Carthago.Engine.Rules.Payloads
             RuleEvaluationContext context, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (!NetworkBatch091095Evidence.PowerShellCradle(c) || !_seen.First(context.Record.Id, context.TimestampUtc))
+            if (!NetworkBatch091095Evidence.PowerShellCradle(context) || !_seen.First(context.Record.Id, context.TimestampUtc))
                 return ValueTask.FromResult(RuleEvaluationResult.NoMatch(Descriptor.RuleId));
             return ValueTask.FromResult(NetworkBatch091095Evidence.Alert(
                 Descriptor, context, "Structured HTTP request target combines a PowerShell launcher, retrieval, and invocation; execution unverified."));
