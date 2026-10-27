@@ -9,6 +9,8 @@ namespace Carthago.Engine.Rules.Health
 {
     public sealed class R055_ThreatFeedStaleRule : DetectionRuleBase
     {
+        private readonly HealthFeedStalenessTransition _transition = new();
+
         public override RuleDescriptor Descriptor => new(
             RuleId: "R055",
             Name: "Threat Feed Stale",
@@ -22,7 +24,8 @@ namespace Carthago.Engine.Rules.Health
         {
             cancellationToken.ThrowIfCancellationRequested();
             var lastFeed = context.HealthSnapshot.LastThreatFeedUpdateUtc;
-            if (!lastFeed.HasValue || (context.TimestampUtc - lastFeed.Value).TotalHours <= 24)
+            if (!HealthEvidenceGate.IsFresh(context)
+                || !_transition.Observe(lastFeed, context.HealthSnapshot.TimestampUtc))
                 return ValueTask.FromResult(RuleEvaluationResult.NoMatch(Descriptor.RuleId));
             return ValueTask.FromResult(RuleEvaluationResult.Match(Descriptor.RuleId, CreateHealthEvent(context, $"Threat feed stale: last update {lastFeed.Value:O}.")));
         }

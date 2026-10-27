@@ -9,6 +9,8 @@ namespace Carthago.Engine.Rules.Health
 {
     public sealed class R051_PacketCaptureDropSurgeRule : DetectionRuleBase
     {
+        private readonly HealthDeltaTransition _transition = new();
+
         public override RuleDescriptor Descriptor => new(
             RuleId: "R051",
             Name: "Packet Capture Drop Surge",
@@ -21,7 +23,8 @@ namespace Carthago.Engine.Rules.Health
         public override ValueTask<RuleEvaluationResult> EvaluateAsync(RuleEvaluationContext context, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (context.HealthSnapshot.CaptureDropDelta <= 0)
+            if (!HealthEvidenceGate.IsFresh(context)
+                || !_transition.Observe(context.HealthSnapshot.CaptureDropDelta, context.HealthSnapshot.TimestampUtc))
                 return ValueTask.FromResult(RuleEvaluationResult.NoMatch(Descriptor.RuleId));
             return ValueTask.FromResult(RuleEvaluationResult.Match(Descriptor.RuleId, CreateHealthEvent(context, $"Capture drop surge detected: {context.HealthSnapshot.CaptureDropDelta} packets dropped before DetectionEvent creation.")));
         }

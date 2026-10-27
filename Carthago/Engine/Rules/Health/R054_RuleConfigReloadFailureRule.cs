@@ -9,6 +9,8 @@ namespace Carthago.Engine.Rules.Health
 {
     public sealed class R054_RuleConfigReloadFailureRule : DetectionRuleBase
     {
+        private readonly HealthCounterTransition _transition = new();
+
         public override RuleDescriptor Descriptor => new(
             RuleId: "R054",
             Name: "Rule Config Reload Failure",
@@ -21,7 +23,8 @@ namespace Carthago.Engine.Rules.Health
         public override ValueTask<RuleEvaluationResult> EvaluateAsync(RuleEvaluationContext context, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (context.HealthSnapshot.ConfigReloadFailureCount <= 0)
+            if (!HealthEvidenceGate.IsFresh(context)
+                || !_transition.Observe(context.HealthSnapshot.ConfigReloadFailureCount, context.HealthSnapshot.TimestampUtc))
                 return ValueTask.FromResult(RuleEvaluationResult.NoMatch(Descriptor.RuleId));
             return ValueTask.FromResult(RuleEvaluationResult.Match(Descriptor.RuleId, CreateHealthEvent(context, $"Rule config reload failure observed. Count={context.HealthSnapshot.ConfigReloadFailureCount}.")));
         }

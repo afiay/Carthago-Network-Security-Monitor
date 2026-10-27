@@ -9,6 +9,8 @@ namespace Carthago.Engine.Rules.Health
 {
     public sealed class R052_SinkQueueBackpressureRule : DetectionRuleBase
     {
+        private readonly HealthCounterTransition _transition = new();
+
         public override RuleDescriptor Descriptor => new(
             RuleId: "R052",
             Name: "Sink Queue Backpressure",
@@ -21,7 +23,8 @@ namespace Carthago.Engine.Rules.Health
         public override ValueTask<RuleEvaluationResult> EvaluateAsync(RuleEvaluationContext context, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (context.HealthSnapshot.SinkBackpressureCount <= 0)
+            if (!HealthEvidenceGate.IsFresh(context)
+                || !_transition.Observe(context.HealthSnapshot.SinkBackpressureCount, context.HealthSnapshot.TimestampUtc))
                 return ValueTask.FromResult(RuleEvaluationResult.NoMatch(Descriptor.RuleId));
             return ValueTask.FromResult(RuleEvaluationResult.Match(Descriptor.RuleId, CreateHealthEvent(context, $"Sink backpressure observed. Count={context.HealthSnapshot.SinkBackpressureCount}.")));
         }

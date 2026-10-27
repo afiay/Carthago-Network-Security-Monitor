@@ -9,6 +9,8 @@ namespace Carthago.Engine.Rules.Health
 {
     public sealed class R053_DetectionJournalWriteFailureRule : DetectionRuleBase
     {
+        private readonly HealthCounterTransition _transition = new();
+
         public override RuleDescriptor Descriptor => new(
             RuleId: "R053",
             Name: "Detection Journal Write Failure",
@@ -21,7 +23,8 @@ namespace Carthago.Engine.Rules.Health
         public override ValueTask<RuleEvaluationResult> EvaluateAsync(RuleEvaluationContext context, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (context.HealthSnapshot.JournalWriteFailureCount <= 0)
+            if (!HealthEvidenceGate.IsFresh(context)
+                || !_transition.Observe(context.HealthSnapshot.JournalWriteFailureCount, context.HealthSnapshot.TimestampUtc))
                 return ValueTask.FromResult(RuleEvaluationResult.NoMatch(Descriptor.RuleId));
             return ValueTask.FromResult(RuleEvaluationResult.Match(Descriptor.RuleId, CreateHealthEvent(context, $"Detection journal write failure observed. Count={context.HealthSnapshot.JournalWriteFailureCount}.")));
         }
