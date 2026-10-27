@@ -51,6 +51,8 @@ namespace Carthago.Engine.Rules.Expansion
                 "negative normal browser sample"
             });
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         public R172_ScannerUserAgentWithBrowserClaimMismatchRule()
             : base(Rule, Profile)
         {
@@ -59,16 +61,17 @@ namespace Carthago.Engine.Rules.Expansion
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!HasHttpContext(record) || !HasScannerUserAgentWithBrowserClaimMismatch(record))
+            if (!NetworkBatch171175Evidence.Http(record) || !NetworkBatch171175Evidence.ScannerBrowser(record))
                 return NoMatch();
 
-            if (!IsCrossBoundary(record, out _, out _))
+            if (!NetworkBatch171175Evidence.Inbound(record))
                 return NoMatch();
 
+            if (!_replay.Observe(record, context.TimestampUtc)) return NoMatch();
             var evidenceItems = new List<DetectionEvidenceItem>
             {
                 new("matched_conditions", "scanner_user_agent,browser_claim_mismatch,boundary_crossing", "rule"),
-                new("http.user_agent", ShortText(UserAgent(record)), "http")
+                new("http.user_agent", "scanner-browser-mismatch", "rule")
             };
             evidenceItems.AddRange(AnalystContext(
                 "The HTTP user agent simultaneously identified as a known scanner and as a browser-like client.",

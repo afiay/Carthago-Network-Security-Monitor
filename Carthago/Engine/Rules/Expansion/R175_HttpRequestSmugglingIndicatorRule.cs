@@ -51,6 +51,8 @@ namespace Carthago.Engine.Rules.Expansion
                 "negative standard content length sample"
             });
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         public R175_HttpRequestSmugglingIndicatorRule()
             : base(Rule, Profile)
         {
@@ -59,12 +61,13 @@ namespace Carthago.Engine.Rules.Expansion
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!HasHttpContext(record) || !HasMethod(record, "POST", "PUT", "PATCH"))
+            if (!NetworkBatch171175Evidence.Http(record) || !HasMethod(record, "POST", "PUT", "PATCH"))
                 return NoMatch();
 
-            if (!HasRequestSmugglingIndicators(record, out var mode))
+            if (!NetworkBatch171175Evidence.Smuggling(record, out var mode))
                 return NoMatch();
 
+            if (!_replay.Observe(record, context.TimestampUtc)) return NoMatch();
             var evidenceItems = new List<DetectionEvidenceItem>
             {
                 new("matched_conditions", "body_bearing_method,conflicting_http_framing", "rule"),
@@ -72,7 +75,7 @@ namespace Carthago.Engine.Rules.Expansion
                 new("smuggling.mode", mode, "http")
             };
             evidenceItems.AddRange(AnalystContext(
-                "An HTTP request used conflicting framing semantics consistent with request smuggling attempts.",
+                "An attributed HTTP request carried conflicting framing fields; exploit success is not inferred.",
                 "Severity is High because CL/TE ambiguities can desynchronize front-end and back-end parsers, enabling cache poisoning or request tunneling.",
                 "Protocol conformance tests, proxy validation, and security labs can intentionally send these header combinations.",
                 "Confirm whether the source is an approved test tool or whether the target is a production-facing HTTP stack.",

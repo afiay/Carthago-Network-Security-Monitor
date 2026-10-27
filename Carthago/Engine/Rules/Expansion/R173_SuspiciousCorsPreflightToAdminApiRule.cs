@@ -51,6 +51,8 @@ namespace Carthago.Engine.Rules.Expansion
                 "negative public api same-site preflight sample"
             });
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         public R173_SuspiciousCorsPreflightToAdminApiRule()
             : base(Rule, Profile)
         {
@@ -59,17 +61,18 @@ namespace Carthago.Engine.Rules.Expansion
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!HasHttpContext(record) || !IsAdminApiPreflight(record))
+            if (!NetworkBatch171175Evidence.Http(record) || !NetworkBatch171175Evidence.Cors(record))
                 return NoMatch();
 
-            if (!IsCrossBoundary(record, out _, out _))
+            if (!NetworkBatch171175Evidence.Inbound(record))
                 return NoMatch();
 
+            if (!_replay.Observe(record, context.TimestampUtc)) return NoMatch();
             var path = HttpPath(record);
             var evidenceItems = new List<DetectionEvidenceItem>
             {
                 new("matched_conditions", "cors_preflight,admin_api_context,suspicious_origin_or_headers", "rule"),
-                new("http.path", string.IsNullOrWhiteSpace(path) ? "/" : path, "http")
+                new("http.path", "[REDACTED]", "http")
             };
             evidenceItems.AddRange(AnalystContext(
                 "A cross-boundary CORS preflight targeted an admin-like API with suspicious origin or requested header context.",
@@ -90,7 +93,7 @@ namespace Carthago.Engine.Rules.Expansion
                     confidence.AddEvidence(0.20, "admin-api-context");
                     confidence.AddEvidence(0.16, "suspicious-origin-or-headers");
                 },
-                cooldownKey: $"{record.Source}:{BestHost(record)}:{path}");
+                cooldownKey: $"{record.Source}:{BestHost(record)}:{NetworkBatch166170Evidence.Key(path)}");
         }
     }
 }

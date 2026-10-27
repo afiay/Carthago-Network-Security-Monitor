@@ -51,6 +51,8 @@ namespace Carthago.Engine.Rules.Expansion
                 "negative benign caldav discovery sample"
             });
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         public R174_WebdavMethodAbuseRule()
             : base(Rule, Profile)
         {
@@ -59,17 +61,18 @@ namespace Carthago.Engine.Rules.Expansion
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!HasHttpContext(record) || !IsSuspiciousWebDavMethod(record))
+            if (!NetworkBatch171175Evidence.DavHttp(record) || !NetworkBatch171175Evidence.DavAbuse(record))
                 return NoMatch();
 
-            if (!IsCrossBoundary(record, out _, out _))
+            if (!NetworkBatch171175Evidence.Inbound(record))
                 return NoMatch();
 
+            if (!_replay.Observe(record, context.TimestampUtc)) return NoMatch();
             var path = HttpPath(record);
             var evidenceItems = new List<DetectionEvidenceItem>
             {
                 new("matched_conditions", "suspicious_webdav_method,boundary_crossing", "rule"),
-                new("http.path", string.IsNullOrWhiteSpace(path) ? "/" : path, "http"),
+                new("http.path", "[REDACTED]", "http"),
                 new("http.method", record.HttpMethod ?? "unknown", "http")
             };
             evidenceItems.AddRange(AnalystContext(
@@ -90,7 +93,7 @@ namespace Carthago.Engine.Rules.Expansion
                     confidence.AddEvidence(0.20, "suspicious-webdav-method");
                     confidence.AddEvidence(0.16, "boundary-crossing");
                 },
-                cooldownKey: $"{record.Source}:{BestHost(record)}:{record.HttpMethod}:{path}");
+                cooldownKey: $"{record.Source}:{BestHost(record)}:{record.HttpMethod}:{NetworkBatch166170Evidence.Key(path)}");
         }
     }
 }
