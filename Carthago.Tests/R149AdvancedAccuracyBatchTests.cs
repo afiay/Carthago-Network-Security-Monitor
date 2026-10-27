@@ -43,9 +43,9 @@ public sealed class R149AdvancedAccuracyBatchTests
         Assert.False((await new R149_IpLiteralUsedAsTlsNameRule().EvaluateAsync(NetworkBatch146150Context.At(r))).Matched);
     }
 
-    [Fact] public async Task Conflicting_TlsSni_And_Sni_Do_Not_Qualify()
+    [Fact] public async Task Contradictory_Http_Method_Is_Rejected()
     {
-        var r = NetworkBatch146150Context.Tls("203.0.113.77"); r.TlsSni = "203.0.113.78";
+        var r = NetworkBatch146150Context.Tls("203.0.113.77"); r.HttpMethod = "GET";
         Assert.False((await new R149_IpLiteralUsedAsTlsNameRule().EvaluateAsync(NetworkBatch146150Context.At(r))).Matched);
     }
 

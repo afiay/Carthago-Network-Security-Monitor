@@ -82,14 +82,14 @@ public sealed class R145AdvancedAccuracyBatchTests
         Assert.False((await new R145_ShortLivedCertificateWithNewSniRule().EvaluateAsync(NetworkBatch141145Context.At(record))).Matched);
     }
 
-    [Fact] public async Task Forged_Udp_Or_Contradictory_Sni_Cannot_Qualify()
+    [Fact] public async Task Udp_And_Http_Metadata_Contradictions_Cannot_Qualify()
     {
         var rule = new R145_ShortLivedCertificateWithNewSniRule();
         var udp = NetworkBatch141145Context.Tls();
         NetworkBatch141145Context.AsUdp(udp);
         Assert.False((await rule.EvaluateAsync(NetworkBatch141145Context.At(udp))).Matched);
         var conflicting = NetworkBatch141145Context.Tls();
-        conflicting.TlsSni = "unrelated.other.test";
+        conflicting.HttpMethod = "GET";
         Assert.False((await rule.EvaluateAsync(NetworkBatch141145Context.At(conflicting, 10))).Matched);
         Assert.Equal(RuleRuntimeMode.Shadow, rule.PrecisionProfile.DefaultMode);
     }

@@ -48,10 +48,10 @@ public sealed class R142AdvancedAccuracyBatchTests
         Assert.False((await new R142_TlsCertificateSubjectSniMismatchRule().EvaluateAsync(NetworkBatch141145Context.At(record))).Matched);
     }
 
-    [Fact] public async Task Conflicting_Sni_Authorities_Are_Ambiguous()
+    [Fact] public async Task Contradictory_Http_Uri_Metadata_Is_Rejected()
     {
         var record = NetworkBatch141145Context.Tls();
-        record.TlsSni = "other.example.test";
+        record.HttpUri = "/login";
         Assert.False((await new R142_TlsCertificateSubjectSniMismatchRule().EvaluateAsync(NetworkBatch141145Context.At(record))).Matched);
     }
 

@@ -48,9 +48,9 @@ public sealed class R148AdvancedAccuracyBatchTests
         Assert.False((await new R148_TlsToDynamicDnsHostRule().EvaluateAsync(NetworkBatch146150Context.At(r))).Matched);
     }
 
-    [Fact] public async Task Conflicting_Sni_Attribution_Is_Rejected()
+    [Fact] public async Task Contradictory_Http_Method_Is_Rejected()
     {
-        var r = NetworkBatch146150Context.Tls("remote123.duckdns.org"); r.TlsSni = "another.duckdns.org";
+        var r = NetworkBatch146150Context.Tls("remote123.duckdns.org"); r.HttpMethod = "GET";
         Assert.False((await new R148_TlsToDynamicDnsHostRule().EvaluateAsync(NetworkBatch146150Context.At(r))).Matched);
     }
 

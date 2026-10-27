@@ -69,10 +69,10 @@ public sealed class R141AdvancedAccuracyBatchTests
         Assert.False((await new R141_NewSniWithRareTlsFingerprintRule().EvaluateAsync(NetworkBatch141145Context.At(record))).Matched);
     }
 
-    [Fact] public async Task Conflicting_Handshake_Sni_Fields_Are_Rejected()
+    [Fact] public async Task Contradictory_Http_Metadata_Is_Rejected()
     {
         var record = NetworkBatch141145Context.Tls();
-        record.TlsSni = "different.example.test";
+        record.HttpMethod = "GET";
         Assert.False((await new R141_NewSniWithRareTlsFingerprintRule().EvaluateAsync(NetworkBatch141145Context.At(record))).Matched);
     }
 
