@@ -39,8 +39,9 @@ Public sources to examine (not imported or independently validated here):
   dns2tcp and dnscat2 datasets. Verify scenario and reuse rights.
 - https://wiki.wireshark.org/SampleCaptures — candidate benign DNS traces.
 - https://data.mendeley.com/datasets/v2cy9y58t7/2 — controlled DNS
-  exfiltration data. Verify that packet capture evidence, not only CSV
-  features, is available for selected samples.
+  exfiltration dataset. The published download is CSV feature data, not
+  a verified PCAP; it is unsuitable for this packet-attributed importer
+  unless original captures are independently obtained and authenticated.
 
 ## Prepare the four samples (no tests or freeze)
 
@@ -63,14 +64,33 @@ It does not freeze, execute rules, score accuracy or alter v1.
 Review and redact sensitive data before publication without inventing
 missing packets, transport attribution or ground-truth labels.
 
-## Explicit freeze (not a test run)
+## Packet provenance audit and explicit freeze (not a detector test)
 
-When all four imported candidates have verified independent source labels
-and passed license/privacy review, the project owner may run:
+The freeze step requires the **original captures**, not just metadata.
+Store the original .pcap or .pcapng files in a local restricted directory.
+The audit checks each capture SHA-256; each selected frame against decoded
+IP addresses, UDP/TCP transport, ports and DNS query fields; and uniqueness
+of frame identities across all four cases. The two malicious R102 cases
+must originate from different captured client IPs and contain at least
+three distinct, actually captured TXT query names each.
+
+Optional offline source-integrity audit (runs no Carthago rule tests):
 
 ~~~powershell
-.\scripts\freeze-holdout-v2.ps1 -ApproveFreeze -ReviewedSensitiveTelemetry
+.\scripts\audit-holdout-v2-candidates.ps1 -CaptureDirectory 'C:\evidence\pcaps'
 ~~~
+
+After review of labels, source license and potentially sensitive telemetry,
+freeze explicitly with the original capture files available:
+
+~~~powershell
+.\scripts\freeze-holdout-v2.ps1 -CaptureDirectory 'C:\evidence\pcaps' -ApproveFreeze -ReviewedSensitiveTelemetry
+~~~
+
+The freeze repeats the PCAP audit before changing files, then pins hashes.
+It atomically replaces the manifest and rolls back newly copied v2 files
+on errors. V1 never changes. Packet authenticity does not independently
+establish a malicious ground-truth label or publication permission.
 
 The freeze refuses missing evidence and copies the new four fixture/provenance
 pairs into the v2-only locations. It pins Git blob hashes and transitions
