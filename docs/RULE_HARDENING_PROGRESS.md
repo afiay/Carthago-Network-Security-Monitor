@@ -365,3 +365,14 @@ holdout or runner were invoked. No confidence floors, approval policy,
 thresholds, frozen inputs or labels were changed. The R102 frozen v1
 holdout remains failed, v2 pending. See `docs/RULE_BATCH_121-125.md`.
 **Next contiguous batch: R126–R130.**
+
+## R126-R130 candidate implementation - 2026-10-27
+
+Five IdentityAccess rules hardened with explicit TCP/HTTP/SSH provenance,
+IP-boundary checks, fixed-category route evidence and bounded per-instance
+burst state. 35 new advanced xUnit facts authored (7 per rule), plus shared
+context and evidence helper. **CANDIDATE - UNVERIFIED: zero tests run.**
+Existing default Shadow, confidence floors, approval/baseline gates and
+frozen holdout were not changed. The consolidated Windows entry point
+remains unchanged. See `docs/RULE_BATCH_126-130.md` for scope and risks.
+**Next contiguous batch: R131-R135.**
