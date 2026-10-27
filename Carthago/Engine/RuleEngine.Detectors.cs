@@ -1986,171 +1986,192 @@ namespace Carthago.Services
             return false;
         }
 
-        // ===== R031 DNS TXT spike (exfil heuristic) =====
+        // ===== R031 DNS TXT spike: observed queries, per-client/resolver window =====
         private static bool DetectDnsTxtSpike(DateTime now, TrafficRecord r, out DetectionEvent det)
         {
             det = null!;
             try
             {
-                bool isDns = string.Equals(r.Protocol, "DNS", StringComparison.OrdinalIgnoreCase) || (string.Equals(r.Protocol, "UDP", StringComparison.OrdinalIgnoreCase) && r.DestinationPort == 53);
-                if (!isDns) return false;
-
-                if (!string.Equals(r.DnsQtype, "TXT", StringComparison.OrdinalIgnoreCase)) return false;
-
-                BoundDictionary(_dnsTxtBySrc, 20000);
+                bool dns = string.Equals(r.Protocol, "DNS", StringComparison.OrdinalIgnoreCase);
+                bool udp = string.Equals(r.Protocol, "UDP", StringComparison.OrdinalIgnoreCase);
+                bool tcp = string.Equals(r.Protocol, "TCP", StringComparison.OrdinalIgnoreCase);
+                if (!(dns || udp || (tcp && string.Equals(r.ApplicationService, "DNS", StringComparison.OrdinalIgnoreCase)))
+                    || r.DestinationPort != 53 || r.Length <= 0 || r.IsQuic || r.DnsIsResponse
+                    || !string.Equals(r.DnsQtype, "TXT", StringComparison.OrdinalIgnoreCase)
+                    || string.IsNullOrWhiteSpace(r.DnsQname) || r.DnsQname.Length > 253
+                    || !IPAddress.TryParse(r.Source, out _) || !IPAddress.TryParse(r.Destination, out _)
+                    || (!string.IsNullOrWhiteSpace(r.ApplicationService)
+                        && !string.Equals(r.ApplicationService, "DNS", StringComparison.OrdinalIgnoreCase)))
+                    return false;
 
                 const int window = 60;
-                const int threshold = 15;
-
-                var list = _dnsTxtBySrc.GetOrAdd(NS(r.Source), _ => new List<DateTime>(threshold * 2));
+                const int threshold = 15; // Preserve the existing configured detection boundary.
+                BoundDictionary(_dnsTxtBySrc, 20000);
+                string key = $"{r.Source}|{r.Destination}";
+                var list = _dnsTxtBySrc.GetOrAdd(key, _ => new List<DateTime>(threshold * 2));
+                int count;
                 lock (list)
                 {
-                    list.Add(now);
-                    int count = TrimAndCount(list, now, window);
-                    if (count >= threshold)
-                    {
-                        if (SuppressRepeat(now, "R031", NS(r.Source), r.Destination, r.DestinationPort)) return false;
-                        det = new DetectionEvent
-                        {
-                            RuleId = "R031",
-                            Description = $"DNS TXT query spike from {NS(r.Source)} ({count}/{window}s)",
-                            SourceIp = NS(r.Source),
-                            DestinationIp = r.Destination,
-                            Protocol = NP(r.Protocol),
-                            Severity = SeverityLevel.High,
-                            Count = count,
-                            WindowSeconds = window
-                        };
-                        list.Clear();
-                        return true;
-                    }
+                    var cutoff = now.AddSeconds(-window);
+                    list.RemoveAll(ts => ts < cutoff || ts > now);
+                    // Replayed or duplicated capture timestamps must not inflate volume.
+                    if (!list.Contains(now)) list.Add(now);
+                    if (list.Count > 4096) list.RemoveRange(0, list.Count - 4096);
+                    count = list.Count;
+                    if (count < threshold) return false;
+                    // Clear completed bursts even when cooldown suppresses the event.
+                    list.Clear();
                 }
+                if (SuppressRepeat(now, "R031", r.Source!, r.Destination, 53)) return false;
+                det = new DetectionEvent
+                {
+                    RuleId = "R031", Description = $"DNS TXT query spike ({count}/{window}s)",
+                    SourceIp = r.Source, DestinationIp = r.Destination, DestinationPort = 53,
+                    Protocol = "DNS", Severity = SeverityLevel.High,
+                    Count = count, WindowSeconds = window
+                };
+                return true;
             }
-            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] R031 error: {ex}"); }
+            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] R031 error: {ex.GetType().Name}"); }
             return false;
         }
 
-        // ===== R032 Suspicious/empty HTTP User-Agent =====
+        // ===== R032 HTTP User-Agent: observed requests, never expose raw header =====
         private static readonly Regex _susUa = new(@"(?i)\b(curl|wget|python-requests|Go-http-client|powershell|libwww-perl|java/\d|okhttp)\b", RegexOptions.Compiled);
         private static bool DetectSuspiciousUserAgent(DateTime now, TrafficRecord r, out DetectionEvent det)
         {
             det = null!;
             try
             {
-                bool httpLike = string.Equals(r.Protocol, "HTTP", StringComparison.OrdinalIgnoreCase) || (r.HttpMethod is not null) || (r.HttpUserAgent is not null);
-                if (!httpLike) return false;
+                bool http = string.Equals(r.Protocol, "HTTP", StringComparison.OrdinalIgnoreCase)
+                    || (string.Equals(r.Protocol, "TCP", StringComparison.OrdinalIgnoreCase)
+                        && string.Equals(r.ApplicationService, "HTTP", StringComparison.OrdinalIgnoreCase));
+                string? method = r.HttpMethod?.Trim();
+                if (!http || r.Length <= 0 || r.IsQuic
+                    || !IPAddress.TryParse(r.Source, out _) || !IPAddress.TryParse(r.Destination, out _)
+                    || method is not ("GET" or "POST" or "PUT" or "PATCH" or "DELETE" or "HEAD" or "OPTIONS")
+                    || (!string.IsNullOrWhiteSpace(r.ApplicationService)
+                        && !string.Equals(r.ApplicationService, "HTTP", StringComparison.OrdinalIgnoreCase)))
+                    return false;
 
                 string ua = r.HttpUserAgent ?? string.Empty;
                 bool emptyUa = string.IsNullOrWhiteSpace(ua);
-                bool badUa = _susUa.IsMatch(ua);
-
-                if (!(emptyUa || badUa)) return false;
-
-                if (SuppressRepeat(now, "R032", NS(r.Source), r.Destination, r.DestinationPort)) return false;
+                bool suspiciousUa = !emptyUa && _susUa.IsMatch(ua);
+                if (!emptyUa && !suspiciousUa) return false;
+                if (SuppressRepeat(now, "R032", r.Source!, r.Destination, r.DestinationPort)) return false;
                 det = new DetectionEvent
                 {
                     RuleId = "R032",
-                    Description = emptyUa ? "HTTP request with empty User-Agent" : $"HTTP request with suspicious User-Agent: {ua}",
-                    SourceIp = NS(r.Source),
-                    DestinationIp = r.Destination,
-                    DestinationPort = r.DestinationPort,
-                    Protocol = "HTTP",
-                    Severity = badUa ? SeverityLevel.Medium : SeverityLevel.Low,
+                    Description = emptyUa ? "HTTP request with empty User-Agent" : "HTTP request with automation-associated User-Agent",
+                    SourceIp = r.Source, DestinationIp = r.Destination, DestinationPort = r.DestinationPort,
+                    Protocol = "HTTP", Severity = suspiciousUa ? SeverityLevel.Medium : SeverityLevel.Low,
                     Count = 1
                 };
                 return true;
             }
-            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] R032 error: {ex}"); }
+            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] R032 error: {ex.GetType().Name}"); }
             return false;
         }
 
-        // ===== R033 ICMP oversized echo payload =====
+        // ===== R033 ICMP oversized observed echo packets only =====
         private static bool DetectIcmpOversized(DateTime now, TrafficRecord r, out DetectionEvent det)
         {
             det = null!;
             try
             {
-                if (!string.Equals(r.Protocol, "ICMP", StringComparison.OrdinalIgnoreCase)) return false;
-                if (r.Length <= 0) return false;
-
-                const int sizeThresh = 1000; // bytes (payload + headers as observed length)
-                if (r.Length >= sizeThresh)
+                if (!string.Equals(r.Protocol, "ICMP", StringComparison.OrdinalIgnoreCase)
+                    || r.Length < 1000 || !r.IcmpTypeCode.HasValue
+                    || r.IcmpTypeCode.Value is not (0x0800 or 0x0000 or 0x8000 or 0x8100)
+                    || !IPAddress.TryParse(r.Source, out _) || !IPAddress.TryParse(r.Destination, out _))
+                    return false;
+                if (SuppressRepeat(now, "R033", r.Source!, r.Destination, null)) return false;
+                det = new DetectionEvent
                 {
-                    if (SuppressRepeat(now, "R033", NS(r.Source), r.Destination, null)) return false;
-                    det = new DetectionEvent
-                    {
-                        RuleId = "R033",
-                        Description = $"ICMP oversized packet length={r.Length} bytes",
-                        SourceIp = NS(r.Source),
-                        DestinationIp = r.Destination,
-                        Protocol = "ICMP",
-                        Severity = SeverityLevel.Medium,
-                        Count = r.Length
-                    };
-                    return true;
-                }
+                    RuleId = "R033", Description = $"Oversized ICMP echo packet ({r.Length} bytes)",
+                    SourceIp = r.Source, DestinationIp = r.Destination, Protocol = "ICMP",
+                    Severity = SeverityLevel.Medium, Count = r.Length
+                };
+                return true;
             }
-            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] R033 error: {ex}"); }
+            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] R033 error: {ex.GetType().Name}"); }
             return false;
         }
 
-        // ===== R034 DNS-over-HTTPS (DoH) heuristic =====
+        // ===== R034 DoH: corroborated HTTP request metadata, not prose =====
         private static bool DetectDoHHeuristic(DateTime now, TrafficRecord r, out DetectionEvent det)
         {
             det = null!;
             try
             {
-                bool looksDoH = IsDoHLike(r);
-                if (!looksDoH) return false;
-
-                if (SuppressRepeat(now, "R034", NS(r.Source), r.Destination, r.DestinationPort)) return false;
+                bool http = string.Equals(r.Protocol, "HTTP", StringComparison.OrdinalIgnoreCase)
+                    || (string.Equals(r.Protocol, "TCP", StringComparison.OrdinalIgnoreCase)
+                        && string.Equals(r.ApplicationService, "HTTP", StringComparison.OrdinalIgnoreCase));
+                if (!http || r.Length <= 0 || r.IsQuic || r.DestinationPort is not (443 or 8443)
+                    || !IPAddress.TryParse(r.Source, out _) || !IPAddress.TryParse(r.Destination, out _)
+                    || (!string.IsNullOrWhiteSpace(r.ApplicationService)
+                        && !string.Equals(r.ApplicationService, "HTTP", StringComparison.OrdinalIgnoreCase)))
+                    return false;
+                string method = r.HttpMethod?.Trim().ToUpperInvariant() ?? string.Empty;
+                string uri = r.HttpUri ?? string.Empty;
+                int query = uri.IndexOf('?');
+                string path = query < 0 ? uri : uri.Substring(0, query);
+                if (!string.Equals(path, "/dns-query", StringComparison.OrdinalIgnoreCase)) return false;
+                bool get = method == "GET" && query >= 0
+                    && Regex.IsMatch(uri.Substring(query + 1), @"(?:^|&)dns=[A-Za-z0-9_-]{8,}(?:&|$)");
+                bool post = method == "POST"
+                    && Regex.IsMatch(r.HttpRequestHeaders ?? string.Empty,
+                        @"(?im)^Content-Type:\s*application/dns-message\s*(?:;[^\r\n]*)?$");
+                if (!(get || post)) return false;
+                if (SuppressRepeat(now, "R034", r.Source!, r.Destination, r.DestinationPort)) return false;
                 det = new DetectionEvent
                 {
-                    RuleId = "R034",
-                    Description = "Possible DNS-over-HTTPS (DoH) detected",
-                    SourceIp = NS(r.Source),
-                    DestinationIp = r.Destination,
-                    DestinationPort = r.DestinationPort,
-                    Protocol = "HTTP",
-                    Severity = SeverityLevel.Medium,
-                    Count = 1
+                    RuleId = "R034", Description = "Observed DNS-over-HTTPS request candidate",
+                    SourceIp = r.Source, DestinationIp = r.Destination, DestinationPort = r.DestinationPort,
+                    Protocol = "HTTP", Severity = SeverityLevel.Medium, Count = 1
                 };
                 return true;
             }
-            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] R034 error: {ex}"); }
+            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] R034 error: {ex.GetType().Name}"); }
             return false;
         }
 
-        // ===== R035 Rare SSH client fingerprint (HASSH/JA4SSH) =====
+        // ===== R035 Rare SSH fingerprint: validated SSH client observation =====
         private static bool DetectRareSshFingerprint(DateTime now, TrafficRecord r, out DetectionEvent det)
         {
             det = null!;
             try
             {
-                string? key = r.Ja4SSH ?? r.Hassh;
-                if (string.IsNullOrWhiteSpace(key)) return false;
+                bool ssh = string.Equals(r.Protocol, "SSH", StringComparison.OrdinalIgnoreCase)
+                    || (string.Equals(r.Protocol, "TCP", StringComparison.OrdinalIgnoreCase)
+                        && string.Equals(r.ApplicationService, "SSH", StringComparison.OrdinalIgnoreCase));
+                string? fingerprint = !string.IsNullOrWhiteSpace(r.Ja4SSH) ? r.Ja4SSH : r.Hassh;
+                if (!ssh || r.Length <= 0 || r.IsQuic || string.IsNullOrWhiteSpace(fingerprint)
+                    || fingerprint.Length > 128 || fingerprint.Any(char.IsWhiteSpace)
+                    || fingerprint.Any(char.IsControl)
+                    || !IPAddress.TryParse(r.Source, out _) || !IPAddress.TryParse(r.Destination, out _)
+                    || (!string.IsNullOrWhiteSpace(r.ApplicationService)
+                        && !string.Equals(r.ApplicationService, "SSH", StringComparison.OrdinalIgnoreCase)))
+                    return false;
 
-                BoundedMerge(_sshFpCounts, key!, now);
-                var stat = _sshFpCounts[key!];
-
-                if (stat.Count <= 3)
+                BoundDictionary(_sshFpCounts, 5000);
+                // An observation older than the latest cannot re-prime rarity.
+                var stat = _sshFpCounts.AddOrUpdate(fingerprint!, _ => (1, now, now),
+                    (_, prev) => now < prev.LastSeen ? prev
+                        : now == prev.LastSeen ? prev
+                        : (now - prev.LastSeen).TotalMinutes > 60
+                            ? (1, now, now) : (Math.Min(prev.Count + 1, 4), prev.FirstSeen, now));
+                if (stat.LastSeen != now || stat.Count > 3) return false;
+                if (SuppressRepeat(now, "R035", r.Source!, r.Destination, r.DestinationPort)) return false;
+                det = new DetectionEvent
                 {
-                    if (SuppressRepeat(now, "R035", NS(r.Source), r.Destination, r.DestinationPort)) return false;
-                    det = new DetectionEvent
-                    {
-                        RuleId = "R035",
-                        Description = $"Rare SSH fingerprint observed ({key}) count={stat.Count}",
-                        SourceIp = NS(r.Source),
-                        DestinationIp = r.Destination,
-                        DestinationPort = r.DestinationPort,
-                        Protocol = "SSH",
-                        Severity = stat.Count == 1 ? SeverityLevel.Medium : SeverityLevel.Low,
-                        Count = stat.Count
-                    };
-                    return true;
-                }
+                    RuleId = "R035", Description = $"Rare SSH client fingerprint (observation={stat.Count})",
+                    SourceIp = r.Source, DestinationIp = r.Destination, DestinationPort = r.DestinationPort,
+                    Protocol = "SSH", Severity = stat.Count == 1 ? SeverityLevel.Medium : SeverityLevel.Low,
+                    Count = stat.Count
+                };
+                return true;
             }
-            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] R035 error: {ex}"); }
+            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] R035 error: {ex.GetType().Name}"); }
             return false;
         }
 

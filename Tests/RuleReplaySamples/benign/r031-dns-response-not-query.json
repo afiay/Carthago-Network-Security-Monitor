@@ -1,0 +1,19 @@
+{
+  "name": "r031-dns-response-not-query",
+  "records": [
+    {
+      "source": "10.31.0.2",
+      "destination": "8.8.8.8",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "dnsQtype": "TXT",
+      "dnsQname": "example.org",
+      "dnsIsResponse": true,
+      "length": 90
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R031"
+  ]
+}

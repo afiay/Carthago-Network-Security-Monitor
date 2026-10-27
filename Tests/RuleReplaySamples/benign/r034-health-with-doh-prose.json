@@ -1,0 +1,19 @@
+{
+  "name": "r034-health-with-doh-prose",
+  "records": [
+    {
+      "source": "10.34.0.2",
+      "destination": "8.8.8.8",
+      "protocol": "HTTP",
+      "destinationPort": 443,
+      "httpMethod": "GET",
+      "httpUri": "/health",
+      "info": "GET /dns-query?dns=AbCdEfGh1234 HTTP/1.1",
+      "length": 220
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R034"
+  ]
+}

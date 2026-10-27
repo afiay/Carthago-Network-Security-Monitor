@@ -1,0 +1,16 @@
+{
+  "name": "r033-icmp-error-not-echo",
+  "records": [
+    {
+      "source": "10.33.0.2",
+      "destination": "8.8.8.8",
+      "protocol": "ICMP",
+      "icmpTypeCode": 769,
+      "length": 1400
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R033"
+  ]
+}

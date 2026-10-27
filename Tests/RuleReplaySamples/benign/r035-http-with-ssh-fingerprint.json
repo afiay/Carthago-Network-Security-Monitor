@@ -1,0 +1,17 @@
+{
+  "name": "r035-http-with-ssh-fingerprint",
+  "records": [
+    {
+      "source": "10.35.0.2",
+      "destination": "8.8.8.8",
+      "protocol": "HTTP",
+      "destinationPort": 80,
+      "ja4SSH": "ssh-ja4-fingerprint-001",
+      "length": 180
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R035"
+  ]
+}
