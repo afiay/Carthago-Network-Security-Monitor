@@ -423,3 +423,27 @@ frozen holdout data remain unchanged. The previous user-run verification
 does not validate these new changes. Frozen V1 R102 remains FAILED 4/6;
 V2 still awaits independently sourced, licensed, reviewed typed PCAP evidence.
 **Next contiguous batch: R141-R145.**
+
+## R141-R145 candidate implementation - 2026-10-27
+
+The automation was paused at the user's request after its in-flight
+R136-R140 work finished at commit `39028c248b189d98626dacb5b278ac77efdc416b`.
+This R141-R145 batch was developed manually on the SAME existing branch,
+without resuming or duplicating the automation.
+
+Five TLS/PKI rules received typed transport/SNI/observed-socket validation,
+bounded source-scoped duplicate-resistant fingerprint windows, ordered
+certificate lifetime checks and certificate distinguished-name evidence
+redaction. The implementation preserves R141/R145 Candidate/Shadow,
+R142-R144 Shadow, all existing confidence floors and configured thresholds,
+and the user's frozen holdout constraints. Added one shared evidence/window
+helper and one test fixture plus **40 advanced xUnit facts (8 per rule)**.
+Source commit `beafa9350916eb599ed7523d010fb3382942d2e5`;
+test commit `fb889bf4052160a19171afdb0660d652a7a6b5cd`.
+See `docs/RULE_BATCH_141-145.md` for cases, limits and risks.
+
+**CANDIDATE - UNVERIFIED:** no build, xUnit, development replay,
+benchmark, V1/V2 holdout or Windows runner executed by this work.
+Previously passing R001-R125 regressions do not verify R126-R145.
+Frozen V1 remains FAILED (R102 4/6); V2 awaits independent reviewed
+PCAP evidence. **Next contiguous batch: R146-R150.**
