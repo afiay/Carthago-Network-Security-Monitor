@@ -24,6 +24,18 @@ try {
     $transcriptStarted = $true
     $started = Get-Date
 
+    # Preflight the explicitly selected holdout before starting the expensive
+    # regression. A pending v2 must not burn a full xUnit/benchmark run only
+    # to discover that no reviewed PCAP evidence was ever frozen.
+    if ($HoldoutVersion -eq 'v2') {
+        $v2Manifest = Get-Content -LiteralPath 'docs/holdout-evaluation-v2-manifest.json' -Raw | ConvertFrom-Json
+        if ($v2Manifest.schemaVersion -ne 2 -or
+            $v2Manifest.approvalState -ne 'FROZEN_V2_SYNTHETIC' -or
+            @($v2Manifest.samples).Count -ne 12) {
+            throw 'V2 not frozen: no builds or tests started. Complete independently reviewed PCAP evidence and explicit v2 freeze first.'
+        }
+    }
+
     # Identify the authored tests from their filename contract. Never accept
     # an incomplete or skipped batch as a successful all-rules verification.
     $authored = @()
