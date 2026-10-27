@@ -56,13 +56,15 @@ namespace Carthago.Engine.Rules.Expansion
         {
         }
 
+        private readonly NetworkBatch151155DistinctWindow _observations = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!HasHttpContext(record) || !HasMethod(record, "GET", "HEAD", "OPTIONS") || !IsLikelyApiPath(record))
-                return NoMatch();
-
-            if (!IsCrossBoundary(record, out var outboundToExternal, out var inboundFromExternal))
+            if (!NetworkBatch151155Evidence.HttpRequest(record)
+                || !HasMethod(record, "GET", "HEAD", "OPTIONS")
+                || !NetworkBatch151155Evidence.ApiResourcePath(record, out var path)
+                || !NetworkBatch126130Evidence.CrossBoundary(record, out var outboundToExternal, out var inboundFromExternal))
                 return NoMatch();
 
             if (outboundToExternal && IsBrowserLikeUserAgent(record))
@@ -70,44 +72,35 @@ namespace Carthago.Engine.Rules.Expansion
 
             var window = TimeSpan.FromSeconds(IntSetting(Rule.RuleId, "WindowSeconds", 180, 60, 3600));
             var threshold = IntSetting(Rule.RuleId, "Threshold", 6, 4, 100);
-            var distinct = CountDistinctValues($"{Rule.RuleId}:{record.Source}:{BestHost(record)}", ApiProbeKey(record), context.TimestampUtc, window);
-            if (distinct < threshold)
+            var key = $"{record.Source}:{record.Destination}:{record.DestinationPort}:{record.HttpHost}";
+            if (!_observations.Observe(key, record.Id, path, context.TimestampUtc, window, out var distinct)
+                || distinct < threshold)
                 return NoMatch();
 
-            var path = HttpPath(record);
-            var matchedConditions = new List<string> { "api_path", "distinct_uri_threshold", "boundary_crossing" };
-            if (inboundFromExternal) matchedConditions.Add("inbound_from_external");
-            if (outboundToExternal) matchedConditions.Add("outbound_to_external");
-
+            var conditions = new List<string> { "typed_http_request", "distinct_api_paths", "cross_boundary" };
+            if (outboundToExternal) conditions.Add("outbound_to_external");
+            if (inboundFromExternal) conditions.Add("inbound_from_external");
             var evidenceItems = new List<DetectionEvidenceItem>
             {
-                new("matched_conditions", string.Join(",", matchedConditions), "rule"),
-                new("http.path", string.IsNullOrWhiteSpace(path) ? "/" : path, "http"),
+                new("matched_conditions", string.Join(",", conditions), "rule"),
+                new("http.path", "/api/[REDACTED]", "http"),
                 new("count", distinct.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
                 new("window_seconds", ((int)window.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture), "rule")
             };
             evidenceItems.AddRange(AnalystContext(
-                "A cross-boundary source rapidly touched many distinct API resources in a short window.",
-                "Severity is Medium because fast enumeration of API resources often indicates discovery, scraping, or credentialed post-auth reconnaissance.",
-                "Approved testing pipelines, QA sweeps, or inventory jobs can resemble API enumeration bursts. Validate the source process or user agent before escalating.",
-                "Review adjacent API authentication, GraphQL, and documentation probe activity from the same source.",
-                "Confirm whether the source is an approved test runner, scanner, or integration job."));
-
-            return MatchHttpApi(
-                context,
-                SeverityLevel.Medium,
-                "REST API enumeration burst observed",
-                "ApiEnumeration",
-                evidenceItems,
+                "An attributed cross-boundary client visited many distinct API resource paths within a short window.",
+                "Severity is Medium because API enumeration can indicate reconnaissance or scraping.",
+                "QA, integration tests and authorized scanners can exhibit the same shape.",
+                "Correlate with permissions, responses and explicit authorization.",
+                "Review whether the source is an approved scanner or integration job."));
+            return MatchHttpApi(context, SeverityLevel.Medium, "REST API resource enumeration burst",
+                "ApiEnumeration", evidenceItems,
                 confidence =>
                 {
                     confidence.AddEvidence(0.22, "api-path");
                     confidence.AddEvidence(0.24, "distinct-uri-threshold");
                     confidence.AddEvidence(0.16, "boundary-crossing");
-                },
-                distinct,
-                window,
-                $"{record.Source}:{BestHost(record)}");
+                }, distinct, window, NetworkBatch131135Evidence.Fingerprint(key));
         }
     }
 }

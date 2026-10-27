@@ -59,42 +59,35 @@ namespace Carthago.Engine.Rules.Expansion
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!HasHttpContext(record) || !IsGraphqlPath(record) || !HasGraphqlIntrospectionIndicator(record))
+            if (!NetworkBatch151155Evidence.HttpRequest(record)
+                || !NetworkBatch151155Evidence.GraphqlPath(record)
+                || !NetworkBatch151155Evidence.IntrospectionQuery(record)
+                || !NetworkBatch126130Evidence.CrossBoundary(record, out var outboundToExternal, out var inboundFromExternal))
                 return NoMatch();
 
-            if (!IsCrossBoundary(record, out var outboundToExternal, out var inboundFromExternal))
-                return NoMatch();
-
-            var path = HttpPath(record);
-            var matchedConditions = new List<string> { "graphql_path", "introspection_indicator", "boundary_crossing" };
-            if (outboundToExternal) matchedConditions.Add("outbound_to_external");
-            if (inboundFromExternal) matchedConditions.Add("inbound_from_external");
-
+            var conditions = new List<string> { "typed_http_request", "graphql_endpoint", "observed_introspection_query", "cross_boundary" };
+            if (outboundToExternal) conditions.Add("outbound_to_external");
+            if (inboundFromExternal) conditions.Add("inbound_from_external");
             var evidenceItems = new List<DetectionEvidenceItem>
             {
-                new("matched_conditions", string.Join(",", matchedConditions), "rule"),
-                new("http.path", string.IsNullOrWhiteSpace(path) ? "/" : path, "http")
+                new("matched_conditions", string.Join(",", conditions), "rule"),
+                new("http.path", "/graphql", "http")
             };
             evidenceItems.AddRange(AnalystContext(
-                "A GraphQL endpoint was reached with explicit schema introspection indicators across an internal/external boundary.",
-                "Severity is Medium because introspection on exposed GraphQL endpoints often precedes API mapping, token abuse, or follow-on object enumeration.",
-                "Approved developer tooling, schema explorers, or external partner APIs can generate similar requests. Validate whether the destination is sanctioned for schema discovery.",
-                "Confirm whether the destination GraphQL service is approved for interactive schema inspection.",
-                "Review the source user agent, process, and adjacent API requests for follow-on enumeration or token misuse."));
-
-            return MatchHttpApi(
-                context,
-                SeverityLevel.Medium,
-                "GraphQL introspection query observed",
-                "GraphQLIntrospection",
-                evidenceItems,
+                "An attributed cross-boundary GraphQL request contained an explicit introspection query parameter.",
+                "Severity is Medium because introspection can assist API discovery, but is common in approved developer workflows.",
+                "No typed HTTP body field exists in the current model; body-only introspection cannot be proven here.",
+                "Check whether developer tooling and schema inspection are authorized.",
+                "Review nearby GraphQL operations and authentication context."));
+            return MatchHttpApi(context, SeverityLevel.Medium, "GraphQL introspection parameter observed",
+                "GraphQLIntrospection", evidenceItems,
                 confidence =>
                 {
                     confidence.AddEvidence(0.28, "graphql-path");
                     confidence.AddEvidence(0.28, "introspection-indicator");
                     confidence.AddEvidence(0.18, "boundary-crossing");
-                },
-                cooldownKey: $"{record.Source}:{BestHost(record)}:{path}");
+                }, cooldownKey: NetworkBatch131135Evidence.Fingerprint(
+                    $"{record.Source}:{record.Destination}:{record.DestinationPort}:graphql"));
         }
     }
 }

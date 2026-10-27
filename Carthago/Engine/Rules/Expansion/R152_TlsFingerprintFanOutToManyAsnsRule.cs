@@ -57,56 +57,49 @@ namespace Carthago.Engine.Rules.Expansion
         {
         }
 
+        private readonly NetworkBatch146152AsnWindow _observations = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            var host = BestHost(record);
-            var fingerprint = string.IsNullOrWhiteSpace(record.Ja4) ? record.Ja3 : record.Ja4;
-            if (!IsTls(record)
-                || string.IsNullOrWhiteSpace(host)
-                || string.IsNullOrWhiteSpace(fingerprint)
-                || string.IsNullOrWhiteSpace(record.WhoisASN)
-                || !IsExternalAddress(host)
+            var fingerprint = NetworkBatch141145Evidence.Fingerprint(record);
+            var asn = NetworkBatch146152Evidence.Asn(record);
+            if (!NetworkBatch141145Evidence.TlsSession(context)
+                || fingerprint == null || asn == null
+                || !NetworkBatch136140Evidence.ExternalDestination(record)
                 || IsLikelyBrowserProcess(record.ProcessName))
-            {
                 return NoMatch();
-            }
 
             var window = TimeSpan.FromSeconds(IntSetting(Rule.RuleId, "WindowSeconds", 900, 60, 7200));
             var threshold = IntSetting(Rule.RuleId, "Threshold", 5, 3, 200);
-            var distinctAsns = CountDistinctValues($"{Rule.RuleId}:{fingerprint}", record.WhoisASN!, context.TimestampUtc, window);
-            if (distinctAsns < threshold)
+            var key = $"{record.Source}:{fingerprint}";
+            if (!_observations.Observe(key, record.Id, asn, context.TimestampUtc, window, out var distinctAsns)
+                || distinctAsns < threshold)
                 return NoMatch();
 
             var evidenceItems = new List<DetectionEvidenceItem>
             {
-                new("matched_conditions", "tls_context,external_destination,fingerprint_fanout_many_asns", "rule"),
+                new("matched_conditions", "attributed_tls_tcp,external_socket,independent_distinct_asns", "rule"),
                 new("count", distinctAsns.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
                 new("window_seconds", ((int)window.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
-                new("whois.asn", record.WhoisASN!, "whois")
+                new("whois.asn", asn, "whois")
             };
             evidenceItems.AddRange(AnalystContext(
-                "A non-browser TLS fingerprint reached many distinct ASNs in a short time window.",
-                "Severity is Medium because broad ASN fan-out with a stable uncommon client fingerprint can indicate automated distribution, scanning, or C2 infrastructure discovery.",
-                "Package managers, distributed agents, and some enterprise automation can look similar. Validate whether the process and destinations are expected.",
-                "Review whether the fingerprint belongs to an approved enterprise client or package manager.",
-                "Inspect the ASN distribution and whether the same source also fans out across unusual domains or ports."));
-
-            return MatchTls(
-                context,
-                SeverityLevel.Medium,
-                "TLS fingerprint fanned out across many ASNs",
-                "FingerprintFanoutAsn",
-                evidenceItems,
+                "One source's TLS fingerprint reached multiple separately attributed ASNs within the configured window.",
+                "Severity is Medium because rapid ASN fan-out may warrant review of automated outbound infrastructure.",
+                "ASN enrichment can be stale or misleading. CDNs and software-updaters can reach many ASNs.",
+                "Validate destination-to-ASN mapping and time-aligned enrichment.",
+                "Check client ownership and approved distribution topology."));
+            return MatchTls(context, SeverityLevel.Medium,
+                "TLS fingerprint reached multiple independently observed ASNs",
+                "FingerprintFanoutAsn", evidenceItems,
                 confidence =>
                 {
                     confidence.AddEvidence(0.26, "tls-fingerprint");
                     confidence.AddEvidence(0.18, "external-destination");
                     confidence.AddEvidence(0.18, "asn-fanout-threshold");
-                },
-                distinctAsns,
-                window,
-                fingerprint);
+                }, distinctAsns, window,
+                NetworkBatch136140Evidence.Fingerprint(key));
         }
     }
 }

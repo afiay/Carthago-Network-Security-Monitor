@@ -60,40 +60,32 @@ namespace Carthago.Engine.Rules.Expansion
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            var host = BestHost(record);
-            if (!IsTls(record)
-                || !HasH2Alpn(record)
+            if (!NetworkBatch141145Evidence.TlsSession(context)
+                || !string.Equals(record.Alpn?.Trim(), "h2", StringComparison.OrdinalIgnoreCase)
                 || !IsUncommonH2Port(record)
-                || !IsExternalAddress(host)
+                || !NetworkBatch136140Evidence.ExternalDestination(record)
                 || IsLikelyBrowserProcess(record.ProcessName))
-            {
                 return NoMatch();
-            }
 
             var evidenceItems = new List<DetectionEvidenceItem>
             {
-                new("matched_conditions", "tls_context,external_destination,h2_alpn,uncommon_port", "rule")
+                new("matched_conditions", "attributed_tls_tcp,observed_h2_alpn,external_socket,uncommon_port", "rule")
             };
             evidenceItems.AddRange(AnalystContext(
-                "A non-browser external TLS session negotiated HTTP/2 ALPN on an uncommon port.",
-                "Severity is Medium because HTTP/2 on unusual ports can indicate custom APIs, covert channels, or niche infrastructure.",
-                "Custom APIs and reverse proxies can legitimately use HTTP/2 on uncommon ports. Validate whether the destination and process are approved.",
-                "Review the process, port, and destination service ownership.",
-                "Check whether the same client uses the same ALPN on standard HTTPS services."));
-
-            return MatchTls(
-                context,
-                SeverityLevel.Medium,
-                "HTTP/2 ALPN negotiated on uncommon TLS port",
-                "H2UncommonPort",
-                evidenceItems,
+                "TLS telemetry explicitly reported h2 ALPN on an uncommon external service port.",
+                "Severity is Medium: unusual ALPN/port combinations can indicate customized applications, not necessarily misuse.",
+                "Proxies and enterprise APIs commonly negotiate h2 on nonstandard ports.",
+                "Check the server's approved listening port and client ownership.",
+                "Verify whether ALPN reflects negotiation rather than advertised offerings."));
+            return MatchTls(context, SeverityLevel.Medium, "HTTP/2 ALPN observed on uncommon TLS port",
+                "H2UncommonPort", evidenceItems,
                 confidence =>
                 {
                     confidence.AddEvidence(0.26, "tls-context");
                     confidence.AddEvidence(0.18, "external-destination");
                     confidence.AddEvidence(0.18, "h2-on-uncommon-port");
-                },
-                cooldownKey: $"{host}:{record.DestinationPort}:{record.Alpn}");
+                }, cooldownKey: NetworkBatch136140Evidence.Fingerprint(
+                    $"{record.Source}:{record.Destination}:{record.DestinationPort}:h2"));
         }
     }
 }

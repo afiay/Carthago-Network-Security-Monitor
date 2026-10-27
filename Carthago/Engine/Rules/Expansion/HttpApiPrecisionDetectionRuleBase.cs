@@ -137,7 +137,10 @@ namespace Carthago.Engine.Rules.Expansion
         {
             var record = context.Record;
             var host = BestHost(record);
-            var path = HttpPath(record);
+            // R153-R155 may carry tokens or personal identifiers in resource
+            // paths; do not emit them through the shared event builder.
+            var path = Descriptor.RuleId is "R153" or "R154" or "R155"
+                ? "[REDACTED]" : HttpPath(record);
             var items = new List<DetectionEvidenceItem>
             {
                 new("httpapi.family", detectionFamily, "http-api"),

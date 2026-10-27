@@ -56,49 +56,45 @@ namespace Carthago.Engine.Rules.Expansion
         {
         }
 
+        private readonly NetworkBatch141145Window _observations = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!HasHttpContext(record) || !HasMethod(record, "POST") || !IsGraphqlPath(record) || !HasGraphqlBatchingIndicator(record))
+            if (!NetworkBatch151155Evidence.HttpRequest(record)
+                || !HasMethod(record, "POST")
+                || !NetworkBatch151155Evidence.GraphqlPath(record)
+                || !NetworkBatch151155Evidence.GraphqlBatchSummary(record))
                 return NoMatch();
 
             var window = TimeSpan.FromSeconds(IntSetting(Rule.RuleId, "WindowSeconds", 120, 60, 3600));
             var threshold = IntSetting(Rule.RuleId, "Threshold", 5, 3, 50);
-            var path = HttpPath(record);
-            var count = CountWindowEvents($"{Rule.RuleId}:{record.Source}:{BestHost(record)}:{path}", context.TimestampUtc, window);
-            if (count < threshold)
+            var key = $"{record.Source}:{record.Destination}:{record.DestinationPort}:{record.HttpHost}:graphql";
+            if (!_observations.Observe(key, record.Id, context.TimestampUtc, window, out var count)
+                || count < threshold)
                 return NoMatch();
 
-            var matchedConditions = new List<string> { "graphql_path", "batching_indicator", "threshold_reached" };
             var evidenceItems = new List<DetectionEvidenceItem>
             {
-                new("matched_conditions", string.Join(",", matchedConditions), "rule"),
-                new("http.path", string.IsNullOrWhiteSpace(path) ? "/" : path, "http"),
+                new("matched_conditions", "typed_http_post,graphql_endpoint,bounded_batch_summary,independent_threshold", "rule"),
+                new("http.path", "/graphql", "http"),
                 new("count", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
                 new("window_seconds", ((int)window.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture), "rule")
             };
             evidenceItems.AddRange(AnalystContext(
-                "A source repeatedly issued GraphQL requests with explicit batching indicators to the same endpoint.",
-                "Severity is Medium because repeated batch-style GraphQL calls can accelerate schema and object discovery or amplify scraping against exposed APIs.",
-                "Modern SPAs sometimes batch GraphQL operations. Validate the source user agent and destination service against approved application behavior.",
-                "Review the same source for adjacent GraphQL introspection, object enumeration, or token misuse.",
-                "Confirm whether GraphQL batching is expected for this endpoint and client."));
-
-            return MatchHttpApi(
-                context,
-                SeverityLevel.Medium,
-                "Repeated GraphQL batching pattern observed",
-                "GraphQLBatching",
-                evidenceItems,
+                "A single attributed source repeated GraphQL POST requests whose metadata indicated batched operations.",
+                "Severity is Medium because sustained batching can amplify API probing, but is also common in approved apps.",
+                "The current model has no trusted GraphQL body field; Info-only batch labels require independent confirmation.",
+                "Validate the originating client and the server's batching policy.",
+                "Correlate with distinct GraphQL operations, errors and rate limits."));
+            return MatchHttpApi(context, SeverityLevel.Medium, "Repeated GraphQL batching summaries observed",
+                "GraphQLBatching", evidenceItems,
                 confidence =>
                 {
                     confidence.AddEvidence(0.24, "graphql-path");
                     confidence.AddEvidence(0.22, "batching-indicator");
                     confidence.AddEvidence(0.20, "threshold-reached");
-                },
-                count,
-                window,
-                $"{record.Source}:{BestHost(record)}:{path}");
+                }, count, window, NetworkBatch131135Evidence.Fingerprint(key));
         }
     }
 }
