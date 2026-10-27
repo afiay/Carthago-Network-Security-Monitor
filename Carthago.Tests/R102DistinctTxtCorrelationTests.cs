@@ -75,15 +75,21 @@ public sealed class R102DistinctTxtCorrelationTests
         var rule = new R102_DNSTunnelingViaLongLabelsRule();
         var root = "retry-" + Guid.NewGuid().ToString("N")[..8] + ".example";
         var record = Record("10.248.10.20", Labels[0] + "." + root, "TXT");
-        for (var index = 0; index < 4; index++)
+        // Distinct delivery of the same record ID is not independent telemetry.
+        var first = await rule.EvaluateAsync(new RuleEvaluationContext(
+            record, Sensitivity.Balanced, BaseTime));
+        Assert.True(first.Matched);
+        var evt = Assert.Single(first.Events);
+        Assert.Equal("1", EvidenceValue(evt, "dns.distinctSuspiciousTxtNames"));
+        Assert.DoesNotContain("multiple_distinct_suspicious_txt_names",
+            EvidenceValue(evt, "matched_conditions"), StringComparison.OrdinalIgnoreCase);
+
+        for (var index = 1; index < 4; index++)
         {
-            var evaluated = await rule.EvaluateAsync(new RuleEvaluationContext(
+            var repeated = await rule.EvaluateAsync(new RuleEvaluationContext(
                 record, Sensitivity.Balanced, BaseTime.AddSeconds(index * 20)));
-            Assert.True(evaluated.Matched);
-            var evt = Assert.Single(evaluated.Events);
-            Assert.Equal("1", EvidenceValue(evt, "dns.distinctSuspiciousTxtNames"));
-            Assert.False(EvidenceValue(evt, "matched_conditions").Contains(
-                "multiple_distinct_suspicious_txt_names", StringComparison.OrdinalIgnoreCase));
+            Assert.False(repeated.Matched);
+            Assert.Empty(repeated.Events);
         }
     }
 
