@@ -50,6 +50,33 @@ Public sources to examine (not imported or independently validated here):
   a verified PCAP; it is unsuitable for this packet-attributed importer
   unless original captures are independently obtained and authenticated.
 
+## Source acquisition and packet suitability (read-only)
+
+An externally sourced PCAP is not automatically valid for an R102 holdout.
+Source licensing, privacy and captured DNS query types require direct
+review. The separate source review ledger is
+[HOLDOUT_V2_SOURCE_REVIEW.md](HOLDOUT_V2_SOURCE_REVIEW.md).
+
+The Elastic iodine PCAP can be acquired reproducibly at its immutable
+Git source commit and checked against its published Git blob hash with:
+
+~~~powershell
+.\scripts\acquire-holdout-v2-source-candidates.ps1 -Source ElasticIodine
+~~~
+
+The source remains **unreviewed**. A separate, bounded packet inspection
+can reveal whether source/client groups contain enough distinct long
+TXT DNS queries before attempting the importer:
+
+~~~powershell
+.\scripts\inspect-holdout-v2-pcap.ps1 -CapturePath 'build-verify/holdout-v2-sources/elastic-iodine-6d86454ebb7a.pcap' -MaximumPacketsToScan 100000
+~~~
+
+These commands do not run Carthago tests, choose a malicious label,
+freeze artifacts, or validate source privacy. The inspector's default
+output omits full QNAMEs and source IPs; its bounded read never claims
+that an entire capture was analyzed.
+
 ## Prepare the four samples (no tests or freeze)
 
 Install TShark on the analysis workstation and review source PCAPs.
