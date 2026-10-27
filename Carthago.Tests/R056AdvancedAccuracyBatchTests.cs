@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Carthago.Engine.Rules;
 using Carthago.Engine.Rules.Health;
 using Carthago.Models;
+using Carthago.Services;
 using Xunit;
 
 namespace Carthago.Tests;
