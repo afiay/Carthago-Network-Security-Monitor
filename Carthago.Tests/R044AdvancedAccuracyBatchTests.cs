@@ -39,7 +39,7 @@ public sealed class R044AdvancedAccuracyBatchTests : IDisposable
     [Fact] public async Task Proxy_Connect_Is_Excluded_But_Direct_Connect_Is_Not()
     {
         Assert.False((await See(Http("CONNECT",port:8080))).Matched);
-        Assert.True((await See(Http("CONNECT",port:443)).Matched);
+        Assert.True((await See(Http("CONNECT",port:443)).Matched));
     }
     [Fact] public async Task Info_Text_And_Contradictory_Protocol_Are_Not_Trusted()
     {
