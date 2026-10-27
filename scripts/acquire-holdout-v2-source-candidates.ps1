@@ -23,8 +23,11 @@ try {
             Path='Security Analytics/dns_tunnel_detection/dns-tunnel-iodine.pcap'
             GitBlobSha='f43152b995d0eb9127d5a8fcaf13e5c26595ce69'
             Size=77524
+            # Third-party A-Packets report: https://apackets.com/reports/iodine-dns-tunnel
+            # 222 NULL (type 10) questions, no TXT, if the SHA-256 matches.
+            ReportedSampleSha256='91fd221e07107507c8327a9d9487cd7f7531a1fd87cf543b1a76160ff0609b7b'
             SourceLicense='Apache-2.0 repository root; review fixture provenance'
-            Description='Elastic Packetbeat demo of iodine DNS tunnel traffic'
+            Description='Elastic Packetbeat iodine protocol-diversity control (not approved for R102 TXT holdout)'
         }
     }
     $entry=$sources[$Source]
@@ -69,6 +72,10 @@ try {
         sha256=$sha256
         bytes=$info.Length
         packetInspection='NOT_PERFORMED'
+        externalReportUrl='https://apackets.com/reports/iodine-dns-tunnel'
+        externalReportHashMatches=($sha256 -eq $entry.ReportedSampleSha256)
+        externalReportQtype=$(if ($sha256 -eq $entry.ReportedSampleSha256) { 'NULL-only (DNS type 10), no TXT' } else { 'NOT VERIFIED FOR THIS BLOB' })
+        r102EncodedTxtEligibility=$(if ($sha256 -eq $entry.ReportedSampleSha256) { 'INELIGIBLE_NULL_ONLY' } else { 'PENDING_ACTUAL_TSHARK_INSPECTION' })
         privacyReview='PENDING'
         groundTruthLabelReview='PENDING'
         allowedHoldoutUse='NOT_APPROVED'
@@ -94,6 +101,11 @@ try {
     Write-Host "  Capture: $output"
     Write-Host "  Receipt: $receipt"
     Write-Host "  SHA-256: $sha256"
+    if ($sha256 -eq $entry.ReportedSampleSha256) {
+        Write-Warning 'The published hash-matched iodine capture has NULL-only DNS queries. It cannot populate the encoded-TXT v2 slots.'
+    } else {
+        Write-Warning 'Capture TXT eligibility is unknown until packet inspection. Do not assume it is suitable.'
+    }
     Write-Host 'This acquisition does not prove PCAP DNS eligibility, permission to republish'
     Write-Host 'packet data, source/client independence, nor accuracy. No tests ran.'
 }
