@@ -57,6 +57,24 @@ These repairs are **UNVERIFIED** until a fresh consolidated CARTHAGE run.
 No malicious labels, confidence floors, baseline approvals, disabled/shadow
 policy or frozen holdout identities have been relaxed.
 
+## CARTHAGE acceptance checkpoint — 2026-10-27 18:29
+
+The newer consolidated Windows run compiled the test and benchmark projects
+without reported warnings/errors. The development replay recognized **48/48**
+expected malicious rule matches and completed its expectation stage.
+Full xUnit still failed **two** cases:
+`R103AdvancedAccuracyBatchTests.Six_Independent_Stable_Intervals_Produce_Beacon_Candidate`
+and `R103AdvancedAccuracyBatchTests.Duplicate_Id_Cannot_Fill_A_Stable_Interval_Window`.
+The frozen holdout has not been accepted based on this run.
+
+R103 has a separate older positive test in `DnsPrecisionRuleTests` using
+six valid independent DNS requests. Candidate repair `234141af28722d2eda3f2b1d633191d641d4e951`
+aligns advanced fixtures with that existing passing contract and adds
+effective configuration details to failure diagnostics. The change does **not**
+lower the six-observation default threshold or remove negative/duplicate tests.
+**Candidate — unverified** until a fresh run; all R006–R110 batches remain
+unaccepted.
+
 **Next batch to author: R111–R115.** R006–R110 is authored but remains unverified; do not treat those batches as accepted. Continue in exact ascending groups of five.
 Do not mark a subsequent batch accepted until the user explicitly initiates
 the deferred consolidated Windows verification and the corresponding evidence
