@@ -1,0 +1,17 @@
+{
+  "name": "r024-http-ja4-metadata",
+  "records": [
+    {
+      "source": "10.24.0.2",
+      "destination": "8.8.8.8",
+      "protocol": "HTTP",
+      "destinationPort": 80,
+      "length": 100,
+      "ja4": "t13d1516h2_8daaf6152771_b186095e22b6"
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R024"
+  ]
+}

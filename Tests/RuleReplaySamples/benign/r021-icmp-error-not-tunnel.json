@@ -1,0 +1,17 @@
+{
+  "name": "r021-icmp-error-not-tunnel",
+  "records": [
+    {
+      "source": "10.21.0.2",
+      "destination": "8.8.8.8",
+      "protocol": "ICMP",
+      "length": 96,
+      "icmpTypeCode": 769,
+      "info": "ICMP destination unreachable"
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R021"
+  ]
+}

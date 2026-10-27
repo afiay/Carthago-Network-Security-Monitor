@@ -1531,249 +1531,266 @@ namespace Carthago.Services
             return false;
         }
 
-        // ===== R021 ICMP tunneling suspicion (windowed bytes + avg payload) =====
+        // ===== R021 ICMP tunneling suspicion: attributable echo traffic only =====
         private static bool DetectIcmpTunnel(DateTime now, TrafficRecord r, Sensitivity s, out DetectionEvent det)
         {
             det = null!;
             try
             {
-                if (!string.Equals(r.Protocol, "ICMP", StringComparison.OrdinalIgnoreCase)) return false;
-
-                BoundDictionary(_icmpWindow, 20000);
-                BoundDictionary(_icmpBytes, 20000);
-                BoundDictionary(_icmpTimes, 20000);
+                if (!string.Equals(r.Protocol, "ICMP", StringComparison.OrdinalIgnoreCase)
+                    || r.Length <= 0
+                    || !IPAddress.TryParse(r.Source, out _)
+                    || !IPAddress.TryParse(r.Destination, out _))
+                    return false;
+                // When capture supplies the ICMP header, exclude errors, redirects and
+                // other non-echo messages. Legacy headerless observations remain eligible.
+                if (r.IcmpTypeCode is ushort typeCode
+                    && typeCode is not (0x0800 or 0x0000 or 0x8000 or 0x8100))
+                    return false;
 
                 int window = _cfg.IcmpWindowSeconds ?? IcmpWindowSeconds;
                 int cntThresh = ScaleCount(_cfg.IcmpPktCountThreshold ?? IcmpPktCountThreshold, s);
                 long byteThresh = ScaleBytes(_cfg.IcmpTotalBytesThreshold ?? IcmpTotalBytesThreshold, s);
-
-                var key = NS(r.Source);
+                BoundDictionary(_icmpWindow, 20000);
+                // A large transfer to one destination must not prime an unrelated peer.
+                string key = $"{r.Source}->{r.Destination}";
                 var samples = _icmpWindow.GetOrAdd(key, _ => new List<(DateTime ts, int bytes)>(64));
-                int count, total;
+                int count;
+                long total = 0;
                 lock (samples)
                 {
-                    samples.Add((now, Math.Max(0, r.Length)));
                     var cutoff = now.AddSeconds(-window);
-                    int write = 0; total = 0;
+                    int write = 0;
                     for (int i = 0; i < samples.Count; i++)
                     {
-                        if (samples[i].ts >= cutoff)
+                        var sample = samples[i];
+                        if (sample.ts >= cutoff && sample.ts <= now)
                         {
-                            samples[write++] = samples[i];
-                            total += samples[i].bytes;
+                            samples[write++] = sample;
+                            total += sample.bytes;
                         }
                     }
                     if (write != samples.Count) samples.RemoveRange(write, samples.Count - write);
-                    count = write;
-                }
-
-                double avgPayload = count > 0 ? (double)total / count : 0.0;
-
-                if ((count >= cntThresh || total >= byteThresh) && avgPayload >= 24.0)
-                {
-                    if (SuppressRepeat(now, "R021", key, r.Destination, null)) return false;
-                    det = new DetectionEvent
+                    samples.Add((now, r.Length));
+                    total += r.Length;
+                    // Bound memory independently of threshold configuration.
+                    if (samples.Count > 4096)
                     {
-                        RuleId = "R021",
-                        Description = $"Suspicious ICMP activity (pkts={count}, bytes={total}/{window}s, avg={avgPayload:F0}B)",
-                        SourceIp = key,
-                        DestinationIp = r.Destination,
-                        Protocol = "ICMP",
-                        Severity = SeverityLevel.Medium,
-                        Count = count,
-                        WindowSeconds = window
-                    };
-                    lock (samples) samples.Clear();
-                    return true;
+                        int excess = samples.Count - 4096;
+                        for (int i = 0; i < excess; i++) total -= samples[i].bytes;
+                        samples.RemoveRange(0, excess);
+                    }
+                    count = samples.Count;
+                    if ((count < cntThresh && total < byteThresh)
+                        || (double)total / count < 24.0)
+                        return false;
+
+                    // Clear the reached window even during cooldown; a suppressed burst
+                    // must not keep an old threshold armed for later traffic.
+                    samples.Clear();
                 }
+                if (SuppressRepeat(now, "R021", r.Source!, r.Destination, null))
+                    return false;
+                det = new DetectionEvent
+                {
+                    RuleId = "R021",
+                    Description = $"Suspicious ICMP echo volume (pkts={count}, bytes={total}/{window}s)",
+                    SourceIp = r.Source,
+                    DestinationIp = r.Destination,
+                    Protocol = "ICMP",
+                    Severity = SeverityLevel.Medium,
+                    Count = count,
+                    WindowSeconds = window
+                };
+                return true;
             }
-            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] DetectIcmpTunnel error: {ex}"); }
+            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] DetectIcmpTunnel error: {ex.GetType().Name}"); }
             return false;
         }
 
-        // ===== R022 DNS NXDOMAIN spike =====
+        // ===== R022 DNS NXDOMAIN spike: observed negative responses =====
         private static bool DetectDnsNxSpike(DateTime now, TrafficRecord r, Sensitivity s, out DetectionEvent det)
         {
             det = null!;
             try
             {
                 bool isDns = string.Equals(r.Protocol, "DNS", StringComparison.OrdinalIgnoreCase)
-                             || (string.Equals(r.Protocol, "UDP", StringComparison.OrdinalIgnoreCase) && r.DestinationPort == 53);
-                if (!isDns || r.Source is not { Length: > 0 }) return false;
+                    || (string.Equals(r.Protocol, "UDP", StringComparison.OrdinalIgnoreCase)
+                        && r.SourcePort == 53);
+                if (!isDns || !r.DnsIsResponse || r.Length <= 0
+                    || !IPAddress.TryParse(r.Source, out _)
+                    || !IPAddress.TryParse(r.Destination, out _))
+                    return false;
+                // Explicit structured RCODE wins over text, including contradictions.
+                bool negative = !string.IsNullOrWhiteSpace(r.DnsRcode)
+                    ? string.Equals(r.DnsRcode.Trim(), "NXDOMAIN", StringComparison.OrdinalIgnoreCase)
+                      || string.Equals(r.DnsRcode.Trim(), "3", StringComparison.Ordinal)
+                    : Regex.IsMatch(r.Info ?? string.Empty, @"\bNXDOMAIN\b", RegexOptions.IgnoreCase);
+                if (!negative) return false;
 
+                int window = _cfg.DnsNxWindowSeconds ?? DnsNxWindowSeconds;
+                int threshold = ScaleCount(_cfg.DnsNxThreshold ?? DnsNxThreshold, s);
                 BoundDictionary(_nxdomain, 20000);
-
-                var info = r.Info ?? string.Empty;
-                bool nxd = info.IndexOf("NXDOMAIN", StringComparison.OrdinalIgnoreCase) >= 0
-                           || info.IndexOf("RCODE=NXDOMAIN", StringComparison.OrdinalIgnoreCase) >= 0;
-                if (!nxd) return false;
-
-                var window = _cfg.DnsNxWindowSeconds ?? DnsNxWindowSeconds;
-                var threshold = ScaleCount(_cfg.DnsNxThreshold ?? DnsNxThreshold, s);
-
-                var list = _nxdomain.GetOrAdd(r.Source, _ => new List<DateTime>(threshold * 2));
+                // Responses travel resolver -> client; count by client and resolver,
+                // not by the resolver's source alone (which aggregates all clients).
+                string key = $"{r.Destination}|{r.Source}";
+                var list = _nxdomain.GetOrAdd(key, _ => new List<DateTime>(threshold * 2));
+                int count;
                 lock (list)
                 {
-                    list.Add(now);
-                    int count = TrimAndCount(list, now, window);
-                    if (count >= threshold)
-                    {
-                        if (SuppressRepeat(now, "R022", r.Source, r.Destination, r.DestinationPort)) return false;
-                        det = new DetectionEvent
-                        {
-                            RuleId = "R022",
-                            Description = $"NXDOMAIN spike from {r.Source} ({count}/{window}s)",
-                            SourceIp = r.Source,
-                            DestinationIp = r.Destination,
-                            Protocol = NP(r.Protocol),
-                            Severity = SeverityLevel.High,
-                            Count = count,
-                            WindowSeconds = window
-                        };
-                        list.Clear();
-                        return true;
-                    }
+                    var cutoff = now.AddSeconds(-window);
+                    list.RemoveAll(ts => ts < cutoff || ts > now);
+                    // Same-timestamp duplicate captures cannot inflate a spike.
+                    if (!list.Contains(now)) list.Add(now);
+                    if (list.Count > 4096) list.RemoveRange(0, list.Count - 4096);
+                    count = list.Count;
+                    if (count < threshold) return false;
+                    list.Clear();
                 }
+                if (SuppressRepeat(now, "R022", r.Destination!, r.Source, 53))
+                    return false;
+                det = new DetectionEvent
+                {
+                    RuleId = "R022",
+                    Description = $"NXDOMAIN response spike ({count}/{window}s)",
+                    SourceIp = r.Destination,
+                    DestinationIp = r.Source,
+                    Protocol = "DNS",
+                    Severity = SeverityLevel.High,
+                    Count = count,
+                    WindowSeconds = window
+                };
+                return true;
             }
-            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] DetectDnsNxSpike error: {ex}"); }
+            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] DetectDnsNxSpike error: {ex.GetType().Name}"); }
             return false;
         }
 
-        // ===== R023 TLS to public IP without SNI (exclude QUIC; require persistence) =====
+        // ===== R023 TLS to public IP without SNI (three observed samples / five minutes) =====
         private static bool DetectTlsNoSniToIp(DateTime now, TrafficRecord r, out DetectionEvent det)
         {
             det = null!;
             try
             {
-                // TLS-like (classic TLS on 443 or explicit TLS proto)
-                bool tlsLike = (r.DestinationPort == 443)
-                               || string.Equals(r.Protocol, "TLS", StringComparison.OrdinalIgnoreCase);
-                if (!tlsLike) return false;
-
-                // Exclude QUIC/HTTP3 cases entirely
-                if (r.IsQuic || r.QuicVersion is not null || r.QuicAlpn is not null)
+                bool tls = string.Equals(r.Protocol, "TLS", StringComparison.OrdinalIgnoreCase)
+                    || (string.Equals(r.Protocol, "TCP", StringComparison.OrdinalIgnoreCase)
+                        && !string.IsNullOrWhiteSpace(r.TlsVersion));
+                if (!tls || r.Length <= 0 || r.IsQuic || r.QuicVersion is not null
+                    || r.QuicAlpn is not null || !IPAddress.TryParse(r.Source, out _)
+                    || !IsPublicLegacyEgressIp(r.Destination))
+                    return false;
+                if (!string.IsNullOrWhiteSpace(r.Sni) && !IPAddress.TryParse(r.Sni, out _))
+                    return false;
+                if (r.DestinationPort is not int port || port is < 1 or > 65535)
                     return false;
 
-                // Missing SNI or SNI is an IP literal
-                bool sniMissingOrIp = string.IsNullOrWhiteSpace(r.Sni) || IPAddress.TryParse(r.Sni!, out _);
-                if (!sniMissingOrIp) return false;
-
-                // Must be going to a public IP literal
-                if (string.IsNullOrWhiteSpace(r.Destination)) return false;
-                if (!IPAddress.TryParse(r.Destination, out var _)) return false;
-                if (IsPrivateIp(r.Destination)) return false;
-
-                // Require ≥3 hits to the same destination within 5 minutes (persistence)
-                string key = $"R023:{NS(r.Source)}->{r.Destination}";
+                string key = $"R023:{r.Source}->{r.Destination}:{port}";
+                BoundDictionary(_packetTimes, 20000);
                 var list = _packetTimes.GetOrAdd(key, _ => new List<DateTime>(8));
                 lock (list)
                 {
-                    list.Add(now);
-                    if (TrimAndCount(list, now, 300) < 3) // 5 minutes
-                        return false;
+                    var cutoff = now.AddSeconds(-300);
+                    list.RemoveAll(ts => ts < cutoff || ts > now);
+                    if (!list.Contains(now)) list.Add(now);
+                    if (list.Count < 3) return false;
+                    list.Clear();
                 }
-
-                if (SuppressRepeat(now, "R023", NS(r.Source), r.Destination, r.DestinationPort)) return false;
-
+                if (SuppressRepeat(now, "R023", r.Source!, r.Destination, port))
+                    return false;
                 det = new DetectionEvent
                 {
                     RuleId = "R023",
-                    Description = "TLS to public IP without SNI (repeated to same host)",
-                    SourceIp = NS(r.Source),
+                    Description = "Repeated TLS to a public IP without a DNS SNI name",
+                    SourceIp = r.Source,
                     DestinationIp = r.Destination,
-                    DestinationPort = r.DestinationPort,
-                    Protocol = NP(r.Protocol),
+                    DestinationPort = port,
+                    Protocol = "TLS",
                     Severity = SeverityLevel.Medium,
-                    Count = 1,
+                    Count = 3,
                     WindowSeconds = 300
                 };
                 return true;
             }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"[RuleEngine] R023 error: {ex}");
-                return false;
-            }
+            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] R023 error: {ex.GetType().Name}"); }
+            return false;
         }
 
-        // ===== R024 Rare/novel TLS client fingerprint (JA3/JA4) =====
+        // ===== R024 Rare TLS client fingerprint: structured, non-secret evidence =====
         private static bool DetectRareTlsFingerprint(DateTime now, TrafficRecord r, out DetectionEvent det)
         {
             det = null!;
             try
             {
-                string? key = r.Ja4 ?? r.Ja3;
-                if (string.IsNullOrWhiteSpace(key)) return false;
+                string? fp = !string.IsNullOrWhiteSpace(r.Ja4) ? r.Ja4 : r.Ja3;
+                if (string.IsNullOrWhiteSpace(fp) || fp.Length > 128
+                    || fp.Any(char.IsWhiteSpace) || fp.Any(char.IsControl)
+                    || !IPAddress.TryParse(r.Source, out _)
+                    || !IPAddress.TryParse(r.Destination, out _)
+                    || r.Length <= 0 || r.IsQuic
+                    || !(string.Equals(r.Protocol, "TLS", StringComparison.OrdinalIgnoreCase)
+                        || !string.IsNullOrWhiteSpace(r.TlsVersion)))
+                    return false;
 
-                BoundedMerge(_ja4Counts, key!, now);
-                var stat = _ja4Counts[key!];
-
-                // Trigger on first sighting(s)
-                if (stat.Count <= 3)
+                BoundedMerge(_ja4Counts, fp, now);
+                var stat = _ja4Counts[fp];
+                if (stat.Count > 3) return false;
+                if (SuppressRepeat(now, "R024", r.Source!, r.Destination, r.DestinationPort))
+                    return false;
+                det = new DetectionEvent
                 {
-                    if (SuppressRepeat(now, "R024", NS(r.Source), r.Destination, r.DestinationPort)) return false;
-                    det = new DetectionEvent
-                    {
-                        RuleId = "R024",
-                        Description = $"Rare TLS fingerprint observed ({(r.Ja4 ?? r.Ja3)}) count={stat.Count}",
-                        SourceIp = NS(r.Source),
-                        DestinationIp = r.Destination,
-                        DestinationPort = r.DestinationPort,
-                        Protocol = NP(r.Protocol),
-                        Severity = stat.Count == 1 ? SeverityLevel.Medium : SeverityLevel.Low,
-                        Count = stat.Count
-                    };
-                    return true;
-                }
+                    RuleId = "R024",
+                    // Never include raw fingerprint or untrusted capture text in alerts.
+                    Description = $"Rare TLS client fingerprint (observation={stat.Count})",
+                    SourceIp = r.Source,
+                    DestinationIp = r.Destination,
+                    DestinationPort = r.DestinationPort,
+                    Protocol = "TLS",
+                    Severity = stat.Count == 1 ? SeverityLevel.Medium : SeverityLevel.Low,
+                    Count = stat.Count
+                };
+                return true;
             }
-            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] R024 error: {ex}"); }
+            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] R024 error: {ex.GetType().Name}"); }
             return false;
         }
 
-        // ===== R025 TLS certificate expired or expiring soon =====
+        // ===== R025 TLS certificate expiry: observed and chronologically valid chain =====
         private static bool DetectTlsCertExpiry(DateTime now, TrafficRecord r, out DetectionEvent det)
         {
             det = null!;
             try
             {
-                if (r.DestinationPort != 443) return false;
-                if (!r.CertValidTo.HasValue) return false;
+                if (r.DestinationPort != 443 || !r.CertValidTo.HasValue
+                    || !IPAddress.TryParse(r.Source, out _)
+                    || !IPAddress.TryParse(r.Destination, out _)
+                    || r.IsQuic || r.Length <= 0
+                    || !(string.Equals(r.Protocol, "TLS", StringComparison.OrdinalIgnoreCase)
+                        || !string.IsNullOrWhiteSpace(r.TlsVersion)))
+                    return false;
+                if (r.CertValidFrom.HasValue && r.CertValidFrom.Value > r.CertValidTo.Value)
+                    return false;
 
-                var daysLeft = (r.CertValidTo.Value - now).TotalDays;
-                if (daysLeft < 0)
+                double daysLeft = (r.CertValidTo.Value.ToUniversalTime() - now).TotalDays;
+                if (daysLeft > 7) return false;
+                if (SuppressRepeat(now, "R025", r.Source!, r.Destination, 443))
+                    return false;
+                bool expired = daysLeft < 0;
+                det = new DetectionEvent
                 {
-                    if (SuppressRepeat(now, "R025", NS(r.Source), r.Destination, r.DestinationPort)) return false;
-                    det = new DetectionEvent
-                    {
-                        RuleId = "R025",
-                        Description = "TLS certificate expired",
-                        SourceIp = NS(r.Source),
-                        DestinationIp = r.Destination,
-                        DestinationPort = r.DestinationPort,
-                        Protocol = NP(r.Protocol),
-                        Severity = SeverityLevel.High,
-                        Count = (int)Math.Abs(Math.Round(daysLeft))
-                    };
-                    return true;
-                }
-                if (daysLeft <= 7)
-                {
-                    if (SuppressRepeat(now, "R025", NS(r.Source), r.Destination, r.DestinationPort)) return false;
-                    det = new DetectionEvent
-                    {
-                        RuleId = "R025",
-                        Description = $"TLS certificate expiring soon (≤7 days, left≈{daysLeft:F1})",
-                        SourceIp = NS(r.Source),
-                        DestinationIp = r.Destination,
-                        DestinationPort = r.DestinationPort,
-                        Protocol = NP(r.Protocol),
-                        Severity = SeverityLevel.Medium,
-                        Count = (int)Math.Ceiling(daysLeft)
-                    };
-                    return true;
-                }
+                    RuleId = "R025",
+                    Description = expired ? "TLS certificate expired" : "TLS certificate expiring within seven days",
+                    SourceIp = r.Source,
+                    DestinationIp = r.Destination,
+                    DestinationPort = 443,
+                    Protocol = "TLS",
+                    Severity = expired ? SeverityLevel.High : SeverityLevel.Medium,
+                    // Avoid overflow on malformed or extremely old certificate dates.
+                    Count = (int)Math.Min(int.MaxValue, expired
+                        ? Math.Ceiling(-daysLeft) : Math.Ceiling(daysLeft))
+                };
+                return true;
             }
-            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] R025 error: {ex}"); }
+            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] R025 error: {ex.GetType().Name}"); }
             return false;
         }
 
