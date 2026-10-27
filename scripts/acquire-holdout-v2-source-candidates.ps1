@@ -34,8 +34,8 @@ try {
     New-Item -ItemType Directory -Path $dir -Force | Out-Null
     $output=Join-Path $dir ('elastic-iodine-'+$entry.Commit.Substring(0,12)+'.pcap')
     $receipt=Join-Path $dir ('elastic-iodine-'+$entry.Commit.Substring(0,12)+'.source.json')
-    if (Test-Path -LiteralPath $output -PathType Leaf -or
-        Test-Path -LiteralPath $receipt -PathType Leaf) {
+    if ((Test-Path -LiteralPath $output -PathType Leaf) -or
+        (Test-Path -LiteralPath $receipt -PathType Leaf)) {
         throw 'Download receipt or source already present; refusing to overwrite previous evidence.'
     }
     $temp=$output+'.downloading'
