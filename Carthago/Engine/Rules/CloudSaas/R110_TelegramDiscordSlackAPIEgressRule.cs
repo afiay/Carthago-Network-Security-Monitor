@@ -9,6 +9,7 @@ namespace Carthago.Engine.Rules.CloudSaas
 {
     public sealed class R110_TelegramDiscordSlackAPIEgressRule : CloudSaasPrecisionDetectionRuleBase
     {
+        private readonly NetworkBatch081085Dedup _seen = new();
         private static readonly RuleDescriptor Rule = new(
             RuleId: "R110",
             Name: "Telegram / Discord / Slack API Egress",
@@ -72,6 +73,8 @@ namespace Carthago.Engine.Rules.CloudSaas
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
+            if (!NetworkBatch101105Evidence.CloudUpload(context) || !_seen.First(record.Id, context.TimestampUtc))
+                return NoMatch();
             var host = BestHost(record);
             if (string.IsNullOrWhiteSpace(host) || !IsInternalAddress(record.Source) || !IsExternalAddress(record.Destination))
                 return NoMatch();
@@ -81,7 +84,7 @@ namespace Carthago.Engine.Rules.CloudSaas
 
             var bytes = TransferBytes(record);
             var minimumPayloadBytes = IntSetting(Descriptor.RuleId, "MinimumPayloadBytes", 150_000, 8_000, 50_000_000);
-            var exfilHint = HasChatExfilHint(record) || HasUploadMetadata(record);
+            var exfilHint = NetworkBatch106110Evidence.ChatActionPath(record) || NetworkBatch101105Evidence.UploadMetadata(record);
             var automation = IsLikelyAutomationProcess(record);
             if (!exfilHint && !automation && bytes < minimumPayloadBytes)
                 return NoMatch();
@@ -124,7 +127,8 @@ namespace Carthago.Engine.Rules.CloudSaas
                     if (automation) confidence.AddCorrelation(0.16, "automation-process");
                     if (bytes >= minimumPayloadBytes) confidence.AddEvidence(0.10, "non-trivial-payload");
                 },
-                cooldownKey: $"{record.Source}:{ProviderIdentity(host)}");
+                cooldownKey: $"{record.Source}:{ProviderIdentity(host)}",
+                redactHttpUri: true);
         }
     }
 }

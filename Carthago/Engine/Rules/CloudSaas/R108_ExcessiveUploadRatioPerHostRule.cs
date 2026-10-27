@@ -9,6 +9,7 @@ namespace Carthago.Engine.Rules.CloudSaas
 {
     public sealed class R108_ExcessiveUploadRatioPerHostRule : CloudSaasPrecisionDetectionRuleBase
     {
+        private readonly NetworkBatch081085Dedup _seen = new();
         private static readonly RuleDescriptor Rule = new(
             RuleId: "R108",
             Name: "Excessive Upload Ratio Per Host",
@@ -72,6 +73,8 @@ namespace Carthago.Engine.Rules.CloudSaas
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
+            if (!NetworkBatch106110Evidence.StructuredFlow(context) || !_seen.First(record.Id, context.TimestampUtc))
+                return NoMatch();
             var host = BestHost(record);
             var bytes = TransferBytes(record);
             if (bytes <= 0)
@@ -101,7 +104,7 @@ namespace Carthago.Engine.Rules.CloudSaas
             var outboundBytes = AddBytesWindow($"{Descriptor.RuleId}:{record.Source}:{provider}:out", context.TimestampUtc, bytes, window);
             var inboundBytes = SumBytesWindow($"{Descriptor.RuleId}:{record.Source}:{provider}:in", context.TimestampUtc, window);
             var uploadRatio = inboundBytes > 0 ? outboundBytes / Math.Max(1.0, inboundBytes) : outboundBytes;
-            var uploadContext = HasUploadShape(record, 250_000) || !IsLikelyBrowserProcess(record.ProcessName);
+            var uploadContext = (IsUploadMethod(record) || NetworkBatch101105Evidence.UploadMetadata(record)) || !IsLikelyBrowserProcess(record.ProcessName);
             if (!uploadContext && outboundBytes < outboundOnlyBytes)
                 return NoMatch();
 
@@ -113,7 +116,7 @@ namespace Carthago.Engine.Rules.CloudSaas
             var matchedConditions = new List<string> { "windowed_provider_ratio" };
             if (ratioMatched) matchedConditions.Add("high_outbound_inbound_ratio");
             if (outboundOnlyMatched) matchedConditions.Add("high_outbound_only_volume");
-            if (HasUploadMetadata(record)) matchedConditions.Add("upload_metadata");
+            if (NetworkBatch101105Evidence.UploadMetadata(record)) matchedConditions.Add("upload_metadata");
             if (IsPasteOrDropHost(host)) matchedConditions.Add("paste_or_drop_provider");
 
             var whyMatched = ratioMatched
@@ -149,7 +152,7 @@ namespace Carthago.Engine.Rules.CloudSaas
                     confidence.AddEvidence(0.40, "provider-scoped-ratio");
                     if (ratioMatched) confidence.AddEvidence(0.20, "high-outbound-inbound-ratio");
                     if (outboundOnlyMatched) confidence.AddEvidence(0.20, "high-outbound-only-volume");
-                    if (HasUploadMetadata(record)) confidence.AddEvidence(0.08, "upload-metadata");
+                    if (NetworkBatch101105Evidence.UploadMetadata(record)) confidence.AddEvidence(0.08, "upload-metadata");
                     if (IsPersonalCloudHost(host)) confidence.AddCorrelation(0.12, "consumer-cloud-provider");
                     if (IsPasteOrDropHost(host)) confidence.AddCorrelation(0.08, "paste-or-drop-provider");
                 },

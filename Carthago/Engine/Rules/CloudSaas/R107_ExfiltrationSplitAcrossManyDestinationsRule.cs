@@ -9,6 +9,7 @@ namespace Carthago.Engine.Rules.CloudSaas
 {
     public sealed class R107_ExfiltrationSplitAcrossManyDestinationsRule : CloudSaasPrecisionDetectionRuleBase
     {
+        private readonly NetworkBatch081085Dedup _seen = new();
         private static readonly RuleDescriptor Rule = new(
             RuleId: "R107",
             Name: "Exfiltration Split Across Many Destinations",
@@ -72,6 +73,8 @@ namespace Carthago.Engine.Rules.CloudSaas
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
+            if (!NetworkBatch101105Evidence.CloudUpload(context) || !_seen.First(record.Id, context.TimestampUtc))
+                return NoMatch();
             if (!IsInternalAddress(record.Source) || !IsExternalAddress(record.Destination))
                 return NoMatch();
 
@@ -82,7 +85,7 @@ namespace Carthago.Engine.Rules.CloudSaas
 
             var host = BestHost(record);
             var suspiciousTransfer = IsUploadMethod(record)
-                                     || HasUploadMetadata(record)
+                                     || NetworkBatch101105Evidence.UploadMetadata(record)
                                      || (!string.IsNullOrWhiteSpace(host) && (IsCloudStorageHost(host) || IsPasteOrDropHost(host) || IsChatApiHost(host)))
                                      || (!IsLikelyBrowserProcess(record.ProcessName) && bytes >= minimumEventBytes * 2L);
             if (!suspiciousTransfer)
@@ -102,7 +105,7 @@ namespace Carthago.Engine.Rules.CloudSaas
             var matchedConditions = new List<string> { "multi_destination_outbound_volume", "suspicious_transfer_context" };
             if (!string.IsNullOrWhiteSpace(host) && IsPasteOrDropHost(host)) matchedConditions.Add("paste_or_drop_provider");
             if (!string.IsNullOrWhiteSpace(host) && IsCloudStorageHost(host)) matchedConditions.Add("cloud_provider");
-            if (HasUploadMetadata(record)) matchedConditions.Add("upload_metadata");
+            if (NetworkBatch101105Evidence.UploadMetadata(record)) matchedConditions.Add("upload_metadata");
 
             var whyMatched = $"{record.Source} sent {totalUploadBytes} bytes across {distinctDestinations} distinct external destinations in {window.TotalMinutes:F0} minutes with {transferEvents} suspicious transfer events.";
             var severityReason = "Severity is High because the outbound transfer volume is being distributed across many destinations with upload-like context, which is consistent with split exfiltration rather than casual browsing.";
@@ -136,7 +139,7 @@ namespace Carthago.Engine.Rules.CloudSaas
                     confidence.AddEvidence(0.20, "windowed-upload-volume");
                     confidence.AddEvidence(0.14, "suspicious-transfer-context");
                     if (!string.IsNullOrWhiteSpace(host) && IsPasteOrDropHost(host)) confidence.AddCorrelation(0.10, "paste-or-drop-destination");
-                    if (HasUploadMetadata(record)) confidence.AddEvidence(0.08, "upload-metadata");
+                    if (NetworkBatch101105Evidence.UploadMetadata(record)) confidence.AddEvidence(0.08, "upload-metadata");
                 },
                 count: transferEvents,
                 window: window,

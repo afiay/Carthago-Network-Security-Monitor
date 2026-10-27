@@ -9,6 +9,7 @@ namespace Carthago.Engine.Rules.CloudSaas
 {
     public sealed class R106_UploadAfterInternalSweepRule : CloudSaasPrecisionDetectionRuleBase
     {
+        private readonly NetworkBatch081085Dedup _seen = new();
         private static readonly RuleDescriptor Rule = new(
             RuleId: "R106",
             Name: "Upload After Internal Sweep",
@@ -71,9 +72,12 @@ namespace Carthago.Engine.Rules.CloudSaas
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            TrackPotentialInternalSweep(context.Record, context.TimestampUtc);
+            if (NetworkBatch106110Evidence.InternalAdminProbe(context))
+                TrackPotentialInternalSweep(context.Record, context.TimestampUtc);
 
             var record = context.Record;
+            if (!NetworkBatch101105Evidence.CloudUpload(context) || !_seen.First(record.Id, context.TimestampUtc))
+                return NoMatch();
             if (!IsInternalAddress(record.Source) || !IsExternalAddress(record.Destination))
                 return NoMatch();
 
@@ -101,7 +105,7 @@ namespace Carthago.Engine.Rules.CloudSaas
 
             var matchedConditions = new List<string> { "recent_internal_sweep", "outbound_upload_after_sweep" };
             if (relevantEgress) matchedConditions.Add("relevant_external_egress_target");
-            if (HasUploadMetadata(record)) matchedConditions.Add("upload_metadata");
+            if (NetworkBatch101105Evidence.UploadMetadata(record)) matchedConditions.Add("upload_metadata");
             if (IsLikelyAutomationProcess(record)) matchedConditions.Add("automation_process");
 
             var provider = ProviderIdentity(host);

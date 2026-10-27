@@ -9,6 +9,7 @@ namespace Carthago.Engine.Rules.CloudSaas
 {
     public sealed class R109_SuspiciousGitHubGitLabRawAccessRule : CloudSaasPrecisionDetectionRuleBase
     {
+        private readonly NetworkBatch081085Dedup _seen = new();
         private static readonly RuleDescriptor Rule = new(
             RuleId: "R109",
             Name: "Suspicious GitHub / GitLab Raw Access",
@@ -72,6 +73,8 @@ namespace Carthago.Engine.Rules.CloudSaas
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
+            if (!NetworkBatch106110Evidence.StructuredHttpRead(context) || !_seen.First(record.Id, context.TimestampUtc))
+                return NoMatch();
             var host = BestHost(record);
             if (string.IsNullOrWhiteSpace(host) || !IsInternalAddress(record.Source) || !IsExternalAddress(record.Destination))
                 return NoMatch();
@@ -80,7 +83,7 @@ namespace Carthago.Engine.Rules.CloudSaas
                 return NoMatch();
 
             var bytes = TransferBytes(record);
-            var payloadHint = HasGitPayloadHint(record);
+            var payloadHint = NetworkBatch106110Evidence.GitPayloadPath(record);
             var automation = IsLikelyAutomationProcess(record);
             var repeatWindow = TimeSpan.FromSeconds(IntSetting(Descriptor.RuleId, "WindowSeconds", 600, 60, 3600));
             var repeatThreshold = IntSetting(Descriptor.RuleId, "RepeatThreshold", 3, 2, 64);
@@ -136,7 +139,8 @@ namespace Carthago.Engine.Rules.CloudSaas
                 },
                 count: repeatCount,
                 window: repeatWindow,
-                cooldownKey: $"{record.Source}:{ProviderIdentity(host)}");
+                cooldownKey: $"{record.Source}:{ProviderIdentity(host)}",
+                redactHttpUri: true);
         }
     }
 }
