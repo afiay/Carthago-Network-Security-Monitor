@@ -88,7 +88,11 @@ foreach ($entry in $entries) {
         }
         $expected[$frame]=$records[$i]
     }
-    $filter='dns.flags.response == 0 && (udp.dstport == 53 || tcp.dstport == 53)'
+    # Decode ONLY the selected frames. Broad -Y DNS scans emitted every
+    # query in a large third-party PCAP into memory, which could exhaust
+    # a modest verification machine despite a tiny pinned fixture.
+    $selectedFrames=($frames | ForEach-Object { [int]$_ }) -join ' '
+    $filter='frame.number in { '+$selectedFrames+' } && dns.flags.response == 0 && (udp.dstport == 53 || tcp.dstport == 53)'
     $argsTshark=@('-n','-r',$pcap,'-Y',$filter,'-T','fields',
         '-E','separator=|','-E','quote=n','-E','occurrence=f')
     foreach ($field in $fields) { $argsTshark+=@('-e',$field) }
