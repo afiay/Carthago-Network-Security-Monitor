@@ -57,3 +57,12 @@ transport attribution. V2 remains pending independent licensed captures,
 labels and approval. No change to either holdout.
 
 **Next contiguous five-rule batch: R146-R150.**
+
+## Static fixture correction after code review
+
+`TrafficRecord.Sni` and `TrafficRecord.TlsSni` share the same
+backing property; setting them to different values in one record cannot
+represent independently conflicting parser fields. The affected
+R141/R142/R145 tests were corrected to assert *real* contradictory
+HTTP metadata on an attributed TLS record. This does not adjust any
+detector, precision threshold or runtime policy. Tests remain **UNEXECUTED**.

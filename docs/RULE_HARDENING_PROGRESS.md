@@ -486,3 +486,16 @@ samples modified. Frozen V1 R102 failure remains 4/6; V2 independent
 capture review pending. Same branch throughout.
 
 **Next contiguous batch: R156-R160. Automation remains PAUSED.**
+
+## Aliased SNI fixture correction - 2026-10-27
+
+Static inspection established that `TrafficRecord.Sni` and
+`TrafficRecord.TlsSni` are aliases of the same backing field,
+so tests trying to set conflicting independent SNI fields were
+unrepresentable. Five advanced test files R141, R142, R145, R148
+and R149 were corrected to exercise contradictory HTTP request
+metadata instead; commit `29238dac5e2c24feaab9357798bc1b18f3946063`.
+The source detector code and frozen holdout were not modified.
+**No tests run.** All R126-R155 recent authored work remains
+**CANDIDATE - UNVERIFIED** pending user-initiated consolidated Windows
+validation. **Next batch: R156-R160; hourly automation PAUSED.**

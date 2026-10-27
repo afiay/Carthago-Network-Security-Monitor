@@ -38,3 +38,11 @@ Windows runner or GitHub workflow was invoked.
   Independent PCAP-based V2 remains PENDING_EXTERNAL_CAPTURE_AND_REVIEW.
 
 **Next five-rule batch: R151-R155.**
+
+## Static fixture correction after code review
+
+`TrafficRecord.Sni` / `TlsSni` share a backing field, so the original
+two-source conflict test was not a representable traffic record.
+R148 and R149 now assert that parser-attributed TLS with contradictory
+HTTP request metadata is rejected. No detector behavior, threshold or
+policy changed. **CANDIDATE - UNVERIFIED**.
