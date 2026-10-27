@@ -2,32 +2,57 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Carthago.Engine.Rules;
 using Carthago.Engine.Rules.Dns;
+using Carthago.Models;
+using Carthago.Services;
 using Xunit;
 namespace Carthago.Tests;
 
 [Collection("R102 distinct TXT correlation")]
 public sealed class R103AdvancedAccuracyBatchTests
 {
+    // Match the established R103 DNS positive fixture: six independent
+    // A-question observations, exactly 30 seconds apart, with no unrelated
+    // transport or enrichment fields. Distinct TrafficRecord IDs are essential.
+    private static readonly DateTime Origin = new(2026, 4, 29, 15, 0, 0, DateTimeKind.Utc);
+    private static RuleEvaluationContext DnsFixture(int seconds, string query,
+        string type = "A", bool response = false, string? answers = null,
+        string source = "10.101.0.10")
+        => new(new TrafficRecord
+        {
+            Source = source, Destination = "8.8.8.8", DestinationPort = 53,
+            Protocol = "DNS", ApplicationProtocol = "DNS", ApplicationService = "DNS",
+            DnsQname = query, DnsQtype = type, DnsRcode = "NOERROR",
+            DnsAnswers = answers, DnsIsResponse = response, IsUdp = true
+        }, Sensitivity.Balanced, Origin.AddSeconds(seconds));
+
+    private static string EffectiveSettings()
+        => $"R103 effective Threshold={RuleEngine.GetRuleIntSetting("R103", "Threshold", 6, 3, 200)}; "
+           + $"WindowSeconds={RuleEngine.GetRuleIntSetting("R103", "WindowSeconds", 900, 60, 7200)}; "
+           + $"MinAverageIntervalSeconds={RuleEngine.GetRuleIntSetting("R103", "MinAverageIntervalSeconds", 10, 1, 3600)}.";
+
     private readonly R103_DNSBeaconingWithStableIntervalRule _rule=new();
     private async Task<bool> Hit(int t,string q,string source="10.103.0.10")
-        =>(await _rule.EvaluateAsync(NetworkBatch101105Context.Dns(t,q,source:source))).Matched;
+        =>(await _rule.EvaluateAsync(DnsFixture(t,q,source:source))).Matched;
     [Fact] public async Task Six_Independent_Stable_Intervals_Produce_Beacon_Candidate()
     {
         var q="poll."+NetworkBatch101105Context.Root();
         for(var i=0;i<5;i++)Assert.False(await Hit(i*30,q));
-        var e=Assert.Single((await _rule.EvaluateAsync(NetworkBatch101105Context.Dns(150,q))).Events);
+        var last = await _rule.EvaluateAsync(DnsFixture(150, q));
+        Assert.True(last.Matched, "Six independent stable DNS requests were not recognized. " + EffectiveSettings());
+        var e=Assert.Single(last.Events);
         Assert.Equal("R103",e.RuleId);
         Assert.Contains(e.StructuredEvidence!.Items,x=>x.Key=="count"&&x.Value=="6");
     }
     [Fact] public async Task Duplicate_Id_Cannot_Fill_A_Stable_Interval_Window()
     {
         var q="poll."+NetworkBatch101105Context.Root();
-        var c=NetworkBatch101105Context.Dns(1,q);
+        var c=DnsFixture(1,q);
         Assert.False((await _rule.EvaluateAsync(c)).Matched);
         for(var i=0;i<9;i++)Assert.False((await _rule.EvaluateAsync(c)).Matched);
         for(var i=1;i<=4;i++)Assert.False(await Hit(i*30,q));
-        Assert.True(await Hit(150,q));
+        Assert.True(await Hit(150,q), "Distinct observations after replayed packet IDs were not recognized. " + EffectiveSettings());
     }
     [Fact] public async Task Six_Rotating_Subdomains_Do_Not_Prove_Exact_Beacon_Reuse()
     {
@@ -48,9 +73,9 @@ public sealed class R103AdvancedAccuracyBatchTests
     [Fact] public async Task Response_And_Http_Contradiction_Cannot_Seed_Cadence()
     {
         var q="poll."+NetworkBatch101105Context.Root();
-        var c=NetworkBatch101105Context.Dns(1,q,response:true);
+        var c=DnsFixture(1,q,response:true);
         Assert.False((await _rule.EvaluateAsync(c)).Matched);
-        c=NetworkBatch101105Context.Dns(2,q);c.Record.HttpMethod="GET";
+        c=DnsFixture(2,q);c.Record.HttpMethod="GET";
         Assert.False((await _rule.EvaluateAsync(c)).Matched);
         Assert.False(await Hit(30,q));
     }
@@ -58,8 +83,8 @@ public sealed class R103AdvancedAccuracyBatchTests
     {
         var q="poll."+NetworkBatch101105Context.Root();
         using var cts=new CancellationTokenSource();cts.Cancel();
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(async()=>await _rule.EvaluateAsync(NetworkBatch101105Context.Dns(1,q),cts.Token));
-        var c=NetworkBatch101105Context.Dns(2,"short.example");c.Record.DnsQname=null;c.Record.Info=q;
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async()=>await _rule.EvaluateAsync(DnsFixture(1,q),cts.Token));
+        var c=DnsFixture(2,"short.example");c.Record.DnsQname=null;c.Record.Info=q;
         Assert.False((await _rule.EvaluateAsync(c)).Matched);
     }
 }
