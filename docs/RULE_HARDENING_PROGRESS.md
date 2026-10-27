@@ -7,7 +7,7 @@ in the same commit as each batch's code, tests and technical assessment.
 | Batch | Rules | Development status | Test evidence |
 | --- | --- | --- | --- |
 | 01 | R001–R005 | Accepted for synthetic development gates | Windows 2026-10-27: targeted 62/62, advanced 28/28, full local regression PASS, frozen holdout 12/12 and expected matches 6/6 |
-| 02 | R006–R010 | **CANDIDATE — UNVERIFIED** (41 advanced xUnit facts, four new development replay fixtures) | No builds, tests or replay executed; candidate code commit SHA to be recorded after publication |
+| 02 | R006–R010 | **CANDIDATE — UNVERIFIED** (41 advanced xUnit facts, four new development replay fixtures) | No builds, tests or replay executed; candidate commit 8efa410ee20a3e551ca29a52f9bc50ed24f7c947 |
 
 **Next batch to author: R011–R015.** R006–R010 is authored but remains unverified; do not treat it as accepted. Continue in exact ascending groups of five.
 Do not mark a subsequent batch accepted until the user explicitly initiates
