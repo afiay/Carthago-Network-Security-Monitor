@@ -1,0 +1,17 @@
+{
+  "name": "r038-prose-only-doh-not-observation",
+  "records": [
+    {
+      "source": "10.38.0.2",
+      "destination": "8.8.8.8",
+      "protocol": "HTTPS",
+      "destinationPort": 443,
+      "info": "GET /dns-query?dns=AbCdEfGh1234 HTTP/1.1",
+      "length": 210
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R038"
+  ]
+}

@@ -228,7 +228,7 @@ namespace Carthago.Services
         // ===== Strategy detectors state (new: R037–R039) =====
 
         // R037: JA4 drift per SNI (per-SNI map of JA4 -> (count, lastSeen))
-        private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, (int Count, DateTime LastSeen)>> _sniJa4Drift =
+        private static readonly ConcurrentDictionary<string, List<(DateTime Ts, string Fingerprint)>> _sniJa4Drift =
             new(StringComparer.OrdinalIgnoreCase);
 
         // R038: QUIC high-entropy SNI + DoH surge (per-source windows)
@@ -2175,331 +2175,282 @@ namespace Carthago.Services
             return false;
         }
 
-        // ===== R036 Heavy egress to single external host (per-pair exfil) =====
+        // ===== R036 Heavy egress to single external host =====
         private static bool DetectPairExfiltration(DateTime now, TrafficRecord r, out DetectionEvent det)
         {
             det = null!;
             try
             {
+                // Volume is a hypothesis, not sufficient evidence to poison the service allowlist.
+                if (r.Length <= 0 || !IsPrivateIp(r.Source)
+                    || !IPAddress.TryParse(r.Source, out var srcIp)
+                    || !IsPublicLegacyEgressIp(r.Destination)
+                    || !IPAddress.TryParse(r.Destination, out var dstIp)
+                    || (r.DestinationPort is int port && (port < 1 || port > 65535)))
+                    return false;
+
+                const int window = 120;
+                const long thresholdBytes = 20_000_000;
+                var key = (Src: srcIp.ToString(), Dst: dstIp.ToString());
                 BoundDictionary(_pairBytes, 20000);
-
-                if (r.Length <= 0) return false;
-                if (string.IsNullOrWhiteSpace(r.Destination) || IsPrivateIp(r.Destination)) return false;
-                if (string.IsNullOrWhiteSpace(r.Source)) return false;
-
-                const int window = 120;               // seconds
-                const int thresholdBytes = 20_000_000; // 20 MB per 2 min to a single host
-
-                var key = (NS(r.Source), r.Destination);
-                var list = _pairBytes.GetOrAdd(key, _ => new List<(DateTime, int)>(capacity: 64));
+                var list = _pairBytes.GetOrAdd(key, _ => new List<(DateTime ts, int bytes)>(64));
                 lock (list)
                 {
+                    // Reject out-of-order observations; dedupe an indistinguishable retransmit.
+                    if (list.Count > 0 && now < list[^1].ts) return false;
+                    if (list.Count > 0 && now == list[^1].ts && r.Length == list[^1].bytes)
+                        return false;
+                    list.RemoveAll(t => t.ts < now.AddSeconds(-window));
                     list.Add((now, r.Length));
-                    var cutoff = now.AddSeconds(-window);
-                    list.RemoveAll(t => t.ts < cutoff);
+                    if (list.Count > 10000) list.RemoveRange(0, list.Count - 10000);
 
-                    int total = 0;
-                    for (int i = 0; i < list.Count; i++) total += list[i].bytes;
+                    long total = 0;
+                    foreach (var observation in list) total += observation.bytes;
+                    if (total < thresholdBytes) return false;
 
-                    if (total >= thresholdBytes)
+                    // A completed suppressed window must not prime the next window.
+                    list.Clear();
+                    if (SuppressRepeat(now, "R036", key.Src, key.Dst, r.DestinationPort))
+                        return false;
+                    det = new DetectionEvent
                     {
-                        if (SuppressRepeat(now, "R036", key.Item1, key.Item2, r.DestinationPort)) return false;
-                        det = new DetectionEvent
-                        {
-                            RuleId = "R036",
-                            Description = $"High-volume egress from {key.Item1} to {key.Item2}: {total} bytes / {window}s",
-                            SourceIp = key.Item1,
-                            DestinationIp = key.Item2,
-                            DestinationPort = r.DestinationPort,
-                            Protocol = NP(r.Protocol),
-                            Severity = SeverityLevel.Critical,
-                            Count = total,
-                            WindowSeconds = window
-                        };
-                        list.Clear();
-
-                        // Penalize service (if any) due to heavy suspicious egress to a single host.
-                        if (r.DestinationPort is int p3 && !string.IsNullOrWhiteSpace(r.Protocol))
-                            AllowListLearner.MarkBad(p3, r.Protocol, now, "heavy-egress");
-
-                        return true;
-                    }
+                        RuleId = "R036",
+                        Description = $"High-volume outbound transfer to a single public host ({total} bytes/{window}s)",
+                        SourceIp = key.Src,
+                        DestinationIp = key.Dst,
+                        DestinationPort = r.DestinationPort,
+                        Protocol = NP(r.Protocol),
+                        Severity = SeverityLevel.Critical,
+                        Count = (int)Math.Min(total, int.MaxValue),
+                        WindowSeconds = window
+                    };
+                    return true;
                 }
             }
-            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] R036 error: {ex}"); }
+            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] R036 error: {ex.GetType().Name}"); }
             return false;
         }
 
-        // ===== R037 JA4 drift per SNI (rare SNI -> multiple JA4s) =====
+        // ===== R037 JA4 drift per SNI =====
         private static bool DetectJa4DriftPerSni(DateTime now, TrafficRecord r, out DetectionEvent det)
         {
             det = null!;
             try
             {
-                // Need a concrete SNI and JA4 client fingerprint
-                string? sni = r.Sni ?? r.TlsSni;
-                if (string.IsNullOrWhiteSpace(sni)) return false;
-                string? ja4 = r.Ja4;
-                if (string.IsNullOrWhiteSpace(ja4)) return false;
-
-                // Focus on TLS/HTTPS/QUIC-ish flows only
-                bool tlsLike =
-                    r.DestinationPort == 443
-                    || string.Equals(r.Protocol, "TLS", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(r.Protocol, "HTTPS", StringComparison.OrdinalIgnoreCase)
-                    || r.IsQuic;
-                if (!tlsLike) return false;
-
-                const int windowSeconds = 3600;      // 1h drift window
-                const int maxJa4PerSni = 16;         // bound per-SNI distinct JA4s
-                const int minDistinct = 3;           // require at least 3 distinct JA4s
-                const int minTotal = 5;              // minimum connections in-window
-                const int maxTotalForRare = 50;      // rare SNI guard: don't trigger on very popular SNI
-
-                var inner = _sniJa4Drift.GetOrAdd(sni, _ => new ConcurrentDictionary<string, (int Count, DateTime LastSeen)>());
-
-                // Update per-SNI JA4 stats
-                inner.AddOrUpdate(
-                    ja4,
-                    _ => (1, now),
-                    (_, prev) => (prev.Count + 1, now));
-
-                // Time-based cleanup
-                var cutoff = now.AddSeconds(-windowSeconds);
-                foreach (var kv in inner.Where(kv => kv.Value.LastSeen < cutoff).ToList())
-                    inner.TryRemove(kv.Key, out _);
-
-                // Bound per-SNI distinct JA4s
-                if (inner.Count > maxJa4PerSni)
-                {
-                    foreach (var kv in inner.OrderBy(kv => kv.Value.LastSeen)
-                                             .Take(inner.Count - maxJa4PerSni)
-                                             .ToList())
-                    {
-                        inner.TryRemove(kv.Key, out _);
-                    }
-                }
-
-                // Bound global SNI map
-                BoundDictionary(_sniJa4Drift, 5000);
-
-                int distinct = inner.Count;
-                int total = inner.Sum(x => x.Value.Count);
-
-                if (distinct < minDistinct || total < minTotal || total > maxTotalForRare)
+                if (r.Length <= 0 || !IPAddress.TryParse(r.Source, out _)
+                    || !IsPublicLegacyEgressIp(r.Destination)
+                    || !(r.IsQuic || string.Equals(r.Protocol, "TLS", StringComparison.OrdinalIgnoreCase)
+                         || string.Equals(r.Protocol, "HTTPS", StringComparison.OrdinalIgnoreCase)
+                         || string.Equals(r.Protocol, "QUIC", StringComparison.OrdinalIgnoreCase)))
                     return false;
 
-                if (SuppressRepeat(now, "R037", NS(r.Source), r.Destination, r.DestinationPort)) return false;
+                var sni = r.Sni?.Trim().TrimEnd('.').ToLowerInvariant();
+                var ja4 = r.Ja4?.Trim();
+                if (string.IsNullOrEmpty(sni) || string.IsNullOrEmpty(ja4)
+                    || !Regex.IsMatch(sni, @"\A(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}\z",
+                        RegexOptions.CultureInvariant)
+                    || !Regex.IsMatch(ja4, @"\A[A-Za-z0-9_-]{8,128}\z", RegexOptions.CultureInvariant))
+                    return false;
 
-                var severity = distinct >= 5 ? SeverityLevel.High : SeverityLevel.Medium;
-
-                det = new DetectionEvent
+                const int windowSeconds = 3600;
+                const int minDistinct = 3, minTotal = 5, maxTotalForRare = 50;
+                BoundDictionary(_sniJa4Drift, 5000);
+                var list = _sniJa4Drift.GetOrAdd(sni, _ => new List<(DateTime Ts, string Fingerprint)>());
+                lock (list)
                 {
-                    RuleId = "R037",
-                    Description = $"JA4 drift for rare SNI '{sni}' (distinctJA4={distinct}, conns={total}/{windowSeconds}s)",
-                    SourceIp = NS(r.Source),
-                    DestinationIp = r.Destination,
-                    DestinationPort = r.DestinationPort,
-                    Protocol = NP(r.Protocol),
-                    Severity = severity,
-                    Count = distinct,
-                    WindowSeconds = windowSeconds
-                };
-                return true;
+                    if (list.Count > 0 && now < list[^1].Ts) return false;
+                    list.RemoveAll(x => x.Ts < now.AddSeconds(-windowSeconds));
+                    // Same timestamp + same fingerprint cannot manufacture repeated handshakes.
+                    if (list.Any(x => x.Ts == now && x.Fingerprint == ja4)) return false;
+                    list.Add((now, ja4));
+                    if (list.Count > 64) list.RemoveRange(0, list.Count - 64);
+                    int total = list.Count;
+                    int distinct = list.Select(x => x.Fingerprint).Distinct(StringComparer.Ordinal).Count();
+                    if (distinct < minDistinct || total < minTotal || total > maxTotalForRare)
+                        return false;
+
+                    list.Clear();
+                    if (SuppressRepeat(now, "R037", NS(r.Source), r.Destination, r.DestinationPort))
+                        return false;
+                    det = new DetectionEvent
+                    {
+                        RuleId = "R037",
+                        // Neither SNI nor JA4 is copied into alert text.
+                        Description = $"JA4 diversity changed for a low-volume TLS destination (distinct={distinct}, observations={total})",
+                        SourceIp = NS(r.Source),
+                        DestinationIp = r.Destination,
+                        DestinationPort = r.DestinationPort,
+                        Protocol = NP(r.Protocol),
+                        Severity = distinct >= 5 ? SeverityLevel.High : SeverityLevel.Medium,
+                        Count = distinct,
+                        WindowSeconds = windowSeconds
+                    };
+                    return true;
+                }
             }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"[RuleEngine] R037 error: {ex}");
-                return false;
-            }
+            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] R037 error: {ex.GetType().Name}"); }
+            return false;
         }
 
-        // ===== R038 Encrypted DNS bootstrap (QUIC high-entropy SNI + DoH surge) =====
+        // ===== R038 Encrypted DNS bootstrap (corroborated DoH + QUIC) =====
         private static bool DetectEncryptedDnsBootstrap(DateTime now, TrafficRecord r, out DetectionEvent det)
         {
             det = null!;
             try
             {
-                string src = NS(r.Source);
-                if (string.IsNullOrWhiteSpace(src)) return false;
-
-                const int windowSeconds = 300; // 5 min
-                const int dohThreshold = 10;   // DoH requests in window
-                const int quicThreshold = 3;   // high-entropy QUIC SNIs in window
-                const double sniEntropyThreshold = 3.5;
-
-                bool isDoH = IsDoHLike(r);
-                bool isQuicHiEntropy = false;
-
-                // QUIC / HTTP3 handshake with SNI that looks random-ish
-                if ((r.IsQuic
-                     || string.Equals(r.Protocol, "QUIC", StringComparison.OrdinalIgnoreCase)
-                     || r.QuicAlpn is { Length: > 0 })
-                    && !string.IsNullOrWhiteSpace(r.Sni))
-                {
-                    double ent = ShannonEntropy(r.Sni!);
-                    isQuicHiEntropy = ent >= sniEntropyThreshold;
-                }
-
-                if (!isDoH && !isQuicHiEntropy)
+                if (r.Length <= 0 || !IsPrivateIp(r.Source)
+                    || !IPAddress.TryParse(r.Source, out var srcIp)
+                    || !IsPublicLegacyEgressIp(r.Destination))
                     return false;
 
+                const int windowSeconds = 300, dohThreshold = 10, quicThreshold = 3;
+                const double sniEntropyThreshold = 3.5;
+                string src = srcIp.ToString();
+                bool isDoH = IsDoHLike(r);
+                bool isQuicHiEntropy = r.DestinationPort == 443
+                    && (r.IsQuic || string.Equals(r.Protocol, "QUIC", StringComparison.OrdinalIgnoreCase))
+                    && !string.Equals(r.Protocol, "HTTP", StringComparison.OrdinalIgnoreCase)
+                    && !string.Equals(r.Protocol, "DNS", StringComparison.OrdinalIgnoreCase)
+                    && !string.IsNullOrWhiteSpace(r.Sni)
+                    && Regex.IsMatch(r.Sni!, @"\A[A-Za-z0-9.-]{8,253}\z", RegexOptions.CultureInvariant)
+                    && ShannonEntropy(r.Sni!) >= sniEntropyThreshold;
+                if (!isDoH && !isQuicHiEntropy) return false;
+
+                // One timestamp is one observation in this coarse replay/capture model.
                 if (isDoH)
                 {
-                    var list = _dohBySrc.GetOrAdd(src, _ => new List<DateTime>(dohThreshold * 2));
-                    lock (list)
-                    {
-                        list.Add(now);
-                        TrimAndCount(list, now, windowSeconds);
-                    }
+                    var list = _dohBySrc.GetOrAdd(src, _ => new List<DateTime>());
+                    if (!AppendDistinctWindowTime(list, now, windowSeconds)) return false;
                     BoundDictionary(_dohBySrc, 10000);
                 }
-
                 if (isQuicHiEntropy)
                 {
-                    var list = _quicHiEntropyBySrc.GetOrAdd(src, _ => new List<DateTime>(quicThreshold * 2));
-                    lock (list)
-                    {
-                        list.Add(now);
-                        TrimAndCount(list, now, windowSeconds);
-                    }
+                    var list = _quicHiEntropyBySrc.GetOrAdd(src, _ => new List<DateTime>());
+                    if (!AppendDistinctWindowTime(list, now, windowSeconds)) return false;
                     BoundDictionary(_quicHiEntropyBySrc, 10000);
                 }
 
-                int dohCount = 0;
-                if (_dohBySrc.TryGetValue(src, out var dohList) && dohList != null)
-                {
-                    lock (dohList)
-                    {
-                        dohCount = TrimAndCount(dohList, now, windowSeconds);
-                    }
-                }
+                int dohCount = 0, quicCount = 0;
+                if (_dohBySrc.TryGetValue(src, out var doh))
+                    lock (doh) { doh.RemoveAll(t => t < now.AddSeconds(-windowSeconds)); dohCount = doh.Count; }
+                if (_quicHiEntropyBySrc.TryGetValue(src, out var quic))
+                    lock (quic) { quic.RemoveAll(t => t < now.AddSeconds(-windowSeconds)); quicCount = quic.Count; }
+                if (dohCount < dohThreshold || quicCount < quicThreshold) return false;
 
-                int quicCount = 0;
-                if (_quicHiEntropyBySrc.TryGetValue(src, out var quicList) && quicList != null)
-                {
-                    lock (quicList)
-                    {
-                        quicCount = TrimAndCount(quicList, now, windowSeconds);
-                    }
-                }
-
-                if (dohCount < dohThreshold || quicCount < quicThreshold)
-                    return false;
-
+                // Clear both completed windows, including a suppressed detection.
+                if (_dohBySrc.TryGetValue(src, out doh)) lock (doh) doh.Clear();
+                if (_quicHiEntropyBySrc.TryGetValue(src, out quic)) lock (quic) quic.Clear();
                 if (SuppressRepeat(now, "R038", src, r.Destination, r.DestinationPort)) return false;
 
-                int score = dohCount * 2 + quicCount; // simple "probability-ish" score
-                var severity = score >= 30 ? SeverityLevel.High : SeverityLevel.Medium;
-
+                int score = dohCount * 2 + quicCount;
                 det = new DetectionEvent
                 {
                     RuleId = "R038",
-                    Description = $"Encrypted DNS bootstrap suspected from {src} (DoH={dohCount}, QUIC-hi-entropy={quicCount}/{windowSeconds}s, score={score})",
+                    Description = $"Correlated encrypted-DNS bootstrap pattern (DoH={dohCount}, QUIC={quicCount}, window={windowSeconds}s)",
                     SourceIp = src,
                     DestinationIp = r.Destination,
                     DestinationPort = r.DestinationPort,
                     Protocol = NP(r.Protocol),
-                    Severity = severity,
+                    Severity = score >= 30 ? SeverityLevel.High : SeverityLevel.Medium,
                     Count = score,
                     WindowSeconds = windowSeconds
                 };
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] R038 error: {ex.GetType().Name}"); }
+            return false;
+        }
+
+        private static bool AppendDistinctWindowTime(List<DateTime> list, DateTime now, int windowSeconds)
+        {
+            lock (list)
             {
-                Console.Error.WriteLine($"[RuleEngine] R038 error: {ex}");
-                return false;
+                if (list.Count > 0 && now <= list[^1]) return false;
+                list.RemoveAll(t => t < now.AddSeconds(-windowSeconds));
+                list.Add(now);
+                if (list.Count > 256) list.RemoveRange(0, list.Count - 256);
+                return true;
             }
         }
 
-        // Shared helper for DoH-ish HTTP detection (R034 & R038)
+        // R038 requires wire-structured DoH evidence; arbitrary prose in Info
+        // or request headers cannot establish the method and request target.
         private static bool IsDoHLike(TrafficRecord r)
         {
-            var info = r.Info ?? string.Empty;
-            bool httpLike = string.Equals(r.Protocol, "HTTP", StringComparison.OrdinalIgnoreCase)
-                            || (r.HttpMethod is not null)
-                            || info.Contains("HTTP/1.", StringComparison.OrdinalIgnoreCase);
-
-            if (!httpLike) return false;
-
-            var firstLine = info.Split('\n').FirstOrDefault() ?? string.Empty;
-            var parts = firstLine.Split(' ');
-            string? method = parts.Length > 0 ? parts[0] : null;
-            string? uri = r.HttpUri ?? (parts.Length > 1 ? parts[1] : null);
-
-            var headers = r.HttpRequestHeaders ?? info;
-
-            bool looksDoH =
-                (uri?.Contains("/dns-query", StringComparison.OrdinalIgnoreCase) == true)
-                || headers.Contains("application/dns-message", StringComparison.OrdinalIgnoreCase);
-
-            // Slight guard: only GET/POST to keep noise low
-            if (!looksDoH) return false;
-            if (!string.Equals(method, "GET", StringComparison.OrdinalIgnoreCase) &&
-                !string.Equals(method, "POST", StringComparison.OrdinalIgnoreCase))
+            if (r.DestinationPort != 443 || r.IsQuic
+                || !(string.Equals(r.Protocol, "HTTP", StringComparison.OrdinalIgnoreCase)
+                     || string.Equals(r.Protocol, "HTTPS", StringComparison.OrdinalIgnoreCase))
+                || (r.ApplicationService != null
+                    && !string.Equals(r.ApplicationService, "HTTP", StringComparison.OrdinalIgnoreCase)
+                    && !string.Equals(r.ApplicationService, "HTTPS", StringComparison.OrdinalIgnoreCase)
+                    && !string.Equals(r.ApplicationService, "DOH", StringComparison.OrdinalIgnoreCase)))
                 return false;
-
-            return true;
+            var uri = r.HttpUri;
+            if (string.IsNullOrWhiteSpace(uri)
+                || !Regex.IsMatch(uri, @"\A/dns-query(?:\?|$)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+                return false;
+            if (string.Equals(r.HttpMethod, "GET", StringComparison.OrdinalIgnoreCase))
+                return Regex.IsMatch(uri, @"[?&]dns=[A-Za-z0-9_-]{8,}(?:&|$)", RegexOptions.CultureInvariant);
+            if (string.Equals(r.HttpMethod, "POST", StringComparison.OrdinalIgnoreCase))
+                return Regex.IsMatch(r.HttpRequestHeaders ?? string.Empty,
+                    @"(?im)^Content-Type\s*:\s*application/dns-message\s*(?:;[^\r\n]*)?$",
+                    RegexOptions.CultureInvariant);
+            return false;
         }
 
-        // ===== R039 ASN novelty on sensitive VLANs =====
+        // ===== R039 ASN novelty on explicitly sensitive outbound assets =====
         private static bool DetectAsnNoveltySensitive(DateTime now, TrafficRecord r, out DetectionEvent det)
         {
             det = null!;
             try
             {
-                if (string.IsNullOrWhiteSpace(r.WhoisASN)) return false;
-                if (!IsSensitiveVlanFlow(r)) return false;
+                if (r.Length <= 0 || !IsSensitiveVlanFlow(r)
+                    || !IsPrivateIp(r.Source) || !IPAddress.TryParse(r.Source, out var sourceIp)
+                    || !IsPublicLegacyEgressIp(r.Destination))
+                    return false;
+                var match = Regex.Match(r.WhoisASN ?? string.Empty,
+                    @"\A\s*AS(?<number>[1-9][0-9]{0,9})(?:\s|$)",
+                    RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+                if (!match.Success || !uint.TryParse(match.Groups["number"].Value, out var asnNumber))
+                    return false;
+                string asn = "AS" + asnNumber;
+                string key = sourceIp + "|" + asn;
+                if (_asnSeenOnSensitive.TryGetValue(key, out var prior) && now < prior)
+                    return false;
 
-                // Normalize ASN string (e.g. "AS1234 Example Ltd" -> "AS1234")
-                string asnRaw = r.WhoisASN!.Trim();
-                int spaceIdx = asnRaw.IndexOf(' ');
-                string asn = spaceIdx > 0 ? asnRaw.Substring(0, spaceIdx) : asnRaw;
-
-                // Track where we've seen this ASN at all
-                var stats = _asnSeenAnywhere.AddOrUpdate(
-                    asn,
-                    _ => (FirstSeen: now, LastSeen: now),
-                    (_, prev) => (prev.FirstSeen, LastSeen: now));
-
-                // Age out very old ASNs so state doesn't grow forever
                 var cutoff = now.AddDays(-7);
-                foreach (var kv in _asnSeenAnywhere.Where(kv => kv.Value.LastSeen < cutoff).ToList())
+                foreach (var kv in _asnSeenAnywhere.Where(x => x.Value.LastSeen < cutoff).Take(100).ToList())
                     _asnSeenAnywhere.TryRemove(kv.Key, out _);
+                foreach (var kv in _asnSeenOnSensitive.Where(x => x.Value < cutoff).Take(100).ToList())
+                    _asnSeenOnSensitive.TryRemove(kv.Key, out _);
                 BoundDictionary(_asnSeenAnywhere, 20000);
                 BoundDictionary(_asnSeenOnSensitive, 5000);
 
-                // First time this ASN has ever talked to a sensitive segment in this Carthago lifetime?
-                bool firstOnSensitive = _asnSeenOnSensitive.TryAdd(asn, now);
-                if (!firstOnSensitive) return false;
+                bool seenPreviously = _asnSeenAnywhere.TryGetValue(asn, out var prev)
+                    && prev.FirstSeen < now.AddMinutes(-10);
+                if (!_asnSeenOnSensitive.TryAdd(key, now)) return false;
+                _asnSeenAnywhere.AddOrUpdate(asn, _ => (now, now),
+                    (_, old) => (old.FirstSeen, now > old.LastSeen ? now : old.LastSeen));
 
-                // If we've never seen this ASN anywhere before, it's more suspicious.
-                bool seenElsewhereBefore = stats.FirstSeen < now.AddMinutes(-10);
-
-                if (SuppressRepeat(now, "R039", NS(r.Source), r.Destination, r.DestinationPort)) return false;
-
-                var severity = seenElsewhereBefore ? SeverityLevel.Medium : SeverityLevel.High;
-
+                if (SuppressRepeat(now, "R039", sourceIp.ToString(), r.Destination, r.DestinationPort))
+                    return false;
                 det = new DetectionEvent
                 {
                     RuleId = "R039",
-                    Description = $"New ASN {asn} observed talking to sensitive segment (networkType={r.NetworkType ?? "n/a"})",
-                    SourceIp = NS(r.Source),
+                    Description = $"Previously unobserved destination ASN {asn} for an explicitly sensitive source",
+                    SourceIp = sourceIp.ToString(),
                     DestinationIp = r.Destination,
                     DestinationPort = r.DestinationPort,
                     Protocol = NP(r.Protocol),
-                    Severity = severity,
+                    Severity = seenPreviously ? SeverityLevel.Medium : SeverityLevel.High,
                     Count = 1
                 };
                 return true;
             }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"[RuleEngine] R039 error: {ex}");
-                return false;
-            }
+            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] R039 error: {ex.GetType().Name}"); }
+            return false;
         }
+
         // ===== Local flow stat for R040 =====
         private sealed class FlowStat
         {
@@ -2535,44 +2486,55 @@ namespace Carthago.Services
             det = null!;
             try
             {
-                bool encryptedLike =
-                    r.DestinationPort == 443 ||
-                    string.Equals(r.Protocol, "TLS", StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(r.Protocol, "HTTPS", StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(r.Protocol, "QUIC", StringComparison.OrdinalIgnoreCase) ||
-                    r.IsQuic;
+                bool encryptedLike = string.Equals(r.Protocol, "TLS", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(r.Protocol, "HTTPS", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(r.Protocol, "QUIC", StringComparison.OrdinalIgnoreCase)
+                    || (r.IsQuic && !string.Equals(r.Protocol, "HTTP", StringComparison.OrdinalIgnoreCase));
+                if (!encryptedLike || r.Length <= 0
+                    || !IsPrivateIp(r.Source) || !IPAddress.TryParse(r.Source, out var srcIp)
+                    || !IsPublicLegacyEgressIp(r.Destination)
+                    || !IPAddress.TryParse(r.Destination, out var dstIp)
+                    || r.DestinationPort is not int port || port < 1 || port > 65535)
+                    return false;
 
-                if (!encryptedLike) return false;
-                if (string.IsNullOrWhiteSpace(r.Source) || string.IsNullOrWhiteSpace(r.Destination)) return false;
-                if (IsPrivateIp(r.Destination)) return false; // focus on Internet C2
-
-                var key = (Src: NS(r.Source), Dst: r.Destination, Port: r.DestinationPort);
+                var key = (Src: srcIp.ToString(), Dst: dstIp.ToString(), Port: (int?)port);
+                BoundDictionary(_encFlow, 10000);
                 var fs = _encFlow.GetOrAdd(key, _ => new FlowStat
                 {
-                    First = now,
-                    Last = now,
-                    Bytes = 0,
-                    Count = 0
+                    First = now, Last = now, Bytes = 0, Count = 0
                 });
-
                 lock (fs)
                 {
+                    if (fs.Count > 0 && now <= fs.Last) return false;
+                    // An idle gap or stale session is a new flow, not 15 minutes
+                    // of uninterrupted low-throughput encrypted activity.
+                    if (fs.Count > 0 && ((now - fs.Last).TotalSeconds > 300
+                        || (now - fs.First).TotalHours > 24))
+                    {
+                        fs.First = now;
+                        fs.Bytes = 0;
+                        fs.Count = 0;
+                    }
                     fs.Last = now;
-                    fs.Bytes += Math.Max(0, r.Length);
+                    if (r.Length > 300_000 || fs.Bytes + r.Length > 300_000)
+                    {
+                        fs.First = now;
+                        fs.Bytes = 0;
+                        fs.Count = 0;
+                        return false;
+                    }
+                    fs.Bytes += r.Length;
                     fs.Count++;
 
-                    var lifetime = (fs.Last - fs.First).TotalSeconds;
-                    if (lifetime < 900) return false;   // < 15 minutes
-                    if (fs.Count < 12) return false;    // < 12 packets/records
-                    if (fs.Bytes > 300_000) return false; // > 300KB looks like normal browsing/transfer
-
+                    double lifetime = (now - fs.First).TotalSeconds;
+                    if (lifetime < 900 || fs.Count < 12) return false;
+                    _encFlow.TryRemove(key, out _);
                     if (SuppressRepeat(now, "R040", key.Src, key.Dst, key.Port))
                         return false;
-
                     det = new DetectionEvent
                     {
                         RuleId = "R040",
-                        Description = $"Long-lived low-throughput encrypted session {key.Src} → {key.Dst} (dur≈{lifetime / 60:F1}m, msgs={fs.Count}, bytes={fs.Bytes})",
+                        Description = $"Long-lived low-throughput encrypted flow (duration≈{lifetime / 60:F1}m, observations={fs.Count}, bytes={fs.Bytes})",
                         SourceIp = key.Src,
                         DestinationIp = key.Dst,
                         DestinationPort = key.Port,
@@ -2581,16 +2543,11 @@ namespace Carthago.Services
                         Count = fs.Count,
                         WindowSeconds = (int)Math.Round(lifetime)
                     };
-
-                    _encFlow.TryRemove(key, out _); // one-shot per flow window
                     return true;
                 }
             }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"[RuleEngine] R040 error: {ex}");
-                return false;
-            }
+            catch (Exception ex) { Console.Error.WriteLine($"[RuleEngine] R040 error: {ex.GetType().Name}"); }
+            return false;
         }
 
         // ===== R041: JA4 fan-out sweep (same JA4 -> many SNIs quickly) =====

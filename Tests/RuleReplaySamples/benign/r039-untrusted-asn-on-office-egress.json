@@ -1,0 +1,18 @@
+{
+  "name": "r039-untrusted-asn-on-office-egress",
+  "records": [
+    {
+      "source": "10.39.0.2",
+      "destination": "8.8.8.8",
+      "protocol": "TLS",
+      "destinationPort": 443,
+      "networkType": "Office",
+      "whoisASN": "AS64500 Example Networks",
+      "length": 240
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R039"
+  ]
+}

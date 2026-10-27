@@ -1,0 +1,18 @@
+{
+  "name": "r037-port-only-ja4-not-handshake",
+  "records": [
+    {
+      "source": "10.37.0.2",
+      "destination": "8.8.8.8",
+      "protocol": "TCP",
+      "destinationPort": 443,
+      "sni": "rare.example.org",
+      "ja4": "fingerprintA001",
+      "length": 220
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R037"
+  ]
+}

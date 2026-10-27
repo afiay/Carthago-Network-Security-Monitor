@@ -1,0 +1,16 @@
+{
+  "name": "r036-authorized-subthreshold-egress",
+  "records": [
+    {
+      "source": "10.36.0.2",
+      "destination": "8.8.8.8",
+      "protocol": "TLS",
+      "destinationPort": 443,
+      "length": 1500
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R036"
+  ]
+}

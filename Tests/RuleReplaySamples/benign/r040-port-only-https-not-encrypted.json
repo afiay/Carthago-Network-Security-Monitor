@@ -1,0 +1,16 @@
+{
+  "name": "r040-port-only-https-not-encrypted",
+  "records": [
+    {
+      "source": "10.40.0.2",
+      "destination": "8.8.8.8",
+      "protocol": "TCP",
+      "destinationPort": 443,
+      "length": 150
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R040"
+  ]
+}
