@@ -73,6 +73,13 @@ public sealed class R058AdvancedAccuracyBatchTests
         Assert.False((await _rule.EvaluateAsync(AssetBatch056060Context.At(0,
             mac: AssetBatch056060Context.VendorA, protocol: "TCP"))).Matched);
     }
+    [Fact] public async Task Expired_Novelty_Requires_Two_Fresh_Claims()
+    {
+        Assert.False(await Seen(0, AssetBatch056060Context.VendorA));
+        Assert.False(await Seen(1, AssetBatch056060Context.VendorB));
+        Assert.False(await Seen(200, AssetBatch056060Context.VendorB));
+        Assert.True(await Seen(201, AssetBatch056060Context.VendorB));
+    }
     [Fact] public async Task Cancellation_Prevents_Vendor_Observation()
     {
         using var cts = new CancellationTokenSource(); cts.Cancel();
