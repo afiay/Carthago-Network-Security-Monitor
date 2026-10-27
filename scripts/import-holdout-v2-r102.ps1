@@ -87,6 +87,9 @@ foreach ($row in $rows) {
     if ($nameValue.Length -gt 253 -or $nameValue -notmatch '^[a-z0-9_-]+(?:\.[a-z0-9_-]+)+$') { continue }
     $typeNumber=$columns[10].Trim()
     if (-not $qtypes.ContainsKey($typeNumber)) { continue }
+    # The v2 malicious slots are explicitly encoded-TXT scenarios. Do
+    # not pass through NULL/CNAME/A DNS samples under a misleading TXT label.
+    if ($Classification -eq 'Malicious' -and $typeNumber -ne '16') { continue }
     $udp=$columns[5].Length -gt 0 -and $columns[6] -eq '53'
     $tcp=$columns[7].Length -gt 0 -and $columns[8] -eq '53'
     if ($udp -eq $tcp) { continue } # Require exactly one captured transport.
@@ -107,9 +110,14 @@ foreach ($row in $rows) {
 if ($records.Count -lt 3) {
     throw "Only $($records.Count) attributable DNS packets selected. Require >=3."
 }
-if ($Classification -eq 'Malicious' -and
-    @($records | ForEach-Object { $_.dnsQname } | Sort-Object -Unique).Count -lt 3) {
-    throw 'Malicious candidate requires >=3 distinct captured QNAMEs; do not synthesize repeats.'
+if ($Classification -eq 'Malicious') {
+    $distinctLongTxt=@($records | Where-Object {
+        $_.dnsQtype -eq 'TXT' -and
+        (@([string]$_.dnsQname -split '\.' | Where-Object { $_.Length -ge 50 }).Count -gt 0)
+    } | Select-Object -ExpandProperty dnsQname -Unique)
+    if ($distinctLongTxt.Count -lt 3) {
+        throw "R102 encoded-TXT candidate requires three distinct captured TXT names with a label >=50 bytes; found $($distinctLongTxt.Count). A NULL/CNAME-only tunnel is not eligible."
+    }
 }
 # Never permit unreviewed DNS QNAME/IP captures to be written into
 # tracked corpus paths by overriding the candidate directory.
@@ -154,7 +162,11 @@ $provenance=[ordered]@{
     extractorVersion=((& $exe.Source -v | Select-Object -First 1) -join '');
     capturedTransportEvidence=$true;
     maximumPacketsToScan=$MaximumPacketsToScan;
-    selectionMethod='First matching query records within bounded earliest PCAP packet range';
+    selectionMethod=$(if ($Classification -eq 'Malicious') {
+        'First bounded source/root DNS TXT question packets; require 3 distinct long-label TXT names'
+    } else {
+        'First bounded source/root DNS question packets; retain A/AAAA/TXT controls'
+    });
     transformations='Case-normalized QNAME, removed final dot; transport/IP/ports and DNS names otherwise retained.';
     privacyReviewRequired=$true;preparedAtUtc=[DateTime]::UtcNow.ToString('o')
 }
