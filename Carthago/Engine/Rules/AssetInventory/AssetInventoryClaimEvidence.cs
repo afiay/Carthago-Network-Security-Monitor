@@ -119,9 +119,16 @@ namespace Carthago.Engine.Rules.AssetInventory
                     entry.Reported = false;
                     return false;
                 }
-                entry.Last = now;
-                if (entry.Reported || entry.SilentBaseline || now - entry.First > Confirmation)
+                if (!entry.Reported && !entry.SilentBaseline && now - entry.First > Confirmation)
+                {
+                    // An old first sighting cannot corroborate a new observation.
+                    // Restart the two-minute confirmation window rather than
+                    // leaving the candidate permanently unconfirmable.
+                    entry.First = entry.Last = now;
                     return false;
+                }
+                entry.Last = now;
+                if (entry.Reported || entry.SilentBaseline) return false;
                 entry.Reported = true;
                 return true;
             }
