@@ -30,7 +30,12 @@ try {
     $entry=$sources[$Source]
     $escapedPath=($entry.Path.Split('/') | ForEach-Object { [Uri]::EscapeDataString($_) }) -join '/'
     $url="https://raw.githubusercontent.com/$($entry.Repository)/$($entry.Commit)/$escapedPath"
-    $dir=Join-Path $root $OutputDirectory
+    $dir=[IO.Path]::GetFullPath((Join-Path $root $OutputDirectory))
+    $privateRoot=[IO.Path]::GetFullPath((Join-Path $root 'build-verify'))
+    if (-not $dir.StartsWith($privateRoot+[IO.Path]::DirectorySeparatorChar,
+                            [StringComparison]::OrdinalIgnoreCase)) {
+        throw 'Unreviewed external PCAP downloads must remain under build-verify.'
+    }
     New-Item -ItemType Directory -Path $dir -Force | Out-Null
     $output=Join-Path $dir ('elastic-iodine-'+$entry.Commit.Substring(0,12)+'.pcap')
     $receipt=Join-Path $dir ('elastic-iodine-'+$entry.Commit.Substring(0,12)+'.source.json')
