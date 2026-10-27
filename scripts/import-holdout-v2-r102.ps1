@@ -113,7 +113,7 @@ if ($records.Count -lt 3) {
 if ($Classification -eq 'Malicious') {
     $distinctLongTxt=@($records | Where-Object {
         $_.dnsQtype -eq 'TXT' -and
-        (@([string]$_.dnsQname -split '\.' | Where-Object { $_.Length -ge 50 }).Count -gt 0)
+        (@(([string]$_.dnsQname).Split('.') | Where-Object { $_.Length -ge 50 }).Count -gt 0)
     } | Select-Object -ExpandProperty dnsQname -Unique)
     if ($distinctLongTxt.Count -lt 3) {
         throw "R102 encoded-TXT candidate requires three distinct captured TXT names with a label >=50 bytes; found $($distinctLongTxt.Count). A NULL/CNAME-only tunnel is not eligible."
