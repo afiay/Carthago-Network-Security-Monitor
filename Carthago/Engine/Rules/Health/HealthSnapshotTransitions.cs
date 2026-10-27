@@ -94,4 +94,32 @@ namespace Carthago.Engine.Rules.Health
             }
         }
     }
+
+// A clock offset is an episode, not a new alert for every packet. Recovery
+// or a sign reversal establishes a new episode; duplicate/out-of-order
+// health snapshots cannot manufacture repeated incidents.
+internal sealed class ClockSkewEpisodeTransition
+{
+    private readonly object _sync = new();
+    private DateTime _lastObservedUtc = DateTime.MinValue;
+    private int _activeSign;
+
+    public bool Observe(TimeSpan skew, DateTime observedAtUtc)
+    {
+        lock (_sync)
+        {
+            if (observedAtUtc <= _lastObservedUtc) return false;
+            _lastObservedUtc = observedAtUtc;
+            var seconds = skew.TotalSeconds;
+            if (Math.Abs(seconds) < 60)
+            {
+                _activeSign = 0;
+                return false;
+            }
+            var sign = Math.Sign(seconds);
+            if (sign == _activeSign) return false;
+            _activeSign = sign;
+            return true;
+        }
+    }
 }
