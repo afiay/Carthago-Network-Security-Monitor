@@ -148,8 +148,19 @@ namespace Carthago.Engine.Rules
             var s = Normalize(raw);
             try
             {
-                return Regex.IsMatch(s, @"\$\{(?:\$\{(?:lower:j|upper:J)\}|j)ndi\s*:\s*(?:ldap|ldaps|rmi|dns|iiop)://",
-                    RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(50));
+                // Log4j lower/upper lookups can split every letter of "jndi".
+                // Fold only bounded single-character substitutions; never
+                // evaluate arbitrary nested lookup expressions or copy raw data.
+                s = Regex.Replace(s, @"\$\{(lower|upper):([a-zA-Z])\}", match =>
+                {
+                    var letter = match.Groups[2].Value;
+                    return match.Groups[1].Value.Equals("lower", StringComparison.OrdinalIgnoreCase)
+                        ? letter.ToLowerInvariant() : letter.ToUpperInvariant();
+                }, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant,
+                    TimeSpan.FromMilliseconds(50));
+                return Regex.IsMatch(s, @"\$\{jndi\s*:\s*(?:ldap|ldaps|rmi|dns|iiop)://",
+                    RegexOptions.IgnoreCase | RegexOptions.CultureInvariant,
+                    TimeSpan.FromMilliseconds(50));
             }
             catch (RegexMatchTimeoutException) { return false; }
         }
