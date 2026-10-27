@@ -5,7 +5,10 @@
     {
       "source": "10.248.20.20",
       "destination": "8.8.8.8",
+      "sourcePort": 53000,
       "destinationPort": 53,
+      "ipVersion": 4,
+      "isUdp": true,
       "protocol": "DNS",
       "applicationProtocol": "DNS",
       "dnsQname": "x9q8v7m6n5p4t3k2rz0h1w2c3v4b5n6m7l8k9j0i1u2y3t4r5s6.verification.example",
@@ -14,7 +17,10 @@
     {
       "source": "10.248.20.20",
       "destination": "8.8.8.8",
+      "sourcePort": 53000,
       "destinationPort": 53,
+      "ipVersion": 4,
+      "isUdp": true,
       "protocol": "DNS",
       "applicationProtocol": "DNS",
       "dnsQname": "x9q8v7m6n5p4t3k2rz0h1w2c3v4b5n6m7l8k9j0i1u2y3t4r5s6.verification.example",
@@ -23,7 +29,10 @@
     {
       "source": "10.248.20.20",
       "destination": "8.8.8.8",
+      "sourcePort": 53000,
       "destinationPort": 53,
+      "ipVersion": 4,
+      "isUdp": true,
       "protocol": "DNS",
       "applicationProtocol": "DNS",
       "dnsQname": "x9q8v7m6n5p4t3k2rz0h1w2c3v4b5n6m7l8k9j0i1u2y3t4r5s6.verification.example",
