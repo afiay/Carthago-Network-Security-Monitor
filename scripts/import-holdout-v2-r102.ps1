@@ -13,6 +13,7 @@ param(
     [Parameter(Mandatory=$true)][string]$IndependentLabelBasis,
     [Parameter(Mandatory=$true)][switch]$AnalystReviewedLabel,
     [int]$MaximumRecords=50,
+    [int]$MaximumPacketsToScan=100000,
     [string]$OutputDirectory='build-verify/holdout-v2-import',
     [string]$TsharkPath='tshark'
 )
@@ -20,6 +21,9 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 if ($MaximumRecords -lt 3 -or $MaximumRecords -gt 500) {
     throw 'MaximumRecords must be 3..500.'
+}
+if ($MaximumPacketsToScan -lt 100 -or $MaximumPacketsToScan -gt 500000) {
+    throw 'MaximumPacketsToScan must be 100..500000 to bound large PCAP decoding.'
 }
 if ($Classification -eq 'Malicious' -and $IndependentLabelBasis.Trim().Length -lt 20) {
     throw 'Malicious classification needs a substantive independent label basis.'
@@ -43,7 +47,7 @@ if ($entry.Count -ne 1 -or $entry[0].primaryRule -ne 'R102' -or
 $fields=@('frame.number','ip.src','ip.dst','ipv6.src','ipv6.dst',
           'udp.srcport','udp.dstport','tcp.srcport','tcp.dstport',
           'dns.qry.name','dns.qry.type')
-$argsTshark=@('-n','-r',$pcap,'-Y',
+$argsTshark=@('-n','-r',$pcap,'-c',"$MaximumPacketsToScan",'-Y',
              'dns.flags.response == 0 && (udp.dstport == 53 || tcp.dstport == 53)',
              '-T','fields','-E','separator=|','-E','quote=n','-E','occurrence=f')
 foreach ($field in $fields) { $argsTshark+=@('-e',$field) }
@@ -129,6 +133,8 @@ $provenance=[ordered]@{
     sourceAddress=$SourceAddress;queryRoot=$domain;extractor='tshark';
     extractorVersion=((& $exe.Source -v | Select-Object -First 1) -join '');
     capturedTransportEvidence=$true;
+    maximumPacketsToScan=$MaximumPacketsToScan;
+    selectionMethod='First matching query records within bounded earliest PCAP packet range';
     transformations='Case-normalized QNAME, removed final dot; transport/IP/ports and DNS names otherwise retained.';
     privacyReviewRequired=$true;preparedAtUtc=[DateTime]::UtcNow.ToString('o')
 }
@@ -136,6 +142,7 @@ $encoding=[Text.UTF8Encoding]::new($false)
 [IO.File]::WriteAllText($samplePath, (($sample | ConvertTo-Json -Depth 15)+[Environment]::NewLine), $encoding)
 [IO.File]::WriteAllText($provenancePath, (($provenance | ConvertTo-Json -Depth 15)+[Environment]::NewLine), $encoding)
 Write-Host "PREPARED (NOT FROZEN): $($records.Count) packet-attributed records"
+Write-Host "Inspected at most $MaximumPacketsToScan input packets (bounded candidate selection)."
 Write-Host "Candidate: $samplePath"
 Write-Host "Provenance: $provenancePath"
 Write-Host 'Review labels, capture license and sensitive QNAME/IP data before publication.'
