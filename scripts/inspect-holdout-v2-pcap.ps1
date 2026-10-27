@@ -111,7 +111,12 @@ foreach ($key in @($groups.Keys | Sort-Object)) {
     if ($ShowSourceAddresses) { $profile.sourceAddress=$observations[0].Source }
     $profiles.Add($profile)
 }
-$dir=Join-Path $root $OutputDirectory
+$dir=[IO.Path]::GetFullPath((Join-Path $root $OutputDirectory))
+$privateRoot=[IO.Path]::GetFullPath((Join-Path $root 'build-verify'))
+if (-not $dir.StartsWith($privateRoot+[IO.Path]::DirectorySeparatorChar,
+                        [StringComparison]::OrdinalIgnoreCase)) {
+    throw 'Inspection profiles must remain under the private build-verify directory.'
+}
 New-Item -ItemType Directory -Force -Path $dir | Out-Null
 $stem=[IO.Path]::GetFileNameWithoutExtension($capture)
 $destination=Join-Path $dir ($stem+'-'+[Guid]::NewGuid().ToString('N')+'.json')
