@@ -102,11 +102,22 @@ $provenancePath=Join-Path $dir ($Name+'.provenance.json')
 if ((Test-Path -LiteralPath $samplePath) -or (Test-Path -LiteralPath $provenancePath)) {
     throw 'Candidate already exists. Refusing overwrite.'
 }
+# Keep expected-rule collections as arrays, including exactly one match.
+# PowerShell statement subexpressions can otherwise unwrap singleton arrays.
+if ($Classification -eq 'Malicious') {
+    $expectedMatches=[string[]]@('R102')
+    $expectedNonMatches=[string[]]@('R118','R163')
+    $confidenceFloor=0.75
+} else {
+    $expectedMatches=[string[]]@()
+    $expectedNonMatches=[string[]]@('R102','R118','R163')
+    $confidenceFloor=0.0
+}
 $sample=[ordered]@{
     name=$Name;classification=$Classification;records=@($records.ToArray());
-    expectedMatches=$(if ($Classification -eq 'Malicious') { @('R102') } else { @() });
-    expectedNonMatches=$(if ($Classification -eq 'Benign') { @('R102','R118','R163') } else { @('R118','R163') });
-    expectedMinimumConfidence=$(if ($Classification -eq 'Malicious') { 0.75 } else { 0 })
+    expectedMatches=$expectedMatches;
+    expectedNonMatches=$expectedNonMatches;
+    expectedMinimumConfidence=$confidenceFloor
 }
 $provenance=[ordered]@{
     schemaVersion=1;sample=$Name;classification=$Classification;
