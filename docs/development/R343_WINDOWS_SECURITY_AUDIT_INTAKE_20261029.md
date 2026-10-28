@@ -63,3 +63,23 @@ The cmdlet does not elevate or grant log access. Audit Process Creation and Incl
 Next on CARTHAGE: pull the new HEAD, run the default script and `-InspectRecentEvents`. Share only the sanitized result. If access is denied, a Windows administrator must decide whether to grant narrowly scoped read access or perform diagnostics in an already-authorized elevated session; do not grant privileges, change ACLs or enable broad auditing automatically.
 
 **Status:** diagnostic script updated but NOT YET TESTED on CARTHAGE. R343 remains fail-closed; the four replay-expectations remain blocked; no detection rule, replay fixture, trust anchor or Windows setting was changed.
+
+
+## CARTHAGE result at 2026-10-29 00:19 Stockholm (read-only checks)
+
+- Elevated administrator token: **False**.
+- Windows Event Log service: **Running**.
+- Include-command-line policy: **NOT SET** at the inspected local policy path; effective policy still unverified.
+- Security channel metadata: **ACCESS_DENIED**.
+- Recent 4624 and 4688 searches: **NOT OBSERVED** in the 30-minute window, but there is no independent confirmation that this token can read the channel.
+- `auditpol /get /subcategory:{0CCE922B-69AE-11D9-BED3-505054503030}` returned Windows error `0x00000522` (`ERROR_PRIVILEGE_NOT_HELD`). This blocks inspection of the effective Process Creation auditing policy using the current token.
+
+**Interpretation:** do not conclude the Security log is empty or auditing is disabled. The metadata read is denied, and the event searches returned no matches but cannot establish comprehensive access. A read of audit policy requires permission on the audit policy security descriptor (or broader SeSecurityPrivilege); do not add privileges or change policy automatically.
+
+The readiness script now reports `NO MATCHES REPORTED (log access unverified)` when event searches return the no-match code but Security channel metadata is inaccessible, and its final state explicitly reports `ACCESS UNVERIFIED`. This is an output classification fix, not a detection or policy change.
+
+### Next safe operational check
+
+Use an **already-authorized** elevated administrator PowerShell session for *read-only diagnosis only*, if such permission is available and approved. Run `Get-WinEvent -ListLog Security` and `auditpol /get /subcategory:{0CCE922B-69AE-11D9-BED3-505054503030}`. For privacy, share only the access outcome and enabled/disabled audit status; do not share event contents or command lines. Granting Security-log read permissions or enabling auditing is a separate operator/security decision, not part of this task.
+
+The R343 producer and R343 replay remain unavailable; R295, R275 and R163 remain independent replay blockers. The corrected script is published but NOT YET RUN on CARTHAGE.
