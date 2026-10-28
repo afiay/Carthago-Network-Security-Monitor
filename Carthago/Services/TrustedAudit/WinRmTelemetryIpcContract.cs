@@ -66,6 +66,7 @@ namespace Carthago.Services.TrustedAudit
     {
         internal const int MaxFrameBytes = 4096;
         internal const int MaxSessions = 64;
+        internal const int MaxChannelBindings = 4096;
         internal const int MaxAcceptedMessages = 4096;
         private const int ProtocolVersion = 1;
         private const string Kind = "UnsignedWinRmCandidate";
@@ -117,7 +118,7 @@ namespace Carthago.Services.TrustedAudit
             lock (_gate)
             {
                 if (_sessions.Count >= MaxSessions
-                    || _usedChannelBindings.Count >= MaxSessions
+                    || _usedChannelBindings.Count >= MaxChannelBindings
                     || !_usedChannelBindings.Add(peer.ChannelBinding))
                 {
                     reason = "CHANNEL_REPLAY_OR_CAPACITY";
