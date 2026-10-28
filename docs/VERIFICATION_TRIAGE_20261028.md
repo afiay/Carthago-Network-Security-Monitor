@@ -255,3 +255,13 @@ The operator pulled commit `c3c0326` and executed `scripts/verify-process-creati
 The operator then executed `scripts/set-process-creation-audit-lab.ps1 -Mode Restore`. The script reported effective Process Creation policy `Success -> No Auditing`, with successful restore. This completes the Stage 1 lab change and returns CARTHAGE to the previously observed audit-policy baseline. The Stage 2 command-line inclusion setting was not enabled. Security event records from the test are not erased by policy rollback.
 
 **Result:** Stage 1 OS telemetry and benign local identity correlation verified on CARTHAGE; **configuration restored**. The R343 alert/replay remains blocked on authenticated session, command and outcome evidence, producer trust and authorization context. The other replay blockers R295, R275 and R163 remain open. Last reported full xUnit run is 4,851/4,851 at `290a327`; no claim of an additional build or replay certification is made.
+
+## R343 follow-on source hardening after CARTHAGE Stage 1 (2026-10-29)
+
+CARTHAGE Stage 1 ended with real 4688 process-ID/executable-path correlation **PASS** and a verified `Success -> No Auditing` rollback. The host remains on the prior audit policy baseline; command-line inclusion was not enabled.
+
+Subsequent source-only commits harden `WinRmSecurityAuditIntake` against `wsmprovhost.exe`/`powershell.exe` lookalikes outside expected system/install paths and against encoded-command flags carried on unrelated executable command lines. The test file now contains **18 added cases** (16 adversarial, two positive), including standard PowerShell 7 and quoted image paths. See `docs/development/R343_AUTHENTICATED_PRODUCER_BOUNDARY_20261029.md` for the separate, least-privileged producer design and explicit prohibition on converting unsigned candidates into signed receipts.
+
+**Unverified source changes**: These C# increments are committed, but no .NET build, new focused test run or full xUnit rerun has yet been performed on CARTHAGE. Last verified baseline: **4,851/4,851**. R343, R295, R275 and R163 replay expectations are still blocked. R343 continues to return `WINRM_COMMAND_AUDIT_UNAVAILABLE`; confidence floors, signed-receipt verification and replay labels are unchanged.
+
+On the next operator-approved test window, run `dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter 'FullyQualifiedName~WinRmSecurityAuditIntakeTests'` before the full existing verification workflow. Do not enable command-line logging or grant Security-log privileges automatically.
