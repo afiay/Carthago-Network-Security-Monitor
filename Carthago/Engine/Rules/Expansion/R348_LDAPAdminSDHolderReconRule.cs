@@ -11,7 +11,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId: "R348",
             Name: "LDAP AdminSDHolder Recon",
             Category: "ActiveDirectoryWindows",
-            Description: "Detects LDAP AdminSDHolder Recon only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
+            Description: "Candidate R348 requires verified operation and provenance; packet-only indicators return NoMatch.",
             DefaultSeverity: SeverityLevel.Medium,
             ConfigKey: "Rules.R348.Enabled",
             EnabledByDefault: true);
@@ -21,7 +21,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId = "R348",
             Name = "LDAP AdminSDHolder Recon",
             Category = "ActiveDirectoryWindows",
-            Description = "Detects LDAP AdminSDHolder Recon only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
+            Description = "Candidate R348 requires verified operation and provenance; packet-only indicators return NoMatch.",
             Severity = SeverityLevel.Medium,
             RequiredTelemetry = new[] { RuleTelemetryKind.Flow, RuleTelemetryKind.Identity, RuleTelemetryKind.Process },
             RequiredFields = new[] { "source", "destination", "windows_protocol_context" },
@@ -54,6 +54,12 @@ namespace Carthago.Engine.Rules.Expansion
         public R348_LDAPAdminSDHolderReconRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            // A network port or textual SQL/LDAP descriptor is not an authenticated operation audit.
+            // The capture adapter does not parse trustworthy TDS/LDAP request and result provenance.
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "LDAP_ADMINSDHOLDER_AUDIT_UNAVAILABLE",
+                "AdminSDHolder reconnaissance requires parsed LDAP search filter/base, authenticated bind, returned attributes and approved directory role.");
+        }
     }
 }

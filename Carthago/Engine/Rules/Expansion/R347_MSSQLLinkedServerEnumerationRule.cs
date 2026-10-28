@@ -11,7 +11,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId: "R347",
             Name: "MSSQL Linked Server Enumeration",
             Category: "ActiveDirectoryWindows",
-            Description: "Detects MSSQL Linked Server Enumeration only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
+            Description: "Candidate R347 requires verified operation and provenance; packet-only indicators return NoMatch.",
             DefaultSeverity: SeverityLevel.Medium,
             ConfigKey: "Rules.R347.Enabled",
             EnabledByDefault: true);
@@ -21,7 +21,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId = "R347",
             Name = "MSSQL Linked Server Enumeration",
             Category = "ActiveDirectoryWindows",
-            Description = "Detects MSSQL Linked Server Enumeration only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
+            Description = "Candidate R347 requires verified operation and provenance; packet-only indicators return NoMatch.",
             Severity = SeverityLevel.Medium,
             RequiredTelemetry = new[] { RuleTelemetryKind.Flow, RuleTelemetryKind.Identity, RuleTelemetryKind.Process },
             RequiredFields = new[] { "source", "destination", "windows_protocol_context" },
@@ -54,6 +54,12 @@ namespace Carthago.Engine.Rules.Expansion
         public R347_MSSQLLinkedServerEnumerationRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            // A network port or textual SQL/LDAP descriptor is not an authenticated operation audit.
+            // The capture adapter does not parse trustworthy TDS/LDAP request and result provenance.
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "MSSQL_LINKED_SERVER_AUDIT_UNAVAILABLE",
+                "Linked-server enumeration requires authenticated SQL batch/procedure and verified server response, not TDS port or query descriptions.");
+        }
     }
 }

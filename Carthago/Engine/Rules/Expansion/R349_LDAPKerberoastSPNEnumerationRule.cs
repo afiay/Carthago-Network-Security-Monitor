@@ -11,7 +11,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId: "R349",
             Name: "LDAP Kerberoast SPN Enumeration",
             Category: "ActiveDirectoryWindows",
-            Description: "Detects LDAP Kerberoast SPN Enumeration only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
+            Description: "Candidate R349 requires verified operation and provenance; packet-only indicators return NoMatch.",
             DefaultSeverity: SeverityLevel.High,
             ConfigKey: "Rules.R349.Enabled",
             EnabledByDefault: true);
@@ -21,7 +21,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId = "R349",
             Name = "LDAP Kerberoast SPN Enumeration",
             Category = "ActiveDirectoryWindows",
-            Description = "Detects LDAP Kerberoast SPN Enumeration only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
+            Description = "Candidate R349 requires verified operation and provenance; packet-only indicators return NoMatch.",
             Severity = SeverityLevel.High,
             RequiredTelemetry = new[] { RuleTelemetryKind.Flow, RuleTelemetryKind.Identity, RuleTelemetryKind.Process },
             RequiredFields = new[] { "source", "destination", "windows_protocol_context" },
@@ -54,6 +54,12 @@ namespace Carthago.Engine.Rules.Expansion
         public R349_LDAPKerberoastSPNEnumerationRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            // A network port or textual SQL/LDAP descriptor is not an authenticated operation audit.
+            // The capture adapter does not parse trustworthy TDS/LDAP request and result provenance.
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "LDAP_SPN_SEARCH_AUDIT_UNAVAILABLE",
+                "Kerberoast-related SPN enumeration requires parsed authenticated LDAP search and KDC ticket evidence before attributing roasting intent.");
+        }
     }
 }

@@ -11,7 +11,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId: "R346",
             Name: "MSSQL xp_cmdshell Use Indicator",
             Category: "ActiveDirectoryWindows",
-            Description: "Detects MSSQL xp_cmdshell Use Indicator only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
+            Description: "Candidate R346 requires verified operation and provenance; packet-only indicators return NoMatch.",
             DefaultSeverity: SeverityLevel.Critical,
             ConfigKey: "Rules.R346.Enabled",
             EnabledByDefault: true);
@@ -21,7 +21,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId = "R346",
             Name = "MSSQL xp_cmdshell Use Indicator",
             Category = "ActiveDirectoryWindows",
-            Description = "Detects MSSQL xp_cmdshell Use Indicator only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
+            Description = "Candidate R346 requires verified operation and provenance; packet-only indicators return NoMatch.",
             Severity = SeverityLevel.Critical,
             RequiredTelemetry = new[] { RuleTelemetryKind.Flow, RuleTelemetryKind.Identity, RuleTelemetryKind.Process },
             RequiredFields = new[] { "source", "destination", "windows_protocol_context" },
@@ -54,6 +54,12 @@ namespace Carthago.Engine.Rules.Expansion
         public R346_MSSQLXpCmdshellUseIndicatorRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            // A network port or textual SQL/LDAP descriptor is not an authenticated operation audit.
+            // The capture adapter does not parse trustworthy TDS/LDAP request and result provenance.
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "MSSQL_COMMAND_AUDIT_UNAVAILABLE",
+                "MSSQL xp_cmdshell execution requires authenticated TDS command, server-side procedure invocation and outcome audit.");
+        }
     }
 }
