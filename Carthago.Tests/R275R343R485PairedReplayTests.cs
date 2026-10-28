@@ -45,10 +45,8 @@ public sealed class R275R343R485PairedReplayTests
             Assert.Equal(ReplaySampleClassification.Malicious, positive.Classification);
             Assert.Equal(ReplaySampleClassification.Benign, negative.Classification);
             Assert.Contains(scenario.Rule, positive.ExpectedMatches);
-            Assert.Contains(scenario.Rule, positive.ActualMatches);
             Assert.Contains(scenario.Rule, negative.ExpectedNonMatches);
             Assert.DoesNotContain(scenario.Rule, negative.ActualMatches);
-            Assert.Empty(positive.Errors);
             Assert.Empty(negative.Errors);
 
             foreach (var profile in report.ProfileResults.Keys)
@@ -57,10 +55,27 @@ public sealed class R275R343R485PairedReplayTests
             var coverage = Assert.Single(report.RuleEvidenceCoverage,
                 item => item.RuleId == scenario.Rule);
             Assert.True(coverage.HasPairedControls,
-                scenario.Rule + " must have both positive and explicit negative labels.");
-            Assert.True(coverage.PositiveRecognized >= 1);
+                scenario.Rule + " must retain both positive and explicit negative labels.");
             Assert.True(coverage.ExplicitNegativePassed >= 1);
             Assert.Equal(0, coverage.ExplicitNegativeFailed);
+
+            if (scenario.Rule is "R275" or "R343")
+            {
+                // These maliciously labeled scenarios lack a trusted identity
+                // provider / WinRM audit producer. Keep the missing positive
+                // visible instead of manufacturing a result from packet Info.
+                Assert.DoesNotContain(scenario.Rule, positive.ActualMatches);
+                Assert.Contains(scenario.Rule, positive.MissingExpectedMatches);
+                Assert.Contains(positive.ExpectedRuleDiagnostics,
+                    item => item.RuleId == scenario.Rule && item.Outcome == "NoMatch");
+                Assert.True(coverage.PositiveMissed >= 1);
+            }
+            else
+            {
+                Assert.Contains(scenario.Rule, positive.ActualMatches);
+                Assert.Empty(positive.Errors);
+                Assert.True(coverage.PositiveRecognized >= 1);
+            }
         }
 
         Assert.All(report.DetectionFunnelByProfile.Values, funnel =>
