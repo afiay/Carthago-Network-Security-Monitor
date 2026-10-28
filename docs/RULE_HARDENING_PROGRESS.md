@@ -725,3 +725,31 @@ From verified remote HEAD `dcd35e5a937a385e244dc6b60ccb0c6731d21b67`, authored f
 ## R346–R350 candidate implementation — 2026-10-28
 
 From verified R341–R345 remote HEAD `e5ec4122f8ba41b43856824e5f23847d5cf2a16e`, authored five fail-closed MSSQL and LDAP provenance candidates. **70 advanced xUnit cases (14 per rule), ZERO executed; CANDIDATE/UNVERIFIED.** No authenticated SQL procedure/linked-server results, LDAP AdminSDHolder/SPN/password policy search or SAMR operation outcome producer. No positives invented. Source `35050f31e2d8740ee89d573eb31035fab55265d3`; tests `818ff90ca203bb858c06ace2fd8e921f65305bc5`; exact paths, cases and limitations `docs/RULE_BATCH_346-350.md`. No build, xUnit, replay, holdout, CI or runner. Floors, modes, approvals, baseline readiness, privacy and frozen evidence preserved. R102 V1 FAILED 4/6; V2 independent reviewed PCAP pending. **R341–R350 combined 140 authored unexecuted cases; next R351–R355 then R356–R360.**
+
+
+## R351–R355 candidate implementation — 2026-10-28
+
+From inspected remote HEAD `a99e49e04dc9cda176bf79cbdbb85eedec343930`
+(previous ledger through R350), authored five consecutive provenance-aware
+candidates: R351 typed NTLM/TCP outbound boundary; R352 exact process and
+LLMNR/NBNS application attribution; R353/R354 parser-owned PAT flags with
+captured HTTP/TCP request requirements; R355 parsed Jenkins console request
+shape and strict origin-form path. Sensitive HTTP request targets are redacted
+in R353–R355 event evidence. **55 advanced xUnit scenarios authored
+(10+11+10+10+14), ZERO executed; CANDIDATE — UNVERIFIED.**
+
+R351 and R352 remain **BLOCKED** on missing trusted NTLM/process producers.
+R353 and R354 are **CONDITIONAL** on cleartext parser-observed token bytes;
+HTTPS/SNI and Info cannot prove exposure. R355 is **OPERATIONAL for cleartext
+request-shape detection only**, not Jenkins identity, authentication or code
+execution. Existing R351–R355 provenance guards are preserved. Source
+`12cd46a31df25c54070a6b541ed9418ea92576aa`; tests
+`ad3882f7e389cc2d77a6f2dc076475e43fa32ecd`.
+Detailed scenarios and evidence boundaries: `docs/RULE_BATCH_351-355.md`.
+
+No builds, tests, replays, benchmarks, holdouts, CI or runner invoked. Confidence
+floors R102 80%, R118 86%, R163 84%, all modes, approvals, baseline gates,
+privacy and frozen evidence unchanged. R102 frozen V1 **FAILED 4/6**; V2
+independent licensed capture/review still pending. Pre-repair 4,675/4,733
+local xUnit checkpoint and replay failures do not verify these candidates.
+**Next R356–R360 only after expected-HEAD publication succeeds.**
