@@ -26,7 +26,7 @@ namespace Carthago.Engine.Rules.Expansion
             RequiredTelemetry = new[] { RuleTelemetryKind.Http, RuleTelemetryKind.Flow, RuleTelemetryKind.Process },
             RequiredFields = new[] { "source", "destination_or_host", "kubernetes_or_container_context" },
             EvidenceFields = new[] { "kubernetes.api.path", "network.source", "network.destination", "matched_conditions" },
-            PositiveConditions = new[] { "Istio Envoy Admin Endpoint Probe requires concrete KubernetesContainer telemetry, not descriptor text.", "The source and destination or identity context must be present.", "At least two independent rule-specific signals must be present, or the rule-specific threshold must be met." },
+            PositiveConditions = new[] { "Require authenticated service identity, operation outcome and approved asset/mesh context from a trusted producer.", "Fail closed while these provenance contracts are unavailable." },
             NegativeConditions = new[] { "Do not match on rule names, category labels, or generic scanner banners alone.", "Do not match when source/destination context is absent.", "Do not match approved administrative, CI/CD, backup, mail migration, or monitoring paths unless explicit high-risk evidence is present." },
             FalsePositives = new[] { "Cluster administrators, CI/CD runners, and vulnerability scanners can legitimately query Kubernetes or registry APIs." },
             TextIndicators = new[] { "envoy admin", "istio", "/clusters", "/config_dump", "/stats" },
@@ -45,7 +45,7 @@ namespace Carthago.Engine.Rules.Expansion
             Cooldown = TimeSpan.FromMinutes(20),
             DistinctBy = "source+destination+kubernetescontainer+behavior",
             TuningKnobs = new[] { "Mode", "Threshold", "WindowSeconds", "CooldownSeconds", "ApprovedSources", "ApprovedDestinations", "ApprovedProcesses", "ApprovedServiceAccounts" },
-            RequiredTests = new[] { "positive R309 evidence-gated sample", "negative R309 descriptor-only sample", "negative R309 missing telemetry sample" },
+            RequiredTests = new[] { "negative apparent positive without trusted producer", "negative spoofed and contradictory telemetry", "negative replay, privacy and profile invariants" },
             RequireHttp = true,
         };
 
@@ -54,6 +54,12 @@ namespace Carthago.Engine.Rules.Expansion
         public R309_IstioEnvoyAdminEndpointProbeRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            // Packet metadata does not authenticate service identity, access outcome or mesh policy.
+            // Reject label-only claims until a trusted producer supplies these contracts.
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "ENVOY_ADMIN_ENDPOINT_IDENTITY_UNAVAILABLE",
+                "An Envoy-like path or port does not establish a validated Envoy admin listener, its exposure, or a successful admin response.");
+        }
     }
 }
