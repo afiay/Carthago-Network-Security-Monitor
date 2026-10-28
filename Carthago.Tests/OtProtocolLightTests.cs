@@ -16,6 +16,29 @@ public sealed class OtProtocolLightTests
     private static readonly byte[] BacnetBvlc =
         { 0x81, 0x0a, 0x00, 0x06, 0x01, 0x20 };
 
+    [Fact] public void Modbus_Write_Single_Register_Request_Is_Typed_Write()
+    {
+        var bytes = (byte[])ModbusReadHolding.Clone(); bytes[7] = 6;
+        Assert.True(OtProtocolLight.TryIdentifyTcp(bytes, 51000, 502, out var protocol));
+        Assert.Equal("modbus.write", protocol);
+    }
+    [Fact] public void Modbus_Write_Response_Is_Not_New_Write_Request()
+    {
+        var bytes = (byte[])ModbusReadHolding.Clone(); bytes[7] = 6;
+        Assert.True(OtProtocolLight.TryIdentifyTcp(bytes, 502, 51000, out var protocol));
+        Assert.Equal("modbus", protocol);
+    }
+    [Fact] public void Modbus_Read_Holding_Register_Remains_Read()
+    {
+        Assert.True(OtProtocolLight.TryIdentifyTcp(ModbusReadHolding, 51000, 502, out var protocol));
+        Assert.Equal("modbus", protocol);
+    }
+    [Fact] public void Modbus_Unknown_Function_Remains_Generic()
+    {
+        var bytes = (byte[])ModbusReadHolding.Clone(); bytes[7] = 4;
+        Assert.True(OtProtocolLight.TryIdentifyTcp(bytes, 51000, 502, out var protocol));
+        Assert.Equal("modbus", protocol);
+    }
     [Fact] public void Modbus_Mbap_And_Function_Code_Identify_Tcp_502()
     {
         Assert.True(OtProtocolLight.TryIdentifyTcp(ModbusReadHolding, 51000, 502, out var protocol));

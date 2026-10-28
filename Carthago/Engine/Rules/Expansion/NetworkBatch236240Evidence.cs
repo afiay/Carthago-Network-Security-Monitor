@@ -73,6 +73,16 @@ namespace Carthago.Engine.Rules.Expansion
             => host.Equals(root, StringComparison.OrdinalIgnoreCase)
                 || host.EndsWith("." + root, StringComparison.OrdinalIgnoreCase);
 
+        private static bool PrivateSource(string? value)
+        {
+            if (!IPAddress.TryParse(value, out var ip)) return false;
+            var b = ip.GetAddressBytes();
+            return b.Length == 4 && (b[0] == 10
+                || b[0] == 172 && b[1] is >= 16 and <= 31
+                || b[0] == 192 && b[1] == 168)
+                || b.Length == 16 && (b[0] & 0xfe) == 0xfc;
+        }
+
         private static bool HubProcess(string? name)
             => name != null && (name.Equals("homeassistant", StringComparison.OrdinalIgnoreCase)
                 || name.Equals("homeassistant.exe", StringComparison.OrdinalIgnoreCase)
@@ -85,6 +95,7 @@ namespace Carthago.Engine.Rules.Expansion
             if (!Tcp(r) || r.TlsVersion != null || r.HttpMethod != null
                 || r.DestinationPort != 1883
                 || !NetworkBatch226230Evidence.Public(r.Destination)
+                || !PrivateSource(r.Source)
                 || !string.Equals(r.ProcessName, "zigbee2mqtt", StringComparison.OrdinalIgnoreCase)
                    && !string.Equals(r.ProcessName, "zigbee2mqtt.exe", StringComparison.OrdinalIgnoreCase))
                 return false;

@@ -30,6 +30,8 @@ public sealed class R238AdvancedAccuracyBatchTests
     { var r = Sample(); r.Sni = "api.smartthings.com.evil.example"; Assert.False(await Hit(r)); }
     [Fact] public async Task Internal_Destination_Is_Not_Cloud_Egress()
     { var r = Sample(); r.Destination = "10.236.1.20"; Assert.False(await Hit(r)); }
+    [Fact] public async Task External_Source_Is_Not_An_Attributed_Local_Hub()
+    { var r = Sample(); r.Source = "198.51.100.25"; Assert.False(await Hit(r)); }
     [Fact] public async Task Tls_Protocol_Contradiction_Is_Rejected()
     { var r = Sample(); r.ApplicationProtocol = "HTTP"; Assert.False(await Hit(r)); }
     [Fact] public async Task Duplicate_Id_Does_Not_Inflate_Burst()
