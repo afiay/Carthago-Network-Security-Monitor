@@ -62,6 +62,9 @@ public sealed class R258AdvancedAccuracyBatchTests
         }
         Assert.DoesNotContain("secret-marker", Assert.Single(result.Events).Evidence ?? "", StringComparison.Ordinal);
     }
+    [Fact] public async Task Contradictory_Application_Protocol_Is_Rejected() {
+        var r = Sample(); r.ApplicationProtocol = "HTTP"; Assert.False(await Hit(r));
+    }
     [Fact] public void Original_Alert_Confidence_And_Threshold_Remain() {
         var p = new R258_IcmpDestinationUnreachableSpikeRule().PrecisionProfile;
         Assert.Equal(75, p.MinimumConfidence); Assert.Equal(8, p.Threshold);

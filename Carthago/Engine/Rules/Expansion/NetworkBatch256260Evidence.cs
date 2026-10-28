@@ -75,7 +75,8 @@ namespace Carthago.Engine.Rules.Expansion
         internal static bool IcmpUnreachable(TrafficRecord r)
         {
             if (!Endpoints(r) || r.IsTcp || r.IsUdp || r.TcpFlags != null
-                || r.IcmpTypeCode == null || r.HttpMethod != null || r.TlsVersion != null)
+                || r.IcmpTypeCode == null || r.HttpMethod != null || r.TlsVersion != null
+                || r.ApplicationProtocol != null || r.Sni != null || r.DnsQname != null)
                 return false;
             var type = r.IcmpTypeCode.Value >> 8;
             var code = r.IcmpTypeCode.Value & 255;
@@ -89,7 +90,8 @@ namespace Carthago.Engine.Rules.Expansion
             => Endpoints(r) && r.IsTcp && !r.IsUdp && !r.IsQuic
                 && string.Equals(r.Protocol, "TCP", StringComparison.OrdinalIgnoreCase)
                 && r.SourcePort is > 0 and <= 65535 && r.DestinationPort is > 0 and <= 65535
-                && r.IcmpTypeCode == null && r.TcpFlags.HasValue
+                && r.IcmpTypeCode == null && r.HttpMethod == null && r.TlsVersion == null
+                && r.Sni == null && r.DnsQname == null && r.TcpFlags.HasValue
                 && (r.TcpFlags.Value & 0x04) != 0 && (r.TcpFlags.Value & 0x02) == 0;
 
         internal static bool SynFingerprint(TrafficRecord r, out string fingerprint)
@@ -99,7 +101,8 @@ namespace Carthago.Engine.Rules.Expansion
                 || !string.Equals(r.Protocol, "TCP", StringComparison.OrdinalIgnoreCase)
                 || r.SourcePort is not (> 0 and <= 65535)
                 || r.DestinationPort is not (> 0 and <= 65535)
-                || r.IcmpTypeCode != null || r.TcpFlags == null
+                || r.IcmpTypeCode != null || r.HttpMethod != null || r.TlsVersion != null
+                || r.Sni != null || r.DnsQname != null || r.TcpFlags == null
                 || (r.TcpFlags.Value & 0x02) == 0 || (r.TcpFlags.Value & 0x14) != 0
                 || string.IsNullOrWhiteSpace(r.Ja4T)) return false;
             var value = r.Ja4T!.Trim();
@@ -159,6 +162,7 @@ namespace Carthago.Engine.Rules.Expansion
                 internal string Value = "";
                 internal DateTime Latest = DateTime.MinValue;
                 internal readonly HashSet<Guid> Seen = new();
+                internal readonly Queue<(Guid Id, DateTime At)> Items = new();
             }
             private readonly object _gate = new();
             private readonly Dictionary<string, Slot> _slots = new(StringComparer.OrdinalIgnoreCase);
@@ -177,10 +181,18 @@ namespace Carthago.Engine.Rules.Expansion
                         }
                         _slots.Add(key, new Slot { Value = fingerprint, Latest = at });
                         _slots[key].Seen.Add(r.Id);
+                        _slots[key].Items.Enqueue((r.Id, at));
                         return false;
                     }
-                    if (at < slot.Latest || !slot.Seen.Add(r.Id)) return false;
-                    if (slot.Seen.Count > 256) return false;
+                    if (at < slot.Latest || slot.Seen.Contains(r.Id)) return false;
+                    while (slot.Items.Count > 0 && at - slot.Items.Peek().At > TimeSpan.FromMinutes(20))
+                    {
+                        var old = slot.Items.Dequeue();
+                        slot.Seen.Remove(old.Id);
+                    }
+                    if (slot.Items.Count >= 256) return false;
+                    slot.Seen.Add(r.Id);
+                    slot.Items.Enqueue((r.Id, at));
                     slot.Latest = at;
                     if (string.Equals(slot.Value, fingerprint, StringComparison.Ordinal)) return false;
                     slot.Value = fingerprint;

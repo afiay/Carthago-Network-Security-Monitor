@@ -62,6 +62,9 @@ public sealed class R259AdvancedAccuracyBatchTests
         }
         Assert.DoesNotContain("secret-marker", Assert.Single(result.Events).Evidence ?? "", StringComparison.Ordinal);
     }
+    [Fact] public async Task Contradictory_Http_Metadata_Is_Rejected() {
+        var r = Sample(); r.HttpMethod = "GET"; Assert.False(await Hit(r));
+    }
     [Fact] public void Original_Alert_Confidence_And_Threshold_Remain() {
         var p = new R259_TcpResetStormRule().PrecisionProfile;
         Assert.Equal(75, p.MinimumConfidence); Assert.Equal(10, p.Threshold);

@@ -63,6 +63,9 @@ public sealed class R260AdvancedAccuracyBatchTests
         Assert.DoesNotContain("secret-marker", evt.Evidence ?? "", StringComparison.Ordinal);
         Assert.DoesNotContain("t13d_2_2_2", evt.Evidence ?? "", StringComparison.Ordinal);
     }
+    [Fact] public async Task Contradictory_Tls_Metadata_Is_Rejected() {
+        var r = Sample(); r.TlsVersion = "TLS1.3"; Assert.False(await Hit(r));
+    }
     [Fact] public void Original_Alert_Confidence_And_Threshold_Remain() {
         var p = new R260_RareTcpOptionFingerprintRule().PrecisionProfile;
         Assert.Equal(75, p.MinimumConfidence); Assert.Equal(1, p.Threshold);
