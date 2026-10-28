@@ -26,7 +26,7 @@ namespace Carthago.Engine.Rules.Expansion
             RequiredTelemetry = new[] { RuleTelemetryKind.Identity, RuleTelemetryKind.Http, RuleTelemetryKind.GeoIp },
             RequiredFields = new[] { "source", "identity_or_user", "destination_or_host", "auth_or_http_context" },
             EvidenceFields = new[] { "identity.signal", "network.source", "network.destination", "matched_conditions", "rule.windowCount" },
-            PositiveConditions = new[] { "VPN Login Followed By Internal Scan requires concrete IdentityAdvanced telemetry, not descriptor text.", "The source and destination or identity context must be present.", "At least two independent rule-specific signals must be present, or the rule-specific threshold must be met." },
+            PositiveConditions = new[] { "Requires independently authenticated, provenance-verified outcome evidence from a trusted producer.", "Fail closed until that producer is integrated and approved." },
             NegativeConditions = new[] { "Do not match on rule names, category labels, or generic scanner banners alone.", "Do not match when source/destination context is absent.", "Do not match approved administrative, CI/CD, backup, mail migration, or monitoring paths unless explicit high-risk evidence is present." },
             FalsePositives = new[] { "Legitimate travel, VPN egress, identity-provider retries, or approved admin sessions can resemble these events." },
             TextIndicators = new[] { "vpn login", "internal scan", "port scan", "syn scan", "nmap", "masscan", "authenticated vpn" },
@@ -45,7 +45,7 @@ namespace Carthago.Engine.Rules.Expansion
             Cooldown = TimeSpan.FromMinutes(20),
             DistinctBy = "source+destination+identityadvanced+behavior",
             TuningKnobs = new[] { "Mode", "Threshold", "WindowSeconds", "CooldownSeconds", "ApprovedSources", "ApprovedDestinations", "ApprovedProcesses", "ApprovedServiceAccounts" },
-            RequiredTests = new[] { "positive R282 evidence-gated sample", "negative R282 descriptor-only sample", "negative R282 missing telemetry sample" },
+            RequiredTests = new[] { "negative R282 apparent positive without trusted audit", "negative R282 spoofed and contradictory telemetry", "negative R282 privacy, replay and profile invariants" },
             RequireCrossBoundary = true,
         };
 
@@ -54,6 +54,12 @@ namespace Carthago.Engine.Rules.Expansion
         public R282_VPNLoginFollowedByInternalScanRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            // Current traffic capture cannot attest the identity outcome required by this rule.
+            // Untrusted URI, port, header and Info indicators must never substitute for audit provenance.
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "VPN_LOGIN_SCAN_CORRELATION_UNAVAILABLE",
+                "Authenticated VPN session and same-principal internal scan correlation are unavailable.");
+        }
     }
 }
