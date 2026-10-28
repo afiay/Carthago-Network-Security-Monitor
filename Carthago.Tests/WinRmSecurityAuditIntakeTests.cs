@@ -5,6 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Xml.Linq;
 using Carthago.Services.TrustedAudit;
+using Carthago.Engine.Rules;
+using Carthago.Engine.Rules.Expansion;
+using Carthago.Models;
 using Xunit;
 
 namespace Carthago.Tests;
@@ -124,6 +127,7 @@ public sealed class WinRmSecurityAuditIntakeTests
     [InlineData("TargetLogonId", "0x0")]
     [InlineData("IpAddress", "127.0.0.1")]
     [InlineData("IpAddress", "::1")]
+    [InlineData("IpAddress", "::ffff:127.0.0.1")]
     [InlineData("IpAddress", "-")]
     public void Local_Interactive_Or_Unattributed_Logon_Does_Not_Qualify(
         string field, string value)
@@ -170,6 +174,35 @@ public sealed class WinRmSecurityAuditIntakeTests
         Assert.False(WinRmSecurityAuditIntake.TryCorrelateCandidate(
             login, spawned, out var association, out _));
         Assert.Null(association);
+    }
+
+    [Fact]
+    public async System.Threading.Tasks.Task Correlated_Untrusted_Audit_Still_Does_Not_Satisfy_R343()
+    {
+        var login = Inspect(4624, 100, Start, NetworkLogonFields());
+        var process = Inspect(4688, 101, Start.AddMinutes(1), ProcessFields());
+        Assert.True(WinRmSecurityAuditIntake.TryCorrelateCandidate(
+            login, process, out var candidate, out _));
+        Assert.NotNull(candidate);
+        Assert.False(candidate.FromLocalSecurityLog);
+
+        var packet = new TrafficRecord
+        {
+            Source = candidate.RemoteIp,
+            Destination = "10.30.40.99",
+            SourcePort = 51111,
+            DestinationPort = 5985,
+            IsTcp = true,
+            Protocol = "TCP",
+            ApplicationProtocol = "WinRM",
+            ProcessName = "powershell.exe",
+            Info = "remoting encoded command observed"
+        };
+        var evaluation = await new R343_PowerShellRemotingEncodedCommandRule()
+            .EvaluateAsync(new RuleEvaluationContext(
+                packet, Sensitivity.Balanced, Start.UtcDateTime));
+        Assert.False(evaluation.Matched);
+        Assert.Empty(evaluation.Events);
     }
 
     [Fact]
