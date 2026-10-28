@@ -101,7 +101,7 @@ namespace Carthago.Services.TrustedAudit
         /// </summary>
         public static bool TryInspectUntrustedXml(string? xml,
             out WinRmSecurityAuditObservation? observation, out string reason)
-            => TryInspect(xml, null, null, null, null, null,
+            => TryInspect(xml, null, null, null, null, null, null,
                 false, out observation, out reason);
 
         /// <summary>
