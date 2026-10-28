@@ -15,3 +15,5 @@
 **Limitations:** HTTP capture adapters may not surface multipart Content-Disposition; no body inference from Info. DNS qname is not evidence of connection or malicious intent. The existing R180 baseline fallback remains unverified. Per-rule-instance replay guards are bounded but need later Windows concurrency and clock-skew verification. DNS qnames and upload filenames are redacted in new event evidence; root-domain and generic rule summaries remain category-only.
 
 Default modes, floors, thresholds, approval and baseline-readiness policy, frozen V1 (R102 FAILED 4/6), and V2 independent-PCAP requirements are unchanged. The consolidated `scripts/verify-all-rule-batches.ps1` remains the sole deferred verification entry point and discovers the new tests automatically. **Next: R181-R185.**
+Static follow-up: R178 requires a pool/stratum service subdomain rather than the mining-provider brand apex; candidate correction `806a6244cd549c2606f9a23ba535b51a2bef0744`. The R178 apex benign negative remains unexecuted. No test or build was run.
+
