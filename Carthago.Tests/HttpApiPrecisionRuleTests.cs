@@ -8,8 +8,8 @@ namespace Carthago.Tests;
 
 public sealed class HttpApiPrecisionRuleTests
 {
-    private const string JwtNoneToken = "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiIxIn0.xx";
-    private const string JwtHs256Token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIn0.sig";
+    private const string JwtNoneToken = "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiIxIn0.";
+    private const string JwtHs256Token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIn0.ZmFrZXNpZ25hdHVyZQ";
 
     public static IEnumerable<object[]> PrecisionHttpApiRules()
     {
@@ -1005,8 +1005,8 @@ public sealed class HttpApiPrecisionRuleTests
     {
         var rule = new R176_HostHeaderInjectionIndicatorRule();
         var result = await rule.EvaluateAsync(CreateContext(CreateWebRecord(
-            source: "203.0.113.260",
-            destination: "10.0.0.260",
+            source: "203.0.113.160",
+            destination: "10.0.0.160",
             destinationPort: 443,
             host: "app.example.com",
             method: "GET",
@@ -1025,8 +1025,8 @@ public sealed class HttpApiPrecisionRuleTests
     {
         var rule = new R176_HostHeaderInjectionIndicatorRule();
         var result = await rule.EvaluateAsync(CreateContext(CreateWebRecord(
-            source: "203.0.113.261",
-            destination: "10.0.0.261",
+            source: "203.0.113.161",
+            destination: "10.0.0.161",
             destinationPort: 443,
             host: "app.example.com",
             method: "GET",
@@ -1044,8 +1044,8 @@ public sealed class HttpApiPrecisionRuleTests
     {
         var rule = new R177_HighRiskFileUploadExtensionRule();
         var result = await rule.EvaluateAsync(CreateContext(CreateWebRecord(
-            source: "203.0.113.270",
-            destination: "10.0.0.270",
+            source: "203.0.113.170",
+            destination: "10.0.0.170",
             destinationPort: 443,
             host: "upload.internal.local",
             method: "POST",
@@ -1064,8 +1064,8 @@ public sealed class HttpApiPrecisionRuleTests
     {
         var rule = new R177_HighRiskFileUploadExtensionRule();
         var result = await rule.EvaluateAsync(CreateContext(CreateWebRecord(
-            source: "203.0.113.271",
-            destination: "10.0.0.271",
+            source: "203.0.113.171",
+            destination: "10.0.0.171",
             destinationPort: 443,
             host: "upload.internal.local",
             method: "POST",
