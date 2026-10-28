@@ -660,3 +660,8 @@ No positives were invented: network packets, URL/query strings, User-Agent, cook
 ## R281-R285 candidate implementation — 2026-10-28
 
 From verified HEAD `bfc3840d233f18eeecf3e620a3b2d4915b2a02ef`, authored five fail-closed identity/SCIM precision candidates. **60 advanced xUnit facts authored (12 per rule), ZERO executed; CANDIDATE/UNVERIFIED.** Source `1714a18f3d3ab40e6aae64f63646b77476034790`; tests `bdd03951ae6a135c520efccb21ad0f0ccd68ca33`; exact paths, missing trusted producers and scenarios: `docs/RULE_BATCH_281-285.md`. No authenticated positive events invented; no build, tests, replay, holdout, CI or runner. Floors, modes, approvals, baseline readiness and frozen evidence preserved; R102 V1 FAILED 4/6, V2 reviewed PCAP pending. **Next R286-R290 then R291-R295.**
+
+
+## R286-R290 candidate implementation — 2026-10-28
+
+From verified R281-R285 remote HEAD `f67bafb70607f8908f517be23193fec5a6f6dc08`, authored five fail-closed LDAP, Kerberos, NTLMv1, RADIUS and Citrix exploit-probe precision candidates. **60 advanced xUnit facts authored (12 per rule), ZERO executed; CANDIDATE/UNVERIFIED.** Source `8fe3e00586d7405da8c1b46da04a46e5f3edb66f`; tests `f901a120ba262467a8fb4fcd8fd332408190da7b`; exact paths, missing parsers and scenarios: `docs/RULE_BATCH_286-290.md`. No successful authentication or exploit positive events invented; no build, tests, replay, holdout, CI or runner. Floors, modes, approvals, baseline readiness and frozen evidence preserved; R102 V1 FAILED 4/6, V2 reviewed PCAP pending. **R281-R290 combined 120 authored unexecuted facts; next R291-R295 then R296-R300.**
