@@ -23,6 +23,11 @@ namespace Carthago.Services.Benchmarking
         // capture, deriving trusted credential flags before header redaction.
         // Never deserialize an arbitrary trust flag directly from replay JSON.
         public Dictionary<int, string> RawHttpRequestsByRecordIndex { get; set; } = new();
+        // Offline-only synthetic Modbus/OT TCP payloads, hex encoded and bounded.
+        // The replay runner derives ApplicationProtocol with the SAME bounded OT
+        // parser used by capture; fixture narrative or pre-set protocol labels
+        // cannot stand in for an observed write function.
+        public Dictionary<int, string> RawOtTcpPayloadsByRecordIndex { get; set; } = new();
         public List<string> ExpectedMatches { get; set; } = new();
         public List<string> ExpectedEmittedMatches { get; set; } = new();
         public List<string> ExpectedSuppressedMatches { get; set; } = new();
