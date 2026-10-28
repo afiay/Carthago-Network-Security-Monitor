@@ -46,41 +46,25 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R267_SuspiciousProcessNameNetworkEgressRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch266270Evidence.DistinctWindow _observed = new();
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            var record = context.Record;
-            if (!(IsOutboundExternal(record) && IsSuspiciousProcessName(record.ProcessName)))
-                return NoMatch();
-
-            var count = 1;
-            var evidence = new List<DetectionEvidenceItem>
-            {
-                new("matched_conditions", "SuspiciousProcess,evidence_gated,threshold_met", "rule"),
-                new("rule.windowCount", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule")
+            var r = context.Record;
+            if (!NetworkBatch266270Evidence.SuspiciousName(r, out var process)) return NoMatch();
+            var key = r.Source + "|" + r.ProcessId + "|" + r.Destination + "|" + process;
+            if (_observed.Observe(r, context.TimestampUtc, key, TimeSpan.FromMinutes(20)) == 0) return NoMatch();
+            var evidence = new List<DetectionEvidenceItem> {
+                new("matched_conditions", "typed_external_tcp,exact_masquerade_basename", "rule"),
+                new("process.nameCategory", "exact_masquerade_candidate", "rule")
             };
-            evidence.AddRange(AnalystContext(
-                "The process name resembles common masquerading or typo-squatting patterns and initiated external traffic.",
-                "Severity is High because process masquerading plus external egress is a strong malware and persistence indicator.",
-                "Some internal tools may have poor names; whitelist by signed path/hash in the endpoint layer rather than suppressing broadly.",
-                "Verify the source host role, owner, and recent process/startup changes.",
-                "Pivot on destination host, destination port, process name, and adjacent detections in the same time window.",
-                "Tune approved business systems explicitly instead of weakening the rule globally."));
-
-            return MatchEvasionInfra(
-                context,
-                SeverityLevel.High,
-                "Suspiciously named process initiated external egress",
-                "SuspiciousProcess",
-                evidence,
-                confidence =>
-                {
-                    confidence.AddEvidence(0.34, "concrete-evidence");
-                    confidence.AddEvidence(0.22, "source-context");
-                    confidence.AddEvidence(0.18, "threshold-or-baseline");
-                },
-                count: count,
-                window: Profile.Window,
-                cooldownKey: $"{record.Source}:{BestHost(record)}:{record.DestinationPort ?? 0}:SuspiciousProcess");
+            evidence.AddRange(AnalystContext("An exactly matched suspicious process basename was co-observed with external TCP egress.",
+                "A suspicious name alone does not prove executable identity, signing status or malicious execution.",
+                "Poorly named internal applications and authorized security tests can resemble masquerading.",
+                "Confirm process path, signer and hash using trusted endpoint telemetry."));
+            return MatchEvasionInfra(context, SeverityLevel.High,
+                "Masquerade-like process name with external TCP egress (identity unverified)", "SuspiciousProcess",
+                evidence, c => { c.AddEvidence(0.34, "typed-external-tcp"); c.AddEvidence(0.22, "exact-process-basename"); c.AddEvidence(0.18, "distinct-observation"); },
+                cooldownKey: key + ":masquerade");
         }
     }
 }

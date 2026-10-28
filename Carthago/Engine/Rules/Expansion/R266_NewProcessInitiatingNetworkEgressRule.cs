@@ -46,41 +46,26 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R266_NewProcessInitiatingNetworkEgressRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch266270Evidence.FirstObserved _seen = new();
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            var record = context.Record;
-            if (!(IsOutboundExternal(record) && !string.IsNullOrWhiteSpace(record.ProcessName) && FirstTimeSeen($"process-egress:{record.Source}:{ProcessKey(record)}", context.TimestampUtc)))
-                return NoMatch();
-
-            var count = 1;
-            var evidence = new List<DetectionEvidenceItem>
-            {
-                new("matched_conditions", "NewProcessEgress,evidence_gated,threshold_met", "rule"),
-                new("rule.windowCount", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule")
+            var r = context.Record;
+            if (!NetworkBatch266270Evidence.NewProcessEgress(r, out var process)) return NoMatch();
+            var key = r.Source + "|" + r.ProcessId + "|" + process;
+            if (!_seen.Observe(r, context.TimestampUtc, key)) return NoMatch();
+            var evidence = new List<DetectionEvidenceItem> {
+                new("matched_conditions", "typed_external_tcp,attributed_process,instance_first_observed", "rule"),
+                new("process.identityHash", NetworkBatch131135Evidence.Fingerprint(key), "rule"),
+                new("process.baselineStatus", "first_in_detector_instance_not_launch_or_approved_baseline", "rule")
             };
-            evidence.AddRange(AnalystContext(
-                "The source/process pair was not previously observed initiating outbound external traffic in the local baseline.",
-                "Severity is Low because first-seen process egress is weak alone but valuable for correlation with downloads, interpreters, or suspicious destinations.",
-                "Software installs, updates, and newly deployed business applications can naturally create first-seen egress.",
-                "Verify the source host role, owner, and recent process/startup changes.",
-                "Pivot on destination host, destination port, process name, and adjacent detections in the same time window.",
-                "Tune approved business systems explicitly instead of weakening the rule globally."));
-
-            return MatchEvasionInfra(
-                context,
-                SeverityLevel.Low,
-                "Previously unseen process initiated external network egress",
-                "NewProcessEgress",
-                evidence,
-                confidence =>
-                {
-                    confidence.AddEvidence(0.34, "concrete-evidence");
-                    confidence.AddEvidence(0.22, "source-context");
-                    confidence.AddEvidence(0.18, "threshold-or-baseline");
-                },
-                count: count,
-                window: Profile.Window,
-                cooldownKey: $"{record.Source}:{BestHost(record)}:{record.DestinationPort ?? 0}:NewProcessEgress");
+            evidence.AddRange(AnalystContext("A source/PID/process combination was first observed on an external TCP flow in this detector instance.",
+                "First observation is not process creation, approved-baseline novelty or evidence of compromise.",
+                "New software and routine deployment commonly create first-observed process traffic.",
+                "Confirm process provenance with trusted endpoint events before escalation."));
+            return MatchEvasionInfra(context, SeverityLevel.Low,
+                "Process first observed with external TCP flow (launch unverified)", "NewProcessEgress",
+                evidence, c => { c.AddEvidence(0.34, "typed-external-tcp"); c.AddEvidence(0.22, "process-identity"); c.AddEvidence(0.18, "instance-first-observed"); },
+                cooldownKey: key + ":first-observed");
         }
     }
 }

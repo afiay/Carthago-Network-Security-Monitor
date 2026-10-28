@@ -46,41 +46,25 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R268_DnsOrHttpFromScriptInterpreterRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch266270Evidence.DistinctWindow _observed = new();
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            var record = context.Record;
-            if (!(IsOutboundExternal(record) && IsScriptInterpreterProcess(record) && HasDnsOrHttpContext(record)))
-                return NoMatch();
-
-            var count = 1;
-            var evidence = new List<DetectionEvidenceItem>
-            {
-                new("matched_conditions", "ScriptInterpreterEgress,evidence_gated,threshold_met", "rule"),
-                new("rule.windowCount", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule")
+            var r = context.Record;
+            if (!NetworkBatch266270Evidence.InterpreterDnsOrHttp(r, out var kind)) return NoMatch();
+            var key = r.Source + "|" + r.ProcessId + "|" + r.Destination + "|" + kind;
+            if (_observed.Observe(r, context.TimestampUtc, key, TimeSpan.FromMinutes(20)) == 0) return NoMatch();
+            var evidence = new List<DetectionEvidenceItem> {
+                new("matched_conditions", "exact_interpreter_process,typed_dns_or_cleartext_http", "rule"),
+                new("network.observedRequest", kind, "rule")
             };
-            evidence.AddRange(AnalystContext(
-                "A scripting/interpreter process initiated DNS or HTTP/S traffic to an external destination.",
-                "Severity is High because script-driven network egress is common in payload staging, LOLBin abuse, and automation-based compromise.",
-                "Developer workstations, automation runners, and managed scripts can legitimately use interpreters for network access.",
-                "Verify the source host role, owner, and recent process/startup changes.",
-                "Pivot on destination host, destination port, process name, and adjacent detections in the same time window.",
-                "Tune approved business systems explicitly instead of weakening the rule globally."));
-
-            return MatchEvasionInfra(
-                context,
-                SeverityLevel.High,
-                "Script interpreter initiated DNS or HTTP external communication",
-                "ScriptInterpreterEgress",
-                evidence,
-                confidence =>
-                {
-                    confidence.AddEvidence(0.34, "concrete-evidence");
-                    confidence.AddEvidence(0.22, "source-context");
-                    confidence.AddEvidence(0.18, "threshold-or-baseline");
-                },
-                count: count,
-                window: Profile.Window,
-                cooldownKey: $"{record.Source}:{BestHost(record)}:{record.DestinationPort ?? 0}:ScriptInterpreterEgress");
+            evidence.AddRange(AnalystContext("An exact interpreter basename was co-observed with a typed DNS query or parsed cleartext HTTP request.",
+                "No command-line execution or script contents were observed, and HTTPS payloads are not decrypted.",
+                "Developer workstations and automation agents legitimately use interpreters.",
+                "Correlate the PID and request with trusted process-command-line telemetry."));
+            return MatchEvasionInfra(context, SeverityLevel.High,
+                "Interpreter with typed DNS/cleartext HTTP request (execution unverified)", "ScriptInterpreterEgress",
+                evidence, c => { c.AddEvidence(0.34, "typed-request"); c.AddEvidence(0.22, "exact-interpreter"); c.AddEvidence(0.18, "external-destination"); },
+                cooldownKey: key + ":interpreter");
         }
     }
 }

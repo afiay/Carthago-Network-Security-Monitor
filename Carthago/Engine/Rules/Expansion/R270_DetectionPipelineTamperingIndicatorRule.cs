@@ -48,39 +48,11 @@ namespace Carthago.Engine.Rules.Expansion
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            var record = context.Record;
-            if (!(HasPipelineTamperContext(record)))
-                return NoMatch();
-
-            var count = 1;
-            var evidence = new List<DetectionEvidenceItem>
-            {
-                new("matched_conditions", "PipelineTamper,evidence_gated,threshold_met", "rule"),
-                new("rule.windowCount", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule")
-            };
-            evidence.AddRange(AnalystContext(
-                "Telemetry indicates a detector, sensor, journal, rule engine, content pack, or pipeline control was disabled, stopped, deleted, or tampered.",
-                "Severity is Critical because disabling detection or evidence writing directly threatens incident visibility and event durability.",
-                "Planned maintenance and controlled test-mode changes must be represented as explicit maintenance context to suppress this rule.",
-                "Verify the source host role, owner, and recent process/startup changes.",
-                "Pivot on destination host, destination port, process name, and adjacent detections in the same time window.",
-                "Tune approved business systems explicitly instead of weakening the rule globally."));
-
-            return MatchEvasionInfra(
-                context,
-                SeverityLevel.Critical,
-                "Detection pipeline tampering indicator observed",
-                "PipelineTamper",
-                evidence,
-                confidence =>
-                {
-                    confidence.AddEvidence(0.34, "concrete-evidence");
-                    confidence.AddEvidence(0.22, "source-context");
-                    confidence.AddEvidence(0.18, "threshold-or-baseline");
-                },
-                count: count,
-                window: Profile.Window,
-                cooldownKey: $"{record.Source}:{BestHost(record)}:{record.DestinationPort ?? 0}:PipelineTamper");
+            // Packet descriptions, process names, HTTP paths and DNS fields cannot
+            // attest to changes in the sensor/journal/rule-engine control plane.
+            // No trusted typed pipeline-tamper producer is connected to TrafficRecord.
+            // Fail closed rather than emit an unsupported Critical tamper finding.
+            return NoMatch();
         }
     }
 }

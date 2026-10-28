@@ -46,44 +46,27 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R269_SecurityToolUpdateBlockIndicatorRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch266270Evidence.DistinctWindow _failures = new();
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            var record = context.Record;
-            if (!(HasSecurityToolUpdateBlockContext(record)))
-                return NoMatch();
-
-            var count = CountWithin($"security-update-block:{record.Source}:{BestHost(record)}", context.TimestampUtc, TimeSpan.FromMinutes(30));
-            if (!(count >= 3))
-                return NoMatch();
-
-            var evidence = new List<DetectionEvidenceItem>
-            {
-                new("matched_conditions", "SecurityUpdateBlock,evidence_gated,threshold_met", "rule"),
+            var r = context.Record;
+            if (!NetworkBatch266270Evidence.SecurityUpdateDnsFailure(r, out var code)) return NoMatch();
+            var key = r.Destination + "|" + r.Source + "|" + r.DnsQname!.ToLowerInvariant() + "|" + code;
+            var count = _failures.Observe(r, context.TimestampUtc, key, TimeSpan.FromMinutes(30));
+            if (count < 3) return NoMatch();
+            var evidence = new List<DetectionEvidenceItem> {
+                new("matched_conditions", "typed_dns_response,known_update_domain,distinct_failure_responses", "rule"),
+                new("dns.failureCategory", code, "dns"),
                 new("rule.windowCount", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule")
             };
-            evidence.AddRange(AnalystContext(
-                "Telemetry combines security-update/threat-feed context with DNS, connection, HTTP, or reset failure evidence.",
-                "Severity is Medium because blocked security updates can indicate tampering, sinkholing, proxy issues, or defensive blind spots.",
-                "Outages, maintenance windows, captive portals, and proxy misconfiguration can produce legitimate failures.",
-                "Verify the source host role, owner, and recent process/startup changes.",
-                "Pivot on destination host, destination port, process name, and adjacent detections in the same time window.",
-                "Tune approved business systems explicitly instead of weakening the rule globally."));
-
-            return MatchEvasionInfra(
-                context,
-                SeverityLevel.Medium,
-                "Security tool update or threat-feed retrieval appears blocked or failing",
-                "SecurityUpdateBlock",
-                evidence,
-                confidence =>
-                {
-                    confidence.AddEvidence(0.34, "concrete-evidence");
-                    confidence.AddEvidence(0.22, "source-context");
-                    confidence.AddEvidence(0.18, "threshold-or-baseline");
-                },
-                count: count,
-                window: Profile.Window,
-                cooldownKey: $"{record.Source}:{BestHost(record)}:{record.DestinationPort ?? 0}:SecurityUpdateBlock");
+            evidence.AddRange(AnalystContext("Three distinct DNS SERVFAIL/REFUSED responses were observed for an exact known security-update hostname.",
+                "DNS resolution failure is not proof of deliberate blocking, tampering or failed security-tool updates.",
+                "Resolver outages, maintenance and policy can produce these responses.",
+                "Verify resolver health and the endpoint's actual update status."));
+            return MatchEvasionInfra(context, SeverityLevel.Medium,
+                "Repeated security-update domain DNS resolution failures (blocking unverified)", "SecurityUpdateBlock",
+                evidence, c => { c.AddEvidence(0.34, "typed-dns-response"); c.AddEvidence(0.22, "exact-update-domain"); c.AddEvidence(0.18, "distinct-responses"); },
+                count: count, window: Profile.Window, cooldownKey: key + ":update-dns-failure");
         }
     }
 }
