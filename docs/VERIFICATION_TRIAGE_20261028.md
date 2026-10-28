@@ -247,3 +247,11 @@ With explicit operator authorization, CARTHAGE ran `scripts/set-process-creation
 Next source-only increment `scripts/verify-process-creation-audit-lab.ps1` adds a read-only bounded local smoke test that launches a harmless process and correlates the returned 4688 against its PID and exact image path without printing audit payloads or changing Windows policy. **New smoke test is published but NOT YET EXECUTED on CARTHAGE.** If the test fails to find its record, treat it as inconclusive, not a reason to change detector confidence.
 
 Rollback remains `scripts/set-process-creation-audit-lab.ps1 -Mode Restore` when the lab session ends. The other open replay blockers R295, R275 and R163 are independent; R343 still returns WINRM_COMMAND_AUDIT_UNAVAILABLE. Last reported full xUnit checkpoint remains **4,851/4,851 at 290a327**.
+
+## CARTHAGE R343 Stage 1 lab closeout - PASS and RESTORED (2026-10-29)
+
+The operator pulled commit `c3c0326` and executed `scripts/verify-process-creation-audit-lab.ps1` in an authorized elevated Windows PowerShell session. The result was `PASS: event 4688 matched the harmless local process ID and image path.` This confirms one bounded event-to-process correlation in the Windows Security log, not WinRM attribution or signed evidence.
+
+The operator then executed `scripts/set-process-creation-audit-lab.ps1 -Mode Restore`. The script reported effective Process Creation policy `Success -> No Auditing`, with successful restore. This completes the Stage 1 lab change and returns CARTHAGE to the previously observed audit-policy baseline. The Stage 2 command-line inclusion setting was not enabled. Security event records from the test are not erased by policy rollback.
+
+**Result:** Stage 1 OS telemetry and benign local identity correlation verified on CARTHAGE; **configuration restored**. The R343 alert/replay remains blocked on authenticated session, command and outcome evidence, producer trust and authorization context. The other replay blockers R295, R275 and R163 remain open. Last reported full xUnit run is 4,851/4,851 at `290a327`; no claim of an additional build or replay certification is made.
