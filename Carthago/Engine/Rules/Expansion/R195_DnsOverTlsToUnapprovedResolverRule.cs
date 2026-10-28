@@ -52,39 +52,22 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R195_DnsOverTlsToUnapprovedResolverRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            var host = BestHost(record);
-            var hasConcreteTlsContext =
-                !string.IsNullOrWhiteSpace(record.Sni)
-                || !string.IsNullOrWhiteSpace(record.TlsSni)
-                || !string.IsNullOrWhiteSpace(record.TlsVersion)
-                || !string.IsNullOrWhiteSpace(record.Alpn)
-                || !string.IsNullOrWhiteSpace(record.CertIssuer)
-                || !string.IsNullOrWhiteSpace(record.CertSubject)
-                || !string.IsNullOrWhiteSpace(record.Ja3)
-                || !string.IsNullOrWhiteSpace(record.Ja4)
-                || !string.IsNullOrWhiteSpace(record.Ja4S)
-                || !string.IsNullOrWhiteSpace(record.Ja4X)
-                || ContainsAny(record.Protocol, "tls", "https", "ssl")
-                || ContainsAny(record.ApplicationProtocol, "tls", "https", "ssl")
-                || ContainsAny(record.ApplicationService, "dns over tls", "dot", "tls", "https", "ssl");
-            var dotLike = hasConcreteTlsContext
-                          && IsTls(record)
-                          && (record.DestinationPort == 853
-                              || ContainsAny(record.ApplicationService, "dns over tls", "dot")
-                              || ContainsAny(record.ApplicationProtocol, "dns over tls", "dot"));
-            var external = IsExternalAddress(host) || IsExternalAddress(record.Destination);
-            if (!dotLike || !external || string.IsNullOrWhiteSpace(host) || IsApprovedDotHost(host) || IsLikelyBrowserProcess(record.ProcessName))
+            if (!NetworkBatch191195Evidence.Dot(record, out var host)
+                || IsApprovedDotHost(host) || IsLikelyBrowserProcess(record.ProcessName)
+                || !_replay.Observe(record, context.TimestampUtc))
                 return NoMatch();
 
             var evidence = new List<DetectionEvidenceItem>
             {
-                new("matched_conditions", "dot_port_or_service,external_destination,unapproved_resolver", "rule")
+                new("matched_conditions", "tcp_853,tls_handshake,sni,external_destination,unapproved_resolver", "rule")
             };
             evidence.AddRange(AnalystContext(
-                "A TLS session consistent with DNS-over-TLS targeted an external resolver host that is not on the approved list.",
+                "A TCP/853 TLS session with parsed handshake metadata and SNI targeted an external endpoint not on the static DoT resolver list; encrypted DNS payload was not inspected.",
                 "Severity is High because unapproved DoT can bypass enterprise DNS controls while remaining opaque to traditional DNS telemetry.",
                 "Some environments intentionally use custom private DoT resolvers. Validate resolver ownership before escalating.",
                 "Review the endpoint process and any companion DoH or unusual DNS activity from the same source.",
@@ -102,7 +85,7 @@ namespace Carthago.Engine.Rules.Expansion
                     confidence.AddEvidence(0.18, "external-destination");
                     confidence.AddEvidence(0.22, "unapproved-resolver");
                 },
-                cooldownKey: $"{record.Source}:{host}");
+                cooldownKey: $"{record.Source}:{NetworkBatch166170Evidence.Key(host)}");
         }
 
         private static bool IsApprovedDotHost(string host)

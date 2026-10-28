@@ -46,20 +46,25 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R192_PunycodeHomographDomainRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!TryGetDnsQuestion(context, out var query) || !TryGetPunycodeHomographLabel(query, out var label))
+            if (!NetworkBatch176180Evidence.Dns(context.Record, out var query)
+                || !TryGetPunycodeHomographLabel(query, out var label)
+                || !string.Equals(label, SecondLevelLabel(query), StringComparison.OrdinalIgnoreCase)
+                || !NetworkBatch191195Evidence.ValidPunycode(label))
                 return NoMatch();
 
             var baseline = ObserveBaseline("dns.punycode-homograph", context.Record.Source ?? "unknown", query, context, $"label={label}");
             var firstSeen = baseline.IsFirstSeen || FirstTimeSeen(query, context.TimestampUtc);
-            if (!firstSeen)
+            if (!firstSeen || !_replay.Observe(context.Record, context.TimestampUtc))
                 return NoMatch();
 
             var evidence = new List<DetectionEvidenceItem>
             {
-                new("dns.punycodeLabel", label, "dns"),
-                new("baseline.reason", baseline.Reason, "baseline"),
+                new("dns.punycodeLabel", "[REDACTED]", "dns"),
+                new("baseline.reason", "first_seen_candidate", "baseline"),
                 new("matched_conditions", "punycode_label,ascii_tld,first_seen", "rule")
             };
             evidence.AddRange(AnalystContext(
@@ -72,7 +77,7 @@ namespace Carthago.Engine.Rules.Expansion
             return MatchDns(
                 context,
                 SeverityLevel.Medium,
-                $"Punycode homograph candidate observed: {query}",
+                "Punycode homograph candidate observed",
                 query,
                 evidence,
                 confidence =>
@@ -82,7 +87,7 @@ namespace Carthago.Engine.Rules.Expansion
                     if (!string.Equals(baseline.Reason, "baseline unavailable", StringComparison.OrdinalIgnoreCase)) confidence.AddBaseline(0.16, baseline.Reason);
                     else confidence.AddCorrelation(0.10, "first-seen-fallback");
                 },
-                cooldownKey: $"{context.Record.Source}:{query}");
+                cooldownKey: $"{context.Record.Source}:{NetworkBatch166170Evidence.Key(query)}");
         }
     }
 }

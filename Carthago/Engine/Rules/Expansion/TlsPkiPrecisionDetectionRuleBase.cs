@@ -73,7 +73,7 @@ namespace Carthago.Engine.Rules.Expansion
             var items = new List<DetectionEvidenceItem>
             {
                 new("tls.family", tlsFamily, "tls-pki"),
-                new("tls.host", string.IsNullOrWhiteSpace(host) ? record.Destination ?? "unknown" : host, "tls-pki")
+                new("tls.host", Descriptor.RuleId == "R195" ? "[REDACTED]" : string.IsNullOrWhiteSpace(host) ? record.Destination ?? "unknown" : host, "tls-pki")
             };
 
             if (!string.IsNullOrWhiteSpace(record.TlsVersion))

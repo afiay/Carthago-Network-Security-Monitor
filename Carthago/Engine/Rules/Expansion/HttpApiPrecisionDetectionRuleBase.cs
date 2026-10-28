@@ -139,12 +139,12 @@ namespace Carthago.Engine.Rules.Expansion
             var host = BestHost(record);
             // R153-R155 may carry tokens or personal identifiers in resource
             // paths; do not emit them through the shared event builder.
-            var path = Descriptor.RuleId is "R153" or "R154" or "R155" or "R156" or "R157" or "R158" or "R159" or "R160" or "R161" or "R162" or "R163" or "R164" or "R165" or "R166" or "R167" or "R168" or "R169" or "R170" or "R171" or "R172" or "R173" or "R174" or "R175" or "R176" or "R177"
+            var path = Descriptor.RuleId is "R153" or "R154" or "R155" or "R156" or "R157" or "R158" or "R159" or "R160" or "R161" or "R162" or "R163" or "R164" or "R165" or "R166" or "R167" or "R168" or "R169" or "R170" or "R171" or "R172" or "R173" or "R174" or "R175" or "R176" or "R177" or "R194"
                 ? "[REDACTED]" : HttpPath(record);
             var items = new List<DetectionEvidenceItem>
             {
                 new("httpapi.family", detectionFamily, "http-api"),
-                new("httpapi.host", string.IsNullOrWhiteSpace(host) ? record.Destination ?? "unknown" : host, "http-api")
+                new("httpapi.host", Descriptor.RuleId == "R194" ? "[REDACTED]" : string.IsNullOrWhiteSpace(host) ? record.Destination ?? "unknown" : host, "http-api")
             };
 
             if (!string.IsNullOrWhiteSpace(path))

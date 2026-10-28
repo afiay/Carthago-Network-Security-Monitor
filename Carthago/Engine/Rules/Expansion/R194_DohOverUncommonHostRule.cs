@@ -51,27 +51,22 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R194_DohOverUncommonHostRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            var host = BestHost(record);
-            var path = HttpPath(record);
-            var dohSemantics =
-                (path.StartsWith("/dns-query", StringComparison.OrdinalIgnoreCase)
-                    || HeaderContains(record, "Accept", "application/dns-message")
-                    || HeaderContains(record, "Content-Type", "application/dns-message"))
-                && HasMethod(record, "GET", "POST");
-
-            if (!HasHttpContext(record) || string.IsNullOrWhiteSpace(host) || !IsExternalAddress(host) || !dohSemantics || IsApprovedDohHost(host))
+            if (!NetworkBatch191195Evidence.Doh(record, out var host, out var method)
+                || IsApprovedDohHost(host) || !_replay.Observe(record, context.TimestampUtc))
                 return NoMatch();
 
             var evidence = new List<DetectionEvidenceItem>
             {
-                new("matched_conditions", "doh_semantics,external_host,unapproved_provider", "rule"),
-                new("http.path", string.IsNullOrWhiteSpace(path) ? "/" : path, "http")
+                new("matched_conditions", "typed_doh_request_shape,external_host,unapproved_provider", "rule"),
+                new("doh.method", method, "http")
             };
             evidence.AddRange(AnalystContext(
-                "The HTTP request used DNS-over-HTTPS semantics against an external host that is not on the approved resolver list.",
+                "A wire-attributed HTTP request had DoH-shaped headers and URI semantics against an external host not in the static resolver list; request-body DNS payload is not inspected.",
                 "Severity is Medium because custom or covert DoH endpoints can bypass enterprise resolver policy and DNS monitoring.",
                 "Some enterprises intentionally deploy private DoH gateways. Validate whether the destination host is part of an approved internal or vendor-managed resolver design.",
                 "Review the calling process, user agent, and follow-on encrypted DNS behavior from the same source.",
@@ -90,7 +85,7 @@ namespace Carthago.Engine.Rules.Expansion
                     confidence.AddEvidence(0.18, "unapproved-provider");
                     if (!IsBrowserLikeUserAgent(record) && !string.IsNullOrWhiteSpace(record.ProcessName)) confidence.AddCorrelation(0.08, "non-browser-process");
                 },
-                cooldownKey: $"{record.Source}:{host}");
+                cooldownKey: $"{record.Source}:{NetworkBatch166170Evidence.Key(host)}");
         }
 
         private static bool IsApprovedDohHost(string host)

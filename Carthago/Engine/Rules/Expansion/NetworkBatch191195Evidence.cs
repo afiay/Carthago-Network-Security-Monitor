@@ -1,0 +1,113 @@
+// SPDX-License-Identifier: MIT
+using System;
+using System.Globalization;
+using System.Linq;
+using System.Net;
+using Carthago.Models;
+
+namespace Carthago.Engine.Rules.Expansion
+{
+    // Candidate request/handshake attribution only. Do not claim decoded DoH/DoT
+    // DNS payload or resolver approval from arbitrary packet Info text.
+    internal static class NetworkBatch191195Evidence
+    {
+        internal static bool ValidPunycode(string label)
+        {
+            if (!label.StartsWith("xn--", StringComparison.OrdinalIgnoreCase)
+                || label.Length is < 8 or > 63) return false;
+            try
+            {
+                var unicode = new IdnMapping().GetUnicode(label);
+                return unicode.Any(c => c > 127) && !unicode.Equals(label, StringComparison.OrdinalIgnoreCase);
+            }
+            catch (ArgumentException) { return false; }
+        }
+
+        internal static bool Doh(TrafficRecord r, out string host, out string method)
+        {
+            host = "";
+            method = "";
+            if (!NetworkBatch166170Evidence.Http(r) || r.IsQuic
+                || string.IsNullOrWhiteSpace(r.HttpHost)
+                || !IPAddress.TryParse(r.Destination, out var dst)
+                || IPAddress.IsLoopback(dst) || dst.IsIPv6LinkLocal
+                || r.Destination!.StartsWith("10.", StringComparison.Ordinal)
+                || r.Destination.StartsWith("192.168.", StringComparison.Ordinal)
+                || r.Destination.StartsWith("172.16.", StringComparison.Ordinal)
+                || r.Destination.StartsWith("172.17.", StringComparison.Ordinal)
+                || r.Destination.StartsWith("172.18.", StringComparison.Ordinal)
+                || r.Destination.StartsWith("172.19.", StringComparison.Ordinal)
+                || r.Destination.StartsWith("172.2", StringComparison.Ordinal)
+                || r.Destination.StartsWith("172.30.", StringComparison.Ordinal)
+                || r.Destination.StartsWith("172.31.", StringComparison.Ordinal))
+                return false;
+            host = r.HttpHost!.TrimEnd('.').ToLowerInvariant();
+            if (host.Length is < 4 or > 253 || host.Contains('/') || host.Contains('@')
+                || host.EndsWith(".local", StringComparison.OrdinalIgnoreCase)
+                || host.EndsWith(".internal", StringComparison.OrdinalIgnoreCase))
+                return false;
+            if (!NetworkBatch156165Evidence.UriOf(r, out var uri))
+                return false;
+            var path = uri.AbsolutePath;
+            var standard = path.Equals("/dns-query", StringComparison.OrdinalIgnoreCase);
+            if (string.Equals(r.HttpMethod, "GET", StringComparison.OrdinalIgnoreCase))
+            {
+                if (!standard || !NetworkBatch166170Evidence.Header(r, "Accept", out var accept)
+                    || !accept.Equals("application/dns-message", StringComparison.OrdinalIgnoreCase))
+                    return false;
+                foreach (var pair in uri.Query.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries))
+                {
+                    var p = pair.Split('=', 2);
+                    if (p.Length != 2 || !p[0].Equals("dns", StringComparison.OrdinalIgnoreCase)
+                        || p[1].Length is < 16 or > 2048
+                        || p[1].Any(c => !(char.IsAsciiLetterOrDigit(c) || c is '-' or '_')))
+                        continue;
+                    method = "GET"; return true;
+                }
+                return false;
+            }
+            if (string.Equals(r.HttpMethod, "POST", StringComparison.OrdinalIgnoreCase)
+                && NetworkBatch166170Evidence.Header(r, "Content-Type", out var contentType)
+                && contentType.Equals("application/dns-message", StringComparison.OrdinalIgnoreCase)
+                && NetworkBatch166170Evidence.Header(r, "Content-Length", out var length)
+                && long.TryParse(length, NumberStyles.None, CultureInfo.InvariantCulture, out var bytes)
+                && bytes is >= 12 and <= 65535)
+            {
+                method = "POST"; return true;
+            }
+            return false;
+        }
+
+        internal static bool Dot(TrafficRecord r, out string host)
+        {
+            host = "";
+            if (r.Id == Guid.Empty || !r.IsTcp || r.IsUdp || r.IsQuic
+                || r.DestinationPort != 853 || r.SourcePort == 853
+                || !IPAddress.TryParse(r.Destination, out var dst)
+                || IPAddress.IsLoopback(dst) || dst.IsIPv6LinkLocal
+                || dst.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork
+                || r.Destination!.StartsWith("10.", StringComparison.Ordinal)
+                || r.Destination.StartsWith("192.168.", StringComparison.Ordinal)
+                || (dst.GetAddressBytes()[0] == 172 && dst.GetAddressBytes()[1] is >= 16 and <= 31)
+                || !string.IsNullOrWhiteSpace(r.HttpMethod)
+                || !string.IsNullOrWhiteSpace(r.HttpHost)
+                || !string.IsNullOrWhiteSpace(r.HttpUri)
+                || !string.IsNullOrWhiteSpace(r.HttpRequestHeaders)
+                || !string.IsNullOrWhiteSpace(r.DnsQname)
+                || !new[] { "TCP", "TLS", "SSL" }.Contains(r.Protocol, StringComparer.OrdinalIgnoreCase)
+                || r.ApplicationProtocol != null && !new[] { "TLS", "DNS-over-TLS", "DoT" }.Contains(r.ApplicationProtocol, StringComparer.OrdinalIgnoreCase)
+                || r.ApplicationService != null && !new[] { "TLS", "DNS-over-TLS", "DoT" }.Contains(r.ApplicationService, StringComparer.OrdinalIgnoreCase)
+                || string.IsNullOrWhiteSpace(r.Sni) || string.IsNullOrWhiteSpace(r.TlsVersion)
+                || r.Alpn is "h2" or "http/1.1" or "http/1.0")
+                return false;
+            host = r.Sni!.TrimEnd('.').ToLowerInvariant();
+            if (host.Length is < 4 or > 253 || host.Contains('@') || host.Contains('/')
+                || host.EndsWith(".local", StringComparison.OrdinalIgnoreCase)
+                || host.EndsWith(".internal", StringComparison.OrdinalIgnoreCase)
+                || !(r.TlsVersion!.Contains("1.2", StringComparison.OrdinalIgnoreCase)
+                    || r.TlsVersion.Contains("1.3", StringComparison.OrdinalIgnoreCase)))
+                return false;
+            return true;
+        }
+    }
+}

@@ -46,15 +46,18 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R191_ConsonantHeavyDgaDomainRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!TryGetDnsQuestion(context, out var query) || LooksLikeBenignValidationQuery(query) || IsKnownTelemetryRoot(RootDomain(query)))
+            if (!NetworkBatch176180Evidence.Dns(context.Record, out var query) || LooksLikeBenignValidationQuery(query) || IsKnownTelemetryRoot(RootDomain(query)))
                 return NoMatch();
 
             var entropyThreshold = DoubleSetting(Descriptor.RuleId, "EntropyThreshold", 3.0, 1.0, 8.0);
             var vowelRatioThreshold = DoubleSetting(Descriptor.RuleId, "VowelRatioThreshold", 0.18, 0.0, 1.0);
             var minimumLength = IntSetting(Descriptor.RuleId, "MinimumLabelLength", 10, 4, 63);
-            if (!LooksConsonantHeavyDga(query, entropyThreshold, vowelRatioThreshold, minimumLength))
+            if (!LooksConsonantHeavyDga(query, entropyThreshold, vowelRatioThreshold, minimumLength)
+                || !_replay.Observe(context.Record, context.TimestampUtc))
                 return NoMatch();
 
             var secondLevel = SecondLevelLabel(query);
@@ -74,7 +77,7 @@ namespace Carthago.Engine.Rules.Expansion
             return MatchDns(
                 context,
                 SeverityLevel.Medium,
-                $"Consonant-heavy DGA-like DNS query observed: {query}",
+                "Consonant-heavy DGA-like DNS query observed",
                 query,
                 evidence,
                 confidence =>
@@ -82,7 +85,7 @@ namespace Carthago.Engine.Rules.Expansion
                     confidence.AddEvidence(0.26, "consonant-heavy-second-level");
                     confidence.AddEvidence(0.18, "high-entropy");
                 },
-                cooldownKey: $"{context.Record.Source}:{query}");
+                cooldownKey: $"{context.Record.Source}:{NetworkBatch166170Evidence.Key(query)}");
         }
     }
 }
