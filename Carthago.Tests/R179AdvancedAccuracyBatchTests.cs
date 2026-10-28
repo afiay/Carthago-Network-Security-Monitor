@@ -39,7 +39,7 @@ public sealed class R179AdvancedAccuracyBatchTests
     }
     [Fact] public async Task Onion_Subdomain_Identifier_Is_Redacted()
     {
-        var r=NetworkBatch176185Context.Dns("secret179.onion.to");var x=await new R179_DnsQueryForTorOnionGatewayRule().EvaluateAsync(NetworkBatch176185Context.At(r));Assert.True(x.Matched);Assert.DoesNotContain(Assert.Single(x.Events).StructuredEvidence!.Items,i=>i.Value.Contains("secret179",StringComparison.Ordinal));
+        var r=NetworkBatch176185Context.Dns("secret179.onion.to");var x=await new R179_DnsQueryForTorOnionGatewayRule().EvaluateAsync(NetworkBatch176185Context.At(r));Assert.True(x.Matched);var evt=Assert.Single(x.Events);Assert.DoesNotContain(evt.StructuredEvidence!.Items,i=>i.Value.Contains("secret179",StringComparison.Ordinal));Assert.Equal("[REDACTED]",evt.DestinationHost);Assert.DoesNotContain("secret179",evt.Evidence ?? "",StringComparison.Ordinal);
     }
     [Fact] public void Default_Mode_And_Confidence_Floor_Are_Preserved()
     {
