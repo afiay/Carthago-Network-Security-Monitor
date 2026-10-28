@@ -45,9 +45,11 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R185_CanaryOrMetadataDomainProbeRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!TryGetDnsQuestion(context, out var query) || !IsCanaryOrMetadataQuery(query))
+            if (!NetworkBatch176180Evidence.Dns(context.Record, out var query) || !IsCanaryOrMetadataQuery(query) || !_replay.Observe(context.Record, context.TimestampUtc))
                 return NoMatch();
 
             var evidence = new List<DetectionEvidenceItem>
@@ -64,14 +66,14 @@ namespace Carthago.Engine.Rules.Expansion
             return MatchDns(
                 context,
                 SeverityLevel.Low,
-                $"Canary or metadata DNS query observed: {query}",
+                "Canary or metadata DNS query observed",
                 query,
                 evidence,
                 confidence =>
                 {
                     confidence.AddEvidence(0.24, "known-canary-or-metadata-root");
                 },
-                cooldownKey: $"{context.Record.Source}:{query}");
+                cooldownKey: $"{context.Record.Source}:{NetworkBatch166170Evidence.Key(query)}");
         }
     }
 }

@@ -46,9 +46,11 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R183_DnssecRandomSubdomainSpikeRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch181185Window _window = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!TryGetDnsQuestion(context, out var query) || !IsDnssecQueryType(context.Record.DnsQtype))
+            if (!NetworkBatch176180Evidence.Dns(context.Record, out var query) || !IsDnssecQueryType(context.Record.DnsQtype))
                 return NoMatch();
 
             var leftOfRoot = LeftOfRoot(query);
@@ -61,7 +63,7 @@ namespace Carthago.Engine.Rules.Expansion
 
             var window = TimeSpan.FromSeconds(IntSetting(Descriptor.RuleId, "WindowSeconds", 600, 60, 3600));
             var threshold = IntSetting(Descriptor.RuleId, "Threshold", 8, 3, 100);
-            var count = CountDistinctValues($"{Descriptor.RuleId}:{context.Record.Source}:{RootDomain(query)}", query, context.TimestampUtc, window);
+            var count = _window.Observe(context.Record, $"{Descriptor.RuleId}:{context.Record.Source}:{context.Record.Destination}:{RootDomain(query)}", query, context.TimestampUtc, window, distinct: true);
             if (count < threshold)
                 return NoMatch();
 
@@ -81,7 +83,7 @@ namespace Carthago.Engine.Rules.Expansion
             return MatchDns(
                 context,
                 SeverityLevel.Medium,
-                $"Random DNSSEC subdomain burst observed: {query}",
+                "Random DNSSEC subdomain burst observed",
                 query,
                 evidence,
                 confidence =>

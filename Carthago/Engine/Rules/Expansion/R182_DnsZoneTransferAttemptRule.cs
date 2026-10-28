@@ -45,9 +45,11 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R182_DnsZoneTransferAttemptRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!TryGetDnsQuestion(context, out var query))
+            if (!NetworkBatch176180Evidence.Dns(context.Record, out var query))
                 return NoMatch();
 
             var qtype = context.Record.DnsQtype ?? string.Empty;
@@ -57,8 +59,8 @@ namespace Carthago.Engine.Rules.Expansion
                 return NoMatch();
             }
 
-            var boundary = IsExternalDestination(context.Record.Destination) || IsExternalEndpoint(context.Record.Source);
-            if (!boundary)
+            var boundary = IsExternalEndpoint(context.Record.Destination) || IsExternalEndpoint(context.Record.Source);
+            if (!boundary || !context.Record.IsTcp || !_replay.Observe(context.Record, context.TimestampUtc))
                 return NoMatch();
 
             var evidence = new List<DetectionEvidenceItem>
@@ -75,7 +77,7 @@ namespace Carthago.Engine.Rules.Expansion
             return MatchDns(
                 context,
                 SeverityLevel.High,
-                $"DNS zone transfer attempt observed: {query}",
+                "DNS zone transfer attempt observed",
                 query,
                 evidence,
                 confidence =>
@@ -83,7 +85,7 @@ namespace Carthago.Engine.Rules.Expansion
                     confidence.AddEvidence(0.34, "zone-transfer-qtype");
                     confidence.AddEvidence(0.22, "boundary-crossing");
                 },
-                cooldownKey: $"{context.Record.Source}:{query}");
+                cooldownKey: $"{context.Record.Source}:{NetworkBatch166170Evidence.Key(query)}");
         }
     }
 }

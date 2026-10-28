@@ -45,15 +45,17 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R181_ExcessiveDnsAnyQueriesRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch181185Window _window = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!TryGetDnsQuestion(context, out var query) || !string.Equals(context.Record.DnsQtype, "ANY", StringComparison.OrdinalIgnoreCase))
+            if (!NetworkBatch176180Evidence.Dns(context.Record, out var query) || !string.Equals(context.Record.DnsQtype, "ANY", StringComparison.OrdinalIgnoreCase))
                 return NoMatch();
 
             var window = TimeSpan.FromSeconds(IntSetting(Descriptor.RuleId, "WindowSeconds", 600, 60, 3600));
             var threshold = IntSetting(Descriptor.RuleId, "Threshold", 5, 2, 100);
             var key = $"{Descriptor.RuleId}:{context.Record.Source}:{context.Record.Destination}";
-            var count = CountWindowEvents(key, context.TimestampUtc, window);
+            var count = _window.Observe(context.Record, key, query, context.TimestampUtc, window, distinct: false);
             if (count < threshold)
                 return NoMatch();
 
@@ -73,7 +75,7 @@ namespace Carthago.Engine.Rules.Expansion
             return MatchDns(
                 context,
                 SeverityLevel.Medium,
-                $"Repeated DNS ANY queries observed: {query}",
+                "Repeated DNS ANY queries observed",
                 query,
                 evidence,
                 confidence =>

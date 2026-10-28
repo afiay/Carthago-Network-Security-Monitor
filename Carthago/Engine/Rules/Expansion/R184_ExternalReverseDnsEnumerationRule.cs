@@ -46,14 +46,16 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R184_ExternalReverseDnsEnumerationRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch181185Window _window = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!TryGetDnsQuestion(context, out var query) || !IsReverseLookupQuery(query) || !IsExternalDestination(context.Record.Destination))
+            if (!NetworkBatch176180Evidence.Dns(context.Record, out var query) || !IsReverseLookupQuery(query) || !IsExternalEndpoint(context.Record.Destination) || !string.Equals(context.Record.DnsQtype, "PTR", StringComparison.OrdinalIgnoreCase))
                 return NoMatch();
 
             var window = TimeSpan.FromSeconds(IntSetting(Descriptor.RuleId, "WindowSeconds", 600, 60, 3600));
             var threshold = IntSetting(Descriptor.RuleId, "Threshold", 10, 3, 200);
-            var count = CountDistinctValues($"{Descriptor.RuleId}:{context.Record.Source}:{context.Record.Destination}", query, context.TimestampUtc, window);
+            var count = _window.Observe(context.Record, $"{Descriptor.RuleId}:{context.Record.Source}:{context.Record.Destination}", query, context.TimestampUtc, window, distinct: true);
             if (count < threshold)
                 return NoMatch();
 
@@ -73,7 +75,7 @@ namespace Carthago.Engine.Rules.Expansion
             return MatchDns(
                 context,
                 SeverityLevel.Medium,
-                $"External reverse-DNS enumeration observed: {query}",
+                "External reverse-DNS enumeration observed",
                 query,
                 evidence,
                 confidence =>

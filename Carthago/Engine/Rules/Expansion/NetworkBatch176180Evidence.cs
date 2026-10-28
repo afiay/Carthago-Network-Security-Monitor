@@ -108,12 +108,13 @@ namespace Carthago.Engine.Rules.Expansion
                 || !(r.ApplicationProtocol?.Equals("DNS", StringComparison.OrdinalIgnoreCase) == true
                     || r.ApplicationService?.Equals("DNS", StringComparison.OrdinalIgnoreCase) == true
                     || r.Protocol?.Equals("DNS", StringComparison.OrdinalIgnoreCase) == true)
-                || r.ApplicationProtocol is not (null or "DNS")
-                || r.ApplicationService is not (null or "DNS")
+                || r.ApplicationProtocol != null && !r.ApplicationProtocol.Equals("DNS", StringComparison.OrdinalIgnoreCase)
+                || r.ApplicationService != null && !r.ApplicationService.Equals("DNS", StringComparison.OrdinalIgnoreCase)
                 || r.HttpMethod != null || r.HttpUri != null || r.HttpRequestHeaders != null
                 || r.DestinationPort != 53 || !IPAddress.TryParse(r.Source, out var src)
                 || !IPAddress.TryParse(r.Destination, out var dst)
                 || src.Equals(dst) || src.AddressFamily != dst.AddressFamily
+                || r.IpVersion is not (null or 4 or 6)
                 || r.IpVersion == 4 && src.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork
                 || r.IpVersion == 6 && src.AddressFamily != System.Net.Sockets.AddressFamily.InterNetworkV6)
                 return false;
