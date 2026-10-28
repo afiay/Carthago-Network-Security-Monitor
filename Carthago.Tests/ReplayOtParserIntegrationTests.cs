@@ -79,7 +79,7 @@ public sealed class ReplayOtParserIntegrationTests
         Assert.True(document.Remove("rawOtTcpPayloadsByRecordIndex"),
             "The fixture must contain a raw OT payload for this negative test.");
         document["expectedMatches"] = new JsonArray();
-        document["expectedNonMatches"] = new JsonArray("R240");
+        document["expectedNonMatches"] = new JsonArray(JsonValue.Create("R240"));
         document["expectedMinimumConfidence"] = 0.0;
 
         Assert.False(document.ContainsKey("rawOtTcpPayloadsByRecordIndex"));
