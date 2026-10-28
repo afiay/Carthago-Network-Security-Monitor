@@ -523,3 +523,9 @@ From R166-R170 remote HEAD `605613ca572cb9deea0015a7cbd714bfc5a815a7`, authored 
 ## R176-R180 candidate implementation - 2026-10-28
 
 Authored five consecutive rules after remote HEAD `54eee0e2077439b8eae0f8f6c253b58dffa45103`: wire-attributed Host and upload evidence, strict DNS question/transport attribution, instance-owned replay protection, fixed-category HTTP path and DNS qname redaction. Added shared `NetworkBatch176180Evidence.cs`, scoped event redaction and 45 advanced xUnit facts (nine per rule) in five new test classes plus fixture. **CANDIDATE / UNVERIFIED: 0 executed.** See `docs/RULE_BATCH_176-180.md`. No tests/builds/replay/holdout/runner/CI invoked. Existing floors, modes, thresholds, approvals and frozen V1/V2 unchanged; R102 V1 remains FAILED 4/6. **Next R181-R185, then R186-R190.**
+
+## R181-R185 candidate implementation - 2026-10-28
+
+After verified R176-R180 HEAD `f62ffdcf6391b1809f372e37ecbea31668f86cf4`, authored five additional DNS rules with typed DNS attribution, bounded per-instance duplicate-resistant source/resolver windows, TCP zone transfer boundaries and redacted qnames. Added `NetworkBatch181185Window.cs` and 40 advanced xUnit facts (eight per rule), zero executed. Corrected R177 multipart test escaping in commit `9c93dfe6849763f55f44c1fc7e899e4c239f9e07`. See `docs/RULE_BATCH_181-185.md`.
+
+**R176-R185 total: 10 consecutive rules, 85 advanced xUnit facts authored, zero executed. CANDIDATE / UNVERIFIED.** No builds/tests/replays/holdouts/CI/runner. Existing floors, modes, thresholds, approvals and frozen evidence preserved. Frozen V1 R102 FAILED 4/6; V2 independent PCAP pending. **Next R186-R190, then R191-R195.**
