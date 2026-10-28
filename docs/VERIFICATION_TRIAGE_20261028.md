@@ -95,3 +95,9 @@ The 146-fixture replay reports 48 malicious and 98 benign. Enterprise: **45/48 r
 The `verify-local.ps1` diagnostic printer was improved after this run to surface the missing-evidence outcome and reason codes. This output-only change has **not been retested**. It must not affect gate outcomes.
 
 **Next engineering milestone:** introduce reviewed, authenticated telemetry provenance through existing extension points; attach scenario-specific positive/negative evidence and adversarial spoofing controls for R343/R295/R275; implement independent SSRF causality for R163. Keep all four original malicious labels and minimum-confidence fixtures unchanged until genuinely supported. Do not treat successful xUnit tests alone as release certification.
+
+## Next engineering increment — signed audit verifier foundation (unverified)
+
+Added an operator-pinned RSA-PSS/SHA-256 audit receipt verifier, an immutable verified-receipt capability, and 15 new xUnit invocations for signature tampering, wrong/unknown keys, wrong rule/operation scope, replay, time skew, invalid IDs/hashes, duplicate JSON properties, domain separation and fail-closed behavior. All receipts require actor/resource/session trace hashes. See `docs/development/TRUSTED_AUDIT_PROVENANCE_CONTRACT_20261028.md`.
+
+**No producer, RuleEvaluationContext bridge, or rule-match path was connected.** The four remaining replay failures are deliberately unchanged, and the new foundation is **NOT TESTED** on CARTHAGE. Synthetic ephemeral test key material is neither deployed nor shipped as trust anchors. Existing 4,797/4,797 results apply only to the preceding checkpoint.
