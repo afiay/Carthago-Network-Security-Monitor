@@ -478,8 +478,13 @@ namespace Carthago.Engine.Rules.Expansion
                     if (!IsPlainHttpUrl(normalizedTarget) && !TargetsInternalHost(normalizedTarget))
                         continue;
                 }
-                else if (!TargetsInternalHost(normalizedTarget) && SameRootHost(requestHost, normalizedTarget))
+                else if (SameRootHost(requestHost, normalizedTarget)
+                    && (!TargetsInternalHost(normalizedTarget)
+                        || string.Equals(NormalizeHostValue(requestHost), NormalizeHostValue(normalizedTarget),
+                            StringComparison.OrdinalIgnoreCase)))
                 {
+                    // Even internal destinations can be legitimate same-host returns.
+                    // Keep cross-host internal redirects eligible for investigation.
                     continue;
                 }
 
