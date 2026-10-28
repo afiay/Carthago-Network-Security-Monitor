@@ -28,8 +28,8 @@ namespace Carthago.Engine.Rules.Expansion
         private static bool Endpoints(TrafficRecord r, out IPAddress source, out IPAddress destination)
         {
             source = IPAddress.None; destination = IPAddress.None;
-            return r.Id != Guid.Empty && IPAddress.TryParse(r.Source, out source!)
-                && IPAddress.TryParse(r.Destination, out destination!)
+            return r.Id != Guid.Empty && IPAddress.TryParse(r.Source, out source)
+                && IPAddress.TryParse(r.Destination, out destination)
                 && source.AddressFamily == destination.AddressFamily && !source.Equals(destination)
                 && (r.IpVersion == 4 && source.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork
                     || r.IpVersion == 6 && source.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6);
@@ -126,11 +126,6 @@ namespace Carthago.Engine.Rules.Expansion
             rcode = r.DnsRcode.ToLowerInvariant();
             return true;
         }
-        // No trusted, structured pipeline-control or tamper event is present in
-        // TrafficRecord. Capture health is a separate service; packet Info is not
-        // an admissible substitute. R270 must fail closed until a real adapter exists.
-        internal static bool TrustedPipelineTamper(TrafficRecord r) => false;
-
         internal sealed class FirstObserved
         {
             private readonly object _gate = new();
