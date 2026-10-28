@@ -232,3 +232,18 @@ The operator approved Stage 1 on 2026-10-29: enable **Process Creation success a
 Published `scripts/set-process-creation-audit-lab.ps1` with `-Mode Status`, `-Mode Enable` and `-Mode Restore`. It restricts host to CARTHAGE, requires an elevated administrator token, checks the known `No Auditing` baseline and that the inspected command-line registry setting is not enabled, applies only `auditpol /set /subcategory:{0CCE922B-69AE-11D9-BED3-505054503030} /success:enable`, verifies the effective result, and restores by scoped `/success:disable` only from the expected `Success` state. The Failure audit setting and other categories remain untouched. A separate new operator guide documents commands and verification at `docs/development/R343_CARTHAGE_AUDIT_STAGE1_20261029.md`.
 
 **Status:** scripts and documents published; no command executed on CARTHAGE yet; no OS settings or privilege assignments changed by this repository update. R343 still requires authenticated WinRM command/outcome telemetry and separate Stage 2 decision on potentially sensitive command-line auditing. Other replay blockers R295, R275 and R163 unchanged. Last verified xUnit remains 4,851/4,851.
+
+## CARTHAGE R343 Stage 1 telemetry activated and verified (2026-10-29)
+
+With explicit operator authorization, CARTHAGE ran `scripts/set-process-creation-audit-lab.ps1 -Mode Enable` at repository checkpoint `7149997`. The script confirmed effective Process Creation policy `No Auditing -> Success` and did **not** change the optional command-line inclusion setting (still not set in the checked local registry location). An authorized elevated readiness run then reported:
+
+- Process Creation success auditing: **SUCCESS AUDITING ENABLED**.
+- Security metadata: **READABLE**; event 4624: **OBSERVED**; event 4688: **OBSERVED** in the last 30 minutes.
+- A harmless local `cmd.exe /d /c exit 0` test ran, followed by three 4688 event-ID/timestamp results in the queried interval. This confirms 4688 production after activation but **does not prove** those three results belong to that exact test process.
+- Readiness script conclusion: **EVENT IDS OBSERVED - auditing policy, event fields and authenticated outcome remain NOT VERIFIED.**
+
+**Milestone:** CARTHAGE's Stage 1 Windows OS telemetry prerequisite is operationally verified. The separate command-line inclusion policy, exact PID/path correlation, WinRM session attribution, execution outcome, trusted signer and R343 promotion are NOT verified. No xUnit or replay test rerun was reported for this host-policy-only change.
+
+Next source-only increment `scripts/verify-process-creation-audit-lab.ps1` adds a read-only bounded local smoke test that launches a harmless process and correlates the returned 4688 against its PID and exact image path without printing audit payloads or changing Windows policy. **New smoke test is published but NOT YET EXECUTED on CARTHAGE.** If the test fails to find its record, treat it as inconclusive, not a reason to change detector confidence.
+
+Rollback remains `scripts/set-process-creation-audit-lab.ps1 -Mode Restore` when the lab session ends. The other open replay blockers R295, R275 and R163 are independent; R343 still returns WINRM_COMMAND_AUDIT_UNAVAILABLE. Last reported full xUnit checkpoint remains **4,851/4,851 at 290a327**.
