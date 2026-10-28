@@ -43,6 +43,7 @@ namespace Carthago.Services.TrustedAudit
             DestinationIp = claim.DestinationIp;
             ActorHash = claim.ActorHash;
             ResourceHash = claim.ResourceHash;
+            TraceHash = claim.TraceHash;
         }
 
         public string IssuerId { get; }
@@ -54,6 +55,9 @@ namespace Carthago.Services.TrustedAudit
         public string DestinationIp { get; }
         public string ActorHash { get; }
         public string ResourceHash { get; }
+        // Correlation key must originate from the audit producer. IP/time
+        // coincidence alone cannot bind a receipt to a network observation.
+        public string TraceHash { get; }
     }
 
     /// <summary>
@@ -72,6 +76,7 @@ namespace Carthago.Services.TrustedAudit
         public string DestinationIp { get; set; } = "";
         public string ActorHash { get; set; } = "";
         public string ResourceHash { get; set; } = "";
+        public string TraceHash { get; set; } = "";
     }
 
     /// <summary>
@@ -202,7 +207,7 @@ namespace Carthago.Services.TrustedAudit
                     nameof(AuditClaim.EvidenceId), nameof(AuditClaim.OccurredAtUtc),
                     nameof(AuditClaim.Operation), nameof(AuditClaim.SourceIp),
                     nameof(AuditClaim.DestinationIp), nameof(AuditClaim.ActorHash),
-                    nameof(AuditClaim.ResourceHash)
+                    nameof(AuditClaim.ResourceHash), nameof(AuditClaim.TraceHash)
                 };
                 foreach (var prop in json.RootElement.EnumerateObject())
                     if (!seenNames.Add(prop.Name) || !allowedNames.Contains(prop.Name))
@@ -223,7 +228,8 @@ namespace Carthago.Services.TrustedAudit
                 || claim.OccurredAtUtc == default
                 || claim.OccurredAtUtc.Offset != TimeSpan.Zero
                 || !ValidIpPair(claim.SourceIp, claim.DestinationIp)
-                || !ValidHash(claim.ActorHash) || !ValidHash(claim.ResourceHash))
+                || !ValidHash(claim.ActorHash) || !ValidHash(claim.ResourceHash)
+                || !ValidHash(claim.TraceHash))
             {
                 reason = "INVALID_CLAIM";
                 return false;
