@@ -228,11 +228,12 @@ namespace Carthago.Tests
             Assert.DoesNotContain("R275", oauth.ActualMatches);
             Assert.Contains("R275", oauth.MissingExpectedMatches);
             Assert.True(report.ProfileResults["Enterprise"].AlertCount >= report.ProfileResults["HomeLab"].AlertCount);
-            // The current fixture provides only an Info description of a
-            // Modbus write; the actual parser-derived write operation is absent.
-            Assert.DoesNotContain("R240", modbus.ActualMatches);
-            Assert.Contains("R240", modbus.MissingExpectedMatches);
-            Assert.DoesNotContain("R240", modbus.Profiles["OTSegment"].AlertRuleIds);
+            // MBAP/PDU bytes are now decoded by the same OT parser used by
+            // capture. Raw R240 recognition must succeed; environment profile
+            // authorization and confidence still control alert eligibility.
+            Assert.Contains("R240", modbus.ActualMatches);
+            Assert.DoesNotContain("R240", modbus.MissingExpectedMatches);
+            Assert.True(modbus.MaximumConfidence >= 0.65);
             Assert.DoesNotContain("R240", modbus.Profiles["HomeLab"].AlertRuleIds);
         }
 
@@ -379,7 +380,7 @@ namespace Carthago.Tests
             var names = new[]
             {
                 "bacnet-write-property", "cloudflared-tunnel",
-                "rclone-exfil", "redis-config-set", "ssrf-imds"
+                "modbus-write-function", "rclone-exfil", "redis-config-set", "ssrf-imds"
             };
             foreach (var name in names)
             {
