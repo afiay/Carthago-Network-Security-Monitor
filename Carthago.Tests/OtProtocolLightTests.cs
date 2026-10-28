@@ -96,4 +96,39 @@ public sealed class OtProtocolLightTests
         Assert.False(OtProtocolLight.TryIdentifyTcp(bytes, 51000, 102, out _));
         Assert.False(OtProtocolLight.TryIdentifyUdp(bytes, 51000, 47808, out _));
     }
+
+    [Fact] public void Bacnet_WhoIs_Bvlc_Npdu_Apdu_Is_Parsed()
+    {
+        byte[] p = { 0x81, 0x0b, 0x00, 0x08, 0x01, 0x00, 0x10, 0x08 };
+        Assert.True(OtProtocolLight.TryIdentifyUdp(p, 51000, 47808, out var kind));
+        Assert.Equal("bacnet.whois", kind);
+    }
+    [Fact] public void Bacnet_IAm_Bvlc_Npdu_Apdu_Is_Parsed()
+    {
+        byte[] p = { 0x81, 0x0a, 0x00, 0x08, 0x01, 0x00, 0x10, 0x00 };
+        Assert.True(OtProtocolLight.TryIdentifyUdp(p, 47808, 51000, out var kind));
+        Assert.Equal("bacnet.iam", kind);
+    }
+    [Fact] public void Bacnet_Without_Discovery_Apdu_Remains_Generic()
+    {
+        byte[] p = { 0x81, 0x0a, 0x00, 0x08, 0x01, 0x00, 0x10, 0x0f };
+        Assert.True(OtProtocolLight.TryIdentifyUdp(p, 51000, 47808, out var kind));
+        Assert.Equal("bacnet", kind);
+    }
+    [Fact] public void Ntp_Mode7_Monlist_Request_Is_Parsed()
+    {
+        byte[] p = { 0x27, 0x00, 0x03, 0x2a, 0, 0, 0, 0 };
+        Assert.True(OtProtocolLight.TryIdentifyUdp(p, 51000, 123, out var kind));
+        Assert.Equal("ntp.mode7.monlist", kind);
+    }
+    [Fact] public void Ntp_Normal_Client_Sync_Is_Not_Monlist()
+    {
+        byte[] p = { 0x23, 0x00, 0x03, 0x2a, 0, 0, 0, 0 };
+        Assert.False(OtProtocolLight.TryIdentifyUdp(p, 51000, 123, out _));
+    }
+    [Fact] public void Ntp_Mode7_Response_Is_Not_Request()
+    {
+        byte[] p = { 0x27, 0x80, 0x03, 0x2a, 0, 0, 0, 0 };
+        Assert.False(OtProtocolLight.TryIdentifyUdp(p, 123, 51000, out _));
+    }
 }
