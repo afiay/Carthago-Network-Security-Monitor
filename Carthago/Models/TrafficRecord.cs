@@ -139,6 +139,10 @@ namespace Carthago.Models
         // this trusted capture-path observation.
         public bool HttpBasicDefaultCredentialObserved { get; internal set; }
 
+        // Capture-derived classification only: never retain token bytes.
+        public bool HttpGitHubTokenPatternObserved { get; internal set; }
+        public bool HttpGitLabTokenPatternObserved { get; internal set; }
+
         // JA4H (HTTP)
         private string? _ja4H;
         public string? Ja4H { get => _ja4H; set { _ja4H = value; OnChanged(nameof(Ja4H)); } }
