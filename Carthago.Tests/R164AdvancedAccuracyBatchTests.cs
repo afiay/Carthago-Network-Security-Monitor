@@ -25,6 +25,16 @@ public sealed class R164AdvancedAccuracyBatchTests
         var r=NetworkBatch156165Context.Http("/login?next=https%3A%2F%2Fapi.internal.local%2Fhome");
         Assert.False((await new R164_OpenRedirectParameterAbuseRule().EvaluateAsync(NetworkBatch156165Context.At(r))).Matched);
     }
+    [Fact] public async Task Different_Internal_Host_Return_Is_Still_Suspicious()
+    {
+        var r = NetworkBatch156165Context.Http("/login?next=https%3A%2F%2Fadmin.internal.local%2Fhome");
+        Assert.True((await new R164_OpenRedirectParameterAbuseRule().EvaluateAsync(NetworkBatch156165Context.At(r))).Matched);
+    }
+    [Fact] public async Task Host_Lookalike_Return_Is_Still_Suspicious()
+    {
+        var r = NetworkBatch156165Context.Http("/login?next=https%3A%2F%2Fapi.internal.local.evil.test%2Fhome");
+        Assert.True((await new R164_OpenRedirectParameterAbuseRule().EvaluateAsync(NetworkBatch156165Context.At(r))).Matched);
+    }
     [Fact] public async Task Expected_Oidc_Callback_Is_Excluded()
     {
         var r=NetworkBatch156165Context.Http("/oauth/callback?redirect_uri=http%3A%2F%2Fevil.test%2Fcallback");
