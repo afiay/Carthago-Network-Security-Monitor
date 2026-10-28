@@ -1,7 +1,7 @@
 # Local verification triage — 2026-10-28
 
 **Branch:** `feature/carthago-reliability-hardening`  
-**Status:** CANDIDATE — UNVERIFIED; no certification or ledger promotion.
+**Status:** 4,797/4,797 xUnit VERIFIED on CARTHAGE; replay-expectations FAILED (4); no certification or ledger promotion.
 
 ## Observed local evidence
 
@@ -73,3 +73,25 @@ The supplied TRX verifies **4,796 passed, 1 failed, 0 skipped** (4,797 total). T
 The separate replay-expectations stage improved from **five to four** invalid fixtures: R240 passed genuine MBAP/PDU-based recognition. Still open: R343 (WinRM audit), R295 (Kubernetes exec audit), R275 (IdP corroboration), R163 (0.62 vs expected minimum 0.65; production confidence floor remains 0.84).
 
 The negative test now removes the `rawOtTcpPayloadsByRecordIndex` property via `JsonNode`, asserts removal, and keeps the explicit R240 non-match expectation. These corrections are **PUBLISHED BUT NOT YET TESTED**; do not mark the branch or full verification as green based on the previous run. Do not lower confidence floors or waive the four replay blockers.
+
+
+## CARTHAGE verified 23:33–23:34 local — 4,797/4,797 passing
+
+The full TRX supplied after the CRLF-safe R240 regression fix contains **4,797 Passed, zero Failed, zero Skipped** at 2026-10-28 23:33–23:34 (+01:00). The full local verifier successfully completed the benchmark stage but **failed `replay-expectations`** for exactly four fixtures. R240's parser-backed request now passes both positive and fail-closed negative checks.
+
+**Outstanding and *not waived*:**
+
+| Fixture | Rule | Observed | Required engineering evidence |
+| --- | --- | --- | --- |
+| `ad-psremoting-encoded-command` | R343 | No match; 0.00 confidence | Authenticated WinRM/PowerShell operation and process-command audit, bound to a specific host/session/actor |
+| `kubernetes-pod-exec` | R295 | No match; 0.00 confidence | Verified Kubernetes API-server exec authorization/session audit with actor, resource and outcome |
+| `oauth-device-code-phishing` | R275 | No match; 0.00 confidence | Trusted identity-provider device-flow abuse audit **and independent** phishing corroboration |
+| `ssrf-imds` | R163 | Direct metadata credential-path observation at 0.62; fixture expects at least 0.65 | Independently attributable causal link between inbound request and outbound metadata access, not simply a shared timestamp or URL mention |
+
+R163's existing **production precision floor of 0.84** is preserved. Its current replay has an inbound `/fetch?url=...` record and a separate metadata request but **no authenticated trace or causality evidence**. Adding confidence solely for an IMDSv2 header, a query string, or spatial/temporal coincidence would be incorrect.
+
+The 146-fixture replay reports 48 malicious and 98 benign. Enterprise: **45/48 raw recognized; 4/48 alerted; 0/98 benign alerted**. The gap primarily reflects Shadow/approval policies and missing trusted outcomes; neither figure estimates field accuracy. Catalog audit: 544 rules, 10 with paired synthetic controls, 489 without explicit replay controls, zero contract issues.
+
+The `verify-local.ps1` diagnostic printer was improved after this run to surface the missing-evidence outcome and reason codes. This output-only change has **not been retested**. It must not affect gate outcomes.
+
+**Next engineering milestone:** introduce reviewed, authenticated telemetry provenance through existing extension points; attach scenario-specific positive/negative evidence and adversarial spoofing controls for R343/R295/R275; implement independent SSRF causality for R163. Keep all four original malicious labels and minimum-confidence fixtures unchanged until genuinely supported. Do not treat successful xUnit tests alone as release certification.
