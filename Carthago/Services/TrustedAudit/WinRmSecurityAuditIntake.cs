@@ -231,7 +231,7 @@ namespace Carthago.Services.TrustedAudit
                     || !TryHex(fields, "ProcessId", out var parentId)
                     || parentId > uint.MaxValue
                     || childId == parentId
-                    || !HasValidEncodedArgument(commandLine))
+                    || !HasValidEncodedArgument(commandLine, process))
                 {
                     reason = "NO_ENCODED_PROCESS_CREATION_ATTRIBUTION";
                     return false;
@@ -365,9 +365,10 @@ namespace Carthago.Services.TrustedAudit
                 && !value.Contains('/', StringComparison.Ordinal)
                 && !value.Contains('"', StringComparison.Ordinal);
 
-        private static bool HasValidEncodedArgument(string? commandLine)
+        private static bool HasValidEncodedArgument(string? commandLine, string image)
         {
-            if (string.IsNullOrWhiteSpace(commandLine) || commandLine.Length > 8192)
+            if (string.IsNullOrWhiteSpace(commandLine) || commandLine.Length > 8192
+                || !CommandLineTargetsImage(commandLine, image))
                 return false;
             try
             {
@@ -387,6 +388,43 @@ namespace Carthago.Services.TrustedAudit
             {
                 return false;
             }
+        }
+
+        // A forged "CommandLine" field must not be able to contribute a
+        // PowerShell flag while actually naming cmd.exe, rundll32.exe, etc.
+        // Windows can record an absolute quoted or unquoted image path, or
+        // just a basename. Intentionally fail closed on ambiguous quoting.
+        private static bool CommandLineTargetsImage(string commandLine, string image)
+        {
+            var value = commandLine.TrimStart();
+            if (value.Length == 0)
+                return false;
+
+            string executable;
+            if (value[0] == '"')
+            {
+                var close = value.IndexOf('"', 1);
+                if (close < 2 || (close + 1 < value.Length
+                    && !char.IsWhiteSpace(value[close + 1])))
+                    return false;
+                executable = value.Substring(1, close - 1);
+            }
+            else
+            {
+                var end = 0;
+                while (end < value.Length && !char.IsWhiteSpace(value[end]))
+                    end++;
+                executable = value[..end];
+            }
+
+            var slash = image.LastIndexOf('\\');
+            if (slash < 0)
+                return false;
+            var basename = image[(slash + 1)..];
+            return string.Equals(executable, basename,
+                       StringComparison.OrdinalIgnoreCase)
+                || string.Equals(executable, image,
+                       StringComparison.OrdinalIgnoreCase);
         }
 
         private static bool IsLocalMachine(string name)
