@@ -50,6 +50,8 @@ public sealed class R248AdvancedAccuracyBatchTests
         var evt = Assert.Single(result.Events);
         Assert.DoesNotContain("ftp-secret-marker", evt.Evidence ?? "", StringComparison.Ordinal);
         Assert.DoesNotContain("198.51.100.248", evt.Evidence ?? "", StringComparison.Ordinal);
+        Assert.DoesNotContain(evt.StructuredEvidence!.Items,
+            item => item.Value.Contains("198.51.100.248", StringComparison.Ordinal));
     }
     [Fact] public void Original_Alert_Mode_And_Confidence_Are_Preserved() {
         var p = new R248_FtpUploadToExternalHostRule().PrecisionProfile;
