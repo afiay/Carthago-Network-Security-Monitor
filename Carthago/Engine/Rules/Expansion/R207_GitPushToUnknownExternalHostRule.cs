@@ -46,11 +46,15 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R207_GitPushToUnknownExternalHostRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch201205Window _observations = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
             var host = BestHost(record);
-            if (!HasHttpContext(record) || !LooksLikeGitClient(record) || IsBrowserLikeUserAgent(record) || !IsGitPushRequest(record) || !IsExternalAddress(host) || IsOfficialGitHost(host))
+            if (!NetworkBatch206215Evidence.Git(record, true)
+                || !_observations.Observe(record, $"{Descriptor.RuleId}:{record.Source}:{host}", host,
+                    context.TimestampUtc, TimeSpan.FromMinutes(15), 0, out _, out _))
                 return NoMatch();
 
             var baseline = ObserveBaseline("clouddev.git-push-host", record.Source ?? "unknown", host, context, "git=push");

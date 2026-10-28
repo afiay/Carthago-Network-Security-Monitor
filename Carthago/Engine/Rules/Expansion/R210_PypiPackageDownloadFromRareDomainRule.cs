@@ -46,11 +46,15 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R210_PypiPackageDownloadFromRareDomainRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch201205Window _observations = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
             var host = BestHost(record);
-            if (!LooksLikePypiArtifactRequest(record) || IsOfficialPackageRegistryHost(host) || !IsExternalAddress(host))
+            if (!NetworkBatch206215Evidence.Pypi(record)
+                || !_observations.Observe(record, $"{Descriptor.RuleId}:{record.Source}:{host}", host,
+                    context.TimestampUtc, TimeSpan.FromMinutes(15), 0, out _, out _))
                 return NoMatch();
 
             var baseline = ObserveBaseline("clouddev.pypi-host", record.Source ?? "unknown", host, context, "ecosystem=pypi");

@@ -46,9 +46,15 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R209_NpmInstallScriptBeaconPatternRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch201205Window _observations = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!LooksLikeNpmInstallScriptBeacon(context.Record))
+            if (!NetworkBatch206215Evidence.NpmCallback(context.Record)
+                || !_observations.Observe(context.Record,
+                    $"{Descriptor.RuleId}:{context.Record.Source}:{context.Record.HttpHost}",
+                    context.Record.HttpHost ?? "", context.TimestampUtc,
+                    TimeSpan.FromMinutes(15), 0, out _, out _))
                 return NoMatch();
 
             var host = BestHost(context.Record);
