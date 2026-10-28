@@ -564,3 +564,10 @@ From verified R196-R200 remote HEAD `0a6c882250cfd9cb44e155242675c206f03d3a1e`, 
 From remote HEAD `71133c0a7cab70c9fbc340c00d73d9e34f246ccd`, authored five consecutive Git and package-client rule hardenings with typed HTTP request/protocol/authority evidence, non-official external destination validation, instance-owned bounded replay/out-of-order guards, and host/path redaction. **55 advanced xUnit facts authored, zero executed.** Source `15ae3a5aeda96e8c3ad7e428ed0ac725d4809e63`, Git path correction `335bfd1cb7c0f104bb51c77f6fd55c7fdf105fe3`, tests `e1a60edaaa1fbe9e45e1094760bf4573b1bcb5b5`. Paths and scenario ledger: `docs/RULE_BATCH_206-210.md`.
 
 **CANDIDATE / UNVERIFIED.** Live capture lacks decrypted HTTPS and may not attribute process identity; npm install-hook query labels do not prove execution. No build, xUnit, replay, holdout, CI or runner. Existing floors, policies, thresholds, approvals, baseline readiness and frozen evidence unchanged; frozen R102 V1 FAILED 4/6, V2 independent PCAP pending. **Next R211-R215, then R216-R220.**
+
+
+## R211-R215 candidate implementation - 2026-10-28
+
+After verified R206-R210 remote HEAD `a895673929bb9b23671778869665c70adc6687e7`, authored five consecutive PowerShell/curl raw-script and AWS/Azure/GCS storage-request candidates with typed HTTP/authority/transport checks, bounded duplicate/out-of-order guards, redacted host/path evidence and SHA256-fingerprinted R213 object-path state. **62 advanced xUnit facts authored, zero executed.** Source `fa699244fe601ec4f6d4693b71d957a19084593a`; tests `9a5b0f9ca2fa5142f45f005af1befbbffbcef701`. See `docs/RULE_BATCH_211-215.md` for paths, scenarios and limitations.
+
+**R206-R215 total: 10 consecutive rules, 117 advanced facts authored, ZERO executed; CANDIDATE / UNVERIFIED.** R212 packet Info does not establish shell execution; R213 requests do not prove object downloads; HTTPS metadata capture is unverified. No build, xUnit, replay, holdout, CI or runner. Floors, policies, thresholds, approvals, baseline readiness and frozen evidence unchanged; frozen R102 V1 FAILED 4/6, V2 independent PCAP pending. **Next R216-R220, then R221-R225.**
