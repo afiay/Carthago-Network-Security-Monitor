@@ -54,6 +54,10 @@ namespace Carthago.Engine.Rules.Expansion
         public R326_DMARCSPFDKIMReconQueryBurstRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "DNS_MAIL_POLICY_AUDIT_UNAVAILABLE",
+                "DNS policy lookups do not establish unauthorized reconnaissance. Require independently verified source context.");
+        }
     }
 }

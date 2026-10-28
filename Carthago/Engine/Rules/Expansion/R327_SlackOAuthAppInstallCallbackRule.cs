@@ -54,6 +54,10 @@ namespace Carthago.Engine.Rules.Expansion
         public R327_SlackOAuthAppInstallCallbackRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "SLACK_INSTALL_AUDIT_UNAVAILABLE",
+                "OAuth callback URLs do not prove successful app installation. Require trusted workspace audit outcomes.");
+        }
     }
 }

@@ -54,6 +54,10 @@ namespace Carthago.Engine.Rules.Expansion
         public R329_SharePointBulkDownloadPatternRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "SHAREPOINT_DOWNLOAD_AUDIT_UNAVAILABLE",
+                "SharePoint paths and GET requests do not prove authenticated bulk file downloads.");
+        }
     }
 }

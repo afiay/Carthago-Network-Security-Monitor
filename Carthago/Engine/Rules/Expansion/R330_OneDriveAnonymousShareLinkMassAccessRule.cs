@@ -54,6 +54,10 @@ namespace Carthago.Engine.Rules.Expansion
         public R330_OneDriveAnonymousShareLinkMassAccessRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "ONEDRIVE_SHARE_AUDIT_UNAVAILABLE",
+                "Share-link paths do not prove anonymous permissions, successful access or files delivered.");
+        }
     }
 }

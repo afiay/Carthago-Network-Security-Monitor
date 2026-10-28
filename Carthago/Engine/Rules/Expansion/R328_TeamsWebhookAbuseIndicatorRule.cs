@@ -55,6 +55,10 @@ namespace Carthago.Engine.Rules.Expansion
         public R328_TeamsWebhookAbuseIndicatorRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "TEAMS_WEBHOOK_AUDIT_UNAVAILABLE",
+                "Webhook POST paths do not prove accepted messages or unauthorized activity. Require trusted connector audit.");
+        }
     }
 }
