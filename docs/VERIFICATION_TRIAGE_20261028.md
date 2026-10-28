@@ -164,3 +164,12 @@ The user-supplied local summary on checkout `290a327ab53da107867ac57fefa4a397143
 Added `scripts/inspect-winrm-audit-readiness.ps1` as an opt-in read-only Windows readiness check. Without flags it checks Security log metadata access and an optional 4688 include-command-line registry setting; with `-InspectRecentEvents` it only checks whether recent 4624/4688 IDs exist. The script does not output event XML, command lines or identities, enable audit policies, elevate permissions, create signed claims or feed R343.
 
 This command has NOT been executed on CARTHAGE. The four malicious replay expectations are deliberately unchanged and certification is still blocked.
+
+
+## CARTHAGE R343 Security-log readiness limitation (2026-10-29)
+
+At HEAD `66234637fdbbceb42eb0cb362dbd679ea2f15a1a`, the operator ran both default and opt-in Windows Security audit readiness checks. The Windows Security channel metadata lookup did not succeed; the 4688 include-command-line registry value was UNKNOWN; process-creation success auditing remained unverified. The opt-in command stopped before querying event IDs, so **no absence of 4624/4688 events was demonstrated**.
+
+Read-only diagnostic fix now published: the readiness script emits safe failure categories and Windows token/service status, distinguishes absent registry policy from denied access, and independently queries event IDs 4624/4688 if explicitly requested, even when `Get-WinEvent -ListLog Security` fails. It does not read or print event bodies, modify audit settings, elevate, or sign claims.
+
+**Unverified new script; all four original replay failures stay open.** Previous 4,851/4,851 xUnit passed at `290a327`, and no production detector or replay fixtures were modified. Operational eligibility for Security-log reading is a separate Windows permissions decision, not proof of an R343 attack.
