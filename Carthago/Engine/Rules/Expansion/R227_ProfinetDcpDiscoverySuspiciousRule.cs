@@ -39,52 +39,31 @@ namespace Carthago.Engine.Rules.Expansion
             threshold: 8,
             window: TimeSpan.FromMinutes(2),
             cooldown: TimeSpan.FromMinutes(15),
-            distinctBy: "destination",
+            distinctBy: "unique_frame",
             falsePositives: new[] { "Approved engineering or device commissioning tools can intentionally enumerate Profinet devices." },
             tuningKnobs: new[] { "Mode", "Threshold", "WindowSeconds", "CooldownSeconds" },
             requiredTests: new[] { "positive profinet discovery burst sample", "negative single profinet request sample" });
 
         public R227_ProfinetDcpDiscoverySuspiciousRule() : base(Rule, Profile) { }
 
+        // The IP-only capture path cannot observe Ethernet DCP frames yet.
+        // Only explicitly decoded L2 records are eligible; never substitute UDP/34964.
+        private readonly NetworkBatch226230Evidence.Window _observations = new();
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            var record = context.Record;
-            if (!IsProfinetContext(record) || !HasProfinetDiscoverySemantics(record))
-                return NoMatch();
-
+            var r = context.Record;
+            if (!NetworkBatch226230Evidence.ProfinetDcp(r)) return NoMatch();
             var window = TimeSpan.FromSeconds(IntSetting(Descriptor.RuleId, "WindowSeconds", 120, 30, 3600));
             var threshold = IntSetting(Descriptor.RuleId, "Threshold", 8, 3, 500);
-            var count = CountDistinctValues($"{Descriptor.RuleId}:{record.Source}", record.Destination ?? BestHost(record), context.TimestampUtc, window);
-            if (count < threshold)
-                return NoMatch();
-
-            var evidence = new List<DetectionEvidenceItem>
-            {
-                new("count", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
-                new("window_seconds", ((int)window.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
-                new("matched_conditions", "profinet_dcp_discovery,destination_burst_threshold", "rule")
-            };
-            evidence.AddRange(AnalystContext(
-                "Profinet DCP discovery semantics were sent to many distinct destinations in a short window.",
-                "Severity is Medium because high-rate device identification across Profinet networks often indicates reconnaissance or unaudited commissioning scans.",
-                "Approved engineering or device commissioning workflows can resemble this pattern.",
-                "Validate whether the source is a sanctioned commissioning or engineering host.",
-                "Review the destination spread and whether identify-all or station-name discovery aligned with maintenance activity."));
-
-            return MatchIot(
-                context,
-                SeverityLevel.Medium,
-                "Profinet DCP discovery burst observed",
+            var count = _observations.Observe(r.MacSource, r.MacDestination, r.Id, context.TimestampUtc, window, false);
+            if (count < threshold) return NoMatch();
+            return MatchIot(context, SeverityLevel.Medium, "Decoded Profinet DCP Identify burst",
                 "Profinet DCP",
-                evidence,
-                confidence =>
-                {
-                    confidence.AddEvidence(0.28, "profinet-dcp-discovery");
-                    confidence.AddEvidence(0.20, "destination-burst-threshold");
-                },
-                count,
-                window,
-                $"{record.Source}:profinet-discovery");
+                new[] { new DetectionEvidenceItem("count", count.ToString(), "rule"),
+                    new DetectionEvidenceItem("matched_conditions", "typed_l2_dcp_identify,unique_frame_burst", "rule") },
+                confidence => { confidence.AddEvidence(0.28, "typed-l2-dcp-identify");
+                    confidence.AddEvidence(0.20, "unique-frame-burst"); },
+                count, window, r.MacSource + ":profinet-discovery");
         }
     }
 }

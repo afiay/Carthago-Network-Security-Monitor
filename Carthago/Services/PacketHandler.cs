@@ -390,6 +390,21 @@ namespace Carthago.Services
                             if (OtProtocolLight.TryIdentifyTcp(normPayload, sport, dport, out var otProtocol))
                                 rec.ApplicationProtocol = otProtocol;
 
+                            // -------- Bounded EtherNet/IP ListIdentity and MQTT --------
+                            if (NetworkBatch226230Wire.CipListIdentity(normPayload, sport, dport))
+                                rec.ApplicationProtocol = "ethernetip.listidentity";
+                            if (NetworkBatch226230Wire.Mqtt(normPayload, sport, dport,
+                                out var mqttOperation, out var mqttTopic, out var mqttRetain))
+                            {
+                                rec.ApplicationProtocol = mqttOperation;
+                                if (mqttOperation == "mqtt.publish")
+                                {
+                                    rec.MqttTopic = mqttTopic;
+                                    rec.MqttRetain = mqttRetain;
+                                }
+                                else rec.MqttWillTopic = mqttTopic;
+                            }
+
                             // -------- HTTP --------
                             if (normPayload.Length >= 4 && HttpLight.TryParseHttp(normPayload, out var http))
                             {

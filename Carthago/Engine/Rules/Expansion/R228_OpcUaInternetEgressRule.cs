@@ -46,35 +46,19 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R228_OpcUaInternetEgressRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch226230Evidence.Window _observations = new();
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            var record = context.Record;
-            if (!IsOpcUaContext(record) || !IsInternalToExternal(record))
-                return NoMatch();
-
-            var evidence = new List<DetectionEvidenceItem>
-            {
-                new("matched_conditions", "opcua_context,internal_to_external", "rule")
-            };
-            evidence.AddRange(AnalystContext(
-                "OPC UA traffic from an internal source reached an external destination.",
-                "Severity is High because OPC UA should not reach the internet without tightly controlled brokers or gateways.",
-                "Approved historians or secure cloud/DMZ brokers can resemble this pattern and should be explicitly tuned.",
-                "Validate whether the source is an approved broker, historian, or vendor-managed gateway.",
-                "Review the OPC UA session context for browse, read, or write operations that crossed the boundary."));
-
-            return MatchIot(
-                context,
-                SeverityLevel.High,
-                "OPC UA egress to external destination observed",
+            var r = context.Record;
+            if (!NetworkBatch226230Evidence.OpcUaEgress(r)
+                || _observations.Observe(r.Source, r.Destination, r.Id, context.TimestampUtc,
+                    TimeSpan.FromMinutes(10), false) == 0) return NoMatch();
+            return MatchIot(context, SeverityLevel.High, "Typed OPC UA egress to external IP",
                 "OPC UA",
-                evidence,
-                confidence =>
-                {
-                    confidence.AddEvidence(0.36, "opcua-context");
-                    confidence.AddEvidence(0.24, "internal-to-external");
-                },
-                cooldownKey: $"{record.Source}:{record.Destination}");
+                new[] { new DetectionEvidenceItem("matched_conditions", "typed_opcua,tcp_4840,internal_to_external", "rule") },
+                confidence => { confidence.AddEvidence(0.36, "typed-opcua");
+                    confidence.AddEvidence(0.24, "internal-to-external"); },
+                cooldownKey: r.Source + ":" + r.Destination);
         }
     }
 }

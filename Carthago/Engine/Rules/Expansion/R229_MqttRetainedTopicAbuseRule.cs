@@ -46,51 +46,25 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R229_MqttRetainedTopicAbuseRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch226230Evidence.Window _observations = new();
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            var record = context.Record;
-            if (!IsMqtt(record) || !HasRetainIndicator(record))
-                return NoMatch();
-
-            var topic = NormalizeTopic(ExtractTopic(Text(record)));
-            var host = BestHost(record);
-            var suspiciousTopic = IsSuspiciousMqttControlTopic(topic);
-            var riskyBroker = IsExternalAddress(record.Destination) || IsPublicMqttBroker(host);
-            var automation = IsAutomationLikeProcess(record.ProcessName);
-            if (!suspiciousTopic && !riskyBroker && !automation)
-                return NoMatch();
-
-            var matchedConditions = new List<string> { "mqtt_retained_indicator" };
-            if (suspiciousTopic) matchedConditions.Add("suspicious_control_topic");
-            if (riskyBroker) matchedConditions.Add("external_or_public_broker");
-            if (automation) matchedConditions.Add("automation_process");
-
-            var evidence = new List<DetectionEvidenceItem>
-            {
-                new("mqtt.topic", string.IsNullOrWhiteSpace(topic) ? "(unknown)" : topic, "iot-ot"),
-                new("matched_conditions", string.Join(",", matchedConditions), "rule")
-            };
-            evidence.AddRange(AnalystContext(
-                "A retained MQTT publish targeted a suspicious topic or broker context.",
-                "Severity is Medium because retained control or broad-scope topics can persist malicious state or commands across MQTT clients.",
-                "Approved IoT platforms can legitimately use retained state topics on internal brokers.",
-                "Validate the retained topic, broker approval status, and publishing client.",
-                "Review whether the retained message could persist commands or configuration across device reconnects."));
-
-            return MatchIot(
-                context,
-                SeverityLevel.Medium,
-                "Suspicious retained MQTT publish observed",
-                "MQTT",
-                evidence,
-                confidence =>
-                {
-                    confidence.AddEvidence(0.22, "mqtt-retained-indicator");
-                    if (suspiciousTopic) confidence.AddEvidence(0.18, "suspicious-control-topic");
-                    if (riskyBroker) confidence.AddEvidence(0.16, "external-or-public-broker");
-                    if (automation) confidence.AddCorrelation(0.10, "automation-process");
-                },
-                cooldownKey: $"{record.Source}:{host}:{topic}");
+            var r = context.Record;
+            if (!NetworkBatch226230Evidence.RetainedPublish(r)) return NoMatch();
+            var suspicious = NetworkBatch226230Evidence.SuspiciousTopic(r.MqttTopic);
+            var external = NetworkBatch226230Evidence.Public(r.Destination);
+            if (!suspicious && !external
+                || _observations.Observe(r.Source, r.Destination, r.Id, context.TimestampUtc,
+                    TimeSpan.FromMinutes(10), false) == 0) return NoMatch();
+            return MatchIot(context, SeverityLevel.Medium, "Retained MQTT PUBLISH with risk context",
+                "MQTT", new[] {
+                    new DetectionEvidenceItem("mqtt.topic", "[REDACTED]", "iot-ot"),
+                    new DetectionEvidenceItem("matched_conditions",
+                        suspicious ? "parsed_retained_publish,control_topic" : "parsed_retained_publish,external_broker", "rule") },
+                confidence => { confidence.AddEvidence(0.22, "parsed-retained-publish");
+                    if (suspicious) confidence.AddEvidence(0.18, "control-topic");
+                    if (external) confidence.AddEvidence(0.16, "external-broker"); },
+                cooldownKey: r.Source + ":" + r.Destination + ":mqtt-retain");
         }
     }
 }

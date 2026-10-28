@@ -46,45 +46,22 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R226_EthernetipCipDiscoveryBurstRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch226230Evidence.Window _observations = new();
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            var record = context.Record;
-            if (!IsCipContext(record) || !HasCipDiscoverySemantics(record))
-                return NoMatch();
-
+            var r = context.Record;
+            if (!NetworkBatch226230Evidence.CipDiscovery(r)) return NoMatch();
             var window = TimeSpan.FromSeconds(IntSetting(Descriptor.RuleId, "WindowSeconds", 120, 30, 3600));
             var threshold = IntSetting(Descriptor.RuleId, "Threshold", 8, 3, 500);
-            var count = CountDistinctValues($"{Descriptor.RuleId}:{record.Source}", record.Destination ?? BestHost(record), context.TimestampUtc, window);
-            if (count < threshold)
-                return NoMatch();
-
-            var evidence = new List<DetectionEvidenceItem>
-            {
-                new("count", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
-                new("window_seconds", ((int)window.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
-                new("matched_conditions", "cip_discovery_semantics,destination_burst_threshold", "rule")
-            };
-            evidence.AddRange(AnalystContext(
-                "CIP discovery semantics such as ListIdentity were sent to many distinct destinations in a short window.",
-                "Severity is Medium because high-rate CIP discovery often reflects asset reconnaissance or unaudited scanning in OT networks.",
-                "Approved inventory or OT discovery tools can intentionally enumerate PLCs and adapters.",
-                "Validate whether the source belongs to sanctioned discovery or engineering tooling.",
-                "Review the destination spread and timing for reconnaissance against PLCs or adapters."));
-
-            return MatchIot(
-                context,
-                SeverityLevel.Medium,
-                "EtherNet/IP discovery burst observed",
+            var count = _observations.Observe(r.Source, r.Destination, r.Id, context.TimestampUtc, window, true);
+            if (count < threshold) return NoMatch();
+            return MatchIot(context, SeverityLevel.Medium, "Wire-attributed CIP ListIdentity destination burst",
                 "EtherNetIP/CIP",
-                evidence,
-                confidence =>
-                {
-                    confidence.AddEvidence(0.28, "cip-discovery-semantics");
-                    confidence.AddEvidence(0.20, "destination-burst-threshold");
-                },
-                count,
-                window,
-                $"{record.Source}:cip-discovery");
+                new[] { new DetectionEvidenceItem("count", count.ToString(), "rule"),
+                    new DetectionEvidenceItem("matched_conditions", "parsed_listidentity,distinct_destination_burst", "rule") },
+                confidence => { confidence.AddEvidence(0.28, "parsed-listidentity");
+                    confidence.AddEvidence(0.20, "distinct-destination-burst"); },
+                count, window, r.Source + ":cip-discovery");
         }
     }
 }

@@ -112,6 +112,12 @@ namespace Carthago.Models
         public int? ReputationReports { get; set; }
         public DateTime? ReputationLastSeen { get; set; }
 
+        // ===== MQTT (wire-derived when populated by PacketHandler) =====
+        // No MQTT payload or client credentials are retained here.
+        public string? MqttTopic { get; set; }
+        public bool? MqttRetain { get; set; }
+        public string? MqttWillTopic { get; set; }
+
         // ===== HTTP =====
         public string? HttpMethod { get; set; }
         public string? HttpHost { get; set; }

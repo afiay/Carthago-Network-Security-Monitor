@@ -46,51 +46,25 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R230_MqttLastWillSuspiciousRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch226230Evidence.Window _observations = new();
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            var record = context.Record;
-            if (!IsMqtt(record) || !HasWillIndicator(record))
-                return NoMatch();
-
-            var topic = NormalizeTopic(ExtractTopic(Text(record)));
-            var host = BestHost(record);
-            var suspiciousTopic = IsSuspiciousMqttControlTopic(topic);
-            var riskyBroker = IsExternalAddress(record.Destination) || IsPublicMqttBroker(host);
-            var automation = IsAutomationLikeProcess(record.ProcessName);
-            if (!suspiciousTopic && !riskyBroker && !automation)
-                return NoMatch();
-
-            var matchedConditions = new List<string> { "mqtt_last_will_indicator" };
-            if (suspiciousTopic) matchedConditions.Add("suspicious_control_topic");
-            if (riskyBroker) matchedConditions.Add("external_or_public_broker");
-            if (automation) matchedConditions.Add("automation_process");
-
-            var evidence = new List<DetectionEvidenceItem>
-            {
-                new("mqtt.topic", string.IsNullOrWhiteSpace(topic) ? "(unknown)" : topic, "iot-ot"),
-                new("matched_conditions", string.Join(",", matchedConditions), "rule")
-            };
-            evidence.AddRange(AnalystContext(
-                "MQTT last-will configuration targeted a suspicious topic or broker context.",
-                "Severity is Medium because last-will messages can be abused to persist alerts, commands, or fallback behavior when clients disconnect.",
-                "Routine device availability LWTs on approved internal brokers are common and should stay suppressed.",
-                "Validate the LWT topic, broker approval status, and client intent.",
-                "Review whether the will message could trigger control workflows or automated responses on disconnect."));
-
-            return MatchIot(
-                context,
-                SeverityLevel.Medium,
-                "Suspicious MQTT last-will usage observed",
-                "MQTT",
-                evidence,
-                confidence =>
-                {
-                    confidence.AddEvidence(0.22, "mqtt-last-will-indicator");
-                    if (suspiciousTopic) confidence.AddEvidence(0.18, "suspicious-control-topic");
-                    if (riskyBroker) confidence.AddEvidence(0.16, "external-or-public-broker");
-                    if (automation) confidence.AddCorrelation(0.10, "automation-process");
-                },
-                cooldownKey: $"{record.Source}:{host}:{topic}");
+            var r = context.Record;
+            if (!NetworkBatch226230Evidence.LastWill(r)) return NoMatch();
+            var suspicious = NetworkBatch226230Evidence.SuspiciousTopic(r.MqttWillTopic);
+            var external = NetworkBatch226230Evidence.Public(r.Destination);
+            if (!suspicious && !external
+                || _observations.Observe(r.Source, r.Destination, r.Id, context.TimestampUtc,
+                    TimeSpan.FromMinutes(10), false) == 0) return NoMatch();
+            return MatchIot(context, SeverityLevel.Medium, "MQTT CONNECT will with risk context",
+                "MQTT", new[] {
+                    new DetectionEvidenceItem("mqtt.topic", "[REDACTED]", "iot-ot"),
+                    new DetectionEvidenceItem("matched_conditions",
+                        suspicious ? "parsed_connect_will,control_topic" : "parsed_connect_will,external_broker", "rule") },
+                confidence => { confidence.AddEvidence(0.22, "parsed-connect-will");
+                    if (suspicious) confidence.AddEvidence(0.18, "control-topic");
+                    if (external) confidence.AddEvidence(0.16, "external-broker"); },
+                cooldownKey: r.Source + ":" + r.Destination + ":mqtt-will");
         }
     }
 }
