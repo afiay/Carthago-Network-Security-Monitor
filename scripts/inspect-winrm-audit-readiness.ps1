@@ -51,7 +51,7 @@ Write-Host ('Process-creation policy inspection: {0}' -f [bool]$InspectAuditPoli
 
 if (-not [Environment]::OSVersion.Platform.Equals([PlatformID]::Win32NT)) {
     Write-Host 'Windows Security event source: UNAVAILABLE (Windows only).'
-    Write-Host 'STATUS: NOT READY — no audit events queried.'
+    Write-Host 'STATUS: NOT READY - no audit events queried.'
     return
 }
 
@@ -154,7 +154,7 @@ Write-Host ('Security channel metadata: {0}' -f $metadataStatus)
 
 if (-not $InspectRecentEvents) {
     Write-Host 'Recent 4624/4688 observations: NOT INSPECTED (opt in with -InspectRecentEvents).'
-    Write-Host 'STATUS: READINESS ONLY — no events inspected, permissions changed or claims signed.'
+    Write-Host 'STATUS: READINESS ONLY - no events inspected, permissions changed or claims signed.'
     return
 }
 
@@ -197,15 +197,23 @@ foreach ($id in @(4624,4688)) {
         $id, $LookbackMinutes, $state)
 }
 
-if ($unavailable -gt 0) {
-    Write-Host 'STATUS: NOT READY — at least one Security event query failed.'
+if ($processCreationStatus -eq 'NO AUDITING' -or
+    $processCreationStatus -eq 'SUCCESS AUDITING NOT ENABLED') {
+    # A disabled success-audit subcategory is a known prerequisite blocker
+    # even when the Security channel is readable and 4624 is observed.
+    Write-Host 'STATUS: BLOCKED - Process Creation success auditing is disabled; fresh Security 4688 evidence is not expected.'
+    if ($unavailable -gt 0) {
+        Write-Host 'ADDITIONAL BLOCKER: one or more Security event queries failed.'
+    }
+} elseif ($unavailable -gt 0) {
+    Write-Host 'STATUS: NOT READY - at least one Security event query failed.'
 } elseif ($metadataStatus -eq 'ACCESS_DENIED' -and $observed -eq 0) {
-    Write-Host 'STATUS: ACCESS UNVERIFIED — metadata denied and no events returned; neither log readability nor event absence is established.'
+    Write-Host 'STATUS: ACCESS UNVERIFIED - metadata denied and no events returned; neither log readability nor event absence is established.'
 } elseif ($metadataStatus -ne 'READABLE' -and $observed -eq 0) {
-    Write-Host 'STATUS: ACCESS UNVERIFIED — no metadata confirmation or returned events.'
+    Write-Host 'STATUS: ACCESS UNVERIFIED - no metadata confirmation or returned events.'
 } elseif ($observed -lt 2) {
-    Write-Host 'STATUS: INCOMPLETE — one or both event IDs not returned in the selected window.'
+    Write-Host 'STATUS: INCOMPLETE - one or both event IDs not returned in the selected window.'
 } else {
-    Write-Host 'STATUS: EVENT IDS OBSERVED — auditing policy, event fields and authenticated outcome remain NOT VERIFIED.'
+    Write-Host 'STATUS: EVENT IDS OBSERVED - auditing policy, event fields and authenticated outcome remain NOT VERIFIED.'
 }
 Write-Host 'No events modified or signed. R343 remains blocked pending authenticated source, session and outcome evidence.'
