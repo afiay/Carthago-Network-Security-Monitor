@@ -86,16 +86,35 @@ namespace Carthago.Engine.Rules
             if (context == null) throw new ArgumentNullException(nameof(context));
 
             var record = context.Record;
+            // These rules can identify private DNS labels, token-bearing service
+            // authorities, or sensitive file-transfer destinations. Redact only
+            // event presentation: keep the original record for rule evaluation,
+            // flow correlation and analyst investigation in its own access scope.
+            var redactHost = RedactRuleHost(Descriptor.RuleId);
+            var redactDestination = RedactRuleDestination(Descriptor.RuleId);
             var items = new List<DetectionEvidenceItem>
             {
                 new("source", record.Source ?? "unknown", "traffic-record"),
-                new("destination", record.Destination ?? "unknown", "traffic-record"),
-                new("destinationHost", FirstNonEmpty(record.DnsQname, record.HttpHost, record.Sni, record.Destination) ?? "unknown", "traffic-record"),
+                new("destination", redactDestination ? "[REDACTED]" : record.Destination ?? "unknown", "traffic-record"),
+                new("destinationHost", redactHost ? "[REDACTED]" : FirstNonEmpty(record.DnsQname, record.HttpHost, record.Sni, record.Destination) ?? "unknown", "traffic-record"),
                 new("protocol", FirstNonEmpty(record.ApplicationProtocol, record.ApplicationService, record.Protocol) ?? "unknown", "traffic-record")
             };
 
             if (evidenceItems != null)
-                items.AddRange(evidenceItems.Where(static item => !string.IsNullOrWhiteSpace(item.Key) && !string.IsNullOrWhiteSpace(item.Value)));
+            {
+                foreach (var item in evidenceItems.Where(static item =>
+                    !string.IsNullOrWhiteSpace(item.Key) && !string.IsNullOrWhiteSpace(item.Value)))
+                {
+                    // Subclasses may already redact their own fields. Do not
+                    // permit another raw host or destination key to bypass the
+                    // shared event boundary.
+                    if ((redactHost && IsHostEvidenceKey(item.Key))
+                        || (redactDestination && IsDestinationEvidenceKey(item.Key)))
+                        items.Add(new DetectionEvidenceItem(item.Key, "[REDACTED]", item.Source));
+                    else
+                        items.Add(item);
+                }
+            }
 
             var summaryText = string.IsNullOrWhiteSpace(summary) ? Descriptor.Name : summary.Trim();
             var evt = new DetectionEvent
@@ -107,7 +126,7 @@ namespace Carthago.Engine.Rules
                 SourceIp = record.Source,
                 SourcePort = record.SourcePort,
                 DestinationIp = record.Destination,
-                DestinationHost = FirstNonEmpty(record.DnsQname, record.HttpHost, record.Sni, record.Destination),
+                DestinationHost = redactHost ? "[REDACTED]" : FirstNonEmpty(record.DnsQname, record.HttpHost, record.Sni, record.Destination),
                 DestinationPort = record.DestinationPort,
                 Protocol = FirstNonEmpty(record.ApplicationProtocol, record.ApplicationService, record.Protocol),
                 ProcessName = record.ProcessName,
@@ -182,6 +201,35 @@ namespace Carthago.Engine.Rules
             if (!string.IsNullOrWhiteSpace(PrecisionProfile.DistinctBy))
                 EvidenceBuilder.AppendEvidence(evt, "precision.distinctBy", PrecisionProfile.DistinctBy!, "rule-precision-profile");
         }
+
+        private static bool RedactRuleHost(string ruleId)
+        {
+            if (!ruleId.StartsWith("R", StringComparison.Ordinal)
+                || !int.TryParse(ruleId.AsSpan(1), out var number))
+                return false;
+            return number is >= 178 and <= 197
+                or >= 201 and <= 222
+                or >= 243 and <= 257
+                or 353 or 354;
+        }
+
+        private static bool RedactRuleDestination(string ruleId)
+            => ruleId is "R248" or "R249" or "R250";
+
+        private static bool IsHostEvidenceKey(string key)
+            => key.Equals("destinationHost", StringComparison.OrdinalIgnoreCase)
+                || key.Equals("network.bestHost", StringComparison.OrdinalIgnoreCase)
+                || key.Equals("clouddev.host", StringComparison.OrdinalIgnoreCase)
+                || key.Equals("httpapi.host", StringComparison.OrdinalIgnoreCase)
+                || key.Equals("http.host", StringComparison.OrdinalIgnoreCase)
+                || key.Equals("tls.sni", StringComparison.OrdinalIgnoreCase)
+                || key.Equals("dns.qname", StringComparison.OrdinalIgnoreCase)
+                || key.Equals("dns.rootDomain", StringComparison.OrdinalIgnoreCase)
+                || key.Equals("dns.answers", StringComparison.OrdinalIgnoreCase);
+
+        private static bool IsDestinationEvidenceKey(string key)
+            => key.Equals("destination", StringComparison.OrdinalIgnoreCase)
+                || key.Equals("network.destination", StringComparison.OrdinalIgnoreCase);
 
         private static string BuildLegacyEvidence(IEnumerable<DetectionEvidenceItem> items)
             => string.Join("; ", items
