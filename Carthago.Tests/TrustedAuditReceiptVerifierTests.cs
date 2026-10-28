@@ -253,6 +253,19 @@ public sealed class TrustedAuditReceiptVerifierTests
     }
 
     [Fact]
+    public void Different_Issuer_Aliases_Cannot_Share_One_Public_Key()
+    {
+        using var key = RSA.Create(2048);
+        var spki = Convert.ToBase64String(key.ExportSubjectPublicKeyInfo());
+        Assert.Throws<ArgumentException>(() => new TrustedAuditReceiptVerifier(
+            new[]
+            {
+                new TrustedAuditIssuer("winrm-issuer", spki, new[] { "R343" }),
+                new TrustedAuditIssuer("idp-issuer", spki, new[] { "R275" })
+            }));
+    }
+
+    [Fact]
     public void Invalid_Trust_Anchor_And_Undersized_Key_Cannot_Be_Registered()
     {
         using var small = RSA.Create(1024);
