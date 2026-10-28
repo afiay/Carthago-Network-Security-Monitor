@@ -11,6 +11,24 @@ namespace Carthago.Engine.Rules.Expansion
     // DNS payload or resolver approval from arbitrary packet Info text.
     internal static class NetworkBatch191195Evidence
     {
+        private static bool ExternalIp(string? address)
+        {
+            if (!IPAddress.TryParse(address, out var ip) || IPAddress.IsLoopback(ip)
+                || ip.IsIPv6LinkLocal || ip.IsIPv6Multicast || ip.IsIPv6SiteLocal)
+                return false;
+            var b = ip.GetAddressBytes();
+            if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
+                return (b[0] & 0xfe) != 0xfc; // IPv6 unique-local fc00::/7
+            if (b[0] is 0 or 10 or 127 || b[0] >= 224
+                || b[0] == 169 && b[1] == 254
+                || b[0] == 172 && b[1] is >= 16 and <= 31
+                || b[0] == 192 && b[1] == 168
+                || b[0] == 100 && b[1] is >= 64 and <= 127
+                || b[0] == 198 && b[1] is 18 or 19)
+                return false;
+            return true;
+        }
+
         internal static bool ValidPunycode(string label)
         {
             if (!label.StartsWith("xn--", StringComparison.OrdinalIgnoreCase)
@@ -27,19 +45,9 @@ namespace Carthago.Engine.Rules.Expansion
         {
             host = "";
             method = "";
-            if (!NetworkBatch166170Evidence.Http(r) || r.IsQuic
+            if (!NetworkBatch166170Evidence.Http(r) || r.IsQuic || !r.IsTcp || r.IsUdp
                 || string.IsNullOrWhiteSpace(r.HttpHost)
-                || !IPAddress.TryParse(r.Destination, out var dst)
-                || IPAddress.IsLoopback(dst) || dst.IsIPv6LinkLocal
-                || r.Destination!.StartsWith("10.", StringComparison.Ordinal)
-                || r.Destination.StartsWith("192.168.", StringComparison.Ordinal)
-                || r.Destination.StartsWith("172.16.", StringComparison.Ordinal)
-                || r.Destination.StartsWith("172.17.", StringComparison.Ordinal)
-                || r.Destination.StartsWith("172.18.", StringComparison.Ordinal)
-                || r.Destination.StartsWith("172.19.", StringComparison.Ordinal)
-                || r.Destination.StartsWith("172.2", StringComparison.Ordinal)
-                || r.Destination.StartsWith("172.30.", StringComparison.Ordinal)
-                || r.Destination.StartsWith("172.31.", StringComparison.Ordinal))
+                || !ExternalIp(r.Destination))
                 return false;
             host = r.HttpHost!.TrimEnd('.').ToLowerInvariant();
             if (host.Length is < 4 or > 253 || host.Contains('/') || host.Contains('@')
@@ -83,12 +91,7 @@ namespace Carthago.Engine.Rules.Expansion
             host = "";
             if (r.Id == Guid.Empty || !r.IsTcp || r.IsUdp || r.IsQuic
                 || r.DestinationPort != 853 || r.SourcePort == 853
-                || !IPAddress.TryParse(r.Destination, out var dst)
-                || IPAddress.IsLoopback(dst) || dst.IsIPv6LinkLocal
-                || dst.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork
-                || r.Destination!.StartsWith("10.", StringComparison.Ordinal)
-                || r.Destination.StartsWith("192.168.", StringComparison.Ordinal)
-                || (dst.GetAddressBytes()[0] == 172 && dst.GetAddressBytes()[1] is >= 16 and <= 31)
+                || !ExternalIp(r.Destination)
                 || !string.IsNullOrWhiteSpace(r.HttpMethod)
                 || !string.IsNullOrWhiteSpace(r.HttpHost)
                 || !string.IsNullOrWhiteSpace(r.HttpUri)
