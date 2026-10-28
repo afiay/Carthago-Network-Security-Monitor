@@ -384,6 +384,12 @@ namespace Carthago.Services
                         bool c2s = clientToServer;
                         if (ShouldAcceptSegment(tcpFlow, c2s, seq, l4Payload, out ReadOnlySpan<byte> normPayload))
                         {
+                            // -------- Bounded OT framing --------
+                            // Port is a routing hint; ApplicationProtocol is set
+                            // only when the captured bytes validate the frame.
+                            if (OtProtocolLight.TryIdentifyTcp(normPayload, sport, dport, out var otProtocol))
+                                rec.ApplicationProtocol = otProtocol;
+
                             // -------- HTTP --------
                             if (normPayload.Length >= 4 && HttpLight.TryParseHttp(normPayload, out var http))
                             {
@@ -476,6 +482,10 @@ namespace Carthago.Services
                     }
                     else if (isUdp)
                     {
+                        // -------- Bounded OT framing --------
+                        if (OtProtocolLight.TryIdentifyUdp(l4Payload, sport, dport, out var otProtocol))
+                            rec.ApplicationProtocol = otProtocol;
+
                         // -------- QUIC --------
                         if (l4Payload.Length >= 6 && QuicLight.TryDetectQuic(l4Payload, out var quic))
                         {
