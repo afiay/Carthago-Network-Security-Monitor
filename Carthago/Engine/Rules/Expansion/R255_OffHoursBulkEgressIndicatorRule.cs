@@ -17,7 +17,7 @@ namespace Carthago.Engine.Rules.Expansion
             var record = context.Record;
             if (!NetworkBatch251255Evidence.OffHoursDeclared(record, context.TimestampUtc, out var declared)
                 || IsLikelyApprovedSyncOrBackup(record)
-                || !IsLikelyAutomationProcess(record)
+                || !NetworkBatch251255Evidence.AutomationProcess(record)
                 || !_replay.Observe(record, context.TimestampUtc)) return NoMatch();
             var evidence = new List<DetectionEvidenceItem> {
                 new("matched_conditions", "utc_off_hours,large_declared_http_body,automation_process", "rule"),

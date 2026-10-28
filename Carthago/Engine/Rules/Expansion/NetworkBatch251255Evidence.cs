@@ -50,6 +50,41 @@ namespace Carthago.Engine.Rules.Expansion
                 "box.com", "slack.com", "amazonaws.com", "icloud.com" }
                 .Any(root => HostRoot(host, root));
         }
+        internal static bool AutomationProcess(TrafficRecord r)
+        {
+            var process = r.ProcessName?.Trim();
+            return process != null && new[] { "curl.exe", "wget.exe", "python.exe",
+                "powershell.exe", "pwsh.exe", "rclone.exe" }
+                .Any(p => process.Equals(p, StringComparison.OrdinalIgnoreCase));
+        }
+
+        // First observed by this detector instance and source, NOT a durable
+        // approved baseline or domain-registration novelty assertion.
+        internal sealed class FirstObservedWindow
+        {
+            private readonly object _gate = new();
+            private readonly System.Collections.Generic.Dictionary<string, DateTime> _seen =
+                new(StringComparer.OrdinalIgnoreCase);
+            internal bool Observe(TrafficRecord r, DateTime at)
+            {
+                if (r.Id == Guid.Empty || string.IsNullOrWhiteSpace(r.Source)
+                    || string.IsNullOrWhiteSpace(r.HttpHost)) return false;
+                var key = r.Source + "|" + r.HttpHost;
+                lock (_gate)
+                {
+                    if (_seen.ContainsKey(key)) return false;
+                    if (_seen.Count >= 2048)
+                    {
+                        foreach (var old in _seen.Where(e => at - e.Value > TimeSpan.FromHours(24))
+                            .Select(e => e.Key).ToArray()) _seen.Remove(old);
+                        if (_seen.Count >= 2048) return false;
+                    }
+                    _seen.Add(key, at);
+                    return true;
+                }
+            }
+        }
+
         internal static bool Multipart(TrafficRecord r)
         {
             if (!HttpUpload(r) || !UnknownHost(r)

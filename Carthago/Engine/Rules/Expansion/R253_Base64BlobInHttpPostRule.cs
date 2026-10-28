@@ -17,7 +17,7 @@ namespace Carthago.Engine.Rules.Expansion
             var record = context.Record;
             if (!NetworkBatch251255Evidence.EncodedQuery(record)
                 || IsLikelyApprovedSyncOrBackup(record)
-                || !IsLikelyAutomationProcess(record)
+                || !NetworkBatch251255Evidence.AutomationProcess(record)
                 || !_replay.Observe(record, context.TimestampUtc)) return NoMatch();
             var evidence = new List<DetectionEvidenceItem> {
                 new("matched_conditions", "parsed_http_upload,base64_query_parameter,automation_process", "rule"),
