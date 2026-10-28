@@ -28,7 +28,7 @@ internal static class NetworkBatch256260Context
             r.ProcessName = "mimikatz.exe";
         }
         if (rule == 258 || rule == 259 || rule == 260) {
-            r.Source = "10." + rule + ".0.10";
+            r.Source = "10." + (rule - 200) + ".0.10";
             r.Destination = "198.51.100." + (rule - 200);
             r.HttpMethod = null; r.HttpHost = null; r.HttpUri = null;
             r.HttpRequestHeaders = null; r.ApplicationProtocol = null;
