@@ -76,7 +76,15 @@ namespace Carthago.Services.TrustedAudit
                             record.MachineName, record.Id, record.RecordId,
                             record.TimeCreated, out var observation, out _)
                         && observation != null)
-                        events.Add(observation);
+                    {
+                        // Reading the newest N events may still encounter old
+                        // entries on quiet machines. Do not surface stale
+                        // candidates as if they were current activity.
+                        var age = DateTimeOffset.UtcNow - observation.TimeUtc;
+                        if (age <= TimeSpan.FromMinutes(30)
+                            && age >= TimeSpan.FromMinutes(-2))
+                            events.Add(observation);
+                    }
                 }
             }
             catch (UnauthorizedAccessException)
