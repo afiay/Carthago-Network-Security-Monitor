@@ -20,4 +20,17 @@ internal static class NetworkBatch186195Context
             IpVersion = 4, SourcePort = 53, DestinationPort = 53000,
             Protocol = "DNS", ApplicationProtocol = "DNS", IsUdp = true,
             DnsQname = name, DnsQtype = "A", DnsIsResponse = true, DnsTtl = ttl, DnsRcode = "NOERROR" };
+    internal static TrafficRecord DohGet(string host = "resolver.example.net", string path = "/dns-query?dns=AAABAAABAAAAAAAA")
+    {
+        var r = NetworkBatch166175Context.Http(path);
+        r.Source = "10.186.0.10"; r.Destination = "9.9.9.9";
+        r.HttpHost = host; r.HttpRequestHeaders = "Host: " + host + "\r\nAccept: application/dns-message";
+        return r;
+    }
+    internal static TrafficRecord Dot(string host = "resolver.example.net")
+        => new() { Id = Guid.NewGuid(), Source = "10.186.0.10", Destination = "9.9.9.9",
+            IpVersion = 4, SourcePort = 55000, DestinationPort = 853,
+            Protocol = "TCP", ApplicationProtocol = "TLS", ApplicationService = "TLS",
+            IsTcp = true, Sni = host, TlsVersion = "TLS1.3", Length = 512, L4Len = 400 };
+
 }
