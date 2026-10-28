@@ -95,8 +95,11 @@ namespace Carthago.Engine.Rules.Expansion
             }
             if (filename.Length is < 5 or > 180 || filename.Contains('/') || filename.Contains('\\')
                 || filename.Contains("..", StringComparison.Ordinal)) return false;
+            // Out parameters cannot be captured by lambdas (CS1628).
+            // Snapshot only after validation to preserve the existing matching semantics.
+            var validatedFilename = filename;
             return new[] { ".php", ".phtml", ".phar", ".jsp", ".jspx", ".asp", ".aspx", ".ashx", ".cfm", ".war", ".jar" }
-                .Any(ext => filename.EndsWith(ext, StringComparison.OrdinalIgnoreCase));
+                .Any(ext => validatedFilename.EndsWith(ext, StringComparison.OrdinalIgnoreCase));
         }
         internal static bool MiningService(string leftOfRoot)
             => Regex.IsMatch(leftOfRoot, @"(?:^|\.)(?:pool|stratum|rig|solo|xmr|btc|eth)(?:[-0-9]|\.|$)",
