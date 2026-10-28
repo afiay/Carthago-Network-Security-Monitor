@@ -45,6 +45,8 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R204_TerraformStateFileAccessRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch181185Window _window = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
@@ -52,7 +54,9 @@ namespace Carthago.Engine.Rules.Expansion
                 return NoMatch();
 
             var host = BestHost(record);
-            if (string.IsNullOrWhiteSpace(host) || (!IsExternalAddress(host) && !IsCloudStorageHost(host)))
+            if (string.IsNullOrWhiteSpace(host) || (!IsExternalAddress(host) && !IsCloudStorageHost(host))
+                || _window.Observe(record, $"{Descriptor.RuleId}:{record.Source}:{host}",
+                    statePath, context.TimestampUtc, TimeSpan.FromMinutes(15), distinct: false) == 0)
                 return NoMatch();
 
             var evidence = new List<DetectionEvidenceItem>

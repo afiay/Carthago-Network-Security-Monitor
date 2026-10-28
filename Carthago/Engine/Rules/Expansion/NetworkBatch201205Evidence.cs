@@ -23,8 +23,7 @@ namespace Carthago.Engine.Rules.Expansion
         {
             classifier = "";
             if (!Http(r, out var uri) || !r.HttpMethod!.Equals("POST", StringComparison.OrdinalIgnoreCase)
-                || !(r.DestinationPort == 6443
-                    || r.HttpHost!.Equals("kubernetes.default.svc", StringComparison.OrdinalIgnoreCase)
+                || !(r.HttpHost!.Equals("kubernetes.default.svc", StringComparison.OrdinalIgnoreCase)
                     || r.HttpHost.Equals("kubernetes.default.svc.cluster.local", StringComparison.OrdinalIgnoreCase)))
                 return false;
             var segments = uri.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
@@ -121,7 +120,9 @@ namespace Carthago.Engine.Rules.Expansion
                 var parts = pair.Split('=', 2);
                 if (parts.Length != 2 || !names.Contains(parts[0], StringComparer.OrdinalIgnoreCase))
                     continue;
-                var value = Uri.UnescapeDataString(parts[1]);
+                string value;
+                try { value = Uri.UnescapeDataString(parts[1]); }
+                catch (UriFormatException) { continue; }
                 if (value.Length is < 16 or > 512
                     || value.Contains("example", StringComparison.OrdinalIgnoreCase)
                     || value.Contains("placeholder", StringComparison.OrdinalIgnoreCase)

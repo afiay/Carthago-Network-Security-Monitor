@@ -46,11 +46,15 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R201_KubernetesServiceAccountTokenAccessRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch181185Window _window = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
             if (IsLikelyKubernetesComponentProcess(record.ProcessName)
-                || !NetworkBatch201205Evidence.KubernetesTokenRequest(record, out var classifier))
+                || !NetworkBatch201205Evidence.KubernetesTokenRequest(record, out var classifier)
+                || _window.Observe(record, $"{Descriptor.RuleId}:{record.Source}:{record.Destination}",
+                    classifier, context.TimestampUtc, TimeSpan.FromMinutes(15), distinct: false) == 0)
                 return NoMatch();
 
             var evidence = new List<DetectionEvidenceItem>

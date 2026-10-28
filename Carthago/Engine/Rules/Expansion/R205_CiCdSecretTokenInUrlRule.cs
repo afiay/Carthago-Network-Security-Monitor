@@ -45,9 +45,13 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R205_CiCdSecretTokenInUrlRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch181185Window _window = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!NetworkBatch201205Evidence.CiSecret(context.Record, out var parameterName))
+            if (!NetworkBatch201205Evidence.CiSecret(context.Record, out var parameterName)
+                || _window.Observe(context.Record, $"{Descriptor.RuleId}:{context.Record.Source}:{context.Record.HttpHost}",
+                    parameterName, context.TimestampUtc, TimeSpan.FromMinutes(15), distinct: false) == 0)
                 return NoMatch();
 
             var evidence = new List<DetectionEvidenceItem>
