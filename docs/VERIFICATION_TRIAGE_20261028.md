@@ -101,3 +101,19 @@ The `verify-local.ps1` diagnostic printer was improved after this run to surface
 Added an operator-pinned RSA-PSS/SHA-256 audit receipt verifier, an immutable verified-receipt capability, and 15 new xUnit invocations for signature tampering, wrong/unknown keys, wrong rule/operation scope, replay, time skew, invalid IDs/hashes, duplicate JSON properties, domain separation and fail-closed behavior. All receipts require actor/resource/session trace hashes. See `docs/development/TRUSTED_AUDIT_PROVENANCE_CONTRACT_20261028.md`.
 
 **No producer, RuleEvaluationContext bridge, or rule-match path was connected.** The four remaining replay failures are deliberately unchanged, and the new foundation is **NOT TESTED** on CARTHAGE. Synthetic ephemeral test key material is neither deployed nor shipped as trust anchors. Existing 4,797/4,797 results apply only to the preceding checkpoint.
+
+
+## 2026-10-28 audit-trust progress — source candidate, not yet tested
+
+The newly uploaded CARTHAGE `verify-local.ps1` console log confirms **benchmark PASS** and **`replay-expectations` FAIL**, with the same four mandatory blockers: `R343` / `WINRM_COMMAND_AUDIT_UNAVAILABLE`, `R295` / `K8S_POD_EXEC_AUDIT_UNAVAILABLE`, `R275` / `TRUSTED_DEVICE_CODE_ABUSE_EVENT_UNAVAILABLE`, and `R163` 0.62 confidence vs 0.65 fixture minimum. No new test counts are visible in the provided benchmark-only excerpt; do **not** call the newer trusted-audit tests green.
+
+Offline detection funnel: 45/48 malicious fixtures recognized, 4/48 Enterprise alerts and 0/98 benign alerts. This **does not establish field accuracy** or support disabling Shadow/approval gates.
+
+**Source-level work since last CARTHAGE green xUnit checkpoint:** the signed audit verifier now rejects alias issuer IDs sharing a canonical RSA public key and binds its immutable receipts to the verifier instance; a new `TrustedAuditReceiptCorrelation` component implements fail-closed, same-registry/same-subject association only. A separate xUnit suite covers cross-registry mixing, self-corroboration, repeated IDs, differing trace/actor/resource and temporal skew. **No production producer or alert path is connected**, and the four replay fixtures are unchanged. Different keys are not proof of independent producer control. Full compile/test, signed audit producer integration and actual event semantics remain pending.
+
+Focused next check on CARTHAGE:
+```powershell
+git pull --ff-only
+dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~TrustedAuditReceipt"
+```
+If focused tests pass, execute `.\verify-local.ps1 -Details -LiveOutput` once on a recorded HEAD. Do not promote certification while the four replay expectations fail.
