@@ -61,11 +61,29 @@ namespace Carthago.Engine.Rules.Expansion
             // confidence, approval and corroboration gates are considered.
             var record = context.Record;
             var process = record.ProcessName ?? string.Empty;
-            if (process.IndexOf("responder", StringComparison.OrdinalIgnoreCase) < 0
-                && process.IndexOf("inveigh", StringComparison.OrdinalIgnoreCase) < 0)
+            var separator = process.LastIndexOfAny(new[] { '/', '\\' });
+            if (separator >= 0)
+                process = process[(separator + 1)..];
+            // Substring matching misclassifies "responder-monitor.exe" and
+            // log descriptions as execution of the named tooling.
+            if (!process.Equals("responder", StringComparison.OrdinalIgnoreCase)
+                && !process.Equals("responder.py", StringComparison.OrdinalIgnoreCase)
+                && !process.Equals("inveigh", StringComparison.OrdinalIgnoreCase)
+                && !process.Equals("inveigh.exe", StringComparison.OrdinalIgnoreCase)
+                && !process.Equals("inveigh.ps1", StringComparison.OrdinalIgnoreCase))
                 return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
                     "RESPONDER_PROCESS_NOT_ATTRIBUTED",
                     "A Responder or Inveigh process attribution is required; name-resolution traffic alone is insufficient.");
+            if ((!record.IsTcp && !record.IsUdp) || (record.IsTcp && record.IsUdp))
+                return NoMatch(RuleNoMatchReasonCategory.MissingTelemetry,
+                    "NAME_RESOLUTION_TRANSPORT_NOT_ATTRIBUTED",
+                    "Exactly one observed transport must be attributed.");
+            var application = record.ApplicationProtocol ?? string.Empty;
+            if (!application.Equals("LLMNR", StringComparison.OrdinalIgnoreCase)
+                && !application.Equals("NBNS", StringComparison.OrdinalIgnoreCase))
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                    "NAME_RESOLUTION_PROTOCOL_NOT_ATTRIBUTED",
+                    "A trusted LLMNR/NBNS application classification is required.");
             return EvaluateSpec(context, Spec);
         }
     }

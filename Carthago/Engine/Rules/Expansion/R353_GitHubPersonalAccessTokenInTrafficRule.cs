@@ -54,6 +54,19 @@ namespace Carthago.Engine.Rules.Expansion
         public R353_GitHubPersonalAccessTokenInTrafficRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            var record = context.Record;
+            // Parser-owned token flags are only meaningful alongside an
+            // attributed cleartext HTTP request. HTTPS/SNI, Info and generic
+            // authorization vocabulary do not expose token bytes.
+            if (!record.IsTcp || record.IsUdp
+                || !string.Equals(record.ApplicationProtocol, "HTTP", StringComparison.OrdinalIgnoreCase)
+                || string.IsNullOrWhiteSpace(record.HttpMethod)
+                || string.IsNullOrWhiteSpace(record.HttpUri))
+                return NoMatch(RuleNoMatchReasonCategory.MissingTelemetry,
+                    "CAPTURED_HTTP_REQUEST_NOT_ATTRIBUTED",
+                    "A parser-attributed TCP HTTP request is required before token-pattern evaluation.");
+            return EvaluateSpec(context, Spec);
+        }
     }
 }

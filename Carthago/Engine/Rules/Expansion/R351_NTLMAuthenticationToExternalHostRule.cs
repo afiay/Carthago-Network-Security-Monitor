@@ -59,8 +59,19 @@ namespace Carthago.Engine.Rules.Expansion
             // an NTLM authentication exchange. Preserve the existing outbound
             // boundary, confidence, approval and signal gates in EvaluateSpec.
             var record = context.Record;
-            var observedProtocol = string.Join(" ", record.Protocol, record.ApplicationProtocol, record.ApplicationService);
-            if (observedProtocol.IndexOf("NTLM", StringComparison.OrdinalIgnoreCase) < 0)
+            if (!record.IsTcp || record.IsUdp)
+                return NoMatch(RuleNoMatchReasonCategory.MissingTelemetry,
+                    "NTLM_TCP_TRANSPORT_NOT_ATTRIBUTED",
+                    "An attributed TCP transport is required for this NTLM exchange candidate.");
+            // A free-form Protocol/Info label is not a parser-attributed NTLM
+            // exchange. ApplicationProtocol/Service must be supplied by a
+            // trusted NTLM-aware producer (not currently PacketHandler).
+            var observedProtocol = record.ApplicationProtocol ?? string.Empty;
+            var observedService = record.ApplicationService ?? string.Empty;
+            if (!observedProtocol.Equals("NTLM", StringComparison.OrdinalIgnoreCase)
+                && !observedProtocol.Equals("NTLMSSP", StringComparison.OrdinalIgnoreCase)
+                && !observedService.Equals("NTLM", StringComparison.OrdinalIgnoreCase)
+                && !observedService.Equals("NTLMSSP", StringComparison.OrdinalIgnoreCase))
                 return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
                     "NTLM_PROTOCOL_NOT_ATTRIBUTED",
                     "An NTLM-attributed protocol observation is required; SMB alone is insufficient.");

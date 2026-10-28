@@ -60,6 +60,11 @@ namespace Carthago.Engine.Rules.Expansion
             // cannot establish a script-console HTTP probe. Require a parsed
             // request method and an exact console endpoint path.
             var record = context.Record;
+            if (!record.IsTcp || record.IsUdp
+                || !string.Equals(record.ApplicationProtocol, "HTTP", StringComparison.OrdinalIgnoreCase))
+                return NoMatch(RuleNoMatchReasonCategory.MissingTelemetry,
+                    "JENKINS_HTTP_PROTOCOL_NOT_ATTRIBUTED",
+                    "A parser-attributed TCP HTTP request is required.");
             var method = record.HttpMethod;
             var uri = record.HttpUri;
             if (string.IsNullOrWhiteSpace(method) || string.IsNullOrWhiteSpace(uri))
@@ -73,7 +78,17 @@ namespace Carthago.Engine.Rules.Expansion
                     "JENKINS_UNEXPECTED_HTTP_METHOD",
                     "Only observed GET or POST requests are eligible for this probe rule.");
 
-            var path = uri.Split('?', '#')[0].TrimEnd('/');
+            // PacketHandler provides origin-form request targets. Reject
+            // absolute-form or authority-relative targets whose authority
+            // cannot be reconciled with the captured Host.
+            var rawPath = uri.Split('?', '#')[0];
+            if (!rawPath.StartsWith("/", StringComparison.Ordinal)
+                || rawPath.StartsWith("//", StringComparison.Ordinal)
+                || rawPath.Contains('\\'))
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                    "JENKINS_REQUEST_TARGET_UNTRUSTED",
+                    "An origin-form Jenkins console request target is required.");
+            var path = rawPath.TrimEnd('/');
             if (!path.EndsWith("/script", StringComparison.OrdinalIgnoreCase)
                 && !path.EndsWith("/scriptText", StringComparison.OrdinalIgnoreCase))
                 return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
