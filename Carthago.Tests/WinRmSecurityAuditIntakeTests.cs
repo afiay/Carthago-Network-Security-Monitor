@@ -159,6 +159,36 @@ public sealed class WinRmSecurityAuditIntakeTests
     }
 
     [Theory]
+    [InlineData("cmd.exe")]
+    [InlineData(@"C:\Windows\System32\cmd.exe")]
+    [InlineData("rundll32.exe")]
+    [InlineData(@"C:\Temp\powershell.exe")]
+    [InlineData("pwsh.exe")]
+    [InlineData("powershell.exe-extra")]
+    [InlineData("\"powershell.exe\"extra")]
+    public void Unrelated_Command_Launcher_Cannot_Borrow_EncodedCommand_Flag(
+        string launcher)
+    {
+        var fields = ProcessFields();
+        fields["CommandLine"] = launcher + " -EncodedCommand " + Encoded();
+        Assert.False(WinRmSecurityAuditIntake.TryInspectUntrustedXml(
+            Xml(4688, 101, Start.AddMinutes(1), fields),
+            out var result, out _));
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void Quoted_Exact_PowerShell_Image_In_CommandLine_Remains_Candidate()
+    {
+        var fields = ProcessFields();
+        fields["CommandLine"] = "\"" + fields["NewProcessName"]
+            + "\" -NoProfile -EncodedCommand " + Encoded();
+        var observation = Inspect(4688, 101, Start.AddMinutes(1), fields);
+        Assert.Equal((uint)0x2222, observation.ProcessId);
+        Assert.False(observation.FromLocalSecurityLog);
+    }
+
+    [Theory]
     [InlineData("LogonType", "2")]
     [InlineData("TargetLogonId", "0x0")]
     [InlineData("IpAddress", "127.0.0.1")]
