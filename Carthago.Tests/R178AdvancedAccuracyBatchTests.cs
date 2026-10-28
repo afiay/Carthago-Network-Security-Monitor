@@ -49,6 +49,6 @@ public sealed class R178AdvancedAccuracyBatchTests
     {
         var p=new R178_DnsQueryForCryptoMiningPoolRule().PrecisionProfile;
         Assert.Equal(80,p.MinimumConfidence);
-        Assert.Equal(RuleRuntimeMode.Shadow,p.DefaultMode);
+        Assert.Equal(RuleRuntimeMode.Alert,p.DefaultMode);
     }
 }
