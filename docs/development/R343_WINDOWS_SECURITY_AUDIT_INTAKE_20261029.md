@@ -83,3 +83,27 @@ The readiness script now reports `NO MATCHES REPORTED (log access unverified)` w
 Use an **already-authorized** elevated administrator PowerShell session for *read-only diagnosis only*, if such permission is available and approved. Run `Get-WinEvent -ListLog Security` and `auditpol /get /subcategory:{0CCE922B-69AE-11D9-BED3-505054503030}`. For privacy, share only the access outcome and enabled/disabled audit status; do not share event contents or command lines. Granting Security-log read permissions or enabling auditing is a separate operator/security decision, not part of this task.
 
 The R343 producer and R343 replay remain unavailable; R295, R275 and R163 remain independent replay blockers. The corrected script is published but NOT YET RUN on CARTHAGE.
+
+## Elevated CARTHAGE verification — 2026-10-29
+
+An authorized elevated Windows PowerShell session returned the following **read-only** results:
+
+- Administrator token: `True`.
+- Security channel: `IsEnabled=True`, `RecordCount=35528`.
+- `auditpol /get /subcategory:{0CCE922B-69AE-11D9-BED3-505054503030}`: **Process Creation = No Auditing**.
+- A combined `Get-WinEvent` query over IDs 4624 and 4688 with `-MaxEvents 5` returned five recent **4624** events. Since the result limit applies to the combined query, this does **not** individually establish the absence of historical 4688 records.
+- An earlier non-elevated inspection had found the local `ProcessCreationIncludeCmdLine_Enabled` registry value not set. This is distinct from effective advanced audit policy.
+
+**Confirmed operational root cause:** native Security log access works under an already-authorized administrator token, but **Process Creation success auditing is currently disabled**, so Windows is not expected to generate new 4688 process-creation audit events. Without suitable 4688 process and command-line audit events the R343 intake cannot establish a WinRM PowerShell candidate. This is an OS telemetry prerequisite, not a bug in the detection rule.
+
+Microsoft's [Audit Process Creation policy](https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/audit-process-creation) documents generation of 4688; [Include command line in process creation events](https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-auditsettings) is an **independent** setting applied only when process creation auditing is enabled. It exposes process command lines **in plaintext** to Security-log readers and can contain passwords or personal data. Do not enable either policy without a separate operator decision covering log volume, retention, access restrictions and sensitive data.
+
+### Source-only readiness improvement
+
+The read-only inspector now accepts `-InspectAuditPolicy` and runs `auditpol /get /subcategory:{GUID} /r` without emitting the native CSV contents, hostnames or event text. It attempts to read the process creation success setting from the returned CSV row, labels unsupported/localized formats as unknown, and reports `NO AUDITING` / `SUCCESS AUDITING ENABLED` / `SUCCESS AUDITING NOT ENABLED` if the setting is recognized. The earlier `-InspectRecentEvents` option remains independently opt-in. It does NOT enable audit policies, grant access, modify registry or execute/simulate WinRM commands.
+
+**Current engineering boundary:** collector remains unsigned and opt-in; R343 still returns `WINRM_COMMAND_AUDIT_UNAVAILABLE`; R295, R275 and R163 replay gates remain independent. The new audit-policy parser is **published but not yet executed on CARTHAGE**; Windows PowerShell validation is pending. No new xUnit checkpoint since 4,851/4,851.
+
+Suggested read-only next command in the authorized elevated session, after pulling HEAD in the normal repo terminal:
+
+    .\scripts\inspect-winrm-audit-readiness.ps1 -InspectAuditPolicy -InspectRecentEvents
