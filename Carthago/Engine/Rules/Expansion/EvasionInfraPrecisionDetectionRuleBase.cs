@@ -136,7 +136,7 @@ namespace Carthago.Engine.Rules.Expansion
             string? cooldownKey = null)
         {
             var record = context.Record;
-            var host = Descriptor.RuleId is "R261" or "R262" or "R263" or "R264" or "R265" or "R266" or "R267" or "R268" or "R269" or "R270"
+            var host = Descriptor.RuleId is "R261" or "R262" or "R263" or "R264" or "R265" or "R266" or "R267" or "R268" or "R269" or "R270" or "R271" or "R272"
                 ? record.Destination : BestHost(record);
             var items = new List<DetectionEvidenceItem>
             {
@@ -151,9 +151,9 @@ namespace Carthago.Engine.Rules.Expansion
                 items.Add(new DetectionEvidenceItem("network.sourcePort", record.SourcePort.Value.ToString(CultureInfo.InvariantCulture), "network"));
             if (record.DestinationPort.HasValue)
                 items.Add(new DetectionEvidenceItem("network.destinationPort", record.DestinationPort.Value.ToString(CultureInfo.InvariantCulture), "network"));
-            if (Descriptor.RuleId is not ("R261" or "R262" or "R263" or "R264" or "R265" or "R266" or "R267" or "R268" or "R269" or "R270") && !string.IsNullOrWhiteSpace(record.ProcessName))
+            if (Descriptor.RuleId is not ("R261" or "R262" or "R263" or "R264" or "R265" or "R266" or "R267" or "R268" or "R269" or "R270" or "R271" or "R272") && !string.IsNullOrWhiteSpace(record.ProcessName))
                 items.Add(new DetectionEvidenceItem("process.name", record.ProcessName!, "process"));
-            if (Descriptor.RuleId is not ("R258" or "R259" or "R260" or "R261" or "R262" or "R263" or "R264" or "R265" or "R266" or "R267" or "R268" or "R269" or "R270")
+            if (Descriptor.RuleId is not ("R258" or "R259" or "R260" or "R261" or "R262" or "R263" or "R264" or "R265" or "R266" or "R267" or "R268" or "R269" or "R270" or "R271" or "R272")
                 && !string.IsNullOrWhiteSpace(record.Info))
                 items.Add(new DetectionEvidenceItem("event.info", ShortText(record.Info!, 240), "telemetry"));
 
@@ -169,7 +169,7 @@ namespace Carthago.Engine.Rules.Expansion
                 count,
                 window.HasValue ? (int)window.Value.TotalSeconds : 0);
 
-            if (Descriptor.RuleId is "R266" or "R267" or "R268" or "R269" or "R270")
+            if (Descriptor.RuleId is "R266" or "R267" or "R268" or "R269" or "R270" or "R271" or "R272")
             {
                 evt.DestinationHost = "[REDACTED]";
                 if (evt.StructuredEvidence != null)

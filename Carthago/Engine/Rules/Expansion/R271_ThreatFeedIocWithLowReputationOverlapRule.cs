@@ -21,14 +21,14 @@ namespace Carthago.Engine.Rules.Expansion
             ruleId: "R271",
             maturity: RulePrecisionMaturity.Validated,
             defaultMode: RuleRuntimeMode.Alert,
-            requiredTelemetry: new[] { RuleTelemetryKind.Flow, RuleTelemetryKind.Process },
-            requiredFields: new[] { "source", "destination_or_host", "protocol_or_process_or_info" },
-            evidenceFields: new[] { "network.source", "network.destination", "process.name", "event.info", "matched_conditions" },
+            requiredTelemetry: new[] { RuleTelemetryKind.Flow, RuleTelemetryKind.ThreatIntel },
+            requiredFields: new[] { "source", "destination_or_host", "protocol_or_port" },
+            evidenceFields: new[] { "network.source", "network.destination", "threatintel.feedConfidence", "reputation.score", "matched_conditions" },
             positiveConditions: new[]
             {
-                "The rule must observe concrete telemetry evidence tied to the named behavior.",
-                "The event must include a source and either a destination/host, process, protocol, or pipeline component.",
-                "Generic descriptor text alone must not produce a match."
+                "Exact source-IP match in a fresh local threat-feed snapshot is required.",
+                "Independent malicious source-IP reputation and typed inbound transport must corroborate the feed match.",
+                "Packet descriptions, host hints, and unverified reputation cannot substitute for a feed match."
             },
             negativeConditions: new[]
             {
@@ -49,38 +49,43 @@ namespace Carthago.Engine.Rules.Expansion
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!(HasThreatFeedIocLowReputationContext(record)))
-                return NoMatch();
+            // Match the same observed SOURCE IP in the locally loaded feed and the
+            // source-IP reputation enrichment. Never infer an IOC from packet Info.
+            if (!Carthago.Services.ThreatFeedService.TryMatch(record.Source ?? string.Empty, out var feed)
+                || !NetworkBatch271275Evidence.HasSourceOverlap(
+                    record, feed, Carthago.Services.ThreatFeedService.CurrentStats.LastBuild,
+                    context.TimestampUtc))
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                    "TRUSTED_SOURCE_IOC_REPUTATION_OVERLAP_REQUIRED",
+                    "A fresh exact source-IP feed match and independent source reputation are required.");
 
-            var count = 1;
             var evidence = new List<DetectionEvidenceItem>
             {
-                new("matched_conditions", "IocReputationOverlap,evidence_gated,threshold_met", "rule"),
-                new("rule.windowCount", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule")
+                new("matched_conditions", "exact_source_ip_feed_match,source_reputation_malicious,fresh_snapshot", "rule"),
+                new("threatintel.feedConfidence", feed.Confidence.ToString(System.Globalization.CultureInfo.InvariantCulture), "threat-intel"),
+                new("threatintel.sourceCount", feed.Sources.Length.ToString(System.Globalization.CultureInfo.InvariantCulture), "threat-intel"),
+                new("reputation.score", record.ReputationScore!.Value.ToString(System.Globalization.CultureInfo.InvariantCulture), "reputation"),
+                new("rule.windowCount", "1", "rule")
             };
             evidence.AddRange(AnalystContext(
-                "The same network event carries both IOC/feed-hit evidence and low-reputation/malicious classification evidence.",
-                "Severity is Critical because independent indicator and reputation signals overlapping on the same destination materially raises confidence.",
-                "Stale feeds, parked domains, and shared infrastructure can cause false positives; verify feed age and destination role.",
-                "Verify the source host role, owner, and recent process/startup changes.",
-                "Pivot on destination host, destination port, process name, and adjacent detections in the same time window.",
-                "Tune approved business systems explicitly instead of weakening the rule globally."));
+                "An inbound source IP exactly matches a fresh local feed snapshot and separately has a high malicious source-IP reputation score.",
+                "The two independently sourced classifications warrant triage, but do not prove malicious activity or compromise.",
+                "Shared IP infrastructure, stale reputation, and manual lookup timing may create misleading overlap.",
+                "Validate feed freshness and independent reputation provenance before escalation.",
+                "Review the inbound connection and the source-IP owner."));
 
             return MatchEvasionInfra(
-                context,
-                SeverityLevel.Critical,
-                "Threat-feed IOC also has low-reputation or malicious classification",
-                "IocReputationOverlap",
-                evidence,
+                context, SeverityLevel.Critical,
+                "Exact inbound source-IP threat-feed and reputation overlap",
+                "SourceIpFeedReputationOverlap", evidence,
                 confidence =>
                 {
-                    confidence.AddEvidence(0.34, "concrete-evidence");
-                    confidence.AddEvidence(0.22, "source-context");
-                    confidence.AddEvidence(0.18, "threshold-or-baseline");
+                    confidence.AddEvidence(0.34, "exact-feed-match");
+                    confidence.AddEvidence(0.22, "independent-source-reputation");
+                    confidence.AddEvidence(0.18, "freshness-and-transport");
                 },
-                count: count,
-                window: Profile.Window,
-                cooldownKey: $"{record.Source}:{BestHost(record)}:{record.DestinationPort ?? 0}:IocReputationOverlap");
+                count: 1, window: Profile.Window,
+                cooldownKey: $"{record.Source}:{record.Destination}:SourceIpFeedReputationOverlap");
         }
     }
 }

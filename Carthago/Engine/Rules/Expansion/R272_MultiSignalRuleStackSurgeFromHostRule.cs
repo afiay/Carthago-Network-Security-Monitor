@@ -26,9 +26,9 @@ namespace Carthago.Engine.Rules.Expansion
             evidenceFields: new[] { "network.source", "network.destination", "process.name", "event.info", "matched_conditions" },
             positiveConditions: new[]
             {
-                "The rule must observe concrete telemetry evidence tied to the named behavior.",
-                "The event must include a source and either a destination/host, process, protocol, or pipeline component.",
-                "Generic descriptor text alone must not produce a match."
+                "Requires distinct emitted rule-engine events with rule IDs, family, host, timestamp and provenance.",
+                "No trusted per-host detection-event correlation adapter is connected to TrafficRecord.",
+                "Fail closed until a trusted rule-event correlation adapter exists."
             },
             negativeConditions: new[]
             {
@@ -48,42 +48,12 @@ namespace Carthago.Engine.Rules.Expansion
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            var record = context.Record;
-            if (!(HasMultiSignalStackContext(record)))
-                return NoMatch();
-
-            var count = DistinctWithin($"signal-stack:{record.Source}", BestHost(record) + ":" + (record.DestinationPort ?? 0).ToString(System.Globalization.CultureInfo.InvariantCulture), context.TimestampUtc, TimeSpan.FromMinutes(10));
-            if (!(count >= 3))
-                return NoMatch();
-
-            var evidence = new List<DetectionEvidenceItem>
-            {
-                new("matched_conditions", "SignalStackSurge,evidence_gated,threshold_met", "rule"),
-                new("rule.windowCount", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule")
-            };
-            evidence.AddRange(AnalystContext(
-                "Telemetry explicitly reports a stack or surge of multiple rule families/signals for the same host.",
-                "Severity is High because a multi-signal surge is more reliable than a single atomic indicator and should drive triage priority.",
-                "Demo mode, replay tests, and synthetic validation runs can intentionally create multi-signal surges.",
-                "Verify the source host role, owner, and recent process/startup changes.",
-                "Pivot on destination host, destination port, process name, and adjacent detections in the same time window.",
-                "Tune approved business systems explicitly instead of weakening the rule globally."));
-
-            return MatchEvasionInfra(
-                context,
-                SeverityLevel.High,
-                "Multiple detection signals surged from the same host",
-                "SignalStackSurge",
-                evidence,
-                confidence =>
-                {
-                    confidence.AddEvidence(0.34, "concrete-evidence");
-                    confidence.AddEvidence(0.22, "source-context");
-                    confidence.AddEvidence(0.18, "threshold-or-baseline");
-                },
-                count: count,
-                window: Profile.Window,
-                cooldownKey: $"{record.Source}:{BestHost(record)}:{record.DestinationPort ?? 0}:SignalStackSurge");
+            // A packet record contains no rule-engine alert IDs, family identifiers,
+            // correlation provenance or distinct emitted detections. Counting
+            // destinations or packet descriptions would fabricate a rule-stack surge.
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "TRUSTED_RULE_EVENT_CORRELATION_UNAVAILABLE",
+                "R272 requires distinct, authenticated rule-engine detection events; packet traffic is not a substitute.");
         }
     }
 }

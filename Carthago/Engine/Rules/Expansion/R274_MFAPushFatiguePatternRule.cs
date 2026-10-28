@@ -26,7 +26,7 @@ namespace Carthago.Engine.Rules.Expansion
             RequiredTelemetry = new[] { RuleTelemetryKind.Identity, RuleTelemetryKind.Http, RuleTelemetryKind.GeoIp },
             RequiredFields = new[] { "source", "identity_or_user", "destination_or_host", "auth_or_http_context" },
             EvidenceFields = new[] { "identity.signal", "network.source", "network.destination", "matched_conditions", "rule.windowCount" },
-            PositiveConditions = new[] { "MFA Push Fatigue Pattern requires concrete IdentityAdvanced telemetry, not descriptor text.", "The source and destination or identity context must be present.", "At least two independent rule-specific signals must be present, or the rule-specific threshold must be met." },
+            PositiveConditions = new[] { "Requires trusted MFA prompt IDs, account, timestamps, delivery status and denial/approval outcomes.", "HTTP requests and packet descriptions cannot establish MFA fatigue." },
             NegativeConditions = new[] { "Do not match on rule names, category labels, or generic scanner banners alone.", "Do not match when source/destination context is absent.", "Do not match approved administrative, CI/CD, backup, mail migration, or monitoring paths unless explicit high-risk evidence is present." },
             FalsePositives = new[] { "Legitimate travel, VPN egress, identity-provider retries, or approved admin sessions can resemble these events." },
             TextIndicators = new[] { "mfa push", "push fatigue", "mfa denied", "mfa prompt", "number matching", "push notification", "duo push" },
@@ -54,6 +54,12 @@ namespace Carthago.Engine.Rules.Expansion
         public R274_MFAPushFatiguePatternRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            // Packet HTTP/Info fields do not carry authenticated MFA push event IDs,
+            // delivery/outcome status or account correlation.
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "AUTHENTICATED_MFA_PUSH_EVENTS_UNAVAILABLE",
+                "MFA fatigue requires trusted distinct prompts and their outcomes for one account.");
+        }
     }
 }

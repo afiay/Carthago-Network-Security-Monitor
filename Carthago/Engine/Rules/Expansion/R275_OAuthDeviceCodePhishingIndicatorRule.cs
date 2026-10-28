@@ -26,7 +26,7 @@ namespace Carthago.Engine.Rules.Expansion
             RequiredTelemetry = new[] { RuleTelemetryKind.Http },
             RequiredFields = new[] { "source", "destination_or_host", "http_any" },
             EvidenceFields = new[] { "identity.signal", "network.source", "network.destination", "matched_conditions", "rule.windowCount" },
-            PositiveConditions = new[] { "OAuth Device Code Phishing Indicator requires concrete IdentityAdvanced telemetry, not descriptor text.", "The source and destination or identity context must be present.", "At least two independent rule-specific signals must be present, or the rule-specific threshold must be met." },
+            PositiveConditions = new[] { "Requires a trusted IdP device-flow abuse event and independently corroborated phishing evidence.", "A device-code endpoint request or query parameters alone are not phishing proof." },
             NegativeConditions = new[] { "Do not match on rule names, category labels, or generic scanner banners alone.", "Do not match when source/destination context is absent.", "Do not match approved administrative, CI/CD, backup, mail migration, or monitoring paths unless explicit high-risk evidence is present." },
             FalsePositives = new[] { "Legitimate travel, VPN egress, identity-provider retries, or approved admin sessions can resemble these events." },
             TextIndicators = new[] { "device code", "device_code", "verification_uri", "user_code", "oauth device", "phishing" },
@@ -55,14 +55,12 @@ namespace Carthago.Engine.Rules.Expansion
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            // A normal device-code initiation is not phishing evidence. Require
-            // both a device-code and user-code indicator before scoring.
-            var uri = context.Record.HttpUri ?? string.Empty;
-            if (!uri.Contains("device_code=", StringComparison.OrdinalIgnoreCase)
-                || !uri.Contains("user_code=", StringComparison.OrdinalIgnoreCase))
-                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence, "DEVICE_CODE_ABUSE_NOT_OBSERVED", "Device-code initiation alone does not establish phishing.");
-
-            return EvaluateSpec(context, Spec);
+            // Device-code initiation, even when query parameters mention user_code,
+            // is not evidence of phishing. HTTPS payload is not decrypted by the
+            // packet capture path and there is no trusted IdP device-flow audit.
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "TRUSTED_DEVICE_CODE_ABUSE_EVENT_UNAVAILABLE",
+                "A verified IdP audit event or independently corroborated phishing action is required.");
         }
     }
 }
