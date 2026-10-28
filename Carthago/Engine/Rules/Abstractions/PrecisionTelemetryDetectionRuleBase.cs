@@ -222,6 +222,7 @@ namespace Carthago.Engine.Rules
                 || key.Equals("clouddev.host", StringComparison.OrdinalIgnoreCase)
                 || key.Equals("httpapi.host", StringComparison.OrdinalIgnoreCase)
                 || key.Equals("http.host", StringComparison.OrdinalIgnoreCase)
+                || key.Equals("tls.host", StringComparison.OrdinalIgnoreCase)
                 || key.Equals("tls.sni", StringComparison.OrdinalIgnoreCase)
                 || key.Equals("dns.qname", StringComparison.OrdinalIgnoreCase)
                 || key.Equals("dns.rootDomain", StringComparison.OrdinalIgnoreCase)
