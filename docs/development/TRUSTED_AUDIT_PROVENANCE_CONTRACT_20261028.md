@@ -14,7 +14,7 @@ Do not feed a JSON audit object, a guessed boolean, a self-signed local certific
 
 - `TrustedAuditIssuer`: operator-configured issuer ID, RSA subject-public-key-info (SPKI) and explicitly permitted rule IDs. Only an operator-controlled configuration may supply trusted issuers. No input from `TrafficRecord`, replay JSON or a packet may modify trust anchors.
 - `SignedAuditEnvelope`: envelope issuer, base64 JSON claim bytes and detached base64 RSA-PSS/SHA-256 signature, verified over the exact `CARTHAGO-TRUSTED-AUDIT-V1\n` domain prefix plus claim bytes.
-- `AuditClaim`: metadata only—rule/operation, receipt UUID, UTC occurrence, source/destination IPs, pseudonymous actor hash and resource hash. Do not include raw commands, JWTs, access tokens, device codes, HTTP secrets, usernames or request bodies.
+- `AuditClaim`: metadata only—rule/operation, receipt UUID, UTC occurrence, source/destination IPs, pseudonymous actor hash, resource hash **and mandatory session/trace hash**. Do not include raw commands, JWTs, access tokens, device codes, HTTP secrets, usernames or request bodies.
 - `VerifiedAuditReceipt`: immutable output with an **internal constructor**; unsigned input cannot directly instantiate it.
 - `TrustedAuditReceiptVerifier`: pinned key validation (RSA 2048 bits or stronger), issuer-to-rule scope, exact operation mapping, capped input bytes, duplicate/unknown JSON field rejection, strict UTC freshness (10-minute age; 2-minute future tolerance), and a bounded, fail-closed consumed-ID cache.
 
@@ -27,7 +27,7 @@ Allowed rule/operation pairs are fixed in code:
 | R275 | `OAuthDeviceFlowAbuseConfirmed` | Trusted IdP audit plus **independent** evidence of phishing action |
 | R163 | `HttpMetadataRequestCausallyLinked` | Trusted request/trace/identity link tying untrusted inbound handling to outgoing IMDS credential request |
 
-**A valid signature is necessary but not sufficient for an alert.** The claim's factual source must be authenticated by the producer, the issuer must be configured and scoped by an operator, and the consumer must bind the event to an actual rule's affected entity, actor, resource, session/trace and time. **IP + adjacent timestamp alone is insufficient** for R163, Kubernetes, WinRM or OAuth abuse. The current `RuleEvaluationContext` does not consume `VerifiedAuditReceipt`.
+**A valid signature is necessary but not sufficient for an alert.** The claim's factual source must be authenticated by the producer, the issuer must be configured and scoped by an operator, and the consumer must bind the event to an actual rule's affected entity, actor, resource, signed session/trace hash and time. **IP + adjacent timestamp alone is insufficient** for R163, Kubernetes, WinRM or OAuth abuse. The current `RuleEvaluationContext` does not consume `VerifiedAuditReceipt`.
 
 ## Attack/failure cases covered by new xUnit tests
 
@@ -37,7 +37,7 @@ Allowed rule/operation pairs are fixed in code:
 - Cross-rule signer misuse and mismatched operation
 - Expired and future-dated claims
 - Exact replay of a previously consumed signed claim
-- Invalid actor hashes and contradictory endpoints
+- Invalid actor/session hashes and contradictory endpoints
 - Duplicate/unknown JSON properties, including a raw-command field
 - Truncated or malformed base64 signature/payload
 - Rejection of weak key sizes, unrecognized rule scopes, and empty trust configuration
@@ -49,7 +49,7 @@ The tests generate ephemeral local keys and do not mark any real operational out
 
 1. **Trust provisioning**: establish an operator-controlled, revocable signer registry. Never ship private keys, test keys or broad wildcard trust in the repository or in user-editable configuration. Define rollover and revocation before live use. The in-memory duplicate-ID set is intentionally capped at 8,192; saturation fails closed. A production cache will need durable bounded idempotency and metrics.
 2. **Real evidence producers**: connect authenticated Windows PowerShell/WinRM audit, Kubernetes API-server audit, and IdP audit via explicit vendor/OS authorization and integrity checks. Validate event signing identity and actual operation semantics before signing any claim. Distinguish executed, denied, attempted and authorized outcomes.
-3. **Causal binding**: introduce a session/trace correlation contract with demonstrated unique actor/resource and time binding. Do not join unrelated events solely by host/IP, timing or descriptive text.
+3. **Causal binding**: require a shared, authenticated local session/trace correlation ID and match it against the signed pseudonymous `TraceHash` field with unique actor/resource and time binding. Never derive that ID from an unverified HTTP query or packet Info. Do not join unrelated events solely by host/IP, timing or descriptive text.
 4. **Rule ingestion**: connect verified, tightly bound receipts to rules as an opt-in dependency. Preserve `R343`, `R295`, `R275` NoMatch defaults until complete. R163 remains a metadata credential-path observation, not proof of SSRF.
 5. **Accuracy and privacy**: add authenticated positive/negative/duplicate/reordered/spoofed tests, protect identifiers from export, and measure true positive / false positive alert-level behavior without lowering confidence floors. Do not substitute a synthetic signature for genuine external provenance.
 6. **Certification**: run full Windows compilation and tests on CARTHAGE, then separate replay quality; do not change the four existing malicious replay labels or expected minimum confidence solely to obtain a green gate.
