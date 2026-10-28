@@ -24,7 +24,9 @@ namespace Carthago.Engine.Rules.Expansion
                 && !ip.Equals(IPAddress.Any) && !ip.Equals(IPAddress.IPv6Any)
                 && ip.GetAddressBytes()[0] != 0
                 && (ip.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork
-                    || ip.GetAddressBytes()[0] is < 224);
+                    || ip.GetAddressBytes()[0] is < 224
+                        && !(ip.GetAddressBytes()[0] == 169 && ip.GetAddressBytes()[1] == 254)
+                        && !(ip.GetAddressBytes()[0] == 100 && ip.GetAddressBytes()[1] is >= 64 and <= 127));
         private static bool Endpoints(TrafficRecord r, out IPAddress source, out IPAddress destination)
         {
             source = IPAddress.None; destination = IPAddress.None;
@@ -121,7 +123,8 @@ namespace Carthago.Engine.Rules.Expansion
                 || r.HttpMethod != null || r.TlsVersion != null || r.Sni != null
                 || r.IcmpTypeCode != null || r.DnsQname == null
                 || !UpdateDomains.Contains(r.DnsQname.TrimEnd('.').ToLowerInvariant())
-                || r.DnsRcode is not ("SERVFAIL" or "REFUSED"))
+                || !(string.Equals(r.DnsRcode, "SERVFAIL", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(r.DnsRcode, "REFUSED", StringComparison.OrdinalIgnoreCase)))
                 return false;
             rcode = r.DnsRcode.ToLowerInvariant();
             return true;
