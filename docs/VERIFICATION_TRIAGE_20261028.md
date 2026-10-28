@@ -144,3 +144,23 @@ Next focused validation:
     dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~WinRmSecurityAuditIntakeTests"
 
 After that passes, run the full verifier and capture exact HEAD. More Windows-specific telemetry verification and source-role governance are required before signing or considering detection promotion. No confidence floors, labels or Shadow/Alert policies changed.
+
+## CARTHAGE verification 2026-10-29 00:15 (+01:00) — 4,851 xUnit PASS
+
+The user-supplied local summary on checkout `290a327ab53da107867ac57fefa4a397143aa5a0` reports:
+
+- **4,851 passed, 0 failed, 0 skipped, 0 other**; TRX modified 2026-10-28 23:15:49 UTC and benchmark modified 23:15:59 UTC.
+- Benchmark stage **PASS**; **replay-expectations FAILED** for four unchanged cases:
+  - R343: WINRM_COMMAND_AUDIT_UNAVAILABLE
+  - R295: K8S_POD_EXEC_AUDIT_UNAVAILABLE
+  - R275: TRUSTED_DEVICE_CODE_ABUSE_EVENT_UNAVAILABLE
+  - R163: detected at 0.62, below malicious fixture minimum 0.65
+- 146 labeled offline fixtures: 48 malicious, 98 benign. Enterprise TP=4, FP=0, FN=44, TN=98; benign critical alerts=0. Synthetic fixture figures are not production accuracy statistics.
+
+**Verified scope:** the new Windows Security 4624/4688 candidate parser, local reader and adversarial regression tests compile and pass on CARTHAGE. The tests do not verify live Security-log permissions, actual process command audit configuration, or any authenticated WinRM command outcome. The signed producer and R343 alert integration remain absent.
+
+### Subsequent readiness command — unverified
+
+Added `scripts/inspect-winrm-audit-readiness.ps1` as an opt-in read-only Windows readiness check. Without flags it checks Security log metadata access and an optional 4688 include-command-line registry setting; with `-InspectRecentEvents` it only checks whether recent 4624/4688 IDs exist. The script does not output event XML, command lines or identities, enable audit policies, elevate permissions, create signed claims or feed R343.
+
+This command has NOT been executed on CARTHAGE. The four malicious replay expectations are deliberately unchanged and certification is still blocked.
