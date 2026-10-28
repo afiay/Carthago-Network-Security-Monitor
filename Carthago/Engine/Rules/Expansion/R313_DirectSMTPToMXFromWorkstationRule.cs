@@ -26,7 +26,7 @@ namespace Carthago.Engine.Rules.Expansion
             RequiredTelemetry = new[] { RuleTelemetryKind.Http, RuleTelemetryKind.Flow, RuleTelemetryKind.Dns },
             RequiredFields = new[] { "source", "destination_or_host", "mail_or_collaboration_context" },
             EvidenceFields = new[] { "mail.protocol", "http.path", "network.destination", "matched_conditions" },
-            PositiveConditions = new[] { "Direct SMTP To MX From Workstation requires concrete EmailCollaboration telemetry, not descriptor text.", "The source and destination or identity context must be present.", "At least two independent rule-specific signals must be present, or the rule-specific threshold must be met." },
+            PositiveConditions = new[] { "Require authenticated producer evidence and approved asset context before classifying the named behavior.", "Fail closed while the relevant identity, response, or outcome contracts are unavailable." },
             NegativeConditions = new[] { "Do not match on rule names, category labels, or generic scanner banners alone.", "Do not match when source/destination context is absent.", "Do not match approved administrative, CI/CD, backup, mail migration, or monitoring paths unless explicit high-risk evidence is present." },
             FalsePositives = new[] { "Mail migrations, eDiscovery exports, DLP tooling, and sanctioned collaboration automations can match these patterns." },
             TextIndicators = new[] { "smtp", "mx", "mail from", "rcpt to" },
@@ -45,7 +45,7 @@ namespace Carthago.Engine.Rules.Expansion
             Cooldown = TimeSpan.FromMinutes(20),
             DistinctBy = "source+destination+emailcollaboration+behavior",
             TuningKnobs = new[] { "Mode", "Threshold", "WindowSeconds", "CooldownSeconds", "ApprovedSources", "ApprovedDestinations", "ApprovedProcesses", "ApprovedServiceAccounts" },
-            RequiredTests = new[] { "positive R313 evidence-gated sample", "negative R313 descriptor-only sample", "negative R313 missing telemetry sample" },
+            RequiredTests = new[] { "negative apparent-positive without trusted producer", "negative spoofed and contradictory telemetry", "negative replay, privacy and profile invariants" },
             RequireOutboundExternal = true,
         };
 
@@ -54,6 +54,12 @@ namespace Carthago.Engine.Rules.Expansion
         public R313_DirectSMTPToMXFromWorkstationRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            // Packet metadata cannot authenticate the identity, policy or operation outcome required by this rule.
+            // Avoid promoting labels, ports, URLs or Info strings to trusted security events.
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "WORKSTATION_ROLE_AND_MX_DESTINATION_UNVERIFIED",
+                "TCP/25 or SMTP labels do not prove a workstation asset role or that the destination is an external MX rather than an approved relay. Require trusted asset inventory and resolved MX attribution.");
+        }
     }
 }
