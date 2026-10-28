@@ -11,7 +11,7 @@ public sealed class R194AdvancedAccuracyBatchTests
     private static RuleEvaluationContext At(TrafficRecord r, int seconds = 0) => NetworkBatch186195Context.At(r, seconds);
     private static TrafficRecord Q(string name, string type = "A") => NetworkBatch186195Context.Query(name, type);
 
-    private static TrafficRecord Get(string host="resolver.example.net",string path="/dns-query?dns=AAABAAABAAAAAAAA")
+    private static TrafficRecord Get(string host="resolver.example.net",string? path=null)
         => NetworkBatch186195Context.DohGet(host,path);
     [Fact] public async Task Typed_Get_Doh_Shape_On_Unapproved_Host_Qualifies()
         => Assert.True((await new R194_DohOverUncommonHostRule().EvaluateAsync(At(Get()))).Matched);
@@ -26,6 +26,8 @@ public sealed class R194AdvancedAccuracyBatchTests
         => Assert.False((await new R194_DohOverUncommonHostRule().EvaluateAsync(At(Get(path:"/dns-query-status?dns=AAABAAABAAAAAAAA")))).Matched);
     [Fact] public async Task Accept_Header_Alone_Not_Doh()
         => Assert.False((await new R194_DohOverUncommonHostRule().EvaluateAsync(At(Get(path:"/dns-query")))).Matched);
+    [Fact] public async Task Truncated_Dns_Wire_Question_Not_Doh()
+        => Assert.False((await new R194_DohOverUncommonHostRule().EvaluateAsync(At(Get(path:"/dns-query?dns=AAABAAABAAAAAAAA")))).Matched);
     [Fact] public async Task Missing_Dns_Mime_Not_Doh()
     {
         var r=Get();r.HttpRequestHeaders="Host: resolver.example.net";

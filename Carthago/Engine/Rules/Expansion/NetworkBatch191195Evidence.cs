@@ -41,6 +41,34 @@ namespace Carthago.Engine.Rules.Expansion
             catch (ArgumentException) { return false; }
         }
 
+        // GET dns= must decode to a DNS query with a complete first question.
+        // This checks observable request bytes, not an encrypted DNS response.
+        private static bool ValidDnsWireQuestion(string encoded)
+        {
+            try
+            {
+                var raw = encoded.Replace('-', '+').Replace('_', '/');
+                raw = raw.PadRight((raw.Length + 3) / 4 * 4, '=');
+                var bytes = Convert.FromBase64String(raw);
+                if (bytes.Length is < 18 or > 512 || (bytes[2] & 0x80) != 0
+                    || bytes[4] != 0 || bytes[5] != 1) return false;
+                var index = 12;
+                var labels = 0;
+                while (index < bytes.Length)
+                {
+                    var length = bytes[index++];
+                    if (length == 0) break;
+                    if (length > 63 || index + length > bytes.Length) return false;
+                    index += length; labels++;
+                    if (labels > 20) return false;
+                }
+                return labels > 0 && index + 4 <= bytes.Length
+                    && (bytes[index] != 0 || bytes[index + 1] != 0)
+                    && bytes[index + 2] == 0 && bytes[index + 3] == 1;
+            }
+            catch (FormatException) { return false; }
+        }
+
         internal static bool Doh(TrafficRecord r, out string host, out string method)
         {
             host = "";
@@ -68,7 +96,7 @@ namespace Carthago.Engine.Rules.Expansion
                     var p = pair.Split('=', 2);
                     if (p.Length != 2 || !p[0].Equals("dns", StringComparison.OrdinalIgnoreCase)
                         || p[1].Length is < 16 or > 2048
-                        || p[1].Any(c => !(char.IsAsciiLetterOrDigit(c) || c is '-' or '_')))
+                        || !ValidDnsWireQuestion(p[1]))
                         continue;
                     method = "GET"; return true;
                 }

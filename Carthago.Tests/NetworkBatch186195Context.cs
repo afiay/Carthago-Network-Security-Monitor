@@ -20,12 +20,20 @@ internal static class NetworkBatch186195Context
             IpVersion = 4, SourcePort = 53, DestinationPort = 53000,
             Protocol = "DNS", ApplicationProtocol = "DNS", IsUdp = true,
             DnsQname = name, DnsQtype = "A", DnsIsResponse = true, DnsTtl = ttl, DnsRcode = "NOERROR" };
-    internal static TrafficRecord DohGet(string host = "resolver.example.net", string path = "/dns-query?dns=AAABAAABAAAAAAAA")
+    internal static TrafficRecord DohGet(string host = "resolver.example.net", string? path = null)
     {
-        var r = NetworkBatch166175Context.Http(path);
+        var r = NetworkBatch166175Context.Http(path ?? "/dns-query?dns=" + WireDnsQuestion());
         r.Source = "10.186.0.10"; r.Destination = "9.9.9.9";
         r.HttpHost = host; r.HttpRequestHeaders = "Host: " + host + "\r\nAccept: application/dns-message";
         return r;
+    }
+    private static string WireDnsQuestion()
+    {
+        var message = new byte[] { 0x12, 0x34, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x07, (byte)'e', (byte)'x', (byte)'a', (byte)'m',
+            (byte)'p', (byte)'l', (byte)'e', 0x03, (byte)'o', (byte)'r', (byte)'g',
+            0x00, 0x00, 0x01, 0x00, 0x01 };
+        return Convert.ToBase64String(message).TrimEnd('=').Replace('+', '-').Replace('/', '_');
     }
     internal static TrafficRecord Dot(string host = "resolver.example.net")
         => new() { Id = Guid.NewGuid(), Source = "10.186.0.10", Destination = "9.9.9.9",
