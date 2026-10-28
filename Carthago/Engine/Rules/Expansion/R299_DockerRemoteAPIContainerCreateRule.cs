@@ -26,7 +26,7 @@ namespace Carthago.Engine.Rules.Expansion
             RequiredTelemetry = new[] { RuleTelemetryKind.Http, RuleTelemetryKind.Flow, RuleTelemetryKind.Process },
             RequiredFields = new[] { "source", "destination_or_host", "kubernetes_or_container_context" },
             EvidenceFields = new[] { "kubernetes.api.path", "network.source", "network.destination", "matched_conditions" },
-            PositiveConditions = new[] { "Docker Remote API Container Create requires concrete KubernetesContainer telemetry, not descriptor text.", "The source and destination or identity context must be present.", "At least two independent rule-specific signals must be present, or the rule-specific threshold must be met." },
+            PositiveConditions = new[] { "Require authenticated API, runtime or host-audit outcome from a trusted producer.", "Fail closed until validated provenance and approval context are available." },
             NegativeConditions = new[] { "Do not match on rule names, category labels, or generic scanner banners alone.", "Do not match when source/destination context is absent.", "Do not match approved administrative, CI/CD, backup, mail migration, or monitoring paths unless explicit high-risk evidence is present." },
             FalsePositives = new[] { "Cluster administrators, CI/CD runners, and vulnerability scanners can legitimately query Kubernetes or registry APIs." },
             TextIndicators = new[] { "docker remote api", "containers/create", "container create", "privileged" },
@@ -45,7 +45,7 @@ namespace Carthago.Engine.Rules.Expansion
             Cooldown = TimeSpan.FromMinutes(20),
             DistinctBy = "source+destination+kubernetescontainer+behavior",
             TuningKnobs = new[] { "Mode", "Threshold", "WindowSeconds", "CooldownSeconds", "ApprovedSources", "ApprovedDestinations", "ApprovedProcesses", "ApprovedServiceAccounts" },
-            RequiredTests = new[] { "positive R299 evidence-gated sample", "negative R299 descriptor-only sample", "negative R299 missing telemetry sample" },
+            RequiredTests = new[] { "negative R299 apparent positive without trusted producer", "negative R299 spoofed/contradictory evidence", "negative R299 replay, privacy and profile invariants" },
             RequireHttp = true,
         };
 
@@ -54,6 +54,12 @@ namespace Carthago.Engine.Rules.Expansion
         public R299_DockerRemoteAPIContainerCreateRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            // Network path/port labels and packet Info cannot authenticate this outcome.
+            // Do not claim a runtime or Kubernetes operation without trusted producer evidence.
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "DOCKER_CONTAINER_CREATE_AUDIT_UNAVAILABLE",
+                "No validated Docker Engine API endpoint identity and authenticated container-create result is connected; a POST request path alone does not prove container creation.");
+        }
     }
 }

@@ -26,7 +26,7 @@ namespace Carthago.Engine.Rules.Expansion
             RequiredTelemetry = new[] { RuleTelemetryKind.Http, RuleTelemetryKind.Flow, RuleTelemetryKind.Process },
             RequiredFields = new[] { "source", "destination_or_host", "kubernetes_or_container_context" },
             EvidenceFields = new[] { "kubernetes.api.path", "network.source", "network.destination", "matched_conditions" },
-            PositiveConditions = new[] { "Container Runtime Socket Exposure Probe requires concrete KubernetesContainer telemetry, not descriptor text.", "The source and destination or identity context must be present.", "At least two independent rule-specific signals must be present, or the rule-specific threshold must be met." },
+            PositiveConditions = new[] { "Require authenticated API, runtime or host-audit outcome from a trusted producer.", "Fail closed until validated provenance and approval context are available." },
             NegativeConditions = new[] { "Do not match on rule names, category labels, or generic scanner banners alone.", "Do not match when source/destination context is absent.", "Do not match approved administrative, CI/CD, backup, mail migration, or monitoring paths unless explicit high-risk evidence is present." },
             FalsePositives = new[] { "Cluster administrators, CI/CD runners, and vulnerability scanners can legitimately query Kubernetes or registry APIs." },
             TextIndicators = new[] { "docker.sock", "containerd.sock", "crio.sock", "runtime socket", "/containers/json" },
@@ -45,7 +45,7 @@ namespace Carthago.Engine.Rules.Expansion
             Cooldown = TimeSpan.FromMinutes(20),
             DistinctBy = "source+destination+kubernetescontainer+behavior",
             TuningKnobs = new[] { "Mode", "Threshold", "WindowSeconds", "CooldownSeconds", "ApprovedSources", "ApprovedDestinations", "ApprovedProcesses", "ApprovedServiceAccounts" },
-            RequiredTests = new[] { "positive R298 evidence-gated sample", "negative R298 descriptor-only sample", "negative R298 missing telemetry sample" },
+            RequiredTests = new[] { "negative R298 apparent positive without trusted producer", "negative R298 spoofed/contradictory evidence", "negative R298 replay, privacy and profile invariants" },
             RequireHttp = true,
         };
 
@@ -54,6 +54,12 @@ namespace Carthago.Engine.Rules.Expansion
         public R298_ContainerRuntimeSocketExposureProbeRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            // Network path/port labels and packet Info cannot authenticate this outcome.
+            // Do not claim a runtime or Kubernetes operation without trusted producer evidence.
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "RUNTIME_SOCKET_EXPOSURE_AUDIT_UNAVAILABLE",
+                "No trusted host runtime-socket exposure inventory or validated Docker/containerd/CRI API endpoint identity is available; a TCP port or path does not prove Unix socket exposure.");
+        }
     }
 }
