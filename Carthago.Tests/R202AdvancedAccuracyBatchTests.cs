@@ -50,6 +50,16 @@ public sealed class R202AdvancedAccuracyBatchTests
         Assert.False((await rule.EvaluateAsync(NetworkBatch201205Context.At(R(0), 10))).Matched);
         Assert.False((await rule.EvaluateAsync(NetworkBatch201205Context.At(R(1), 5))).Matched);
     }
+    [Fact] public async Task Registry_Host_And_Artifact_Are_Redacted()
+    {
+        var rule = new R202_DockerRegistryPushPullAnomalyRule();
+        Carthago.Engine.Rules.RuleEvaluationResult? last = null;
+        for (var i = 0; i < 6; i++) last = await rule.EvaluateAsync(NetworkBatch201205Context.At(R(i), i));
+        Assert.True(last!.Matched);
+        Assert.DoesNotContain(Assert.Single(last.Events).StructuredEvidence!.Items, e =>
+            e.Value.Contains("registry.external.example", StringComparison.Ordinal)
+            || e.Value.Contains("release-5", StringComparison.Ordinal));
+    }
     [Fact] public void Shadow_And_Confidence_Floor_Unchanged()
     {
         var p = new R202_DockerRegistryPushPullAnomalyRule().PrecisionProfile;

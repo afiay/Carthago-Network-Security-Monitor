@@ -57,6 +57,16 @@ public sealed class R203AdvancedAccuracyBatchTests
         Assert.False((await rule.EvaluateAsync(NetworkBatch201205Context.At(R(0), 10))).Matched);
         Assert.False((await rule.EvaluateAsync(NetworkBatch201205Context.At(R(1), 5))).Matched);
     }
+    [Fact] public async Task Registry_Host_And_Layer_Digest_Are_Redacted()
+    {
+        var rule = new R203_ContainerImageLayerBulkDownloadRule();
+        Carthago.Engine.Rules.RuleEvaluationResult? last = null;
+        for (var i = 0; i < 6; i++) last = await rule.EvaluateAsync(NetworkBatch201205Context.At(R(i), i));
+        Assert.True(last!.Matched);
+        Assert.DoesNotContain(Assert.Single(last.Events).StructuredEvidence!.Items, e =>
+            e.Value.Contains("registry.external.example", StringComparison.Ordinal)
+            || e.Value.Contains("sha256:", StringComparison.Ordinal));
+    }
     [Fact] public void Shadow_And_Confidence_Floor_Unchanged()
     {
         var p = new R203_ContainerImageLayerBulkDownloadRule().PrecisionProfile;
