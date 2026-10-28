@@ -1,0 +1,27 @@
+# R256–R260 — typed network evidence and conservative co-observation
+
+**CANDIDATE — UNVERIFIED.** Authored 2026-10-28 on `feature/carthago-reliability-hardening`. **59 advanced xUnit facts authored (R256=12; R257=11; R258=12; R259=12; R260=12), ZERO executed.** No build, xUnit, replay, benchmark, frozen holdout, CI, GitHub Actions or Windows runner.
+
+## Changed paths and commits
+
+Production: `Carthago/Engine/Rules/Expansion/NetworkBatch256260Evidence.cs`, `R256_InternalDataStagingServerBehaviorRule.cs`, `R257_ExfiltrationAfterCredentialAlertChainRule.cs`, `R258_IcmpDestinationUnreachableSpikeRule.cs`, `R259_TcpResetStormRule.cs`, `R260_RareTcpOptionFingerprintRule.cs`, `CloudDevPrecisionDetectionRuleBase.cs`, `EvasionInfraPrecisionDetectionRuleBase.cs`.
+
+Tests: `Carthago.Tests/NetworkBatch256260Context.cs`, `Carthago.Tests/R256AdvancedAccuracyBatchTests.cs` through `R260AdvancedAccuracyBatchTests.cs`. **59 authored, none executed.** Source `7372869c3f69126aee505917c60aa0af5c98604f`; initial tests `58ec8142a8fef5c0a2cd954b61e280d679b99632`; IPv4 fixture correction `088c85ddc0172aa798367730308748d9e9f5dbea`; typed-contradiction and bounded fingerprint correction `10dc2c66bec27a10cf274832a24823d1a937acc8`.
+
+## Rule contracts and authored advanced cases
+
+- **R256 (12):** Six distinct internal-to-internal cleartext HTTP archive/dump-named POST/PUT/PATCH requests within 30 minutes; exact typed HTTP request and Host consistency, single bounded declared Content-Length, safe filename suffix, explicit approved backup-process suppression. Tests: positive six, below-threshold five, benign path, Info spoof, external target, approved backup, duplicate packet ID, out-of-order, independent source, absent declared size, path/Info redaction, original Alert/80/threshold6. **Requests do not prove internal staging, file creation or bytes transferred.** The former 250 MiB packet-byte shortcut is not treated as delivered data.
+- **R257 (11):** Exact credential-associated process name on the *same* record as a parsed external cleartext HTTP upload request with declared length. Tests: positive co-observation, missing process, Info spoof, process-name substring, internal target, GET, missing Content-Length, TLS contradiction, replay/out-of-order, secret redaction/explicit chain-unverified summary, original Critical Alert/88. **No trusted upstream credential alert is exposed by RuleEvaluationContext/TrafficRecord. This is NOT a verified credential-alert-to-exfiltration chain.** Process attribution is unverified in live capture.
+- **R258 (12):** IPv4 ICMP type 3 or IPv6 ICMPv6 type 1 destination-unreachable code with valid typed protocol/IP version and eight distinct packet IDs per source/target/type-code in five minutes. Tests: threshold, below-threshold, echo benign, Info spoof, protocol/IP-version contradiction, replay, out-of-order, source isolation, Info redaction, contradictory application protocol, original Alert/75/threshold8.
+- **R259 (12):** Captured TCP RST flag bit on consistent TCP endpoint record, ten distinct packet IDs per source/target/port in five minutes. Tests: threshold, below-threshold, SYN benign, Info spoof, ICMP contradiction, SYN+RST contradiction, replay, out-of-order, destination-port isolation, Info redaction, HTTP contradiction, original Alert/75/threshold10.
+- **R260 (12):** Typed JA4T on SYN packet and a **change from this detector instance's first observed fingerprint** for the same source/destination/port, with bounded duplicate/out-of-order state and SHA256-derived fingerprint evidence. Tests: changed fingerprint, first observation benign, unchanged fingerprint, Info spoof, non-SYN, SYN+RST, malformed JA4T, replay/out-of-order, source isolation, raw fingerprint/Info redaction, TLS contradiction, original Alert/75/threshold1. **A changed fingerprint is NOT statistical rarity, approved baseline drift or proof of malicious traffic.** Live JA4T enrichment reachability is unverified.
+
+## State, privacy, reachability and verification restrictions
+
+The bounded windows are detector-instance-owned, monotonic and packet-ID deduplicated, capped at 512 keys/256 observations per key; capacity exhaustion fails closed. R256/R257 redact clouddev.host, http.path and destinationHost, including structured evidence. R258–R260 exclude untrusted packet Info from event evidence; R260 emits only a truncated SHA256 fingerprint key. No raw HTTP path, query credential or JA4T value is intentionally promoted into rule evidence.
+
+R256/R257 are HTTP request-shape only; Content-Length is declared body size, not transmitted bytes. R258/R259 typed ICMP/TCP fields exist in TrafficRecord and are populated by PacketHandler, but the new logic remains unexecuted. R260 JA4T may not be populated in the inspected PacketHandler path; positive fixtures are contract-only until capture reachability is verified. HTTPS is not decrypted and there is no complete TCP reassembly. No field precision, recall, F1 or emitted-alert accuracy claim is made.
+
+Original confidence floors, severity, default modes, thresholds, asset approvals, baseline-readiness gates and frozen evidence remain unchanged. Frozen R102 V1 FAILED 4/6, immutable; V2 requires independent licensed PCAP and analyst approval. The sole deferred Windows verifier `scripts/verify-all-rule-batches.ps1` remains unchanged and unexecuted.
+
+**Next consecutive rules: R261–R265, then R266–R270, unless the live branch advances.**
