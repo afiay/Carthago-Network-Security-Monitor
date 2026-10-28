@@ -48,39 +48,19 @@ namespace Carthago.Engine.Rules.Expansion
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            var record = context.Record;
-            if (!(IsOutboundExternal(record) && IsUserSpaceProxyProcess(record)))
-                return NoMatch();
-
-            var count = 1;
-            var evidence = new List<DetectionEvidenceItem>
-            {
-                new("matched_conditions", "UserSpaceProxy,evidence_gated,threshold_met", "rule"),
-                new("rule.windowCount", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule")
+            var r = context.Record;
+            if (!NetworkBatch261265Evidence.ProxyProcessEgress(r, out var process)) return NoMatch();
+            var evidence = new List<DetectionEvidenceItem> {
+                new("matched_conditions", "exact_proxy_process,typed_external_tcp_flow", "rule"),
+                new("process.basename", process, "process")
             };
-            evidence.AddRange(AnalystContext(
-                "A known user-space proxy/tunnel process was observed making outbound external connections.",
-                "Severity is Medium because ad-hoc proxies and tunnels can bypass normal network controls or create covert access paths.",
-                "Approved remote support tunnels and developer tunnels such as sanctioned ngrok/cloudflared use can be legitimate.",
-                "Verify the source host role, owner, and recent process/startup changes.",
-                "Pivot on destination host, destination port, process name, and adjacent detections in the same time window.",
-                "Tune approved business systems explicitly instead of weakening the rule globally."));
-
-            return MatchEvasionInfra(
-                context,
-                SeverityLevel.Medium,
-                "User-space proxy or tunnel process initiated external egress",
-                "UserSpaceProxy",
-                evidence,
-                confidence =>
-                {
-                    confidence.AddEvidence(0.34, "concrete-evidence");
-                    confidence.AddEvidence(0.22, "source-context");
-                    confidence.AddEvidence(0.18, "threshold-or-baseline");
-                },
-                count: count,
-                window: Profile.Window,
-                cooldownKey: $"{record.Source}:{BestHost(record)}:{record.DestinationPort ?? 0}:UserSpaceProxy");
+            evidence.AddRange(AnalystContext("An exact known proxy/tunnel process basename co-occurs with external TCP egress.",
+                "Process association depends on unverified capture enrichment and does not prove policy bypass.",
+                "Sanctioned remote-support and development tunnels are common false positives.",
+                "Check process ownership and explicit approved-process policy."));
+            return MatchEvasionInfra(context, SeverityLevel.Medium, "Proxy/tunnel process co-observed with external TCP egress",
+                "UserSpaceProxy", evidence, c => { c.AddEvidence(0.34, "exact-process"); c.AddEvidence(0.22, "typed-tcp-egress"); c.AddEvidence(0.18, "endpoint"); },
+                cooldownKey: r.Source + "|" + r.Destination + "|" + process);
         }
     }
 }

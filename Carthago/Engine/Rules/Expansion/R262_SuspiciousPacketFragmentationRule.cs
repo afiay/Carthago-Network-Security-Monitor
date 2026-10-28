@@ -46,44 +46,25 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R262_SuspiciousPacketFragmentationRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch256260Evidence.BoundedWindow _fragments = new();
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            var record = context.Record;
-            if (!(HasSuspiciousFragmentationContext(record)))
-                return NoMatch();
-
-            var count = CountWithin($"fragment:{record.Source}:{record.Destination}:{record.DestinationPort ?? 0}", context.TimestampUtc, TimeSpan.FromMinutes(10));
-            if (!(count >= 2))
-                return NoMatch();
-
-            var evidence = new List<DetectionEvidenceItem>
-            {
-                new("matched_conditions", "Fragmentation,evidence_gated,threshold_met", "rule"),
+            var r = context.Record;
+            if (!NetworkBatch261265Evidence.TinyFragment(r)) return NoMatch();
+            var key = r.Source + "|" + r.Destination + "|" + r.IpVersion;
+            var count = _fragments.Observe(r, context.TimestampUtc, key, TimeSpan.FromMinutes(10));
+            if (count < 2) return NoMatch();
+            var evidence = new List<DetectionEvidenceItem> {
+                new("matched_conditions", "typed_ipv4_noninitial_tiny_fragment,distinct_packet_ids", "rule"),
                 new("rule.windowCount", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule")
             };
-            evidence.AddRange(AnalystContext(
-                "Fragmentation telemetry indicates overlap, tiny fragments, offset abuse, or explicit evasion-like fragmentation.",
-                "Severity is High because overlapping or tiny fragments are common evasive delivery patterns against inspection and reassembly logic.",
-                "Path MTU issues, tunnels, and legacy devices can fragment traffic; tune known tunnel endpoints.",
-                "Verify the source host role, owner, and recent process/startup changes.",
-                "Pivot on destination host, destination port, process name, and adjacent detections in the same time window.",
-                "Tune approved business systems explicitly instead of weakening the rule globally."));
-
-            return MatchEvasionInfra(
-                context,
-                SeverityLevel.High,
-                "Suspicious packet fragmentation pattern observed",
-                "Fragmentation",
-                evidence,
-                confidence =>
-                {
-                    confidence.AddEvidence(0.34, "concrete-evidence");
-                    confidence.AddEvidence(0.22, "source-context");
-                    confidence.AddEvidence(0.18, "threshold-or-baseline");
-                },
-                count: count,
-                window: Profile.Window,
-                cooldownKey: $"{record.Source}:{BestHost(record)}:{record.DestinationPort ?? 0}:Fragmentation");
+            evidence.AddRange(AnalystContext("Two distinct typed tiny noninitial IPv4 fragments were reported within 10 minutes.",
+                "Tiny fragmentation can interfere with inspection, but does not establish overlap or successful evasion.",
+                "The current PacketHandler drops fragments: these positives are typed contract-only until capture integration exists.",
+                "Inspect capture-path fragment telemetry before considering promotion."));
+            return MatchEvasionInfra(context, SeverityLevel.High, "Typed tiny-fragment observations (capture reachability unverified)",
+                "Fragmentation", evidence, c => { c.AddEvidence(0.34, "typed-fragment"); c.AddEvidence(0.22, "distinct-packets"); c.AddEvidence(0.18, "bounded-window"); },
+                count: count, window: Profile.Window, cooldownKey: key + ":tiny-fragments");
         }
     }
 }

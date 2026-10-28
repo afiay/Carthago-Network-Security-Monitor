@@ -48,39 +48,19 @@ namespace Carthago.Engine.Rules.Expansion
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            var record = context.Record;
-            if (!(IsOutboundExternal(record) && IsTorDirectoryOrGuardContext(record)))
-                return NoMatch();
-
-            var count = 1;
-            var evidence = new List<DetectionEvidenceItem>
-            {
-                new("matched_conditions", "Tor,evidence_gated,threshold_met", "rule"),
-                new("rule.windowCount", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule")
+            var r = context.Record;
+            if (!NetworkBatch261265Evidence.TorProcessEgress(r, out var process)) return NoMatch();
+            var evidence = new List<DetectionEvidenceItem> {
+                new("matched_conditions", "exact_tor_process,typed_external_tcp_flow", "rule"),
+                new("process.basename", process, "process")
             };
-            evidence.AddRange(AnalystContext(
-                "The destination, service, port, or telemetry contains Tor guard/directory/onion evidence on outbound traffic.",
-                "Severity is High because Tor connectivity can provide anonymous command-and-control, exfiltration, or policy bypass paths.",
-                "Security research, privacy tooling, and sanctioned Tor tests may legitimately contact Tor infrastructure.",
-                "Verify the source host role, owner, and recent process/startup changes.",
-                "Pivot on destination host, destination port, process name, and adjacent detections in the same time window.",
-                "Tune approved business systems explicitly instead of weakening the rule globally."));
-
-            return MatchEvasionInfra(
-                context,
-                SeverityLevel.High,
-                "Tor directory, guard, SOCKS, or onion-related connection observed",
-                "Tor",
-                evidence,
-                confidence =>
-                {
-                    confidence.AddEvidence(0.34, "concrete-evidence");
-                    confidence.AddEvidence(0.22, "source-context");
-                    confidence.AddEvidence(0.18, "threshold-or-baseline");
-                },
-                count: count,
-                window: Profile.Window,
-                cooldownKey: $"{record.Source}:{BestHost(record)}:{record.DestinationPort ?? 0}:Tor");
+            evidence.AddRange(AnalystContext("An exact Tor-process basename co-occurs with an external TCP connection.",
+                "Neither port nor process alone establishes a directory/guard role or an active Tor circuit.",
+                "Approved research and privacy tools may legitimately generate the same telemetry.",
+                "Corroborate against a trusted Tor relay inventory and approved process ownership."));
+            return MatchEvasionInfra(context, SeverityLevel.High, "Tor-process external TCP egress (guard role unverified)",
+                "Tor", evidence, c => { c.AddEvidence(0.34, "exact-tor-process"); c.AddEvidence(0.22, "typed-tcp-egress"); c.AddEvidence(0.18, "endpoint"); },
+                cooldownKey: r.Source + "|" + r.Destination + ":tor-process");
         }
     }
 }

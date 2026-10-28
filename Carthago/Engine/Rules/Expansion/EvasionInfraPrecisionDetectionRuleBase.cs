@@ -136,7 +136,8 @@ namespace Carthago.Engine.Rules.Expansion
             string? cooldownKey = null)
         {
             var record = context.Record;
-            var host = BestHost(record);
+            var host = Descriptor.RuleId is "R261" or "R262" or "R263" or "R264" or "R265"
+                ? record.Destination : BestHost(record);
             var items = new List<DetectionEvidenceItem>
             {
                 new("evasion.family", detectionFamily, "evasion-infra"),
@@ -150,9 +151,9 @@ namespace Carthago.Engine.Rules.Expansion
                 items.Add(new DetectionEvidenceItem("network.sourcePort", record.SourcePort.Value.ToString(CultureInfo.InvariantCulture), "network"));
             if (record.DestinationPort.HasValue)
                 items.Add(new DetectionEvidenceItem("network.destinationPort", record.DestinationPort.Value.ToString(CultureInfo.InvariantCulture), "network"));
-            if (!string.IsNullOrWhiteSpace(record.ProcessName))
+            if (Descriptor.RuleId is not ("R261" or "R262" or "R263" or "R264" or "R265") && !string.IsNullOrWhiteSpace(record.ProcessName))
                 items.Add(new DetectionEvidenceItem("process.name", record.ProcessName!, "process"));
-            if (Descriptor.RuleId is not ("R258" or "R259" or "R260")
+            if (Descriptor.RuleId is not ("R258" or "R259" or "R260" or "R261" or "R262" or "R263" or "R264" or "R265")
                 && !string.IsNullOrWhiteSpace(record.Info))
                 items.Add(new DetectionEvidenceItem("event.info", ShortText(record.Info!, 240), "telemetry"));
 

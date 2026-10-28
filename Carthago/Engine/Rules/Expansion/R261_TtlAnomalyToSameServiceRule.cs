@@ -46,45 +46,26 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R261_TtlAnomalyToSameServiceRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch261265Evidence.TtlWindow _observations = new();
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            var record = context.Record;
-            if (!(HasTtlAnomalyContext(record, out var ttlValue)))
-                return NoMatch();
-
-            var count = CountWithin($"ttl-anomaly:{record.Source}:{record.Destination}:{record.DestinationPort ?? 0}", context.TimestampUtc, TimeSpan.FromMinutes(15));
-            if (!(count >= 3))
-                return NoMatch();
-
-            var evidence = new List<DetectionEvidenceItem>
-            {
-                new("matched_conditions", "TtlAnomaly,evidence_gated,threshold_met", "rule"),
-                new("rule.windowCount", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule")
+            var r = context.Record;
+            if (!NetworkBatch261265Evidence.ValidFlow(r) || !NetworkBatch261265Evidence.Ttl(r, out var ttl)) return NoMatch();
+            var key = r.Source + "|" + r.Destination + "|" + (r.DestinationPort ?? 0);
+            var count = _observations.Observe(r, context.TimestampUtc, key, ttl);
+            if (count < 3) return NoMatch();
+            var evidence = new List<DetectionEvidenceItem> {
+                new("matched_conditions", "wire_ttl,instance_scoped_change,distinct_packet_ids", "rule"),
+                new("rule.windowCount", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
+                new("network.ttl", ttl.ToString(System.Globalization.CultureInfo.InvariantCulture), "network")
             };
-            if (!string.IsNullOrWhiteSpace(ttlValue)) evidence.Add(new DetectionEvidenceItem("network.ttl", ttlValue, "network"));
-            evidence.AddRange(AnalystContext(
-                "Telemetry explicitly reported a TTL or hop-limit mismatch for traffic to the same service.",
-                "Severity is Low because TTL anomalies are weak alone, but useful when combined with spoofing, routing, proxy, or scanner evidence.",
-                "Asymmetric routing, tunnels, load balancers, and path changes can naturally change TTL values.",
-                "Verify the source host role, owner, and recent process/startup changes.",
-                "Pivot on destination host, destination port, process name, and adjacent detections in the same time window.",
-                "Tune approved business systems explicitly instead of weakening the rule globally."));
-
-            return MatchEvasionInfra(
-                context,
-                SeverityLevel.Low,
-                "TTL/hop-limit anomaly observed toward the same service",
-                "TtlAnomaly",
-                evidence,
-                confidence =>
-                {
-                    confidence.AddEvidence(0.34, "concrete-evidence");
-                    confidence.AddEvidence(0.22, "source-context");
-                    confidence.AddEvidence(0.18, "threshold-or-baseline");
-                },
-                count: count,
-                window: Profile.Window,
-                cooldownKey: $"{record.Source}:{BestHost(record)}:{record.DestinationPort ?? 0}:TtlAnomaly");
+            evidence.AddRange(AnalystContext("Three distinct packets to the same service show a TTL spread of at least 16 within 15 minutes.",
+                "TTL spread is a path-change indicator, not evidence of spoofing or a malicious actor.",
+                "Routing asymmetry, NAT, VPNs and load balancing can change observed TTL.",
+                "Compare route changes with approved network maintenance."));
+            return MatchEvasionInfra(context, SeverityLevel.Low, "Observed TTL spread toward same service (path anomaly only)",
+                "TtlAnomaly", evidence, c => { c.AddEvidence(0.34, "wire-ttl"); c.AddEvidence(0.22, "same-service"); c.AddEvidence(0.18, "distinct-packets"); },
+                count: count, window: Profile.Window, cooldownKey: key + ":ttl-spread");
         }
     }
 }

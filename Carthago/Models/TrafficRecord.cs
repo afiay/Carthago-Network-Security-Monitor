@@ -76,6 +76,12 @@ namespace Carthago.Models
         private int? _l4Len;                    // transport payload length (TCP data or UDP payload)
         public int? L4Len { get => _l4Len; set { _l4Len = value; OnChanged(nameof(L4Len)); } }
 
+        // Typed IPv4 fragment metadata contract. PacketHandler currently drops fragments,
+        // so these fields are NOT populated on the live capture path (R262 contract-only).
+        public int? IpFragmentOffset { get; set; } // eight-octet units
+        public bool? IpMoreFragments { get; set; }
+        public int? IpFragmentPayloadLength { get; set; }
+
         // ===== L7 identification =====
         private string? _applicationProtocol;
         public string? ApplicationProtocol { get => _applicationProtocol; set { _applicationProtocol = value; OnChanged(nameof(ApplicationProtocol)); } }

@@ -48,39 +48,19 @@ namespace Carthago.Engine.Rules.Expansion
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            var record = context.Record;
-            if (!(IsOutboundExternal(record) && IsPublicVpnProxyDomainContact(record)))
-                return NoMatch();
-
-            var count = 1;
-            var evidence = new List<DetectionEvidenceItem>
-            {
-                new("matched_conditions", "PublicVpnProxy,evidence_gated,threshold_met", "rule"),
-                new("rule.windowCount", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule")
+            var r = context.Record;
+            if (!NetworkBatch261265Evidence.ProviderTls(r, out var provider)) return NoMatch();
+            var evidence = new List<DetectionEvidenceItem> {
+                new("matched_conditions", "typed_tls_sni,exact_provider_domain_suffix", "rule"),
+                new("provider.category", provider, "rule")
             };
-            evidence.AddRange(AnalystContext(
-                "The contacted host or telemetry matches public VPN/proxy provider evidence.",
-                "Severity is Medium because public VPN/proxy services can bypass egress governance and hide destination intent.",
-                "User privacy tools, travel VPNs, browser extensions, and sanctioned testing may contact these services.",
-                "Verify the source host role, owner, and recent process/startup changes.",
-                "Pivot on destination host, destination port, process name, and adjacent detections in the same time window.",
-                "Tune approved business systems explicitly instead of weakening the rule globally."));
-
-            return MatchEvasionInfra(
-                context,
-                SeverityLevel.Medium,
-                "Public VPN/proxy provider domain contacted from internal host",
-                "PublicVpnProxy",
-                evidence,
-                confidence =>
-                {
-                    confidence.AddEvidence(0.34, "concrete-evidence");
-                    confidence.AddEvidence(0.22, "source-context");
-                    confidence.AddEvidence(0.18, "threshold-or-baseline");
-                },
-                count: count,
-                window: Profile.Window,
-                cooldownKey: $"{record.Source}:{BestHost(record)}:{record.DestinationPort ?? 0}:PublicVpnProxy");
+            evidence.AddRange(AnalystContext("TLS SNI names a known public VPN provider on an external TCP connection.",
+                "SNI contact does not prove VPN tunnel establishment or use of a proxy.",
+                "Provider websites, support pages and security research can produce benign TLS SNI.",
+                "Corroborate with process identity and approved VPN policy before escalation."));
+            return MatchEvasionInfra(context, SeverityLevel.Medium, "Public VPN provider TLS SNI observed (tunnel unverified)",
+                "PublicVpnProxy", evidence, c => { c.AddEvidence(0.34, "typed-tls-sni"); c.AddEvidence(0.22, "exact-domain"); c.AddEvidence(0.18, "external-tcp"); },
+                cooldownKey: r.Source + "|" + r.Destination + "|" + provider);
         }
     }
 }
