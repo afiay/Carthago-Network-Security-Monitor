@@ -117,3 +117,17 @@ git pull --ff-only
 dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~TrustedAuditReceipt"
 ```
 If focused tests pass, execute `.\verify-local.ps1 -Details -LiveOutput` once on a recorded HEAD. Do not promote certification while the four replay expectations fail.
+
+
+## CARTHAGE verified 2026-10-29 00:01–00:02 (+01:00)
+
+**Git checkpoint tested:** `42ad48a40674ff116a9d01011e15faab7472554f` (from the local checkout report immediately preceding this uploaded TRX).
+
+The complete uploaded `carthago-tests.trx` reports:
+
+- **4,825 / 4,825 xUnit tests Passed**, 0 Failed, 0 Skipped, 0 inconclusive, 0 errors.
+- TRX run start `2026-10-29 00:01:18+01:00`; finish `2026-10-29 00:02:29+01:00`.
+- **28/28 `TrustedAuditReceipt*` test cases Passed**, including signer key alias rejection, verifier-registry isolation, signed trace/actor/resource mismatch, replay/expiry protections, domain separation, and unchanged rule fail-closed behavior.
+- The immediately preceding read-only benchmark summary on the same local checkout reported 146 replay samples (48 malicious; 98 benign), with **four unresolved replay expectations**: R343/WinRM authenticated command audit, R295/Kubernetes pod-exec audit, R275/trusted IdP device-flow abuse evidence, and R163 observed maximum confidence 0.62 versus malicious fixture minimum 0.65. Enterprise alert-level confusion: TP=4, FP=0, FN=44, TN=98.
+
+**Certification remains BLOCKED.** The new receipt verifier/correlation primitive is now xUnit-verified, **not integrated with trusted producer telemetry**. Synthetic signing is not a substitute for an authenticated source. Do not bypass issuer provisioning, independent source roles, trace binding, rule evidence requirements, policy shadow gates, or R163 confidence requirements. This file records results from distinct artifacts: the uploaded TRX proves xUnit; the replay metrics come from the separately supplied summary, not from the TRX.
