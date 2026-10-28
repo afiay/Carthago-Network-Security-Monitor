@@ -51,7 +51,8 @@ namespace Carthago.Engine.Rules.Expansion
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!NetworkBatch196200Evidence.MetadataRequest(record, "gcp")
+            if (!IsGcpMetadataCredentialRequest(record)
+                || !NetworkBatch196200Evidence.MetadataRequest(record, "gcp")
                 || _window.Observe(record, $"{Descriptor.RuleId}:{record.Source}:{record.Destination}",
                     record.HttpUri ?? "", context.TimestampUtc, TimeSpan.FromMinutes(15), distinct: false) == 0)
                 return NoMatch();

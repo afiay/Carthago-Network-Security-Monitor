@@ -36,6 +36,16 @@ public sealed class R199AdvancedAccuracyBatchTests
         var r = M(); r.HttpMethod = null; r.Info = "metadata credential retrieval successful";
         Assert.False(await Hit(r));
     }
+    [Fact] public async Task Approved_Guest_Agent_Activity_Remains_Suppressed()
+    {
+        var r = M(); r.ProcessName = "google-guest-agent";
+        Assert.False(await Hit(r));
+    }
+    [Fact] public async Task Contradictory_Tls_Transport_Is_Not_Cleartext_Imds()
+    {
+        var r = M(); r.Protocol = "HTTPS"; r.ApplicationProtocol = "HTTPS";
+        Assert.False(await Hit(r));
+    }
     [Fact] public async Task Duplicate_Packet_Id_Is_Rejected()
     {
         var rule = new R199_GcpMetadataCredentialRetrievalRule(); var r = M();

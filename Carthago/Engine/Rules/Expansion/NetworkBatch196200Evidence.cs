@@ -64,6 +64,7 @@ namespace Carthago.Engine.Rules.Expansion
             // Metadata credentials are only attributable to the link-local IMDS
             // socket. An HTTP Host string or packet Info cannot establish it.
             if (!NetworkBatch166170Evidence.Http(r)
+                || !NetworkBatch131135Evidence.CleartextHttpRequest(r)
                 || r.Destination != "169.254.169.254"
                 || !string.Equals(r.HttpMethod, "GET", StringComparison.OrdinalIgnoreCase)
                 || !NetworkBatch166170Evidence.Header(r, "Host", out var host)
