@@ -107,3 +107,17 @@ The read-only inspector now accepts `-InspectAuditPolicy` and runs `auditpol /ge
 Suggested read-only next command in the authorized elevated session, after pulling HEAD in the normal repo terminal:
 
     .\scripts\inspect-winrm-audit-readiness.ps1 -InspectAuditPolicy -InspectRecentEvents
+
+## R343 next increment - unsigned candidate source-path hardening (2026-10-29)
+
+After the successful 4688 PID/path smoke test and rollback on CARTHAGE, the existing R343 candidate-only intake was hardened **without enabling new Windows auditing or changing R343 detection behavior**.
+
+- 4688 parent executable path must identify `wsmprovhost.exe` under the configured Windows root's `System32` or `SysWOW64` directory. A basename under a writable or unrelated directory no longer qualifies.
+- The child process path must match the Windows PowerShell installation under `System32`/`SysWOW64` `WindowsPowerShell\v1.0\powershell.exe`, or the standard PowerShell 7/7-preview Program Files installation. Portable, user-writable and custom installations are deliberately left unclassified until separately vetted.
+- The captured CommandLine must start with the image's exact basename or its complete path (quoted when needed). An encoded-command flag found on another executable's command line no longer qualifies as a PowerShell process candidate.
+- Host roots and installed program paths are *candidate heuristics*, not a signature, ACL verification, host provenance or an authenticated WinRM outcome. Environment variables and event XML are not trust anchors.
+- Expanded `WinRmSecurityAuditIntakeTests.cs` with 9 parameterized path-spoof cases, an installed PowerShell 7 positive case, 7 unrelated-launcher cases and a quoted exact-path positive case (18 test invocations). Existing candidate-only evidence scope, `WINRM_COMMAND_AUDIT_UNAVAILABLE` and all replay gates are unchanged.
+
+Default PowerShell locations are documented by Microsoft: https://learn.microsoft.com/en-us/powershell/scripting/whats-new/migrating-from-windows-powershell-51-to-powershell-7 . WinRM process ancestry by itself is never grounds to create signed evidence.
+
+**Code status:** source changes published on `feature/carthago-reliability-hardening`; these new tests have **not been compiled or run on CARTHAGE**. Original host Process Creation auditing was already restored to `No Auditing` after Stage 1. The authenticated producer boundary is documented in `docs/development/R343_AUTHENTICATED_PRODUCER_BOUNDARY_20261029.md`; no service, installer, key or IPC has been deployed.
