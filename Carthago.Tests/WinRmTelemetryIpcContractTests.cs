@@ -35,6 +35,18 @@ public sealed class WinRmTelemetryIpcContractTests
         return Assert.IsType<WinRmTelemetryIpcSession>(session);
     }
 
+    private static bool TryAccept(WinRmTelemetryIpcContract contract,
+        WinRmTelemetryIpcSession? session, byte[] frame,
+        out WinRmTelemetryIpcCandidate? candidate, out string reason)
+    {
+        // Synthetic transport identity in TESTS ONLY; a real adapter must
+        // derive this independently from the Windows OS on every frame.
+        var peer = session == null ? null : new WinRmTelemetryTransportPeer(
+            Sid, Machine, 701, session.ChannelBinding);
+        return TryAccept(contract, session, peer, frame,
+            out candidate, out reason);
+    }
+
     private static Dictionary<string, object?> Payload(
         WinRmTelemetryIpcSession session, long sequence = 1,
         Guid? correlation = null, DateTimeOffset? at = null)
@@ -72,7 +84,7 @@ public sealed class WinRmTelemetryIpcContractTests
     {
         var contract = Contract();
         var session = Open(contract);
-        Assert.True(contract.TryAcceptFrame(session, Frame(Payload(session)),
+        Assert.True(TryAccept(contract, session, Frame(Payload(session)),
             out var accepted, out var reason), reason);
         var result = Assert.IsType<WinRmTelemetryIpcCandidate>(accepted);
         Assert.Equal("UNSIGNED_IPC_CANDIDATE_NOT_AUTHORIZED_FOR_ALERT", reason);
@@ -118,15 +130,43 @@ public sealed class WinRmTelemetryIpcContractTests
         var first = Contract();
         var second = Contract();
         var session = Open(first);
-        Assert.False(second.TryAcceptFrame(session, Frame(Payload(session)),
+        Assert.False(TryAccept(second, session, Frame(Payload(session)),
             out var foreign, out var foreignReason));
         Assert.Null(foreign);
         Assert.Equal("INVALID_SESSION", foreignReason);
         first.Close(session);
-        Assert.False(first.TryAcceptFrame(session, Frame(Payload(session)),
+        Assert.False(TryAccept(first, session, Frame(Payload(session)),
             out var closed, out var reason));
         Assert.Null(closed);
         Assert.Equal("SESSION_CLOSED_OR_EXPIRED", reason);
+    }
+
+    [Fact]
+    public void Each_Frame_Requires_The_Same_Transport_Verified_Sid_Pid_And_Channel()
+    {
+        var contract = Contract();
+        var session = Open(contract);
+        var frame = Frame(Payload(session));
+
+        var wrongPeers = new WinRmTelemetryTransportPeer?[]
+        {
+            null,
+            Peer(sid: "S-1-5-80-999", channel: session.ChannelBinding),
+            Peer(machine: "OTHERHOST", channel: session.ChannelBinding),
+            Peer(pid: 702, channel: session.ChannelBinding),
+            Peer(channel: Guid.NewGuid())
+        };
+        foreach (var peer in wrongPeers)
+        {
+            Assert.False(contract.TryAcceptFrame(session, peer, frame,
+                out var candidate, out var reason));
+            Assert.Null(candidate);
+            Assert.Equal("TRANSPORT_IDENTITY_MISMATCH", reason);
+        }
+        // Rejected frames do not advance sequence or burn correlation IDs.
+        Assert.True(TryAccept(contract, session, frame, out var valid, out var accepted),
+            accepted);
+        Assert.NotNull(valid);
     }
 
     [Fact]
@@ -170,11 +210,11 @@ public sealed class WinRmTelemetryIpcContractTests
         var session = Open(contract);
         var fields = Payload(session);
         fields[key] = replacement;
-        Assert.False(contract.TryAcceptFrame(session, Frame(fields),
+        Assert.False(TryAccept(contract, session, Frame(fields),
             out var candidate, out _));
         Assert.Null(candidate);
         // A rejected frame must not consume the first sequence number.
-        Assert.True(contract.TryAcceptFrame(session, Frame(Payload(session)),
+        Assert.True(TryAccept(contract, session, Frame(Payload(session)),
             out var valid, out var reason), reason);
         Assert.NotNull(valid);
     }
@@ -197,7 +237,7 @@ public sealed class WinRmTelemetryIpcContractTests
         var session = Open(contract);
         var fields = Payload(session);
         fields[extra] = "attacker-controlled";
-        Assert.False(contract.TryAcceptFrame(session, Frame(fields),
+        Assert.False(TryAccept(contract, session, Frame(fields),
             out var candidate, out var reason));
         Assert.Null(candidate);
         Assert.Equal("INVALID_CANDIDATE_SCHEMA", reason);
@@ -210,7 +250,7 @@ public sealed class WinRmTelemetryIpcContractTests
         var session = Open(contract);
         var serialized = JsonSerializer.Serialize(Payload(session));
         var spoofed = serialized.Insert(1, "\"Version\":1,");
-        Assert.False(contract.TryAcceptFrame(session, FrameText(spoofed),
+        Assert.False(TryAccept(contract, session, FrameText(spoofed),
             out var candidate, out var reason));
         Assert.Null(candidate);
         Assert.Equal("INVALID_CANDIDATE_SCHEMA", reason);
@@ -236,7 +276,7 @@ public sealed class WinRmTelemetryIpcContractTests
             FrameText("\uFEFF" + JsonSerializer.Serialize(Payload(session)))
         })
         {
-            Assert.False(contract.TryAcceptFrame(session, frame,
+            Assert.False(TryAccept(contract, session, frame,
                 out var candidate, out _));
             Assert.Null(candidate);
         }
@@ -247,15 +287,15 @@ public sealed class WinRmTelemetryIpcContractTests
     {
         var contract = Contract();
         var session = Open(contract);
-        Assert.False(contract.TryAcceptFrame(session, Frame(Payload(session, 2)),
+        Assert.False(TryAccept(contract, session, Frame(Payload(session, 2)),
             out _, out _));
-        Assert.True(contract.TryAcceptFrame(session, Frame(Payload(session, 1)),
+        Assert.True(TryAccept(contract, session, Frame(Payload(session, 1)),
             out _, out _));
-        Assert.False(contract.TryAcceptFrame(session, Frame(Payload(session, 1)),
+        Assert.False(TryAccept(contract, session, Frame(Payload(session, 1)),
             out _, out _));
-        Assert.False(contract.TryAcceptFrame(session, Frame(Payload(session, 3)),
+        Assert.False(TryAccept(contract, session, Frame(Payload(session, 3)),
             out _, out _));
-        Assert.True(contract.TryAcceptFrame(session, Frame(Payload(session, 2)),
+        Assert.True(TryAccept(contract, session, Frame(Payload(session, 2)),
             out _, out _));
     }
 
@@ -266,9 +306,9 @@ public sealed class WinRmTelemetryIpcContractTests
         var first = Open(contract);
         var second = Open(contract);
         var id = Guid.NewGuid();
-        Assert.True(contract.TryAcceptFrame(first,
+        Assert.True(TryAccept(contract, first,
             Frame(Payload(first, correlation: id)), out _, out _));
-        Assert.False(contract.TryAcceptFrame(second,
+        Assert.False(TryAccept(contract, second,
             Frame(Payload(second, correlation: id)), out var candidate,
             out var reason));
         Assert.Null(candidate);
@@ -282,7 +322,7 @@ public sealed class WinRmTelemetryIpcContractTests
         var first = Open(contract);
         var second = Open(contract);
         var forged = Payload(first);
-        Assert.False(contract.TryAcceptFrame(second, Frame(forged),
+        Assert.False(TryAccept(contract, second, Frame(forged),
             out var candidate, out var reason));
         Assert.Null(candidate);
         Assert.Equal("CHANNEL_OR_MACHINE_MISMATCH", reason);
@@ -296,7 +336,7 @@ public sealed class WinRmTelemetryIpcContractTests
         var contract = Contract();
         var session = Open(contract);
         var when = Now.AddSeconds(offsetSeconds);
-        Assert.False(contract.TryAcceptFrame(session,
+        Assert.False(TryAccept(contract, session,
             Frame(Payload(session, at: when)), out var candidate, out var reason));
         Assert.Null(candidate);
         Assert.Equal("STALE_OR_FUTURE_CANDIDATE", reason);
@@ -309,7 +349,7 @@ public sealed class WinRmTelemetryIpcContractTests
         var contract = Contract(() => clock);
         var session = Open(contract);
         clock = Now.AddMinutes(16);
-        Assert.False(contract.TryAcceptFrame(session,
+        Assert.False(TryAccept(contract, session,
             Frame(Payload(session, at: clock)), out var candidate, out var reason));
         Assert.Null(candidate);
         Assert.Equal("SESSION_CLOSED_OR_EXPIRED", reason);
@@ -341,11 +381,11 @@ public sealed class WinRmTelemetryIpcContractTests
         for (var sequence = 1; sequence <= WinRmTelemetryIpcContract.MaxAcceptedMessages;
             sequence++)
         {
-            Assert.True(contract.TryAcceptFrame(session,
+            Assert.True(TryAccept(contract, session,
                 Frame(Payload(session, sequence)), out _, out var reason), reason);
         }
 
-        Assert.False(contract.TryAcceptFrame(session,
+        Assert.False(TryAccept(contract, session,
             Frame(Payload(session, WinRmTelemetryIpcContract.MaxAcceptedMessages + 1)),
             out var rejected, out var rejection));
         Assert.Null(rejected);
