@@ -159,6 +159,25 @@ try {
                 Write-Host "FAIL: $($invalid.Count) replay sample(s) have invalid expectations:"
                 foreach ($sample in $invalid) {
                     Write-Host "  $($sample.name): $($sample.errors -join '; ')"
+                    # Display reason codes separately from the summary error.
+                    # This is diagnostic-only: it does not change expectations,
+                    # decision thresholds, labels, or the failing exit code.
+                    $missingIds = @($sample.missingExpectedMatches)
+                    foreach ($diagnostic in @($sample.expectedRuleDiagnostics |
+                        Where-Object { $_.ruleId -in $missingIds })) {
+                        Write-Host ("    {0}: outcome={1}" -f $diagnostic.ruleId, $diagnostic.outcome)
+                        $missingTelemetry = @($diagnostic.missingRequiredTelemetry |
+                            Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) })
+                        if ($missingTelemetry.Count -gt 0) {
+                            Write-Host ("      Missing telemetry: {0}" -f ($missingTelemetry -join ', '))
+                        }
+                        # NoMatchReasons can contain descriptions; bound the
+                        # output and emit only category/code, not arbitrary text.
+                        foreach ($reason in @($diagnostic.noMatchReasons | Select-Object -First 3)) {
+                            $reasonCode = ([string]$reason -split ':', 2)[0]
+                            Write-Host ("      Diagnostic: {0}" -f $reasonCode)
+                        }
+                    }
                 }
             }
             Write-Host "Replay quality: $($report.summary.replaySampleCount) samples; benign critical alerts: $($report.summary.benignCriticalAlertCount)"
