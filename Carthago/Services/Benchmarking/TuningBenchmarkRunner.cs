@@ -477,7 +477,7 @@ namespace Carthago.Services.Benchmarking
                     || hex.Any(static ch => !Uri.IsHexDigit(ch)))
                     throw new InvalidDataException("Invalid OT replay payload at index " + index);
                 var record = sample.Records[index];
-                if (!record.IsTcp || record.IsUdp || record.IsQuic || record.Protocol != "TCP"
+                if (!record.IsTcp || record.IsUdp || record.IsQuic || !string.Equals(record.Protocol, "TCP", StringComparison.OrdinalIgnoreCase)
                     || record.SourcePort is null || record.DestinationPort is null
                     || record.HttpMethod != null || record.TlsVersion != null
                     || sample.RawHttpRequestsByRecordIndex.ContainsKey(index))
