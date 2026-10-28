@@ -54,6 +54,10 @@ namespace Carthago.Engine.Rules.Expansion
         public R321_GmailAPIBulkMessageReadRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "GMAIL_READ_AUDIT_UNAVAILABLE",
+                "Gmail API request paths cannot establish authenticated bulk message reads or response counts. Require trusted authenticated producer evidence before matching.");
+        }
     }
 }

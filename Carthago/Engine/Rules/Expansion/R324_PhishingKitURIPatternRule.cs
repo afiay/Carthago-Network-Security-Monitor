@@ -55,6 +55,10 @@ namespace Carthago.Engine.Rules.Expansion
         public R324_PhishingKitURIPatternRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "VALIDATED_KIT_SIGNATURE_UNAVAILABLE",
+                "Generic login paths cannot establish a validated phishing-kit identity. Require trusted authenticated producer evidence before matching.");
+        }
     }
 }

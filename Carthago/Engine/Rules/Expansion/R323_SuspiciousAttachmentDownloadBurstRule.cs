@@ -54,6 +54,10 @@ namespace Carthago.Engine.Rules.Expansion
         public R323_SuspiciousAttachmentDownloadBurstRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "ATTACHMENT_RESULT_AUDIT_UNAVAILABLE",
+                "Attachment paths cannot establish authenticated downloads or bytes delivered. Require trusted authenticated producer evidence before matching.");
+        }
     }
 }

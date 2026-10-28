@@ -54,6 +54,10 @@ namespace Carthago.Engine.Rules.Expansion
         public R322_MailForwardingRuleCreationIndicatorRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "MAIL_FORWARDING_AUDIT_UNAVAILABLE",
+                "Mail forwarding paths cannot establish an authenticated successful mailbox-rule mutation. Require trusted authenticated producer evidence before matching.");
+        }
     }
 }

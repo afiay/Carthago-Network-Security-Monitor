@@ -54,6 +54,10 @@ namespace Carthago.Engine.Rules.Expansion
         public R325_LookalikeSenderDomainContactRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "SENDER_IDENTITY_AUDIT_UNAVAILABLE",
+                "DNS contact cannot establish authenticated sender identity or an approved protected-domain comparison. Require trusted authenticated producer evidence before matching.");
+        }
     }
 }
