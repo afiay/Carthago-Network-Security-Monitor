@@ -25,7 +25,7 @@ internal static class NetworkBatch231235Context
             Protocol = rule is 233 or 234 ? "TCP" : "UDP",
             IsTcp = rule is 233 or 234, IsUdp = rule is 231 or 232 or 235,
             ApplicationProtocol = rule == 231 ? "coap.discovery" : rule == 232 ? "mDNS"
-                : rule == 233 ? "HTTP" : rule == 234 ? "rtsp.play" : "wsdiscovery.probe",
+                : rule == 233 ? "HTTP" : rule == 234 ? "rtsp.play" : "onvif.wsdiscovery.probe",
             ApplicationService = rule == 232 ? "mDNS" : null,
             Length = 300, L4Len = 200, Info = "",
             DnsQname = rule == 232 ? "_http._tcp.local" : null,

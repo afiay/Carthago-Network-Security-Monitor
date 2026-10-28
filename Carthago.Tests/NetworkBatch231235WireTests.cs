@@ -34,8 +34,13 @@ public sealed class NetworkBatch231235WireTests
     }
     [Fact] public void Valid_WsDiscovery_Probe_Xml_Is_Recognized()
     {
-        var xml = "<s:Envelope xmlns:s='http://www.w3.org/2003/05/soap-envelope' xmlns:d='http://schemas.xmlsoap.org/ws/2005/04/discovery'><s:Body><d:Probe /></s:Body></s:Envelope>";
+        var xml = "<s:Envelope xmlns:s='http://www.w3.org/2003/05/soap-envelope' xmlns:d='http://schemas.xmlsoap.org/ws/2005/04/discovery' xmlns:dn='http://www.onvif.org/ver10/network/wsdl'><s:Body><d:Probe><d:Types>dn:NetworkVideoTransmitter</d:Types></d:Probe></s:Body></s:Envelope>";
         Assert.True(NetworkBatch231235Wire.WsDiscoveryProbe(Encoding.UTF8.GetBytes(xml), 51000, 3702));
+    }
+    [Fact] public void Generic_WsDiscovery_Probe_Without_Onvif_Type_Is_Rejected()
+    {
+        var xml = "<s:Envelope xmlns:s='http://www.w3.org/2003/05/soap-envelope' xmlns:d='http://schemas.xmlsoap.org/ws/2005/04/discovery'><s:Body><d:Probe /></s:Body></s:Envelope>";
+        Assert.False(NetworkBatch231235Wire.WsDiscoveryProbe(Encoding.UTF8.GetBytes(xml), 51000, 3702));
     }
     [Fact] public void Xml_Dtd_Is_Not_Accepted_As_Probe()
     {

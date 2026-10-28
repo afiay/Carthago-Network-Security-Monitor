@@ -66,11 +66,26 @@ namespace Carthago.Services
                     IgnoreComments = true
                 };
                 using var reader = XmlReader.Create(new StringReader(Encoding.UTF8.GetString(bytes)), settings);
+                bool probe = false, onvifVideoType = false;
                 while (reader.Read())
-                    if (reader.NodeType == XmlNodeType.Element && reader.LocalName == "Probe"
-                        && (reader.NamespaceURI == "http://schemas.xmlsoap.org/ws/2005/04/discovery"
-                            || reader.NamespaceURI == "http://docs.oasis-open.org/ws-dd/ns/discovery/2009/01"))
-                        return true;
+                {
+                    if (reader.NodeType != XmlNodeType.Element) continue;
+                    var discovery = reader.NamespaceURI == "http://schemas.xmlsoap.org/ws/2005/04/discovery"
+                        || reader.NamespaceURI == "http://docs.oasis-open.org/ws-dd/ns/discovery/2009/01";
+                    if (!discovery) continue;
+                    if (reader.LocalName == "Probe") probe = true;
+                    if (reader.LocalName == "Types")
+                    {
+                        var types = reader.ReadElementContentAsString();
+                        foreach (var name in types.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries))
+                            if (name.EndsWith(":NetworkVideoTransmitter", StringComparison.Ordinal)
+                                || name == "NetworkVideoTransmitter")
+                                onvifVideoType = true;
+                    }
+                }
+                return probe && onvifVideoType
+                    && Encoding.UTF8.GetString(bytes).Contains(
+                        "http://www.onvif.org/ver10/network/wsdl", StringComparison.Ordinal);
             }
             catch (XmlException) { }
             return false;

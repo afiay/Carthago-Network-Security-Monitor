@@ -525,7 +525,7 @@ namespace Carthago.Services
                         if (NetworkBatch231235Wire.CoapDiscovery(l4Payload, sport, dport))
                             rec.ApplicationProtocol = "coap.discovery";
                         if (NetworkBatch231235Wire.WsDiscoveryProbe(l4Payload, sport, dport))
-                            rec.ApplicationProtocol = "wsdiscovery.probe";
+                            rec.ApplicationProtocol = "onvif.wsdiscovery.probe";
                         if ((sport == 5353 || dport == 5353) &&
                             DnsLight.TryParse(l4Payload, isTcp: false, out var mdns))
                         {

@@ -68,7 +68,7 @@ namespace Carthago.Engine.Rules.Expansion
         internal static bool OnvifProbe(TrafficRecord r)
             => Flow(r, false) && r.DestinationPort == 3702
                 && r.Destination == "239.255.255.250"
-                && string.Equals(r.ApplicationProtocol, "wsdiscovery.probe", StringComparison.OrdinalIgnoreCase)
+                && string.Equals(r.ApplicationProtocol, "onvif.wsdiscovery.probe", StringComparison.OrdinalIgnoreCase)
                 && Private(r.Source) && Workstation(r.ProcessName)
                 && r.HttpMethod == null && r.DnsQname == null;
 
