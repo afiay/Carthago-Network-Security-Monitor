@@ -11,7 +11,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId: "R345",
             Name: "DCOM MMC20 Lateral Indicator",
             Category: "ActiveDirectoryWindows",
-            Description: "Detects DCOM MMC20 Lateral Indicator only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
+            Description: "Candidate R345 requires verified operation and provenance; packet-only indicators return NoMatch.",
             DefaultSeverity: SeverityLevel.High,
             ConfigKey: "Rules.R345.Enabled",
             EnabledByDefault: true);
@@ -21,7 +21,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId = "R345",
             Name = "DCOM MMC20 Lateral Indicator",
             Category = "ActiveDirectoryWindows",
-            Description = "Detects DCOM MMC20 Lateral Indicator only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
+            Description = "Candidate R345 requires verified operation and provenance; packet-only indicators return NoMatch.",
             Severity = SeverityLevel.High,
             RequiredTelemetry = new[] { RuleTelemetryKind.Flow, RuleTelemetryKind.Identity, RuleTelemetryKind.Process },
             RequiredFields = new[] { "source", "destination", "windows_protocol_context" },
@@ -54,6 +54,12 @@ namespace Carthago.Engine.Rules.Expansion
         public R345_DCOMMMC20LateralIndicatorRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            // Capture exposes network observations, not authenticated operation/outcome audit.
+            // Do not promote text indicators, port hints or unverified enrichment to attack evidence.
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "DCOM_MMC20_AUDIT_UNAVAILABLE",
+                "MMC20 DCOM lateral execution requires validated COM activation, authenticated remote principal and ExecuteShellCommand invocation/outcome.");
+        }
     }
 }

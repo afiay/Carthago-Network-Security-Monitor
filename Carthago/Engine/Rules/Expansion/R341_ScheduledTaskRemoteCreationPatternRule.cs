@@ -11,7 +11,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId: "R341",
             Name: "Scheduled Task Remote Creation Pattern",
             Category: "ActiveDirectoryWindows",
-            Description: "Detects Scheduled Task Remote Creation Pattern only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
+            Description: "Candidate R341 requires verified operation and provenance; packet-only indicators return NoMatch.",
             DefaultSeverity: SeverityLevel.High,
             ConfigKey: "Rules.R341.Enabled",
             EnabledByDefault: true);
@@ -21,7 +21,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId = "R341",
             Name = "Scheduled Task Remote Creation Pattern",
             Category = "ActiveDirectoryWindows",
-            Description = "Detects Scheduled Task Remote Creation Pattern only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
+            Description = "Candidate R341 requires verified operation and provenance; packet-only indicators return NoMatch.",
             Severity = SeverityLevel.High,
             RequiredTelemetry = new[] { RuleTelemetryKind.Flow, RuleTelemetryKind.Identity, RuleTelemetryKind.Process },
             RequiredFields = new[] { "source", "destination", "windows_protocol_context" },
@@ -54,6 +54,12 @@ namespace Carthago.Engine.Rules.Expansion
         public R341_ScheduledTaskRemoteCreationPatternRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            // Capture exposes network observations, not authenticated operation/outcome audit.
+            // Do not promote text indicators, port hints or unverified enrichment to attack evidence.
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "SCHEDULED_TASK_AUDIT_UNAVAILABLE",
+                "Remote scheduled-task creation requires authenticated Task Scheduler RPC operation, principal, target and accepted creation result.");
+        }
     }
 }

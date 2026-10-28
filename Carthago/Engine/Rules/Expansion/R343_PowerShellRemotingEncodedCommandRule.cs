@@ -11,7 +11,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId: "R343",
             Name: "PowerShell Remoting Encoded Command",
             Category: "ActiveDirectoryWindows",
-            Description: "Detects PowerShell Remoting Encoded Command only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
+            Description: "Candidate R343 requires verified operation and provenance; packet-only indicators return NoMatch.",
             DefaultSeverity: SeverityLevel.High,
             ConfigKey: "Rules.R343.Enabled",
             EnabledByDefault: true);
@@ -21,7 +21,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId = "R343",
             Name = "PowerShell Remoting Encoded Command",
             Category = "ActiveDirectoryWindows",
-            Description = "Detects PowerShell Remoting Encoded Command only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
+            Description = "Candidate R343 requires verified operation and provenance; packet-only indicators return NoMatch.",
             Severity = SeverityLevel.High,
             RequiredTelemetry = new[] { RuleTelemetryKind.Flow, RuleTelemetryKind.Identity, RuleTelemetryKind.Process },
             RequiredFields = new[] { "source", "destination", "windows_protocol_context" },
@@ -56,19 +56,11 @@ namespace Carthago.Engine.Rules.Expansion
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            var record = context.Record;
-            var info = record.Info ?? string.Empty;
-            var hasEncodedCommand = info.Contains("encodedcommand", StringComparison.OrdinalIgnoreCase)
-                                    || info.Contains("-enc ", StringComparison.OrdinalIgnoreCase);
-            var hasRemoting = info.Contains("Invoke-Command", StringComparison.OrdinalIgnoreCase)
-                              || info.Contains("Enter-PSSession", StringComparison.OrdinalIgnoreCase)
-                              || info.Contains("New-PSSession", StringComparison.OrdinalIgnoreCase);
-            var usesWinRmPort = record.DestinationPort is 5985 or 5986 || record.SourcePort is 5985 or 5986;
-
-            if (!hasEncodedCommand || !hasRemoting || !usesWinRmPort)
-                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence, "REMOTING_ENCODED_COMMAND_NOT_CORROBORATED", "Encoded PowerShell requires a remoting command and WinRM endpoint context.");
-
-            return EvaluateSpec(context, Spec);
+            // Capture exposes network observations, not authenticated operation/outcome audit.
+            // Do not promote text indicators, port hints or unverified enrichment to attack evidence.
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "WINRM_COMMAND_AUDIT_UNAVAILABLE",
+                "PowerShell remoting encoded-command attribution requires trusted WinRM operation and process command-line audit; Info text and port 5985/5986 are insufficient.");
         }
     }
 }
