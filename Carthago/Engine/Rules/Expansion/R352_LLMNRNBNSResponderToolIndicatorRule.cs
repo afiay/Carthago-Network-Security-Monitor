@@ -54,6 +54,19 @@ namespace Carthago.Engine.Rules.Expansion
         public R352_LLMNRNBNSResponderToolIndicatorRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            // LLMNR/NBNS is normal name resolution; a port, protocol label,
+            // or an Info string mentioning Responder is not tool attribution.
+            // A concrete process attribution is required before normal
+            // confidence, approval and corroboration gates are considered.
+            var record = context.Record;
+            var process = record.ProcessName ?? string.Empty;
+            if (process.IndexOf("responder", StringComparison.OrdinalIgnoreCase) < 0
+                && process.IndexOf("inveigh", StringComparison.OrdinalIgnoreCase) < 0)
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                    "RESPONDER_PROCESS_NOT_ATTRIBUTED",
+                    "A Responder or Inveigh process attribution is required; name-resolution traffic alone is insufficient.");
+            return EvaluateSpec(context, Spec);
+        }
     }
 }
