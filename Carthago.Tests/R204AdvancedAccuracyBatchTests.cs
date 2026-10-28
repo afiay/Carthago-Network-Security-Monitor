@@ -47,8 +47,11 @@ public sealed class R204AdvancedAccuracyBatchTests
     {
         var x = await new R204_TerraformStateFileAccessRule().EvaluateAsync(NetworkBatch201205Context.At(S()));
         Assert.True(x.Matched);
-        Assert.DoesNotContain(Assert.Single(x.Events).StructuredEvidence!.Items,
+        var evt = Assert.Single(x.Events);
+        Assert.DoesNotContain(evt.StructuredEvidence!.Items,
             e => e.Value.Contains("terraform.tfstate", StringComparison.Ordinal) || e.Value.Contains("state.external.example", StringComparison.Ordinal));
+        Assert.Equal("[REDACTED]", evt.DestinationHost);
+        Assert.DoesNotContain("state.external.example", evt.Evidence ?? "", StringComparison.Ordinal);
     }
     [Fact] public void Alert_And_Confidence_Floor_Unchanged()
     {
