@@ -26,7 +26,7 @@ namespace Carthago.Engine.Rules.Expansion
             RequiredTelemetry = new[] { RuleTelemetryKind.Http, RuleTelemetryKind.Flow, RuleTelemetryKind.Dns },
             RequiredFields = new[] { "source", "destination_or_host", "mail_or_collaboration_context" },
             EvidenceFields = new[] { "mail.protocol", "http.path", "network.destination", "matched_conditions" },
-            PositiveConditions = new[] { "M365 Graph Mail Export Pattern requires concrete EmailCollaboration telemetry, not descriptor text.", "The source and destination or identity context must be present.", "At least two independent rule-specific signals must be present, or the rule-specific threshold must be met." },
+            PositiveConditions = new[] { "Require authenticated producer evidence and approved endpoint or identity context before classifying the named behavior.", "Fail closed while the relevant payload, response or outcome contracts are unavailable." },
             NegativeConditions = new[] { "Do not match on rule names, category labels, or generic scanner banners alone.", "Do not match when source/destination context is absent.", "Do not match approved administrative, CI/CD, backup, mail migration, or monitoring paths unless explicit high-risk evidence is present." },
             FalsePositives = new[] { "Mail migrations, eDiscovery exports, DLP tooling, and sanctioned collaboration automations can match these patterns." },
             TextIndicators = new[] { "graph", "mailfolders", "messages", "export", "download", "delta" },
@@ -45,7 +45,7 @@ namespace Carthago.Engine.Rules.Expansion
             Cooldown = TimeSpan.FromMinutes(20),
             DistinctBy = "source+destination+emailcollaboration+behavior",
             TuningKnobs = new[] { "Mode", "Threshold", "WindowSeconds", "CooldownSeconds", "ApprovedSources", "ApprovedDestinations", "ApprovedProcesses", "ApprovedServiceAccounts" },
-            RequiredTests = new[] { "positive R320 evidence-gated sample", "negative R320 descriptor-only sample", "negative R320 missing telemetry sample" },
+            RequiredTests = new[] { "negative apparent-positive without trusted producer", "negative spoofed and contradictory telemetry", "negative replay, privacy and profile invariants" },
             RequireHttp = true,
         };
 
@@ -54,6 +54,12 @@ namespace Carthago.Engine.Rules.Expansion
         public R320_M365GraphMailExportPatternRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            // Ports, paths and Info text are not authenticated mail-operation or credential evidence.
+            // Reject unsupported outcomes until a trusted, privacy-safe producer is integrated.
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "GRAPH_MAIL_EXPORT_AUDIT_UNAVAILABLE",
+                "Graph hostnames, message URLs and declared bytes do not prove authenticated Graph mail export or delivered mailbox contents. Require Microsoft Graph operation audit and authorized identity/transfer evidence.");
+        }
     }
 }
