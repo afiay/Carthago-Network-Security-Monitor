@@ -131,3 +131,16 @@ The complete uploaded `carthago-tests.trx` reports:
 - The immediately preceding read-only benchmark summary on the same local checkout reported 146 replay samples (48 malicious; 98 benign), with **four unresolved replay expectations**: R343/WinRM authenticated command audit, R295/Kubernetes pod-exec audit, R275/trusted IdP device-flow abuse evidence, and R163 observed maximum confidence 0.62 versus malicious fixture minimum 0.65. Enterprise alert-level confusion: TP=4, FP=0, FN=44, TN=98.
 
 **Certification remains BLOCKED.** The new receipt verifier/correlation primitive is now xUnit-verified, **not integrated with trusted producer telemetry**. Synthetic signing is not a substitute for an authenticated source. Do not bypass issuer provisioning, independent source roles, trace binding, rule evidence requirements, policy shadow gates, or R163 confidence requirements. This file records results from distinct artifacts: the uploaded TRX proves xUnit; the replay metrics come from the separately supplied summary, not from the TRX.
+
+
+## Next development increment — native Windows 4624/4688 candidate intake (UNVERIFIED)
+
+Added WinRmSecurityAuditIntake, WinRmLocalSecurityAuditReader and WinRmSecurityAuditIntakeTests. The reader inspects only local Windows Security 4624 (network logon) and 4688 (process creation) records with strict provider/channel/host identity, a bound on records processed, freshness limits and native EventRecord/XML cross-checks. Its parser accepts only structurally valid, attributed, bounded events, confirms exact PowerShell/wsmprovhost executable names and syntactically valid UTF-16LE EncodedCommand arguments, and correlates a preceding network logon using its Windows logon ID. Command-line and decoded payload content are not returned.
+
+**This is NOT authenticated execution attestation:** 4624+4688 can be benign or indirectly related, and the reader does not sign claims, install an event collector, elevate privileges, change audit policies, connect to R343 or alter replay. All results remain unsigned, non-authoritative *candidates*. The six new fact tests and 20 parameterized inputs were written but **not yet compiled/tested on CARTHAGE**. The last independently verified xUnit count remains 4,825/4,825 on the earlier checkpoint. The four replay-expectation failures (R343, R295, R275 and R163) are unchanged.
+
+Next focused validation:
+
+    dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~WinRmSecurityAuditIntakeTests"
+
+After that passes, run the full verifier and capture exact HEAD. More Windows-specific telemetry verification and source-role governance are required before signing or considering detection promotion. No confidence floors, labels or Shadow/Alert policies changed.
