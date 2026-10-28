@@ -12,7 +12,7 @@ public sealed class R177AdvancedAccuracyBatchTests
     private static TrafficRecord Upload()
     {
         var r=NetworkBatch176185Context.Http();
-        r.HttpRequestHeaders+="\r\nContent-Type: multipart/form-data; boundary=abc\r\nContent-Disposition: form-data; name=\\"file\\"; filename=\\"shell.php\\"";
+        r.HttpRequestHeaders+="\r\nContent-Type: multipart/form-data; boundary=abc\r\nContent-Disposition: form-data; name=\"file\"; filename=\"shell.php\"";
         return r;
     }
     [Fact] public async Task Multipart_Executable_Filename_Qualifies()
