@@ -192,13 +192,13 @@ namespace Carthago.Engine.Rules.Expansion
             // R359 is specifically a PAT-in-URL rule: a token in Info or an
             // unrelated request header must never satisfy its core predicate.
             if (string.Equals(spec.RuleId, "R353", StringComparison.OrdinalIgnoreCase)
-                && !HasTokenPattern(record, new[] { "github" }))
+                && !record.HttpGitHubTokenPatternObserved)
                 return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
                     "GITHUB_PAT_PATTERN_NOT_OBSERVED",
                     "R353 requires an observed GitHub token pattern, not provider vocabulary.");
 
             if (string.Equals(spec.RuleId, "R354", StringComparison.OrdinalIgnoreCase)
-                && !HasTokenPattern(record, new[] { "gitlab" }))
+                && !record.HttpGitLabTokenPatternObserved)
                 return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
                     "GITLAB_PRIVATE_TOKEN_PATTERN_NOT_OBSERVED",
                     "R354 requires an observed GitLab private token pattern.");
@@ -389,8 +389,8 @@ namespace Carthago.Engine.Rules.Expansion
             var text = Text(record);
             foreach (var tokenKind in tokenKinds)
             {
-                if (string.Equals(tokenKind, "github", StringComparison.OrdinalIgnoreCase) && GitHubTokenRegex.IsMatch(text)) return true;
-                if (string.Equals(tokenKind, "gitlab", StringComparison.OrdinalIgnoreCase) && GitLabTokenRegex.IsMatch(text)) return true;
+                if (string.Equals(tokenKind, "github", StringComparison.OrdinalIgnoreCase) && record.HttpGitHubTokenPatternObserved) return true;
+                if (string.Equals(tokenKind, "gitlab", StringComparison.OrdinalIgnoreCase) && record.HttpGitLabTokenPatternObserved) return true;
                 if (string.Equals(tokenKind, "azuredevops", StringComparison.OrdinalIgnoreCase) && AzureDevOpsPatRegex.IsMatch(text) && ContainsAny(text, "azure", "devops", "visualstudio", "pat")) return true;
                 if (string.Equals(tokenKind, "circleci", StringComparison.OrdinalIgnoreCase) && CircleCiTokenRegex.IsMatch(text)) return true;
                 if (string.Equals(tokenKind, "npm", StringComparison.OrdinalIgnoreCase) && NpmTokenRegex.IsMatch(text)) return true;
