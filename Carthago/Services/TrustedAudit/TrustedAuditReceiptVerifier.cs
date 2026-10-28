@@ -105,6 +105,9 @@ namespace Carthago.Services.TrustedAudit
         private readonly Dictionary<string, (byte[] PublicKey, HashSet<string> AllowedRules)> _issuers =
             new(StringComparer.Ordinal);
         private readonly HashSet<string> _seen = new(StringComparer.Ordinal);
+        // Distinct issuer names are not independent trust roots when they
+        // share a signing key. Forbid aliases that could forge corroboration.
+        private readonly HashSet<string> _trustedKeyFingerprints = new(StringComparer.Ordinal);
         private readonly object _replayGate = new();
         private readonly Func<DateTimeOffset> _now;
 
@@ -128,15 +131,19 @@ namespace Carthago.Services.TrustedAudit
                     rsa.ImportSubjectPublicKeyInfo(key, out var consumed);
                     if (consumed != key.Length || rsa.KeySize < 2048)
                         throw new CryptographicException("Unsupported signing key.");
+                    // Normalize DER encodings before computing a trust-root ID.
+                    key = rsa.ExportSubjectPublicKeyInfo();
                 }
                 catch (Exception e) when (e is FormatException or CryptographicException or ArgumentException)
                 {
                     throw new ArgumentException("Invalid RSA public key in audit trust anchor.", nameof(trustedIssuers), e);
                 }
                 var allowed = issuer.AllowedRuleIds.ToHashSet(StringComparer.Ordinal);
+                var keyFingerprint = Convert.ToHexString(SHA256.HashData(key));
                 if (allowed.Count == 0 || allowed.Any(rule => !RuleOperations.ContainsKey(rule))
+                    || !_trustedKeyFingerprints.Add(keyFingerprint)
                     || !_issuers.TryAdd(issuer.IssuerId, (key, allowed)))
-                    throw new ArgumentException("Invalid or duplicate audit issuer scope.", nameof(trustedIssuers));
+                    throw new ArgumentException("Invalid or duplicate audit issuer scope/key.", nameof(trustedIssuers));
             }
             if (_issuers.Count == 0)
                 throw new ArgumentException("At least one trusted audit issuer is required.", nameof(trustedIssuers));
