@@ -66,7 +66,7 @@ namespace Carthago.Services
             // Mode 7 private request, MON_GETLIST_1 (42). No sync/response promotion.
             if (destinationPort == 123 && sourcePort != 123 && bytes.Length >= 8
                 && (bytes[0] & 7) == 7 && ((bytes[0] >> 3) & 7) is 3 or 4
-                && (bytes[1] & 0x80) == 0 && bytes[3] == 42)
+                && (bytes[1] & 0x80) == 0 && bytes[2] == 3 && bytes[3] == 42)
             { protocol = "ntp.mode7.monlist"; return true; }
             if (!Port(sourcePort, destinationPort, 47808) || bytes.Length < 6
                 || bytes[0] != 0x81 || bytes[1] is not (0x0a or 0x0b)

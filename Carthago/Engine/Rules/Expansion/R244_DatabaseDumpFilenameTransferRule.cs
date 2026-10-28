@@ -15,7 +15,8 @@ namespace Carthago.Engine.Rules.Expansion
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var r = context.Record;
-            if (!NetworkBatch241245Evidence.DatabaseDump(r) || !_replay.Observe(r, context.TimestampUtc))
+            if (!NetworkBatch241245Evidence.DatabaseDump(r) || IsLikelyApprovedSyncOrBackup(r)
+                || !_replay.Observe(r, context.TimestampUtc))
                 return NoMatch();
             var evidence = new List<DetectionEvidenceItem> {
                 new("matched_conditions", "external_http,database_dump_name,declared_body", "rule"),
