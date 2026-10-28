@@ -61,6 +61,11 @@ Write-Host ('xUnit: passed={0} failed={1} skipped={2} other={3} total={4}' -f
     $passed, $failed, $skipped, $other, $total)
 Write-Host ('Replay: {0} (modified UTC: {1:yyyy-MM-dd HH:mm:ss})' -f
     $reportFile.Name, $reportFile.LastWriteTimeUtc)
+$artifactGap = [Math]::Abs(($trxFile.LastWriteTimeUtc -
+    $reportFile.LastWriteTimeUtc).TotalMinutes)
+if ($artifactGap -gt 30) {
+    Write-Warning ('TRX and benchmark timestamps differ by {0:N1} minutes. These could belong to different runs.' -f $artifactGap)
+}
 
 $summary = $reportData.summary
 Write-Host ('Labeled samples: total={0} malicious={1} benign={2}' -f
@@ -76,9 +81,11 @@ foreach ($sample in @($invalid | Sort-Object name)) {
     })
     $label = if ($missing.Count -gt 0) { $missing -join ',' } else { 'confidence/other' }
     # Avoid printing sample Info, raw URLs, credentials, or arbitrary error text.
-    Write-Host ('  {0} [{1}] max-confidence={2:N2} expected-min={3:N2}' -f
-        $sample.name, $label, [double]$sample.maximumConfidence,
-        [double]$sample.expectedMinimumConfidence)
+    # The result schema does not serialize a fixture confidence minimum.
+    # Never invent it or print null as 0; use the original fixture/log for
+    # expected floors, and retain the observed maximum here.
+    Write-Host ('  {0} [{1}] observed-max-confidence={2:N2}' -f
+        $sample.name, $label, [double]$sample.maximumConfidence)
     foreach ($diagnostic in @($sample.expectedRuleDiagnostics | Where-Object {
         $_.ruleId -in $missing
     })) {
