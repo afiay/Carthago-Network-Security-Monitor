@@ -23,7 +23,7 @@ namespace Carthago.Engine.Rules.Expansion
             defaultMode: RuleRuntimeMode.Alert,
             requiredTelemetry: new[] { RuleTelemetryKind.Http, RuleTelemetryKind.Payload },
             requiredFields: new[] { "source", "destination_or_host", "http_any", "payload_or_uri" },
-            evidenceFields: new[] { "matched_conditions", "upload.filename", "http.path" },
+            evidenceFields: new[] { "matched_conditions", "upload.filenameFingerprint", "http.path" },
             positiveConditions: new[]
             {
                 "The request must have concrete upload semantics such as multipart/form-data or an upload-like path.",
