@@ -67,7 +67,8 @@ namespace Carthago.Engine.Rules.Expansion
             if (!Http(r, out var uri) || OfficialGit(r.HttpHost) || !Client(r, "git", "git-lfs"))
                 return false;
             var path = uri.AbsolutePath;
-            if (!path.Contains(".git/", StringComparison.OrdinalIgnoreCase)) return false;
+            // Git smart HTTP permits repository paths without a .git suffix.
+            if (path.Split('/', StringSplitOptions.RemoveEmptyEntries).Length < 3) return false;
             if (path.EndsWith("/info/refs", StringComparison.OrdinalIgnoreCase))
                 return r.HttpMethod == "GET" && Query(uri, "service",
                     push ? "git-receive-pack" : "git-upload-pack");
