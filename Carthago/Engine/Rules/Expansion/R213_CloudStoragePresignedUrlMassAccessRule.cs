@@ -45,15 +45,19 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R213_CloudStoragePresignedUrlMassAccessRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch201205Window _observations = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!TryGetPresignedUrlProvider(context.Record, out var provider, out _))
+            if (!NetworkBatch206215Evidence.Presigned(context.Record, out var provider, out var artifact))
                 return NoMatch();
 
             var window = TimeSpan.FromSeconds(IntSetting(Descriptor.RuleId, "WindowSeconds", 600, 60, 3600));
             var threshold = IntSetting(Descriptor.RuleId, "Threshold", 8, 3, 200);
-            var distinctValue = context.Record.HttpUri ?? $"{provider}:{BestHost(context.Record)}";
-            var count = CountDistinctValues($"{Descriptor.RuleId}:{context.Record.Source}:{provider}", distinctValue, context.TimestampUtc, window);
+            if (!_observations.Observe(context.Record,
+                    $"{Descriptor.RuleId}:{context.Record.Source}:{provider}", artifact,
+                    context.TimestampUtc, window, 0, out var count, out _))
+                return NoMatch();
             if (count < threshold)
                 return NoMatch();
 

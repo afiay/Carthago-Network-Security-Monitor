@@ -46,9 +46,15 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R212_CurlWgetRawScriptToShellRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch201205Window _observations = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!IsCurlWgetScriptToShell(context.Record))
+            if (!NetworkBatch206215Evidence.CurlRawScript(context.Record)
+                || !IsCurlWgetScriptToShell(context.Record)
+                || !_observations.Observe(context.Record,
+                    $"{Descriptor.RuleId}:{context.Record.Source}:{NetworkBatch206215Evidence.Fingerprint(context.Record.HttpHost ?? "")}",
+                    "raw-script-request", context.TimestampUtc, TimeSpan.FromMinutes(15), 0, out _, out _))
                 return NoMatch();
 
             var evidence = new List<DetectionEvidenceItem>
@@ -65,7 +71,7 @@ namespace Carthago.Engine.Rules.Expansion
             return MatchHttpApi(
                 context,
                 SeverityLevel.Critical,
-                "Curl/wget raw script to shell pattern observed",
+                "Curl/wget raw script request with unverified shell-pipe hint",
                 "CurlWgetScriptToShell",
                 evidence,
                 confidence =>
@@ -74,7 +80,7 @@ namespace Carthago.Engine.Rules.Expansion
                     confidence.AddEvidence(0.24, "pipe-to-shell");
                     confidence.AddEvidence(0.20, "raw-script-source");
                 },
-                cooldownKey: $"{context.Record.Source}:{BestHost(context.Record)}");
+                cooldownKey: $"{context.Record.Source}:{NetworkBatch206215Evidence.Fingerprint(context.Record.HttpHost ?? "")}");
         }
     }
 }

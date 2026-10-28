@@ -45,9 +45,14 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R215_AzureBlobContainerEnumerationRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch201205Window _observations = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!IsAzureBlobEnumerationRequest(context.Record))
+            if (!NetworkBatch206215Evidence.AzureList(context.Record)
+                || !_observations.Observe(context.Record,
+                    $"{Descriptor.RuleId}:{context.Record.Source}:{NetworkBatch206215Evidence.Fingerprint(context.Record.HttpHost ?? "")}",
+                    "azure-list", context.TimestampUtc, TimeSpan.FromMinutes(15), 0, out _, out _))
                 return NoMatch();
 
             var evidence = new List<DetectionEvidenceItem>
@@ -73,7 +78,7 @@ namespace Carthago.Engine.Rules.Expansion
                     confidence.AddEvidence(0.22, "azure-blob-host");
                     confidence.AddEvidence(0.20, "container-list-semantics");
                 },
-                cooldownKey: $"{context.Record.Source}:{BestHost(context.Record)}:{HttpPath(context.Record)}");
+                cooldownKey: $"{context.Record.Source}:{NetworkBatch206215Evidence.Fingerprint((context.Record.HttpHost ?? "") + (context.Record.HttpUri ?? ""))}");
         }
     }
 }

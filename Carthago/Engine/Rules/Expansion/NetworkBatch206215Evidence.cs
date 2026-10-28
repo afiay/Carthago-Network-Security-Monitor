@@ -2,6 +2,8 @@
 using System;
 using System.Linq;
 using System.Net;
+using System.Security.Cryptography;
+using System.Text;
 using Carthago.Models;
 
 namespace Carthago.Engine.Rules.Expansion
@@ -115,5 +117,71 @@ namespace Carthago.Engine.Rules.Expansion
                     || uri.AbsolutePath.StartsWith("/packages/", StringComparison.OrdinalIgnoreCase)
                     || uri.AbsolutePath.EndsWith(".whl", StringComparison.OrdinalIgnoreCase)
                     || uri.AbsolutePath.EndsWith(".tar.gz", StringComparison.OrdinalIgnoreCase));
+
+        private static bool QueryPresent(Uri uri, string name)
+            => uri.Query.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries)
+                .Select(x => x.Split('=', 2))
+                .Any(x => x.Length == 2 && x[0].Equals(name, StringComparison.OrdinalIgnoreCase)
+                    && x[1].Length > 0 && x[1].Length <= 1024);
+
+        internal static string Fingerprint(string value)
+            => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
+
+        internal static bool PowerShellScript(TrafficRecord r)
+            => Http(r, out var uri) && r.HttpMethod == "GET"
+                && Client(r, "powershell", "pwsh")
+                && !HostIs(r.HttpHost, "powershellgallery.com")
+                && uri.AbsolutePath.EndsWith(".ps1", StringComparison.OrdinalIgnoreCase);
+
+        // A raw script GET is observable; the following packet does not
+        // establish shell execution or prove the contents of a process pipe.
+        internal static bool CurlRawScript(TrafficRecord r)
+            => Http(r, out var uri) && r.HttpMethod == "GET"
+                && Client(r, "curl", "wget")
+                && (HostIs(r.HttpHost, "raw.githubusercontent.com")
+                    || HostIs(r.HttpHost, "gist.githubusercontent.com")
+                    || HostIs(r.HttpHost, "paste.rs")
+                    || uri.AbsolutePath.EndsWith(".sh", StringComparison.OrdinalIgnoreCase));
+
+        internal static bool Presigned(TrafficRecord r, out string provider, out string artifact)
+        {
+            provider = ""; artifact = "";
+            if (!Http(r, out var uri) || r.HttpMethod is not ("GET" or "HEAD")) return false;
+            if (HostIs(r.HttpHost, "s3.amazonaws.com")
+                && QueryPresent(uri, "X-Amz-Signature")
+                && Query(uri, "X-Amz-Algorithm", "AWS4-HMAC-SHA256"))
+                provider = "aws-presigned";
+            else if (HostIs(r.HttpHost, "storage.googleapis.com")
+                && QueryPresent(uri, "X-Goog-Signature")
+                && Query(uri, "X-Goog-Algorithm", "GOOG4-RSA-SHA256"))
+                provider = "gcs-signed";
+            else if (HostIs(r.HttpHost, "blob.core.windows.net")
+                && QueryPresent(uri, "sig") && QueryPresent(uri, "se") && QueryPresent(uri, "sp"))
+                provider = "azure-sas";
+            if (provider.Length == 0 || uri.AbsolutePath == "/") return false;
+            // Never retain signed URLs or query credentials in rule-owned state.
+            artifact = Fingerprint(r.HttpHost + uri.AbsolutePath);
+            return true;
+        }
+
+        internal static bool S3List(TrafficRecord r)
+        {
+            if (!Http(r, out var uri) || r.HttpMethod != "GET"
+                || !HostIs(r.HttpHost, "s3.amazonaws.com")) return false;
+            var segments = uri.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            // Virtual-host style root, or path-style /bucket. Never an object path.
+            if (segments.Length > 1) return false;
+            return Query(uri, "list-type", "2") || QueryPresent(uri, "prefix")
+                || QueryPresent(uri, "delimiter");
+        }
+
+        internal static bool AzureList(TrafficRecord r)
+        {
+            if (!Http(r, out var uri) || r.HttpMethod != "GET"
+                || !HostIs(r.HttpHost, "blob.core.windows.net")) return false;
+            var segments = uri.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            return segments.Length == 1 && segments[0].Length is >= 3 and <= 63
+                && Query(uri, "restype", "container") && Query(uri, "comp", "list");
+        }
     }
 }

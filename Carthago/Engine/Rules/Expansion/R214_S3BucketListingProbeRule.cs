@@ -45,9 +45,14 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R214_S3BucketListingProbeRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch201205Window _observations = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!IsS3BucketListingRequest(context.Record))
+            if (!NetworkBatch206215Evidence.S3List(context.Record)
+                || !_observations.Observe(context.Record,
+                    $"{Descriptor.RuleId}:{context.Record.Source}:{NetworkBatch206215Evidence.Fingerprint(context.Record.HttpHost ?? "")}",
+                    "s3-list", context.TimestampUtc, TimeSpan.FromMinutes(15), 0, out _, out _))
                 return NoMatch();
 
             var evidence = new List<DetectionEvidenceItem>
@@ -73,7 +78,7 @@ namespace Carthago.Engine.Rules.Expansion
                     confidence.AddEvidence(0.22, "s3-host");
                     confidence.AddEvidence(0.20, "bucket-listing-semantics");
                 },
-                cooldownKey: $"{context.Record.Source}:{BestHost(context.Record)}:{HttpPath(context.Record)}");
+                cooldownKey: $"{context.Record.Source}:{NetworkBatch206215Evidence.Fingerprint((context.Record.HttpHost ?? "") + (context.Record.HttpUri ?? ""))}");
         }
     }
 }
