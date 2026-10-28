@@ -434,18 +434,10 @@ public sealed class DnsAdvancedPrecisionRuleTests
     public async Task R194_matches_doh_request_to_unapproved_external_host()
     {
         var rule = new R194_DohOverUncommonHostRule();
-        var result = await rule.EvaluateAsync(CreateContext(CreateWebRecord(
-            source: "10.30.1.170",
-            destination: "198.51.100.170",
-            destinationPort: 443,
-            host: "resolver.evil.example",
-            method: "GET",
-            uri: "/dns-query?dns=AAABAA",
-            headers: "Host: resolver.evil.example\r\nAccept: application/dns-message",
-            info: "doh request",
-            service: "HTTPS",
-            protocol: "HTTPS",
-            process: "agent.exe")));
+        // Use a complete base64url-encoded DNS wire question. A truncated
+        // six-character query string is not an observed DoH operation.
+        var observed = NetworkBatch186195Context.DohGet("resolver.evil.example");
+        var result = await rule.EvaluateAsync(CreateContext(observed));
 
         var evt = AssertSingleEvent(result, "R194", SeverityLevel.Medium, 0.45);
         AssertEvidence(evt, "matched_conditions", "http.path");
@@ -455,18 +447,9 @@ public sealed class DnsAdvancedPrecisionRuleTests
     public async Task R194_ignores_approved_public_doh_provider()
     {
         var rule = new R194_DohOverUncommonHostRule();
-        var result = await rule.EvaluateAsync(CreateContext(CreateWebRecord(
-            source: "10.30.1.171",
-            destination: "8.8.8.8",
-            destinationPort: 443,
-            host: "dns.google",
-            method: "GET",
-            uri: "/dns-query?dns=AAABAA",
-            headers: "Host: dns.google\r\nAccept: application/dns-message",
-            info: "approved doh",
-            service: "HTTPS",
-            protocol: "HTTPS",
-            process: "chrome.exe")));
+        // An approved host must stay excluded even with a valid DoH request.
+        var observed = NetworkBatch186195Context.DohGet("dns.google");
+        var result = await rule.EvaluateAsync(CreateContext(observed));
 
         Assert.False(result.Matched);
     }
@@ -475,13 +458,10 @@ public sealed class DnsAdvancedPrecisionRuleTests
     public async Task R195_matches_unapproved_external_dot_resolver()
     {
         var rule = new R195_DnsOverTlsToUnapprovedResolverRule();
-        var result = await rule.EvaluateAsync(CreateContext(CreateTlsRecord(
-            source: "10.30.1.180",
-            destination: "198.51.100.180",
-            destinationPort: 853,
-            sni: "resolver.evil.example",
-            tlsVersion: "TLS 1.3",
-            process: "agent.exe")));
+        // Canonical parsed TCP/853 TLS metadata with an externally routable
+        // resolver, rather than an incomplete TLS metadata stub.
+        var observed = NetworkBatch186195Context.Dot("resolver.evil.example");
+        var result = await rule.EvaluateAsync(CreateContext(observed));
 
         var evt = AssertSingleEvent(result, "R195", SeverityLevel.High, 0.50);
         AssertEvidence(evt, "matched_conditions");
@@ -491,13 +471,8 @@ public sealed class DnsAdvancedPrecisionRuleTests
     public async Task R195_ignores_approved_public_dot_resolver()
     {
         var rule = new R195_DnsOverTlsToUnapprovedResolverRule();
-        var result = await rule.EvaluateAsync(CreateContext(CreateTlsRecord(
-            source: "10.30.1.181",
-            destination: "8.8.8.8",
-            destinationPort: 853,
-            sni: "dns.google",
-            tlsVersion: "TLS 1.3",
-            process: "svchost.exe")));
+        var observed = NetworkBatch186195Context.Dot("dns.google");
+        var result = await rule.EvaluateAsync(CreateContext(observed));
 
         Assert.False(result.Matched);
     }
@@ -631,9 +606,14 @@ public sealed class DnsAdvancedPrecisionRuleTests
         string rcode = "NOERROR")
         => new()
         {
-            Source = source,
-            Destination = destination,
-            DestinationPort = 53,
+            Id = Guid.NewGuid(),
+            // The named source represents the client under observation.
+            // DNS response packets reverse the wire endpoints and port roles.
+            Source = isResponse || rcode.Equals("NXDOMAIN", StringComparison.OrdinalIgnoreCase) ? destination : source,
+            Destination = isResponse || rcode.Equals("NXDOMAIN", StringComparison.OrdinalIgnoreCase) ? source : destination,
+            SourcePort = isResponse || rcode.Equals("NXDOMAIN", StringComparison.OrdinalIgnoreCase) ? 53 : 53000,
+            DestinationPort = isResponse || rcode.Equals("NXDOMAIN", StringComparison.OrdinalIgnoreCase) ? 53000 : 53,
+            IpVersion = 4,
             Protocol = "DNS",
             ApplicationProtocol = "DNS",
             ApplicationService = "DNS",
@@ -642,8 +622,10 @@ public sealed class DnsAdvancedPrecisionRuleTests
             DnsRcode = rcode,
             DnsAnswers = answers,
             DnsTtl = ttl,
-            DnsIsResponse = isResponse,
-            IsUdp = true
+            DnsIsResponse = isResponse || rcode.Equals("NXDOMAIN", StringComparison.OrdinalIgnoreCase),
+            // AXFR/IXFR queries are TCP, not UDP transport observations.
+            IsTcp = qtype is "AXFR" or "IXFR",
+            IsUdp = qtype is not ("AXFR" or "IXFR")
         };
 
     private static TrafficRecord CreateWebRecord(
