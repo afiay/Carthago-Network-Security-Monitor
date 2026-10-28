@@ -1,5 +1,6 @@
 using Carthago.Engine.ContentPacks;
 using Carthago.Engine.Rules;
+using Carthago.Engine.Rules.Expansion;
 using Carthago.Models;
 using Carthago.Services.Hunting;
 
@@ -53,22 +54,44 @@ public sealed class ContentPackBenchmarkAndHuntTests
     [Fact]
     public async Task Compiled_pack_rule_emits_structured_evidence_when_it_matches()
     {
-        var rule = new CompiledContentPackRegistry().GetAllRuleRegistrations()
+        // Exercise the translation contract with a source rule that has
+        // independently observable parsed operation evidence. AD041 delegates
+        // to R343, which intentionally fails closed without trusted WinRM audit.
+        var compiled = new CompiledContentPackRule(
+            "carthago.synthetic-proof.v1",
+            new ContentPackRule
+            {
+                RuleId = "TEST240",
+                Name = "Synthetic Modbus write alias",
+                Category = "Synthetic",
+                Source = new ContentPackRuleSource { CoreRuleId = "R240" }
+            },
+            new R240_ModbusWriteFunctionRule());
+
+        var record = NetworkBatch236240Context.Sample(240);
+        var result = await compiled.EvaluateAsync(NetworkBatch236240Context.At(record));
+        var evt = Assert.Single(result.Events);
+        Assert.Equal("TEST240", evt.RuleId);
+        Assert.NotNull(evt.StructuredEvidence);
+        Assert.NotEmpty(evt.StructuredEvidence!.Items);
+        Assert.Contains(evt.StructuredEvidence.Items,
+            item => string.Equals(item.Key, "content_pack_id", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task Compiled_ad_rule_does_not_fabricate_missing_winrm_command_audit()
+    {
+        var compiled = new CompiledContentPackRegistry().GetAllRuleRegistrations()
             .Single(registration => string.Equals(registration.Rule.RuleId, "AD041", StringComparison.OrdinalIgnoreCase))
             .CompiledRule!;
         var sample = ContentPackTestHarness.LoadReplaySample(@"Tests/RuleReplaySamples/malicious/ad-psremoting-encoded-command.json");
-
         var events = new List<Carthago.Models.DetectionEvent>();
         foreach (var record in sample.Records)
         {
-            var result = await rule.EvaluateAsync(new RuleEvaluationContext(record, Sensitivity.Balanced, DateTime.UtcNow));
+            var result = await compiled.EvaluateAsync(new RuleEvaluationContext(record, Sensitivity.Balanced, DateTime.UtcNow));
             events.AddRange(result.Events);
         }
-
-        var evt = Assert.Single(events);
-        Assert.NotNull(evt.StructuredEvidence);
-        Assert.NotEmpty(evt.StructuredEvidence!.Items);
-        Assert.Contains(evt.StructuredEvidence.Items, item => string.Equals(item.Key, "content_pack_id", StringComparison.OrdinalIgnoreCase));
+        Assert.Empty(events);
     }
 
     [Fact]
