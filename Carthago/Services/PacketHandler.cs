@@ -426,6 +426,8 @@ namespace Carthago.Services
                                 rec.HttpUserAgent = http.UserAgent ?? rec.HttpUserAgent;
                                 rec.HttpRequestHeaders = http.JoinedHeaderLines ?? rec.HttpRequestHeaders;
                                 rec.HttpBasicDefaultCredentialObserved = c2s && http.ObservedDefaultBasicCredential;
+                                rec.HttpGitHubTokenPatternObserved = c2s && http.ObservedGitHubTokenPattern;
+                                rec.HttpGitLabTokenPatternObserved = c2s && http.ObservedGitLabTokenPattern;
 
                                 var (readable, tag) = HttpJa4H.Compute(http.Method, http.HttpVersion, http.HeaderNames, http.UserAgent);
                                 rec.HttpJa4h = $"{readable}|{tag}";
@@ -822,6 +824,8 @@ namespace Carthago.Services
             public List<string> HeaderNames { get; init; } = new();
             public string? JoinedHeaderLines { get; init; }
             public bool ObservedDefaultBasicCredential { get; init; }
+            public bool ObservedGitHubTokenPattern { get; init; }
+            public bool ObservedGitLabTokenPattern { get; init; }
         }
 
         public static bool TryParseHttp(ReadOnlySpan<byte> data, out HttpInfo info)
@@ -850,6 +854,7 @@ namespace Carthago.Services
         {
             string? host = null, ua = null;
             bool defaultBasicObserved = false;
+            bool githubTokenObserved = false, gitlabTokenObserved = false;
             int authorizationHeaderCount = 0;
             bool headerSectionComplete = false;
             int idx = offset;
@@ -885,6 +890,16 @@ namespace Carthago.Services
                             defaultBasicObserved = true;
                     }
 
+                    // Classify sensitive header values in the byte span, before redaction.
+                    // Require a complete header block below before promoting the flags.
+                    if (name.Equals("Authorization", StringComparison.OrdinalIgnoreCase) ||
+                        name.Equals("Private-Token", StringComparison.OrdinalIgnoreCase) ||
+                        name.Equals("X-Gitlab-Token", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var value = line.Slice(colon + 1);
+                        githubTokenObserved |= HasProviderTokenPrefix(value, "ghp_", 20) || HasProviderTokenPrefix(value, "gho_", 20) || HasProviderTokenPrefix(value, "ghu_", 20) || HasProviderTokenPrefix(value, "ghs_", 20) || HasProviderTokenPrefix(value, "ghr_", 20) || HasProviderTokenPrefix(value, "github_pat_", 30);
+                        gitlabTokenObserved |= HasProviderTokenPrefix(value, "glpat-", 20);
+                    }
                     // Avoid allocating a managed string for bearer secrets at all.
                     // Preserve only the header name and a redaction marker in telemetry.
                     bool sensitive = name.Equals("Authorization", StringComparison.OrdinalIgnoreCase) ||
@@ -895,7 +910,9 @@ namespace Carthago.Services
                                      name.Equals("X-aws-ec2-metadata-token", StringComparison.OrdinalIgnoreCase) ||
                                      name.Equals("X-Identity-Header", StringComparison.OrdinalIgnoreCase) ||
                                      name.Equals("X-Auth-Token", StringComparison.OrdinalIgnoreCase) ||
-                                     name.Equals("X-Amz-Security-Token", StringComparison.OrdinalIgnoreCase);
+                                     name.Equals("X-Amz-Security-Token", StringComparison.OrdinalIgnoreCase) ||
+                                     name.Equals("Private-Token", StringComparison.OrdinalIgnoreCase) ||
+                                     name.Equals("X-Gitlab-Token", StringComparison.OrdinalIgnoreCase);
                     var val = sensitive ? "[REDACTED]" : TrimHeaderValue(line, colon + 1);
                     sbJoin.Append(name).Append(": ").Append(val).Append("\r\n");
                     if (name.Equals("Host", StringComparison.OrdinalIgnoreCase)) host = val;
@@ -911,8 +928,29 @@ namespace Carthago.Services
                 HttpVersion = httpVersion,
                 JoinedHeaderLines = sbJoin.ToString(),
                 ObservedDefaultBasicCredential = headerSectionComplete && defaultBasicObserved && authorizationHeaderCount == 1,
+                ObservedGitHubTokenPattern = headerSectionComplete && authorizationHeaderCount <= 1 && githubTokenObserved,
+                ObservedGitLabTokenPattern = headerSectionComplete && authorizationHeaderCount <= 1 && gitlabTokenObserved,
                 HeaderNames = headerNames
             };
+        }
+
+        private static bool HasProviderTokenPrefix(ReadOnlySpan<byte> value, string prefix, int minSuffix)
+        {
+            // ASCII-only, allocation-free inspection. Do not persist the matched span.
+            for (int i = 0; i + prefix.Length + minSuffix <= value.Length; i++)
+            {
+                bool matches = true;
+                for (int j = 0; j < prefix.Length; j++)
+                    if (value[i + j] != (byte)prefix[j]) { matches = false; break; }
+                if (!matches) continue;
+                int end = i + prefix.Length;
+                while (end < value.Length && ((value[end] >= 'a' && value[end] <= 'z') ||
+                       (value[end] >= 'A' && value[end] <= 'Z') ||
+                       (value[end] >= '0' && value[end] <= '9') ||
+                       value[end] == '_' || (prefix == "glpat-" && value[end] == '-'))) end++;
+                if (end - i - prefix.Length >= minSuffix) return true;
+            }
+            return false;
         }
 
         private static bool TryParseRequestLine(ReadOnlySpan<byte> line, out string? method, out string? path, out string? ver)
