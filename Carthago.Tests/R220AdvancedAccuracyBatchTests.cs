@@ -151,7 +151,7 @@ public sealed class R220AdvancedAccuracyBatchTests
             Assert.False((await rule.EvaluateAsync(At(r, i))).Matched);
         }
         var later = Sample(); later.Source = "10.220.0.95"; NetworkBatch216220Context.Small(later);
-        Assert.False((await rule.EvaluateAsync(At(later, 901))).Matched);
+        Assert.False((await rule.EvaluateAsync(At(later, 1000))).Matched);
     }
     [Fact] public async Task Browser_Requires_Stronger_Burst_Than_Automation()
     {

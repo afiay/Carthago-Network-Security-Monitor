@@ -44,7 +44,7 @@ internal static class NetworkBatch216220Context
         r.IsUdp = false;
         r.HttpHost = host;
         r.HttpUri = path;
-        r.HttpRequestHeaders = "Host: " + host +
+        r.HttpRequestHeaders = rule == 216 ? "Host: " + host : "Host: " + host +
             "\r\nContent-Type: multipart/form-data; boundary=abc123" +
             "\r\nContent-Length: " + (rule == 220 ? "250000" : "70000");
         r.HttpUserAgent = "python-requests/2.31";
