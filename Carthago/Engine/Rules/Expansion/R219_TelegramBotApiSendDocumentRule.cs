@@ -46,52 +46,36 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R219_TelegramBotApiSendDocumentRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!TryClassifyTelegramDocumentSend(record, out var classifier))
+            if (!NetworkBatch216220Evidence.Telegram(record)
+                || IsLikelyCollaborationClientProcess(record.ProcessName)
+                || !_replay.Observe(record, context.TimestampUtc))
                 return NoMatch();
-
-            var bytes = TransferBytes(record);
-            var minimumPayloadBytes = IntSetting(Descriptor.RuleId, "MinimumPayloadBytes", 50_000, 8_000, 50_000_000);
-            var documentHint = HasUploadMetadata(record) || ContainsAny(Text(record), "name=\"document\"", "document=", "sendDocument", "attach://", "filename=");
-            if (!documentHint && bytes < minimumPayloadBytes)
-                return NoMatch();
-
-            if (IsLikelyCollaborationClientProcess(record.ProcessName) && !documentHint && bytes < minimumPayloadBytes * 2L)
-                return NoMatch();
-
-            var matchedConditions = new List<string> { "telegram_senddocument_endpoint", "supporting_document_context" };
-            if (documentHint) matchedConditions.Add("document_or_multipart_hint");
-            if (bytes >= minimumPayloadBytes) matchedConditions.Add("non_trivial_payload");
-            if (!IsLikelyCollaborationClientProcess(record.ProcessName)) matchedConditions.Add("non_telegram_process");
-
             var evidence = new List<DetectionEvidenceItem>
             {
-                new("host.classifier", classifier, "cloud"),
-                new("matched_conditions", string.Join(",", matchedConditions), "rule")
+                new("host.classifier", "telegram-senddocument", "cloud"),
+                new("matched_conditions", "typed_http,exact_bot_senddocument,declared_upload_context", "rule")
             };
             evidence.AddRange(AnalystContext(
-                "The HTTP request targeted Telegram's exact sendDocument bot endpoint with document-upload semantics.",
-                "Severity is High because Telegram bot document uploads can move files out of the environment over a collaboration channel with minimal user interaction.",
-                "Approved workflow automation may legitimately send reports or logs through Telegram bots. Validate bot ownership and the calling process before escalating.",
-                "Review the bot path and payload shape to confirm document transfer rather than routine messaging.",
-                "Correlate with endpoint telemetry to determine which file or archive was staged for upload."));
-
-            return MatchCloudDev(
-                context,
-                SeverityLevel.High,
-                "Telegram Bot API document upload observed",
-                "TelegramBotSendDocument",
-                evidence,
-                confidence =>
+                "A parsed Telegram Bot API sendDocument POST included multipart or declared large-body context.",
+                "The request indicates attempted document transfer, not confirmed delivery or exfiltration.",
+                "Approved reporting and incident-response bots may send documents.",
+                "Correlate with endpoint process and file activity.",
+                "Verify bot authorization through independent audit evidence."));
+            return MatchHttpApi(context, SeverityLevel.High,
+                "Telegram Bot API document request observed", "TelegramBotSendDocument",
+                evidence, confidence =>
                 {
                     confidence.AddEvidence(0.24, "telegram-senddocument-endpoint");
-                    if (documentHint) confidence.AddEvidence(0.20, "document-or-multipart-hint");
-                    if (!IsLikelyCollaborationClientProcess(record.ProcessName)) confidence.AddEvidence(0.16, "non-telegram-process");
-                    if (bytes >= minimumPayloadBytes) confidence.AddEvidence(0.10, "non-trivial-payload");
-                },
-                cooldownKey: $"{record.Source}:{ProviderIdentity(BestHost(record))}:{classifier}");
+                    confidence.AddEvidence(0.20, "declared-document-context");
+                    confidence.AddEvidence(0.16, "non-telegram-process");
+                    confidence.AddEvidence(0.10, "request-shape");
+                }, cooldownKey: NetworkBatch216220Evidence.SafeKey(record));
         }
     }
 }
+

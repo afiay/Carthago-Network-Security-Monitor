@@ -46,44 +46,35 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R217_SlackWebhookExfiltrationRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!TryClassifySlackRequest(record, out var classifier))
+            if (!NetworkBatch216220Evidence.Slack(record, out var classifier)
+                || ContainsAny(record.ProcessName, "slack")
+                || !_replay.Observe(record, context.TimestampUtc))
                 return NoMatch();
-
-            if (ContainsAny(record.ProcessName, "slack"))
-                return NoMatch();
-
-            var exfilHint = HasSlackExfilHint(record) || TransferBytes(record) >= 50_000 || string.Equals(classifier, "slack-webhook", StringComparison.OrdinalIgnoreCase);
-            if (!exfilHint)
-                return NoMatch();
-
             var evidence = new List<DetectionEvidenceItem>
             {
                 new("cloud.provider", classifier, "cloud"),
-                new("matched_conditions", "slack_webhook_or_api_post,non_slack_process,exfil_like_payload", "rule")
+                new("matched_conditions", "typed_http,exact_slack_post,declared_upload_context,non_slack_process", "rule")
             };
             evidence.AddRange(AnalystContext(
-                "The HTTP POST targeted a real Slack webhook or upload/message API endpoint from a process that did not look like the normal Slack client.",
-                "Severity is High because webhook or upload-style Slack traffic from arbitrary processes is a common collaboration-channel exfiltration pattern.",
-                "Approved integrations and automation can legitimately post to Slack. Validate the integration owner and payload purpose before escalating.",
-                "Review the calling process and whether the payload included files, attachments, or message content.",
-                "Confirm whether the Slack webhook or app endpoint is approved for the source system."));
-
-            return MatchHttpApi(
-                context,
-                SeverityLevel.High,
-                "Slack webhook or upload-style exfiltration pattern observed",
-                "SlackWebhookExfiltration",
-                evidence,
-                confidence =>
+                "A parsed Slack webhook or file-upload POST included multipart or declared large-body context.",
+                "This is a potential collaboration-channel transfer, not proof of exfiltration or successful delivery.",
+                "Approved integration and incident-response bots can post the same request shapes.",
+                "Correlate with endpoint file activity and application audit logs.",
+                "Confirm whether this integration and source process are approved."));
+            return MatchHttpApi(context, SeverityLevel.High,
+                "Slack webhook or file-upload request observed", "SlackWebhookExfiltration",
+                evidence, confidence =>
                 {
                     confidence.AddEvidence(0.22, "slack-webhook-or-api-post");
                     confidence.AddEvidence(0.18, "non-slack-process");
-                    confidence.AddEvidence(0.16, "exfil-like-payload");
-                },
-                cooldownKey: $"{record.Source}:{BestHost(record)}:{HttpPath(record)}");
+                    confidence.AddEvidence(0.16, "declared-upload-context");
+                }, cooldownKey: NetworkBatch216220Evidence.SafeKey(record));
         }
     }
 }
+

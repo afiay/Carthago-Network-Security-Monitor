@@ -46,52 +46,36 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R218_DiscordWebhookFileUploadRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!TryClassifyDiscordWebhookUpload(record, out var classifier))
+            if (!NetworkBatch216220Evidence.Discord(record, out var classifier)
+                || IsLikelyCollaborationClientProcess(record.ProcessName)
+                || !_replay.Observe(record, context.TimestampUtc))
                 return NoMatch();
-
-            var bytes = TransferBytes(record);
-            var minimumPayloadBytes = IntSetting(Descriptor.RuleId, "MinimumPayloadBytes", 50_000, 8_000, 50_000_000);
-            var uploadHint = HasUploadMetadata(record) || ContainsAny(Text(record), "payload_json", "attachments", "filename=", "multipart/form-data");
-            if (!uploadHint && bytes < minimumPayloadBytes)
-                return NoMatch();
-
-            if (IsLikelyCollaborationClientProcess(record.ProcessName) && !uploadHint && bytes < minimumPayloadBytes * 2L)
-                return NoMatch();
-
-            var matchedConditions = new List<string> { "discord_exact_upload_endpoint", "supporting_upload_context" };
-            if (uploadHint) matchedConditions.Add("multipart_or_attachment_hint");
-            if (bytes >= minimumPayloadBytes) matchedConditions.Add("non_trivial_payload");
-            if (!IsLikelyCollaborationClientProcess(record.ProcessName)) matchedConditions.Add("non_discord_process");
-
             var evidence = new List<DetectionEvidenceItem>
             {
                 new("host.classifier", classifier, "cloud"),
-                new("matched_conditions", string.Join(",", matchedConditions), "rule")
+                new("matched_conditions", "typed_http,exact_discord_endpoint,declared_upload_context", "rule")
             };
             evidence.AddRange(AnalystContext(
-                "The HTTP request targeted an exact Discord webhook or attachment endpoint with file-upload context.",
-                "Severity is High because Discord webhook uploads are a common collaboration-channel exfiltration path when driven by arbitrary processes or automation.",
-                "Approved webhook bots and sanctioned collaboration automations can upload content intentionally. Validate the webhook owner and calling process before escalating.",
-                "Review whether the request used a webhook token or a channel attachment flow.",
-                "Correlate with endpoint telemetry to determine which file or payload was staged for upload."));
-
-            return MatchCloudDev(
-                context,
-                SeverityLevel.High,
-                "Discord webhook or attachment upload observed",
-                "DiscordWebhookUpload",
-                evidence,
-                confidence =>
+                "A parsed Discord webhook or channel attachment POST included multipart or declared large-body context.",
+                "This request shape is compatible with data transfer, but delivery and exfiltration are not proven.",
+                "Approved collaboration bots may send files through these endpoints.",
+                "Correlate with endpoint process and file activity.",
+                "Confirm the webhook or bot is authorized for the source."));
+            return MatchHttpApi(context, SeverityLevel.High,
+                "Discord webhook or attachment request observed", "DiscordWebhookUpload",
+                evidence, confidence =>
                 {
                     confidence.AddEvidence(0.24, "discord-exact-upload-endpoint");
-                    if (uploadHint) confidence.AddEvidence(0.20, "multipart-or-attachment-hint");
-                    if (!IsLikelyCollaborationClientProcess(record.ProcessName)) confidence.AddEvidence(0.16, "non-discord-process");
-                    if (bytes >= minimumPayloadBytes) confidence.AddEvidence(0.10, "non-trivial-payload");
-                },
-                cooldownKey: $"{record.Source}:{ProviderIdentity(BestHost(record))}:{classifier}");
+                    confidence.AddEvidence(0.20, "declared-upload-context");
+                    confidence.AddEvidence(0.16, "non-discord-process");
+                    confidence.AddEvidence(0.10, "request-shape");
+                }, cooldownKey: NetworkBatch216220Evidence.SafeKey(record));
         }
     }
 }
+

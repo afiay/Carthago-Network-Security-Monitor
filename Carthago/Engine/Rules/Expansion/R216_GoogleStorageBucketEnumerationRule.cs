@@ -45,35 +45,32 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R216_GoogleStorageBucketEnumerationRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!IsGoogleStorageEnumerationRequest(context.Record))
+            var record = context.Record;
+            if (!NetworkBatch216220Evidence.GcsList(record) || !_replay.Observe(record, context.TimestampUtc))
                 return NoMatch();
-
             var evidence = new List<DetectionEvidenceItem>
             {
-                new("cloud.provider", ProviderIdentity(BestHost(context.Record)), "cloud"),
-                new("matched_conditions", "gcs_host,listing_semantics", "rule")
+                new("cloud.provider", "google-cloud-storage", "cloud"),
+                new("matched_conditions", "typed_http,gcs_exact_host,bucket_listing_request", "rule")
             };
             evidence.AddRange(AnalystContext(
-                "The HTTP request used Google Cloud Storage listing semantics rather than downloading a single media object.",
-                "Severity is Medium because storage listing often reflects reconnaissance or broad object discovery.",
-                "Approved inventory and synchronization tooling can enumerate GCS objects legitimately.",
-                "Review the bucket path and calling process performing the listing request.",
-                "Confirm whether the source is authorized to enumerate the target bucket."));
-
-            return MatchHttpApi(
-                context,
-                SeverityLevel.Medium,
-                "Google Cloud Storage bucket enumeration observed",
-                "GoogleStorageBucketEnumeration",
-                evidence,
-                confidence =>
+                "A parsed HTTP GET targeted a GCS JSON or XML bucket-listing request shape.",
+                "Listing requests can indicate object discovery, but neither response nor authorization success is established.",
+                "Approved backup and inventory clients also list buckets.",
+                "Correlate the request with authorized inventory activity.",
+                "Confirm bucket access against independently sourced cloud audit logs."));
+            return MatchHttpApi(context, SeverityLevel.Medium,
+                "Google Cloud Storage bucket-listing request observed",
+                "GoogleStorageBucketEnumeration", evidence, confidence =>
                 {
                     confidence.AddEvidence(0.22, "gcs-host");
                     confidence.AddEvidence(0.20, "listing-semantics");
-                },
-                cooldownKey: $"{context.Record.Source}:{BestHost(context.Record)}:{HttpPath(context.Record)}");
+                }, cooldownKey: NetworkBatch216220Evidence.SafeKey(record));
         }
     }
 }
+

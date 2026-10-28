@@ -46,63 +46,53 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R220_PasteServiceHighVolumePostRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch201205Window _observations = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            var host = BestHost(record);
-            if (!HasHttpContext(record) || string.IsNullOrWhiteSpace(host) || !IsPasteOrDropHost(host) || !IsUploadMethod(record))
+            if (!NetworkBatch216220Evidence.Paste(record, out var provider))
                 return NoMatch();
-
             var window = TimeSpan.FromSeconds(IntSetting(Descriptor.RuleId, "WindowSeconds", 900, 60, 3600));
             var threshold = IntSetting(Descriptor.RuleId, "Threshold", 5, 2, 100);
             var minimumPayloadBytes = IntSetting(Descriptor.RuleId, "MinimumPayloadBytes", 200_000, 8_000, 50_000_000);
-            var count = CountWindowEvents($"{Descriptor.RuleId}:{record.Source}:{ProviderIdentity(host)}", context.TimestampUtc, window);
-            var bytes = TransferBytes(record);
-            var uploadHint = HasPasteUploadHint(record);
-            var automation = IsLikelyAutomationProcess(record);
-            if (!uploadHint && !automation && bytes < minimumPayloadBytes && count < threshold)
+            var large = NetworkBatch216220Evidence.DeclaredBytes(record, out var declared) && declared >= minimumPayloadBytes;
+            var key = NetworkBatch216220Evidence.SafeKey(record);
+            if (!_observations.Observe(record, key, record.Id.ToString("N"), context.TimestampUtc,
+                window, 0, out var count, out _))
                 return NoMatch();
-
-            if (IsLikelyBrowserProcess(record.ProcessName) && !automation && !uploadHint && bytes < minimumPayloadBytes * 2L && count < threshold + 1)
+            if (!large && count < threshold)
                 return NoMatch();
-
-            var matchedConditions = new List<string> { "paste_or_drop_provider", "posting_method" };
-            if (uploadHint) matchedConditions.Add("upload_or_document_hint");
-            if (automation) matchedConditions.Add("automation_process");
-            if (count >= threshold) matchedConditions.Add("posting_burst_threshold");
-            if (bytes >= minimumPayloadBytes) matchedConditions.Add("non_trivial_payload");
-
+            if (IsLikelyBrowserProcess(record.ProcessName) && !large && count < threshold + 1)
+                return NoMatch();
+            var matchedConditions = new List<string> { "typed_http", "paste_provider", "post_method" };
+            if (large) matchedConditions.Add("large_declared_content_length");
+            if (count >= threshold) matchedConditions.Add("distinct_post_request_threshold");
             var evidence = new List<DetectionEvidenceItem>
             {
+                new("provider", provider, "cloud"),
                 new("count", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
                 new("window_seconds", ((int)window.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
                 new("matched_conditions", string.Join(",", matchedConditions), "rule")
             };
             evidence.AddRange(AnalystContext(
-                "The source posted data to a paste or file-drop provider with either repeated burst behavior or non-trivial upload context.",
-                "Severity is High because paste and drop services are common exfiltration channels when data is posted rather than merely viewed.",
-                "Approved secure-transfer workflows or analyst troubleshooting can resemble this activity. Validate whether the provider and posting process are sanctioned.",
-                "Review whether the requests created new pastes or uploaded documents rather than reading existing content.",
-                "Correlate with endpoint file activity to determine what may have been posted."));
-
-            return MatchCloudDev(
-                context,
-                SeverityLevel.High,
-                "Paste or file-drop posting activity observed",
-                "PasteServiceHighVolumePost",
-                evidence,
-                confidence =>
+                "The source made repeated distinct paste-service upload requests or declared a large request body.",
+                "Observed requests and declared body length do not establish successful data delivery.",
+                "Approved troubleshooting and secure-transfer workflows can look identical.",
+                "Correlate with application responses and endpoint file activity.",
+                "Confirm whether the source and provider are sanctioned."));
+            return MatchHttpApi(context, SeverityLevel.High,
+                "Paste or file-drop posting requests observed", "PasteServiceHighVolumePost",
+                evidence, confidence =>
                 {
                     confidence.AddEvidence(0.24, "paste-or-drop-provider");
                     confidence.AddEvidence(0.16, "posting-method");
-                    if (uploadHint) confidence.AddEvidence(0.14, "upload-or-document-hint");
+                    if (NetworkBatch216220Evidence.Multipart(record)) confidence.AddEvidence(0.14, "multipart-request");
                     if (count >= threshold) confidence.AddEvidence(0.12, "posting-burst-threshold");
-                    if (bytes >= minimumPayloadBytes) confidence.AddEvidence(0.10, "non-trivial-payload");
-                    if (automation) confidence.AddCorrelation(0.10, "automation-process");
-                },
-                count,
-                window,
-                $"{record.Source}:{ProviderIdentity(host)}");
+                    if (large) confidence.AddEvidence(0.10, "large-declared-content-length");
+                    if (IsLikelyAutomationProcess(record)) confidence.AddCorrelation(0.10, "automation-process");
+                }, count, window, key);
         }
     }
 }
+
