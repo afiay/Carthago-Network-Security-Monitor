@@ -316,6 +316,43 @@ public sealed class WinRmTelemetryIpcContractTests
     }
 
     [Fact]
+    public void Concurrent_Session_Limit_Is_Fail_Closed_But_Closed_Slots_Reopen()
+    {
+        var contract = Contract();
+        var sessions = new List<WinRmTelemetryIpcSession>();
+        for (var i = 0; i < WinRmTelemetryIpcContract.MaxSessions; i++)
+            sessions.Add(Open(contract));
+
+        Assert.False(contract.TryOpenVerifiedPeer(Peer(), out var denied,
+            out var reason));
+        Assert.Null(denied);
+        Assert.Equal("CHANNEL_REPLAY_OR_CAPACITY", reason);
+
+        contract.Close(sessions[0]);
+        var replacement = Open(contract);
+        Assert.NotEqual(sessions[0].Id, replacement.Id);
+    }
+
+    [Fact]
+    public void Replay_Cache_Saturates_Fail_Closed_Without_Evicting_Old_Ids()
+    {
+        var contract = Contract();
+        var session = Open(contract);
+        for (var sequence = 1; sequence <= WinRmTelemetryIpcContract.MaxAcceptedMessages;
+            sequence++)
+        {
+            Assert.True(contract.TryAcceptFrame(session,
+                Frame(Payload(session, sequence)), out _, out var reason), reason);
+        }
+
+        Assert.False(contract.TryAcceptFrame(session,
+            Frame(Payload(session, WinRmTelemetryIpcContract.MaxAcceptedMessages + 1)),
+            out var rejected, out var rejection));
+        Assert.Null(rejected);
+        Assert.Equal("REPLAY_CACHE_CAPACITY", rejection);
+    }
+
+    [Fact]
     public void Malformed_Operator_Configuration_Fails_Before_Sessions_Open()
     {
         Assert.Throws<ArgumentException>(() => new WinRmTelemetryIpcContract(
