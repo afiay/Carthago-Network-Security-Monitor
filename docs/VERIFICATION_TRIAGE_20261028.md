@@ -59,3 +59,9 @@ Remaining failing groups from the reported test names:
 **Subsequent commits are unverified until the next local run.** They correct synthetic JWT signatures, invalid IPv4 octets, provider process/host attribution, valid webhook token and multipart/Content-Length request shapes, TCP/TLS flow attribution, and content-pack wrapper tests. Benchmark test expectations now reconcile and report the missing positives explicitly rather than demanding fictitious matches. The replay fixtures and the production **replay-expectations gate have not been weakened or removed**: unsupported R343, R295, R275 and description-only R240 scenarios and the R163 confidence discrepancy remain explicit blockers.
 
 No detection thresholds, confidence floors, required audits or runtime mode defaults were relaxed as part of this follow-up. The new R351–R355 test additions from the concurrent engineering stream must also pass the next actual verification before this status can change.
+
+## 2026-10-28 23:16 CARTHAGE verification
+
+The uploaded TRX confirms **4,791 passed, 0 failed, 0 skipped**. Full verification still fails `replay-expectations` on five labeled cases. Alert-level Enterprise recall remains 4/48 with zero benign alert false positives (offline fixtures only).
+
+The current *unverified* candidate routes synthetic Modbus TCP bytes through the same bounded parser used by capture, adds positive/negative replay coverage, and restores the expected R240 detection assertion. No detector or policy thresholds were changed. The other replay gaps are not waived, and a clean xUnit result alone is not release certification.
