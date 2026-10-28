@@ -50,7 +50,7 @@ namespace Carthago.Engine.Rules.Expansion
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!NetworkBatch176180Evidence.Dns(context.Record, out var query) || !IsMiningPoolQuery(query) || string.IsNullOrWhiteSpace(LeftOfRoot(query)) || !HasExplicitMiningPoolSignal(query) || !_replay.Observe(context.Record, context.TimestampUtc))
+            if (!NetworkBatch176180Evidence.Dns(context.Record, out var query) || !IsMiningPoolQuery(query) || !NetworkBatch176180Evidence.MiningService(LeftOfRoot(query)) || !_replay.Observe(context.Record, context.TimestampUtc))
                 return NoMatch();
 
             var root = RootDomain(query);

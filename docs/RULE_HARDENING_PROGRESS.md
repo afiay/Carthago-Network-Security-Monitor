@@ -531,3 +531,5 @@ After verified R176-R180 HEAD `f62ffdcf6391b1809f372e37ecbea31668f86cf4`, author
 **R176-R185 total: 10 consecutive rules, 85 advanced xUnit facts authored, zero executed. CANDIDATE / UNVERIFIED.** No builds/tests/replays/holdouts/CI/runner. Existing floors, modes, thresholds, approvals and frozen evidence preserved. Frozen V1 R102 FAILED 4/6; V2 independent PCAP pending. **Next R186-R190, then R191-R195.**
 
 Static follow-up: R178 requires a pool/stratum service subdomain rather than the mining-provider brand apex; candidate correction `806a6244cd549c2606f9a23ba535b51a2bef0744`. The R178 apex benign negative remains unexecuted. No test or build was run.
+
+Static R178 service-label refinement: anchored pool/stratum/rig service labels now reject benign provider website `www.2miners.com`; one additional unexecuted advanced fact. R176-R180 now 46 facts; R181-R185 40; combined R176-R185 86 authored, 0 executed. All CANDIDATE/UNVERIFIED. Next R186-R190 then R191-R195.

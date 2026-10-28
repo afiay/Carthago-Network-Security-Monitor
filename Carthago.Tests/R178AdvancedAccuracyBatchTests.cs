@@ -17,6 +17,10 @@ public sealed class R178AdvancedAccuracyBatchTests
     {
         Assert.False((await new R178_DnsQueryForCryptoMiningPoolRule().EvaluateAsync(NetworkBatch176185Context.At(NetworkBatch176185Context.Dns("2miners.com")))).Matched);
     }
+    [Fact] public async Task Provider_Website_Is_Not_A_Mining_Service()
+    {
+        Assert.False((await new R178_DnsQueryForCryptoMiningPoolRule().EvaluateAsync(NetworkBatch176185Context.At(NetworkBatch176185Context.Dns("www.2miners.com")))).Matched);
+    }
     [Fact] public async Task Lookalike_Root_Rejected()
     {
         Assert.False((await new R178_DnsQueryForCryptoMiningPoolRule().EvaluateAsync(NetworkBatch176185Context.At(NetworkBatch176185Context.Dns("stratum.2miners.com.evil.example")))).Matched);

@@ -98,6 +98,9 @@ namespace Carthago.Engine.Rules.Expansion
             return new[] { ".php", ".phtml", ".phar", ".jsp", ".jspx", ".asp", ".aspx", ".ashx", ".cfm", ".war", ".jar" }
                 .Any(ext => filename.EndsWith(ext, StringComparison.OrdinalIgnoreCase));
         }
+        internal static bool MiningService(string leftOfRoot)
+            => Regex.IsMatch(leftOfRoot, @"(?:^|\.)(?:pool|stratum|rig|solo|xmr|btc|eth)(?:[-0-9]|\.|$)",
+                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         internal static bool Dns(TrafficRecord r, out string query)
         {
             query = "";

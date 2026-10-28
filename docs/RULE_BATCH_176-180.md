@@ -17,3 +17,5 @@
 Default modes, floors, thresholds, approval and baseline-readiness policy, frozen V1 (R102 FAILED 4/6), and V2 independent-PCAP requirements are unchanged. The consolidated `scripts/verify-all-rule-batches.ps1` remains the sole deferred verification entry point and discovers the new tests automatically. **Next: R181-R185.**
 Static follow-up: R178 requires a pool/stratum service subdomain rather than the mining-provider brand apex; candidate correction `806a6244cd549c2606f9a23ba535b51a2bef0744`. The R178 apex benign negative remains unexecuted. No test or build was run.
 
+
+Static refinement: R178 requires an anchored pool/stratum/rig service label, rejecting provider website `www.2miners.com` as a close benign negative. One additional advanced fact authored, zero executed. R176–R180 now **46 facts**, and R176–R185 now **86 facts**, all CANDIDATE / UNVERIFIED.
