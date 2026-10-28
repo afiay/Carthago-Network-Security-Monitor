@@ -18,6 +18,7 @@ public sealed class TrustedAuditReceiptVerifierTests
         new(2026, 10, 28, 22, 0, 0, TimeSpan.Zero);
     private const string Actor = "a1b2c3d4e5f60123456789abcdef0123456789abcdef0123456789abcdef0123";
     private const string Resource = "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789";
+    private const string Trace = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
 
     private static AuditClaim Claim(string rule = "R343") => new()
     {
@@ -36,7 +37,8 @@ public sealed class TrustedAuditReceiptVerifierTests
         SourceIp = "10.0.0.70",
         DestinationIp = "10.0.0.20",
         ActorHash = Actor,
-        ResourceHash = Resource
+        ResourceHash = Resource,
+        TraceHash = Trace
     };
 
     private static TrustedAuditReceiptVerifier Verifier(RSA key, string[] rules)
@@ -71,6 +73,7 @@ public sealed class TrustedAuditReceiptVerifierTests
         Assert.Equal("R343", verified.RuleId);
         Assert.Equal("WinRmEncodedCommandExecuted", verified.Operation);
         Assert.Equal(Actor, verified.ActorHash);
+        Assert.Equal(Trace, verified.TraceHash);
     }
 
     [Fact]
@@ -159,6 +162,9 @@ public sealed class TrustedAuditReceiptVerifierTests
         var badActor = Claim();
         badActor.ActorHash = "powershell.exe -enc secret";
         Assert.False(verifier.TryVerify(Signed(key, badActor), out _, out _));
+        var missingTrace = Claim();
+        missingTrace.TraceHash = "";
+        Assert.False(verifier.TryVerify(Signed(key, missingTrace), out _, out _));
         var loop = Claim();
         loop.DestinationIp = loop.SourceIp;
         Assert.False(verifier.TryVerify(Signed(key, loop), out _, out _));
