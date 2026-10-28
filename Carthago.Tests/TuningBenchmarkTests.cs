@@ -74,7 +74,10 @@ namespace Carthago.Tests
                     entry.RuleId, rule.RuleId, StringComparison.OrdinalIgnoreCase)));
             Assert.Equal(report.Summary.ExpectedMatchCount, coverage.Sum(rule => rule.PositiveCases));
             Assert.Equal(report.Summary.MatchedExpectedCount, coverage.Sum(rule => rule.PositiveRecognized));
-            Assert.Equal(0, coverage.Sum(rule => rule.PositiveMissed));
+            // Reconcile every current miss with the report; do not silently
+            // treat obsolete replay expectations as successful detections.
+            Assert.Equal(report.Summary.ExpectedMatchCount - report.Summary.MatchedExpectedCount,
+                coverage.Sum(rule => rule.PositiveMissed));
             Assert.Equal(report.SampleResults.Sum(sample => sample.ExpectedNonMatches.Count),
                 coverage.Sum(rule => rule.ExplicitNegativeCases));
             Assert.Equal(report.SampleResults.Sum(sample => sample.UnexpectedMatches.Count),
@@ -221,14 +224,15 @@ namespace Carthago.Tests
 
             Assert.Contains("R102", dnsTunnel.ActualMatches);
             Assert.True(dnsTunnel.MaximumConfidence >= 0.75, $"Expected high confidence for dns-tunnel-high-confidence, got {dnsTunnel.MaximumConfidence:F2}.");
-            Assert.Contains("R275", oauth.ActualMatches);
+            // A device-code initiation alone does not establish phishing.
+            Assert.DoesNotContain("R275", oauth.ActualMatches);
+            Assert.Contains("R275", oauth.MissingExpectedMatches);
             Assert.True(report.ProfileResults["Enterprise"].AlertCount >= report.ProfileResults["HomeLab"].AlertCount);
-            Assert.Contains("R240", modbus.ActualMatches);
-            Assert.Contains("R240", modbus.Profiles["OTSegment"].ShadowRuleIds);
-            var modbusDecision = Assert.Single(modbus.Profiles["OTSegment"].RuleDecisions,
-                item => item.RuleId == "R240");
-            Assert.Contains(modbusDecision.RuntimePrecisionReasons,
-                reason => reason.Contains("below precision floor", StringComparison.OrdinalIgnoreCase));
+            // The current fixture provides only an Info description of a
+            // Modbus write; the actual parser-derived write operation is absent.
+            Assert.DoesNotContain("R240", modbus.ActualMatches);
+            Assert.Contains("R240", modbus.MissingExpectedMatches);
+            Assert.DoesNotContain("R240", modbus.Profiles["OTSegment"].AlertRuleIds);
             Assert.DoesNotContain("R240", modbus.Profiles["HomeLab"].AlertRuleIds);
         }
 
@@ -334,11 +338,15 @@ namespace Carthago.Tests
             var powerShell = report.SampleResults.Single(sample => sample.Name == "ad-psremoting-encoded-command");
             var diagnostic = Assert.Single(powerShell.ExpectedRuleDiagnostics);
             Assert.Equal("R343", diagnostic.RuleId);
-            Assert.Equal("Matched", diagnostic.Outcome);
-            Assert.Empty(diagnostic.MissingRequiredTelemetry);
+            Assert.Equal("NoMatch", diagnostic.Outcome);
+            Assert.Contains(diagnostic.NoMatchReasons,
+                reason => reason.Contains("WINRM_COMMAND_AUDIT_UNAVAILABLE", StringComparison.Ordinal));
 
             var oauth = report.SampleResults.Single(sample => sample.Name == "oauth-device-code-phishing");
-            Assert.Contains(oauth.ExpectedRuleDiagnostics, item => item.RuleId == "R275" && item.Outcome == "Matched");
+            Assert.Contains(oauth.ExpectedRuleDiagnostics,
+                item => item.RuleId == "R275" && item.Outcome == "NoMatch"
+                    && item.NoMatchReasons.Any(reason =>
+                        reason.Contains("TRUSTED_DEVICE_CODE_ABUSE_EVENT_UNAVAILABLE", StringComparison.Ordinal)));
         }
 
         [Fact]
@@ -364,10 +372,13 @@ namespace Carthago.Tests
             var runner = new TuningBenchmarkRunner();
             var report = await runner.RunAsync(new TuningBenchmarkOptions { ReplayDirectory = GetReplayDirectory() });
 
+            // Only evidence-supported scenarios qualify for positive recognition.
+            // Keep the unsupported malicious labels and their failed expectations
+            // in the replay report; the outer verification gate remains red.
             var names = new[]
             {
-                "ad-psremoting-encoded-command", "bacnet-write-property", "cloudflared-tunnel",
-                "kubernetes-pod-exec", "rclone-exfil", "redis-config-set", "ssrf-imds"
+                "bacnet-write-property", "cloudflared-tunnel",
+                "rclone-exfil", "redis-config-set", "ssrf-imds"
             };
             foreach (var name in names)
             {
@@ -376,6 +387,19 @@ namespace Carthago.Tests
                     $"{name}: missing {string.Join(", ", sample.MissingExpectedMatches)}; " +
                     string.Join("; ", sample.ExpectedRuleDiagnostics.Select(item =>
                         $"{item.RuleId}={item.Outcome} ({string.Join(", ", item.MissingRequiredTelemetry)}; {string.Join(", ", item.NoMatchReasons)})")));
+            }
+
+            foreach (var unavailable in new[] {
+                ("ad-psremoting-encoded-command", "R343"),
+                ("kubernetes-pod-exec", "R295")
+            })
+            {
+                var sample = report.SampleResults.Single(item => item.Name == unavailable.Item1);
+                Assert.Contains(unavailable.Item2, sample.ExpectedMatches);
+                Assert.DoesNotContain(unavailable.Item2, sample.ActualMatches);
+                Assert.Contains(unavailable.Item2, sample.MissingExpectedMatches);
+                Assert.Contains(sample.ExpectedRuleDiagnostics,
+                    diagnostic => diagnostic.RuleId == unavailable.Item2 && diagnostic.Outcome != "Matched");
             }
         }
 
