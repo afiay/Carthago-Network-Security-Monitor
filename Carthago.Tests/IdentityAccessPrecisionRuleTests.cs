@@ -796,9 +796,15 @@ public sealed class IdentityAccessPrecisionRuleTests
         string? srcCountryIso2 = null)
         => new()
         {
+            // Synthetic HTTP/flow records must carry a real packet identity and
+            // port roles; otherwise the provenance gate rejects them before
+            // the intended rule behavior is evaluated.
+            Id = Guid.NewGuid(),
             Source = source,
+            SourcePort = 51000,
             Destination = destination,
             DestinationPort = destinationPort,
+            IpVersion = 4,
             Protocol = protocol,
             ApplicationProtocol = protocol,
             ApplicationService = service,
@@ -824,9 +830,15 @@ public sealed class IdentityAccessPrecisionRuleTests
         string? process = null)
         => new()
         {
+            // Synthetic HTTP/flow records must carry a real packet identity and
+            // port roles; otherwise the provenance gate rejects them before
+            // the intended rule behavior is evaluated.
+            Id = Guid.NewGuid(),
             Source = source,
+            SourcePort = 51000,
             Destination = destination,
             DestinationPort = destinationPort,
+            IpVersion = 4,
             Protocol = protocol,
             ApplicationProtocol = protocol,
             ApplicationService = service,
