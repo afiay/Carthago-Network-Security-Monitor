@@ -253,10 +253,10 @@ public sealed class IdentityAccessPrecisionRuleTests
             source: "10.1.0.7",
             destination: "198.51.100.50",
             destinationPort: 443,
-            host: "fw.example.net",
+            host: "fortigate-fw.example.net",
             method: "GET",
             uri: "/remote/login",
-            headers: "Host: fw.example.net",
+            headers: "Host: fortigate-fw.example.net",
             info: "fortigate sslvpn admin portal",
             service: "HTTPS",
             protocol: "HTTPS")));
