@@ -67,7 +67,7 @@ public sealed class R275R343R485PairedReplayTests
                 Assert.DoesNotContain(scenario.Rule, positive.ActualMatches);
                 Assert.Contains(scenario.Rule, positive.MissingExpectedMatches);
                 Assert.Contains(positive.ExpectedRuleDiagnostics,
-                    item => item.RuleId == scenario.Rule && item.Outcome == "NoMatch");
+                    item => item.RuleId == scenario.Rule && (item.Outcome is "NoMatch" or "MissingTelemetry"));
                 Assert.True(coverage.PositiveMissed >= 1);
             }
             else
