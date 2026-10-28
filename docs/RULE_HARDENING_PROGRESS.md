@@ -533,3 +533,9 @@ After verified R176-R180 HEAD `f62ffdcf6391b1809f372e37ecbea31668f86cf4`, author
 Static follow-up: R178 requires a pool/stratum service subdomain rather than the mining-provider brand apex; candidate correction `806a6244cd549c2606f9a23ba535b51a2bef0744`. The R178 apex benign negative remains unexecuted. No test or build was run.
 
 Static R178 service-label refinement: anchored pool/stratum/rig service labels now reject benign provider website `www.2miners.com`; one additional unexecuted advanced fact. R176-R180 now 46 facts; R181-R185 40; combined R176-R185 86 authored, 0 executed. All CANDIDATE/UNVERIFIED. Next R186-R190 then R191-R195.
+
+## R186-R190 candidate implementation - 2026-10-28
+
+From remote HEAD `2f8eaee4e33a48be886a54ab1a099cc97fcf9856`, authored five DNS candidate hardenings: typed CAA/NULL/SRV queries, internal-to-external AD SRV leakage, bounded duplicate-resistant windows and a strict response-only short-TTL contract. Added `NetworkBatch186190Evidence.cs`, scoped DNS qname/answer redaction for R186-R195, and **50 advanced xUnit facts (10 per rule), zero executed**. Source `ef92684391f13953128933df811cf310a461027f`, tests `b4f5b597844f688573460b4c3a40312dd9306469`, static fixture/attribution correction `b4bc16137e343dc51fa991b1b732586582a70bc6`. See `docs/RULE_BATCH_186-190.md`.
+
+**CANDIDATE / UNVERIFIED.** R190's `DnsTtl` is not currently populated by the inspected live `PacketHandler` DNS parse paths; no live TTL recall claim. No builds/tests/replays/holdouts/CI/runner. Confidence floors, policies, approvals, thresholds and frozen evidence preserved. Frozen V1 R102 FAILED 4/6; V2 independent reviewed PCAP pending. **Next R191-R195, then R196-R200.**
