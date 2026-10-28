@@ -1,6 +1,6 @@
 # R343 - authenticated Windows/WinRM audit producer trust boundary
 
-**Status: DESIGN CONTRACT ONLY.** No service, signing key, transport, signed audit producer, or R343 alert promotion is implemented here. R343 continues to return `WINRM_COMMAND_AUDIT_UNAVAILABLE`. This contract guides the next isolated development increments.
+**Status: protocol gate and adversarial tests implemented; OS-authenticated transport NOT implemented.** `WinRmTelemetryIpcContract` now validates bounded metadata-only frames in memory behind an operator-pinned peer/session scope. It has no OS peer authenticator, pipe, service, signing key, signed producer or R343 alert promotion. This does not establish authenticated communication until a future Windows transport adapter validates the peer token and supplies the trusted context. R343 continues to return `WINRM_COMMAND_AUDIT_UNAVAILABLE`. See `docs/development/R343_TELEMETRY_IPC_CONTRACT_20261029.md` for exact wire format and negative tests.
 
 ## Verified foundation and deliberate limitations
 
@@ -41,7 +41,7 @@
 ## Narrow incremental roadmap
 
 1. **Current increment:** harden the existing unsigned candidate parser to reject user-writable executable lookalikes and to bind encoded-command flags to the observed PowerShell launcher. Add adversarial synthetic tests. No source policy changes.
-2. **Next:** define a read-only service-to-consumer IPC contract with explicit identity and capability checks, then add purely offline negative tests. Do not create a signing key or service installer as part of the contract review.
+2. **Implemented source-only:** in-process metadata IPC protocol gate and negative tests enforce operator-pinned SID/machine, channel binding, frame limits, strict schema, age, ordering and replay. A Windows OS-authenticated transport adapter does **not** exist; synthetic peer identities in tests are not proof of authentication. See `R343_TELEMETRY_IPC_CONTRACT_20261029.md`.
 3. **Then:** implement an operator-provisioned source with real authenticated WinRM operation/outcome correlation and explicit authorization provenance, initially producing diagnostic-only data.
 4. **Last:** after successful real-source tests, security review, and independently corroborated outcomes, consider signing receipts and separately reviewing R343 alert-promotion policy. Never modify existing confidence floors or relabel malicious fixtures to pass certification.
 
