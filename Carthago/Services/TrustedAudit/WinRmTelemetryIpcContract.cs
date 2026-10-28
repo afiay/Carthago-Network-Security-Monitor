@@ -43,7 +43,6 @@ namespace Carthago.Services.TrustedAudit
         internal DateTimeOffset CreatedAtUtc { get; }
         internal long LastSequence { get; set; }
         internal bool Closed { get; set; }
-        internal object Gate { get; } = new();
         public Guid Id { get; }
     }
 
@@ -298,20 +297,32 @@ namespace Carthago.Services.TrustedAudit
         }
         private static bool ReadInt32(Dictionary<string, JsonElement> fields,
             string key, out int value)
-            => fields[key].ValueKind == JsonValueKind.Number
+        {
+            value = default;
+            return fields[key].ValueKind == JsonValueKind.Number
                 && fields[key].TryGetInt32(out value);
+        }
         private static bool ReadInt64(Dictionary<string, JsonElement> fields,
             string key, out long value)
-            => fields[key].ValueKind == JsonValueKind.Number
+        {
+            value = default;
+            return fields[key].ValueKind == JsonValueKind.Number
                 && fields[key].TryGetInt64(out value);
+        }
         private static bool ReadUInt32(Dictionary<string, JsonElement> fields,
             string key, out uint value)
-            => fields[key].ValueKind == JsonValueKind.Number
+        {
+            value = default;
+            return fields[key].ValueKind == JsonValueKind.Number
                 && fields[key].TryGetUInt32(out value);
+        }
         private static bool ReadUInt64(Dictionary<string, JsonElement> fields,
             string key, out ulong value)
-            => fields[key].ValueKind == JsonValueKind.Number
+        {
+            value = default;
+            return fields[key].ValueKind == JsonValueKind.Number
                 && fields[key].TryGetUInt64(out value);
+        }
 
         private static bool ValidMachine(string? machine)
             => machine is { Length: >= 1 and <= 128 }
