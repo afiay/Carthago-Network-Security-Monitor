@@ -34,7 +34,7 @@ public sealed class DevOpsCredentialRuleEvidenceTests
     }
 
     [Fact]
-    public async Task GitHub_Token_Must_Be_Observed_Not_Inferred_From_Vocabulary()
+    public async Task GitHub_Token_In_Untrusted_Info_Must_Not_Establish_Wire_Observation()
     {
         var benign = Record("api.github.com", "/repos/example/repo",
             "GitHub authorization token personal access token documentation");
@@ -42,12 +42,14 @@ public sealed class DevOpsCredentialRuleEvidenceTests
             .EvaluateAsync(Context(benign))).Matched);
 
         benign.Info = "Synthetic GitHub PAT candidate ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ012345";
-        Assert.True((await new R353_GitHubPersonalAccessTokenInTrafficRule()
+        // Info is untrusted descriptive text; only the capture parser may set
+        // the credential-observation flag used by R353.
+        Assert.False((await new R353_GitHubPersonalAccessTokenInTrafficRule()
             .EvaluateAsync(Context(benign))).Matched);
     }
 
     [Fact]
-    public async Task GitLab_Token_Must_Be_Observed_Not_Inferred_From_Vocabulary()
+    public async Task GitLab_Token_In_Untrusted_Info_Must_Not_Establish_Wire_Observation()
     {
         var benign = Record("gitlab.com", "/api/v4/projects",
             "GitLab private-token authorization documentation");
@@ -55,7 +57,8 @@ public sealed class DevOpsCredentialRuleEvidenceTests
             .EvaluateAsync(Context(benign))).Matched);
 
         benign.Info = "Synthetic GitLab PAT candidate glpat-ABCDEFGHIJKLMNOPQRSTUVWXYZ012345";
-        Assert.True((await new R354_GitLabPrivateTokenInTrafficRule()
+        // A token-shaped Info string is not proof of a captured credential.
+        Assert.False((await new R354_GitLabPrivateTokenInTrafficRule()
             .EvaluateAsync(Context(benign))).Matched);
     }
 
