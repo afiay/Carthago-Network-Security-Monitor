@@ -65,3 +65,21 @@ dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQua
 ```
 
 The last verified checkpoint before this candidate was **4,797/4,797 xUnit passing** with four replay-expectation failures (R343, R295, R275, R163). The new verifier and tests remain **UNVERIFIED** until the next CARTHAGE run.
+
+
+## Next hardening increment: registry-scoped receipt correlation
+
+`TrustedAuditReceiptVerifier` now rejects two configured issuer aliases with the **same canonical RSA public key**. A receipt carries an internal verifier-instance identifier, assigned only after successful signature, scope, freshness and replay validation.
+
+`TrustedAuditReceiptCorrelation.TryCorrelate` can compare two previously verified receipts and return a narrowly scoped `CorrelatedAuditReceipts` association only when:
+
+- The **same verifier instance** validated both claims using its operator-defined trust anchors.
+- The issuers and receipt UUIDs are **distinct** (different issuer names must also have different public keys).
+- Rule ID, signed operation, source/destination addresses, pseudonymous actor/resource/trace hashes match exactly.
+- Signed occurrence times differ by no more than two minutes.
+
+The corresponding regression suite tests valid association and rejects self-corroboration, mixed trust stores, duplicate IDs, cross-rule context, mismatched trace/actor/resource/endpoints and event-time skew.
+
+**Important limitation:** two different signing keys are not necessarily independently operated evidence producers. A common operator can control both. Correlation is **not** independent proof of abuse and cannot be used to promote Alert/Shadow decisions. A legitimate R163 inbound/outbound causal sequence may have **different network endpoints**; this current strict same-tuple primitive must not be presented as a general SSRF causal binder. A future producer-specific binder will need authenticated trace links and explicit source roles.
+
+The runtime rule engine, benchmark replay loader, trust-key provisioning and the four blocked malicious fixtures are intentionally unchanged. All changes in this increment remain **uncompiled/unverified** until a CARTHAGE run. The safe order is **compile and test the trust layer → wire authenticated producers and role separation → independently verify event correlation → consider a carefully gated rule path**. Never skip directly from a synthetic signature to alert eligibility.
