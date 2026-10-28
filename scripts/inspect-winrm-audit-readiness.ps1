@@ -119,7 +119,7 @@ $from = (Get-Date).AddMinutes(-$LookbackMinutes)
 $observed = 0
 $unavailable = 0
 foreach ($id in @(4624,4688)) {
-    $state = 'NOT OBSERVED'
+    $state = 'NOT VERIFIED'
     try {
         $event = Get-WinEvent -FilterHashtable @{
             LogName = 'Security'
@@ -133,7 +133,14 @@ foreach ($id in @(4624,4688)) {
     } catch {
         $failure = Get-SafeFailureCode $_
         if ($failure -eq 'NO_MATCHING_EVENTS') {
-            $state = 'NOT OBSERVED'
+            # If the caller cannot read channel metadata, a no-match
+            # query response does not independently establish that the
+            # Security channel was accessible or auditing was enabled.
+            $state = if ($metadataStatus -eq 'READABLE') {
+                'NO MATCHING EVENTS (selected window)'
+            } else {
+                'NO MATCHES REPORTED (log access unverified)'
+            }
         } else {
             $state = $failure
             $unavailable++
@@ -147,9 +154,13 @@ foreach ($id in @(4624,4688)) {
 
 if ($unavailable -gt 0) {
     Write-Host 'STATUS: NOT READY — at least one Security event query failed.'
+} elseif ($metadataStatus -eq 'ACCESS_DENIED' -and $observed -eq 0) {
+    Write-Host 'STATUS: ACCESS UNVERIFIED — metadata denied and no events returned; neither log readability nor event absence is established.'
+} elseif ($metadataStatus -ne 'READABLE' -and $observed -eq 0) {
+    Write-Host 'STATUS: ACCESS UNVERIFIED — no metadata confirmation or returned events.'
 } elseif ($observed -lt 2) {
-    Write-Host 'STATUS: INCOMPLETE — one or both event types not observed in the selected window.'
+    Write-Host 'STATUS: INCOMPLETE — one or both event IDs not returned in the selected window.'
 } else {
-    Write-Host 'STATUS: EVENT IDS OBSERVED — audit policy, record fields, and authenticated outcome NOT VERIFIED.'
+    Write-Host 'STATUS: EVENT IDS OBSERVED — auditing policy, event fields and authenticated outcome remain NOT VERIFIED.'
 }
 Write-Host 'No events modified or signed. R343 remains blocked pending authenticated source, session and outcome evidence.'
