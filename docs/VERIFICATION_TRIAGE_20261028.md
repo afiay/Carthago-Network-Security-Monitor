@@ -65,3 +65,11 @@ No detection thresholds, confidence floors, required audits or runtime mode defa
 The uploaded TRX confirms **4,791 passed, 0 failed, 0 skipped**. Full verification still fails `replay-expectations` on five labeled cases. Alert-level Enterprise recall remains 4/48 with zero benign alert false positives (offline fixtures only).
 
 The current *unverified* candidate routes synthetic Modbus TCP bytes through the same bounded parser used by capture, adds positive/negative replay coverage, and restores the expected R240 detection assertion. No detector or policy thresholds were changed. The other replay gaps are not waived, and a clean xUnit result alone is not release certification.
+
+## CARTHAGE verification 2026-10-28 23:27–23:28 local
+
+The supplied TRX verifies **4,796 passed, 1 failed, 0 skipped** (4,797 total). The six new R240 parser-backed tests ran; five passed and the single `Port_502_And_Info_Without_Payload_Do_Not_Prove_Modbus_Write` test failed because the source fixture's newline-sensitive string replacement did not remove the raw OT bytes on Windows. The observed unexpected R240 match was therefore not proof that the rule trusted packet Info.
+
+The separate replay-expectations stage improved from **five to four** invalid fixtures: R240 passed genuine MBAP/PDU-based recognition. Still open: R343 (WinRM audit), R295 (Kubernetes exec audit), R275 (IdP corroboration), R163 (0.62 vs expected minimum 0.65; production confidence floor remains 0.84).
+
+The negative test now removes the `rawOtTcpPayloadsByRecordIndex` property via `JsonNode`, asserts removal, and keeps the explicit R240 non-match expectation. These corrections are **PUBLISHED BUT NOT YET TESTED**; do not mark the branch or full verification as green based on the previous run. Do not lower confidence floors or waive the four replay blockers.
