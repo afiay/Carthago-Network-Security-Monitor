@@ -11,7 +11,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId: "R333",
             Name: "SMB Null Session Enumeration",
             Category: "ActiveDirectoryWindows",
-            Description: "Detects SMB Null Session Enumeration only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
+            Description: "Candidate R333 requires authenticated operation and outcome provenance; packet-only indicators cannot establish the named behavior.",
             DefaultSeverity: SeverityLevel.High,
             ConfigKey: "Rules.R333.Enabled",
             EnabledByDefault: true);
@@ -21,7 +21,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId = "R333",
             Name = "SMB Null Session Enumeration",
             Category = "ActiveDirectoryWindows",
-            Description = "Detects SMB Null Session Enumeration only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
+            Description = "Candidate R333 requires authenticated operation and outcome provenance; packet-only indicators cannot establish the named behavior.",
             Severity = SeverityLevel.High,
             RequiredTelemetry = new[] { RuleTelemetryKind.Flow, RuleTelemetryKind.Identity, RuleTelemetryKind.Process },
             RequiredFields = new[] { "source", "destination", "windows_protocol_context" },
@@ -54,6 +54,12 @@ namespace Carthago.Engine.Rules.Expansion
         public R333_SMBNullSessionEnumerationRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            // No authenticated application/session outcome producer is connected to this capture path.
+            // Packet descriptions, paths and ports are not sufficient proof of this behavior.
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "SMB_SESSION_AUTH_AUDIT_UNAVAILABLE",
+                "SMB port and IPC$ vocabulary do not prove anonymous SMB authentication or enumeration. Require validated SMB session identity, tree connect and enumeration outcome.");
+        }
     }
 }

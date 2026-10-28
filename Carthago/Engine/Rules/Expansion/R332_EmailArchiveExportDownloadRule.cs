@@ -11,7 +11,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId: "R332",
             Name: "Email Archive Export Download",
             Category: "EmailCollaboration",
-            Description: "Detects Email Archive Export Download only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
+            Description: "Candidate R332 requires authenticated operation and outcome provenance; packet-only indicators cannot establish the named behavior.",
             DefaultSeverity: SeverityLevel.High,
             ConfigKey: "Rules.R332.Enabled",
             EnabledByDefault: true);
@@ -21,7 +21,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId = "R332",
             Name = "Email Archive Export Download",
             Category = "EmailCollaboration",
-            Description = "Detects Email Archive Export Download only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
+            Description = "Candidate R332 requires authenticated operation and outcome provenance; packet-only indicators cannot establish the named behavior.",
             Severity = SeverityLevel.High,
             RequiredTelemetry = new[] { RuleTelemetryKind.Http, RuleTelemetryKind.Flow, RuleTelemetryKind.Dns },
             RequiredFields = new[] { "source", "destination_or_host", "mail_or_collaboration_context" },
@@ -55,6 +55,12 @@ namespace Carthago.Engine.Rules.Expansion
         public R332_EmailArchiveExportDownloadRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            // No authenticated application/session outcome producer is connected to this capture path.
+            // Packet descriptions, paths and ports are not sufficient proof of this behavior.
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "MAIL_EXPORT_RESULT_UNAVAILABLE",
+                "Archive-looking URLs and HTTP GET requests do not establish an authenticated mail export, successful download, or transferred bytes. Require trusted mail export audit and delivery outcome.");
+        }
     }
 }

@@ -11,7 +11,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId: "R331",
             Name: "Calendar Invite Phishing Link Pattern",
             Category: "EmailCollaboration",
-            Description: "Detects Calendar Invite Phishing Link Pattern only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
+            Description: "Candidate R331 requires authenticated operation and outcome provenance; packet-only indicators cannot establish the named behavior.",
             DefaultSeverity: SeverityLevel.Medium,
             ConfigKey: "Rules.R331.Enabled",
             EnabledByDefault: true);
@@ -21,7 +21,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId = "R331",
             Name = "Calendar Invite Phishing Link Pattern",
             Category = "EmailCollaboration",
-            Description = "Detects Calendar Invite Phishing Link Pattern only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
+            Description = "Candidate R331 requires authenticated operation and outcome provenance; packet-only indicators cannot establish the named behavior.",
             Severity = SeverityLevel.Medium,
             RequiredTelemetry = new[] { RuleTelemetryKind.Http, RuleTelemetryKind.Flow, RuleTelemetryKind.Dns },
             RequiredFields = new[] { "source", "destination_or_host", "mail_or_collaboration_context" },
@@ -54,6 +54,12 @@ namespace Carthago.Engine.Rules.Expansion
         public R331_CalendarInvitePhishingLinkPatternRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            // No authenticated application/session outcome producer is connected to this capture path.
+            // Packet descriptions, paths and ports are not sufficient proof of this behavior.
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "CALENDAR_INVITE_AUDIT_UNAVAILABLE",
+                "A calendar URL or ICS-looking request does not prove an invitation was delivered or that its link is phishing. Require authenticated calendar message, recipient and validated destination evidence.");
+        }
     }
 }

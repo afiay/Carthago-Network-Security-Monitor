@@ -11,7 +11,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId: "R335",
             Name: "LSARPC SAMR Enumeration Pattern",
             Category: "ActiveDirectoryWindows",
-            Description: "Detects LSARPC SAMR Enumeration Pattern only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
+            Description: "Candidate R335 requires authenticated operation and outcome provenance; packet-only indicators cannot establish the named behavior.",
             DefaultSeverity: SeverityLevel.High,
             ConfigKey: "Rules.R335.Enabled",
             EnabledByDefault: true);
@@ -21,7 +21,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId = "R335",
             Name = "LSARPC SAMR Enumeration Pattern",
             Category = "ActiveDirectoryWindows",
-            Description = "Detects LSARPC SAMR Enumeration Pattern only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
+            Description = "Candidate R335 requires authenticated operation and outcome provenance; packet-only indicators cannot establish the named behavior.",
             Severity = SeverityLevel.High,
             RequiredTelemetry = new[] { RuleTelemetryKind.Flow, RuleTelemetryKind.Identity, RuleTelemetryKind.Process },
             RequiredFields = new[] { "source", "destination", "windows_protocol_context" },
@@ -54,6 +54,12 @@ namespace Carthago.Engine.Rules.Expansion
         public R335_LSARPCSAMREnumerationPatternRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            // No authenticated application/session outcome producer is connected to this capture path.
+            // Packet descriptions, paths and ports are not sufficient proof of this behavior.
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "RPC_ENUMERATION_AUDIT_UNAVAILABLE",
+                "SAMR or LSARPC text and SMB port do not prove an authenticated RPC bind or enumeration result. Require validated RPC interface, operation, identity and outcome.");
+        }
     }
 }
