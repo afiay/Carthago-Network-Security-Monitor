@@ -31,8 +31,8 @@ public sealed class R187AdvancedAccuracyBatchTests
         Assert.True((await rule.EvaluateAsync(At(r))).Matched);
         Assert.False((await rule.EvaluateAsync(At(r,1))).Matched);
     }
-    [Fact] public async Task Acme_Validation_Query_Remains_Suppressed()
-        => Assert.False((await new R187_DnsNullQueryUsageRule().EvaluateAsync(At(Q("_acme-challenge.example.org","NULL")))).Matched);
+    [Fact] public async Task Autodiscover_Validation_Query_Remains_Suppressed()
+        => Assert.False((await new R187_DnsNullQueryUsageRule().EvaluateAsync(At(Q("autodiscover.example.org","NULL")))).Matched);
     [Fact] public async Task Http_Contradiction_Rejected()
     {
         var r=Q("unusual.example.org","NULL"); r.HttpUri="/null";

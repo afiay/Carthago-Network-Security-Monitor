@@ -19,7 +19,9 @@ namespace Carthago.Engine.Rules.Expansion
                 || !new[] { "DNS", "TCP", "UDP" }.Contains(r.Protocol, StringComparer.OrdinalIgnoreCase)
                 || r.ApplicationProtocol != null && !r.ApplicationProtocol.Equals("DNS", StringComparison.OrdinalIgnoreCase)
                 || r.ApplicationService != null && !r.ApplicationService.Equals("DNS", StringComparison.OrdinalIgnoreCase)
-                || r.Protocol != "DNS" && r.ApplicationProtocol != "DNS" && r.ApplicationService != "DNS"
+                || !string.Equals(r.Protocol, "DNS", StringComparison.OrdinalIgnoreCase)
+                    && !string.Equals(r.ApplicationProtocol, "DNS", StringComparison.OrdinalIgnoreCase)
+                    && !string.Equals(r.ApplicationService, "DNS", StringComparison.OrdinalIgnoreCase)
                 || !IPAddress.TryParse(r.Source, out var src) || !IPAddress.TryParse(r.Destination, out var dst)
                 || src.Equals(dst) || src.AddressFamily != dst.AddressFamily
                 || r.IpVersion == 4 && src.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork
