@@ -77,32 +77,12 @@ namespace Carthago.Engine.Rules.Expansion
         internal static bool RetainedPublish(TrafficRecord r)
             => Flow(r, true) && Port(r, 1883)
                && string.Equals(r.ApplicationProtocol, "mqtt.publish", StringComparison.OrdinalIgnoreCase)
-               && r.MqttRetain == true && ValidTopic(r.MqttTopic);
+               && r.MqttRetain == true && r.MqttPublishTopicObserved;
 
         internal static bool LastWill(TrafficRecord r)
             => Flow(r, true) && Port(r, 1883)
                && string.Equals(r.ApplicationProtocol, "mqtt.connect", StringComparison.OrdinalIgnoreCase)
-               && ValidTopic(r.MqttWillTopic);
-
-        private static bool ValidTopic(string? topic)
-            => !string.IsNullOrWhiteSpace(topic) && topic.Length <= 512
-               && topic.IndexOf('\0') < 0 && topic.IndexOf('#') < 0
-               && topic.IndexOf('+') < 0;
-
-        internal static bool SuspiciousTopic(string? topic)
-        {
-            if (!ValidTopic(topic)) return false;
-            foreach (var segment in topic!.Split('/'))
-                if (segment.Equals("cmd", StringComparison.OrdinalIgnoreCase)
-                    || segment.Equals("command", StringComparison.OrdinalIgnoreCase)
-                    || segment.Equals("control", StringComparison.OrdinalIgnoreCase)
-                    || segment.Equals("admin", StringComparison.OrdinalIgnoreCase)
-                    || segment.Equals("broadcast", StringComparison.OrdinalIgnoreCase)
-                    || segment.Equals("all", StringComparison.OrdinalIgnoreCase)
-                    || segment.Equals("$sys", StringComparison.OrdinalIgnoreCase))
-                    return true;
-            return false;
-        }
+               && r.MqttWillTopicObserved;
 
         // Instance-owned, bounded, duplicate-resistant and monotonic event
         // windows. Saturation fails closed rather than inflating counts.

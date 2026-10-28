@@ -34,8 +34,8 @@ internal static class NetworkBatch226230Context
             r.SourcePort = null; r.DestinationPort = null;
             r.ApplicationProtocol = "profinet.dcp.identify";
         }
-        if (rule == 229) { r.MqttRetain = true; r.MqttTopic = "devices/cmd"; }
-        if (rule == 230) r.MqttWillTopic = "devices/control";
+        if (rule == 229) { r.MqttRetain = true; r.MqttPublishTopicObserved = true; r.MqttControlTopicObserved = true; }
+        if (rule == 230) { r.MqttWillTopicObserved = true; r.MqttWillControlTopicObserved = true; }
         return r;
     }
 }

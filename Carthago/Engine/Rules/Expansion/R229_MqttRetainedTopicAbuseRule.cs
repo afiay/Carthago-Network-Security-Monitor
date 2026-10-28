@@ -51,7 +51,7 @@ namespace Carthago.Engine.Rules.Expansion
         {
             var r = context.Record;
             if (!NetworkBatch226230Evidence.RetainedPublish(r)) return NoMatch();
-            var suspicious = NetworkBatch226230Evidence.SuspiciousTopic(r.MqttTopic);
+            var suspicious = r.MqttControlTopicObserved;
             var external = NetworkBatch226230Evidence.Public(r.Destination);
             if (!suspicious && !external
                 || _observations.Observe(r.Source, r.Destination, r.Id, context.TimestampUtc,

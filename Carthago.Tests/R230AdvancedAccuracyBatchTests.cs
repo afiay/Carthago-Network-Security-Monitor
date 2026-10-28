@@ -19,12 +19,12 @@ public sealed class R230AdvancedAccuracyBatchTests
         => Assert.True(await Hit(Sample()));
     [Fact] public async Task Routine_Internal_Availability_Will_Is_Benign()
     {
-        var r = Sample(); r.MqttWillTopic = "devices/availability";
+        var r = Sample(); r.MqttWillControlTopicObserved = false;
         Assert.False(await Hit(r));
     }
     [Fact] public async Task Packet_Info_Last_Will_Claim_Is_Not_Parsed_Will()
     {
-        var r = Sample(); r.MqttWillTopic = null; r.Info = "last will topic=devices/control";
+        var r = Sample(); r.MqttWillTopicObserved = false; r.MqttWillControlTopicObserved = false; r.Info = "last will topic=devices/control";
         Assert.False(await Hit(r));
     }
     [Fact] public async Task Publish_Is_Not_Connect_Will()
@@ -34,7 +34,7 @@ public sealed class R230AdvancedAccuracyBatchTests
     }
     [Fact] public async Task External_Broker_With_Ordinary_Will_Is_Eligible()
     {
-        var r = Sample(); r.Destination = "198.51.100.230"; r.MqttWillTopic = "devices/availability";
+        var r = Sample(); r.Destination = "198.51.100.230"; r.MqttWillControlTopicObserved = false;
         Assert.True(await Hit(r));
     }
     [Fact] public async Task Tls_Port_Without_Decryption_Is_Not_Connect_Will()
@@ -50,7 +50,7 @@ public sealed class R230AdvancedAccuracyBatchTests
     }
     [Fact] public async Task Will_Topic_And_Info_Are_Redacted()
     {
-        var r = Sample(); r.MqttWillTopic = "devices/control/secret-token-67890";
+        var r = Sample(); r.MqttWillControlTopicObserved = true;
         r.Info = "password=private-marker";
         var x = await new R230_MqttLastWillSuspiciousRule().EvaluateAsync(At(r));
         Assert.True(x.Matched);

@@ -42,6 +42,20 @@ namespace Carthago.Services
             return text.IndexOf('\0') < 0;
         }
 
+        internal static bool IsControlTopic(string topic)
+        {
+            foreach (var segment in topic.Split('/'))
+                if (segment.Equals("cmd", StringComparison.OrdinalIgnoreCase)
+                    || segment.Equals("command", StringComparison.OrdinalIgnoreCase)
+                    || segment.Equals("control", StringComparison.OrdinalIgnoreCase)
+                    || segment.Equals("admin", StringComparison.OrdinalIgnoreCase)
+                    || segment.Equals("broadcast", StringComparison.OrdinalIgnoreCase)
+                    || segment.Equals("all", StringComparison.OrdinalIgnoreCase)
+                    || segment.Equals("$sys", StringComparison.OrdinalIgnoreCase))
+                    return true;
+            return false;
+        }
+
         internal static bool Mqtt(ReadOnlySpan<byte> data, int? src, int? dst,
             out string operation, out string topic, out bool retain)
         {

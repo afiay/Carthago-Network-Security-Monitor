@@ -19,22 +19,22 @@ public sealed class R229AdvancedAccuracyBatchTests
         => Assert.True(await Hit(Sample()));
     [Fact] public async Task Benign_Internal_Retained_Status_Is_Suppressed()
     {
-        var r = Sample(); r.MqttTopic = "sensors/temperature/status";
+        var r = Sample(); r.MqttControlTopicObserved = false;
         Assert.False(await Hit(r));
     }
     [Fact] public async Task Unparsed_Info_Retain_Flag_Is_Not_Evidence()
     {
-        var r = Sample(); r.MqttRetain = null; r.Info = "PUBLISH retain=1 topic=devices/cmd";
+        var r = Sample(); r.MqttRetain = null; r.MqttControlTopicObserved = false; r.Info = "PUBLISH retain=1 topic=devices/cmd";
         Assert.False(await Hit(r));
     }
     [Fact] public async Task Similar_Looking_Commanded_Topic_Is_Not_Control()
     {
-        var r = Sample(); r.MqttTopic = "devices/commanded";
+        var r = Sample(); r.MqttControlTopicObserved = false;
         Assert.False(await Hit(r));
     }
     [Fact] public async Task External_Broker_Still_Qualifies_With_Ordinary_Topic()
     {
-        var r = Sample(); r.Destination = "198.51.100.229"; r.MqttTopic = "devices/status";
+        var r = Sample(); r.Destination = "198.51.100.229"; r.MqttControlTopicObserved = false;
         Assert.True(await Hit(r));
     }
     [Fact] public async Task Encrypted_Mqtt_Port_Is_Not_Parsed_Cleartext()
@@ -50,7 +50,7 @@ public sealed class R229AdvancedAccuracyBatchTests
     }
     [Fact] public async Task Topic_And_Info_Secrets_Are_Redacted()
     {
-        var r = Sample(); r.MqttTopic = "devices/cmd/secret-token-12345"; r.Info = "password=private-marker";
+        var r = Sample(); r.MqttControlTopicObserved = true; r.Info = "password=private-marker";
         var x = await new R229_MqttRetainedTopicAbuseRule().EvaluateAsync(At(r));
         Assert.True(x.Matched);
         Assert.DoesNotContain(Assert.Single(x.Events).StructuredEvidence!.Items,

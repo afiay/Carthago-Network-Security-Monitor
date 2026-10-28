@@ -114,9 +114,11 @@ namespace Carthago.Models
 
         // ===== MQTT (wire-derived when populated by PacketHandler) =====
         // No MQTT payload or client credentials are retained here.
-        public string? MqttTopic { get; set; }
+        public bool MqttPublishTopicObserved { get; set; }
         public bool? MqttRetain { get; set; }
-        public string? MqttWillTopic { get; set; }
+        public bool MqttControlTopicObserved { get; set; }
+        public bool MqttWillTopicObserved { get; set; }
+        public bool MqttWillControlTopicObserved { get; set; }
 
         // ===== HTTP =====
         public string? HttpMethod { get; set; }

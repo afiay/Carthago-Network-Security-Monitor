@@ -399,10 +399,15 @@ namespace Carthago.Services
                                 rec.ApplicationProtocol = mqttOperation;
                                 if (mqttOperation == "mqtt.publish")
                                 {
-                                    rec.MqttTopic = mqttTopic;
+                                    rec.MqttPublishTopicObserved = true;
+                                    rec.MqttControlTopicObserved = NetworkBatch226230Wire.IsControlTopic(mqttTopic);
                                     rec.MqttRetain = mqttRetain;
                                 }
-                                else rec.MqttWillTopic = mqttTopic;
+                                else
+                                {
+                                    rec.MqttWillTopicObserved = true;
+                                    rec.MqttWillControlTopicObserved = NetworkBatch226230Wire.IsControlTopic(mqttTopic);
+                                }
                             }
 
                             // -------- HTTP --------
