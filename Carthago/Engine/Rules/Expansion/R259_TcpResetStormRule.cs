@@ -46,44 +46,27 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R259_TcpResetStormRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch256260Evidence.BoundedWindow _window = new();
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            var record = context.Record;
-            if (!(HasTcpResetContext(record)))
-                return NoMatch();
-
-            var count = CountWithin($"tcp-reset:{record.Source}:{record.Destination}:{record.DestinationPort ?? 0}", context.TimestampUtc, TimeSpan.FromMinutes(5));
-            if (!(count >= 10))
-                return NoMatch();
-
-            var evidence = new List<DetectionEvidenceItem>
-            {
-                new("matched_conditions", "TcpReset,evidence_gated,threshold_met", "rule"),
-                new("rule.windowCount", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule")
+            var r = context.Record;
+            if (!NetworkBatch256260Evidence.TcpReset(r)) return NoMatch();
+            var key = r.Source + "|" + r.Destination + "|" + r.DestinationPort;
+            var count = _window.Observe(r, context.TimestampUtc, key, TimeSpan.FromMinutes(5));
+            if (count < 10) return NoMatch();
+            var evidence = new List<DetectionEvidenceItem> {
+                new("matched_conditions", "tcp_rst_bit,distinct_packet_ids", "rule"),
+                new("rule.windowCount", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
+                new("tcp.rst", "true", "network")
             };
-            evidence.AddRange(AnalystContext(
-                "TCP reset flags or connection-reset telemetry repeated above the rule threshold.",
-                "Severity is Medium because reset storms can reveal active blocking, evasion attempts, broken middleboxes, or aggressive scanning fallout.",
-                "Load balancers, firewall policy changes, and application restarts can generate legitimate reset bursts.",
-                "Verify the source host role, owner, and recent process/startup changes.",
-                "Pivot on destination host, destination port, process name, and adjacent detections in the same time window.",
-                "Tune approved business systems explicitly instead of weakening the rule globally."));
-
-            return MatchEvasionInfra(
-                context,
-                SeverityLevel.Medium,
-                "TCP reset storm observed between the same endpoints",
-                "TcpReset",
-                evidence,
-                confidence =>
-                {
-                    confidence.AddEvidence(0.34, "concrete-evidence");
-                    confidence.AddEvidence(0.22, "source-context");
-                    confidence.AddEvidence(0.18, "threshold-or-baseline");
-                },
-                count: count,
-                window: Profile.Window,
-                cooldownKey: $"{record.Source}:{BestHost(record)}:{record.DestinationPort ?? 0}:TcpReset");
+            evidence.AddRange(AnalystContext("Repeated TCP RST-flag observations between the same endpoints.",
+                "RST bursts can reflect ordinary service restarts or middlebox behavior.",
+                "Legitimate load balancers and firewall changes may match.",
+                "Inspect session termination and service health."));
+            return MatchEvasionInfra(context, SeverityLevel.Medium, "TCP reset-flag burst",
+                "TcpReset", evidence,
+                c => { c.AddEvidence(0.34, "typed-tcp-flags"); c.AddEvidence(0.22, "distinct-packets"); c.AddEvidence(0.18, "window-threshold"); },
+                count: count, window: Profile.Window, cooldownKey: key + ":tcp-reset");
         }
     }
 }

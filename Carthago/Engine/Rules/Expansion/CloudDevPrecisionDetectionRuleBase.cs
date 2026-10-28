@@ -176,11 +176,11 @@ namespace Carthago.Engine.Rules.Expansion
             var items = new List<DetectionEvidenceItem>
             {
                 new("clouddev.family", detectionFamily, "cloud-dev"),
-                new("clouddev.host", Descriptor.RuleId is "R221" or "R222" or "R243" or "R244" or "R245" or "R246" or "R247" or "R248" or "R249" or "R250" or "R251" or "R252" or "R253" or "R254" or "R255" ? "[REDACTED]" : string.IsNullOrWhiteSpace(host) ? record.Destination ?? "unknown" : host, "cloud-dev")
+                new("clouddev.host", Descriptor.RuleId is "R221" or "R222" or "R243" or "R244" or "R245" or "R246" or "R247" or "R248" or "R249" or "R250" or "R251" or "R252" or "R253" or "R254" or "R255" or "R256" or "R257" ? "[REDACTED]" : string.IsNullOrWhiteSpace(host) ? record.Destination ?? "unknown" : host, "cloud-dev")
             };
 
             if (!string.IsNullOrWhiteSpace(path))
-                items.Add(new DetectionEvidenceItem("http.path", Descriptor.RuleId is "R221" or "R222" or "R243" or "R244" or "R245" or "R246" or "R247" or "R248" or "R249" or "R250" or "R251" or "R252" or "R253" or "R254" or "R255" ? "[REDACTED]" : path, "http"));
+                items.Add(new DetectionEvidenceItem("http.path", Descriptor.RuleId is "R221" or "R222" or "R243" or "R244" or "R245" or "R246" or "R247" or "R248" or "R249" or "R250" or "R251" or "R252" or "R253" or "R254" or "R255" or "R256" or "R257" ? "[REDACTED]" : path, "http"));
             if (!string.IsNullOrWhiteSpace(record.HttpMethod))
                 items.Add(new DetectionEvidenceItem("http.method", record.HttpMethod!, "http"));
             if (record.DestinationPort.HasValue)
@@ -212,7 +212,7 @@ namespace Carthago.Engine.Rules.Expansion
                 EvidenceBuilder.AppendEvidence(evt, "suppression.remainingSeconds", Math.Ceiling(remaining.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture), "rule");
             }
 
-            if (Descriptor.RuleId is "R243" or "R244" or "R245" or "R246" or "R247" or "R248" or "R249" or "R250" or "R251" or "R252" or "R253" or "R254" or "R255")
+            if (Descriptor.RuleId is "R243" or "R244" or "R245" or "R246" or "R247" or "R248" or "R249" or "R250" or "R251" or "R252" or "R253" or "R254" or "R255" or "R256" or "R257")
             {
                 evt.DestinationHost = "[REDACTED]";
                 if (evt.StructuredEvidence != null)

@@ -46,42 +46,27 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R260_RareTcpOptionFingerprintRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch256260Evidence.FingerprintChange _changes = new();
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            var record = context.Record;
-            if (!(IsRareTcpOptionFingerprint(record, context, out var fingerprint)))
-                return NoMatch();
-
-            var count = 1;
-            var evidence = new List<DetectionEvidenceItem>
-            {
-                new("matched_conditions", "TcpFingerprint,evidence_gated,threshold_met", "rule"),
-                new("rule.windowCount", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule")
+            var r = context.Record;
+            if (!NetworkBatch256260Evidence.SynFingerprint(r, out var fingerprint)) return NoMatch();
+            var key = r.Source + "|" + r.Destination + "|" + r.DestinationPort;
+            if (!_changes.Observe(r, context.TimestampUtc, key, fingerprint)) return NoMatch();
+            var evidence = new List<DetectionEvidenceItem> {
+                new("matched_conditions", "typed_ja4t_syn_fingerprint,instance_observed_change", "rule"),
+                new("tcp.fingerprintStatus", "changed_from_instance_first_not_approved_baseline", "rule"),
+                new("tcp.fingerprintKey", NetworkBatch131135Evidence.Fingerprint(fingerprint), "network")
             };
-            if (!string.IsNullOrWhiteSpace(fingerprint)) evidence.Add(new DetectionEvidenceItem("tcp.optionFingerprint", fingerprint, "network"));
-            evidence.AddRange(AnalystContext(
-                "TCP option ordering/fingerprint was explicitly rare or new to the baseline for the same source/service context.",
-                "Severity is Medium because unusual TCP option fingerprints may indicate custom tooling, scanners, OS spoofing, or evasion frameworks.",
-                "New operating systems, NAT devices, VPN clients, and legitimate scanners may introduce new TCP fingerprints.",
-                "Verify the source host role, owner, and recent process/startup changes.",
-                "Pivot on destination host, destination port, process name, and adjacent detections in the same time window.",
-                "Tune approved business systems explicitly instead of weakening the rule globally."));
-
-            return MatchEvasionInfra(
-                context,
-                SeverityLevel.Medium,
-                "Rare TCP option fingerprint observed for this source/service",
-                "TcpFingerprint",
-                evidence,
-                confidence =>
-                {
-                    confidence.AddEvidence(0.34, "concrete-evidence");
-                    confidence.AddEvidence(0.22, "source-context");
-                    confidence.AddEvidence(0.18, "threshold-or-baseline");
-                },
-                count: count,
-                window: Profile.Window,
-                cooldownKey: $"{record.Source}:{BestHost(record)}:{record.DestinationPort ?? 0}:TcpFingerprint");
+            evidence.AddRange(AnalystContext("The SYN JA4T value changed relative to this detector instance's first observation.",
+                "Change does not establish statistical rarity or malicious tooling.",
+                "OS updates, NAT and path changes can alter SYN fingerprints.",
+                "Compare with an approved fingerprint baseline before escalation."));
+            return MatchEvasionInfra(context, SeverityLevel.Medium,
+                "SYN fingerprint changed from instance-first observation (rarity unverified)",
+                "TcpFingerprint", evidence,
+                c => { c.AddEvidence(0.34, "typed-ja4t"); c.AddEvidence(0.22, "same-source-service"); c.AddEvidence(0.18, "instance-change"); },
+                cooldownKey: key + ":tcp-fingerprint-change");
         }
     }
 }

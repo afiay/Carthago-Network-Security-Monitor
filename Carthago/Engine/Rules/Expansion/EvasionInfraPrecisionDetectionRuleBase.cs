@@ -152,7 +152,8 @@ namespace Carthago.Engine.Rules.Expansion
                 items.Add(new DetectionEvidenceItem("network.destinationPort", record.DestinationPort.Value.ToString(CultureInfo.InvariantCulture), "network"));
             if (!string.IsNullOrWhiteSpace(record.ProcessName))
                 items.Add(new DetectionEvidenceItem("process.name", record.ProcessName!, "process"));
-            if (!string.IsNullOrWhiteSpace(record.Info))
+            if (Descriptor.RuleId is not ("R258" or "R259" or "R260")
+                && !string.IsNullOrWhiteSpace(record.Info))
                 items.Add(new DetectionEvidenceItem("event.info", ShortText(record.Info!, 240), "telemetry"));
 
             if (evidenceItems != null)

@@ -46,44 +46,26 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R258_IcmpDestinationUnreachableSpikeRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch256260Evidence.BoundedWindow _window = new();
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            var record = context.Record;
-            if (!(HasIcmpDestinationUnreachableContext(record)))
-                return NoMatch();
-
-            var count = CountWithin($"icmp-unreachable:{record.Source}:{record.Destination}", context.TimestampUtc, TimeSpan.FromMinutes(5));
-            if (!(count >= 8))
-                return NoMatch();
-
-            var evidence = new List<DetectionEvidenceItem>
-            {
-                new("matched_conditions", "IcmpUnreachable,evidence_gated,threshold_met", "rule"),
-                new("rule.windowCount", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule")
+            var r = context.Record;
+            if (!NetworkBatch256260Evidence.IcmpUnreachable(r)) return NoMatch();
+            var count = _window.Observe(r, context.TimestampUtc, r.Source + "|" + r.Destination + "|" + r.IcmpTypeCode, TimeSpan.FromMinutes(5));
+            if (count < 8) return NoMatch();
+            var evidence = new List<DetectionEvidenceItem> {
+                new("matched_conditions", "typed_icmp_unreachable,distinct_packet_ids", "rule"),
+                new("rule.windowCount", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
+                new("icmp.typeCode", r.IcmpTypeCode!.Value.ToString(System.Globalization.CultureInfo.InvariantCulture), "network")
             };
-            evidence.AddRange(AnalystContext(
-                "ICMP unreachable evidence repeated above the rule window threshold.",
-                "Severity is Medium because repeated unreachable responses can indicate probing, scanning fallout, ACL rejection mapping, or broken routing after compromise.",
-                "Network changes, firewall tests, or outage triage can legitimately produce unreachable bursts.",
-                "Verify the source host role, owner, and recent process/startup changes.",
-                "Pivot on destination host, destination port, process name, and adjacent detections in the same time window.",
-                "Tune approved business systems explicitly instead of weakening the rule globally."));
-
-            return MatchEvasionInfra(
-                context,
-                SeverityLevel.Medium,
-                "ICMP destination-unreachable responses spiked from the same source/destination context",
-                "IcmpUnreachable",
-                evidence,
-                confidence =>
-                {
-                    confidence.AddEvidence(0.34, "concrete-evidence");
-                    confidence.AddEvidence(0.22, "source-context");
-                    confidence.AddEvidence(0.18, "threshold-or-baseline");
-                },
-                count: count,
-                window: Profile.Window,
-                cooldownKey: $"{record.Source}:{BestHost(record)}:{record.DestinationPort ?? 0}:IcmpUnreachable");
+            evidence.AddRange(AnalystContext("Repeated captured ICMP destination-unreachable type/code observations.",
+                "Unreachable bursts may reflect routing faults or firewall policy, not necessarily evasion.",
+                "Maintenance and outage triage can produce benign bursts.",
+                "Inspect interface counters, routing and firewall changes."));
+            return MatchEvasionInfra(context, SeverityLevel.Medium, "Typed ICMP unreachable burst",
+                "IcmpUnreachable", evidence,
+                c => { c.AddEvidence(0.34, "typed-icmp"); c.AddEvidence(0.22, "distinct-packets"); c.AddEvidence(0.18, "window-threshold"); },
+                count: count, window: Profile.Window, cooldownKey: r.Source + ":" + r.Destination + ":icmp-unreachable");
         }
     }
 }
