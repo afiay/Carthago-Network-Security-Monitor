@@ -37,3 +37,29 @@ If focused tests pass:
     .\scripts\inspect-verification-summary.ps1
 
 This increment has not yet been compiled. The last verified checkpoint was 4,825/4,825 xUnit tests. Four separate replay gates remain unresolved: R343, R295, R275 and R163. This change alters no replay labels, production thresholds, rule confidence floors or policy decisions.
+
+
+## CARTHAGE operator readiness check — 2026-10-29
+
+At commit 66234637fdbbceb42eb0cb362dbd679ea2f15a1a, the operator ran the default readiness check and the opt-in recent-event check. They reported:
+
+- 4688 command-line registry policy: UNKNOWN
+- Process Creation success auditing: NOT VERIFIED
+- Security channel: UNAVAILABLE OR NOT READABLE
+- No 4624/4688 events inspected; opt-in run stopped because the script required a successful metadata lookup
+
+**Interpretation:** neither permission denial nor absent audit events is proven. `Get-WinEvent -ListLog Security` failed, but the old script masked the exception category and did not attempt event queries. The two independent audit policies may not be configured; this must be checked without automatically enabling them.
+
+### Diagnostic-only correction
+
+The updated `scripts/inspect-winrm-audit-readiness.ps1` now reports safe error categories (ACCESS_DENIED, LOG_NOT_FOUND, COMMAND_UNAVAILABLE or a sanitized exception type/HRESULT) without event descriptions or exception messages. It reports the Windows Event Log service status, whether the PowerShell process carries an elevated administrator token, and distinguishes an absent local include-command-line registry value from a read failure. The `-InspectRecentEvents` mode now attempts bounded 4624 and 4688 event-existence queries even if the Security channel's metadata lookup fails. `NoMatchingEventsFound` is classified differently from event-query errors.
+
+Microsoft documents the *Process Creation* audit subcategory GUID as `{0CCE922B-69AE-11D9-BED3-505054503030}`. The following command only **reads** the policy; do not change it as part of diagnosis:
+
+    auditpol /get /subcategory:"{0CCE922B-69AE-11D9-BED3-505054503030}"
+
+The cmdlet does not elevate or grant log access. Audit Process Creation and Include Command Line in Process Creation Events are separately controlled. Enabling the latter can expose sensitive command-line arguments in the Security log; operator approval and retention/privacy assessment would be required.
+
+Next on CARTHAGE: pull the new HEAD, run the default script and `-InspectRecentEvents`. Share only the sanitized result. If access is denied, a Windows administrator must decide whether to grant narrowly scoped read access or perform diagnostics in an already-authorized elevated session; do not grant privileges, change ACLs or enable broad auditing automatically.
+
+**Status:** diagnostic script updated but NOT YET TESTED on CARTHAGE. R343 remains fail-closed; the four replay-expectations remain blocked; no detection rule, replay fixture, trust anchor or Windows setting was changed.
