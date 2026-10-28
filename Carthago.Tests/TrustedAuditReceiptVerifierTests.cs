@@ -92,6 +92,21 @@ public sealed class TrustedAuditReceiptVerifierTests
     }
 
     [Fact]
+    public void Valid_Payload_Signed_Without_Domain_Separator_Is_Not_Trusted()
+    {
+        using var key = RSA.Create(2048);
+        var verifier = Verifier(key, new[] { "R343" });
+        var payload = JsonSerializer.SerializeToUtf8Bytes(Claim());
+        var signature = key.SignData(payload, HashAlgorithmName.SHA256,
+            RSASignaturePadding.Pss);
+        var envelope = new SignedAuditEnvelope("winrm-issuer",
+            Convert.ToBase64String(payload), Convert.ToBase64String(signature));
+        Assert.False(verifier.TryVerify(envelope, out var receipt, out var reason));
+        Assert.Null(receipt);
+        Assert.Equal("INVALID_SIGNATURE", reason);
+    }
+
+    [Fact]
     public void Unknown_Signer_And_Wrong_Key_Are_Refused()
     {
         using var trusted = RSA.Create(2048);
