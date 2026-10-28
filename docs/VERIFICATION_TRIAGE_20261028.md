@@ -41,3 +41,21 @@ Five replay expectations are still known to disagree with the actual capability 
 The benchmark previously identified **44/48 raw malicious matches** but only **4/48 Enterprise alerts**; 40 were routed to Shadow. These figures do not measure independent production recall. Keep the original fixture labels and policy baselines, and distinguish `NoMatch` from Shadow/Disabled rather than manipulating scores for a green result.
 
 **Next local verification:** fast-forward the existing branch, pin the exact HEAD, run `verify-local.ps1 -Details -LiveOutput` once and capture the TRX plus replay JSON. Audit the remaining mismatch messages. Do not certify R351–R355 or advance the hardening ledger before all required gates pass.
+
+
+## Follow-up CARTHAGE verification: 4,718 / 4,735 passing
+
+The subsequent user-supplied local run completed with **4,718 passed, 17 failed, 0 skipped** (4,735 total). This is **41 fewer failures** than the preceding 58-failure result, but **not certification**.
+
+Remaining failing groups from the reported test names:
+
+- 4 HTTP/API legacy positives (R156, R157, R176, R177).
+- 6 CloudDev legacy positives (R217–R222).
+- 1 identity-access fixture (R128).
+- 1 content-pack alias assertion (AD041 delegates to unobservable R343).
+- 1 paired replay contract (R275/R343).
+- 4 tuning benchmark tests related to stale replay expectations.
+
+**Subsequent commits are unverified until the next local run.** They correct synthetic JWT signatures, invalid IPv4 octets, provider process/host attribution, valid webhook token and multipart/Content-Length request shapes, TCP/TLS flow attribution, and content-pack wrapper tests. Benchmark test expectations now reconcile and report the missing positives explicitly rather than demanding fictitious matches. The replay fixtures and the production **replay-expectations gate have not been weakened or removed**: unsupported R343, R295, R275 and description-only R240 scenarios and the R163 confidence discrepancy remain explicit blockers.
+
+No detection thresholds, confidence floors, required audits or runtime mode defaults were relaxed as part of this follow-up. The new R351–R355 test additions from the concurrent engineering stream must also pass the next actual verification before this status can change.
