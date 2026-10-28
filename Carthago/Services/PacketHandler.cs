@@ -390,6 +390,12 @@ namespace Carthago.Services
                             if (OtProtocolLight.TryIdentifyTcp(normPayload, sport, dport, out var otProtocol))
                                 rec.ApplicationProtocol = otProtocol;
 
+                            // -------- Bounded FTP and SMB2 request framing --------
+                            if (c2s && NetworkBatch246250Wire.FtpUpload(normPayload, sport, dport, out var ftpOperation))
+                                rec.ApplicationProtocol = ftpOperation;
+                            if (c2s && NetworkBatch246250Wire.Smb2Write(normPayload, sport, dport))
+                                rec.ApplicationProtocol = "smb2.write.request";
+
                             // -------- Bounded EtherNet/IP ListIdentity and MQTT --------
                             if (NetworkBatch226230Wire.CipListIdentity(normPayload, sport, dport))
                                 rec.ApplicationProtocol = "ethernetip.listidentity";
