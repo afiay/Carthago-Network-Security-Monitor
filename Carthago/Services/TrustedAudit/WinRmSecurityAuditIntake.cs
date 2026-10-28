@@ -206,7 +206,9 @@ namespace Carthago.Services.TrustedAudit
                     || !TryHex(fields, "TargetLogonId", out var logonId)
                     || !fields.TryGetValue("IpAddress", out var remote)
                     || !IPAddress.TryParse(remote, out var ip)
-                    || IPAddress.IsLoopback(ip) || ip.Equals(IPAddress.Any)
+                    || IPAddress.IsLoopback(ip)
+                    || (ip.IsIPv4MappedToIPv6 && IPAddress.IsLoopback(ip.MapToIPv4()))
+                    || ip.Equals(IPAddress.Any)
                     || ip.Equals(IPAddress.IPv6Any))
                 {
                     reason = "NO_NETWORK_LOGON_ATTRIBUTION";
