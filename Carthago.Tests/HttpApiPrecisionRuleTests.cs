@@ -1056,7 +1056,10 @@ public sealed class HttpApiPrecisionRuleTests
             protocol: "HTTPS")));
 
         var evt = AssertSingleEvent(result, "R177", SeverityLevel.High, 0.50);
-        AssertEvidence(evt, "matched_conditions", "upload.filename", "http.path");
+        AssertEvidence(evt, "matched_conditions", "upload.filenameFingerprint", "http.path");
+        Assert.DoesNotContain("shell.jsp", evt.Evidence ?? "", StringComparison.Ordinal);
+        Assert.DoesNotContain(evt.StructuredEvidence!.Items,
+            item => item.Value.Contains("shell.jsp", StringComparison.Ordinal));
     }
 
     [Fact]
