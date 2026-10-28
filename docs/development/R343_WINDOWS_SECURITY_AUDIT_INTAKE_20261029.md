@@ -1,6 +1,6 @@
 # R343 Windows Security audit intake — candidate-only contract
 
-**Status:** source candidate; not yet compiled or tested on CARTHAGE. No R343 alerts, no signed evidence producer and no rule promotion.
+**Status:** candidate-only intake compiled and tested on CARTHAGE (4,851/4,851 xUnit passed at checkpoint `290a327`). R343 alert integration and authenticated evidence production remain intentionally absent. Process Creation success auditing is currently `No Auditing` on CARTHAGE.
 
 ## Architecture
 
@@ -36,7 +36,7 @@ If focused tests pass:
     .\verify-local.ps1 -Details -LiveOutput
     .\scripts\inspect-verification-summary.ps1
 
-This increment has not yet been compiled. The last verified checkpoint was 4,825/4,825 xUnit tests. Four separate replay gates remain unresolved: R343, R295, R275 and R163. This change alters no replay labels, production thresholds, rule confidence floors or policy decisions.
+This intake was compiled and included in the 4,851/4,851 passing xUnit checkpoint at `290a327` on CARTHAGE. The four replay gates remain unresolved: R343, R295, R275 and R163. This change alters no replay labels, production thresholds, rule confidence floors or policy decisions.
 
 
 ## CARTHAGE operator readiness check — 2026-10-29
@@ -102,7 +102,7 @@ Microsoft's [Audit Process Creation policy](https://learn.microsoft.com/en-us/wi
 
 The read-only inspector now accepts `-InspectAuditPolicy` and runs `auditpol /get /subcategory:{GUID} /r` without emitting the native CSV contents, hostnames or event text. It attempts to read the process creation success setting from the returned CSV row, labels unsupported/localized formats as unknown, and reports `NO AUDITING` / `SUCCESS AUDITING ENABLED` / `SUCCESS AUDITING NOT ENABLED` if the setting is recognized. The earlier `-InspectRecentEvents` option remains independently opt-in. It does NOT enable audit policies, grant access, modify registry or execute/simulate WinRM commands.
 
-**Current engineering boundary:** collector remains unsigned and opt-in; R343 still returns `WINRM_COMMAND_AUDIT_UNAVAILABLE`; R295, R275 and R163 replay gates remain independent. The new audit-policy parser is **published but not yet executed on CARTHAGE**; Windows PowerShell validation is pending. No new xUnit checkpoint since 4,851/4,851.
+**Current engineering boundary:** collector remains unsigned and opt-in; R343 still returns `WINRM_COMMAND_AUDIT_UNAVAILABLE`; R295, R275 and R163 replay gates remain independent. The audit-policy parser was executed on CARTHAGE at `a23726d`: an elevated session confirmed `NO AUDITING`, 4624 observed and no 4688 returned in 30 minutes. The subsequent report-only status/encoding fix awaits rerun. Last xUnit checkpoint is 4,851/4,851 at `290a327`.
 
 Suggested read-only next command in the authorized elevated session, after pulling HEAD in the normal repo terminal:
 
