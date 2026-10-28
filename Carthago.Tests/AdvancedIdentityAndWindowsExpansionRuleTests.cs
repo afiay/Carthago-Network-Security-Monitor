@@ -7,7 +7,7 @@ namespace Carthago.Tests;
 public sealed class AdvancedIdentityAndWindowsExpansionRuleTests
 {
     [Fact]
-    public async Task R275_matches_suspicious_device_code_request()
+    public async Task R275_device_code_request_without_trusted_audit_is_not_phishing()
     {
         var rule = new R275_OAuthDeviceCodePhishingIndicatorRule();
         var result = await rule.EvaluateAsync(CreateContext(new TrafficRecord
@@ -25,10 +25,9 @@ public sealed class AdvancedIdentityAndWindowsExpansionRuleTests
             IsTcp = true
         }));
 
-        Assert.True(result.Matched);
-        var evt = Assert.Single(result.Events);
-        Assert.Equal("R275", evt.RuleId);
-        Assert.True(evt.ConfidenceScore >= 0.75);
+        Assert.False(result.Matched);
+        Assert.Empty(result.Events);
+        Assert.Contains(result.NoMatchReasons, reason => reason.Code == "TRUSTED_DEVICE_CODE_ABUSE_EVENT_UNAVAILABLE");
     }
 
     [Fact]
@@ -67,7 +66,7 @@ public sealed class AdvancedIdentityAndWindowsExpansionRuleTests
     }
 
     [Fact]
-    public async Task R343_matches_powershell_remoting_encoded_command()
+    public async Task R343_remoting_text_without_trusted_command_audit_is_not_attribution()
     {
         var rule = new R343_PowerShellRemotingEncodedCommandRule();
         var result = await rule.EvaluateAsync(CreateContext(new TrafficRecord
@@ -80,10 +79,9 @@ public sealed class AdvancedIdentityAndWindowsExpansionRuleTests
             IsTcp = true
         }));
 
-        Assert.True(result.Matched);
-        var evt = Assert.Single(result.Events);
-        Assert.Equal("R343", evt.RuleId);
-        Assert.True(evt.ConfidenceScore >= 0.80);
+        Assert.False(result.Matched);
+        Assert.Empty(result.Events);
+        Assert.Contains(result.NoMatchReasons, reason => reason.Code == "WINRM_COMMAND_AUDIT_UNAVAILABLE");
     }
 
     [Fact]
