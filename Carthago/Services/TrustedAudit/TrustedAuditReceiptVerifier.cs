@@ -32,8 +32,12 @@ namespace Carthago.Services.TrustedAudit
     /// </summary>
     public sealed class VerifiedAuditReceipt
     {
-        internal VerifiedAuditReceipt(AuditClaim claim)
+        internal VerifiedAuditReceipt(AuditClaim claim, Guid trustRegistryInstanceId)
         {
+            // A receipt is scoped to the exact registry that validated it.
+            // Two individually verified claims from unrelated trust stores
+            // must not be combined into a single corroborated claim.
+            TrustRegistryInstanceId = trustRegistryInstanceId;
             IssuerId = claim.IssuerId;
             RuleId = claim.RuleId;
             EvidenceId = claim.EvidenceId;
@@ -46,6 +50,7 @@ namespace Carthago.Services.TrustedAudit
             TraceHash = claim.TraceHash;
         }
 
+        internal Guid TrustRegistryInstanceId { get; }
         public string IssuerId { get; }
         public string RuleId { get; }
         public Guid EvidenceId { get; }
@@ -109,6 +114,7 @@ namespace Carthago.Services.TrustedAudit
         // share a signing key. Forbid aliases that could forge corroboration.
         private readonly HashSet<string> _trustedKeyFingerprints = new(StringComparer.Ordinal);
         private readonly object _replayGate = new();
+        private readonly Guid _trustRegistryInstanceId = Guid.NewGuid();
         private readonly Func<DateTimeOffset> _now;
 
         public TrustedAuditReceiptVerifier(
@@ -261,7 +267,7 @@ namespace Carthago.Services.TrustedAudit
                     return false;
                 }
             }
-            verified = new VerifiedAuditReceipt(claim);
+            verified = new VerifiedAuditReceipt(claim, _trustRegistryInstanceId);
             reason = "VERIFIED";
             return true;
         }
