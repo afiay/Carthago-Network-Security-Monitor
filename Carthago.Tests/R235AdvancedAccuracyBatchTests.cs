@@ -66,6 +66,13 @@ public sealed class R235AdvancedAccuracyBatchTests
             Assert.False((await rule.EvaluateAsync(At(r, i))).Matched);
         }
     }
+    [Fact] public async Task Out_Of_Order_Probe_Does_Not_Advance_Window()
+    {
+        var rule = new R235_OnvifDiscoveryFromWorkstationRule();
+        var r = Sample(); Assert.False((await rule.EvaluateAsync(At(r, 20))).Matched);
+        var old = Sample(); old.Source = r.Source;
+        Assert.False((await rule.EvaluateAsync(At(old, 5))).Matched);
+    }
     [Fact] public void Original_Shadow_And_Confidence_Floor()
     {
         var p = new R235_OnvifDiscoveryFromWorkstationRule().PrecisionProfile;

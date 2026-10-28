@@ -65,7 +65,8 @@ public sealed class R231AdvancedAccuracyBatchTests
     {
         var rule = new R231_CoapMulticastDiscoveryBurstRule(); var r = Sample();
         Assert.False((await rule.EvaluateAsync(At(r, 20))).Matched);
-        Assert.False((await rule.EvaluateAsync(At(Sample(), 5))).Matched);
+        var old = Sample(); old.Source = r.Source;
+        Assert.False((await rule.EvaluateAsync(At(old, 5))).Matched);
     }
     [Fact] public void Original_Shadow_And_Confidence_Floor()
     {

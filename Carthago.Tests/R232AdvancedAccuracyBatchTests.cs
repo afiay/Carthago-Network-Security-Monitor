@@ -72,6 +72,25 @@ public sealed class R232AdvancedAccuracyBatchTests
         Assert.DoesNotContain(evt.StructuredEvidence!.Items,
             item => item.Value.Contains("_private19", StringComparison.Ordinal));
     }
+    [Fact] public async Task Independent_Resolvers_Do_Not_Join_Service_Windows()
+    {
+        var rule = new R232_MdnsServiceEnumerationBurstRule();
+        var a = Sample().Source; var b = Sample().Source;
+        for (int i = 0; i < 11; i++)
+        {
+            var r = Sample(); r.Source = a; r.DnsQname = "_svc" + i + "._udp.local";
+            Assert.False((await rule.EvaluateAsync(At(r, i))).Matched);
+            r = Sample(); r.Source = b; r.DnsQname = "_svc" + i + "._udp.local";
+            Assert.False((await rule.EvaluateAsync(At(r, i))).Matched);
+        }
+    }
+    [Fact] public async Task Out_Of_Order_Mdns_Record_Does_Not_Advance_Window()
+    {
+        var rule = new R232_MdnsServiceEnumerationBurstRule();
+        var r = Sample(); Assert.False((await rule.EvaluateAsync(At(r, 20))).Matched);
+        var old = Sample(); old.Source = r.Source; old.DnsQname = "_old._udp.local";
+        Assert.False((await rule.EvaluateAsync(At(old, 5))).Matched);
+    }
     [Fact] public void Original_Shadow_And_Confidence_Floor()
     {
         var p = new R232_MdnsServiceEnumerationBurstRule().PrecisionProfile;

@@ -430,7 +430,18 @@ namespace Carthago.Services
 
                             // -------- Bounded RTSP PLAY request line --------
                             if (NetworkBatch231235Wire.RtspPlay(normPayload, sport, dport))
+                            {
+                                // HttpLight's generic request-line parser may also
+                                // accept RTSP. Do not preserve its HTTP classification
+                                // or a credential-bearing RTSP URI as HTTP telemetry.
                                 rec.ApplicationProtocol = "rtsp.play";
+                                rec.HttpMethod = null;
+                                rec.HttpUri = null;
+                                rec.HttpHost = null;
+                                rec.HttpRequestHeaders = null;
+                                rec.HttpUserAgent = null;
+                                rec.HttpJa4h = null;
+                            }
 
                             // -------- DNS over TCP (length-prefixed DNS message) --------
                             if ((sport == 53 || dport == 53) &&
