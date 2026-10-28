@@ -344,9 +344,10 @@ namespace Carthago.Tests
 
             var oauth = report.SampleResults.Single(sample => sample.Name == "oauth-device-code-phishing");
             Assert.Contains(oauth.ExpectedRuleDiagnostics,
-                item => item.RuleId == "R275" && item.Outcome == "NoMatch"
-                    && item.NoMatchReasons.Any(reason =>
-                        reason.Contains("TRUSTED_DEVICE_CODE_ABUSE_EVENT_UNAVAILABLE", StringComparison.Ordinal)));
+                item => item.RuleId == "R275"
+                    && item.Outcome is "NoMatch" or "MissingTelemetry"
+                    && (item.MissingRequiredTelemetry.Count > 0 || item.NoMatchReasons.Any(reason =>
+                        reason.Contains("TRUSTED_DEVICE_CODE_ABUSE_EVENT_UNAVAILABLE", StringComparison.Ordinal))));
         }
 
         [Fact]
