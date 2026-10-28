@@ -26,7 +26,7 @@ namespace Carthago.Engine.Rules.Expansion
             RequiredTelemetry = new[] { RuleTelemetryKind.Identity, RuleTelemetryKind.Http, RuleTelemetryKind.GeoIp },
             RequiredFields = new[] { "source", "identity_or_user", "destination_or_host", "auth_or_http_context" },
             EvidenceFields = new[] { "identity.signal", "network.source", "network.destination", "matched_conditions", "rule.windowCount" },
-            PositiveConditions = new[] { "Credential Stuffing Rotating User Agent requires concrete IdentityAdvanced telemetry, not descriptor text.", "The source and destination or identity context must be present.", "At least two independent rule-specific signals must be present, or the rule-specific threshold must be met." },
+            PositiveConditions = new[] { "Requires distinct verified account failures plus correlated User-Agent changes; HTTP paths and headers alone are insufficient.", "Fail closed until a verified producer is connected and approved." },
             NegativeConditions = new[] { "Do not match on rule names, category labels, or generic scanner banners alone.", "Do not match when source/destination context is absent.", "Do not match approved administrative, CI/CD, backup, mail migration, or monitoring paths unless explicit high-risk evidence is present." },
             FalsePositives = new[] { "Legitimate travel, VPN egress, identity-provider retries, or approved admin sessions can resemble these events." },
             TextIndicators = new[] { "credential stuffing", "login failure", "user-agent", "rotating", "password" },
@@ -54,6 +54,12 @@ namespace Carthago.Engine.Rules.Expansion
         public R279_CredentialStuffingRotatingUserAgentRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            // HTTP login requests and changing User-Agent strings do not establish credential stuffing without trusted account-specific authentication failures.
+            // No trusted producer for this event family is connected to TrafficRecord.
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "CREDENTIAL_STUFFING_AUTH_OUTCOMES_UNAVAILABLE",
+                "HTTP login requests and changing User-Agent strings do not establish credential stuffing without trusted account-specific authentication failures.");
+        }
     }
 }

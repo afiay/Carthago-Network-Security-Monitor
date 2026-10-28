@@ -26,7 +26,7 @@ namespace Carthago.Engine.Rules.Expansion
             RequiredTelemetry = new[] { RuleTelemetryKind.Identity, RuleTelemetryKind.Http, RuleTelemetryKind.GeoIp },
             RequiredFields = new[] { "source", "identity_or_user", "destination_or_host", "auth_or_http_context" },
             EvidenceFields = new[] { "identity.signal", "network.source", "network.destination", "matched_conditions", "rule.windowCount" },
-            PositiveConditions = new[] { "Password Spray Low And Slow Across Accounts requires concrete IdentityAdvanced telemetry, not descriptor text.", "The source and destination or identity context must be present.", "At least two independent rule-specific signals must be present, or the rule-specific threshold must be met." },
+            PositiveConditions = new[] { "Requires trusted failed authentication events with stable account identifiers, outcome, source and timestamp; packet requests are not failed logins.", "Fail closed until a verified producer is connected and approved." },
             NegativeConditions = new[] { "Do not match on rule names, category labels, or generic scanner banners alone.", "Do not match when source/destination context is absent.", "Do not match approved administrative, CI/CD, backup, mail migration, or monitoring paths unless explicit high-risk evidence is present." },
             FalsePositives = new[] { "Legitimate travel, VPN egress, identity-provider retries, or approved admin sessions can resemble these events." },
             TextIndicators = new[] { "password spray", "invalid password", "failed login", "bad password", "many users", "lockout" },
@@ -54,6 +54,12 @@ namespace Carthago.Engine.Rules.Expansion
         public R278_PasswordSprayLowAndSlowAcrossAccountsRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            // Packet records lack account identifiers and verified authentication failure outcomes. Counting HTTP requests cannot establish password spraying across accounts.
+            // No trusted producer for this event family is connected to TrafficRecord.
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "AUTH_FAILURE_ACCOUNT_CORRELATION_UNAVAILABLE",
+                "Packet records lack account identifiers and verified authentication failure outcomes. Counting HTTP requests cannot establish password spraying across accounts.");
+        }
     }
 }

@@ -26,7 +26,7 @@ namespace Carthago.Engine.Rules.Expansion
             RequiredTelemetry = new[] { RuleTelemetryKind.Identity, RuleTelemetryKind.Http, RuleTelemetryKind.GeoIp },
             RequiredFields = new[] { "source", "identity_or_user", "destination_or_host", "auth_or_http_context" },
             EvidenceFields = new[] { "identity.signal", "network.source", "network.destination", "matched_conditions", "rule.windowCount" },
-            PositiveConditions = new[] { "Legacy Protocol Authentication Attempt requires concrete IdentityAdvanced telemetry, not descriptor text.", "The source and destination or identity context must be present.", "At least two independent rule-specific signals must be present, or the rule-specific threshold must be met." },
+            PositiveConditions = new[] { "Requires parser-attributed legacy-protocol AUTH command or trusted server authentication audit; port-only flows are insufficient.", "Fail closed until a verified producer is connected and approved." },
             NegativeConditions = new[] { "Do not match on rule names, category labels, or generic scanner banners alone.", "Do not match when source/destination context is absent.", "Do not match approved administrative, CI/CD, backup, mail migration, or monitoring paths unless explicit high-risk evidence is present." },
             FalsePositives = new[] { "Legitimate travel, VPN egress, identity-provider retries, or approved admin sessions can resemble these events." },
             TextIndicators = new[] { "legacy protocol", "basic auth", "imap", "pop3", "smtp auth", "ews", "autodiscover", "ntlm" },
@@ -54,6 +54,12 @@ namespace Carthago.Engine.Rules.Expansion
         public R277_LegacyProtocolAuthenticationAttemptRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            // A POP/IMAP/SMTP port or banner does not establish an authentication attempt. Require parsed protocol AUTH command or trusted server authentication audit.
+            // No trusted producer for this event family is connected to TrafficRecord.
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "LEGACY_AUTH_ATTEMPT_TELEMETRY_UNAVAILABLE",
+                "A POP/IMAP/SMTP port or banner does not establish an authentication attempt. Require parsed protocol AUTH command or trusted server authentication audit.");
+        }
     }
 }
