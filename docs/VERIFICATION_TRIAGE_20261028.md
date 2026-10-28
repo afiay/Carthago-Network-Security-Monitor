@@ -182,3 +182,13 @@ Current operator token is not elevated; Windows Event Log service is running. Th
 A diagnostic-only change to `inspect-winrm-audit-readiness.ps1` now labels such no-match cases as `NO MATCHES REPORTED (log access unverified)` and makes the final status `ACCESS UNVERIFIED`. No Windows privileges, audit policies, rule behavior, shadow policies, benchmark samples or detection thresholds were changed. The change has not been tested on CARTHAGE.
 
 Still outstanding: authenticated R343 command and process outcome, R295 pod-exec audit, R275 IdP abuse corroboration, and R163 metadata-causality evidence. Do not count xUnit green as completion of these four replay expectations.
+
+## CARTHAGE elevated Security-read diagnosis — Process Creation auditing disabled
+
+The operator reran Windows checks in an authorized **elevated** PowerShell window. The Security channel was readable and enabled, with 35,528 records. `auditpol /get` for Process Creation returned **No Auditing**. Five newest combined 4624/4688 results were all 4624; the five-result limit does not rule out older 4688 records.
+
+This confirms the key missing R343 telemetry prerequisite: **Process Creation success auditing is disabled**. The separate Include Command Line policy was also not set at the previously checked local registry value. Windows therefore cannot supply the required fresh process-creation/encoded-command audit evidence by default. This does not authorize lowering R343 evidentiary requirements or manufacturing signed receipts.
+
+Added an optional **read-only** Process Creation audit-policy check to `scripts/inspect-winrm-audit-readiness.ps1` (`-InspectAuditPolicy`). It queries `auditpol /get /r`, returns a sanitized status and reports unsupported localized CSV formats as unknown. It changes no Windows policy, Security-log access permissions, production rules, replay fixtures, labels or confidence thresholds.
+
+The revised script is published but untested on CARTHAGE. R343 remains blocked for authenticated remote execution/outcome evidence, along with the independent R295, R275 and R163 replay blockers. Last verified xUnit 4,851/4,851.
