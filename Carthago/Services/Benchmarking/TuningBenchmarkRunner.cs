@@ -479,7 +479,7 @@ namespace Carthago.Services.Benchmarking
                 var record = sample.Records[index];
                 if (!record.IsTcp || record.IsUdp || record.IsQuic || !string.Equals(record.Protocol, "TCP", StringComparison.OrdinalIgnoreCase)
                     || record.SourcePort is null || record.DestinationPort is null
-                    || record.HttpMethod != null || record.TlsVersion != null
+                    || record.HttpMethod != null || record.HttpUri != null || record.TlsVersion != null
                     || sample.RawHttpRequestsByRecordIndex.ContainsKey(index))
                     throw new InvalidDataException("Contradictory OT replay metadata at index " + index);
                 if (!OtProtocolLight.TryIdentifyTcp(Convert.FromHexString(hex), record.SourcePort,
