@@ -224,9 +224,8 @@ namespace Carthago.Services.TrustedAudit
                 if (!fields.TryGetValue("NewProcessName", out var process)
                     || !fields.TryGetValue("ParentProcessName", out var parent)
                     || !fields.TryGetValue("CommandLine", out var commandLine)
-                    || !ExactWindowsExecutable(process, "powershell.exe")
-                       && !ExactWindowsExecutable(process, "pwsh.exe")
-                    || !ExactWindowsExecutable(parent, "wsmprovhost.exe")
+                    || !IsExpectedPowerShellPath(process)
+                    || !IsExpectedWinRmHostPath(parent)
                     || !TryHex(fields, "NewProcessId", out var childId)
                     || childId > uint.MaxValue
                     || !TryHex(fields, "ProcessId", out var parentId)
@@ -303,6 +302,68 @@ namespace Carthago.Services.TrustedAudit
             return slash >= 3
                 && string.Equals(value[(slash + 1)..], name, StringComparison.OrdinalIgnoreCase);
         }
+
+        // Executable basenames alone are insufficient even for UNSIGNED
+        // candidate telemetry: an attacker may name a binary wsmprovhost.exe
+        // or powershell.exe in a user-writable directory. Be intentionally
+        // conservative about trusted-looking Windows program locations.
+        // Path validation is NOT an authenticity or code-signature check.
+        private static bool IsExpectedWinRmHostPath(string? path)
+            => ExactWindowsExecutable(path, "wsmprovhost.exe")
+                && (IsPathInWindowsRoot(path, @"System32\wsmprovhost.exe")
+                    || IsPathInWindowsRoot(path, @"SysWOW64\wsmprovhost.exe"));
+
+        private static bool IsExpectedPowerShellPath(string? path)
+            => (ExactWindowsExecutable(path, "powershell.exe")
+                    && (IsPathInWindowsRoot(path,
+                            @"System32\WindowsPowerShell\v1.0\powershell.exe")
+                        || IsPathInWindowsRoot(path,
+                            @"SysWOW64\WindowsPowerShell\v1.0\powershell.exe")))
+                || (ExactWindowsExecutable(path, "pwsh.exe")
+                    && IsInstalledPowerShellCorePath(path));
+
+        private static bool IsPathInWindowsRoot(string? path, string relativePath)
+        {
+            var root = Environment.GetEnvironmentVariable("SystemRoot");
+            if (string.IsNullOrWhiteSpace(root))
+                root = @"C:\Windows"; // synthetic-parser fallback only
+            return IsDrivePathRoot(root)
+                && string.Equals(path, root.TrimEnd('\\') + "\\" + relativePath,
+                    StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsInstalledPowerShellCorePath(string? path)
+        {
+            var programFiles = Environment.GetEnvironmentVariable("ProgramFiles");
+            if (string.IsNullOrWhiteSpace(programFiles))
+                programFiles = @"C:\Program Files"; // synthetic-parser fallback
+            if (!IsDrivePathRoot(programFiles) || path == null)
+                return false;
+
+            var prefix = programFiles.TrimEnd('\\') + @"\PowerShell\";
+            const string suffix = @"\pwsh.exe";
+            if (!path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+                || !path.EndsWith(suffix, StringComparison.OrdinalIgnoreCase)
+                || path.Length <= prefix.Length + suffix.Length)
+                return false;
+
+            // Only a single release directory is permitted. Custom,
+            // portable, or user-writable installations remain unclassified.
+            var version = path.Substring(prefix.Length,
+                path.Length - prefix.Length - suffix.Length);
+            return Regex.IsMatch(version, @"^7(?:\.\d+)*(?:-preview)?$",
+                RegexOptions.CultureInvariant | RegexOptions.IgnoreCase,
+                TimeSpan.FromMilliseconds(100));
+        }
+
+        private static bool IsDrivePathRoot(string value)
+            => value.Length >= 3
+                && char.IsAsciiLetter(value[0])
+                && value[1] == ':'
+                && value[2] == '\\'
+                && !value.Contains("..", StringComparison.Ordinal)
+                && !value.Contains('/', StringComparison.Ordinal)
+                && !value.Contains('"', StringComparison.Ordinal);
 
         private static bool HasValidEncodedArgument(string? commandLine)
         {
