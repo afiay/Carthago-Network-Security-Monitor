@@ -5,6 +5,9 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Carthago.Services.TrustedAudit;
+using Carthago.Engine.Rules;
+using Carthago.Engine.Rules.Expansion;
+using Carthago.Models;
 using Xunit;
 
 namespace Carthago.Tests;
@@ -186,6 +189,46 @@ public sealed class TrustedAuditReceiptVerifierTests
         var mismatch = Claim();
         mismatch.IssuerId = "different-issuer";
         Assert.False(verifier.TryVerify(Signed(key, mismatch), out _, out _));
+    }
+
+    [Theory]
+    [InlineData("R343")]
+    [InlineData("R295")]
+    [InlineData("R275")]
+    public async System.Threading.Tasks.Task A_Verified_Envelope_Alone_Cannot_Promote_An_Unwired_Rule(string ruleId)
+    {
+        // A unit-test signer is NOT a trusted upstream audit producer.
+        // The receipt boundary is deliberately not connected to the live
+        // RuleEngine or benchmark; normal packet text must still fail closed.
+        using var key = RSA.Create(2048);
+        var verifier = Verifier(key, new[] { ruleId });
+        var claim = Claim(ruleId);
+        Assert.True(verifier.TryVerify(Signed(key, claim), out var receipt, out _));
+        Assert.NotNull(receipt);
+
+        IDetectionRule rule = ruleId switch
+        {
+            "R343" => new R343_PowerShellRemotingEncodedCommandRule(),
+            "R295" => new R295_KubernetesExecIntoPodOverAPIRule(),
+            "R275" => new R275_OAuthDeviceCodePhishingIndicatorRule(),
+            _ => throw new ArgumentOutOfRangeException(nameof(ruleId))
+        };
+        var record = new TrafficRecord
+        {
+            Source = claim.SourceIp,
+            Destination = claim.DestinationIp,
+            Protocol = "TCP",
+            IsTcp = true,
+            SourcePort = 53000,
+            DestinationPort = ruleId == "R343" ? 5985 : ruleId == "R295" ? 6443 : 443,
+            ProcessName = "powershell.exe",
+            ApplicationProtocol = "WinRM",
+            Info = claim.Operation + " verified with synthetic signature"
+        };
+        var result = await rule.EvaluateAsync(new RuleEvaluationContext(
+            record, Sensitivity.Balanced, Clock.UtcDateTime));
+        Assert.False(result.Matched);
+        Assert.Empty(result.Events);
     }
 
     [Fact]
