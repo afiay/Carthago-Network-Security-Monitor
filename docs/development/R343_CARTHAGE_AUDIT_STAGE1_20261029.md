@@ -55,7 +55,7 @@ Restoring the audit setting does **not** erase already collected 4688 records. D
 
 **Stage 1 ENABLED and verified on CARTHAGE at commit `7149997`:** operator executed `-Mode Status` (No Auditing), `-Mode Enable` (effective policy Success), and the read-only readiness script (`SUCCESS AUDITING ENABLED`, 4624 and 4688 observed). A harmless local `cmd.exe /d /c exit 0` was launched, and three 4688 event IDs with timestamps were returned shortly afterward. The three records were not matched by PID and image path to that specific process; that narrower correlation remains a separate test. This does **not** provide encoded command-line content, remote execution attribution, WinRM outcome, authenticated signer, or signed R343 receipts. Continue to keep R343 fail-closed. Command-line inclusion remains a separate, unapproved Stage 2 privacy/security decision.
 
-## Subsequent identity-correlation smoke check (not yet executed)
+## Subsequent identity-correlation smoke check (executed and passed on CARTHAGE)
 
 To prove that a **particular harmless process** (rather than merely nearby unrelated events) produces a matching 4688 record, the repo now contains `scripts/verify-process-creation-audit-lab.ps1`. It is restricted to CARTHAGE and an authorized elevated Windows PowerShell session, verifies that effective Process Creation success auditing is enabled, launches a harmless built-in `cmd.exe /d /c exit 0`, then reads a bounded number of recent 4688 events and searches for a match on the test process's PID and exact image path. The event XML is processed in memory only; it is never printed or saved. Failure to match is reported as **INCONCLUSIVE**, never evidence of an attack.
 
@@ -66,3 +66,22 @@ To prove that a **particular harmless process** (rather than merely nearby unrel
 The smoke script does **not** enable or disable auditing, record command-line content, execute WinRM, grant Security-log permissions, or create trusted audit claims. A matching process ID/path remains candidate-quality telemetry only, not remote-execution attribution. Windows may represent an image path differently, and high event volume can exceed the bounded query: these cases are inconclusive, not grounds to lower the trust bar.
 
 **Safety/rollback:** keep command-line inclusion disabled for this stage. Once testing is over, the operator can run the published `-Mode Restore` command; it does not erase existing Security log entries. Stage 2 requires a separate privacy decision.
+
+
+## Stage 1 closeout: successful PID/path correlation and rollback (2026-10-29)
+
+At repository checkpoint `c3c0326f5bcbcddf6f86dda82719d659b6e70f9b`, the operator ran `scripts/verify-process-creation-audit-lab.ps1` from an authorized elevated PowerShell session on CARTHAGE. It returned:
+
+```text
+CARTHAGO 4688 LOCAL PROCESS CORRELATION
+Policy: Process Creation success auditing enabled.
+Harmless process created; checking Security 4688 by process ID and image path.
+PASS: event 4688 matched the harmless local process ID and image path.
+This does not prove command-line capture, WinRM attribution, or a signed outcome.
+```
+
+Immediately afterward, the operator ran `scripts/set-process-creation-audit-lab.ps1 -Mode Restore`. The output confirmed `Effective policy before: Success`, `Effective policy after: No Auditing`, and `RESTORED: Process Creation success auditing is off.` The operator did not enable command-line inclusion during the test. Historic 4688 audit records may still be retained by Windows.
+
+**Stage 1 disposition: COMPLETE, LAB PASS, CONFIGURATION RESTORED.** The smoke test proves that the lab's read-only Security-event query could correlate a deliberately launched benign local process with a Security 4688 record by process ID and executable path. It does **not** establish a WinRM session binding, encoded command, execution outcome, signer provenance, authorization context or alert quality. R343 remains fail-closed. No new full .NET/xUnit test run is represented by this closeout; the last reported xUnit baseline remains 4,851/4,851 at `290a327`.
+
+**Future work:** develop and validate an authenticated, least-privileged local telemetry producer and its attestation boundaries before any integration of signed receipts. Only reactivate auditing for an explicitly controlled test. Re-enabling command-line inclusion (Stage 2) remains a separate privacy-sensitive decision.
