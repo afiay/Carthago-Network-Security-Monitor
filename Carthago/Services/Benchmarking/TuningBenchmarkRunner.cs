@@ -470,6 +470,26 @@ namespace Carthago.Services.Benchmarking
                 record.HttpBasicDefaultCredentialObserved = parsed.ObservedDefaultBasicCredential;
             }
 
+            foreach (var (index, hex) in sample.RawOtTcpPayloadsByRecordIndex)
+            {
+                if (index < 0 || index >= sample.Records.Count || string.IsNullOrEmpty(hex)
+                    || hex.Length < 16 || hex.Length > 1024 || (hex.Length % 2) != 0
+                    || hex.Any(static ch => !Uri.IsHexDigit(ch)))
+                    throw new InvalidDataException("Invalid OT replay payload at index " + index);
+                var record = sample.Records[index];
+                if (!record.IsTcp || record.IsUdp || record.IsQuic || record.Protocol != "TCP"
+                    || record.SourcePort is null || record.DestinationPort is null
+                    || record.HttpMethod != null || record.TlsVersion != null
+                    || sample.RawHttpRequestsByRecordIndex.ContainsKey(index))
+                    throw new InvalidDataException("Contradictory OT replay metadata at index " + index);
+                if (!OtProtocolLight.TryIdentifyTcp(Convert.FromHexString(hex), record.SourcePort,
+                        record.DestinationPort, out var parsed))
+                    throw new InvalidDataException("OT parser rejected replay payload at index " + index);
+                if (record.ApplicationProtocol != null &&
+                    !string.Equals(record.ApplicationProtocol, parsed, StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidDataException("OT replay protocol conflict at index " + index);
+                record.ApplicationProtocol = parsed;
+            }
             return sample;
         }
 
