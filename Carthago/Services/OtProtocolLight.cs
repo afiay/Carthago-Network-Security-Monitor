@@ -23,7 +23,11 @@ namespace Carthago.Services
                 if (length is >= 2 and <= 254 && bytes.Length >= 6 + length
                     && bytes[7] is >= 1 and <= 127)
                 {
-                    protocol = "modbus";
+                    // Only client-to-server requests can be classified as
+                    // write operations. A response from port 502 is not proof
+                    // of a new write attempt.
+                    protocol = destinationPort == 502 && bytes[7] is 5 or 6 or 15 or 16
+                        ? "modbus.write" : "modbus";
                     return true;
                 }
             }

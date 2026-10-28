@@ -46,43 +46,24 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R239_Zigbee2MqttBridgeInternetAccessRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch226230Evidence.Window _observations = new();
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            var record = context.Record;
-            var host = BestHost(record);
-            var topic = NormalizeTopic(ExtractTopic(Text(record)));
-            var mqttContext = ContainsAnyValue(record.ApplicationProtocol, "mqtt") || ContainsAnyValue(record.ApplicationService, "mqtt") || ContainsAnyValue(Text(record), "mqtt", "zigbee2mqtt", "z2m");
-            var suspiciousTopic = IsSuspiciousMqttControlTopic(topic) || ContainsAnyValue(topic, "zigbee2mqtt/bridge", "zigbee2mqtt/+/set", "/set", "/availability");
-            if (!IsZigbee2MqttBridge(record) || !mqttContext || !IsInternalToExternal(record))
-                return NoMatch();
-
-            var evidence = new List<DetectionEvidenceItem>
-            {
-                new("host", host, "flow"),
-                new("mqtt.topic", string.IsNullOrWhiteSpace(topic) ? "unknown" : topic, "mqtt"),
-                new("matched_conditions", suspiciousTopic ? "zigbee2mqtt_context,external_destination,mqtt_context,bridge_or_control_topic" : "zigbee2mqtt_context,external_destination,mqtt_context", "rule")
-            };
-            evidence.AddRange(AnalystContext(
-                "A Zigbee2MQTT bridge communicated with an external MQTT/cloud destination.",
-                "Severity is High because exposing bridge traffic externally can leak smart-home state or allow control-topic abuse if broker credentials are compromised.",
-                "Cloud MQTT broker deployments may be legitimate but should be explicitly documented and monitored.",
-                "Confirm whether the MQTT broker is local, approved cloud-hosted, or unknown.",
-                "Review topics for command/control namespaces, retained messages, and bridge administrative operations."));
-
-            return MatchIot(
-                context,
-                SeverityLevel.High,
-                "Zigbee2MQTT bridge accessed external MQTT/cloud destination",
-                "Zigbee2MqttExternal",
-                evidence,
-                confidence =>
-                {
-                    confidence.AddEvidence(0.34, "zigbee2mqtt-context");
-                    confidence.AddEvidence(0.28, "external-destination");
-                    confidence.AddEvidence(0.12, "mqtt-context");
-                    if (suspiciousTopic) confidence.AddCorrelation(0.08, "bridge-or-control-topic");
-                },
-                cooldownKey: $"{record.Source}:{host}:zigbee2mqtt-external");
+            var r = context.Record;
+            if (!NetworkBatch236240Evidence.BridgeMqtt(r, out var control)
+                || _observations.Observe(r.Source, r.Destination, r.Id, context.TimestampUtc,
+                    TimeSpan.FromMinutes(10), false) == 0) return NoMatch();
+            return MatchIot(context, SeverityLevel.High,
+                "Attributed Zigbee2MQTT bridge requested external MQTT broker", "Zigbee2MqttExternal",
+                new[] {
+                    new DetectionEvidenceItem("matched_conditions", control
+                        ? "bridge_process,parsed_mqtt,external_broker,control_topic_class"
+                        : "bridge_process,parsed_mqtt,external_broker", "rule"),
+                    new DetectionEvidenceItem("mqtt.topic", "[REDACTED]", "mqtt") },
+                c => { c.AddEvidence(0.38, "attributed-bridge-process");
+                    c.AddEvidence(0.30, "parsed-mqtt-operation");
+                    c.AddCorrelation(0.18, "external-broker"); },
+                cooldownKey: r.Source + ":" + r.Destination + ":zigbee2mqtt");
         }
     }
 }

@@ -76,7 +76,7 @@ namespace Carthago.Engine.Rules.IotOt
             var items = new List<DetectionEvidenceItem>
             {
                 new("iot.protocolFamily", protocolFamily, "iot-ot"),
-                new("iot.host", Descriptor.RuleId is "R223" or "R224" or "R225" or "R226" or "R227" or "R228" or "R229" or "R230" or "R231" or "R232" or "R233" or "R234" or "R235" ? "[REDACTED]" : string.IsNullOrWhiteSpace(host) ? record.Destination ?? "unknown" : host, "iot-ot")
+                new("iot.host", Descriptor.RuleId is "R223" or "R224" or "R225" or "R226" or "R227" or "R228" or "R229" or "R230" or "R231" or "R232" or "R233" or "R234" or "R235" or "R236" or "R237" or "R238" or "R239" or "R240" ? "[REDACTED]" : string.IsNullOrWhiteSpace(host) ? record.Destination ?? "unknown" : host, "iot-ot")
             };
 
             if (record.DestinationPort.HasValue)
@@ -86,7 +86,7 @@ namespace Carthago.Engine.Rules.IotOt
             // IoT/OT Info may contain credentials, device identifiers, RTSP URLs or
             // private discovery payloads. For R113-R122 never persist raw Info
             // in either legacy or structured evidence, including shadow events.
-            if (Descriptor.RuleId is not ("R113" or "R114" or "R115" or "R116" or "R117" or "R118" or "R119" or "R120" or "R121" or "R122" or "R223" or "R224" or "R225" or "R226" or "R227" or "R228" or "R229" or "R230" or "R231" or "R232" or "R233" or "R234" or "R235")
+            if (Descriptor.RuleId is not ("R113" or "R114" or "R115" or "R116" or "R117" or "R118" or "R119" or "R120" or "R121" or "R122" or "R223" or "R224" or "R225" or "R226" or "R227" or "R228" or "R229" or "R230" or "R231" or "R232" or "R233" or "R234" or "R235" or "R236" or "R237" or "R238" or "R239" or "R240")
                 && !string.IsNullOrWhiteSpace(record.Info))
                 items.Add(new DetectionEvidenceItem("iot.info", ShortText(record.Info!, 220), "iot-ot"));
 
@@ -105,7 +105,7 @@ namespace Carthago.Engine.Rules.IotOt
             // Scope privacy to R226–R235: mDNS service identifiers and RTSP/
             // MQTT authorities must not enter structured or legacy evidence.
             if (Descriptor.RuleId is "R226" or "R227" or "R228" or "R229" or "R230"
-                or "R231" or "R232" or "R233" or "R234" or "R235")
+                or "R231" or "R232" or "R233" or "R234" or "R235" or "R236" or "R237" or "R238" or "R239" or "R240")
             {
                 evt.DestinationHost = "[REDACTED]";
                 if (evt.StructuredEvidence != null)

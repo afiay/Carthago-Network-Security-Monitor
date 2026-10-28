@@ -46,50 +46,25 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R238_SmartHomeHubCloudBurstRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch226230Evidence.Window _observations = new();
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            var record = context.Record;
-            var host = BestHost(record);
-            var hubContext = HasSmartHomeHubTelemetryContext(record) || IsSmartHomeHubVendorHost(host);
-            var cloudContext = IsSmartHomeHubVendorHost(host) || ContainsAnyValue(Text(record), "cloud", "sync", "telemetry", "heartbeat", "device status", "scene", "automation");
-            if (!hubContext || !cloudContext || !IsInternalToExternal(record))
-                return NoMatch();
-
+            var r = context.Record;
+            if (!NetworkBatch236240Evidence.HubCloud(r, out var host)) return NoMatch();
             var window = TimeSpan.FromSeconds(IntSetting(Descriptor.RuleId, "WindowSeconds", 300, 60, 7200));
             var threshold = IntSetting(Descriptor.RuleId, "Threshold", 60, 10, 5000);
-            var count = CountWindowEvents($"{Descriptor.RuleId}:{record.Source}:{host}", context.TimestampUtc, window);
-            if (count < threshold)
-                return NoMatch();
-
-            var evidence = new List<DetectionEvidenceItem>
-            {
-                new("count", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
-                new("window_seconds", ((int)window.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
-                new("host", host, "flow"),
-                new("matched_conditions", "smart_home_hub_context,cloud_sync_context,burst_threshold", "rule")
-            };
-            evidence.AddRange(AnalystContext(
-                "Smart-home hub or bridge telemetry produced a high-rate cloud synchronization burst.",
-                "Severity is Medium because unusual bursty cloud synchronization can indicate device takeover, automation loop failure, or unexpected data export.",
-                "Onboarding, reboot recovery, and vendor-cloud outage recovery can look similar; compare with recent device lifecycle events.",
-                "Check whether the hub recently rebooted, added devices, or recovered from an outage.",
-                "Review destination hostnames and volume for unexpected vendor or non-vendor cloud endpoints."));
-
-            return MatchIot(
-                context,
-                SeverityLevel.Medium,
-                "Smart-home hub cloud synchronization burst observed",
-                "SmartHomeCloudBurst",
-                evidence,
-                confidence =>
-                {
-                    confidence.AddEvidence(0.22, "hub-context");
-                    confidence.AddEvidence(0.20, "cloud-sync-context");
-                    confidence.AddEvidence(0.18, "burst-threshold");
-                },
-                count,
-                window,
-                $"{record.Source}:{host}:smart-home-cloud-burst");
+            var count = _observations.Observe(r.Source + ":" + host, r.Destination,
+                r.Id, context.TimestampUtc, window, false);
+            if (count < threshold) return NoMatch();
+            return MatchIot(context, SeverityLevel.Medium,
+                "Attributed smart-home hub vendor-cloud request burst", "SmartHomeCloudBurst",
+                new[] {
+                    new DetectionEvidenceItem("count", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
+                    new DetectionEvidenceItem("matched_conditions", "attributed_hub_process,typed_vendor_host,distinct_packet_burst", "rule") },
+                c => { c.AddEvidence(0.30, "attributed-hub-process");
+                    c.AddEvidence(0.30, "typed-vendor-authority");
+                    c.AddCorrelation(0.16, "bounded-burst"); },
+                count, window, r.Source + ":" + r.Destination + ":hub-cloud");
         }
     }
 }

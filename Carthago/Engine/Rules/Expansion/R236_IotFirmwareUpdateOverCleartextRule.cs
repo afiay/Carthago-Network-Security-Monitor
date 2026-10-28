@@ -12,7 +12,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId: "R236",
             Name: "IoT Firmware Update Over Cleartext",
             Category: "IotOtAdvanced",
-            Description: "Detects IoT firmware artifacts transferred over cleartext HTTP only when update artifact and IoT/device context are both present.",
+            Description: "Detects observable IoT firmware artifact requests over cleartext HTTP only when update artifact and IoT/device context are both present.",
             DefaultSeverity: SeverityLevel.High,
             ConfigKey: "Rules.R236.Enabled",
             EnabledByDefault: true);
@@ -46,43 +46,22 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R236_IotFirmwareUpdateOverCleartextRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch226230Evidence.Window _observations = new();
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            var record = context.Record;
-            var text = Text(record);
-            var iotContext = ContainsAnyValue(text, "iot", "device", "firmware", "router", "camera", "printer", "gateway", "sensor", "zigbee", "mqtt")
-                             || IsSmartHomeHubVendorHost(BestHost(record))
-                             || IsHubLikeProcess(record.ProcessName)
-                             || IsCameraLikeProcess(record.ProcessName);
-            if (!IsCleartextHttp(record) || !LooksLikeFirmwareArtifact(record) || !iotContext)
-                return NoMatch();
-
-            var evidence = new List<DetectionEvidenceItem>
-            {
-                new("matched_conditions", "cleartext_http,firmware_artifact,iot_context", "rule"),
-                new("http.path", string.IsNullOrWhiteSpace(record.HttpUri) ? "/" : record.HttpUri!, "http"),
-                new("host", BestHost(record), "http")
-            };
-            evidence.AddRange(AnalystContext(
-                "A firmware/update-looking artifact for an IoT/device context was transferred over cleartext HTTP.",
-                "Severity is High because cleartext firmware distribution can allow tampering, downgrade, or credential exposure around device-update workflows.",
-                "Some legacy devices still use HTTP update repositories; approved hosts should be explicitly documented and tuned.",
-                "Verify the firmware host, artifact hash, and device model/version.",
-                "Check whether the device supports HTTPS update endpoints or signed firmware validation."));
-
-            return MatchIot(
-                context,
-                SeverityLevel.High,
-                "IoT firmware artifact transferred over cleartext HTTP",
-                "CleartextFirmwareUpdate",
-                evidence,
-                confidence =>
-                {
-                    confidence.AddEvidence(0.30, "cleartext-http");
-                    confidence.AddEvidence(0.30, "firmware-artifact");
-                    confidence.AddCorrelation(0.16, "iot-device-context");
-                },
-                cooldownKey: $"{record.Source}:{BestHost(record)}:{record.HttpUri}:firmware-http");
+            var r = context.Record;
+            if (!NetworkBatch236240Evidence.FirmwareRequest(r)
+                || _observations.Observe(r.Source, r.Destination, r.Id, context.TimestampUtc,
+                    TimeSpan.FromMinutes(10), false) == 0) return NoMatch();
+            return MatchIot(context, SeverityLevel.High,
+                "IoT firmware artifact requested over cleartext HTTP", "CleartextFirmwareUpdate",
+                new[] {
+                    new DetectionEvidenceItem("matched_conditions", "parsed_http_get,firmware_route,device_process", "rule"),
+                    new DetectionEvidenceItem("http.path", "[REDACTED]", "http") },
+                c => { c.AddEvidence(0.38, "parsed-cleartext-http");
+                    c.AddEvidence(0.32, "anchored-firmware-route");
+                    c.AddCorrelation(0.18, "attributed-device-process"); },
+                cooldownKey: r.Source + ":" + r.Destination + ":firmware-request");
         }
     }
 }

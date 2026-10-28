@@ -46,44 +46,22 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R237_IotDefaultWebAdminAccessRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch226230Evidence.Window _observations = new();
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            var record = context.Record;
-            var text = Text(record);
-            var deviceContext = ContainsAnyValue(text, "router", "camera", "printer", "gateway", "embedded", "iot", "luci", "boa", "webcm", "goform", "hikvision", "dahua", "axis", "mikrotik", "ubiquiti", "unifi")
-                                || IsCameraLikeProcess(record.ProcessName)
-                                || IsHubLikeProcess(record.ProcessName);
-            var adminIndicator = HasDefaultWebAdminPath(record) || HasDefaultAdminCredential(record);
-            if (!adminIndicator || !deviceContext)
-                return NoMatch();
-
-            var credentialEvidence = HasDefaultAdminCredential(record);
-            var evidence = new List<DetectionEvidenceItem>
-            {
-                new("matched_conditions", credentialEvidence ? "iot_context,default_admin_path,default_credential_token" : "iot_context,default_admin_path", "rule"),
-                new("http.path", string.IsNullOrWhiteSpace(record.HttpUri) ? "/" : record.HttpUri!, "http"),
-                new("host", BestHost(record), "http")
-            };
-            evidence.AddRange(AnalystContext(
-                "A request targeted IoT/appliance default web-admin surfaces or default credential tokens.",
-                "Severity is High because default web-admin paths and credentials are common initial-access and device-takeover paths for embedded devices.",
-                "Approved setup hosts and vulnerability scanners may match during controlled onboarding or assessment windows.",
-                "Confirm whether the source is approved for device setup or vulnerability scanning.",
-                "Review whether the target still accepts default credentials or exposes unauthenticated admin pages."));
-
-            return MatchIot(
-                context,
-                SeverityLevel.High,
-                "IoT default web admin access indicator observed",
-                "IotDefaultAdmin",
-                evidence,
-                confidence =>
-                {
-                    confidence.AddEvidence(0.28, "iot-appliance-context");
-                    confidence.AddEvidence(0.28, "default-admin-path");
-                    if (credentialEvidence) confidence.AddEvidence(0.18, "default-credential-token");
-                },
-                cooldownKey: $"{record.Source}:{BestHost(record)}:{record.HttpUri}:default-admin");
+            var r = context.Record;
+            if (!NetworkBatch236240Evidence.AdminRequest(r)
+                || _observations.Observe(r.Source, r.Destination, r.Id, context.TimestampUtc,
+                    TimeSpan.FromMinutes(10), false) == 0) return NoMatch();
+            return MatchIot(context, SeverityLevel.High,
+                "IoT default web-admin route requested", "IotDefaultAdmin",
+                new[] {
+                    new DetectionEvidenceItem("matched_conditions", "parsed_http,anchored_admin_route,device_process", "rule"),
+                    new DetectionEvidenceItem("http.path", "[REDACTED]", "http") },
+                c => { c.AddEvidence(0.38, "parsed-cleartext-http");
+                    c.AddEvidence(0.30, "anchored-admin-route");
+                    c.AddCorrelation(0.18, "attributed-device-process"); },
+                cooldownKey: r.Source + ":" + r.Destination + ":device-admin");
         }
     }
 }
