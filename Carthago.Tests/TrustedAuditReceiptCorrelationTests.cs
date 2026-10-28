@@ -105,7 +105,6 @@ public sealed class TrustedAuditReceiptCorrelationTests
     [InlineData("source")]
     [InlineData("destination")]
     [InlineData("rule")]
-    [InlineData("operation")]
     [InlineData("time")]
     public void Signed_But_Unrelated_Events_Cannot_Be_Paired(string mismatch)
     {
@@ -132,12 +131,6 @@ public sealed class TrustedAuditReceiptCorrelationTests
                 altered.DestinationIp = "10.20.30.51";
                 break;
             case "rule":
-                altered.RuleId = "R275";
-                altered.Operation = "OAuthDeviceFlowAbuseConfirmed";
-                break;
-            case "operation":
-                // A different valid operation is only possible in a different
-                // rule scope, whose mismatch must fail closed.
                 altered.RuleId = "R275";
                 altered.Operation = "OAuthDeviceFlowAbuseConfirmed";
                 break;
