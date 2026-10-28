@@ -1,0 +1,17 @@
+# R281-R285 — trusted identity, SAML/OIDC and SCIM provenance
+**CANDIDATE / UNVERIFIED.** 60 advanced xUnit facts authored (12 per rule), **ZERO executed**. Static inspection only; no build, test, replay, benchmark, holdout, CI, GitHub Actions or Windows runner.
+
+Source commit `1714a18f3d3ab40e6aae64f63646b77476034790`: `Carthago/Engine/Rules/Expansion/R281_SuspiciousAdminConsoleLoginToCloudRule.cs`, `R282_VPNLoginFollowedByInternalScanRule.cs`, `R283_SAMLRelayStateInjectionPatternRule.cs`, `R284_OIDCAuthorizationCodeLeakageInURLRule.cs`, `R285_SCIMBulkUserEnumerationRule.cs`.
+Test commit `bdd03951ae6a135c520efccb21ad0f0ccd68ca33`: `Carthago.Tests/NetworkBatch281285Context.cs` and `Carthago.Tests/R281AdvancedAccuracyBatchTests.cs` through `R285AdvancedAccuracyBatchTests.cs`. Deferred verifier `scripts/verify-all-rule-batches.ps1` unchanged.
+
+**R281 (12 unexecuted facts):** Authenticated privileged cloud sign-in outcome, tenant and account are unavailable. Tests: Admin Portal Http, Admin Sni, Admin UserAgent, Login Post, GeoIp, Info spoof, duplicate, out-of-order, missing source, contradictory UDP/HTTP, secret non-emission, preserved 78/1/Alert profile. Reason: `ADMIN_LOGIN_AUDIT_UNAVAILABLE`. **No positive invented; fail closed.**
+
+**R282 (12 unexecuted facts):** Authenticated VPN session and same-principal internal scan correlation are unavailable. Tests: Vpn Udp, Scan Info, Vpn Process, Internal Smb, Internal Ssh, Info spoof, duplicate, out-of-order, missing source, contradictory UDP/HTTP, secret non-emission, preserved 78/3/Alert profile. Reason: `VPN_LOGIN_SCAN_CORRELATION_UNAVAILABLE`. **No positive invented; fail closed.**
+
+**R283 (12 unexecuted facts):** Trusted SAML validation outcome and parsed RelayState attack provenance are unavailable. Tests: Normal RelayState, External RelayState, SamlResponse, Saml Info, Saml Post, Info spoof, duplicate, out-of-order, missing source, contradictory UDP/HTTP, secret non-emission, preserved 78/1/Alert profile. Reason: `SAML_RELAYSTATE_VALIDATION_UNAVAILABLE`. **No positive invented; fail closed.**
+
+**R284 (12 unexecuted facts):** Trusted proof of authorization code disclosure to an unintended recipient is unavailable. Tests: Callback Code, Callback State, Referer Code, Leak Info, Oidc Sni, Info spoof, duplicate, out-of-order, missing source, contradictory UDP/HTTP, secret non-emission, preserved 78/1/Alert profile. Reason: `OIDC_CODE_LEAKAGE_PROVENANCE_UNAVAILABLE`. **No positive invented; fail closed.**
+
+**R285 (12 unexecuted facts):** Authenticated SCIM API outcome, returned object count and approved principal context are unavailable. Tests: Scim Users, Scim Groups, Scim Search, Scim UserAgent, Scim Paging, Info spoof, duplicate, out-of-order, missing source, contradictory UDP/HTTP, secret non-emission, preserved 74/4/Alert profile. Reason: `SCIM_ENUMERATION_AUDIT_UNAVAILABLE`. **No positive invented; fail closed.**
+
+Current `TrafficRecord` and `PacketHandler` do not provide authenticated admin login outcome, verified VPN sign-in-to-scan principal correlation, trusted SAML validation, unintended OIDC code disclosure or authenticated SCIM result counts. HTTP callback codes and RelayState are normal protocol data and not proof of abuse. HTTPS is not decrypted; complete TCP stream reconstruction is absent. Existing floors, modes, thresholds, approvals, baseline readiness, privacy and architecture preserved. Frozen R102 V1 **FAILED 4/6** immutable; V2 pending independently reviewed licensed PCAP and analyst approval. **Next R286-R290 then R291-R295.**
