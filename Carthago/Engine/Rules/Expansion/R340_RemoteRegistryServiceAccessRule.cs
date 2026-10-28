@@ -11,7 +11,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId: "R340",
             Name: "Remote Registry Service Access",
             Category: "ActiveDirectoryWindows",
-            Description: "Detects Remote Registry Service Access only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
+            Description: "Candidate R340 requires authenticated protocol operation and outcome provenance; packet-only indicators cannot establish the named behavior.",
             DefaultSeverity: SeverityLevel.Medium,
             ConfigKey: "Rules.R340.Enabled",
             EnabledByDefault: true);
@@ -21,7 +21,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId = "R340",
             Name = "Remote Registry Service Access",
             Category = "ActiveDirectoryWindows",
-            Description = "Detects Remote Registry Service Access only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
+            Description = "Candidate R340 requires authenticated protocol operation and outcome provenance; packet-only indicators cannot establish the named behavior.",
             Severity = SeverityLevel.Medium,
             RequiredTelemetry = new[] { RuleTelemetryKind.Flow, RuleTelemetryKind.Identity, RuleTelemetryKind.Process },
             RequiredFields = new[] { "source", "destination", "windows_protocol_context" },
@@ -54,6 +54,12 @@ namespace Carthago.Engine.Rules.Expansion
         public R340_RemoteRegistryServiceAccessRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            // No authenticated protocol operation/outcome producer is connected to the capture path.
+            // Packet text, generic service ports and unverified enrichment cannot prove this behavior.
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "REMOTE_REGISTRY_AUDIT_UNAVAILABLE",
+                "Remote Registry or winreg strings do not prove authenticated service access. Require trusted RPC interface/bind, registry operation outcome, principal and asset approval.");
+        }
     }
 }

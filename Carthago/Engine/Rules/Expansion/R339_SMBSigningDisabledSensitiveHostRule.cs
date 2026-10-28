@@ -11,7 +11,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId: "R339",
             Name: "SMB Signing Disabled Sensitive Host",
             Category: "ActiveDirectoryWindows",
-            Description: "Detects SMB Signing Disabled Sensitive Host only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
+            Description: "Candidate R339 requires authenticated protocol operation and outcome provenance; packet-only indicators cannot establish the named behavior.",
             DefaultSeverity: SeverityLevel.High,
             ConfigKey: "Rules.R339.Enabled",
             EnabledByDefault: true);
@@ -21,7 +21,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId = "R339",
             Name = "SMB Signing Disabled Sensitive Host",
             Category = "ActiveDirectoryWindows",
-            Description = "Detects SMB Signing Disabled Sensitive Host only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
+            Description = "Candidate R339 requires authenticated protocol operation and outcome provenance; packet-only indicators cannot establish the named behavior.",
             Severity = SeverityLevel.High,
             RequiredTelemetry = new[] { RuleTelemetryKind.Flow, RuleTelemetryKind.Identity, RuleTelemetryKind.Process },
             RequiredFields = new[] { "source", "destination", "windows_protocol_context" },
@@ -54,6 +54,12 @@ namespace Carthago.Engine.Rules.Expansion
         public R339_SMBSigningDisabledSensitiveHostRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            // No authenticated protocol operation/outcome producer is connected to the capture path.
+            // Packet text, generic service ports and unverified enrichment cannot prove this behavior.
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "SMB_SIGNING_NEGOTIATION_UNAVAILABLE",
+                "SMB port and signing-disabled text do not prove negotiated signing state or sensitive host role. Require validated SMB negotiation/session flags and approved asset classification.");
+        }
     }
 }

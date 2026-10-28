@@ -11,7 +11,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId: "R337",
             Name: "Kerberos S4U Delegation Abuse Indicator",
             Category: "ActiveDirectoryWindows",
-            Description: "Detects Kerberos S4U Delegation Abuse Indicator only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
+            Description: "Candidate R337 requires authenticated protocol operation and outcome provenance; packet-only indicators cannot establish the named behavior.",
             DefaultSeverity: SeverityLevel.High,
             ConfigKey: "Rules.R337.Enabled",
             EnabledByDefault: true);
@@ -21,7 +21,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId = "R337",
             Name = "Kerberos S4U Delegation Abuse Indicator",
             Category = "ActiveDirectoryWindows",
-            Description = "Detects Kerberos S4U Delegation Abuse Indicator only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
+            Description = "Candidate R337 requires authenticated protocol operation and outcome provenance; packet-only indicators cannot establish the named behavior.",
             Severity = SeverityLevel.High,
             RequiredTelemetry = new[] { RuleTelemetryKind.Flow, RuleTelemetryKind.Identity, RuleTelemetryKind.Process },
             RequiredFields = new[] { "source", "destination", "windows_protocol_context" },
@@ -54,6 +54,12 @@ namespace Carthago.Engine.Rules.Expansion
         public R337_KerberosS4UDelegationAbuseIndicatorRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            // No authenticated protocol operation/outcome producer is connected to the capture path.
+            // Packet text, generic service ports and unverified enrichment cannot prove this behavior.
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "KERBEROS_S4U_AUDIT_UNAVAILABLE",
+                "Kerberos port and S4U vocabulary do not prove delegation abuse. Require validated KDC S4U2Self/S4U2Proxy exchanges, principal, service, ticket outcome and approved delegation policy.");
+        }
     }
 }

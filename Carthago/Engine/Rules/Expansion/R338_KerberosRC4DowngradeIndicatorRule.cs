@@ -11,7 +11,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId: "R338",
             Name: "Kerberos RC4 Downgrade Indicator",
             Category: "ActiveDirectoryWindows",
-            Description: "Detects Kerberos RC4 Downgrade Indicator only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
+            Description: "Candidate R338 requires authenticated protocol operation and outcome provenance; packet-only indicators cannot establish the named behavior.",
             DefaultSeverity: SeverityLevel.Medium,
             ConfigKey: "Rules.R338.Enabled",
             EnabledByDefault: true);
@@ -21,7 +21,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId = "R338",
             Name = "Kerberos RC4 Downgrade Indicator",
             Category = "ActiveDirectoryWindows",
-            Description = "Detects Kerberos RC4 Downgrade Indicator only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
+            Description = "Candidate R338 requires authenticated protocol operation and outcome provenance; packet-only indicators cannot establish the named behavior.",
             Severity = SeverityLevel.Medium,
             RequiredTelemetry = new[] { RuleTelemetryKind.Flow, RuleTelemetryKind.Identity, RuleTelemetryKind.Process },
             RequiredFields = new[] { "source", "destination", "windows_protocol_context" },
@@ -54,6 +54,12 @@ namespace Carthago.Engine.Rules.Expansion
         public R338_KerberosRC4DowngradeIndicatorRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            // No authenticated protocol operation/outcome producer is connected to the capture path.
+            // Packet text, generic service ports and unverified enrichment cannot prove this behavior.
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "KERBEROS_ETYPE_AUDIT_UNAVAILABLE",
+                "RC4 or etype 23 text does not prove negotiated Kerberos encryption downgrade. Require parsed KDC ticket encryption type, client/service support and approved baseline.");
+        }
     }
 }

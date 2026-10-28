@@ -11,7 +11,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId: "R336",
             Name: "DRSUAPI Replication Attempt",
             Category: "ActiveDirectoryWindows",
-            Description: "Detects DRSUAPI Replication Attempt only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
+            Description: "Candidate R336 requires authenticated protocol operation and outcome provenance; packet-only indicators cannot establish the named behavior.",
             DefaultSeverity: SeverityLevel.Critical,
             ConfigKey: "Rules.R336.Enabled",
             EnabledByDefault: true);
@@ -21,7 +21,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId = "R336",
             Name = "DRSUAPI Replication Attempt",
             Category = "ActiveDirectoryWindows",
-            Description = "Detects DRSUAPI Replication Attempt only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events return NoMatch.",
+            Description = "Candidate R336 requires authenticated protocol operation and outcome provenance; packet-only indicators cannot establish the named behavior.",
             Severity = SeverityLevel.Critical,
             RequiredTelemetry = new[] { RuleTelemetryKind.Flow, RuleTelemetryKind.Identity, RuleTelemetryKind.Process },
             RequiredFields = new[] { "source", "destination", "windows_protocol_context" },
@@ -54,6 +54,12 @@ namespace Carthago.Engine.Rules.Expansion
         public R336_DRSUAPIReplicationAttemptRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            // No authenticated protocol operation/outcome producer is connected to the capture path.
+            // Packet text, generic service ports and unverified enrichment cannot prove this behavior.
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "DRSUAPI_REPLICATION_AUDIT_UNAVAILABLE",
+                "DRSUAPI strings and RPC ports do not prove a replication request or unauthorized DCSync. Require parsed RPC interface and operation, authenticated principal, domain controller identity and outcome.");
+        }
     }
 }
