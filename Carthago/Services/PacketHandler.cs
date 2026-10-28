@@ -449,6 +449,9 @@ namespace Carthago.Services
                                 rec.HttpRequestHeaders = null;
                                 rec.HttpUserAgent = null;
                                 rec.HttpJa4h = null;
+                                rec.HttpBasicDefaultCredentialObserved = false;
+                                rec.HttpGitHubTokenPatternObserved = false;
+                                rec.HttpGitLabTokenPatternObserved = false;
                             }
 
                             // -------- DNS over TCP (length-prefixed DNS message) --------
