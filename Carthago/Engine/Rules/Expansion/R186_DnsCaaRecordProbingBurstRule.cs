@@ -45,14 +45,16 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R186_DnsCaaRecordProbingBurstRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch181185Window _window = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!TryGetDnsQuestion(context, out var query) || !string.Equals(context.Record.DnsQtype, "CAA", StringComparison.OrdinalIgnoreCase))
+            if (!NetworkBatch176180Evidence.Dns(context.Record, out var query) || !string.Equals(context.Record.DnsQtype, "CAA", StringComparison.OrdinalIgnoreCase))
                 return NoMatch();
 
             var window = TimeSpan.FromSeconds(IntSetting(Descriptor.RuleId, "WindowSeconds", 600, 60, 3600));
             var threshold = IntSetting(Descriptor.RuleId, "Threshold", 8, 3, 100);
-            var count = CountDistinctValues($"{Descriptor.RuleId}:{context.Record.Source}", RootDomain(query), context.TimestampUtc, window);
+            var count = _window.Observe(context.Record, $"{Descriptor.RuleId}:{context.Record.Source}:{context.Record.Destination}", RootDomain(query), context.TimestampUtc, window, distinct: true);
             if (count < threshold)
                 return NoMatch();
 
@@ -72,7 +74,7 @@ namespace Carthago.Engine.Rules.Expansion
             return MatchDns(
                 context,
                 SeverityLevel.Low,
-                $"CAA probing burst observed: {query}",
+                "CAA probing burst observed",
                 query,
                 evidence,
                 confidence =>
@@ -82,7 +84,7 @@ namespace Carthago.Engine.Rules.Expansion
                 },
                 count,
                 window,
-                context.Record.Source);
+                 $"{context.Record.Source}:{context.Record.Destination}");
         }
     }
 }

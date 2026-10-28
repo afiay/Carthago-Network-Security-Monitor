@@ -46,13 +46,16 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R189_AdSrvQueryToExternalResolverRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!TryGetDnsQuestion(context, out var query) || !IsAdSrvQuery(query) || !IsExternalDestination(context.Record.Destination))
+            if (!NetworkBatch186190Evidence.AdSrv(context.Record, out var query) || !IsAdSrvQuery(query)
+                || !IsInternalEndpoint(context.Record.Source) || !IsExternalEndpoint(context.Record.Destination))
                 return NoMatch();
 
             var internalNamespace = LooksLikeInternalOnlyDnsName(query) || query.Contains("._msdcs.", StringComparison.OrdinalIgnoreCase);
-            if (!internalNamespace)
+            if (!internalNamespace || !_replay.Observe(context.Record, context.TimestampUtc))
                 return NoMatch();
 
             var evidence = new List<DetectionEvidenceItem>
@@ -70,7 +73,7 @@ namespace Carthago.Engine.Rules.Expansion
             return MatchDns(
                 context,
                 SeverityLevel.High,
-                $"AD SRV query leaked to external resolver: {query}",
+                "AD SRV query sent to external resolver",
                 query,
                 evidence,
                 confidence =>
@@ -79,7 +82,7 @@ namespace Carthago.Engine.Rules.Expansion
                     confidence.AddEvidence(0.24, "external-resolver");
                     confidence.AddEvidence(0.16, "internal-namespace");
                 },
-                cooldownKey: $"{context.Record.Source}:{context.Record.Destination}");
+                cooldownKey: $"{context.Record.Source}:{context.Record.Destination}:{NetworkBatch166170Evidence.Key(query)}");
         }
     }
 }

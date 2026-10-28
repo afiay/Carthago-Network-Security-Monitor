@@ -46,9 +46,11 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R190_DnsShortTtlBurstRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch181185Window _window = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!TryGetDnsQuestion(context, out var query) || !context.Record.DnsIsResponse || !context.Record.DnsTtl.HasValue)
+            if (!NetworkBatch186190Evidence.DnsResponse(context.Record, out var query))
                 return NoMatch();
 
             var maxTtl = IntSetting(Descriptor.RuleId, "MaxTtlSeconds", 1, 0, 30);
@@ -58,7 +60,7 @@ namespace Carthago.Engine.Rules.Expansion
             var window = TimeSpan.FromSeconds(IntSetting(Descriptor.RuleId, "WindowSeconds", 300, 60, 3600));
             var threshold = IntSetting(Descriptor.RuleId, "Threshold", 6, 3, 100);
             var root = RootDomain(query);
-            var count = CountWindowEvents($"{Descriptor.RuleId}:{context.Record.Source}:{root}", context.TimestampUtc, window);
+            var count = _window.Observe(context.Record, $"{Descriptor.RuleId}:{context.Record.Destination}:{context.Record.Source}:{root}", query, context.TimestampUtc, window, distinct: false);
             if (count < threshold)
                 return NoMatch();
 
@@ -78,7 +80,7 @@ namespace Carthago.Engine.Rules.Expansion
             return MatchDns(
                 context,
                 SeverityLevel.Medium,
-                $"Short-TTL DNS burst observed: {query}",
+                "Short-TTL DNS burst observed",
                 query,
                 evidence,
                 confidence =>
@@ -89,7 +91,7 @@ namespace Carthago.Engine.Rules.Expansion
                 },
                 count,
                 window,
-                $"{context.Record.Source}:{root}");
+                $"{context.Record.Destination}:{context.Record.Source}:{root}");
         }
     }
 }

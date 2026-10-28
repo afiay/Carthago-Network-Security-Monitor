@@ -45,15 +45,17 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R188_ActiveDirectorySrvEnumerationRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch181185Window _window = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!TryGetDnsQuestion(context, out var query) || !IsAdSrvQuery(query))
+            if (!NetworkBatch186190Evidence.AdSrv(context.Record, out var query) || !IsAdSrvQuery(query))
                 return NoMatch();
 
             var window = TimeSpan.FromSeconds(IntSetting(Descriptor.RuleId, "WindowSeconds", 600, 60, 3600));
             var threshold = IntSetting(Descriptor.RuleId, "Threshold", 3, 2, 50);
             var root = RootDomain(query);
-            var count = CountDistinctValues($"{Descriptor.RuleId}:{context.Record.Source}:{root}", query, context.TimestampUtc, window);
+            var count = _window.Observe(context.Record, $"{Descriptor.RuleId}:{context.Record.Source}:{context.Record.Destination}:{root}", query, context.TimestampUtc, window, distinct: true);
             if (count < threshold)
                 return NoMatch();
 
@@ -73,7 +75,7 @@ namespace Carthago.Engine.Rules.Expansion
             return MatchDns(
                 context,
                 SeverityLevel.Medium,
-                $"AD SRV enumeration observed: {query}",
+                "AD SRV enumeration observed",
                 query,
                 evidence,
                 confidence =>
@@ -83,7 +85,7 @@ namespace Carthago.Engine.Rules.Expansion
                 },
                 count,
                 window,
-                $"{context.Record.Source}:{root}");
+                $"{context.Record.Source}:{context.Record.Destination}:{root}");
         }
     }
 }

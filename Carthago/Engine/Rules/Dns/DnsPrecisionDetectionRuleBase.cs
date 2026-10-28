@@ -86,6 +86,11 @@ namespace Carthago.Engine.Rules.Dns
             return true;
         }
 
+        // Fixed-category DNS evidence for candidate rules that may expose internal names,
+        // host labels, identifiers or proprietary zones. Do not serialize raw answers.
+        private static bool IsSensitiveDnsRule(string ruleId)
+            => string.CompareOrdinal(ruleId, "R178") >= 0 && string.CompareOrdinal(ruleId, "R195") <= 0;
+
         protected RuleEvaluationResult MatchDns(
             RuleEvaluationContext context,
             SeverityLevel severity,
@@ -99,8 +104,8 @@ namespace Carthago.Engine.Rules.Dns
         {
             var items = new List<DetectionEvidenceItem>
             {
-                new("dns.qname", Descriptor.RuleId is "R178" or "R179" or "R180" or "R181" or "R182" or "R183" or "R184" or "R185" ? "[REDACTED]" : query, "dns"),
-                new("dns.rootDomain", Descriptor.RuleId is "R178" or "R179" or "R180" or "R181" or "R182" or "R183" or "R184" or "R185" ? "[REDACTED]" : RootDomain(query), "dns")
+                new("dns.qname", IsSensitiveDnsRule(Descriptor.RuleId) ? "[REDACTED]" : query, "dns"),
+                new("dns.rootDomain", IsSensitiveDnsRule(Descriptor.RuleId) ? "[REDACTED]" : RootDomain(query), "dns")
             };
 
             if (!string.IsNullOrWhiteSpace(context.Record.DnsQtype))
@@ -109,7 +114,7 @@ namespace Carthago.Engine.Rules.Dns
                 items.Add(new DetectionEvidenceItem("dns.rcode", context.Record.DnsRcode!, "dns"));
             if (context.Record.DnsTtl.HasValue)
                 items.Add(new DetectionEvidenceItem("dns.ttl", context.Record.DnsTtl.Value.ToString(System.Globalization.CultureInfo.InvariantCulture), "dns"));
-            if (!string.IsNullOrWhiteSpace(context.Record.DnsAnswers) && Descriptor.RuleId is not ("R178" or "R179" or "R180" or "R181" or "R182" or "R183" or "R184" or "R185"))
+            if (!string.IsNullOrWhiteSpace(context.Record.DnsAnswers) && !IsSensitiveDnsRule(Descriptor.RuleId))
                 items.Add(new DetectionEvidenceItem("dns.answers", ShortText(context.Record.DnsAnswers!, 240), "dns"));
 
             if (evidenceItems != null)

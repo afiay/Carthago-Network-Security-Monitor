@@ -45,12 +45,15 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R187_DnsNullQueryUsageRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!TryGetDnsQuestion(context, out var query)
+            if (!NetworkBatch176180Evidence.Dns(context.Record, out var query)
                 || !string.Equals(context.Record.DnsQtype, "NULL", StringComparison.OrdinalIgnoreCase)
                 || LooksLikeBenignValidationQuery(query)
-                || IsCommonSingleLabelFallbackName(query))
+                || IsCommonSingleLabelFallbackName(query)
+                || !_replay.Observe(context.Record, context.TimestampUtc))
             {
                 return NoMatch();
             }
@@ -69,14 +72,14 @@ namespace Carthago.Engine.Rules.Expansion
             return MatchDns(
                 context,
                 SeverityLevel.Medium,
-                $"DNS NULL query observed: {query}",
+                "DNS NULL query observed",
                 query,
                 evidence,
                 confidence =>
                 {
                     confidence.AddEvidence(0.28, "dns-null-query");
                 },
-                cooldownKey: $"{context.Record.Source}:{query}");
+                cooldownKey: $"{context.Record.Source}:{context.Record.Destination}:{NetworkBatch166170Evidence.Key(query)}");
         }
     }
 }
