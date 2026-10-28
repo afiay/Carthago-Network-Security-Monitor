@@ -68,4 +68,42 @@ public sealed class ReplayOtParserIntegrationTests
             () => RunOneAsync(json));
         Assert.Contains("protocol conflict", failure.Message, StringComparison.OrdinalIgnoreCase);
     }
+    [Fact]
+    public async Task Port_502_And_Info_Without_Payload_Do_Not_Prove_Modbus_Write()
+    {
+        var json = await File.ReadAllTextAsync(Fixture);
+        json = json.Replace(
+            "  \"rawOtTcpPayloadsByRecordIndex\": {\n    \"0\": \"000100000006010600000001\"\n  },\n",
+            "", StringComparison.Ordinal);
+        json = json.Replace("\"expectedMatches\": [\"R240\"]",
+            "\"expectedMatches\": [], \"expectedNonMatches\": [\"R240\"]", StringComparison.Ordinal);
+        json = json.Replace("\"expectedMinimumConfidence\": 0.65",
+            "\"expectedMinimumConfidence\": 0.0", StringComparison.Ordinal);
+        var result = await RunOneAsync(json);
+        Assert.DoesNotContain("R240", result.ActualMatches);
+    }
+
+    [Fact]
+    public async Task Modbus_Write_Response_Does_Not_Impersonate_Client_Request()
+    {
+        var json = await File.ReadAllTextAsync(Fixture);
+        json = json.Replace("\"sourcePort\": 51000", "\"sourcePort\": 502", StringComparison.Ordinal);
+        json = json.Replace("\"destinationPort\": 502", "\"destinationPort\": 51000", StringComparison.Ordinal);
+        json = json.Replace("\"expectedMatches\": [\"R240\"]",
+            "\"expectedMatches\": [], \"expectedNonMatches\": [\"R240\"]", StringComparison.Ordinal);
+        json = json.Replace("\"expectedMinimumConfidence\": 0.65",
+            "\"expectedMinimumConfidence\": 0.0", StringComparison.Ordinal);
+        var result = await RunOneAsync(json);
+        Assert.DoesNotContain("R240", result.ActualMatches);
+    }
+
+    [Fact]
+    public async Task Malformed_Mbap_Protocol_Id_Is_Rejected()
+    {
+        var json = await File.ReadAllTextAsync(Fixture);
+        json = json.Replace("000100000006010600000001", "000101000006010600000001", StringComparison.Ordinal);
+        var failure = await Assert.ThrowsAsync<InvalidDataException>(() => RunOneAsync(json));
+        Assert.Contains("OT parser rejected", failure.Message, StringComparison.Ordinal);
+    }
+
 }
