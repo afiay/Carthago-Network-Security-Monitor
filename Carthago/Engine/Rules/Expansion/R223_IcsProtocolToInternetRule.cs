@@ -46,46 +46,34 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R223_IcsProtocolToInternetRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            var protocolName = string.Empty;
-            if (IsModbusContext(record)) protocolName = "modbus";
-            else if (IsDnp3Context(record)) protocolName = "dnp3";
-            else if (IsS7Context(record)) protocolName = "s7comm";
-            else if (IsCipContext(record)) protocolName = "ethernetip-cip";
-            else if (IsOpcUaContext(record)) protocolName = "opcua";
-            else if (IsBacnetContext(record)) protocolName = "bacnet";
-            else if (IsProfinetContext(record)) protocolName = "profinet";
-            else if (ContainsAnyValue(Text(record), "iec104", "iec 104", "iec-104", "iec61850", "goose", "mms")) protocolName = "iec";
-            if (string.IsNullOrWhiteSpace(protocolName) || !IsInternalToExternal(record))
+            if (!NetworkBatch221225Evidence.Ot(record, out var protocolName)
+                || !IsInternalToExternal(record) || !_replay.Observe(record, context.TimestampUtc))
                 return NoMatch();
-
             var evidence = new List<DetectionEvidenceItem>
             {
                 new("protocol_name", protocolName, "iot-ot"),
-                new("matched_conditions", "industrial_protocol_context,internal_to_external", "rule")
+                new("matched_conditions", "parser_attributed_ot,transport_port_consistent,internal_to_external", "rule")
             };
             evidence.AddRange(AnalystContext(
-                "Concrete ICS protocol traffic from an internal source reached an external destination.",
-                "Severity is Critical because industrial control protocols should not traverse the public internet without tightly controlled gateways.",
-                "Approved remote support links or managed OT gateways may resemble this traffic and should be tuned explicitly rather than broadening detection.",
-                "Validate whether the source is an approved OT gateway, historian, or vendor-maintained bridge.",
-                "Review the industrial protocol immediately for reads, writes, or discovery actions that crossed the trust boundary."));
-
-            return MatchIot(
-                context,
-                SeverityLevel.Critical,
-                "ICS protocol traffic to external destination observed",
-                "IcsProtocol",
-                evidence,
-                confidence =>
+                "An L7-attributed industrial protocol flow crossed from an internal address to an external address.",
+                "The observed flow does not prove a successful PLC operation or unauthorized access.",
+                "Approved OT gateways and vendor support tunnels may bridge this boundary.",
+                "Correlate with trusted industrial gateway and change-control logs.",
+                "Confirm the source and destination are approved OT peers."));
+            return MatchIot(context, SeverityLevel.Critical,
+                "Attributed ICS protocol flow to external destination observed", "IcsProtocol",
+                evidence, confidence =>
                 {
                     confidence.AddEvidence(0.42, "industrial-protocol-context");
                     confidence.AddEvidence(0.28, "internal-to-external");
                     confidence.AddCorrelation(0.10, protocolName);
-                },
-                cooldownKey: $"{record.Source}:{record.Destination}:{protocolName}");
+                }, cooldownKey: NetworkBatch221225Evidence.Key(record, protocolName));
         }
     }
 }
+

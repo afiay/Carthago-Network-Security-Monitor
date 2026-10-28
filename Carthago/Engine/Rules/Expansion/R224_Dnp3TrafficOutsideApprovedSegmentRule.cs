@@ -46,47 +46,38 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R224_Dnp3TrafficOutsideApprovedSegmentRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!IsDnp3Context(record))
+            if (!NetworkBatch221225Evidence.Ot(record, out var protocol)
+                || protocol != "dnp3" || !_replay.Observe(record, context.TimestampUtc))
                 return NoMatch();
-
             var externalBoundary = IsExternalAddress(record.Source) || IsExternalAddress(record.Destination);
-            var crossLocalSegment = IsInternalAddress(record.Source) && IsInternalAddress(record.Destination) && !SharesSame24(record.Source, record.Destination);
-            if (!externalBoundary && !crossLocalSegment)
-                return NoMatch();
-
-            var matchedConditions = new List<string> { "dnp3_protocol_context" };
-            if (externalBoundary) matchedConditions.Add("external_boundary");
-            if (crossLocalSegment) matchedConditions.Add("cross_local_segment");
-
+            var crossLocalSegment = IsInternalAddress(record.Source) && IsInternalAddress(record.Destination)
+                && !SharesSame24(record.Source, record.Destination);
+            if (!externalBoundary && !crossLocalSegment) return NoMatch();
             var evidence = new List<DetectionEvidenceItem>
             {
-                new("matched_conditions", string.Join(",", matchedConditions), "rule")
+                new("matched_conditions", externalBoundary ? "typed_dnp3,external_boundary" :
+                    "typed_dnp3,cross_24_heuristic", "rule")
             };
             evidence.AddRange(AnalystContext(
-                externalBoundary
-                    ? "DNP3 traffic crossed an external boundary."
-                    : "DNP3 traffic crossed non-local internal segments.",
-                "Severity is High because DNP3 should stay inside tightly controlled OT segments and masters/outstations.",
-                "Approved SCADA routing and carefully segmented OT backbones can resemble this pattern.",
-                "Validate whether the source and destination are approved DNP3 peers or remote telemetry units.",
-                "Review the DNP3 operation sequence for unexpected controls, integrity polls, or outstation access."));
-
-            return MatchIot(
-                context,
-                SeverityLevel.High,
-                "DNP3 traffic outside expected segment observed",
-                "DNP3",
-                evidence,
-                confidence =>
+                "A parser-attributed DNP3 flow crossed an external boundary or a non-local /24 heuristic.",
+                "A different /24 is not proof of an unapproved OT segment or a control operation.",
+                "Approved routed SCADA backbones can cross /24 boundaries.",
+                "Review authoritative asset segmentation and gateway logs.",
+                "Confirm peer authorization before escalation."));
+            return MatchIot(context, SeverityLevel.High,
+                "Attributed DNP3 flow across network boundary observed", "DNP3",
+                evidence, confidence =>
                 {
                     confidence.AddEvidence(0.38, "dnp3-protocol-context");
                     if (externalBoundary) confidence.AddEvidence(0.20, "external-boundary");
                     if (crossLocalSegment) confidence.AddEvidence(0.18, "cross-local-segment");
-                },
-                cooldownKey: $"{record.Source}:{record.Destination}");
+                }, cooldownKey: NetworkBatch221225Evidence.Key(record, "dnp3"));
         }
     }
 }
+

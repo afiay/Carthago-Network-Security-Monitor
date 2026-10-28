@@ -46,47 +46,38 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R225_S7CommTrafficOutsideApprovedSegmentRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch156165ReplayGuard _replay = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!IsS7Context(record))
+            if (!NetworkBatch221225Evidence.Ot(record, out var protocol)
+                || protocol != "s7comm" || !_replay.Observe(record, context.TimestampUtc))
                 return NoMatch();
-
             var externalBoundary = IsExternalAddress(record.Source) || IsExternalAddress(record.Destination);
-            var crossLocalSegment = IsInternalAddress(record.Source) && IsInternalAddress(record.Destination) && !SharesSame24(record.Source, record.Destination);
-            if (!externalBoundary && !crossLocalSegment)
-                return NoMatch();
-
-            var matchedConditions = new List<string> { "s7_protocol_context" };
-            if (externalBoundary) matchedConditions.Add("external_boundary");
-            if (crossLocalSegment) matchedConditions.Add("cross_local_segment");
-
+            var crossLocalSegment = IsInternalAddress(record.Source) && IsInternalAddress(record.Destination)
+                && !SharesSame24(record.Source, record.Destination);
+            if (!externalBoundary && !crossLocalSegment) return NoMatch();
             var evidence = new List<DetectionEvidenceItem>
             {
-                new("matched_conditions", string.Join(",", matchedConditions), "rule")
+                new("matched_conditions", externalBoundary ? "typed_s7,external_boundary" :
+                    "typed_s7,cross_24_heuristic", "rule")
             };
             evidence.AddRange(AnalystContext(
-                externalBoundary
-                    ? "S7 communication crossed an external boundary."
-                    : "S7 communication crossed non-local internal segments.",
-                "Severity is High because PLC programming and control protocols should remain inside tightly approved engineering paths.",
-                "Approved engineering or routed PLC networks can resemble this pattern and should be tuned explicitly.",
-                "Validate whether the source is an approved engineering workstation or PLC peer.",
-                "Review whether the S7 conversation includes setup, read, or write operations that should not traverse the segment boundary."));
-
-            return MatchIot(
-                context,
-                SeverityLevel.High,
-                "S7 communication outside expected segment observed",
-                "S7comm",
-                evidence,
-                confidence =>
+                "A parser-attributed S7comm flow crossed an external boundary or a non-local /24 heuristic.",
+                "A different /24 does not establish an unapproved PLC route or successful write.",
+                "Approved engineering stations can communicate across routed PLC segments.",
+                "Review authoritative PLC topology and gateway logs.",
+                "Confirm the source and destination are approved engineering peers."));
+            return MatchIot(context, SeverityLevel.High,
+                "Attributed S7comm flow across network boundary observed", "S7comm",
+                evidence, confidence =>
                 {
                     confidence.AddEvidence(0.38, "s7-protocol-context");
                     if (externalBoundary) confidence.AddEvidence(0.20, "external-boundary");
                     if (crossLocalSegment) confidence.AddEvidence(0.18, "cross-local-segment");
-                },
-                cooldownKey: $"{record.Source}:{record.Destination}");
+                }, cooldownKey: NetworkBatch221225Evidence.Key(record, "s7comm"));
         }
     }
 }
+

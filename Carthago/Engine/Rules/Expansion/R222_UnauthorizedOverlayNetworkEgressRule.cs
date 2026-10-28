@@ -46,62 +46,52 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R222_UnauthorizedOverlayNetworkEgressRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch201205Window _observations = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!TryClassifyOverlayNetworkEgress(record, out var vendor, out var signal))
+            if (!NetworkBatch221225Evidence.Overlay(record, out var vendor, out var signal))
                 return NoMatch();
-
             var window = TimeSpan.FromSeconds(IntSetting(Descriptor.RuleId, "WindowSeconds", 600, 60, 3600));
             var threshold = IntSetting(Descriptor.RuleId, "Threshold", 3, 2, 100);
-            var baseline = ObserveBaseline("clouddev.overlay-network-vendor", record.Source ?? "unknown", vendor, context, $"host={BestHost(record)}; signal={signal}");
+            var key = NetworkBatch221225Evidence.Key(record, vendor);
+            var baseline = ObserveBaseline("clouddev.overlay-network-vendor", record.Source ?? "unknown",
+                vendor, context, "vendor=" + vendor + "; endpoint_fingerprint=" + key);
             var firstSeen = baseline.IsFirstSeen
-                || (baseline.FirstSeenUtc.HasValue && context.TimestampUtc - baseline.FirstSeenUtc.Value <= window)
-                || (string.Equals(baseline.Reason, "baseline unavailable", StringComparison.OrdinalIgnoreCase)
-                    && FirstSeenWithinWindow($"{Descriptor.RuleId}:first-seen:{record.Source}:{vendor}", context.TimestampUtc, window));
-            var count = CountWindowEvents($"{Descriptor.RuleId}:{record.Source}:{vendor}", context.TimestampUtc, window);
-            if (!firstSeen || count < threshold)
+                || baseline.FirstSeenUtc.HasValue && context.TimestampUtc - baseline.FirstSeenUtc.Value <= window
+                || string.Equals(baseline.Reason, "baseline unavailable", StringComparison.OrdinalIgnoreCase)
+                    && FirstSeenWithinWindow($"{Descriptor.RuleId}:first-seen:{key}", context.TimestampUtc, window);
+            if (!_observations.Observe(record, key, record.Id.ToString("N"), context.TimestampUtc,
+                window, 0, out var count, out _) || !firstSeen || count < threshold)
                 return NoMatch();
-
-            var matchedConditions = new List<string> { "overlay_vendor_context", "first_seen_vendor", "egress_threshold" };
-            if (signal.Contains("process", StringComparison.OrdinalIgnoreCase)) matchedConditions.Add("overlay_process");
-            if (signal.Contains("host", StringComparison.OrdinalIgnoreCase)) matchedConditions.Add("vendor_host");
-            if (signal.Contains("port", StringComparison.OrdinalIgnoreCase)) matchedConditions.Add("known_overlay_port");
-
             var evidence = new List<DetectionEvidenceItem>
             {
                 new("vendor", vendor, "cloud"),
                 new("signal", signal, "rule"),
                 new("baseline.reason", baseline.Reason, "baseline"),
                 new("count", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
-                new("window_seconds", ((int)window.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
-                new("matched_conditions", string.Join(",", matchedConditions), "rule")
+                new("matched_conditions", "typed_flow,overlay_process,corroborated_endpoint,first_seen,distinct_egress", "rule")
             };
             evidence.AddRange(AnalystContext(
-                "The source repeatedly contacted first-seen overlay or tunnel infrastructure with matching vendor, process, or known service-port context.",
-                "Severity is High because overlay and tunnel egress can bypass network segmentation and create covert or unsanctioned access paths.",
-                "Approved mesh VPNs or support tunnels can resemble this traffic. Validate whether the agent and vendor are sanctioned before escalating.",
-                "Review the process lineage and destination vendor to determine whether a tunnel or mesh client initiated the traffic.",
-                "Confirm whether the overlay vendor is approved for the source host or role."));
-
-            return MatchCloudDev(
-                context,
-                SeverityLevel.High,
-                "Overlay or tunnel egress pattern observed",
-                "OverlayNetworkEgress",
-                evidence,
-                confidence =>
+                "A source made repeated distinct egress flows with a matching overlay process and endpoint or service port.",
+                "The traffic may be a tunnel connection; unauthorized access is not independently established.",
+                "Sanctioned mesh VPNs and remote support tunnels are common benign equivalents.",
+                "Correlate with endpoint process and network policy records.",
+                "Confirm asset-specific tunnel authorization before escalation."));
+            return MatchCloudDev(context, SeverityLevel.High,
+                "Overlay or tunnel client egress pattern observed", "OverlayNetworkEgress",
+                evidence, confidence =>
                 {
                     confidence.AddEvidence(0.26, "overlay-vendor-context");
                     confidence.AddEvidence(0.18, "egress-threshold");
                     confidence.AddEvidence(0.12, "first-seen-vendor");
-                    if (signal.Contains("process", StringComparison.OrdinalIgnoreCase)) confidence.AddEvidence(0.10, "overlay-process");
-                    if (signal.Contains("port", StringComparison.OrdinalIgnoreCase)) confidence.AddEvidence(0.08, "known-overlay-port");
-                    if (signal.Contains("host", StringComparison.OrdinalIgnoreCase)) confidence.AddEvidence(0.08, "vendor-host");
-                },
-                count,
-                window,
-                $"{record.Source}:{vendor}");
+                    confidence.AddEvidence(0.10, "overlay-process");
+                    if (signal.Contains("port", StringComparison.OrdinalIgnoreCase))
+                        confidence.AddEvidence(0.08, "known-overlay-port");
+                    else confidence.AddEvidence(0.08, "vendor-host");
+                }, count, window, key);
         }
     }
 }
+

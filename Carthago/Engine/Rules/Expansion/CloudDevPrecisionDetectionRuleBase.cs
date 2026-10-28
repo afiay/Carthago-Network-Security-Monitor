@@ -175,11 +175,11 @@ namespace Carthago.Engine.Rules.Expansion
             var items = new List<DetectionEvidenceItem>
             {
                 new("clouddev.family", detectionFamily, "cloud-dev"),
-                new("clouddev.host", string.IsNullOrWhiteSpace(host) ? record.Destination ?? "unknown" : host, "cloud-dev")
+                new("clouddev.host", Descriptor.RuleId is "R221" or "R222" ? "[REDACTED]" : string.IsNullOrWhiteSpace(host) ? record.Destination ?? "unknown" : host, "cloud-dev")
             };
 
             if (!string.IsNullOrWhiteSpace(path))
-                items.Add(new DetectionEvidenceItem("http.path", path, "http"));
+                items.Add(new DetectionEvidenceItem("http.path", Descriptor.RuleId is "R221" or "R222" ? "[REDACTED]" : path, "http"));
             if (!string.IsNullOrWhiteSpace(record.HttpMethod))
                 items.Add(new DetectionEvidenceItem("http.method", record.HttpMethod!, "http"));
             if (record.DestinationPort.HasValue)
