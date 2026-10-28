@@ -46,20 +46,25 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R198_AwsMetadataCredentialRetrievalRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch181185Window _window = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!IsAwsMetadataCredentialRequest(record))
+            if (!NetworkBatch196200Evidence.MetadataRequest(record, "aws")
+                || _window.Observe(record, $"{Descriptor.RuleId}:{record.Source}:{record.Destination}",
+                    record.HttpUri ?? "", context.TimestampUtc, TimeSpan.FromMinutes(15), distinct: false) == 0)
                 return NoMatch();
 
-            var hasImdsv2Token = HasHeader(record, "X-aws-ec2-metadata-token");
+            var hasImdsv2Token = NetworkBatch166170Evidence.Header(record, "X-aws-ec2-metadata-token", out var token)
+                && !string.IsNullOrWhiteSpace(token);
 
             var evidence = new List<DetectionEvidenceItem>
             {
                 new("matched_conditions", hasImdsv2Token ? "aws_imds_target,credential_path,imdsv2_token" : "aws_imds_target,credential_path", "rule")
             };
             evidence.AddRange(AnalystContext(
-                "The HTTP request reached AWS instance metadata credential material from a process that was not identified as a standard metadata agent.",
+                "A typed HTTP request targeted an AWS IMDS role-credential endpoint; response content and credential issuance were not observed.",
                 "Severity is Critical because IMDS credential retrieval can expose temporary IAM credentials for privilege escalation or cloud exfiltration.",
                 "Expected cloud bootstrap or management agents can touch IMDS. Validate the calling process and instance role before escalating.",
                 "Review the calling process and subsequent AWS API usage from the same host.",
@@ -77,7 +82,7 @@ namespace Carthago.Engine.Rules.Expansion
                     confidence.AddEvidence(0.28, "credential-path");
                     if (hasImdsv2Token) confidence.AddEvidence(0.10, "imdsv2-token");
                 },
-                cooldownKey: $"{record.Source}:{BestHost(record)}");
+                cooldownKey: $"{record.Source}:{record.Destination}");
         }
     }
 }

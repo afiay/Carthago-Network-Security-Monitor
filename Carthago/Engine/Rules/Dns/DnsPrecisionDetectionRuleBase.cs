@@ -89,7 +89,7 @@ namespace Carthago.Engine.Rules.Dns
         // Fixed-category DNS evidence for candidate rules that may expose internal names,
         // host labels, identifiers or proprietary zones. Do not serialize raw answers.
         private static bool IsSensitiveDnsRule(string ruleId)
-            => string.CompareOrdinal(ruleId, "R178") >= 0 && string.CompareOrdinal(ruleId, "R195") <= 0;
+            => string.CompareOrdinal(ruleId, "R178") >= 0 && string.CompareOrdinal(ruleId, "R197") <= 0;
 
         protected RuleEvaluationResult MatchDns(
             RuleEvaluationContext context,

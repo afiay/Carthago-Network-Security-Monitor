@@ -46,9 +46,12 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R197_DnsRebindingPrivateIpAnswerRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch181185Window _window = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!TryGetDnsQuestion(context, out var query) || !context.Record.DnsIsResponse || LooksLikeInternalOnlyDnsName(query))
+            if (!NetworkBatch196200Evidence.PrivateAnswer(context.Record) || !TryGetDnsQuestion(context, out var query)
+                || LooksLikeInternalOnlyDnsName(query))
                 return NoMatch();
 
             if (!TryGetPrivateAnswerIp(context.Record.DnsAnswers, out var privateIp, out var loopbackOrLinkLocal, out var mixedPublicAndPrivate))
@@ -59,6 +62,11 @@ namespace Carthago.Engine.Rules.Expansion
             if (!lowTtl && !loopbackOrLinkLocal && !mixedPublicAndPrivate)
                 return NoMatch();
 
+            if (_window.Observe(context.Record,
+                $"{Descriptor.RuleId}:{context.Record.Destination}:{context.Record.Source}:{query}",
+                query, context.TimestampUtc, TimeSpan.FromMinutes(15), distinct: false) == 0)
+                return NoMatch();
+
             var matched = new List<string> { "private_answer_ip" };
             if (lowTtl) matched.Add("low_ttl");
             if (loopbackOrLinkLocal) matched.Add("loopback_or_linklocal_answer");
@@ -66,7 +74,7 @@ namespace Carthago.Engine.Rules.Expansion
 
             var evidence = new List<DetectionEvidenceItem>
             {
-                new("dns.privateAnswer", privateIp, "dns"),
+                new("dns.privateAnswer", "[REDACTED]", "dns"),
                 new("matched_conditions", string.Join(",", matched), "rule")
             };
             evidence.AddRange(AnalystContext(
@@ -79,7 +87,7 @@ namespace Carthago.Engine.Rules.Expansion
             return MatchDns(
                 context,
                 SeverityLevel.High,
-                $"DNS rebinding-style private answer observed: {query}",
+                "DNS rebinding-style private answer observed",
                 query,
                 evidence,
                 confidence =>
@@ -89,7 +97,7 @@ namespace Carthago.Engine.Rules.Expansion
                     if (loopbackOrLinkLocal) confidence.AddEvidence(0.18, "loopback-or-linklocal-answer");
                     if (mixedPublicAndPrivate) confidence.AddEvidence(0.12, "mixed-public-private-answers");
                 },
-                cooldownKey: $"{context.Record.Source}:{query}");
+                cooldownKey: $"{context.Record.Destination}:{context.Record.Source}:{NetworkBatch166170Evidence.Key(query)}");
         }
     }
 }

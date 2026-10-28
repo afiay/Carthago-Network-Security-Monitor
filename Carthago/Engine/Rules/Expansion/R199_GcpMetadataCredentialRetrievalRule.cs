@@ -46,10 +46,14 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R199_GcpMetadataCredentialRetrievalRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch181185Window _window = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!IsGcpMetadataCredentialRequest(record))
+            if (!NetworkBatch196200Evidence.MetadataRequest(record, "gcp")
+                || _window.Observe(record, $"{Descriptor.RuleId}:{record.Source}:{record.Destination}",
+                    record.HttpUri ?? "", context.TimestampUtc, TimeSpan.FromMinutes(15), distinct: false) == 0)
                 return NoMatch();
 
             var evidence = new List<DetectionEvidenceItem>
@@ -57,7 +61,7 @@ namespace Carthago.Engine.Rules.Expansion
                 new("matched_conditions", "gcp_metadata_target,service_account_path,metadata_flavor_header", "rule")
             };
             evidence.AddRange(AnalystContext(
-                "The HTTP request targeted Google metadata token or identity material with the required metadata header from a non-guest-agent process.",
+                "A typed HTTP request targeted a GCP service-account token or identity endpoint; response content and credential issuance were not observed.",
                 "Severity is Critical because metadata token retrieval can expose cloud identity credentials and enable lateral cloud actions.",
                 "Expected GCE agents and initialization workflows can query metadata. Validate the process lineage and intended workload behavior before escalating.",
                 "Review the process lineage and any follow-on Google API calls.",
@@ -75,7 +79,7 @@ namespace Carthago.Engine.Rules.Expansion
                     confidence.AddEvidence(0.26, "service-account-path");
                     confidence.AddEvidence(0.12, "metadata-flavor-header");
                 },
-                cooldownKey: $"{record.Source}:{BestHost(record)}");
+                cooldownKey: $"{record.Source}:{record.Destination}");
         }
     }
 }

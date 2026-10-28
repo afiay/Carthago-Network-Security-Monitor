@@ -46,10 +46,14 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R200_AzureMetadataCredentialRetrievalRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch181185Window _window = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!IsAzureMetadataCredentialRequest(record))
+            if (!NetworkBatch196200Evidence.MetadataRequest(record, "azure")
+                || _window.Observe(record, $"{Descriptor.RuleId}:{record.Source}:{record.Destination}",
+                    record.HttpUri ?? "", context.TimestampUtc, TimeSpan.FromMinutes(15), distinct: false) == 0)
                 return NoMatch();
 
             var evidence = new List<DetectionEvidenceItem>
@@ -57,7 +61,7 @@ namespace Carthago.Engine.Rules.Expansion
                 new("matched_conditions", "azure_imds_target,managed_identity_token_path,metadata_header", "rule")
             };
             evidence.AddRange(AnalystContext(
-                "The HTTP request targeted Azure managed-identity token material at IMDS with the required metadata header from a non-agent process.",
+                "A typed HTTP request targeted Azure managed-identity token material; response content and credential issuance were not observed.",
                 "Severity is Critical because managed-identity token retrieval can expose privileged cloud access for lateral movement or exfiltration.",
                 "Expected Azure guest agents and initialization workflows can query IMDS. Validate the process lineage before escalating.",
                 "Review the resource parameter and any follow-on Azure API access.",
@@ -75,7 +79,7 @@ namespace Carthago.Engine.Rules.Expansion
                     confidence.AddEvidence(0.26, "managed-identity-token-path");
                     confidence.AddEvidence(0.12, "metadata-header");
                 },
-                cooldownKey: $"{record.Source}:{BestHost(record)}");
+                cooldownKey: $"{record.Source}:{record.Destination}");
         }
     }
 }

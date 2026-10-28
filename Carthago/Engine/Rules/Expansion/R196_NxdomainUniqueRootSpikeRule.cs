@@ -46,15 +46,20 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R196_NxdomainUniqueRootSpikeRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch181185Window _window = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!TryGetDnsQuestion(context, out var query) || !IsNxDomain(context.Record) || LooksLikeBenignValidationQuery(query) || IsCommonSingleLabelFallbackName(query))
+            if (!NetworkBatch196200Evidence.Nxdomain(context.Record) || !TryGetDnsQuestion(context, out var query)
+                || LooksLikeBenignValidationQuery(query) || IsCommonSingleLabelFallbackName(query))
                 return NoMatch();
 
             var window = TimeSpan.FromSeconds(IntSetting(Descriptor.RuleId, "WindowSeconds", 600, 60, 3600));
             var threshold = IntSetting(Descriptor.RuleId, "Threshold", 10, 3, 200);
             var root = RootDomain(query);
-            var count = CountDistinctValues($"{Descriptor.RuleId}:{context.Record.Source}", root, context.TimestampUtc, window);
+            var count = _window.Observe(context.Record,
+                $"{Descriptor.RuleId}:{context.Record.Destination}:{context.Record.Source}", root,
+                context.TimestampUtc, window, distinct: true);
             if (count < threshold)
                 return NoMatch();
 
@@ -74,7 +79,7 @@ namespace Carthago.Engine.Rules.Expansion
             return MatchDns(
                 context,
                 SeverityLevel.Medium,
-                $"NXDOMAIN unique-root spike observed: {query}",
+                "NXDOMAIN unique-root spike observed",
                 query,
                 evidence,
                 confidence =>
@@ -84,7 +89,7 @@ namespace Carthago.Engine.Rules.Expansion
                 },
                 count,
                 window,
-                context.Record.Source);
+                 $"{context.Record.Destination}:{context.Record.Source}");
         }
     }
 }
