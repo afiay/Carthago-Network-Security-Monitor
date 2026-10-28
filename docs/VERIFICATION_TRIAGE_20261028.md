@@ -173,3 +173,12 @@ At HEAD `66234637fdbbceb42eb0cb362dbd679ea2f15a1a`, the operator ran both defaul
 Read-only diagnostic fix now published: the readiness script emits safe failure categories and Windows token/service status, distinguishes absent registry policy from denied access, and independently queries event IDs 4624/4688 if explicitly requested, even when `Get-WinEvent -ListLog Security` fails. It does not read or print event bodies, modify audit settings, elevate, or sign claims.
 
 **Unverified new script; all four original replay failures stay open.** Previous 4,851/4,851 xUnit passed at `290a327`, and no production detector or replay fixtures were modified. Operational eligibility for Security-log reading is a separate Windows permissions decision, not proof of an R343 attack.
+
+
+## CARTHAGE R343 audit readiness — access/privilege confirmed (2026-10-29)
+
+Current operator token is not elevated; Windows Event Log service is running. The readiness check returned `ACCESS_DENIED` for Security channel metadata, and both 4624 and 4688 bounded searches returned `NOT OBSERVED` in a 30-minute window. Because metadata access is denied, the searches do **not** establish full Security log read access or absence of records. The local 4688 command-line policy registry value is not set; effective audit policies were not inspected. A read-only `auditpol /get` failed with `0x522 / ERROR_PRIVILEGE_NOT_HELD`, so process creation audit configuration remains unknown.
+
+A diagnostic-only change to `inspect-winrm-audit-readiness.ps1` now labels such no-match cases as `NO MATCHES REPORTED (log access unverified)` and makes the final status `ACCESS UNVERIFIED`. No Windows privileges, audit policies, rule behavior, shadow policies, benchmark samples or detection thresholds were changed. The change has not been tested on CARTHAGE.
+
+Still outstanding: authenticated R343 command and process outcome, R295 pod-exec audit, R275 IdP abuse corroboration, and R163 metadata-causality evidence. Do not count xUnit green as completion of these four replay expectations.
