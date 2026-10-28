@@ -208,3 +208,19 @@ The operator pulled `a23726d` and ran `inspect-winrm-audit-readiness.ps1 -Inspec
 **Source-only repair:** `inspect-winrm-audit-readiness.ps1` now prioritizes the `BLOCKED - Process Creation success auditing is disabled` status if the optional effective audit policy check reports no success auditing, and all user-facing status lines use ASCII-safe punctuation for Windows PowerShell 5.1. No Windows audit settings, privileges, app startup, detection rules, confidence floors, or replay fixtures were changed. The revised script is **published but awaits a CARTHAGE rerun**.
 
 **Next operational dependency:** any decision to enable 4688 success auditing or include command lines belongs to the operator's Windows security/privacy change process. A separate least-privileged, authenticated telemetry producer would ultimately be required for an R343 signed receipt. The other replay blockers R295, R275 and R163 are independent. Last previously verified xUnit checkpoint: **4,851/4,851** at `290a327`.
+
+## CARTHAGE R343 final read-only audit-readiness rerun (2026-10-29)
+
+The operator fast-forwarded to checkpoint `34bd2b2d6140125f888286e54a1626b06ce7e198` and ran the published `scripts/inspect-winrm-audit-readiness.ps1 -InspectAuditPolicy -InspectRecentEvents` from an elevated Windows PowerShell session.
+
+- `Elevated administrator token: True`; Windows Event Log service `Running`; Security channel metadata `READABLE`.
+- `4688 include-command-line policy: NOT SET (local policy value absent)`.
+- `Process Creation success-audit policy: NO AUDITING`.
+- `Security 4624 in last 30 minutes: OBSERVED (event ID only)`.
+- `Security 4688 in last 30 minutes: NO MATCHING EVENTS (selected window)`.
+- Confirmed final status: `BLOCKED - Process Creation success auditing is disabled; fresh Security 4688 evidence is not expected.`
+- Windows PowerShell output no longer contains the previous em-dash mojibake.
+
+**Result:** the read-only readiness script's published status/encoding correction is now operationally verified on CARTHAGE. This verifies **the diagnostic**, not real signed WinRM execution evidence or an R343 alert. A missing 4688 within the selected 30-minute window is consistent with the separately observed disabled audit policy; it does not establish the entire historical Security log is free of 4688.
+
+**Boundaries:** no Windows audit policy was changed; no command-line logging was enabled; no new source permissions were granted; no production R343 logic, other detection thresholds, replay fixtures or signed receipt trust rules changed. A decision to enable process creation auditing and command-line inclusion requires separate operator authorization and sensitive-data review, followed by least-privileged producer design. Existing replay blockers R343, R295, R275 and R163 remain open. Last verified xUnit run still 4,851/4,851 at `290a327`.
