@@ -30,16 +30,23 @@ namespace Carthago.Services.TrustedAudit
     internal sealed class WinRmTelemetryIpcSession
     {
         internal WinRmTelemetryIpcSession(Guid ownerId, Guid id, Guid channelBinding,
+            string windowsSid, string machine, int processId,
             DateTimeOffset createdAtUtc)
         {
             OwnerId = ownerId;
             Id = id;
             ChannelBinding = channelBinding;
+            WindowsSid = windowsSid;
+            Machine = machine;
+            ProcessId = processId;
             CreatedAtUtc = createdAtUtc;
         }
 
         internal Guid OwnerId { get; }
         internal Guid ChannelBinding { get; }
+        internal string WindowsSid { get; }
+        internal string Machine { get; }
+        internal int ProcessId { get; }
         internal DateTimeOffset CreatedAtUtc { get; }
         internal long LastSequence { get; set; }
         internal bool Closed { get; set; }
@@ -125,7 +132,8 @@ namespace Carthago.Services.TrustedAudit
                     return false;
                 }
                 session = new WinRmTelemetryIpcSession(_ownerId, Guid.NewGuid(),
-                    peer.ChannelBinding, _now());
+                    peer.ChannelBinding, peer.WindowsSid, peer.Machine,
+                    peer.ProcessId, _now());
                 _sessions.Add(session);
             }
 
@@ -144,6 +152,7 @@ namespace Carthago.Services.TrustedAudit
         }
 
         internal bool TryAcceptFrame(WinRmTelemetryIpcSession? session,
+            WinRmTelemetryTransportPeer? verifiedTransportPeer,
             ReadOnlySpan<byte> frame, out WinRmTelemetryIpcCandidate? candidate,
             out string reason)
         {
@@ -151,6 +160,21 @@ namespace Carthago.Services.TrustedAudit
             reason = "INVALID_SESSION";
             if (session == null || session.OwnerId != _ownerId)
                 return false;
+
+            // The transport adapter must re-attest the OS peer associated
+            // with THIS frame. Never trust SID/PID/binding from frame JSON
+            // or merely assume an existing session is still on its channel.
+            if (verifiedTransportPeer == null
+                || !string.Equals(verifiedTransportPeer.WindowsSid,
+                    session.WindowsSid, StringComparison.Ordinal)
+                || !string.Equals(verifiedTransportPeer.Machine,
+                    session.Machine, StringComparison.OrdinalIgnoreCase)
+                || verifiedTransportPeer.ProcessId != session.ProcessId
+                || verifiedTransportPeer.ChannelBinding != session.ChannelBinding)
+            {
+                reason = "TRANSPORT_IDENTITY_MISMATCH";
+                return false;
+            }
 
             // Reject oversized and malformed frames before allocating JSON.
             if (frame.Length is < 6 or > MaxFrameBytes)
