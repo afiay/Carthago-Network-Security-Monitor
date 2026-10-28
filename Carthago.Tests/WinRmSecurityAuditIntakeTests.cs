@@ -123,6 +123,42 @@ public sealed class WinRmSecurityAuditIntakeTests
     }
 
     [Theory]
+    [InlineData("NewProcessName", @"C:\Temp\powershell.exe")]
+    [InlineData("NewProcessName", @"C:\Users\Public\powershell.exe")]
+    [InlineData("NewProcessName", @"C:\Windows\Temp\powershell.exe")]
+    [InlineData("NewProcessName", @"C:\Windows\System32\powershell.exe")]
+    [InlineData("NewProcessName", @"C:\Windows\System32\WindowsPowerShell\v1.0\pwsh.exe")]
+    [InlineData("ParentProcessName", @"C:\Temp\wsmprovhost.exe")]
+    [InlineData("ParentProcessName", @"C:\Users\Public\wsmprovhost.exe")]
+    [InlineData("ParentProcessName", @"C:\Windows\Temp\wsmprovhost.exe")]
+    [InlineData("ParentProcessName", @"C:\Windows\System32\not-wsmprovhost.exe")]
+    public void Lookalike_Executable_Locations_Are_Not_Trusted_As_Candidates(
+        string field, string replacement)
+    {
+        var fields = ProcessFields();
+        fields[field] = replacement;
+        Assert.False(WinRmSecurityAuditIntake.TryInspectUntrustedXml(
+            Xml(4688, 101, Start.AddMinutes(1), fields),
+            out var result, out _));
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void Installed_PowerShell_7_And_Expected_System_Parent_Remain_Candidates()
+    {
+        var fields = ProcessFields();
+        var programFiles = Environment.GetEnvironmentVariable("ProgramFiles")
+            ?? @"C:\Program Files";
+        fields["NewProcessName"] = programFiles.TrimEnd('\\')
+            + @"\PowerShell\7\pwsh.exe";
+        fields["CommandLine"] = "pwsh.exe -EncodedCommand " + Encoded();
+        var observation = Inspect(4688, 101, Start.AddMinutes(1), fields);
+        Assert.Equal(WinRmSecurityObservationKind.EncodedPowerShellProcessCreation,
+            observation.Kind);
+        Assert.False(observation.FromLocalSecurityLog);
+    }
+
+    [Theory]
     [InlineData("LogonType", "2")]
     [InlineData("TargetLogonId", "0x0")]
     [InlineData("IpAddress", "127.0.0.1")]
