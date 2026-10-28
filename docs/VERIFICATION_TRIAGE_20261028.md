@@ -192,3 +192,19 @@ This confirms the key missing R343 telemetry prerequisite: **Process Creation su
 Added an optional **read-only** Process Creation audit-policy check to `scripts/inspect-winrm-audit-readiness.ps1` (`-InspectAuditPolicy`). It queries `auditpol /get /r`, returns a sanitized status and reports unsupported localized CSV formats as unknown. It changes no Windows policy, Security-log access permissions, production rules, replay fixtures, labels or confidence thresholds.
 
 The revised script is published but untested on CARTHAGE. R343 remains blocked for authenticated remote execution/outcome evidence, along with the independent R295, R275 and R163 replay blockers. Last verified xUnit 4,851/4,851.
+
+## CARTHAGE R343 audited readiness confirmed (2026-10-29)
+
+The operator pulled `a23726d` and ran `inspect-winrm-audit-readiness.ps1 -InspectAuditPolicy -InspectRecentEvents` in an authorized elevated PowerShell session. Results:
+
+- Administrator token `True`; Windows Event Log service `Running`; Security channel metadata `READABLE`.
+- `auditpol.exe /get` parsed successfully: **Process Creation success-audit policy = NO AUDITING**.
+- The checked local 4688 command-line policy value was **NOT SET**. This does not claim exhaustive effective policy verification.
+- Security 4624 **OBSERVED** within 30 minutes; 4688 **NO MATCHING EVENTS** within that selected 30-minute window.
+- The script previously ended with `STATUS: INCOMPLETE` despite an explicit `NO AUDITING` prerequisite. PowerShell 5.1 rendered a UTF-8 em dash as `â€”`.
+
+**Confirmed blocker:** the host can be inspected with an authorized elevated identity, but currently does not audit process creation successfully. Neither a current 4688 audit event nor its command-line field can be relied upon for R343. Reading the Security channel in an elevated administrative session does not mean the standard user/desktop application's Security-log reader has equivalent access. **Do not run Carthago's entire GUI as administrator to bypass that boundary.**
+
+**Source-only repair:** `inspect-winrm-audit-readiness.ps1` now prioritizes the `BLOCKED - Process Creation success auditing is disabled` status if the optional effective audit policy check reports no success auditing, and all user-facing status lines use ASCII-safe punctuation for Windows PowerShell 5.1. No Windows audit settings, privileges, app startup, detection rules, confidence floors, or replay fixtures were changed. The revised script is **published but awaits a CARTHAGE rerun**.
+
+**Next operational dependency:** any decision to enable 4688 success auditing or include command lines belongs to the operator's Windows security/privacy change process. A separate least-privileged, authenticated telemetry producer would ultimately be required for an R343 signed receipt. The other replay blockers R295, R275 and R163 are independent. Last previously verified xUnit checkpoint: **4,851/4,851** at `290a327`.
