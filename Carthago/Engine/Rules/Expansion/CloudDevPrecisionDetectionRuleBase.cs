@@ -4,6 +4,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Carthago.Models;
 using Carthago.Services;
 using Carthago.Services.Baseline;
@@ -175,11 +176,11 @@ namespace Carthago.Engine.Rules.Expansion
             var items = new List<DetectionEvidenceItem>
             {
                 new("clouddev.family", detectionFamily, "cloud-dev"),
-                new("clouddev.host", Descriptor.RuleId is "R221" or "R222" ? "[REDACTED]" : string.IsNullOrWhiteSpace(host) ? record.Destination ?? "unknown" : host, "cloud-dev")
+                new("clouddev.host", Descriptor.RuleId is "R221" or "R222" or "R243" or "R244" or "R245" ? "[REDACTED]" : string.IsNullOrWhiteSpace(host) ? record.Destination ?? "unknown" : host, "cloud-dev")
             };
 
             if (!string.IsNullOrWhiteSpace(path))
-                items.Add(new DetectionEvidenceItem("http.path", Descriptor.RuleId is "R221" or "R222" ? "[REDACTED]" : path, "http"));
+                items.Add(new DetectionEvidenceItem("http.path", Descriptor.RuleId is "R221" or "R222" or "R243" or "R244" or "R245" ? "[REDACTED]" : path, "http"));
             if (!string.IsNullOrWhiteSpace(record.HttpMethod))
                 items.Add(new DetectionEvidenceItem("http.method", record.HttpMethod!, "http"));
             if (record.DestinationPort.HasValue)
@@ -211,6 +212,20 @@ namespace Carthago.Engine.Rules.Expansion
                 EvidenceBuilder.AppendEvidence(evt, "suppression.remainingSeconds", Math.Ceiling(remaining.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture), "rule");
             }
 
+            if (Descriptor.RuleId is "R243" or "R244" or "R245")
+            {
+                evt.DestinationHost = "[REDACTED]";
+                if (evt.StructuredEvidence != null)
+                {
+                    var safe = evt.StructuredEvidence.Items.Select(item =>
+                        item.Key.Equals("destinationHost", StringComparison.OrdinalIgnoreCase)
+                            ? item with { Value = "[REDACTED]" } : item).ToArray();
+                    evt.StructuredEvidence = new DetectionEvidenceSet(safe, evt.StructuredEvidence.Summary);
+                }
+                if (evt.Evidence != null)
+                    evt.Evidence = Regex.Replace(evt.Evidence, @"destinationHost=[^;]*",
+                        "destinationHost=[REDACTED]", RegexOptions.IgnoreCase);
+            }
             return RuleEvaluationResult.Match(Descriptor.RuleId, evt);
         }
 

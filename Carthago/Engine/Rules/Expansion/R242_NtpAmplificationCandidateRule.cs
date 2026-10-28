@@ -46,47 +46,24 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R242_NtpAmplificationCandidateRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch226230Evidence.Window _observations = new();
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            var record = context.Record;
-            if (!HasNtpAmplificationSemantics(record))
-                return NoMatch();
-
+            var r = context.Record;
+            if (!NetworkBatch241245Evidence.NtpMonlist(r)) return NoMatch();
             var window = TimeSpan.FromSeconds(IntSetting(Descriptor.RuleId, "WindowSeconds", 120, 30, 3600));
             var threshold = IntSetting(Descriptor.RuleId, "Threshold", 5, 2, 1000);
-            var count = CountWindowEvents($"{Descriptor.RuleId}:{record.Source}:{record.Destination}", context.TimestampUtc, window);
-            if (count < threshold)
-                return NoMatch();
-
-            var external = IsExternalAddress(record.Source) || IsExternalAddress(record.Destination);
-            var evidence = new List<DetectionEvidenceItem>
-            {
-                new("count", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
-                new("window_seconds", ((int)window.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
-                new("matched_conditions", external ? "udp_ntp,amplification_command_semantics,external_context,burst_threshold" : "udp_ntp,amplification_command_semantics,burst_threshold", "rule")
-            };
-            evidence.AddRange(AnalystContext(
-                "NTP traffic carried amplification-prone command semantics repeatedly within a short window.",
-                "Severity is Medium because monlist/mode7/readvar-style traffic can indicate reflection/amplification probing or abuse of exposed NTP services.",
-                "Approved scanners may intentionally test NTP amplification posture.",
-                "Confirm whether the source is an approved vulnerability scanner or monitoring host.",
-                "Check whether the NTP service is internet-exposed and whether legacy monlist/mode7 behavior is enabled."));
-
-            return MatchIot(
-                context,
-                SeverityLevel.Medium,
-                "NTP amplification candidate traffic observed",
-                "NtpAmplification",
-                evidence,
-                confidence =>
-                {
-                    confidence.AddEvidence(0.34, "ntp-amplification-semantics");
-                    confidence.AddEvidence(0.20, "burst-threshold");
-                    if (external) confidence.AddCorrelation(0.10, "external-context");
-                },
-                count,
-                window,
-                $"{record.Source}:{record.Destination}:ntp-amplification");
+            var count = _observations.Observe(r.Source + ":" + r.Destination, "ntp-monlist", r.Id,
+                context.TimestampUtc, window, false);
+            if (count < threshold) return NoMatch();
+            return MatchIot(context, SeverityLevel.Medium, "Parsed NTP mode-7 monlist request burst observed",
+                "NtpAmplification", new[] {
+                    new DetectionEvidenceItem("count", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
+                    new DetectionEvidenceItem("window_seconds", ((int)window.TotalSeconds).ToString(), "rule"),
+                    new DetectionEvidenceItem("matched_conditions", "udp_ntp,parsed_mode7_monlist,packet_burst", "rule")
+                }, confidence => { confidence.AddEvidence(0.34, "parsed-monlist"); confidence.AddEvidence(0.20, "packet-burst"); confidence.AddCorrelation(0.10, "ntp-target"); }, count, window,
+                r.Source + ":" + r.Destination + ":ntp-monlist");
         }
+
     }
 }

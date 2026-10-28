@@ -46,47 +46,24 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R241_BacnetWhoIsIAmBurstRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch226230Evidence.Window _observations = new();
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            var record = context.Record;
-            if (!IsBacnetContext(record) || !HasBacnetWhoIsIAmSemantics(record))
-                return NoMatch();
-
+            var r = context.Record;
+            if (!NetworkBatch241245Evidence.Bacnet(r, out var operation)) return NoMatch();
             var window = TimeSpan.FromSeconds(IntSetting(Descriptor.RuleId, "WindowSeconds", 120, 30, 3600));
             var threshold = IntSetting(Descriptor.RuleId, "Threshold", 15, 3, 1000);
-            var value = string.Join("|", record.Destination ?? string.Empty, BestHost(record), Text(record));
-            var count = CountDistinctValues($"{Descriptor.RuleId}:{record.Source}", value, context.TimestampUtc, window);
-            if (count < threshold)
-                return NoMatch();
-
-            var evidence = new List<DetectionEvidenceItem>
-            {
-                new("count", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
-                new("window_seconds", ((int)window.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
-                new("matched_conditions", "bacnet_context,whois_iam_semantics,distinct_discovery_burst", "rule")
-            };
-            evidence.AddRange(AnalystContext(
-                "BACnet Who-Is/I-Am discovery semantics appeared in a bursty or broad pattern.",
-                "Severity is Medium because BACnet discovery can reveal building automation devices, object inventory, and control-system topology.",
-                "Approved BMS commissioning and inventory workflows can intentionally generate BACnet discovery bursts.",
-                "Validate whether the source is an approved BMS, engineering workstation, or commissioning tool.",
-                "Review whether follow-on BACnet reads/writes or cross-segment building automation traffic occurred."));
-
-            return MatchIot(
-                context,
-                SeverityLevel.Medium,
-                "BACnet Who-Is/I-Am discovery burst observed",
-                "BacnetDiscovery",
-                evidence,
-                confidence =>
-                {
-                    confidence.AddEvidence(0.28, "bacnet-context");
-                    confidence.AddEvidence(0.24, "whois-iam-semantics");
-                    confidence.AddEvidence(0.18, "distinct-discovery-burst");
-                },
-                count,
-                window,
-                $"{record.Source}:bacnet-discovery");
+            var count = _observations.Observe(r.Source, "bacnet-discovery", r.Id,
+                context.TimestampUtc, window, false);
+            if (count < threshold) return NoMatch();
+            return MatchIot(context, SeverityLevel.Medium, "Parsed BACnet discovery burst observed",
+                "BacnetDiscovery", new[] {
+                    new DetectionEvidenceItem("count", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
+                    new DetectionEvidenceItem("window_seconds", ((int)window.TotalSeconds).ToString(), "rule"),
+                    new DetectionEvidenceItem("matched_conditions", "udp_bacnet,parsed_discovery_operation,packet_burst", "rule")
+                }, confidence => { confidence.AddEvidence(0.28, "parsed-bacnet"); confidence.AddEvidence(0.24, "operation"); confidence.AddEvidence(0.18, "packet-burst"); }, count, window,
+                r.Source + ":" + r.Destination + ":bacnet-discovery");
         }
+
     }
 }
