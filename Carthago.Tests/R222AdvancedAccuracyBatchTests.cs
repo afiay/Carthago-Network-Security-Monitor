@@ -130,6 +130,9 @@ public sealed class R222AdvancedAccuracyBatchTests
             r.ProcessName = null; r.Sni = null;
             r.IsTcp = false; r.IsUdp = true; r.Protocol = "UDP"; r.DestinationPort = 51820;
         }));
+    [Fact] public async Task Contradictory_HttpHost_And_TlsSni_Are_Rejected()
+        => Assert.False(await Burst(r => r.HttpHost = "attacker.example.net"));
+
     [Fact] public async Task Cloudflared_And_Argotunnel_Host_Are_Corroborated()
         => Assert.True(await Burst(r => { r.ProcessName = "cloudflared.exe"; r.Sni = "region1.v2.argotunnel.com"; }));
 }

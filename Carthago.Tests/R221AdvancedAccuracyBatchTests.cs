@@ -122,6 +122,12 @@ public sealed class R221AdvancedAccuracyBatchTests
         => Assert.True(await Burst(r => { r.ProcessName = "teamviewer.exe"; r.Sni = "relay.teamviewer.com"; }));
     [Fact] public async Task Mismatched_AnyDesk_Process_And_TeamViewer_Host_Are_Rejected()
         => Assert.False(await Burst(r => r.Sni = "relay.teamviewer.com"));
+    [Fact] public async Task ScreenConnect_Client_And_Exact_Vendor_Host_Are_Corroborated()
+        => Assert.True(await Burst(r => { r.ProcessName = "screenconnect.clientservice.exe"; r.Sni = "relay.screenconnect.com"; }));
+
+    [Fact] public async Task Contradictory_HttpHost_And_TlsSni_Are_Rejected()
+        => Assert.False(await Burst(r => r.HttpHost = "attacker.example.net"));
+
     [Fact] public async Task Process_Only_Without_Host_Attribution_Is_Not_Sufficient()
         => Assert.False(await Burst(r => r.Sni = null));
 }

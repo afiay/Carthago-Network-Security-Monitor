@@ -48,14 +48,18 @@ namespace Carthago.Engine.Rules.Expansion
         internal static bool RemoteDesktop(TrafficRecord r, out string vendor)
         {
             vendor = "";
-            if (!Flow(r) || !PublicDestination(r.Destination)) return false;
+            if (!Flow(r) || !PublicDestination(r.Destination)
+                || r.Sni != null && r.HttpHost != null
+                    && !r.Sni.Equals(r.HttpHost, StringComparison.OrdinalIgnoreCase)) return false;
             var host = r.Sni ?? r.HttpHost;
             var candidates = new (string Vendor, string Process, string Domain)[]
             {
                 ("anydesk", "anydesk", "anydesk.com"),
                 ("teamviewer", "teamviewer", "teamviewer.com"),
                 ("rustdesk", "rustdesk", "rustdesk.com"),
-                ("splashtop", "splashtop", "splashtop.com")
+                ("splashtop", "splashtop", "splashtop.com"),
+                ("screenconnect", "screenconnect.clientservice", "screenconnect.com"),
+                ("screenconnect", "screenconnect.clientservice", "connectwise.com")
             };
             foreach (var candidate in candidates)
             {
@@ -71,7 +75,9 @@ namespace Carthago.Engine.Rules.Expansion
         internal static bool Overlay(TrafficRecord r, out string vendor, out string signal)
         {
             vendor = ""; signal = "";
-            if (!Flow(r) || !PublicDestination(r.Destination)) return false;
+            if (!Flow(r) || !PublicDestination(r.Destination)
+                || r.Sni != null && r.HttpHost != null
+                    && !r.Sni.Equals(r.HttpHost, StringComparison.OrdinalIgnoreCase)) return false;
             var host = r.Sni ?? r.HttpHost;
             if (ProcessIs(r.ProcessName, "tailscale") && HostIs(host, "tailscale.com"))
                 vendor = "tailscale";
