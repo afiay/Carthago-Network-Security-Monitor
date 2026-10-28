@@ -69,6 +69,9 @@ namespace Carthago.Engine.Rules.Expansion
             {
                 new("matched_conditions", string.Join(",", matchedConditions), "rule"),
                 new("query.parameter", parameterName, "http"),
+                // Keep the evidence contract's redirect.target key, but never
+                // serialize the raw absolute URL or embedded query secrets.
+                new("redirect.target", "suspicious_external_or_internal", "http"),
                 new("redirect.targetCategory", "suspicious_external_or_internal", "http")
             };
             evidenceItems.AddRange(AnalystContext(
