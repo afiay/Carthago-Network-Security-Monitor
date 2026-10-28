@@ -55,6 +55,32 @@ namespace Carthago.Engine.Rules.Expansion
         public R355_JenkinsScriptConsoleProbeRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            // A descriptive Info field, process name or generic Jenkins hostname
+            // cannot establish a script-console HTTP probe. Require a parsed
+            // request method and an exact console endpoint path.
+            var record = context.Record;
+            var method = record.HttpMethod;
+            var uri = record.HttpUri;
+            if (string.IsNullOrWhiteSpace(method) || string.IsNullOrWhiteSpace(uri))
+                return NoMatch(RuleNoMatchReasonCategory.MissingTelemetry,
+                    "JENKINS_HTTP_REQUEST_NOT_OBSERVED",
+                    "A parsed HTTP request method and URI are required.");
+
+            if (!string.Equals(method, "GET", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(method, "POST", StringComparison.OrdinalIgnoreCase))
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                    "JENKINS_UNEXPECTED_HTTP_METHOD",
+                    "Only observed GET or POST requests are eligible for this probe rule.");
+
+            var path = uri.Split('?', '#')[0].TrimEnd('/');
+            if (!path.EndsWith("/script", StringComparison.OrdinalIgnoreCase)
+                && !path.EndsWith("/scriptText", StringComparison.OrdinalIgnoreCase))
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                    "JENKINS_CONSOLE_PATH_NOT_OBSERVED",
+                    "A parsed Jenkins script-console endpoint is required.");
+
+            return EvaluateSpec(context, Spec);
+        }
     }
 }
