@@ -1,89 +1,155 @@
 # SPDX-License-Identifier: MIT
-# Read-only local Windows Security audit readiness check for R343.
-# Never prints event XML, usernames, command lines, message bodies or tokens.
+# Read-only R343 Windows audit readiness. NEVER authenticates an operation.
+# Do not print event XML, event Message, usernames, command lines or tokens.
 [CmdletBinding()]
 param(
     [switch]$InspectRecentEvents,
-    [ValidateRange(1, 120)][int]$LookbackMinutes = 30
+    [ValidateRange(1,120)][int]$LookbackMinutes = 30
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+
+function Get-SafeFailureCode {
+    param([System.Management.Automation.ErrorRecord]$Failure)
+    # Do not print exception.Message: the provider may embed machine names,
+    # paths, or other sensitive strings in human-readable error messages.
+    $id = [string]$Failure.FullyQualifiedErrorId
+    if ($id -match '(^|,)NoMatchingEventsFound(,|$)') {
+        return 'NO_MATCHING_EVENTS'
+    }
+    $exception = $Failure.Exception
+    $firstType = if ($null -ne $exception) { $exception.GetType().Name } else { 'Unknown' }
+    $firstHr = if ($null -ne $exception) {
+        ('0x{0:X8}' -f [int]$exception.HResult)
+    } else { 'UNKNOWN' }
+    while ($null -ne $exception) {
+        if ($exception -is [System.UnauthorizedAccessException] -or
+            $exception -is [System.Security.SecurityException] -or
+            $exception.HResult -eq -2147024891 -or
+            ($exception -is [System.ComponentModel.Win32Exception] -and
+                $exception.NativeErrorCode -eq 5)) {
+            return 'ACCESS_DENIED'
+        }
+        if ($exception -is [System.Management.Automation.CommandNotFoundException]) {
+            return 'COMMAND_UNAVAILABLE'
+        }
+        if ($exception.GetType().Name -eq 'EventLogNotFoundException') {
+            return 'LOG_NOT_FOUND'
+        }
+        $exception = $exception.InnerException
+    }
+    # A stable error class and HRESULT are useful for diagnosing missing
+    # channels/providers without exposing provider-specific message text.
+    return ('OTHER_ERROR ({0}; {1})' -f $firstType, $firstHr)
+}
 
 Write-Host 'CARTHAGO R343 WINDOWS AUDIT READINESS'
 Write-Host 'Mode: read-only, unsigned candidate readiness; NEVER trusted execution attestation.'
 Write-Host ('Recent-event inspection: {0}' -f [bool]$InspectRecentEvents)
 
 if (-not [Environment]::OSVersion.Platform.Equals([PlatformID]::Win32NT)) {
-    Write-Host 'Windows Security event source: NOT AVAILABLE (Windows only).'
+    Write-Host 'Windows Security event source: UNAVAILABLE (Windows only).'
     Write-Host 'STATUS: NOT READY — no audit events queried.'
     return
 }
 
-# This registry policy indicates whether Security 4688 may INCLUDE the
-# command line. The separate Process Creation success-audit policy and the
-# actual presence/content of Security events must also be verified.
+try {
+    $identity = [System.Security.Principal.WindowsIdentity]::GetCurrent()
+    $principal = [System.Security.Principal.WindowsPrincipal]::new($identity)
+    Write-Host ('Elevated administrator token: {0}' -f
+        $principal.IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator))
+} catch {
+    Write-Host 'Elevated administrator token: UNKNOWN'
+}
+
+try {
+    $service = Get-Service -Name EventLog -ErrorAction Stop
+    Write-Host ('Windows Event Log service: {0}' -f $service.Status)
+} catch {
+    Write-Host ('Windows Event Log service: {0}' -f (Get-SafeFailureCode $_))
+}
+
+# Absence of this policy value is different from an access failure.
+# The other "Audit Process Creation" success setting is independent.
 $registryPath = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System\Audit'
-$commandLinePolicy = 'UNKNOWN'
+$commandLinePolicy = 'NOT SET (local policy value absent)'
 try {
     $policy = Get-ItemProperty -LiteralPath $registryPath -ErrorAction Stop
     if ($null -ne $policy.PSObject.Properties['ProcessCreationIncludeCmdLine_Enabled']) {
         $value = [int]$policy.ProcessCreationIncludeCmdLine_Enabled
-        $commandLinePolicy = if ($value -eq 1) { 'CONFIGURED' } else { 'NOT CONFIGURED' }
+        $commandLinePolicy = if ($value -eq 1) {
+            'CONFIGURED'
+        } elseif ($value -eq 0) {
+            'DISABLED'
+        } else {
+            'UNKNOWN (unexpected policy value)'
+        }
     }
 } catch {
-    $commandLinePolicy = 'UNKNOWN (registry policy unreadable)'
+    if ($_.Exception -is [System.Management.Automation.ItemNotFoundException] -or
+        $_.FullyQualifiedErrorId -match '(PathNotFound|ItemNotFound)') {
+        $commandLinePolicy = 'NOT SET (local policy path absent)'
+    } else {
+        $commandLinePolicy = 'UNKNOWN (' + (Get-SafeFailureCode $_) + ')'
+    }
 }
 Write-Host ('4688 include-command-line policy: {0}' -f $commandLinePolicy)
-Write-Host 'Process Creation audit success policy: NOT VERIFIED (separate requirement).'
+Write-Host 'Process Creation success-audit policy: NOT VERIFIED (requires a separate read-only auditpol query).'
 
-# Check Security log access without requesting elevation or reading records.
-$logReadable = $false
+# A failure to read channel configuration does NOT prove that the event
+# queries will fail, so never use this metadata result as a query gate.
+$metadataStatus = 'NOT READABLE'
 try {
     $metadata = Get-WinEvent -ListLog Security -ErrorAction Stop
-    if ($null -ne $metadata) {
-        $logReadable = $true
-    }
-} catch [System.UnauthorizedAccessException] {
-    Write-Host 'Security channel: ACCESS DENIED'
+    if ($null -ne $metadata) { $metadataStatus = 'READABLE' }
 } catch {
-    # Keep exception details private; Windows error text can disclose machine
-    # names or paths and should not become part of a shared verification log.
-    Write-Host 'Security channel: UNAVAILABLE OR NOT READABLE'
+    $metadataStatus = Get-SafeFailureCode $_
 }
-if ($logReadable) { Write-Host 'Security channel: metadata readable' }
+Write-Host ('Security channel metadata: {0}' -f $metadataStatus)
 
 if (-not $InspectRecentEvents) {
     Write-Host 'Recent 4624/4688 observations: NOT INSPECTED (opt in with -InspectRecentEvents).'
-    Write-Host 'STATUS: READINESS ONLY — no events were inspected or signed.'
-    return
-}
-if (-not $logReadable) {
-    Write-Host 'STATUS: NOT READY — cannot inspect the local Security channel.'
+    Write-Host 'STATUS: READINESS ONLY — no events inspected, permissions changed or claims signed.'
     return
 }
 
+# Probe event existence independently, even if -ListLog Security failed.
+# No event XML, Message, Properties, identity or command line is accessed.
 $from = (Get-Date).AddMinutes(-$LookbackMinutes)
-foreach ($id in @(4624, 4688)) {
+$observed = 0
+$unavailable = 0
+foreach ($id in @(4624,4688)) {
     $state = 'NOT OBSERVED'
     try {
-        # Filter at the Windows event log provider; retrieve at most one
-        # matching event for each ID. Do NOT access Message, ToXml,
-        # Properties, UserId, MachineName, or the process command line.
         $event = Get-WinEvent -FilterHashtable @{
-            LogName   = 'Security'
-            Id        = $id
+            LogName = 'Security'
+            Id = $id
             StartTime = $from
         } -MaxEvents 1 -ErrorAction Stop
         if ($null -ne $event) {
-            $state = 'OBSERVED (metadata only)'
+            $state = 'OBSERVED (event ID only)'
+            $observed++
         }
-    } catch [System.UnauthorizedAccessException] {
-        $state = 'ACCESS DENIED'
     } catch {
-        $state = 'NOT OBSERVED OR UNAVAILABLE'
+        $failure = Get-SafeFailureCode $_
+        if ($failure -eq 'NO_MATCHING_EVENTS') {
+            $state = 'NOT OBSERVED'
+        } else {
+            $state = $failure
+            $unavailable++
+        }
+    } finally {
+        $event = $null
     }
     Write-Host ('Security {0} in last {1} minutes: {2}' -f
         $id, $LookbackMinutes, $state)
 }
-Write-Host 'STATUS: AUDIT READINESS CHECKED; no operation/outcome verified.'
-Write-Host 'R343 remains blocked until authenticated source, process/session and outcome validation.'
+
+if ($unavailable -gt 0) {
+    Write-Host 'STATUS: NOT READY — at least one Security event query failed.'
+} elseif ($observed -lt 2) {
+    Write-Host 'STATUS: INCOMPLETE — one or both event types not observed in the selected window.'
+} else {
+    Write-Host 'STATUS: EVENT IDS OBSERVED — audit policy, record fields, and authenticated outcome NOT VERIFIED.'
+}
+Write-Host 'No events modified or signed. R343 remains blocked pending authenticated source, session and outcome evidence.'
