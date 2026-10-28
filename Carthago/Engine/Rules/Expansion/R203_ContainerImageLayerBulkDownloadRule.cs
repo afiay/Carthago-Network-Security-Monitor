@@ -46,10 +46,13 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R203_ContainerImageLayerBulkDownloadRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch201205Window _window = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!TryClassifyDockerRegistryOperation(record, out var operation, out var artifactKey) || !string.Equals(operation, "pull", StringComparison.OrdinalIgnoreCase))
+            if (!NetworkBatch201205Evidence.Registry(record, out var operation, out var artifactKey)
+                || !string.Equals(operation, "pull", StringComparison.OrdinalIgnoreCase))
                 return NoMatch();
 
             var host = BestHost(record);
@@ -64,8 +67,9 @@ namespace Carthago.Engine.Rules.Expansion
                 || (baseline.FirstSeenUtc.HasValue && context.TimestampUtc - baseline.FirstSeenUtc.Value <= window)
                 || (string.Equals(baseline.Reason, "baseline unavailable", StringComparison.OrdinalIgnoreCase)
                     && FirstSeenWithinWindow($"{Descriptor.RuleId}:first-seen:{record.Source}:{host}", context.TimestampUtc, window));
-            var count = CountDistinctValues($"{Descriptor.RuleId}:{record.Source}:{host}", artifactKey, context.TimestampUtc, window);
-            var bytes = AddBytesWindow($"{Descriptor.RuleId}:bytes:{record.Source}:{host}", context.TimestampUtc, TransferBytes(record), window);
+            if (!_window.Observe(record, $"{Descriptor.RuleId}:{record.Source}:{host}", artifactKey,
+                context.TimestampUtc, window, TransferBytes(record), out var count, out var bytes))
+                return NoMatch();
             if (!firstSeen || count < threshold || bytes < minimumBytes)
                 return NoMatch();
 
@@ -77,7 +81,7 @@ namespace Carthago.Engine.Rules.Expansion
                 new("matched_conditions", "container_layer_pull,unofficial_registry,first_seen_host,bulk_threshold", "rule")
             };
             evidence.AddRange(AnalystContext(
-                "The source downloaded many distinct container image layers with meaningful byte volume from a first-seen non-official registry.",
+                "The source requested many distinct image-layer blobs from a first-seen non-official registry with substantial observed packet-byte volume; successful downloads are not proven.",
                 "Severity is Medium because bulk layer pulls to unfamiliar registries can indicate image staging, container artifact exfiltration, or shadow supply-chain activity.",
                 "Legitimate CI or ephemeral build systems can bulk-pull layers from new registries. Validate the registry owner and workload context before escalating.",
                 "Review the calling process and repository names associated with the layer downloads.",

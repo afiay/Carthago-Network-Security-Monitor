@@ -49,7 +49,8 @@ namespace Carthago.Engine.Rules.Expansion
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!TryClassifyKubernetesTokenAccess(record, out var classifier))
+            if (IsLikelyKubernetesComponentProcess(record.ProcessName)
+                || !NetworkBatch201205Evidence.KubernetesTokenRequest(record, out var classifier))
                 return NoMatch();
 
             var evidence = new List<DetectionEvidenceItem>
@@ -57,7 +58,7 @@ namespace Carthago.Engine.Rules.Expansion
                 new("matched_conditions", classifier, "rule")
             };
             evidence.AddRange(AnalystContext(
-                "The telemetry referenced Kubernetes service-account token material from a process that did not look like an expected platform component.",
+                "An attributed HTTP POST requested a Kubernetes service-account TokenRequest API endpoint; no token response was observed.",
                 "Severity is Critical because service-account token access can expose cluster credentials and enable API abuse or lateral movement inside Kubernetes.",
                 "Cluster bootstrap or administrative tooling can legitimately request tokens. Validate process lineage, namespace, and intended workload role before escalating.",
                 "Review the calling process and whether it immediately accessed the Kubernetes API.",
@@ -75,7 +76,7 @@ namespace Carthago.Engine.Rules.Expansion
                     if (classifier.Contains("mounted_", StringComparison.OrdinalIgnoreCase)) confidence.AddEvidence(0.14, "mounted-token-path");
                     if (classifier.Contains("tokenrequest", StringComparison.OrdinalIgnoreCase)) confidence.AddEvidence(0.16, "tokenrequest-api");
                 },
-                cooldownKey: $"{record.Source}:{classifier}");
+                cooldownKey: $"{record.Source}:{record.Destination}:{classifier}");
         }
     }
 }

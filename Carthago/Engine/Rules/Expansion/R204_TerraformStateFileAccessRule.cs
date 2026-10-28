@@ -48,7 +48,7 @@ namespace Carthago.Engine.Rules.Expansion
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!HasHttpContext(record) || !IsTerraformStatePath(record, out var statePath))
+            if (!NetworkBatch201205Evidence.TerraformState(record, out var statePath))
                 return NoMatch();
 
             var host = BestHost(record);
@@ -69,7 +69,7 @@ namespace Carthago.Engine.Rules.Expansion
             return MatchHttpApi(
                 context,
                 SeverityLevel.High,
-                $"Terraform state artifact access observed: {statePath}",
+                "Terraform state artifact request observed",
                 "TerraformStateAccess",
                 evidence,
                 confidence =>
@@ -77,7 +77,7 @@ namespace Carthago.Engine.Rules.Expansion
                     confidence.AddEvidence(0.24, "terraform-state-path");
                     confidence.AddEvidence(0.18, "external-or-cloud-storage-host");
                 },
-                cooldownKey: $"{record.Source}:{host}:{statePath}");
+                cooldownKey: $"{record.Source}:{NetworkBatch166170Evidence.Key(host)}:{NetworkBatch166170Evidence.Key(statePath)}");
         }
     }
 }

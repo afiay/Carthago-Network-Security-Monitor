@@ -46,10 +46,12 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R202_DockerRegistryPushPullAnomalyRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch201205Window _window = new();
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
-            if (!TryClassifyDockerRegistryOperation(record, out var operation, out var artifactKey))
+            if (!NetworkBatch201205Evidence.Registry(record, out var operation, out var artifactKey))
                 return NoMatch();
 
             var host = BestHost(record);
@@ -63,7 +65,9 @@ namespace Carthago.Engine.Rules.Expansion
                 || (baseline.FirstSeenUtc.HasValue && context.TimestampUtc - baseline.FirstSeenUtc.Value <= window)
                 || (string.Equals(baseline.Reason, "baseline unavailable", StringComparison.OrdinalIgnoreCase)
                     && FirstSeenWithinWindow($"{Descriptor.RuleId}:first-seen:{record.Source}:{host}", context.TimestampUtc, window));
-            var count = CountDistinctValues($"{Descriptor.RuleId}:{record.Source}:{host}", artifactKey, context.TimestampUtc, window);
+            if (!_window.Observe(record, $"{Descriptor.RuleId}:{record.Source}:{host}", artifactKey,
+                context.TimestampUtc, window, 0, out var count, out _))
+                return NoMatch();
             if (count < threshold || !firstSeen)
                 return NoMatch();
 

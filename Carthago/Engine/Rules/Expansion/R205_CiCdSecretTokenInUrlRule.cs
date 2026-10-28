@@ -47,7 +47,7 @@ namespace Carthago.Engine.Rules.Expansion
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            if (!HasHttpContext(context.Record) || !TryGetCiCdSecretQueryParameter(context.Record, out var parameterName))
+            if (!NetworkBatch201205Evidence.CiSecret(context.Record, out var parameterName))
                 return NoMatch();
 
             var evidence = new List<DetectionEvidenceItem>
@@ -73,7 +73,7 @@ namespace Carthago.Engine.Rules.Expansion
                     confidence.AddEvidence(0.28, "cicd-secret-query-parameter");
                     confidence.AddEvidence(0.18, "token-like-value");
                 },
-                cooldownKey: $"{context.Record.Source}:{parameterName}:{HttpPath(context.Record)}");
+                cooldownKey: $"{context.Record.Source}:{parameterName}:{NetworkBatch166170Evidence.Key(context.Record.HttpUri ?? "")}");
         }
     }
 }
