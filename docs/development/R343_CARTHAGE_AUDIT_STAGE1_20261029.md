@@ -1,0 +1,56 @@
+# CARTHAGE R343 Windows telemetry - Stage 1 lab change
+
+## Authorization and scope
+
+On 2026-10-29 the operator explicitly approved Stage 1: **enable Audit Process Creation / Success** on the Windows development host CARTHAGE, while leaving **Include command line in process creation events** unchanged. Approval does not extend to command-line logging, changing Security-log ACLs, granting application elevation, signing audit receipts, modifying detection confidence, or enabling R343 alerts.
+
+Prior read-only CARTHAGE evidence: Security log enabled/readable under an authorized elevated PowerShell session; 4624 observed; effective Process Creation audit policy `No Auditing`; `ProcessCreationIncludeCmdLine_Enabled` not set at the checked local policy location; no 4688 events returned in a bounded 30-minute window. Previously verified 4,851/4,851 xUnit tests at `290a327`; four replay blockers remain.
+
+## Scoped local utility
+
+`scripts/set-process-creation-audit-lab.ps1` accepts `-Mode Status` (default), `-Mode Enable`, or `-Mode Restore` and is restricted to hostname CARTHAGE and an elevated administrator token. It queries the Process Creation subcategory by its stable GUID, parses its auditpol CSV report, and fails closed on unexpected policy values or schemas. Enable requires the **exact observed `No Auditing` baseline** and absence of enabled local command-line inclusion; it only sets `/success:enable`. Restore requires the expected `Success` effective state and only sets `/success:disable`, returning to the observed baseline. It does not change `/failure`, other categories, registry, log size/retention, application privileges, or the rule engine. Both changes verify the effective auditpol setting afterward.
+
+Microsoft syntax reference: https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/auditpol-set . Audit policy state reader: https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/auditpol-get .
+
+## Operator execution
+
+**First pull in the normal repository terminal:**
+
+```powershell
+git switch feature/carthago-reliability-hardening
+git pull --ff-only
+git rev-parse --short HEAD
+```
+
+**Then run from an already-authorized elevated Windows PowerShell:**
+
+```powershell
+cd C:\Users\afiay\Documents\Projects\Carthago-Network-Security-Monitor
+.\scripts\set-process-creation-audit-lab.ps1 -Mode Status
+.\scripts\set-process-creation-audit-lab.ps1 -Mode Enable
+.\scripts\inspect-winrm-audit-readiness.ps1 -InspectAuditPolicy -InspectRecentEvents
+```
+
+After enabling, create a harmless local process and check only event IDs and timestamps, not XML or messages:
+
+```powershell
+$started = Get-Date
+Start-Process -FilePath "$env:WINDIR\System32\cmd.exe" -ArgumentList '/d /c exit 0' -Wait -NoNewWindow
+Get-WinEvent -FilterHashtable @{ LogName='Security'; Id=4688; StartTime=$started.AddSeconds(-5) } -MaxEvents 3 -ErrorAction Stop |
+    Select-Object Id, TimeCreated
+```
+
+Observe log growth and retention while testing, and avoid real secrets in process arguments even though command-line logging is not intentionally enabled. The change might be superseded by Group Policy or endpoint management; do not bypass those controls.
+
+## Restore
+
+```powershell
+.\scripts\set-process-creation-audit-lab.ps1 -Mode Restore
+.\scripts\set-process-creation-audit-lab.ps1 -Mode Status
+```
+
+Restoring the audit setting does **not** erase already collected 4688 records. Do not clear the Security log as part of cleanup.
+
+## Completion boundaries
+
+**Published to GitHub, not executed on CARTHAGE**. After the operator's confirmed `Success` policy and new 4688 events, Stage 1 can be marked operationally verified. This does **not** provide encoded command-line content, remote execution attribution, WinRM outcome, authenticated signer, or signed R343 receipts. Continue to keep R343 fail-closed. Command-line inclusion remains a separate, unapproved Stage 2 privacy/security decision.
