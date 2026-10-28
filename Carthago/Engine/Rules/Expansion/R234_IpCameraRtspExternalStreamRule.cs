@@ -46,44 +46,20 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R234_IpCameraRtspExternalStreamRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch226230Evidence.Window _observations = new();
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            var record = context.Record;
-            var text = Text(record);
-            var rtsp = record.SourcePort == 554 || record.DestinationPort == 554 || record.SourcePort == 8554 || record.DestinationPort == 8554
-                       || ContainsAnyValue(record.ApplicationProtocol, "rtsp")
-                       || ContainsAnyValue(record.ApplicationService, "rtsp")
-                       || ContainsAnyValue(text, "rtsp://", "rtsp/1.0", "describe rtsp", "setup rtsp", "play rtsp", "rtsp describe", "rtsp play");
-            var cameraContext = IsCameraLikeProcess(record.ProcessName) || ContainsAnyValue(text, "camera", "ipcam", "nvr", "dvr", "hikvision", "dahua", "axis", "rtsp stream");
-            if (!rtsp || !IsUnexpectedSegmentCrossing(record) || (!cameraContext && !ContainsAnyValue(text, "rtsp://")))
-                return NoMatch();
-
-            var evidence = new List<DetectionEvidenceItem>
-            {
-                new("matched_conditions", cameraContext ? "rtsp_semantics,external_or_boundary,camera_context" : "rtsp_semantics,external_or_boundary", "rule"),
-                new("network.destinationPort", (record.DestinationPort ?? 0).ToString(System.Globalization.CultureInfo.InvariantCulture), "flow"),
-                new("camera.context", cameraContext ? "present" : "rtsp-uri-only", "rule")
-            };
-            evidence.AddRange(AnalystContext(
-                "RTSP camera-streaming semantics were observed across an external or unexpected network boundary.",
-                "Severity is High because camera streams crossing external boundaries can expose physical surveillance data or indicate unauthorized remote viewing.",
-                "Approved NVR cloud connectors and remote monitoring platforms can be legitimate if explicitly registered.",
-                "Confirm whether the destination is an approved video-management or cloud relay service.",
-                "Check camera/NVR access logs for the same source, stream path, and user account."));
-
-            return MatchIot(
-                context,
-                SeverityLevel.High,
-                "External RTSP camera stream observed",
-                "RtspCameraStream",
-                evidence,
-                confidence =>
-                {
-                    confidence.AddEvidence(0.38, "rtsp-semantics");
-                    confidence.AddEvidence(0.26, "external-or-boundary");
-                    if (cameraContext) confidence.AddCorrelation(0.14, "camera-context");
-                },
-                cooldownKey: $"{record.Source}:{record.Destination}:rtsp-camera");
+            var r = context.Record;
+            if (!NetworkBatch231235Evidence.RtspPlay(r)
+                || _observations.Observe(r.Source, r.Destination, r.Id, context.TimestampUtc,
+                    TimeSpan.FromMinutes(10), false) == 0) return NoMatch();
+            return MatchIot(context, SeverityLevel.High, "RTSP PLAY request crossed network boundary",
+                "RtspCameraStream", new[] {
+                    new DetectionEvidenceItem("matched_conditions", "parsed_rtsp_play,tcp_rtsp_port,boundary", "rule"),
+                    new DetectionEvidenceItem("camera.context", "unverified_rtsp_request", "rule") },
+                confidence => { confidence.AddEvidence(0.38, "parsed-rtsp-play");
+                    confidence.AddEvidence(0.26, "boundary"); },
+                cooldownKey: r.Source + ":" + r.Destination + ":rtsp-play");
         }
     }
 }

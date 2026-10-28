@@ -102,6 +102,24 @@ namespace Carthago.Engine.Rules.IotOt
                 count,
                 window.HasValue ? (int)window.Value.TotalSeconds : 0);
 
+            // Scope privacy to R226–R235: mDNS service identifiers and RTSP/
+            // MQTT authorities must not enter structured or legacy evidence.
+            if (Descriptor.RuleId is "R226" or "R227" or "R228" or "R229" or "R230"
+                or "R231" or "R232" or "R233" or "R234" or "R235")
+            {
+                evt.DestinationHost = "[REDACTED]";
+                if (evt.StructuredEvidence != null)
+                {
+                    var safeItems = evt.StructuredEvidence.Items.Select(item =>
+                        item.Key.Equals("destinationHost", StringComparison.OrdinalIgnoreCase)
+                            ? item with { Value = "[REDACTED]" } : item).ToArray();
+                    evt.StructuredEvidence = new DetectionEvidenceSet(safeItems, evt.StructuredEvidence.Summary);
+                }
+                if (evt.Evidence != null)
+                    evt.Evidence = Regex.Replace(evt.Evidence, @"destinationHost=[^;]*",
+                        "destinationHost=[REDACTED]", RegexOptions.IgnoreCase);
+            }
+
             var effectiveCooldownKey = string.IsNullOrWhiteSpace(cooldownKey) ? null : $"{Descriptor.RuleId}:{cooldownKey}";
             var cooldown = PrecisionProfile.Cooldown ?? TimeSpan.Zero;
             if (effectiveCooldownKey != null

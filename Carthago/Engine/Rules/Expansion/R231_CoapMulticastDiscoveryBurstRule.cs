@@ -39,58 +39,29 @@ namespace Carthago.Engine.Rules.Expansion
             threshold: 10,
             window: TimeSpan.FromMinutes(2),
             cooldown: TimeSpan.FromMinutes(15),
-            distinctBy: "source",
+            distinctBy: "unique_packet",
             falsePositives: new[] { "Approved IoT onboarding or inventory workflows can intentionally enumerate CoAP resources." },
             tuningKnobs: new[] { "Mode", "Threshold", "WindowSeconds", "CooldownSeconds" },
             requiredTests: new[] { "positive coap discovery burst sample", "negative single coap discovery sample" });
 
         public R231_CoapMulticastDiscoveryBurstRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch226230Evidence.Window _observations = new();
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            var record = context.Record;
-            var discovery = ContainsAnyValue(Text(record), "/.well-known/core", "coap discover", "resource discovery");
-            var multicast = IsMulticastOrBroadcast(record.Destination);
-            if (!IsCoapZigbeeContext(record) || (!discovery && !multicast))
-                return NoMatch();
-
+            var r = context.Record;
+            if (!NetworkBatch231235Evidence.Coap(r)) return NoMatch();
             var window = TimeSpan.FromSeconds(IntSetting(Descriptor.RuleId, "WindowSeconds", 120, 30, 3600));
             var threshold = IntSetting(Descriptor.RuleId, "Threshold", 10, 3, 500);
-            var count = CountWindowEvents($"{Descriptor.RuleId}:{record.Source}", context.TimestampUtc, window);
-            if (count < threshold)
-                return NoMatch();
-
-            var matchedConditions = new List<string> { "coap_discovery_semantics", "burst_threshold" };
-            if (multicast) matchedConditions.Add("multicast_or_broadcast_target");
-
-            var evidence = new List<DetectionEvidenceItem>
-            {
-                new("count", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
-                new("window_seconds", ((int)window.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
-                new("matched_conditions", string.Join(",", matchedConditions), "rule")
-            };
-            evidence.AddRange(AnalystContext(
-                "CoAP discovery or multicast resource enumeration occurred in a high-rate burst.",
-                "Severity is Medium because high-rate CoAP discovery is often an onboarding, inventory, or reconnaissance step against IoT devices.",
-                "Approved IoT onboarding or inventory tools can intentionally enumerate CoAP endpoints.",
-                "Validate whether the source belongs to sanctioned onboarding or discovery tooling.",
-                "Review whether /.well-known/core enumeration targeted a broad device set unexpectedly."));
-
-            return MatchIot(
-                context,
-                SeverityLevel.Medium,
-                "CoAP discovery burst observed",
-                "CoAP",
-                evidence,
-                confidence =>
-                {
-                    confidence.AddEvidence(0.24, "coap-discovery-semantics");
-                    confidence.AddEvidence(0.20, "burst-threshold");
-                    if (multicast) confidence.AddEvidence(0.08, "multicast-or-broadcast-target");
-                },
-                count,
-                window,
-                $"{record.Source}:coap-discovery");
+            var count = _observations.Observe(r.Source, r.Destination, r.Id, context.TimestampUtc, window, false);
+            if (count < threshold) return NoMatch();
+            return MatchIot(context, SeverityLevel.Medium, "Parsed CoAP resource-discovery burst",
+                "CoAP", new[] {
+                    new DetectionEvidenceItem("count", count.ToString(), "rule"),
+                    new DetectionEvidenceItem("matched_conditions", "parsed_coap_get_well_known_core,unique_packet_burst", "rule") },
+                confidence => { confidence.AddEvidence(0.24, "parsed-coap-discovery");
+                    confidence.AddEvidence(0.20, "unique-packet-burst"); },
+                count, window, r.Source + ":coap-discovery");
         }
     }
 }

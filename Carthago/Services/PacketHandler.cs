@@ -428,6 +428,10 @@ namespace Carthago.Services
                                 AppendInfo(rec, $"[HTTP host={rec.HttpHost ?? "-"} ua={(rec.HttpUserAgent ?? "-")}]");
                             }
 
+                            // -------- Bounded RTSP PLAY request line --------
+                            if (NetworkBatch231235Wire.RtspPlay(normPayload, sport, dport))
+                                rec.ApplicationProtocol = "rtsp.play";
+
                             // -------- DNS over TCP (length-prefixed DNS message) --------
                             if ((sport == 53 || dport == 53) &&
                                 DnsLight.TryParse(normPayload, isTcp: true, out var dnsTcp))
@@ -505,6 +509,21 @@ namespace Carthago.Services
                         // -------- Bounded OT framing --------
                         if (OtProtocolLight.TryIdentifyUdp(l4Payload, sport, dport, out var otProtocol))
                             rec.ApplicationProtocol = otProtocol;
+
+                        // -------- Bounded CoAP and WS-Discovery requests --------
+                        if (NetworkBatch231235Wire.CoapDiscovery(l4Payload, sport, dport))
+                            rec.ApplicationProtocol = "coap.discovery";
+                        if (NetworkBatch231235Wire.WsDiscoveryProbe(l4Payload, sport, dport))
+                            rec.ApplicationProtocol = "wsdiscovery.probe";
+                        if ((sport == 5353 || dport == 5353) &&
+                            DnsLight.TryParse(l4Payload, isTcp: false, out var mdns))
+                        {
+                            rec.ApplicationProtocol = "mDNS";
+                            rec.DnsQname = mdns.QName;
+                            rec.DnsQtype = mdns.QType;
+                            rec.DnsRcode = mdns.Rcode;
+                            rec.DnsIsResponse = mdns.IsResponse;
+                        }
 
                         // -------- QUIC --------
                         if (l4Payload.Length >= 6 && QuicLight.TryDetectQuic(l4Payload, out var quic))

@@ -39,54 +39,30 @@ namespace Carthago.Engine.Rules.Expansion
             threshold: 5,
             window: TimeSpan.FromMinutes(2),
             cooldown: TimeSpan.FromMinutes(15),
-            distinctBy: "source+destination",
+            distinctBy: "unique_packet",
             falsePositives: new[] { "Camera management software, inventory tooling, and initial camera onboarding may legitimately perform ONVIF discovery." },
             tuningKnobs: new[] { "Mode", "Threshold", "WindowSeconds", "CooldownSeconds", "ApprovedCameraManagers" },
             requiredTests: new[] { "positive workstation onvif burst sample", "negative nvr onvif sample" });
 
         public R235_OnvifDiscoveryFromWorkstationRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch226230Evidence.Window _observations = new();
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            var record = context.Record;
-            var workstation = IsWorkstationLikeProcess(record.ProcessName) || (!IsCameraLikeProcess(record.ProcessName) && IsInternalAddress(record.Source));
-            if (!IsOnvifContext(record) || !HasOnvifDiscoverySemantics(record) || !workstation)
-                return NoMatch();
-
+            var r = context.Record;
+            if (!NetworkBatch231235Evidence.OnvifProbe(r)) return NoMatch();
             var window = TimeSpan.FromSeconds(IntSetting(Descriptor.RuleId, "WindowSeconds", 120, 30, 3600));
             var threshold = IntSetting(Descriptor.RuleId, "Threshold", 5, 2, 500);
-            var count = CountDistinctValues($"{Descriptor.RuleId}:{record.Source}", record.Destination ?? BestHost(record), context.TimestampUtc, window);
-            if (count < threshold)
-                return NoMatch();
-
-            var evidence = new List<DetectionEvidenceItem>
-            {
-                new("count", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
-                new("window_seconds", ((int)window.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
-                new("matched_conditions", "onvif_discovery,workstation_source,distinct_target_burst", "rule")
-            };
-            evidence.AddRange(AnalystContext(
-                "A workstation-like source generated repeated ONVIF/WS-Discovery camera discovery traffic.",
-                "Severity is Medium because ONVIF enumeration can reveal cameras, NVRs, device models, and surveillance topology.",
-                "Approved camera-management workstations and onboarding tools should be allow-listed.",
-                "Confirm whether the source is an approved VMS/camera-management host.",
-                "Review the discovered camera targets and check for follow-on RTSP, web admin, or credential attempts."));
-
-            return MatchIot(
-                context,
-                SeverityLevel.Medium,
-                "ONVIF discovery burst from workstation observed",
-                "OnvifDiscovery",
-                evidence,
-                confidence =>
-                {
-                    confidence.AddEvidence(0.28, "onvif-discovery-semantics");
-                    confidence.AddEvidence(0.20, "workstation-like-source");
-                    confidence.AddEvidence(0.18, "distinct-target-burst");
-                },
-                count,
-                window,
-                $"{record.Source}:onvif-discovery");
+            var count = _observations.Observe(r.Source, r.Destination, r.Id, context.TimestampUtc, window, false);
+            if (count < threshold) return NoMatch();
+            return MatchIot(context, SeverityLevel.Medium, "Workstation-attributed WS-Discovery Probe burst",
+                "OnvifDiscovery", new[] {
+                    new DetectionEvidenceItem("count", count.ToString(), "rule"),
+                    new DetectionEvidenceItem("matched_conditions", "parsed_wsdiscovery_probe,workstation_process,unique_packet_burst", "rule") },
+                confidence => { confidence.AddEvidence(0.28, "parsed-wsdiscovery-probe");
+                    confidence.AddEvidence(0.20, "workstation-process");
+                    confidence.AddEvidence(0.18, "unique-packet-burst"); },
+                count, window, r.Source + ":wsdiscovery");
         }
     }
 }

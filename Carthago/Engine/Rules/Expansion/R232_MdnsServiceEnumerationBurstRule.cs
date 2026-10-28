@@ -46,46 +46,22 @@ namespace Carthago.Engine.Rules.Expansion
 
         public R232_MdnsServiceEnumerationBurstRule() : base(Rule, Profile) { }
 
+        private readonly NetworkBatch226230Evidence.Window _observations = new();
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            var record = context.Record;
-            if (!IsMdnsContext(record) || !HasMdnsEnumerationSemantics(record))
-                return NoMatch();
-
+            var r = context.Record;
+            if (!NetworkBatch231235Evidence.Mdns(r, out var query)) return NoMatch();
             var window = TimeSpan.FromSeconds(IntSetting(Descriptor.RuleId, "WindowSeconds", 120, 30, 3600));
             var threshold = IntSetting(Descriptor.RuleId, "Threshold", 20, 5, 1000);
-            var distinctValue = string.IsNullOrWhiteSpace(record.DnsQname) ? Text(record) : record.DnsQname!;
-            var count = CountDistinctValues($"{Descriptor.RuleId}:{record.Source}", distinctValue, context.TimestampUtc, window);
-            if (count < threshold)
-                return NoMatch();
-
-            var evidence = new List<DetectionEvidenceItem>
-            {
-                new("count", count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
-                new("window_seconds", ((int)window.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
-                new("matched_conditions", "mdns_service_enumeration,distinct_query_burst", "rule")
-            };
-            evidence.AddRange(AnalystContext(
-                "mDNS service enumeration semantics appeared across many distinct queries in a short window.",
-                "Severity is Medium because broad mDNS enumeration is often a reconnaissance or onboarding step against local device ecosystems.",
-                "Approved discovery tools, AV systems, or consumer-IoT onboarding can intentionally enumerate services.",
-                "Validate whether the source belongs to sanctioned discovery or onboarding tooling.",
-                "Review the enumerated service set to determine whether the scan targeted printers, media devices, or IoT hubs."));
-
-            return MatchIot(
-                context,
-                SeverityLevel.Medium,
-                "mDNS service-enumeration burst observed",
-                "mDNS",
-                evidence,
-                confidence =>
-                {
-                    confidence.AddEvidence(0.24, "mdns-service-enumeration");
-                    confidence.AddEvidence(0.20, "distinct-query-burst");
-                },
-                count,
-                window,
-                $"{record.Source}:mdns-enumeration");
+            var count = _observations.Observe(r.Source, query, r.Id, context.TimestampUtc, window, true);
+            if (count < threshold) return NoMatch();
+            return MatchIot(context, SeverityLevel.Medium, "Parsed mDNS PTR service enumeration burst",
+                "mDNS", new[] {
+                    new DetectionEvidenceItem("count", count.ToString(), "rule"),
+                    new DetectionEvidenceItem("matched_conditions", "parsed_mdns_ptr,distinct_service_queries", "rule") },
+                confidence => { confidence.AddEvidence(0.24, "parsed-mdns-ptr");
+                    confidence.AddEvidence(0.20, "distinct-service-queries"); },
+                count, window, r.Source + ":mdns-enumeration");
         }
     }
 }
