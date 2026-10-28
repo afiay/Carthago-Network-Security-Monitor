@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using Carthago.Services.Benchmarking;
 using Xunit;
@@ -71,16 +72,20 @@ public sealed class ReplayOtParserIntegrationTests
     [Fact]
     public async Task Port_502_And_Info_Without_Payload_Do_Not_Prove_Modbus_Write()
     {
-        var json = await File.ReadAllTextAsync(Fixture);
-        json = json.Replace(
-            "  \"rawOtTcpPayloadsByRecordIndex\": {\n    \"0\": \"000100000006010600000001\"\n  },\n",
-            "", StringComparison.Ordinal);
-        json = json.Replace("\"expectedMatches\": [\"R240\"]",
-            "\"expectedMatches\": [], \"expectedNonMatches\": [\"R240\"]", StringComparison.Ordinal);
-        json = json.Replace("\"expectedMinimumConfidence\": 0.65",
-            "\"expectedMinimumConfidence\": 0.0", StringComparison.Ordinal);
-        var result = await RunOneAsync(json);
+        // Edit JSON structurally: exact newline-based replacements silently
+        // failed on Windows CRLF checkouts and left the original Modbus
+        // PDU in place, creating a false failure of this negative control.
+        var document = JsonNode.Parse(await File.ReadAllTextAsync(Fixture))!.AsObject();
+        Assert.True(document.Remove("rawOtTcpPayloadsByRecordIndex"),
+            "The fixture must contain a raw OT payload for this negative test.");
+        document["expectedMatches"] = new JsonArray();
+        document["expectedNonMatches"] = new JsonArray("R240");
+        document["expectedMinimumConfidence"] = 0.0;
+
+        Assert.False(document.ContainsKey("rawOtTcpPayloadsByRecordIndex"));
+        var result = await RunOneAsync(document.ToJsonString());
         Assert.DoesNotContain("R240", result.ActualMatches);
+        Assert.Empty(result.Errors);
     }
 
     [Fact]
