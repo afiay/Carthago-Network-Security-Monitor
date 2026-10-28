@@ -54,6 +54,17 @@ namespace Carthago.Engine.Rules.Expansion
         public R351_NTLMAuthenticationToExternalHostRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            // SMB transport or descriptive Info text alone does not establish
+            // an NTLM authentication exchange. Preserve the existing outbound
+            // boundary, confidence, approval and signal gates in EvaluateSpec.
+            var record = context.Record;
+            var observedProtocol = string.Join(" ", record.Protocol, record.ApplicationProtocol, record.ApplicationService);
+            if (observedProtocol.IndexOf("NTLM", StringComparison.OrdinalIgnoreCase) < 0)
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                    "NTLM_PROTOCOL_NOT_ATTRIBUTED",
+                    "An NTLM-attributed protocol observation is required; SMB alone is insufficient.");
+            return EvaluateSpec(context, Spec);
+        }
     }
 }
