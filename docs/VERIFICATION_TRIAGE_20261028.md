@@ -355,7 +355,7 @@ After pulling source commit `a06a8485370db967ec1f3c2ab4777e1161042657`, the oper
 
 **Existing v2 preparation reused, not recreated:** `docs/holdout-evaluation-v2-manifest.json` already defined eight pinned v1 R118/R163 references and four pending new PCAP-sourced R102 fixtures. The v2 importer, source audit, freeze and opt-in evaluator existed before this increment. This change hardens the PCAP source audit to reject extra serialized fixture/record fields, altered labels/expected rules, inconsistent transport types and malicious confidence-floor weakening. New `scripts/inspect-holdout-v2-readiness.ps1` verifies the eight reused v1 Git hashes, reports candidate pair availability and optionally invokes original-PCAP packet redecoding with `-AuditPackets` and an explicit capture directory. The versioned v2 remains **PENDING_EXTERNAL_CAPTURE_AND_REVIEW**: no new PCAP, independent label approval, privacy review or source-licensing clearance was supplied, and v2 was not frozen or run.
 
-**Tests added, not yet run:** `Carthago.Tests/DnsReplayTelemetryDiagnosticsTests.cs` covers missing/contradictory transport, privacy, no mutation and an end-to-end benchmark missing-input diagnosis. `SyntheticHoldoutV2ContractTests.cs` gains safety assertions for strict source-field audit and non-freezing readiness. Previous CARTHAGE baseline remains full xUnit **4,940/4,940 at 498b8b0** and R102 focused **8/8 at a06a848**; these numbers do not validate this latest source increment.
+**Focused verification PASSED on CARTHAGE at `b88aba1` (2026-10-29):** the operator ran `dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~DnsReplayTelemetryDiagnosticsTests|FullyQualifiedName~SyntheticHoldoutV2ContractTests|FullyQualifiedName~TuningBenchmarkTests"`. Release application and test builds succeeded. **30 tests passed, 0 failed, 0 skipped**, in approximately 34.4 seconds test execution (86.0 seconds overall command). Console reported 15 warning occurrences, comprising seven existing nullable-warning locations repeated during temporary WPF and main compilation, plus one `xUnit2009` analyzer warning in `SyntheticHoldoutContractTests.cs`. The supplied output reports no errors in the newly introduced DNS diagnostics or v2 tests. The latest full-suite run remains **4,940/4,940 at `498b8b0`**; this is a focused checkpoint, not another full-suite run.
 
 **Gates unchanged:** development replay four blockers R343/R295/R275/R163; frozen v1 R102 holdout **FAILED** with only 4/6 malicious recognition and 0/6 alert-level recall. Zero benign alerts on v1 does not establish precision. No Windows audit policy or transport adapter changes. Do not run, freeze or claim v2 complete until original source captures, independent ground-truth labels, licensing and privacy review have been obtained and packet audit passes.
 
@@ -370,3 +370,14 @@ dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQua
 ```powershell
 .\scripts\inspect-holdout-v2-readiness.ps1
 ```
+
+### CARTHAGE v2 readiness check completed - PENDING (2026-10-29)
+
+Read-only `scripts/inspect-holdout-v2-readiness.ps1` at checked-out commit `b88aba1` completed successfully and validated the v2 manifest structure, eight immutable non-R102 v1 references and their pinned local blob hashes. It reported `PENDING_EXTERNAL_CAPTURE_AND_REVIEW` and **0/4 externally reviewed R102 sample/provenance pairs present**:
+
+- `holdout-v2-r102-benign-validation-txt`: PENDING CAPTURE/PROVENANCE
+- `holdout-v2-r102-benign-workstation-queries`: PENDING CAPTURE/PROVENANCE
+- `holdout-v2-r102-encoded-txt-first-client`: PENDING CAPTURE/PROVENANCE
+- `holdout-v2-r102-encoded-txt-second-client`: PENDING CAPTURE/PROVENANCE
+
+No packet-level audit, freeze or v2 evaluation occurred, and no independent label, license or privacy approval has been verified. The frozen v1 failed holdout and four development replay blockers remain unchanged. This status is from user-provided CARTHAGE terminal output, not a GitHub Actions job.
