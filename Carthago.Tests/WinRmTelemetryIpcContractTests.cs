@@ -43,7 +43,7 @@ public sealed class WinRmTelemetryIpcContractTests
         // derive this independently from the Windows OS on every frame.
         var peer = session == null ? null : new WinRmTelemetryTransportPeer(
             Sid, Machine, 701, session.ChannelBinding);
-        return TryAccept(contract, session, peer, frame,
+        return contract.TryAcceptFrame(session, peer, frame,
             out candidate, out reason);
     }
 
