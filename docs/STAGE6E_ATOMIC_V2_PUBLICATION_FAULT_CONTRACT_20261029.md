@@ -8,7 +8,7 @@
 
 The existing scripts/import-holdout-v2-r102.ps1 publishes one candidate sample JSON followed by its separate provenance JSON. Although it refuses overwriting and uses bounded packet selection, a failure between the writes can leave a partial pair. That is a **source-inspected reliability risk**, not an observed incident. The current scripts/audit-holdout-v2-candidates.ps1 reads matching pairs from a directory and validates certain original capture frame fields; it is not a transactional publisher. Neither existing production script has been changed.
 
-Stage 6D already proposed a 30-field strict private provenance schema version 2 and an in-memory batch validator. This is distinct from the separately versioned Holdout V2 manifest and from the *legacy provenance schema version 1*. Stage 6E prepares a deterministic regression contract for a **new future private publisher**, without modifying legacy import, audit, detector, evaluation, V1 holdout or V2 manifest data.
+Stage 6D already proposed a 30-field strict private provenance schema version 2 and an in-memory batch validator. This is distinct from the separately versioned Holdout V2 manifest and from the *legacy provenance schema version 1*. GA 6E's deterministic contract was subsequently implemented in the separate private publisher and verified **18/18** on CARTHAGE, without changing legacy import, audit, detector, evaluation, frozen V1, or the V2 manifest.
 
 Four manifest-declared R102 candidates (two benign and two malicious) must be written as **eight paired files to a private review destination**, or not exposed there at all. Publication to that private destination is not admission into the frozen corpus, classification, evidence independence, source license approval or readiness. All candidate review states remain PENDING_EXTERNAL_CAPTURE_AND_REVIEW.
 
@@ -17,13 +17,13 @@ Four manifest-declared R102 candidates (two benign and two malicious) must be wr
 Implemented module: `scripts/HoldoutV2CandidatePublisher.psm1`. Its verified synthetic fault contract does not replace external-source admission or real storage durability testing.
 
 - The exported wrapper, Publish-HoldoutV2CandidateBatch, accepts exactly four candidate sample/provenance pairs and a previously authenticated private destination.
-- A **module-private** Invoke-HoldoutV2AtomicPublishCore takes CandidatePairs, SchemaPath, PrivateOutputRoot, BatchName and an internal OnMilestone hook. The hook is invoked only from the parked test within module scope to deterministically inject synthetic failures.
+- A **module-private** Invoke-HoldoutV2AtomicPublishCore takes CandidatePairs, SchemaPath, PrivateOutputRoot, BatchName and an internal OnMilestone hook. The hook is invoked only from the owner-gated synthetic regression within module scope to deterministically inject synthetic failures.
 - A **pure module-private** Assert-HoldoutV2BatchName -Name validator rejects traversal, path separators, Windows reserved names and malformed basename syntax before a filesystem path can be built.
 - No public UI, user-facing script, production wrapper, automated workflow or job dispatch is permitted to accept a user-supplied OnMilestone / FaultAt callback. Exposing fault injection to the real application is expressly forbidden.
-- The core should reuse Stage 6D's pure Confirm-HoldoutV2ProvenanceBatch rather than rewriting cross-field and cross-sample validation. Valid structure does not prove source authenticity, permission to redistribute PCAPs or analyst classification.
+- The core reuses GA 6D's pure Confirm-HoldoutV2ProvenanceBatch rather than rewriting cross-field and cross-sample validation. Valid structure does not prove source authenticity, permission to redistribute PCAPs or analyst classification.
 - A successful internal private publication returns only CandidateCount=4, ReviewState=PENDING_EXTERNAL_CAPTURE_AND_REVIEW, IsApproved=false, PublishedToPrivateStaging=true. No raw QNAME, IP, session, file path, hash, original capture reference or user-supplied metadata in normal output.
 
-### Planned constant error identifiers
+### Implemented error codes and historical missing-module sentinels
 
 | Error code | Required meaning |
 | --- | --- |
@@ -42,7 +42,7 @@ The PUBLISH_* identifiers are implemented and exercised in the synthetic publish
 
 The harness is a PowerShell script with an upfront AuthorizedTestTime switch, **checked before any write**. This switch by itself does not give permission; the owner must explicitly say "now it's test time" first.
 
-Only in that future authorized test does the script create a random, uniquely owned child directory under the repository's ignored private build-verify root, for example stage6e-atomicity-<random>. It creates a sentinel.keep file, hashes it, generates four synthetic candidate pairs derived from the **real manifest's four declared names**, then calls the future private core.
+During the owner-authorized synthetic Windows test, the script created a random, uniquely owned child directory under the repository's ignored private build-verify root, for example stage6e-atomicity-<random>. It creates a sentinel.keep file, hashes it, generates four synthetic candidate pairs derived from the **real manifest's four declared names**, then calls the future private core.
 
 The synthetic sample records use documentation-only IP addresses and made-up DNS TXT names. Every companion provenance object uses the exact 30 proposed schema v2 fields, including record count and frame/question ordinals. Crucially, analystReviewedLabel=false and capturedTransportEvidence=false ensure no synthetic fixture pretends to be an independently verified external capture or licensed malicious ground truth. The publisher would stage structurally valid *unapproved* records for review, never freeze or promote them.
 
@@ -147,7 +147,7 @@ Frozen V1 remains historically FAILED 4/6, without retroactive edits. V2 remains
 The Stage 6F recovery planner and two-writer contracts were subsequently **implemented and verified**: recovery decisions 15/15 at `1ab3290`, two-writer contention 3/3 at `adf421f`. The publisher exists and is used by the verified synthetic race harness.
 
 - scripts/verify-v2-recovery-planner-contract.ps1: 15 **path-free, in-memory** advisory scenarios for active writers, young/old orphans, missing ownership evidence, untrusted reparse points, partial/complete committed folders, post-rename uncertainty and name collisions. The planned private Get-HoldoutV2PrivateRecoveryPlan function returns only bounded decision codes with RequiresManualReview=true and AutoDeleteAllowed=false; it cannot delete or approve a batch.
-- scripts/verify-v2-two-writer-race-contract.ps1: three synchronized two-process contention rounds (6 independent Start-Job workers planned). A future **public, non-fault-injectable** Publish-HoldoutV2CandidateBatch wrapper must create exactly one complete eight-file pending-review directory per new name; the other worker must fail with PUBLISH_TARGET_EXISTS without modifying the winner.
+- scripts/verify-v2-two-writer-race-contract.ps1: three synchronized two-process contention rounds (6 Start-Job worker executions observed). The implemented **exported, non-fault-injectable** Publish-HoldoutV2CandidateBatch wrapper created exactly one complete eight-file pending-review directory per new name; the other worker must fail with PUBLISH_TARGET_EXISTS without modifying the winner.
 - docs/STAGE6F_CONCURRENT_V2_PUBLICATION_AND_RECOVERY_20261029.md: full threat model, expected decision matrix, race lifecycle, privacy controls, absence of destructive recovery, prerequisites, incomplete guarantees and evidence policy.
 
 **Observed synthetic executions were individually owner-authorized.** They establish bounded Windows race/visibility behavior but not power-loss durability, formal no-replace correctness under all filesystem conditions, ACL attacks, real-source rights or detector accuracy. Stage 6D and 6E achieved independently observed GREEN before the Stage 6F tests; this ordering remains required for subsequent format changes. Do not broaden Stage 6E with new public fault hooks, automatic orphan cleanup, or extra GitHub Actions workflows.
