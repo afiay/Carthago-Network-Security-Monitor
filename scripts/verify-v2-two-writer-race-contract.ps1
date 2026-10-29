@@ -484,8 +484,19 @@ function Invoke-ReaderNegativeCase(
         $result=$messages[0]
         $allowed=@('Code','ProcessId','Polls','Absent','Complete','Partial','IoErrors')
         $actual=@($result.PSObject.Properties.Name)
-        Assert-Contract ($actual.Count -eq $allowed.Count -and
-            @(Compare-Object ($actual | Sort-Object) ($allowed | Sort-Object)).Count -eq 0) 'negative-leaked-output-fields'
+        # Receive-Job adds Windows PowerShell remoting transport metadata to
+        # deserialized objects. It is not emitted by the observer scriptblock.
+        # Check that all seven business fields exist, then allow ONLY these
+        # three known, provider-owned envelope fields. Unknown data remains
+        # a hard privacy failure; never print or serialize raw job output.
+        $transport=@('PSComputerName','RunspaceId','PSShowComputerName')
+        $missing=@($allowed | Where-Object { $actual -cnotcontains $_ })
+        $unexpected=@($actual | Where-Object {
+            $_ -cnotin $allowed -and $_ -cnotin $transport
+        })
+        Assert-Contract ($missing.Count -eq 0 -and
+            $unexpected.Count -eq 0 -and
+            $actual.Count -eq ($allowed.Count+@($actual | Where-Object { $_ -cin $transport }).Count)) 'negative-leaked-output-fields'
         Assert-Contract ([string]$result.Code -ceq 'READER_DONE' -and
             [int]$result.ProcessId -ne $PID) 'negative-reader-wrong-process'
         Assert-Contract ([int]$result.Absent -ge 1 -and
