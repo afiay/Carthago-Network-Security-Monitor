@@ -140,8 +140,15 @@ $script:PrivateBatchReaderJob = {
                 $VerbosePreference='SilentlyContinue'
                 $counts=@{Polls=0;Absent=0;Complete=0;Partial=0;IoErrors=0}
                 try {
-                    $Names=[string[]]@(ConvertFrom-Json -InputObject $NamesJson)
-                    if($Names.Count -ne 4) {
+                    # Only four synthetic manifest basenames are allowed.
+                    # A scalar delimited token avoids PowerShell 5.1 job-array
+                    # serialization differences. Names cannot contain '|'.
+                    $Names=[string[]]([string]$NamesJson).Split('|')
+                    $uniqueNames=@($Names | Sort-Object -Unique)
+                    if($Names.Count -ne 4 -or $uniqueNames.Count -ne 4 -or
+                       @($Names | Where-Object {
+                           $_ -cnotmatch '^holdout-v2-r102-[a-z0-9-]+$'
+                       }).Count -ne 0) {
                         return [pscustomobject]@{Code='READER_NAMES_INVALID';ProcessId=$PID;
                             Polls=0;Absent=0;Complete=0;Partial=0;IoErrors=0}
                     }
@@ -249,9 +256,9 @@ function Invoke-ContentionRound([string]$OwnedRoot,[string]$Name,
             # .pending-* or opens source captures. A writer that publishes a
             # directory before its eight JSON files are valid must be caught.
             $names=[string[]]@($Pairs | ForEach-Object { [string]$_.Provenance.sample })
-            # Pass a single JSON string through Start-Job: positional array
-            # flattening varies by PowerShell binding/serialization behavior.
-            $namesJson=ConvertTo-Json -InputObject $names -Compress
+            # Pass one safe, delimiter-joined scalar through Start-Job to
+            # avoid Windows PowerShell array-binding differences.
+            $namesJson=$names -join '|'
             $target=Join-Path $OwnedRoot $Name
             $readerJob=Start-Job -ScriptBlock $script:PrivateBatchReaderJob -ArgumentList @(
                 $target,$readerReady,$signal,$readerStop,$namesJson,'','')
@@ -378,7 +385,23 @@ function Wait-ForPrivateReaderMarker([string]$Path,[object]$Reader,[string]$Reas
     while($watch.Elapsed.TotalSeconds -lt 12) {
         if(Test-Path -LiteralPath $Path -PathType Leaf) { return }
         if($Reader.State -in @('Failed','Stopped','Completed')) {
-            throw ('STAGE6H_NEGATIVE_CONTRACT: '+$Reason+'-reader-exited-early')
+            # Surface only known constant result codes. Never print private
+            # exceptions or returned payload fields from the child process.
+            $reasonCode='NO_READER_RESULT'
+            try {
+                $values=@(Receive-Job -Job $Reader -ErrorAction SilentlyContinue 2>$null)
+                if($values.Count -eq 1 -and
+                   $null -ne $values[0].PSObject.Properties['Code']) {
+                    $candidateCode=[string]$values[0].Code
+                    if($candidateCode -in @('READER_NAMES_INVALID','READER_UNEXPECTED',
+                        'EARLY_VISIBLE','READER_BARRIER_TIMEOUT','READER_DEADLINE',
+                        'READER_DONE')) {
+                        $reasonCode=$candidateCode
+                    }
+                }
+            } catch { }
+            throw ('STAGE6H_NEGATIVE_CONTRACT: '+$Reason+
+                '-reader-exited-early:'+ $reasonCode)
         }
         Start-Sleep -Milliseconds 20
     }
@@ -437,7 +460,7 @@ function Invoke-ReaderNegativeCase(
         Assert-Contract (-not (Test-Path -LiteralPath $x)) 'probe-artifact-collision'
     }
     $names=[string[]]@($Pairs | ForEach-Object { [string]$_.Provenance.sample })
-    $namesJson=ConvertTo-Json -InputObject $names -Compress
+    $namesJson=$names -join '|'
     $reader=$null
     try {
         $reader=Start-Job -ScriptBlock $script:PrivateBatchReaderJob -ArgumentList @(
