@@ -43,6 +43,30 @@ function Assert-PrivatePublicationRoot([string]$RequestedRoot) {
     return $canonical
 }
 
+# Compare declared rule sets without Compare-Object. A valid benign sample has
+# ZERO expected positive rules; passing an empty pipeline to Compare-Object
+# throws under Windows PowerShell 5.1. The strict set check also rejects
+# duplicate, non-string, missing and case-altered rule identifiers.
+function Test-PublisherExactRuleSet([object]$Actual,[object]$Expected) {
+    if($null -eq $Actual -or $null -eq $Expected -or
+       $Actual -isnot [array] -or $Expected -isnot [array] -or
+       $Actual.Count -ne $Expected.Count) {
+        return $false
+    }
+    $seen=[Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+    foreach($item in $Actual) {
+        if($item -isnot [string] -or -not $seen.Add([string]$item)) {
+            return $false
+        }
+    }
+    foreach($item in $Expected) {
+        if($item -isnot [string] -or -not $seen.Contains([string]$item)) {
+            return $false
+        }
+    }
+    return $true
+}
+
 function Assert-PublisherSamplePairs([object[]]$CandidatePairs) {
     if($CandidatePairs.Count -ne 4) { Fail-Publisher 'PUBLISH_INVALID_BATCH' }
     $allowedSample=@('name','classification','records','expectedMatches',
@@ -86,12 +110,8 @@ function Assert-PublisherSamplePairs([object[]]$CandidatePairs) {
             $negative=[string[]]@('R118','R163')
             $floor=0.75
         }
-        $actualPos=@($sample.expectedMatches)
-        $actualNeg=@($sample.expectedNonMatches)
-        if($actualPos.Count -ne $positive.Count -or
-           $actualNeg.Count -ne $negative.Count -or
-           @(Compare-Object ($actualPos | Sort-Object) ($positive | Sort-Object)).Count -ne 0 -or
-           @(Compare-Object ($actualNeg | Sort-Object) ($negative | Sort-Object)).Count -ne 0 -or
+        if(-not (Test-PublisherExactRuleSet -Actual $sample.expectedMatches -Expected $positive) -or
+           -not (Test-PublisherExactRuleSet -Actual $sample.expectedNonMatches -Expected $negative) -or
            [double]$sample.expectedMinimumConfidence -ne $floor) {
             Fail-Publisher 'PUBLISH_INVALID_BATCH'
         }
@@ -142,8 +162,10 @@ function Invoke-HoldoutV2AtomicPublishCore {
         [scriptblock]$OnMilestone
     )
     Assert-HoldoutV2BatchName -Name $BatchName
+    $preflightPhase='ROOT'
     try {
         $privateRoot=Assert-PrivatePublicationRoot $PrivateOutputRoot
+        $preflightPhase='PROVENANCE'
         $provenances=@($CandidatePairs | ForEach-Object {
             if($null -eq $_ -or $null -eq $_.PSObject.Properties['Provenance']) {
                 Fail-Publisher 'PUBLISH_INVALID_BATCH'
@@ -155,11 +177,13 @@ function Invoke-HoldoutV2AtomicPublishCore {
            $validated.ApprovalState -cne 'PENDING_EXTERNAL_CAPTURE_AND_REVIEW') {
             Fail-Publisher 'PUBLISH_INVALID_BATCH'
         }
+        $preflightPhase='SAMPLE'
         Assert-PublisherSamplePairs $CandidatePairs
     } catch {
-        # Detailed PROV_* codes are preserved by the read-only validator, but
-        # never contain source values in the public publisher response.
-        Fail-Publisher 'PUBLISH_INVALID_BATCH'
+        # Never propagate source records, paths or raw exceptions. This
+        # fixed phase marker distinguishes root, provenance and sample
+        # validation without disclosing candidate data.
+        Fail-Publisher ('PUBLISH_INVALID_BATCH:'+$preflightPhase)
     }
 
     $target=Join-Path $privateRoot $BatchName
