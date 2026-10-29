@@ -27,7 +27,7 @@ Development replay controls such as `Tests/RuleReplaySamples/malicious/r102-dist
 
 ## Guarded test added
 
-`Carthago.Tests/R102AdvancedAccuracyBatchTests.cs` now has `Structured_Txt_Without_Transport_Identity_Fails_Closed`: a fresh synthetic high-entropy TXT name without either UDP or TCP attribution must not match; a separately created coherent UDP record remains eligible for an unsigned R102 candidate. No frozen holdout data is copied or tuned. The test is **source committed but not yet run on CARTHAGE**.
+`Carthago.Tests/R102AdvancedAccuracyBatchTests.cs` now has `Structured_Txt_Without_Transport_Identity_Fails_Closed`: a fresh synthetic high-entropy TXT name without either UDP or TCP attribution must not match; a separately created coherent UDP record remains eligible for an unsigned R102 candidate. No frozen holdout data is copied or tuned. **Focused test verified on CARTHAGE at commit `a06a848` (October 29, 2026):** `dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~R102AdvancedAccuracyBatchTests"` completed **8/8 passing, zero failures, zero skips**. Release build succeeded with **8 warning occurrences** (seven nullable source warnings and one existing xUnit analyzer warning, outside the modified R102 test). The run checks the source-level guard but does not re-run or pass frozen holdout v1.
 
 ## Relationship to other certification gates
 
