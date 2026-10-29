@@ -512,3 +512,24 @@ Owner-provided CARTHAGE PowerShell transcript confirms a clean fast-forward to *
 **Execution gating:** Do not retest Stage 6H merely to prove its already observed 6/6 success, and do not proceed to Stage 6E/F/G/TShark while 6D remains blocked. Owner should fast-forward the same branch to a commit containing 8261716, run **parse-only** using System.Management.Automation.Language.Parser.ParseFile for scripts/verify-v2-provenance-schema-contract.ps1, and run the 6D synthetic contract only if that check returns zero parser errors. If 6D then reports wrong-rejection-reason:<fixed case>:expected=...:actual=..., fix the precise behavioral mismatch rather than editing unrelated rules or private source data. Local build-verify evidence and all untracked logs remain untouched.
 
 **Status to preserve:** 6H observed GREEN at 8882f1c; 6D NOT RUN due to parser failure at 8882f1c; repaired 6D code committed but NOT VERIFIED ON WINDOWS. V2 remains PENDING_EXTERNAL_CAPTURE_AND_REVIEW with 0/4 external R102 approvals; frozen V1 historical FAILED 4/6, R102 80%, R118 86%, R163 84% and all privacy/journal/cooldown controls remain unchanged.
+
+
+### 2026-10-29 — Fourth owner-authorized Windows verification: provenance case 23 of 24 blocked by unexpected exception
+
+**Observed checkout:** feature/carthago-reliability-hardening at **cf5fb12**, after user fast-forward. Windows PowerShell Parser.ParseFile reported **PowerShell syntax: PASS** for the 188-line Stage 6D contract; owner then executed only verify-v2-provenance-schema-contract.ps1 -AuthorizedTestTime.
+
+**Observed result:** \`V2 private provenance contract: wrong-rejection-reason:wrong-count-type:expected=PROV_SCHEMA_TYPE:actual=NON_CONTRACT_EXCEPTION\`. The failure occurred while testing the synthetic mutation \`selectedRecordCount='3'\` (a string rather than a JSON integer). As this is the **23rd of 24** sequential negative cases, the two valid pending-review controls and preceding 22 negative-case checks were reached without a terminating assertion in that run. **Do not claim full 24/24 GREEN:** the final not-four-candidates negative case was not reached, and the unexpected exception's original message was intentionally suppressed for privacy. No original PCAP, detector rule, publisher or holdout admission was exercised. The Stage 6H six-case reader-sensitivity result remains **GREEN 6/6** from the earlier authorized test; no rerun needed.
+
+**Targeted code corrections (source committed but NOT rerun on Windows):**
+
+| Commit | Change | Rationale |
+| --- | --- | --- |
+| e0c038a | scripts/HoldoutV2Provenance.psm1 | Add explicit \`selectedRecordCount\` scalar type guard **before** cross-field frame/question count checks. Prevent invalid scalar count from reaching a numeric comparison before generating \`PROV_SCHEMA_TYPE\`. Preserve minimum-length cardinality check behavior for other cases. |
+| 0470470 | scripts/verify-v2-provenance-schema-contract.ps1 | Require the wrong-count-type fixture mutation to remain exactly string \`'3'\` in the candidate, preventing a false assumption about PowerShell property coercion. All 24 original negative scenarios remain unchanged. |
+| e147304 | scripts/HoldoutV2Provenance.psm1 | Explicitly reject string-valued count at that preflight boundary prior to using the generic integer predicate. No source identity, packet field, license claim, holdout reference or output payload added. |
+
+**Remaining uncertainty:** The original \`NON_CONTRACT_EXCEPTION\` is not yet classified beyond the suppressed message. The new scalar guard targets the exact malformed type, but **only a new Windows runtime result** can demonstrate the root cause was resolved. If the next run still returns NON_CONTRACT_EXCEPTION, inspect only a sanitized PowerShell exception type and fixed source-phase marker; do not print raw private source metadata.
+
+**Next gate:** Fast-forward to latest branch SHA, parse-check **both** scripts/HoldoutV2Provenance.psm1 and scripts/verify-v2-provenance-schema-contract.ps1, then rerun only Stage 6D. Preserve all untracked build-verify evidence. Only after a complete positive-controls plus 24-negative-case pass should Stage 6D be marked GREEN and Stage 6E publisher testing be considered.
+
+**Holdout governance unchanged:** V1 historic failed 4/6; V2 pending 0/4 approved external R102 candidates. Rules R102/R118/R163 confidence 80/86/84%, privacy, Shadow/Disabled, cooldowns, journal and existing manually gated workflow untouched.
