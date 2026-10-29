@@ -105,7 +105,9 @@ function Read-DnsQuestionsFromRaw([byte[]]$Message) {
             DnsWireLabelsBase64=[string[]]$encoded.ToArray()
         })
     }
-    return ,$questions.ToArray()
+    # Emit one object per question; the caller wraps pipeline output in @().
+    # Do not use unary-comma here or multi-question packets become nested.
+    return $questions.ToArray()
 }
 
 function Read-DnsWireQuestion {
