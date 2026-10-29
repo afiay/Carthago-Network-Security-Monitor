@@ -279,3 +279,19 @@ Security design and restrictions documented in `docs/development/R343_TELEMETRY_
 Focused test command when the operator's test window opens:
 
     dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~WinRmTelemetryIpcContractTests|FullyQualifiedName~WinRmSecurityAuditIntakeTests"
+
+## CARTHAGE focused R343 IPC and WinRM intake verification - PASS (2026-10-29)
+
+The operator pulled `80e37ed3b92918175a273b0c2d3b04b359bec3c1` on the existing `feature/carthago-reliability-hardening` branch, then executed:
+
+```powershell
+dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~WinRmTelemetryIpcContractTests|FullyQualifiedName~WinRmSecurityAuditIntakeTests"
+```
+
+**Observed result:** Release build succeeded; **115 tests total, 115 passed, zero failed, zero skipped**, focused test duration approximately 4.5 seconds, overall build/test command approximately 56.6 seconds. The .NET app and test project compiled successfully. This confirms the new contract and the hardened unsigned 4624/4688 intake build and pass the focused regression/negative-test suite on CARTHAGE.
+
+The build reported **15 warning occurrences** across build targets. Seven distinct application warning sites were reported (CS8602 in `R075_WMIDCOMLateralMovementRule.cs`, `SensitiveTelemetryContracts.cs`, `NetworkBatch266270Evidence.cs`; CS8629 in `R055_ThreatFeedStaleRule.cs`, `R190_DnsShortTtlBurstRule.cs`; CS8601 in `NetworkBatch266270Evidence.cs` at two locations) and one `xUnit2009` warning in `SyntheticHoldoutContractTests.cs`. The application warnings occurred during both temporary WPF compilation and the main project build. No warning in the supplied output points to `WinRmTelemetryIpcContract.cs`, `WinRmTelemetryIpcContractTests.cs` or `WinRmSecurityAuditIntake.cs`. These are not a claim that the warning sites have been previously verified or fixed.
+
+**Scope and limitations:** The 115 focused tests use synthetic peer descriptors and parser fixtures; **no live Windows transport peer was authenticated**, no IPC listener or service was started, and no signing keys or attested WinRM outcomes were created. No host audit settings were changed by this test. CARTHAGE Process Creation auditing was restored to `No Auditing` after the earlier Stage 1 lab, and Stage 2 command-line inclusion remains disabled. The pre-existing full-suite checkpoint is still 4,851 passing tests at `290a327`, not a newly rerun full suite. R343, R295, R275 and R163 replay expectations remain unresolved.
+
+**Next gate:** design a Windows-specific authenticated peer adapter (actual OS-derived SID, PID and connection identity) behind the isolated protocol gate, with adversarial cross-process/reconnect tests and explicit operator review before exposing any IPC endpoint or privilege elevation.
