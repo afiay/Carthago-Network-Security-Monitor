@@ -1,20 +1,141 @@
-name: Carthago detection quality
+name: Carthago centralized validation
 
-# Automatic GitHub Actions runs disabled while account billing is locked.
-# Use .\\verify-local.ps1 from PowerShell on Windows instead.
+# Single owner-controlled entry point. No push, PR or scheduled execution.
+# Private output stays on CARTHAGE; no artifacts or packet payloads uploaded.
 on:
   workflow_dispatch:
+    inputs:
+      profile:
+        description: 'Explicit validation profile (never runs automatically)'
+        required: true
+        type: choice
+        options:
+          - dns-wire-codec
+          - dns-wire-packet
+          - r102-accuracy
+          - dns-wire-replay
+          - dns-source-contract
+          - v2-contract
+          - v2-readiness
+          - rule-batches
+          - baseline
+          - detection-quality
+          - full-verification
+      authorization:
+        description: 'Owner gate: enter NOW_TEST_TIME to authorize execution'
+        required: true
+        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: carthago-quality-${{ github.ref }}
-  cancel-in-progress: true
+  group: carthago-centralized-validation
+  cancel-in-progress: false
 
 jobs:
+  selected-validation:
+    name: Authorized scoped validation on CARTHAGE
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.authorization == 'NOW_TEST_TIME' && inputs.profile != 'detection-quality' }}
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 60
+    env:
+      VALIDATION_PROFILE: ${{ inputs.profile }}
+      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+      DOTNET_NOLOGO: '1'
+      VSTEST_CONNECTION_TIMEOUT: '300'
+    steps:
+      - name: Verify CARTHAGE before checking out source
+        shell: pwsh
+        run: |
+          if ($env:COMPUTERNAME -ine 'CARTHAGE') {
+            throw 'Validation is restricted to CARTHAGE.'
+          }
+
+      - name: Check out selected commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Check exact commit identity
+        shell: pwsh
+        run: |
+          $actual = (git rev-parse HEAD).Trim()
+          if ($actual -ne $env:GITHUB_SHA) { throw 'Checked-out commit mismatch.' }
+
+      - name: Install .NET 8 SDK for code suites
+        if: ${{ inputs.profile != 'v2-readiness' && inputs.profile != 'dns-source-contract' }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Execute only the selected profile
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $ProgressPreference = 'SilentlyContinue'
+          $profile = $env:VALIDATION_PROFILE
+          $privateDirectory = Join-Path $env:RUNNER_TEMP 'carthago-central-validation'
+          New-Item -ItemType Directory -Path $privateDirectory -Force | Out-Null
+
+          function Invoke-Private([string]$label, [string]$executable, [string[]]$arguments) {
+            $privateLog = Join-Path $privateDirectory ($label + '.log')
+            & $executable @arguments *> $privateLog
+            $code = $LASTEXITCODE
+            if ($code -ne 0) {
+              Write-Host "::error title=Carthago validation::$label failed (exit code $code). See private CARTHAGE log."
+              exit 1
+            }
+            Write-Host "PASS: $label; detailed output retained on CARTHAGE only."
+          }
+
+          switch ($profile) {
+            'dns-wire-codec' {
+              if (-not (Test-Path 'Carthago.Tests/DnsWireNameCodecTests.cs')) { throw 'Codec contract not authored.' }
+              Invoke-Private 'dns-wire-codec' 'dotnet' @('test','Carthago.Tests/Carthago.Tests.csproj','-c','Release','--filter','FullyQualifiedName~DnsWireNameCodecTests')
+            }
+            'dns-wire-packet' {
+              if (-not (Test-Path 'Carthago.Tests/DnsWirePacketTests.cs')) { throw 'Packet contract not authored.' }
+              Invoke-Private 'dns-wire-packet' 'dotnet' @('test','Carthago.Tests/Carthago.Tests.csproj','-c','Release','--filter','FullyQualifiedName~DnsWirePacketTests')
+            }
+            'r102-accuracy' {
+              if (-not (Test-Path 'Carthago.Tests/R102BinaryDnsPrecisionTests.cs')) { throw 'R102 binary contract not authored.' }
+              Invoke-Private 'r102-accuracy' 'dotnet' @('test','Carthago.Tests/Carthago.Tests.csproj','-c','Release','--filter','FullyQualifiedName~R102BinaryDnsPrecisionTests|FullyQualifiedName~R102DistinctTxtCorrelationTests|FullyQualifiedName~R102AdvancedAccuracyBatchTests|FullyQualifiedName~DnsReplayTelemetryDiagnosticsTests')
+            }
+            'dns-wire-replay' {
+              if (-not (Test-Path 'Carthago.Tests/DnsWireReplayHydratorTests.cs')) { throw 'Private replay contract not authored.' }
+              Invoke-Private 'dns-wire-replay' 'dotnet' @('test','Carthago.Tests/Carthago.Tests.csproj','-c','Release','--filter','FullyQualifiedName~DnsWireReplayHydratorTests|FullyQualifiedName~SyntheticHoldoutV2ContractTests')
+            }
+            'dns-source-contract' {
+              if (-not (Test-Path 'scripts/verify-dns-wire-source-contract.ps1')) { throw 'Source contract not authored.' }
+              Invoke-Private 'dns-source-contract' 'powershell.exe' @('-NoProfile','-File','scripts/verify-dns-wire-source-contract.ps1','-TsharkPath','C:/Program Files/Wireshark/tshark.exe')
+            }
+            'v2-readiness' {
+              Invoke-Private 'v2-readiness' 'powershell.exe' @('-NoProfile','-File','scripts/inspect-holdout-v2-readiness.ps1')
+            }
+            'v2-contract' {
+              Invoke-Private 'v2-contract' 'dotnet' @('test','Carthago.Tests/Carthago.Tests.csproj','-c','Release','--filter','FullyQualifiedName~SyntheticHoldoutV2ContractTests')
+            }
+            'rule-batches' {
+              Invoke-Private 'rule-batches' 'powershell.exe' @('-NoProfile','-File','scripts/verify-all-rule-batches.ps1','-HoldoutVersion','v1')
+            }
+            'baseline' {
+              Invoke-Private 'baseline-restore' 'dotnet' @('restore','DOTNET.sln')
+              Invoke-Private 'baseline-build' 'dotnet' @('build','DOTNET.sln','--configuration','Release','--no-restore')
+              Invoke-Private 'baseline-tests' 'dotnet' @('test','Carthago.Tests/Carthago.Tests.csproj','--configuration','Release','--no-build')
+            }
+            'full-verification' {
+              Invoke-Private 'full-regression' 'pwsh' @('-NoProfile','-File','verify-local.ps1','-Details')
+              Invoke-Private 'frozen-v1-holdout' 'pwsh' @('-NoProfile','-File','scripts/evaluate-holdout.ps1','-NoBuild')
+            }
+            default { throw 'Unsupported validation profile.' }
+          }
+
+          Write-Host 'No source approval, rule promotion or holdout freeze performed.'
+
   windows-detection-quality:
     name: Windows build, tests and alert-level replay
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.authorization == 'NOW_TEST_TIME' && inputs.profile == 'detection-quality' }}
     runs-on: [self-hosted, Windows, X64]
     timeout-minutes: 35
     env:
@@ -22,6 +143,13 @@ jobs:
       DOTNET_CLI_TELEMETRY_OPTOUT: '1'
       DOTNET_NOLOGO: '1'
     steps:
+      - name: Verify authorized CARTHAGE host
+        shell: pwsh
+        run: |
+          if ($env:COMPUTERNAME -ine 'CARTHAGE') {
+            throw 'Detection-quality verification is restricted to CARTHAGE.'
+          }
+
       - name: Check out the exact commit
         uses: actions/checkout@v7
         with:
