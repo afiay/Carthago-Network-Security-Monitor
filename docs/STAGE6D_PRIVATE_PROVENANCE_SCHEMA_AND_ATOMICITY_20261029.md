@@ -195,3 +195,12 @@ powershell.exe -NoProfile -File .\scripts\verify-v2-provenance-schema-contract.p
 - RFC 4343 DNS case-insensitive identity: https://www.rfc-editor.org/rfc/rfc4343
 - RFC 4648 canonical Base64: https://www.rfc-editor.org/rfc/rfc4648
 - Local auditor and importer: `scripts/audit-holdout-v2-candidates.ps1`, `scripts/import-holdout-v2-r102.ps1`.
+
+
+## Stage 6E handoff — fault-injection contract now authored (2026-10-29)
+
+The next step proposed in this Stage 6D document has now been **authored but not executed** as scripts/verify-v2-atomic-publication-contract.ps1 (commits 30ebeac, c2e010c and 1f7888c). The in-depth separate specification is docs/STAGE6E_ATOMIC_V2_PUBLICATION_FAULT_CONTRACT_20261029.md (commit 1b8d4b6).
+
+This new test source proposes a **module-private** fault-injectable publisher core and a pure, non-writing batch-name validator; neither production module nor atomic publisher currently exists. Stage 6E defines one private unpublished-to-holdout control and 17 failure/exception cases covering eight precommit faults, postcommit uncertainty, existing-target protection, four pure unsafe filename tests and three invalid batch forms. It checks exact eight-file sample/provenance contents and denies any automatic approval. No existing importer/auditor, V1/V2 manifest, workflow or threshold has been changed.
+
+This Stage 6D schema contract remains logically **prior** to implementation of the Stage 6E publisher: confirm the pure provenance validator's RED then GREEN under separate owner test authorization before the publisher can reuse it. Neither a file committed to GitHub nor an authored failure callback is proof of a real Windows filesystem result. Crash durability, concurrent two-process races, ACL denial, and symlink/reparse-point handling remain separate acceptance tests, not completed coverage. The owner's public-connection no-test restriction is unchanged; **zero executions** have occurred.
