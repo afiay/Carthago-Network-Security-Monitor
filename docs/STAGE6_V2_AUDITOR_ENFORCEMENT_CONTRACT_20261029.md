@@ -1,7 +1,10 @@
-# Stage 6 — V2 importer/auditor enforcement contract (PARKED)
-Date: 2026-10-29
-Branch: feature/carthago-reliability-hardening
-Execution: NOT AUTHORIZED. This document is a specification, not a passing test.
+# GA 6 — Legacy V2 importer/auditor enforcement contract (not yet verified)
+
+**Current status (2026-10-30): PENDING — separate legacy auditor enforcement harness has NO independently recorded Windows PASS.** The successfully completed GA 7 binary DNS/TShark and V2 frame/question tests (`e412c2a`) verify the **new private source binder**, not this legacy `dns.qry.name` importer/auditor implementation. GA 8 compatibility is independently GREEN (`9f709d0`), but it does **not** migrate or certify the old auditor. This distinction is intentional: retain this contract as an open test until the owner runs and verifies this exact harness.
+
+Date: 2026-10-29  
+Branch: feature/carthago-reliability-hardening  
+Execution: separately owner-gated; the legacy auditor contract has not been verified. The sections below retain the historical RED-first design, not a synthetic PASS.
 
 ## Verified existing behavior
 Read-only inspection of scripts/audit-holdout-v2-candidates.ps1 shows that the auditor:
