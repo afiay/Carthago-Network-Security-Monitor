@@ -108,6 +108,22 @@ function Assert-CompletePendingBatch([string]$Root,[string]$Name,[object[]]$Pair
     }
 }
 
+function Assert-NoReparseInOwnedTree([string]$Root) {
+    # Inspect directories one level at a time and refuse to enter a reparse
+    # point. Never recursively follow symlinks before a cleanup decision.
+    $stack=[Collections.Generic.Stack[string]]::new()
+    $stack.Push($Root)
+    while($stack.Count -gt 0) {
+        $current=$stack.Pop()
+        $folder=Get-Item -LiteralPath $current -Force
+        Assert-Contract (-not (($folder.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0)) 'cleanup-root-or-nested-reparse-point'
+        foreach($item in @(Get-ChildItem -LiteralPath $current -Force -ErrorAction Stop)) {
+            Assert-Contract (-not (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0)) 'cleanup-nested-reparse-point'
+            if($item.PSIsContainer) { $stack.Push($item.FullName) }
+        }
+    }
+}
+
 function Invoke-ContentionRound([string]$OwnedRoot,[string]$Name,
                                 [object[]]$Pairs,[string]$Schema,
                                 [string]$PublisherPath) {
@@ -235,8 +251,7 @@ try {
     Write-Host 'Stage 6F race contract: three two-process contention rounds prepared; results do not certify crash durability or source review.'
 } finally {
     if(Test-Path -LiteralPath $owned) {
-        $item=Get-Item -LiteralPath $owned -Force
-        Assert-Contract (-not (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0)) 'unsafe-owned-root-reparse-point'
+        Assert-NoReparseInOwnedTree $owned
         Remove-Item -LiteralPath $owned -Recurse -Force -ErrorAction Stop
     }
 }
