@@ -268,3 +268,37 @@ has not been dispatched.
 **Preserved:** Frozen V1 failed 4/6 with R102 attribution miss; V2 remains `PENDING_EXTERNAL_CAPTURE_AND_REVIEW`, **0/4** external R102 candidate approvals; R102 confidence 80%, R118 86%, R163 84%, candidate floor 0.75, Shadow/Disabled/cooldown/baseline privacy controls. Only `feature/carthago-reliability-hardening` was changed; no runner workflow YAML modified.
 
 **Next development priority:** Inspect the test vector and schema for correctness during authorized validation, then implement the pure validator after observed RED. Prepare independent atomic batch-publisher fault-injection contract before any real source candidate publication. All outputs/logs remain private and evidence-driven.
+
+
+### 2026-10-29 — Stage 6E fault-injection contract for atomic private V2 candidate publication
+
+**Execution gate:** PARKED. The owner has not authorized test time; no tests, PowerShell scripts, original/real PCAP reads, packet decoders, TShark, builds, holdout evaluations, CI jobs, runner operations or private artifact uploads have been run. All changes are authored source/design on feature/carthago-reliability-hardening.
+
+| Step | Commit | Path | Reviewable development and decision | Status |
+| --- | --- | --- | --- | --- |
+| S6E-01 | 30ebeac | scripts/verify-v2-atomic-publication-contract.ps1 | Added a synthetic four-pair private batch fault-injection contract for a future non-existent publisher module. One control and eight precommit injection milestones, one postcommit uncertain outcome, existing-target failure, four unsafe-name cases and an incomplete batch, all with specific error identifiers. | Authored, **not executed** |
+| S6E-02 | c2e010c | scripts/verify-v2-atomic-publication-contract.ps1 | Security-corrected the unsafe-path test: pass traversal/reserved names only to a pure module-private Assert-HoldoutV2BatchName checker, never to the actual writer. Prevents the test itself creating out-of-root files if production path checks are flawed. | Static correction, **not executed** |
+| S6E-03 | 1f7888c | scripts/verify-v2-atomic-publication-contract.ps1 | Verify exact semantic content of all eight committed files; add duplicate sample and legacy provenance v1 regression; ensure private test-root contains only expected folders/sentinel, preserving existing batch SHA-256 on collision. | Static expansion, **not executed** |
+| S6E-04 | 1b8d4b6 | docs/STAGE6E_ATOMIC_V2_PUBLICATION_FAULT_CONTRACT_20261029.md | In-depth transaction architecture, 18 planned outcomes, constant error code contract, failure states, no-replace Windows commit semantics, rollback, crash/recovery boundary, privacy, no-upload, human approval and phased test-first gates. | Documentation only |
+| S6E-05 | 10b9f35 | docs/STAGE6D_PRIVATE_PROVENANCE_SCHEMA_AND_ATOMICITY_20261029.md | Link the existing strict private schema/validator design to the newly authored publisher regression, preserving dependency sequencing and explicit untested status. | Documentation only |
+
+**Source-informed underlying risk:** Existing scripts/import-holdout-v2-r102.ps1 uses separate sample and provenance WriteAllText operations; interruption may leave an incomplete pair. The new Stage 6E harness does **not** modify that importer or fix the risk. It prepares a test-first design for a future private batch publisher with all-or-nothing namespace visibility.
+
+**Proposed test input:** four manifest-matched synthetic candidates (two benign, two malicious), three dummy TXT records each and 30-field proposed provenance schema v2, example-only URLs, RFC 5737 documentation IPs, analystReviewedLabel=false, capturedTransportEvidence=false, and reviewState=PENDING_EXTERNAL_CAPTURE_AND_REVIEW. No real original capture or external malicious ground truth is represented. The **existing importer provenance schema v1** and **Holdout V2 manifest schema v2** are separate and must not be conflated.
+
+**Prepared inventory:** one pending-only successful private publication and **17 negative/exception cases**: eight pre-rename stage faults; one post-rename uncertain commit (must retain complete final folder); one existing-batch no-overwrite collision; four pure unsafe-batch-name tests; and three invalid batch inputs (three slots, duplicate candidate name, legacy version 1 sidecar). No tests have been executed.
+
+**Key acceptance invariants (future, not observed):** exactly eight correctly identified sample/provenance JSON files; complete content equivalence; client/private output suppressed; no sampled DNS or source IP data in errors; candidate input remains unchanged; .pending-* cleaned after precommit failure; unrelated sentinel SHA and preexisting batch files unchanged; postcommit exception leaves final directory intact; no automatic reviewer decision or holdout freeze.
+
+**Missing by design:** scripts/HoldoutV2CandidatePublisher.psm1 with private Invoke-HoldoutV2AtomicPublishCore and pure Assert-HoldoutV2BatchName, plus Stage 6D pure provenance validator scripts/HoldoutV2Provenance.psm1. Their absent-module RED is an implementation checkpoint only, not proof the harness generates valid fixture bytes. No public fault-injection arguments may be exposed in production. Reuse existing pure validator instead of duplicating code.
+
+**Explicitly deferred, not claimed GREEN:** real filesystem no-replace rename semantics under simultaneous writers; ACL/permissions faults; malicious reparse-point paths and symlinks; actual Windows crash durability; orphan-stage recovery and reconciliation; original PCAP corroboration; licensed source/right/label review. Each needs separate controlled tests once the owner authorizes. The current script is a deterministic parked contract only.
+
+**Exact future command (NOT authorization):**
+~~~powershell
+powershell.exe -NoProfile -File .\scripts\verify-v2-atomic-publication-contract.ps1 -AuthorizedTestTime
+~~~
+
+At test time, verify CARTHAGE hostname, exact commit/schema SHA, Windows PowerShell version, private file root and the owner's explicit "now it's test time" approval. First verify synthetic fixture/control soundness, then observe missing API RED, implement minimally, rerun identical suite for GREEN, and separately plan concurrency/crash/ACL tests. Record outcome/exit/sanitized error code/expected file count/hashes and warnings in this central ledger.
+
+**Preserved scope:** frozen V1 FAILED 4/6, no retroactive fixes; V2 PENDING_EXTERNAL_CAPTURE_AND_REVIEW with **0/4** R102 candidates approved; R102 confidence 80%, R118 86%, R163 84%, R102 holdout floor 0.75 and all privacy, baseline, Shadow/Disabled and cooldown controls unchanged. Single centralized GitHub Actions workflow remains manual-only. No merge, branch cleanup, captured evidence upload or production-code rewrite.
