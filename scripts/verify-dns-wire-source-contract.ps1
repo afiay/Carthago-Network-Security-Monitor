@@ -4,7 +4,9 @@
 # source address or reversible label is written to the console or repository.
 [CmdletBinding()]
 param(
-    [string]$TsharkPath = 'tshark'
+    [string]$TsharkPath = 'tshark',
+    # Stage 6 is separately parked: leave Stage 5's RED/GREEN scope stable.
+    [switch]$IncludeV2Provenance
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -140,6 +142,94 @@ function Assert-QuestionRejected([string]$Path, [int]$Frame, [int]$Ordinal, [str
     Assert-Contract $rejected 'malformed-or-ambiguous-question-accepted'
 }
 
+function Assert-CandidateRejected(
+    [string]$Path, [object]$Provenance, [object[]]$Records, [string]$Tshark
+) {
+    $rejected = $false
+    try {
+        $unexpected = @(Confirm-DnsWireCandidateBinding -CapturePath $Path `
+            -Provenance $Provenance -Records $Records -TsharkPath $Tshark 6>&1)
+    } catch {
+        $rejected = $true
+        $details = [string]$_.Exception.Message
+        Assert-Contract (-not ($details -match 'QS7/|YmFzZQ|YWxwaGE=|192\.0\.2\.|198\.51\.100\.')) 'candidate-error-leaks-private-value'
+    }
+    Assert-Contract $rejected 'tampered-candidate-evidence-accepted'
+}
+
+function Assert-Stage6CandidateEvidence([string]$Path, [string]$Hash, [string]$Tshark) {
+    # Proposed Task 6 boundary: the V2 importer and auditor must use this
+    # shared original-frame/ordinal binding check before accepting a record.
+    # This checks data fidelity only; no label/rights/client is approved here.
+    Assert-Contract ($null -ne (Get-Command Confirm-DnsWireCandidateBinding -ErrorAction SilentlyContinue)) `
+        'candidate-binding-not-implemented-red'
+    $reference = [pscustomobject]@{
+        provenance = [pscustomobject]@{
+            captureSha256 = $Hash
+            dnsWireNameEncoding = 'labels-base64-v1'
+            frameNumbers = [int[]]@(1, 2)
+            questionIndices = [int[]]@(0, 1)
+            originatingClientLabel = 'synthetic-client-a'
+            collectionSessionId = 'synthetic-session-1'
+            collectionVantage = 'client'
+            independentClientEvidenceUri = 'https://example.org/review-pending'
+        }
+        records = @(
+            [pscustomobject]@{
+                source = '192.0.2.10'; destination = '198.51.100.53'
+                ipVersion = 4; sourcePort = 53001; destinationPort = 53
+                isUdp = $true; isTcp = $false; dnsQtype = 'TXT'
+                dnsWireLabelsBase64 = [string[]]@('QS7/', 'YmFzZQ==')
+            },
+            [pscustomobject]@{
+                source = '192.0.2.10'; destination = '198.51.100.53'
+                ipVersion = 4; sourcePort = 53002; destinationPort = 53
+                isUdp = $true; isTcp = $false; dnsQtype = 'A'
+                dnsWireLabelsBase64 = [string[]]@('YWxwaGE=', 'ZXhhbXBsZQ==')
+            }
+        )
+    }
+    $verified = @(Confirm-DnsWireCandidateBinding -CapturePath $Path `
+        -Provenance $reference.provenance -Records $reference.records -TsharkPath $Tshark 6>&1)
+    Assert-Contract ($verified.Count -eq 1 -and $verified[0] -is [pscustomobject]) 'candidate-helper-output-shape'
+    Assert-Contract ([int]$verified[0].MatchedQuestionCount -eq 2) 'candidate-question-count-mismatch'
+    Assert-Contract ([string]$verified[0].CaptureSha256 -eq $Hash) 'candidate-hash-binding-mismatch'
+    Assert-Contract ($verified[0].PSObject.Properties.Name -notcontains 'DnsWireLabelsBase64') 'candidate-output-discloses-raw-labels'
+    Assert-Contract ($verified[0].PSObject.Properties.Name -notcontains 'SourceAddress') 'candidate-output-discloses-source'
+
+    # Every rejection uses a fresh JSON deep copy so tests cannot mutate the
+    # reference or accidentally share a partly accepted record collection.
+    $cases = @(
+        { param($x) $x.provenance.captureSha256 = '00' * 32 },
+        { param($x) $x.provenance.frameNumbers[0] = 2 },
+        { param($x) $x.provenance.questionIndices[1] = 0 },
+        { param($x) $x.provenance.questionIndices = @(0) },
+        { param($x) $x.provenance.dnsWireNameEncoding = 'labels-base64-v0' },
+        { param($x) $x.records[0].dnsWireLabelsBase64[0] = 'QS7+' },
+        { param($x) $x.records[0].dnsWireLabelsBase64[0] = 'AR==' },
+        { param($x) $x.records[0].dnsQtype = 'A' },
+        { param($x) $x.records[0].source = '192.0.2.11' },
+        { param($x) $x.records[0].sourcePort = 53042 },
+        { param($x) $x.records[0].isUdp = $false },
+        { param($x) $x.records[0].isTcp = $true },
+        { param($x) $x.provenance.frameNumbers[1] = 1; $x.provenance.questionIndices[1] = 0 },
+        { param($x) $x.provenance.originatingClientLabel = '' },
+        { param($x) $x.provenance.collectionSessionId = '' },
+        { param($x) $x.provenance.collectionVantage = 'unattributed-proxy' },
+        { param($x) $x.provenance.independentClientEvidenceUri = 'http://example.org/unreviewed' },
+        { param($x) $x.records[0] | Add-Member -NotePropertyName 'dnsWireUnreviewedDebug' -NotePropertyValue 'private' }
+    )
+    foreach ($change in $cases) {
+        $mutant = ConvertFrom-Json -InputObject ($reference | ConvertTo-Json -Depth 12)
+        & $change $mutant
+        Assert-CandidateRejected $Path $mutant.provenance @($mutant.records) $Tshark
+    }
+    # A missing original PCAP never falls back to trusting JSON-only fields.
+    Assert-CandidateRejected (Join-Path (Split-Path $Path) 'missing-original.pcap') `
+        $reference.provenance @($reference.records) $Tshark
+    Write-Host 'V2 frame/question binding contract: two source-bound records; nineteen tampering/missing-original cases rejected. Source syntax only.'
+}
+
 $temporaryPath = Join-Path ([IO.Path]::GetTempPath()) `
     ('carthago-dns-wire-contract-' + [Guid]::NewGuid().ToString('N'))
 [void][IO.Directory]::CreateDirectory($temporaryPath)
@@ -208,6 +298,9 @@ try {
     Assert-QuestionRejected $capture 6 0 $tshark # truncated label
     Assert-QuestionRejected $capture 99 0 $tshark # absent source frame
     Write-Host 'DNS wire source contract: four source-bound questions corroborated; five invalid/ambiguous selections rejected. Synthetic evidence only.'
+    if ($IncludeV2Provenance) {
+        Assert-Stage6CandidateEvidence $capture $captureHash $tshark
+    }
 } finally {
     # Remove only our own uniquely named temporary test fixture.
     if (Test-Path -LiteralPath $temporaryPath) {
