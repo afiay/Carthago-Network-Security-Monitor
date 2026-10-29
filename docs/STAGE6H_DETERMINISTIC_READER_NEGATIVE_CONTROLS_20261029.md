@@ -1,6 +1,6 @@
 # Stage 6H — Deterministic reader-sensitivity negative controls
 
-**State: PREPARED / NOT RUN / NO RED OR GREEN OBSERVED**
+**Current status (2026-10-30): VALIDATION GATE PASSED — six synthetic reader-negative controls H01–H06, 6/6 owner-verified on Windows at `8882f1c`. This is bounded observer sensitivity, not crash durability or formal atomicity.**
 
 Date: 2026-10-29  
 Active branch: feature/carthago-reliability-hardening  
@@ -13,7 +13,7 @@ Stage 6G added a third independent Windows PowerShell Start-Job reader to watch 
 
 A flaw in a polling observer could result in apparently green metrics without ever observing a partial publication, even if the publisher is unsafe. For example, if only a complete final batch were ever tested, a reader that silently skips malformed JSON might still report no errors. Stage 6H provides a **deterministic negative control against the reader itself**. It deliberately exposes known-invalid completed test folders and requires direct evidence that the same observer flags them.
 
-The new mode is intentionally **independent of the unfinished publisher**. It does not import HoldoutV2CandidatePublisher.psm1, call the actual importer, audit source PCAPs, trigger R102 detections, or modify any frozen evidence. It is limited to newly generated synthetic files in one test-owned ignored build-verify child folder.
+The reader-negative mode is intentionally **independent of the implemented publisher**. It does not import HoldoutV2CandidatePublisher.psm1, call the actual importer, audit source PCAPs, trigger R102 detections, or modify any frozen evidence. It is limited to newly generated synthetic files in one test-owned ignored build-verify child folder.
 
 ## 2. Exact source changes and unchanged defaults
 
@@ -31,11 +31,11 @@ The existing pre-execution guard remains mandatory: AuthorizedTestTime must be p
 ### New option
 
 ~~~powershell
-# PARKED documentation command only; never run without explicit owner approval
+# Owner-gated regression command; previously verified, not automatically scheduled
 powershell.exe -NoProfile -File .\scripts\verify-v2-two-writer-race-contract.ps1 -AuthorizedTestTime -OnlyReaderNegativeControl
 ~~~
 
-The command does not require the unimplemented publisher module, unlike the Stage 6F/6G modes. That allows verification of the observer before implementation of the publisher.
+The command deliberately does not invoke the publisher module, unlike the Stage 6F/6G modes. That allowed verification of observer sensitivity independently of publication success.
 
 ## 3. Deterministic negative fixtures
 
@@ -50,7 +50,7 @@ Each fixture originates from the four sample identifiers and classifications alr
 | H05 | All eight valid files, plus an additional unexpected debug text file | Partial >= 1, IoErrors = 0 | Strict allowlist and no extra private/debug artifact. |
 | H06 | Eight files, but one sample classification disagrees with its provenance classification | Partial >= 1, IoErrors = 0 | Correct file count is insufficient if the pair's classification differs. |
 
-These six cases are **authored expectations, not executed results**. If a fixture is accidentally malformed in an unintended way, or Start-Job fails to bind arguments, the resulting error is a test-harness defect and cannot be used to claim that the intended reader invariant has been validated.
+All six H01–H06 deliberately invalid synthetic cases were **executed and owner-verified 6/6** at `8882f1c`. Successful rejection, not an unrelated Start-Job binding error or other harness failure, was required.
 
 ## 4. Same observer, causal feedback, private isolation
 
@@ -106,15 +106,15 @@ Neither the reader nor the test parent may print raw file contents, source IPs, 
 
 **Intentional exclusions:** A malformed *real* PCAP is never opened here. The negative probe itself moves a local synthetic directory into the final name; the aim is to challenge the observer, **not** to claim Directory.Move as the production Windows no-replace primitive. Cross-volume atomicity, actual power-loss durability, ACL access faults, concurrent rename linearizability, and real licensing/analyst review are separate tasks.
 
-## 6. Test-first acceptance sequence and implementation handoff
+## 6. Verified synthetic validation gates and remaining boundaries
 
-1. **Now:** only GitHub source review, commits and documentation. Owner has not authorized running tests. No Process, Start-Job, PowerShell, TShark, CI or CARTHAGE execution in this stage.
-2. **Owner-approved future test time:** verify exact Git commit and source blob, Windows CARTHAGE hostname, PowerShell 5.1, manifest and ignored build-verify scratch path. No real external captures in the test root.
-3. **Verify Stage 6H observer sensitivity first:** call only the reader-negative mode and require all H01–H06 to detect their intended invalid condition. Distinguish genuine observer failure from PowerShell serializer or fixture errors.
-4. **Stage 6D provenance validator:** validate the in-memory positive and negative schema cases, then implement the minimal missing pure validator after correctly observed RED. Keep old schemaVersion=1 importer compatibility.
-5. **Stage 6E publisher:** validate the sequential failure contracts and implement the minimal new atomic publisher in its own private module, reusing Stage 6D rather than duplicating validation.
-6. **Stage 6F race and recovery:** validate no-replace publication under two competing writer processes and the non-destructive path-free recovery planner. No automatic orphan deletion.
-7. **Stage 6G reader visibility:** only after Stage 6H proves the observer detects faults, run the opt-in 3/6/12 bounded reader modes. Passing sampled polls does not prove every intermediate state was invisible.
+1. **Completed:** owner explicitly authorized the synthetic Windows reader-sensitivity test. Result 6/6 at `8882f1c`; this documentation cleanup performs no test execution.
+2. **Preflight:** the owner verified the Windows local test environment before the recorded run. For a future regression, independently reconfirm exact commit, PowerShell interpreter, manifest and synthetic-only scratch path. No real external captures in the test root.
+3. **Validated:** the reader-negative mode identified all six H01–H06 deliberately invalid synthetic final states. Distinguish genuine observer failure from PowerShell serializer or fixture errors.
+4. **Phase 6D validated separately:** the implemented private provenance validator passed 2 pending-only positive and 24 negative cases (26/26). Keep old schemaVersion=1 importer compatibility.
+5. **Phase 6E validated separately:** the implemented private publisher passed its 18/18 synthetic rollback and fault checks.
+6. **Phase 6F validated separately:** writer contention 3/3 and the non-destructive path-free recovery planner 15/15 passed on Windows. No automatic orphan deletion.
+7. **Phase 6G validated separately:** after this observer-sensitivity gate, bounded sampled reader visibility passed the 3/6/12-round matrix. Passing sampled polls does not prove every intermediate state was invisible.
 8. **External evidence and quality:** separately obtain original PCAP byte fidelity, client/source independence, human-reviewed license/classification and a decision to admit the four external R102 candidates. Run R102 precision, recall and F1 only on qualified labeled evidence. No auto-freeze.
 
 ## 7. Static audit and preservation checkpoint
@@ -128,7 +128,7 @@ Read-only GitHub source inspection after commit 6c5ec83 confirmed:
 - Nested reparse-point cleanup checks remain present; the earlier duplicate race-tail block was removed.
 - Existing Stage 6F and Stage 6G modes retain their original three rounds and opt-in bounded 3–12 reader stress.
 
-These are source checks, not parser compilation, PowerShell execution, test results or runtime filesystem validation.
+This checklist was originally source-only. It was subsequently supplemented with observed Windows 6/6 reader-negative and 3/6/12 writer/reader results in the centralized validation ledger.
 
 **Historical frozen V1:** FAILED 4/6, immutable. **V2:** PENDING_EXTERNAL_CAPTURE_AND_REVIEW, 0/4 approved R102 candidates. Rule confidence requirements R102 80%, R118 86%, R163 84% and external R102 minimum 0.75 remain unchanged. Existing core importer, original audit script and manually gated workflow remain untouched.
 
@@ -140,7 +140,7 @@ These are source checks, not parser compilation, PowerShell execution, test resu
 - docs/STAGE6E_ATOMIC_V2_PUBLICATION_FAULT_CONTRACT_20261029.md — transactional publisher and rollback.
 - docs/STAGE6D_PRIVATE_PROVENANCE_SCHEMA_AND_ATOMICITY_20261029.md — strict v2 private provenance.
 
-**End status:** Stage 6H is **authored, not executed**, with no evidence about real Windows rename behavior or detection accuracy.
+**Current result:** Reader-negative validation gate **6/6 GREEN** at `8882f1c`; bounded synthetic detection of incomplete final batches is verified. Formal rename linearizability, storage/power-loss durability and real detector accuracy remain unverified.
 
 
 ## 8. Additional private-root safety hardening
@@ -149,4 +149,4 @@ Commit **e977067** modified only scripts/verify-v2-two-writer-race-contract.ps1 
 
 This is a source-level preventive check, **not an executed proof** against junction/symlink races or other path aliasing. Additional trusted-root canonicalization, ACL and filesystem race tests remain required before claiming Windows isolation. No production application paths, original PCAPs, Holdout V1/V2 manifests, runner configurations or workflow files were modified in this hardening step.
 
-**Final Stage 6H source change register:** f8c1ec5 (shared reader), d6a848e (six fault-injection helpers), fd4ce67 (reader-only mode), 6c5ec83 (remove incorrect duplicate branch tail), e977067 (reject redirected private parent). No PowerShell script was executed and no observer sensitivity result has been observed.
+**Historical source change register:** f8c1ec5 (shared reader), d6a848e (six fault-injection helpers), fd4ce67 (reader-only mode), 6c5ec83 (remove incorrect duplicate branch tail), e977067 (reject redirected private parent). **Subsequent validation:** 6/6 owner-verified synthetic reader sensitivity at `8882f1c`.
