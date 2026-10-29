@@ -4,7 +4,10 @@
 # Synthetic records, documentation IPs, fixed safe names, no capture/TShark.
 # Requires a future publisher module and an explicitly trusted local test root.
 [CmdletBinding()]
-param([switch]$AuthorizedTestTime)
+param(
+    [switch]$AuthorizedTestTime,
+    [switch]$IncludeReaderVisibility
+)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -126,13 +129,101 @@ function Assert-NoReparseInOwnedTree([string]$Root) {
 
 function Invoke-ContentionRound([string]$OwnedRoot,[string]$Name,
                                 [object[]]$Pairs,[string]$Schema,
-                                [string]$PublisherPath) {
+                                [string]$PublisherPath,[switch]$WithReader) {
     # Start-Job launches separate Windows PowerShell job processes. Workers
     # import the same module and wait behind a local, private file barrier.
     # Only sanitized outcome codes and numeric PIDs are returned to the parent.
     $signal=Join-Path $OwnedRoot ($Name+'.go')
+    $readerReady=Join-Path $OwnedRoot ($Name+'.reader-ready')
+    $readerStop=Join-Path $OwnedRoot ($Name+'.reader-stop')
     $jobs=@()
+    $readerJob=$null
     try {
+        if($WithReader) {
+            # Third process reads the FINAL safe name only. It never scans
+            # .pending-* or opens source captures. A writer that publishes a
+            # directory before its eight JSON files are valid must be caught.
+            $names=[string[]]@($Pairs | ForEach-Object { [string]$_.Provenance.sample })
+            $target=Join-Path $OwnedRoot $Name
+            $readerJob=Start-Job -ScriptBlock {
+                param($Target,$Ready,$Go,$Stop,$Names)
+                $ErrorActionPreference='Stop'
+                $WarningPreference='SilentlyContinue'
+                $InformationPreference='SilentlyContinue'
+                $VerbosePreference='SilentlyContinue'
+                $counts=@{Polls=0;Absent=0;Complete=0;Partial=0;IoErrors=0}
+                try {
+                    # Parent will not release competing writers until it
+                    # observes this reader-ready marker.
+                    if([IO.Directory]::Exists($Target)) {
+                        return [pscustomobject]@{Code='EARLY_VISIBLE';ProcessId=$PID;
+                            Polls=0;Absent=0;Complete=0;Partial=1;IoErrors=0}
+                    }
+                    [IO.File]::WriteAllText($Ready,'READY',[Text.Encoding]::ASCII)
+                    $timer=[Diagnostics.Stopwatch]::StartNew()
+                    while(-not [IO.File]::Exists($Go)) {
+                        if($timer.Elapsed.TotalSeconds -ge 30) {
+                            return [pscustomobject]@{Code='READER_BARRIER_TIMEOUT';ProcessId=$PID;
+                                Polls=0;Absent=1;Complete=0;Partial=0;IoErrors=0}
+                        }
+                        Start-Sleep -Milliseconds 10
+                    }
+                    $counts.Absent=1 # Just-verified absence before go.
+                    $timer.Restart()
+                    while(-not [IO.File]::Exists($Stop)) {
+                        if($timer.Elapsed.TotalSeconds -gt 75) {
+                            return [pscustomobject]@{Code='READER_DEADLINE';ProcessId=$PID;
+                                Polls=$counts.Polls;Absent=$counts.Absent;
+                                Complete=$counts.Complete;Partial=$counts.Partial;IoErrors=$counts.IoErrors}
+                        }
+                        $counts.Polls++
+                        if(-not [IO.Directory]::Exists($Target)) {
+                            $counts.Absent++
+                            Start-Sleep -Milliseconds 4
+                            continue
+                        }
+                        try {
+                            $files=[IO.Directory]::GetFiles($Target,'*',[IO.SearchOption]::TopDirectoryOnly)
+                            $expected=@()
+                            foreach($id in @($Names)) {
+                                $expected+=($id+'.json')
+                                $expected+=($id+'.provenance.json')
+                            }
+                            $actual=@($files | ForEach-Object { [IO.Path]::GetFileName($_) })
+                            $valid=$actual.Count -eq 8 -and
+                                @(Compare-Object -ReferenceObject ($expected | Sort-Object) -DifferenceObject ($actual | Sort-Object)).Count -eq 0
+                            if($valid) {
+                                foreach($id in @($Names)) {
+                                    $a=Get-Content -LiteralPath (Join-Path $Target ($id+'.json')) -Raw | ConvertFrom-Json
+                                    $b=Get-Content -LiteralPath (Join-Path $Target ($id+'.provenance.json')) -Raw | ConvertFrom-Json
+                                    if([string]$a.name -cne $id -or
+                                       [string]$b.sample -cne $id -or
+                                       [int]$b.schemaVersion -ne 2 -or
+                                       [string]$a.classification -cne [string]$b.classification -or
+                                       [string]$b.reviewState -cne 'PENDING_EXTERNAL_CAPTURE_AND_REVIEW') {
+                                        $valid=$false
+                                        break
+                                    }
+                                }
+                            }
+                            if($valid) { $counts.Complete++ } else { $counts.Partial++ }
+                        } catch {
+                            # Do not leak the reader exception: its payload
+                            # may include private paths or serialized data.
+                            $counts.IoErrors++
+                        }
+                        Start-Sleep -Milliseconds 4
+                    }
+                    return [pscustomobject]@{Code='READER_DONE';ProcessId=$PID;
+                        Polls=$counts.Polls;Absent=$counts.Absent;Complete=$counts.Complete;
+                        Partial=$counts.Partial;IoErrors=$counts.IoErrors}
+                } catch {
+                    return [pscustomobject]@{Code='READER_UNEXPECTED';ProcessId=$PID;
+                        Polls=$counts.Polls;Absent=$counts.Absent;Complete=$counts.Complete;
+                        Partial=$counts.Partial;IoErrors=$counts.IoErrors}
+                }
+            } -ArgumentList @($target,$readerReady,$signal,$readerStop,(,$names))
+        }
         for($i=0;$i -lt 2;$i++) {
             $ready=Join-Path $OwnedRoot ($Name+'.ready'+$i)
             $job=Start-Job -ScriptBlock {
@@ -178,8 +269,12 @@ function Invoke-ContentionRound([string]$OwnedRoot,[string]$Name,
         while($watch.Elapsed.TotalSeconds -lt 35) {
             $allReady=(Test-Path -LiteralPath (Join-Path $OwnedRoot ($Name+'.ready0'))) -and
                       (Test-Path -LiteralPath (Join-Path $OwnedRoot ($Name+'.ready1')))
+            if($WithReader) {
+                $allReady=$allReady -and (Test-Path -LiteralPath $readerReady -PathType Leaf)
+            }
             if($allReady) { break }
             if(@($jobs | Where-Object { $_.State -in @('Failed','Stopped') }).Count -gt 0) { break }
+            if($WithReader -and $readerJob.State -in @('Failed','Stopped')) { break }
             Start-Sleep -Milliseconds 25
         }
         Assert-Contract $allReady 'workers-did-not-reach-barrier'
@@ -195,18 +290,48 @@ function Invoke-ContentionRound([string]$OwnedRoot,[string]$Name,
         $ids=@($outcomes | ForEach-Object { [int]$_.ProcessId } | Sort-Object -Unique)
         Assert-Contract ($ids.Count -eq 2) 'workers-not-independent-processes'
         Assert-CompletePendingBatch $OwnedRoot $Name $Pairs
+        if($WithReader) {
+            # Keep the observer alive after both writers finish so it must
+            # see at least one complete committed view, not only absence.
+            Start-Sleep -Milliseconds 100
+            [IO.File]::WriteAllText($readerStop,'STOP',[Text.Encoding]::ASCII)
+            $readerDone=@(Wait-Job -Job $readerJob -Timeout 15)
+            Assert-Contract ($readerDone.Count -eq 1) 'reader-did-not-stop'
+            $readerOutputs=@(Receive-Job -Job $readerJob -ErrorAction Stop)
+            Assert-Contract ($readerOutputs.Count -eq 1 -and
+                $readerOutputs[0] -is [pscustomobject]) 'reader-invalid-output-shape'
+            $rv=$readerOutputs[0]
+            Assert-Contract ([string]$rv.Code -ceq 'READER_DONE') 'reader-did-not-complete'
+            Assert-Contract ([int]$rv.Polls -ge 1 -and [int]$rv.Absent -ge 1 -and
+                [int]$rv.Complete -ge 1) 'reader-did-not-observe-both-states'
+            Assert-Contract ([int]$rv.Partial -eq 0 -and
+                [int]$rv.IoErrors -eq 0) 'reader-observed-partial-or-error'
+            Assert-Contract ([int]$rv.ProcessId -notin $ids) 'observer-not-independent-process'
+            Write-Host ('STAGE6G READER: '+$Name+' saw absent/complete states only; no partial view.')
+        }
         $stages=@(Get-ChildItem -LiteralPath $OwnedRoot -Force |
             Where-Object { $_.Name -like '.pending-*' })
         Assert-Contract ($stages.Count -eq 0) 'losing-writer-left-pending-stage'
         Write-Host ('STAGE6F RACE '+$Name+': one private writer won; one received target-exists; no approval.')
     } finally {
+        # Signal the observer before terminating workers, including after an
+        # assertion failure. Stop/Remove-Job never targets arbitrary jobs.
+        if($null -ne $readerJob) {
+            if(-not [IO.File]::Exists($readerStop)) {
+                [IO.File]::WriteAllText($readerStop,'STOP',[Text.Encoding]::ASCII)
+            }
+            if($readerJob.State -in @('Running','NotStarted')) {
+                Stop-Job -Job $readerJob -ErrorAction SilentlyContinue
+            }
+            Remove-Job -Job $readerJob -Force -ErrorAction SilentlyContinue
+        }
         foreach($job in $jobs) {
             if($job.State -in @('Running','NotStarted')) {
                 Stop-Job -Job $job -ErrorAction SilentlyContinue
             }
             Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
         }
-        foreach($suffix in @('.go','.ready0','.ready1')) {
+        foreach($suffix in @('.go','.ready0','.ready1','.reader-ready','.reader-stop')) {
             $file=Join-Path $OwnedRoot ($Name+$suffix)
             if(Test-Path -LiteralPath $file -PathType Leaf) {
                 Remove-Item -LiteralPath $file -Force
@@ -241,14 +366,18 @@ try {
     [IO.File]::WriteAllText($marker,'STAGE6F_CANARY',[Text.Encoding]::ASCII)
     $markerHash=(Get-FileHash -LiteralPath $marker -Algorithm SHA256).Hash
     foreach($round in @('race-01','race-02','race-03')) {
-        Invoke-ContentionRound $owned $round $pairs $schema $modulePath
+        Invoke-ContentionRound $owned $round $pairs $schema $modulePath -WithReader:$IncludeReaderVisibility
     }
     Assert-Contract ((Get-FileHash -LiteralPath $marker -Algorithm SHA256).Hash -ceq
         $markerHash) 'unrelated-sentinel-modified'
     $top=@(Get-ChildItem -LiteralPath $owned -Force | Sort-Object Name)
     Assert-Contract ($top.Count -eq 4 -and
         @($top | Where-Object { $_.Name -notin @('sentinel.keep','race-01','race-02','race-03') }).Count -eq 0) 'unexpected-test-root-entry'
-    Write-Host 'Stage 6F race contract: three two-process contention rounds prepared; results do not certify crash durability or source review.'
+    if($IncludeReaderVisibility) {
+        Write-Host 'Stage 6G opt-in: three 2-writer/1-reader visibility rounds prepared. No durability or source approval.'
+    } else {
+        Write-Host 'Stage 6F race contract: three two-process contention rounds prepared; results do not certify crash durability or source review.'
+    }
 } finally {
     if(Test-Path -LiteralPath $owned) {
         Assert-NoReparseInOwnedTree $owned
