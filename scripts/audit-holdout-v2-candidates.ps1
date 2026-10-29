@@ -64,6 +64,50 @@ foreach ($entry in $entries) {
     }
     $records=@($sample.records)
     $frames=@($p.frameNumbers)
+    # Strict evidence provenance: an imported packet record may contain ONLY
+    # the eleven fields independently decoded and checked below. Otherwise
+    # arbitrary fixture-supplied metadata could influence rule evaluation
+    # despite a seemingly valid capture hash and transport flag.
+    $allowedRecordFields=@('source','destination','ipVersion','sourcePort',
+        'destinationPort','protocol','applicationProtocol','isUdp','isTcp',
+        'dnsQname','dnsQtype')
+    $allowedSampleFields=@('name','classification','records','expectedMatches',
+        'expectedNonMatches','expectedMinimumConfidence')
+    $sampleFields=@($sample.PSObject.Properties.Name)
+    if ($sampleFields.Count -ne $allowedSampleFields.Count -or
+        @(Compare-Object -ReferenceObject ($allowedSampleFields | Sort-Object) -DifferenceObject ($sampleFields | Sort-Object)).Count -gt 0) {
+        throw "Source audit: unexpected fixture fields could forge context for $name."
+    }
+    foreach ($record in $records) {
+        $actualFields=@($record.PSObject.Properties.Name)
+        if ($actualFields.Count -ne $allowedRecordFields.Count -or
+            @(Compare-Object -ReferenceObject ($allowedRecordFields | Sort-Object) -DifferenceObject ($actualFields | Sort-Object)).Count -gt 0 -or
+            $record.isUdp -isnot [bool] -or $record.isTcp -isnot [bool] -or
+            $record.ipVersion -isnot [int] -or
+            $record.sourcePort -isnot [int] -or
+            $record.destinationPort -isnot [int]) {
+            throw "Source audit: DNS packet record has missing, extra or invalid typed fields for $name."
+        }
+    }
+    if ($entry.classification -eq 'Malicious') {
+        if (@($sample.expectedMatches).Count -ne 1 -or
+            [string]$sample.expectedMatches[0] -ne 'R102' -or
+            [double]$sample.expectedMinimumConfidence -lt 0.75 -or
+            [double]$sample.expectedMinimumConfidence -gt 1.0) {
+            throw "Source audit: R102 malicious expected rule/confidence was altered for $name."
+        }
+    } else {
+        if (@($sample.expectedMatches).Count -ne 0 -or
+            [double]$sample.expectedMinimumConfidence -ne 0) {
+            throw "Source audit: benign sample has unexpected positive expectations for $name."
+        }
+    }
+    if (@($sample.expectedNonMatches).Count -ne $(if ($entry.classification -eq 'Benign') {3} else {2}) -or
+        @($sample.expectedNonMatches | Sort-Object -Unique | Where-Object {
+            $_ -notin $(if ($entry.classification -eq 'Benign') {@('R102','R118','R163')} else {@('R118','R163')})
+        }).Count -ne 0) {
+        throw "Source audit: R102 expected negative controls changed for $name."
+    }
     if ($entry.classification -eq 'Malicious') {
         $maliciousCount++
         if (-not $maliciousSources.Add([string]$p.sourceAddress)) {
