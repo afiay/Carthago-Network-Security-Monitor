@@ -122,6 +122,9 @@ function Invoke-ContentionRound([string]$OwnedRoot,[string]$Name,
             $job=Start-Job -ScriptBlock {
                 param($Module,$CandidatePairs,$SchemaPath,$OutputRoot,$Batch,$Ready,$Go)
                 $ErrorActionPreference='Stop'
+                $WarningPreference='SilentlyContinue'
+                $InformationPreference='SilentlyContinue'
+                $VerbosePreference='SilentlyContinue'
                 # Synthetic fixture only; never emit private payload or errors.
                 try {
                     Import-Module -Name $Module -Force -ErrorAction Stop
@@ -150,7 +153,7 @@ function Invoke-ContentionRound([string]$OwnedRoot,[string]$Name,
                     }
                     return [pscustomobject]@{Code='UNEXPECTED_ERROR';ProcessId=$PID}
                 }
-            } -ArgumentList $PublisherPath,$Pairs,$Schema,$OwnedRoot,$Name,$ready,$signal
+            } -ArgumentList @($PublisherPath, (,$Pairs), $Schema, $OwnedRoot, $Name, $ready, $signal)
             $jobs+=,$job
         }
         # A fixed upper bound prevents waiting forever if a worker fails.
