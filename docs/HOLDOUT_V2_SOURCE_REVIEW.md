@@ -185,3 +185,25 @@ lossless representation and regression tests first. Do not alter
 frozen V1, the 0.75 confidence floor, existing fixture hashes, or
 the V2 pending state. No detector tests, rule evaluations, import,
 freeze or promotion took place during this investigation.
+
+### Independent TShark 4.2.2 corroboration
+
+The same SHA-256-pinned `bind9/dns.pcap` was decoded independently using
+Ubuntu-packaged **TShark 4.2.2**, separately from CARTHAGE's TShark 4.6.9.
+This was a source-only inspection, not a Carthago detector test.
+Using the identical DNS-query/UDP-or-TCP-port-53 display filter,
+TShark 4.2.2 reported **7,991 QTYPE 16 (TXT) queries**. A privacy-safe
+aggregate inspection of its exported question-name fields reproduced the
+current inspector's **5,335 allowed-syntax and 2,656 rejected-syntax**
+counts. The exported text for all 2,656 rejected names contained non-ASCII
+characters; 184 contained a backslash. No raw names or addresses were
+printed or published. This independent dissector result corroborates the
+rejection breakdown but does not prove that textual TShark output alone
+can reconstruct all original label octets without ambiguity.
+
+Read-only original-wire decoding is still the authority for exact label
+octets, with original PCAP SHA-256 and frame attribution needed for each
+candidate. These cross-version checks **do not** establish the rights,
+labels, source independence, or fitness of any of the four pending
+Holdout V2 fixtures. No production change, import, freeze, or holdout
+evaluation occurred.
