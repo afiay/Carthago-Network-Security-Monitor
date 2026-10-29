@@ -624,7 +624,10 @@ try {
             $labels.Add($FirstLabel)
             $labels.Add([Text.Encoding]::ASCII.GetBytes('example'))
             $labels.Add([Text.Encoding]::ASCII.GetBytes('test'))
-            foreach([byte[]]$bytes in $labels) {
+            # PowerShell foreach requires an untyped loop variable.
+            # Preserve byte[] identity with an explicit assignment inside.
+            foreach($labelBytes in $labels) {
+                [byte[]]$bytes=$labelBytes
                 $msg.Add([byte]$bytes.Length)
                 $msg.AddRange($bytes)
             }
