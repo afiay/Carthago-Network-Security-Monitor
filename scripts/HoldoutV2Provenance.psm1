@@ -174,6 +174,21 @@ function Confirm-HoldoutV2ProvenanceBatch {
             }
             Fail-Provenance 'PROV_SCHEMA_EXTRA_FIELD'
         }
+        # Cross-field cardinality is a dedicated failure class, including
+        # an array shortened below its independent schema minItems. Check
+        # only when the three values already have their expected top-level
+        # types: malformed scalar/array types must still report TYPE.
+        $fProp=Get-ProvenanceProp $candidate 'frameNumbers'
+        $qProp=Get-ProvenanceProp $candidate 'questionIndices'
+        $nProp=Get-ProvenanceProp $candidate 'selectedRecordCount'
+        if($null -ne $fProp -and $null -ne $qProp -and $null -ne $nProp -and
+           $fProp.Value -is [array] -and $qProp.Value -is [array] -and
+           (Test-IntegerValue $nProp.Value)) {
+            if($fProp.Value.Count -ne $qProp.Value.Count -or
+               $fProp.Value.Count -ne [int]$nProp.Value) {
+                Fail-Provenance 'PROV_SCHEMA_CARDINALITY'
+            }
+        }
         foreach($name in $required) {
             $prop=Get-ProvenanceProp $candidate $name
             if($null -eq $prop) { Fail-Provenance 'PROV_SCHEMA_REQUIRED_FIELD' }
