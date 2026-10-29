@@ -6,10 +6,16 @@
 param(
     [string]$TsharkPath = 'tshark',
     # Stage 6 is separately parked: leave Stage 5's RED/GREEN scope stable.
-    [switch]$IncludeV2Provenance
+    [switch]$IncludeV2Provenance,
+    # Stage 8 bridge stays parked even if the earlier core DNS test is run.
+    [switch]$IncludeReplayCompatibility,
+    [switch]$AuthorizedTestTime
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+if ($IncludeReplayCompatibility -and -not $AuthorizedTestTime) {
+    throw 'PARKED: Stage 8 replay compatibility test requires explicit owner test-time authorization.'
+}
 
 function Assert-Contract([bool]$Condition, [string]$Code) {
     if (-not $Condition) { throw "DNS wire source contract: $Code" }
@@ -560,6 +566,187 @@ try {
     if ($IncludeV2Provenance) {
         Assert-Stage6CandidateEvidence $capture $captureHash $tshark
         Assert-Stage6LogicalSourceIndependence
+    }
+    if ($IncludeReplayCompatibility) {
+        # Stage 8 is an additional synthetic-only, private compatibility
+        # boundary. The three original wire tests above are unchanged.
+        $bridgePath=Join-Path $PSScriptRoot 'HoldoutV2WireReplayBridge.psm1'
+        Assert-Contract (Test-Path -LiteralPath $bridgePath -PathType Leaf) 'bridge-module-missing'
+        Import-Module -Name $bridgePath -Force -ErrorAction Stop
+        $bridgeModule=Get-Module -Name HoldoutV2WireReplayBridge
+        Assert-Contract ($null -ne $bridgeModule) 'bridge-module-unavailable'
+
+        # Unit sensitivity for the private canonical-byte to legacy text
+        # conversion, including binary data which must NEVER be normalized.
+        $unit=@(& $bridgeModule {
+            $ascii=[Text.Encoding]::ASCII
+            $label={param([string]$s) [Convert]::ToBase64String($ascii.GetBytes($s))}
+            $a=& $label 'alpha'
+            $e=& $label 'example'
+            $t=& $label 'test'
+            $u=& $label 'under_score'
+            $valid=(Convert-BridgeWireLabelsToLegacyName ([string[]]@($a,$e,$t))) -ceq 'alpha.example.test'
+            $valid=$valid -and (Convert-BridgeWireLabelsToLegacyName ([string[]]@($u,$e,$t))) -ceq 'under_score.example.test'
+            $invalid=@(
+                [pscustomobject]@{Labels=[string[]]@((& $label 'Alpha'),$e,$t)}
+                [pscustomobject]@{Labels=[string[]]@((& $label 'ab.cd'),$e,$t)}
+                [pscustomobject]@{Labels=[string[]]@([Convert]::ToBase64String([byte[]]@(255)),$e,$t)}
+                [pscustomobject]@{Labels=[string[]]@([Convert]::ToBase64String([byte[]]@(0)),$e,$t)}
+                [pscustomobject]@{Labels=[string[]]@('YWxwaGE',$e,$t)}
+                [pscustomobject]@{Labels=[string[]]@((& $label ('a'*64)),$e,$t)}
+                [pscustomobject]@{Labels=[string[]]@($a)}
+                [pscustomobject]@{Labels=[string[]]@()}
+                [pscustomobject]@{Labels=[string[]]@((& $label ('a'*63)),(& $label ('b'*63)),(& $label ('c'*63)),(& $label ('d'*63)),(& $label ('e'*63)))}
+                [pscustomobject]@{Labels='not-an-array'}
+            )
+            $rejected=0
+            foreach($case in $invalid) {
+                $reason='NO_REJECTION'
+                try { $null=Convert-BridgeWireLabelsToLegacyName $case.Labels }
+                catch { $reason=[string]$_.Exception.Message }
+                if($reason -ceq 'BRIDGE_NAME_NOT_LOSSLESS') { $rejected++ }
+            }
+            return [pscustomobject]@{Valid=$valid;Rejected=$rejected}
+        })
+        Assert-Contract ($unit.Count -eq 1 -and
+            [bool]$unit[0].Valid -and [int]$unit[0].Rejected -eq 10) 'bridge-byte-exact-unit-regression'
+        Write-Host 'V2 wire replay bridge: two exact printable names accepted; ten non-lossless names rejected.'
+
+        # A SECOND, uniquely owned synthetic PCAP under the same temporary
+        # directory. Three question frames are alpha/beta/gamma.example.test;
+        # frame three uses TCP, frame four uses a 0xff binary DNS label.
+        # Never inspect or modify the original user-owned capture evidence.
+        function New-BridgeDnsQuery([byte[]]$FirstLabel) {
+            $msg=[Collections.Generic.List[byte]]::new()
+            $msg.AddRange((Convert-HexToBytes '123401000001000000000000'))
+            foreach($part in @($FirstLabel,
+                    [Text.Encoding]::ASCII.GetBytes('example'),
+                    [Text.Encoding]::ASCII.GetBytes('test'))) {
+                [byte[]]$bytes=$part
+                $msg.Add([byte]$bytes.Length)
+                $msg.AddRange($bytes)
+            }
+            $msg.AddRange((Convert-HexToBytes '0000010001'))
+            return ,$msg.ToArray()
+        }
+        function New-BridgeRecord([string]$Prefix,[int]$Port,[bool]$IsTcp) {
+            return [pscustomobject]@{
+                source='192.0.2.10';destination='198.51.100.53';ipVersion=4
+                sourcePort=$Port;destinationPort=53
+                isUdp=(-not $IsTcp);isTcp=$IsTcp;dnsQtype='A'
+                dnsWireLabelsBase64=[string[]]@(
+                    [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes($Prefix)),
+                    'ZXhhbXBsZQ==','dGVzdA==')
+            }
+        }
+        function Clone-BridgeFixture([object]$P,[object[]]$R) {
+            $envelope=[pscustomobject]@{Provenance=$P;Records=$R}
+            return (ConvertFrom-Json -InputObject (ConvertTo-Json -InputObject $envelope -Depth 14))
+        }
+        function Assert-BridgeRejected([string]$Path,[object]$P,[object[]]$R,
+                                       [string]$Exe,[string]$Code) {
+            $reason='NO_REJECTION'
+            try {
+                $null=Confirm-HoldoutV2WireReplayCompatibility -CapturePath $Path -Provenance $P -Records $R -TsharkPath $Exe
+            } catch {
+                $reason=[string]$_.Exception.Message
+            }
+            Assert-Contract ($reason -ceq $Code) 'bridge-negative-control'
+        }
+        $bridgeCapture=Join-Path $temporaryPath 'synthetic-v2-wire-bridge.pcap'
+        [byte[][]]$bridgeFrames=@(
+            (New-UdpDnsFrame (New-BridgeDnsQuery ([Text.Encoding]::ASCII.GetBytes('alpha'))) 1),
+            (New-UdpDnsFrame (New-BridgeDnsQuery ([Text.Encoding]::ASCII.GetBytes('beta'))) 2),
+            (New-TcpDnsFrame (New-BridgeDnsQuery ([Text.Encoding]::ASCII.GetBytes('gamma'))) 3),
+            (New-UdpDnsFrame (New-BridgeDnsQuery ([byte[]]@(255))) 4)
+        )
+        Assert-Contract ($bridgeFrames.Count -eq 4) 'bridge-synthetic-fixture-count'
+        Write-SyntheticPcap -Path $bridgeCapture -Frames $bridgeFrames
+        $bridgeSha=(Get-FileHash -LiteralPath $bridgeCapture -Algorithm SHA256).Hash.ToLowerInvariant()
+        $p=[pscustomobject]@{
+            schemaVersion=2;sourceKind='external-pcap-reviewed'
+            reviewState='PENDING_EXTERNAL_CAPTURE_AND_REVIEW'
+            dnsWireNameEncoding='labels-base64-v1'
+            privacyReviewRequired=$true;analystReviewedLabel=$false
+            capturedTransportEvidence=$false;selectedRecordCount=3
+            queryRoot='example.test';captureSha256=$bridgeSha
+            frameNumbers=[int[]]@(1,2,3);questionIndices=[int[]]@(0,0,0)
+            originatingClientLabel='synthetic-client-a'
+            collectionSessionId='synthetic-session-a';collectionVantage='client'
+            independentClientEvidenceUri='https://example.org/synthetic-pending'
+        }
+        [object[]]$records=@(
+            (New-BridgeRecord 'alpha' 53001 $false),
+            (New-BridgeRecord 'beta' 53002 $false),
+            (New-BridgeRecord 'gamma' 53002 $true)
+        )
+        $status=@(Confirm-HoldoutV2WireReplayCompatibility -CapturePath $bridgeCapture -Provenance $p -Records $records -TsharkPath $tshark)
+        Assert-Contract ($status.Count -eq 1 -and
+            [bool]$status[0].OriginalFrameQuestionsBound -and
+            [bool]$status[0].TextProjectionPossible -and
+            -not [bool]$status[0].ProjectionProduced -and
+            [int]$status[0].RecordCount -eq 3 -and
+            [bool]$status[0].RequiresHumanReview -and
+            -not [bool]$status[0].IsApproved -and
+            -not [bool]$status[0].CanPublish -and
+            -not [bool]$status[0].CanFreeze -and
+            [string]$status[0].ReviewState -ceq 'PENDING_EXTERNAL_CAPTURE_AND_REVIEW') 'bridge-success-state'
+        $statusText=ConvertTo-Json -InputObject $status[0] -Depth 5 -Compress
+        Assert-Contract ($statusText -notmatch 'alpha|beta|gamma|192[.]0[.]2[.]|example[.]test|captureSha256|dnsWireLabelsBase64' -and
+            @($status[0].PSObject.Properties).Count -eq 9) 'bridge-success-privacy'
+
+        $negativeCount=0
+        $bad=Clone-BridgeFixture $p $records
+        $bad.Provenance.queryRoot='other.test'
+        Assert-BridgeRejected $bridgeCapture $bad.Provenance @($bad.Records) $tshark 'BRIDGE_ROOT_MISMATCH'
+        $negativeCount++
+        $bad=Clone-BridgeFixture $p $records
+        $bad.Provenance.reviewState='APPROVED'
+        Assert-BridgeRejected $bridgeCapture $bad.Provenance @($bad.Records) $tshark 'BRIDGE_PENDING_ONLY'
+        $negativeCount++
+        $bad=Clone-BridgeFixture $p $records
+        $bad.Provenance.schemaVersion=1
+        Assert-BridgeRejected $bridgeCapture $bad.Provenance @($bad.Records) $tshark 'BRIDGE_PENDING_ONLY'
+        $negativeCount++
+        $bad=Clone-BridgeFixture $p $records
+        $bad.Provenance.dnsWireNameEncoding='lossy-qname-text'
+        Assert-BridgeRejected $bridgeCapture $bad.Provenance @($bad.Records) $tshark 'BRIDGE_PENDING_ONLY'
+        $negativeCount++
+        $bad=Clone-BridgeFixture $p $records
+        $bad.Provenance.selectedRecordCount=2
+        Assert-BridgeRejected $bridgeCapture $bad.Provenance @($bad.Records) $tshark 'BRIDGE_CARDINALITY'
+        $negativeCount++
+        $bad=Clone-BridgeFixture $p $records
+        $bad.Records[0].dnsWireLabelsBase64[0]='eA=='
+        Assert-BridgeRejected $bridgeCapture $bad.Provenance @($bad.Records) $tshark 'BRIDGE_SOURCE_BINDING_FAILED'
+        $negativeCount++
+        Assert-BridgeRejected (Join-Path $temporaryPath 'missing-bridge-source.pcap') $p $records $tshark 'BRIDGE_SOURCE_BINDING_FAILED'
+        $negativeCount++
+        $bad=Clone-BridgeFixture $p $records
+        $bad.Provenance.queryRoot='Example.test'
+        Assert-BridgeRejected $bridgeCapture $bad.Provenance @($bad.Records) $tshark 'BRIDGE_ROOT_INVALID'
+        $negativeCount++
+        $bad=Clone-BridgeFixture $p $records
+        $bad.Provenance.privacyReviewRequired=$false
+        Assert-BridgeRejected $bridgeCapture $bad.Provenance @($bad.Records) $tshark 'BRIDGE_PENDING_ONLY'
+        $negativeCount++
+        $bad=Clone-BridgeFixture $p $records
+        $bad.Provenance.frameNumbers[1]=1
+        Assert-BridgeRejected $bridgeCapture $bad.Provenance @($bad.Records) $tshark 'BRIDGE_SOURCE_BINDING_FAILED'
+        $negativeCount++
+        # The fourth original frame contains a binary label. Its source
+        # binding is legitimate, but legacy text projection MUST be denied.
+        $bad=Clone-BridgeFixture $p $records
+        $bad.Provenance.frameNumbers=[int[]]@(1,2,3,4)
+        $bad.Provenance.questionIndices=[int[]]@(0,0,0,0)
+        $bad.Provenance.selectedRecordCount=4
+        $binaryRecord=New-BridgeRecord 'alpha' 53004 $false
+        $binaryRecord.dnsWireLabelsBase64[0]=[Convert]::ToBase64String([byte[]]@(255))
+        [object[]]$binaryRecords=@($bad.Records[0],$bad.Records[1],$bad.Records[2],$binaryRecord)
+        Assert-BridgeRejected $bridgeCapture $bad.Provenance $binaryRecords $tshark 'BRIDGE_NAME_NOT_LOSSLESS'
+        $negativeCount++
+        Assert-Contract ($negativeCount -eq 11) 'bridge-negative-count'
+        Write-Host 'V2 wire replay bridge: three original frame/question records bound; eleven source, schema, binary and review-state negatives rejected; no projected samples or approvals.'
     }
 } finally {
     # Remove only our own uniquely named temporary test fixture.
