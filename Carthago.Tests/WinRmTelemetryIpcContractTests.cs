@@ -89,19 +89,21 @@ public sealed class WinRmTelemetryIpcContractTests
         var result = Assert.IsType<WinRmTelemetryIpcCandidate>(accepted);
         Assert.Equal("UNSIGNED_IPC_CANDIDATE_NOT_AUTHORIZED_FOR_ALERT", reason);
         Assert.Equal(session.Id, result.SessionId);
-        Assert.Equal(1, result.Sequence);
+        Assert.Equal(1L, result.Sequence);
         Assert.Equal(Machine, result.Machine);
         Assert.Equal("10.20.30.41", result.RemoteIp);
         Assert.Equal(1234U, result.ProcessId);
         Assert.Equal(100L, result.LogonRecordId);
         Assert.Equal(101L, result.ProcessRecordId);
 
-        var properties = string.Join(",", typeof(WinRmTelemetryIpcCandidate)
-            .GetProperties().Select(x => x.Name));
+        var properties = typeof(WinRmTelemetryIpcCandidate)
+            .GetProperties().Select(x => x.Name)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
         foreach (var forbidden in new[]
             { "CommandLine", "Payload", "Signature", "Trusted", "Authorized",
               "Outcome", "Verified", "Token", "Sid" })
-            Assert.DoesNotContain(forbidden, properties, StringComparison.OrdinalIgnoreCase);
+            Assert.False(properties.Contains(forbidden),
+                "Forbidden IPC candidate property: " + forbidden);
     }
 
     [Fact]
