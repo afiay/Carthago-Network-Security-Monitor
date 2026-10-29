@@ -124,7 +124,7 @@ Read-only GitHub source inspection after commit 6c5ec83 confirmed:
 - One shared reader job scriptblock definition and two callers (Stage 6G race and Stage 6H negative probe), not duplicate observer implementations.
 - The observer can optionally emit both ABSENT and PARTIAL/IOERROR acknowledgment markers.
 - Exactly six H01–H06 synthetic negative cases, with no publisher API call inside Invoke-ReaderNegativeCase.
-- Separate OnlyReaderNegativeControl mode bypasses the missing publisher-module preflight while keeping the AuthorizationTestTime guard.
+- Separate OnlyReaderNegativeControl mode bypasses the missing publisher-module preflight while keeping the AuthorizedTestTime guard.
 - Nested reparse-point cleanup checks remain present; the earlier duplicate race-tail block was removed.
 - Existing Stage 6F and Stage 6G modes retain their original three rounds and opt-in bounded 3–12 reader stress.
 
@@ -141,3 +141,12 @@ These are source checks, not parser compilation, PowerShell execution, test resu
 - docs/STAGE6D_PRIVATE_PROVENANCE_SCHEMA_AND_ATOMICITY_20261029.md — strict v2 private provenance.
 
 **End status:** Stage 6H is **authored, not executed**, with no evidence about real Windows rename behavior or detection accuracy.
+
+
+## 8. Additional private-root safety hardening
+
+Commit **e977067** modified only scripts/verify-v2-two-writer-race-contract.ps1 to fail closed when the existing build-verify **parent itself** carries the Windows ReparsePoint attribute. A private child directory is created only after confirming that the parent exists, is a directory and is not this kind of redirected location. This complements the earlier nested-reparse cleanup check and reduces the risk that a deliberately malformed synthetic fixture is created outside the intended ignored private root.
+
+This is a source-level preventive check, **not an executed proof** against junction/symlink races or other path aliasing. Additional trusted-root canonicalization, ACL and filesystem race tests remain required before claiming Windows isolation. No production application paths, original PCAPs, Holdout V1/V2 manifests, runner configurations or workflow files were modified in this hardening step.
+
+**Final Stage 6H source change register:** f8c1ec5 (shared reader), d6a848e (six fault-injection helpers), fd4ce67 (reader-only mode), 6c5ec83 (remove incorrect duplicate branch tail), e977067 (reject redirected private parent). No PowerShell script was executed and no observer sensitivity result has been observed.
