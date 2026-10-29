@@ -1,6 +1,6 @@
 # Stage 6E — Atomic private V2 candidate publication and fault-injection contract
 
-**Status:** Design and regression source authored; execution PARKED. No test or publisher module has run.
+**Current status (2026-10-30): SYNTHETIC GREEN — Stage 6E atomic private publisher 18/18 owner-verified Windows cases at `c5174da`. The publisher module exists; original-PCAP source approval, power-loss durability and commercial release remain unverified.**
 
 **Date:** 2026-10-29. **Branch:** feature/carthago-reliability-hardening. **Source:** scripts/verify-v2-atomic-publication-contract.ps1.
 
@@ -12,11 +12,11 @@ Stage 6D already proposed a 30-field strict private provenance schema version 2 
 
 Four manifest-declared R102 candidates (two benign and two malicious) must be written as **eight paired files to a private review destination**, or not exposed there at all. Publication to that private destination is not admission into the frozen corpus, classification, evidence independence, source license approval or readiness. All candidate review states remain PENDING_EXTERNAL_CAPTURE_AND_REVIEW.
 
-## 2. Proposed private module and callable interfaces
+## 2. Implemented private module and callable interfaces
 
-Future module: scripts/HoldoutV2CandidatePublisher.psm1. It does **not** currently exist.
+Implemented module: `scripts/HoldoutV2CandidatePublisher.psm1`. Its verified synthetic fault contract does not replace external-source admission or real storage durability testing.
 
-- A public production wrapper, Publish-HoldoutV2CandidateBatch, will accept exactly four candidate sample/provenance pairs and a previously authenticated private destination.
+- The exported wrapper, Publish-HoldoutV2CandidateBatch, accepts exactly four candidate sample/provenance pairs and a previously authenticated private destination.
 - A **module-private** Invoke-HoldoutV2AtomicPublishCore takes CandidatePairs, SchemaPath, PrivateOutputRoot, BatchName and an internal OnMilestone hook. The hook is invoked only from the parked test within module scope to deterministically inject synthetic failures.
 - A **pure module-private** Assert-HoldoutV2BatchName -Name validator rejects traversal, path separators, Windows reserved names and malformed basename syntax before a filesystem path can be built.
 - No public UI, user-facing script, production wrapper, automated workflow or job dispatch is permitted to accept a user-supplied OnMilestone / FaultAt callback. Exposing fault injection to the real application is expressly forbidden.
@@ -36,7 +36,7 @@ Future module: scripts/HoldoutV2CandidatePublisher.psm1. It does **not** current
 | PUBLISH_UNSAFE_BATCH_NAME | Bad name rejected before any writer invocation |
 | PUBLISH_INVALID_BATCH | Invalid four-slot input, duplicated name or unsupported schema |
 
-These are proposed stable, privacy-safe identifiers; they do not yet exist in production. A missing interpreter or malformed fixture must not be mistaken for an observed security RED.
+The PUBLISH_* identifiers are implemented and exercised in the synthetic publisher regression; the three `*-not-implemented-red` entries describe the **historical missing-module setup phase**, not the current module state. Missing interpreters and malformed fixtures never constitute a security result.
 
 ## 3. Isolation, inputs, and privacy
 
@@ -50,7 +50,7 @@ The harness never downloads or opens a real PCAP, uses a packet interface, invok
 
 ## 4. Authored deterministic regression matrix
 
-**Planned cases:** one pending-only success control and **17 failure/exception scenarios**, i.e., 18 invocations. **Executed cases:** zero.
+**Owner-verified synthetic cases:** one pending-only success control and **17 failure/exception scenarios**, **18/18 GREEN** at `c5174da`. These did not approve an external sample.
 
 | Test | Fault or mutation | Expected final filesystem state | Specific diagnostic |
 | --- | --- | --- | --- |
@@ -90,9 +90,9 @@ The harness never downloads or opens a real PCAP, uses a packet interface, invok
 - The owned test root must end with only the sentinel, control-complete and intentionally committed-but-uncertain folders.
 - Existing frozen V1 and V2 manifest are not written. No branch, workflow or source evidence cleanup.
 
-All listed checks are **authored expectations, not executed results**. Windows PowerShell 5.1 serialization, module-scoped private invocation, malformed input and filesystem semantics may reveal harness defects when explicitly authorized. Such defects are NOT security RED.
+These expectations were subsequently exercised in the owner-authorized 18-case Windows test. The observed result covers bounded synthetic namespace publication and rollback only; it is **not** a power-loss or arbitrary ACL/reparse-point guarantee.
 
-## 6. Proposed production transaction algorithm
+## 6. Implemented private transaction algorithm and remaining limits
 
 ### Side-effect-free preflight
 Require exactly four manifest-matched, correctly classified candidate pairs and strict version-2 private provenance. Reject missing and unknown fields, malformed original-frame indexes, duplicate frame/question identity, client/source/session collisions and incompatible review state. Confirm any source review separately. Canonicalize the trusted private root and final destination, reject traversal and reparse points, require a safe basename, refuse existing targets, and enforce bounded record/file sizes.
@@ -106,19 +106,19 @@ Use an actual no-overwrite directory rename/placement primitive with demonstrate
 ### Rollback and recovery
 Before commit, remove only the operation-owned pending directory. If rename fails or reports uncertainty, inspect whether the final target exists and contains the intended bytes before cleanup. After a successful rename, never delete the committed directory because a later response failed. Do not overwrite a final target on retry. Handle orphan stages after crashes only through a separately reviewed policy with ownership, age limits, path containment and no symlink following; never blindly delete unknown source data.
 
-Concurrent writers and Windows power-loss durability are distinct future tests. A same-volume rename can give atomic namespace visibility without necessarily guaranteeing power-loss durability; the harness has not verified NTFS or Windows API semantics.
+Concurrent writers and independent reader visibility were subsequently exercised in Stages 6F/6G (two-writer 3/3 and reader 3/6/12 rounds GREEN). **Power-loss durability, formal linearizability, arbitrary ACL failures and general NTFS guarantees remain unverified.**
 
-## 7. Sequential test-first activation gates
+## 7. Originally staged activation gates and observed result
 
-1. **NOW:** no execution permitted. Only GitHub source edits, static review and in-depth documentation. The script is parked.
+1. **Historical preparation gate (complete):** code was initially authored without execution; the owner later authorized and verified the synthetic 18-case publisher matrix at `c5174da`.
 2. **Future owner approval:** confirm the explicit "now it's test time" authorization, CARTHAGE hostname, exact repository commit, installed Windows PowerShell version and the schema/provenance dependencies. No live capture or external source access.
-3. **First RED:** verify legitimate synthetic control vectors and ensure missing private module/API is the expected unimplemented boundary. Missing TShark, broken JSON, Windows parser errors or environment problems cannot stand in for functional RED.
-4. **Implementation:** after observed RED, add the smallest private publisher module and pure filename validator, reusing Stage 6D's validation function and preserving the existing importer, auditor, frozen evidence and one manual GitHub Actions workflow.
-5. **GREEN:** repeat the identical 18 synthetic cases. Require exact diagnostic codes, eight-file integrity, rollback, no overwrite and privacy controls, including corrected problems discovered in first execution.
-6. **Further test gates:** separate concurrent-process race test, crash/reboot recovery, ACL/permissions denial, same-volume rename behavior and malicious symlink/reparse-point handling. These are not yet implemented in the initial deterministic harness.
+3. **Historical RED-first step (complete):** verify legitimate synthetic control vectors and isolate missing private module/API before implementation. Missing TShark, broken JSON, Windows parser errors or environment problems cannot stand in for functional RED.
+4. **Implemented:** the private publisher module and pure filename validator were added after RED-first contract preparation, reusing Stage 6D's validation function and preserving the existing importer, auditor, frozen evidence and one manual GitHub Actions workflow.
+5. **GREEN verified:** the 18-case synthetic contract passed at `c5174da`. Require exact diagnostic codes, eight-file integrity, rollback, no overwrite and privacy controls, including corrected problems discovered in first execution.
+6. **Subsequent gates:** two-writer contention passed 3/3 and the independent reader reached 12/12 bounded rounds; reader fault-sensitivity passed 6/6. **Crash/reboot durability, generalized ACL/permissions denial, formal linearizability and adversarial filesystem races remain open.**
 7. **Source admission:** human-reviewed license, malicious/benign label, original PCAP bytes, independent logical source and session, and explicit owner freeze authorization all remain separate. A green synthetic publisher cannot approve any V2 candidate.
 
-**Parked command, NOT authorization:**
+**Owner-gated regression command (already verified; not automatically scheduled):**
 
 ~~~powershell
 powershell.exe -NoProfile -File .\scripts\verify-v2-atomic-publication-contract.ps1 -AuthorizedTestTime
@@ -142,12 +142,12 @@ Frozen V1 remains historically FAILED 4/6, without retroactive edits. V2 remains
 - JSON Schema Draft 2020-12: https://json-schema.org/draft/2020-12
 
 
-## Stage 6F implementation handoff (2026-10-29, authored / NOT RUN)
+## Stage 6F handoff — subsequently implemented and tested on Windows
 
-The concurrency and recovery gaps identified in Stage 6E have now been **prepared as separate opt-in contracts**, not executed or integrated into the current publisher (which still does not exist).
+The Stage 6F recovery planner and two-writer contracts were subsequently **implemented and verified**: recovery decisions 15/15 at `1ab3290`, two-writer contention 3/3 at `adf421f`. The publisher exists and is used by the verified synthetic race harness.
 
 - scripts/verify-v2-recovery-planner-contract.ps1: 15 **path-free, in-memory** advisory scenarios for active writers, young/old orphans, missing ownership evidence, untrusted reparse points, partial/complete committed folders, post-rename uncertainty and name collisions. The planned private Get-HoldoutV2PrivateRecoveryPlan function returns only bounded decision codes with RequiresManualReview=true and AutoDeleteAllowed=false; it cannot delete or approve a batch.
 - scripts/verify-v2-two-writer-race-contract.ps1: three synchronized two-process contention rounds (6 independent Start-Job workers planned). A future **public, non-fault-injectable** Publish-HoldoutV2CandidateBatch wrapper must create exactly one complete eight-file pending-review directory per new name; the other worker must fail with PUBLISH_TARGET_EXISTS without modifying the winner.
 - docs/STAGE6F_CONCURRENT_V2_PUBLICATION_AND_RECOVERY_20261029.md: full threat model, expected decision matrix, race lifecycle, privacy controls, absence of destructive recovery, prerequisites, incomplete guarantees and evidence policy.
 
-**No execution authorized.** Neither contract verifies actual Windows no-replace behavior, power-loss durability, ACLs, symlinks, real source PCAPs or detection accuracy until the user separately permits testing. Stage 6D pure validator and Stage 6E sequential transactional core must first achieve independently observed GREEN before Stage 6F can be interpreted as production assurance. Do not broaden Stage 6E with new public fault hooks, automatic orphan cleanup, or extra GitHub Actions workflows.
+**Observed synthetic executions were individually owner-authorized.** They establish bounded Windows race/visibility behavior but not power-loss durability, formal no-replace correctness under all filesystem conditions, ACL attacks, real-source rights or detector accuracy. Stage 6D and 6E achieved independently observed GREEN before the Stage 6F tests; this ordering remains required for subsequent format changes. Do not broaden Stage 6E with new public fault hooks, automatic orphan cleanup, or extra GitHub Actions workflows.
