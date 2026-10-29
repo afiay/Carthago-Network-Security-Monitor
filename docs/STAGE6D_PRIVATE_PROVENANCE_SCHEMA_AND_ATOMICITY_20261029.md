@@ -1,12 +1,12 @@
 # Stage 6D — Private Holdout V2 provenance schema and transactional admission contract
 
-**Status:** PARKED / DESIGN + REGRESSION SOURCE AUTHORED / NO TESTS EXECUTED
+**Current status (2026-10-30): SYNTHETIC GREEN — private provenance validator 2 pending-only positives + 24 negatives (26/26) verified on CARTHAGE at `3ae94ba`. The downstream atomic publisher (Stage 6E) is independently GREEN 18/18 at `c5174da`; Holdout V2 source approval remains PENDING, 0/4.**
 
 **Date:** 2026-10-29  
 **Branch:** `feature/carthago-reliability-hardening`  
 **Created schema:** `docs/contracts/holdout-v2-private-provenance-v2.schema.json` (commit `163a11b`)  
 **Prepared synthetic test:** `scripts/verify-v2-provenance-schema-contract.ps1` (commits `9e29ab7`, `fbab77d`)  
-**Production code status:** Existing importer/auditor unchanged; future `scripts/HoldoutV2Provenance.psm1` does not yet exist.
+**Production code status:** `scripts/HoldoutV2Provenance.psm1` exists and its synthetic schema/collision validation is verified; `scripts/HoldoutV2CandidatePublisher.psm1` also exists, with separate fault/concurrency checks. The legacy importer and auditor still use their older provenance format and remain unchanged.
 
 ## 1. Why this stage exists
 
@@ -91,11 +91,11 @@ Required independent validation after schema typing:
 9. Avoid reading or publishing unbounded untrusted packet data. Enforce the existing bounded record/packet caps, selected frame scans and local private storage.
 10. Never print DNS QNAMEs, reversible Base64 strings, source IPs, capture paths, URLs, credentials or session/client labels into ordinary console logs, CI summaries or shared artifacts.
 
-## 5. Prepared in-memory regression contract (unexecuted)
+## 5. Synthetic provenance regression contract — verified
 
 The companion script defines a syntactically valid **four-candidate** reference fixture from the actual manifest names, with only RFC 5737 documentation IPs and `example.org` marker URLs. It is not external ground truth and uses `analystReviewedLabel=false` and `capturedTransportEvidence=false`, deliberately demonstrating that **schema-valid can remain wholly unapproved**.
 
-Two positive-but-pending controls are authored: (i) four well-formed candidate sidecars, and (ii) a repeated frame with a distinct question index within the same capture. Both must return exactly one five-property, non-approving metadata object and leave the input unchanged.
+Two valid-structure, review-pending controls were executed and verified: (i) four well-formed candidate sidecars, and (ii) a repeated frame with a distinct question index within the same capture. Both must return exactly one five-property, non-approving metadata object and leave the input unchanged.
 
 **Negative cases, with stable diagnostic identifiers to distinguish real schema failures from unrelated interpreter errors:**
 
@@ -126,17 +126,17 @@ Two positive-but-pending controls are authored: (i) four well-formed candidate s
 | 23 | `wrong-count-type` | `PROV_SCHEMA_TYPE` | Structural or cross-candidate rejection, not source approval |
 | 24 | `not-four-candidates` | `PROV_BATCH_SHAPE` | Structural or cross-candidate rejection, not source approval |
 
-There are **24 authored negative cases**, not observed failures. The future validator must distinguish missing fields from wrong types, malformed schema fields from inconsistent cross-candidate collections, and invalid repeat packet/question pairs from valid multi-question frames.
+All **24 negative rejection cases were owner-verified** on CARTHAGE (in addition to two pending-only positive controls). The validator distinguishes missing fields from wrong types, malformed schema fields from inconsistent cross-candidate collections, and invalid repeat packet/question pairs from valid multi-question frames.
 
-The test uses a missing future helper module by design, `scripts/HoldoutV2Provenance.psm1`, and requires an additional `-AuthorizedTestTime` switch. At the first approved test time, the expected missing-implementation error is `provenance-validator-not-implemented-red`; it counts as an intentionally missing API, not proof that the synthetic fixtures are valid. Each case can only be called meaningful RED once the independent schema/positive controls are verified.
+The test originally targeted a deliberately missing helper as a RED-first design. The helper was subsequently implemented, and the exact synthetic validator matrix reached GREEN at `3ae94ba`. The `-AuthorizedTestTime` flag remains a required guard for any later rerun; missing-implementation diagnostics describe the historical design phase, not the current code.
 
 ### Expected safe error behavior
 
 All negative failures should use bounded constant error codes such as `PROV_SCHEMA_VERSION` or `PROV_BATCH_SESSION_COLLISION`, with **no appended private values**. The test's error-path scanner looks for private source IPs, client/session markers, capture filenames, hashes and source URLs, and rejects accidental leakage. The positive response must have exactly five harmless metadata fields. Neither positive nor negative result should claim evidence approval.
 
-## 6. Required future atomic candidate publication
+## 6. Atomic candidate publication — implemented and synthetically verified in Stage 6E
 
-**The current importer remains unchanged; the following is a contract for a future, separately implemented and tested V2 batch-publisher.**
+**The existing importer remains unchanged. The separate V2 private publisher has since been implemented and verified on synthetic pending-only batches. The following is its original acceptance contract; see Stage 6E/6F/6G for observed tests and limits.**
 
 Recommended API boundary: `Publish-HoldoutV2CandidateBatch -ValidatedCandidates -PrivateOutputDirectory` with a distinct protected root under `build-verify`. Never accept an arbitrary absolute or redirected path outside that root.
 
@@ -153,29 +153,29 @@ A proper publication transaction is:
 
 The current flat-path auditor already accepts a `-CandidateDirectory` argument; a future integration may point it at the committed batch folder without changing the frozen manifest. Do not silently alter its current behavior to accept pending directories.
 
-### Future fault-injection contract (not yet executable)
+### Atomic publisher fault-injection contract — executed (18/18)
 
 Prepare a separate transaction harness (after schema RED/GREEN) that simulates failure at: preflight; writing sample 2/4; writing provenance 3/4; flush/reread mismatch; permission denial; target-already-exists; directory rename failure; and post-move status uncertainty. For every **pre-commit** failure, require that the destination batch is absent and no unrelated file changed. For post-commit uncertainty, require manual reconciliation and no destructive overwrite. Also verify two concurrent writers cannot both claim the same target.
 
 Fault injection may only modify synthetic private temporary files on explicitly approved CARTHAGE test time. It must not read real external PCAP, run detectors or mutate the V1/V2 manifests.
 
-## 7. Red/green execution gates and precise evidence
+## 7. Execution record and originally planned RED/GREEN gates
 
-- **Current gate:** user prohibited tests on the public connection. Do not dispatch CI, invoke PowerShell, TShark, xUnit, a PCAP decoder or write test outputs. GitHub source editing and in-depth documentation are the only actions performed.
+- **Observed gate:** the owner explicitly ran the private synthetic provenance matrix on CARTHAGE; 2 pending-only controls and 24 negatives passed at `3ae94ba`. CI, real PCAPs, external admissions and automatic promotion were not authorized.
 - **First authorized gate:** verify the exact code SHA, PowerShell 5.1, the 2020-12 schema parser, the four-slot manifest, and original V1 constraints. Check that every static test vector conforms to its intended positive/negative class; failures in the harness or schema engine are **not** security RED.
-- **RED phase:** run the parked pure schema contract; observe missing module/API and then genuine independent validation failures. Do not report a successful suite until the implementation meets all type/collision/privacy expectations.
+- **Historical RED-first plan (completed for the validated synthetic scope):** run the private schema contract; observe missing module/API and then genuine independent validation failures. Do not report a successful suite until the implementation meets all type/collision/privacy expectations.
 - **GREEN phase:** implement minimal pure validator without changing the legacy importer or frozen evidence, run focused regression with exact error identifiers and verify no input mutation, auto-approval or privacy leakage.
 - **Transaction phase:** separately author/observe RED for the future publisher, implement the smallest safe staging/commit API, then run rollback and concurrency tests under explicit approval.
 - **Production admission:** source licensing, malicious classification, original client provenance and Holdout V2 freeze require separate human authority. No algorithmic syntactic validation implies permission.
 - **Evidence ledger format:** date, code SHA, schema SHA, host, interpreter version, test case ID, expected vs observed error, sanitized exit status, count/hash summary, privacy review and next approval gate.
 
-### Prepared command — parked, not permission
+### Owner-gated regression command (already verified; no need to rerun without code changes)
 
 ```powershell
 powershell.exe -NoProfile -File .\scripts\verify-v2-provenance-schema-contract.ps1 -AuthorizedTestTime
 ```
 
-**Do not execute until the owner explicitly authorizes testing.** The presence of the switch or schema source is not such authorization.
+**Historical authoring precaution:** execution requires explicit owner authorization; prior successful runs do not grant standing permission for future tests.
 
 ## 8. Non-negotiable safety and compatibility constraints
 
@@ -186,7 +186,7 @@ powershell.exe -NoProfile -File .\scripts\verify-v2-provenance-schema-contract.p
 - No irreversible branch deletion or merging as part of this stage.
 - Keep all private PCAPs and reversible DNS names out of Git, public telemetry, default serialization and ordinary logs.
 
-**Status at commit creation: schema + tests authored; no source decoder, provenance validator or atomic batch publisher implemented; no tests run.**
+**Historical status at initial commit:** schema and tests were authored before the modules existed. **Current verified status:** Stage 6D 26/26 and Stage 6E 18/18 synthetic checks GREEN; real source approval remains pending.
 
 ## References
 
@@ -199,8 +199,8 @@ powershell.exe -NoProfile -File .\scripts\verify-v2-provenance-schema-contract.p
 
 ## Stage 6E handoff — fault-injection contract now authored (2026-10-29)
 
-The next step proposed in this Stage 6D document has now been **authored but not executed** as scripts/verify-v2-atomic-publication-contract.ps1 (commits 30ebeac, c2e010c and 1f7888c). The in-depth separate specification is docs/STAGE6E_ATOMIC_V2_PUBLICATION_FAULT_CONTRACT_20261029.md (commit 1b8d4b6).
+The Stage 6E handoff was subsequently implemented and verified **18/18** under owner-authorized Windows synthetic tests at `c5174da`; the original design script is `scripts/verify-v2-atomic-publication-contract.ps1`. Details and boundaries are in `docs/STAGE6E_ATOMIC_V2_PUBLICATION_FAULT_CONTRACT_20261029.md`.
 
-This new test source proposes a **module-private** fault-injectable publisher core and a pure, non-writing batch-name validator; neither production module nor atomic publisher currently exists. Stage 6E defines one private unpublished-to-holdout control and 17 failure/exception cases covering eight precommit faults, postcommit uncertainty, existing-target protection, four pure unsafe filename tests and three invalid batch forms. It checks exact eight-file sample/provenance contents and denies any automatic approval. No existing importer/auditor, V1/V2 manifest, workflow or threshold has been changed.
+The implemented test exercises a **module-private** fault-injectable publisher core and pure non-writing batch-name validator; both now exist in `scripts/HoldoutV2CandidatePublisher.psm1`. Stage 6E defines one private unpublished-to-holdout control and 17 failure/exception cases covering eight precommit faults, postcommit uncertainty, existing-target protection, four pure unsafe filename tests and three invalid batch forms. It checks exact eight-file sample/provenance contents and denies any automatic approval. No existing importer/auditor, V1/V2 manifest, workflow or threshold has been changed.
 
-This Stage 6D schema contract remains logically **prior** to implementation of the Stage 6E publisher: confirm the pure provenance validator's RED then GREEN under separate owner test authorization before the publisher can reuse it. Neither a file committed to GitHub nor an authored failure callback is proof of a real Windows filesystem result. Crash durability, concurrent two-process races, ACL denial, and symlink/reparse-point handling remain separate acceptance tests, not completed coverage. The owner's public-connection no-test restriction is unchanged; **zero executions** have occurred.
+Stage 6D's private schema checks were independently confirmed GREEN before interpreting Stage 6E's later publisher result. The dependency remains mandatory for any future versioned schema change. Neither a file committed to GitHub nor an authored failure callback is proof of a real Windows filesystem result. Crash durability, concurrent two-process races, ACL denial, and symlink/reparse-point handling remain separate acceptance tests, not completed coverage. These synthetic suites were later executed by the owner and recorded in `docs/DEVELOPMENT_VALIDATION_LEDGER.md`; no tests were run merely to refresh this document.
