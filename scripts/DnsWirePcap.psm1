@@ -299,6 +299,24 @@ function Assert-CanonicalWireLabels([object]$Values) {
         if($length -gt 255) { Fail-Wire 'DNS_WIRE_NAME_TOO_LONG' }
     }
 }
+# A record schema is an exact, case-sensitive set of NOTE property names.
+# No Compare-Object/Sort-Object pipeline: empty and malformed inputs must
+# fail deterministically rather than trigger PowerShell mandatory prompts.
+function Test-DnsExactRecordFields([object]$Record,[string[]]$ExpectedFields) {
+    if($null -eq $Record -or $null -eq $ExpectedFields) { return $false }
+    $seen=[Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+    foreach($property in $Record.PSObject.Properties) {
+        if($property.MemberType -ne [Management.Automation.PSMemberTypes]::NoteProperty) {
+            return $false
+        }
+        if(-not $seen.Add([string]$property.Name)) { return $false }
+    }
+    if($seen.Count -ne $ExpectedFields.Count) { return $false }
+    foreach($field in $ExpectedFields) {
+        if(-not $seen.Contains([string]$field)) { return $false }
+    }
+    return $true
+}
 function Confirm-DnsWireCandidateBinding {
     [CmdletBinding()]
     param(
@@ -336,9 +354,7 @@ function Confirm-DnsWireCandidateBinding {
     $matched=[Collections.Generic.HashSet[string]]::new()
     for($i=0;$i -lt $Records.Count;$i++) {
         $record=$Records[$i]
-        if(@($record.PSObject.Properties.Name).Count -ne $fields.Count -or
-           @(Compare-Object (@($record.PSObject.Properties.Name) | Sort-Object)
-              ($fields | Sort-Object)).Count -ne 0 -or
+        if(-not (Test-DnsExactRecordFields -Record $record -ExpectedFields $fields) -or
            $record.isUdp -isnot [bool] -or $record.isTcp -isnot [bool] -or
            ($record.isUdp -eq $record.isTcp)) {
             Fail-Wire 'DNS_WIRE_RECORD_SCHEMA'
