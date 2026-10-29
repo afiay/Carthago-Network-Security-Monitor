@@ -29,6 +29,38 @@ function Convert-WireHex([string]$Text) {
     }
     return ,$bytes
 }
+# Wireshark -T jsonraw encodes one *_raw field as a descriptor array:
+# [hex, frameOffset, byteLength, bitmask, fieldType, optional dataSource].
+# Those 5/6 entries are metadata for ONE field, not multiple DNS payloads.
+# Refuse ambiguous/nested/malformed descriptors and verify metadata length
+# against the complete decoded hex bytes before transport-specific parsing.
+function Convert-DnsJsonRawDescriptor([object]$Descriptor) {
+    if($null -eq $Descriptor -or $Descriptor -isnot [array] -or
+       $Descriptor.Count -notin @(5,6)) {
+        Fail-Wire 'DNS_WIRE_RAW_AMBIGUOUS'
+    }
+    if($Descriptor[0] -isnot [string]) {
+        Fail-Wire 'DNS_WIRE_RAW_AMBIGUOUS'
+    }
+    for($i=1;$i -lt $Descriptor.Count;$i++) {
+        if($Descriptor[$i] -isnot [int] -and
+           $Descriptor[$i] -isnot [long]) {
+            Fail-Wire 'DNS_WIRE_RAW_AMBIGUOUS'
+        }
+        if([long]$Descriptor[$i] -lt 0) {
+            Fail-Wire 'DNS_WIRE_RAW_AMBIGUOUS'
+        }
+    }
+    if([long]$Descriptor[3] -ne 0) {
+        # Protocol-level DNS bytes must not describe a masked bitfield.
+        Fail-Wire 'DNS_WIRE_RAW_AMBIGUOUS'
+    }
+    $bytes=Convert-WireHex ([string]$Descriptor[0])
+    if([long]$Descriptor[2] -ne $bytes.Length) {
+        Fail-Wire 'DNS_WIRE_RAW_LENGTH_MISMATCH'
+    }
+    return ,$bytes
+}
 # DNS over TCP is preceded by a two-octet big-endian length per RFC 7766.
 # In TShark 4.6.9 jsonraw the prefix is included in dns_raw for the
 # synthetic TCP fixture. Enforce exact framing, never guess or silently
@@ -177,9 +209,9 @@ function Read-DnsWireQuestion {
     if($null -eq $layers) { Fail-Wire 'DNS_WIRE_RAW_UNAVAILABLE' }
     $rawProperty=Get-WireProp $layers 'dns_raw'
     if($null -eq $rawProperty) { Fail-Wire 'DNS_WIRE_RAW_UNAVAILABLE' }
-    $rawValues=@($rawProperty.Value)
-    if($rawValues.Count -ne 1) { Fail-Wire 'DNS_WIRE_RAW_AMBIGUOUS' }
-    $rawBytes=Convert-WireHex ([string]$rawValues[0])
+    # dns_raw is a single jsonraw descriptor with five or six fields.
+    # Do not treat its metadata fields as repeated DNS message values.
+    $rawBytes=Convert-DnsJsonRawDescriptor -Descriptor $rawProperty.Value
     # Obtain independently decoded transport fields BEFORE interpreting
     # raw DNS header bytes: TCP jsonraw may include its two-octet prefix.
     # Extract only the selected frame's captured source/destination and
