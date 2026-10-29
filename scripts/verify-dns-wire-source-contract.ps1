@@ -362,7 +362,19 @@ try {
     $rawOutput = @(& $tshark -n -r $capture -Y 'frame.number == 1 || frame.number == 2 || frame.number == 5' `
         -T jsonraw 2>&1)
     Assert-Contract ($LASTEXITCODE -eq 0) 'tshark-jsonraw-failed'
-    $rawFrames = @(ConvertFrom-Json -InputObject ($rawOutput -join [Environment]::NewLine))
+    # jsonraw is a top-level JSON array. Windows PowerShell 5.1 may
+    # preserve or enumerate that array differently when ConvertFrom-Json
+    # emits into @(...). Decode through a single-object envelope so the
+    # typed Frames property has stable cardinality across PS versions.
+    # TShark output remains unmodified; never print raw DNS packet bytes.
+    $rawJson = ($rawOutput -join [Environment]::NewLine).Trim()
+    Assert-Contract ($rawJson.StartsWith('[') -and
+        $rawJson.EndsWith(']')) 'tshark-jsonraw-not-array'
+    $rawEnvelope = ConvertFrom-Json -InputObject ('{"Frames":'+$rawJson+'}')
+    Assert-Contract ($null -ne $rawEnvelope -and
+        $null -ne $rawEnvelope.PSObject.Properties['Frames'] -and
+        $rawEnvelope.Frames -is [array]) 'tshark-jsonraw-frame-shape-invalid'
+    [object[]]$rawFrames = $rawEnvelope.Frames
     Assert-Contract ($rawFrames.Count -eq 3) 'tshark-frame-count-mismatch'
     foreach ($reference in @(@(0, $dns1), @(1, $dns2), @(2, $dns5))) {
         $frameIndex = [int]$reference[0]
