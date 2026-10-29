@@ -42,7 +42,7 @@ The exact implementation plan lives in
 | --- | --- | --- | --- |
 | 1 | `DnsWireNameCodec`: original byte labels, canonical Base64, 255-octet DNS limit, compression bounds, ASCII-only case identity | `dotnet test Carthago.Tests/Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~DnsWireNameCodecTests"`; observe expected **RED** before code, then **GREEN** | Test authored, **RED NOT RUN** |
 | 2 | `PacketHandler` + `TrafficRecord`: preserve binary bytes while keeping safe legacy `DnsQname` and default JSON redaction | Focus `DnsWirePacketTests` plus `PacketHandlerLinkLayerTests`; validate UDP/TCP and no replacement characters | Test authored; **RED NOT RUN** |
-| 3 | R102-only opt-in to wire-based evidence and original-byte entropy/distinctness, preserving existing thresholds | Focus `R102BinaryDnsPrecisionTests`, `R102DistinctTxtCorrelationTests`, `R102AdvancedAccuracyBatchTests`, and `DnsReplayTelemetryDiagnosticsTests`; precision, recall, F1 and privacy review | NOT STARTED / PARKED |
+| 3 | R102-only opt-in to wire-based evidence and original-byte entropy/distinctness, preserving existing thresholds | Focus `R102BinaryDnsPrecisionTests`, `R102DistinctTxtCorrelationTests`, `R102AdvancedAccuracyBatchTests`, and `DnsReplayTelemetryDiagnosticsTests`; precision, recall, F1 and privacy review | Ten named test methods authored; **RED NOT RUN** |
 | 4 | Private replay hydrator with strict version, legacy-name consistency and default-JSON exclusion | Focus `DnsWireReplayHydratorTests` plus pinned V2 contract; verify conflicting names fail closed | NOT STARTED / PARKED |
 | 5 | TShark original-frame/private-PCAP decoder and bounded binary-name source inspector | `powershell.exe -NoProfile -File scripts/verify-dns-wire-source-contract.ps1 -TsharkPath 'C:\Program Files\Wireshark\tshark.exe'`; compare frame, question ordinal, name octets, QTYPE and transport | DESIGN READY / PARKED |
 | 6 | Importer/auditor exact PCAP hash, frame/ordinal, byte labels, source/session independence and strict fixture schema | Focus `SyntheticHoldoutV2ContractTests` and private source contract; reject tampering, same-frame reuse and mirrored clients | DESIGN READY / PARKED |
@@ -64,7 +64,7 @@ project owner's decision to initiate the run.
 | --- | --- | --- |
 | `dns-wire-codec` | Stage 1 focused RED/GREEN | PARKED |
 | `dns-wire-packet` | Stage 2 focused parser compatibility | PARKED; test authored, not executed |
-| `r102-accuracy` | Stage 3 R102/diagnostics regression | PARKED; test file pending |
+| `r102-accuracy` | Stage 3 R102/diagnostics regression | PARKED; test authored, not executed |
 | `dns-wire-replay` | Stage 4 private replay hydration and pinned V2 contract | PARKED; test file pending |
 | `dns-source-contract` | Stage 5 synthetic PCAP and TShark | PARKED; script pending |
 | `v2-contract` | Stage 6/7 strict V2 schema and source/fixture contract | PARKED |
@@ -101,6 +101,15 @@ Git history.
 | 2026-10-29 09 | `71082e3` | Removed obsolete one-shot full-verification workflow after cancelling its queued run | Recoverable in Git; no tests |
 | 2026-10-29 10 | `7c0d0fd` | Removed automatic main Windows CI workflow from feature branch; baseline command remains a manual profile | Recoverable in Git; no tests |
 | 2026-10-29 11 | `f8852f0` | Prepared six synthetic UDP/TCP, legacy-ASCII, embedded-dot and JSON-privacy contracts for Stage 2 | **RED NOT RUN**; no production implementation |
+| 2026-10-29 12 | `09e558a` | Prepared ten named R102 binary-accuracy/negative-control test methods (twelve parameterized xUnit cases); no external PCAP embedded | **RED NOT RUN**; no production implementation |
+
+### R102 deferred evidence and privacy checkpoint
+
+- **Source:** a synthetic-only test module at `Carthago.Tests/R102BinaryDnsPrecisionTests.cs` on the same development branch; no live packet or frozen holdout values are duplicated.
+- **Positive contract:** three independently observed high-entropy binary-label TXT names from one attributed source and root must produce distinct-count evidence 1, 2, 3 without lowering `PrecisionProfile.MinimumConfidence = 80` or promoting an unready baseline out of Shadow.
+- **Negative contracts:** identical packet-ID replay, new packet with the same name, case-only label variations, and a second observed source address must not inflate per-client distinct-name confidence. Unattributed UDP/TCP, malformed/noncanonical Base64, and 40-byte labels that expand to 56 Base64 characters must not become positive evidence. Binary ACME validation remains excluded.
+- **Privacy contract:** binary-name events must not publish reversible Base64, synthesized `?`/replacement-character names, raw source identity, or the generic `dns.qname` evidence item. Structural length/entropy/count metadata remains available. The current shared `DnsPrecisionDetectionRuleBase.MatchDns` emits text-based `dns.qname`, and `DetectionEvent` carries source IP metadata; R102 needs a narrow privacy-safe event path before any binary-name promotion. This is an **identified design risk**, not a tested or fixed defect.
+- **Pending execution:** run `dotnet test Carthago.Tests/Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~R102BinaryDnsPrecisionTests|FullyQualifiedName~R102DistinctTxtCorrelationTests|FullyQualifiedName~R102AdvancedAccuracyBatchTests|FullyQualifiedName~DnsReplayTelemetryDiagnosticsTests"` on verified CARTHAGE only after explicit test-time authorization, with first-failure and final-success evidence and no new warnings. No detection-quality estimate is valid until the labeled replay and benign cohorts have been evaluated separately.
 
 **Read-only state check:** the feature branch now lists exactly one file in
 `.github/workflows/`: `carthago-detection-quality.yml`. The cancelled
