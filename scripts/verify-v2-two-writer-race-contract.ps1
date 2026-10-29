@@ -7,7 +7,8 @@
 param(
     [switch]$AuthorizedTestTime,
     [switch]$IncludeReaderVisibility,
-    [ValidateRange(3,12)][int]$ReaderStressRounds=6
+    [ValidateRange(3,12)][int]$ReaderStressRounds=6,
+    [switch]$OnlyReaderNegativeControl
 )
 
 Set-StrictMode -Version Latest
@@ -128,29 +129,11 @@ function Assert-NoReparseInOwnedTree([string]$Root) {
     }
 }
 
-function Invoke-ContentionRound([string]$OwnedRoot,[string]$Name,
-                                [object[]]$Pairs,[string]$Schema,
-                                [string]$PublisherPath,[switch]$WithReader) {
-    # Start-Job launches separate Windows PowerShell job processes. Workers
-    # import the same module and wait behind a local, private file barrier.
-    # Only sanitized outcome codes and numeric PIDs are returned to the parent.
-    $signal=Join-Path $OwnedRoot ($Name+'.go')
-    $readerReady=Join-Path $OwnedRoot ($Name+'.reader-ready')
-    $readerStop=Join-Path $OwnedRoot ($Name+'.reader-stop')
-    $jobs=@()
-    $readerJob=$null
-    try {
-        if($WithReader) {
-            # Third process reads the FINAL safe name only. It never scans
-            # .pending-* or opens source captures. A writer that publishes a
-            # directory before its eight JSON files are valid must be caught.
-            $names=[string[]]@($Pairs | ForEach-Object { [string]$_.Provenance.sample })
-            # Pass a single JSON string through Start-Job: positional array
-            # flattening varies by PowerShell binding/serialization behavior.
-            $namesJson=ConvertTo-Json -InputObject $names -Compress
-            $target=Join-Path $OwnedRoot $Name
-            $readerJob=Start-Job -ScriptBlock {
-                param($Target,$Ready,$Go,$Stop,$NamesJson)
+# Shared test-only observer. Both the 2-writer/1-reader race and the
+# deterministic Stage 6H negative controls run this *same scriptblock*.
+# It has no publisher access and reads only the supplied safe final folder.
+$script:PrivateBatchReaderJob = {
+                param($Target,$Ready,$Go,$Stop,$NamesJson,$AbsenceProof,$FailureProof)
                 $ErrorActionPreference='Stop'
                 $WarningPreference='SilentlyContinue'
                 $InformationPreference='SilentlyContinue'
@@ -188,6 +171,10 @@ function Invoke-ContentionRound([string]$OwnedRoot,[string]$Name,
                         $counts.Polls++
                         if(-not [IO.Directory]::Exists($Target)) {
                             $counts.Absent++
+                            if(-not [string]::IsNullOrWhiteSpace($AbsenceProof) -and
+                               -not [IO.File]::Exists($AbsenceProof)) {
+                                [IO.File]::WriteAllText($AbsenceProof,'ABSENT',[Text.Encoding]::ASCII)
+                            }
                             Start-Sleep -Milliseconds 4
                             continue
                         }
@@ -215,11 +202,23 @@ function Invoke-ContentionRound([string]$OwnedRoot,[string]$Name,
                                     }
                                 }
                             }
-                            if($valid) { $counts.Complete++ } else { $counts.Partial++ }
+                            if($valid) {
+                                $counts.Complete++
+                            } else {
+                                $counts.Partial++
+                                if(-not [string]::IsNullOrWhiteSpace($FailureProof) -and
+                                   -not [IO.File]::Exists($FailureProof)) {
+                                    [IO.File]::WriteAllText($FailureProof,'PARTIAL',[Text.Encoding]::ASCII)
+                                }
+                            }
                         } catch {
                             # Do not leak the reader exception: its payload
                             # may include private paths or serialized data.
                             $counts.IoErrors++
+                            if(-not [string]::IsNullOrWhiteSpace($FailureProof) -and
+                               -not [IO.File]::Exists($FailureProof)) {
+                                [IO.File]::WriteAllText($FailureProof,'IOERROR',[Text.Encoding]::ASCII)
+                            }
                         }
                         Start-Sleep -Milliseconds 4
                     }
@@ -231,7 +230,31 @@ function Invoke-ContentionRound([string]$OwnedRoot,[string]$Name,
                         Polls=$counts.Polls;Absent=$counts.Absent;Complete=$counts.Complete;
                         Partial=$counts.Partial;IoErrors=$counts.IoErrors}
                 }
-            } -ArgumentList @($target,$readerReady,$signal,$readerStop,$namesJson)
+            }
+
+function Invoke-ContentionRound([string]$OwnedRoot,[string]$Name,
+                                [object[]]$Pairs,[string]$Schema,
+                                [string]$PublisherPath,[switch]$WithReader) {
+    # Start-Job launches separate Windows PowerShell job processes. Workers
+    # import the same module and wait behind a local, private file barrier.
+    # Only sanitized outcome codes and numeric PIDs are returned to the parent.
+    $signal=Join-Path $OwnedRoot ($Name+'.go')
+    $readerReady=Join-Path $OwnedRoot ($Name+'.reader-ready')
+    $readerStop=Join-Path $OwnedRoot ($Name+'.reader-stop')
+    $jobs=@()
+    $readerJob=$null
+    try {
+        if($WithReader) {
+            # Third process reads the FINAL safe name only. It never scans
+            # .pending-* or opens source captures. A writer that publishes a
+            # directory before its eight JSON files are valid must be caught.
+            $names=[string[]]@($Pairs | ForEach-Object { [string]$_.Provenance.sample })
+            # Pass a single JSON string through Start-Job: positional array
+            # flattening varies by PowerShell binding/serialization behavior.
+            $namesJson=ConvertTo-Json -InputObject $names -Compress
+            $target=Join-Path $OwnedRoot $Name
+            $readerJob=Start-Job -ScriptBlock $script:PrivateBatchReaderJob -ArgumentList @(
+                $target,$readerReady,$signal,$readerStop,$namesJson,'','')
         }
         for($i=0;$i -lt 2;$i++) {
             $ready=Join-Path $OwnedRoot ($Name+'.ready'+$i)
@@ -351,9 +374,14 @@ function Invoke-ContentionRound([string]$OwnedRoot,[string]$Name,
 
 $repository=(Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $modulePath=Join-Path $PSScriptRoot 'HoldoutV2CandidatePublisher.psm1'
-Assert-Contract (Test-Path -LiteralPath $modulePath -PathType Leaf) 'race-publisher-not-implemented-red'
-Import-Module -Name $modulePath -Force -ErrorAction Stop
-Assert-Contract ($null -ne (Get-Command Publish-HoldoutV2CandidateBatch -ErrorAction SilentlyContinue)) 'race-public-wrapper-not-implemented-red'
+# A standalone observer-negative control needs no publisher module. It must
+# be possible to establish sensitivity BEFORE implementing a future writer.
+Assert-Contract (-not ($OnlyReaderNegativeControl -and $IncludeReaderVisibility)) 'ambiguous-test-mode'
+if(-not $OnlyReaderNegativeControl) {
+    Assert-Contract (Test-Path -LiteralPath $modulePath -PathType Leaf) 'race-publisher-not-implemented-red'
+    Import-Module -Name $modulePath -Force -ErrorAction Stop
+    Assert-Contract ($null -ne (Get-Command Publish-HoldoutV2CandidateBatch -ErrorAction SilentlyContinue)) 'race-public-wrapper-not-implemented-red'
+}
 $schema=Join-Path $repository 'docs/contracts/holdout-v2-private-provenance-v2.schema.json'
 $manifest=Get-Content -LiteralPath (Join-Path $repository 'docs/holdout-evaluation-v2-manifest.json') -Raw | ConvertFrom-Json
 Assert-Contract ([int]$manifest.schemaVersion -eq 2 -and
