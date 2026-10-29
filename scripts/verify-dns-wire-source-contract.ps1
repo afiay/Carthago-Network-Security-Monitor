@@ -476,6 +476,48 @@ try {
         [bool]$framingProbe[0].Valid -and
         [int]$framingProbe[0].Rejected -eq 5) 'tcp-length-negative-regression'
     Write-Host 'DNS TCP framing: unmodified UDP and exact TCP payload preserved; five invalid length prefixes rejected.'
+    # TShark jsonraw stores one *_raw field as a 5/6-member metadata tuple,
+    # not several DNS payloads. Probe both layouts and ten malformed cases
+    # with synthetic bytes only, inside the existing module context.
+    $descriptorProbe=@(& $wireModule {
+        $hex='123401000001000000000000'
+        [object[]]$six=@($hex,42,12,0,1,0)
+        [object[]]$five=@($hex,42,12,0,1)
+        [byte[]]$fromSix=Convert-DnsJsonRawDescriptor -Descriptor $six
+        [byte[]]$fromFive=Convert-DnsJsonRawDescriptor -Descriptor $five
+        [byte[]]$expected=@(0x12,0x34,0x01,0x00,0x00,0x01,0x00,0x00,0x00,0x00,0x00,0x00)
+        $valid=([Convert]::ToBase64String($fromSix) -ceq
+                [Convert]::ToBase64String($expected) -and
+                [Convert]::ToBase64String($fromFive) -ceq
+                [Convert]::ToBase64String($expected))
+        $negatives=@(
+            [pscustomobject]@{Data=[object[]]@($hex,42,12,0);Code='DNS_WIRE_RAW_AMBIGUOUS'}
+            [pscustomobject]@{Data=[object[]]@($hex,42,12,0,1,0,0);Code='DNS_WIRE_RAW_AMBIGUOUS'}
+            [pscustomobject]@{Data=[object[]]@($hex,42,13,0,1,0);Code='DNS_WIRE_RAW_LENGTH_MISMATCH'}
+            [pscustomobject]@{Data=[object[]]@($six,$five);Code='DNS_WIRE_RAW_AMBIGUOUS'}
+            [pscustomobject]@{Data=[object[]]@($hex,42,12,1,1,0);Code='DNS_WIRE_RAW_AMBIGUOUS'}
+            [pscustomobject]@{Data=[object[]]@($hex,-1,12,0,1,0);Code='DNS_WIRE_RAW_AMBIGUOUS'}
+            [pscustomobject]@{Data=[object[]]@(12,42,12,0,1,0);Code='DNS_WIRE_RAW_AMBIGUOUS'}
+            [pscustomobject]@{Data=[object[]]@($hex,'42',12,0,1,0);Code='DNS_WIRE_RAW_AMBIGUOUS'}
+            [pscustomobject]@{Data=[object[]]@('ZZ',42,1,0,1,0);Code='DNS_WIRE_INVALID_HEX'}
+            [pscustomobject]@{Data=$hex;Code='DNS_WIRE_RAW_AMBIGUOUS'}
+        )
+        $rejected=0
+        foreach($case in $negatives) {
+            $actual='NO_REJECTION'
+            try {
+                $null=Convert-DnsJsonRawDescriptor -Descriptor $case.Data
+            } catch {
+                $actual=[string]$_.Exception.Message
+            }
+            if($actual -ceq [string]$case.Code) { $rejected++ }
+        }
+        return [pscustomobject]@{Valid=$valid;Rejected=$rejected}
+    })
+    Assert-Contract ($descriptorProbe.Count -eq 1 -and
+        [bool]$descriptorProbe[0].Valid -and
+        [int]$descriptorProbe[0].Rejected -eq 10) 'tshark-raw-descriptor-regression'
+    Write-Host 'TShark jsonraw descriptor: 5/6-member formats preserved; ten ambiguous or invalid descriptors rejected.'
     Assert-PrivateQuestion $capture $captureHash 1 0 @('QS7/', 'YmFzZQ==') 16 'UDP' $tshark
     Assert-PrivateQuestion $capture $captureHash 2 0 @('YWxwaGE=', 'ZXhhbXBsZQ==') 16 'UDP' $tshark
     Assert-PrivateQuestion $capture $captureHash 2 1 @('YWxwaGE=', 'ZXhhbXBsZQ==') 1 'UDP' $tshark
