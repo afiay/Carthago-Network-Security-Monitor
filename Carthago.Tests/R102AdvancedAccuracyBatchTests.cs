@@ -19,6 +19,26 @@ public sealed class R102AdvancedAccuracyBatchTests
         Assert.Equal("R102",e.RuleId);
         Assert.Contains(e.StructuredEvidence!.Items,x=>x.Key=="dns.longestLabelEntropy");
     }
+    [Fact] public async Task Structured_Txt_Without_Transport_Identity_Fails_Closed()
+    {
+        // A DNS protocol label and qname alone do not establish UDP/TCP.
+        // This uses new synthetic data, never frozen evaluation fixtures.
+        var query = Query();
+        var unknownTransport = NetworkBatch101105Context.Dns(52, query, type:"TXT");
+        unknownTransport.Record.IsUdp = false;
+        unknownTransport.Record.IsTcp = false;
+        var missing = await _rule.EvaluateAsync(unknownTransport);
+        Assert.False(missing.Matched);
+        Assert.Empty(missing.Events);
+
+        // Explicitly attributed UDP in an independently created record
+        // remains eligible for R102 candidate classification.
+        var attributedUdp = NetworkBatch101105Context.Dns(53, query, type:"TXT");
+        var valid = await _rule.EvaluateAsync(attributedUdp);
+        Assert.True(valid.Matched);
+        Assert.Single(valid.Events);
+    }
+
     [Fact] public async Task Monolithic_Long_Txt_Label_Remains_Recognized()
     {Assert.True(await Hit(1,new string('a',55)+"."+NetworkBatch101105Context.Root()));}
     [Fact] public async Task Benign_Short_Queries_Do_Not_Accumulate_Suspicious_Count()
