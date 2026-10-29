@@ -252,6 +252,121 @@ function Invoke-HoldoutV2AtomicPublishCore {
     }
 }
 
+# Module-private, path-free recovery classification. It is a decision aid,
+# not a filesystem scanner. This function MUST NOT delete, move, approve or
+# publish anything, and must never treat an inventory claim as verified truth.
+function Get-HoldoutV2PrivateRecoveryPlan {
+    [CmdletBinding()]
+    param([Parameter(Mandatory=$true)][object[]]$Entries)
+    if($Entries.Count -lt 1 -or $Entries.Count -gt 500) {
+        Fail-Publisher 'RECOVERY_INPUT_INVALID'
+    }
+    $fields=@('Key','Kind','OwnedByInvocation','HasOwnershipMarker',
+              'IsReparsePoint','WriterActive','AgeMinutes','PairCount',
+              'HashesVerified','ProvenanceSchemaVersion','CommitOutcome',
+              'DestinationExists','NameCollision')
+    $decisions=[Collections.Generic.List[object]]::new()
+    $seen=[Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+    foreach($entry in $Entries) {
+        if($null -eq $entry) { Fail-Publisher 'RECOVERY_INPUT_INVALID' }
+        $keys=@($entry.PSObject.Properties.Name)
+        if($keys.Count -ne $fields.Count -or
+           @(Compare-Object ($keys | Sort-Object) ($fields | Sort-Object)).Count -ne 0) {
+            Fail-Publisher 'RECOVERY_INPUT_INVALID'
+        }
+        if($entry.Key -isnot [string] -or
+           $entry.Key -cnotmatch '^[A-Za-z][A-Za-z0-9_-]{1,40}
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)][object[]]$CandidatePairs,
+        [Parameter(Mandatory=$true)][string]$SchemaPath,
+        [Parameter(Mandatory=$true)][string]$PrivateOutputRoot,
+        [Parameter(Mandatory=$true)][string]$BatchName
+    )
+    Invoke-HoldoutV2AtomicPublishCore -CandidatePairs $CandidatePairs -SchemaPath $SchemaPath -PrivateOutputRoot $PrivateOutputRoot -BatchName $BatchName
+}
+Export-ModuleMember -Function Publish-HoldoutV2CandidateBatch
+ -or
+           -not $seen.Add([string]$entry.Key) -or
+           $entry.Kind -isnot [string] -or
+           $entry.CommitOutcome -isnot [string] -or
+           $entry.OwnedByInvocation -isnot [bool] -or
+           $entry.HasOwnershipMarker -isnot [bool] -or
+           $entry.IsReparsePoint -isnot [bool] -or
+           $entry.WriterActive -isnot [bool] -or
+           $entry.HashesVerified -isnot [bool] -or
+           $entry.DestinationExists -isnot [bool] -or
+           $entry.NameCollision -isnot [bool] -or
+           $entry.AgeMinutes -isnot [int] -or
+           $entry.PairCount -isnot [int] -or
+           $entry.ProvenanceSchemaVersion -isnot [int] -or
+           $entry.AgeMinutes -lt 0 -or
+           $entry.PairCount -lt 0 -or $entry.PairCount -gt 4) {
+            Fail-Publisher 'RECOVERY_INPUT_INVALID'
+        }
+        $disposition='BLOCK_REVIEW'
+        $reason='RECOVERY_UNKNOWN_KIND'
+        if($entry.IsReparsePoint) {
+            $reason='RECOVERY_REPARSE_POINT'
+        } elseif(-not $entry.OwnedByInvocation) {
+            $disposition='LEAVE_UNTOUCHED'
+            $reason='RECOVERY_UNOWNED_ENTRY'
+        } elseif(-not $entry.HasOwnershipMarker) {
+            $reason='RECOVERY_OWNER_UNVERIFIED'
+        } elseif($entry.WriterActive) {
+            $disposition='LEAVE_UNTOUCHED'
+            $reason='RECOVERY_ACTIVE_WRITER'
+        } elseif($entry.NameCollision) {
+            $reason='RECOVERY_TARGET_COLLISION'
+        } elseif($entry.Kind -notin @('Pending','Committed')) {
+            $reason='RECOVERY_UNKNOWN_KIND'
+        } elseif($entry.ProvenanceSchemaVersion -ne 2) {
+            $disposition='QUARANTINE_REVIEW'
+            $reason='RECOVERY_SCHEMA_UNSUPPORTED'
+        } elseif($entry.CommitOutcome -ceq 'Unknown' -and
+                 $entry.Kind -ceq 'Pending' -and
+                 -not $entry.DestinationExists) {
+            $reason='RECOVERY_COMMIT_UNCERTAIN_FINAL_ABSENT'
+        } elseif($entry.Kind -ceq 'Committed') {
+            if(-not $entry.DestinationExists -or $entry.PairCount -ne 4) {
+                $disposition='QUARANTINE_REVIEW'
+                $reason='RECOVERY_PARTIAL_FINAL'
+            } elseif(-not $entry.HashesVerified) {
+                $disposition='QUARANTINE_REVIEW'
+                $reason='RECOVERY_UNVERIFIED_FINAL'
+            } elseif($entry.CommitOutcome -ceq 'Unknown') {
+                $disposition='RECONCILE_COMMITTED'
+                $reason='RECOVERY_COMMIT_UNCERTAIN_FINAL_PRESENT'
+            } elseif($entry.CommitOutcome -ceq 'Succeeded') {
+                $disposition='RETAIN_COMMITTED'
+                $reason='RECOVERY_COMMITTED_PENDING_REVIEW'
+            }
+        } elseif($entry.Kind -ceq 'Pending') {
+            if($entry.AgeMinutes -lt 60) {
+                $disposition='REVIEW_PENDING'
+                $reason='RECOVERY_UNCOMMITTED_STAGE'
+            } elseif($entry.PairCount -eq 4 -and $entry.HashesVerified) {
+                $disposition='QUARANTINE_REVIEW'
+                $reason='RECOVERY_ORPHAN_COMPLETE'
+            } else {
+                $disposition='QUARANTINE_REVIEW'
+                $reason='RECOVERY_ORPHAN_PARTIAL'
+            }
+        }
+        $decisions.Add([pscustomobject][ordered]@{
+            Key=[string]$entry.Key
+            Disposition=$disposition
+            Reason=$reason
+        })
+    }
+    return [pscustomobject][ordered]@{
+        EntryCount=$Entries.Count
+        RequiresManualReview=$true
+        AutoDeleteAllowed=$false
+        Decisions=@($decisions.ToArray())
+    }
+}
+
 function Publish-HoldoutV2CandidateBatch {
     [CmdletBinding()]
     param(
