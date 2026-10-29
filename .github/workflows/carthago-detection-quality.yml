@@ -115,6 +115,8 @@ jobs:
             }
             'v2-contract' {
               Invoke-Private 'v2-contract' 'dotnet' @('test','Carthago.Tests/Carthago.Tests.csproj','-c','Release','--filter','FullyQualifiedName~SyntheticHoldoutV2ContractTests')
+              if (-not (Test-Path 'scripts/verify-dns-wire-source-contract.ps1')) { throw 'Private V2 source contract not authored.' }
+              Invoke-Private 'v2-dns-wire-provenance' 'powershell.exe' @('-NoProfile','-File','scripts/verify-dns-wire-source-contract.ps1','-IncludeV2Provenance','-TsharkPath','C:/Program Files/Wireshark/tshark.exe')
             }
             'rule-batches' {
               Invoke-Private 'rule-batches' 'powershell.exe' @('-NoProfile','-File','scripts/verify-all-rule-batches.ps1','-HoldoutVersion','v1')
