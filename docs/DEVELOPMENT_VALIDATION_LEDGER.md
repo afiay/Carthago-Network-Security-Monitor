@@ -474,3 +474,23 @@ powershell.exe -NoProfile -File .\scripts\verify-v2-two-writer-race-contract.ps1
 **Preserved governance:** frozen V1 historical FAILED 4/6; Holdout V2 still PENDING_EXTERNAL_CAPTURE_AND_REVIEW with 0/4 external R102 source approvals, detection confidence floors R102 80%, R118 86%, R163 84% and R102 external 0.75. All existing production importer, source auditor, rules, and the manual-only GitHub Actions workflow remain unchanged.
 
 **Follow-up static compatibility correction:** commit `c991e83` changed only the synthetic Stage 6H/G reader name parser to `@(([string]$NamesJson).Split([char]'|'))` for explicit Windows PowerShell 5.1 character splitting. It continues accepting only the four validated synthetic manifest names. This correction was committed **after** the first blocked owner-reported results; it has not been run locally by the assistant or validated on CARTHAGE.
+
+
+### 2026-10-29 — Second authorized Windows verification at 88dd526 (both gates blocked)
+
+Owner-provided CARTHAGE PowerShell transcript confirms a clean fast-forward to **88dd526**, followed by two more synthetic tests. Original captured data and ignored build-verify files were not removed. These results concern synthetic contract infrastructure, **not** R102 accuracy, approval, or frozen V1 outcomes.
+
+| Gate | Command profile | Observed at 88dd526 | Interpretation |
+| --- | --- | --- | --- |
+| Stage 6H | verify-v2-two-writer-race-contract.ps1 -AuthorizedTestTime -OnlyReaderNegativeControl | STAGE6F_RACE_CONTRACT: negative-leaked-output-fields | Reader reached job result evaluation; Windows Receive-Job envelope properties need to be distinguished from unexpected business fields. No six-case GREEN established. |
+| Stage 6D | verify-v2-provenance-schema-contract.ps1 -AuthorizedTestTime | V2 private provenance contract: wrong-rejection-reason | Negative-case expected-versus-actual rejection mismatch; no 24-case GREEN established. |
+
+**Subsequent targeted, source-only corrections (not yet rerun by owner):**
+
+- **8f58a89** updates Stage 6H's property-shape assertion to accept only the seven expected business fields plus the three known Windows PowerShell remoting envelope properties (`PSComputerName`, `RunspaceId`, `PSShowComputerName`), rejecting all others.
+- **91aca2e** updates the strict provenance validator to reject mismatched frame/question/count cardinality before applying standalone per-array minimum bounds, preserving stricter schema checks.
+- **a3c447f** makes Stage 6D negative-case failures show only the fixed synthetic case name, expected code, and allowlisted actual PROV_* code (or NON_CONTRACT_EXCEPTION), without printing private source values.
+
+**No post-fix runtime evidence:** owner transcript still reports HEAD **88dd526** and precedes these changes. Before interpreting any new outcome, owner must `git pull --ff-only origin feature/carthago-reliability-hardening`, record new HEAD, then rerun Stage 6H and—only after its success—Stage 6D. If Stage 6D reports another case mismatch, use the sanitized case/actual code to fix the smallest issue. Do not advance to real PCAP, TShark, publisher/concurrency, full .NET suites or Holdout V2 admission while the two gates remain blocked.
+
+**Preservation:** V1 historical FAILED 4/6 unchanged; V2 PENDING_EXTERNAL_CAPTURE_AND_REVIEW, 0/4 external R102 candidates approved; existing rule thresholds, importer, auditor, manually gated workflow and private build-verify evidence untouched.
