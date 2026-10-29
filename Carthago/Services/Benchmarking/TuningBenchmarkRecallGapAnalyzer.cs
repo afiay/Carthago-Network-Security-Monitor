@@ -46,6 +46,8 @@ namespace Carthago.Services.Benchmarking
                         {
                             if (diagnostic != null)
                             {
+                                evidence.AddRange(diagnostic.InputTelemetryIssueCodes
+                                    .Select(static code => "Input telemetry: " + code));
                                 evidence.AddRange(diagnostic.MissingRequiredTelemetry
                                     .Select(static missing => "Missing telemetry: " + missing));
                                 evidence.AddRange(diagnostic.NoMatchReasons);
@@ -97,6 +99,7 @@ namespace Carthago.Services.Benchmarking
                     outcome switch
                     {
                         "MissingTelemetry" => "MissingTelemetry",
+                        "InvalidInputTelemetry" => "InvalidInputTelemetry",
                         "EvaluationFailed" => "DetectorFailure",
                         "RuleUnavailable" => "RuleUnavailable",
                         _ => "NoMatch"
