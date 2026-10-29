@@ -6,7 +6,8 @@
 [CmdletBinding()]
 param(
     [switch]$AuthorizedTestTime,
-    [switch]$IncludeReaderVisibility
+    [switch]$IncludeReaderVisibility,
+    [ValidateRange(3,12)][int]$ReaderStressRounds=6
 )
 
 Set-StrictMode -Version Latest
@@ -373,16 +374,23 @@ try {
     $marker=Join-Path $owned 'sentinel.keep'
     [IO.File]::WriteAllText($marker,'STAGE6F_CANARY',[Text.Encoding]::ASCII)
     $markerHash=(Get-FileHash -LiteralPath $marker -Algorithm SHA256).Hash
-    foreach($round in @('race-01','race-02','race-03')) {
+    # Preserve Stage 6F's original three rounds by default. Stage 6G opt-in
+    # can repeat 3..12 three-process races without growing unbounded jobs.
+    $roundCount=if($IncludeReaderVisibility){$ReaderStressRounds}else{3}
+    $roundNames=@(for($number=1;$number -le $roundCount;$number++){
+        'race-{0:D2}' -f $number
+    })
+    foreach($round in $roundNames) {
         Invoke-ContentionRound $owned $round $pairs $schema $modulePath -WithReader:$IncludeReaderVisibility
     }
     Assert-Contract ((Get-FileHash -LiteralPath $marker -Algorithm SHA256).Hash -ceq
         $markerHash) 'unrelated-sentinel-modified'
     $top=@(Get-ChildItem -LiteralPath $owned -Force | Sort-Object Name)
-    Assert-Contract ($top.Count -eq 4 -and
-        @($top | Where-Object { $_.Name -notin @('sentinel.keep','race-01','race-02','race-03') }).Count -eq 0) 'unexpected-test-root-entry'
+    $expectedTop=@('sentinel.keep')+@($roundNames)
+    Assert-Contract ($top.Count -eq ($roundCount+1) -and
+        @($top | Where-Object { $_.Name -notin $expectedTop }).Count -eq 0) 'unexpected-test-root-entry'
     if($IncludeReaderVisibility) {
-        Write-Host 'Stage 6G opt-in: three 2-writer/1-reader visibility rounds prepared. No durability or source approval.'
+        Write-Host ('Stage 6G opt-in: '+$roundCount+' 2-writer/1-reader visibility rounds completed; no durability or source approval.')
     } else {
         Write-Host 'Stage 6F race contract: three two-process contention rounds prepared; results do not certify crash durability or source review.'
     }
