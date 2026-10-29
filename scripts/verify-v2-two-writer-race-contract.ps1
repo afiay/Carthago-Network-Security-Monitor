@@ -144,15 +144,23 @@ function Invoke-ContentionRound([string]$OwnedRoot,[string]$Name,
             # .pending-* or opens source captures. A writer that publishes a
             # directory before its eight JSON files are valid must be caught.
             $names=[string[]]@($Pairs | ForEach-Object { [string]$_.Provenance.sample })
+            # Pass a single JSON string through Start-Job: positional array
+            # flattening varies by PowerShell binding/serialization behavior.
+            $namesJson=ConvertTo-Json -InputObject $names -Compress
             $target=Join-Path $OwnedRoot $Name
             $readerJob=Start-Job -ScriptBlock {
-                param($Target,$Ready,$Go,$Stop,$Names)
+                param($Target,$Ready,$Go,$Stop,$NamesJson)
                 $ErrorActionPreference='Stop'
                 $WarningPreference='SilentlyContinue'
                 $InformationPreference='SilentlyContinue'
                 $VerbosePreference='SilentlyContinue'
                 $counts=@{Polls=0;Absent=0;Complete=0;Partial=0;IoErrors=0}
                 try {
+                    $Names=[string[]]@(ConvertFrom-Json -InputObject $NamesJson)
+                    if($Names.Count -ne 4) {
+                        return [pscustomobject]@{Code='READER_NAMES_INVALID';ProcessId=$PID;
+                            Polls=0;Absent=0;Complete=0;Partial=0;IoErrors=0}
+                    }
                     # Parent will not release competing writers until it
                     # observes this reader-ready marker.
                     if([IO.Directory]::Exists($Target)) {
@@ -222,7 +230,7 @@ function Invoke-ContentionRound([string]$OwnedRoot,[string]$Name,
                         Polls=$counts.Polls;Absent=$counts.Absent;Complete=$counts.Complete;
                         Partial=$counts.Partial;IoErrors=$counts.IoErrors}
                 }
-            } -ArgumentList @($target,$readerReady,$signal,$readerStop,(,$names))
+            } -ArgumentList @($target,$readerReady,$signal,$readerStop,$namesJson)
         }
         for($i=0;$i -lt 2;$i++) {
             $ready=Join-Path $OwnedRoot ($Name+'.ready'+$i)
@@ -304,8 +312,8 @@ function Invoke-ContentionRound([string]$OwnedRoot,[string]$Name,
             Assert-Contract ([string]$rv.Code -ceq 'READER_DONE') 'reader-did-not-complete'
             Assert-Contract ([int]$rv.Polls -ge 1 -and [int]$rv.Absent -ge 1 -and
                 [int]$rv.Complete -ge 1) 'reader-did-not-observe-both-states'
-            Assert-Contract ([int]$rv.Partial -eq 0 -and
-                [int]$rv.IoErrors -eq 0) 'reader-observed-partial-or-error'
+            Assert-Contract ([int]$rv.Partial -eq 0) 'reader-observed-partial-visible-batch'
+            Assert-Contract ([int]$rv.IoErrors -eq 0) 'reader-view-unreadable-or-io-error'
             Assert-Contract ([int]$rv.ProcessId -notin $ids) 'observer-not-independent-process'
             Write-Host ('STAGE6G READER: '+$Name+' saw absent/complete states only; no partial view.')
         }
