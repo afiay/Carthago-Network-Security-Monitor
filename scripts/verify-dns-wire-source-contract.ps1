@@ -394,14 +394,25 @@ try {
         $rawField = @($rawFrames[$frameIndex]._source.layers.dns_raw)[0]
         Assert-Contract ($null -ne $rawField) 'tshark-dns-raw-unavailable'
         $fromTshark = Convert-HexToBytes ([string]$rawField)
-        if([Convert]::ToBase64String($fromTshark) -cne
+        [byte[]]$messageBytes=$fromTshark
+        if([int]$reference.FrameNumber -eq 5) {
+            # DNS-over-TCP adds exactly two network-order framing bytes to
+            # its DNS message (RFC 7766). Test the framing AND the unchanged
+            # original DNS payload; no unconditional two-byte truncation.
+            Assert-Contract ($fromTshark.Length -eq ($expected.Length+2)) 'tshark-tcp-framing-length-mismatch'
+            $advertised=(([int]$fromTshark[0] -shl 8) -bor [int]$fromTshark[1])
+            Assert-Contract ($advertised -eq $expected.Length) 'tshark-tcp-length-prefix-mismatch'
+            $messageBytes=New-Object byte[] $advertised
+            [Array]::Copy($fromTshark,2,$messageBytes,0,$advertised)
+        }
+        if([Convert]::ToBase64String($messageBytes) -cne
            [Convert]::ToBase64String($expected)) {
-            # Only synthetic frame index and byte lengths. Do not emit actual
-            # wire bytes, reversible labels, source identity, JSON or paths.
+            # Report only known synthetic frame number and byte lengths.
+            # Never emit hex, base64, QNAME, source identity or original PCAP.
             Assert-Contract $false ('tshark-dns-wire-mismatch-frame-'+
                 [string]$reference.FrameNumber+'-expected-length-'+
                 [string]$expected.Length+'-actual-length-'+
-                [string]$fromTshark.Length)
+                [string]$messageBytes.Length)
         }
     }
 
