@@ -48,6 +48,18 @@ try {
     Write-Host 'V1 predecessor: retained and historically FAILED.'
     Write-Host 'V2 schema: 12 declared slots; eight immutable non-R102 v1 references; four external R102 sources required.'
 
+    if ($manifest.approvalState -eq 'FROZEN_V2_SYNTHETIC') {
+        if ($AuditPackets) {
+            throw 'Frozen v2 must be checked through the pinned evaluator; the candidate audit only supports pre-freeze status.'
+        }
+        Write-Host 'STATUS: FROZEN MANIFEST - use the opt-in v2 evaluator to validate pinned content.'
+        Write-Host 'Do not infer external label truth or production detection accuracy from a frozen manifest.'
+        return
+    }
+    if ($manifest.approvalState -ne 'PENDING_EXTERNAL_CAPTURE_AND_REVIEW') {
+        throw 'Unknown v2 approval state. Fail closed.'
+    }
+
     $present=0
     foreach ($entry in $external) {
         $name=[IO.Path]::GetFileNameWithoutExtension([string]$entry.file)
@@ -82,14 +94,6 @@ try {
         Write-Host 'STATUS: PACKET FIELDS AUDITED - MANUAL LABEL/RIGHTS/PRIVACY REVIEW AND FREEZE STILL PENDING.'
         return
     }
-    if ($manifest.approvalState -eq 'FROZEN_V2_SYNTHETIC') {
-        if ($AuditPackets) {
-            throw 'Frozen v2 must be checked through the pinned evaluator; the candidate audit only supports pre-freeze status.'
-        }
-        Write-Host 'STATUS: FROZEN MANIFEST - use the opt-in v2 evaluator to validate pinned content.'
-        Write-Host 'Do not infer external label truth or production detection accuracy from a frozen manifest.'
-        return
-    }
-    throw 'Unknown v2 approval state. Fail closed.'
+
 }
 finally { Pop-Location }
