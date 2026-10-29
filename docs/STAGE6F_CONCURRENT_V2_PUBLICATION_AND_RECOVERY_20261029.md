@@ -11,8 +11,8 @@ Stage 6E defines a full private batch transaction for exactly four external R102
 
 Stage 6F adds two **separate and opt-in** regression contracts:
 
-- scripts/verify-v2-recovery-planner-contract.ps1 — 15 synthetic, path-free, in-memory recovery classifications. The eventual planner must never delete, rename, approve, freeze, overwrite or even accept a target filesystem path. Human review remains mandatory.
-- scripts/verify-v2-two-writer-race-contract.ps1 — 3 planned synchronized race rounds using two separate Windows PowerShell Start-Job processes per round (6 worker-process executions when testing is eventually authorized). The publisher must return exactly one safe winner and one target-exists failure per fresh directory name. Both workers use only synthetic candidates under a unique private scratch root.
+- scripts/verify-v2-recovery-planner-contract.ps1 — 15 owner-verified synthetic, path-free, in-memory recovery classifications. The implemented planner cannot delete, rename, approve, freeze, overwrite or accept a target filesystem path. Human review remains mandatory.
+- scripts/verify-v2-two-writer-race-contract.ps1 — 3 verified synchronized race rounds using two separate Windows PowerShell Start-Job processes per round (6 synthetic worker-process executions). The publisher must return exactly one safe winner and one target-exists failure per fresh directory name. Both workers use only synthetic candidates under a unique private scratch root.
 
 The contracts were originally prepared before the publisher existed. `scripts/HoldoutV2CandidatePublisher.psm1`, its private recovery planner and exported publisher wrapper are now implemented; their bounded synthetic recovery/contended-publication behavior has been verified on CARTHAGE. The original capture/importer/auditor remain unchanged.
 
@@ -31,7 +31,7 @@ Read-only source inspection of the feature branch confirms:
 
 ## 3. Stage 6F-A: pure orphan / recovery decision planning
 
-Future internal API, private to HoldoutV2CandidatePublisher.psm1:
+Implemented internal API, private to HoldoutV2CandidatePublisher.psm1:
 
 ~~~
 Get-HoldoutV2PrivateRecoveryPlan -Entries <synthetic inventory metadata>
@@ -50,7 +50,7 @@ Required output is one bounded metadata object:
 
 No raw path, capture filename, client name, source IP, session ID, QNAME, license URL, reversible label or hash may be returned. In particular, a decision called QUARANTINE_REVIEW is **advisory**, not permission to automatically move anything into a quarantine directory. Runtime cleanup and actual quarantine need independent ownership, path, permission and audit safeguards.
 
-### In-memory recovery matrix (15 authored scenarios)
+### In-memory recovery matrix (15/15 owner-verified scenarios)
 
 | ID | Synthetic inventory condition | Expected disposition | Expected reason |
 | --- | --- | --- | --- |
@@ -95,7 +95,7 @@ There is intentionally **no public OnMilestone, FaultAt, or arbitrary code callb
 
 1. Read the actual Holdout V2 manifest for the four fixed R102 names, classifications and pending approval state.
 2. Generate four pairs with schema version 2, 30 private provenance properties, three synthetic DNS TXT records per sample and RFC 5737 documentation-only IPs; analystReviewedLabel=false and capturedTransportEvidence=false.
-3. Require the future module and public wrapper to exist before creating test files.
+3. Require the implemented module and exported publisher wrapper to exist before creating test files.
 4. Create a fresh random test-owned directory under the repository's ignored build-verify root. Write one local sentinel and record its SHA-256.
 5. For each of three fixed safe batch names (race-01, race-02, race-03), start **two distinct Start-Job worker processes**. Each imports the same publisher module, writes a local ready marker, then waits for one private go-signal file.
 6. The parent waits for both ready markers with a bounded timeout before emitting the signal, to increase overlap. The workers have their own signal timeout. No packet interface, download or network request occurs.
@@ -117,7 +117,7 @@ A synchronized barrier does **not guarantee the two writers execute the rename s
 
 If the parent cannot observe two ready markers, it must fail as **harness/environment error**, not claim a successful security rejection. If a publisher raises an unexpected error, the worker returns only UNEXPECTED_ERROR and the test fails. If both writers claim success, or both are rejected, the test fails. File existence alone does not constitute correctness; the test checks all eight files' synthetic content and their pending review state.
 
-**Critical gap to test later:** a third independent reader polling during the rename should never observe fewer than eight files in a final directory. The present harness verifies after both workers terminate, not continuous reader visibility. Separate reader-observer, ACL-denial, handle locking and power-failure tests remain pending.
+**Third-reader gap subsequently addressed within a bounded synthetic scope:** GA 6G ran the same private publisher with a third independent reader at 3/6/12 rounds and saw only absent/complete pending-review final folders. These are sampled snapshots, not continuous formal linearizability. **Still pending:** adversarial ACL-denial, handle locking, and power-failure/durability tests.
 
 ## 5. Windows semantics and operational constraints
 
@@ -125,7 +125,7 @@ If the parent cannot observe two ready markers, it must fail as **harness/enviro
 - Do not implement a naive Test-Path then Move-Item overwrite-prone sequence; the commit must use verified same-volume **no-replace** semantics. Windows directory moves and filesystem sharing/ACL nuances must be reviewed and observed on CARTHAGE during authorized validation.
 - Post-rename failure does not prove rollback. Preserve complete committed directories and report an uncertain result until reconciled.
 - A same-volume namespace rename is not proof of power-loss persistence. Explicit file flush, storage write ordering and recovery after crash require independent environmental testing.
-- PowerShell Start-Job on the planned Windows host should be validated as separate worker processes with distinct process IDs. Start-Job serialization of the four-candidate array, local barrier handling, module import, timing and sanitized output are **unverified** at present.
+- The owner-verified CARTHAGE 3/3 race confirms separate Start-Job workers, distinct process IDs, four-candidate serialization, ready/go barriers, module import and sanitized results within its bounded synthetic environment. Broader scheduling, OS versions, ACL and hostile filesystem conditions remain separately unverified.
 - No machine-wide service changes, firewall adjustments, listener, private capture, VPN, Internet transaction, OS reboot, automatic branch cleanup, CI trigger or overnight execution are part of Stage 6F.
 
 ## 6. Completed synthetic gates and remaining acceptance boundaries
