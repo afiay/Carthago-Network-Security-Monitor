@@ -101,3 +101,22 @@ The user ran `scripts/inspect-holdout-v2-pcap.ps1` with installed TShark 4.6.9 a
 **Disposition:** candidate is **unqualified on the currently accepted decoded subset**, NOT proven categorically unsuitable. The inspector combines malformed/unsupported fields and duplicate rows into one skipped count and does not break down skip causes; it cannot prove the 2656 skipped rows contain no valid TXT queries. Verify aggregate TShark query-type counts and cause categories (e.g., missing transport, unsupported/duplicated DNS questions, invalid DNS names) before deciding whether to exclude the original PCAP. Keep the original under `build-verify/` and do not alter packet fields, parser thresholds or corpus labels to produce a positive result. It cannot populate a v2 source slot until independent label, rights/privacy and packet-frame audit requirements have all passed.
 
 **No change to acceptance:** v2 still has 0/4 approved external source/provenance pairs; original frozen v1 failed result is preserved.
+
+## CARTHAGE Base32 PCAP query-type and DNS label audit (2026-10-29)
+
+Additional operator-provided *read-only* TShark output establishes that the extracted PCAP SHA-256 is **`b9c5ec5b6a50facb8719ffe47656d2cda0f0704ed08d91130c8b48a3e0ddf102`** (full 64 hex characters). TShark 4.6.9 reported **7,991 DNS query records of QTYPE 16 (TXT)** under the bounded `dns.flags.response == 0 && (udp.dstport == 53 || tcp.dstport == 53)` filter. This is direct, concrete evidence that the source is **not NULL-only** like the separately verified Elastic iodine capture.
+
+The original source inspector's two source/root groups reported:
+
+| Anonymized group | Accepted TXT records | Distinct TXT names | Distinct TXT names with label >=50 | Maximum label length |
+| --- | ---: | ---: | ---: | ---: |
+| Client-001 | 2,671 | 2,664 | 1 | 56 |
+| Client-002 | 2,664 | 2,664 | 1 | 56 |
+
+**Accounting:** 2,671 + 2,664 accepted rows + 2,656 previously combined skipped/invalid rows = 7,991 filtered query records in this bounded inspection. This correspondence is not an independent guarantee that every source frame was fully parsed; the inspector may reject duplicates or malformed question fields. The two anonymized source/root groups are **not** evidence of two independently captured malicious clients, and the distinct TXT sets may overlap.
+
+**Interpretation:** The PCAP has thousands of genuinely observed TXT queries, but only one distinct *long-label* TXT name per accepted source/root group under the current (>=50 character) shape check, versus three required by the v2 malicious R102 pre-freeze contract. It is **not eligible for either v2 malicious encoded-long-TXT slot under the observed accepted records**. This does not mean the iodine scenario was benign or that no DNS tunneling occurred; it may exercise shorter-label tunneling behavior not covered by that specific v2 contract. Do not lower R102 thresholds, relabel the sample, merge unrelated clients, or rewrite the v1 failure to force eligibility.
+
+**New diagnostic-only inspector enhancement:** `scripts/inspect-holdout-v2-pcap.ps1` now records a mutually exclusive reason for each rejected filtered row (`repeatedFrameNumber`, missing/conflicting transport, unsupported type, malformed/invalid name, label length, source/destination) and anonymized per-group TXT longest-label histograms in relevant bands `0-19`, `20-39`, `40-45`, `46-49`, `50-53`, `54-57`, `58-63`. It retains privacy defaults, source field attribution and the original eligibility predicate. The new code and companion contract assertion are committed but **have not yet been executed on CARTHAGE**.
+
+Use the same original PCAP and TShark executable to rerun read-only inspection after pulling the new branch revision. Compare the mutually exclusive reason counts to 2,656 and the group distinct-long counts to 1. The extra breakdown can identify parsing gaps but must not turn this PCAP into an approved v2 fixture without independent review of original frames, classification basis, license and privacy. V2 remains `PENDING_EXTERNAL_CAPTURE_AND_REVIEW`, **0/4** approved fixture/provenance pairs.
