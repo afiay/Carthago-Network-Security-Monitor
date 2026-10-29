@@ -21,7 +21,8 @@ function Test-IntegerValue([object]$Value) {
 function Assert-ProvenanceValue([string]$Name,[object]$Value,[object]$Spec) {
     $type=[string]$Spec.type
     $code='PROV_SCHEMA_TYPE'
-    if($Name -eq 'captureSha256'){$code='PROV_SCHEMA_CAPTURE_HASH'}
+    if($Name -eq 'schemaVersion'){$code='PROV_SCHEMA_VERSION'}
+    elseif($Name -eq 'captureSha256'){$code='PROV_SCHEMA_CAPTURE_HASH'}
     elseif($Name -eq 'frameNumbers'){$code='PROV_SCHEMA_FRAME_INDEX'}
     elseif($Name -eq 'questionIndices'){$code='PROV_SCHEMA_QUESTION_INDEX'}
     elseif($Name -eq 'sourceLicense'){$code='PROV_SCHEMA_LICENSE'}
