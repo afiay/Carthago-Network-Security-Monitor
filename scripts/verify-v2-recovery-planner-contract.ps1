@@ -42,7 +42,7 @@ function Clone-Entry([object]$Value) {
 function Assert-Result([object]$Entry,[string]$ExpectedDisposition,
                        [string]$ExpectedReason) {
     $snapshot = ConvertTo-Json -InputObject $Entry -Compress -Depth 12
-    $results = @(Get-HoldoutV2PrivateRecoveryPlan -Entries @($Entry) 6>&1)
+    $results = @(& $script:publisher { param($items) Get-HoldoutV2PrivateRecoveryPlan -Entries $items } @($Entry) 6>&1)
     Assert-Contract ($results.Count -eq 1 -and $results[0] -is [pscustomobject]) 'one-metadata-result-required'
     $response = $results[0]
     $allowed = @('EntryCount','RequiresManualReview','AutoDeleteAllowed','Decisions')
@@ -64,7 +64,7 @@ function Assert-Result([object]$Entry,[string]$ExpectedDisposition,
     Assert-Contract ((ConvertTo-Json -InputObject $Entry -Compress -Depth 12) -ceq
         $snapshot) 'planner-mutated-inventory'
     $public = ConvertTo-Json -InputObject $response -Depth 8 -Compress
-    Assert-Contract (-not ($public -match '(?i)\\b(delete|remove-item|approved|frozen|promoted)\\b')) 'unsafe-plan-output'
+    Assert-Contract (-not ($public -match '(?i)\b(delete|remove-item|approved|frozen|promoted)\b')) 'unsafe-plan-output'
     Write-Host ('STAGE6F RECOVERY CASE '+$Entry.Key+': expected advisory disposition prepared.')
 }
 
