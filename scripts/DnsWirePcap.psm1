@@ -306,7 +306,7 @@ function Test-DnsExactRecordFields([object]$Record,[string[]]$ExpectedFields) {
     if($null -eq $Record -or $null -eq $ExpectedFields) { return $false }
     $seen=[Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
     foreach($property in $Record.PSObject.Properties) {
-        if($property.MemberType -ne [Management.Automation.PSMemberTypes]::NoteProperty) {
+        if($property.MemberType -ne [System.Management.Automation.PSMemberTypes]::NoteProperty) {
             return $false
         }
         if(-not $seen.Add([string]$property.Name)) { return $false }
