@@ -48,6 +48,8 @@ try {
 
     $reportPath = Join-Path $OutputDirectory 'tuning-benchmark.json'
     $report = Get-Content -LiteralPath $reportPath -Raw | ConvertFrom-Json
+    # Read-only diagnostics: never modify pinned fixtures or gate behavior.
+    & (Join-Path $PSScriptRoot 'inspect-replay-input-telemetry.ps1') -ReportPath $reportPath
     $samples = @($report.sampleResults)
     $failures = [System.Collections.Generic.List[string]]::new()
     if ($samples.Count -ne 12 -or [int]$report.summary.benignSampleCount -ne 6 -or
