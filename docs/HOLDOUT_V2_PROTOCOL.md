@@ -205,7 +205,7 @@ Both v1 and opt-in v2 evaluators invoke `scripts/inspect-replay-input-telemetry.
 
 ### Source-only verification pending
 
-The new C# diagnostic tests and PowerShell changes are committed but **have not been compiled or executed on CARTHAGE**. First run focused xUnit tests when explicitly ready:
+**The new diagnostic and v2 contract tests passed on CARTHAGE at `b88aba1` on October 29, 2026: 30/30 passed, zero failures, zero skips.** The Release build completed with warnings at pre-existing locations. The read-only v2 readiness script also ran successfully, reporting **0/4 external candidate/provenance pairs** and state `PENDING_EXTERNAL_CAPTURE_AND_REVIEW`. This does not certify any source PCAP, prove independent benign/malicious labeling, or make the v2 holdout ready for freezing. To reproduce the focused tests:
 
 ```powershell
 dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~DnsReplayTelemetryDiagnosticsTests|FullyQualifiedName~SyntheticHoldoutV2ContractTests"
