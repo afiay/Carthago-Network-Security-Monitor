@@ -15,7 +15,7 @@ permissions:
 
 concurrency:
   group: carthago-one-shot-full-verification
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   full-verification:
