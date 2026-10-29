@@ -81,3 +81,13 @@ The existing Korving-F source ledger identified two controlled iodine configurat
 Repository: https://github.com/Korving-F/dns-tunnel-dataset. **No original archive contents were independently decoded in this review; no raw archive license or publication clearance was established.** Both metadata files reference the same lab client `192.168.0.30`, so neither should be assumed to supply the required *second independently captured malicious client*. Separate benign PCAP sources likewise remain unverified. Do not import either archive into a v2 slot without rights review, isolated inspection, SHA-256 receipt and original-packet TShark audit. No source approval is implied by this ledger entry.
 
 **V2 status remains `PENDING_EXTERNAL_CAPTURE_AND_REVIEW`, 0/4 approved and packet-audited external R102 fixture/provenance pairs.**
+
+## CARTHAGE Korving TXT Base32 archive verified and inventoried (2026-10-29)
+
+The operator downloaded the immutable-commit published archive to the locally ignored `build-verify/holdout-v2-sources/korving-iodine-txt-base32.tar.gz`, then independently ran `git hash-object --no-filters` against the expected source Git object `c061d953b9e21068031d604b9c1001ddcd1cfa53`. The comparison succeeded. This verifies **archive integrity against the pinned upstream Git blob**, not the embedded PCAP's individual SHA-256 or suitability.
+
+The operator ran `tar -tzf` (list only). It reported the exact archive member `86950175ba9bf6b4aaea5478bbd49ad7/bind9/dns.pcap` alongside BIND9 query logs, metadata and scripts. **No embedded packet was extracted, decoded or independently analyzed in this checkpoint; none of the bundled scripts should be executed.** The upstream scenario metadata indicates TXT Base32 iodine, but that is not packet-level proof of qualifying long TXT queries.
+
+Next safe action: extract **only** the named `bind9/dns.pcap` member under the ignored local `build-verify/holdout-v2-sources/korving-base32-extract` directory, compute its independent SHA-256, and inspect using the existing read-only `scripts/inspect-holdout-v2-pcap.ps1` with the fully qualified installed TShark 4.6.9 executable. Keep extraction output private; do not upload raw DNS/IP data or evaluate detection. The exact source archive member is pinned above; avoid extracting the entire tarball or executing scripts.
+
+**Status remains 0/4 v2 reviewed source/provenance pairs.** Archive integrity and member inventory are necessary preliminaries, not label independence, source licensing, privacy clearance, R102 transport eligibility, packet-frame attribution, frozen fixture approval or holdout certification.
