@@ -230,6 +230,108 @@ function Assert-Stage6CandidateEvidence([string]$Path, [string]$Hash, [string]$T
     Write-Host 'V2 frame/question binding contract: two source-bound records; nineteen tampering/missing-original cases rejected. Source syntax only.'
 }
 
+function New-SyntheticLogicalSource(
+    [string]$Hash, [string]$Origin, [string]$Session, [string]$Address,
+    [int[]]$Frames, [string[]]$FirstLabels, [string]$RootLabel = 'ZXhhbXBsZQ=='
+) {
+    Assert-Contract ($Frames.Count -eq $FirstLabels.Count) 'logical-source-fixture-cardinality'
+    $records = [System.Collections.Generic.List[object]]::new()
+    foreach ($label in $FirstLabels) {
+        $records.Add([pscustomobject]@{
+            dnsWireLabelsBase64 = [string[]]@($label, $RootLabel)
+            dnsQtype = 'TXT'
+        })
+    }
+    return [pscustomobject]@{
+        provenance = [pscustomobject]@{
+            captureSha256 = $Hash
+            sourceAddress = $Address
+            frameNumbers = $Frames
+            questionIndices = [int[]]@(0, 0, 0)
+            originatingClientLabel = $Origin
+            collectionSessionId = $Session
+            collectionVantage = 'client'
+            independentClientEvidenceUri = 'https://example.org/synthetic-review-only'
+        }
+        records = @($records.ToArray())
+    }
+}
+
+function Assert-SourceReviewResult(
+    [object[]]$Candidates, [bool]$Mirrored, [bool]$SharedSession,
+    [bool]$SameOrigin, [bool]$ReusedFrame, [int]$Overlap
+) {
+    # This is a review-risk classifier, not an independence approval API.
+    $items = @(Measure-DnsWireMaliciousSourceIndependence -Candidates $Candidates 6>&1)
+    Assert-Contract ($items.Count -eq 1 -and $items[0] -is [pscustomobject]) 'source-review-output-shape'
+    $result = $items[0]
+    Assert-Contract ([bool]$result.CompleteNameSetOverlap -eq $Mirrored) 'source-mirror-risk-mismatch'
+    Assert-Contract ([bool]$result.SharedCollectionSession -eq $SharedSession) 'source-session-risk-mismatch'
+    Assert-Contract ([bool]$result.SameOriginatingClient -eq $SameOrigin) 'source-client-risk-mismatch'
+    Assert-Contract ([bool]$result.ReusedOriginalFrame -eq $ReusedFrame) 'source-frame-reuse-risk-mismatch'
+    Assert-Contract ([int]$result.OverlappingDistinctNameCount -eq $Overlap) 'source-name-overlap-count-mismatch'
+    Assert-Contract ([bool]$result.RequiresAnalystReview) 'source-review-gate-bypassed'
+    Assert-Contract (-not [bool]$result.IndependenceApproved) 'source-syntax-auto-approved'
+    $summary = $result | ConvertTo-Json -Depth 8 -Compress
+    foreach ($candidate in $Candidates) {
+        foreach ($privateValue in @(
+            $candidate.provenance.sourceAddress,
+            $candidate.provenance.originatingClientLabel,
+            $candidate.provenance.collectionSessionId)) {
+            Assert-Contract (-not $summary.Contains([string]$privateValue)) `
+                'source-review-output-exposes-private-attribution'
+        }
+        foreach ($record in @($candidate.records)) {
+            foreach ($label in @($record.dnsWireLabelsBase64)) {
+                Assert-Contract (-not $summary.Contains([string]$label)) `
+                    'source-review-output-exposes-reversible-name'
+            }
+        }
+    }
+}
+
+function Assert-Stage6LogicalSourceIndependence() {
+    Assert-Contract ($null -ne (Get-Command Measure-DnsWireMaliciousSourceIndependence -ErrorAction SilentlyContinue)) `
+        'logical-source-review-not-implemented-red'
+    # Names and provenance are entirely synthetic. This check must identify
+    # a mirrored DNS-name SET independently of source-IP and packet order.
+    $first = New-SyntheticLogicalSource ('11' * 32) 'client-one' 'session-one' `
+        '192.0.2.10' @(101, 102, 103) @('YQ==', 'Yg==', 'Yw==')
+    $mirrored = New-SyntheticLogicalSource ('22' * 32) 'client-two' 'session-two' `
+        '192.0.2.11' @(201, 202, 203) @('Qw==', 'Qg==', 'QQ==') 'RVhBTVBMRQ=='
+    Assert-SourceReviewResult @($first, $mirrored) $true $false $false $false 3
+
+    $disjoint = New-SyntheticLogicalSource ('22' * 32) 'client-two' 'session-two' `
+        '192.0.2.11' @(201, 202, 203) @('eA==', 'eQ==', 'eg==')
+    # A lack of overlap is never sufficient for automatic source approval.
+    Assert-SourceReviewResult @($first, $disjoint) $false $false $false $false 0
+
+    $partial = New-SyntheticLogicalSource ('22' * 32) 'client-two' 'session-two' `
+        '192.0.2.11' @(201, 202, 203) @('Yg==', 'eQ==', 'eg==')
+    Assert-SourceReviewResult @($first, $partial) $false $false $false $false 1
+
+    $sessionCopy = New-SyntheticLogicalSource ('22' * 32) 'client-two' 'session-one' `
+        '192.0.2.11' @(201, 202, 203) @('eA==', 'eQ==', 'eg==')
+    Assert-SourceReviewResult @($first, $sessionCopy) $false $true $false $false 0
+
+    $originCopy = New-SyntheticLogicalSource ('22' * 32) 'client-one' 'session-two' `
+        '192.0.2.11' @(201, 202, 203) @('eA==', 'eQ==', 'eg==')
+    Assert-SourceReviewResult @($first, $originCopy) $false $false $true $false 0
+
+    $frameCopy = New-SyntheticLogicalSource ('11' * 32) 'client-two' 'session-two' `
+        '192.0.2.11' @(101, 102, 103) @('eA==', 'eQ==', 'eg==')
+    Assert-SourceReviewResult @($first, $frameCopy) $false $false $false $true 0
+
+    # Non-ASCII octets must not be Unicode-case-folded into one identity.
+    $binaryA = New-SyntheticLogicalSource ('33' * 32) 'client-three' 'session-three' `
+        '192.0.2.12' @(301, 302, 303) @('gA==', 'Yg==', 'Yw==')
+    $binaryB = New-SyntheticLogicalSource ('44' * 32) 'client-four' 'session-four' `
+        '192.0.2.13' @(401, 402, 403) @('gQ==', 'eQ==', 'eg==')
+    Assert-SourceReviewResult @($binaryA, $binaryB) $false $false $false $false 0
+
+    Write-Host 'V2 logical-source contract: seven mirror, overlap, session, origin, frame-reuse and non-ASCII review scenarios defined. No source approved.'
+}
+
 $temporaryPath = Join-Path ([IO.Path]::GetTempPath()) `
     ('carthago-dns-wire-contract-' + [Guid]::NewGuid().ToString('N'))
 [void][IO.Directory]::CreateDirectory($temporaryPath)
@@ -300,6 +402,7 @@ try {
     Write-Host 'DNS wire source contract: four source-bound questions corroborated; five invalid/ambiguous selections rejected. Synthetic evidence only.'
     if ($IncludeV2Provenance) {
         Assert-Stage6CandidateEvidence $capture $captureHash $tshark
+        Assert-Stage6LogicalSourceIndependence
     }
 } finally {
     # Remove only our own uniquely named temporary test fixture.
