@@ -619,10 +619,12 @@ try {
         function New-BridgeDnsQuery([byte[]]$FirstLabel) {
             $msg=[Collections.Generic.List[byte]]::new()
             $msg.AddRange((Convert-HexToBytes '123401000001000000000000'))
-            foreach($part in @($FirstLabel,
-                    [Text.Encoding]::ASCII.GetBytes('example'),
-                    [Text.Encoding]::ASCII.GetBytes('test'))) {
-                [byte[]]$bytes=$part
+            # Avoid PowerShell 5.1 nested-array flattening of byte[] labels.
+            $labels=[Collections.Generic.List[byte[]]]::new()
+            $labels.Add($FirstLabel)
+            $labels.Add([Text.Encoding]::ASCII.GetBytes('example'))
+            $labels.Add([Text.Encoding]::ASCII.GetBytes('test'))
+            foreach([byte[]]$bytes in $labels) {
                 $msg.Add([byte]$bytes.Length)
                 $msg.AddRange($bytes)
             }
