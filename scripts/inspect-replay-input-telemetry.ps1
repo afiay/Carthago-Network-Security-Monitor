@@ -10,6 +10,8 @@ $ErrorActionPreference='Stop'
 $path=(Resolve-Path -LiteralPath $ReportPath -ErrorAction Stop).Path
 $report=Get-Content -LiteralPath $path -Raw -ErrorAction Stop | ConvertFrom-Json
 $rows=0
+$diagnosticsSeen=0
+$versionedDiagnosticsSeen=0
 foreach ($sample in @($report.sampleResults)) {
     # Scenario labels are output only if they are simple, bounded identifiers.
     $scenario=[string]$sample.name
@@ -17,6 +19,10 @@ foreach ($sample in @($report.sampleResults)) {
         $scenario='REDACTED_SCENARIO'
     }
     foreach ($diagnostic in @($sample.expectedRuleDiagnostics)) {
+        $diagnosticsSeen++
+        if ($null -ne $diagnostic.PSObject.Properties['inputTelemetryIssueCodes']) {
+            $versionedDiagnosticsSeen++
+        }
         $rule=[string]$diagnostic.ruleId
         if ($rule -notmatch '^R[0-9]{3}$') { continue }
         $codes=@($diagnostic.inputTelemetryIssueCodes | Where-Object {
@@ -35,6 +41,11 @@ foreach ($sample in @($report.sampleResults)) {
             } else { 'UNKNOWN' }))
         $rows++
     }
+}
+if ($diagnosticsSeen -gt 0 -and $versionedDiagnosticsSeen -ne $diagnosticsSeen) {
+    Write-Host 'INPUT TELEMETRY: UNAVAILABLE - benchmark report uses an older/incomplete diagnostic schema.'
+    Write-Host 'Rebuild the Release benchmark before using -NoBuild; do not interpret absent fields as zero issues.'
+    return
 }
 Write-Host ("INPUT TELEMETRY SUMMARY: {0} expected-rule diagnostic(s) with structured input issues." -f $rows)
 Write-Host 'Diagnostic-only: no raw QNAME, IP, headers, command lines, inference or rule promotion.'
