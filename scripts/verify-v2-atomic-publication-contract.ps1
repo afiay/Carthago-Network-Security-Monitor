@@ -22,7 +22,9 @@ function New-SyntheticPairs([object[]]$Slots) {
         $root = if($malicious){'exfil.example'}else{'normal.example'}
         $records = @()
         for($j=0;$j -lt 3;$j++) {
-            $records += [ordered]@{
+            # Publisher intentionally requires explicit 11-property objects.
+            # [ordered]@{} alone creates OrderedDictionary, not PSCustomObject.
+            $records += [pscustomobject][ordered]@{
                 source=$ip; destination='198.51.100.53'; ipVersion=4
                 sourcePort=(53010+$i); destinationPort=53
                 protocol='DNS';applicationProtocol='DNS';isUdp=$true;isTcp=$false
@@ -202,6 +204,13 @@ try {
     [IO.File]::WriteAllText($sentinel,'STAGE6E_CANARY',[Text.UTF8Encoding]::new($false))
     $sentinelHash=(Get-FileHash -LiteralPath $sentinel -Algorithm SHA256).Hash
     $pairs=New-SyntheticPairs $slots
+    foreach($pair in $pairs) {
+        Assert-Contract (@($pair.Sample.records).Count -eq 3) 'fixture-record-count'
+        foreach($record in @($pair.Sample.records)) {
+            Assert-Contract ($record -is [pscustomobject] -and
+                @($record.PSObject.Properties.Name).Count -eq 11) 'fixture-record-shape'
+        }
+    }
     $control=@(Invoke-Core $pairs $schema $ownedRoot 'control-complete' '' 6>&1)
     Assert-Contract ($control.Count -eq 1 -and $control[0] -is [pscustomobject]) 'control-output-shape'
     $result=$control[0]
