@@ -275,18 +275,7 @@ function Get-HoldoutV2PrivateRecoveryPlan {
             Fail-Publisher 'RECOVERY_INPUT_INVALID'
         }
         if($entry.Key -isnot [string] -or
-           $entry.Key -cnotmatch '^[A-Za-z][A-Za-z0-9_-]{1,40}
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory=$true)][object[]]$CandidatePairs,
-        [Parameter(Mandatory=$true)][string]$SchemaPath,
-        [Parameter(Mandatory=$true)][string]$PrivateOutputRoot,
-        [Parameter(Mandatory=$true)][string]$BatchName
-    )
-    Invoke-HoldoutV2AtomicPublishCore -CandidatePairs $CandidatePairs -SchemaPath $SchemaPath -PrivateOutputRoot $PrivateOutputRoot -BatchName $BatchName
-}
-Export-ModuleMember -Function Publish-HoldoutV2CandidateBatch
- -or
+           $entry.Key -cnotmatch '^[A-Za-z][A-Za-z0-9_-]{1,40}$' -or
            -not $seen.Add([string]$entry.Key) -or
            $entry.Kind -isnot [string] -or
            $entry.CommitOutcome -isnot [string] -or
