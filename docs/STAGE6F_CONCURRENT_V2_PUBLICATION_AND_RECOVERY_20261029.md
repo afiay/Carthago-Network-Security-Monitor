@@ -189,3 +189,14 @@ The race worker also stages its four synthetic candidates as **one positional ar
 | bf1045e | scripts/verify-v2-two-writer-race-contract.ps1 | Block recursive scratch cleanup through nested reparse points |
 
 **Actual validation:** none. No race was initiated, no recovery plan called, and no cleanup procedure executed in this authoring step.
+
+
+## 10. Stage 6G opt-in concurrent reader handoff (authored 2026-10-29; not run)
+
+The third-reader visibility gap identified in Stage 6F is now addressed **at the regression-source level only** by extending the **same** scripts/verify-v2-two-writer-race-contract.ps1. Commits bb8a458, 2dccb79 and 6af2424 added an opt-in IncludeReaderVisibility switch, single-string JSON binding for the four expected synthetic names, separate Partial versus read/parse error counters, and a bounded ReaderStressRounds range of 3–12 (six default when opted in). The existing Stage 6F invocation **without** IncludeReaderVisibility still prepares three rounds with exactly two writer jobs each; no new script, workflow, public production hook or sample corpus was created.
+
+When owner testing is explicitly authorized, the opt-in third reader job will wait behind the same local GO barrier as the two writer processes and repeatedly poll only the safe final directory. A legitimate observation is either **absent** or **exactly eight complete, readable, paired JSON files** with schemaVersion=2 and PENDING_EXTERNAL_CAPTURE_AND_REVIEW. The reader returns metadata-only Polls, Absent, Complete, Partial and IoErrors counters; the parent requires at least one absent and one complete observation, zero partial/unreadable snapshots and an independent reader process ID. All jobs remain bounded and scratch-owned.
+
+The full threat model, invocation examples, exact diagnostics, safety boundaries, acceptance sequence and preserved invariants are in **docs/STAGE6G_CONCURRENT_READER_VISIBILITY_20261029.md** (commit 815a064). This remains a **sampled visibility regression**, not proof that partial visibility never happened between polls. Before calling Stage 6G GREEN, implement and verify a separate safe synthetic negative control that deliberately exposes an incomplete final directory and demonstrates that the reader flags it, without writing outside its own ignored scratch directory. Continuous reader visibility, actual Windows no-replace API semantics, NTFS crash durability, ACL errors, and real source/license/label review remain unverified and separately gated.
+
+**No tests, worker jobs, PowerShell commands, packet captures, production module invocations or CI workflow dispatch were executed.** This paragraph documents only code authored and committed. Frozen V1 and pending V2 approval state remain untouched.
