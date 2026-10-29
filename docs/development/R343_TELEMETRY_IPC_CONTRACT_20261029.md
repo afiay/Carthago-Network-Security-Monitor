@@ -78,3 +78,7 @@ git switch feature/carthago-reliability-hardening
 git pull --ff-only
 dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~WinRmTelemetryIpcContractTests|FullyQualifiedName~WinRmSecurityAuditIntakeTests"
 ```
+
+## CARTHAGE focused verification (2026-10-29)
+
+At source commit `80e37ed`, the operator ran the Release test filter covering `WinRmTelemetryIpcContractTests` and `WinRmSecurityAuditIntakeTests`. **115 passed; 0 failed; 0 skipped.** Build succeeded with warnings in other rule files and an existing test analyzer warning. This validates the in-memory contract and parser under focused tests, not real OS transport authentication. No full-suite or replay certification was run. No Windows audit policy was changed.
