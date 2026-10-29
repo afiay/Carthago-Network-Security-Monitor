@@ -104,7 +104,23 @@ function BuildFixture([string]$scenario) {
         foreach($q in $names) {
             $records+=@{source=$source;destination='198.51.100.53';ipVersion=4;sourcePort=(53000+$slot);destinationPort=53;protocol='DNS';applicationProtocol='DNS';isUdp=$true;isTcp=$false;dnsQname=$q;dnsQtype='TXT'}
         }
-        $sample=[ordered]@{name=$name;classification=[string]$entry.classification;records=$records;expectedMatches=$(if($malicious){@('R102')}else{@()});expectedNonMatches=$(if($malicious){@('R118','R163')}else{@('R102','R118','R163')});expectedMinimumConfidence=$(if($malicious){0.75}else{0.0})}
+        # Assign arrays as variables, not $() pipeline expressions: an empty
+        # pipeline would otherwise serialize as null instead of [] for benign
+        # expectedMatches, invalidating the attribution-only baseline.
+        $expectedMatches=[string[]]@()
+        $expectedNonMatches=[string[]]@('R102','R118','R163')
+        if($malicious) {
+            $expectedMatches=[string[]]@('R102')
+            $expectedNonMatches=[string[]]@('R118','R163')
+        }
+        $sample=[ordered]@{
+            name=$name
+            classification=[string]$entry.classification
+            records=$records
+            expectedMatches=$expectedMatches
+            expectedNonMatches=$expectedNonMatches
+            expectedMinimumConfidence=$(if($malicious){0.75}else{0.0})
+        }
         $p=[ordered]@{sample=$name;classification=[string]$entry.classification;sourceKind='external-pcap-reviewed';analystReviewedLabel=$true;capturedTransportEvidence=$true;independentLabelBasis='synthetic-only';sourceUri='https://example.org/synthetic';sourceLicenseEvidenceUri='https://example.org/synthetic-rights';sourceLicense='CC0-1.0';captureFileName=$pcapFile;captureSha256=$hash;sourceAddress=$source;queryRoot=$rootName;frameNumbers=@(1,2,3);selectedRecordCount=3;originatingClientLabel=('synthetic-origin-'+$slot);collectionSessionId=('synthetic-session-'+$slot);collectionVantage='client'}
         if($scenario -eq 'A02' -and $slot -eq 3){$p.collectionSessionId='synthetic-session-2'}
         if($scenario -eq 'A03' -and $slot -eq 3){$p.originatingClientLabel='synthetic-origin-2'}
