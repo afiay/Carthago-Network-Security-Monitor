@@ -250,6 +250,10 @@ function Invoke-ContentionRound([string]$OwnedRoot,[string]$Name,
     $readerStop=Join-Path $OwnedRoot ($Name+'.reader-stop')
     $jobs=@()
     $readerJob=$null
+    # Serialize the four synthetic candidate pairs to ONE argument. Passing
+    # nested arrays through Start-Job -ArgumentList may flatten them under
+    # Windows PowerShell 5.1 and produce false publication failures.
+    $pairsJson=ConvertTo-Json -InputObject $Pairs -Depth 24 -Compress
     try {
         if($WithReader) {
             # Third process reads the FINAL safe name only. It never scans
@@ -266,7 +270,7 @@ function Invoke-ContentionRound([string]$OwnedRoot,[string]$Name,
         for($i=0;$i -lt 2;$i++) {
             $ready=Join-Path $OwnedRoot ($Name+'.ready'+$i)
             $job=Start-Job -ScriptBlock {
-                param($Module,$CandidatePairs,$SchemaPath,$OutputRoot,$Batch,$Ready,$Go)
+                param($Module,$CandidatePairsJson,$SchemaPath,$OutputRoot,$Batch,$Ready,$Go)
                 $ErrorActionPreference='Stop'
                 $WarningPreference='SilentlyContinue'
                 $InformationPreference='SilentlyContinue'
@@ -284,7 +288,17 @@ function Invoke-ContentionRound([string]$OwnedRoot,[string]$Name,
                         }
                         Start-Sleep -Milliseconds 20
                     }
-                    $items=@(Publish-HoldoutV2CandidateBatch -CandidatePairs $CandidatePairs -SchemaPath $SchemaPath -PrivateOutputRoot $OutputRoot -BatchName $Batch 6>&1)
+                    # Preserve the original four nested sample/provenance
+                    # objects without Start-Job positional array coercion.
+                    $candidatePairs=[object[]]@(ConvertFrom-Json -InputObject ([string]$CandidatePairsJson))
+                    if($candidatePairs.Count -ne 4 -or
+                       @($candidatePairs | Where-Object {
+                           $null -eq $_.PSObject.Properties['Sample'] -or
+                           $null -eq $_.PSObject.Properties['Provenance']
+                       }).Count -ne 0) {
+                        return [pscustomobject]@{Code='BAD_JOB_FIXTURE';ProcessId=$PID}
+                    }
+                    $items=@(Publish-HoldoutV2CandidateBatch -CandidatePairs $candidatePairs -SchemaPath $SchemaPath -PrivateOutputRoot $OutputRoot -BatchName $Batch 6>&1)
                     if($items.Count -ne 1 -or
                        [int]$items[0].CandidateCount -ne 4 -or
                        [bool]$items[0].IsApproved -or
@@ -299,7 +313,7 @@ function Invoke-ContentionRound([string]$OwnedRoot,[string]$Name,
                     }
                     return [pscustomobject]@{Code='UNEXPECTED_ERROR';ProcessId=$PID}
                 }
-            } -ArgumentList @($PublisherPath, (,$Pairs), $Schema, $OwnedRoot, $Name, $ready, $signal)
+            } -ArgumentList @($PublisherPath, $pairsJson, $Schema, $OwnedRoot, $Name, $ready, $signal)
             $jobs+=,$job
         }
         # A fixed upper bound prevents waiting forever if a worker fails.
