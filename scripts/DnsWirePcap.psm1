@@ -29,6 +29,25 @@ function Convert-WireHex([string]$Text) {
     }
     return ,$bytes
 }
+# DNS over TCP is preceded by a two-octet big-endian length per RFC 7766.
+# In TShark 4.6.9 jsonraw the prefix is included in dns_raw for the
+# synthetic TCP fixture. Enforce exact framing, never guess or silently
+# truncate bytes. A single selected raw DNS record is one message only.
+function Get-DnsMessageFromTransportRaw([byte[]]$RawBytes,[string]$Transport) {
+    if($Transport -ceq 'UDP') {
+        if($RawBytes.Length -lt 12) { Fail-Wire 'DNS_WIRE_TRUNCATED' }
+        return ,$RawBytes
+    }
+    if($Transport -cne 'TCP') { Fail-Wire 'DNS_WIRE_TRANSPORT_AMBIGUOUS' }
+    if($RawBytes.Length -lt 2) { Fail-Wire 'DNS_WIRE_TCP_PREFIX_TRUNCATED' }
+    $declared=Read-BE16 $RawBytes 0
+    if($declared -lt 12 -or $declared -ne ($RawBytes.Length-2)) {
+        Fail-Wire 'DNS_WIRE_TCP_LENGTH_MISMATCH'
+    }
+    $message=New-Object byte[] $declared
+    [Array]::Copy($RawBytes,2,$message,0,$declared)
+    return ,$message
+}
 function Read-WireName([byte[]]$Message,[int]$At) {
     $labels=[Collections.Generic.List[byte[]]]::new()
     $cursor=$At
@@ -138,10 +157,21 @@ function Read-DnsWireQuestion {
         $raw=@(& $tshark.Source -n -r $capture -Y $filter -T jsonraw 2>&1)
     } catch { Fail-Wire 'DNS_WIRE_TSHARK_ERROR' }
     if($LASTEXITCODE -ne 0) { Fail-Wire 'DNS_WIRE_TSHARK_ERROR' }
-    $decoded=$null
-    try { $decoded=ConvertFrom-Json -InputObject ($raw -join [Environment]::NewLine) }
+    # Envelope top-level jsonraw so PowerShell 5.1 preserves frame array
+    # cardinality. Never expose packet bytes or private source metadata.
+    $rawJson=($raw -join [Environment]::NewLine).Trim()
+    if(-not $rawJson.StartsWith('[') -or -not $rawJson.EndsWith(']')) {
+        Fail-Wire 'DNS_WIRE_TSHARK_RAW_INVALID'
+    }
+    $envelope=$null
+    try { $envelope=ConvertFrom-Json -InputObject ('{"Frames":'+$rawJson+'}') }
     catch { Fail-Wire 'DNS_WIRE_TSHARK_RAW_INVALID' }
-    $frames=@($decoded)
+    if($null -eq $envelope -or
+       $null -eq $envelope.PSObject.Properties['Frames'] -or
+       $envelope.Frames -isnot [array]) {
+        Fail-Wire 'DNS_WIRE_TSHARK_RAW_INVALID'
+    }
+    [object[]]$frames=$envelope.Frames
     if($frames.Count -ne 1) { Fail-Wire 'DNS_WIRE_FRAME_NOT_UNIQUE' }
     $layers=$frames[0]._source.layers
     if($null -eq $layers) { Fail-Wire 'DNS_WIRE_RAW_UNAVAILABLE' }
@@ -149,11 +179,9 @@ function Read-DnsWireQuestion {
     if($null -eq $rawProperty) { Fail-Wire 'DNS_WIRE_RAW_UNAVAILABLE' }
     $rawValues=@($rawProperty.Value)
     if($rawValues.Count -ne 1) { Fail-Wire 'DNS_WIRE_RAW_AMBIGUOUS' }
-    $bytes=Convert-WireHex ([string]$rawValues[0])
-    $questions=@(Read-DnsQuestionsFromRaw $bytes)
-    if($QuestionIndex -ge $questions.Count) {
-        Fail-Wire 'DNS_WIRE_QUESTION_ORDINAL_INVALID'
-    }
+    $rawBytes=Convert-WireHex ([string]$rawValues[0])
+    # Obtain independently decoded transport fields BEFORE interpreting
+    # raw DNS header bytes: TCP jsonraw may include its two-octet prefix.
     # Extract only the selected frame's captured source/destination and
     # transport fields. They are NOT inferred from QNAME presentation text.
     $fields=@('frame.number','ip.src','ip.dst','ipv6.src','ipv6.dst',
@@ -197,6 +225,11 @@ function Read-DnsWireQuestion {
     if($sourcePort -lt 1 -or $sourcePort -gt 65535 -or
        $destinationPort -ne 53) {
         Fail-Wire 'DNS_WIRE_PORT_INVALID'
+    }
+    $message=Get-DnsMessageFromTransportRaw -RawBytes $rawBytes -Transport $transport
+    $questions=@(Read-DnsQuestionsFromRaw $message)
+    if($QuestionIndex -ge $questions.Count) {
+        Fail-Wire 'DNS_WIRE_QUESTION_ORDINAL_INVALID'
     }
     try { $hash=(Get-FileHash -LiteralPath $capture -Algorithm SHA256 -ErrorAction Stop).Hash.ToLowerInvariant() }
     catch { Fail-Wire 'DNS_WIRE_CAPTURE_HASH_UNAVAILABLE' }
