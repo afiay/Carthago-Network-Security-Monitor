@@ -695,7 +695,7 @@ try {
             [string]$status[0].ReviewState -ceq 'PENDING_EXTERNAL_CAPTURE_AND_REVIEW') 'bridge-success-state'
         $statusText=ConvertTo-Json -InputObject $status[0] -Depth 5 -Compress
         Assert-Contract ($statusText -notmatch 'alpha|beta|gamma|192[.]0[.]2[.]|example[.]test|captureSha256|dnsWireLabelsBase64' -and
-            @($status[0].PSObject.Properties).Count -eq 9) 'bridge-success-privacy'
+            @($status[0].PSObject.Properties.Name).Count -eq 9) 'bridge-success-privacy'
 
         $negativeCount=0
         $bad=Clone-BridgeFixture $p $records
