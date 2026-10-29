@@ -198,3 +198,26 @@ has not been dispatched.
 - **Privacy:** Redirect child process output to private temporary log; delete synthetic fixture directory in finally; do not upload packets, raw labels, client attribution or private logs.
 - **Future command (NOT authorized):** `powershell.exe -NoProfile -File .\scripts\verify-v2-auditor-enforcement.ps1 -TsharkPath 'C:\Program Files\Wireshark\tshark.exe' -AuthorizedTestTime`. This requires separate owner approval first. No CARTHAGE build, xUnit, TShark, PCAP processing, replay, evaluation or GitHub Actions run has occurred in this step.
 - **Next gate:** when test time is explicitly authorized, verify the control, record actual RED, then implement the smallest possible audited enforcement and extend the same harness. Maintain the single GA workflow and frozen V1.
+
+
+### 2026-10-29 — Stage 6B reason-bound actual-auditor regression expansion (PARKED)
+
+**Branch:** \`feature/carthago-reliability-hardening\`. **Execution authorization:** NOT GRANTED. The owner remains on a public connection and has not said "now it's test time." No process execution, runner activity or source capture is part of this checkpoint.
+
+| Step | Commit | File | Change | Execution/evidence |
+| --- | --- | --- | --- | --- |
+| S6B-01 | \`d4cbdca\` | \`scripts/verify-v2-auditor-enforcement.ps1\` | Expand the real-auditor synthetic harness with A04 SHA/frame reuse, A08 QTYPE/port mutation, A09 missing PCAP, A10 invalid vantage, A11 invalid license, A13 review-only control, A16 duplicate-but-capture-aligned TXT names; require specific failure reasons rather than any nonzero exit; scan private stdout/stderr for literal QNAME and source/destination IP disclosures. | Authored only; no PowerShell/TShark invocation. |
+| S6B-02 | \`05e5dda\` | \`scripts/verify-v2-auditor-enforcement.ps1\` | Prevent false baseline failure from PowerShell pipeline collapsing empty benign \`expectedMatches\` to JSON null; construct typed arrays before serialization. | Static source correction only; Windows PowerShell compatibility not executed. |
+| S6B-03 | \`e17d2f0\` | \`docs/STAGE6_V2_AUDITOR_ENFORCEMENT_CONTRACT_20261029.md\` | In-depth scenario-by-scenario matrix, privacy expectations, error-code contract, red/green sequencing, known hazards and explicit deferred binary-only coverage. | Documentation committed; no validation. |
+
+**Prepared test inventory:** two legitimate *attribution-only* controls (\`BASELINE\`, \`A13\`) and fifteen independent rejection mutations (\`A01\`, \`A02\`, \`A03\`, \`A04\`, \`A06\`, \`A08-qtype\`, \`A08-port\`, \`A09\`, \`A09-missing\`, \`A10\`, \`A11\`, \`A11-license\`, \`A12\`, \`A14\`, \`A16-distinct\`). All synthetic; each fixture is generated under a private randomly named OS temporary directory, with no packet capture or network interface access. Both controls must succeed before any failing mutation may be interpreted as a security RED; every rejection must match its specific intended reason. The actual auditor was not modified.
+
+**Known expected RED:** \`SOURCE_INDEPENDENCE_MIRROR\`, \`SOURCE_SESSION_COLLISION\`, \`SOURCE_ORIGIN_COLLISION\` and \`SOURCE_VANTAGE_UNREVIEWED\` are proposed privacy-safe error identifiers for unimplemented auditor enforcement. The current legacy auditor checks source-IP inequality but not independently corroborated original clients/sessions. An error from a missing dependency or broken synthetic fixture is **not** a valid RED.
+
+**Privacy checkpoint:** in the planned future run, the harness inspects only a local temporary log and rejects any literal generated QNAME, source address or destination address in it; private logs are deleted under \`finally\`. This is not a complete audit of every possible credential or binary payload disclosure. GitHub Actions stays a single existing manually dispatched, owner-gated YAML file, unchanged in this step.
+
+**Remaining gaps before claiming Stage 6 complete:** A05 per-frame DNS question ordinals, A06 binary-byte identity and A07 canonical Base64, A08 full TCP/question transport binding, A10 independently verified vantage, A11 substantive license/analyst proof, A12 provenance allowlists, A15 full privacy redaction, A16 byte-length and entropy, and actual production importer/auditor enforcement. Frozen V1 remains unchanged; V2 remains \`PENDING_EXTERNAL_CAPTURE_AND_REVIEW\`, 0/4 approvals. No claims about R102 precision/recall/F1 follow from prepared syntax regressions.
+
+**Parked future command, not permission:** \`powershell.exe -NoProfile -File .\scripts\verify-v2-auditor-enforcement.ps1 -TsharkPath 'C:\Program Files\Wireshark\tshark.exe' -AuthorizedTestTime\`, only on CARTHAGE after separate explicit owner authorization. Record original repository SHA, TShark version, exact failing case/error, synthetic capture hash and sanitized exit status when authorized. Do not upload detailed logs or packet data.
+
+**Next development boundary:** prepare narrow code changes to the actual auditor *only after* an authorized and valid security RED confirms the new enforcement gaps. Until then, continue with independent test contract design/documentation or other non-executed tasks without changing frozen evidence.
