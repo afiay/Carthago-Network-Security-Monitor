@@ -1,6 +1,6 @@
 # Stage 6G — Concurrent reader visibility and bounded three-process stress
 
-**Status:** TEST CONTRACT AUTHORED — NOT EXECUTED  
+**Current status (2026-10-30): SYNTHETIC GREEN — independent reader visibility 3/3, 6/6 and 12/12 bounded rounds (maximum at `566f746`), with one WIN/one TARGET_EXISTS and absent/complete snapshots only. Stage 6H shared-reader negative sensitivity 6/6 independently GREEN at `8882f1c`.**  
 **Date:** 2026-10-29  
 **Active branch:** feature/carthago-reliability-hardening  
 **Existing test harness extended:** scripts/verify-v2-two-writer-race-contract.ps1  
@@ -10,7 +10,7 @@
 
 Stage 6F introduced three two-writer race contracts that verify the final private candidate batch **after** both publishers complete. Those tests cannot establish what a third independent process observes **while** the rename/commit occurs. A broken publisher that creates the final directory first, then adds its eight JSON files one by one, might still pass a final-state check. A reader could mistake an incomplete candidate for a usable private bundle.
 
-Stage 6G makes the third-reader observer an explicit **opt-in extension** of the existing two-writer synthetic harness. It reuses the same manifest-derived four candidate pairs, schema, safe writer interface, unique scratch root, workers, content assertions and cleanup. Stage 6F's three-round behavior is unchanged when the new switch is omitted. No test results are available because the owner has not authorized any PowerShell execution.
+Stage 6G makes the third-reader observer an explicit **opt-in extension** of the existing two-writer synthetic harness. It reuses the same manifest-derived four candidate pairs, schema, safe writer interface, unique scratch root, workers, content assertions and cleanup. Stage 6F's three-round behavior is unchanged when the new switch is omitted. The owner subsequently authorized and ran the bounded 3-, 6- and 12-round Windows contracts. Their synthetic results are recorded in `docs/DEVELOPMENT_VALIDATION_LEDGER.md`; no real source was involved.
 
 **Correctness property under test:** Every successful reader snapshot of a final batch name must be either:
 
@@ -19,7 +19,7 @@ Stage 6G makes the third-reader observer an explicit **opt-in extension** of the
 
 **Forbidden observations:** final directory visible with 0–7 files; extra or misplaced files; malformed, truncated or unreadable JSON; wrong sample/provenance names; inconsistent classifications; legacy provenance version; or a source approval/frozen state. Directory-read errors are tracked separately from a clean absence and also fail the contract.
 
-This is a *sampled concurrency invariant*: a fast transient partial state between polls may be missed. Absence of a detected partial snapshot cannot prove linearizability or Windows power-loss durability. All of these tests remain preparation, NOT demonstrated runtime behavior.
+This is a *sampled concurrency invariant*: a fast transient partial state between polls may be missed. Absence of a detected partial snapshot cannot prove linearizability or Windows power-loss durability. The bounded synthetic reader behavior has been observed on Windows, but it cannot establish formal linearizability or power-loss durability.
 
 ## 2. Why the existing harness was extended instead of copied
 
@@ -41,7 +41,7 @@ Duplicating those fixtures in a separate Stage 6G script would introduce opportu
 | IncludeReaderVisibility | false | Adds one third, independent Start-Job observer per writer race. Stage 6F default remains two writer jobs and three rounds. |
 | ReaderStressRounds | 6 | Only used when IncludeReaderVisibility is supplied; bounded to 3–12 rounds by ValidateRange. Original no-reader run remains exactly three rounds. |
 
-**Parked examples, for future owner-approved CARTHAGE use only:**
+**Owner-gated regression commands (already executed with bounded synthetic cases; not automatic):**
 
 ~~~powershell
 # Stage 6F original three-round behavior:
@@ -78,7 +78,7 @@ Reader polling is bounded by a 75-second observation deadline and a 4-millisecon
 
 Before observing, the reader receives the four *expected synthetic sample names* as one JSON string, decoded in its own process. This avoids array flattening in PowerShell job argument binding. No real client/source metadata or original DNS wire-label bytes are passed.
 
-### Reader snapshot algorithm (authored, not executed)
+### Reader snapshot algorithm (implemented and exercised)
 
 1. Check the final directory is absent before signalling READY. If it already exists, return EARLY_VISIBLE.
 2. Wait for GO; maintain integer counters Polls, Absent, Complete, Partial and IoErrors.
@@ -116,20 +116,20 @@ No diagnostic may print packet names, reversible DNS data, captured IPs, client/
 
 | Scenario | Stage 6G status | Assurance boundary |
 | --- | --- | --- |
-| Three-process absent-to-complete observation for each fresh batch | **Authored**, no execution | Detects a partial final directory when sampled |
-| Six rounds by opt-in default | **Authored**, no execution | Bounded, repeatable stress; no statistical guarantee |
-| Up to twelve rounds by explicit parameter | **Authored**, no execution | Additional opportunities to expose contention |
-| One winner and one target-exists loser | Reuses Stage 6F checks; **not observed** | Tests no-replace contention |
-| Reader parses eight expected records | **Authored**, no execution | Visible JSON and matching metadata, not byte-accurate source PCAP |
-| Separate no-replace rename primitive review | **Not implemented/tested** | Atomicity depends on actual Windows behavior |
-| Deliberately broken publisher that exposes partial final folder | **Not yet covered by fault injection** | Observer-sensitivity negative control required |
+| Three-process absent-to-complete observation for each fresh batch | **GREEN**, owner-confirmed 3/6/12 rounds | Detects a partial final directory when sampled |
+| Six rounds by opt-in default | **GREEN 6/6** | Bounded, repeatable stress; no statistical guarantee |
+| Up to twelve rounds by explicit parameter | **GREEN 12/12** at `566f746` | Additional opportunities to expose contention |
+| One winner and one target-exists loser | **Observed** one WIN and one TARGET_EXISTS per round | Tests no-replace contention |
+| Reader parses eight expected records | **GREEN in bounded synthetic sampled snapshots** | Visible JSON and matching metadata, not byte-accurate source PCAP |
+| Separate no-replace rename primitive review | **Bounded Windows contention/visibility tested**; no formal guarantee | Atomicity depends on actual Windows behavior |
+| Deliberately incomplete/malformed synthetic final folders | **GREEN 6/6 reader negative sensitivity, Stage 6H** | Observer-sensitivity negative control required |
 | Continuous formal linearizability proof | Not feasible from sampled polling | A sub-poll interval partial view may be missed |
 | Reader under share-violation and ACL denial | Deferred | Real Windows filesystem and permissions behavior |
 | Writer crash/reboot while renaming | Deferred | No destructive crash injection authorized |
 | Full NTFS durability/power-loss guarantee | Deferred | Requires storage-specific recovery evidence |
 | Real malicious-source or license approval | Outside scope | Manual human review required |
 
-The absence of a deterministic partial-publication negative control is an explicit acceptance gap. Before claiming Stage 6G GREEN, separately verify that the observer detects a controlled **synthetic incomplete final directory** using a safe, owned test folder. Never create a deliberately unsafe path or write into a real candidate directory to generate that negative control.
+The deterministic shared-reader negative control was separately implemented and **verified 6/6** in Stage 6H before Stage 6G was closed GREEN. It detected deliberately incomplete/malformed **synthetic final directories** in its owned scratch folder. Never create a deliberately unsafe path or write into a real candidate directory to generate that negative control.
 
 The parent must refuse any unexpected top-level scratch entries. Even when all tests eventually pass, a reader might miss very brief partial states because polling is sampled. A future true no-replace commit primitive audit, continuous watcher or deterministic fault hook must complement this regression.
 
@@ -138,10 +138,10 @@ The parent must refuse any unexpected top-level scratch entries. Even when all t
 1. Preserve Stage 6D's private provenance schema (all 30 required fields), Stage 6E's atomic publisher and Stage 6F's prior race/recovery contracts. No code duplication or additional production modules from Stage 6G.
 2. Obtain explicit owner test-time authorization. Simply passing AuthorizedTestTime is **not** sufficient.
 3. Verify CARTHAGE, Windows PowerShell version, exact checkout SHA, private filesystem roots and absence of real source data in scratch.
-4. Complete Stage 6D pure schema RED then GREEN, Stage 6E transactional publisher RED then GREEN, and Stage 6F initial race and recovery gates. Treat missing-module errors and malformed synthetic fixtures as setup defects, not as demonstrated security RED.
-5. Only then run Stage 6G opt-in reader mode. Begin with three rounds to confirm worker binding and observer counts; advance to six, then bounded twelve if approved and system resources permit. If a reader misses complete view or sees IO errors, distinguish test scheduling/serialization from genuine product regression.
+4. Use the already confirmed Stage 6D 26/26, Stage 6E 18/18 and Stage 6F recovery 15/15 plus writer 3/3 as prerequisites for any future versioned reruns. Treat missing-module errors and malformed synthetic fixtures as setup defects, not as demonstrated security RED.
+5. Stage 6G's opt-in reader tests were subsequently run at three, then six, then twelve rounds, all GREEN; future code changes should repeat the incremental ordering only if separately authorized. If a reader misses complete view or sees IO errors, distinguish test scheduling/serialization from genuine product regression.
 6. Capture metadata-only evidence for every attempt: exact commit SHA and schema blob, OS/PowerShell versions, round count, writer PIDs unique (numeric only), reader PID uniqueness, WIN/TARGET_EXISTS codes, per-round Absent/Complete/Partial/IoErrors counts, final eight-file integrity, sentinel SHA outcome and orphan count.
-7. Add an independent deterministic partial-publication negative control before declaring Stage 6G GREEN.
+7. The shared-reader Stage 6H deterministic sensitivity check was completed 6/6 before closing Stage 6G GREEN.
 8. Do not run packet capture, TShark, detector replay, R102 accuracy, dataset mutation, model training or any GitHub Actions job without separately authorized gates.
 9. Do not freeze V2, modify failed V1, change rule confidence or auto-approve source rights, labels or provenance.
 
@@ -173,14 +173,14 @@ Frozen V1 remains FAILED 4/6 (historical R102 missing transport attribution) wit
 
 ## 10. Stage 6H negative-control completion at source level — 2026-10-29
 
-The deterministic sensitivity probe that Stage 6G explicitly required has now been **authored, not executed**. Rather than writing a duplicate observer, the existing scripts/verify-v2-two-writer-race-contract.ps1 now holds **one** shared PrivateBatchReaderJob scriptblock reused by (a) the Stage 6G concurrent reader and (b) an independent Stage 6H synthetic negative-control mode.
+The deterministic sensitivity probe required by Stage 6G was implemented and subsequently **owner-verified GREEN 6/6 at `8882f1c`**. Rather than writing a duplicate observer, the existing scripts/verify-v2-two-writer-race-contract.ps1 now holds **one** shared PrivateBatchReaderJob scriptblock reused by (a) the Stage 6G concurrent reader and (b) an independent Stage 6H synthetic negative-control mode.
 
-The new OnlyReaderNegativeControl mode does **not** import or call the unfinished publisher module and does **not** start two competing writer jobs. It sequentially creates six deliberately malformed synthetic final folders under one unique ignored scratch root: H01 zero-file directory; H02 missing sidecar; H03 malformed JSON in otherwise complete eight-file names; H04 false APPROVED review state; H05 unexpected extra file; H06 conflicting sample/provenance classification. All sources/identifiers are artificial, never real PCAP content.
+The OnlyReaderNegativeControl mode does **not** import or call the publisher module and does **not** start two competing writer jobs. It sequentially creates six deliberately malformed synthetic final folders under one unique ignored scratch root: H01 zero-file directory; H02 missing sidecar; H03 malformed JSON in otherwise complete eight-file names; H04 false APPROVED review state; H05 unexpected extra file; H06 conflicting sample/provenance classification. All sources/identifiers are artificial, never real PCAP content.
 
 Both test modes execute exactly the same reader code. The Stage 6H parent requires a **real post-GO absence acknowledgment** before revealing each invalid synthetic folder via a same-volume move, and a **reader-generated PARTIAL or IOERROR acknowledgment** afterward. Each check has bounded waits, a strict seven-field metadata-only result, and no raw-content logging. The old Stage 6F three-round behavior and opt-in Stage 6G 3–12-round behavior are preserved.
 
-Detailed test mechanics, expected counters, failure categories, path controls and parked commands are in docs/STAGE6H_DETERMINISTIC_READER_NEGATIVE_CONTROLS_20261029.md, commits **402003f** and **b791d5d**. Source updates: **f8c1ec5, d6a848e, fd4ce67, 6c5ec83, e977067**. The last one guards against a redirected build-verify parent before scratch creation.
+Detailed test mechanics, executed counters, failure categories, path controls and owner-gated commands are in docs/STAGE6H_DETERMINISTIC_READER_NEGATIVE_CONTROLS_20261029.md, commits **402003f** and **b791d5d**. Source updates: **f8c1ec5, d6a848e, fd4ce67, 6c5ec83, e977067**. The last one guards against a redirected build-verify parent before scratch creation.
 
-**Acceptance order is now explicit:** after separate owner approval, verify H01–H06 sensitivity in reader-only mode before interpreting any Stage 6G writer-race "zero partial snapshots" as meaningful. This is still sampled observation; even after a successful negative control, it does not prove formal linearizability, crash durability or original-source correctness.
+**Acceptance order followed:** the owner verified H01–H06 sensitivity in reader-only mode before interpreting the successful Stage 6G writer/reader races. The later Stage 6G 3/6/12 matrix is GREEN within sampled synthetic scope. This is still sampled observation; even after a successful negative control, it does not prove formal linearizability, crash durability or original-source correctness.
 
-**Execution truth:** no Start-Job, PowerShell test, TShark, packet capture, reader observation, CI dispatch or filesystem fault injection was run while authoring Stage 6H. Existing importer and auditor remain unchanged; V1 frozen outcome and V2 PENDING_EXTERNAL_CAPTURE_AND_REVIEW, 0/4 approval state, are preserved.
+**Historical authoring truth:** Stage 6H was not executed during its original source-only authoring step. **Current state:** Windows owner-observed Stage 6H 6/6 and Stage 6G bounded reader 3/6/12 tests have since executed; no live PCAP or CI was involved. Existing importer and auditor remain unchanged; V1 frozen outcome and V2 PENDING_EXTERNAL_CAPTURE_AND_REVIEW, 0/4 approval state, are preserved.
