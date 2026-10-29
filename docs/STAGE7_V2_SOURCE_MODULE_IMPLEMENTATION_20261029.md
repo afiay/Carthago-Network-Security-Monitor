@@ -1,8 +1,8 @@
-# Carthago — Stage 7 V2 source modules implemented (verification parked)
+# Carthago — GA 7: V2 source modules and verified synthetic contracts
 
 **Date:** 2026-10-29  
 **Branch:** feature/carthago-reliability-hardening  
-**Status:** Implementation SOURCE COMMITTED; Windows PowerShell parsing, TShark compatibility, xUnit tests, pipeline replay, filesystem races, privacy output and performance **NOT EXECUTED**. The owner continues to prohibit test execution until the explicit statement "now it's test time."
+**Current status (2026-10-30): IMPLEMENTED; TARGETED SYNTHETIC VALIDATION GREEN.** Owner-verified Windows results include GA 6D provenance **26/26** (`3ae94ba`), GA 6E atomic publication **18/18** (`c5174da`), GA 6F recovery **15/15** (`1ab3290`) and two-writer contention **3/3** (`adf421f`), GA 6H reader sensitivity **6/6** (`8882f1c`), GA 6G sampled reader visibility **3/6/12 rounds** (`566f746`), and original binary DNS/TShark plus optional V2 source-binding verification at **`e412c2a`**. The read-only GA 8 wire-to-legacy bridge separately passed at **`9f709d0`**. These are synthetic contracts, **not** full xUnit/replay/performance certification, real capture approval, NTFS power-loss durability or production acceptance. V2 remains `PENDING_EXTERNAL_CAPTURE_AND_REVIEW` with **0/4 external R102 sources approved**.
 
 ## Executive implementation result
 
@@ -14,7 +14,7 @@ Three missing private modules were implemented without changing the legacy R102 
 | scripts/HoldoutV2Provenance.psm1 | Confirm-HoldoutV2ProvenanceBatch | Strict 30-field schema v2 typed/allowlist checks, four manifest slots, frame/question cardinality and global tuple uniqueness | One five-field private pending-review metadata object; no disk writes or external capture |
 | scripts/HoldoutV2CandidatePublisher.psm1 | Publish-HoldoutV2CandidateBatch | Private name/path checks; pure validator reuse; exactly eight staged sample/sidecar JSON files; close/flush/re-read; same-volume no-replace Directory.Move; guarded rollback; private fault hook | One four-field private-published/pending result. Does not freeze or approve a candidate. |
 
-The publisher module also implements a *non-exported*, path-free Get-HoldoutV2PrivateRecoveryPlan to satisfy Stage 6F's 15-case advisory recovery contract. It returns manual-review decisions only; it cannot remove, rename, scan or approve filesystem entries. The module keeps Assert-HoldoutV2BatchName and Invoke-HoldoutV2AtomicPublishCore **private**, so fault injection is not exposed to applications or end users.
+The publisher module also implements a *non-exported*, path-free Get-HoldoutV2PrivateRecoveryPlan to satisfy GA 6F's 15-case advisory recovery contract. It returns manual-review decisions only; it cannot remove, rename, scan or approve filesystem entries. The module keeps Assert-HoldoutV2BatchName and Invoke-HoldoutV2AtomicPublishCore **private**, so fault injection is not exposed to applications or end users.
 
 ### Commits recorded during implementation
 
@@ -43,7 +43,7 @@ Inputs: CapturePath, FrameNumber (>=1), zero-based QuestionIndex, TsharkPath.
 4. Select exactly the requested zero-based question ordinal, including more than one question in a single DNS frame. Extract source/destination IP, transport and ports; validate destination port 53 and source port range.
 5. Return only **private** selected-frame metadata, including DnsWireLabelsBase64 (a reversible representation of original binary label octets). Callers must not print/upload that object or put it in public telemetry. Error paths must emit constant metadata-only identifiers.
 
-TShark is used **at future invocation time**, not during this development step. The -T jsonraw dns_raw layout, packet filtering, IPv6 formatting and TCP reassembly behavior still require a controlled CARTHAGE test. The module is deliberately conservative and may reject unhandled protocols or malformed packets rather than silently interpret a presentation string as wire fidelity.
+**Observed on CARTHAGE:** synthetic TShark 4.6.9 `-T jsonraw` descriptor parsing, strict DNS-over-TCP two-byte framing, four source-bound questions and five invalid selections passed, followed by the optional V2 two-record/19-negative binding and seven logical-source risk scenarios at `e412c2a`. **Remaining gaps:** independent real-source review, generalized IPv6/TCP reassembly coverage, arbitrary capture formats, field precision/recall and non-synthetic provenance. The decoder remains deliberately fail-closed.
 
 ### Confirm-DnsWireCandidateBinding
 
@@ -79,11 +79,11 @@ A complete publication:
 4. **Commit:** Directory.Move the **entire private staging directory** into a fresh final basename on the same filesystem. No file-by-file copying to a visible target. A second concurrent publisher must lose with PUBLISH_TARGET_EXISTS rather than overwrite.
 5. **Return:** CandidateCount=4, ReviewState=PENDING_EXTERNAL_CAPTURE_AND_REVIEW, IsApproved=false, PublishedToPrivateStaging=true. The result proves only that a private folder was published by the code path if later verification passes.
 
-The private Invoke-HoldoutV2AtomicPublishCore exposes **no public fault-injection hook**. The earlier Stage 6E harness can enter module scope for synthetic milestone testing; the production wrapper cannot accept OnMilestone or FaultAt arguments.
+The private Invoke-HoldoutV2AtomicPublishCore exposes **no public fault-injection hook**. The earlier GA 6E harness can enter module scope for synthetic GA testing; the production wrapper cannot accept OnMilestone or FaultAt arguments.
 
 On precommit failure, clean up only the random operation-owned .pending-* folder after inspecting nested reparse points. If a final target exists because another process won, do not modify it. If an error occurs **after** a successful directory move, return PUBLISH_COMMIT_UNCERTAIN and retain the complete folder for manual reconciliation. No output path, source IP, reversible original name, capture file hash, license URL or client identity is added to public result fields.
 
-**Important Windows caveat:** same-volume Directory.Move can provide a namespace visibility boundary but does not by itself establish durability across power loss. Race-free no-replace behavior, ACLs and reparse/symlink resolution require Stage 6E/6F/6G controlled execution on the target Windows filesystem before product assurance claims are made.
+**Windows evidence boundary:** controlled CARTHAGE synthetic tests for GA 6E/6F/6G observed rollback, one-winner/one-target-exists contention and reader absent/complete snapshots. These **do not** establish power-loss durability, universal no-replace linearizability, adverse ACL/reparse-point race safety or production filesystem assurance.
 
 ### Private recovery planner
 
@@ -99,34 +99,32 @@ This change does NOT:
 - certify source licensing, analyst labels, original malicious ground truth or independently authenticated client sessions;
 - raise R102 confidence thresholds or promote a rule;
 - interpret or edit immutable historical V1 evidence (historical FAIL 4/6);
-- dispatch CARTHAGE jobs, install TShark, change workflow profiles, execute a compiler or run PowerShell tests;
-- claim performance, quality metrics, crash durability or collision-free publication until the target-specific tests are explicitly authorized.
+- dispatch unsanctioned CARTHAGE jobs or change workflow profiles; previously owner-authorized synthetic PowerShell/TShark tests were executed and are recorded in the ledger;
+- claim production performance or field quality metrics, crash durability or universal filesystem correctness from the bounded synthetic tests.
 
 Integration of the new **private** V2 schema and DNS wire-byte fields into the existing importer/auditor needs its own backward-compatible, opt-in cutover and observed RED/GREEN, rather than a speculative replacement of production behavior. In particular, the existing legacy source audit checks printable QNAMEs and frame-number-only attribution; it must not be treated as the new byte-accurate source contract.
 
-## 5. Next acceptance order — no execution currently permitted
+## 5. Current GA verification and remaining acceptance work
 
-**The owner has not yet said "now it's test time."** Authored code commits are not passing results. Preserve the manual-only workflow. When the owner explicitly authorizes a safe CARTHAGE test window:
+The owner has already authorized and completed the **targeted synthetic** checks below; do not describe them as parked or request reflexive reruns without a relevant source change. Full transcripts and exact tested revisions are preserved in `docs/DEVELOPMENT_VALIDATION_LEDGER.md`.
 
-1. Confirm the exact repo SHA, PowerShell 5.1, TShark version, manual-only runner and a private synthetic scratch tree.
-2. Validate Stage 6H reader-negative H01–H06 first (independent of publisher), so a later zero-partial observation has a known-sensitive monitor.
-3. Check Stage 5/6 DNS raw-wire codec and original-question contract against synthetic TShark jsonraw/fields; record expected bytes, source attribution, exact error classification, and any Windows binding defects.
-4. Run Stage 6D pure provenance suite (two pending-review controls and 24 negative cases). Resolve errors caused by fixture/PS serialization without claiming security GREEN.
-5. Run Stage 6E single-writer atomic publisher suite (one control, 17 failure scenarios); require precommit rollback, no overwrite, postcommit reconciliation and exact eight-file bytes.
-6. Run Stage 6F path-free recovery cases and two-writer competition; run Stage 6G third-reader stress only when the prerequisites succeed.
-7. Run a separately approved integration cutover test with original PCAP/source evidence, with human-reviewed rights/classification/source independence and no V1 rewrite.
-8. Perform the consolidated R102 detection quality measurement (precision, recall, F1), performance and privacy review. The existing four V2 external source placeholders stay pending until a new explicit approval.
+| GA | Verified local Windows result | Tested revision | Scope |
+| --- | --- | --- | --- |
+| GA 6D | GREEN — 2 pending-only controls + 24 negative provenance cases | `3ae94ba` | Structured metadata; **not** source rights |
+| GA 6E | GREEN — 18/18 atomic private-publisher controls | `c5174da` | Synthetic commit/rollback; **not** power-loss durability |
+| GA 6F | GREEN — 15/15 recovery decisions, 3/3 writer contention | `1ab3290`, `adf421f` | Review-only recovery and competing writers |
+| GA 6H | GREEN — 6/6 invalid final-batch reader sensitivity | `8882f1c` | Invalid synthetic folder detection |
+| GA 6G | GREEN — 3/6/12 bounded three-process reader rounds | `566f746` (12-round maximum) | Sampled absent/complete visibility; not linearizability |
+| GA 7 DNS source verification | GREEN — TCP/UDP/JSON raw, four bound questions + five negatives; optional two V2 records + nineteen negatives and seven source-risk cases | `e412c2a` | Original-wire **synthetic** PCAP; no approval |
+| GA 8 compatibility | GREEN — two printable names, ten non-lossless rejections; three original bound frames and eleven negative cases | `9f709d0` | Read-only metadata; no sample publication |
 
-### Existing parked scripts
+**Still pending:** The legacy importer/auditor enforcement contract has no independently confirmed Windows PASS in this recorded set, and the existing importer/auditor/publisher format migration is not implemented. The four independent licensed/labeled external R102 captures remain **0/4 approved**; frozen V1 is **FAILED 4/6**. R102 field precision/recall, full integrated xUnit/replay/performance, power-loss durability and adversarial filesystem conditions require independent evidence.
 
-- scripts/verify-dns-wire-source-contract.ps1 (requires TShark, produces only synthetic test capture)
-- scripts/verify-v2-provenance-schema-contract.ps1
-- scripts/verify-v2-atomic-publication-contract.ps1
-- scripts/verify-v2-recovery-planner-contract.ps1
-- scripts/verify-v2-two-writer-race-contract.ps1 (also provides Stage 6G/H modes)
-- scripts/verify-v2-auditor-enforcement.ps1
+### Current test policy
 
-**No script in the list was executed during this implementation turn.** Future failures must be recorded as observed vs expected sanitized code and linked to the exact SHA, without uploading private samples.
+Tests remain manual and owner-authorized. A prior successful run does not authorize future execution or CI dispatch. A synthetic PASS covers the stated contract at its tested SHA only.
+
+**Historical implementation note:** no test ran during the original module-authoring step. Later Windows test outcomes changed the **current** verification status, not the validity of that historical note.
 
 ## 6. Sources within the repository
 
@@ -137,4 +135,4 @@ Integration of the new **private** V2 schema and DNS wire-byte fields into the e
 - docs/STAGE6H_DETERMINISTIC_READER_NEGATIVE_CONTROLS_20261029.md
 - docs/DEVELOPMENT_VALIDATION_LEDGER.md
 
-**Status:** Three missing modules present and source-reviewed; no runtime validation or V2 admission, no changes to legacy production importer or auditor.
+**Current status:** targeted synthetic module contracts verified as listed above. **Still unapproved:** all external R102 source admissions (0/4). The legacy importer/auditor remain unchanged.
