@@ -124,14 +124,19 @@ function Read-DnsWireQuestion {
     if(-not (Test-Path -LiteralPath $CapturePath -PathType Leaf)) {
         Fail-Wire 'DNS_WIRE_ORIGINAL_CAPTURE_MISSING'
     }
-    $capture=(Resolve-Path -LiteralPath $CapturePath).Path
-    $captureItem=Get-Item -LiteralPath $capture -Force
+    try {
+        $capture=(Resolve-Path -LiteralPath $CapturePath -ErrorAction Stop).Path
+        $captureItem=Get-Item -LiteralPath $capture -Force -ErrorAction Stop
+    } catch { Fail-Wire 'DNS_WIRE_ORIGINAL_CAPTURE_UNAVAILABLE' }
     if(($captureItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
         Fail-Wire 'DNS_WIRE_UNTRUSTED_CAPTURE'
     }
-    $tshark=Get-Command $TsharkPath -ErrorAction Stop
+    try { $tshark=Get-Command $TsharkPath -ErrorAction Stop }
+    catch { Fail-Wire 'DNS_WIRE_TSHARK_UNAVAILABLE' }
     $filter='frame.number == '+$FrameNumber
-    $raw=@(& $tshark.Source -n -r $capture -Y $filter -T jsonraw 2>&1)
+    try {
+        $raw=@(& $tshark.Source -n -r $capture -Y $filter -T jsonraw 2>&1)
+    } catch { Fail-Wire 'DNS_WIRE_TSHARK_ERROR' }
     if($LASTEXITCODE -ne 0) { Fail-Wire 'DNS_WIRE_TSHARK_ERROR' }
     $decoded=$null
     try { $decoded=ConvertFrom-Json -InputObject ($raw -join [Environment]::NewLine) }
@@ -156,7 +161,8 @@ function Read-DnsWireQuestion {
     $args=@('-n','-r',$capture,'-Y',$filter,'-T','fields',
             '-E','separator=|','-E','quote=n','-E','occurrence=f')
     foreach($field in $fields) {$args+=@('-e',$field)}
-    $rawFields=@(& $tshark.Source @args 2>&1)
+    try { $rawFields=@(& $tshark.Source @args 2>&1) }
+    catch { Fail-Wire 'DNS_WIRE_TRANSPORT_UNAVAILABLE' }
     if($LASTEXITCODE -ne 0 -or $rawFields.Count -ne 1) {
         Fail-Wire 'DNS_WIRE_TRANSPORT_UNAVAILABLE'
     }
