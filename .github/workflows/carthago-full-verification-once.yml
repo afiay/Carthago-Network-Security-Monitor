@@ -19,6 +19,8 @@ concurrency:
 
 jobs:
   full-verification:
+    # Explicit owner gate: this one-shot job is parked, including queued runs.
+    if: false
     name: Full builds, xUnit, replay quality and holdout
     runs-on: [self-hosted, Windows, X64]
     timeout-minutes: 60
