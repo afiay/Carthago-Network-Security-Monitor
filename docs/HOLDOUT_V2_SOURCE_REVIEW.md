@@ -64,3 +64,20 @@ PCAP SHA-256 and frame decoding → privacy approval → packet-matched JSON
 candidate → separate v2 Git hash freeze → manually authorized isolated
 holdout run. V1 never changes and v2 does not establish field precision.
 See HOLDOUT_V2_PROTOCOL.md for original-capture audit requirements.
+
+## CARTHAGE actual Elastic iodine acquisition and packet inspection (2026-10-29)
+
+**Reference source: acquired and hash-verified, but ineligible for encoded-TXT v2 slots.** The operator ran `scripts/acquire-holdout-v2-source-candidates.ps1 -Source ElasticIodine` on CARTHAGE. The reported downloaded capture is `build-verify/holdout-v2-sources/elastic-iodine-6d86454ebb7a.pcap`; the script produced its source receipt separately. Reported SHA-256: `91fd221e07107507c8327a9d9487cd7f7531a1fd87cf543b1a76160ff0609b7b`. This matches the independently published analysis of the same NULL-only iodine capture: https://apackets.com/reports/iodine-dns-tunnel. Verified integrity is *not* evidence of permissions, representativeness, source independence, independent labeling or suitability for TXT exfiltration.
+
+Subsequent bounded, privacy-conscious offline inspection used installed TShark 4.6.9 at `C:\Program Files\Wireshark\tshark.exe` and `scripts/inspect-holdout-v2-pcap.ps1 -MaximumPacketsToScan 100000`. Operator output: **one DNS source/root group, 41 skipped/invalid frames, zero groups with at least three distinct long TXT QNAMEs**. It created a local profile under ignored `build-verify/holdout-v2-profiles/`. These are an inspector's reported counts, not a full-capture eligibility certification. No alerts, classification approvals, freeze or v2 fixture changes occurred. **Do not use this capture for either malicious encoded-TXT slot.** It may be retained only as a separately reviewed protocol-diversity/negative-control research input, without changing frozen v1.
+
+### Next inspected-but-unapproved TXT-mode source locations
+
+The existing Korving-F source ledger identified two controlled iodine configurations specifying `-Ttxt` and Base32 / Base64, respectively. GitHub was checked again at source commit `bdc4486751f5e87fa6100b17dd57fc001743b43c` to confirm both corresponding public archive objects exist:
+
+- `dns_tunnel_file_transfer/86950175ba9bf6b4aaea5478bbd49ad7/86950175ba9bf6b4aaea5478bbd49ad7_full_dataset.tar.gz` (3,178,726 bytes; metadata `record_type: txt`, `encoding: base32`).
+- `dns_tunnel_file_transfer/c6a08caf0d52af99dfd2487f2b48c54a/c6a08caf0d52af99dfd2487f2b48c54a_full_dataset.tar.gz` (3,065,396 bytes; metadata `record_type: txt`, `encoding: base64`).
+
+Repository: https://github.com/Korving-F/dns-tunnel-dataset. **No original archive contents were independently decoded in this review; no raw archive license or publication clearance was established.** Both metadata files reference the same lab client `192.168.0.30`, so neither should be assumed to supply the required *second independently captured malicious client*. Separate benign PCAP sources likewise remain unverified. Do not import either archive into a v2 slot without rights review, isolated inspection, SHA-256 receipt and original-packet TShark audit. No source approval is implied by this ledger entry.
+
+**V2 status remains `PENDING_EXTERNAL_CAPTURE_AND_REVIEW`, 0/4 approved and packet-audited external R102 fixture/provenance pairs.**
