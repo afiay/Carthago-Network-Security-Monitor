@@ -142,6 +142,9 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "V2 benchmark exited with code $LASTEXITCODE" }
     $reportPath=Join-Path $OutputDirectory 'tuning-benchmark.json'
     $report=Get-Content -LiteralPath $reportPath -Raw | ConvertFrom-Json
+    # Reporting only: the versioned source/label/transport checks and
+    # holdout acceptance criteria remain unchanged.
+    & (Join-Path $PSScriptRoot 'inspect-replay-input-telemetry.ps1') -ReportPath $reportPath
     $failures=[System.Collections.Generic.List[string]]::new()
     if (@($report.sampleResults).Count -ne 12 -or
         [int]$report.summary.benignSampleCount -ne 6 -or
