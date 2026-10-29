@@ -174,3 +174,41 @@ before the project owner explicitly authorizes testing.
 Even if v2 passes, the v1 failure remains documented. Neither synthetic
 dataset establishes field precision or operational alert recall, and no
 rule promotion follows automatically from synthetic success.
+
+## 2026-10-29 readiness and packet-provenance hardening
+
+The v2 manifest and import/audit/freeze/evaluate pipeline **already existed** before this increment. Their approval state remains `PENDING_EXTERNAL_CAPTURE_AND_REVIEW`. No external PCAP was acquired or independently labeled during this increment; no frozen v2 source fixture exists and no new validity or accuracy claim is made.
+
+Run the read-only status check:
+
+```powershell
+.\scripts\inspect-holdout-v2-readiness.ps1
+```
+
+It checks the 12-slot v2 structure, verifies all eight reused v1 files against their pinned Git blob IDs and reports the status of each of four v2 R102 candidate/provenance pairs. Missing pairs produce **PENDING**, not a pass. The command never downloads data, runs rules, freezes files, or grants approval.
+
+With all four candidate JSON/provenance pairs already prepared **and their original captures independently reviewed**, explicitly audit the actual packet fields:
+
+```powershell
+.\scripts\inspect-holdout-v2-readiness.ps1 -AuditPackets -CaptureDirectory 'C:\evidence\reviewed-pcaps'
+```
+
+The underlying packet audit rechecks capture SHA-256, distinct selected frame identities, extracted source/destination IP and ports, UDP/TCP attribution, DNS question name/type, two distinct malicious client addresses, and the three distinct long TXT questions for each malicious case. Newly enforced strict record schema accepts **only** source/destination, IP version, source/destination ports, protocol/application protocol, explicit UDP/TCP booleans, DNS QNAME and QTYPE. Any extra packet metadata (such as forged process, application, trust or HTTP fields), invalid boolean/integer types, changed fixture labels or changed R102 expectations fails the pre-freeze audit. Frozen v1 fixtures are untouched.
+
+**Packet verification is not label validation.** A syntactically correct transport field, matching SHA-256, or metadata field claiming `analystReviewedLabel=true` cannot independently establish benign/malicious classification, collection consent, publication rights or a field-independent test set. Human review of source licensing, privacy and labeling remains mandatory. Do not use detector success/failure to choose or alter the samples.
+
+### New diagnostic-only report fields
+
+Benchmarks now include `expectedRuleDiagnostics[].inputTelemetryIssueCodes`, `inputRecordsInspected` and `inputRecordsWithIssues` for expected DNS rules. When every inspected DNS record has structured input problems and the detector does not match, the outcome is `InvalidInputTelemetry` rather than a generic `NoMatch`; mixed-validity or correctly attributed records retain normal result semantics. Stable codes such as `DNS_TRANSPORT_UNATTRIBUTED`, `DNS_TRANSPORT_CONFLICT`, `DNS_QNAME_MISSING`, `DNS_QTYPE_MISSING`, and `DNS_IP_INVALID` do not contain raw IPs, names, or payloads.
+
+Both v1 and opt-in v2 evaluators invoke `scripts/inspect-replay-input-telemetry.ps1` after benchmark output creation, printing a bounded metadata-only summary. The underlying detector result, existing 0.75 R102 expectation floor, zero-benign-alert requirements, freeze hash validation and strict holdout failure exit remain unchanged. **Rebuild benchmarks before using `-NoBuild`**, because an older executable will not include the new report fields.
+
+### Source-only verification pending
+
+The new C# diagnostic tests and PowerShell changes are committed but **have not been compiled or executed on CARTHAGE**. First run focused xUnit tests when explicitly ready:
+
+```powershell
+dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~DnsReplayTelemetryDiagnosticsTests|FullyQualifiedName~SyntheticHoldoutV2ContractTests"
+```
+
+Do not execute or freeze v2 until the four legitimately acquired and reviewed captures are available. The historical frozen v1 failure remains part of the evidence record.
