@@ -363,3 +363,43 @@ powershell.exe -NoProfile -File .\scripts\verify-v2-two-writer-race-contract.ps1
 **Next gating order:** Stage 6D pure provenance RED→GREEN; Stage 6E transactional publisher RED→GREEN; Stage 6F initial writer race and recovery RED→GREEN; controlled reader negative probe; then Stage 6G opt-in 3/6/12 rounds. Human review and four-slot V2 admission remain pending. Current Holdout V2: PENDING_EXTERNAL_CAPTURE_AND_REVIEW, **0/4 approved**. Frozen V1 historical FAILED 4/6, R102/R118/R163 confidence 80/86/84% and candidate floor 0.75 unchanged.
 
 **Do not infer PASS/RED/GREEN or detection precision/recall/F1 from the code committed in this step.**
+
+
+### 2026-10-29 — Stage 6H deterministic third-reader sensitivity contract (AUTHORED / PARKED)
+
+**Owner decision boundary:** "Continue please" authorizes further source preparation but NOT execution. The owner has prohibited all tests until explicitly saying "now it's test time". No PowerShell parser, script, job, TShark, build, replay, PCAP read, network capture, self-hosted runner job or CI workflow was launched. Changes are on the existing feature/carthago-reliability-hardening branch only.
+
+| Step | Commit | Changed file | Engineering work | Evidence status |
+| --- | --- | --- | --- | --- |
+| S6H-01 | f8c1ec5 | scripts/verify-v2-two-writer-race-contract.ps1 | Refactored the Stage 6G reader into one shared script-scoped PrivateBatchReaderJob and allowed a reader-only negative-control mode without the future publisher module. Optional causal acknowledgment markers; existing Stage 6F/G invocation modes preserved. | Source authored, no Start-Job executed. |
+| S6H-02 | d6a848e | scripts/verify-v2-two-writer-race-contract.ps1 | Added private fixture generator, bounded marker wait, per-case isolated invalid final-folder injection and metadata-only result check, using the exact same observer as Stage 6G; no production writer API invoked. | Authored only; no filesystem fault injected. |
+| S6H-03 | fd4ce67 | scripts/verify-v2-two-writer-race-contract.ps1 | Wired six negative fixtures (H01–H06) in OnlyReaderNegativeControl mode; kept Stage 6F three-round default and Stage 6G 3–12 opt-in behavior; synthetic root under ignored build-verify. | Static preparation only. |
+| S6H-04 | 6c5ec83 | scripts/verify-v2-two-writer-race-contract.ps1 | Removed a duplicate former Stage 6F race-only tail that referenced race variables outside its branch, avoiding misleading negative-mode failures. | Static correction; no parser/run evidence. |
+| S6H-05 | 402003f | docs/STAGE6H_DETERMINISTIC_READER_NEGATIVE_CONTROLS_20261029.md | In-depth six-case input/expected-signal matrix, shared-observer design, causal markers, safety, error classification, review and owner test-first gates. | Documentation committed. |
+| S6H-06 | e977067 | scripts/verify-v2-two-writer-race-contract.ps1 | Fail closed if the intended ignored build-verify parent is a ReparsePoint before creating new test-owned scratch; retain nested reparse-point guards for cleanup. | Static protection, not Windows race proof. |
+| S6H-07 | b791d5d | docs/STAGE6H_DETERMINISTIC_READER_NEGATIVE_CONTROLS_20261029.md | Record final parent-root safety requirement and all source commits, with explicit zero-execution status. | Documentation committed. |
+| S6H-08 | 6092c7d | docs/STAGE6G_CONCURRENT_READER_VISIBILITY_20261029.md | Link Stage 6H sensitivity precondition to Stage 6G sampled concurrent-reader results; preserve Stage 6F/G behavior, false-GREEN warnings and manual gating. | Documentation committed. |
+
+**Six planned negative probes (0 executed):**
+- H01: final directory contains no files -> require actual shared reader Partial > 0, IoErrors = 0.
+- H02: seven of eight sample/provenance JSON files -> require Partial > 0, IoErrors = 0.
+- H03: eight expected filenames but one malformed JSON file -> require IoErrors > 0, Partial = 0.
+- H04: eight readable files but one provenance reviewState='APPROVED' -> require Partial > 0, IoErrors = 0.
+- H05: eight readable files plus extra debug file -> require Partial > 0, IoErrors = 0.
+- H06: eight readable files, inconsistent sample/provenance classification -> require Partial > 0, IoErrors = 0.
+
+**Causal test mechanism:** Single Stage 6G/H reader scriptblock used by both actual two-writer race and six negative probes; independent Windows PowerShell reader job; unique safe test name; parent waits for real post-GO ABSENT marker; builds invalid fixture privately in a .pending-probe-<id> test directory; reveals it to the reader with a same-volume local Directory.Move; waits for actual reader PARTIAL or IOERROR acknowledgment; then stops and joins only that reader job. The final metadata result has exactly seven allowed fields (Code, ProcessId, Polls, Absent, Complete, Partial, IoErrors), a distinct PID and no private packet contents. Waits are bounded and use fixed markers. All files are synthetic; no publisher, original capture, network, real client identity or detector involved.
+
+**Safe removal boundary (future):** stage and final folders have fixed generated basenames beneath one newly owned ignored build-verify child; the root and nested folders are checked for reparse-point redirection before recursive cleanup; only the owning reader job and generated marker files are removed. A redirected build-verify parent is rejected before creation. These checks do NOT prove absence of a Windows TOCTOU filesystem attack; no execution or true OS-level no-follow test has been performed.
+
+**Static source checks, not runtime tests:** GitHub readback after 6c5ec83 confirmed one shared reader definition, two Start-Job call sites, optional ABSENT/PARTIAL/IOERROR acknowledgment paths, six independent fixture descriptions, module bypass for negative-only mode, legacy default preservation, no real publisher API call inside negative-case helper, and one correctly scoped final root inventory check. Windows PowerShell 5.1 parsing and serialization remain unverified. Source checks are not RED/GREEN, performance metrics, or detection quality.
+
+**Next engineering decision:** Stage 6H concludes the planned source-only reader-sensitivity preparation. Avoid extending the test-contract backlog without runtime feedback. After explicit separate owner approval, verify CARTHAGE and exact SHAs; execute Stage 6H reader-only H01–H06 first to establish observer sensitivity, then Stage 6D pure provenance validator RED/GREEN, Stage 6E transactional publisher RED/GREEN, Stage 6F two-writer and read-only recovery RED/GREEN, and Stage 6G bounded reader stress. Implement only the missing minimal modules after sound observed RED; preserve approved code. Source/license/client and R102 accuracy evidence are separate human-reviewed gates.
+
+**Parked command (NOT permission):**
+
+~~~powershell
+powershell.exe -NoProfile -File .\scripts\verify-v2-two-writer-race-contract.ps1 -AuthorizedTestTime -OnlyReaderNegativeControl
+~~~
+
+**Preserved:** Original importer and auditor untouched; single centralized GitHub Actions workflow manual-only; V1 historical FAILED 4/6 remains immutable, V2 PENDING_EXTERNAL_CAPTURE_AND_REVIEW with **0/4** approved R102 samples; rule confidence floors R102 80%, R118 86%, R163 84% and external R102 sample floor 0.75, Shadow/Disabled, baseline, cooldown, journals and privacy requirements unchanged. No branch merge, deletion or PCAP upload. No tests executed.
