@@ -118,6 +118,20 @@ namespace Carthago.Services.Benchmarking
                         {
                             if (diagnostic.Outcome == "RuleUnavailable") diagnostic.Outcome = "MissingTelemetry";
                             diagnostic.MissingRequiredTelemetry.AddRange(telemetry.MissingRequiredTelemetry);
+                            // Diagnostic-only: never supply missing transport or
+                            // qname fields to the rule, and never infer UDP from DNS
+                            // names, ports, fixture labels or classification.
+                            if (string.Equals(rule.Descriptor.Category, "Dns",
+                                StringComparison.OrdinalIgnoreCase))
+                            {
+                                var issues = DnsReplayTelemetryDiagnostics.Inspect(record);
+                                diagnostic.InputRecordsInspected++;
+                                if (issues.Count > 0)
+                                {
+                                    diagnostic.InputRecordsWithIssues++;
+                                    diagnostic.InputTelemetryIssueCodes.AddRange(issues);
+                                }
+                            }
                         }
                         if (!telemetry.CanRunSafely)
                             continue;
@@ -156,7 +170,13 @@ namespace Carthago.Services.Benchmarking
                 {
                     if (matchedExpected.Contains(diagnostic.RuleId)) diagnostic.Outcome = "Matched";
                     else if (evaluatedExpected.Contains(diagnostic.RuleId))
-                        diagnostic.Outcome = failedExpected.Contains(diagnostic.RuleId) ? "EvaluationFailed" : "NoMatch";
+                        diagnostic.Outcome = failedExpected.Contains(diagnostic.RuleId)
+                            ? "EvaluationFailed"
+                            : diagnostic.InputRecordsInspected > 0
+                              && diagnostic.InputRecordsInspected == diagnostic.InputRecordsWithIssues
+                                ? "InvalidInputTelemetry" : "NoMatch";
+                    diagnostic.InputTelemetryIssueCodes = diagnostic.InputTelemetryIssueCodes
+                        .Distinct(StringComparer.Ordinal).OrderBy(static value => value, StringComparer.Ordinal).ToList();
                     diagnostic.MissingRequiredTelemetry = diagnostic.MissingRequiredTelemetry
                         .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(static value => value, StringComparer.OrdinalIgnoreCase).ToList();
                     diagnostic.NoMatchReasons = diagnostic.NoMatchReasons
