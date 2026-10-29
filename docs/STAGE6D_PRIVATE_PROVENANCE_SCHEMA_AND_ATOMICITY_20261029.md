@@ -12,7 +12,7 @@
 
 Carthago's **Holdout V2 manifest schemaVersion=2** is a separate versioning surface from the current private candidate **provenance schemaVersion=1** written by `scripts/import-holdout-v2-r102.ps1`. Conflating them could let unreviewed data acquire apparent legitimacy or produce ambiguous parsing. The current importer writes one `<sample>.json` and one `<sample>.provenance.json` separately. Its source selection is bounded and it refuses to overwrite existing files; nevertheless, a failure during the second write can leave a partial pair. No production change or failure is claimed from the new contracts.
 
-This stage specifies a **new private provenance schema v2**, complete allowlisting, exact field types and bounds, an explicit pending review state, and a future all-or-nothing four-candidate publication boundary. It does **not** authorize V2 freeze, relabeling, promotion, capture redistribution, or rule accuracy claims.
+GA 6D established a **private provenance schema v2** with complete allowlisting, bounded typed fields, and explicit pending review. The separate all-or-nothing four-candidate private publisher was subsequently implemented and validated under GA 6E. It does **not** authorize V2 freeze, relabeling, promotion, capture redistribution, or rule accuracy claims.
 
 The existing v1 importer remains a legacy input path. New features must be opt-in and use the existing original-PCAP provenance work, not rewrite or silently convert old data.
 
@@ -76,7 +76,7 @@ Reversible per-label Base64 DNS bytes must not be emitted into default telemetry
 
 ## 4. Cross-field and cross-candidate requirements outside JSON Schema
 
-The future `Confirm-HoldoutV2ProvenanceBatch -Candidates -SchemaPath` helper is intentionally **pure**: it takes four private candidate objects and schema location, makes no writes or network calls, and returns only `CandidateCount`, `SchemaValid`, `RequiresHumanReview`, `IsApproved`, and `ApprovalState`.
+The implemented `Confirm-HoldoutV2ProvenanceBatch -Candidates -SchemaPath` helper is intentionally **pure**: it takes four private candidate objects and schema location, makes no writes or network calls, and returns only `CandidateCount`, `SchemaValid`, `RequiresHumanReview`, `IsApproved`, and `ApprovalState`.
 
 Required independent validation after schema typing:
 
@@ -165,7 +165,7 @@ Fault injection may only modify synthetic private temporary files on explicitly 
 - **First authorized gate:** verify the exact code SHA, PowerShell 5.1, the 2020-12 schema parser, the four-slot manifest, and original V1 constraints. Check that every static test vector conforms to its intended positive/negative class; failures in the harness or schema engine are **not** security RED.
 - **Historical RED-first plan (completed for the validated synthetic scope):** run the private schema contract; observe missing module/API and then genuine independent validation failures. Do not report a successful suite until the implementation meets all type/collision/privacy expectations.
 - **GREEN phase:** implement minimal pure validator without changing the legacy importer or frozen evidence, run focused regression with exact error identifiers and verify no input mutation, auto-approval or privacy leakage.
-- **Transaction phase:** separately author/observe RED for the future publisher, implement the smallest safe staging/commit API, then run rollback and concurrency tests under explicit approval.
+- **Transaction GA (completed within synthetic scope):** GA 6E's 18 publisher cases and GA 6F's 3 writer-contending rounds were independently owner-verified. Actual crash durability and adversarial permissions remain open.
 - **Production admission:** source licensing, malicious classification, original client provenance and Holdout V2 freeze require separate human authority. No algorithmic syntactic validation implies permission.
 - **Evidence ledger format:** date, code SHA, schema SHA, host, interpreter version, test case ID, expected vs observed error, sanitized exit status, count/hash summary, privacy review and next approval gate.
 
@@ -197,10 +197,10 @@ powershell.exe -NoProfile -File .\scripts\verify-v2-provenance-schema-contract.p
 - Local auditor and importer: `scripts/audit-holdout-v2-candidates.ps1`, `scripts/import-holdout-v2-r102.ps1`.
 
 
-## Stage 6E handoff — fault-injection contract now authored (2026-10-29)
+## GA 6E handoff — source implemented and synthetic 18/18 verified
 
 The Stage 6E handoff was subsequently implemented and verified **18/18** under owner-authorized Windows synthetic tests at `c5174da`; the original design script is `scripts/verify-v2-atomic-publication-contract.ps1`. Details and boundaries are in `docs/STAGE6E_ATOMIC_V2_PUBLICATION_FAULT_CONTRACT_20261029.md`.
 
 The implemented test exercises a **module-private** fault-injectable publisher core and pure non-writing batch-name validator; both now exist in `scripts/HoldoutV2CandidatePublisher.psm1`. Stage 6E defines one private unpublished-to-holdout control and 17 failure/exception cases covering eight precommit faults, postcommit uncertainty, existing-target protection, four pure unsafe filename tests and three invalid batch forms. It checks exact eight-file sample/provenance contents and denies any automatic approval. No existing importer/auditor, V1/V2 manifest, workflow or threshold has been changed.
 
-Stage 6D's private schema checks were independently confirmed GREEN before interpreting Stage 6E's later publisher result. The dependency remains mandatory for any future versioned schema change. Neither a file committed to GitHub nor an authored failure callback is proof of a real Windows filesystem result. Crash durability, concurrent two-process races, ACL denial, and symlink/reparse-point handling remain separate acceptance tests, not completed coverage. These synthetic suites were later executed by the owner and recorded in `docs/DEVELOPMENT_VALIDATION_LEDGER.md`; no tests were run merely to refresh this document.
+Stage 6D's private schema checks were independently confirmed GREEN before interpreting Stage 6E's later publisher result. The dependency remains mandatory for any future versioned schema change. Neither a file committed to GitHub nor an authored failure callback is proof of a real Windows filesystem result. Bounded two-writer contention **3/3** and sampled-reader visibility **3/6/12** are now verified on synthetic Windows tests; crash/power-loss durability, arbitrary ACL denial, and symlink/reparse-point race attacks remain separate unverified acceptance work. These synthetic suites were later executed by the owner and recorded in `docs/DEVELOPMENT_VALIDATION_LEDGER.md`; no tests were run merely to refresh this document.
