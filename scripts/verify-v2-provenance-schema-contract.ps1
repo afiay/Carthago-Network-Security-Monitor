@@ -181,6 +181,12 @@ foreach($case in $cases) {
     $script:removeLast=$false
     & $case.Edit $candidate
     if($script:removeLast) { $candidate=@($candidate[0..2]) }
+    if([string]$case.Name -ceq 'wrong-count-type') {
+        # The negative test must carry a string, not a value PowerShell
+        # already coerced to integer. Otherwise a rejection is misleading.
+        Assert-Contract ($candidate[0].selectedRecordCount -is [string] -and
+            [string]$candidate[0].selectedRecordCount -ceq '3') 'wrong-count-type-fixture-invalid'
+    }
     Assert-Rejected $candidate $schema ([string]$case.Code) ([string]$case.Name)
 }
 Write-Host ('Private provenance schema contract: 2 structurally-valid, pending-review controls and '+
