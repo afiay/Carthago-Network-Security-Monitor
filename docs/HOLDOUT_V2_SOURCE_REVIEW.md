@@ -124,12 +124,12 @@ Use the same original PCAP and TShark executable to rerun read-only inspection a
 ## Independent raw-wire triage of Korving Base32 source (2026-10-29)
 
 **Research-only result; source NOT approved, V2 still 0/4.** To investigate
-the 2,656 \`invalidQuestionName\` exclusions without repeating a Carthago
+the 2,656 `invalidQuestionName` exclusions without repeating a Carthago
 test, the exact pinned 3,178,726-byte archive was independently obtained.
-\`git hash-object --no-filters\` returned the ledger's expected source
-blob \`c061d953b9e21068031d604b9c1001ddcd1cfa53\`. Only the named
-\`bind9/dns.pcap\` member was extracted; its independent SHA-256 was
-\`b9c5ec5b6a50facb8719ffe47656d2cda0f0704ed08d91130c8b48a3e0ddf102\`,
+`git hash-object --no-filters` returned the ledger's expected source
+blob `c061d953b9e21068031d604b9c1001ddcd1cfa53`. Only the named
+`bind9/dns.pcap` member was extracted; its independent SHA-256 was
+`b9c5ec5b6a50facb8719ffe47656d2cda0f0704ed08d91130c8b48a3e0ddf102`,
 identical to the CARTHAGE result. No bundled executable or source script
 was run.
 
@@ -144,7 +144,7 @@ Independent counts reconciled with the CARTHAGE inspector:
 | Total PCAP frames | 15,942 |
 | UDP/53 DNS query frames with QTYPE TXT (16) | 7,991 |
 | Question names accepted by current inspector ASCII syntax | 5,335 |
-| Excluded due to octets outside \`[a-z0-9_-]\` | 2,656 |
+| Excluded due to octets outside `[a-z0-9_-]` | 2,656 |
 | Of those excluded, names with a longest label of 62 octets | 2,644 |
 | Question names exceeding 255 DNS wire octets | 0 |
 | Source/root groups (anonymized) | 2 |
@@ -153,7 +153,7 @@ Independent counts reconciled with the CARTHAGE inspector:
 | Distinct full wire QNAMEs shared by both sources | 3,977 |
 
 **Interpretation and correction to prior subset-only assessment:**
-the \`invalidQuestionName\` label means these TShark-exported names failed
+the `invalidQuestionName` label means these TShark-exported names failed
 the inspector's restrictive *textual character policy*. It does not
 demonstrate malformed DNS framing, bad label lengths, or an invalid DNS
 wire QNAME. RFC 1035 section 3.1 and RFC 2181 section 11 allow arbitrary
