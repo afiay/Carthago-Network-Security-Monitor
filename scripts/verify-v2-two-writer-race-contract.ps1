@@ -143,7 +143,7 @@ $script:PrivateBatchReaderJob = {
                     # Only four synthetic manifest basenames are allowed.
                     # A scalar delimited token avoids PowerShell 5.1 job-array
                     # serialization differences. Names cannot contain '|'.
-                    $Names=[string[]]([string]$NamesJson).Split('|')
+                    $Names=@(([string]$NamesJson).Split([char]'|'))
                     $uniqueNames=@($Names | Sort-Object -Unique)
                     if($Names.Count -ne 4 -or $uniqueNames.Count -ne 4 -or
                        @($Names | Where-Object {
