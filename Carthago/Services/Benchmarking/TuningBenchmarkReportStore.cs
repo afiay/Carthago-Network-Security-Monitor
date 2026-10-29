@@ -137,6 +137,34 @@ namespace Carthago.Services.Benchmarking
                 sb.AppendLine("- Showing 40 tested rules. Full per-rule inventory and zero-coverage rules are available in the JSON report.");
 
             sb.AppendLine();
+            sb.AppendLine("## Structured DNS Input Telemetry Diagnostics");
+            sb.AppendLine("- Reporting only: missing/contradictory input fields are not inferred, repaired, or trusted.");
+            sb.AppendLine("- Input issues describe replay evidence gaps, not an assertion that a DNS tunneling attack occurred.");
+            var inputIssues = report.SampleResults
+                .SelectMany(sample => sample.ExpectedRuleDiagnostics
+                    .Where(diag => diag.InputTelemetryIssueCodes.Count > 0)
+                    .Select(diag => (sample.Name, Diagnostic: diag)))
+                .ToArray();
+            if (inputIssues.Length == 0)
+                sb.AppendLine("- No structured DNS input issues recorded for expected DNS rules.");
+            else
+            {
+                sb.AppendLine("| Sample | Rule | Outcome | Affected / inspected | Stable input codes |");
+                sb.AppendLine("| --- | --- | --- | ---: | --- |");
+                foreach (var row in inputIssues.Take(40))
+                {
+                    // Keep raw query strings, IP addresses or arbitrary
+                    // scenario identifiers out of this diagnostic section.
+                    var safeName = row.Name.Length is > 0 and <= 100
+                        && row.Name.All(static ch => char.IsAsciiLetterOrDigit(ch)
+                            || ch is '-' or '_') ? row.Name : "REDACTED_SCENARIO";
+                    sb.AppendLine($"| {EscapeCell(safeName)} | {EscapeCell(row.Diagnostic.RuleId)} | {EscapeCell(row.Diagnostic.Outcome)} | {row.Diagnostic.InputRecordsWithIssues}/{row.Diagnostic.InputRecordsInspected} | {EscapeCell(string.Join(", ", row.Diagnostic.InputTelemetryIssueCodes))} |");
+                }
+                if (inputIssues.Length > 40)
+                    sb.AppendLine($"- Showing 40 of {inputIssues.Length} diagnostics. JSON retains all stable issue codes.");
+            }
+
+            sb.AppendLine();
             sb.AppendLine("## Alert-Level Recall Gaps");
             sb.AppendLine("- Unit: one expected malicious (sample, rule, profile) without an alert.");
             sb.AppendLine("- A raw detector match in Shadow mode remains a missed alert for this report.");
