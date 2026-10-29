@@ -1,10 +1,12 @@
 # Carthago Development and Deferred Validation Ledger
 
-**Owner-controlled execution gate:** PARKED. All builds, .NET/xUnit runs,
-benchmarks, replays, holdout evaluations, source-contract checks and GitHub
-Actions jobs require explicit authorization from the project owner
-("now it's test time"). Preparing checks and documenting them is permitted;
-their presence does not imply successful execution.
+**Current execution policy (2026-10-30):** Individual GA validation checks have already
+been owner-authorized, run on CARTHAGE and recorded GREEN where stated below.
+**New or repeated** builds, .NET/xUnit, benchmarks, replay, capture/source
+checks and GitHub Actions jobs remain **manual and separately owner-authorized**.
+The presence of a test script or manual workflow is not permission to run it.
+A previous successful synthetic check does not certify a different code SHA,
+real evidence admission or production readiness.
 
 **Development track:** Complete the R102 binary-DNS wire-name and original
 capture provenance foundation **before** expanding the remaining detector
@@ -13,7 +15,7 @@ rules. Keep the single existing branch
 all R102 thresholds/confidence weights and benign controls, and V2
 `PENDING_EXTERNAL_CAPTURE_AND_REVIEW` until separate authorization.
 
-This is the **central step ledger**, not a replacement for detailed design,
+This is the **central GA ledger**, not a replacement for detailed design,
 protocol, fixture or forensic source documents. Each future change must append
 a dated entry describing the changed file/commit, decision, authored test,
 validation command, parked or observed outcome, evidence boundary, and next
@@ -31,7 +33,53 @@ feature, observe GREEN, then remove that stage's guard in a separate commit
 so all subsequent normal regression runs include its tests. Do not report
 tests as passing merely because they were preprocessor-excluded.
 
-## Current evidence and decisions — 2026-10-29
+## Current GA verification snapshot — 2026-10-30
+
+This section is the **current status**. Later dated entries below are an
+append-only audit trail of what was known **at that earlier time**.
+Historical statements such as "PARKED", "module missing", "RED" and
+"NOT RUN" must not be read as today's status unless the current table
+independently confirms them. Original source/test SHAs are retained.
+
+| GA / validation area | Current verified result | Owner-tested SHA | Boundary |
+| --- | --- | --- | --- |
+| GA 6D — private V2 provenance | **GREEN 26/26**: 2 pending-only positives + 24 strict negatives | `3ae94ba` | Metadata syntax, not original source rights or labels |
+| GA 6E — private atomic publication | **GREEN 18/18** synthetic publish/fault cases | `c5174da` | Synthetic private filesystem, not crash durability |
+| GA 6F — recovery and writers | **GREEN 15/15** recovery + **3/3** two-writer contention | `1ab3290`, `adf421f` | Non-destructive advisory recovery; bounded contention |
+| GA 6H — reader negative sensitivity | **GREEN 6/6** deliberately invalid synthetic final states | `8882f1c` | Detectability of known partial/malformed snapshots |
+| GA 6G — writer/reader visibility | **GREEN 3/6/12** bounded separate-process rounds | `566f746` (12 max) | Sampled absent/complete snapshots, not linearizability |
+| GA 7 — binary DNS/TShark and V2 source binding | **GREEN**: TCP/UDP/JSON raw; 4 source-bound questions/5 invalid; 2 bound records/19 tamper cases; 7 review scenarios | `e412c2a` | Entirely synthetic PCAP; no independent source approved |
+| GA 8 — read-only replay compatibility | **GREEN**: 2 printable names/10 nonlossless negatives, 3 bound records/11 rejection cases | `9f709d0` | No projected sample, publication, freeze or approval |
+
+**Still not verified or authorized by these passes:** GA 1–4 compiler-guarded
+code-path contracts and untested rule batches; the separate legacy R102
+importer/auditor-enforcement harness; the versioned migration to the existing
+11-field publisher/replay/evaluator; complete current-revision xUnit and
+application replay certification; real-field R102 precision, recall and F1;
+cross-machine power-loss durability and adversarial ACL/reparse-point races.
+The existing manual CI profiles were **not** dispatched merely because
+their corresponding locally executed tests passed.
+
+**Immutable evaluation state:** V1 frozen holdout **FAILED 4/6**; V2
+`PENDING_EXTERNAL_CAPTURE_AND_REVIEW` with **0/4 externally approved R102
+sources**. Preserve R102/R118/R163 floors 80%/86%/84%, R102 external
+candidate 0.75 threshold, Shadow/Disabled, cooldowns, baseline readiness,
+privacy, journal integrity and all original private/ignored evidence.
+
+**Terminology:** New current-status documentation uses **GA**.
+Historic filenames, source-code symbols, Git commit references and quoted
+earlier records remain unchanged to protect navigation and audit history.
+
+---
+
+## Original 2026-10-29 design and execution plan — historical snapshot
+
+The following matrix records the **initial parked plan**, not a live status
+dashboard. Its initial RED/NOT RUN observations must be interpreted using
+the current GA verification table and later owner-tested ledger entries.
+Some still-pending compiler-guarded or CI-specific items remain pending.
+
+## Evidence and decisions at the original planning checkpoint — 2026-10-29
 
 | ID | Item | Evidence / state | Next gate |
 | --- | --- | --- | --- |
