@@ -307,11 +307,20 @@ function Invoke-ContentionRound([string]$OwnedRoot,[string]$Name,
                     }
                     return [pscustomobject]@{Code='WIN';ProcessId=$PID}
                 } catch {
+                    # Emit only constant codes; raw exceptions may contain
+                    # private capture metadata, original names or local paths.
                     $message=[string]$_.Exception.Message
-                    if($message.Contains('PUBLISH_TARGET_EXISTS')) {
-                        return [pscustomobject]@{Code='TARGET_EXISTS';ProcessId=$PID}
+                    $code='UNEXPECTED_ERROR'
+                    switch -CaseSensitive ($message) {
+                        'PUBLISH_TARGET_EXISTS' { $code='TARGET_EXISTS';break }
+                        'PUBLISH_INVALID_BATCH:ROOT' { $code='INVALID_ROOT';break }
+                        'PUBLISH_INVALID_BATCH:PROVENANCE' { $code='INVALID_PROVENANCE';break }
+                        'PUBLISH_INVALID_BATCH:SAMPLE' { $code='INVALID_SAMPLE';break }
+                        'PUBLISH_INVALID_BATCH' { $code='INVALID_BATCH';break }
+                        'PUBLISH_PRECOMMIT_ABORT' { $code='PRECOMMIT_ABORT';break }
+                        'PUBLISH_COMMIT_UNCERTAIN' { $code='COMMIT_UNCERTAIN';break }
                     }
-                    return [pscustomobject]@{Code='UNEXPECTED_ERROR';ProcessId=$PID}
+                    return [pscustomobject]@{Code=$code;ProcessId=$PID}
                 }
             } -ArgumentList @($PublisherPath, $pairsJson, $Schema, $OwnedRoot, $Name, $ready, $signal)
             $jobs+=,$job
@@ -338,6 +347,15 @@ function Invoke-ContentionRound([string]$OwnedRoot,[string]$Name,
         $outcomes=@(Receive-Job -Job $jobs -ErrorAction Stop)
         Assert-Contract ($outcomes.Count -eq 2) 'two-outcomes-required'
         $codes=@($outcomes | ForEach-Object { [string]$_.Code })
+        # Output only allowlisted constant statuses. Never print raw job
+        # objects, exception messages, JSON, paths or source identities.
+        $allowedCodes=@('WIN','TARGET_EXISTS','BAD_JOB_FIXTURE',
+            'BAD_SUCCESS_SHAPE','BARRIER_TIMEOUT','UNEXPECTED_ERROR',
+            'INVALID_ROOT','INVALID_PROVENANCE','INVALID_SAMPLE',
+            'INVALID_BATCH','PRECOMMIT_ABORT','COMMIT_UNCERTAIN')
+        Assert-Contract (@($codes | Where-Object { $_ -cnotin $allowedCodes }).Count -eq 0) 'unrecognized-worker-status'
+        Write-Host ('STAGE6F RACE '+$Name+' sanitized worker statuses: '+
+            (@($codes | Sort-Object) -join ','))
         Assert-Contract (@($codes | Where-Object { $_ -ceq 'WIN' }).Count -eq 1 -and
                          @($codes | Where-Object { $_ -ceq 'TARGET_EXISTS' }).Count -eq 1) 'race-did-not-have-exactly-one-winner'
         $ids=@($outcomes | ForEach-Object { [int]$_.ProcessId } | Sort-Object -Unique)
