@@ -525,21 +525,49 @@ $pairs=New-PrivateSyntheticPairs $slots
 # Distinct, newly owned local scratch: no production data or existing fixture
 # directory is ever targeted. The process race tests only safe generated names.
 $privateRoot=Join-Path $repository 'build-verify'
-$owned=Join-Path $privateRoot ('stage6f-race-'+[guid]::NewGuid().ToString('N'))
+Assert-Contract (Test-Path -LiteralPath $privateRoot -PathType Container) 'private-build-verify-root-missing'
+$prefix=if($OnlyReaderNegativeControl){'stage6h-negative-'}else{'stage6f-race-'}
+$owned=Join-Path $privateRoot ($prefix+[guid]::NewGuid().ToString('N'))
 Assert-Contract (-not (Test-Path -LiteralPath $owned)) 'test-scratch-collision'
 try {
     [void](New-Item -Path $owned -ItemType Directory -Force -ErrorAction Stop)
     $marker=Join-Path $owned 'sentinel.keep'
     [IO.File]::WriteAllText($marker,'STAGE6F_CANARY',[Text.Encoding]::ASCII)
     $markerHash=(Get-FileHash -LiteralPath $marker -Algorithm SHA256).Hash
-    # Preserve Stage 6F's original three rounds by default. Stage 6G opt-in
-    # can repeat 3..12 three-process races without growing unbounded jobs.
-    $roundCount=if($IncludeReaderVisibility){$ReaderStressRounds}else{3}
-    $roundNames=@(for($number=1;$number -le $roundCount;$number++){
-        'race-{0:D2}' -f $number
-    })
-    foreach($round in $roundNames) {
-        Invoke-ContentionRound $owned $round $pairs $schema $modulePath -WithReader:$IncludeReaderVisibility
+    if($OnlyReaderNegativeControl) {
+        # No publisher module or writer is required for the six sensitivity
+        # controls. Every faulty final folder is synthetic and scratch-owned.
+        $cases=@(
+            @{Id='h01';Fault='EMPTY';Expected='PARTIAL'},
+            @{Id='h02';Fault='MISSING_SIDECAR';Expected='PARTIAL'},
+            @{Id='h03';Fault='MALFORMED_JSON';Expected='IOERROR'},
+            @{Id='h04';Fault='FALSE_APPROVAL';Expected='PARTIAL'},
+            @{Id='h05';Fault='EXTRA_FILE';Expected='PARTIAL'},
+            @{Id='h06';Fault='CLASSIFICATION_MISMATCH';Expected='PARTIAL'}
+        )
+        foreach($case in $cases) {
+            Invoke-ReaderNegativeCase $owned $pairs ([string]$case.Id) ([string]$case.Fault) ([string]$case.Expected)
+        }
+        Assert-Contract (@(Get-ChildItem -LiteralPath $owned -Force).Count -eq 1) 'negative-probe-left-unexpected-artifacts'
+        Write-Host ('Stage 6H: '+$cases.Count+' synthetic reader sensitivity cases completed. No publisher or source approved.')
+    } else {
+        # Stage 6F preserves three rounds; Stage 6G opt-in uses 3..12.
+        $roundCount=if($IncludeReaderVisibility){$ReaderStressRounds}else{3}
+        $roundNames=@(for($number=1;$number -le $roundCount;$number++){
+            'race-{0:D2}' -f $number
+        })
+        foreach($round in $roundNames) {
+            Invoke-ContentionRound $owned $round $pairs $schema $modulePath -WithReader:$IncludeReaderVisibility
+        }
+        $top=@(Get-ChildItem -LiteralPath $owned -Force | Sort-Object Name)
+        $expectedTop=@('sentinel.keep')+@($roundNames)
+        Assert-Contract ($top.Count -eq ($roundCount+1) -and
+            @($top | Where-Object { $_.Name -notin $expectedTop }).Count -eq 0) 'unexpected-test-root-entry'
+        if($IncludeReaderVisibility) {
+            Write-Host ('Stage 6G opt-in: '+$roundCount+' 2-writer/1-reader visibility rounds completed; no durability or source approval.')
+        } else {
+            Write-Host 'Stage 6F race contract: three two-process contention rounds prepared; results do not certify crash durability or source review.'
+        }
     }
     Assert-Contract ((Get-FileHash -LiteralPath $marker -Algorithm SHA256).Hash -ceq
         $markerHash) 'unrelated-sentinel-modified'
