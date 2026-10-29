@@ -75,8 +75,8 @@ Subsequent bounded, privacy-conscious offline inspection used installed TShark 4
 
 The existing Korving-F source ledger identified two controlled iodine configurations specifying `-Ttxt` and Base32 / Base64, respectively. GitHub was checked again at source commit `bdc4486751f5e87fa6100b17dd57fc001743b43c` to confirm both corresponding public archive objects exist:
 
-- `dns_tunnel_file_transfer/86950175ba9bf6b4aaea5478bbd49ad7/86950175ba9bf6b4aaea5478bbd49ad7_full_dataset.tar.gz` (3,178,726 bytes; metadata `record_type: txt`, `encoding: base32`).
-- `dns_tunnel_file_transfer/c6a08caf0d52af99dfd2487f2b48c54a/c6a08caf0d52af99dfd2487f2b48c54a_full_dataset.tar.gz` (3,065,396 bytes; metadata `record_type: txt`, `encoding: base64`).
+- `dns_tunnel_file_transfer/86950175ba9bf6b4aaea5478bbd49ad7/86950175ba9bf6b4aaea5478bbd49ad7_full_dataset.tar.gz` (3,178,726 bytes; metadata `record_type: txt`, `encoding: base32`); Git blob `c061d953b9e21068031d604b9c1001ddcd1cfa53`).
+- `dns_tunnel_file_transfer/c6a08caf0d52af99dfd2487f2b48c54a/c6a08caf0d52af99dfd2487f2b48c54a_full_dataset.tar.gz` (3,065,396 bytes; metadata `record_type: txt`, `encoding: base64`); Git blob `3f2a09fd86f1b7ac16adab963967c153b3e707fa`).
 
 Repository: https://github.com/Korving-F/dns-tunnel-dataset. **No original archive contents were independently decoded in this review; no raw archive license or publication clearance was established.** Both metadata files reference the same lab client `192.168.0.30`, so neither should be assumed to supply the required *second independently captured malicious client*. Separate benign PCAP sources likewise remain unverified. Do not import either archive into a v2 slot without rights review, isolated inspection, SHA-256 receipt and original-packet TShark audit. No source approval is implied by this ledger entry.
 
