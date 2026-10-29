@@ -1,0 +1,240 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/afiay/Carthago-Network-Security-Monitor/blob/feature/carthago-reliability-hardening/docs/contracts/holdout-v2-private-provenance-v2.schema.json",
+  "title": "Carthago private R102 candidate provenance sidecar — proposed schema version 2",
+  "description": "PARKED / NOT IMPLEMENTED. Structural allowlist for locally staged, unapproved V2 R102 provenance; separate from the Holdout V2 manifest's schemaVersion=2 and existing importer provenance schemaVersion=1. Passing this schema is NEVER evidence approval.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "sample",
+    "classification",
+    "sourceKind",
+    "sourceUri",
+    "sourceLicense",
+    "sourceLicenseEvidenceUri",
+    "independentLabelBasis",
+    "analystReviewedLabel",
+    "capturedTransportEvidence",
+    "privacyReviewRequired",
+    "captureFileName",
+    "captureSha256",
+    "frameNumbers",
+    "questionIndices",
+    "selectedRecordCount",
+    "sourceAddress",
+    "queryRoot",
+    "originatingClientLabel",
+    "collectionSessionId",
+    "collectionVantage",
+    "independentClientEvidenceUri",
+    "dnsWireNameEncoding",
+    "extractor",
+    "extractorVersion",
+    "maximumPacketsToScan",
+    "selectionMethod",
+    "transformations",
+    "preparedAtUtc",
+    "reviewState"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 2
+    },
+    "sample": {
+      "type": "string",
+      "maxLength": 128,
+      "pattern": "^holdout-v2-r102-[a-z0-9-]+$"
+    },
+    "classification": {
+      "type": "string",
+      "enum": [
+        "Benign",
+        "Malicious"
+      ]
+    },
+    "sourceKind": {
+      "type": "string",
+      "const": "external-pcap-reviewed",
+      "description": "Legacy sourceKind token maintained for manifest compatibility; NOT proof of approval."
+    },
+    "sourceUri": {
+      "type": "string",
+      "minLength": 9,
+      "maxLength": 2048,
+      "pattern": "^https://[^\\s/@?#]+(?:[/?#][^\\s]*)?$",
+      "description": "Syntactic HTTPS only. Never establishes license rights, source ownership, reviewer identity or independence."
+    },
+    "sourceLicense": {
+      "type": "string",
+      "enum": [
+        "Apache-2.0",
+        "CC-BY-4.0",
+        "CC0-1.0"
+      ]
+    },
+    "sourceLicenseEvidenceUri": {
+      "type": "string",
+      "minLength": 9,
+      "maxLength": 2048,
+      "pattern": "^https://[^\\s/@?#]+(?:[/?#][^\\s]*)?$",
+      "description": "Syntactic HTTPS only. Never establishes license rights, source ownership, reviewer identity or independence."
+    },
+    "independentLabelBasis": {
+      "type": "string",
+      "minLength": 20,
+      "maxLength": 2048,
+      "description": "Untrusted assertion pending independent human verification."
+    },
+    "analystReviewedLabel": {
+      "type": "boolean",
+      "description": "Typed declaration only; true is NOT proof that review happened."
+    },
+    "capturedTransportEvidence": {
+      "type": "boolean",
+      "description": "Must be verified against original source frames; cannot be trusted as a claim."
+    },
+    "privacyReviewRequired": {
+      "type": "boolean",
+      "const": true
+    },
+    "captureFileName": {
+      "type": "string",
+      "maxLength": 180,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*\\.pcap(?:ng)?$"
+    },
+    "captureSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "frameNumbers": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 500,
+      "items": {
+        "type": "integer",
+        "minimum": 1
+      },
+      "description": "Repeated frame numbers allowed only when questionIndices differ; composite uniqueness checked by runtime."
+    },
+    "questionIndices": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 500,
+      "items": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 65535
+      },
+      "description": "Zero-based DNS question ordinal. Runtime must check exact count, per-frame bounds and uniqueness of each frame/ordinal pair."
+    },
+    "selectedRecordCount": {
+      "type": "integer",
+      "minimum": 3,
+      "maximum": 500
+    },
+    "sourceAddress": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 45,
+      "pattern": "^[0-9A-Fa-f:.]+$",
+      "description": "Structural shape only; runtime must parse using System.Net.IPAddress and check actual captured source."
+    },
+    "queryRoot": {
+      "type": "string",
+      "maxLength": 253,
+      "pattern": "^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$",
+      "description": "Legacy printable grouping root; never a lossless DNS wire-label oracle."
+    },
+    "originatingClientLabel": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$",
+      "description": "Opaque local private identity, not independently verified by syntax."
+    },
+    "collectionSessionId": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$",
+      "description": "Opaque local private identity, not independently verified by syntax."
+    },
+    "collectionVantage": {
+      "type": "string",
+      "enum": [
+        "client",
+        "endpoint",
+        "sensor"
+      ],
+      "description": "A sensor vantage does not establish independent clients."
+    },
+    "independentClientEvidenceUri": {
+      "type": "string",
+      "minLength": 9,
+      "maxLength": 2048,
+      "pattern": "^https://[^\\s/@?#]+(?:[/?#][^\\s]*)?$",
+      "description": "Syntactic HTTPS only. Never establishes license rights, source ownership, reviewer identity or independence."
+    },
+    "dnsWireNameEncoding": {
+      "type": "string",
+      "const": "labels-base64-v1",
+      "description": "Private byte-accurate decoding required, but reversible wire labels are intentionally excluded from default JSON provenance and telemetry."
+    },
+    "extractor": {
+      "type": "string",
+      "const": "tshark"
+    },
+    "extractorVersion": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 160
+    },
+    "maximumPacketsToScan": {
+      "type": "integer",
+      "minimum": 100,
+      "maximum": 500000
+    },
+    "selectionMethod": {
+      "type": "string",
+      "const": "selected-source-frame-question-tuples-v2"
+    },
+    "transformations": {
+      "type": "string",
+      "const": "None: original DNS label octets preserved; ASCII-only identity comparison"
+    },
+    "preparedAtUtc": {
+      "type": "string",
+      "format": "date-time",
+      "maxLength": 40
+    },
+    "reviewState": {
+      "type": "string",
+      "const": "PENDING_EXTERNAL_CAPTURE_AND_REVIEW",
+      "description": "This file cannot approve source license, classification, independent client or V2 freeze."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "classification": {
+            "const": "Malicious"
+          }
+        },
+        "required": [
+          "classification"
+        ]
+      },
+      "then": {
+        "properties": {
+          "independentLabelBasis": {
+            "minLength": 20
+          }
+        }
+      }
+    }
+  ],
+  "$comment": "Cross-field count equality; unique (captureHash,frameNumber,questionIndex); actual capture hash, IP, transport, QTYPE and DNS wire bytes; 2 benign+2 malicious slots; session/origin independence; reviewer authenticity; licensing rights; and atomic publication MUST be verified outside JSON Schema. Schema matching is never admission."
+}
