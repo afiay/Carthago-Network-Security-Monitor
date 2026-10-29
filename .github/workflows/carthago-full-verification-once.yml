@@ -20,7 +20,7 @@ concurrency:
 jobs:
   full-verification:
     name: Full builds, xUnit, replay quality and holdout
-    runs-on: [self-hosted, Windows, X64, LENOVO-I7-16GB]
+    runs-on: [self-hosted, Windows, X64]
     timeout-minutes: 60
     env:
       DOTNET_CLI_TELEMETRY_OPTOUT: '1'
