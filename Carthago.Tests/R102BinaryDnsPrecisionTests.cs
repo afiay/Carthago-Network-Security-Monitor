@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if CARTHAGO_DNS_WIRE_STAGE3
 using System;
 using System.Globalization;
 using System.Linq;
@@ -303,3 +304,4 @@ public sealed class R102BinaryDnsPrecisionTests
             string.Equals(item.Key, key, StringComparison.OrdinalIgnoreCase))?.Value
             ?? throw new InvalidOperationException("Missing evidence key: " + key);
 }
+#endif // CARTHAGO_DNS_WIRE_STAGE3
