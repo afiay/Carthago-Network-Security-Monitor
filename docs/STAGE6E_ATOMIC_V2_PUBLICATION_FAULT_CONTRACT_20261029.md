@@ -140,3 +140,14 @@ Frozen V1 remains historically FAILED 4/6, without retroactive edits. V2 remains
 - scripts/audit-holdout-v2-candidates.ps1
 - Microsoft Windows MoveFileExW: https://learn.microsoft.com/windows/win32/api/winbase/nf-winbase-movefileexw
 - JSON Schema Draft 2020-12: https://json-schema.org/draft/2020-12
+
+
+## Stage 6F implementation handoff (2026-10-29, authored / NOT RUN)
+
+The concurrency and recovery gaps identified in Stage 6E have now been **prepared as separate opt-in contracts**, not executed or integrated into the current publisher (which still does not exist).
+
+- scripts/verify-v2-recovery-planner-contract.ps1: 15 **path-free, in-memory** advisory scenarios for active writers, young/old orphans, missing ownership evidence, untrusted reparse points, partial/complete committed folders, post-rename uncertainty and name collisions. The planned private Get-HoldoutV2PrivateRecoveryPlan function returns only bounded decision codes with RequiresManualReview=true and AutoDeleteAllowed=false; it cannot delete or approve a batch.
+- scripts/verify-v2-two-writer-race-contract.ps1: three synchronized two-process contention rounds (6 independent Start-Job workers planned). A future **public, non-fault-injectable** Publish-HoldoutV2CandidateBatch wrapper must create exactly one complete eight-file pending-review directory per new name; the other worker must fail with PUBLISH_TARGET_EXISTS without modifying the winner.
+- docs/STAGE6F_CONCURRENT_V2_PUBLICATION_AND_RECOVERY_20261029.md: full threat model, expected decision matrix, race lifecycle, privacy controls, absence of destructive recovery, prerequisites, incomplete guarantees and evidence policy.
+
+**No execution authorized.** Neither contract verifies actual Windows no-replace behavior, power-loss durability, ACLs, symlinks, real source PCAPs or detection accuracy until the user separately permits testing. Stage 6D pure validator and Stage 6E sequential transactional core must first achieve independently observed GREEN before Stage 6F can be interpreted as production assurance. Do not broaden Stage 6E with new public fault hooks, automatic orphan cleanup, or extra GitHub Actions workflows.
