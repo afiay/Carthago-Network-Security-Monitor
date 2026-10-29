@@ -376,14 +376,33 @@ try {
         $rawEnvelope.Frames -is [array]) 'tshark-jsonraw-frame-shape-invalid'
     [object[]]$rawFrames = $rawEnvelope.Frames
     Assert-Contract ($rawFrames.Count -eq 3) 'tshark-frame-count-mismatch'
-    foreach ($reference in @(@(0, $dns1), @(1, $dns2), @(2, $dns5))) {
-        $frameIndex = [int]$reference[0]
-        $expected = [byte[]]$reference[1]
+    # Named, typed expected vectors prevent nested PowerShell tuple arrays
+    # from being flattened/reshaped at evaluation boundaries. The expected
+    # bytes remain the original, independently authored synthetic DNS vectors.
+    $expectedVectors = @(
+        [pscustomobject]@{ FrameNumber=1; Index=0; Bytes=[byte[]]$dns1 }
+        [pscustomobject]@{ FrameNumber=2; Index=1; Bytes=[byte[]]$dns2 }
+        [pscustomobject]@{ FrameNumber=5; Index=2; Bytes=[byte[]]$dns5 }
+    )
+    Assert-Contract ($expectedVectors.Count -eq 3 -and
+        $expectedVectors[0].Bytes.Length -eq $dns1.Length -and
+        $expectedVectors[1].Bytes.Length -eq $dns2.Length -and
+        $expectedVectors[2].Bytes.Length -eq $dns5.Length) 'synthetic-reference-shape-invalid'
+    foreach ($reference in $expectedVectors) {
+        $frameIndex = [int]$reference.Index
+        [byte[]]$expected = $reference.Bytes
         $rawField = @($rawFrames[$frameIndex]._source.layers.dns_raw)[0]
         Assert-Contract ($null -ne $rawField) 'tshark-dns-raw-unavailable'
         $fromTshark = Convert-HexToBytes ([string]$rawField)
-        Assert-Contract ([Convert]::ToBase64String($fromTshark) -ceq `
-            [Convert]::ToBase64String($expected)) 'tshark-dns-wire-mismatch'
+        if([Convert]::ToBase64String($fromTshark) -cne
+           [Convert]::ToBase64String($expected)) {
+            # Only synthetic frame index and byte lengths. Do not emit actual
+            # wire bytes, reversible labels, source identity, JSON or paths.
+            Assert-Contract $false ('tshark-dns-wire-mismatch-frame-'+
+                [string]$reference.FrameNumber+'-expected-length-'+
+                [string]$expected.Length+'-actual-length-'+
+                [string]$fromTshark.Length)
+        }
     }
 
     $typeOutput = @(& $tshark -n -r $capture `
