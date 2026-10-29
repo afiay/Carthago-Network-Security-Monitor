@@ -187,7 +187,8 @@ function Confirm-HoldoutV2ProvenanceBatch {
         # the scalar precheck; standalone array lengths remain checked by
         # the schema validator after the cross-field cardinality check.
         if($null -ne $nProp -and
-           -not (Test-IntegerValue $nProp.Value)) {
+           ($nProp.Value -is [string] -or
+            -not (Test-IntegerValue $nProp.Value))) {
             Fail-Provenance 'PROV_SCHEMA_TYPE'
         }
         if($null -ne $fProp -and $null -ne $qProp -and $null -ne $nProp -and
