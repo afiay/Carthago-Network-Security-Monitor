@@ -89,7 +89,433 @@ function Assert-MinimalResult([object[]]$Candidates,[string]$Schema) {
         }
     }
 }
-function Assert-Rejected([object[]]$Candidates,[string]$Schema,[string]$Code) {
+function Assert-Rejected([object[]]$Candidates,[string]$Schema,[string]$Code,[string]$CaseName) {
+    # The case metadata is fixed in the synthetic test source, never user data.
+    Assert-Contract ($CaseName -cmatch '^[a-z0-9-]{2,48}
+    $rejected=$false
+    try {
+        $ignored=@(Confirm-HoldoutV2ProvenanceBatch -Candidates $Candidates -SchemaPath $Schema 6>&1)
+    } catch {
+        $rejected=$true
+        $message=[string]$_.Exception.Message
+        if(-not $message.Contains($Code)) {
+            # Unexpected PowerShell exception details may expose local paths.
+            # Report only fixed synthetic case IDs and validated reason codes.
+            $actualCode='NON_CONTRACT_EXCEPTION'
+            if($message -cmatch '^PROV_[A-Z0-9_]+(?::[A-Z0-9_]+)?
+        foreach($c in $Candidates) {
+            # Use property descriptors, not direct member access: the missing-
+            # required-field mutation intentionally removes a property under
+            # Set-StrictMode and must still assert the intended rejection code.
+            foreach($field in @('sourceAddress','originatingClientLabel',
+                                'collectionSessionId','sourceUri','captureSha256')) {
+                $property=$c.PSObject.Properties[$field]
+                if($null -eq $property) { continue }
+                $secret=[string]$property.Value
+                if(-not [string]::IsNullOrWhiteSpace($secret)) {
+                    Assert-Contract (-not $message.Contains($secret)) 'private-evidence-in-error'
+                }
+            }
+        }
+    }
+    Assert-Contract $rejected 'invalid-candidates-were-accepted'
+}
+$root=(Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+$schema=Join-Path $root 'docs/contracts/holdout-v2-private-provenance-v2.schema.json'
+Assert-Contract (Test-Path -LiteralPath $schema -PathType Leaf) 'schema-file-not-found'
+$manifest=Get-Content -LiteralPath (Join-Path $root 'docs/holdout-evaluation-v2-manifest.json') -Raw | ConvertFrom-Json
+$slots=@($manifest.samples | Where-Object { $_.sourceKind -eq 'external-pcap-reviewed' })
+Assert-Contract ($slots.Count -eq 4) 'manifest-slot-count-mismatch'
+Assert-Contract ((@($slots | ForEach-Object { [string]$_.classification }) -join ',') -ceq
+                 'Benign,Benign,Malicious,Malicious') 'manifest-order-mismatch'
+$module=Join-Path $PSScriptRoot 'HoldoutV2Provenance.psm1'
+Assert-Contract (Test-Path -LiteralPath $module -PathType Leaf) 'provenance-validator-not-implemented-red'
+Import-Module -Name $module -Force -ErrorAction Stop
+Assert-Contract ($null -ne (Get-Command Confirm-HoldoutV2ProvenanceBatch -ErrorAction SilentlyContinue)) 'provenance-validator-api-not-implemented-red'
+
+$reference=New-SyntheticCandidates $slots
+Assert-Contract ($reference.Count -eq 4) 'fixture-reference-cardinality'
+# Schema-valid, still unapproved, containing deliberately unreviewed fields.
+Assert-MinimalResult (Clone-Candidates $reference) $schema
+# A repeated frame with a *different* DNS question ordinal is structurally
+# valid; capture-level truth remains a separate offline review requirement.
+$ordinalPositive=Clone-Candidates $reference
+$ordinalPositive[0].frameNumbers[1]=1
+$ordinalPositive[0].questionIndices[1]=1
+Assert-MinimalResult $ordinalPositive $schema
+
+$cases=@(
+    @{Name='wrong-version';Code='PROV_SCHEMA_VERSION';Edit={param($a) $a[0].schemaVersion=1}},
+    @{Name='unknown-field';Code='PROV_SCHEMA_EXTRA_FIELD';Edit={param($a) $a[0] | Add-Member -NotePropertyName unreviewedDebug -NotePropertyValue 'synthetic'}},
+    @{Name='missing-required';Code='PROV_SCHEMA_REQUIRED_FIELD';Edit={param($a) $a[0].PSObject.Properties.Remove('collectionSessionId')}},
+    @{Name='review-bool-string';Code='PROV_SCHEMA_TYPE';Edit={param($a) $a[2].analystReviewedLabel='yes'}},
+    @{Name='sha-uppercase';Code='PROV_SCHEMA_CAPTURE_HASH';Edit={param($a) $a[0].captureSha256='AB'*32}},
+    @{Name='negative-frame';Code='PROV_SCHEMA_FRAME_INDEX';Edit={param($a) $a[0].frameNumbers[0]=-1}},
+    @{Name='negative-ordinal';Code='PROV_SCHEMA_QUESTION_INDEX';Edit={param($a) $a[0].questionIndices[0]=-1}},
+    @{Name='array-misaligned';Code='PROV_SCHEMA_CARDINALITY';Edit={param($a) $a[0].questionIndices=@(0,0)}},
+    @{Name='count-mismatch';Code='PROV_SCHEMA_CARDINALITY';Edit={param($a) $a[0].selectedRecordCount=4}},
+    @{Name='duplicate-same-frame-question';Code='PROV_SCHEMA_DUPLICATE_QUESTION';Edit={param($a) $a[0].frameNumbers[1]=1}},
+    @{Name='duplicate-across-samples';Code='PROV_BATCH_DUPLICATE_QUESTION';Edit={param($a) $a[1].captureSha256=$a[0].captureSha256}},
+    @{Name='duplicate-sample';Code='PROV_BATCH_DUPLICATE_SAMPLE';Edit={param($a) $a[3].sample=$a[2].sample}},
+    @{Name='same-malicious-source';Code='PROV_BATCH_IP_COLLISION';Edit={param($a) $a[3].sourceAddress=$a[2].sourceAddress}},
+    @{Name='same-malicious-session';Code='PROV_BATCH_SESSION_COLLISION';Edit={param($a) $a[3].collectionSessionId=$a[2].collectionSessionId}},
+    @{Name='same-malicious-origin';Code='PROV_BATCH_ORIGIN_COLLISION';Edit={param($a) $a[3].originatingClientLabel=$a[2].originatingClientLabel}},
+    @{Name='invalid-vantage';Code='PROV_SCHEMA_VANTAGE';Edit={param($a) $a[0].collectionVantage='unattributed-proxy'}},
+    @{Name='http-source';Code='PROV_SCHEMA_URI';Edit={param($a) $a[0].sourceUri='http://example.org/unreviewed'}},
+    @{Name='wrong-license';Code='PROV_SCHEMA_LICENSE';Edit={param($a) $a[0].sourceLicense='Other'}},
+    @{Name='wrong-encoding';Code='PROV_SCHEMA_ENCODING';Edit={param($a) $a[0].dnsWireNameEncoding='legacy-text-v0'}},
+    @{Name='false-approval';Code='PROV_SCHEMA_REVIEW_STATE';Edit={param($a) $a[0].reviewState='APPROVED'}},
+    @{Name='invalid-root';Code='PROV_SCHEMA_ROOT';Edit={param($a) $a[0].queryRoot='Invalid..Root'}},
+    @{Name='unexpected-method';Code='PROV_SCHEMA_METHOD';Edit={param($a) $a[0].selectionMethod='textual-first-qname'}},
+    @{Name='wrong-count-type';Code='PROV_SCHEMA_TYPE';Edit={param($a) $a[0].selectedRecordCount='3'}},
+    @{Name='not-four-candidates';Code='PROV_BATCH_SHAPE';Edit={param($a) $script:removeLast=$true}}
+)
+foreach($case in $cases) {
+    $candidate=Clone-Candidates $reference
+    $script:removeLast=$false
+    & $case.Edit $candidate
+    if($script:removeLast) { $candidate=@($candidate[0..2]) }
+    Assert-Rejected $candidate $schema ([string]$case.Code) ([string]$case.Name)
+}
+Write-Host ('Private provenance schema contract: 2 structurally-valid, pending-review controls and '+
+            $cases.Count+' negative cases. All candidate identities remain synthetic.')
+ -and
+        $Code -cmatch '^PROV_[A-Z_]+
+    $rejected=$false
+    try {
+        $ignored=@(Confirm-HoldoutV2ProvenanceBatch -Candidates $Candidates -SchemaPath $Schema 6>&1)
+    } catch {
+        $rejected=$true
+        $message=[string]$_.Exception.Message
+        Assert-Contract ($message.Contains($Code)) 'wrong-rejection-reason'
+        foreach($c in $Candidates) {
+            # Use property descriptors, not direct member access: the missing-
+            # required-field mutation intentionally removes a property under
+            # Set-StrictMode and must still assert the intended rejection code.
+            foreach($field in @('sourceAddress','originatingClientLabel',
+                                'collectionSessionId','sourceUri','captureSha256')) {
+                $property=$c.PSObject.Properties[$field]
+                if($null -eq $property) { continue }
+                $secret=[string]$property.Value
+                if(-not [string]::IsNullOrWhiteSpace($secret)) {
+                    Assert-Contract (-not $message.Contains($secret)) 'private-evidence-in-error'
+                }
+            }
+        }
+    }
+    Assert-Contract $rejected 'invalid-candidates-were-accepted'
+}
+$root=(Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+$schema=Join-Path $root 'docs/contracts/holdout-v2-private-provenance-v2.schema.json'
+Assert-Contract (Test-Path -LiteralPath $schema -PathType Leaf) 'schema-file-not-found'
+$manifest=Get-Content -LiteralPath (Join-Path $root 'docs/holdout-evaluation-v2-manifest.json') -Raw | ConvertFrom-Json
+$slots=@($manifest.samples | Where-Object { $_.sourceKind -eq 'external-pcap-reviewed' })
+Assert-Contract ($slots.Count -eq 4) 'manifest-slot-count-mismatch'
+Assert-Contract ((@($slots | ForEach-Object { [string]$_.classification }) -join ',') -ceq
+                 'Benign,Benign,Malicious,Malicious') 'manifest-order-mismatch'
+$module=Join-Path $PSScriptRoot 'HoldoutV2Provenance.psm1'
+Assert-Contract (Test-Path -LiteralPath $module -PathType Leaf) 'provenance-validator-not-implemented-red'
+Import-Module -Name $module -Force -ErrorAction Stop
+Assert-Contract ($null -ne (Get-Command Confirm-HoldoutV2ProvenanceBatch -ErrorAction SilentlyContinue)) 'provenance-validator-api-not-implemented-red'
+
+$reference=New-SyntheticCandidates $slots
+Assert-Contract ($reference.Count -eq 4) 'fixture-reference-cardinality'
+# Schema-valid, still unapproved, containing deliberately unreviewed fields.
+Assert-MinimalResult (Clone-Candidates $reference) $schema
+# A repeated frame with a *different* DNS question ordinal is structurally
+# valid; capture-level truth remains a separate offline review requirement.
+$ordinalPositive=Clone-Candidates $reference
+$ordinalPositive[0].frameNumbers[1]=1
+$ordinalPositive[0].questionIndices[1]=1
+Assert-MinimalResult $ordinalPositive $schema
+
+$cases=@(
+    @{Name='wrong-version';Code='PROV_SCHEMA_VERSION';Edit={param($a) $a[0].schemaVersion=1}},
+    @{Name='unknown-field';Code='PROV_SCHEMA_EXTRA_FIELD';Edit={param($a) $a[0] | Add-Member -NotePropertyName unreviewedDebug -NotePropertyValue 'synthetic'}},
+    @{Name='missing-required';Code='PROV_SCHEMA_REQUIRED_FIELD';Edit={param($a) $a[0].PSObject.Properties.Remove('collectionSessionId')}},
+    @{Name='review-bool-string';Code='PROV_SCHEMA_TYPE';Edit={param($a) $a[2].analystReviewedLabel='yes'}},
+    @{Name='sha-uppercase';Code='PROV_SCHEMA_CAPTURE_HASH';Edit={param($a) $a[0].captureSha256='AB'*32}},
+    @{Name='negative-frame';Code='PROV_SCHEMA_FRAME_INDEX';Edit={param($a) $a[0].frameNumbers[0]=-1}},
+    @{Name='negative-ordinal';Code='PROV_SCHEMA_QUESTION_INDEX';Edit={param($a) $a[0].questionIndices[0]=-1}},
+    @{Name='array-misaligned';Code='PROV_SCHEMA_CARDINALITY';Edit={param($a) $a[0].questionIndices=@(0,0)}},
+    @{Name='count-mismatch';Code='PROV_SCHEMA_CARDINALITY';Edit={param($a) $a[0].selectedRecordCount=4}},
+    @{Name='duplicate-same-frame-question';Code='PROV_SCHEMA_DUPLICATE_QUESTION';Edit={param($a) $a[0].frameNumbers[1]=1}},
+    @{Name='duplicate-across-samples';Code='PROV_BATCH_DUPLICATE_QUESTION';Edit={param($a) $a[1].captureSha256=$a[0].captureSha256}},
+    @{Name='duplicate-sample';Code='PROV_BATCH_DUPLICATE_SAMPLE';Edit={param($a) $a[3].sample=$a[2].sample}},
+    @{Name='same-malicious-source';Code='PROV_BATCH_IP_COLLISION';Edit={param($a) $a[3].sourceAddress=$a[2].sourceAddress}},
+    @{Name='same-malicious-session';Code='PROV_BATCH_SESSION_COLLISION';Edit={param($a) $a[3].collectionSessionId=$a[2].collectionSessionId}},
+    @{Name='same-malicious-origin';Code='PROV_BATCH_ORIGIN_COLLISION';Edit={param($a) $a[3].originatingClientLabel=$a[2].originatingClientLabel}},
+    @{Name='invalid-vantage';Code='PROV_SCHEMA_VANTAGE';Edit={param($a) $a[0].collectionVantage='unattributed-proxy'}},
+    @{Name='http-source';Code='PROV_SCHEMA_URI';Edit={param($a) $a[0].sourceUri='http://example.org/unreviewed'}},
+    @{Name='wrong-license';Code='PROV_SCHEMA_LICENSE';Edit={param($a) $a[0].sourceLicense='Other'}},
+    @{Name='wrong-encoding';Code='PROV_SCHEMA_ENCODING';Edit={param($a) $a[0].dnsWireNameEncoding='legacy-text-v0'}},
+    @{Name='false-approval';Code='PROV_SCHEMA_REVIEW_STATE';Edit={param($a) $a[0].reviewState='APPROVED'}},
+    @{Name='invalid-root';Code='PROV_SCHEMA_ROOT';Edit={param($a) $a[0].queryRoot='Invalid..Root'}},
+    @{Name='unexpected-method';Code='PROV_SCHEMA_METHOD';Edit={param($a) $a[0].selectionMethod='textual-first-qname'}},
+    @{Name='wrong-count-type';Code='PROV_SCHEMA_TYPE';Edit={param($a) $a[0].selectedRecordCount='3'}},
+    @{Name='not-four-candidates';Code='PROV_BATCH_SHAPE';Edit={param($a) $script:removeLast=$true}}
+)
+foreach($case in $cases) {
+    $candidate=Clone-Candidates $reference
+    $script:removeLast=$false
+    & $case.Edit $candidate
+    if($script:removeLast) { $candidate=@($candidate[0..2]) }
+    Assert-Rejected $candidate $schema ([string]$case.Code)
+}
+Write-Host ('Private provenance schema contract: 2 structurally-valid, pending-review controls and '+
+            $cases.Count+' negative cases. All candidate identities remain synthetic.')
+) 'invalid-synthetic-case-metadata'
+    $rejected=$false
+    try {
+        $ignored=@(Confirm-HoldoutV2ProvenanceBatch -Candidates $Candidates -SchemaPath $Schema 6>&1)
+    } catch {
+        $rejected=$true
+        $message=[string]$_.Exception.Message
+        Assert-Contract ($message.Contains($Code)) 'wrong-rejection-reason'
+        foreach($c in $Candidates) {
+            # Use property descriptors, not direct member access: the missing-
+            # required-field mutation intentionally removes a property under
+            # Set-StrictMode and must still assert the intended rejection code.
+            foreach($field in @('sourceAddress','originatingClientLabel',
+                                'collectionSessionId','sourceUri','captureSha256')) {
+                $property=$c.PSObject.Properties[$field]
+                if($null -eq $property) { continue }
+                $secret=[string]$property.Value
+                if(-not [string]::IsNullOrWhiteSpace($secret)) {
+                    Assert-Contract (-not $message.Contains($secret)) 'private-evidence-in-error'
+                }
+            }
+        }
+    }
+    Assert-Contract $rejected 'invalid-candidates-were-accepted'
+}
+$root=(Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+$schema=Join-Path $root 'docs/contracts/holdout-v2-private-provenance-v2.schema.json'
+Assert-Contract (Test-Path -LiteralPath $schema -PathType Leaf) 'schema-file-not-found'
+$manifest=Get-Content -LiteralPath (Join-Path $root 'docs/holdout-evaluation-v2-manifest.json') -Raw | ConvertFrom-Json
+$slots=@($manifest.samples | Where-Object { $_.sourceKind -eq 'external-pcap-reviewed' })
+Assert-Contract ($slots.Count -eq 4) 'manifest-slot-count-mismatch'
+Assert-Contract ((@($slots | ForEach-Object { [string]$_.classification }) -join ',') -ceq
+                 'Benign,Benign,Malicious,Malicious') 'manifest-order-mismatch'
+$module=Join-Path $PSScriptRoot 'HoldoutV2Provenance.psm1'
+Assert-Contract (Test-Path -LiteralPath $module -PathType Leaf) 'provenance-validator-not-implemented-red'
+Import-Module -Name $module -Force -ErrorAction Stop
+Assert-Contract ($null -ne (Get-Command Confirm-HoldoutV2ProvenanceBatch -ErrorAction SilentlyContinue)) 'provenance-validator-api-not-implemented-red'
+
+$reference=New-SyntheticCandidates $slots
+Assert-Contract ($reference.Count -eq 4) 'fixture-reference-cardinality'
+# Schema-valid, still unapproved, containing deliberately unreviewed fields.
+Assert-MinimalResult (Clone-Candidates $reference) $schema
+# A repeated frame with a *different* DNS question ordinal is structurally
+# valid; capture-level truth remains a separate offline review requirement.
+$ordinalPositive=Clone-Candidates $reference
+$ordinalPositive[0].frameNumbers[1]=1
+$ordinalPositive[0].questionIndices[1]=1
+Assert-MinimalResult $ordinalPositive $schema
+
+$cases=@(
+    @{Name='wrong-version';Code='PROV_SCHEMA_VERSION';Edit={param($a) $a[0].schemaVersion=1}},
+    @{Name='unknown-field';Code='PROV_SCHEMA_EXTRA_FIELD';Edit={param($a) $a[0] | Add-Member -NotePropertyName unreviewedDebug -NotePropertyValue 'synthetic'}},
+    @{Name='missing-required';Code='PROV_SCHEMA_REQUIRED_FIELD';Edit={param($a) $a[0].PSObject.Properties.Remove('collectionSessionId')}},
+    @{Name='review-bool-string';Code='PROV_SCHEMA_TYPE';Edit={param($a) $a[2].analystReviewedLabel='yes'}},
+    @{Name='sha-uppercase';Code='PROV_SCHEMA_CAPTURE_HASH';Edit={param($a) $a[0].captureSha256='AB'*32}},
+    @{Name='negative-frame';Code='PROV_SCHEMA_FRAME_INDEX';Edit={param($a) $a[0].frameNumbers[0]=-1}},
+    @{Name='negative-ordinal';Code='PROV_SCHEMA_QUESTION_INDEX';Edit={param($a) $a[0].questionIndices[0]=-1}},
+    @{Name='array-misaligned';Code='PROV_SCHEMA_CARDINALITY';Edit={param($a) $a[0].questionIndices=@(0,0)}},
+    @{Name='count-mismatch';Code='PROV_SCHEMA_CARDINALITY';Edit={param($a) $a[0].selectedRecordCount=4}},
+    @{Name='duplicate-same-frame-question';Code='PROV_SCHEMA_DUPLICATE_QUESTION';Edit={param($a) $a[0].frameNumbers[1]=1}},
+    @{Name='duplicate-across-samples';Code='PROV_BATCH_DUPLICATE_QUESTION';Edit={param($a) $a[1].captureSha256=$a[0].captureSha256}},
+    @{Name='duplicate-sample';Code='PROV_BATCH_DUPLICATE_SAMPLE';Edit={param($a) $a[3].sample=$a[2].sample}},
+    @{Name='same-malicious-source';Code='PROV_BATCH_IP_COLLISION';Edit={param($a) $a[3].sourceAddress=$a[2].sourceAddress}},
+    @{Name='same-malicious-session';Code='PROV_BATCH_SESSION_COLLISION';Edit={param($a) $a[3].collectionSessionId=$a[2].collectionSessionId}},
+    @{Name='same-malicious-origin';Code='PROV_BATCH_ORIGIN_COLLISION';Edit={param($a) $a[3].originatingClientLabel=$a[2].originatingClientLabel}},
+    @{Name='invalid-vantage';Code='PROV_SCHEMA_VANTAGE';Edit={param($a) $a[0].collectionVantage='unattributed-proxy'}},
+    @{Name='http-source';Code='PROV_SCHEMA_URI';Edit={param($a) $a[0].sourceUri='http://example.org/unreviewed'}},
+    @{Name='wrong-license';Code='PROV_SCHEMA_LICENSE';Edit={param($a) $a[0].sourceLicense='Other'}},
+    @{Name='wrong-encoding';Code='PROV_SCHEMA_ENCODING';Edit={param($a) $a[0].dnsWireNameEncoding='legacy-text-v0'}},
+    @{Name='false-approval';Code='PROV_SCHEMA_REVIEW_STATE';Edit={param($a) $a[0].reviewState='APPROVED'}},
+    @{Name='invalid-root';Code='PROV_SCHEMA_ROOT';Edit={param($a) $a[0].queryRoot='Invalid..Root'}},
+    @{Name='unexpected-method';Code='PROV_SCHEMA_METHOD';Edit={param($a) $a[0].selectionMethod='textual-first-qname'}},
+    @{Name='wrong-count-type';Code='PROV_SCHEMA_TYPE';Edit={param($a) $a[0].selectedRecordCount='3'}},
+    @{Name='not-four-candidates';Code='PROV_BATCH_SHAPE';Edit={param($a) $script:removeLast=$true}}
+)
+foreach($case in $cases) {
+    $candidate=Clone-Candidates $reference
+    $script:removeLast=$false
+    & $case.Edit $candidate
+    if($script:removeLast) { $candidate=@($candidate[0..2]) }
+    Assert-Rejected $candidate $schema ([string]$case.Code)
+}
+Write-Host ('Private provenance schema contract: 2 structurally-valid, pending-review controls and '+
+            $cases.Count+' negative cases. All candidate identities remain synthetic.')
+) {
+                $actualCode=$message
+            }
+            throw ('V2 private provenance contract: wrong-rejection-reason:'+
+                $CaseName+':expected='+$Code+':actual='+$actualCode)
+        }
+        foreach($c in $Candidates) {
+            # Use property descriptors, not direct member access: the missing-
+            # required-field mutation intentionally removes a property under
+            # Set-StrictMode and must still assert the intended rejection code.
+            foreach($field in @('sourceAddress','originatingClientLabel',
+                                'collectionSessionId','sourceUri','captureSha256')) {
+                $property=$c.PSObject.Properties[$field]
+                if($null -eq $property) { continue }
+                $secret=[string]$property.Value
+                if(-not [string]::IsNullOrWhiteSpace($secret)) {
+                    Assert-Contract (-not $message.Contains($secret)) 'private-evidence-in-error'
+                }
+            }
+        }
+    }
+    Assert-Contract $rejected 'invalid-candidates-were-accepted'
+}
+$root=(Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+$schema=Join-Path $root 'docs/contracts/holdout-v2-private-provenance-v2.schema.json'
+Assert-Contract (Test-Path -LiteralPath $schema -PathType Leaf) 'schema-file-not-found'
+$manifest=Get-Content -LiteralPath (Join-Path $root 'docs/holdout-evaluation-v2-manifest.json') -Raw | ConvertFrom-Json
+$slots=@($manifest.samples | Where-Object { $_.sourceKind -eq 'external-pcap-reviewed' })
+Assert-Contract ($slots.Count -eq 4) 'manifest-slot-count-mismatch'
+Assert-Contract ((@($slots | ForEach-Object { [string]$_.classification }) -join ',') -ceq
+                 'Benign,Benign,Malicious,Malicious') 'manifest-order-mismatch'
+$module=Join-Path $PSScriptRoot 'HoldoutV2Provenance.psm1'
+Assert-Contract (Test-Path -LiteralPath $module -PathType Leaf) 'provenance-validator-not-implemented-red'
+Import-Module -Name $module -Force -ErrorAction Stop
+Assert-Contract ($null -ne (Get-Command Confirm-HoldoutV2ProvenanceBatch -ErrorAction SilentlyContinue)) 'provenance-validator-api-not-implemented-red'
+
+$reference=New-SyntheticCandidates $slots
+Assert-Contract ($reference.Count -eq 4) 'fixture-reference-cardinality'
+# Schema-valid, still unapproved, containing deliberately unreviewed fields.
+Assert-MinimalResult (Clone-Candidates $reference) $schema
+# A repeated frame with a *different* DNS question ordinal is structurally
+# valid; capture-level truth remains a separate offline review requirement.
+$ordinalPositive=Clone-Candidates $reference
+$ordinalPositive[0].frameNumbers[1]=1
+$ordinalPositive[0].questionIndices[1]=1
+Assert-MinimalResult $ordinalPositive $schema
+
+$cases=@(
+    @{Name='wrong-version';Code='PROV_SCHEMA_VERSION';Edit={param($a) $a[0].schemaVersion=1}},
+    @{Name='unknown-field';Code='PROV_SCHEMA_EXTRA_FIELD';Edit={param($a) $a[0] | Add-Member -NotePropertyName unreviewedDebug -NotePropertyValue 'synthetic'}},
+    @{Name='missing-required';Code='PROV_SCHEMA_REQUIRED_FIELD';Edit={param($a) $a[0].PSObject.Properties.Remove('collectionSessionId')}},
+    @{Name='review-bool-string';Code='PROV_SCHEMA_TYPE';Edit={param($a) $a[2].analystReviewedLabel='yes'}},
+    @{Name='sha-uppercase';Code='PROV_SCHEMA_CAPTURE_HASH';Edit={param($a) $a[0].captureSha256='AB'*32}},
+    @{Name='negative-frame';Code='PROV_SCHEMA_FRAME_INDEX';Edit={param($a) $a[0].frameNumbers[0]=-1}},
+    @{Name='negative-ordinal';Code='PROV_SCHEMA_QUESTION_INDEX';Edit={param($a) $a[0].questionIndices[0]=-1}},
+    @{Name='array-misaligned';Code='PROV_SCHEMA_CARDINALITY';Edit={param($a) $a[0].questionIndices=@(0,0)}},
+    @{Name='count-mismatch';Code='PROV_SCHEMA_CARDINALITY';Edit={param($a) $a[0].selectedRecordCount=4}},
+    @{Name='duplicate-same-frame-question';Code='PROV_SCHEMA_DUPLICATE_QUESTION';Edit={param($a) $a[0].frameNumbers[1]=1}},
+    @{Name='duplicate-across-samples';Code='PROV_BATCH_DUPLICATE_QUESTION';Edit={param($a) $a[1].captureSha256=$a[0].captureSha256}},
+    @{Name='duplicate-sample';Code='PROV_BATCH_DUPLICATE_SAMPLE';Edit={param($a) $a[3].sample=$a[2].sample}},
+    @{Name='same-malicious-source';Code='PROV_BATCH_IP_COLLISION';Edit={param($a) $a[3].sourceAddress=$a[2].sourceAddress}},
+    @{Name='same-malicious-session';Code='PROV_BATCH_SESSION_COLLISION';Edit={param($a) $a[3].collectionSessionId=$a[2].collectionSessionId}},
+    @{Name='same-malicious-origin';Code='PROV_BATCH_ORIGIN_COLLISION';Edit={param($a) $a[3].originatingClientLabel=$a[2].originatingClientLabel}},
+    @{Name='invalid-vantage';Code='PROV_SCHEMA_VANTAGE';Edit={param($a) $a[0].collectionVantage='unattributed-proxy'}},
+    @{Name='http-source';Code='PROV_SCHEMA_URI';Edit={param($a) $a[0].sourceUri='http://example.org/unreviewed'}},
+    @{Name='wrong-license';Code='PROV_SCHEMA_LICENSE';Edit={param($a) $a[0].sourceLicense='Other'}},
+    @{Name='wrong-encoding';Code='PROV_SCHEMA_ENCODING';Edit={param($a) $a[0].dnsWireNameEncoding='legacy-text-v0'}},
+    @{Name='false-approval';Code='PROV_SCHEMA_REVIEW_STATE';Edit={param($a) $a[0].reviewState='APPROVED'}},
+    @{Name='invalid-root';Code='PROV_SCHEMA_ROOT';Edit={param($a) $a[0].queryRoot='Invalid..Root'}},
+    @{Name='unexpected-method';Code='PROV_SCHEMA_METHOD';Edit={param($a) $a[0].selectionMethod='textual-first-qname'}},
+    @{Name='wrong-count-type';Code='PROV_SCHEMA_TYPE';Edit={param($a) $a[0].selectedRecordCount='3'}},
+    @{Name='not-four-candidates';Code='PROV_BATCH_SHAPE';Edit={param($a) $script:removeLast=$true}}
+)
+foreach($case in $cases) {
+    $candidate=Clone-Candidates $reference
+    $script:removeLast=$false
+    & $case.Edit $candidate
+    if($script:removeLast) { $candidate=@($candidate[0..2]) }
+    Assert-Rejected $candidate $schema ([string]$case.Code)
+}
+Write-Host ('Private provenance schema contract: 2 structurally-valid, pending-review controls and '+
+            $cases.Count+' negative cases. All candidate identities remain synthetic.')
+ -and
+        $Code -cmatch '^PROV_[A-Z_]+
+    $rejected=$false
+    try {
+        $ignored=@(Confirm-HoldoutV2ProvenanceBatch -Candidates $Candidates -SchemaPath $Schema 6>&1)
+    } catch {
+        $rejected=$true
+        $message=[string]$_.Exception.Message
+        Assert-Contract ($message.Contains($Code)) 'wrong-rejection-reason'
+        foreach($c in $Candidates) {
+            # Use property descriptors, not direct member access: the missing-
+            # required-field mutation intentionally removes a property under
+            # Set-StrictMode and must still assert the intended rejection code.
+            foreach($field in @('sourceAddress','originatingClientLabel',
+                                'collectionSessionId','sourceUri','captureSha256')) {
+                $property=$c.PSObject.Properties[$field]
+                if($null -eq $property) { continue }
+                $secret=[string]$property.Value
+                if(-not [string]::IsNullOrWhiteSpace($secret)) {
+                    Assert-Contract (-not $message.Contains($secret)) 'private-evidence-in-error'
+                }
+            }
+        }
+    }
+    Assert-Contract $rejected 'invalid-candidates-were-accepted'
+}
+$root=(Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+$schema=Join-Path $root 'docs/contracts/holdout-v2-private-provenance-v2.schema.json'
+Assert-Contract (Test-Path -LiteralPath $schema -PathType Leaf) 'schema-file-not-found'
+$manifest=Get-Content -LiteralPath (Join-Path $root 'docs/holdout-evaluation-v2-manifest.json') -Raw | ConvertFrom-Json
+$slots=@($manifest.samples | Where-Object { $_.sourceKind -eq 'external-pcap-reviewed' })
+Assert-Contract ($slots.Count -eq 4) 'manifest-slot-count-mismatch'
+Assert-Contract ((@($slots | ForEach-Object { [string]$_.classification }) -join ',') -ceq
+                 'Benign,Benign,Malicious,Malicious') 'manifest-order-mismatch'
+$module=Join-Path $PSScriptRoot 'HoldoutV2Provenance.psm1'
+Assert-Contract (Test-Path -LiteralPath $module -PathType Leaf) 'provenance-validator-not-implemented-red'
+Import-Module -Name $module -Force -ErrorAction Stop
+Assert-Contract ($null -ne (Get-Command Confirm-HoldoutV2ProvenanceBatch -ErrorAction SilentlyContinue)) 'provenance-validator-api-not-implemented-red'
+
+$reference=New-SyntheticCandidates $slots
+Assert-Contract ($reference.Count -eq 4) 'fixture-reference-cardinality'
+# Schema-valid, still unapproved, containing deliberately unreviewed fields.
+Assert-MinimalResult (Clone-Candidates $reference) $schema
+# A repeated frame with a *different* DNS question ordinal is structurally
+# valid; capture-level truth remains a separate offline review requirement.
+$ordinalPositive=Clone-Candidates $reference
+$ordinalPositive[0].frameNumbers[1]=1
+$ordinalPositive[0].questionIndices[1]=1
+Assert-MinimalResult $ordinalPositive $schema
+
+$cases=@(
+    @{Name='wrong-version';Code='PROV_SCHEMA_VERSION';Edit={param($a) $a[0].schemaVersion=1}},
+    @{Name='unknown-field';Code='PROV_SCHEMA_EXTRA_FIELD';Edit={param($a) $a[0] | Add-Member -NotePropertyName unreviewedDebug -NotePropertyValue 'synthetic'}},
+    @{Name='missing-required';Code='PROV_SCHEMA_REQUIRED_FIELD';Edit={param($a) $a[0].PSObject.Properties.Remove('collectionSessionId')}},
+    @{Name='review-bool-string';Code='PROV_SCHEMA_TYPE';Edit={param($a) $a[2].analystReviewedLabel='yes'}},
+    @{Name='sha-uppercase';Code='PROV_SCHEMA_CAPTURE_HASH';Edit={param($a) $a[0].captureSha256='AB'*32}},
+    @{Name='negative-frame';Code='PROV_SCHEMA_FRAME_INDEX';Edit={param($a) $a[0].frameNumbers[0]=-1}},
+    @{Name='negative-ordinal';Code='PROV_SCHEMA_QUESTION_INDEX';Edit={param($a) $a[0].questionIndices[0]=-1}},
+    @{Name='array-misaligned';Code='PROV_SCHEMA_CARDINALITY';Edit={param($a) $a[0].questionIndices=@(0,0)}},
+    @{Name='count-mismatch';Code='PROV_SCHEMA_CARDINALITY';Edit={param($a) $a[0].selectedRecordCount=4}},
+    @{Name='duplicate-same-frame-question';Code='PROV_SCHEMA_DUPLICATE_QUESTION';Edit={param($a) $a[0].frameNumbers[1]=1}},
+    @{Name='duplicate-across-samples';Code='PROV_BATCH_DUPLICATE_QUESTION';Edit={param($a) $a[1].captureSha256=$a[0].captureSha256}},
+    @{Name='duplicate-sample';Code='PROV_BATCH_DUPLICATE_SAMPLE';Edit={param($a) $a[3].sample=$a[2].sample}},
+    @{Name='same-malicious-source';Code='PROV_BATCH_IP_COLLISION';Edit={param($a) $a[3].sourceAddress=$a[2].sourceAddress}},
+    @{Name='same-malicious-session';Code='PROV_BATCH_SESSION_COLLISION';Edit={param($a) $a[3].collectionSessionId=$a[2].collectionSessionId}},
+    @{Name='same-malicious-origin';Code='PROV_BATCH_ORIGIN_COLLISION';Edit={param($a) $a[3].originatingClientLabel=$a[2].originatingClientLabel}},
+    @{Name='invalid-vantage';Code='PROV_SCHEMA_VANTAGE';Edit={param($a) $a[0].collectionVantage='unattributed-proxy'}},
+    @{Name='http-source';Code='PROV_SCHEMA_URI';Edit={param($a) $a[0].sourceUri='http://example.org/unreviewed'}},
+    @{Name='wrong-license';Code='PROV_SCHEMA_LICENSE';Edit={param($a) $a[0].sourceLicense='Other'}},
+    @{Name='wrong-encoding';Code='PROV_SCHEMA_ENCODING';Edit={param($a) $a[0].dnsWireNameEncoding='legacy-text-v0'}},
+    @{Name='false-approval';Code='PROV_SCHEMA_REVIEW_STATE';Edit={param($a) $a[0].reviewState='APPROVED'}},
+    @{Name='invalid-root';Code='PROV_SCHEMA_ROOT';Edit={param($a) $a[0].queryRoot='Invalid..Root'}},
+    @{Name='unexpected-method';Code='PROV_SCHEMA_METHOD';Edit={param($a) $a[0].selectionMethod='textual-first-qname'}},
+    @{Name='wrong-count-type';Code='PROV_SCHEMA_TYPE';Edit={param($a) $a[0].selectedRecordCount='3'}},
+    @{Name='not-four-candidates';Code='PROV_BATCH_SHAPE';Edit={param($a) $script:removeLast=$true}}
+)
+foreach($case in $cases) {
+    $candidate=Clone-Candidates $reference
+    $script:removeLast=$false
+    & $case.Edit $candidate
+    if($script:removeLast) { $candidate=@($candidate[0..2]) }
+    Assert-Rejected $candidate $schema ([string]$case.Code)
+}
+Write-Host ('Private provenance schema contract: 2 structurally-valid, pending-review controls and '+
+            $cases.Count+' negative cases. All candidate identities remain synthetic.')
+) 'invalid-synthetic-case-metadata'
     $rejected=$false
     try {
         $ignored=@(Confirm-HoldoutV2ProvenanceBatch -Candidates $Candidates -SchemaPath $Schema 6>&1)
