@@ -163,6 +163,35 @@ function Assert-Stage6CandidateEvidence([string]$Path, [string]$Hash, [string]$T
     # This checks data fidelity only; no label/rights/client is approved here.
     Assert-Contract ($null -ne (Get-Command Confirm-DnsWireCandidateBinding -ErrorAction SilentlyContinue)) `
         'candidate-binding-not-implemented-red'
+    # Preflight the same strict, non-interactive schema matcher used by
+    # Confirm-DnsWireCandidateBinding. The four invalid inputs must reject
+    # even when empty, partially populated or differently cased. Do not
+    # invoke interactive Compare-Object or inspect original capture data.
+    $schemaModule=Get-Module -Name DnsWirePcap
+    Assert-Contract ($null -ne $schemaModule) 'record-schema-module-unavailable'
+    $schemaProbe=@(& $schemaModule {
+        [string[]]$expected=@('alpha','beta')
+        $valid=Test-DnsExactRecordFields -Record ([pscustomobject]@{
+            alpha=1; beta=2
+        }) -ExpectedFields $expected
+        [object[]]$invalid=@(
+            [pscustomobject]@{}
+            [pscustomobject]@{alpha=1}
+            [pscustomobject]@{alpha=1; beta=2; gamma=3}
+            [pscustomobject]@{alpha=1; Beta=2}
+        )
+        $rejected=0
+        foreach($candidate in $invalid) {
+            if(-not (Test-DnsExactRecordFields -Record $candidate -ExpectedFields $expected)) {
+                $rejected++
+            }
+        }
+        return [pscustomobject]@{Valid=$valid; Rejected=$rejected}
+    })
+    Assert-Contract ($schemaProbe.Count -eq 1 -and
+        [bool]$schemaProbe[0].Valid -and
+        [int]$schemaProbe[0].Rejected -eq 4) 'record-schema-exact-field-regression'
+    Write-Host 'V2 record schema: one exact layout accepted; four malformed layouts rejected.'
     $reference = [pscustomobject]@{
         provenance = [pscustomobject]@{
             captureSha256 = $Hash
