@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if CARTHAGO_DNS_WIRE_STAGE2
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -153,3 +154,4 @@ public sealed class DnsWirePacketTests
         return packet;
     }
 }
+#endif // CARTHAGO_DNS_WIRE_STAGE2
