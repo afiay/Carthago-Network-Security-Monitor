@@ -295,3 +295,40 @@ The build reported **15 warning occurrences** across build targets. Seven distin
 **Scope and limitations:** The 115 focused tests use synthetic peer descriptors and parser fixtures; **no live Windows transport peer was authenticated**, no IPC listener or service was started, and no signing keys or attested WinRM outcomes were created. No host audit settings were changed by this test. CARTHAGE Process Creation auditing was restored to `No Auditing` after the earlier Stage 1 lab, and Stage 2 command-line inclusion remains disabled. The pre-existing full-suite checkpoint is still 4,851 passing tests at `290a327`, not a newly rerun full suite. R343, R295, R275 and R163 replay expectations remain unresolved.
 
 **Next gate:** design a Windows-specific authenticated peer adapter (actual OS-derived SID, PID and connection identity) behind the isolated protocol gate, with adversarial cross-process/reconnect tests and explicit operator review before exposing any IPC endpoint or privilege elevation.
+
+## CARTHAGO full local verification checkpoint - 2026-10-29
+
+**Operator-observed execution:** CARTHAGE, Windows PowerShell, `feature/carthago-reliability-hardening`, local checkout commit `498b8b0` (the supplied `git pull --ff-only` fast-forwarded `80e37ed..498b8b0`). Invoked `./verify-local.ps1 -Details -LiveOutput` on October 29, 2026. Source: operator-provided terminal transcript. This was a **local** verification, not the queued GitHub Actions job.
+
+| Stage | Result |
+| --- | --- |
+| Restore .NET tests and benchmarks | PASS |
+| Release build: tests | PASS, 8 warnings, 0 errors |
+| Release build: benchmarks | PASS, 0 warnings, 0 errors |
+| Complete xUnit suite | **PASS: 4,940 passed, 0 failed, 0 skipped** |
+| Replay benchmark execution | PASS: 146 labeled synthetic samples |
+| Rule-catalog contract audit | PASS: 544 rules, 0 contract issues |
+| Replay expectation validation | **FAIL: four existing evidence/expectation blockers** |
+| Frozen holdout (`scripts/evaluate-holdout.ps1`) | NOT RUN by `verify-local.ps1` in supplied transcript |
+
+Compared with the earlier full-suite checkpoint of 4,851 passing xUnit tests, the current suite contains 89 additional passing tests. This observation is a **test-count delta**, not proof that every new test or rule was isolated and independently certified. No evidence indicates an IPC contract regression: Release build and all xUnit tests passed.
+
+### Four outstanding replay expectation failures
+
+- `ad-psremoting-encoded-command` / R343: expected match missing; maximum confidence 0.00, requirement 0.65; `InsufficientEvidence/WINRM_COMMAND_AUDIT_UNAVAILABLE`. The completed Windows 4688 local lab and source-only IPC gate do NOT satisfy authenticated WinRM outcome provenance.
+- `kubernetes-pod-exec` / R295: expected match missing; maximum confidence 0.00, requirement 0.65; `InsufficientEvidence/K8S_POD_EXEC_AUDIT_UNAVAILABLE`.
+- `oauth-device-code-phishing` / R275: expected match missing; maximum confidence 0.00, requirement 0.65; `InsufficientEvidence/TRUSTED_DEVICE_CODE_ABUSE_EVENT_UNAVAILABLE`.
+- `ssrf-imds` / R163: maximum confidence 0.62, below the expected fixture floor 0.65. Do not lower confidence floors to bypass this gate.
+
+### Replay scope, quality and coverage gaps
+
+- Synthetic replay corpus: 146 samples; 48 malicious and 98 benign; 0 benign critical alerts and 0 benign false-positive alerts reported.
+- Raw/detector recognition: 45 of 48 expected malicious rules (93.8%) recognized. This is **not** alert-level recall and not production detection accuracy.
+- Enterprise alert-level results: TP=4 FP=0 FN=44 TN=98, precision 100% on four true-positive alerts, recall 8.3%, F1 15.4%. Other profiles have 1-5 true-positive alerts and recall 2.1%-10.4%. Do not call the small-sample precision score production precision.
+- Catalog coverage: 544 registered rules, 10 with paired synthetic controls, 489 without explicit replay controls; 0 contract issues. Improve explicit negative/positive rule coverage without weakening security guards.
+
+### Remaining status and next gates
+
+**Build and xUnit: GREEN. Replay expectations: RED. Full certification: NOT MET.** The overall local verifier ended `FAILED stages: replay-expectations`. Existing report-only diagnostics and full xUnit success must not override this nonzero final result. The separate frozen synthetic holdout was not part of the supplied local output and should be checked as its own gate; it does not replace replay failures. No signed WinRM/Kubernetes/OAuth outcome evidence or privileged Windows transport was implemented or tested in this checkpoint. CARTHAGE Windows Process Creation auditing remains at the previously reported restored `No Auditing` baseline unless separately changed by the operator. No detector confidence floors, replay labels or signing trust rules were altered for this report.
+
+Existing one-shot GitHub Actions workflow job `40792433511` was independently checked after the local verification and remained queued with no runner assigned, so it is not the origin of these results. The local verifier is authoritative for this checkpoint.
