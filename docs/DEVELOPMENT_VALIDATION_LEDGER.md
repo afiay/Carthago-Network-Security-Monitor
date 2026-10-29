@@ -815,3 +815,36 @@ Stop on the first non-PASS or constant failure code and record it before any oth
 - Wireshark official \`tshark -T jsonraw\`: https://www.wireshark.org/docs/man-pages/tshark
 - Wireshark JSON-to-PCAP raw descriptor structure and DNS example: https://www.h21lab.com/tools/json-to-pcap/
 - Wireshark 4.6.x jsonraw baseline six-member descriptor: https://fossies.org/linux/wireshark/test/baseline/dhcp.jsonraw
+
+
+### 2026-10-29 — Twentieth owner-authorized CARTHAGE verification: core DNS original-wire/TShark corroboration GREEN
+
+**Observed exact revision and PowerShell syntax:** Owner fast-forwarded feature/carthago-reliability-hardening to **a5bc69f**, and confirmed it using git rev-parse --short HEAD. Windows PowerShell Parser.ParseFile reported **Syntax PASS** for both \`scripts/DnsWirePcap.psm1\` and \`scripts/verify-dns-wire-source-contract.ps1\`. The owner ran the existing **synthetic-only** generated-PCAP contract with locally installed **TShark 4.6.9**, explicit \`-TsharkPath "C:\Program Files\Wireshark\tshark.exe"\`, and **without** \`-IncludeV2Provenance\`.
+
+**Complete, successful owner-supplied output:**
+\`\`\`text
+DNS TCP framing: unmodified UDP and exact TCP payload preserved; five invalid length prefixes rejected.
+TShark jsonraw descriptor: 5/6-member formats preserved; ten ambiguous or invalid descriptors rejected.
+DNS wire source contract: four source-bound questions corroborated; five invalid/ambiguous selections rejected. Synthetic evidence only.
+\`\`\`
+The command returned to the PowerShell prompt without a contract exception. The previous observed failure \`DNS_WIRE_RAW_AMBIGUOUS\` no longer occurred in this run.
+
+**Verified scope and counts, from the executed script and observed stdout:**
+- DNS-over-TCP length prefix: two positive data-preservation checks (TCP framed DNS and unchanged UDP) with five intentionally malformed TCP framing vectors rejected.
+- Independent TShark JSON raw descriptor extraction: **two positive layouts** (five-field and six-field) preserve the same synthetic byte payload; **ten malformed/ambiguous descriptor vectors** rejected with fixed error codes, including inappropriate structure/metadata/byte lengths.
+- Synthetic-PCAP original-frame DNS comparison: **four original-bound question selections** preserved binary label octets, frame index, selected question ordinal, DNS type and IPv4/UDP/TCP source/destination port attribution; **five invalid/ambiguous cases** rejected (out-of-range ordinal, forward pointer, cycle, truncated question, absent frame).
+- Original selected synthetic PCAP SHA-256 integrity verified, byte-for-byte DNS payload comparisons against separately derived \`dns_raw\` and TShark QTYPE checks were reached without exceptions. The test creates and removes only its uniquely named synthetic temporary fixture.
+- The two parser and regression files passed syntax on the owner's actual Windows PowerShell installation. The assistant did not execute TShark or Windows tests.
+
+**Disposition:** Core DNS wire representation + original frame/TShark corroboration regression is now **GREEN within its fully synthetic Stage 5 scope** at a5bc69f. The earlier 4 failure iterations are retained historically in this ledger, not overwritten. This is meaningful verification of handling binary DNS label bytes, DNS-over-TCP framing and strict \`jsonraw\` descriptors; it does **not** validate rights/labels/origin of third-party PCAP evidence, prove field detector accuracy or authorize any holdout admission.
+
+**Next distinct, already-authored gate (not yet executed):** \`scripts/verify-dns-wire-source-contract.ps1 -IncludeV2Provenance\`. Its source already defines:
+1. Two synthetic frame+question-ordinal-bound candidate records compared against the **same original synthetic PCAP** with SHA-256 provenance.
+2. Eighteen deliberate provenance/record tampering mutations plus a missing-original-capture case: **nineteen negative checks**. These include changed capture hash/frame/ordinal, duplicated question, missing cardinality, invalid encoding, altered binary labels, QTYPE/IP/port/protocol, missing client attribution, unsafe metadata, and extra record field.
+3. Seven synthetic logical-source comparison cases (mirrored name sets despite ASCII case/order, disjoint and partial overlap, reused session, reused originating client, reused original frame and non-ASCII bytes remaining distinct). This is **review-risk classification only**: every case must set \`RequiresAnalystReview=true\`, \`IndependenceApproved=false\`.
+
+**Source-only preflight:** The optional switch exists, is false by default and reuses the identical synthesized temporary PCAP; it does not invoke the old importer/auditor or touch private user sources. The existing candidate binder uses strict fail-closed identity matching and strips source metadata from its success result. This optional extension is **NOT YET GREEN**; its output must be observed before reporting approval of the extra checks.
+
+**Recommended owner-run follow-up:** Pull latest documentation checkpoint, confirm HEAD, then run ONLY \`powershell.exe -NoProfile -File .\scripts\verify-dns-wire-source-contract.ps1 -TsharkPath "C:\Program Files\Wireshark\tshark.exe" -IncludeV2Provenance\`. Expect the three already-verified core logs followed by \`V2 frame/question binding contract: two source-bound records; nineteen tampering/missing-original cases rejected. Source syntax only.\` and \`V2 logical-source contract: seven mirror, overlap, session, origin, frame-reuse and non-ASCII review scenarios defined. No source approved.\` If any stage fails, stop at the exact constant code and do not rerun closed concurrency gates or change application behavior speculatively. The optional extension uses exclusively synthetic local data; no live capture, public network probe, old importer, source admission or CI is authorized by this gate.
+
+**Frozen and pending evidence unchanged:** Historical immutable V1 FAILED 4/6; V2 PENDING_EXTERNAL_CAPTURE_AND_REVIEW with **0/4 approved external R102 samples**. Stage 6G bounded 3/6/12 concurrent-reader tests GREEN, 6H reader negative 6/6 GREEN, 6D provenance 26/26 GREEN, 6E atomic publisher 18/18 GREEN and 6F recovery and race GREEN. Thresholds R102 80%, R118 86%, R163 84%, external R102 0.75, privacy, Shadow/Disabled, cooldowns, baseline and journal integrity remain unchanged. The assistant changed **only this centralized ledger** in response to the owner PASS.
