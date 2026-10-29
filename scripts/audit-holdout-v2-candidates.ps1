@@ -83,9 +83,9 @@ foreach ($entry in $entries) {
         if ($actualFields.Count -ne $allowedRecordFields.Count -or
             @(Compare-Object -ReferenceObject ($allowedRecordFields | Sort-Object) -DifferenceObject ($actualFields | Sort-Object)).Count -gt 0 -or
             $record.isUdp -isnot [bool] -or $record.isTcp -isnot [bool] -or
-            $record.ipVersion -isnot [int] -or
-            $record.sourcePort -isnot [int] -or
-            $record.destinationPort -isnot [int]) {
+            ($record.ipVersion -isnot [int] -and $record.ipVersion -isnot [long]) -or
+            ($record.sourcePort -isnot [int] -and $record.sourcePort -isnot [long]) -or
+            ($record.destinationPort -isnot [int] -and $record.destinationPort -isnot [long])) {
             throw "Source audit: DNS packet record has missing, extra or invalid typed fields for $name."
         }
     }
@@ -102,10 +102,12 @@ foreach ($entry in $entries) {
             throw "Source audit: benign sample has unexpected positive expectations for $name."
         }
     }
-    if (@($sample.expectedNonMatches).Count -ne $(if ($entry.classification -eq 'Benign') {3} else {2}) -or
-        @($sample.expectedNonMatches | Sort-Object -Unique | Where-Object {
-            $_ -notin $(if ($entry.classification -eq 'Benign') {@('R102','R118','R163')} else {@('R118','R163')})
-        }).Count -ne 0) {
+    $requiredNonMatches=if ($entry.classification -eq 'Benign') {
+        @('R102','R118','R163')
+    } else { @('R118','R163') }
+    $actualNonMatches=@($sample.expectedNonMatches)
+    if ($actualNonMatches.Count -ne $requiredNonMatches.Count -or
+        @(Compare-Object -ReferenceObject ($requiredNonMatches | Sort-Object) -DifferenceObject ($actualNonMatches | Sort-Object)).Count -gt 0) {
         throw "Source audit: R102 expected negative controls changed for $name."
     }
     if ($entry.classification -eq 'Malicious') {
