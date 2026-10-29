@@ -526,6 +526,9 @@ $pairs=New-PrivateSyntheticPairs $slots
 # directory is ever targeted. The process race tests only safe generated names.
 $privateRoot=Join-Path $repository 'build-verify'
 Assert-Contract (Test-Path -LiteralPath $privateRoot -PathType Container) 'private-build-verify-root-missing'
+$privateParent=Get-Item -LiteralPath $privateRoot -Force
+Assert-Contract (-not (($privateParent.Attributes -band
+    [IO.FileAttributes]::ReparsePoint) -ne 0)) 'private-root-is-redirected'
 $prefix=if($OnlyReaderNegativeControl){'stage6h-negative-'}else{'stage6f-race-'}
 $owned=Join-Path $privateRoot ($prefix+[guid]::NewGuid().ToString('N'))
 Assert-Contract (-not (Test-Path -LiteralPath $owned)) 'test-scratch-collision'
