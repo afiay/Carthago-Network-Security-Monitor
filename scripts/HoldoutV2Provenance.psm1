@@ -181,9 +181,17 @@ function Confirm-HoldoutV2ProvenanceBatch {
         $fProp=Get-ProvenanceProp $candidate 'frameNumbers'
         $qProp=Get-ProvenanceProp $candidate 'questionIndices'
         $nProp=Get-ProvenanceProp $candidate 'selectedRecordCount'
+        # Type validation must precede ANY count comparison. A forged string
+        # "3" must produce a stable PROV_SCHEMA_TYPE rejection, not an
+        # incidental PowerShell coercion or runtime exception. This is only
+        # the scalar precheck; standalone array lengths remain checked by
+        # the schema validator after the cross-field cardinality check.
+        if($null -ne $nProp -and
+           -not (Test-IntegerValue $nProp.Value)) {
+            Fail-Provenance 'PROV_SCHEMA_TYPE'
+        }
         if($null -ne $fProp -and $null -ne $qProp -and $null -ne $nProp -and
-           $fProp.Value -is [array] -and $qProp.Value -is [array] -and
-           (Test-IntegerValue $nProp.Value)) {
+           $fProp.Value -is [array] -and $qProp.Value -is [array]) {
             if($fProp.Value.Count -ne $qProp.Value.Count -or
                $fProp.Value.Count -ne [int]$nProp.Value) {
                 Fail-Provenance 'PROV_SCHEMA_CARDINALITY'
