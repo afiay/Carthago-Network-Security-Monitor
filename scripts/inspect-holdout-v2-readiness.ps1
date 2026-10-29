@@ -33,8 +33,13 @@ try {
         $relative=[string]$item.file
         if (-not $old.ContainsKey($relative) -or
             [string]$item.gitBlobSha -ne $old[$relative] -or
-            $item.primaryRule -eq 'R102') {
+            $item.primaryRule -eq 'R102' -or
+            -not (Test-Path -LiteralPath $relative -PathType Leaf)) {
             throw 'V2 predecessor blob identity failed.'
+        }
+        $calculated=(& git hash-object "--path=$relative" -- "$relative" | Select-Object -Last 1).Trim()
+        if ($LASTEXITCODE -ne 0 -or $calculated -ne [string]$item.gitBlobSha) {
+            throw 'V2 predecessor file differs from its pinned v1 Git object.'
         }
     }
 
