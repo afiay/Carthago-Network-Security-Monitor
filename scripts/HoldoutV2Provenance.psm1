@@ -123,7 +123,7 @@ function Confirm-HoldoutV2ProvenanceBatch {
         [Parameter(Mandatory=$true)][AllowEmptyCollection()][object[]]$Candidates,
         [Parameter(Mandatory=$true)][string]$SchemaPath
     )
-    if($Candidates.Count -ne 4) { Fail-Provenance 'PROV_BATCH_SHAPE' }
+    if($Candidates.Count -ne 4) { Fail-Provenance 'PROV_BATCH_SHAPE:INPUT_COUNT' }
     $trustedSchema=Join-Path $PSScriptRoot '../docs/contracts/holdout-v2-private-provenance-v2.schema.json'
     $actualPath=[IO.Path]::GetFullPath($SchemaPath)
     $trustedPath=[IO.Path]::GetFullPath($trustedSchema)
@@ -153,10 +153,10 @@ function Confirm-HoldoutV2ProvenanceBatch {
     $manifest=Get-Content -LiteralPath $manifestFile -Encoding UTF8 -Raw | ConvertFrom-Json
     if($manifest.schemaVersion -ne 2 -or
        $manifest.approvalState -cne 'PENDING_EXTERNAL_CAPTURE_AND_REVIEW') {
-        Fail-Provenance 'PROV_BATCH_SHAPE'
+        Fail-Provenance 'PROV_BATCH_SHAPE:MANIFEST_STATE'
     }
     $slots=@($manifest.samples | Where-Object { $_.sourceKind -eq 'external-pcap-reviewed' })
-    if($slots.Count -ne 4) { Fail-Provenance 'PROV_BATCH_SHAPE' }
+    if($slots.Count -ne 4) { Fail-Provenance 'PROV_BATCH_SHAPE:MANIFEST_SLOTS' }
     $seenSample=[Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
     $seenQuestion=[Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
     $maliciousAddresses=[Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
@@ -190,7 +190,7 @@ function Confirm-HoldoutV2ProvenanceBatch {
         })
         if($slot.Count -ne 1 -or
            [string]$slot[0].classification -cne [string]$candidate.classification) {
-            Fail-Provenance 'PROV_BATCH_SHAPE'
+            Fail-Provenance 'PROV_BATCH_SHAPE:SLOT_MAPPING'
         }
         $frames=@($candidate.frameNumbers)
         $ordinals=@($candidate.questionIndices)
@@ -222,7 +222,7 @@ function Confirm-HoldoutV2ProvenanceBatch {
     }
     if(@($Candidates | Where-Object {$_.classification -ceq 'Benign'}).Count -ne 2 -or
        @($Candidates | Where-Object {$_.classification -ceq 'Malicious'}).Count -ne 2) {
-        Fail-Provenance 'PROV_BATCH_SHAPE'
+        Fail-Provenance 'PROV_BATCH_SHAPE:CLASS_COUNTS'
     }
     return [pscustomobject][ordered]@{
         CandidateCount=4
