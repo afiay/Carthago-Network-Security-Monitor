@@ -109,6 +109,14 @@ function Assert-FinalBatch([string]$Root,[string]$Name,[object[]]$Pairs) {
             [string]$sample.classification -ceq [string]$p.classification) 'cross-file-mismatch'
         Assert-Contract ([int]$p.schemaVersion -eq 2 -and
             [string]$p.reviewState -ceq 'PENDING_EXTERNAL_CAPTURE_AND_REVIEW') 'published-as-approved'
+        # Compare the serialized synthetic fixture content, not just names.
+        # Publisher must neither silently normalize, omit nor invent fields.
+        $actualSample=ConvertTo-Json -InputObject $sample -Depth 24 -Compress
+        $actualProvenance=ConvertTo-Json -InputObject $p -Depth 24 -Compress
+        $expectedSample=ConvertTo-Json -InputObject $pair.Sample -Depth 24 -Compress
+        $expectedProvenance=ConvertTo-Json -InputObject $pair.Provenance -Depth 24 -Compress
+        Assert-Contract ($actualSample -ceq $expectedSample) 'sample-data-changed-on-publication'
+        Assert-Contract ($actualProvenance -ceq $expectedProvenance) 'provenance-data-changed-on-publication'
     }
 }
 function Get-Hashes([string]$Root,[string]$Name) {
@@ -248,11 +256,26 @@ try {
     }
     $incomplete=[object[]]@($pairs[0],$pairs[1],$pairs[2])
     Expect-Failure $incomplete $schema $ownedRoot 'incomplete-batch' '' 'PUBLISH_INVALID_BATCH' $false
+    # A full four-slot array containing duplicated IDs or a legacy
+    # provenance version must fail before writing any individual pair.
+    $duplicate=ConvertFrom-Json -InputObject (ConvertTo-Json -InputObject $pairs -Depth 24)
+    $duplicate[3].Provenance.sample=$duplicate[2].Provenance.sample
+    $duplicate[3].Sample.name=$duplicate[2].Sample.name
+    Expect-Failure $duplicate $schema $ownedRoot 'duplicate-sample' '' 'PUBLISH_INVALID_BATCH' $false
+    $wrongVersion=ConvertFrom-Json -InputObject (ConvertTo-Json -InputObject $pairs -Depth 24)
+    $wrongVersion[1].Provenance.schemaVersion=1
+    Expect-Failure $wrongVersion $schema $ownedRoot 'legacy-schema' '' 'PUBLISH_INVALID_BATCH' $false
+
+    # Neither a successful commit nor any fault may create arbitrary
+    # top-level files outside our known control, uncertain-commit, sentinel.
+    $top=@(Get-ChildItem -LiteralPath $ownedRoot -Force)
+    Assert-Contract ($top.Count -eq 3 -and
+        @($top | Where-Object { $_.Name -notin @('sentinel.keep','control-complete','post-commit-uncertain') }).Count -eq 0) 'unexpected-artifacts-in-owned-root'
     Assert-Contract ((Get-FileHash -LiteralPath $sentinel -Algorithm SHA256).Hash -ceq
         $sentinelHash) 'unrelated-sentinel-modified'
-    Write-Host ('Stage 6E contract defined: 1 pending-only control, '+
+    Write-Host ('Stage 6E contract: 1 pending-only control, '+
         $precommit.Count+' precommit rollbacks, 1 uncertain commit, '+
-        '1 existing target, 4 unsafe paths and 1 invalid batch. No approval.')
+        '1 existing target, 4 pure unsafe-name cases and 3 invalid batches. No approval.')
 } finally {
     if(Test-Path -LiteralPath $ownedRoot) {
         $item=Get-Item -LiteralPath $ownedRoot -Force
