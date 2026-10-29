@@ -250,10 +250,19 @@ function Invoke-ContentionRound([string]$OwnedRoot,[string]$Name,
     $readerStop=Join-Path $OwnedRoot ($Name+'.reader-stop')
     $jobs=@()
     $readerJob=$null
-    # Serialize the four synthetic candidate pairs to ONE argument. Passing
-    # nested arrays through Start-Job -ArgumentList may flatten them under
-    # Windows PowerShell 5.1 and produce false publication failures.
-    $pairsJson=ConvertTo-Json -InputObject $Pairs -Depth 24 -Compress
+    # Serialize an OBJECT envelope with one Pairs property, rather than
+    # serializing a bare top-level JSON array. Windows PowerShell 5.1 can
+    # pipeline-enumerate top-level arrays from ConvertFrom-Json, so wrapping
+    # the four candidates in a single PSCustomObject fixes their shape
+    # across the Start-Job boundary without weakening publisher validation.
+    Assert-Contract ($Pairs.Count -eq 4) 'writer-fixture-parent-count'
+    $payload=[pscustomobject]@{ Pairs=[object[]]$Pairs }
+    $pairsJson=ConvertTo-Json -InputObject $payload -Depth 24 -Compress
+    # Pure in-process round-trip before launching child workers. This must
+    # not log or expose synthetic candidate identities.
+    $check=ConvertFrom-Json -InputObject $pairsJson
+    Assert-Contract ($null -ne $check.PSObject.Properties['Pairs'] -and
+        $check.Pairs -is [array] -and $check.Pairs.Count -eq 4) 'writer-fixture-parent-roundtrip'
     try {
         if($WithReader) {
             # Third process reads the FINAL safe name only. It never scans
@@ -288,11 +297,19 @@ function Invoke-ContentionRound([string]$OwnedRoot,[string]$Name,
                         }
                         Start-Sleep -Milliseconds 20
                     }
-                    # Preserve the original four nested sample/provenance
-                    # objects without Start-Job positional array coercion.
-                    $candidatePairs=[object[]]@(ConvertFrom-Json -InputObject ([string]$CandidatePairsJson))
-                    if($candidatePairs.Count -ne 4 -or
-                       @($candidatePairs | Where-Object {
+                    # A single JSON object envelope is never enumerated as
+                    # multiple pipeline objects by ConvertFrom-Json. Extract
+                    # the typed four-pair array from its fixed Pairs member.
+                    $envelope=ConvertFrom-Json -InputObject ([string]$CandidatePairsJson)
+                    if($null -eq $envelope -or
+                       $null -eq $envelope.PSObject.Properties['Pairs'] -or
+                       $envelope.Pairs -isnot [array] -or
+                       $envelope.Pairs.Count -ne 4) {
+                        return [pscustomobject]@{Code='BAD_JOB_FIXTURE';ProcessId=$PID}
+                    }
+                    [object[]]$candidatePairs=$envelope.Pairs
+                    if(@($candidatePairs | Where-Object {
+                           $null -eq $_ -or
                            $null -eq $_.PSObject.Properties['Sample'] -or
                            $null -eq $_.PSObject.Properties['Provenance']
                        }).Count -ne 0) {
