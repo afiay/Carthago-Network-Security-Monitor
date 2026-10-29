@@ -12,7 +12,7 @@ Stage 6F introduced three two-writer race contracts that verify the final privat
 
 Stage 6G makes the third-reader observer an explicit **opt-in extension** of the existing two-writer synthetic harness. It reuses the same manifest-derived four candidate pairs, schema, safe writer interface, unique scratch root, workers, content assertions and cleanup. Stage 6F's three-round behavior is unchanged when the new switch is omitted. The owner subsequently authorized and ran the bounded 3-, 6- and 12-round Windows contracts. Their synthetic results are recorded in `docs/DEVELOPMENT_VALIDATION_LEDGER.md`; no real source was involved.
 
-**Correctness property under test:** Every successful reader snapshot of a final batch name must be either:
+**Verified sampled correctness property:** Every successful reader snapshot of a final batch name must be either:
 
 - **ABSENT** — the final directory has not become visible, or
 - **COMPLETE_PENDING_REVIEW** — the final directory contains **exactly eight valid sample/provenance JSON files** with the four expected manifest names, matching classifications, provenance schema version 2, and PENDING_EXTERNAL_CAPTURE_AND_REVIEW state.
@@ -131,7 +131,7 @@ No diagnostic may print packet names, reversible DNS data, captured IPs, client/
 
 The deterministic shared-reader negative control was separately implemented and **verified 6/6** in Stage 6H before Stage 6G was closed GREEN. It detected deliberately incomplete/malformed **synthetic final directories** in its owned scratch folder. Never create a deliberately unsafe path or write into a real candidate directory to generate that negative control.
 
-The parent must refuse any unexpected top-level scratch entries. Even when all tests eventually pass, a reader might miss very brief partial states because polling is sampled. A future true no-replace commit primitive audit, continuous watcher or deterministic fault hook must complement this regression.
+The parent must refuse unexpected top-level scratch entries. Although the bounded CARTHAGE synthetic 3/6/12-round matrix has now passed, a reader can still miss very brief partial states between sampled polls. A future true no-replace commit primitive audit, continuous watcher or deterministic fault hook must complement this regression.
 
 ## 7. Dependency and authorization ordering
 
