@@ -1,6 +1,6 @@
 # Stage 6F — V2 concurrent publisher and crash-recovery decision contracts
 
-**Status: PARKED / TEST SOURCE AUTHORED / ZERO EXECUTIONS**  
+**Current status (2026-10-30): SYNTHETIC GREEN — Stage 6F non-destructive recovery planner 15/15 at `1ab3290`; separate two-writer contention 3/3 at `adf421f`. Stage 6G reader 3/6/12 and Stage 6H reader-sensitivity 6/6 were also separately verified. Power-loss durability and field evidence remain unverified.**  
 Date: 2026-10-29  
 Branch: feature/carthago-reliability-hardening  
 Predecessors: Stage 6D (strict private provenance, pure validator); Stage 6E (single-writer transactional publication).
@@ -14,7 +14,7 @@ Stage 6F adds two **separate and opt-in** regression contracts:
 - scripts/verify-v2-recovery-planner-contract.ps1 — 15 synthetic, path-free, in-memory recovery classifications. The eventual planner must never delete, rename, approve, freeze, overwrite or even accept a target filesystem path. Human review remains mandatory.
 - scripts/verify-v2-two-writer-race-contract.ps1 — 3 planned synchronized race rounds using two separate Windows PowerShell Start-Job processes per round (6 worker-process executions when testing is eventually authorized). The publisher must return exactly one safe winner and one target-exists failure per fresh directory name. Both workers use only synthetic candidates under a unique private scratch root.
 
-These are preparation for future code and tests; the corresponding module scripts/HoldoutV2CandidatePublisher.psm1, private recovery planner, and public publisher wrapper do **not yet exist**. No result is observed and no production code was changed.
+The contracts were originally prepared before the publisher existed. `scripts/HoldoutV2CandidatePublisher.psm1`, its private recovery planner and exported publisher wrapper are now implemented; their bounded synthetic recovery/contended-publication behavior has been verified on CARTHAGE. The original capture/importer/auditor remain unchanged.
 
 The work does **not** claim that source labels are correct, captures are authentic, licensed redistribution is permitted, clients are independent, packet content is safe, the original frozen V1 is passing, or that Holdout V2 may be frozen.
 
@@ -24,7 +24,7 @@ Read-only source inspection of the feature branch confirms:
 
 - scripts/import-holdout-v2-r102.ps1 currently writes a sample and a provenance sidecar separately; the existing importer produces provenance schemaVersion 1 and retains bounded selected frames. Its independent writes present a potential partial-pair risk if interrupted.
 - scripts/audit-holdout-v2-candidates.ps1 consumes the four manifest-named candidate pairs and original PCAP frames but lacks strict versioned provenance and authenticated logical-client independence.
-- docs/contracts/holdout-v2-private-provenance-v2.schema.json proposes exactly 30 required private metadata properties and pending review; it is not an implemented validator.
+- docs/contracts/holdout-v2-private-provenance-v2.schema.json specifies 30 required private metadata properties; `scripts/HoldoutV2Provenance.psm1` now implements runtime validation, owner-verified 26/26 under Stage 6D.
 - scripts/verify-v2-atomic-publication-contract.ps1 contains the prior Stage 6E sequential fault matrix. Stage 6F does not rewrite it or alter its future API surface.
 - docs/holdout-evaluation-v2-manifest.json remains PENDING_EXTERNAL_CAPTURE_AND_REVIEW, with 8 pinned V1-derived non-R102 references and four still unapproved R102 slots.
 - The centralized GitHub workflow is manually gated. Stage 6F creates no new workflow, schedule, trigger, artifact, runner job or public fault API.
@@ -72,7 +72,7 @@ No raw path, capture filename, client name, source IP, session ID, QNAME, licens
 
 The contract creates each independent case from a path-free reference, invokes the **private module function through module scope**, asserts the exact expected constant reason and disposition, confirms only the four result fields are exposed, checks that no input was mutated, and rejects any result that appears to authorize deletion, approval, promotion or freeze.
 
-The module is missing by design; a future authorized initial run will encounter recovery-module-not-implemented-red or recovery-planner-not-implemented-red until the minimal implementation exists. That is an **unimplemented API observation**, not a valid security RED until fixture/output assumptions have been independently verified.
+The initial missing-module assertions belonged to historical RED-first preparation. The recovery planner is now present; its fifteen path-free cases were owner-verified **15/15** at `1ab3290`. No result authorizes automatic deletion, promotion or source approval.
 
 ### Recovery policy that must *not* be implemented automatically
 
@@ -80,7 +80,7 @@ Never classify a pending directory as safe for deletion based solely on age, a f
 
 ## 4. Stage 6F-B: separate-process same-name race contract
 
-Future public production API assumed by the parked harness:
+Implemented exported private-batch publisher API exercised by the synthetic harness:
 
 ~~~
 Publish-HoldoutV2CandidateBatch -CandidatePairs <four private synthetic pairs>
@@ -128,17 +128,17 @@ If the parent cannot observe two ready markers, it must fail as **harness/enviro
 - PowerShell Start-Job on the planned Windows host should be validated as separate worker processes with distinct process IDs. Start-Job serialization of the four-candidate array, local barrier handling, module import, timing and sanitized output are **unverified** at present.
 - No machine-wide service changes, firewall adjustments, listener, private capture, VPN, Internet transaction, OS reboot, automatic branch cleanup, CI trigger or overnight execution are part of Stage 6F.
 
-## 6. Test-first ordering and acceptance criteria
+## 6. Completed synthetic gates and remaining acceptance boundaries
 
 1. Owner must explicitly say "now it's test time" before any tests. An AuthorizedTestTime parameter is a safety gate, not permission by itself.
 2. Confirm Windows CARTHAGE, current Git SHA, interpreter version, intended private volume, no production data in the scratch root, and the module/API availability. Verify the synthetic fixture generator and Stage 6D schema assumptions.
-3. Observe Stage 6D pure provenance validator RED/GREEN first; then Stage 6E single-writer publisher RED/GREEN, so each Stage 6F regression has a known-good baseline.
-4. Run the 15 Stage 6F-A in-memory decision scenarios and verify stable safe results without disk I/O; fix any test-harness failures before claiming a meaningful implementation regression.
-5. Run the three Stage 6F-B races only under renewed explicit authorization, with a safe output root and no real capture. Require one winner/one loser per round and complete unchanged content. Record failures as exact sanitized categories.
-6. Follow with owner-approved third-reader visibility, concurrent stress, ACL injection and crash/reboot recovery tests as separate later gates. Do **not** assume they passed from this test preparation.
+3. Stage 6D provenance 26/26 and Stage 6E single-writer 18/18 were separately verified before Stage 6F; retain this gate dependency for future schema changes.
+4. **Completed 15/15:** the Stage 6F-A path-free recovery decision scenarios returned the expected review-only results; fix any test-harness failures before claiming a meaningful implementation regression.
+5. **Completed 3/3:** the Stage 6F-B two-writer contention rounds ran under explicit owner authorization, with synthetic private scratch and no real capture. Require one winner/one loser per round and complete unchanged content. Record failures as exact sanitized categories.
+6. **Completed separately:** Stage 6H six reader-negative controls and Stage 6G reader visibility at 3/6/12 rounds. **Still open:** ACL fault injection, crash/reboot recovery and power-loss durability; they do not follow from sampled reader polls.
 7. Keep human-reviewed capture rights, original source-byte fidelity, client independence and malicious classification separate from publishing. No V2 candidate is admitted or frozen from these tests.
 
-### Parked commands (not permission)
+### Owner-gated regression commands (previously executed; do not rerun automatically)
 
 ~~~powershell
 powershell.exe -NoProfile -File .\scripts\verify-v2-recovery-planner-contract.ps1 -AuthorizedTestTime
@@ -149,7 +149,7 @@ Never dispatch these commands automatically. The single centralized GitHub Actio
 
 ## 7. Documentation and evidence standard
 
-When tests are eventually approved, append to docs/DEVELOPMENT_VALIDATION_LEDGER.md: exact commit SHA, host, PowerShell and OS versions, intended private root, fixture/schema hashes, case IDs and timestamps, expected vs observed **sanitized** code, process-count and PID uniqueness, file-count/hash summary, pending-orphan count, non-sensitive warnings, and next gate.
+The completed tests are documented in docs/DEVELOPMENT_VALIDATION_LEDGER.md. For any further authorized work, append: exact commit SHA, host, PowerShell and OS versions, intended private root, fixture/schema hashes, case IDs and timestamps, expected vs observed **sanitized** code, process-count and PID uniqueness, file-count/hash summary, pending-orphan count, non-sensitive warnings, and next gate.
 
 Do **not** publish original PCAPs, individual DNS QNAMEs, reversible labels, client addresses, review notes, source/license URLs, or raw worker logs. Avoid declaring RED/GREEN for a case that merely failed because a prerequisite module, serializer or Windows feature is unavailable.
 
@@ -157,15 +157,15 @@ Do **not** publish original PCAPs, individual DNS QNAMEs, reversible labels, cli
 
 Frozen V1 R102 evidence remains historically FAILED 4/6. V2 remains PENDING_EXTERNAL_CAPTURE_AND_REVIEW with **0/4** approved R102 candidates. The R102 confidence requirement remains 80%, R118 86%, R163 84%, candidate confidence floor 0.75; Shadow/Disabled, baseline, cooldown, journal integrity, privacy and governance controls remain untouched. No merge, branch deletion, production code rewrite, dataset replacement or network activity was undertaken.
 
-**Stage 6F outcome: source contracts prepared, with ZERO executions and ZERO validated filesystem or recovery claims.**
+**Current Stage 6F outcome: synthetic Windows recovery GREEN 15/15 and two-writer contention GREEN 3/3.** No crash durability, real-source approval, or broad filesystem guarantee is asserted.
 
 ## References
 
 - docs/STAGE6E_ATOMIC_V2_PUBLICATION_FAULT_CONTRACT_20261029.md — sequential fault injection, postcommit uncertainty, old branch state.
 - docs/STAGE6D_PRIVATE_PROVENANCE_SCHEMA_AND_ATOMICITY_20261029.md — strict private provenance and validation boundary.
-- scripts/verify-v2-atomic-publication-contract.ps1 — parked sequential publisher contract.
-- scripts/verify-v2-recovery-planner-contract.ps1 — parked pure recovery planner contract.
-- scripts/verify-v2-two-writer-race-contract.ps1 — parked separate-process race harness.
+- scripts/verify-v2-atomic-publication-contract.ps1 — verified synthetic sequential publisher contract (18/18).
+- scripts/verify-v2-recovery-planner-contract.ps1 — verified synthetic recovery planner contract (15/15).
+- scripts/verify-v2-two-writer-race-contract.ps1 — verified synthetic writer contention (3/3) and later reader visibility (3/6/12).
 - Microsoft PowerShell Start-Job documentation: https://learn.microsoft.com/powershell/module/microsoft.powershell.core/start-job
 - Windows MoveFileExW documentation: https://learn.microsoft.com/windows/win32/api/winbase/nf-winbase-movefileexw
 
@@ -188,15 +188,15 @@ The race worker also stages its four synthetic candidates as **one positional ar
 | dfc75c1 | docs/STAGE6E_ATOMIC_V2_PUBLICATION_FAULT_CONTRACT_20261029.md | Stage 6E dependency and handoff reference |
 | bf1045e | scripts/verify-v2-two-writer-race-contract.ps1 | Block recursive scratch cleanup through nested reparse points |
 
-**Actual validation:** none. No race was initiated, no recovery plan called, and no cleanup procedure executed in this authoring step.
+**Historical authoring checkpoint:** no test ran during the source-only commit. **Subsequent owner verification:** recovery 15/15 at `1ab3290`, writer contention 3/3 at `adf421f`; source-level precautions are now accompanied by bounded runtime evidence.
 
 
-## 10. Stage 6G opt-in concurrent reader handoff (authored 2026-10-29; not run)
+## 10. Stage 6G concurrent reader handoff — subsequently verified
 
 The third-reader visibility gap identified in Stage 6F is now addressed **at the regression-source level only** by extending the **same** scripts/verify-v2-two-writer-race-contract.ps1. Commits bb8a458, 2dccb79 and 6af2424 added an opt-in IncludeReaderVisibility switch, single-string JSON binding for the four expected synthetic names, separate Partial versus read/parse error counters, and a bounded ReaderStressRounds range of 3–12 (six default when opted in). The existing Stage 6F invocation **without** IncludeReaderVisibility still prepares three rounds with exactly two writer jobs each; no new script, workflow, public production hook or sample corpus was created.
 
-When owner testing is explicitly authorized, the opt-in third reader job will wait behind the same local GO barrier as the two writer processes and repeatedly poll only the safe final directory. A legitimate observation is either **absent** or **exactly eight complete, readable, paired JSON files** with schemaVersion=2 and PENDING_EXTERNAL_CAPTURE_AND_REVIEW. The reader returns metadata-only Polls, Absent, Complete, Partial and IoErrors counters; the parent requires at least one absent and one complete observation, zero partial/unreadable snapshots and an independent reader process ID. All jobs remain bounded and scratch-owned.
+In the owner-authorized bounded synthetic runs, the opt-in third reader job waited behind the same local GO barrier as the two writer processes and repeatedly poll only the safe final directory. A legitimate observation is either **absent** or **exactly eight complete, readable, paired JSON files** with schemaVersion=2 and PENDING_EXTERNAL_CAPTURE_AND_REVIEW. The reader returns metadata-only Polls, Absent, Complete, Partial and IoErrors counters; the parent requires at least one absent and one complete observation, zero partial/unreadable snapshots and an independent reader process ID. All jobs remain bounded and scratch-owned.
 
-The full threat model, invocation examples, exact diagnostics, safety boundaries, acceptance sequence and preserved invariants are in **docs/STAGE6G_CONCURRENT_READER_VISIBILITY_20261029.md** (commit 815a064). This remains a **sampled visibility regression**, not proof that partial visibility never happened between polls. Before calling Stage 6G GREEN, implement and verify a separate safe synthetic negative control that deliberately exposes an incomplete final directory and demonstrates that the reader flags it, without writing outside its own ignored scratch directory. Continuous reader visibility, actual Windows no-replace API semantics, NTFS crash durability, ACL errors, and real source/license/label review remain unverified and separately gated.
+The full threat model, invocation examples, exact diagnostics, safety boundaries, acceptance sequence and preserved invariants are in **docs/STAGE6G_CONCURRENT_READER_VISIBILITY_20261029.md** (commit 815a064). This remains a **sampled visibility regression**, not proof that partial visibility never happened between polls. Stage 6H subsequently supplied the exact shared-reader synthetic negative control, owner-verified 6/6 at `8882f1c`, before Stage 6G was closed GREEN on bounded 3/6/12 rounds. These checks never wrote outside the owned synthetic scratch directory. Continuous reader visibility, actual Windows no-replace API semantics, NTFS crash durability, ACL errors, and real source/license/label review remain unverified and separately gated.
 
-**No tests, worker jobs, PowerShell commands, packet captures, production module invocations or CI workflow dispatch were executed.** This paragraph documents only code authored and committed. Frozen V1 and pending V2 approval state remain untouched.
+**Historical authoring record:** no tests were executed during this original documentation step. **Current validation:** owner-observed Stage 6F recovery and writer contention, Stage 6G bounded reader visibility, and Stage 6H reader sensitivity GREEN as summarized above. No live capture or CI was dispatched as part of the documentation refresh. Frozen V1 and pending V2 approval state remain untouched.
