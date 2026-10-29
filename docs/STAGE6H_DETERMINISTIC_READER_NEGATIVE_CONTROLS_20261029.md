@@ -78,7 +78,7 @@ A timestamp or elapsed interval alone does not count as proof that the observer 
 
 ### Execution and resource limits
 
-- **At most one reader job at a time** in Stage 6H. Six sequential negative probes are prepared; no worker race or publisher execution is necessary.
+- **At most one reader job at a time** in GA 6H. All six sequential negative probes were owner-verified; no publisher invocation or competing writer job was required.
 - Reader readiness/fault acknowledgments use 12-second timeouts; reader join uses 15 seconds; worker own polling deadline remains 75 seconds as a hard fallback.
 - The existing Stage 6F mode still prepares three 2-writer races. Stage 6G requires explicit IncludeReaderVisibility and can prepare between 3 and 12 three-process rounds. Stage 6H does not silently increase their scope.
 - Windows PowerShell 5.1 parsing, Start-Job serialization, file moves, job lifecycle, marker timing and actual reader sensitivity are **unverified until authorized**.
@@ -111,10 +111,10 @@ Neither the reader nor the test parent may print raw file contents, source IPs, 
 1. **Completed:** owner explicitly authorized the synthetic Windows reader-sensitivity test. Result 6/6 at `8882f1c`; this documentation cleanup performs no test execution.
 2. **Preflight:** the owner verified the Windows local test environment before the recorded run. For a future regression, independently reconfirm exact commit, PowerShell interpreter, manifest and synthetic-only scratch path. No real external captures in the test root.
 3. **Validated:** the reader-negative mode identified all six H01–H06 deliberately invalid synthetic final states. Distinguish genuine observer failure from PowerShell serializer or fixture errors.
-4. **Phase 6D validated separately:** the implemented private provenance validator passed 2 pending-only positive and 24 negative cases (26/26). Keep old schemaVersion=1 importer compatibility.
-5. **Phase 6E validated separately:** the implemented private publisher passed its 18/18 synthetic rollback and fault checks.
-6. **Phase 6F validated separately:** writer contention 3/3 and the non-destructive path-free recovery planner 15/15 passed on Windows. No automatic orphan deletion.
-7. **Phase 6G validated separately:** after this observer-sensitivity gate, bounded sampled reader visibility passed the 3/6/12-round matrix. Passing sampled polls does not prove every intermediate state was invisible.
+4. **GA 6D validated separately:** the implemented private provenance validator passed 2 pending-only positive and 24 negative cases (26/26). Keep old schemaVersion=1 importer compatibility.
+5. **GA 6E validated separately:** the implemented private publisher passed its 18/18 synthetic rollback and fault checks.
+6. **GA 6F validated separately:** writer contention 3/3 and the non-destructive path-free recovery planner 15/15 passed on Windows. No automatic orphan deletion.
+7. **GA 6G validated separately:** after this observer-sensitivity gate, bounded sampled reader visibility passed the 3/6/12-round matrix. Passing sampled polls does not prove every intermediate state was invisible.
 8. **External evidence and quality:** separately obtain original PCAP byte fidelity, client/source independence, human-reviewed license/classification and a decision to admit the four external R102 candidates. Run R102 precision, recall and F1 only on qualified labeled evidence. No auto-freeze.
 
 ## 7. Static audit and preservation checkpoint
@@ -124,7 +124,7 @@ Read-only GitHub source inspection after commit 6c5ec83 confirmed:
 - One shared reader job scriptblock definition and two callers (Stage 6G race and Stage 6H negative probe), not duplicate observer implementations.
 - The observer can optionally emit both ABSENT and PARTIAL/IOERROR acknowledgment markers.
 - Exactly six H01–H06 synthetic negative cases, with no publisher API call inside Invoke-ReaderNegativeCase.
-- Separate OnlyReaderNegativeControl mode bypasses the missing publisher-module preflight while keeping the AuthorizedTestTime guard.
+- Separate OnlyReaderNegativeControl mode bypasses the publisher-module prerequisite, even though the module has since been implemented; the AuthorizedTestTime guard remains intact.
 - Nested reparse-point cleanup checks remain present; the earlier duplicate race-tail block was removed.
 - Existing Stage 6F and Stage 6G modes retain their original three rounds and opt-in bounded 3–12 reader stress.
 
