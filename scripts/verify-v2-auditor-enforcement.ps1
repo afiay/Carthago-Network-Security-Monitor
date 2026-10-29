@@ -146,7 +146,7 @@ function BuildFixture([string]$scenario) {
         if($scenario -eq 'A11-review-type' -and $slot -eq 2){$p.analystReviewedLabel='yes'}
         if($scenario -eq 'A11-license' -and $slot -eq 2){$p.sourceLicense='Unlicensed'}
         if($scenario -eq 'A12' -and $slot -eq 2){$sample.records[0]['unreviewedPrivate']='forbidden'}
-        if($scenario -eq 'A12-provenance' -and $slot -eq 2){$p.unreviewedImportedDebug='forbidden'}
+        if($scenario -eq 'A12-provenance' -and $slot -eq 2){$p['unreviewedImportedDebug']='forbidden'}
         if($scenario -eq 'A14' -and $slot -eq 2){$sample.expectedMatches=@('R118')}
         SaveJson (Join-Path $candidateDir ($name+'.json')) $sample
         SaveJson (Join-Path $candidateDir ($name+'.provenance.json')) $p
