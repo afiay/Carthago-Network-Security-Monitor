@@ -133,6 +133,23 @@ function Get-Hashes([string]$Root,[string]$Name) {
             }
     )
 }
+function Assert-OwnedScratchNoReparse([string]$Folder) {
+    # Fail closed on a nested symlink/junction before recursive test cleanup.
+    # Inspect one level at a time; never descend into a reparse point.
+    $stack=[Collections.Generic.Stack[string]]::new()
+    $stack.Push($Folder)
+    while($stack.Count -gt 0) {
+        $current=$stack.Pop()
+        $item=Get-Item -LiteralPath $current -Force -ErrorAction Stop
+        Assert-Contract (-not (($item.Attributes -band
+            [IO.FileAttributes]::ReparsePoint) -ne 0)) 'owned-scratch-reparse-point'
+        foreach($child in @(Get-ChildItem -LiteralPath $current -Force -ErrorAction Stop)) {
+            Assert-Contract (-not (($child.Attributes -band
+                [IO.FileAttributes]::ReparsePoint) -ne 0)) 'nested-scratch-reparse-point'
+            if($child.PSIsContainer) { $stack.Push($child.FullName) }
+        }
+    }
+}
 function Assert-NoPending([string]$Root) {
     $parts=@(Get-ChildItem -LiteralPath $Root -Force |
         Where-Object { $_.Name -like '.pending-*' })
@@ -196,6 +213,10 @@ Assert-Contract $nameValidatorExists 'atomic-private-name-validator-not-implemen
 
 # Only a uniquely owned folder under build-verify may be removed by this test.
 $privateBase=Join-Path $repository 'build-verify'
+Assert-Contract (Test-Path -LiteralPath $privateBase -PathType Container) 'scratch-parent-missing'
+$baseItem=Get-Item -LiteralPath $privateBase -Force -ErrorAction Stop
+Assert-Contract (-not (($baseItem.Attributes -band
+    [IO.FileAttributes]::ReparsePoint) -ne 0)) 'scratch-parent-redirected'
 $ownedRoot=Join-Path $privateBase ('stage6e-atomicity-'+[guid]::NewGuid().ToString('N'))
 Assert-Contract (-not (Test-Path -LiteralPath $ownedRoot)) 'scratch-root-collision'
 try {
@@ -287,8 +308,7 @@ try {
         '1 existing target, 4 pure unsafe-name cases and 3 invalid batches. No approval.')
 } finally {
     if(Test-Path -LiteralPath $ownedRoot) {
-        $item=Get-Item -LiteralPath $ownedRoot -Force
-        Assert-Contract (-not (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0)) 'owned-root-reparse-point'
+        Assert-OwnedScratchNoReparse $ownedRoot
         Remove-Item -LiteralPath $ownedRoot -Recurse -Force -ErrorAction Stop
     }
 }
