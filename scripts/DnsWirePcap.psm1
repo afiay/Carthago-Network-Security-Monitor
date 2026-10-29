@@ -198,7 +198,8 @@ function Read-DnsWireQuestion {
        $destinationPort -ne 53) {
         Fail-Wire 'DNS_WIRE_PORT_INVALID'
     }
-    $hash=(Get-FileHash -LiteralPath $capture -Algorithm SHA256).Hash.ToLowerInvariant()
+    try { $hash=(Get-FileHash -LiteralPath $capture -Algorithm SHA256 -ErrorAction Stop).Hash.ToLowerInvariant() }
+    catch { Fail-Wire 'DNS_WIRE_CAPTURE_HASH_UNAVAILABLE' }
     $q=$questions[$QuestionIndex]
     return [pscustomobject][ordered]@{
         CaptureSha256=$hash
@@ -262,7 +263,8 @@ function Confirm-DnsWireCandidateBinding {
     if(-not (Test-Path -LiteralPath $CapturePath -PathType Leaf)) {
         Fail-Wire 'DNS_WIRE_ORIGINAL_CAPTURE_MISSING'
     }
-    $hash=(Get-FileHash -LiteralPath $CapturePath -Algorithm SHA256).Hash.ToLowerInvariant()
+    try { $hash=(Get-FileHash -LiteralPath $CapturePath -Algorithm SHA256 -ErrorAction Stop).Hash.ToLowerInvariant() }
+    catch { Fail-Wire 'DNS_WIRE_CAPTURE_HASH_UNAVAILABLE' }
     if($hash -cne ([string]$Provenance.captureSha256).ToLowerInvariant()) {
         Fail-Wire 'DNS_WIRE_CAPTURE_HASH_MISMATCH'
     }
