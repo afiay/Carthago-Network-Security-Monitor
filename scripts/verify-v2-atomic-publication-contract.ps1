@@ -179,6 +179,10 @@ $coreExists=& $publisherModule {
     [bool](Get-Command Invoke-HoldoutV2AtomicPublishCore -ErrorAction SilentlyContinue)
 }
 Assert-Contract $coreExists 'atomic-core-not-implemented-red'
+$nameValidatorExists=& $publisherModule {
+    [bool](Get-Command Assert-HoldoutV2BatchName -ErrorAction SilentlyContinue)
+}
+Assert-Contract $nameValidatorExists 'atomic-private-name-validator-not-implemented-red'
 
 # Only a uniquely owned folder under build-verify may be removed by this test.
 $privateBase=Join-Path $repository 'build-verify'
@@ -225,11 +229,16 @@ try {
     Assert-Contract ((ConvertTo-Json $baselineHashes -Compress) -ceq
         (ConvertTo-Json $afterHashes -Compress)) 'existing-batch-overwritten'
 
-    # Unsafe batch names must be rejected before creating any pending data.
+    # Check dangerous names in a PURE, module-private lexical validator.
+    # NEVER pass an unsafe path to the actual publisher: if the publisher
+    # were vulnerable, a traversal test could create files outside ownedRoot.
     foreach($bad in @('../escape','nested/child','CON','...')) {
         $caught=$false
         try {
-            $unexpected=@(Invoke-Core $pairs $schema $ownedRoot $bad '' 6>&1)
+            $validated=& $publisherModule {
+                param($Name)
+                Assert-HoldoutV2BatchName -Name $Name
+            } $bad
         } catch {
             $caught=$true
             Assert-PrivateError ([string]$_.Exception.Message) 'PUBLISH_UNSAFE_BATCH_NAME' $pairs
