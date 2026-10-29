@@ -105,3 +105,82 @@ The child auditor's stdout/stderr is redirected to a temporary private log and n
 - The harness uses a real child process for the actual auditor, but that does *not* mean the missing binary provenance/importer behavior is implemented.
 
 Execution status: **PARKED — NOT RUN**. No RED/GREEN, precision, recall, F1, source license, classification approval or freeze claim.
+
+
+## Stage 6B — reason-specific enforcement and privacy hardening (2026-10-29)
+
+**Code commits:** \`d4cbdca\` (expanded scenarios and strong assertions) and \`05e5dda\` (explicitly typed empty benign expectation arrays). The code change extends \`scripts/verify-v2-auditor-enforcement.ps1\` exclusively; no production rules, real samples, manifest, source capture, CI workflow or audit implementation was changed.
+
+**Execution:** PARKED / NOT RUN. The following describes expected, *not observed*, results. GitHub accepting a commit is not evidence that PowerShell parses, TShark decodes the synthetic captures, or the checks pass.
+
+### Why the previous exit-code-only harness needed hardening
+
+Previously, each negative case required only a nonzero child process exit. Any unrelated failure (missing TShark, malformed synthetic PCAP, broken JSON cardinality, an incidental interpreter error, or the same wrong upstream validation failing first) could accidentally satisfy the expectation. That would produce a **false GREEN** for a security safeguard that had not actually been exercised.
+
+The new \`Get-ExpectedReason\` mapping requires a privacy-safe failure reason that corresponds to the intended invariant. \`InvokeAudit\` checks BOTH the exit category and the reason from an ephemeral private log. An expected reject with the wrong reason now fails the harness. The success control requires the auditor's \`SOURCE AUDIT COMPLETE:\` marker and explicitly rejects text claiming approval, promotion, freezing, or verified independence. This does not make the current auditor secure; it makes the future test outcome more interpretable.
+
+### Expanded scenario-by-scenario execution matrix
+
+The explicit current invocation sequence contains **two attribution-only success controls** and **15 rejecting mutations**. Each mutation regenerates all four files/sources in an isolated directory, invokes the *real* auditor with its unmodified entry point, and compares the child process outcome with the expected result.
+
+| Case | Synthetic mutation and attack/failure boundary | Required private-safe diagnostic | Expected result |
+| --- | --- | --- | --- |
+| BASELINE | Two benign and two malicious fixed manifest names; three selected UDP/TXT frame records per slot; valid original capture hash | \`SOURCE AUDIT COMPLETE:\` | Accept **packet attribution only** |
+| A13 | Separate synthetic source/session/name sets, same valid control as BASELINE | \`SOURCE AUDIT COMPLETE:\` | Accept **packet attribution only**, not independence |
+| A01 | Mirrored full malicious TXT QNAME set in two different synthetic source IPs and captures | \`SOURCE_INDEPENDENCE_MIRROR\` | Reject; missing in legacy auditor |
+| A02 | Distinct malicious source IPs but repeated \`collectionSessionId\` | \`SOURCE_SESSION_COLLISION\` | Reject; missing in legacy auditor |
+| A03 | Distinct malicious source IPs but repeated \`originatingClientLabel\` | \`SOURCE_ORIGIN_COLLISION\` | Reject; missing in legacy auditor |
+| A04 | Copy benign slot 0 PCAP bytes and record contents to benign slot 1 while preserving each slot's unique filename/sample identifier | \`same original PCAP packet frame reused\` | Reject based on global SHA/frame reuse, **not** malicious source IP |
+| A06 (legacy) | Change one text \`dnsQname\` without changing captured packet | \`serialized record differs from decoded PCAP\` | Reject byte/text mismatch for **legacy printable** name only |
+| A08-qtype | Alter one TXT record's reported DNS type to A | \`serialized record differs from decoded PCAP\` | Reject |
+| A08-port | Alter one selected frame's source port in the JSON record | \`serialized record differs from decoded PCAP\` | Reject |
+| A09 | Replace declared original PCAP SHA-256 with all zeroes | \`original PCAP SHA-256 mismatch\` | Reject |
+| A09-missing | Remove one local synthetic PCAP after writing its provenance | \`original capture missing\` | Reject; never trust JSON alone |
+| A10 | Use an unrecognized \`collectionVantage\` while keeping other metadata consistent | \`SOURCE_VANTAGE_UNREVIEWED\` | Reject; missing in legacy auditor |
+| A11 | Clear the boolean analyst review flag | \`incomplete external attribution or label review\` | Reject syntactically; does not verify real human review |
+| A11-license | Set the source license token to \`Unlicensed\` | \`incomplete external attribution or label review\` | Reject syntactically; does not verify rights to an apparently valid license |
+| A12 | Add an unreviewed private field to a serialized packet record | \`DNS packet record has missing, extra or invalid typed fields\` | Reject via existing legacy allowlist |
+| A14 | Replace expected malicious match \`R102\` with \`R118\` | \`R102 malicious expected rule/confidence was altered\` | Reject |
+| A16-distinct | In malicious slot 2, place the *same* valid long TXT name in frames 2 and 3 while keeping their PCAP bytes and JSON records aligned | \`R102 malicious encoded-TXT requires three distinct captured TXT\` | Reject: only two distinct names, no fabricated record/PCAP mismatch |
+
+The A04 benign-to-benign mutation is deliberate. If both malicious candidates reused one capture, the auditor's older distinct-source-IP check could reject the fixture **before** the global frame-reuse safeguard was reached; that would hide which invariant actually triggered. This regression isolates global frame reuse from the separate malicious-source requirement.
+
+The A16 mutation is also deliberate: the repeated name is written into the **PCAP and its serialized record**, not just the JSON. A negative result should therefore be caused by distinct-name cardinality, not a generic packet mismatch.
+
+### Semantic output and privacy assertions
+
+For *every* child invocation, \`Assert-PrivateAuditOutput\` reads the temporary log, extracts the synthetic candidate QNAMEs and source addresses from the corresponding private fixture files, and fails if any of those values, or the synthetic destination address, appear verbatim in output. Comparisons use ordinal case-insensitive substring checks so case changes cannot bypass the assertion.
+
+Only metadata-only progress and failure categories can be printed to the ordinary console. The underlying child process output is neither uploaded as a workflow artifact nor emitted in an exception. The randomly named scratch directory is removed under \`finally\`, including on failure. The checker does **not yet** prove that all other sensitive material (for example a raw hex dump, unfamiliar TShark diagnostic syntax, real future client identifiers or credentials) is redacted; that requires a separately authorized and expanded A15 review after decoder integration.
+
+**Stable future failure codes:** The four new unimplemented enforcement gates A01, A02, A03 and A10 each require an explicit constant diagnostic identifier. These codes must carry no origin labels, source IPs, session IDs, DNS QNAMEs, Base64 names or PCAP paths. If implementation chooses a different code, change the contract with a documented reason rather than broadening it to accept any nonzero exit.
+
+### Static correctness refinement — PowerShell JSON empty arrays
+
+The prior fixture used pipeline subexpressions like \`expectedMatches=$(if (...) { ... } else { @() })\`. A PowerShell empty pipeline can collapse to \`$null\`, accidentally yielding JSON \`null\` rather than \`[]\`, and could cause a false baseline failure. Commit \`05e5dda\` now assigns explicitly typed \`[string[]]\` expectation arrays before JSON serialization. Their runtime representation and compatibility with Windows PowerShell 5.1 remain unverified until the first authorized run.
+
+### Dependencies and deferred evidence — do not report as completed
+
+- **A05:** Multiple QNAMEs in one captured frame with distinct *question ordinals* requires the lossless decoder/explicit \`questionIndices\`. The current auditor only tracks frame numbers and first textual QTYPE.
+- **A06 binary variant / A07:** Noncanonical and conflicting per-label Base64 requires the new versioned binary-wire schema and decoder; the legacy A06 text mutation is only a partial safeguard.
+- **A08 full:** The current addition checks legacy QTYPE and port, not an independently bound question ordinal or actual TCP reassembly.
+- **A10 full:** The new vantage token rejection is a syntactic requirement, not independently corroborated capture-vantage identity.
+- **A11 full:** A valid-looking HTTPS evidence URL or allowable license string is not evidence that a human actually reviewed source rights and classification. Keep external review separate.
+- **A12 full:** The current check covers the packet record allowlist, not a complete versioned provenance allowlist.
+- **A15 full:** Output assertions cover known synthetic QNAMEs/addresses and forbidden approval wording; unknown secrets and all error paths remain to be analyzed privately.
+- **A16 binary variant:** A label of 50+ Base64 *characters* is not necessarily 50+ original DNS octets. Byte-length eligibility and entropy must be calculated from canonical decoded wire bytes when the codec is implemented.
+- **Cross-client malicious truth:** Identical or disjoint QNAME sets alone cannot prove that two sources are independent clients; human evidence must remain mandatory, with V2 candidate approvals still 0/4.
+
+### Exact future acceptance order (NOT authorization to run)
+
+1. Verify the explicitly approved test window, CARTHAGE hostname, checkout SHA, Windows PowerShell 5.1 and installed TShark version. Ensure no live capture or external traffic, and use only synthetic local files.
+2. Run the two controls first. If either fails, classify as a **harness/environment defect**, preserve a sanitized failure code and fix the fixture. Do not use that failure as an observed RED for R102/provenance.
+3. Run legacy expected rejects A04/A06/A08/A09/A11/A12/A14/A16. Each must fail for its **specific** reason, not any incidental error.
+4. Observe A01/A02/A03/A10 expected RED against the legacy auditor, after the controls and existing checks are sound. Record each outcome, exact code and commit.
+5. Only then implement narrow production importer/auditor enforcement, preferably using shared original-frame binding and a review-only source-independence classifier; preserve frozen V1.
+6. Re-run the same focused harness for GREEN, and prepare the remaining binary-only scenarios. Separate aggregate precision/recall/F1 and V2 admission from source syntax validation.
+7. Update this document and the central ledger with version, results and exceptions. Do not freeze/promote a candidate without a new explicit decision.
+
+**Next implementation priority:** audit hardening for human-reviewed logical origin, collection session and capture vantage, *after* a valid RED has been observed. The test-first dependency still applies; no production enforcement was written in this step.
+
+**Current verification truth:** GitHub commits successfully published the code. No build, PowerShell execution, TShark processing, replay, GitHub Actions dispatch, source capture, malicious-label review or V2 promotion was performed. All newly added scenarios are **PARKED / UNOBSERVED**.
