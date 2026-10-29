@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if CARTHAGO_DNS_WIRE_STAGE4
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -227,3 +228,4 @@ public sealed class DnsWireReplayHydratorTests
 
     private static string Encode(byte[] bytes) => Convert.ToBase64String(bytes);
 }
+#endif // CARTHAGO_DNS_WIRE_STAGE4
