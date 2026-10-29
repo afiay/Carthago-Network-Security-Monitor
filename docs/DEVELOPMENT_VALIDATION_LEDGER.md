@@ -448,3 +448,27 @@ powershell.exe -NoProfile -File .\scripts\verify-v2-two-writer-race-contract.ps1
 **Current test state:** NOT EXECUTED, no PASS/FAIL/RED/GREEN. Historic V1 remains FAILED 4/6; V2 remains PENDING_EXTERNAL_CAPTURE_AND_REVIEW, **0/4** external candidates approved. R102 threshold 80%, R118 86%, R163 84%, R102 external acceptance floor 0.75 and all Shadow/Disabled, cooldown, journal, baseline/privacy controls unchanged. The centralized workflow remains manual-only, with no schedule or push/PR trigger.
 
 **Hard boundary:** No automated branch merging, cleaning, dataset modification, original capture upload or customer-facing claim of verified detection quality. The next work is test-based integration under express owner authorization, not another speculative unverified contract series.
+
+
+### 2026-10-29 — First owner-authorized local Stage 6H / 6D testing; blocked gates
+
+**Authorization:** The owner explicitly authorized testing and ran the two synthetic scripts using Windows PowerShell on the CARTHAGO Windows workspace after fast-forwarding the existing feature/carthago-reliability-hardening branch to exact commit 4a08d0f. These are **owner-provided observed outputs**, not tests independently run by the assistant. Existing local ignored/untracked build-verify evidence was retained. No original capture, TShark, live network interface, rule evaluation, GitHub Actions job, performance test, or automated dataset promotion was reported as executed in this step.
+
+| Test gate | Exact command profile | Observed result | Classification |
+| --- | --- | --- | --- |
+| Stage 6H reader-sensitivity, six negative probes | verify-v2-two-writer-race-contract.ps1 -AuthorizedTestTime -OnlyReaderNegativeControl | STAGE6H_NEGATIVE_CONTRACT: ready-reader-exited-early at the first reader-ready barrier. **No H01–H06 positive detection result established.** | Blocked: child Start-Job exited before ready marker, cause not yet identified on Windows. Not a security RED. |
+| Stage 6D provenance, two positive plus 24 negative prepared cases | verify-v2-provenance-schema-contract.ps1 -AuthorizedTestTime | PROV_BATCH_SHAPE emitted by HoldoutV2Provenance.psm1 before suite summary, no successful baseline announced. **No 24-negative-case result established.** | Blocked: input/manifest/slot/classification shape, exact phase initially ambiguous. Not a detection-quality result. |
+
+**Committed source corrections before any re-execution:**
+
+| Commit | File | Fix / diagnostic |
+| --- | --- | --- |
+| 9863429 | scripts/verify-v2-provenance-schema-contract.ps1 | Normalize JSON clone output into an explicit four-element PSCustomObject[] on Windows PowerShell; require four-item baseline before validation, without logging private candidate metadata. |
+| 2c219a3 | scripts/HoldoutV2Provenance.psm1 | Add privacy-safe PROV_BATCH_SHAPE phase suffixes INPUT_COUNT, MANIFEST_STATE, MANIFEST_SLOTS, SLOT_MAPPING and CLASS_COUNTS. Existing contract's expected PROV_BATCH_SHAPE still matches; source identities are never logged. |
+| f930e06 | scripts/verify-v2-two-writer-race-contract.ps1 | Use a scalar delimiter-joined token of four validated synthetic manifest basenames instead of Start-Job JSON-array binding; on premature reader completion, display only a whitelisted constant child status code or NO_READER_RESULT, never child exception/paths. |
+
+**Critical limits:** These commits are fixes to scripts and diagnostics, **not validated corrections on CARTHAGO yet**. The original underlying cause of both gates is not definitively established until the owner reruns the exact two commands and reports their sanitized output. If either gate remains blocked, do not advance to Stage 6E/F/G, TShark, original PCAP evaluation, full .NET regression or commercial release claims. Do not discard, git-clean, reset or overwrite existing user's untracked build-verify artifacts. The feature branch is the only branch changed; no new workflow, CI dispatch or running processes from the assistant.
+
+**Required next evidence:** owner fast-forward git pull to these commits and rerun only Stage 6H reader-only negative probe and Stage 6D provenance schema contract. Record exact Git SHA; for Stage 6H capture the newly sanitized constant reader exit code and H01–H06 case outcomes; for Stage 6D capture the exact phase-marked PROV_BATCH_SHAPE or specific PROV_* code and baseline/negative counts. Only mark GREEN after the full planned cases pass, not merely after the first exception is suppressed.
+
+**Preserved governance:** frozen V1 historical FAILED 4/6; Holdout V2 still PENDING_EXTERNAL_CAPTURE_AND_REVIEW with 0/4 external R102 source approvals, detection confidence floors R102 80%, R118 86%, R163 84% and R102 external 0.75. All existing production importer, source auditor, rules, and the manual-only GitHub Actions workflow remain unchanged.
