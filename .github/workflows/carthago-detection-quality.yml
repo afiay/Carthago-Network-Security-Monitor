@@ -96,15 +96,15 @@ jobs:
             }
             'dns-wire-packet' {
               if (-not (Test-Path 'Carthago.Tests/DnsWirePacketTests.cs')) { throw 'Packet contract not authored.' }
-              Invoke-Private 'dns-wire-packet' 'dotnet' @('test','Carthago.Tests/Carthago.Tests.csproj','-c','Release','--filter','FullyQualifiedName~DnsWirePacketTests')
+              Invoke-Private 'dns-wire-packet' 'dotnet' @('test','Carthago.Tests/Carthago.Tests.csproj','-c','Release','-p:DefineConstants=CARTHAGO_DNS_WIRE_STAGE2','--filter','FullyQualifiedName~DnsWirePacketTests')
             }
             'r102-accuracy' {
               if (-not (Test-Path 'Carthago.Tests/R102BinaryDnsPrecisionTests.cs')) { throw 'R102 binary contract not authored.' }
-              Invoke-Private 'r102-accuracy' 'dotnet' @('test','Carthago.Tests/Carthago.Tests.csproj','-c','Release','--filter','FullyQualifiedName~R102BinaryDnsPrecisionTests|FullyQualifiedName~R102DistinctTxtCorrelationTests|FullyQualifiedName~R102AdvancedAccuracyBatchTests|FullyQualifiedName~DnsReplayTelemetryDiagnosticsTests')
+              Invoke-Private 'r102-accuracy' 'dotnet' @('test','Carthago.Tests/Carthago.Tests.csproj','-c','Release','-p:DefineConstants=CARTHAGO_DNS_WIRE_STAGE3','--filter','FullyQualifiedName~R102BinaryDnsPrecisionTests|FullyQualifiedName~R102DistinctTxtCorrelationTests|FullyQualifiedName~R102AdvancedAccuracyBatchTests|FullyQualifiedName~DnsReplayTelemetryDiagnosticsTests')
             }
             'dns-wire-replay' {
               if (-not (Test-Path 'Carthago.Tests/DnsWireReplayHydratorTests.cs')) { throw 'Private replay contract not authored.' }
-              Invoke-Private 'dns-wire-replay' 'dotnet' @('test','Carthago.Tests/Carthago.Tests.csproj','-c','Release','--filter','FullyQualifiedName~DnsWireReplayHydratorTests|FullyQualifiedName~SyntheticHoldoutV2ContractTests')
+              Invoke-Private 'dns-wire-replay' 'dotnet' @('test','Carthago.Tests/Carthago.Tests.csproj','-c','Release','-p:DefineConstants=CARTHAGO_DNS_WIRE_STAGE4','--filter','FullyQualifiedName~DnsWireReplayHydratorTests|FullyQualifiedName~SyntheticHoldoutV2ContractTests')
             }
             'dns-source-contract' {
               if (-not (Test-Path 'scripts/verify-dns-wire-source-contract.ps1')) { throw 'Source contract not authored.' }
