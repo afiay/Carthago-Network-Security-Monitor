@@ -245,6 +245,64 @@ public sealed class WinRmTelemetryIpcContractTests
         Assert.Equal("INVALID_CANDIDATE_SCHEMA", reason);
     }
 
+    [Theory]
+    [InlineData("Version")]
+    [InlineData("Kind")]
+    [InlineData("SessionId")]
+    [InlineData("CorrelationId")]
+    [InlineData("Sequence")]
+    [InlineData("Machine")]
+    [InlineData("RemoteIp")]
+    [InlineData("LogonId")]
+    [InlineData("LogonRecordId")]
+    [InlineData("ProcessRecordId")]
+    [InlineData("ProcessId")]
+    [InlineData("ParentProcessId")]
+    [InlineData("ProcessTimeUtc")]
+    public void Any_Missing_Required_Field_Is_Rejected(string field)
+    {
+        var contract = Contract();
+        var session = Open(contract);
+        var fields = Payload(session);
+        Assert.True(fields.Remove(field));
+        Assert.False(TryAccept(contract, session, Frame(fields),
+            out var accepted, out var reason));
+        Assert.Null(accepted);
+        Assert.Equal("INVALID_CANDIDATE_SCHEMA", reason);
+    }
+
+    [Theory]
+    [InlineData("ProcessId", 4294967296L)]
+    [InlineData("ParentProcessId", 4294967296L)]
+    [InlineData("LogonId", -1L)]
+    [InlineData("LogonId", "74565")]
+    [InlineData("Sequence", -1L)]
+    [InlineData("Machine", "")]
+    [InlineData("RemoteIp", "::")]
+    [InlineData("ProcessRecordId", -1L)]
+    [InlineData("ProcessTimeUtc", "2026-10-29T01:30:00Z")]
+    public void Numeric_Overflow_And_Noncanonical_Field_Values_Are_Rejected(
+        string key, object badValue)
+    {
+        var contract = Contract();
+        var session = Open(contract);
+        var fields = Payload(session);
+        fields[key] = badValue;
+        Assert.False(TryAccept(contract, session, Frame(fields),
+            out var accepted, out _));
+        Assert.Null(accepted);
+    }
+
+    [Fact]
+    public void Absent_Session_Cannot_Be_Recovered_From_A_Valid_Looking_Frame()
+    {
+        var contract = Contract();
+        Assert.False(TryAccept(contract, null, FrameText("{}"),
+            out var candidate, out var reason));
+        Assert.Null(candidate);
+        Assert.Equal("INVALID_SESSION", reason);
+    }
+
     [Fact]
     public void Duplicate_Json_Fields_Are_Rejected_Instead_Of_Last_Wins()
     {
