@@ -168,3 +168,24 @@ Frozen V1 R102 evidence remains historically FAILED 4/6. V2 remains PENDING_EXTE
 - scripts/verify-v2-two-writer-race-contract.ps1 — parked separate-process race harness.
 - Microsoft PowerShell Start-Job documentation: https://learn.microsoft.com/powershell/module/microsoft.powershell.core/start-job
 - Windows MoveFileExW documentation: https://learn.microsoft.com/windows/win32/api/winbase/nf-winbase-movefileexw
+
+
+## 9. Static hardening and verification checkpoint
+
+The authored test suite was updated in an additional static hardening commit **bf1045e**: its final cleanup now uses Assert-NoReparseInOwnedTree. Rather than checking only the top-level scratch folder and then recursively deleting everything, it walks directories **one level at a time**, inspects each item for the Windows ReparsePoint attribute *before entering it*, and refuses recursive cleanup if any nested link/reparse point is present. This prevents a malicious or faulty future publisher from causing the *test harness* to follow a nested redirection outside its uniquely owned scratch tree. The routine does **not** prove that the underlying Windows filesystem resolves paths without races; actual link/ACL attacks and cleanup atomicity remain separate authorization-gated tests.
+
+The race worker also stages its four synthetic candidates as **one positional array argument**, instead of allowing PowerShell's argument binder to flatten the array into several unrelated parameters. Each worker suppresses warning/information/verbose output and returns only a bounded status and numeric process ID; on unexpected publisher error it returns UNEXPECTED_ERROR without printing the exception. Whether Start-Job serializes the candidate-array shape as intended must still be verified on CARTHAGE at authorized test time. These are **source-level precautions, not observed test results**.
+
+### Final Stage 6F change register
+
+| Commit | File | Purpose |
+| --- | --- | --- |
+| bf4a27e | scripts/verify-v2-recovery-planner-contract.ps1 | Fifteen path-free advisory recovery decisions, always requiring review |
+| 7743740 | scripts/verify-v2-recovery-planner-contract.ps1 | Private module-scope invocation and corrected forbidden-output pattern |
+| e8cf7f3 | scripts/verify-v2-two-writer-race-contract.ps1 | Three two-process contention rounds with fresh private batch names |
+| fd8a992 | scripts/verify-v2-two-writer-race-contract.ps1 | Preserve candidate argument array and suppress child output streams |
+| 7974219 | docs/STAGE6F_CONCURRENT_V2_PUBLICATION_AND_RECOVERY_20261029.md | In-depth design and acceptance matrix |
+| dfc75c1 | docs/STAGE6E_ATOMIC_V2_PUBLICATION_FAULT_CONTRACT_20261029.md | Stage 6E dependency and handoff reference |
+| bf1045e | scripts/verify-v2-two-writer-race-contract.ps1 | Block recursive scratch cleanup through nested reparse points |
+
+**Actual validation:** none. No race was initiated, no recovery plan called, and no cleanup procedure executed in this authoring step.
