@@ -133,6 +133,10 @@ public sealed class DnsReplayTelemetryDiagnosticsTests
             Assert.Equal(1, diagnostic.InputRecordsWithIssues);
             Assert.Equal(new[] { "DNS_TRANSPORT_UNATTRIBUTED" },
                 diagnostic.InputTelemetryIssueCodes);
+            var markdown = new TuningBenchmarkReportStore().ToMarkdown(report);
+            Assert.Contains("## Structured DNS Input Telemetry Diagnostics", markdown);
+            Assert.Contains("DNS_TRANSPORT_UNATTRIBUTED", markdown);
+            Assert.Contains("InvalidInputTelemetry", markdown);
 
             var gaps = report.RecallGaps.Where(gap => gap.RuleId == "R102").ToArray();
             Assert.NotEmpty(gaps);
