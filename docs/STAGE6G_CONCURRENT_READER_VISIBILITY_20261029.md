@@ -169,3 +169,18 @@ Frozen V1 remains FAILED 4/6 (historical R102 missing transport attribution) wit
 - docs/STAGE6D_PRIVATE_PROVENANCE_SCHEMA_AND_ATOMICITY_20261029.md — strict provenance v2.
 - Microsoft PowerShell Start-Job documentation: https://learn.microsoft.com/powershell/module/microsoft.powershell.core/start-job
 - Microsoft MoveFileExW documentation: https://learn.microsoft.com/windows/win32/api/winbase/nf-winbase-movefileexw
+
+
+## 10. Stage 6H negative-control completion at source level — 2026-10-29
+
+The deterministic sensitivity probe that Stage 6G explicitly required has now been **authored, not executed**. Rather than writing a duplicate observer, the existing scripts/verify-v2-two-writer-race-contract.ps1 now holds **one** shared PrivateBatchReaderJob scriptblock reused by (a) the Stage 6G concurrent reader and (b) an independent Stage 6H synthetic negative-control mode.
+
+The new OnlyReaderNegativeControl mode does **not** import or call the unfinished publisher module and does **not** start two competing writer jobs. It sequentially creates six deliberately malformed synthetic final folders under one unique ignored scratch root: H01 zero-file directory; H02 missing sidecar; H03 malformed JSON in otherwise complete eight-file names; H04 false APPROVED review state; H05 unexpected extra file; H06 conflicting sample/provenance classification. All sources/identifiers are artificial, never real PCAP content.
+
+Both test modes execute exactly the same reader code. The Stage 6H parent requires a **real post-GO absence acknowledgment** before revealing each invalid synthetic folder via a same-volume move, and a **reader-generated PARTIAL or IOERROR acknowledgment** afterward. Each check has bounded waits, a strict seven-field metadata-only result, and no raw-content logging. The old Stage 6F three-round behavior and opt-in Stage 6G 3–12-round behavior are preserved.
+
+Detailed test mechanics, expected counters, failure categories, path controls and parked commands are in docs/STAGE6H_DETERMINISTIC_READER_NEGATIVE_CONTROLS_20261029.md, commits **402003f** and **b791d5d**. Source updates: **f8c1ec5, d6a848e, fd4ce67, 6c5ec83, e977067**. The last one guards against a redirected build-verify parent before scratch creation.
+
+**Acceptance order is now explicit:** after separate owner approval, verify H01–H06 sensitivity in reader-only mode before interpreting any Stage 6G writer-race "zero partial snapshots" as meaningful. This is still sampled observation; even after a successful negative control, it does not prove formal linearizability, crash durability or original-source correctness.
+
+**Execution truth:** no Start-Job, PowerShell test, TShark, packet capture, reader observation, CI dispatch or filesystem fault injection was run while authoring Stage 6H. Existing importer and auditor remain unchanged; V1 frozen outcome and V2 PENDING_EXTERNAL_CAPTURE_AND_REVIEW, 0/4 approval state, are preserved.
