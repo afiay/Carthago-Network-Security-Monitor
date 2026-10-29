@@ -980,3 +980,32 @@ Stop on the first unexpected code, log sanitized exact output plus SHA and diagn
 Stop on any runtime code; do not bypass source-binding, privacy or lossless-label checks. Any control result remains synthetic-only and cannot approve or publish real external evidence.
 
 **Disposition:** Stage 8 bridge module parser GREEN at 683da2e; Stage 8 expanded test-script parser **RED at 683da2e**, patch **source committed** at 0606577, Windows parse of corrected code **PENDING**, runtime Stage 8 **NOT RUN**. Previous core DNS and optional V2 provenance synthetic gates GREEN at e412c2a. Historical V1 FAILED 4/6 and V2 PENDING_EXTERNAL_CAPTURE_AND_REVIEW 0/4 approved; Stage 6D–6H and all private evidence preserved. Only the test file and this central ledger changed.
+
+
+### 2026-10-30 — Stage 8 owner Windows test GREEN: source-bound read-only wire-to-legacy compatibility verified
+
+**Exact checkout and preflight observed:** Owner fast-forwarded the existing feature branch from **683da2e** to **9f709d0**. Windows PowerShell \`Parser.ParseFile\` checked both \`scripts/HoldoutV2WireReplayBridge.psm1\` and \`scripts/verify-dns-wire-source-contract.ps1\`: **Syntax PASS** for each. The previously invalid \`foreach([byte[]]$bytes in $labels)\` declaration was therefore corrected successfully. The owner then ran the explicitly authorized local synthetic test, without invoking private original source evidence:
+\`\`\`powershell
+powershell.exe -NoProfile -NonInteractive -File .\scripts\verify-dns-wire-source-contract.ps1 -TsharkPath "C:\Program Files\Wireshark\tshark.exe" -IncludeReplayCompatibility -AuthorizedTestTime
+\`\`\`
+The command completed and returned to the PowerShell prompt with no exception, no interactive prompt and no approval action. The test was executed on owner-controlled Windows and installed TShark, not on the assistant's environment.
+
+**Complete owner-observed successful output:**
+\`\`\`text
+DNS TCP framing: unmodified UDP and exact TCP payload preserved; five invalid length prefixes rejected.
+TShark jsonraw descriptor: 5/6-member formats preserved; ten ambiguous or invalid descriptors rejected.
+DNS wire source contract: four source-bound questions corroborated; five invalid/ambiguous selections rejected. Synthetic evidence only.
+V2 wire replay bridge: two exact printable names accepted; ten non-lossless names rejected.
+V2 wire replay bridge: three original frame/question records bound; eleven source, schema, binary and review-state negatives rejected; no projected samples or approvals.
+\`\`\`
+
+**Interpretation and acceptance boundaries:**
+1. The three existing synthetic core DNS/TShark contracts repeated GREEN. The new bridge-gated helper verified two byte-identical lower-case printable names and rejected ten unrepresentable/nonnormalizable label encodings, including invalid Base64, embedded dot, uppercase, non-ASCII, NUL and boundary violations.
+2. The new synthetic-PCAP wire-to-legacy compatibility extension positively bound three original frame/question selections (including UDP and TCP) via the existing DNS source binder. Eleven negative cases were rejected, including forged review/encoding/schema state, tampered label or frame identity, missing original capture, incompatible root, cardinality mismatch and independently source-bound binary name ineligible for legacy printable text.
+3. A passed bridge returns **only** a pending-review, metadata-only status: no legacy sample is produced; it never publishes, freezes or approves any fixture or real source. The third original binary-label case verifies that source authenticity does NOT make lossy serialization acceptable. The new test did not invoke the existing legacy importer, auditor, publisher, freeze mechanism or evaluator.
+4. Stage 8's declared read-only compatibility goal is **CLOSED GREEN within exactly this synthetic scope** at owner test SHA **9f709d0**. The previous parser-RED transcript and correction are retained above, not overwritten. No previously GREEN Stage 6D–6H concurrency tests are rerun or reclassified.
+5. This is NOT proof that the original R102 importer/auditor now accept canonical labels-base64-v1, nor that a production replay/evaluation consumer is byte-lossless. The user has not authorized real PCAP imports, third-party datasets, external capture-label approval or publication.
+
+**Next engineering milestone, source-only until a distinct owner test window:** Design and implement an **explicitly versioned, private, non-publishing sample adapter** for the already-proven printable-ASCII subset, while retaining mandatory original PCAP SHA/frame/question/binary labels in separately scoped private evidence. The adapter must not infer original bytes from old lowercased \`dnsQname\` or mix nine-field wire records directly into eleven-field legacy publisher input. After adapter tests and rights/privacy/source checks, selectively migrate the producer/auditor; run separate tests before evolving existing publisher/recovery/benchmark consumers. Preserve old frozen V1 FAILED 4/6, V2 pending/0-of-4 approvals and confidence floors R102 80%, R118 86%, R163 84%, external R102 0.75, plus Shadow/Disabled, cooldown, baseline, privacy and journal controls.
+
+**Repository change in response to this owner test:** Ledger-only: scripts and existing test fixtures are NOT modified, no new test is executed by the assistant.
