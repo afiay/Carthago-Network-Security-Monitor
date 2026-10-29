@@ -83,9 +83,14 @@ namespace Carthago.Services.Benchmarking
     public sealed class TuningBenchmarkExpectedRuleDiagnostic
     {
         public string RuleId { get; set; } = string.Empty;
-        // Matched, MissingTelemetry, NoMatch, EvaluationFailed or RuleUnavailable.
+        // Matched, MissingTelemetry, InvalidInputTelemetry, NoMatch, EvaluationFailed or RuleUnavailable.
         public string Outcome { get; set; } = string.Empty;
         public List<string> MissingRequiredTelemetry { get; set; } = new();
+        // Metadata-only supplementary DNS input triage. These diagnostic
+        // codes do not change rule eligibility, confidence or alert policy.
+        public List<string> InputTelemetryIssueCodes { get; set; } = new();
+        public int InputRecordsInspected { get; set; }
+        public int InputRecordsWithIssues { get; set; }
         public List<string> NoMatchReasons { get; set; } = new();
     }
 
