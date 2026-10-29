@@ -20,7 +20,9 @@ foreach ($sample in @($report.sampleResults)) {
     }
     foreach ($diagnostic in @($sample.expectedRuleDiagnostics)) {
         $diagnosticsSeen++
-        if ($null -ne $diagnostic.PSObject.Properties['inputTelemetryIssueCodes']) {
+        if ($null -ne $diagnostic.PSObject.Properties['inputTelemetryIssueCodes'] -and
+            $null -ne $diagnostic.PSObject.Properties['inputRecordsInspected'] -and
+            $null -ne $diagnostic.PSObject.Properties['inputRecordsWithIssues']) {
             $versionedDiagnosticsSeen++
         }
         $rule=[string]$diagnostic.ruleId
