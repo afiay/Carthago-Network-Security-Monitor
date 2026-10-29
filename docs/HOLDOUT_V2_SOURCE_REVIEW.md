@@ -120,3 +120,68 @@ The original source inspector's two source/root groups reported:
 **New diagnostic-only inspector enhancement:** `scripts/inspect-holdout-v2-pcap.ps1` now records a mutually exclusive reason for each rejected filtered row (`repeatedFrameNumber`, missing/conflicting transport, unsupported type, malformed/invalid name, label length, source/destination) and anonymized per-group TXT longest-label histograms in relevant bands `0-19`, `20-39`, `40-45`, `46-49`, `50-53`, `54-57`, `58-63`. It retains privacy defaults, source field attribution and the original eligibility predicate. The new code and companion contract assertion are committed but **have not yet been executed on CARTHAGE**.
 
 Use the same original PCAP and TShark executable to rerun read-only inspection after pulling the new branch revision. Compare the mutually exclusive reason counts to 2,656 and the group distinct-long counts to 1. The extra breakdown can identify parsing gaps but must not turn this PCAP into an approved v2 fixture without independent review of original frames, classification basis, license and privacy. V2 remains `PENDING_EXTERNAL_CAPTURE_AND_REVIEW`, **0/4** approved fixture/provenance pairs.
+
+## Independent raw-wire triage of Korving Base32 source (2026-10-29)
+
+**Research-only result; source NOT approved, V2 still 0/4.** To investigate
+the 2,656 \`invalidQuestionName\` exclusions without repeating a Carthago
+test, the exact pinned 3,178,726-byte archive was independently obtained.
+\`git hash-object --no-filters\` returned the ledger's expected source
+blob \`c061d953b9e21068031d604b9c1001ddcd1cfa53\`. Only the named
+\`bind9/dns.pcap\` member was extracted; its independent SHA-256 was
+\`b9c5ec5b6a50facb8719ffe47656d2cda0f0704ed08d91130c8b48a3e0ddf102\`,
+identical to the CARTHAGE result. No bundled executable or source script
+was run.
+
+A separate temporary, **read-only wire-format decoder**, not TShark or
+the Carthago importer, traversed the Linux-cooked PCAP records, IPv4,
+UDP, DNS questions and length-prefixed/compressed DNS labels. It emitted
+aggregate statistics only: no raw QNAMEs, source addresses or DNS roots.
+Independent counts reconciled with the CARTHAGE inspector:
+
+| Property | Independently decoded value |
+| --- | ---: |
+| Total PCAP frames | 15,942 |
+| UDP/53 DNS query frames with QTYPE TXT (16) | 7,991 |
+| Question names accepted by current inspector ASCII syntax | 5,335 |
+| Excluded due to octets outside \`[a-z0-9_-]\` | 2,656 |
+| Of those excluded, names with a longest label of 62 octets | 2,644 |
+| Question names exceeding 255 DNS wire octets | 0 |
+| Source/root groups (anonymized) | 2 |
+| Distinct full wire QNAMEs per observed source | 3,977 |
+| Distinct long-label (>=50 octets) QNAMEs per source/root | 1,311 |
+| Distinct full wire QNAMEs shared by both sources | 3,977 |
+
+**Interpretation and correction to prior subset-only assessment:**
+the \`invalidQuestionName\` label means these TShark-exported names failed
+the inspector's restrictive *textual character policy*. It does not
+demonstrate malformed DNS framing, bad label lengths, or an invalid DNS
+wire QNAME. RFC 1035 section 3.1 and RFC 2181 section 11 allow arbitrary
+binary label octets within DNS length limits; see
+https://www.rfc-editor.org/rfc/rfc1035.html and
+https://datatracker.ietf.org/doc/html/rfc2181#section-11.
+The current inspector counts only one distinct long TXT QNAME per group
+because it excludes the binary-label questions before constructing the
+histogram. The original wire capture contains many more such long names.
+This finding does **not** justify modifying production R102 thresholds,
+silently changing the established importer/auditor policy, or treating
+the extra names as automatically approved holdout evidence.
+
+The two observed source/root groups have **100% overlap in their 3,977
+distinct QNAMEs**, and the upstream controlled-lab metadata identifies
+one iodine client. This is consistent with duplicated/forwarded queries
+on two network legs and is **not** two independent malicious clients.
+Distinct source IPs alone must not substitute for independent trace
+provenance. The original archive's scenario configuration, trace rights,
+ground-truth labeling and privacy still require separate approval.
+
+**Next gate:** independently corroborate the binary-label decode using
+TShark's original-frame representation before any extractor change;
+distinguish DNS wire-valid labels from permitted serialized replay
+fields; identify independently captured, licensed and reviewed source(s)
+for the two malicious and two benign V2 cases. If binary DNS name
+support is considered for importer/telemetry, design an explicit
+lossless representation and regression tests first. Do not alter
+frozen V1, the 0.75 confidence floor, existing fixture hashes, or
+the V2 pending state. No detector tests, rule evaluations, import,
+freeze or promotion took place during this investigation.
