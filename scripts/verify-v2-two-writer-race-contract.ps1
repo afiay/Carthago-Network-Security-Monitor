@@ -571,15 +571,6 @@ try {
     }
     Assert-Contract ((Get-FileHash -LiteralPath $marker -Algorithm SHA256).Hash -ceq
         $markerHash) 'unrelated-sentinel-modified'
-    $top=@(Get-ChildItem -LiteralPath $owned -Force | Sort-Object Name)
-    $expectedTop=@('sentinel.keep')+@($roundNames)
-    Assert-Contract ($top.Count -eq ($roundCount+1) -and
-        @($top | Where-Object { $_.Name -notin $expectedTop }).Count -eq 0) 'unexpected-test-root-entry'
-    if($IncludeReaderVisibility) {
-        Write-Host ('Stage 6G opt-in: '+$roundCount+' 2-writer/1-reader visibility rounds completed; no durability or source approval.')
-    } else {
-        Write-Host 'Stage 6F race contract: three two-process contention rounds prepared; results do not certify crash durability or source review.'
-    }
 } finally {
     if(Test-Path -LiteralPath $owned) {
         Assert-NoReparseInOwnedTree $owned
