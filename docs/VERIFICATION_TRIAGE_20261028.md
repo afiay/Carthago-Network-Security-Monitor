@@ -348,3 +348,25 @@ After the 4,940-passing full xUnit run, the operator ran `scripts/evaluate-holdo
 After pulling source commit `a06a8485370db967ec1f3c2ab4777e1161042657`, the operator executed `dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~R102AdvancedAccuracyBatchTests"`. The Release build succeeded. xUnit result: **8 total, 8 passed, 0 failed, 0 skipped** (about 3.8 seconds test duration). The output reported **8 warning occurrences**, all in existing rule files or the `SyntheticHoldoutContractTests.cs` xUnit analyzer; no new R102 test warning was reported. This is a focused checkpoint, not an additional full-suite or holdout pass.
 
 **Gates unchanged:** frozen 12-sample holdout v1 remains failed with two missing R102 detections; main development replay still has four unresolved evidence/confidence expectations; last full xUnit checkpoint remains 4,940/4,940 at source commit `498b8b0`.
+
+## DNS replay diagnostics and independently sourced v2 readiness - source-only (2026-10-29)
+
+**Diagnostics implemented:** `DnsReplayTelemetryDiagnostics.cs` performs read-only, stable-code inspection of DNS replay inputs. `TuningBenchmarkRunner` records `InputTelemetryIssueCodes`, `InputRecordsInspected` and `InputRecordsWithIssues` for expected DNS rules. An otherwise unmatched expected DNS rule with invalid inputs for all inspected records is reported as `InvalidInputTelemetry`, distinct from ordinary `NoMatch`; `TuningBenchmarkRecallGapAnalyzer` and Markdown/JSON reporting expose codes such as `DNS_TRANSPORT_UNATTRIBUTED`. The v1 and opt-in v2 holdout scripts print a separate metadata-only diagnostic summary. None of this infers DNS transport, creates rule matches, alters confidence, relaxes gate failures or logs raw DNS QNAMEs/IPs in the new diagnostic fields.
+
+**Existing v2 preparation reused, not recreated:** `docs/holdout-evaluation-v2-manifest.json` already defined eight pinned v1 R118/R163 references and four pending new PCAP-sourced R102 fixtures. The v2 importer, source audit, freeze and opt-in evaluator existed before this increment. This change hardens the PCAP source audit to reject extra serialized fixture/record fields, altered labels/expected rules, inconsistent transport types and malicious confidence-floor weakening. New `scripts/inspect-holdout-v2-readiness.ps1` verifies the eight reused v1 Git hashes, reports candidate pair availability and optionally invokes original-PCAP packet redecoding with `-AuditPackets` and an explicit capture directory. The versioned v2 remains **PENDING_EXTERNAL_CAPTURE_AND_REVIEW**: no new PCAP, independent label approval, privacy review or source-licensing clearance was supplied, and v2 was not frozen or run.
+
+**Tests added, not yet run:** `Carthago.Tests/DnsReplayTelemetryDiagnosticsTests.cs` covers missing/contradictory transport, privacy, no mutation and an end-to-end benchmark missing-input diagnosis. `SyntheticHoldoutV2ContractTests.cs` gains safety assertions for strict source-field audit and non-freezing readiness. Previous CARTHAGE baseline remains full xUnit **4,940/4,940 at 498b8b0** and R102 focused **8/8 at a06a848**; these numbers do not validate this latest source increment.
+
+**Gates unchanged:** development replay four blockers R343/R295/R275/R163; frozen v1 R102 holdout **FAILED** with only 4/6 malicious recognition and 0/6 alert-level recall. Zero benign alerts on v1 does not establish precision. No Windows audit policy or transport adapter changes. Do not run, freeze or claim v2 complete until original source captures, independent ground-truth labels, licensing and privacy review have been obtained and packet audit passes.
+
+**Focused build/test command for next authorized CARTHAGE test window:**
+
+```powershell
+dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~DnsReplayTelemetryDiagnosticsTests|FullyQualifiedName~SyntheticHoldoutV2ContractTests|FullyQualifiedName~TuningBenchmarkTests"
+```
+
+**Pending v2 source readiness (read only):**
+
+```powershell
+.\scripts\inspect-holdout-v2-readiness.ps1
+```
