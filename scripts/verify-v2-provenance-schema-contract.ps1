@@ -87,10 +87,16 @@ function Assert-Rejected([object[]]$Candidates,[string]$Schema,[string]$Code) {
         $message=[string]$_.Exception.Message
         Assert-Contract ($message.Contains($Code)) 'wrong-rejection-reason'
         foreach($c in $Candidates) {
-            foreach($secret in @($c.sourceAddress,$c.originatingClientLabel,$c.collectionSessionId,
-                                $c.sourceUri,$c.captureSha256)) {
-                if(-not [string]::IsNullOrWhiteSpace([string]$secret)) {
-                    Assert-Contract (-not $message.Contains([string]$secret)) 'private-evidence-in-error'
+            # Use property descriptors, not direct member access: the missing-
+            # required-field mutation intentionally removes a property under
+            # Set-StrictMode and must still assert the intended rejection code.
+            foreach($field in @('sourceAddress','originatingClientLabel',
+                                'collectionSessionId','sourceUri','captureSha256')) {
+                $property=$c.PSObject.Properties[$field]
+                if($null -eq $property) { continue }
+                $secret=[string]$property.Value
+                if(-not [string]::IsNullOrWhiteSpace($secret)) {
+                    Assert-Contract (-not $message.Contains($secret)) 'private-evidence-in-error'
                 }
             }
         }
