@@ -14,6 +14,12 @@ $auditor = Join-Path $PSScriptRoot 'audit-holdout-v2-candidates.ps1'
 $manifest = Get-Content (Join-Path $root 'docs/holdout-evaluation-v2-manifest.json') -Raw | ConvertFrom-Json
 $entries = @($manifest.samples | Where-Object { $_.sourceKind -eq 'external-pcap-reviewed' })
 if ($entries.Count -ne 4) { throw 'Fixture contract changed: four external slots required.' }
+# Fixture mutation indices assume the current manifest's two benign, then two
+# malicious R102 slots. Fail closed if the manifest ever changes its ordering.
+$classes = (@($entries | ForEach-Object { [string]$_.classification }) -join ',')
+if ($classes -cne 'Benign,Benign,Malicious,Malicious') {
+    throw 'Fixture contract changed: expected ordered 2 benign and 2 malicious slots.'
+}
 $work = Join-Path ([IO.Path]::GetTempPath()) ('carthago-v2-auditor-' + [guid]::NewGuid().ToString('N'))
 $captureDir = Join-Path $work 'captures'
 $candidateDir = Join-Path $work 'candidates'
@@ -85,6 +91,11 @@ function BuildFixture([string]$scenario) {
                 $names+=(('a' * 54)+([char](98+2))+([char](49+$i))+'.exfil.example')
             }
         }
+        # A16: three captured TXT questions remain frame-aligned but include
+        # only two *distinct* long labels. Do not fabricate a JSON-only mismatch.
+        if($scenario -eq 'A16-distinct' -and $slot -eq 2) {
+            $names[2] = $names[1]
+        }
         $pcapFile='synthetic-slot-'+$slot+'.pcap'
         $pcap=Join-Path $captureDir $pcapFile
         NewCapture $pcap $names $src $slot
@@ -98,12 +109,85 @@ function BuildFixture([string]$scenario) {
         if($scenario -eq 'A02' -and $slot -eq 3){$p.collectionSessionId='synthetic-session-2'}
         if($scenario -eq 'A03' -and $slot -eq 3){$p.originatingClientLabel='synthetic-origin-2'}
         if($scenario -eq 'A06' -and $slot -eq 2){$sample.records[0].dnsQname='tampered.example'}
+        if($scenario -eq 'A08-qtype' -and $slot -eq 2){$sample.records[0]['dnsQtype']='A'}
+        if($scenario -eq 'A08-port' -and $slot -eq 2){$sample.records[0]['sourcePort']=53042}
         if($scenario -eq 'A09' -and $slot -eq 2){$p.captureSha256=('0'*64)}
+        if($scenario -eq 'A10' -and $slot -eq 2){$p.collectionVantage='unattributed-proxy'}
         if($scenario -eq 'A11' -and $slot -eq 2){$p.analystReviewedLabel=$false}
-        if($scenario -eq 'A12' -and $slot -eq 2){$sample.records[0].unreviewedPrivate='forbidden'}
+        if($scenario -eq 'A11-license' -and $slot -eq 2){$p.sourceLicense='Unlicensed'}
+        if($scenario -eq 'A12' -and $slot -eq 2){$sample.records[0]['unreviewedPrivate']='forbidden'}
         if($scenario -eq 'A14' -and $slot -eq 2){$sample.expectedMatches=@('R118')}
         SaveJson (Join-Path $candidateDir ($name+'.json')) $sample
         SaveJson (Join-Path $candidateDir ($name+'.provenance.json')) $p
+    }
+    if($scenario -eq 'A04') {
+        # Reuse the exact benign slot-0 PCAP bytes and records for benign slot 1,
+        # retaining distinct *sample identifiers*. This isolates the global
+        # (capture hash, frame) replay defense from malicious IP uniqueness.
+        $firstName=[IO.Path]::GetFileNameWithoutExtension([string]$entries[0].file)
+        $secondName=[IO.Path]::GetFileNameWithoutExtension([string]$entries[1].file)
+        $oneSamplePath=Join-Path $candidateDir ($firstName+'.json')
+        $twoSamplePath=Join-Path $candidateDir ($secondName+'.json')
+        $oneProvPath=Join-Path $candidateDir ($firstName+'.provenance.json')
+        $twoProvPath=Join-Path $candidateDir ($secondName+'.provenance.json')
+        $originalSample=Get-Content $oneSamplePath -Raw | ConvertFrom-Json
+        $mutatedSample=Get-Content $twoSamplePath -Raw | ConvertFrom-Json
+        $originalProv=Get-Content $oneProvPath -Raw | ConvertFrom-Json
+        $mutatedProv=Get-Content $twoProvPath -Raw | ConvertFrom-Json
+        Copy-Item -LiteralPath (Join-Path $captureDir 'synthetic-slot-0.pcap') -Destination (Join-Path $captureDir 'synthetic-slot-1.pcap') -Force
+        $mutatedSample.records=$originalSample.records
+        $mutatedProv.captureSha256=$originalProv.captureSha256
+        $mutatedProv.sourceAddress=$originalProv.sourceAddress
+        $mutatedProv.queryRoot=$originalProv.queryRoot
+        $mutatedProv.frameNumbers=$originalProv.frameNumbers
+        SaveJson $twoSamplePath $mutatedSample
+        SaveJson $twoProvPath $mutatedProv
+    }
+    if($scenario -eq 'A09-missing') {
+        Remove-Item -LiteralPath (Join-Path $captureDir 'synthetic-slot-2.pcap') -Force
+    }
+}
+function Get-ExpectedReason([string]$scenario) {
+    # A rejection for an unrelated parser/TShark/fixture error must never
+    # be credited as a successful negative control or security RED.
+    switch ($scenario) {
+        'A01'          { return 'SOURCE_INDEPENDENCE_MIRROR' }
+        'A02'          { return 'SOURCE_SESSION_COLLISION' }
+        'A03'          { return 'SOURCE_ORIGIN_COLLISION' }
+        'A04'          { return 'same original PCAP packet frame reused' }
+        'A06'          { return 'serialized record differs from decoded PCAP' }
+        'A08-qtype'    { return 'serialized record differs from decoded PCAP' }
+        'A08-port'     { return 'serialized record differs from decoded PCAP' }
+        'A09'          { return 'original PCAP SHA-256 mismatch' }
+        'A09-missing'  { return 'original capture missing' }
+        'A10'          { return 'SOURCE_VANTAGE_UNREVIEWED' }
+        'A11'          { return 'incomplete external attribution or label review' }
+        'A11-license'  { return 'incomplete external attribution or label review' }
+        'A12'          { return 'DNS packet record has missing, extra or invalid typed fields' }
+        'A14'          { return 'R102 malicious expected rule/confidence was altered' }
+        'A16-distinct' { return 'R102 malicious encoded-TXT requires three distinct captured TXT' }
+        default        { throw 'Unexpected auditor regression scenario.' }
+    }
+}
+function Assert-PrivateAuditOutput([string]$log) {
+    # Never publish captured records; scan only the temporary private output.
+    foreach($entry in $entries) {
+        $name=[IO.Path]::GetFileNameWithoutExtension([string]$entry.file)
+        $sample=Get-Content -LiteralPath (Join-Path $candidateDir ($name+'.json')) -Raw | ConvertFrom-Json
+        $provenance=Get-Content -LiteralPath (Join-Path $candidateDir ($name+'.provenance.json')) -Raw | ConvertFrom-Json
+        foreach($secret in @([string]$provenance.sourceAddress,'198.51.100.53')) {
+            if(-not [string]::IsNullOrWhiteSpace($secret) -and
+               $log.IndexOf($secret,[StringComparison]::OrdinalIgnoreCase) -ge 0) {
+                throw 'AUDITOR PRIVACY FAIL: raw source/destination address in child output.'
+            }
+        }
+        foreach($record in @($sample.records)) {
+            $secret=[string]$record.dnsQname
+            if(-not [string]::IsNullOrWhiteSpace($secret) -and
+               $log.IndexOf($secret,[StringComparison]::OrdinalIgnoreCase) -ge 0) {
+                throw 'AUDITOR PRIVACY FAIL: reversible DNS name in child output.'
+            }
+        }
     }
 }
 function InvokeAudit([string]$scenario,[bool]$expectReject) {
@@ -111,20 +195,44 @@ function InvokeAudit([string]$scenario,[bool]$expectReject) {
     $output=Join-Path $work 'private-auditor.log'
     & powershell.exe -NoProfile -NonInteractive -File $auditor -CaptureDirectory $captureDir -CandidateDirectory $candidateDir -TsharkPath $TsharkPath *> $output
     $exit=$LASTEXITCODE
+    $log=Get-Content -LiteralPath $output -Raw
+    Assert-PrivateAuditOutput $log
     $rejected=$exit -ne 0
-    # Error and success output must remain local; never print frame or QNAME data.
-    if($rejected -ne $expectReject){
-        throw ('AUDITOR CONTRACT FAIL: '+$scenario+' expectedReject='+$expectReject+' actualRejected='+$rejected+'; private log retained only until cleanup')
+    if($rejected -ne $expectReject) {
+        # No unredacted child output, path, PCAP content or DNS values printed.
+        throw ('AUDITOR CONTRACT FAIL: '+$scenario+' wrong exit category; private log is local and ephemeral.')
     }
-    Write-Host ('AUDITOR CONTRACT: '+$scenario+' observed expected exit category.')
+    if($expectReject) {
+        $expectedReason=Get-ExpectedReason $scenario
+        if($log.IndexOf($expectedReason,[StringComparison]::OrdinalIgnoreCase) -lt 0) {
+            throw ('AUDITOR CONTRACT FAIL: '+$scenario+' rejected for an unexpected reason; do not count as RED or GREEN.')
+        }
+    } else {
+        if($log.IndexOf('SOURCE AUDIT COMPLETE:',[StringComparison]::OrdinalIgnoreCase) -lt 0) {
+            throw ('AUDITOR CONTRACT FAIL: '+$scenario+' exited zero without an attribution-only completion statement.')
+        }
+        # A clean provenance review is NOT a human classification or source
+        # independence decision. No success output may claim promotion/freeze.
+        if($log -match '(?i)\b(approved|promoted|frozen|independence verified)\b') {
+            throw 'AUDITOR CONTRACT FAIL: synthetic attribution misrepresented as approval.'
+        }
+    }
+    Write-Host ('AUDITOR CONTRACT: '+$scenario+' observed expected exit category and reason; private output checked.')
 }
+
 try {
     if(-not (Test-Path -LiteralPath $auditor)) { throw 'Auditor entry point unavailable.' }
     if(-not (Test-Path -LiteralPath $TsharkPath)) { throw 'TShark unavailable; cannot claim expected RED.' }
     # Baseline is an attribution-only control, not a source-label approval.
     InvokeAudit 'BASELINE' $false
-    # A01–A03 are expected RED against legacy IP-only independence checks.
-    foreach($scenario in @('A01','A02','A03','A06','A09','A11','A12','A14')) {
+    # Disjoint sources remain review-only: success is *not* approval.
+    InvokeAudit 'A13' $false
+    # A01/A02/A03/A10 expect new stable privacy-safe reason codes and will
+    # fail under the legacy auditor until its enforcement is implemented.
+    foreach($scenario in @(
+        'A01','A02','A03','A04','A06','A08-qtype','A08-port',
+        'A09','A09-missing','A10','A11','A11-license','A12','A14',
+        'A16-distinct')) {
         InvokeAudit $scenario $true
     }
     Write-Host 'Synthetic auditor regression gate completed. No source approved or holdout frozen.'
