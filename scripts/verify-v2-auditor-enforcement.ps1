@@ -85,10 +85,14 @@ function BuildFixture([string]$scenario) {
             $label=if($malicious){('a' * 54)+([char](98+$slot))+([char](49+$i))}else{'validation'+$slot+$i}
             $names+=($label+'.'+$rootName)
         }
-        if ($scenario -eq 'A01' -and $slot -eq 3) {
+        if ($scenario -in @('A01','A01-case') -and $slot -eq 3) {
             $names=@()
             for($i=0;$i -lt 3;$i++) {
                 $names+=(('a' * 54)+([char](98+2))+([char](49+$i))+'.exfil.example')
+            }
+            if($scenario -eq 'A01-case') {
+                # Deliberately alter frame order, retaining exact membership.
+                $names=@($names[2],$names[0],$names[1])
             }
         }
         # A16: three captured TXT questions remain frame-aligned but include
@@ -98,7 +102,14 @@ function BuildFixture([string]$scenario) {
         }
         $pcapFile='synthetic-slot-'+$slot+'.pcap'
         $pcap=Join-Path $captureDir $pcapFile
-        NewCapture $pcap $names $src $slot
+        # The importer must accept DNS ASCII casing differences without
+        # treating an upper-case captured name as a different logical name.
+        # The legacy auditor itself normalizes tshark's dns.qry.name to lower.
+        $wireNames=[string[]]@($names)
+        if($scenario -eq 'A01-case' -and $slot -eq 3) {
+            $wireNames=[string[]]@($names | ForEach-Object { $_.ToUpperInvariant() })
+        }
+        NewCapture $pcap $wireNames $src $slot
         $hash=(Get-FileHash $pcap -Algorithm SHA256).Hash.ToLowerInvariant()
         $records=@()
         foreach($q in $names) {
@@ -129,9 +140,13 @@ function BuildFixture([string]$scenario) {
         if($scenario -eq 'A08-port' -and $slot -eq 2){$sample.records[0]['sourcePort']=53042}
         if($scenario -eq 'A09' -and $slot -eq 2){$p.captureSha256=('0'*64)}
         if($scenario -eq 'A10' -and $slot -eq 2){$p.collectionVantage='unattributed-proxy'}
+        if($scenario -eq 'A10-origin' -and $slot -eq 2){$p.originatingClientLabel=''}
+        if($scenario -eq 'A10-session' -and $slot -eq 2){$p.collectionSessionId=''}
         if($scenario -eq 'A11' -and $slot -eq 2){$p.analystReviewedLabel=$false}
+        if($scenario -eq 'A11-review-type' -and $slot -eq 2){$p.analystReviewedLabel='yes'}
         if($scenario -eq 'A11-license' -and $slot -eq 2){$p.sourceLicense='Unlicensed'}
         if($scenario -eq 'A12' -and $slot -eq 2){$sample.records[0]['unreviewedPrivate']='forbidden'}
+        if($scenario -eq 'A12-provenance' -and $slot -eq 2){$p.unreviewedImportedDebug='forbidden'}
         if($scenario -eq 'A14' -and $slot -eq 2){$sample.expectedMatches=@('R118')}
         SaveJson (Join-Path $candidateDir ($name+'.json')) $sample
         SaveJson (Join-Path $candidateDir ($name+'.provenance.json')) $p
@@ -168,6 +183,7 @@ function Get-ExpectedReason([string]$scenario) {
     # be credited as a successful negative control or security RED.
     switch ($scenario) {
         'A01'          { return 'SOURCE_INDEPENDENCE_MIRROR' }
+        'A01-case'     { return 'SOURCE_INDEPENDENCE_MIRROR' }
         'A02'          { return 'SOURCE_SESSION_COLLISION' }
         'A03'          { return 'SOURCE_ORIGIN_COLLISION' }
         'A04'          { return 'same original PCAP packet frame reused' }
@@ -177,9 +193,13 @@ function Get-ExpectedReason([string]$scenario) {
         'A09'          { return 'original PCAP SHA-256 mismatch' }
         'A09-missing'  { return 'original capture missing' }
         'A10'          { return 'SOURCE_VANTAGE_UNREVIEWED' }
+        'A10-origin'   { return 'SOURCE_ORIGIN_MISSING' }
+        'A10-session'  { return 'SOURCE_SESSION_MISSING' }
         'A11'          { return 'incomplete external attribution or label review' }
+        'A11-review-type' { return 'SOURCE_REVIEW_FIELD_INVALID' }
         'A11-license'  { return 'incomplete external attribution or label review' }
         'A12'          { return 'DNS packet record has missing, extra or invalid typed fields' }
+        'A12-provenance' { return 'SOURCE_PROVENANCE_SCHEMA_REJECTED' }
         'A14'          { return 'R102 malicious expected rule/confidence was altered' }
         'A16-distinct' { return 'R102 malicious encoded-TXT requires three distinct captured TXT' }
         default        { throw 'Unexpected auditor regression scenario.' }
@@ -246,9 +266,10 @@ try {
     # A01/A02/A03/A10 expect new stable privacy-safe reason codes and will
     # fail under the legacy auditor until its enforcement is implemented.
     foreach($scenario in @(
-        'A01','A02','A03','A04','A06','A08-qtype','A08-port',
-        'A09','A09-missing','A10','A11','A11-license','A12','A14',
-        'A16-distinct')) {
+        'A01','A01-case','A02','A03','A04','A06','A08-qtype','A08-port',
+        'A09','A09-missing','A10','A10-origin','A10-session',
+        'A11','A11-review-type','A11-license','A12','A12-provenance',
+        'A14','A16-distinct')) {
         InvokeAudit $scenario $true
     }
     Write-Host 'Synthetic auditor regression gate completed. No source approved or holdout frozen.'
