@@ -403,3 +403,48 @@ powershell.exe -NoProfile -File .\scripts\verify-v2-two-writer-race-contract.ps1
 ~~~
 
 **Preserved:** Original importer and auditor untouched; single centralized GitHub Actions workflow manual-only; V1 historical FAILED 4/6 remains immutable, V2 PENDING_EXTERNAL_CAPTURE_AND_REVIEW with **0/4** approved R102 samples; rule confidence floors R102 80%, R118 86%, R163 84% and external R102 sample floor 0.75, Shadow/Disabled, baseline, cooldown, journals and privacy requirements unchanged. No branch merge, deletion or PCAP upload. No tests executed.
+
+
+### 2026-10-29 — Stage 7 missing V2 implementation modules authored (NO TEST AUTHORIZATION)
+
+**User directive:** "Complete the missing implementation." Interpreted as permission to edit the exact missing modules and documentation on feature/carthago-reliability-hardening; **NOT** permission to execute test suites or use CARTHAGE. Existing user directive to wait for the exact phrase "now it's test time" remains binding. No test runner, PowerShell parser/command, TShark process, .NET build, PCAP capture/replay, evaluator, CI dispatch or performance measurement was executed.
+
+| Step | Commit | File | Change | Verification |
+| --- | --- | --- | --- | --- |
+| S7-01 | a7bc0dc | scripts/HoldoutV2Provenance.psm1 | Implement strict 30-field provenance v2 schema validation, exact four manifest slots, typed values, capture hash/frame/question cardinality, duplicate evidence and malicious origin/session/source collision, pending-review-only result. | GitHub source authored, untested. |
+| S7-02 | 15d3ea1 | scripts/HoldoutV2Provenance.psm1 | Correct schemaVersion mismatch code to PROV_SCHEMA_VERSION. | Static review only. |
+| S7-03 | 18f69b4 | scripts/HoldoutV2CandidatePublisher.psm1 | Implement private staged eight-file batch publisher reusing S7 validator; bounded private root/name, CreateNew + flush/reread, no-replace same-volume Directory.Move, isolated precommit rollback, postcommit uncertainty. Public wrapper does not expose fault injection. | GitHub source authored, untested. |
+| S7-04 | 2e9a447 | scripts/DnsWirePcap.psm1 | Implement selected original DNS question-byte decoder (compressed/backward pointers; multi-question ordinals; canonical RFC4648 labels), source frame/hash/QTYPE/IP/port binding, and non-approving logical-source independence risk review. | GitHub source authored, no TShark run. |
+| S7-05 | 85e4cbf | scripts/DnsWirePcap.psm1 | Correct original DNS multiple-question array output shape for the ordinal selector. | Static correction only. |
+| S7-06 | 5d199c8 | scripts/HoldoutV2CandidatePublisher.psm1 | Add private path-free Get-HoldoutV2PrivateRecoveryPlan implementing R01–R15 advisory classifications with AutoDeleteAllowed=false, RequiresManualReview=true; no path inputs or filesystem mutations. | GitHub source authored, no recovery execution. |
+| S7-07 | abbe6b0 | scripts/HoldoutV2CandidatePublisher.psm1 | Repair accidental duplicate publisher text inside recovery planner regex introduced during source string replacement. Verified one public wrapper, one planner and one module export by GitHub readback. | Static integrity correction; no PowerShell execution. |
+| S7-08 | f527538 | scripts/DnsWirePcap.psm1 | Sanitize missing capture/resolve/TShark failures into stable private-safe error identifiers. | Static hardening. |
+| S7-09 | 8eb3a35 | docs/STAGE7_V2_SOURCE_MODULE_IMPLEMENTATION_20261029.md | In-depth architecture, public/private API contracts, migration boundaries, stage publication/rollback, source provenance privacy, known test/Windows caveats and future authorization order. | Documentation only. |
+| S7-10 | 3be70ee | scripts/DnsWirePcap.psm1 | Sanitize original-capture SHA-256 reading failures without exposing raw local paths. | Static hardening. |
+
+**Missing-module state changed:** scripts/DnsWirePcap.psm1, scripts/HoldoutV2Provenance.psm1, and scripts/HoldoutV2CandidatePublisher.psm1 **now exist**. They are source implementations, not observed passing code. Publisher also carries the previously missing private recovery planner. No new branch or workflow was created.
+
+**Defined public interfaces:**
+- Read-DnsWireQuestion, Confirm-DnsWireCandidateBinding, Measure-DnsWireMaliciousSourceIndependence;
+- Confirm-HoldoutV2ProvenanceBatch;
+- Publish-HoldoutV2CandidateBatch.
+
+**Private/unexported:** Assert-HoldoutV2BatchName; Invoke-HoldoutV2AtomicPublishCore with test-only OnMilestone; Get-HoldoutV2PrivateRecoveryPlan. Stage 6E/6F parked contracts access these within module scope; public callers cannot pass fault-injection hooks.
+
+**Preserved core functionality:** scripts/import-holdout-v2-r102.ps1 continues to emit legacy private provenance schemaVersion=1 and is **unchanged**. scripts/audit-holdout-v2-candidates.ps1 remains unchanged; its printable-QNAME attribution is NOT upgraded by mere existence of a new binary-wire module. Stage 7 library uses strict private schemaVersion=2, separate from Holdout V2 manifest version 2; explicit opt-in integration is still required. All four external V2 candidates are pending (0/4); private batch publication never approves source rights, attribution, classification or rule promotion.
+
+**Unresolved security/performance caveats:** PowerShell 5.1 syntax and array binding unverified, TShark jsonraw dns_raw and selected-frame port behavior unverified, TCP reassembly/IPv6 support unverified, exact same-volume Windows no-replace Directory.Move races unverified, ACL/reparse race and power-failure durability unverified, provenance license truth and independent logical-client proof require human review, and original source packet compatibility with real PCAP datasets remains untested. The DNS source binder uses selected-question reads per record and may need batched decoding for larger candidate sets. No standalone end-to-end V2 importer cutover was performed.
+
+**Required staged verification upon explicit owner approval:**
+1. Confirm CARTHAGE, checkout SHA, local private scratch path, Windows PowerShell and installed TShark version;
+2. Stage 6H observer-negative H01–H06 (reader sensitivity, no publisher required);
+3. Stage 5/6 original-wire synthetic PCAP/TShark reference contract plus malicious-source review;
+4. Stage 6D two pending-review controls + 24 negative provenance cases;
+5. Stage 6E one complete batch + 17 fault scenarios;
+6. Stage 6F 15 recovery-planner cases and three two-writer races; Stage 6G third-reader visibility 3/6/12 rounds;
+7. Once source modules are GREEN, design a separately reviewed **opt-in** importer/auditor v2 integration preserving legacy v1 and all frozen evidence;
+8. Obtain four human-reviewed external R102 cases; only then calculate precision/recall/F1 against qualified evidence and consider V2 admission.
+
+**Current test state:** NOT EXECUTED, no PASS/FAIL/RED/GREEN. Historic V1 remains FAILED 4/6; V2 remains PENDING_EXTERNAL_CAPTURE_AND_REVIEW, **0/4** external candidates approved. R102 threshold 80%, R118 86%, R163 84%, R102 external acceptance floor 0.75 and all Shadow/Disabled, cooldown, journal, baseline/privacy controls unchanged. The centralized workflow remains manual-only, with no schedule or push/PR trigger.
+
+**Hard boundary:** No automated branch merging, cleaning, dataset modification, original capture upload or customer-facing claim of verified detection quality. The next work is test-based integration under express owner authorization, not another speculative unverified contract series.
