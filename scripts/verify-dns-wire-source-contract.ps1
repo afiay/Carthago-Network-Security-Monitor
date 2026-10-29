@@ -432,6 +432,50 @@ try {
     Assert-Contract (Test-Path -LiteralPath $module -PathType Leaf) 'decoder-not-implemented-red'
     Import-Module -Name $module -Force -ErrorAction Stop
     Assert-Contract ($null -ne (Get-Command Read-DnsWireQuestion -ErrorAction SilentlyContinue)) 'decoder-api-unavailable'
+    # Deterministic module-private regression: prove framing preserves the
+    # original DNS message for both transports and rejects five malformed
+    # length-prefix inputs with exact constant errors. No new exported API.
+    $wireModule=Get-Module -Name DnsWirePcap
+    Assert-Contract ($null -ne $wireModule) 'tcp-framing-module-unavailable'
+    $framingProbe=@(& $wireModule {
+        [byte[]]$minimum=New-Object byte[] 12
+        $minimum[0]=0x12; $minimum[1]=0x34
+        [byte[]]$wrapped=New-Object byte[] 14
+        $wrapped[0]=0; $wrapped[1]=12
+        [Array]::Copy($minimum,0,$wrapped,2,12)
+        [byte[]]$fromTcp=Get-DnsMessageFromTransportRaw -RawBytes $wrapped -Transport 'TCP'
+        [byte[]]$fromUdp=Get-DnsMessageFromTransportRaw -RawBytes $minimum -Transport 'UDP'
+        $valid=([Convert]::ToBase64String($fromTcp) -ceq [Convert]::ToBase64String($minimum) -and
+                [Convert]::ToBase64String($fromUdp) -ceq [Convert]::ToBase64String($minimum))
+        [byte[]]$tooLong=$wrapped.Clone()
+        $tooLong[1]=13
+        [byte[]]$tooShort=$wrapped.Clone()
+        $tooShort[1]=11
+        [byte[]]$trailing=New-Object byte[] 15
+        [Array]::Copy($wrapped,0,$trailing,0,14)
+        $negatives=@(
+            [pscustomobject]@{Bytes=[byte[]]@(0); Expected='DNS_WIRE_TCP_PREFIX_TRUNCATED'}
+            [pscustomobject]@{Bytes=[byte[]]@(0,0); Expected='DNS_WIRE_TCP_LENGTH_MISMATCH'}
+            [pscustomobject]@{Bytes=$tooLong; Expected='DNS_WIRE_TCP_LENGTH_MISMATCH'}
+            [pscustomobject]@{Bytes=$tooShort; Expected='DNS_WIRE_TCP_LENGTH_MISMATCH'}
+            [pscustomobject]@{Bytes=$trailing; Expected='DNS_WIRE_TCP_LENGTH_MISMATCH'}
+        )
+        $rejected=0
+        foreach($negative in $negatives) {
+            $observed='NO_REJECTION'
+            try {
+                $null=Get-DnsMessageFromTransportRaw -RawBytes ([byte[]]$negative.Bytes) -Transport 'TCP'
+            } catch {
+                $observed=[string]$_.Exception.Message
+            }
+            if($observed -ceq [string]$negative.Expected) { $rejected++ }
+        }
+        return [pscustomobject]@{Valid=$valid;Rejected=$rejected}
+    })
+    Assert-Contract ($framingProbe.Count -eq 1 -and
+        [bool]$framingProbe[0].Valid -and
+        [int]$framingProbe[0].Rejected -eq 5) 'tcp-length-negative-regression'
+    Write-Host 'DNS TCP framing: unmodified UDP and exact TCP payload preserved; five invalid length prefixes rejected.'
     Assert-PrivateQuestion $capture $captureHash 1 0 @('QS7/', 'YmFzZQ==') 16 'UDP' $tshark
     Assert-PrivateQuestion $capture $captureHash 2 0 @('YWxwaGE=', 'ZXhhbXBsZQ==') 16 'UDP' $tshark
     Assert-PrivateQuestion $capture $captureHash 2 1 @('YWxwaGE=', 'ZXhhbXBsZQ==') 1 'UDP' $tshark
