@@ -16,10 +16,13 @@ permissions:
 
 concurrency:
   group: dns-wire-codec-focused
-  cancel-in-progress: false
+  # Supersede the previously queued RED run while no test execution is authorized.
+  cancel-in-progress: true
 
 jobs:
   codec-contract:
+    # Parked: no runner allocation or test execution until owner authorization.
+    if: false
     name: xUnit codec contract only
     runs-on: [self-hosted, Windows, X64]
     timeout-minutes: 30
