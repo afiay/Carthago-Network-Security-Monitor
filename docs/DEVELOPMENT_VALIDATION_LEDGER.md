@@ -330,3 +330,36 @@ At test time, verify CARTHAGE hostname, exact commit/schema SHA, Windows PowerSh
 **Preserve governance:** frozen V1 remains historical FAILED 4/6. V2 remains PENDING_EXTERNAL_CAPTURE_AND_REVIEW with **0/4** approved R102 candidates. R102/R118/R163 confidence thresholds 80/86/84%, candidate confidence floor 0.75 and Shadow/Disabled, cooldown, journal, baseline and privacy controls unchanged. No merge, branch deletion, source replacement, production importer or auditor alteration.
 
 **Next development priority:** static audit and prepare a separate reader-visibility / cross-process stress test contract, with no captured source or destructive actions. Before implementing recovery or publisher production modules, observe each current RED on an owner-authorized safe CARTHAGE test window. All newly authored Stage 6F assertions are **PARKED, not validated**.
+
+
+### 2026-10-29 — Stage 6G third-reader visibility and bounded contention stress (PARKED)
+
+**Scope and test authorization:** User said "continue", not "now it's test time." Preserve the previous no-test instruction, the currently active feature/carthago-reliability-hardening branch, frozen V1, pending V2 and one manually gated GitHub Actions workflow. No PowerShell, TShark, PCAP, .NET, replay, self-hosted runner, concurrent job, actual filesystem fault or performance test was run. This is static source authoring, GitHub commit/readback and documentation only.
+
+| Step | Commit | Changed file | Intended improvement | Execution/evidence status |
+| --- | --- | --- | --- | --- |
+| S6G-01 | bb8a458 | scripts/verify-v2-two-writer-race-contract.ps1 | Extend the existing Stage 6F race harness with an **opt-in third reader job** behind the same GO barrier; inspect only the final safe batch directory, never pending scratch, and require absent or complete eight-JSON-file views. Reader checks names, classifications, provenance schema v2 and pending-review state; returns metadata-only counters and independent PID. | Source authored; no workers launched, no observed visibility result. |
+| S6G-02 | 2dccb79 | scripts/verify-v2-two-writer-race-contract.ps1 | Serialize expected sample-name array as one JSON positional argument to avoid Start-Job array-binding ambiguity; distinguish visible incomplete snapshots from JSON read/IO errors. | Static correction only; Windows PowerShell 5.1 compatibility not executed. |
+| S6G-03 | 6af2424 | scripts/verify-v2-two-writer-race-contract.ps1 | Add explicit ReaderStressRounds (3–12, default 6 only if IncludeReaderVisibility); keep original Stage 6F default at three two-writer rounds when the switch is absent. Check final inventory dynamically for N complete batches plus the unrelated sentinel. | Static design; no performance or race stress executed. |
+| S6G-04 | 815a064 | docs/STAGE6G_CONCURRENT_READER_VISIBILITY_20261029.md | In-depth lifecycle, exact Absent/Complete/Partial/IoErrors conditions, process isolation, privacy rules, status/error matrix, bounded stress, known sampled-polling blind spots, future deterministic negative probe and authorisation. | Documentation committed; zero passing/failing test results. |
+| S6G-05 | 79186ad | docs/STAGE6F_CONCURRENT_V2_PUBLICATION_AND_RECOVERY_20261029.md | Cross-reference and distinguish Stage 6G third-reader visibility from Stage 6F writer race and recovery-planner results; preserve original runner/test boundary. | Documentation committed only. |
+
+**Prepared verification:** With explicit future permission, invoking the existing two-writer source with -IncludeReaderVisibility starts a **third separate reader worker per round**, after a reader-ready barrier, with bounded polling. The future reader must never see a final directory with missing/extra files, malformed or inaccessible JSON, wrong sample/provenance cross-references, unsupported schemaVersion or a falsely approved reviewState. Parent requires exactly one WIN, one TARGET_EXISTS, one READER_DONE, distinct PIDs, at least one legitimate absent and complete view, zero partial/read errors, and intact full batch contents. All observer outputs are numeric counts or constant codes only.
+
+**Stress limit:** If IncludeReaderVisibility is omitted, remain exactly three two-writer rounds. With it, default six writer-writer-reader rounds, with explicit bound 3..12. The prepared 12-round configuration would plan **24 writer jobs + 12 reader jobs**, run sequentially by round rather than as one unbounded concurrent swarm. These are authored counts, not executions.
+
+**Known false-negative limitation:** A 4 ms polling loop cannot prove that partial visibility never occurs in shorter intervals. No deterministic broken-publisher/partial-final negative control has been implemented. Do not label GREEN until the controlled negative probe demonstrates the reader detects incomplete final JSON. No-replace rename semantics, NTFS power-loss durability, symlink races, ACL fault tolerance, crash recovery and genuine source licensing/malicious-label review remain separate and untested.
+
+**Safety isolation:** Continue to use manifest-specified four R102 placeholder names and documentation-only IPs; random ignored build-verify test root, fixed safe batch basenames, no packet capture or network contact, unique sentinel SHA and only owned test cleanup. Existing reader/writer helpers remain test-only; no production module, workflow profile or public fault-injection option was added. Any future test failure due to broken ready/go job synchronization, PowerShell serialization or a missing publisher module is setup RED/FAIL, *not evidence of a validated security defect*.
+
+**Parked syntax, not approval:**
+
+~~~powershell
+powershell.exe -NoProfile -File .\scripts\verify-v2-two-writer-race-contract.ps1 -AuthorizedTestTime -IncludeReaderVisibility -ReaderStressRounds 3
+# Later, only if specifically approved and successful:
+powershell.exe -NoProfile -File .\scripts\verify-v2-two-writer-race-contract.ps1 -AuthorizedTestTime -IncludeReaderVisibility -ReaderStressRounds 12
+~~~
+
+**Next gating order:** Stage 6D pure provenance RED→GREEN; Stage 6E transactional publisher RED→GREEN; Stage 6F initial writer race and recovery RED→GREEN; controlled reader negative probe; then Stage 6G opt-in 3/6/12 rounds. Human review and four-slot V2 admission remain pending. Current Holdout V2: PENDING_EXTERNAL_CAPTURE_AND_REVIEW, **0/4 approved**. Frozen V1 historical FAILED 4/6, R102/R118/R163 confidence 80/86/84% and candidate floor 0.75 unchanged.
+
+**Do not infer PASS/RED/GREEN or detection precision/recall/F1 from the code committed in this step.**
