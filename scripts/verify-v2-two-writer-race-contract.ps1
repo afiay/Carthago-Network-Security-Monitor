@@ -372,6 +372,136 @@ function Invoke-ContentionRound([string]$OwnedRoot,[string]$Name,
     }
 }
 
+
+function Wait-ForPrivateReaderMarker([string]$Path,[object]$Reader,[string]$Reason) {
+    $watch=[Diagnostics.Stopwatch]::StartNew()
+    while($watch.Elapsed.TotalSeconds -lt 12) {
+        if(Test-Path -LiteralPath $Path -PathType Leaf) { return }
+        if($Reader.State -in @('Failed','Stopped','Completed')) {
+            throw ('STAGE6H_NEGATIVE_CONTRACT: '+$Reason+'-reader-exited-early')
+        }
+        Start-Sleep -Milliseconds 20
+    }
+    throw ('STAGE6H_NEGATIVE_CONTRACT: '+$Reason+'-marker-timeout')
+}
+
+function Write-PrivateNegativeFixture(
+    [string]$Stage,[object[]]$Pairs,[string]$Fault
+) {
+    # Create only a new stage owned by the current synthetic test.
+    Assert-Contract (-not (Test-Path -LiteralPath $Stage)) 'probe-stage-collision'
+    [void](New-Item -Path $Stage -ItemType Directory -ErrorAction Stop)
+    if($Fault -ceq 'EMPTY') { return }
+    for($i=0;$i -lt $Pairs.Count;$i++) {
+        $pair=$Pairs[$i]
+        $name=[string]$pair.Provenance.sample
+        $sample=ConvertFrom-Json -InputObject (ConvertTo-Json -InputObject $pair.Sample -Depth 24)
+        $prov=ConvertFrom-Json -InputObject (ConvertTo-Json -InputObject $pair.Provenance -Depth 24)
+        if($Fault -ceq 'CLASSIFICATION_MISMATCH' -and $i -eq 1) {
+            $sample.classification='Malicious'
+        }
+        if($Fault -ceq 'FALSE_APPROVAL' -and $i -eq 2) {
+            $prov.reviewState='APPROVED'
+        }
+        $sampleData=ConvertTo-Json -InputObject $sample -Depth 24
+        if($Fault -ceq 'MALFORMED_JSON' -and $i -eq 1) {
+            $sampleData='{ "name": "not-closed" '
+        }
+        [IO.File]::WriteAllText((Join-Path $Stage ($name+'.json')),
+            $sampleData,[Text.UTF8Encoding]::new($false))
+        if($Fault -ceq 'MISSING_SIDECAR' -and $i -eq 3) { continue }
+        [IO.File]::WriteAllText((Join-Path $Stage ($name+'.provenance.json')),
+            (ConvertTo-Json -InputObject $prov -Depth 24),[Text.UTF8Encoding]::new($false))
+    }
+    if($Fault -ceq 'EXTRA_FILE') {
+        [IO.File]::WriteAllText((Join-Path $Stage 'unexpected.debug.txt'),
+            'SYNTHETIC_ONLY',[Text.Encoding]::ASCII)
+    }
+}
+
+function Invoke-ReaderNegativeCase(
+    [string]$OwnedRoot,[object[]]$Pairs,[string]$Id,
+    [string]$Fault,[string]$ExpectedSignal
+) {
+    # Inject invalid, already-staged content with one same-volume move.
+    # Never invoke the real publisher or touch a non-owned destination.
+    $name='negative-'+$Id
+    $target=Join-Path $OwnedRoot $name
+    $stage=Join-Path $OwnedRoot ('.pending-probe-'+$Id)
+    $ready=Join-Path $OwnedRoot ($name+'.ready')
+    $go=Join-Path $OwnedRoot ($name+'.go')
+    $stop=Join-Path $OwnedRoot ($name+'.stop')
+    $absenceProof=Join-Path $OwnedRoot ($name+'.absent')
+    $failureProof=Join-Path $OwnedRoot ($name+'.failure')
+    foreach($x in @($target,$stage,$ready,$go,$stop,$absenceProof,$failureProof)) {
+        Assert-Contract (-not (Test-Path -LiteralPath $x)) 'probe-artifact-collision'
+    }
+    $names=[string[]]@($Pairs | ForEach-Object { [string]$_.Provenance.sample })
+    $namesJson=ConvertTo-Json -InputObject $names -Compress
+    $reader=$null
+    try {
+        $reader=Start-Job -ScriptBlock $script:PrivateBatchReaderJob -ArgumentList @(
+            $target,$ready,$go,$stop,$namesJson,$absenceProof,$failureProof)
+        Wait-ForPrivateReaderMarker $ready $reader 'ready'
+        [IO.File]::WriteAllText($go,'GO',[Text.Encoding]::ASCII)
+        # Evidence of a real absent poll after GO, not a guessed delay.
+        Wait-ForPrivateReaderMarker $absenceProof $reader 'absent'
+        Write-PrivateNegativeFixture $stage $Pairs $Fault
+        Assert-Contract (-not (Test-Path -LiteralPath $target)) 'probe-target-not-absent'
+        [IO.Directory]::Move($stage,$target)
+        Wait-ForPrivateReaderMarker $failureProof $reader 'fault'
+        $observed=[IO.File]::ReadAllText($failureProof,[Text.Encoding]::ASCII)
+        Assert-Contract ($observed -ceq $ExpectedSignal) 'negative-wrong-fault-signal'
+        [IO.File]::WriteAllText($stop,'STOP',[Text.Encoding]::ASCII)
+        $finished=@(Wait-Job -Job $reader -Timeout 15)
+        Assert-Contract ($finished.Count -eq 1) 'negative-reader-join-timeout'
+        $messages=@(Receive-Job -Job $reader -ErrorAction Stop)
+        Assert-Contract ($messages.Count -eq 1 -and
+            $messages[0] -is [pscustomobject]) 'negative-reader-output-shape'
+        $result=$messages[0]
+        $allowed=@('Code','ProcessId','Polls','Absent','Complete','Partial','IoErrors')
+        $actual=@($result.PSObject.Properties.Name)
+        Assert-Contract ($actual.Count -eq $allowed.Count -and
+            @(Compare-Object ($actual | Sort-Object) ($allowed | Sort-Object)).Count -eq 0) 'negative-leaked-output-fields'
+        Assert-Contract ([string]$result.Code -ceq 'READER_DONE' -and
+            [int]$result.ProcessId -ne $PID) 'negative-reader-wrong-process'
+        Assert-Contract ([int]$result.Absent -ge 1 -and
+            [int]$result.Complete -eq 0 -and
+            [int]$result.Polls -ge 2) 'negative-insufficient-observation'
+        if($ExpectedSignal -ceq 'PARTIAL') {
+            Assert-Contract ([int]$result.Partial -ge 1 -and
+                [int]$result.IoErrors -eq 0) 'negative-partial-undetected'
+        } else {
+            Assert-Contract ([int]$result.IoErrors -ge 1 -and
+                [int]$result.Partial -eq 0) 'negative-malformed-undetected'
+        }
+        Write-Host ('STAGE6H '+$Id+': synthetic '+$ExpectedSignal+' detected.')
+    } finally {
+        # Stop only the owned reader job and clean only the known generated
+        # files. Fail closed if any created path is redirected.
+        if($null -ne $reader) {
+            if($reader.State -in @('Running','NotStarted')) {
+                Stop-Job -Job $reader -ErrorAction SilentlyContinue
+            }
+            Remove-Job -Job $reader -Force -ErrorAction SilentlyContinue
+        }
+        foreach($folder in @($stage,$target)) {
+            if(Test-Path -LiteralPath $folder -PathType Container) {
+                Assert-NoReparseInOwnedTree $folder
+                Remove-Item -LiteralPath $folder -Recurse -Force -ErrorAction Stop
+            }
+        }
+        foreach($marker in @($ready,$go,$stop,$absenceProof,$failureProof)) {
+            if(Test-Path -LiteralPath $marker -PathType Leaf) {
+                $item=Get-Item -LiteralPath $marker -Force
+                Assert-Contract (-not (($item.Attributes -band
+                    [IO.FileAttributes]::ReparsePoint) -ne 0)) 'probe-marker-reparse-point'
+                Remove-Item -LiteralPath $marker -Force -ErrorAction Stop
+            }
+        }
+    }
+}
+
 $repository=(Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $modulePath=Join-Path $PSScriptRoot 'HoldoutV2CandidatePublisher.psm1'
 # A standalone observer-negative control needs no publisher module. It must
