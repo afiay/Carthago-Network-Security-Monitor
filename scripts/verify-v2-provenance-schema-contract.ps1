@@ -13,7 +13,18 @@ function Assert-Contract([bool]$Condition,[string]$Code) {
     if (-not $Condition) { throw ('V2 private provenance contract: '+$Code) }
 }
 function Clone-Candidates([object]$value) {
-    return ,@(ConvertFrom-Json -InputObject (ConvertTo-Json -InputObject $value -Depth 24))
+    # ConvertFrom-Json emits arrays differently between Windows PowerShell
+    # and newer PowerShell. Assign first, then preserve ONE flat array of
+    # four PSCustomObject candidates as the function's single output value.
+    $json = ConvertTo-Json -InputObject $value -Depth 24
+    $decoded = ConvertFrom-Json -InputObject $json
+    $items = [object[]]$decoded
+    Assert-Contract ($items.Count -eq 4) 'fixture-clone-cardinality'
+    foreach($item in $items) {
+        Assert-Contract ($null -ne $item -and
+            $null -ne $item.PSObject.Properties['sample']) 'fixture-clone-item-shape'
+    }
+    return ,$items
 }
 function New-SyntheticCandidates([object[]]$Slots) {
     $result=[Collections.Generic.List[object]]::new()
@@ -117,6 +128,7 @@ Import-Module -Name $module -Force -ErrorAction Stop
 Assert-Contract ($null -ne (Get-Command Confirm-HoldoutV2ProvenanceBatch -ErrorAction SilentlyContinue)) 'provenance-validator-api-not-implemented-red'
 
 $reference=New-SyntheticCandidates $slots
+Assert-Contract ($reference.Count -eq 4) 'fixture-reference-cardinality'
 # Schema-valid, still unapproved, containing deliberately unreviewed fields.
 Assert-MinimalResult (Clone-Candidates $reference) $schema
 # A repeated frame with a *different* DNS question ordinal is structurally
