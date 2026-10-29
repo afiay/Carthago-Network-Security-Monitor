@@ -128,6 +128,43 @@ public sealed class SyntheticHoldoutV2ContractTests
     }
 
     [Fact]
+    public void V2_packet_audit_rejects_unattributed_or_injected_fixture_fields()
+    {
+        // Structural safety assertion only; original PCAPs are separately
+        // required for an actual TShark-backed source audit.
+        var audit = File.ReadAllText(Path.Combine(Root, "scripts",
+            "audit-holdout-v2-candidates.ps1"));
+        Assert.Contains("Get-FileHash -LiteralPath $pcap -Algorithm SHA256", audit);
+        Assert.Contains("'frame.number'", audit);
+        Assert.Contains("'udp.srcport'", audit);
+        Assert.Contains("'tcp.srcport'", audit);
+        Assert.Contains("Compare-Object -ReferenceObject ($allowedRecordFields", audit);
+        Assert.Contains("Compare-Object -ReferenceObject ($allowedSampleFields", audit);
+        Assert.Contains("ambiguous transport", audit, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("same original PCAP packet frame reused", audit);
+        Assert.Contains("$record.isUdp -ne $udp", audit);
+        Assert.Contains("$record.isTcp -ne $tcp", audit);
+        Assert.Contains("$maliciousSources.Add", audit);
+    }
+
+    [Fact]
+    public void V2_readiness_reports_pending_sources_without_automatically_freezing()
+    {
+        var readiness = File.ReadAllText(Path.Combine(Root, "scripts",
+            "inspect-holdout-v2-readiness.ps1"));
+        Assert.Contains("PENDING CAPTURE/PROVENANCE", readiness);
+        Assert.Contains("PACKET FIELDS AUDITED - MANUAL LABEL/RIGHTS/PRIVACY REVIEW", readiness);
+        Assert.Contains("audit-holdout-v2-candidates.ps1", readiness);
+        Assert.DoesNotContain("freeze-holdout-v2.ps1", readiness);
+
+        var evaluator = File.ReadAllText(Path.Combine(Root, "scripts",
+            "evaluate-holdout-v2.ps1"));
+        Assert.Contains("PENDING_EXTERNAL_CAPTURE_AND_REVIEW", readiness);
+        Assert.Contains("FROZEN_V2_SYNTHETIC", evaluator);
+        Assert.Contains("inspect-replay-input-telemetry.ps1", evaluator);
+    }
+
+    [Fact]
     public void Full_verification_defaults_to_v1_and_requires_explicit_v2_opt_in()
     {
         var script = File.ReadAllText(Path.Combine(Root,
