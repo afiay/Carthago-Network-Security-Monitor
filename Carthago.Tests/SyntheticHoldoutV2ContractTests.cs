@@ -128,6 +128,32 @@ public sealed class SyntheticHoldoutV2ContractTests
     }
 
     [Fact]
+    public void Source_inspection_reports_exclusive_rejection_reasons_and_private_length_histograms()
+    {
+        // Prevent future source triage from collapsing missing transport,
+        // bad DNS names and frame duplication into an opaque skip count.
+        // This is a structural assertion; the true capture must still
+        // be decoded on CARTHAGE, and no detector thresholds are changed.
+        var inspector = File.ReadAllText(Path.Combine(Root, "scripts",
+            "inspect-holdout-v2-pcap.ps1"));
+        Assert.Contains("skippedFrameReasonCounts=$skipReasons", inspector);
+        Assert.Contains("excludedByOptionalRootFilter=$excludedByOptionalRootFilter", inspector);
+        Assert.Contains("distinctTxtNamesByLongestLabelLength=$distinctLengthHistogram", inspector);
+        Assert.Contains("txtLongestLabelLengthHistogram=$lengthHistogram", inspector);
+        Assert.Contains("repeatedFrameNumber", inspector);
+        Assert.Contains("missingOrConflictingTransport", inspector);
+        Assert.Contains("invalidQuestionName", inspector);
+        Assert.Contains("invalidLabelLength", inspector);
+        Assert.Contains("if ($reasonCount -ne $skipped)", inspector);
+        Assert.Contains("'46-49'", inspector);
+        Assert.Contains("'50-53'", inspector);
+        Assert.Contains("'54-57'", inspector);
+        Assert.Contains("Raw QNAMEs are not exported", inspector);
+        Assert.DoesNotContain("ShowSourceAddresses=$true", inspector);
+        Assert.DoesNotContain("ShowDnsRoots=$true", inspector);
+    }
+
+    [Fact]
     public void V2_packet_audit_rejects_unattributed_or_injected_fixture_fields()
     {
         // Structural safety assertion only; original PCAPs are separately
