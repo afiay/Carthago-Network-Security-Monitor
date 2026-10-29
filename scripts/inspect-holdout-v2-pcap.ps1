@@ -38,23 +38,48 @@ $types=@{'1'='A';'28'='AAAA';'16'='TXT';'5'='CNAME';'15'='MX';'12'='PTR';'2'='NS
 $groups=@{}
 $seenFrames=[System.Collections.Generic.HashSet[int]]::new()
 $skipped=0
+# Mutually exclusive first-rejection reasons; these counts must sum to
+# skippedOrInvalidFrames. They explain input suitability only.
+$skipReasons=[ordered]@{
+    malformedRowOrFrame=0
+    repeatedFrameNumber=0
+    missingSourceOrDestination=0
+    missingOrConflictingTransport=0
+    unsupportedDnsQuestionType=0
+    invalidQuestionName=0
+    invalidLabelLength=0
+}
+$excludedByOptionalRootFilter=0
 foreach ($row in $rows) {
-    if ($row -isnot [string]) { $skipped++; continue }
+    if ($row -isnot [string]) {
+        $skipped++; $skipReasons.malformedRowOrFrame++; continue
+    }
     $c=$row.Split('|')
-    if ($c.Length -ne 11 -or $c[0] -notmatch '^[0-9]+$') { $skipped++; continue }
+    if ($c.Length -ne 11 -or $c[0] -notmatch '^[0-9]{1,9}$') {
+        $skipped++; $skipReasons.malformedRowOrFrame++; continue
+    }
     $frame=[int]$c[0]
-    if (-not $seenFrames.Add($frame)) { $skipped++; continue }
+    if (-not $seenFrames.Add($frame)) {
+        $skipped++; $skipReasons.repeatedFrameNumber++; continue
+    }
     $src=$c[1].Trim(); $dst=$c[2].Trim()
     if (-not $src -or -not $dst) { $src=$c[3].Trim(); $dst=$c[4].Trim() }
     $udp=$c[5].Length -gt 0 -and $c[6] -eq '53'
     $tcp=$c[7].Length -gt 0 -and $c[8] -eq '53'
     $qname=$c[9].Trim().TrimEnd('.').ToLowerInvariant()
     $type=$c[10].Trim()
-    if (-not $src -or -not $dst -or $udp -eq $tcp -or
-        -not $types.ContainsKey($type) -or
-        $qname.Length -gt 253 -or
+    if (-not $src -or -not $dst) {
+        $skipped++; $skipReasons.missingSourceOrDestination++; continue
+    }
+    if ($udp -eq $tcp) {
+        $skipped++; $skipReasons.missingOrConflictingTransport++; continue
+    }
+    if (-not $types.ContainsKey($type)) {
+        $skipped++; $skipReasons.unsupportedDnsQuestionType++; continue
+    }
+    if ($qname.Length -gt 253 -or
         $qname -notmatch '^[a-z0-9_-]+(?:\.[a-z0-9_-]+)+$') {
-        $skipped++; continue
+        $skipped++; $skipReasons.invalidQuestionName++; continue
     }
     $labels=$qname.Split('.')
     foreach ($label in $labels) {
@@ -62,11 +87,14 @@ foreach ($row in $rows) {
             $qname=''; break
         }
     }
-    if (-not $qname) { $skipped++; continue }
+    if (-not $qname) {
+        $skipped++; $skipReasons.invalidLabelLength++; continue
+    }
     $suffix=$domain
     if ($suffix.Length -gt 0) {
         if (-not ($qname -eq $suffix -or
                   $qname.EndsWith('.'+$suffix,[StringComparison]::Ordinal))) {
+            $excludedByOptionalRootFilter++
             continue
         }
     } else {
@@ -93,6 +121,34 @@ foreach ($key in @($groups.Keys | Sort-Object)) {
     $encoded=@($txt | Where-Object { $_.LongestLabelLength -ge 50 })
     $distinctTxt=@($txt | Select-Object -ExpandProperty Qname -Unique).Count
     $distinctEncoded=@($encoded | Select-Object -ExpandProperty Qname -Unique).Count
+    # R102 uses 50 as its current default label threshold, but 46 and 54
+    # are also relevant for shape/corroboration. Histogram is purely
+    # descriptive and never changes importer/freeze acceptance.
+    $lengthBuckets=@('0-19','20-39','40-45','46-49',
+                     '50-53','54-57','58-63')
+    $lengthHistogram=[ordered]@{}
+    $distinctByLength=[ordered]@{}
+    foreach ($bucket in $lengthBuckets) {
+        $lengthHistogram[$bucket]=0
+        $distinctByLength[$bucket]=[System.Collections.Generic.HashSet[string]]::new(
+            [StringComparer]::Ordinal)
+    }
+    foreach ($observation in $txt) {
+        $length=[int]$observation.LongestLabelLength
+        $bucket=if ($length -lt 20) { '0-19' }
+            elseif ($length -lt 40) { '20-39' }
+            elseif ($length -lt 46) { '40-45' }
+            elseif ($length -lt 50) { '46-49' }
+            elseif ($length -lt 54) { '50-53' }
+            elseif ($length -lt 58) { '54-57' }
+            else { '58-63' }
+        $lengthHistogram[$bucket]++
+        [void]$distinctByLength[$bucket].Add([string]$observation.Qname)
+    }
+    $distinctLengthHistogram=[ordered]@{}
+    foreach ($bucket in $lengthBuckets) {
+        $distinctLengthHistogram[$bucket]=$distinctByLength[$bucket].Count
+    }
     $clientLabel='Client-'+('{0:000}' -f $ordinal)
     $profile=[ordered]@{
         client=$clientLabel
@@ -107,10 +163,17 @@ foreach ($key in @($groups.Keys | Sort-Object)) {
         udpCount=@($observations | Where-Object { $_.Udp }).Count
         tcpCount=@($observations | Where-Object { $_.Tcp }).Count
         maximumDnsLabelLength=@($observations | Measure-Object -Property LongestLabelLength -Maximum)[0].Maximum
+        txtLongestLabelLengthHistogram=$lengthHistogram
+        distinctTxtNamesByLongestLabelLength=$distinctLengthHistogram
         meetsBasicThreeDistinctLongTxtShape=($distinctEncoded -ge 3)
     }
     if ($ShowSourceAddresses) { $profile.sourceAddress=$observations[0].Source }
     $profiles.Add($profile)
+}
+$reasonCount=0
+foreach ($reason in $skipReasons.Keys) { $reasonCount+=[int]$skipReasons[$reason] }
+if ($reasonCount -ne $skipped) {
+    throw 'Internal inspector accounting error: skipped rows and rejection categories differ.'
 }
 $dir=[IO.Path]::GetFullPath((Join-Path $root $OutputDirectory))
 $privateRoot=[IO.Path]::GetFullPath((Join-Path $root 'build-verify'))
@@ -133,6 +196,8 @@ $summary=[ordered]@{
     rawDnsRootsIncluded=[bool]$ShowDnsRoots
     distinctSourceRootGroups=$profiles.Count
     skippedOrInvalidFrames=$skipped
+    skippedFrameReasonCounts=$skipReasons
+    excludedByOptionalRootFilter=$excludedByOptionalRootFilter
     groups=@($profiles.ToArray())
     candidateSuitabilityOnly=$true
     independentMaliciousLabelsVerified=$false
@@ -142,7 +207,14 @@ $summary=[ordered]@{
     (($summary | ConvertTo-Json -Depth 15)+[Environment]::NewLine),
     [Text.UTF8Encoding]::new($false))
 Write-Host ("Source inspection: {0} DNS source/root group(s), {1} skipped/invalid frame(s)." -f $profiles.Count,$skipped)
+Write-Host ("Skip reasons (exclusive): {0}" -f (($skipReasons.Keys | ForEach-Object { "$_=$($skipReasons[$_])" }) -join '; '))
 Write-Host ("Groups with >=3 distinct long TXT QNAMEs: {0}" -f @($profiles | Where-Object { $_.meetsBasicThreeDistinctLongTxtShape }).Count)
+foreach ($profile in $profiles) {
+    $lengthSummary=($lengthBuckets | ForEach-Object {
+        "$_=$($profile.distinctTxtNamesByLongestLabelLength[$_])"
+    }) -join '; '
+    Write-Host ("{0} distinct TXT names by longest label: {1}" -f $profile.client,$lengthSummary)
+}
 Write-Host "Privacy-conscious local report: $destination"
 Write-Host 'Raw QNAMEs are not exported; source IPs and DNS roots are hidden unless explicitly requested.'
 Write-Host "At most $MaximumPacketsToScan input packets were scanned; this is not a whole-capture coverage claim."
