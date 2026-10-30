@@ -13,12 +13,13 @@ authored regression tests, batch specification and ledger update together.
 Distinguish authored tests from executed test evidence and a detector match
 from a validated operational alert.
 
-**Latest documented batch:** [R451–R460](RULE_BATCH_451-460.md) — SOURCE
-CANDIDATE — UNVERIFIED; 180 authored xUnit invocations, 0 executed.
-Source commit `7f94a2e37c53981cb71d5e927b99c9638c316db3`; authored-test commit `95f4be3099c80e25efbef50e85f289919d7d3066`.
-Atomic publication is the documentation-descendant commit at the live branch
-ref; a Git commit cannot embed its own SHA. Next contiguous development
-GA is R461–R470, subject to fresh live HEAD/source inspection.
+**Latest documented batch:** [R461–R470](RULE_BATCH_461-470.md) — SOURCE
+CANDIDATE — UNVERIFIED; all ten BLOCKED on missing trusted DHCP, ARP,
+SLAAC, controller, ADB, gateway and MDM provenance. **190 authored xUnit
+invocations, 0 executed.** Source commit `bfe817ee7a3b0e24a7dbd6c255f27187b8905c9d`; authored-test
+commit `2cd4ba6eace2d4242e34f453bc1603cdec27a0bd`. Atomic publication is the documentation-descendant
+commit at the live branch ref (a commit cannot embed its own SHA). Next
+contiguous development GA: **R471–R480**, after fresh live inspection.
 The 2026-10-30 author-only branch rewrite replaced historical HEAD
 `a7166038cd947339d9671d7a873babbd00db080a` with
 `4dd73f3f6de2c0c6b9a6fd299d0c306ebcc3a9cc`; historical commit
@@ -1066,3 +1067,28 @@ service boundary helper, new test file, this batch doc and progress ledger.
 - Source `7f94a2e37c53981cb71d5e927b99c9638c316db3`; authored tests `95f4be3099c80e25efbef50e85f289919d7d3066`; [batch specification](RULE_BATCH_451-460.md). Publication commit is the documentation commit at the branch HEAD when the atomic expected-HEAD update succeeds; the run report records its exact SHA.
 - **180 xUnit invocations authored, 0 executed; SOURCE CANDIDATE — UNVERIFIED.** No build, test, replay, CI, runner or capture was run. Original thresholds, modes, confidence floors, privacy, approvals and historical holdout evidence preserved.
 - Next independent ten-rule GA: **R461–R470**, after live HEAD inspection.
+
+## GA R461–R470 — network-control and wireless provenance boundary (2026-10-30)
+
+**SOURCE CANDIDATE — UNVERIFIED.** Live base HEAD
+`d061bdb276629917f1e63c83507f2af8f27f3b47` (UI GA UI-11 already published);
+source commit `bfe817ee7a3b0e24a7dbd6c255f27187b8905c9d`; authored-test commit `2cd4ba6eace2d4242e34f453bc1603cdec27a0bd`.
+Atomic publication is the documentation-descendant branch HEAD after the
+single non-forced expected-HEAD ref update; its SHA cannot be embedded in
+its own commit. See [R461–R470 batch specification](RULE_BATCH_461-470.md).
+
+**R461, R462, R463, R464, R465, R466, R467, R468, R469, R470:
+all BLOCKED.** Missing trusted DHCP lease/server outcomes, ARP binding
+history and storm baselines, IPv6 RA prefix transitions, Wi-Fi/CAPWAP
+controller authorization, Bluetooth gateway inventory, ADB handshake and
+MDM enrollment audit. Existing local discovery guard fails closed before
+generic scoring, burst/cooldown mutation or alert emission. Original Alert
+modes, 76% confidence, thresholds (R463/R470=4), 5m windows, 20m
+cooldowns, approvals, privacy, journal and frozen evidence unchanged.
+
+**190 concrete xUnit invocations AUTHORED; ZERO EXECUTED.** No build,
+test, replay, holdout, CI, runner, benchmark or production capture.
+Historical 4,940/4,940 and frozen R102 evidence are not reinterpreted.
+Only detection-owned helper, new authored test, this batch doc and ledger
+changed. UI files untouched. Next contiguous GA **R471–R480**,
+conditional on live HEAD inspection.
