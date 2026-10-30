@@ -55,6 +55,12 @@ namespace Carthago.Engine.Rules.Expansion
         public R374_AWSIAMAccessKeyInURLRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            var rejection = CloudRequestPrecisionEvidence.Reject(context.Record, context.TimestampUtc, "R374");
+            if (rejection != null)
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence, rejection,
+                    "Rule-specific packet or authenticated audit evidence is unavailable.");
+            return EvaluateSpec(context, Spec);
+        }
     }
 }

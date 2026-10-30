@@ -86,7 +86,7 @@ namespace Carthago.Engine.Rules.Expansion
                 && !string.IsNullOrWhiteSpace(parts[^1]);
         }
 
-        private static string? ObserveUnique(TrafficRecord r, DateTime at, string id)
+        internal static string? ObserveUnique(TrafficRecord r, DateTime at, string id)
         {
             if (r.Id == Guid.Empty || string.IsNullOrWhiteSpace(r.Source) || string.IsNullOrWhiteSpace(r.Destination))
                 return "DEVOPS_BURST_ATTRIBUTION_MISSING";

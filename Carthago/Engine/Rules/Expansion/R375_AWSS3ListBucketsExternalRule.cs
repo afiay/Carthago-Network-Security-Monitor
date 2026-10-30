@@ -29,13 +29,13 @@ namespace Carthago.Engine.Rules.Expansion
             PositiveConditions = new[] { "AWS S3 ListBuckets External requires observable CloudInfrastructure telemetry and will not match descriptor text alone.", "Source and destination, host, process, protocol, path, port, or payload evidence must be present.", "The configured signal count and time-window threshold must be satisfied before a DetectionEvent is emitted." },
             NegativeConditions = new[] { "Do not match on product names, rule names, documentation text, or generic banners alone.", "Do not match when source/destination context is absent or when the traffic is inside an approved management path.", "Do not match known monitoring, backup, CI/CD, inventory, scanner, or administrative workflows unless rule-specific high-risk evidence remains." },
             FalsePositives = new[] { "Approved infrastructure automation, CI/CD deploy jobs, cloud inventory tools, or cloud security scanners may perform similar API actions; approve known service accounts and management hosts." },
-            TextIndicators = new[] { "aws s3 listbuckets external", "aws", "list", "buckets", "amazonaws", "sts", "iam", "s3", "ec2", "lambda", "cloudtrail", "guardduty" },
-            HostIndicators = new[] { "amazonaws.com", "aws.amazon.com", "s3.amazonaws.com", "s3.", ".s3." },
-            PathIndicators = new[] { "listbuckets", "?list-type=2", "/" },
-            ProcessIndicators = new[] { "aws", "aws.exe", "az", "az.exe", "gcloud", "gsutil", "terraform", "cloudflared", "ngrok", "tailscale", "zerotier-one" },
+            TextIndicators = Array.Empty<string>(),
+            HostIndicators = new[] { "s3.amazonaws.com" },
+            PathIndicators = Array.Empty<string>(),
+            ProcessIndicators = Array.Empty<string>(),
             ProtocolIndicators = Array.Empty<string>(),
-            Methods = new[] { "get", "post" },
-            TokenKinds = new[] { "aws" },
+            Methods = new[] { "get" },
+            TokenKinds = Array.Empty<string>(),
             Ports = Array.Empty<int>(),
             MinimumBytes = 0L,
             MinimumSignals = 2,
@@ -46,6 +46,7 @@ namespace Carthago.Engine.Rules.Expansion
             DistinctBy = "source+destination+cloudinfrastructure+behavior",
             TuningKnobs = new[] { "Mode", "Threshold", "WindowSeconds", "CooldownSeconds", "ApprovedCloudAccounts", "ApprovedServiceAccounts", "ApprovedAutomationHosts", "AllowedCloudRegions" },
             RequiredTests = new[] { "positive R375 evidence-gated sample", "negative R375 descriptor-only sample", "negative R375 missing telemetry sample", "negative R375 approved-admin sample" },
+            RequireHttp = true,
             RequireCrossBoundary = true,
         };
 
@@ -54,6 +55,12 @@ namespace Carthago.Engine.Rules.Expansion
         public R375_AWSS3ListBucketsExternalRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            var rejection = CloudRequestPrecisionEvidence.Reject(context.Record, context.TimestampUtc, "R375");
+            if (rejection != null)
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence, rejection,
+                    "Rule-specific packet or authenticated audit evidence is unavailable.");
+            return EvaluateSpec(context, Spec);
+        }
     }
 }
