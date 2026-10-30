@@ -1479,3 +1479,45 @@ outside completed UI-01–19.
 **References:** [WPF AutomationProperties.Name](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.name);
 [WPF ToolTip](https://learn.microsoft.com/en-us/dotnet/api/system.windows.frameworkelement.tooltip);
 [WPF layout](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/layout).
+
+## GA UI-20 — Raw / Advanced shortcut destination clarity
+
+**2026-10-30 · SOURCE CANDIDATE — UNVERIFIED.** Starting live HEAD:
+`80c89ef6096ee60e95b14b66967ce8323a6ca916`; prior UI-19 publication: `d0cf9e925b65038bd9dfe74b4238533e12f71b1b`.
+**UI source commit:** `04ce70a10f370e457dbd5b72bba8c59e7f335667`. **Tests authored: 0; executed: 0.**
+No build, test, replay, holdout, CI, runner, capture, benchmark or running-UI screenshot was performed.
+
+### Reference and original navigation contract
+
+The exact approved Library image `libfile_b0a34361560c8191b641e432b3e6b15c` was retrieved and visually inspected. Its dark navy/graphite, cyan/teal and compact operational shortcut language remains the design reference; the screenshot's sample telemetry, Mbps, IPs, incidents and CLI are demo-only.
+
+Source inspection of `MainWindow.Dashboard.cs` and `MainWindow.Navigation.cs` established that the existing **PCAP Explorer** tile calls `DashboardPcapExplorer_Click` → `Nav_LiveTraffic_Click` → `LiveTrafficView`, while **Forensics Workspace** calls `DashboardForensicsWorkspace_Click` → `Nav_Alerts_Click` → `AlertsView`. Neither shortcut opens a separate named workspace. The **Open advanced tools** footer likewise routes to Live Traffic. Those visible labels overpromised a distinct destination.
+
+### UI-only change and evidence limits
+
+The existing Raw / Advanced Shortcuts card now labels those two tiles **Traffic Analysis** (subtitle: Opens Live Traffic) and **Detection Investigation** (subtitle: Opens Detection Events); the footer now reads **Open Live Traffic**. All four existing shortcut tiles and the footer receive explicit, truthful WPF UI Automation names/help describing the current destinations. The original Raw Traffic and Raw Detections tiles retain their visible labels. This is **navigation text and accessibility metadata only**: all five original `Click` handlers, view transitions, filter behavior, tiles, styling, dimensions and keyboard controls remain unchanged. Two pairs of shortcuts intentionally continue to reach the same existing views; no dedicated PCAP Explorer or Forensics Workspace is claimed.
+
+**Owned paths:** `Carthago/Views/MainWindow.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md` only. No `MainWindow.Dashboard.cs` or `MainWindow.Navigation.cs` edits. No engine, models, services, rules, capture, telemetry, evidence, privacy, security controls, project, tests, runners, workflows, rule/protocol documentation or automation changes. The real local PPS chart (10-sample average; bounded 120-point history), read-only Live Events (80 displayed / 500 retained), incidents, investigation, KPIs, Cisco/WebView2 and unavailable CLI remain untouched.
+
+**Static divergence/concurrency:** source and consumer handlers read at live HEAD; UI-19 to starting HEAD is the independent P0021–P0030 protocol candidate, on disjoint services/tests/protocol-doc paths. Existing theme and Wide ≥1440 / Standard 1100–1439 / Compact 1024–1099 / below-1024 responsive controls remain unchanged. The revised tile text is potentially longer, so truncation at small widths is a residual visual risk. UI Automation exposure, accessible naming, screen-reader reading order, focus behavior and actual navigation are **not verified**.
+
+### Acceptance scenarios — PLANNED ONLY; UNEXECUTED
+
+1. Raw Traffic tile opens Live Traffic and traffic filters.
+2. Raw Detections tile opens Detection Events and detection filters.
+3. Traffic Analysis tile visibly describes Live Traffic and opens that existing view.
+4. Detection Investigation tile visibly describes Detection Events and opens that existing view.
+5. Footer explicitly says Open Live Traffic and opens the existing Live Traffic view.
+6. Keyboard focus reaches each original button with no extra tab stops.
+7. Screen reader exposes each button's name and truthful HelpText, without decorative glyph ambiguity.
+8. At 1440, 1100, 1099, 1024, 1023 and 640px, long tile titles truncate gracefully without clipping controls.
+9. At 125–200% DPI and high contrast, cyan focus and dark-surface readability remain usable.
+10. Original local PPS, KPIs, incident/investigation, Live Events, unavailable CLI, Cisco, privacy and independent detection/protocol streams remain unaffected.
+
+**Open quality GAs:** pinned-SHA Windows WPF build, actual navigation, keyboard/UIA, high-DPI/high-contrast and responsive screenshot comparison after owner explicitly authorizes tests. **Executed tests: 0.**
+
+**Next independent UI GA UI-21:** inspect live HEAD, exact Library image, ledger and original WPF consumers for one new safe accessibility/readability improvement outside UI-01–20. Do not implement separate PCAP/forensics views or shared contracts.
+
+**References:** [WPF AutomationProperties.Name](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.name);
+[WPF AutomationProperties.HelpText](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.helptext);
+[WPF layout](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/layout).
