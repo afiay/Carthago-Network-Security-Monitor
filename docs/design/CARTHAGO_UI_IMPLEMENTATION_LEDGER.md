@@ -915,3 +915,98 @@ evidence boundaries and independent detection engineering.
 [WPF AutomationProperties](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties);
 [WPF LiveSetting](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.livesetting);
 [WPF UIA ItemStatus](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationelement.automationelementinformation.itemstatus).
+
+## GA UI-14 — Live Events frozen time column for narrow-window readability
+
+**2026-10-30 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE
+`feature/carthago-reliability-hardening` HEAD:
+`b5751b666f2a9e8b1fc4fb98b3545cfac6e3a6cf` (independent detection R481–R490 already present).
+UI source commit: `a9605edefb6bb8a6ba5113957cef5237fc34b77e`.
+The documentation/publication commit descends directly from this source
+commit; read the protected remote branch ref for its publication SHA.
+**Automated tests authored: 0; executed: 0.** No build, test, replay,
+holdout, CI, runner, benchmark or production capture.
+
+### Reference, existing source and one narrow change
+
+The exact approved Library reference
+`libfile_b0a34361560c8191b641e432b3e6b15c` was resolved and
+visually inspected. Its lower Live Events table has a persistent time
+column alongside horizontally dense event facts. The screenshot's event
+values, rule IDs, endpoints, evidence chains and Mbps figures are
+**demo-only**. This GA does not copy any of those values.
+
+The original `DashboardLiveEventsGrid` in
+`Carthago/Views/MainWindow.xaml` is a read-only eight-column WPF
+`DataGrid` with automatic horizontal scrolling and virtualization.
+At narrow widths, its fixed/minimum column widths exceed the available
+viewport. The first **Event time** column is fixed at 144 pixels.
+The UI-only change sets `FrozenColumnCount="1"`, preserving the first
+column while the other seven columns scroll horizontally. Existing
+`AutomationProperties.HelpText` now describes this navigation affordance
+and retains the explicit timezone, evidence and delivery caveats.
+The table's dark navy/graphite/cyan theme, headers, order, data bindings,
+filter controls, empty state, selection, and read-only behavior are
+unchanged.
+
+| Surface | Actual source/binding | Evidence and UX boundary |
+| --- | --- | --- |
+| Frozen first column | Existing `Event time` binding to `DashboardEventRowVm.EventTime` | Displays `DetectionEvent.Timestamp` as recorded; timezone **unverified**. Freezing does not authenticate or correct timestamps. |
+| Remaining columns | Existing Source, Destination, Rule, Severity, Protocol, Evidence and Delivery bindings | Same 80-row filtered projection from local detections, 500-event retention, no raw evidence rendering. |
+| Grid keyboard/help semantics | Existing DataGrid navigation and horizontal scrollbar; amended HelpText | No new keyboard handler, focus trap, custom automation peer, or assertion that assistive technology has been tested. |
+| Capture/demo and status | Existing `DashboardLiveEventsStatusText`, `DashboardLiveEventsProvenanceText` and UI-13 ItemStatus | Counts, capture warnings, demo provenance and delivery-versus-resolution distinction unchanged. |
+
+### Static divergence, ownership and concurrency review
+
+- The previous UI-13 publication HEAD
+  `360485f90804f13ae922ef255afcd9561e383939`
+  is an ancestor of this GA's starting HEAD. The three intervening
+  R481–R490 commits changed only `Carthago/Engine/**`,
+  `Carthago.Tests/**` and rule documentation; no UI path overlap.
+- **Only source path:** `Carthago/Views/MainWindow.xaml`.
+  **Only docs path:** this ledger. The original UI-05
+  `DashboardEventRowVm`, `InitializeDashboardLiveEvents`,
+  `RefreshDashboardLiveEvents`, filter handlers, capture/demo status
+  and row limits were inspected; none were changed.
+- Static checks: one `DashboardLiveEventsGrid`, one frozen-column
+  declaration, the same eight `DataGridTextColumn` bindings and order,
+  original `IsReadOnly=True`, single-row selection, virtualizing panels
+  and automatic horizontal/vertical scrollbars. No new named elements,
+  event handlers, WPF partials, dependencies or shared contracts.
+- No detection rules, rule profiles/modes/thresholds/confidence,
+  evidence, journal, privacy, approval controls, telemetry producers,
+  Cisco/WebView2/ScottPlot, PPS chart, CLI or automation settings changed.
+  This is a source-only review, **not** a WPF compile, layout measurement,
+  keyboard test, screen-reader pass or screenshot comparison.
+- **Residual risks:** WPF frozen-column behavior under keyboard navigation,
+  column reordering, high DPI, tiny viewports and horizontal scrolling is
+  unverified. A fixed 144px first column reduces the remaining visible
+  width; retain the scrollbar rather than hiding data. Event timestamp
+  timezone and capture health remain unverified by this UI change.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED AS TESTS; UNEXECUTED
+
+1. At 1440px, the original eight-column table and theme remain intact.
+2. At 1100px and 1099px, horizontal scrolling retains Event time visibility.
+3. At 1024px and 1023px, Event time stays visible while Source/Destination scroll.
+4. At 640px and 125–200% DPI, the first column does not prevent access to the other seven.
+5. Tab and DataGrid arrow-key navigation reach all columns without trapping focus.
+6. Screen-reader/UIA inspection announces the grid help and does not falsely imply verified timezone or evidence.
+7. User column reordering and keyboard navigation do not silently change the meaning of the frozen column.
+8. Empty table, filtered zero matches and 80-row bound preserve the existing messages and row counts.
+9. 500 retained events, demo mode and non-monitoring capture status retain original provenance and warning text.
+10. PPS chart, incident triage/investigation, unavailable CLI, AlertsGrid filters, Cisco and independent rule work remain unchanged.
+
+**Open quality GAs:** pinned-SHA Windows WPF build, actual frozen-column
+layout/scrolling, keyboard and UI Automation inspection, high contrast,
+DPI and responsive screenshot comparison, capture/demo and filter
+regression after owner authorizes testing. **Tests executed: 0.**
+
+**Next independent UI GA UI-15:** inspect the live branch, approved
+reference and ledger for one bounded UI-owned accessibility or visual
+consistency improvement outside this frozen-column change. Do not invent
+telemetry or modify the independent rule automation.
+
+**Technical reference:**
+[Microsoft WPF DataGrid.FrozenColumnCount](https://learn.microsoft.com/en-us/dotnet/api/system.windows.controls.datagrid.frozencolumncount);
+[WPF DataGrid overview](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/controls/datagrid).
