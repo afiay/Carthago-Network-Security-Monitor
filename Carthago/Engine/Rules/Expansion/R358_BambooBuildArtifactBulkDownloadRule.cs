@@ -54,6 +54,20 @@ namespace Carthago.Engine.Rules.Expansion
         public R358_BambooBuildArtifactBulkDownloadRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            var r = context.Record;
+            if (!DevOpsHttpEvidence.HasParsedRequest(r))
+                return NoMatch(RuleNoMatchReasonCategory.MissingTelemetry, "BAMBOO_HTTP_REQUEST_MISSING", "Parsed TCP/HTTP request required.");
+            var path = DevOpsHttpEvidence.OriginPath(r.HttpUri);
+            if (path == null)
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence, "BAMBOO_TARGET_UNTRUSTED", "Origin-form request target required.");
+            if (!string.Equals(r.HttpMethod, "GET", StringComparison.OrdinalIgnoreCase))
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence, "BAMBOO_DOWNLOAD_METHOD_REQUIRED", "Only GET requests are eligible.");
+            var artifact = path.IndexOf("/artifact/", StringComparison.OrdinalIgnoreCase);
+            if (artifact < 0 || artifact + "/artifact/".Length >= path.Length)
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence, "BAMBOO_ARTIFACT_PATH_NOT_OBSERVED", "A concrete artifact path and name are required.");
+            // The existing five-observation window counts requests, not successful downloads.
+            return EvaluateSpec(context, Spec);
+        }
     }
 }

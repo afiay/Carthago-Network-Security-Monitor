@@ -142,6 +142,9 @@ namespace Carthago.Models
         // Capture-derived classification only: never retain token bytes.
         public bool HttpGitHubTokenPatternObserved { get; internal set; }
         public bool HttpGitLabTokenPatternObserved { get; internal set; }
+        // Derived only by the bounded HTTP parser; imported JSON cannot assert these flags.
+        public bool HttpAzureDevOpsPatUrlObserved { get; internal set; }
+        public bool HttpCircleCiTokenPatternObserved { get; internal set; }
 
         // JA4H (HTTP)
         private string? _ja4H;

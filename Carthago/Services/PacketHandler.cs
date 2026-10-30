@@ -17,6 +17,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Carthago.Services
 {
@@ -428,6 +429,8 @@ namespace Carthago.Services
                                 rec.HttpBasicDefaultCredentialObserved = c2s && http.ObservedDefaultBasicCredential;
                                 rec.HttpGitHubTokenPatternObserved = c2s && http.ObservedGitHubTokenPattern;
                                 rec.HttpGitLabTokenPatternObserved = c2s && http.ObservedGitLabTokenPattern;
+                                rec.HttpAzureDevOpsPatUrlObserved = c2s && http.ObservedAzureDevOpsPatUrlPattern;
+                                rec.HttpCircleCiTokenPatternObserved = c2s && http.ObservedCircleCiTokenPattern;
 
                                 var (readable, tag) = HttpJa4H.Compute(http.Method, http.HttpVersion, http.HeaderNames, http.UserAgent);
                                 rec.HttpJa4h = $"{readable}|{tag}";
@@ -452,6 +455,8 @@ namespace Carthago.Services
                                 rec.HttpBasicDefaultCredentialObserved = false;
                                 rec.HttpGitHubTokenPatternObserved = false;
                                 rec.HttpGitLabTokenPatternObserved = false;
+                                rec.HttpAzureDevOpsPatUrlObserved = false;
+                                rec.HttpCircleCiTokenPatternObserved = false;
                             }
 
                             // -------- DNS over TCP (length-prefixed DNS message) --------
@@ -829,6 +834,8 @@ namespace Carthago.Services
             public bool ObservedDefaultBasicCredential { get; init; }
             public bool ObservedGitHubTokenPattern { get; init; }
             public bool ObservedGitLabTokenPattern { get; init; }
+            public bool ObservedAzureDevOpsPatUrlPattern { get; init; }
+            public bool ObservedCircleCiTokenPattern { get; init; }
         }
 
         public static bool TryParseHttp(ReadOnlySpan<byte> data, out HttpInfo info)
@@ -858,6 +865,9 @@ namespace Carthago.Services
             string? host = null, ua = null;
             bool defaultBasicObserved = false;
             bool githubTokenObserved = false, gitlabTokenObserved = false;
+            bool azurePatUrlObserved = HasAzurePatQuery(path);
+            bool circleCiTokenObserved = false;
+            int circleCiHeaderCount = 0;
             int authorizationHeaderCount = 0;
             bool headerSectionComplete = false;
             int idx = offset;
@@ -903,6 +913,11 @@ namespace Carthago.Services
                         githubTokenObserved |= HasProviderTokenPrefix(value, "ghp_", 20) || HasProviderTokenPrefix(value, "gho_", 20) || HasProviderTokenPrefix(value, "ghu_", 20) || HasProviderTokenPrefix(value, "ghs_", 20) || HasProviderTokenPrefix(value, "ghr_", 20) || HasProviderTokenPrefix(value, "github_pat_", 30);
                         gitlabTokenObserved |= HasProviderTokenPrefix(value, "glpat-", 20);
                     }
+                    if (name.Equals("Circle-Token", StringComparison.OrdinalIgnoreCase))
+                    {
+                        circleCiHeaderCount++;
+                        circleCiTokenObserved |= IsExactCircleToken(line.Slice(colon + 1));
+                    }
                     // Avoid allocating a managed string for bearer secrets at all.
                     // Preserve only the header name and a redaction marker in telemetry.
                     bool sensitive = name.Equals("Authorization", StringComparison.OrdinalIgnoreCase) ||
@@ -915,7 +930,8 @@ namespace Carthago.Services
                                      name.Equals("X-Auth-Token", StringComparison.OrdinalIgnoreCase) ||
                                      name.Equals("X-Amz-Security-Token", StringComparison.OrdinalIgnoreCase) ||
                                      name.Equals("Private-Token", StringComparison.OrdinalIgnoreCase) ||
-                                     name.Equals("X-Gitlab-Token", StringComparison.OrdinalIgnoreCase);
+                                     name.Equals("X-Gitlab-Token", StringComparison.OrdinalIgnoreCase) ||
+                                     name.Equals("Circle-Token", StringComparison.OrdinalIgnoreCase);
                     var val = sensitive ? "[REDACTED]" : TrimHeaderValue(line, colon + 1);
                     sbJoin.Append(name).Append(": ").Append(val).Append("\r\n");
                     if (name.Equals("Host", StringComparison.OrdinalIgnoreCase)) host = val;
@@ -925,7 +941,7 @@ namespace Carthago.Services
             return new HttpInfo
             {
                 Method = method,
-                Path = path,
+                Path = azurePatUrlObserved ? RedactAzurePatQuery(path!) : path,
                 Host = host,
                 UserAgent = ua,
                 HttpVersion = httpVersion,
@@ -933,8 +949,33 @@ namespace Carthago.Services
                 ObservedDefaultBasicCredential = headerSectionComplete && defaultBasicObserved && authorizationHeaderCount == 1,
                 ObservedGitHubTokenPattern = headerSectionComplete && authorizationHeaderCount <= 1 && githubTokenObserved,
                 ObservedGitLabTokenPattern = headerSectionComplete && authorizationHeaderCount <= 1 && gitlabTokenObserved,
+                ObservedAzureDevOpsPatUrlPattern = headerSectionComplete && method != null && azurePatUrlObserved,
+                ObservedCircleCiTokenPattern = headerSectionComplete && method != null && circleCiHeaderCount == 1 && circleCiTokenObserved,
                 HeaderNames = headerNames
             };
+        }
+
+        // Token-shaped query values are classified before the retained URI is
+        // sanitized. The observed bit is not proof of a valid credential.
+        private static readonly Regex AzurePatQuery = new(
+            @"([?&](?:pat|token|access_token|personal_access_token)=)[A-Za-z0-9_-]{52,}(?=[&#]|$)",
+            RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase,
+            TimeSpan.FromMilliseconds(100));
+
+        private static bool HasAzurePatQuery(string? path)
+            => path != null && path.Length <= 4096 && AzurePatQuery.IsMatch(path);
+
+        private static string RedactAzurePatQuery(string path)
+            => AzurePatQuery.Replace(path, "$1[REDACTED]");
+
+        private static bool IsExactCircleToken(ReadOnlySpan<byte> raw)
+        {
+            var value = TrimStartSpacesTabs(raw);
+            if (value.Length != 40) return false;
+            foreach (var b in value)
+                if (!((b >= '0' && b <= '9') || (b >= 'a' && b <= 'f') || (b >= 'A' && b <= 'F')))
+                    return false;
+            return true;
         }
 
         private static bool HasProviderTokenPrefix(ReadOnlySpan<byte> value, string prefix, int minSuffix)

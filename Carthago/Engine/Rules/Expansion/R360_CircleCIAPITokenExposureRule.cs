@@ -54,6 +54,17 @@ namespace Carthago.Engine.Rules.Expansion
         public R360_CircleCIAPITokenExposureRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            var r = context.Record;
+            if (!DevOpsHttpEvidence.HasParsedRequest(r))
+                return NoMatch(RuleNoMatchReasonCategory.MissingTelemetry, "CIRCLECI_HTTP_REQUEST_MISSING", "Parsed TCP/HTTP request required.");
+            if (DevOpsHttpEvidence.OriginPath(r.HttpUri) == null)
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence, "CIRCLECI_TARGET_UNTRUSTED", "Origin-form request target required.");
+            if (!DevOpsHttpEvidence.HostMatches(r, "circleci.com", subdomains: true))
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence, "CIRCLECI_HOST_NOT_OBSERVED", "CircleCI HTTP Host required.");
+            if (!r.HttpCircleCiTokenPatternObserved)
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence, "CIRCLECI_TOKEN_PARSER_FLAG_NOT_OBSERVED", "Complete Circle-Token header with token-shaped value required.");
+            return EvaluateSpec(context, Spec);
+        }
     }
 }

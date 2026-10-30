@@ -55,6 +55,28 @@ namespace Carthago.Engine.Rules.Expansion
         public R357_TeamCityAuthBypassProbeRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            var r = context.Record;
+            if (!DevOpsHttpEvidence.HasParsedRequest(r))
+                return NoMatch(RuleNoMatchReasonCategory.MissingTelemetry, "TEAMCITY_HTTP_REQUEST_MISSING", "Parsed TCP/HTTP request required.");
+            var path = DevOpsHttpEvidence.OriginPath(r.HttpUri);
+            if (path == null)
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence, "TEAMCITY_TARGET_UNTRUSTED", "Origin-form request target required.");
+            if (!string.Equals(r.HttpMethod, "GET", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(r.HttpMethod, "POST", StringComparison.OrdinalIgnoreCase))
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence, "TEAMCITY_METHOD_NOT_ELIGIBLE", "Only GET/POST request shapes are eligible.");
+            var target = r.HttpUri!;
+            var relevant = path.Contains("/app/rest/", StringComparison.OrdinalIgnoreCase)
+                || path.EndsWith("/admin/diagnostic", StringComparison.OrdinalIgnoreCase);
+            var bypassShape = target.Contains("..;", StringComparison.Ordinal)
+                || target.Contains("?jsp=/app/rest/", StringComparison.OrdinalIgnoreCase)
+                || target.Contains("&jsp=/app/rest/", StringComparison.OrdinalIgnoreCase)
+                || target.Contains("?jsp=/admin/diagnostic", StringComparison.OrdinalIgnoreCase)
+                || target.Contains("&jsp=/admin/diagnostic", StringComparison.OrdinalIgnoreCase);
+            if (!relevant || !bypassShape)
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence, "TEAMCITY_BYPASS_SHAPE_NOT_OBSERVED", "A REST/admin path and specific bypass-shaped request target are required.");
+            // Probe-shaped HTTP alone cannot establish an authorization bypass outcome.
+            return EvaluateSpec(context, Spec);
+        }
     }
 }

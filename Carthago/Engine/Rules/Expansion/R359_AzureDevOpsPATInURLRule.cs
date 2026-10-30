@@ -54,6 +54,18 @@ namespace Carthago.Engine.Rules.Expansion
         public R359_AzureDevOpsPATInURLRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            var r = context.Record;
+            if (!DevOpsHttpEvidence.HasParsedRequest(r))
+                return NoMatch(RuleNoMatchReasonCategory.MissingTelemetry, "AZURE_PAT_HTTP_REQUEST_MISSING", "Parsed TCP/HTTP request required.");
+            if (DevOpsHttpEvidence.OriginPath(r.HttpUri) == null)
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence, "AZURE_PAT_TARGET_UNTRUSTED", "Origin-form request target required.");
+            if (!DevOpsHttpEvidence.HostMatches(r, "dev.azure.com")
+                && !DevOpsHttpEvidence.HostMatches(r, "visualstudio.com", subdomains: true))
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence, "AZURE_PAT_HOST_NOT_OBSERVED", "Provider HTTP Host required.");
+            if (!r.HttpAzureDevOpsPatUrlObserved)
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence, "AZURE_PAT_PARSER_FLAG_NOT_OBSERVED", "Parser-derived token-shaped URL query required.");
+            return EvaluateSpec(context, Spec);
+        }
     }
 }

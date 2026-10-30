@@ -54,6 +54,18 @@ namespace Carthago.Engine.Rules.Expansion
         public R356_JenkinsCrumbIssuerEnumerationRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            var r = context.Record;
+            if (!DevOpsHttpEvidence.HasParsedRequest(r))
+                return NoMatch(RuleNoMatchReasonCategory.MissingTelemetry, "JENKINS_CRUMB_HTTP_REQUEST_MISSING", "Parsed TCP/HTTP request required.");
+            var path = DevOpsHttpEvidence.OriginPath(r.HttpUri);
+            if (path == null)
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence, "JENKINS_CRUMB_TARGET_UNTRUSTED", "Origin-form request target required.");
+            if (!string.Equals(r.HttpMethod, "GET", StringComparison.OrdinalIgnoreCase)
+                || (!path.EndsWith("/crumbIssuer/api/json", StringComparison.OrdinalIgnoreCase)
+                    && !path.EndsWith("/crumbIssuer/api/xml", StringComparison.OrdinalIgnoreCase)))
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence, "JENKINS_CRUMB_ENDPOINT_NOT_OBSERVED", "Only an observed GET to the crumb API is eligible.");
+            return EvaluateSpec(context, Spec);
+        }
     }
 }

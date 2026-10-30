@@ -32,8 +32,6 @@ namespace Carthago.Engine.Rules.Expansion
 
         private static readonly Regex GitHubTokenRegex = new(@"\b(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9_]{20,}\b|\bgithub_pat_[A-Za-z0-9_]{30,}\b", RegexOptions.Compiled | RegexOptions.CultureInvariant);
         private static readonly Regex GitLabTokenRegex = new(@"\bglpat-[A-Za-z0-9_\-]{20,}\b", RegexOptions.Compiled | RegexOptions.CultureInvariant);
-        private static readonly Regex AzureDevOpsPatRegex = new(@"\b[a-z0-9]{52}\b|\b[A-Za-z0-9_\-]{70,}\b", RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
-        private static readonly Regex CircleCiTokenRegex = new(@"\b(?:circleci|circle-token|circle_token|Circle-Token)\b|\b[A-Fa-f0-9]{40}\b", RegexOptions.Compiled | RegexOptions.CultureInvariant);
         private static readonly Regex NpmTokenRegex = new(@"\bnpm_[A-Za-z0-9]{24,}\b|//registry\.npmjs\.org/:_authToken=", RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
         private static readonly Regex VaultTokenRegex = new(@"\bhvs\.[A-Za-z0-9_\-]{20,}\b|\bhvb\.[A-Za-z0-9_\-]{20,}\b|\bs\.[A-Za-z0-9]{20,}\b", RegexOptions.Compiled | RegexOptions.CultureInvariant);
         private static readonly Regex TerraformTokenRegex = new(@"\batlasv1\.[A-Za-z0-9_\-]{20,}\b|\bterraform[_\- ]?(?:cloud|token)\b", RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
@@ -378,10 +376,7 @@ namespace Carthago.Engine.Rules.Expansion
             var host = BestHost(record);
             if (!HostMatchesAny(host, new[] { "dev.azure.com", "visualstudio.com" }))
                 return false;
-            var uri = record.HttpUri ?? string.Empty;
-            return Regex.IsMatch(uri,
-                @"(?:[?&])(?:pat|token|access_token|personal_access_token)=[A-Za-z0-9_\-]{52,}(?:[&#]|$)",
-                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+            return record.HttpAzureDevOpsPatUrlObserved;
         }
 
         private static bool HasTokenPattern(TrafficRecord record, IEnumerable<string> tokenKinds)
@@ -391,8 +386,8 @@ namespace Carthago.Engine.Rules.Expansion
             {
                 if (string.Equals(tokenKind, "github", StringComparison.OrdinalIgnoreCase) && record.HttpGitHubTokenPatternObserved) return true;
                 if (string.Equals(tokenKind, "gitlab", StringComparison.OrdinalIgnoreCase) && record.HttpGitLabTokenPatternObserved) return true;
-                if (string.Equals(tokenKind, "azuredevops", StringComparison.OrdinalIgnoreCase) && AzureDevOpsPatRegex.IsMatch(text) && ContainsAny(text, "azure", "devops", "visualstudio", "pat")) return true;
-                if (string.Equals(tokenKind, "circleci", StringComparison.OrdinalIgnoreCase) && CircleCiTokenRegex.IsMatch(text)) return true;
+                if (string.Equals(tokenKind, "azuredevops", StringComparison.OrdinalIgnoreCase) && record.HttpAzureDevOpsPatUrlObserved) return true;
+                if (string.Equals(tokenKind, "circleci", StringComparison.OrdinalIgnoreCase) && record.HttpCircleCiTokenPatternObserved) return true;
                 if (string.Equals(tokenKind, "npm", StringComparison.OrdinalIgnoreCase) && NpmTokenRegex.IsMatch(text)) return true;
                 if (string.Equals(tokenKind, "vault", StringComparison.OrdinalIgnoreCase) && VaultTokenRegex.IsMatch(text)) return true;
                 if (string.Equals(tokenKind, "terraform", StringComparison.OrdinalIgnoreCase) && TerraformTokenRegex.IsMatch(text)) return true;
