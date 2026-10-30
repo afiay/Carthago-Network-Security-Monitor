@@ -1112,18 +1112,37 @@
                         <ComboBoxItem Content="UDP" Tag="UDP"/>
                         <ComboBoxItem Content="ICMP" Tag="ICMP"/>
                       </ComboBox>
-                      <TextBox x:Name="DashboardLiveRuleFilter"
-                               Width="112" Height="30" Margin="0,0,8,6"
-                               VerticalContentAlignment="Center"
-                               ToolTip="Filter by exact rule ID or part of a rule ID"
-                               AutomationProperties.Name="Live events rule ID"
-                               TextChanged="DashboardLiveEventsTextChanged"/>
-                      <TextBox x:Name="DashboardLiveSearchFilter"
-                               Width="210" Height="30" Margin="0,0,8,6"
-                               VerticalContentAlignment="Center"
-                               ToolTip="Search visible event source, destination, rule or protocol; no evidence payload search"
-                               AutomationProperties.Name="Search live event endpoints"
-                               TextChanged="DashboardLiveEventsTextChanged"/>
+                      <!-- GA UI-16: visible, non-interactive labels for the two free-text filters. -->
+                      <StackPanel Orientation="Horizontal" Height="30" Margin="0,0,8,6">
+                        <TextBlock x:Name="DashboardLiveRuleFilterLabel"
+                                   Text="Rule"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   FontSize="11"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,6,0"/>
+                        <TextBox x:Name="DashboardLiveRuleFilter"
+                                 Width="90" Height="30"
+                                 VerticalContentAlignment="Center"
+                                 ToolTip="Filter by exact rule ID or part of a rule ID"
+                                 AutomationProperties.Name="Live events rule ID"
+                                 AutomationProperties.LabeledBy="{Binding ElementName=DashboardLiveRuleFilterLabel}"
+                                 TextChanged="DashboardLiveEventsTextChanged"/>
+                      </StackPanel>
+                      <StackPanel Orientation="Horizontal" Height="30" Margin="0,0,8,6">
+                        <TextBlock x:Name="DashboardLiveSearchFilterLabel"
+                                   Text="Search"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   FontSize="11"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,6,0"/>
+                        <TextBox x:Name="DashboardLiveSearchFilter"
+                                 Width="182" Height="30"
+                                 VerticalContentAlignment="Center"
+                                 ToolTip="Search visible event source, destination, rule or protocol; no evidence payload search"
+                                 AutomationProperties.Name="Search live event endpoints"
+                                 AutomationProperties.LabeledBy="{Binding ElementName=DashboardLiveSearchFilterLabel}"
+                                 TextChanged="DashboardLiveEventsTextChanged"/>
+                      </StackPanel>
                       <Button Content="Clear filters"
                               Height="30" MinWidth="104"
                               Margin="0,0,0,6"
