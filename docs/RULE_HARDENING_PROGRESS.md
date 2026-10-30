@@ -859,3 +859,45 @@ risks, producer gaps, privacy boundaries and AWS protocol references:
 
 **Next sequential source-development GA: R381–R390 only after the
 coherent source/test/docs candidate is published and live HEAD rechecked.**
+
+## R381–R390 ten-rule GA — 2026-10-30 (SOURCE CANDIDATE — UNVERIFIED)
+
+From inspected live HEAD `5ac74dcf3e8d5555b33e40e5ce271a78c23262a4`
+(after R371–R380 and UI GA UI-03), reviewed all ten existing generic
+CloudInfrastructure rule shells, the real HTTP capture/parser producer,
+prior candidate tests and profile/approval/privacy boundaries.
+Source candidate `8b7a7ce717926a10f6286d358fe964485fd97ada`;
+authored-test candidate `5c654b8433f164926fe7350c8e1ec7f63310aea6`.
+The exact publication commit is the descendant documentation HEAD
+after the single non-forced expected-HEAD-protected update; a commit cannot
+embed its own final SHA in its content.
+
+**Ten dispositions:** R381 BLOCKED (no Azure ARM OAuth token body/audit);
+R382 CONDITIONAL (four distinct cleartext Key Vault list-secrets request
+shapes, not successful enumeration); R383 BLOCKED (no safe SAS query
+classification); R384 BLOCKED (link-local IMDS boundary GA open);
+R385 BLOCKED (no GCP OAuth scope body/audit); R386 BLOCKED (no safe signed
+URL query/response correlation); R387 BLOCKED (no authenticated key
+download or response bytes); R388 CONDITIONAL (Cloudflare tunnel create
+POST request shape, not created tunnel); R389 BLOCKED (ngrok agent/auth
+provenance absent); R390 BLOCKED (trusted tailnet auth audit absent).
+Generic process, Host, Info, TLS/SNI and synthetic fixtures cannot substitute
+for provider-authenticated evidence. R382/R388 now require parsed cleartext
+HTTP and exact method/Host/route; original 4-in-10m and 1-in-15m thresholds
+and 30m cooldowns retained. Event path, cloud host and destination host
+redaction covers all R381–R390; upstream capture privacy remains a separate GA.
+
+**94 substantive xUnit invocations AUTHORED, ZERO EXECUTED.** No build,
+test, replay, holdout, CI, runner, benchmark or production capture. Original
+Alert modes, severities, minimum confidence 82, windows, thresholds,
+cooldowns, approvals, baseline and journal restrictions unchanged. The
+4,940/4,940 full test checkpoint predates these candidates. Independent
+R343/R295/R275/R163 replay GAs and R102 frozen V1 FAILED 4/6, V2 0/4
+approved sources remain unchanged; R102 80%, R118 86%, R163 84%,
+external R102 0.75 floors preserved. Exact ten profiles, changed source
+paths, false-positive risks, authoritative Azure/Cloudflare API references,
+94 authored scenario inventory and outstanding validation:
+[GA R381–R390](RULE_BATCH_381-390.md).
+
+**Next contiguous ten-rule GA: R391–R400 after safe publication and
+live HEAD review.** No unrelated rule or UI changes were made in this GA.
