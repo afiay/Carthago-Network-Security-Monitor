@@ -202,6 +202,15 @@ namespace Carthago.Engine.Rules.Expansion
                 return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
                     missingTunnelEvidence.Code, missingTunnelEvidence.Detail);
 
+            // GA R521-R528 — SOURCE CANDIDATE — UNVERIFIED.
+            // Do not interpret generic network hints as authenticated proxy,
+            // domain-fronting, QUIC anomaly or beacon evidence. Fail closed
+            // before protocol applicability, scoring, state and cooldown.
+            var evasionBehaviorGap = EvasionAndSensorEvidenceBoundary.GetMissingProducer(spec.RuleId);
+            if (evasionBehaviorGap is { } missingEvasionBehavior)
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                    missingEvasionBehavior.Code, missingEvasionBehavior.Detail);
+
             if (spec.RequireHttp && !HasHttpContext(record))
                 return NoMatch(RuleNoMatchReasonCategory.NotApplicableProtocol, "HTTP_CONTEXT_REQUIRED", "Rule requires HTTP method, URI, host, headers, or HTTP protocol context.");
 

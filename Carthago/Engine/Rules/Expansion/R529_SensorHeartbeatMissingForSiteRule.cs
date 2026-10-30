@@ -22,6 +22,16 @@ namespace Carthago.Engine.Rules.Expansion
         public R529_SensorHeartbeatMissingForSiteRule() : base(Rule, Profile) { }
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
+            // GA R529-R530 — SOURCE CANDIDATE — UNVERIFIED.
+            // IsPlatformHealthRecord relies on mutable text fields and is not
+            // an authenticated sensor-health producer. Preserve the original
+            // evaluation path for a future typed integration, but fail closed
+            // until the trusted producer is actually connected.
+            var missingProducer = EvasionAndSensorEvidenceBoundary.GetMissingProducer(Descriptor.RuleId);
+            if (missingProducer is { } missing)
+                return RuleEvaluationResult.NoMatch(Descriptor.RuleId,
+                    RuleNoMatchReasonCategory.InsufficientEvidence, missing.Code, missing.Detail);
+
             var r = context.Record; var text = Text(r);
             if (!IsPlatformHealthRecord(r) || !ContainsAny(text, "heartbeat", "sensor health", "site health")) return NoMatch();
             if (!ContainsAny(text, "missing", "overdue", "lost", "stale", "timeout", "not received")) return NoMatch();
