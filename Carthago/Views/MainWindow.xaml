@@ -93,7 +93,7 @@
                       Padding="12,5"
                       Margin="0,0,10,0">
                 <StackPanel Orientation="Horizontal">
-                  <Ellipse Width="9" Height="9" Fill="{StaticResource OkBrush}" Margin="0,0,7,0"/>
+                  <Ellipse Width="9" Height="9" Fill="{Binding BorderBrush, ElementName=MonitoringStatusBadge}" Margin="0,0,7,0"/>
                   <TextBlock x:Name="CaptureStatusText" Text="Paused" FontSize="12" FontWeight="Bold"/>
                 </StackPanel>
               </Border>
@@ -309,6 +309,36 @@
               </Border>
 
               <StackPanel x:Name="SocDashboardWorkspace" Visibility="Collapsed" Margin="0,0,0,4">
+                <!-- GA UI-02: the overview heading is scoped to the dashboard, not the global command bar.
+                     Monitoring state and severity color come from the existing capture status pipeline. -->
+                <Grid Margin="0,0,0,14" MinHeight="42">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Text="Security Overview"
+                             FontSize="24"
+                             FontWeight="SemiBold"
+                             Foreground="{StaticResource TextBrush}"
+                             TextTrimming="CharacterEllipsis"
+                             VerticalAlignment="Center"/>
+                  <StackPanel Grid.Column="1"
+                              Orientation="Horizontal"
+                              HorizontalAlignment="Right"
+                              VerticalAlignment="Center"
+                              Margin="16,0,0,0">
+                    <Ellipse Width="9"
+                             Height="9"
+                             Fill="{Binding BorderBrush, ElementName=MonitoringStatusBadge}"
+                             VerticalAlignment="Center"
+                             Margin="0,0,7,0"/>
+                    <TextBlock Text="{Binding Text, ElementName=CaptureStatusText}"
+                               Foreground="{Binding BorderBrush, ElementName=MonitoringStatusBadge}"
+                               FontSize="12"
+                               FontWeight="SemiBold"
+                               VerticalAlignment="Center"/>
+                  </StackPanel>
+                </Grid>
                 <!-- KPI strip -->
                 <ItemsControl x:Name="DashboardKpiItemsControl" Margin="0,0,0,12"
                               HorizontalContentAlignment="Stretch">
