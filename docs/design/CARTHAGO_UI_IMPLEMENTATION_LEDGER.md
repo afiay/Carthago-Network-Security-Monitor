@@ -1192,3 +1192,98 @@ boundaries and the independent detection stream intact.
 [WPF AutomationProperties.LabeledBy](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.labeledby);
 [WPF StackPanel](https://learn.microsoft.com/en-us/dotnet/api/system.windows.controls.stackpanel);
 [WPF layout](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/layout).
+
+## GA UI-17 — Dashboard KPI value-label associations
+
+**2026-10-30 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE
+`feature/carthago-reliability-hardening` HEAD:
+`f72eb891581776b72fd5b8001e266d3597167d06` (independent R511–R520
+detection candidate and fixture correction present).
+**UI source commit:** `1424122197651913674e1a982056169e31fbec01`.
+**Tests authored: 0; executed: 0.** No builds, xUnit, replays,
+holdouts, CI, runners, benchmarks, WPF runtime, screenshots or production
+capture were executed.
+
+### Approved reference, real producers and bounded improvement
+
+The exact approved Library reference
+`libfile_b0a34361560c8191b641e432b3e6b15c` was resolved and
+visually inspected. It presents four captioned KPI cards with dark navy
+surfaces, muted labels and cyan/teal emphasis. Its Mbps, sensor counts,
+coverage percentage, incident counts, rule IDs, addresses and confidence
+figures are **demo-only**, not evidence for this implementation.
+
+Source inspection of `MainWindow.xaml`,
+`MainWindow.Dashboard.cs` and `MainWindow.DashboardResponsive.cs`
+confirmed that `DashboardKpiCardTemplate` is shared by the four
+operational overview metrics and preference-controlled additional metrics.
+Its title and value were separate visual `TextBlock` elements. This GA
+names the existing template title `DashboardKpiCardTitle` and associates
+the existing value with it using `AutomationProperties.LabeledBy`.
+Both metric collections receive static, neutral accessibility group names.
+There is **no** new value formatter, dynamic accessibility announcement,
+UI model, handler, telemetry producer or layout change.
+
+| Surface | Actual data and UI behavior | Evidence boundary |
+| --- | --- | --- |
+| Overview KPI cards | Existing `BuildSocOverviewKpis`: locally observed throughput when available; unavailable sensor inventory and detection coverage; bounded recent correlated incident count. | No invented inventory, coverage denominator, global incident count or verified capture health. Demo mode may contribute to incident snapshot. |
+| Additional KPI cards | Existing `BuildSocKpis` and user preferences; existing title/value/delta/trend and icon. | Local snapshots, baseline status and trend glyphs remain exactly as before; no inferred accuracy or validated confidence. |
+| Shared value caption | The value `TextBlock` references its same-template title via `AutomationProperties.LabeledBy`. | Intended screen-reader context; actual UI Automation name resolution and reading order remain unverified. |
+| Group names | `DashboardOverviewKpiItemsControl`: “Security overview metric cards”; `DashboardKpiItemsControl`: “Additional dashboard metric cards”. | Static labels describe layout only; no new metric or health claim. |
+| Visual composition | Existing 102px card, typography, gradient, accents, tooltips and approved Wide/Standard/Compact/narrow panels remain unchanged. | Reference fidelity is source intent only, not a rendered comparison. |
+
+### Static divergence, ownership and concurrency review
+
+- Previous UI GA UI-16 publication: `0e03f6975501c4cad08d13b21968b5f2bf245f32`.
+  Live starting HEAD `f72eb891581776b72fd5b8001e266d3597167d06`
+  is five commits ahead; its six changed paths are detection engine,
+  tests and rule documentation only, with **no overlap** with UI-owned paths.
+- **Only source path:** `Carthago/Views/MainWindow.xaml`.
+  **Only documentation path:** this ledger. The existing
+  `SocKpiVm`, `BuildSocOverviewKpis`, `BuildSocKpis` and
+  `UpdateDashboardOverviewThroughput` consumers were inspected but
+  not edited.
+- Source-only review confirms one title name and one value label
+  association inside the shared template, plus one accessible name
+  for each existing KPI collection. The original bindings,
+  `DashboardKpiCardTemplate`, card geometry, throughput updates,
+  status, baseline and all responsive breakpoints are preserved.
+  No modifications to engine/models/services, rule profiles,
+  thresholds, confidence floors, privacy, journal, approvals,
+  tests, capture, Cisco, WebView2, ScottPlot, visual-only CLI,
+  shared APIs, project files, workflows or the detection automation.
+- **Residual risks:** the WPF `ElementName` binding inside the
+  `DataTemplate` may expose a different UIA name/reading order than
+  intended; shared-template additional KPI trends include glyphs
+  that are not verbalized by this change. Group names may or may not
+  be surfaced by the selected screen reader. Validate with Windows
+  UI Automation tools when the owner authorizes testing.
+  This source review is **not** a compilation, accessibility or
+  screenshot-fidelity pass.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. Screen reader identifies each of the four overview KPI values with its own visible title, not another card's title.
+2. Overview throughput unavailable, paused, monitoring and degraded states preserve original values/captions and truthful capture caveats.
+3. Sensor inventory and coverage display “—” with their original unavailable explanations, without invented denominators.
+4. Open Incidents reads as a bounded recent correlated count, with demo warning when demo mode is enabled.
+5. Additional preference-controlled KPI cards retain their title/value associations when widgets are toggled or reordered.
+6. Repeated throughput updates do not trigger unsolicited live announcements or stale accessible values.
+7. At 1440, 1100, 1099, 1024, 1023 and 640px widths, titles and values remain legible and associated with the correct cards.
+8. At 125–200% DPI and high contrast, the existing cyan/teal accents and muted captions remain readable.
+9. Keyboard traversal and UIA reading order do not create extra focus stops or suppress existing title/value/trend content.
+10. PPS chart, prioritized incidents, investigation, read-only Live Events, unavailable CLI, Cisco and independent rule work remain unchanged.
+
+**Open quality GAs:** pinned-SHA Windows WPF build; UI Automation
+and screen-reader label resolution; high contrast/DPI and responsive
+screenshots; capture/demo, preference, incident and chart regressions
+after explicit owner test authorization. **Executed tests: 0.**
+
+**Next independent UI GA UI-18:** inspect LIVE HEAD, approved reference,
+ledger and actual WPF consumers for one new, bounded accessibility,
+readability or visual-consistency improvement outside UI-01–17.
+
+**Technical references:**
+[WPF AutomationProperties.LabeledBy](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.labeledby);
+[WPF DataTemplate](https://learn.microsoft.com/en-us/dotnet/api/system.windows.datatemplate);
+[WPF layout](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/layout).
