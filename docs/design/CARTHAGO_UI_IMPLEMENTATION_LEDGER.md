@@ -553,3 +553,86 @@ capture/model/engine contracts. Keep the detection automation independent.
 **References:** [WPF Grid attached positioning](https://learn.microsoft.com/en-us/dotnet/api/system.windows.controls.grid.setrow);
 [WPF responsive layout](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/layout);
 [original UI-08 ledger](#ga-ui-08--visible-local-pps-chart-no-new-telemetry).
+
+## GA UI-10 — Truthful local PPS waiting state and accessible text summary
+
+**2026-10-30 · SOURCE CANDIDATE — UNVERIFIED.** Started from LIVE
+`feature/carthago-reliability-hardening` HEAD
+`ecf364be165f6b754b0b683088554c3a14d41099` (after independent detection R441–R450 candidate).
+UI source commit: `fc8203ca26c5511bda1936fd7bf00bc305513ccd`. The complete publication is the
+expected-HEAD-protected feature ref after the documentation commit; a commit
+cannot embed its own SHA. **No builds, tests, replays, CI, runner jobs or
+production capture were executed.** Authored automated tests: **0** (UI
+ownership excludes test-suite modifications). Planned acceptance scenarios:
+**10, unexecuted**.
+
+### Evidence and design contract
+
+The authoritative Library reference
+`libfile_b0a34361560c8191b641e432b3e6b15c` was retrieved and
+visually inspected before changes. Its dark navy traffic card and restrained
+empty-state treatment are the visual guide; its three-series Mbps plot,
+incident metrics and timestamps are **demo content**, not telemetry
+contracts. The original WPF `TrafficPlot` remains the single visible local
+ScottPlot PPS chart, with the existing ten-sample average and 120-point
+history. It is still full-width above incidents, not the reference's
+side-by-side placement.
+
+| UI element | Source binding | Evidence boundary |
+| --- | --- | --- |
+| Waiting overlay | `DashboardTrafficChartWaitingPanel` in `MainWindow.xaml`; `MainWindow.Plots.cs` toggles it only while `_trafficYs.Count < 2`, matching the existing `RenderTraffic` minimum line threshold. | No invented samples, capture readiness, progress percentage, or network-wide measurement. Timer ticks can be zeros even without capture. |
+| Readable alternative | `DashboardTrafficChartTextSummary` in the chart footer is updated by the **existing** `RenderTraffic` path with the latest local PPS timer value, retained count (maximum 120) and the existing `CaptureStatusText.Text`. | A timer sample is **not** authenticated evidence of active capture. Summary explicitly warns that zeros can occur without active capture. It does not disclose endpoints, payloads, evidence or credentials. |
+| Capture unavailable state | Existing capture-status badge and non-MONITORING stale-history caution are retained, alongside the summary. | A PAUSED/ERROR/OFFLINE/DEGRADED chart may contain retained historical points or timer-generated zeros; neither is presented as current traffic. |
+| Screen-reader behavior | TextBlock provides a textual companion to the graphical chart; `AutomationProperties.LiveSetting="Off"` avoids deliberate per-second live-region announcements. | Actual screen-reader reading order, keyboard focus, scaling and WPF binding remain **unverified**. This is not a proven accessibility pass. |
+
+### Source-only divergence and concurrency review
+
+- Owned changes: `Carthago/Views/MainWindow.xaml`,
+  `Carthago/Views/MainWindow.Plots.cs`, and this ledger. Existing
+  `TrafficPlot`, `TrafficPlot_Analytics`, the PPS timer, rolling
+  samples, ten-sample moving average, plot style, status bindings and
+  responsive breakpoints remain intact.
+- Original `RenderTraffic` still renders both ScottPlot instances.
+  The only new source action is a bounded display-state update using
+  existing `_trafficYs` and `CaptureStatusText` values.
+- Inspected the latest remote head, prior UI-01–09 ledger, chart markup,
+  plot and timer implementation, and independent R441–R450 changed paths.
+  No UI path was changed by the concurrent detection batch.
+- No changes to engine, models, services, capture/provenance, rule IDs,
+  thresholds, confidence floors, runtime modes, approvals, privacy,
+  journal, tests, project, workflows, Cisco, WebView2, CLI, or rule docs.
+  Source-only uniqueness and changed-path checks do not constitute a
+  compilation, XAML runtime, rendered-layout or accessibility pass.
+- **Residual risk:** the UI timer may continue to generate zeros while
+  capture is inactive; the latest sample can therefore be zero without
+  proving traffic absence. A genuinely capture-qualified sample series
+  would require a separate shared-producer integration proposal and
+  owner approval; it is not implemented here.
+
+### Acceptance scenarios — PLANNED ONLY, NOT AUTHORED AS TESTS, UNEXECUTED
+
+1. Before the first timer tick: waiting overlay visible; summary says no PPS observation.
+2. After exactly one tick: overlay remains; summary identifies the one timer sample.
+3. After two ticks: overlay hides; original PPS line is eligible to render.
+4. After 120+ ticks: retained count remains bounded to 120; no unbounded UI growth.
+5. PAUSED/OFFLINE/ERROR/DEGRADED: original capture badge and caution remain visible; zero is not called a healthy capture.
+6. MONITORING with zero packets: summary reports timer PPS zero without claiming sensor health.
+7. MONITORING with observed packets: latest summary value matches existing timer PPS history.
+8. Ten-plus samples: original ten-sample moving average and Analytics chart remain unchanged.
+9. Keyboard, screen reader, high-contrast and 125–200% DPI: textual alternative and overlay remain readable; not verified.
+10. Widths 1440, 1100, 1099, 1024, 1023 and 640: original responsive layout, Live Events, incidents, Cisco and CLI unavailable panel remain intact.
+
+**Open quality GAs:** pinned-SHA Windows compilation, WPF named-element
+resolution, chart visibility and actual ScottPlot rendering, capture-state
+transitions, timer/plot synchronization, screen-reader reading order,
+DPI and screenshot comparison with the approved reference, and full
+regression when owner authorizes testing. **Tests executed: 0.**
+
+**Next independent UI GA UI-11:** inspect LIVE HEAD and the design reference
+for one cohesive accessibility/visual-consistency improvement outside
+already-completed chart waiting behavior. Do not add telemetry, working CLI,
+or modify the independent rule automation.
+
+**Technical references:** [WPF AutomationProperties.LiveSetting](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.livesetting);
+[WPF visibility](https://learn.microsoft.com/en-us/dotnet/api/system.windows.visibility);
+[prior GA UI-09](#ga-ui-09--narrow-window-pps-chart-header-and-capture-status-readability).
