@@ -31,6 +31,80 @@
 
 **Authoritative WPF references:** [WPF panels and Grid/StackPanel sizing](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/controls/panels-overview); [WPF Ellipse Fill brush](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/graphics-multimedia/how-to-draw-an-ellipse-or-a-circle).
 
+## GA UI-03 — Four-card KPI provenance and adaptive presentation
+
+**2026-10-30 · SOURCE CANDIDATE — UNVERIFIED.** UI source commit:
+`eed18e04c5fed95ed31731753451da1acaf1aec3` (parent `f80fede814c2905588f715f8091b77c30896faf7`). The design-ledger commit is its
+direct descendant; publication uses one non-forced expected-HEAD ref update.
+**No WPF build, xUnit, UI screenshot, replay, CI, runner or production capture executed.**
+
+### Approved-reference mapping and actual data provenance
+
+| Reference card | Source / display contract | Limits and false-positive / misleading-display controls |
+| --- | --- | --- |
+| Network Throughput | `MainWindow.Core.cs` local capture `_bytesBucket` → 1-second `_mbpsSeries`, formatted using existing `FormatThroughput`; `UpdateMonitoringHeader` updates visible card at the existing 5-second cadence | **Observed local capture only**, not total network traffic. Paused/error/offline show `—`; monitoring with no sample shows `—` / awaiting; degraded labels observed values as degraded. No invented 942 Mbps or 12% delta. |
+| Active Sensors | `—` / **Inventory unavailable** | No validated inventory/health numerator and denominator in the audited WPF contracts. Never invent 8/8 or online status. |
+| Open Incidents | `_sinkHost.Analytics.GetRecentIncidents(150)` snapshot filtered by existing `ActiveIncidents()` (not Resolved) | **Bounded recent snapshot, not a global incident total**; demo-mode data can be included, explicitly noted when demo is enabled. No invented incident score, timestamp, or risk-rule mapping. |
+| Detection Coverage | `—` / **No validated denominator** | No validated active-rule denominator or observed rule execution coverage; never substitute baseline confidence or hard-code 96%. |
+
+**Additional metrics:** The original preference-controlled `_dashboardKpis` collection
+remains intact below the four reference-aligned cards, retaining Active Incidents,
+High Risk Hosts, New Anomalies (15m), Threat Feed Hits, and Baseline Confidence
+according to existing `DashboardPreferences` toggles. The shared KPI template
+and container style are reused by both strips; no duplicate template implementation.
+`SocKpiVm` implements `INotifyPropertyChanged` only for the two live fields
+(`Value`, `TrendText`), so status refreshes do not replace the card collection.
+
+**Adaptive layout:** Wide ≥1440 = four cards per row; Standard 1100–1439 = two;
+Compact <1100 = two. The prior additional-metric panel templates (5/3/2)
+and shell navigation breakpoints are unchanged. Layout below 1024 remains
+**source-only, visually unverified**, with a minimum 640px window.
+
+### Owned paths and static divergence review
+
+- `Carthago/Views/MainWindow.xaml` — reusable KPI `DataTemplate` / item style, four reference-aligned cards and labeled additional-metric row.
+- `Carthago/Views/MainWindow.Dashboard.cs` — actual analytics/capture provenance, honest missing metrics, observable throughput state.
+- `Carthago/Views/MainWindow.DashboardResponsive.cs` — overview KPI adaptive panels without changing existing widget layouts.
+- `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md` — this contract, evidence limits, scenario inventory and next GA.
+
+Start-of-GA audit: live branch `f80fede814c2905588f715f8091b77c30896faf7`, UI GA UI-01/UI-02
+already present; detection GA R371–R380 changed rule/test/docs paths only.
+End-of-GA source review: exactly three `Carthago/Views/**` files changed,
+existing `DashboardKpiItemsControl`, handlers, capture controls, WPF
+partials, Cisco views, ScottPlot/WebView2, preferences and rule sources
+retained. One shared card template and one shared item-container style;
+all three overview panel resource keys match responsive code.
+These are **static inspections, not proof of XAML parsing, compilation, bindings
+or layout**.
+
+### Acceptance scenario inventory — DEFERRED, UNEXECUTED
+
+No UI test files were authored because the UI stream cannot modify tests;
+the following are **planned manual/integration checks**, not passed cases:
+1. Monitoring with a positive local capture sample: correct formatted value, no network-wide claim.
+2. Monitoring before the first 1-second sample: `—` and awaiting label.
+3. Monitoring with a sampled zero: observed `0 bps`, distinct from unavailable.
+4. Paused with stale nonzero series: `—`, never stale throughput.
+5. Degraded capture: current local sample explicitly labeled degraded.
+6. Error/offline: `—` and unavailable state; no always-green indicator.
+7. Incident snapshot: resolved excluded, count bounded to the latest 150.
+8. Debug/demo scenario: potential demo inclusion disclosed, no invented rule-to-behavior mapping.
+9. Preference toggles: original five metrics appear/disappear as before; no deletion.
+10. Missing inventory and coverage producer: `—` with explanatory captions.
+11. Wide/Standard/Compact and <1024 widths: no clipped cards, keyboard navigation or unreadable typography.
+12. Monitoring/incident changes: data bindings update without blocking UI thread or breaking focus.
+
+**Risks/open GAs:** XAML resource resolution, `ItemsControl` layout and
+scroll behavior, actual 5-second update cadence, no-demo labeling,
+high-contrast accessibility, and Windows startup are unverified.
+Source-only static review cannot establish zero false positives or field
+coverage. Do not run verification until the owner explicitly authorizes it.
+
+**Next independent UI GA:** prioritized incidents list and selected-incident
+investigation panel (existing `DashboardAnomalyList`, `DashboardSignalPanel`
+and real evidence models). Do not edit engine/rules/tests or fabricate
+incident proof.
+
 ## Visual-reference to real-code map
 
 | Approved visual element | Existing code / evidence | Current disposition and next action |
@@ -38,7 +112,7 @@
 | Dark graphite/navy shell, cyan accents, thin dividers | `Views/Theme.xaml`, `Views/Sidebar.xaml` | GA UI-01 source candidate; static only. |
 | CARTHAGO wordmark / left navigation | `Views/Sidebar.xaml` and `Sidebar.xaml.cs` | GA UI-01 wordmark + Overview/Live Traffic; retain other real destinations until their navigation contracts can be reconciled. |
 | Security Overview header, monitoring state | `Views/MainWindow.xaml` `SocDashboardWorkspace`, `CommandHeader`, `CaptureStatusText`; `MainWindow.Dashboard.cs` `UpdateMonitoringHeader` | GA UI-02 candidate: dashboard-only title and live text/indicator bound to actual capture status; no fake active state. |
-| Four KPI cards (throughput, sensors, incidents, coverage) | `MainWindow.xaml` `DashboardKpiItemsControl`, `MainWindow.Dashboard.cs` `_dashboardKpis`, `MainWindow.DashboardResponsive.cs` | Existing five-column Wide grid; audit metric provenance before changing to four cards. If coverage/sensor data are unavailable, show unavailable rather than fake values. |
+| Four KPI cards (throughput, sensors, incidents, coverage) | `MainWindow.xaml` `DashboardOverviewKpiItemsControl`, `MainWindow.Dashboard.cs` `_dashboardOverviewKpis`, `MainWindow.DashboardResponsive.cs` | **GA UI-03 SOURCE CANDIDATE — UNVERIFIED:** observed local throughput and bounded unresolved incidents; sensors/coverage explicitly unavailable. Original preference-controlled five metrics retained in `DashboardKpiItemsControl`. |
 | Real-time traffic chart | `MainWindow.xaml` hidden legacy `TrafficPlot` / widget workspace; `MainWindow.Plots.cs` | Preserve ScottPlot; assess safe reuse and real telemetry provenance, no simulated chart. |
 | High-priority incidents | `DashboardAnomalyList`, incident snapshot in `MainWindow.Dashboard.cs` | Real incident pipeline exists; visual grouping and severity badges pending. Never map screenshot sample R343/R102/R275 titles to actual rules. |
 | Investigation / evidence inspector | `DashboardSignalPanel`, `DashboardDetailReasonsItems`, `DashboardDetailRulesItems` | Existing details are populated from app state; visual refinement pending. Evidence is not proof of unsupported outcomes. |
@@ -52,4 +126,4 @@
 - Do not edit `Engine/**`, `Models/**`, `Services/**`, rules, capture, tests, runners, workflows, `docs/RULE_HARDENING_PROGRESS.md` or rule evidence. No builds/tests until owner explicitly authorizes.
 - Preserve all sidebar `x:Name` identifiers and Click handlers, filters, Cisco tools, view navigation, ScottPlot/WebView2, and WPF window startup.
 - Source-only changes may have visual or runtime issues; validate with owner-authorized pinned-SHA Windows build and screenshot review later.
-- **Next UI GA:** dashboard KPI strip provenance and responsive presentation, with real throughput/incident bindings and explicit unavailable sensor/coverage states; preserve existing preference-controlled metrics.
+- **Next UI GA:** high-priority incidents list and selected-incident evidence inspector; preserve actual incident provenance and demo boundaries. GA UI-03 KPI strip is SOURCE CANDIDATE — UNVERIFIED until owner-authorized Windows verification.
