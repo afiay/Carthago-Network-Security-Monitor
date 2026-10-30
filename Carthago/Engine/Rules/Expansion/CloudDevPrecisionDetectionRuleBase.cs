@@ -176,11 +176,11 @@ namespace Carthago.Engine.Rules.Expansion
             var items = new List<DetectionEvidenceItem>
             {
                 new("clouddev.family", detectionFamily, "cloud-dev"),
-                new("clouddev.host", Descriptor.RuleId is "R221" or "R222" or "R243" or "R244" or "R245" or "R246" or "R247" or "R248" or "R249" or "R250" or "R251" or "R252" or "R253" or "R254" or "R255" or "R256" or "R257" ? "[REDACTED]" : string.IsNullOrWhiteSpace(host) ? record.Destination ?? "unknown" : host, "cloud-dev")
+                new("clouddev.host", Descriptor.RuleId is "R381" or "R382" or "R383" or "R384" or "R385" or "R386" or "R387" or "R388" or "R389" or "R390" or "R221" or "R222" or "R243" or "R244" or "R245" or "R246" or "R247" or "R248" or "R249" or "R250" or "R251" or "R252" or "R253" or "R254" or "R255" or "R256" or "R257" ? "[REDACTED]" : string.IsNullOrWhiteSpace(host) ? record.Destination ?? "unknown" : host, "cloud-dev")
             };
 
             if (!string.IsNullOrWhiteSpace(path))
-                items.Add(new DetectionEvidenceItem("http.path", Descriptor.RuleId is "R353" or "R354" or "R355" or "R356" or "R357" or "R358" or "R359" or "R360" or "R361" or "R362" or "R363" or "R364" or "R365" or "R366" or "R367" or "R368" or "R369" or "R370" or "R371" or "R372" or "R373" or "R374" or "R375" or "R376" or "R377" or "R378" or "R379" or "R380" or "R221" or "R222" or "R243" or "R244" or "R245" or "R246" or "R247" or "R248" or "R249" or "R250" or "R251" or "R252" or "R253" or "R254" or "R255" or "R256" or "R257" ? "[REDACTED]" : path, "http"));
+                items.Add(new DetectionEvidenceItem("http.path", Descriptor.RuleId is "R353" or "R354" or "R355" or "R356" or "R357" or "R358" or "R359" or "R360" or "R361" or "R362" or "R363" or "R364" or "R365" or "R366" or "R367" or "R368" or "R369" or "R370" or "R371" or "R372" or "R373" or "R374" or "R375" or "R376" or "R377" or "R378" or "R379" or "R380" or "R381" or "R382" or "R383" or "R384" or "R385" or "R386" or "R387" or "R388" or "R389" or "R390" or "R221" or "R222" or "R243" or "R244" or "R245" or "R246" or "R247" or "R248" or "R249" or "R250" or "R251" or "R252" or "R253" or "R254" or "R255" or "R256" or "R257" ? "[REDACTED]" : path, "http"));
             if (!string.IsNullOrWhiteSpace(record.HttpMethod))
                 items.Add(new DetectionEvidenceItem("http.method", record.HttpMethod!, "http"));
             if (record.DestinationPort.HasValue)
@@ -201,6 +201,11 @@ namespace Carthago.Engine.Rules.Expansion
                 configureConfidence,
                 count,
                 window.HasValue ? (int)window.Value.TotalSeconds : 0);
+
+            // Cloud provider request targets and vault/account host labels are
+            // potentially sensitive. Do not retain them in event summaries.
+            if (Descriptor.RuleId is "R381" or "R382" or "R383" or "R384" or "R385" or "R386" or "R387" or "R388" or "R389" or "R390")
+                evt.DestinationHost = "[REDACTED]";
 
             var effectiveCooldownKey = string.IsNullOrWhiteSpace(cooldownKey) ? null : $"{Descriptor.RuleId}:{cooldownKey}";
             var cooldown = PrecisionProfile.Cooldown ?? TimeSpan.Zero;

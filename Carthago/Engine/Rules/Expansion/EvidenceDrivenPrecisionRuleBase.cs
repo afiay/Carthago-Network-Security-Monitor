@@ -234,7 +234,8 @@ namespace Carthago.Engine.Rules.Expansion
             };
 
             if (!string.IsNullOrWhiteSpace(host))
-                evidence.Add(new DetectionEvidenceItem("network.bestHost", host, "network"));
+                evidence.Add(new DetectionEvidenceItem("network.bestHost",
+                    spec.RuleId is "R381" or "R382" or "R383" or "R384" or "R385" or "R386" or "R387" or "R388" or "R389" or "R390" ? "[REDACTED]" : host, "network"));
             if (!string.IsNullOrWhiteSpace(record.Source))
                 evidence.Add(new DetectionEvidenceItem("network.source", record.Source!, "network"));
             if (!string.IsNullOrWhiteSpace(record.Destination))

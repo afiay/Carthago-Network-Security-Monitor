@@ -29,12 +29,12 @@ namespace Carthago.Engine.Rules.Expansion
             PositiveConditions = new[] { "Cloudflare Tunnel Creation Indicator requires observable CloudInfrastructure telemetry and will not match descriptor text alone.", "Source and destination, host, process, protocol, path, port, or payload evidence must be present.", "The configured signal count and time-window threshold must be satisfied before a DetectionEvent is emitted." },
             NegativeConditions = new[] { "Do not match on product names, rule names, documentation text, or generic banners alone.", "Do not match when source/destination context is absent or when the traffic is inside an approved management path.", "Do not match known monitoring, backup, CI/CD, inventory, scanner, or administrative workflows unless rule-specific high-risk evidence remains." },
             FalsePositives = new[] { "Approved infrastructure automation, CI/CD deploy jobs, cloud inventory tools, or cloud security scanners may perform similar API actions; approve known service accounts and management hosts." },
-            TextIndicators = new[] { "cloudflare tunnel creation indicator", "cloudflare", "tunnel", "creation", "cloudflared", "trycloudflare", "argotunnel" },
-            HostIndicators = new[] { "trycloudflare.com", "cloudflare.com", "argotunnel.com" },
-            PathIndicators = new[] { "/api/tunnels", "/tunnel", "/agent", "authtoken" },
-            ProcessIndicators = new[] { "aws", "aws.exe", "az", "az.exe", "gcloud", "gsutil", "terraform", "cloudflared", "ngrok", "tailscale", "zerotier-one" },
+            TextIndicators = Array.Empty<string>(),
+            HostIndicators = new[] { "api.cloudflare.com" },
+            PathIndicators = new[] { "/client/v4/accounts/", "/cfd_tunnel" },
+            ProcessIndicators = Array.Empty<string>(),
             ProtocolIndicators = Array.Empty<string>(),
-            Methods = Array.Empty<string>(),
+            Methods = new[] { "post" },
             TokenKinds = Array.Empty<string>(),
             Ports = Array.Empty<int>(),
             MinimumBytes = 0L,
@@ -46,6 +46,7 @@ namespace Carthago.Engine.Rules.Expansion
             DistinctBy = "source+destination+cloudinfrastructure+behavior",
             TuningKnobs = new[] { "Mode", "Threshold", "WindowSeconds", "CooldownSeconds", "ApprovedCloudAccounts", "ApprovedServiceAccounts", "ApprovedAutomationHosts", "AllowedCloudRegions" },
             RequiredTests = new[] { "positive R388 evidence-gated sample", "negative R388 descriptor-only sample", "negative R388 missing telemetry sample", "negative R388 approved-admin sample" },
+            RequireHttp = true,
             RequireCrossBoundary = true,
         };
 
@@ -54,6 +55,14 @@ namespace Carthago.Engine.Rules.Expansion
         public R388_CloudflareTunnelCreationIndicatorRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            // SOURCE CANDIDATE — UNVERIFIED. Provider request shape alone
+            // cannot establish authentication, success or malicious intent.
+            var rejection = CloudProviderRequestEvidence.Reject(context.Record, context.TimestampUtc, "R388");
+            if (rejection != null)
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence, rejection,
+                    "Rule-specific packet evidence or trusted provider audit is unavailable.");
+            return EvaluateSpec(context, Spec);
+        }
     }
 }

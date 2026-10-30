@@ -54,6 +54,14 @@ namespace Carthago.Engine.Rules.Expansion
         public R390_TailscaleTailnetAuthIndicatorRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            // SOURCE CANDIDATE — UNVERIFIED. Provider request shape alone
+            // cannot establish authentication, success or malicious intent.
+            var rejection = CloudProviderRequestEvidence.Reject(context.Record, context.TimestampUtc, "R390");
+            if (rejection != null)
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence, rejection,
+                    "Rule-specific packet evidence or trusted provider audit is unavailable.");
+            return EvaluateSpec(context, Spec);
+        }
     }
 }
