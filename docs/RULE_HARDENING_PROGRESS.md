@@ -13,17 +13,8 @@ authored regression tests, batch specification and ledger update together.
 Distinguish authored tests from executed test evidence and a detector match
 from a validated operational alert.
 
-**Latest documented batch:** [R461–R470](RULE_BATCH_461-470.md) — SOURCE
-CANDIDATE — UNVERIFIED; all ten BLOCKED on missing trusted DHCP, ARP,
-SLAAC, controller, ADB, gateway and MDM provenance. **190 authored xUnit
-invocations, 0 executed.** Source commit `bfe817ee7a3b0e24a7dbd6c255f27187b8905c9d`; authored-test
-commit `2cd4ba6eace2d4242e34f453bc1603cdec27a0bd`. Atomic publication is the documentation-descendant
-commit at the live branch ref (a commit cannot embed its own SHA). Next
-contiguous development GA: **R471–R480**, after fresh live inspection.
-The 2026-10-30 author-only branch rewrite replaced historical HEAD
-`a7166038cd947339d9671d7a873babbd00db080a` with
-`4dd73f3f6de2c0c6b9a6fd299d0c306ebcc3a9cc`; historical commit
-references below predate the rewrite and are not valid publication leases.
+**Latest documented batch:** [R471–R480](RULE_BATCH_471-480.md) — **SOURCE CANDIDATE — UNVERIFIED**; all ten BLOCKED on missing authenticated RDP/remote-support session or decoded Modbus/S7/DNP3 command provenance. **200 authored xUnit invocations, 0 executed.** Source commit `5962ae38b132b37f5f47a99fb075eaac21aaa23b`; authored-test commit `934223deb5a4d4c004165146e7fccf293592b092`. Atomic publication is the documentation-descendant commit at the live branch ref (a commit cannot embed its own SHA). Next contiguous development GA: **R481–R490**, after fresh live inspection.
+The prior [R461–R470](RULE_BATCH_461-470.md) remains **SOURCE CANDIDATE — UNVERIFIED** with 190 authored xUnit invocations, 0 executed. The 2026-10-30 author-only branch rewrite replaced historical HEAD `a7166038cd947339d9671d7a873babbd00db080a` with `4dd73f3f6de2c0c6b9a6fd299d0c306ebcc3a9cc`; old commit references are historical, never publication leases.
 
 | Batch | Rules | Development status | Test evidence |
 | --- | --- | --- | --- |
