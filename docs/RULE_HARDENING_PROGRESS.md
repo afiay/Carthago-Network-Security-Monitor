@@ -13,7 +13,8 @@ authored regression tests, batch specification and ledger update together.
 Distinguish authored tests from executed test evidence and a detector match
 from a validated operational alert.
 
-**Latest documented batch:** [R481–R490](RULE_BATCH_481-490.md) — **SOURCE CANDIDATE — UNVERIFIED**; all ten BLOCKED on absent decoded, source-attributed OT application operations and trusted authorization/outcome producers. **210 authored xUnit invocations, 0 executed.** Source commit `29d0777c900026301177843e477cb95dff01af20`; authored-test commit `177b19e8da94d78de0b4650ebf37af700de4e3b5`. Atomic publication is the documentation-descendant commit at the live branch ref (a commit cannot embed its own SHA). Next contiguous development GA: **R491–R500**, after fresh live inspection.
+**Latest documented batch:** [R491–R500](RULE_BATCH_491-500.md) — **SOURCE CANDIDATE — UNVERIFIED**; all ten **BLOCKED** on absent trustworthy GOOSE/historian provenance or authenticated sensitive-file, clipboard, remote-session and archive-to-cloud upload correlation. **230 authored xUnit invocations, 0 executed.** Source commit `77fd467f292c0b4ddccac0b28c2134f450f4baef`; authored-test commit `e64a5a3fcbedb5c3f7bea0ad842e4c016729e282`. The atomic publication SHA is the live documentation-descendant branch HEAD (a commit cannot embed its own SHA). Next contiguous development GA: **R501–R510**, after fresh live inspection.
+The prior [R481–R490](RULE_BATCH_481-490.md) remains **SOURCE CANDIDATE — UNVERIFIED** with 210 authored xUnit invocations, 0 executed.
 The prior [R471–R480](RULE_BATCH_471-480.md) remains **SOURCE CANDIDATE — UNVERIFIED** with 200 authored xUnit invocations, 0 executed. The 2026-10-30 author-only branch rewrite replaced historical HEAD `a7166038cd947339d9671d7a873babbd00db080a` with `4dd73f3f6de2c0c6b9a6fd299d0c306ebcc3a9cc`; old commit references are historical, never publication leases.
 
 | Batch | Rules | Development status | Test evidence |
@@ -1083,3 +1084,7 @@ Historical 4,940/4,940 and frozen R102 evidence are not reinterpreted.
 Only detection-owned helper, new authored test, this batch doc and ledger
 changed. UI files untouched. Next contiguous GA **R471–R480**,
 conditional on live HEAD inspection.
+
+## GA R491–R500 — 2026-10-30 source-only candidate
+
+Publication base HEAD `316004fc4fe176ee3250add7c530282d3af30396`; source `77fd467f292c0b4ddccac0b28c2134f450f4baef`; authored tests `e64a5a3fcbedb5c3f7bea0ad842e4c016729e282`; atomic publication is the documentation-descendant commit at the branch ref. **230 authored, 0 executed**. All ten dispositions **BLOCKED**: R491 GOOSE L2/substation provenance; R492 historian query/result and asset authority; R493 browser password store; R494 SSH private key; R495 KeePass database; R496 VPN configuration; R497 browser cookies; R498 clipboard sync; R499 RDP file transfer; R500 archive-to-cloud sequence. [Individual evidence codes, original profiles, false-positive boundaries and exact scenarios](RULE_BATCH_491-500.md). No original modes, confidence floors, thresholds, windows, cooldowns, privacy, approvals or frozen GAs changed. **Next: R501–R510**, only after a fresh live audit.
