@@ -216,6 +216,45 @@ namespace Carthago.Engine.Rules.Expansion
                     "VAULT_TOKEN_NOT_OBSERVED",
                     "R365 requires a concrete Vault token pattern in observed telemetry.");
 
+            // GA R391-R400 (SOURCE CANDIDATE — UNVERIFIED): generic text,
+            // path, process, and protocol tokens are not independent family or
+            // authenticated join/asset provenance. No validated producer is
+            // currently connected for these named behaviors. Fail closed before
+            // burst counters, scoring, cooldown, or evidence construction.
+            switch (spec.RuleId)
+            {
+                case "R391":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "ZEROTIER_JOIN_STATE_PROVENANCE_UNAVAILABLE", "ZeroTier packet or process metadata cannot prove network membership; trusted local node/controller state is unavailable.");
+                case "R392":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "CLOUD_CLI_SERVER_ROLE_AND_UA_PROVENANCE_UNAVAILABLE", "A client-supplied User-Agent cannot prove server asset role or authenticated CLI execution.");
+                case "R393":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "COBALT_STRIKE_BEACON_PROFILE_SIGNATURE_UNAVAILABLE", "Generic URI and timing features cannot attribute a configurable Cobalt Strike Beacon.");
+                case "R394":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "COBALT_STRIKE_MALLEABLE_HEADER_PROFILE_UNAVAILABLE", "Client-supplied HTTP headers cannot prove a particular Malleable C2 profile.");
+                case "R395":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "SLIVER_MTLS_AUTHENTICATED_FINGERPRINT_UNAVAILABLE", "TLS metadata alone cannot attribute mTLS traffic to Sliver.");
+                case "R396":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "MYTHIC_AGENT_CALLBACK_PROVENANCE_UNAVAILABLE", "Generic callback routes cannot identify a Mythic agent without a vetted signature.");
+                case "R397":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "METERPRETER_STAGER_PAYLOAD_SIGNATURE_UNAVAILABLE", "Generic stage paths cannot prove a Meterpreter payload or transfer.");
+                case "R398":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "HAVOC_CALLBACK_SIGNATURE_UNAVAILABLE", "Generic callback paths cannot identify Havoc C2.");
+                case "R399":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "BRUTE_RATEL_BADGER_SIGNATURE_UNAVAILABLE", "Generic beacon terms cannot identify Brute Ratel Badger.");
+                case "R400":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "COVENANT_GRUNT_CALLBACK_SIGNATURE_UNAVAILABLE", "Generic callback routes cannot identify Covenant Grunt.");
+            }
+
             var signalReasons = CollectSignals(record, spec).ToList();
             if (signalReasons.Count < Math.Max(1, spec.MinimumSignals))
                 return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence, "MINIMUM_SIGNAL_COUNT_NOT_MET", $"Rule requires at least {Math.Max(1, spec.MinimumSignals)} independent signal(s), but observed {signalReasons.Count}.");
