@@ -253,6 +253,43 @@ namespace Carthago.Engine.Rules.Expansion
                 case "R400":
                     return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
                         "COVENANT_GRUNT_CALLBACK_SIGNATURE_UNAVAILABLE", "Generic callback routes cannot identify Covenant Grunt.");
+
+            // GA R401-R410 — SOURCE CANDIDATE — UNVERIFIED. These malware
+            // family names cannot be inferred from generic HTTP paths, TLS,
+            // SMTP, process labels, user-controlled headers or Info strings.
+            // No validated family-specific payload, agent, file-execution or
+            // exfiltration provenance producer is connected. Fail closed before
+            // signal scoring, burst state, cooldown or event/evidence emission.
+                case "R401":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "EMPIRE_STAGER_PROFILE_SIGNATURE_UNAVAILABLE", "Vetted Empire-specific stager URI/payload signature and independent response correlation.");
+                case "R402":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "ASYNCRAT_TELEGRAM_AGENT_CORRELATION_UNAVAILABLE", "Attributable AsyncRAT agent behavior and authenticated Telegram message context.");
+                case "R403":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "REMCOS_PROTOCOL_SIGNATURE_UNAVAILABLE", "Validated Remcos-specific packet/payload protocol signature with flow provenance.");
+                case "R404":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "AGENT_TESLA_SMTP_EXFIL_PROVENANCE_UNAVAILABLE", "SMTP envelope/content provenance, transfer outcome and Agent Tesla attribution.");
+                case "R405":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "QAKBOT_HTTP_PROFILE_SIGNATURE_UNAVAILABLE", "Validated QakBot-specific HTTP request/payload signature.");
+                case "R406":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "EMOTET_LOADER_PAYLOAD_SIGNATURE_UNAVAILABLE", "Versioned Emotet loader payload/response signature.");
+                case "R407":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "BUMBLEBEE_LOADER_PAYLOAD_SIGNATURE_UNAVAILABLE", "Validated Bumblebee loader delivery/payload signature.");
+                case "R408":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "SOCGHOLISH_FAKE_UPDATE_DELIVERY_PROVENANCE_UNAVAILABLE", "Vetted fake-update delivery/payload evidence and browser-to-execution correlation.");
+                case "R409":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "RASPBERRY_ROBIN_LNK_EXECUTION_PROVENANCE_UNAVAILABLE", "Trusted removable-media LNK file/shortcut execution telemetry.");
+                case "R410":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "REDLINE_EXFIL_PAYLOAD_CORRELATION_UNAVAILABLE", "Validated RedLine payload or exfiltration content and response correlation.");
             }
 
             var signalReasons = CollectSignals(record, spec).ToList();
