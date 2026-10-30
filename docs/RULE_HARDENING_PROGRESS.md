@@ -1,8 +1,21 @@
 # Detection-rule hardening progress
 
-This ledger is the durable handoff for sequential five-rule development on
-`feature/carthago-reliability-hardening`. Automated development must update it
-in the same commit as each batch's code, tests and technical assessment.
+This ledger records both historical and current rule engineering on
+`feature/carthago-reliability-hardening`. Batches through R356–R360 were
+developed in five-rule units; starting with R361–R370, the recurring
+continuation develops **ten consecutive rules per GA**. Preserve historical
+results exactly as recorded at their respective commits; do not interpret an
+earlier unexecuted label as proof that later tests were never run.
+
+**Documentation standard:** [Rule documentation and GA contract](rules/RULE_DOCUMENTATION_STANDARD.md).
+A completed source-only candidate publication must contain its implementation,
+authored regression tests, batch specification and ledger update together.
+Distinguish authored tests from executed test evidence and a detector match
+from a validated operational alert.
+
+**Latest documented batch:** [R361–R370](RULE_BATCH_361-370.md) — SOURCE
+CANDIDATE / UNVERIFIED; subsequent contiguous development GA is R371–R380,
+subject to a fresh remote HEAD review.
 
 | Batch | Rules | Development status | Test evidence |
 | --- | --- | --- | --- |
