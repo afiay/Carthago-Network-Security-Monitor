@@ -176,6 +176,15 @@ namespace Carthago.Engine.Rules.Expansion
                 return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
                     missingTransferEvidence.Code, missingTransferEvidence.Detail);
 
+            // GA R501-R510 — SOURCE CANDIDATE — UNVERIFIED.
+            // Untrusted HTTP metadata, client User-Agent, process labels and
+            // packet lengths cannot prove a file/body upload or provider outcome.
+            // Stop before generic signal scoring, burst/cooldown state and alerts.
+            var uploadGap = DataLossUploadEvidenceBoundary.GetMissingProducer(spec.RuleId);
+            if (uploadGap is { } missingUploadEvidence)
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                    missingUploadEvidence.Code, missingUploadEvidence.Detail);
+
             if (spec.RequireHttp && !HasHttpContext(record))
                 return NoMatch(RuleNoMatchReasonCategory.NotApplicableProtocol, "HTTP_CONTEXT_REQUIRED", "Rule requires HTTP method, URI, host, headers, or HTTP protocol context.");
 
