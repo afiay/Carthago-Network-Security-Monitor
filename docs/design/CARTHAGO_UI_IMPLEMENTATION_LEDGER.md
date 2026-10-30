@@ -1010,3 +1010,89 @@ telemetry or modify the independent rule automation.
 **Technical reference:**
 [Microsoft WPF DataGrid.FrozenColumnCount](https://learn.microsoft.com/en-us/dotnet/api/system.windows.controls.datagrid.frozencolumncount);
 [WPF DataGrid overview](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/controls/datagrid).
+
+## GA UI-15 — Live Events keyboard-focus visibility
+
+**2026-10-30 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE
+`feature/carthago-reliability-hardening` HEAD: `67555a84575f7c1d7184d5d07cfc89bc3ba574a9`.
+UI source commit: `480568e8b3a2e4e039b3da4db21c87ea7c36c384`. Documentation/publication commit
+is the direct descendant of this source commit, confirmed from the
+protected remote branch after publication. **Tests authored: 0; executed: 0.**
+No builds, xUnit, replays, holdouts, CI, runners, benchmarks, screenshots,
+or production capture were performed.
+
+### Approved reference, existing consumers and bounded change
+
+The exact approved Library image
+`libfile_b0a34361560c8191b641e432b3e6b15c` was resolved and visually
+inspected. Its dark navy/graphite Live Events table uses restrained cyan
+navigation emphasis. Its metrics, endpoints, rule IDs, timestamps,
+confidence and Mbps series are **demo-only**, not Carthago telemetry.
+
+Source inspection of `Carthago/Views/MainWindow.xaml` and
+`Carthago/Views/Theme.xaml` confirmed the existing implicit `DataGridCell`
+style and the shared `KeyboardFocusVisual` theme resource, whose outline
+uses `KeyboardFocusBrush`. This GA adds a **grid-scoped**
+`DataGrid.CellStyle` that inherits the original implicit cell style and
+sets `FocusVisualStyle` to that existing resource. WPF focus visuals are
+intended to indicate **keyboard** focus, not assert selection, alert
+confidence or detection status. No custom focus handler, new UI model,
+renderer, telemetry producer, or global DataGrid style was introduced.
+
+| Surface | Actual binding / UI behavior | Boundary |
+| --- | --- | --- |
+| `DashboardLiveEventsGrid` cells | Existing eight read-only `DashboardEventRowVm` columns and WPF keyboard navigation; only keyboard-focus visual style is scoped to this grid. | No new data, row selection, keyboard command or event handler. Visual focus behavior is unverified. |
+| Time and other columns | Existing frozen 144px Event time and seven horizontally scrollable columns. | Recorded timestamp timezone remains unverified; source/destination/rule/evidence/delivery values remain unchanged. |
+| Theme and reference | Reuses `KeyboardFocusVisual` and `KeyboardFocusBrush` from `Theme.xaml`; no palette or geometry change. | Dark navy/teal composition preserved by source intent, not by a rendered screenshot. |
+| Status and provenance | Existing 80-row display limit, 500-event retention, filtering, ItemStatus, demo and capture warnings. | Evidence is presence/count, not verified custody; delivery is not incident resolution; timer zero is not capture health. |
+
+### Static divergence, ownership and concurrency
+
+- Previous GA UI-14 publication: `316004fc4fe176ee3250add7c530282d3af30396`.
+  Live starting HEAD `67555a84575f7c1d7184d5d07cfc89bc3ba574a9` includes independent detection commits;
+  compared changed paths against UI ownership before editing. Only
+  `Carthago/Views/MainWindow.xaml` and this ledger are changed by UI-15.
+- The new cell style inherits the original implicit `DataGridCell` style,
+  reuses the existing keyboard focus resource, and leaves row hover,
+  selection, read-only behavior, virtualization, column order, filters,
+  handlers, event projections, capture state and empty-state text intact.
+- No changes to `Engine/**`, `Models/**`, `Services/**`, tests,
+  detection rules, thresholds/confidence, privacy, capture, journal,
+  approvals, Cisco, WebView2, ScottPlot PPS history, CLI, shared APIs,
+  project files, workflows, or the detection automation.
+- Source-only checks verify a single new scoped cell style, one original
+  `DashboardLiveEventsGrid`, unchanged frozen first column, unchanged
+  eight columns and no changed WPF partials. **These checks do not prove
+  XAML compilation, keyboard focus rendering, screen-reader accessibility,
+  high contrast, or screenshot fidelity.**
+- **Residual risk:** WPF focus adorners may clip within recycled cells or
+  tight 27px rows; theme focus ring and row selection may visually compete.
+  Verify keyboard-only focus versus mouse focus and high-contrast/DPI
+  behavior when testing is authorized. No unsupported capture or evidence
+  assertion is added.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. Tab from Live Events filters into the read-only grid and verify the keyboard focus outline is visible.
+2. Move with arrow keys between cells and confirm focus follows the active cell without stale outlines.
+3. Click a cell with the mouse and verify no misleading keyboard-only focus indicator is required.
+4. Scroll horizontally and ensure the 144px frozen Event time column remains visible with navigable focus.
+5. At 1440/1100/1099/1024/1023/640px widths, focus does not obscure cell values or the scrollbar.
+6. At 125–200% DPI and high-contrast mode, keyboard focus remains distinguishable from selection and severity.
+7. With zero events, the honest empty state remains and no fake focused row is announced.
+8. With 80 displayed and 500 retained events, virtualization/recycling does not leave stale focus adorners.
+9. Filter severity/protocol/rule/endpoints and confirm counts, evidence and delivery caveats remain truthful.
+10. Confirm the PPS chart, incident investigation, unavailable CLI, Cisco, capture state and independent rule behavior remain unchanged.
+
+**Open quality GAs:** pinned-SHA Windows WPF build, keyboard focus and
+screen-reader/UIA inspection, high contrast, DPI, responsive screenshots,
+filter/virtualization regressions, and reference comparison after explicit
+owner test authorization. **Executed tests: 0.**
+
+**Next independent UI GA UI-16:** inspect LIVE HEAD, approved reference and
+ledger; choose one new, bounded UI-owned readability/accessibility
+improvement outside completed UI-01–15, preserving evidence boundaries.
+
+**Technical references:**
+[Microsoft WPF FocusVisualStyle](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/styling-for-focus-in-controls-and-focusvisualstyle);
+[WPF DataGrid overview](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/controls/datagrid).
