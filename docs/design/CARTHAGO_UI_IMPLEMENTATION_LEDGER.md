@@ -1521,3 +1521,102 @@ The existing Raw / Advanced Shortcuts card now labels those two tiles **Traffic 
 **References:** [WPF AutomationProperties.Name](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.name);
 [WPF AutomationProperties.HelpText](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.helptext);
 [WPF layout](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/layout).
+
+
+## GA UI-21 — Selected risk-score meaning for assistive technology and tooltips
+
+**2026-10-30 · SOURCE CANDIDATE — UNVERIFIED.** Starting live HEAD:
+`56f4d0eec59fdebb961ba02e7ee999e46b352815` (GA UI-20 published).
+**UI source commit:** `bc5a78e13223e3ca6bbc778eebcb3aff78d9b94a`.
+**Tests authored: 0; executed: 0.** No builds, tests, replay, holdouts, CI,
+GitHub Actions, runners, benchmarks, production capture or running-UI screenshot.
+The incoming continuation prompt mentioned UI-20, but live GitHub history and this
+ledger confirmed UI-20 complete; this is the next non-duplicative UI GA.
+
+### Approved reference, original consumers and change
+
+The exact approved Library image `libfile_b0a34361560c8191b641e432b3e6b15c`
+was retrieved and visually inspected (1648×928). Preserve the reference's
+navy/graphite panels, cyan/teal accents, restrained severity palette and compact
+investigation risk ring. Screenshot IPs, Mbps lines, rule IDs, confidence and
+metrics are **demo-only**, never operational evidence.
+
+Source audit: `DashboardDetailRiskRing`, `DashboardDetailRiskText` and
+`DashboardDetailRiskBadgeText` are existing WPF elements in
+`MainWindow.xaml`; `UpdateSocSignalDetails` in `MainWindow.Dashboard.cs`
+populates them from `CreateDashboardSignalDetailModel`. The selected
+anomaly signal's score is normalized locally; the correlated incident branch
+uses the incident's existing risk score; with no signal the risk text is
+`—` and the badge is `Learning`. These are **local risk ranking
+estimates**, not detection confidence, validated accuracy or proof of
+healthy capture. An incident may include related anomaly IDs, so the
+accessibility description intentionally does **not** infer a signal type
+from the model's optional anomaly ID.
+
+**One cohesive improvement:** the existing risk-value TextBlock gets a
+neutral initial UI Automation name and explanatory HelpText. On every
+existing `UpdateSocSignalDetails` refresh, its accessible name and the
+ring's mouse tooltip are updated from the already displayed risk value
+and band. The unavailable state says no selected signal and explicitly
+rejects interpreting baseline learning as capture health. A present score
+is described as a selected local risk estimate, **not** confidence or
+verified accuracy. No extra polling, scoring, event handling, focus
+targets, models, telemetry, evidence or runtime producers were added.
+No new numeric values or demo data were introduced.
+
+### Ownership, static divergence and residual risks
+
+Changed only `Carthago/Views/MainWindow.xaml`,
+`Carthago/Views/MainWindow.Dashboard.cs`, and
+`docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`.
+The prior GA UI-20 source, current WPF partials and risk-value consumers
+were inspected before editing. Existing risk score/band formatting, brushes,
+selected incident/anomaly fallback, detail dialog, seven previously labeled
+investigation fields, incident triage, navigation and action buttons are
+preserved. UI-01–20 remain intact. Actual local PPS ScottPlot uses the
+existing 10-sample average and bounded 120-point history; read-only
+Live Events retain 80 displayed / 500 retained; unavailable CLI, Cisco,
+WebView2, capture/privacy and detection/protocol streams remain untouched.
+Wide ≥1440, Standard 1100–1439, Compact 1024–1099 and below-1024
+layout code and theme resources were not changed.
+
+**Static limitations:** no Windows WPF build or runtime inspection was
+authorized. Whether WPF UI Automation exposes the dynamic TextBlock name,
+whether screen readers announce it once, whether the tooltip renders in
+high contrast, and whether score changes are announced are all **unverified**.
+The TextBlock remains non-focusable, and no live announcement is requested.
+A risk score of zero may still carry the existing `Learning` band; the
+new description does not equate it to no threat or healthy monitoring.
+
+### Acceptance scenarios — PLANNED ONLY; UNEXECUTED
+
+1. With no selected incident/signal, the risk reads `—` / `Learning`
+   and accessible text says unavailable rather than zero risk.
+2. Baseline learning does not announce or imply verified capture health.
+3. Selected anomaly risk score exposes the existing numeric value and band,
+   without being called confidence or verified accuracy.
+4. Selected correlated incident risk score exposes the existing value and
+   band, without assuming its related anomaly IDs define the source.
+5. Score zero is not presented as proof of no detections or capture health.
+6. Score 50/80 band boundaries preserve original label/color semantics.
+7. Selection changes and data refresh update tooltip and accessible name
+   together without new events or focus targets.
+8. Screen-reader/UIA inspection confirms a discoverable risk-value name,
+   no duplicate announcements, and preserved investigation labels.
+9. At 1440, 1100, 1099, 1024, 1023 and 640px, 125–200% DPI and
+   high contrast, the ring, tooltip and nearby detail controls remain usable.
+10. PPS, Live Events, incident navigation, privacy, unavailable CLI,
+    Cisco/WebView2 and independent detection/protocol code remain unchanged.
+
+**Open quality GAs:** pinned-SHA Windows WPF build, UIA/keyboard/screen
+reader, high-contrast/DPI and responsive screenshot review, selection and
+risk-state regression **only after** explicit owner test authorization.
+**Executed tests: 0.**
+
+**Next independent UI GA UI-22:** inspect live HEAD, exact approved image,
+ledger and WPF consumers for one new cohesive UI-owned accessibility,
+readability or visual-consistency improvement outside UI-01–21.
+
+**References:** [WPF AutomationProperties.Name](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.name);
+[WPF AutomationProperties.HelpText](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.helptext);
+[WPF layout](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/layout).
