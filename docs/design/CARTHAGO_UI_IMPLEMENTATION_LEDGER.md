@@ -188,7 +188,7 @@ or change shared telemetry contracts.
 | Real-time traffic chart | `MainWindow.xaml` hidden legacy `TrafficPlot` / widget workspace; `MainWindow.Plots.cs` | Preserve ScottPlot; assess safe reuse and real telemetry provenance, no simulated chart. |
 | High-priority incidents | `DashboardAnomalyList`, `MainWindow.Dashboard.cs` `BuildSocAnomalyItems` | **GA UI-04 CANDIDATE — UNVERIFIED:** up to four unresolved incidents by risk then two anomaly signals (five-signal fallback); typed provenance, selected-row focus. No demo rule mapping. |
 | Investigation / evidence inspector | `DashboardSignalPanel`, `DashboardDetailReasonsItems`, `DashboardDetailRulesItems`, `DashboardDetailEvidenceSummaryText` | **GA UI-04 CANDIDATE — UNVERIFIED:** direct incident selection and reported evidence/event counts only; no raw payload or verified chain-of-custody claim. |
-| Live events table | Existing raw traffic / detection views and `DataGrid` styles | Proposed dashboard integration; preserve event filtering and avoid duplicating capture engine. |
+| Live events table | `MainWindow.xaml` `DashboardLiveEventsGrid`; `MainWindow.DashboardEvents.cs` UI-only projection of `_alerts` | **GA UI-05 SOURCE CANDIDATE — UNVERIFIED:** 80 most recently received local detections, severity/protocol/rule/endpoint filters, count-only evidence, delivery state and honest empty/paused/demo labels. |
 | Compact terminal companion | No verified embedded cross-platform CLI in current WPF shell | **NOT IMPLEMENTED.** Plan design-only placeholder with honest unavailable state; do not invent CLI output or working commands. |
 | Wide ≥1440 / Standard 1100–1439 / Compact <1100 | `Views/ResponsiveLayout.cs`, `MainWindow.Responsive.cs` | Existing breakpoints preserved; 1024–1099 is target Compact band, with graceful behavior below 1024. |
 | Windows and Linux GUI + terminal | WPF currently targets `net8.0-windows10.0.19041.0` | Future separate Avalonia/CLI architecture specification only; no migration in rule-hardening phase. |
@@ -198,4 +198,72 @@ or change shared telemetry contracts.
 - Do not edit `Engine/**`, `Models/**`, `Services/**`, rules, capture, tests, runners, workflows, `docs/RULE_HARDENING_PROGRESS.md` or rule evidence. No builds/tests until owner explicitly authorizes.
 - Preserve all sidebar `x:Name` identifiers and Click handlers, filters, Cisco tools, view navigation, ScottPlot/WebView2, and WPF window startup.
 - Source-only changes may have visual or runtime issues; validate with owner-authorized pinned-SHA Windows build and screenshot review later.
-- **Next UI GA UI-05:** live events presentation with real existing event bindings and honest unavailable states. GA UI-01–04 remain SOURCE CANDIDATES — UNVERIFIED until owner-authorized Windows verification.
+- **Next UI GA UI-06:** visual-only CLI companion with unavailable state and separate Windows/Linux CLI + Avalonia design specification. GA UI-01–05 remain SOURCE CANDIDATES — UNVERIFIED until owner-authorized Windows verification.
+
+## GA UI-05 — Recent local detection events
+
+**2026-10-30 · SOURCE CANDIDATE — UNVERIFIED.** Audited live feature HEAD
+`44d96037a5ecc5445e87b665a79ea4e1f2f07e4b` before editing; UI-04 remains intact and the independent detection
+R391–R400 batch modified only its own rule/test/docs paths. Source changes
+are a new UI-only `Views/MainWindow.DashboardEvents.cs` partial plus
+`Views/MainWindow.xaml` and lifecycle hooks in
+`Views/MainWindow.Dashboard.cs`. No build, xUnit, rendered screenshot,
+replay, holdout, CI, runner or capture executed. Source implementation
+commit: **deaa4be863bb415a248b792bb5d684feff0e192f**; final ledger publication is the descendant
+expected-HEAD-protected feature commit.
+
+### Approved reference mapping and observed producer
+
+| Screenshot element | UI implementation | Contract and limitation |
+| --- | --- | --- |
+| Lower full-width Live Events table | `DashboardLiveEventsPanel` beneath the existing triage/summary cards; native read-only `DataGrid` with Event time, Source, Destination, Rule, Severity, Protocol, Evidence and Delivery. | Rows are **real `DetectionEvent` objects already received by the existing `TrafficCaptureService.DetectionEventRaised` pipeline**, projected from `MainWindow.Core.cs`'s bounded `_alerts` collection; not a new capture or cloud audit producer. |
+| Severity, protocol, rule and endpoint search | Local filters on an independent 80-row display projection; Clear filters and All detections navigation reuse existing handlers. | No modification of the `AlertsGrid`'s existing collection view/filter, BPF, rule engine, alert handling or saved preferences. |
+| Freshness / availability | `_alerts.CollectionChanged` marks projection dirty; one-second UI timer coalesces changes while dashboard visible. Capture status from `CaptureStatusText` distinguishes monitoring/degraded from not-monitoring. | Rows persist after capture pauses; not presented as newly generated. No real-time guarantees or historical journal completeness. Up to 500 in-memory detections retained, up to 80 filtered rows shown; newest **received** first, not verified event chronology. |
+| Evidence / event status | Evidence column displays only reported presence or structured item count; Delivery column displays `DetectionEvent.DeliveryStatus`. | No raw `Evidence` or `StructuredEvidence.Items` values, no chain-of-custody, no successful operation, no incident resolution. Timestamp shown as recorded because timezone provenance is not verified. |
+| Empty / demo states | Distinguishes no session detections from no filter matches; global demo-mode warning when enabled. | Existing event model has no per-event trusted demo marker; rows are not individually claimed production-only. The reference screenshot's R343/R102/R275 labels, IPs and incident statuses are not copied as facts. |
+
+### Static divergence review and ownership
+
+- Before: live `44d96037a5ecc5445e87b665a79ea4e1f2f07e4b`; after: new source candidate commit and
+  descendant ledger commit, both on the **same existing feature branch**.
+  No changes to `Engine/**`, `Models/**`, `Services/**`, detection rules,
+  capture/provenance, tests, workflows, project configuration or rule docs.
+- Reviewed original `MainWindow.xaml`, `MainWindow.Dashboard.cs`,
+  `MainWindow.Core.cs`, `MainWindow.DataEvents.cs`,
+  `MainWindow.Filters.cs`, `MainWindow.Navigation.cs`,
+  `MainWindow.DashboardResponsive.cs`, `DetectionEvent.cs` and
+  `Carthago.csproj` before editing. Existing UI-01–04 cards, incident
+  triage/investigation, responsive grid and all advanced views are retained.
+- One `DataGrid` projection is separate from `AlertsGrid.ItemsSource`,
+  preventing filter interference. UI timer and collection event are
+  unsubscribed in the existing dashboard cleanup path. A new UI-only
+  partial is automatically included by the SDK project; no project edits.
+- **Source-only review**, not proof of XAML parsing, binding, rendering,
+  accessibility, thread behavior, memory footprint or event correctness.
+
+### Planned manual/integration acceptance GAs — NOT EXECUTED
+
+1. No events since startup: explicit no-local-detections empty state.
+2. Nonmatching filters with retained events: no-match state, not no-events claim.
+3. Multiple severities/protocols: exact severity/protocol selection.
+4. Rule substring and endpoint search: case-insensitive matching, no payload search.
+5. Clear filters: restored retained order, no change to Advanced Alerts filters.
+6. 500 retained / 80 displayed: no extra retained rows or unbounded projection.
+7. Burst of detection events: coalesced UI update without noticeable freezes.
+8. Pause/degraded/offline transitions: truthful retained-event and capture status.
+9. Missing timestamp/source/destination/evidence: placeholders without fabricated fields.
+10. Sensitive structured evidence and raw evidence: only count/presence, never content.
+11. Demo-mode toggle: global warning without unproven per-event labeling.
+12. Wide/Standard/Compact/below-1024: grid horizontal scrolling, keyboard and screen-reader access.
+13. Existing All detections navigation and sidebar filters continue unchanged.
+14. Window close: no dangling UI timer or collection-event callback.
+
+**Outstanding GAs:** owner-authorized pinned-SHA Windows WPF build, UI
+render/screenshot comparison, row filtering/selection, lifecycle,
+accessibility, capture-mode transitions and privacy regression. No
+test pass or accuracy claim is established.
+
+**Next independent UI GA UI-06:** compact CLI companion **visual-only**
+with truthful unavailable state; first inspect existing CLI entrypoints
+and document future Windows/Linux CLI + Avalonia architecture without
+creating adapters or inventing working commands.
