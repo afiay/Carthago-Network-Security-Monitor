@@ -1,6 +1,6 @@
 # GA R511–R520 — data-loss staging and evasion-tunnel evidence boundaries
 
-**SOURCE CANDIDATE — UNVERIFIED · 2026-10-30.** Existing branch: `feature/carthago-reliability-hardening`. Inspected live base HEAD `0e03f6975501c4cad08d13b21968b5f2bf245f32` (UI-16 and prior R501–R510 already present). Source commit `234011f1e7cad94932b7f9f5b82c7b3000c75c5e`; authored-test commit `fec253da34e2c17dc9aaaa80d518de7bfddcb789`. The final atomic publication SHA is the resulting documentation-descendant branch HEAD; a commit cannot embed its own SHA. **250 xUnit invocations AUTHORED, 0 EXECUTED.** No build, test, replay, holdout, CI, runner, benchmark or production capture was executed.
+**SOURCE CANDIDATE — UNVERIFIED · 2026-10-30.** Existing branch: `feature/carthago-reliability-hardening`. Inspected live base HEAD `0e03f6975501c4cad08d13b21968b5f2bf245f32` (UI-16 and prior R501–R510 already present). Source commit `234011f1e7cad94932b7f9f5b82c7b3000c75c5e`; authored-test commit `fec253da34e2c17dc9aaaa80d518de7bfddcb789`. Test-fixture correction `6eef621bef98adc4ae46fbf335c44335ef71b024` clears the fallback ProcessName on the missing-destination variant; no tests executed. The final atomic publication SHA is the resulting documentation-descendant branch HEAD; a commit cannot embed its own SHA. **250 xUnit invocations AUTHORED, 0 EXECUTED.** No build, test, replay, holdout, CI, runner, benchmark or production capture was executed.
 
 ## Evidence-first review and ten-rule dispositions
 
