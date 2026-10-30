@@ -24,6 +24,14 @@ public partial class MainWindow
         };
         DashboardKpiItemsControl.ItemsPanel = (ItemsPanelTemplate)FindResource(additionalPanelKey);
 
+        // Keep the observed PPS chart status readable at the same below-1024 threshold.
+        // Reposition only the UI label; the original capture status and plot remain unchanged.
+        Grid.SetRow(DashboardTrafficChartCaptureStatus, narrowKpis ? 1 : 0);
+        Grid.SetColumn(DashboardTrafficChartCaptureStatus, narrowKpis ? 0 : 1);
+        DashboardTrafficChartCaptureStatus.Margin = narrowKpis
+            ? new Thickness(0, 6, 0, 0)
+            : new Thickness(12, 0, 0, 0);
+
         // GA UI-06: visual-only CLI panel; no command runner or state adapter.
         DashboardCliCompanionPanel.Width = mode == ResponsiveLayoutMode.Wide ? 408 : double.NaN;
         DashboardCliCompanionPanel.HorizontalAlignment = mode == ResponsiveLayoutMode.Wide

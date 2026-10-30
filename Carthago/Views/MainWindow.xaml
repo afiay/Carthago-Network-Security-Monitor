@@ -448,20 +448,27 @@
                       <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <Grid Margin="0,0,0,8">
+                      <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                      </Grid.RowDefinitions>
                       <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                       </Grid.ColumnDefinitions>
                       <StackPanel>
                         <TextBlock Text="Network Traffic (Local PPS)"
-                                   Style="{StaticResource DashboardSectionTitle}"/>
+                                   Style="{StaticResource DashboardSectionTitle}"
+                                   TextWrapping="Wrap"/>
                         <TextBlock Text="Local capture samples, rolling 120-second window"
                                    Foreground="{StaticResource TextMutedBrush}"
                                    FontSize="11"
                                    TextWrapping="Wrap"/>
                       </StackPanel>
-                      <StackPanel Grid.Column="1"
+                      <StackPanel x:Name="DashboardTrafficChartCaptureStatus"
+                                  Grid.Column="1"
                                   Orientation="Horizontal"
+                                  HorizontalAlignment="Left"
                                   VerticalAlignment="Center"
                                   Margin="12,0,0,0">
                         <Ellipse Width="8" Height="8"
