@@ -717,3 +717,111 @@ actual telemetry boundaries, and the separate detection automation.
 **Technical references:**
 [WPF AutomationProperties.Name](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.name);
 [WPF layout](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/layout).
+
+## GA UI-12 — Labeled investigation facts and reported-evidence boundary
+
+**2026-10-30 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE
+`feature/carthago-reliability-hardening` HEAD:
+`db6efac2dfbb6e8fa1ab233ee8e68174f12328d4` (independent detection R461–R470 already present).
+UI source commit: `1f2c342110080b21632703202c52834306b988f2`.
+The documentation/publication commit is the direct descendant of this
+source commit and is the final branch HEAD after the expected-HEAD-protected
+atomic update. **Tests authored: 0; tests executed: 0.** No build,
+replay, holdout, CI, runner, benchmark or production capture.
+
+### Scope, original consumers and reference mapping
+
+The exact approved 1648×928 Library reference
+`libfile_b0a34361560c8191b641e432b3e6b15c` was resolved and visually
+inspected. Its right-hand Incident Investigation panel is the design guide;
+its sample confidence scores, endpoints, timestamps and evidence chain are
+**demo-only**, not validated Carthago observations.
+
+This GA makes one focused **accessibility-label association** change to
+the existing investigation panel. The six visible field captions are given
+stable WPF names, and their existing read-only value TextBlocks reference
+them using `AutomationProperties.LabeledBy` with `ElementName` binding:
+
+| Existing caption | New caption name | Existing live value |
+| --- | --- | --- |
+| Source host | `DashboardDetailSourceLabel` | `DashboardDetailSourceText` |
+| Destination | `DashboardDetailDestinationLabel` | `DashboardDetailDestinationText` |
+| Protocol / port | `DashboardDetailProtocolLabel` | `DashboardDetailProtocolText` |
+| Category | `DashboardDetailCategoryLabel` | `DashboardDetailCategoryText` |
+| Detected | `DashboardDetailDetectedLabel` | `DashboardDetailDetectedText` |
+| Related incident | `DashboardDetailRelatedIncidentLabel` | `DashboardDetailRelatedIncidentText` |
+| Evidence provenance (reported, not verified) | `DashboardDetailEvidenceSummaryLabel` | `DashboardDetailEvidenceSummaryText` |
+
+The original `DashboardAnomalyList_SelectionChanged` →
+`UpdateSocSignalDetails` → `CreateDashboardSignalDetailModel` path was
+inspected. The seven value TextBlocks retain their original names, text
+assignments, truncation and full-value tooltips (where present). No new
+value, telemetry, incident correlation, selection handler, automation
+announcement, clipboard/export, or evidence producer is introduced.
+The evidence text continues to be populated **only** from a directly
+selected correlated incident; a selected anomaly signal alone cannot
+establish incident evidence. The label explicitly says **reported, not
+verified**. WPF UI Automation exposure of labels for non-focusable
+TextBlocks and possible spoken duplication remain unverified.
+
+### Source-only divergence and concurrency review
+
+- **Owned files:** `Carthago/Views/MainWindow.xaml` and this ledger.
+  No C# code-behind, UI viewmodel, theme, responsive logic or project
+  contract changed. The prior UI-01–11 components, sidebar, KPI strips,
+  real local PPS ScottPlot, ten-sample average, 120-point history,
+  incident queue, Live Events, unavailable CLI and Cisco controls are
+  preserved.
+- Previous UI-11 HEAD: `d061bdb276629917f1e63c83507f2af8f27f3b47`.
+  The current start HEAD includes three intervening independent detection
+  commits, changing only `Carthago.Tests/**`, `Carthago/Engine/**`,
+  `docs/RULE_BATCH_461-470.md` and
+  `docs/RULE_HARDENING_PROGRESS.md`. No overlap with UI-owned paths.
+- Static candidate inspection: seven unique caption `x:Name` values,
+  seven corresponding `ElementName` associations, no duplicate XAML
+  names, no changed `x:Name` of any value control, no new handlers,
+  no hard-coded endpoint or score. Existing alert/rule modes, thresholds,
+  confidence floors, evidence provenance, privacy and approvals untouched.
+- The approved reference's side-by-side panel geometry and dark
+  navy/cyan/amber visual language are unchanged; this GA changes
+  accessibility metadata only. It does not claim a screenshot match.
+- Source inspection is **not** XAML compilation, runtime binding
+  verification, UIA tree inspection or an accessibility pass. A named
+  label may be announced separately or duplicated by a screen reader;
+  verify with Windows assistive technology when testing is authorized.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED AS TESTS; UNEXECUTED
+
+1. Each of the six read-only fact values exposes its corresponding
+   existing caption through UI Automation without suppressing the value.
+2. Evidence summary exposes its explicit **reported, not verified** caption.
+3. Selecting a correlated incident refreshes the seven existing values
+   and their label associations without a stale-label announcement.
+4. Selecting an anomaly signal does not imply authenticated incident
+   evidence, confirmed rule attribution or detection confidence.
+5. Empty/no-selection state retains em dashes and honest evidence absence.
+6. Very long IPv6, hostname and protocol values remain truncated visually,
+   with their existing full-value tooltips and no extra UI overflow.
+7. Keyboard selection, investigation buttons and detail dialog navigation
+   remain unchanged; no focus trap or added live announcement.
+8. High contrast, 125–200% DPI and 1440/1100/1099/1024/1023/640px
+   widths preserve the original investigation layout and captions.
+9. The existing incident risk ring stays a **local risk score**, never
+   represented as a validated detection-confidence percentage.
+10. No changes to PPS history, Live Events filters, CLI unavailable
+    state, Cisco, privacy-sensitive evidence or detection engineering.
+
+**Open quality GAs:** pinned-SHA Windows WPF compilation, ElementName
+resolution, actual UIA Name/LabeledBy exposure, keyboard and screen-reader
+reading order, no duplicate spoken captions, DPI/high-contrast rendering,
+responsive screenshot comparison, incident selection and evidence/privacy
+regression. **Executed tests: 0.**
+
+**Next independent UI GA UI-13:** inspect the live branch, approved image
+and current ledger, then choose one bounded UI-owned readability or
+accessibility improvement outside the completed investigation label
+association. No working CLI, invented telemetry, or shared API changes.
+
+**Technical reference:**
+[Microsoft WPF accessible name from a nearby TextBlock](https://learn.microsoft.com/en-us/accessibility-tools-docs/items/wpf/edit_name);
+[WPF layout](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/layout).
