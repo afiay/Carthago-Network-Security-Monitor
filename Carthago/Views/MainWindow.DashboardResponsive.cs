@@ -6,21 +6,23 @@ namespace Carthago;
 
 public partial class MainWindow
 {
-    partial void ApplyDashboardResponsiveLayout(ResponsiveLayoutMode mode)
+    partial void ApplyDashboardResponsiveLayout(ResponsiveLayoutMode mode, bool narrowKpis)
     {
-        DashboardOverviewKpiItemsControl.ItemsPanel = (ItemsPanelTemplate)FindResource(mode switch
+        var overviewPanelKey = narrowKpis ? "DashboardOverviewKpiNarrowPanel" : mode switch
         {
             ResponsiveLayoutMode.Compact => "DashboardOverviewKpiCompactPanel",
             ResponsiveLayoutMode.Standard => "DashboardOverviewKpiStandardPanel",
             _ => "DashboardOverviewKpiWidePanel"
-        });
+        };
+        DashboardOverviewKpiItemsControl.ItemsPanel = (ItemsPanelTemplate)FindResource(overviewPanelKey);
 
-        DashboardKpiItemsControl.ItemsPanel = (ItemsPanelTemplate)FindResource(mode switch
+        var additionalPanelKey = narrowKpis ? "DashboardKpiNarrowPanel" : mode switch
         {
             ResponsiveLayoutMode.Compact => "DashboardKpiCompactPanel",
             ResponsiveLayoutMode.Standard => "DashboardKpiStandardPanel",
             _ => "DashboardKpiWidePanel"
-        });
+        };
+        DashboardKpiItemsControl.ItemsPanel = (ItemsPanelTemplate)FindResource(additionalPanelKey);
 
         // GA UI-06: visual-only CLI panel; no command runner or state adapter.
         DashboardCliCompanionPanel.Width = mode == ResponsiveLayoutMode.Wide ? 408 : double.NaN;

@@ -32,6 +32,10 @@
       <ItemsPanelTemplate x:Key="DashboardKpiCompactPanel">
         <UniformGrid IsItemsHost="True" Columns="2"/>
       </ItemsPanelTemplate>
+      <!-- UI-07: preserve two-column Compact at 1024-1099; stack below 1024. -->
+      <ItemsPanelTemplate x:Key="DashboardKpiNarrowPanel">
+        <UniformGrid IsItemsHost="True" Columns="1"/>
+      </ItemsPanelTemplate>
       <ItemsPanelTemplate x:Key="DashboardOverviewKpiWidePanel">
         <UniformGrid IsItemsHost="True" Columns="4"/>
       </ItemsPanelTemplate>
@@ -40,6 +44,9 @@
       </ItemsPanelTemplate>
       <ItemsPanelTemplate x:Key="DashboardOverviewKpiCompactPanel">
         <UniformGrid IsItemsHost="True" Columns="2"/>
+      </ItemsPanelTemplate>
+      <ItemsPanelTemplate x:Key="DashboardOverviewKpiNarrowPanel">
+        <UniformGrid IsItemsHost="True" Columns="1"/>
       </ItemsPanelTemplate>
       <!-- GA UI-03: reusable card template for overview and preference metrics. -->
       <Style x:Key="DashboardKpiItemContainerStyle" TargetType="{x:Type ContentPresenter}">
@@ -104,7 +111,8 @@
                                      Height="16"
                                      Opacity="0.95"
                                      TextWrapping="NoWrap"
-                                     TextTrimming="None"/>
+                                     TextTrimming="CharacterEllipsis"
+                                     ToolTip="{Binding TrendText}"/>
                         </Grid>
                       </Border>
                     </DataTemplate>

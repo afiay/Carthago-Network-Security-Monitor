@@ -8,8 +8,10 @@ namespace Carthago;
 public partial class MainWindow
 {
     private ResponsiveLayoutMode? _responsiveLayoutMode;
+    private bool? _dashboardNarrowKpis;
+    private const double DashboardNarrowKpiThreshold = 1024d;
 
-    partial void ApplyDashboardResponsiveLayout(ResponsiveLayoutMode mode);
+    partial void ApplyDashboardResponsiveLayout(ResponsiveLayoutMode mode, bool narrowKpis);
 
     private void InitializeResponsiveLayout()
     {
@@ -32,13 +34,17 @@ public partial class MainWindow
     {
         var availableWidth = ActualWidth > 0 && double.IsFinite(ActualWidth) ? ActualWidth : Width;
         var mode = ResponsiveLayout.Resolve(availableWidth);
+        // The existing Compact mode covers 640-1099. Below 1024, avoid
+        // squeezing the four operational and optional KPI cards into two columns.
+        var narrowKpis = mode == ResponsiveLayoutMode.Compact && availableWidth < DashboardNarrowKpiThreshold;
 
-        if (!force && _responsiveLayoutMode == mode)
+        if (!force && _responsiveLayoutMode == mode && _dashboardNarrowKpis == narrowKpis)
             return;
 
         _responsiveLayoutMode = mode;
+        _dashboardNarrowKpis = narrowKpis;
         ApplyShellLayout(mode);
-        ApplyDashboardResponsiveLayout(mode);
+        ApplyDashboardResponsiveLayout(mode, narrowKpis);
         ApplyResponsiveLayoutTo(AnomaliesFrame.Content);
         ApplyResponsiveLayoutTo(IncidentsFrame.Content);
         ApplyResponsiveLayoutTo(ThreatFeedFrame.Content);
