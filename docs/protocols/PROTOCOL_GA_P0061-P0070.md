@@ -1,0 +1,62 @@
+# Carthago protocol intelligence — GA P0061–P0070
+
+**Status:** SOURCE CANDIDATE — UNVERIFIED; TESTS AUTHORED; **0 EXECUTED**.  
+**Branch:** `feature/carthago-reliability-hardening` ONLY.  
+**Live source base SHA:** `8b12fdbb335a58ffb98a80fd3f2064415bdd22d5` (2026-10-31).  
+**Publication SHA:** the one source-only commit resulting from the expected-HEAD protected atomic ref update; a commit cannot embed its own hash. **Source/test SHA evidence** is listed below.  
+**Inventory:** immutable owner's Library CSV, P0061–P0070, not RNNN detection rules.  
+**Previous:** [GA P0051–P0060](PROTOCOL_GA_P0051-P0060.md). **Next:** **GA P0071–P0080**.
+
+## Ten-entry decision matrix
+
+| Original ID / label | Disposition | Live producer / reachability | Falsifiable security relevance, trusted evidence and benign alternatives |
+| --- | --- | --- | --- |
+| P0061 `isis` — IS-IS | **BLOCKED — L2/LLC INTEGRATION** | ISO 10589 CLNS/LLC is non-IP; [PacketHandler](../../Carthago/Services/PacketHandler.cs) drops non-IPv4/IPv6 EtherTypes, with no trusted LLC/CLNS adapter. | Unauthorized adjacency/LSP change requires authenticated router telemetry, area/level, neighbor, route-table outcome; legitimate convergence and maintenance resemble changes. A port name is not a producer. |
+| P0062 `eigrp` — EIGRP | **DEFERRED** | IP protocol 88 currently drops through PacketHandler TCP/UDP/ICMP-only switch; no attested complete IP-88 payload producer or EIGRP version-specific contract. | Rogue adjacency/route update requires authenticated router neighbors, topology and routing outcomes; failover is benign. Avoid speculative parser without version/fixture validation. |
+| P0063 `igmp` — IGMP | **DEFERRED** | IP protocol 2 not delivered by current L4 switch; no group-membership evidence chain. | Unexpected multicast membership requires verified group/interface, IGMP version and router/switch state; legitimate IPTV/discovery is benign. |
+| P0064 `pim` — PIM | **DEFERRED** | IP protocol 103 not delivered by current L4 switch; no trusted PIM control producer. | Rogue multicast routing needs authenticated PIM neighbor/RP and forwarding-state evidence; multicast topology changes are benign. |
+| P0065 `l2tp` — L2TP | **DEFERRED** | UDP 1701 metadata does not establish a complete L2TPv2 control-message producer or authenticated VPN outcome. | Suspicious VPN tunnel requires trusted endpoint/AAA, L2TP control and IPsec correlation; authorized remote access is benign. |
+| P0066 `pptp` — PPTP | **DEFERRED** | PPTP TCP 1723 control stream and GREv1 data require separate attested framing; new GRE inspector **rejects GREv1** and is not a PPTP decoder. | Legacy VPN exposure needs endpoint policy and authentication outcome; approved legacy administration is benign. |
+| P0067 `sstp` — SSTP | **DEFERRED** | SSTP application traffic is TLS-protected; no trusted Windows VPN/RRAS or proxy source. **NOT OBSERVABLE** in ciphertext. | VPN login abuse needs Windows/RRAS authentication, session and device identity; ordinary TLS/HTTPS is not SSTP proof. |
+| P0068 `ah` — IPsec AH | **DEFERRED** | IPv6 AH is length-walked but not authenticated; IPv4 protocol 51 is not a supported final L4 path. No trusted Security Association or integrity result. | SA misuse requires trusted IPsec endpoint/Windows logs and verified auth results; AH header presence is not proof of integrity or compromise. |
+| P0069 `gre` — GRE | **IMPLEMENTED_ISOLATED** | New [GrePacketInspector](../../Carthago/Services/ProtocolIntelligence/GrePacketInspector.cs): strict RFC 2784/2890, complete caller-attested IP protocol 47, checksum if present, optional key/sequence envelope, bounded IPv4/IPv6/Ethernet inner shape. No live registration. | Unexpected GRE to a known decapsulation IP could support tunnel policy review **only** with authenticated Arista device model/version/config, decap IP, expected tunnel type, ACL counters and forwarding outcome; legitimate GRE tunnels are common. |
+| P0070 `vxlan` — VXLAN | **IMPLEMENTED_ISOLATED** | New [VxlanDatagramInspector](../../Carthago/Services/ProtocolIntelligence/VxlanDatagramInspector.cs): strict RFC 7348 base header, caller-attested complete UDP/4789, VNI, single optional VLAN and bounded inner Ethernet/IP shape. No live registration. | Unexpected VXLAN to a configured GRE decap IP or unapproved VNI requires trusted VTEP/overlay mapping, device/ACL and forwarding evidence; legitimate overlay traffic and migration are benign. |
+
+**Totals:** 2 IMPLEMENTED_ISOLATED, 0 EXISTING, 0 PARTIAL, 7 DEFERRED, 1 BLOCKED, 0 REJECTED; 0 live integrations. P IDs are historical inventory rows, not claimed as ten operational decoders.
+
+## Source-first divergence and trust boundaries
+
+Reviewed current [PacketHandler](../../Carthago/Services/PacketHandler.cs), [TrafficCaptureService](../../Carthago/Services/TrafficCaptureService.cs), [TrafficRecord](../../Carthago/Models/TrafficRecord.cs), [OtProtocolLight](../../Carthago/Services/OtProtocolLight.cs), NetworkBatch226230Wire/231235Wire/246250Wire, [PortServiceResolver](../../Carthago/Services/PortServiceResolver.cs), ETW and Windows audit paths, Cisco Syslog/SNMP adapters, rule architecture documentation and both other streams' ledgers read-only. SDK-style .NET 8 projects include owned new C# files without editing either project file. No GRE/VXLAN inspector existed in `ProtocolIntelligence/**` at the source base. Existing port labels and generic R222 overlay rule are not protocol parsers.
+
+[PacketHandler](../../Carthago/Services/PacketHandler.cs) drops non-IP EtherTypes and all final L4 protocols except TCP, UDP, ICMPv4 and ICMPv6. It bounds TCP early inspection to 4096 bytes, not general reassembly. UDP capture can provide payload bytes, but currently does not attest full IP/UDP capture length and the new VXLAN parser is not called. GRE IP protocol 47 is discarded before `TrafficRecord` construction. No inspector is wired to live packet capture, ETW, the journal, detection rules or UI. This GA does not change any shared component or detection rule.
+
+**GRE bounds:** 18–65,535 bytes, exact caller-attested complete IP protocol 47 payload, version 0, C/K/S flags only, optional checksum validated, strict known inner types IPv4/IPv6/transparent Ethernet; key/sequence values never retained. Unknown extensions, GREv1/PPTP, MPLS, IPv6 jumbograms and unsupported inner types fail closed. No tunnel sequence tracking or cryptographic authentication; repeated/reordered packets do not establish session or route validity.
+
+**VXLAN bounds:** 23–65,535 bytes, caller-attested complete UDP payload and destination 4789, I flag set, reserved bits zero (strict base profile), bounded Ethernet header, at most one VLAN, minimal IPv4/IPv6/ARP length checks; VNI retained as a typed overlay identifier, but MAC/IP contents are not retained. Extensions, alternative UDP ports, nested VLAN, encrypted overlays and IPv6 jumbograms are unsupported. Neither parser decapsulates or verifies a configured VTEP.
+
+## Threat refresh — vendor-grounded, 2026-10-31
+
+**CVE-2026-7473 — CONFIRMED_EXPLOITED_KNOWN_VULNERABILITY (not established zero-day).** [Arista Security Advisory 0137](https://www.arista.com/en/support/advisories-notices/security-advisory/24005-security-advisory-0137) dated **2026-05-05**, last listed revision **2026-08-10**, explicitly reports exploitation in the wild. Affected EOS-based platforms include 7020R, 7280R/R2 and 7500R/R2; 7280R3, 7500R3 and 7800R3 have limited IP-in-IPv6/GUEv6 exposure. Advisory lists all EOS version trains on affected hardware, with platform-specific exposure; do not reduce it to a simplistic version threshold. **Prerequisite:** configured VXLAN/GRE/decap-group tunnel endpoint with decapsulation IP. **Issue:** unexpected protocol is decapsulated/forwarded at the configured destination IP. **Vendor IOCs:** unconfigured tunnel protocol forwarded into an internal segment and per-entry ACL counters for unexpected tunnel traffic; no universal packet signature, source IP or exploitation byte sequence. Actual exploit confirmation requires authenticated configuration, traffic/forwarding and outcome correlation. Packet header alone proves none of these. The vendor recommends carefully scoped ACL mitigations, considering other permitted traffic to shared IPs.
+
+[Arista advisory](https://www.arista.com/en/support/advisories-notices/security-advisory/24005-security-advisory-0137) is the authoritative exploitation statement; [CISA KEV](https://www.cisa.gov/known-exploited-vulnerabilities-catalog) and [FIRST EPSS](https://www.first.org/epss/) were checked as contextual references. No current per-CVE EPSS numerical score is asserted; EPSS is a probability estimate, not exploitation proof. Other P0061–P0068 entries: **UNVERIFIED** for an item-specific active exploitation claim; no trustworthy vendor/device/version/outcome chain was established. This does not assert no vulnerabilities exist.
+
+**Protocol specifications:** [RFC 2784 (March 2000)](https://www.rfc-editor.org/rfc/rfc2784.html), [RFC 2890 (September 2000)](https://www.rfc-editor.org/rfc/rfc2890.html), [RFC 7348 (August 2014)](https://www.rfc-editor.org/rfc/rfc7348.html). Wireshark dissector labels and IANA port mappings are naming metadata, not proof of a decoder or permissive source code.
+
+## Authored regression scenarios — NOT EXECUTED
+
+| Inspector | Source Git blob SHA | Test Git blob SHA | xUnit methods | Concrete invocations |
+| --- | --- | --- | ---: | ---: |
+| GRE | `ec7a3b52afd194af15bb8f3b1c936f5da42072da` | `efccb8dd064467f01c3574c258cadcbe27875dc6` | 16 | 21 |
+| VXLAN | `2e508d7a65280911ea9465d401e985edfc409e2d` | `1b436cadca8355da59350ce7c36f37f495429f6a` | 17 | 19 |
+| **Total** | | | **33** | **40** |
+
+Test files: [GRE tests](../../Carthago.Tests/ProtocolIntelligence/GrePacketInspectorTests.cs), [VXLAN tests](../../Carthago.Tests/ProtocolIntelligence/VxlanDatagramInspectorTests.cs). Five independent scenario families for each: (1) valid protocol-positive with optional headers/VLAN/IPv6; (2) cross-protocol/incorrect outer transport and variant rejection; (3) malformed/truncated/overlong/spoofed length, reserved flags, checksums; (4) deterministic repeated/concurrent stateless recognition, no sequence or tunnel state claims; (5) fail-closed unattested producer and sensitive key/MAC/IP retention boundaries. Fixtures are synthetic and source-labelled, not real capture, exploits or credentials. **Tests authored 33 methods / 40 concrete invocations; tests executed 0; builds executed 0; CI/replay/capture 0.**
+
+## Coordination-required integration proposal (NOT APPLIED)
+
+1. Under separately approved shared integration, add a small bounded trusted-envelope producer in [PacketHandler](../../Carthago/Services/PacketHandler.cs) for IP protocol 47, only after verifying full IP datagram length, nonfragmentation and link-type provenance. Pass an attested complete GRE payload to `GrePacketInspector.TryInspect`; preserve existing record/journal behavior. Avoid synthetic `TrafficRecord` events when no record is otherwise produced.
+2. For UDP/4789, prove capture length covers the full IP and UDP payload, reject truncation/fragmentation, pass a trusted UDP payload and destination port to `VxlanDatagramInspector.TryInspect`. Do not infer VXLAN solely from port. The existing UDP path can provide bytes but does not currently call this inspector.
+3. Define an additive, provenance-labelled typed observation adapter for outer source/destination, IP protocol/UDP port, VNI/inner type and sensor evidence; use existing authorization/privacy rules. Device configuration, allowed tunnel type, decap IP, ACL counter and forwarding outcome must originate from an authenticated device source, not packet heuristics. Never emit alerts directly from parsers or assert CVE exploitation.
+4. Compatibility verification, **only after owner says "now it's test time"**: Windows x64/xARM compile, 40 authored invocations, actual Npcap complete/truncated/fragmented packets, benign GRE/VXLAN and lookalikes, optional Arista authenticated config/log fixtures, existing journal-first invariants, R102/R118/R163 floors, detection/UI unchanged. Rollback: remove only additive wiring/producer; retain isolated inspectors and source documentation. Owner approval and live-HEAD cross-stream review are required before any shared edits.
+
+**Next GA:** P0071–P0080. Preserve all previous P IDs and both independent stream ledgers.
