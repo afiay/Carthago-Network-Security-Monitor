@@ -1148,7 +1148,9 @@
                                 EnableColumnVirtualization="True"
                                 ScrollViewer.HorizontalScrollBarVisibility="Auto"
                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                AutomationProperties.Name="Recent local detection events">
+                                AutomationProperties.Name="Recent local detection events"
+                                AutomationProperties.HelpText="Read-only local detections, up to 80 rows. Event time is recorded as supplied; timezone is unverified. Evidence is reported presence or count only, not a verified chain. Delivery is transport status, not incident resolution."
+                                AutomationProperties.ItemStatus="{Binding Text, ElementName=DashboardLiveEventsStatusText}">
                         <DataGrid.Columns>
                           <DataGridTextColumn Header="Event time" Binding="{Binding EventTime}" Width="144"/>
                           <DataGridTextColumn Header="Source" Binding="{Binding Source}" Width="*"
@@ -1176,6 +1178,7 @@
                     <StackPanel Grid.Row="3" Margin="0,8,0,0">
                       <TextBlock x:Name="DashboardLiveEventsStatusText"
                                  Text="Waiting for local detection events."
+                                 AutomationProperties.LiveSetting="Off"
                                  Foreground="{StaticResource TextSubtleBrush}"
                                  FontSize="11"
                                  TextWrapping="Wrap"/>
