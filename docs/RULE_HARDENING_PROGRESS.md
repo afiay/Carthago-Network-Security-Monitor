@@ -13,9 +13,9 @@ authored regression tests, batch specification and ledger update together.
 Distinguish authored tests from executed test evidence and a detector match
 from a validated operational alert.
 
-**Latest documented batch:** [R421–R430](RULE_BATCH_421-430.md) — SOURCE
-CANDIDATE — UNVERIFIED; 120 authored xUnit invocations, 0 executed.
-Next contiguous development GA is R431–R440, subject to live HEAD review.
+**Latest documented batch:** [R431–R440](RULE_BATCH_431-440.md) — SOURCE
+CANDIDATE — UNVERIFIED; 140 authored xUnit invocations, 0 executed.
+Next contiguous development GA is R441–R450, subject to live HEAD review.
 The 2026-10-30 author-only branch rewrite replaced historical HEAD
 `a7166038cd947339d9671d7a873babbd00db080a` with
 `4dd73f3f6de2c0c6b9a6fd299d0c306ebcc3a9cc`; historical commit
@@ -999,3 +999,27 @@ checkpoint predates this candidate. Final publication SHA is the
 branch HEAD after atomic non-forced expected-HEAD update (a commit
 cannot contain its own SHA). Next contiguous GA: **R431–R440**,
 subject to fresh live inspection. UI-owned paths untouched.
+
+## GA R431–R440 — service identity and native database protocol boundary (2026-10-30)
+
+**SOURCE CANDIDATE — UNVERIFIED.** Inspected live base `174ecd2fc072ac59bdf5ae1d11b8c218487803e5` after
+GA R421–R430 and UI GA UI-08. Source `c54e830a6b4e0d09f99747f8a6b7d38d1d2f9acd`; authored tests
+`208bb779d5ec5422904d70543c970d6712356def`; final publication is this documentation-descendant commit,
+identified by the live remote HEAD after the non-forced expected-HEAD update.
+All **ten rules R431, R432, R433, R434, R435, R436, R437, R438, R439,
+R440 are BLOCKED** pending authenticated service/native protocol/outcome
+producers. No family/product attribution or login success from packet ports,
+paths, `Info`, forged headers or encrypted metadata. Original modes,
+severities, thresholds (including R439=4), windows, cooldowns, floors,
+approvals, privacy, journal and baseline controls preserved. See
+[R431–R440 batch contract](RULE_BATCH_431-440.md) for individual reasons,
+legitimate-traffic risks and exact scenario matrix.
+
+**140 concrete xUnit invocations AUTHORED, 0 EXECUTED**; no builds,
+replays, holdouts, CI, Windows runners or production capture. Historical
+4,940/4,940 and frozen R102 V1 FAILED 4/6, V2 0/4 approved sources are
+not changed or reinterpreted. R343/R295/R275/R163 replay obligations
+remain separate. Only detection evaluator, new boundary helper, new
+regression tests, this batch doc and progress ledger changed. No UI files.
+
+**Next contiguous GA: R441–R450**, conditional on live branch inspection.
