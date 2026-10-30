@@ -166,6 +166,16 @@ namespace Carthago.Engine.Rules.Expansion
                 return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
                     missingOtDeepEvidence.Code, missingOtDeepEvidence.Detail);
 
+            // GA R493-R500 — SOURCE CANDIDATE — UNVERIFIED.
+            // A request target, process name, packet byte count or forged
+            // audit header cannot attest the local file, clipboard content,
+            // remote-session transfer or successful external upload.
+            // Fail closed before scoring, burst state and cooldown mutation.
+            var transferGap = SensitiveTransferEvidenceBoundary.GetMissingProducer(spec.RuleId);
+            if (transferGap is { } missingTransferEvidence)
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                    missingTransferEvidence.Code, missingTransferEvidence.Detail);
+
             if (spec.RequireHttp && !HasHttpContext(record))
                 return NoMatch(RuleNoMatchReasonCategory.NotApplicableProtocol, "HTTP_CONTEXT_REQUIRED", "Rule requires HTTP method, URI, host, headers, or HTTP protocol context.");
 

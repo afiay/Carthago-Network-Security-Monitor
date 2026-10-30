@@ -30,6 +30,11 @@ namespace Carthago.Engine.Rules.Expansion
                     "No validated EtherNet/IP CIP Forward_Open service, connection path, request direction, or trusted external-boundary authorization is produced."),
                 "R490" => ("IEC61850_MMS_WRITE_OPERATION_UNAVAILABLE",
                     "TCP/102 and TPKT framing cannot establish IEC 61850 MMS Write service, named data object, authenticated association, or outcome."),
+                // GA R491-R492 — SOURCE CANDIDATE — UNVERIFIED.
+                "R491" => ("GOOSE_LAYER2_FRAME_AND_SUBSTATION_POLICY_UNAVAILABLE",
+                    "The live IP-only fast path drops non-IP GOOSE EtherType 0x88B8; no validated GOOSE APDU, L2 multicast provenance, trusted substation boundary, or authorized publisher is produced."),
+                "R492" => ("HISTORIAN_QUERY_IDENTITY_VOLUME_AND_SOURCE_POLICY_UNAVAILABLE",
+                    "Flow ports and HTTP query text cannot establish a trusted historian endpoint, decoded query/result volume, workstation identity, distinct requests, or approved extraction policy."),
                 _ => null
             };
     }
