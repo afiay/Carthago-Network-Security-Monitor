@@ -67,7 +67,7 @@
                                        Style="{StaticResource SocPanelMenuGlyph}"
                                        Margin="8,-4,0,0"/>
                             <StackPanel Orientation="Horizontal">
-                              <TextBlock Text="{Binding Title}" Style="{StaticResource MicroLabel}"/>
+                              <TextBlock x:Name="DashboardKpiCardTitle" Text="{Binding Title}" Style="{StaticResource MicroLabel}"/>
                               <TextBlock Text="  &#x24D8;" Style="{StaticResource SocInfoGlyph}"/>
                             </StackPanel>
                           </DockPanel>
@@ -79,6 +79,7 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                               <TextBlock Text="{Binding Value}"
+                                         AutomationProperties.LabeledBy="{Binding ElementName=DashboardKpiCardTitle}"
                                          FontSize="21"
                                          FontWeight="Bold"/>
                               <TextBlock Text="{Binding DeltaText}"
@@ -425,6 +426,7 @@
                 <!-- GA UI-03: screenshot-aligned four-card operational strip.
                      Unavailable sensor and coverage contracts are never substituted with invented counts. -->
                 <ItemsControl x:Name="DashboardOverviewKpiItemsControl"
+                              AutomationProperties.Name="Security overview metric cards"
                               Margin="0,0,0,8"
                               HorizontalContentAlignment="Stretch"
                               ItemTemplate="{StaticResource DashboardKpiCardTemplate}"
@@ -543,7 +545,7 @@
                            Style="{StaticResource DashboardSectionTitle}"
                            FontSize="13"
                            Margin="0,2,0,8"/>
-                <ItemsControl x:Name="DashboardKpiItemsControl" Margin="0,0,0,12"
+                <ItemsControl x:Name="DashboardKpiItemsControl" AutomationProperties.Name="Additional dashboard metric cards" Margin="0,0,0,12"
                               HorizontalContentAlignment="Stretch"
                               ItemTemplate="{StaticResource DashboardKpiCardTemplate}"
                               ItemContainerStyle="{StaticResource DashboardKpiItemContainerStyle}">
