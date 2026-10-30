@@ -2143,18 +2143,20 @@
 
           <StackPanel Orientation="Horizontal"
                       HorizontalAlignment="Center"
-                      VerticalAlignment="Center">
-            <Ellipse Width="8" Height="8" Fill="{StaticResource OkBrush}" Margin="0,0,8,0"/>
-            <TextBlock Text="All systems operational" Foreground="{StaticResource TextSubtleBrush}"/>
+                      VerticalAlignment="Center"
+                      ToolTip="This indicator reflects local capture state, not overall system, database or sensor health."
+                      AutomationProperties.HelpText="Local capture state only; no overall system, database or sensor health check is implied.">
+            <Ellipse Width="8" Height="8"
+                     Fill="{Binding Foreground, ElementName=FooterTelemetryStateText}"
+                     Margin="0,0,8,0"/>
+            <TextBlock Text="Local capture state" Foreground="{StaticResource TextSubtleBrush}"/>
           </StackPanel>
 
           <StackPanel Grid.Column="1"
                       Orientation="Horizontal"
                       VerticalAlignment="Center">
-            <TextBlock Text="Telemetry:" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,6,0"/>
-            <TextBlock x:Name="FooterTelemetryStateText" Text="On" Foreground="{StaticResource OkBrush}" Margin="0,0,18,0"/>
-            <TextBlock Text="DB:" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,6,0"/>
-            <TextBlock Text="Healthy" Foreground="{StaticResource OkBrush}" Margin="0,0,18,0"/>
+            <TextBlock Text="Capture:" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,6,0"/>
+            <TextBlock x:Name="FooterTelemetryStateText" Text="Unknown" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,18,0"/>
             <TextBlock x:Name="FooterUtcText" Text="UTC --:--:--" Foreground="{StaticResource TextMutedBrush}"/>
           </StackPanel>
         </Grid>
