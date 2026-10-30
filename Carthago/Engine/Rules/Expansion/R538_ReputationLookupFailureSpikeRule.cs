@@ -22,6 +22,14 @@ namespace Carthago.Engine.Rules.Expansion
         public R538_ReputationLookupFailureSpikeRule() : base(Rule, Profile) { }
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
+            // GA R531-R540 — SOURCE CANDIDATE — UNVERIFIED.
+            // Mutable packet text is not authenticated platform-health evidence.
+            // Fail closed before counters, cooldowns or event construction.
+            var missingProducer = PlatformHealthProducerEvidenceBoundary.GetMissingProducer(Descriptor.RuleId);
+            if (missingProducer is { } missing)
+                return RuleEvaluationResult.NoMatch(Descriptor.RuleId,
+                    RuleNoMatchReasonCategory.InsufficientEvidence, missing.Code, missing.Detail);
+
             var r = context.Record; var text = Text(r);
             if (!IsPlatformHealthRecord(r) || !ContainsAny(text, "reputation", "threat intel", "ioc lookup", "feed lookup", "enrichment")) return NoMatch();
             if (!ContainsAny(text, "lookup failure", "lookup failed", "provider failure", "rate limit", "timeout", "feed unavailable", "enrichment failed")) return NoMatch();

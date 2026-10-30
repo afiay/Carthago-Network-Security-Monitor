@@ -26,6 +26,14 @@ namespace Carthago.Engine.Rules.Expansion
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
+            // GA R531-R540 — SOURCE CANDIDATE — UNVERIFIED.
+            // Mutable packet text is not authenticated platform-health evidence.
+            // Fail closed before counters, cooldowns or event construction.
+            var missingProducer = PlatformHealthProducerEvidenceBoundary.GetMissingProducer(Descriptor.RuleId);
+            if (missingProducer is { } missing)
+                return RuleEvaluationResult.NoMatch(Descriptor.RuleId,
+                    RuleNoMatchReasonCategory.InsufficientEvidence, missing.Code, missing.Detail);
+
             var record = context.Record; var text = Text(record);
             if (!IsPlatformHealthRecord(record) || !ContainsAny(text, "parser", "parse", "decoder", "normalizer", "normalization")) return NoMatch();
             if (!ContainsAny(text, "error", "exception", "failed", "failure", "malformed", "invalid", "decode")) return NoMatch();
