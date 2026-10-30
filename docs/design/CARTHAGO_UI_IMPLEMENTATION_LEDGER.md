@@ -1620,3 +1620,105 @@ readability or visual-consistency improvement outside UI-01–21.
 **References:** [WPF AutomationProperties.Name](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.name);
 [WPF AutomationProperties.HelpText](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.helptext);
 [WPF layout](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/layout).
+
+## GA UI-22 — Local PPS chart accessible current-summary status
+
+**2026-10-30 · SOURCE CANDIDATE — UNVERIFIED.** Starting live branch HEAD:
+`9bdcea06799b819063f2d1c828631d9dbb408a2d` (GA UI-21 published;
+independent protocol P0031–P0040 on disjoint paths).
+**UI source commit:** `8b1cfa322b3dcf5ab4327e4729c027d5076dfb81`.
+**Tests authored: 0; executed: 0.** No build, test, xUnit, replay,
+holdout, CI, GitHub Actions, runner, benchmark, production capture,
+WPF runtime or screenshot validation was performed.
+
+### Approved reference and original consumer contract
+
+Retrieved and visually inspected the exact approved Library PNG
+`libfile_b0a34361560c8191b641e432b3e6b15c`.
+The approved dark navy/graphite surfaces, cyan/teal accents and compact
+traffic-card hierarchy remain unchanged. The screenshot's Mbps series,
+IPs, rule IDs, scores, timestamps and status are **demo only** and
+cannot be represented as actual local observations.
+
+Source audit: `MainWindow.xaml` contains one visible `TrafficPlot`
+ScottPlot WPF control and one existing
+`DashboardTrafficChartTextSummary` TextBlock. The existing
+`RenderTraffic` consumer in `MainWindow.Plots.cs` updates that
+TextBlock from local timer PPS, the bounded retained sample count
+(maximum 120), and existing `CaptureStatusText.Text`.
+`MainWindow.Core.cs` retains the original one-second PPS bucket/history
+producer. The chart remains local PPS plus its existing ten-sample
+moving average, **not** inbound/outbound Mbps. Timer-generated zeros
+and retained history are not proof of active capture.
+
+### One cohesive UI-owned improvement
+
+The existing `TrafficPlot` now binds WPF
+`AutomationProperties.ItemStatus` to the **already visible** current
+`DashboardTrafficChartTextSummary.Text`; its static help text
+explicitly directs assistive-technology users to that summary and
+disclaims throughput and capture-health inferences. The plot sets
+`AutomationProperties.LiveSetting="Off"` so this change does not
+deliberately request a live-region announcement on every timer tick.
+No new summary, metric, timer, renderer, series, binding source,
+event handler, telemetry producer, score or sample is introduced.
+The original waiting overlay and capture-status warning remain
+unchanged. This is an accessibility metadata change, not a
+claim of successful screen-reader exposure.
+
+**Owned paths:** `Carthago/Views/MainWindow.xaml` and
+`docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md` only.
+No `MainWindow.Plots.cs`, `MainWindow.Core.cs`, Models, Services,
+Engine, rules, telemetry/capture/trust/privacy, tests, project, shared
+API, workflow, runner, rule/protocol docs or automation changes.
+No Cisco/WebView2/ScottPlot behavior changes. The left navigation,
+KPIs, prioritized incidents, investigation, read-only local Live Events
+(80 displayed / 500 retained), and visual-only **UNAVAILABLE** CLI
+remain unchanged. Wide >=1440, Standard 1100–1439, Compact 1024–1099
+and graceful below 1024 layout code is untouched.
+
+### Static divergence and residual risks
+
+The prior UI-21 source/ledger and live branch were compared before
+editing. The sole intervening P0031–P0040 protocol candidate changed
+Services/ProtocolIntelligence, protocol tests and docs/protocols,
+all disjoint from UI ownership. The original XAML named elements,
+plot/text-summary consumer and capture-status provenance were read.
+Private source commit comparison shows only three added XAML lines and
+one replaced HelpText line; the documentation commit records this
+exact source SHA. A final remote HEAD and changed-path lease review
+is required before publication.
+
+**Risks:** The WPF/ScottPlot automation peer may not expose ItemStatus;
+ElementName binding resolution, screen-reader verbosity, actual
+per-second announcement behavior, high contrast, DPI and responsive
+visual fidelity remain **UNVERIFIED**. LiveSetting Off is not proof
+that every assistive technology will suppress announcements.
+The status may describe timer-generated zero samples while capture is
+inactive; the existing visible caution and summary remain authoritative.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. No timer sample: existing waiting text is retained and ItemStatus does not invent PPS.
+2. One timer sample: waiting overlay remains; accessible status mirrors the existing summary.
+3. Two timer samples: existing plot can draw; accessible status still mirrors visible text.
+4. After 120+ ticks: retained count remains bounded at 120; no new UI history is created.
+5. With ten-plus samples, the original moving-average plot remains unchanged.
+6. PAUSED/OFFLINE/ERROR/DEGRADED: retained history and timer zeros are not called live capture.
+7. MONITORING with PPS zero: no claim of healthy sensor, throughput or absence of threats.
+8. Actual UI Automation inspection checks ItemStatus exposure, binding resolution, and screen-reader reading order without per-second disruptive announcements.
+9. At 1440/1100/1099/1024/1023/640px, 125–200% DPI and high contrast, the chart/summary remain readable.
+10. Original incident/investigation, Live Events, CLI unavailable, navigation, Cisco/WebView2, privacy and independent detection/protocol streams remain untouched.
+
+**Open quality GAs:** pinned-SHA Windows WPF build, UIA/screen-reader,
+keyboard and responsive screenshots, capture-state/plot synchronization
+and provenance regression **only after** explicit owner test
+authorization. **Executed tests: 0.**
+
+**Next independent UI GA UI-23:** audit live HEAD, exact approved image,
+ledger and WPF consumers; choose one new cohesive UI-owned accessibility,
+readability or visual-consistency improvement outside UI-01–22.
+
+**References:** [WPF AutomationProperties.ItemStatus](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.itemstatus);
+[WPF AutomationProperties.LiveSetting](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.livesetting);
+[WPF layout](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/layout).
