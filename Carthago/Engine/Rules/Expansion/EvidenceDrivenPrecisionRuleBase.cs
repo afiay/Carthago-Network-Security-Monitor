@@ -126,7 +126,7 @@ namespace Carthago.Engine.Rules.Expansion
             if (!HasCoreTelemetry(record))
                 return NoMatch(RuleNoMatchReasonCategory.MissingTelemetry, "MISSING_CORE_TELEMETRY", "Source, destination/host, and protocol/behavior telemetry are required before this rule can evaluate.");
 
-            // GA R431-R450 — SOURCE CANDIDATE — UNVERIFIED.
+            // GA R431-R452 — SOURCE CANDIDATE — UNVERIFIED.
             // Packet-level HTTP/port/name clues are not authenticated service,
             // database/broker protocol exchanges, native commands, or server
             // outcome provenance. Stop before generic scoring or window state.
@@ -137,6 +137,15 @@ namespace Carthago.Engine.Rules.Expansion
             if (serviceEvidenceGap is { } missingServiceEvidence)
                 return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
                     missingServiceEvidence.Code, missingServiceEvidence.Detail);
+
+            // GA R453-R460 — SOURCE CANDIDATE — UNVERIFIED.
+            // Existing mDNS and MQTT packet observations do not by themselves
+            // prove a calibrated anomaly, host role, authorization or outcome.
+            // Fail closed before generic signal counts, burst state or cooldown.
+            var localDiscoveryGap = LocalDiscoveryEvidenceBoundary.GetMissingProducer(spec.RuleId);
+            if (localDiscoveryGap is { } missingLocalDiscoveryEvidence)
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                    missingLocalDiscoveryEvidence.Code, missingLocalDiscoveryEvidence.Detail);
 
             if (spec.RequireHttp && !HasHttpContext(record))
                 return NoMatch(RuleNoMatchReasonCategory.NotApplicableProtocol, "HTTP_CONTEXT_REQUIRED", "Rule requires HTTP method, URI, host, headers, or HTTP protocol context.");

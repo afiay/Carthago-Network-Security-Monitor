@@ -53,6 +53,11 @@ namespace Carthago.Engine.Rules.Expansion
                     "Port 2181 or words such as ruok/stat do not prove an attributed four-letter command and server reply."),
                 "R450" => ("NATS_CLIENT_SERVER_HANDSHAKE_UNAVAILABLE",
                     "NATS client, cluster and monitoring ports cannot prove an INFO/CONNECT exchange or external broker access."),
+                // GA R451-R452 — SOURCE CANDIDATE — UNVERIFIED.
+                "R451" => ("MQTT_ANONYMOUS_CONNECT_OUTCOME_UNAVAILABLE",
+                    "The bounded MQTT parser observes some CONNECT frames but does not retain username/password flag provenance or a correlated CONNACK acceptance; anonymous login is not established."),
+                "R452" => ("DATABASE_RESULT_EXPORT_CORRELATION_UNAVAILABLE",
+                    "Transfer bytes and database-looking traffic do not establish a decoded query, result-set size, destination authorization or a correlated external export."),
                 _ => null
             };
     }
