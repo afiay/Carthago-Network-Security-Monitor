@@ -471,3 +471,85 @@ density at narrow widths; prefer source-only, UI-owned improvements. Do not
 add inbound/outbound Mbps without trusted producers or alter detection work.
 
 **Reference:** [WPF DataTrigger](https://learn.microsoft.com/en-us/dotnet/api/system.windows.datatrigger).
+
+## GA UI-09 — Narrow-window PPS chart header and capture-status readability
+
+**2026-10-30 · SOURCE CANDIDATE — UNVERIFIED.** Start live feature HEAD:
+`3172fdd340ce34b851511278a5fafadbe2437018` (after independent
+R431–R440 candidate); UI source commit:
+`965fbf47a97834c32c048576de25176fd5138f41`.
+Publication is the protected feature ref after this ledger commit; the
+commit cannot embed its own final SHA. **Tests authored: 0; executed: 0.
+No builds, replay, holdouts, CI, runner jobs or capture.**
+
+### Approved reference, original source and evidence boundary
+
+The exact approved Library image
+`libfile_b0a34361560c8191b641e432b3e6b15c` was visually inspected.
+The screenshot places a dark navy traffic card above incidents with a compact
+heading and capture state. Existing UI-08 already exposes the original
+`TrafficPlot` ScottPlot WPF instance with actual local **PPS** and optional
+10-sample average over the bounded 120-point history. This GA **does not**
+add another chart, change plotting, introduce telemetry or infer inbound,
+outbound or Mbps series. The chart remains full-width above incidents, rather
+than the reference's side-by-side composition; this deviation is intentional
+until authorized rendered-layout verification.
+
+| Chart element | UI-only change | Evidence and accessibility limit |
+| --- | --- | --- |
+| Heading and sample-window subtitle | `MainWindow.xaml` gives the existing chart-header grid an unused second row and allows the PPS title to wrap. | Existing title, units and real capture-history description are unchanged; actual high-DPI/text-scale rendering is unverified. |
+| Current capture status | Existing status label is named `DashboardTrafficChartCaptureStatus` and repositioned below the title **only below 1024px** using the existing `narrowKpis` responsive transition. | The label remains bound to `CaptureStatusText` and its color to `MonitoringStatusBadge`; no new status or proof of capture health is inferred. |
+| Wide/Standard/Compact | ≥1024px retains title-left/status-right; 640–1023px places status in the second row with 6px top spacing. | Wide ≥1440, Standard 1100–1439 and Compact 1024–1099 remain unchanged; UI-07's below-1024 KPI behavior is reused. |
+| Chart and caution | Existing `TrafficPlot` instance, static accessibility metadata, and non-MONITORING stale-history/zero-sample warning are preserved. | A plotted zero may be timer-generated when capture is inactive; no new screen-reader data table or runtime chart validation is claimed. |
+
+### Static divergence review, ownership and risks
+
+- **Changed paths:** `Carthago/Views/MainWindow.xaml`,
+  `Carthago/Views/MainWindow.DashboardResponsive.cs`, and this design ledger.
+  The source patch adds no dependency, handler, shared API, data model or
+  separate telemetry producer.
+- Inspected the original UI-08 chart markup, the responsive partial and its
+  existing below-1024 threshold, `MainWindow.Plots.cs`, theme resources,
+  UI-01–08 ledger, and the independent R431–R440 changed-path comparison.
+  No UI-owned path had changed since UI-08 before this candidate.
+- Source-only checks: the named chart-status element occurs once, the
+  responsive repositioning call occurs once, the existing `TrafficPlot`
+  declaration remains unique, and the XAML replacement preserves the original
+  chart/caution binding text. These checks are **not** a WPF parse, compile,
+  layout, accessibility, runtime or screenshot pass.
+- No changes to `Carthago/Engine/**`, `Models/**`, `Services/**`,
+  rules, tests, project, workflows, capture, Cisco, WebView2, ScottPlot
+  rendering code, alert/evidence contracts, approvals, confidence floors,
+  journal/privacy or detection documentation. Same-branch concurrency is
+  reconciled only through a final expected-HEAD protected publication.
+- **Residual risk:** the status can still be announced separately from the
+  chart by assistive technology, and WPF may render unexpectedly under high
+  text scale or minimum-width conditions. Runtime verification remains
+  unauthorized.
+
+### Acceptance scenarios — PLANNED, NOT AUTHORED AS TESTS, UNEXECUTED
+
+1. Width 1440: heading and capture status remain side by side.
+2. Width 1100: Standard layout preserves original chart header and bindings.
+3. Width 1099 and 1024: Compact layout retains the side-by-side status.
+4. Width 1023 and 640: status moves to its own row and title wraps without clipping.
+5. Resize 1023→1024→1023: status returns to the correct row without duplication.
+6. MONITORING, PAUSED, OFFLINE, ERROR and DEGRADED: existing badge text/color and caution remain truthful.
+7. No captured packets: no invented series or source-health assertion appears.
+8. At 2 and 11+ samples: original PPS and optional moving average remain unchanged.
+9. 125–200% DPI, keyboard and screen-reader: status and chart help text remain understandable.
+10. Existing Analytics chart, incidents, Live Events, Cisco, preferences and unavailable CLI panel continue functioning.
+
+**Open quality GAs:** pinned-SHA Windows compilation, rendered reference
+comparison across widths/DPI, chart keyboard and screen-reader inspection,
+capture-state transitions, retained-history semantics, and end-to-end
+regression after owner authorization. **No runtime or quality result claimed.**
+
+**Next independent UI GA UI-10:** audit the visible chart's truthful empty/
+unavailable communication and accessible text alternative using existing
+UI-owned data/bindings only. Do not duplicate UI-08/09 or modify shared
+capture/model/engine contracts. Keep the detection automation independent.
+
+**References:** [WPF Grid attached positioning](https://learn.microsoft.com/en-us/dotnet/api/system.windows.controls.grid.setrow);
+[WPF responsive layout](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/layout);
+[original UI-08 ledger](#ga-ui-08--visible-local-pps-chart-no-new-telemetry).
