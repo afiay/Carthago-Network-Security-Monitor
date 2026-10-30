@@ -1096,3 +1096,99 @@ improvement outside completed UI-01–15, preserving evidence boundaries.
 **Technical references:**
 [Microsoft WPF FocusVisualStyle](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/styling-for-focus-in-controls-and-focusvisualstyle);
 [WPF DataGrid overview](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/controls/datagrid).
+
+## GA UI-16 — Visible labels for Live Events free-text filters
+
+**2026-10-30 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE
+`feature/carthago-reliability-hardening` HEAD:
+`afe874bb3537a80e6de56799d440ef090c0c6d4f` (independent R501–R510 detection candidate already present).
+**UI source commit:** `fe17db0d8e915a4f420d2db0b02fd86e37955c53`. The documentation commit descends from
+that source commit and is the publication commit when the remote branch is
+updated with its exact expected-HEAD lease. **Tests authored: 0; executed: 0.**
+No build, WPF runtime, screenshot, xUnit, replay, holdout, CI, runner,
+benchmark or production capture was executed.
+
+### Approved reference, source audit and bounded improvement
+
+The exact approved Library image
+`libfile_b0a34361560c8191b641e432b3e6b15c` was resolved and
+visually inspected. Its lower Live Events filter/search row has clearly
+identified controls; the image's IPs, timestamps, rule IDs, confidence,
+metrics and Mbps series are **demo-only**. No screenshot values were
+introduced.
+
+The original `DashboardLiveEventsGrid` and the existing
+`DashboardLiveSeverityFilter`, `DashboardLiveProtocolFilter`,
+`DashboardLiveRuleFilter` and `DashboardLiveSearchFilter` controls were
+source-audited along with their consumers in
+`MainWindow.DashboardEvents.cs`. The two free-text filters previously
+had only ToolTip and UI Automation names, leaving blank inputs visually
+ambiguous. This GA adds compact, visible **Rule** and **Search** captions
+in the existing `WrapPanel`, with each `TextBox` retaining its
+`x:Name`, `TextChanged` handler, ToolTip and accessible name.
+The captions are associated via `AutomationProperties.LabeledBy`,
+reusing the same WPF pattern as GA UI-12. The surrounding horizontal
+`StackPanel` containers do not add keyboard-focus targets or modify
+filter logic. Entry widths are now 90px (rule) and 182px (search) to
+limit additional horizontal density; all input text and existing
+filter semantics remain unchanged.
+
+| Surface | Actual binding / behavior | Evidence boundary |
+| --- | --- | --- |
+| Rule caption and input | `DashboardLiveRuleFilter.Text` still filters exact/partial local rule ID in `RefreshDashboardLiveEvents`. | No claim that a rule ID is a verified malicious behavior; no new parser. |
+| Search caption and input | `DashboardLiveSearchFilter.Text` still filters visible event source, destination, rule or protocol. | No evidence payload search, packet inspection or new telemetry. |
+| Severity/protocol selectors | Existing selection tags and handlers unchanged. | Only actual local detection-event projection, not confirmed incidents. |
+| Live Events grid/status | Existing eight columns, frozen Event time, read-only virtualization, 80 visible rows, 500 retained events, filtering, capture/demo status and evidence/delivery warnings. | Recorded timestamp timezone is unverified; reported evidence count is not custody; delivery is not resolution. |
+| Dashboard and reference | Existing dark navy/graphite, muted captions and cyan keyboard-focus treatment reused. | Reference fidelity is source-intent only, not a screenshot comparison. |
+
+### Static divergence, ownership and concurrency review
+
+- Previous GA UI-15 publication HEAD
+  `fd8d2e3d11bfefa9f076f6f86607231ebadee235`
+  is an ancestor of the starting live HEAD. The intervening R501–R510
+  changes affect detection engine/tests/rule docs, not the owned UI paths.
+- **Only UI source path:** `Carthago/Views/MainWindow.xaml`.
+  **Only documentation path:** this ledger.
+  Original filter consumers in `MainWindow.DashboardEvents.cs` were
+  read but not edited; both existing `TextChanged` bindings are retained.
+- Source-only checks: each existing text-filter `x:Name` occurs once,
+  each new label `x:Name` occurs once, the original DataGrid remains
+  unique with its frozen time column, and no new event handlers,
+  telemetry/model/service contracts or UI view models were introduced.
+  Original severity/protocol selectors, capture controls, Cisco,
+  WebView2, ScottPlot PPS history, incident investigation, visual-only
+  CLI, privacy and rule profiles are untouched.
+- **Residual risks:** visible captions modestly increase filter-row
+  width and may trigger earlier `WrapPanel` wrapping at narrow widths.
+  The 90px rule input may show less of a long value without scrolling.
+  WPF `LabeledBy` resolution, keyboard reading order, high contrast,
+  DPI and actual visual density remain **unverified**. No accuracy,
+  compilation, accessibility or rendering pass is claimed.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. With empty filters, both Rule and Search captions are visible and distinguishable.
+2. Tab through severity, protocol, rule, search and clear controls without new focus stops.
+3. UIA/screen reader associates Rule and Search captions with the correct inputs.
+4. Typing an exact rule ID preserves the original filtered event set.
+5. Typing a partial rule ID preserves case/substring behavior and clear/reset.
+6. Search source/destination/protocol and confirm evidence payload is not searched.
+7. At 1440, 1100, 1099, 1024, 1023 and 640px widths, the filter row wraps without clipping.
+8. At 125–200% DPI and high contrast, captions and input text remain legible.
+9. Empty, 80 displayed and 500 retained event states preserve truthful counts, capture/demo and delivery caveats.
+10. Confirm the frozen Event time, keyboard cell focus, PPS chart, incident panels, unavailable CLI, Cisco and independent rule work are unchanged.
+
+**Open quality GAs:** pinned-SHA Windows WPF build; actual filter,
+keyboard/UIA and high-contrast/DPI inspection; responsive screenshots;
+event filtering, virtualization, capture/demo and status regressions
+after explicit owner test authorization. **Executed tests: 0.**
+
+**Next independent UI GA UI-17:** inspect LIVE HEAD, approved reference,
+ledger and original WPF source for one bounded accessibility/readability
+improvement outside completed UI-01–16. Keep all telemetry/evidence
+boundaries and the independent detection stream intact.
+
+**Technical references:**
+[WPF AutomationProperties.LabeledBy](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.labeledby);
+[WPF StackPanel](https://learn.microsoft.com/en-us/dotnet/api/system.windows.controls.stackpanel);
+[WPF layout](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/layout).
