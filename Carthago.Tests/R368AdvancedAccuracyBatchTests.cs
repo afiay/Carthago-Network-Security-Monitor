@@ -80,6 +80,11 @@ public sealed class R368AdvancedAccuracyBatchTests
         var r = Candidate(); r.HttpHost = "registry-1.docker.io.attacker.invalid";
         Assert.False((await Eval(r)).Matched);
     }
+    [Fact] public async Task Registry_Artifact_Path_With_Trailing_Operation_Is_Not_An_Artifact_Get()
+    {
+        var r = Candidate(); r.HttpUri += "/extra";
+        Assert.False((await Eval(r)).Matched);
+    }
     [Fact] public void Existing_Mode_Threshold_And_Confidence_Are_Unchanged()
     {
         var p = new R368_DockerHubPullStormRule().PrecisionProfile;

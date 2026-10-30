@@ -66,6 +66,11 @@ public sealed class R362AdvancedAccuracyBatchTests
         var r = Candidate(); r.HttpHost = "api.github.com.attacker.invalid";
         Assert.False((await Eval(r)).Matched);
     }
+    [Fact] public async Task Organization_Registration_Token_Request_Shape_Is_Eligible()
+    {
+        var r = Candidate(); r.HttpUri = "/orgs/example/actions/runners/registration-token";
+        Assert.True((await Eval(r)).Matched);
+    }
     [Fact] public void Existing_Mode_Threshold_And_Confidence_Are_Unchanged()
     {
         var p = new R362_GitHubActionsRunnerRegistrationTokenRule().PrecisionProfile;

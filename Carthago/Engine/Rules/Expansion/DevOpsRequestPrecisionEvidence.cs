@@ -39,6 +39,7 @@ namespace Carthago.Engine.Rules.Expansion
                     ? null : "GITHUB_RUNNER_REGISTRATION_REQUEST_NOT_OBSERVED",
                 "R363" => Is("GET") && DevOpsHttpEvidence.HostMatches(r, "api.github.com")
                     && parts.Length == 7 && Seg(0, "repos") && Seg(3, "actions") && Seg(4, "artifacts") && Seg(6, "zip")
+                    && long.TryParse(parts[5], out var artifactId) && artifactId > 0
                     ? null : "CI_ARTIFACT_ARCHIVE_REQUEST_NOT_OBSERVED",
                 "R364" => Is("POST") && path.Length == 0 && IsAwsSecretsManagerHost(r.HttpHost)
                     && r.HttpAwsListSecretsRequestObserved
@@ -79,11 +80,10 @@ namespace Carthago.Engine.Rules.Expansion
         {
             if (parts.Length < 5 || !string.Equals(parts[0], "v2", StringComparison.OrdinalIgnoreCase))
                 return false;
-            for (var i = 2; i < parts.Length - 1; i++)
-                if (string.Equals(parts[i], "manifests", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(parts[i], "blobs", StringComparison.OrdinalIgnoreCase))
-                    return !string.IsNullOrWhiteSpace(parts[i + 1]);
-            return false;
+            var kind = parts[^2];
+            return (string.Equals(kind, "manifests", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(kind, "blobs", StringComparison.OrdinalIgnoreCase))
+                && !string.IsNullOrWhiteSpace(parts[^1]);
         }
 
         private static string? ObserveUnique(TrafficRecord r, DateTime at, string id)

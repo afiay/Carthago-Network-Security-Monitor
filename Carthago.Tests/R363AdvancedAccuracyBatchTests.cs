@@ -80,6 +80,11 @@ public sealed class R363AdvancedAccuracyBatchTests
         var r = Candidate(); r.HttpHost = "api.github.com.attacker.invalid";
         Assert.False((await Eval(r)).Matched);
     }
+    [Fact] public async Task NonNumeric_Artifact_Identifier_Is_Not_A_Concrete_Archive()
+    {
+        var r = Candidate(); r.HttpUri = "/repos/owner/repo/actions/artifacts/latest/zip";
+        Assert.False((await Eval(r)).Matched);
+    }
     [Fact] public void Existing_Mode_Threshold_And_Confidence_Are_Unchanged()
     {
         var p = new R363_CIArtifactArchiveDownloadBurstRule().PrecisionProfile;
