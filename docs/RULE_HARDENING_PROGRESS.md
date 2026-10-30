@@ -13,9 +13,9 @@ authored regression tests, batch specification and ledger update together.
 Distinguish authored tests from executed test evidence and a detector match
 from a validated operational alert.
 
-**Latest documented batch:** [R401–R410](RULE_BATCH_401-410.md) — SOURCE
+**Latest documented batch:** [R421–R430](RULE_BATCH_421-430.md) — SOURCE
 CANDIDATE — UNVERIFIED; 120 authored xUnit invocations, 0 executed.
-Next contiguous development GA is R411–R420, subject to live HEAD review.
+Next contiguous development GA is R431–R440, subject to live HEAD review.
 The 2026-10-30 author-only branch rewrite replaced historical HEAD
 `a7166038cd947339d9671d7a873babbd00db080a` with
 `4dd73f3f6de2c0c6b9a6fd299d0c306ebcc3a9cc`; historical commit
@@ -979,3 +979,23 @@ the documentation-descendant branch HEAD after the single atomic
 non-forced expected-HEAD ref update (a commit cannot embed its own SHA).
 Next contiguous GA **R421–R430**, after successful publication and
 fresh live source review. UI-owned paths untouched.
+
+
+## GA R421–R430 — management endpoint and service-exposure provenance, 2026-10-30
+
+[Ten-rule evidence contract and 120-scenario inventory](RULE_BATCH_421-430.md).
+**SOURCE CANDIDATE — UNVERIFIED**; R421, R422, R423, R424, R425,
+R426, R427, R428, R429 and R430 all **BLOCKED** on missing trusted
+product identity, correlated response/outcome or verified probe context.
+Common admin paths, TCP ports, client-supplied headers and Info are not
+proof of successful external exposure or malicious probing. Ten per-ID
+guards fail closed before generic scoring, burst state, cooldown or
+DetectionEvent creation. Original Alert modes, severities, 82% floors,
+threshold 1, 10-minute windows, 30-minute cooldowns, approvals, privacy,
+journal, baseline and frozen R102 evidence unchanged. **120 concrete
+xUnit invocations AUTHORED, ZERO EXECUTED.** No build, test, replay,
+CI, runner, benchmark or production capture. The historical 4,940/4,940
+checkpoint predates this candidate. Final publication SHA is the
+branch HEAD after atomic non-forced expected-HEAD update (a commit
+cannot contain its own SHA). Next contiguous GA: **R431–R440**,
+subject to fresh live inspection. UI-owned paths untouched.
