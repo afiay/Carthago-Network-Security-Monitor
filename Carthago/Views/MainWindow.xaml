@@ -598,6 +598,8 @@
 
                       <ListBox x:Name="DashboardAnomalyList"
                                Grid.Row="2"
+                               AutomationProperties.Name="Prioritized local incidents and anomaly signals"
+                               AutomationProperties.HelpText="Use arrow keys to select an item and update Incident Investigation. Local risk scores are not detection confidence."
                                SelectionChanged="DashboardAnomalyList_SelectionChanged"
                                ScrollViewer.VerticalScrollBarVisibility="Auto"
                                ScrollViewer.HorizontalScrollBarVisibility="Disabled"
@@ -615,6 +617,7 @@
                             <Setter Property="Background" Value="Transparent"/>
                             <Setter Property="BorderThickness" Value="0"/>
                             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                            <Setter Property="AutomationProperties.Name" Value="{Binding AccessibilityLabel}"/>
                             <Setter Property="Template">
                               <Setter.Value>
                                 <ControlTemplate TargetType="{x:Type ListBoxItem}">

@@ -1772,6 +1772,11 @@ namespace Carthago
             public string Severity { get; init; } = "MEDIUM";
             public string TimeText { get; init; } = "";
             public Brush AccentBrush { get; init; } = Brushes.Orange;
+
+            // A single accessible row name uses only fields already shown in the triage list.
+            // The score is local risk, not rule confidence or authenticated evidence.
+            public string AccessibilityLabel =>
+                $"{Kind}: {Title}. Severity {Severity}. Local risk score {RiskScore} out of 100. {Subtitle}. Local time {TimeText}.";
         }
 
         private sealed class SocHostVm
