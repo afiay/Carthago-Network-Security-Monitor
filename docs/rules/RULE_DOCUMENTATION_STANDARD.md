@@ -63,7 +63,7 @@ Perform a **pre-change** and **pre-publication** source-only review:
 | --- | --- |
 | Sequential scope | Derive next ten IDs from live GitHub HEAD and existing source/docs; never from a stale pointer alone |
 | No duplication | Inspect actual rule class, shared helper, parser, fixtures and configuration first |
-| Architecture | Separation of concerns, explicit contracts, no cross-layer dependency inversion, bounded memory/state |
+| Architecture | Separation of concerns, explicit contracts, dependencies toward abstractions rather than UI coupling, bounded memory/state |
 | Naming | Reuse stable classes/namespaces and adhere to existing public API and C# style |
 | Telemetry provenance | Distinguish packet-request shape, authenticated audit, server outcome and synthetic fixture |
 | Precision policy | Compare modes, thresholds, windows, cooldowns, floors, approvals, privacy and baseline readiness before/after |
