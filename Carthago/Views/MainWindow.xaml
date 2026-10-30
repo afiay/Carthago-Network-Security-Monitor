@@ -1021,7 +1021,9 @@
                         </StackPanel>
                       </DockPanel>
                       <UniformGrid Columns="2" Margin="0,8,0,0">
-                        <Button Style="{StaticResource ShortcutTile}" Click="DashboardRawTraffic_Click">
+                        <Button Style="{StaticResource ShortcutTile}" Click="DashboardRawTraffic_Click"
+                                AutomationProperties.Name="Raw Traffic"
+                                AutomationProperties.HelpText="Opens the existing Live Traffic view and its traffic filters.">
                           <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                             <TextBlock Text="&#x2301;" FontSize="20" Foreground="{StaticResource TextSubtleBrush}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
@@ -1031,7 +1033,9 @@
                             </StackPanel>
                           </Grid>
                         </Button>
-                        <Button Style="{StaticResource ShortcutTile}" Click="DashboardRawDetections_Click">
+                        <Button Style="{StaticResource ShortcutTile}" Click="DashboardRawDetections_Click"
+                                AutomationProperties.Name="Raw Detections"
+                                AutomationProperties.HelpText="Opens the existing Detection Events view and its detection filters.">
                           <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                             <TextBlock Text="&#x25C7;" FontSize="20" Foreground="{StaticResource TextSubtleBrush}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
@@ -1041,28 +1045,34 @@
                             </StackPanel>
                           </Grid>
                         </Button>
-                        <Button Style="{StaticResource ShortcutTile}" Click="DashboardPcapExplorer_Click">
+                        <Button Style="{StaticResource ShortcutTile}" Click="DashboardPcapExplorer_Click"
+                                AutomationProperties.Name="Traffic Analysis"
+                                AutomationProperties.HelpText="Opens the existing Live Traffic view, not a separate PCAP Explorer.">
                           <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                             <TextBlock Text="&#x25A4;" FontSize="19" Foreground="{StaticResource TextSubtleBrush}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                             <StackPanel Grid.Column="1">
-                              <TextBlock Text="PCAP Explorer" FontWeight="SemiBold" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
-                              <TextBlock Text="Search &amp; analyze PCAPs" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
+                              <TextBlock Text="Traffic Analysis" FontWeight="SemiBold" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+                              <TextBlock Text="Opens Live Traffic" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
                             </StackPanel>
                           </Grid>
                         </Button>
-                        <Button Style="{StaticResource ShortcutTile}" Click="DashboardForensicsWorkspace_Click">
+                        <Button Style="{StaticResource ShortcutTile}" Click="DashboardForensicsWorkspace_Click"
+                                AutomationProperties.Name="Detection Investigation"
+                                AutomationProperties.HelpText="Opens the existing Detection Events view, not a separate Forensics Workspace.">
                           <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                             <TextBlock Text="&#x2315;" FontSize="20" Foreground="{StaticResource TextSubtleBrush}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                             <StackPanel Grid.Column="1">
-                              <TextBlock Text="Forensics Workspace" FontWeight="SemiBold" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
-                              <TextBlock Text="Deep-dive investigations" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
+                              <TextBlock Text="Detection Investigation" FontWeight="SemiBold" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+                              <TextBlock Text="Opens Detection Events" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
                             </StackPanel>
                           </Grid>
                         </Button>
                       </UniformGrid>
-                      <Button Content="Open advanced tools  &#x2192;" Width="180" Height="30" HorizontalAlignment="Left" Style="{StaticResource SecondaryButton}" Click="DashboardRawTraffic_Click" Margin="0,8,0,0"/>
+                      <Button Content="Open Live Traffic  &#x2192;" Width="180" Height="30" HorizontalAlignment="Left" Style="{StaticResource SecondaryButton}" Click="DashboardRawTraffic_Click" Margin="0,8,0,0"
+                              AutomationProperties.Name="Open Live Traffic"
+                              AutomationProperties.HelpText="Opens the existing Live Traffic view."/>
                     </StackPanel>
                   </Border>
                 </Grid>
