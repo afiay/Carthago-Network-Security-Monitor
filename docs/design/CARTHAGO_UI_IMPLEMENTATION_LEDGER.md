@@ -1802,3 +1802,44 @@ Start: live feature HEAD `2ae551a61a542833bda954d8ad3bc524ec94cae2` is a protoco
 **Next independent UI GA UI-25:** inspect live HEAD, exact approved image, ledger and WPF consumers for one new cohesive UI-owned accessibility/readability/visual-consistency improvement outside UI-01–24.
 
 **References:** [WPF ElementName binding](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/data/how-to-bind-the-properties-of-two-controls); [WPF AutomationProperties.HelpText](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.helptext); [WPF layout](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/layout).
+
+## GA UI-25 — Accessible grouping of incident investigation supporting context
+
+**2026-10-31 · SOURCE CANDIDATE — UNVERIFIED.** Starting live feature HEAD: `98a680fd304af2e093c209b3c7eae3f726aa57bb` (independent P0061–P0070 GRE/VXLAN protocol source candidate present, disjoint paths). **UI source commit:** `ffa81db12a9a18b5707432f1d92a6b6ab62fdf1a`. **Owned paths:** `Carthago/Views/MainWindow.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md` only. **Tests authored: 0; executed: 0.** No dotnet build/test, xUnit, replay, holdout, CI, GitHub Actions, runner, benchmark, capture or running-WPF inspection.
+
+### Approved reference, original consumers and provenance
+
+Resolved and visually inspected exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c`. It shows a navy/graphite Security Overview, cyan/teal accents, restrained severity, local incident triage and investigation panels. The screenshot's IPs, metrics, rule IDs, timestamps, confidence and inbound/outbound Mbps curves are **DEMO ONLY**, not evidence or Carthago observations. This GA does not alter rendered colors, typography, panel geometry, left navigation or responsive breakpoints (Wide >=1440, Standard 1100–1439, Compact 1024–1099, graceful below 1024).
+
+Original `MainWindow.xaml` investigation detail contains three visually headed `ItemsControl` groups: Reasons, Tags, and Related rule IDs. `MainWindow.Dashboard.cs` binds them to the existing `ObservableCollection<string>` members `_dashboardDetailReasons`, `_dashboardDetailTags`, and `_dashboardDetailRules`. Existing `UpdateSocSignalDetails` and selection consumers replace these bounded collections from the selected local anomaly signal or correlated incident, including no-selection/empty fallbacks; the original `DashboardAnomalyList_SelectionChanged` continues driving the detail view. Reasons, tags and rule links are local reported/derived context, not independent evidence verification, accuracy or capture-health assertions.
+
+### One cohesive UI-owned improvement
+
+Give each existing visible group heading a unique XAML name (`DashboardDetailReasonsLabel`, `DashboardDetailTagsLabel`, `DashboardDetailRulesLabel`) and connect its original `ItemsControl` using WPF `AutomationProperties.LabeledBy`. Add a concise static `AutomationProperties.HelpText` per group to distinguish local triage reasons, selected-signal tags, and reported rule links from independently verified evidence or validated detection accuracy. The existing displayed text, item templates, `ItemsSource` bindings, collection bounds, selection handlers, scroll behavior, focus, keyboard order, data provenance and incident actions remain unchanged. This is group-level accessible context, distinct from UI-12 fact labels, UI-21 risk-ring explanation and UI-23 incident-list status.
+
+**Exact owned paths:** `Carthago/Views/MainWindow.xaml` (source-only UI metadata) and this `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`. No WPF code-behind, Controls, ViewModels, Theme, Engine, Models, Services, rules, protocol inspectors, telemetry/capture/trust/privacy, tests, benchmarks, workflows, runners, rule/protocol docs, project, shared APIs, security controls or independent automation settings/schedules are changed. Existing local PPS ScottPlot (ten-sample average, bounded 120-point history), operational KPIs, prioritized incidents, investigation, read-only Live Events (80 displayed/500 retained), explicitly **UNAVAILABLE** visual-only CLI, Cisco/WebView2 and responsive code are preserved.
+
+### Static divergence review and residual risks
+
+Start: live branch HEAD `98a680fd304af2e093c209b3c7eae3f726aa57bb` directly follows GA UI-24 publication `8b12fdbb335a58ffb98a80fd3f2064415bdd22d5`; intervening P0061–P0070 changes affect only `Carthago/Services/ProtocolIntelligence/**`, protocol tests and `docs/protocols/**`. Approved image, UI-01–24 ledger, original XAML headings/ItemsControls and `MainWindow.Dashboard.cs` collection producers/selection consumers were inspected. Source edit is limited to three existing heading names and three associated `LabeledBy`/`HelpText` property pairs. Before publication recheck live remote HEAD and changed paths, exact source and docs blobs, WPF names and references, original consumer contract, privacy and provenance; publish only with expected-SHA lease.
+
+**Risks:** WPF `ElementName` binding resolution inside the visual tree, ItemsControl UI Automation peer naming, screen-reader group reading order or duplicated heading announcements, high contrast, DPI, and narrow-window behavior remain **UNVERIFIED**. Accessible help text describes existing local context but cannot verify evidence. Static review is not a build or runtime accessibility test.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. No selected incident or anomaly: existing no-signal reason and empty tag/rule groups remain; labels do not invent content.
+2. Selected anomaly with reasons: original bounded reason text is unchanged and grouped under the visible Reasons heading.
+3. Selected anomaly with tags: original tags and wrap layout remain, with group-level source caveat.
+4. Selected anomaly with linked rule IDs: original IDs and `No linked rule` fallback remain, without implying validated detection.
+5. Selected correlated incident: original incident reasons/tags/related event rule links remain and evidence is not called verified.
+6. Changing `DashboardAnomalyList` selection still refreshes the three existing collections and investigation fields without focus/selection regressions.
+7. UI Automation inspection checks the three group `LabeledBy` associations and `HelpText` exposure, with no duplicate or misleading announcements.
+8. Keyboard navigation and screen-reader reading order remain usable; group metadata does not introduce new tab stops.
+9. At 1440/1100/1099/1024/1023/640px, 125–200% DPI and high contrast, original headings, pill wraps and scrolling remain readable.
+10. Existing local PPS, KPIs, Live Events, unavailable CLI, Cisco/WebView2/ScottPlot, capture/privacy, and independent detection/protocol streams remain unchanged.
+
+**Open quality GAs:** pinned-SHA Windows WPF build, UI Automation/screen-reader review, keyboard, high-contrast/DPI and responsive screenshots, and provenance regression only after explicit owner authorization. **Executed tests: 0.**
+
+**Next independent UI GA UI-26:** inspect fresh live HEAD, approved image, ledger and WPF consumers for one new cohesive safe UI-owned accessibility/readability/visual-consistency improvement outside UI-01–25.
+
+**References:** [WPF AutomationProperties.LabeledBy](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.labeledby); [WPF AutomationProperties.HelpText](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.helptext); [WPF layout](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/layout).
