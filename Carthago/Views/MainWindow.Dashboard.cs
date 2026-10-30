@@ -64,6 +64,7 @@ namespace Carthago
             DashboardDetailReasonsItems.ItemsSource = _dashboardDetailReasons;
             DashboardDetailTagsItems.ItemsSource = _dashboardDetailTags;
             DashboardDetailRulesItems.ItemsSource = _dashboardDetailRules;
+            InitializeDashboardLiveEvents();
             DashboardWidgetPickerCombo.ItemsSource = _dashboardAvailableWidgets;
             DashboardMetricPickerCombo.ItemsSource = _dashboardMetricOptions;
             DashboardPresetCombo.ItemsSource = _dashboardAvailablePresets;
@@ -1688,6 +1689,7 @@ namespace Carthago
             PreferencesService.PreferencesChanged -= DashboardPreferencesChanged;
             DeviceComboBox.SelectionChanged -= DeviceComboBox_SelectionChanged;
             _dashboardHeaderTimer.Stop();
+            CleanupDashboardLiveEvents();
 
             if (_sinkHost != null)
             {

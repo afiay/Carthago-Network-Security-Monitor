@@ -944,6 +944,137 @@
                   </Border>
                 </Grid>
 
+
+                <!-- GA UI-05: bounded, observed detection events; never a fabricated incident chronology. -->
+                <Border x:Name="DashboardLiveEventsPanel"
+                        Style="{StaticResource PageSurface}"
+                        Padding="14"
+                        Margin="0,0,0,10">
+                  <Grid>
+                    <Grid.RowDefinitions>
+                      <RowDefinition Height="Auto"/>
+                      <RowDefinition Height="Auto"/>
+                      <RowDefinition Height="Auto"/>
+                      <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <DockPanel LastChildFill="True">
+                      <Button DockPanel.Dock="Right"
+                              Content="All detections &#x2192;"
+                              MinWidth="130"
+                              Height="30"
+                              Style="{StaticResource SecondaryButton}"
+                              Click="DashboardLiveEventsOpenDetections_Click"/>
+                      <StackPanel>
+                        <TextBlock Text="Live Events" Style="{StaticResource DashboardSectionTitle}"/>
+                        <TextBlock Text="Recent local detection events, not incident-resolution or evidence-chain records."
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   FontSize="11"
+                                   TextWrapping="Wrap"
+                                   Margin="0,3,8,0"/>
+                      </StackPanel>
+                    </DockPanel>
+                    <WrapPanel Grid.Row="1" Margin="0,12,0,9">
+                      <ComboBox x:Name="DashboardLiveSeverityFilter"
+                                Width="142" Height="30" Margin="0,0,8,6"
+                                SelectedIndex="0"
+                                ToolTip="Filter locally observed detection severity"
+                                AutomationProperties.Name="Live events severity"
+                                SelectionChanged="DashboardLiveEventsFilterChanged">
+                        <ComboBoxItem Content="All severities" Tag=""/>
+                        <ComboBoxItem Content="Critical" Tag="Critical"/>
+                        <ComboBoxItem Content="High" Tag="High"/>
+                        <ComboBoxItem Content="Medium" Tag="Medium"/>
+                        <ComboBoxItem Content="Low" Tag="Low"/>
+                        <ComboBoxItem Content="Info" Tag="Info"/>
+                      </ComboBox>
+                      <ComboBox x:Name="DashboardLiveProtocolFilter"
+                                Width="142" Height="30" Margin="0,0,8,6"
+                                SelectedIndex="0"
+                                ToolTip="Filter by observed protocol; other protocols remain available under All"
+                                AutomationProperties.Name="Live events protocol"
+                                SelectionChanged="DashboardLiveEventsFilterChanged">
+                        <ComboBoxItem Content="All protocols" Tag=""/>
+                        <ComboBoxItem Content="TCP" Tag="TCP"/>
+                        <ComboBoxItem Content="UDP" Tag="UDP"/>
+                        <ComboBoxItem Content="ICMP" Tag="ICMP"/>
+                      </ComboBox>
+                      <TextBox x:Name="DashboardLiveRuleFilter"
+                               Width="112" Height="30" Margin="0,0,8,6"
+                               VerticalContentAlignment="Center"
+                               ToolTip="Filter by exact rule ID or part of a rule ID"
+                               AutomationProperties.Name="Live events rule ID"
+                               TextChanged="DashboardLiveEventsTextChanged"/>
+                      <TextBox x:Name="DashboardLiveSearchFilter"
+                               Width="210" Height="30" Margin="0,0,8,6"
+                               VerticalContentAlignment="Center"
+                               ToolTip="Search visible event source, destination, rule or protocol; no evidence payload search"
+                               AutomationProperties.Name="Search live event endpoints"
+                               TextChanged="DashboardLiveEventsTextChanged"/>
+                      <Button Content="Clear filters"
+                              Height="30" MinWidth="104"
+                              Margin="0,0,0,6"
+                              Style="{StaticResource SecondaryButton}"
+                              Click="DashboardLiveEventsClearFilters_Click"/>
+                    </WrapPanel>
+                    <Grid Grid.Row="2">
+                      <DataGrid x:Name="DashboardLiveEventsGrid"
+                                Height="190"
+                                AutoGenerateColumns="False"
+                                IsReadOnly="True"
+                                CanUserAddRows="False"
+                                CanUserDeleteRows="False"
+                                SelectionMode="Single"
+                                HeadersVisibility="Column"
+                                GridLinesVisibility="None"
+                                RowHeight="27"
+                                ColumnHeaderHeight="30"
+                                VirtualizingPanel.IsVirtualizing="True"
+                                VirtualizingPanel.VirtualizationMode="Recycling"
+                                EnableRowVirtualization="True"
+                                EnableColumnVirtualization="True"
+                                ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                AutomationProperties.Name="Recent local detection events">
+                        <DataGrid.Columns>
+                          <DataGridTextColumn Header="Event time" Binding="{Binding EventTime}" Width="144"/>
+                          <DataGridTextColumn Header="Source" Binding="{Binding Source}" Width="*"
+                                              MinWidth="120"/>
+                          <DataGridTextColumn Header="Destination" Binding="{Binding Destination}" Width="*"
+                                              MinWidth="120"/>
+                          <DataGridTextColumn Header="Rule" Binding="{Binding RuleId}" Width="76"/>
+                          <DataGridTextColumn Header="Severity" Binding="{Binding Severity}" Width="85"/>
+                          <DataGridTextColumn Header="Protocol" Binding="{Binding Protocol}" Width="80"/>
+                          <DataGridTextColumn Header="Evidence" Binding="{Binding EvidenceSummary}" Width="128"/>
+                          <DataGridTextColumn Header="Delivery" Binding="{Binding DeliveryStatus}" Width="105"/>
+                        </DataGrid.Columns>
+                      </DataGrid>
+                      <TextBlock x:Name="DashboardLiveEmptyText"
+                                 Text="No local detection events observed in this session."
+                                 Foreground="{StaticResource TextSubtleBrush}"
+                                 FontSize="12"
+                                 TextAlignment="Center"
+                                 TextWrapping="Wrap"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center"
+                                 MaxWidth="420"
+                                 IsHitTestVisible="False"/>
+                    </Grid>
+                    <StackPanel Grid.Row="3" Margin="0,8,0,0">
+                      <TextBlock x:Name="DashboardLiveEventsStatusText"
+                                 Text="Waiting for local detection events."
+                                 Foreground="{StaticResource TextSubtleBrush}"
+                                 FontSize="11"
+                                 TextWrapping="Wrap"/>
+                      <TextBlock x:Name="DashboardLiveEventsProvenanceText"
+                                 Text="Evidence column reports presence/count only; delivery is not incident resolution."
+                                 Foreground="{StaticResource TextMutedBrush}"
+                                 FontSize="11"
+                                 Margin="0,3,0,0"
+                                 TextWrapping="Wrap"/>
+                    </StackPanel>
+                  </Grid>
+                </Border>
+
                 <Expander Header="Layout manager" IsExpanded="False" Visibility="Collapsed" Margin="0,0,0,18">
                   <Border Style="{StaticResource CommandBarSurface}" Padding="14">
                     <StackPanel>
