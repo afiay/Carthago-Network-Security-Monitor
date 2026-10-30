@@ -13,9 +13,9 @@ authored regression tests, batch specification and ledger update together.
 Distinguish authored tests from executed test evidence and a detector match
 from a validated operational alert.
 
-**Latest documented batch:** [R391–R400](RULE_BATCH_391-400.md) — SOURCE
+**Latest documented batch:** [R401–R410](RULE_BATCH_401-410.md) — SOURCE
 CANDIDATE — UNVERIFIED; 120 authored xUnit invocations, 0 executed.
-Next contiguous development GA is R401–R410, subject to live HEAD review.
+Next contiguous development GA is R411–R420, subject to live HEAD review.
 The 2026-10-30 author-only branch rewrite replaced historical HEAD
 `a7166038cd947339d9671d7a873babbd00db080a` with
 `4dd73f3f6de2c0c6b9a6fd299d0c306ebcc3a9cc`; historical commit
@@ -938,3 +938,19 @@ scenario inventory, false-positive risks and missing producers.
 
 **Next contiguous ten-rule GA: R401–R410 after safe publication and
 live HEAD review.** UI-owned files were not modified.
+
+
+## GA R401–R410 — malware-family attribution provenance, 2026-10-30
+
+[Batch contract and scenario inventory](RULE_BATCH_401-410.md).
+**SOURCE CANDIDATE — UNVERIFIED**; all ten rules **BLOCKED** on missing
+independently validated family-specific signatures, authenticated agent/SMTP
+outcome, or LNK execution provenance. The shared evaluator fails closed
+before generic signal scoring, burst state, cooldown and event construction.
+Original Alert modes, threshold 1, 30-minute windows, 45-minute cooldowns,
+86% floors, and all safety controls are preserved. **120 xUnit invocations
+authored; ZERO executed.** Source/test/documentation commits are recorded
+in the batch document. Publication is the branch HEAD after the atomic
+non-forced expected-HEAD update; a Git commit cannot contain its own SHA.
+No tests/builds/replays/CI/runner/capture were run. Historical 4,940/4,940
+checkpoint does not verify this candidate. Next sequential GA: **R411–R420**.
