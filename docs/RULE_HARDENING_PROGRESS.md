@@ -800,3 +800,8 @@ The hourly development automation remains disabled. The owner has not
 authorized test execution. All future writes must check current branch HEAD,
 avoid existing code duplication, and publish only via non-forced expected-HEAD
 protection.
+
+
+## R361–R370 ten-rule GA — 2026-10-30 (source-only)
+
+From remote HEAD 1d0ad6633d3e6bbcdd8c7fc837880b6976486498, prepared ten consecutive DevOps/secret-management precision candidates. R361 BLOCKED without authenticated runner evidence; R362/R364/R365/R367/R369/R370 CONDITIONAL; R363/R366/R368 OPERATIONAL for captured HTTP request shape only, never operation outcomes. Original burst thresholds 5/4/5/10, modes, confidence floors, cooldowns, approvals, baseline readiness and frozen holdout data preserved. Added bounded replay guards and pre-retention X-Vault-Token redaction with parser-only observation flags. **97 advanced xUnit facts + 13 parser/privacy invocations = 110 AUTHORED, ZERO EXECUTED; CANDIDATE — UNVERIFIED.** No build, xUnit, replay, holdout, CI or runner. Source commit c84365d4be7e4e800b529098e4ad5aab16ab67de; test commit 22d0bdc532fb72d30809653b4e521603903d7fad; static corrections ee1dd94fe944f8f87cae8b685947f09fe922ceee and 51df0181c09e5ffc6b377d5927e5efe3512add97. Exact scenarios, risks and dispositions: docs/RULE_BATCH_361-370.md. Final publication is the descendant documentation commit at branch HEAD. R102 and replay evidence GAs remain independent. **Next R371–R380 only after non-forced expected-HEAD publication.**
