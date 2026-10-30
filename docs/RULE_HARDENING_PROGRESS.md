@@ -13,7 +13,7 @@ authored regression tests, batch specification and ledger update together.
 Distinguish authored tests from executed test evidence and a detector match
 from a validated operational alert.
 
-**Latest documented batch:** [R491–R500](RULE_BATCH_491-500.md) — **SOURCE CANDIDATE — UNVERIFIED**; all ten **BLOCKED** on absent trustworthy GOOSE/historian provenance or authenticated sensitive-file, clipboard, remote-session and archive-to-cloud upload correlation. **230 authored xUnit invocations, 0 executed.** Source commit `77fd467f292c0b4ddccac0b28c2134f450f4baef`; authored-test commit `e64a5a3fcbedb5c3f7bea0ad842e4c016729e282`. The atomic publication SHA is the live documentation-descendant branch HEAD (a commit cannot embed its own SHA). Next contiguous development GA: **R501–R510**, after fresh live inspection.
+**Latest documented batch:** [R501–R510](RULE_BATCH_501-510.md) — **SOURCE CANDIDATE — UNVERIFIED**; all ten **BLOCKED** on missing trustworthy multipart/body, provider response, file/agent or transfer-direction provenance. **230 authored xUnit invocations, 0 executed.** Source commit \`adb218809c7a23d058e04ea4c1d584ba1426a4ea\`; authored-test commit \`539346a00e9b1449ebe7d9d915cdd48eb3995fae\`; the atomic publication SHA is the live documentation-descendant branch HEAD (a commit cannot embed its own SHA). Next contiguous development GA: **R511–R520**, after fresh live inspection.
 The prior [R481–R490](RULE_BATCH_481-490.md) remains **SOURCE CANDIDATE — UNVERIFIED** with 210 authored xUnit invocations, 0 executed.
 The prior [R471–R480](RULE_BATCH_471-480.md) remains **SOURCE CANDIDATE — UNVERIFIED** with 200 authored xUnit invocations, 0 executed. The 2026-10-30 author-only branch rewrite replaced historical HEAD `a7166038cd947339d9671d7a873babbd00db080a` with `4dd73f3f6de2c0c6b9a6fd299d0c306ebcc3a9cc`; old commit references are historical, never publication leases.
 
@@ -1088,3 +1088,23 @@ conditional on live HEAD inspection.
 ## GA R491–R500 — 2026-10-30 source-only candidate
 
 Publication base HEAD `316004fc4fe176ee3250add7c530282d3af30396`; source `77fd467f292c0b4ddccac0b28c2134f450f4baef`; authored tests `e64a5a3fcbedb5c3f7bea0ad842e4c016729e282`; atomic publication is the documentation-descendant commit at the branch ref. **230 authored, 0 executed**. All ten dispositions **BLOCKED**: R491 GOOSE L2/substation provenance; R492 historian query/result and asset authority; R493 browser password store; R494 SSH private key; R495 KeePass database; R496 VPN configuration; R497 browser cookies; R498 clipboard sync; R499 RDP file transfer; R500 archive-to-cloud sequence. [Individual evidence codes, original profiles, false-positive boundaries and exact scenarios](RULE_BATCH_491-500.md). No original modes, confidence floors, thresholds, windows, cooldowns, privacy, approvals or frozen GAs changed. **Next: R501–R510**, only after a fresh live audit.
+
+## GA R501–R510 — outbound upload and provider outcome evidence boundary (2026-10-30)
+
+**SOURCE CANDIDATE — UNVERIFIED.** Live inspected base HEAD `fd8d2e3d11bfefa9f076f6f86607231ebadee235`.
+All ten R501, R502, R503, R504, R505, R506, R507, R508, R509 and R510
+are **BLOCKED** pending multipart body-part provenance, data-URI body
+classification, provider upload response correlation, trusted rclone/rsync
+execution and direction, or authenticated S3-compatible endpoint inventory.
+The source guard fails closed before generic scoring, burst/cooldown state
+or event construction. Original Alert profiles (84% confidence, thresholds,
+windows, 35m cooldowns), privacy, approvals, journal, baseline and frozen
+R102 evidence remain unchanged. See [ten individual dispositions, reason
+codes, legitimate-traffic risks and scenarios](RULE_BATCH_501-510.md).
+
+**230 concrete xUnit invocations AUTHORED; ZERO EXECUTED.** No build,
+test, replay, holdout, CI, Windows runner, benchmark or production capture.
+The historical 4,940/4,940 checkpoint predates this candidate.
+Only detection-owned evaluator, new evidence boundary, new authored test,
+this batch document and progress ledger changed. No UI files.
+**Next contiguous GA: R511–R520**, after live branch inspection.
