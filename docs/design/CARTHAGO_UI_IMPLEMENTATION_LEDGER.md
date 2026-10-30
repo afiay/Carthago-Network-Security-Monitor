@@ -1722,3 +1722,42 @@ readability or visual-consistency improvement outside UI-01–22.
 **References:** [WPF AutomationProperties.ItemStatus](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.itemstatus);
 [WPF AutomationProperties.LiveSetting](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.livesetting);
 [WPF layout](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/layout).
+
+## GA UI-23 — Prioritized incident queue accessible snapshot status
+
+**2026-10-30 · SOURCE CANDIDATE — UNVERIFIED.** Starting live feature HEAD: `27eda628828d9d9cfcf923d386ae45f1311c9c0e`. **UI source commit:** `86f62ade779ea03372b7202b639418df9658ad1d`. **Owned paths:** `Carthago/Views/MainWindow.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md` only. **Tests authored: 0; executed: 0.** No build, xUnit, replay, holdout, CI, runner, benchmark, capture or running-WPF inspection.
+
+### Approved reference, original consumers and provenance
+
+Retrieved and visually inspected exact approved ChatGPT Library PNG `libfile_b0a34361560c8191b641e432b3e6b15c`. Its navy/graphite, cyan/teal, restrained severity, prioritized incident list, compact layout and approved breakpoints remain untouched. Screenshot metrics, IPs, rule IDs, timestamps, confidence and Mbps series are **demo-only**, not local evidence.
+
+`DashboardAnomalyList` in `MainWindow.xaml` is the existing local incident/anomaly selection list. Its original `DashboardAnomalyList_SelectionChanged` handler in `MainWindow.Dashboard.cs` updates Incident Investigation. `RefreshSocDashboardWorkspace` refreshes the original bounded queue and `DashboardAnomalyFooterText.Text`: no-items state or shown-item count, unresolved correlated-incident count (max 150), anomaly-signal count (max 160), plus an explicit conditional demo-data caveat. The list's existing per-row `SocAnomalyVm.AccessibilityLabel`, keyboard selection and focus-border styling were inspected and preserved. These counts are **bounded local snapshots**, not global history, verified incidents, confidence or capture health.
+
+### One cohesive UI-owned improvement
+
+The existing list now binds `AutomationProperties.ItemStatus` to the **already visible** `DashboardAnomalyFooterText.Text`. Its help text directs assistive-technology users to the current bounded queue summary. `AutomationProperties.LiveSetting="Off"` avoids deliberately requesting announcements on each refresh. No new timer, collection, telemetry, evidence, producer, scoring, handler, selection logic, item, focus target, shared API or visual data is introduced. This is distinct from UI-11's per-row accessibility descriptions and does not repeat UI-01–22.
+
+### Static divergence and residual risks
+
+The live feature HEAD, prior UI-22 source/ledger, intervening protocol changes, WPF XAML, `RefreshSocDashboardWorkspace`, queue selection and row-label consumers were reviewed. Concurrent protocol changes were disjoint. Only the two authorized paths change. No Engine, Models, Services, detection/protocol rules or docs, capture/trust/privacy, tests, project, CI, runner, Cisco/WebView2/ScottPlot, security controls or automation settings change. The actual local PPS chart remains a 10-sample average over bounded 120-point history; KPIs, investigation, Live Events (80 displayed / 500 retained), unavailable visual-only CLI and responsive code are preserved.
+
+**Risks:** WPF ElementName binding resolution, UI Automation ItemStatus exposure, screen-reader reading order, live-announcement behavior, high-contrast, DPI and narrow-window rendering are **UNVERIFIED**. LiveSetting Off is not a guarantee for every assistive technology. The initial footer text before first refresh is inherited unchanged.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. Initial queue/footer state does not fabricate a count before refresh.
+2. Empty local snapshots expose the existing no-incidents/no-signals message without implying safety.
+3. Nonempty snapshots expose the existing displayed-item, unresolved-incident and anomaly-signal counts.
+4. Existing max-150 incident/max-160 signal bounds are not misrepresented as global totals.
+5. Demo mode retains the existing conditional demo-data caveat in status.
+6. Keyboard selection and focus border still update the existing investigation details.
+7. Existing per-row accessible kind/title/severity/local-risk/subtitle/time remain unchanged.
+8. UI Automation and screen-reader review verify status binding and acceptable announcement frequency.
+9. At 1440/1100/1099/1024/1023/640px, 125–200% DPI and high contrast, queue/footer remain readable.
+10. Local PPS, KPIs, Live Events, unavailable CLI, Cisco/WebView2, privacy and independent streams remain unaffected.
+
+**Open quality GAs:** pinned-SHA Windows WPF build, UIA/screen reader, keyboard, high-contrast/DPI and responsive screenshots, only after explicit owner test authorization. **Executed tests: 0.**
+
+**Next independent UI GA UI-24:** inspect latest live HEAD, approved reference, ledger and original WPF consumers for one new safe UI-owned accessibility/readability/visual-consistency improvement outside UI-01–23.
+
+**References:** [WPF AutomationProperties.ItemStatus](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.itemstatus); [WPF AutomationProperties.LiveSetting](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.livesetting).
