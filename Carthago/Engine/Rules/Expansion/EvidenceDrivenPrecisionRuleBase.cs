@@ -126,6 +126,18 @@ namespace Carthago.Engine.Rules.Expansion
             if (!HasCoreTelemetry(record))
                 return NoMatch(RuleNoMatchReasonCategory.MissingTelemetry, "MISSING_CORE_TELEMETRY", "Source, destination/host, and protocol/behavior telemetry are required before this rule can evaluate.");
 
+            // GA R431-R440 — SOURCE CANDIDATE — UNVERIFIED.
+            // Packet-level HTTP/port/name clues are not authenticated service,
+            // database login, Redis RESP, Memcached command, or server outcome
+            // provenance. Stop before generic scoring or window/cooldown state.
+            // This guard precedes RequireHttp because R433-R435 are native
+            // database protocols, not HTTP, and their missing producer must
+            // not be disguised as an ordinary HTTP protocol mismatch.
+            var serviceEvidenceGap = ServiceExposureEvidenceBoundary.GetMissingProducer(spec.RuleId);
+            if (serviceEvidenceGap is { } missingServiceEvidence)
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                    missingServiceEvidence.Code, missingServiceEvidence.Detail);
+
             if (spec.RequireHttp && !HasHttpContext(record))
                 return NoMatch(RuleNoMatchReasonCategory.NotApplicableProtocol, "HTTP_CONTEXT_REQUIRED", "Rule requires HTTP method, URI, host, headers, or HTTP protocol context.");
 
