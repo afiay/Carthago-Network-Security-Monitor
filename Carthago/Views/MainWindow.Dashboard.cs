@@ -1185,6 +1185,7 @@ namespace Carthago
                     Host = group.Key,
                     HostDisplay = CompactHostLabel(group.Key),
                     RiskScore = group.Max(i => i.RiskScore),
+                    RelatedItemKind = "correlated incident",
                     ActiveIncidents = group.Count(),
                     TrendText = BuildTrendText(group.Select(i => i.UpdatedUtc), DateTime.UtcNow, 60),
                     AccentBrush = BrushForScore(group.Max(i => i.RiskScore))
@@ -1205,6 +1206,7 @@ namespace Carthago
                     Host = group.Key,
                     HostDisplay = CompactHostLabel(group.Key),
                     RiskScore = group.Max(NormalizeAnomalyScore),
+                    RelatedItemKind = "anomaly signal",
                     ActiveIncidents = group.Count(),
                     TrendText = BuildTrendText(group.Select(a => a.CreatedUtc), DateTime.UtcNow, 60),
                     AccentBrush = BrushForScore(group.Max(NormalizeAnomalyScore))
@@ -1785,6 +1787,10 @@ namespace Carthago
             public string HostDisplay { get; init; } = "—";
             public int RiskScore { get; init; }
             public int ActiveIncidents { get; init; }
+            public string RelatedItemKind { get; init; } = "related item";
+            public string AccessibilityLabel =>
+                $"Host {Host}; local risk score {RiskScore}; {ActiveIncidents} " +
+                $"{RelatedItemKind}{(ActiveIncidents == 1 ? "" : "s")}.";
             public string TrendText { get; init; } = "▁▁▁▁▁▁▁▁";
             public Brush AccentBrush { get; init; } = Brushes.Orange;
         }

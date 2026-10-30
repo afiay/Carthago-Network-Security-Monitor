@@ -909,13 +909,16 @@
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="Host" Style="{StaticResource MicroLabel}"/>
                         <TextBlock Grid.Column="1" Text="Risk" Style="{StaticResource MicroLabel}" HorizontalAlignment="Right"/>
-                        <TextBlock Grid.Column="2" Text="Inc." Style="{StaticResource MicroLabel}" HorizontalAlignment="Right"/>
+                        <TextBlock Grid.Column="2" Text="Items" Style="{StaticResource MicroLabel}" HorizontalAlignment="Right"
+                                   ToolTip="Related correlated incidents, or anomaly signals when no incident hosts are available."/>
                         <TextBlock Grid.Column="3" Text="Trend" Style="{StaticResource MicroLabel}" Margin="12,0,0,0"/>
                       </Grid>
                       <ScrollViewer VerticalScrollBarVisibility="Auto"
                                     HorizontalScrollBarVisibility="Disabled"
                                     MaxHeight="112">
-                        <ItemsControl x:Name="DashboardHostItemsControl">
+                        <ItemsControl x:Name="DashboardHostItemsControl"
+                                      AutomationProperties.Name="High-risk hosts from local observations"
+                                      AutomationProperties.HelpText="Up to five host rows. Items counts correlated incidents, or anomaly signals when no incident hosts are available. Risk is a local ranking score, not detection confidence.">
                           <ItemsControl.ItemTemplate>
                             <DataTemplate>
                               <Grid Margin="0,1,0,1" MinHeight="20">
@@ -926,6 +929,7 @@
                                   <ColumnDefinition Width="84"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="{Binding HostDisplay}"
+                                           AutomationProperties.Name="{Binding AccessibilityLabel}"
                                            ToolTip="{Binding Host}"
                                            FontFamily="Consolas"
                                            FontSize="12"
