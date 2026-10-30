@@ -95,6 +95,17 @@ namespace Carthago
 
         private void RenderTraffic()
         {
+            // The existing timer can append zeros when capture is inactive.
+            // A timer sample is not proof of capture health or network-wide visibility.
+            int sampleCount = _trafficYs.Count;
+            DashboardTrafficChartWaitingPanel.Visibility = sampleCount < 2
+                ? System.Windows.Visibility.Visible
+                : System.Windows.Visibility.Collapsed;
+            string captureStatus = CaptureStatusText.Text ?? "Unknown";
+            DashboardTrafficChartTextSummary.Text = sampleCount == 0
+                ? $"No local PPS timer samples yet. Capture status: {captureStatus}. No packet-rate observation is available."
+                : $"Latest local timer PPS sample: {_trafficYs[^1]:0} packets/s; {sampleCount} of {TrafficWindowSeconds} retained samples. Capture status: {captureStatus}. Timer zeros can occur without active capture.";
+
             void Draw(WpfPlot wp, bool withAverage)
             {
                 wp.Plot.Clear();

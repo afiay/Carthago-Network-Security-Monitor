@@ -488,7 +488,33 @@
                                       MinHeight="180"
                                       AutomationProperties.Name="Local packets per second history"
                                       AutomationProperties.HelpText="Local packet counts per second and a ten-sample moving average. Not inbound or outbound throughput."/>
+                    <!-- GA UI-10: truthful waiting state; no additional telemetry. -->
+                    <Border x:Name="DashboardTrafficChartWaitingPanel"
+                            Grid.Row="1"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Background="#E60B1220"
+                            BorderBrush="{StaticResource SoftDividerBrush}"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="14"
+                            IsHitTestVisible="False"
+                            Visibility="Visible">
+                      <TextBlock Text="Waiting for local PPS timer samples (two ticks required to draw)."
+                                 Foreground="{StaticResource TextMutedBrush}"
+                                 FontSize="12"
+                                 TextWrapping="Wrap"
+                                 TextAlignment="Center"
+                                 MaxWidth="340"/>
+                    </Border>
                     <StackPanel Grid.Row="2" Margin="0,8,0,0">
+                       <TextBlock x:Name="DashboardTrafficChartTextSummary"
+                                  Text="Waiting for local PPS timer samples; no packet-rate observation is available yet."
+                                  Foreground="{StaticResource TextMutedBrush}"
+                                  FontSize="11"
+                                  TextWrapping="Wrap"
+                                  AutomationProperties.LiveSetting="Off"
+                                  Margin="0,0,0,4"/>
                       <TextBlock Text="PPS and 10-sample average only; no inbound/outbound or Mbps series are available here."
                                  Foreground="{StaticResource TextMutedBrush}"
                                  FontSize="11"
