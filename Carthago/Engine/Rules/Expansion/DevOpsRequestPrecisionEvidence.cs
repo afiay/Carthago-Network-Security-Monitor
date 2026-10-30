@@ -40,7 +40,7 @@ namespace Carthago.Engine.Rules.Expansion
                 "R363" => Is("GET") && DevOpsHttpEvidence.HostMatches(r, "api.github.com")
                     && parts.Length == 7 && Seg(0, "repos") && Seg(3, "actions") && Seg(4, "artifacts") && Seg(6, "zip")
                     ? null : "CI_ARTIFACT_ARCHIVE_REQUEST_NOT_OBSERVED",
-                "R364" => Is("POST") && path == "/" && IsAwsSecretsManagerHost(r.HttpHost)
+                "R364" => Is("POST") && path.Length == 0 && IsAwsSecretsManagerHost(r.HttpHost)
                     && r.HttpAwsListSecretsRequestObserved
                     ? null : "AWS_LISTSECRETS_REQUEST_NOT_OBSERVED",
                 "R365" => path.StartsWith("/v1/", StringComparison.OrdinalIgnoreCase) && r.HttpVaultTokenPatternObserved

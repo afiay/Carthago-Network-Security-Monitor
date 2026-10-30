@@ -43,9 +43,9 @@ public sealed class R367AdvancedAccuracyBatchTests
         r.Info = "token provider enumeration secret";
         Assert.False((await Eval(r)).Matched);
     }
-    [Fact] public async Task Unrelated_Endpoint_Is_Not_Proof()
+    [Fact] public async Task Unrelated_Provider_Is_Not_Proof()
     {
-        var r = Candidate(); r.HttpUri = "/not-the-required-endpoint";
+        var r = Candidate(); r.HttpHost = "unrelated.invalid";
         Assert.False((await Eval(r)).Matched);
     }
     [Fact] public async Task Tls_Only_Cannot_Assert_Cleartext_Http()
