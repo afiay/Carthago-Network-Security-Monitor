@@ -1287,3 +1287,113 @@ readability or visual-consistency improvement outside UI-01–17.
 [WPF AutomationProperties.LabeledBy](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.labeledby);
 [WPF DataTemplate](https://learn.microsoft.com/en-us/dotnet/api/system.windows.datatemplate);
 [WPF layout](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/layout).
+
+## GA UI-18 — High-risk host row context and honest related-item counts
+
+**2026-10-30 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE
+`feature/carthago-reliability-hardening` HEAD:
+`6b7975c131b6dcfc0817b792bb9ef6524cd18235` (independent R521–R530 detection and protocol GA P0001–P0010
+candidates present). Previous UI-17 publication:
+`3eefe8873fcfb2156ea8badbf4a8676b7cdbba02`.
+**UI source commit:** `1bd422567f31c1c4823b3d334f617e701ee75122`.
+**Tests authored: 0; tests executed: 0.** No builds, xUnit, replays,
+holdouts, CI, runners, benchmarks, running WPF, screenshots or production
+capture. Publication is a single expected-HEAD-protected, non-forced
+ref update for this source commit plus its documentation descendant.
+
+### Reference mapping, existing consumers and evidence contract
+
+The exact approved Library image
+`libfile_b0a34361560c8191b641e432b3e6b15c` was resolved and
+visually inspected. Its compact host/incident visual language is a
+design reference only; screenshot addresses, risk/confidence percentages,
+rule mappings, Mbps and incident counts are **demonstration data**.
+
+Existing `DashboardHostItemsControl` binds to the private
+`_dashboardHostRows` collection populated by `BuildSocHostRows`
+in `MainWindow.Dashboard.cs`. The first source is up to five hosts
+from locally correlated active incidents, grouped by source address,
+with maximum **local risk score** and group count. Only when no
+incident hosts are available, the method falls back to grouped local
+anomaly signals and their normalized **local risk scores**. In the
+fallback, the existing `ActiveIncidents` property actually holds an
+**anomaly-signal count**, not an incident count. This GA corrects the
+visible column caption from `Inc.` to **Items**, and adds a tooltip
+explaining the two sources; it does not change the underlying count.
+
+The existing host display `TextBlock` receives a UI Automation name
+from a private `SocHostVm.AccessibilityLabel`, using the already-held
+full host identifier, local risk score and count, plus a source-kind
+descriptor (correlated incident vs anomaly signal) set in the two
+existing UI projection branches. The compact on-screen host display,
+full-host tooltip, risk colors, trend glyph, sorting, five-row bound,
+navigation action and all event handlers remain unchanged.
+`DashboardHostItemsControl` receives a neutral accessibility name
+and HelpText explaining the fallback and that local risk is **not
+detection confidence**. No new telemetry, capture-health claim,
+remote host lookup, logging or external data export is introduced.
+UI Automation exposure of an already displayed/tooltip-accessible
+host address still warrants privacy and assistive-technology review.
+
+### Owned files, static divergence and concurrency
+
+- `Carthago/Views/MainWindow.xaml` — rename one column caption to
+  Items, add its tooltip, name/help for the existing host collection
+  and an accessible name binding on its existing host `TextBlock`.
+- `Carthago/Views/MainWindow.Dashboard.cs` — add UI-only
+  `RelatedItemKind` and computed `AccessibilityLabel` to private
+  `SocHostVm`; distinguish the two already-existing projection
+  branches without modifying their source data or ranking.
+- `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md` — source
+  provenance, limitations, scenario inventory and next GA.
+
+Start-of-GA compare of UI-17 publication with live HEAD found four
+disjoint commits touching detection engine/tests/docs and protocol
+intelligence/services/tests/docs, not UI paths. Static source inspection
+found one existing host ItemsControl, one host display binding, two
+source-kind initializers, no new handler, no changed shared API or
+serialized model. The dark navy/graphite, cyan/teal, severity colors,
+Wide ≥1440 / Standard 1100–1439 / Compact 1024–1099 and below-1024
+layout paths are unchanged. The local PPS ScottPlot, KPI values,
+prioritized incidents, investigation, read-only Live Events (80 shown,
+500 retained), unavailable visual-only CLI, Cisco/WebView2, privacy,
+capture/trust, rules and all independent automation settings are
+untouched. Source inspection does **not** prove WPF compilation,
+UIA exposure, visual fidelity, focus order or data accuracy.
+
+**Residual risks:** screen readers may announce both the host
+accessible name and neighboring score/count TextBlocks; the full host
+identifier can contain sensitive local addresses already available in
+the UI tooltip. The column's abbreviated source context requires
+reading the tooltip/help; no incident-vs-anomaly badge is added.
+At narrow widths and high DPI, the slightly longer Items caption may
+affect header density. These remain unverified.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. Active correlated incident hosts: row name says correlated incidents and reports the existing bounded count.
+2. No incident hosts, anomaly fallback present: row name says anomaly signals, never incidents.
+3. No incident or anomaly hosts: empty list remains empty; no fabricated host or count.
+4. One related item uses singular, two or more use plural, with no source-kind mix-up.
+5. Long IPv6/reverse-DNS host: visual compact label and full-host tooltip remain; UIA name exposes the original full host.
+6. Risk score is labeled local ranking, never confidence or verified accuracy; original sort and severity brush remain.
+7. Screen reader reads the host row context without duplicate/confusing announcements or extra keyboard focus stops.
+8. Wide, Standard, Compact and below-1024 widths retain the Items column, navigation and responsive composition.
+9. 125–200% DPI and high contrast preserve readable Items caption, cyan/teal theme and truncation behavior.
+10. PPS chart, incident investigation, Live Events, unavailable CLI, Cisco, capture/privacy and independent detection/protocol changes remain unchanged.
+
+**Open quality GAs:** pinned-SHA Windows WPF build, actual UI
+Automation/screen-reader and keyboard inspection, high-contrast/DPI
+and responsive screenshots, incident/anomaly fallback and privacy
+regressions after explicit owner test authorization.
+**Executed tests: 0.**
+
+**Next independent UI GA UI-19:** inspect live HEAD, exact Library
+reference and actual WPF consumers; choose one new cohesive
+accessibility/readability/visual-consistency improvement outside
+UI-01–18 without changing telemetry, rules or shared contracts.
+
+**Technical references:**
+[WPF AutomationProperties.Name](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.name);
+[WPF ItemsControl](https://learn.microsoft.com/en-us/dotnet/api/system.windows.controls.itemscontrol);
+[WPF layout](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/layout).
