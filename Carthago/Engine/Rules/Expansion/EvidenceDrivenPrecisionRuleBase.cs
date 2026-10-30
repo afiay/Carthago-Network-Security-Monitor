@@ -185,6 +185,23 @@ namespace Carthago.Engine.Rules.Expansion
                 return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
                     missingUploadEvidence.Code, missingUploadEvidence.Detail);
 
+            // GA R511-R512 — SOURCE CANDIDATE — UNVERIFIED.
+            // Database/file/mail staging requires trusted local events and
+            // correlated delivery outcomes, not HTTP/process-name clues.
+            var stagingGap = DataLossStagingEvidenceBoundary.GetMissingProducer(spec.RuleId);
+            if (stagingGap is { } missingStagingEvidence)
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                    missingStagingEvidence.Code, missingStagingEvidence.Detail);
+
+            // GA R513-R520 — SOURCE CANDIDATE — UNVERIFIED.
+            // SSH, WebSocket, TLS and QUIC labels cannot authenticate tunnel
+            // configuration, agent sessions, DoQ approval or MASQUE CONNECT-UDP.
+            // Fail closed before generic scoring, state or cooldown mutation.
+            var tunnelGap = EvasionTunnelEvidenceBoundary.GetMissingProducer(spec.RuleId);
+            if (tunnelGap is { } missingTunnelEvidence)
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                    missingTunnelEvidence.Code, missingTunnelEvidence.Detail);
+
             if (spec.RequireHttp && !HasHttpContext(record))
                 return NoMatch(RuleNoMatchReasonCategory.NotApplicableProtocol, "HTTP_CONTEXT_REQUIRED", "Rule requires HTTP method, URI, host, headers, or HTTP protocol context.");
 
