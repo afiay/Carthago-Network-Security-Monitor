@@ -1152,6 +1152,14 @@
                                 AutomationProperties.Name="Recent local detection events"
                                 AutomationProperties.HelpText="Read-only local detections, up to 80 rows. The first Event time column remains visible during horizontal scrolling; navigate remaining columns with the grid keyboard controls or horizontal scroll. Event time is recorded as supplied; timezone is unverified. Evidence is reported presence or count only, not a verified chain. Delivery is transport status, not incident resolution."
                                 AutomationProperties.ItemStatus="{Binding Text, ElementName=DashboardLiveEventsStatusText}">
+                        <!-- GA UI-15: reuse the theme's keyboard-only focus outline for the read-only event cells. -->
+                        <DataGrid.CellStyle>
+                          <Style TargetType="{x:Type DataGridCell}"
+                                 BasedOn="{StaticResource {x:Type DataGridCell}}">
+                            <Setter Property="FocusVisualStyle"
+                                    Value="{StaticResource KeyboardFocusVisual}"/>
+                          </Style>
+                        </DataGrid.CellStyle>
                         <DataGrid.Columns>
                           <DataGridTextColumn Header="Event time" Binding="{Binding EventTime}" Width="144"/>
                           <DataGridTextColumn Header="Source" Binding="{Binding Source}" Width="*"
