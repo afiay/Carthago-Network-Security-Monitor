@@ -954,3 +954,28 @@ in the batch document. Publication is the branch HEAD after the atomic
 non-forced expected-HEAD update; a Git commit cannot contain its own SHA.
 No tests/builds/replays/CI/runner/capture were run. Historical 4,940/4,940
 checkpoint does not verify this candidate. Next sequential GA: **R411–R420**.
+
+
+## GA R411–R420 — unsupported family, cadence and appliance attribution, 2026-10-30
+
+[Ten-rule evidence contract and 120-scenario inventory](RULE_BATCH_411-420.md).
+**SOURCE CANDIDATE — UNVERIFIED**. From inspected live base
+`e1e9fd5b862ced09bc7ab807f28e26639c976e0b` (including UI-06),
+source commit `408eaddaa0398ee120044edacef9b3556ed52d35` and
+authored-test commit `c9a4ccdfe87a217c7783a845e438363ca9ba42c9`
+introduce per-ID fail-closed evidence guards for exactly R411–R420.
+**Ten dispositions: R411 BLOCKED; R412 BLOCKED; R413 BLOCKED; R414 BLOCKED;
+R415 BLOCKED; R416 BLOCKED; R417 BLOCKED; R418 BLOCKED; R419 BLOCKED;
+R420 BLOCKED.** No validated Lumma signature, per-flow jitter variance,
+authenticated appliance identity, exploit/scan provenance, Winbox session
+or Ubiquiti discovery-response producer is connected. Generic HTTP paths,
+ports, headers, Info and repeated traffic cannot prove these behaviors.
+Original modes, confidence floors, thresholds, windows, cooldowns,
+approvals, privacy, journal, baseline and frozen evidence unchanged.
+**120 xUnit invocations AUTHORED, 0 EXECUTED.** No builds, tests,
+replays, CI, runner, benchmark or production capture; historical
+4,940/4,940 predates this source candidate. Final publication SHA is
+the documentation-descendant branch HEAD after the single atomic
+non-forced expected-HEAD ref update (a commit cannot embed its own SHA).
+Next contiguous GA **R421–R430**, after successful publication and
+fresh live source review. UI-owned paths untouched.
