@@ -30,7 +30,6 @@ namespace Carthago
         private readonly ObservableCollection<string> _dashboardDetailReasons = new();
         private readonly ObservableCollection<string> _dashboardDetailTags = new();
         private readonly ObservableCollection<string> _dashboardDetailRules = new();
-        // UI-04: provenance summary only; raw evidence remains in its existing incident workspace.
         private readonly ObservableCollection<DashboardWidgetDescriptor> _dashboardAvailableWidgets = new();
         private readonly ObservableCollection<StatisticsMetricDescriptor> _dashboardMetricOptions = new();
         private readonly ObservableCollection<DashboardPresetDescriptor> _dashboardAvailablePresets = new();
@@ -1126,12 +1125,13 @@ namespace Carthago
                     Severity = NormalizeSeverity(incident.Severity).ToUpperInvariant(),
                     TimeText = incident.UpdatedUtc.ToLocalTime().ToString("HH:mm:ss", CultureInfo.InvariantCulture),
                     AccentBrush = BrushForSeverity(incident.Severity)
-                });
+                })
+                .ToArray();
 
             var signals = _dashboardAnomalySnapshot
                 .OrderByDescending(NormalizeAnomalyScore)
                 .ThenByDescending(anomaly => anomaly.CreatedUtc)
-                .Take(2)
+                .Take(incidents.Length == 0 ? 5 : 2)
                 .Select(anomaly => new SocAnomalyVm
                 {
                     Id = "signal:" + anomaly.Id,
@@ -1338,14 +1338,16 @@ namespace Carthago
         private DashboardSignalDetailDialogModel CreateDashboardSignalDetailModel()
         {
             var triageItem = DashboardAnomalyList.SelectedItem as SocAnomalyVm;
-            var selected = string.IsNullOrWhiteSpace(triageItem?.AnomalyId)
+            var selectedAnomalyId = triageItem?.AnomalyId;
+            var selectedIncidentId = triageItem?.IncidentId;
+            var selected = string.IsNullOrWhiteSpace(selectedAnomalyId)
                 ? null
                 : _dashboardAnomalySnapshot.FirstOrDefault(anomaly =>
-                    string.Equals(anomaly.Id, triageItem.AnomalyId, StringComparison.OrdinalIgnoreCase));
+                    string.Equals(anomaly.Id, selectedAnomalyId, StringComparison.OrdinalIgnoreCase));
 
-            var incident = !string.IsNullOrWhiteSpace(triageItem?.IncidentId)
+            var incident = !string.IsNullOrWhiteSpace(selectedIncidentId)
                 ? _dashboardIncidentSnapshot.FirstOrDefault(item =>
-                    string.Equals(item.Id, triageItem.IncidentId, StringComparison.OrdinalIgnoreCase))
+                    string.Equals(item.Id, selectedIncidentId, StringComparison.OrdinalIgnoreCase))
                 : selected != null ? FindRelatedIncident(selected) : HighestRiskIncident();
 
             if (selected == null && incident == null)
@@ -1541,8 +1543,9 @@ namespace Carthago
                 return null;
 
             return ActiveIncidents()
-                .Where(incident => incident.RelatedAnomalies.Any(anomaly => string.Equals(anomaly.Id, signal.Id, StringComparison.OrdinalIgnoreCase))
-                                   || (!string.IsNullOrWhiteSpace(signal.SourceIp) && string.Equals(incident.PrimarySourceIp, signal.SourceIp, StringComparison.OrdinalIgnoreCase)))
+                // Shared source IP is not proof of correlation; require an explicit linked anomaly.
+                .Where(incident => incident.RelatedAnomalies.Any(anomaly =>
+                    string.Equals(anomaly.Id, signal.Id, StringComparison.OrdinalIgnoreCase)))
                 .OrderByDescending(incident => incident.RiskScore)
                 .ThenByDescending(incident => incident.UpdatedUtc)
                 .FirstOrDefault();
