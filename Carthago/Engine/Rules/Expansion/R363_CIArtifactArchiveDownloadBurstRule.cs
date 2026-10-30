@@ -54,6 +54,11 @@ namespace Carthago.Engine.Rules.Expansion
         public R363_CIArtifactArchiveDownloadBurstRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            var rejection = DevOpsRequestPrecisionEvidence.Reject(context.Record, context.TimestampUtc, "R363");
+            if (rejection != null)
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence, rejection, "Rule-specific parser-attributed request evidence is unavailable.");
+            return EvaluateSpec(context, Spec);
+        }
     }
 }

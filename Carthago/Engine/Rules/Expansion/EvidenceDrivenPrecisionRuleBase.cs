@@ -388,9 +388,9 @@ namespace Carthago.Engine.Rules.Expansion
                 if (string.Equals(tokenKind, "gitlab", StringComparison.OrdinalIgnoreCase) && record.HttpGitLabTokenPatternObserved) return true;
                 if (string.Equals(tokenKind, "azuredevops", StringComparison.OrdinalIgnoreCase) && record.HttpAzureDevOpsPatUrlObserved) return true;
                 if (string.Equals(tokenKind, "circleci", StringComparison.OrdinalIgnoreCase) && record.HttpCircleCiTokenPatternObserved) return true;
-                if (string.Equals(tokenKind, "npm", StringComparison.OrdinalIgnoreCase) && NpmTokenRegex.IsMatch(text)) return true;
-                if (string.Equals(tokenKind, "vault", StringComparison.OrdinalIgnoreCase) && VaultTokenRegex.IsMatch(text)) return true;
-                if (string.Equals(tokenKind, "terraform", StringComparison.OrdinalIgnoreCase) && TerraformTokenRegex.IsMatch(text)) return true;
+                if (string.Equals(tokenKind, "npm", StringComparison.OrdinalIgnoreCase) && (record.HttpNpmTokenPatternObserved || NpmTokenRegex.IsMatch(text))) return true;
+                if (string.Equals(tokenKind, "vault", StringComparison.OrdinalIgnoreCase) && (record.HttpVaultTokenPatternObserved || VaultTokenRegex.IsMatch(text))) return true;
+                if (string.Equals(tokenKind, "terraform", StringComparison.OrdinalIgnoreCase) && (record.HttpTerraformTokenPatternObserved || TerraformTokenRegex.IsMatch(text))) return true;
                 if (string.Equals(tokenKind, "aws", StringComparison.OrdinalIgnoreCase) && AwsAccessKeyRegex.IsMatch(text)) return true;
                 if (string.Equals(tokenKind, "generic", StringComparison.OrdinalIgnoreCase) && GenericSecretRegex.IsMatch(text)) return true;
             }

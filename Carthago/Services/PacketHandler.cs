@@ -431,6 +431,11 @@ namespace Carthago.Services
                                 rec.HttpGitLabTokenPatternObserved = c2s && http.ObservedGitLabTokenPattern;
                                 rec.HttpAzureDevOpsPatUrlObserved = c2s && http.ObservedAzureDevOpsPatUrlPattern;
                                 rec.HttpCircleCiTokenPatternObserved = c2s && http.ObservedCircleCiTokenPattern;
+                                rec.HttpVaultTokenPatternObserved = c2s && http.ObservedVaultTokenPattern;
+                                rec.HttpTerraformTokenPatternObserved = c2s && http.ObservedTerraformTokenPattern;
+                                rec.HttpNpmTokenPatternObserved = c2s && http.ObservedNpmTokenPattern;
+                                rec.HttpPyPiUploadAuthorizationObserved = c2s && http.ObservedPyPiUploadAuthorization;
+                                rec.HttpAwsListSecretsRequestObserved = c2s && http.ObservedAwsListSecretsRequest;
 
                                 var (readable, tag) = HttpJa4H.Compute(http.Method, http.HttpVersion, http.HeaderNames, http.UserAgent);
                                 rec.HttpJa4h = $"{readable}|{tag}";
@@ -836,6 +841,11 @@ namespace Carthago.Services
             public bool ObservedGitLabTokenPattern { get; init; }
             public bool ObservedAzureDevOpsPatUrlPattern { get; init; }
             public bool ObservedCircleCiTokenPattern { get; init; }
+            public bool ObservedVaultTokenPattern { get; init; }
+            public bool ObservedTerraformTokenPattern { get; init; }
+            public bool ObservedNpmTokenPattern { get; init; }
+            public bool ObservedPyPiUploadAuthorization { get; init; }
+            public bool ObservedAwsListSecretsRequest { get; init; }
         }
 
         public static bool TryParseHttp(ReadOnlySpan<byte> data, out HttpInfo info)
@@ -867,6 +877,9 @@ namespace Carthago.Services
             bool githubTokenObserved = false, gitlabTokenObserved = false;
             bool azurePatUrlObserved = HasAzurePatQuery(path);
             bool circleCiTokenObserved = false;
+            bool vaultTokenObserved = false, terraformTokenObserved = false, npmTokenObserved = false;
+            bool pypiUploadAuthorizationObserved = false, awsListSecretsObserved = false;
+            int vaultHeaderCount = 0, awsTargetCount = 0;
             int circleCiHeaderCount = 0;
             int authorizationHeaderCount = 0;
             bool headerSectionComplete = false;
@@ -913,6 +926,25 @@ namespace Carthago.Services
                         githubTokenObserved |= HasProviderTokenPrefix(value, "ghp_", 20) || HasProviderTokenPrefix(value, "gho_", 20) || HasProviderTokenPrefix(value, "ghu_", 20) || HasProviderTokenPrefix(value, "ghs_", 20) || HasProviderTokenPrefix(value, "ghr_", 20) || HasProviderTokenPrefix(value, "github_pat_", 30);
                         gitlabTokenObserved |= HasProviderTokenPrefix(value, "glpat-", 20);
                     }
+                    if (name.Equals("X-Vault-Token", StringComparison.OrdinalIgnoreCase))
+                    {
+                        vaultHeaderCount++;
+                        vaultTokenObserved |= HasProviderTokenPrefix(line.Slice(colon + 1), "hvs.", 20)
+                            || HasProviderTokenPrefix(line.Slice(colon + 1), "hvb.", 20)
+                            || HasProviderTokenPrefix(line.Slice(colon + 1), "s.", 20);
+                    }
+                    if (name.Equals("X-Amz-Target", StringComparison.OrdinalIgnoreCase))
+                    {
+                        awsTargetCount++;
+                        awsListSecretsObserved |= TrimHeaderValue(line, colon + 1).Equals("secretsmanager.ListSecrets", StringComparison.Ordinal);
+                    }
+                    if (name.Equals("Authorization", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var value = line.Slice(colon + 1);
+                        terraformTokenObserved |= HasProviderTokenPrefix(value, "atlasv1.", 20);
+                        npmTokenObserved |= HasProviderTokenPrefix(value, "npm_", 24);
+                        pypiUploadAuthorizationObserved |= HasAuthorizationScheme(value, "Basic ") || HasAuthorizationScheme(value, "Bearer ");
+                    }
                     if (name.Equals("Circle-Token", StringComparison.OrdinalIgnoreCase))
                     {
                         circleCiHeaderCount++;
@@ -931,7 +963,8 @@ namespace Carthago.Services
                                      name.Equals("X-Amz-Security-Token", StringComparison.OrdinalIgnoreCase) ||
                                      name.Equals("Private-Token", StringComparison.OrdinalIgnoreCase) ||
                                      name.Equals("X-Gitlab-Token", StringComparison.OrdinalIgnoreCase) ||
-                                     name.Equals("Circle-Token", StringComparison.OrdinalIgnoreCase);
+                                     name.Equals("Circle-Token", StringComparison.OrdinalIgnoreCase) ||
+                                     name.Equals("X-Vault-Token", StringComparison.OrdinalIgnoreCase);
                     var val = sensitive ? "[REDACTED]" : TrimHeaderValue(line, colon + 1);
                     sbJoin.Append(name).Append(": ").Append(val).Append("\r\n");
                     if (name.Equals("Host", StringComparison.OrdinalIgnoreCase)) host = val;
@@ -951,6 +984,11 @@ namespace Carthago.Services
                 ObservedGitLabTokenPattern = headerSectionComplete && authorizationHeaderCount <= 1 && gitlabTokenObserved,
                 ObservedAzureDevOpsPatUrlPattern = headerSectionComplete && method != null && azurePatUrlObserved,
                 ObservedCircleCiTokenPattern = headerSectionComplete && method != null && circleCiHeaderCount == 1 && circleCiTokenObserved,
+                ObservedVaultTokenPattern = headerSectionComplete && method != null && vaultHeaderCount == 1 && vaultTokenObserved,
+                ObservedTerraformTokenPattern = headerSectionComplete && method != null && authorizationHeaderCount == 1 && terraformTokenObserved,
+                ObservedNpmTokenPattern = headerSectionComplete && method != null && authorizationHeaderCount == 1 && npmTokenObserved,
+                ObservedPyPiUploadAuthorization = headerSectionComplete && method != null && authorizationHeaderCount == 1 && pypiUploadAuthorizationObserved,
+                ObservedAwsListSecretsRequest = headerSectionComplete && method != null && awsTargetCount == 1 && awsListSecretsObserved,
                 HeaderNames = headerNames
             };
         }
@@ -975,6 +1013,17 @@ namespace Carthago.Services
             foreach (var b in value)
                 if (!((b >= '0' && b <= '9') || (b >= 'a' && b <= 'f') || (b >= 'A' && b <= 'F')))
                     return false;
+            return true;
+        }
+
+        private static bool HasAuthorizationScheme(ReadOnlySpan<byte> raw, string scheme)
+        {
+            var value = TrimStartSpacesTabs(raw);
+            if (value.Length <= scheme.Length || !value.StartsWith(Encoding.ASCII.GetBytes(scheme))) return false;
+            var remainder = value.Slice(scheme.Length);
+            if (remainder.Length < 8 || remainder.Length > 2048) return false;
+            foreach (var b in remainder)
+                if (!((b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || (b >= '0' && b <= '9') || b == '+' || b == '/' || b == '=' || b == '_' || b == '-' || b == '.')) return false;
             return true;
         }
 

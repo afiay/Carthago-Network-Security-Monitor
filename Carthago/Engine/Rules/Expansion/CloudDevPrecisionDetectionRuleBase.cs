@@ -180,7 +180,7 @@ namespace Carthago.Engine.Rules.Expansion
             };
 
             if (!string.IsNullOrWhiteSpace(path))
-                items.Add(new DetectionEvidenceItem("http.path", Descriptor.RuleId is "R353" or "R354" or "R355" or "R356" or "R357" or "R358" or "R359" or "R360" or "R221" or "R222" or "R243" or "R244" or "R245" or "R246" or "R247" or "R248" or "R249" or "R250" or "R251" or "R252" or "R253" or "R254" or "R255" or "R256" or "R257" ? "[REDACTED]" : path, "http"));
+                items.Add(new DetectionEvidenceItem("http.path", Descriptor.RuleId is "R353" or "R354" or "R355" or "R356" or "R357" or "R358" or "R359" or "R360" or "R361" or "R362" or "R363" or "R364" or "R365" or "R366" or "R367" or "R368" or "R369" or "R370" or "R221" or "R222" or "R243" or "R244" or "R245" or "R246" or "R247" or "R248" or "R249" or "R250" or "R251" or "R252" or "R253" or "R254" or "R255" or "R256" or "R257" ? "[REDACTED]" : path, "http"));
             if (!string.IsNullOrWhiteSpace(record.HttpMethod))
                 items.Add(new DetectionEvidenceItem("http.method", record.HttpMethod!, "http"));
             if (record.DestinationPort.HasValue)

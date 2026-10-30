@@ -145,6 +145,12 @@ namespace Carthago.Models
         // Derived only by the bounded HTTP parser; imported JSON cannot assert these flags.
         public bool HttpAzureDevOpsPatUrlObserved { get; internal set; }
         public bool HttpCircleCiTokenPatternObserved { get; internal set; }
+        // Parser-only provenance flags; the original credential bytes are not retained.
+        public bool HttpVaultTokenPatternObserved { get; internal set; }
+        public bool HttpTerraformTokenPatternObserved { get; internal set; }
+        public bool HttpNpmTokenPatternObserved { get; internal set; }
+        public bool HttpPyPiUploadAuthorizationObserved { get; internal set; }
+        public bool HttpAwsListSecretsRequestObserved { get; internal set; }
 
         // JA4H (HTTP)
         private string? _ja4H;
