@@ -13,9 +13,9 @@ authored regression tests, batch specification and ledger update together.
 Distinguish authored tests from executed test evidence and a detector match
 from a validated operational alert.
 
-**Latest documented batch:** [R371–R380](RULE_BATCH_371-380.md) — SOURCE
-CANDIDATE — UNVERIFIED; 78 authored xUnit invocations, 0 executed.
-Next contiguous development GA is R381–R390, subject to live HEAD review.
+**Latest documented batch:** [R391–R400](RULE_BATCH_391-400.md) — SOURCE
+CANDIDATE — UNVERIFIED; 120 authored xUnit invocations, 0 executed.
+Next contiguous development GA is R401–R410, subject to live HEAD review.
 The 2026-10-30 author-only branch rewrite replaced historical HEAD
 `a7166038cd947339d9671d7a873babbd00db080a` with
 `4dd73f3f6de2c0c6b9a6fd299d0c306ebcc3a9cc`; historical commit
@@ -901,3 +901,40 @@ paths, false-positive risks, authoritative Azure/Cloudflare API references,
 
 **Next contiguous ten-rule GA: R391–R400 after safe publication and
 live HEAD review.** No unrelated rule or UI changes were made in this GA.
+
+## R391–R400 ten-rule GA — 2026-10-30 (SOURCE CANDIDATE — UNVERIFIED)
+
+From live feature HEAD `1bc051104de3973e04bf2d734f69e92819f8c37e` (including unrelated UI-04), audited
+R391–R400 original rule classes, shared `EvidenceDrivenPrecisionRuleBase`,
+packet/HTTP telemetry provenance, prior test candidates and original profiles.
+Source candidate `135aee3dc8c834680c19a63234cfea0588591dd3`;
+authored-test candidate `5ef9f6752e1f6c127f87f1702c63a07e7c3ab0c3`.
+The exact publication commit is the descendant documentation HEAD after the
+single non-forced expected-HEAD-protected update; it cannot self-reference.
+
+**Ten dispositions:** R391 BLOCKED (no ZeroTier node/controller join-state);
+R392 BLOCKED (no trusted server role or attributed CLI User-Agent);
+R393 BLOCKED (no vetted Cobalt Strike Beacon profile signature);
+R394 BLOCKED (no vetted Malleable C2 header signature);
+R395 BLOCKED (no Sliver-specific mTLS fingerprint);
+R396 BLOCKED (no Mythic agent callback provenance);
+R397 BLOCKED (no Meterpreter stager payload signature);
+R398 BLOCKED (no Havoc callback signature);
+R399 BLOCKED (no Brute Ratel Badger signature);
+R400 BLOCKED (no Covenant Grunt callback signature).
+
+All ten generic token/path/process matches now fail closed before
+scoring, burst/cooldown mutation or event evidence. This prevents family
+attribution from common web paths, forged headers, process labels and TLS
+metadata; it does not validate detection recall. **120 concrete xUnit
+invocations AUTHORED, ZERO EXECUTED** (11 adversarial variants and one
+original-profile invariant per rule). No build, test, replay, holdout,
+CI, runner, benchmark or production capture. Original modes, thresholds,
+confidence floors, windows, cooldowns, approvals, privacy, journal,
+baseline and frozen R102 evidence unchanged. The historical 4,940/4,940
+checkpoint predates this candidate; R343/R295/R275/R163 replay GAs remain
+independent. See [GA R391–R400](RULE_BATCH_391-400.md) for source, exact
+scenario inventory, false-positive risks and missing producers.
+
+**Next contiguous ten-rule GA: R401–R410 after safe publication and
+live HEAD review.** UI-owned files were not modified.
