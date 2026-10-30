@@ -13,9 +13,13 @@ authored regression tests, batch specification and ledger update together.
 Distinguish authored tests from executed test evidence and a detector match
 from a validated operational alert.
 
-**Latest documented batch:** [R361–R370](RULE_BATCH_361-370.md) — SOURCE
-CANDIDATE / UNVERIFIED; subsequent contiguous development GA is R371–R380,
-subject to a fresh remote HEAD review.
+**Latest documented batch:** [R371–R380](RULE_BATCH_371-380.md) — SOURCE
+CANDIDATE — UNVERIFIED; 78 authored xUnit invocations, 0 executed.
+Next contiguous development GA is R381–R390, subject to live HEAD review.
+The 2026-10-30 author-only branch rewrite replaced historical HEAD
+`a7166038cd947339d9671d7a873babbd00db080a` with
+`4dd73f3f6de2c0c6b9a6fd299d0c306ebcc3a9cc`; historical commit
+references below predate the rewrite and are not valid publication leases.
 
 | Batch | Rules | Development status | Test evidence |
 | --- | --- | --- | --- |
@@ -818,3 +822,40 @@ protection.
 ## R361–R370 ten-rule GA — 2026-10-30 (source-only)
 
 From remote HEAD 1d0ad6633d3e6bbcdd8c7fc837880b6976486498, prepared ten consecutive DevOps/secret-management precision candidates. R361 BLOCKED without authenticated runner evidence; R362/R364/R365/R367/R369/R370 CONDITIONAL; R363/R366/R368 OPERATIONAL for captured HTTP request shape only, never operation outcomes. Original burst thresholds 5/4/5/10, modes, confidence floors, cooldowns, approvals, baseline readiness and frozen holdout data preserved. Added bounded replay guards and pre-retention X-Vault-Token redaction with parser-only observation flags. **97 advanced xUnit facts + 13 parser/privacy invocations = 110 AUTHORED, ZERO EXECUTED; CANDIDATE — UNVERIFIED.** No build, xUnit, replay, holdout, CI or runner. Source commit c84365d4be7e4e800b529098e4ad5aab16ab67de; test commit 22d0bdc532fb72d30809653b4e521603903d7fad; static corrections ee1dd94fe944f8f87cae8b685947f09fe922ceee and 51df0181c09e5ffc6b377d5927e5efe3512add97. Exact scenarios, risks and dispositions: docs/RULE_BATCH_361-370.md. Final publication is the descendant documentation commit at branch HEAD. R102 and replay evidence GAs remain independent. **Next R371–R380 only after non-forced expected-HEAD publication.**
+
+## R371–R380 ten-rule GA — 2026-10-30 (SOURCE CANDIDATE — UNVERIFIED)
+
+After the author-only history rewrite, inspected exact base HEAD
+`4dd73f3f6de2c0c6b9a6fd299d0c306ebcc3a9cc`, the prior R361–R370
+batch, all ten existing generic rule shells, the PacketHandler HTTP parser,
+TrafficRecord fields and precision profile base. Source candidate commit
+`9042faabf0edb93bb8a196f58e585cca24f34760`; authored-test candidate
+`29ad9d1c84975e217178914b498daa443260a890`.
+The publication SHA is the current branch HEAD after the single non-forced,
+expected-HEAD-protected documentation-descendant ref update; it cannot be
+embedded in its own commit content without changing its SHA.
+
+**Ten dispositions:** R371 BLOCKED (no Maven credential provenance);
+R372 BLOCKED (no private package namespace producer); R373 BLOCKED
+(no STS action body/audit); R374 BLOCKED (no safe key-in-URL classifier);
+R375 CONDITIONAL (exact S3 ListBuckets cleartext request shape only);
+R376 BLOCKED (no correlated object response bytes); R377 BLOCKED
+(link-local metadata boundary GA unresolved); R378 CONDITIONAL (four
+distinct Lambda invoke request shapes in original 10m window); R379 BLOCKED
+(no authenticated StopLogging outcome); R380 BLOCKED (no trusted GuardDuty
+finding). No generic host/process/Info vocabulary can substitute for the
+missing producers. Host is client-supplied, not authenticated AWS identity.
+
+**78 concrete xUnit invocations AUTHORED, 0 EXECUTED.** No build, test,
+replay, holdout, CI, runner or production capture. No claim of a passing
+test or field precision. Original ten severities, modes, confidence floors,
+thresholds, windows, cooldowns and approval controls remain unchanged.
+Event HTTP path redaction now includes R371–R380. The existing full
+4,940/4,940 checkpoint predates this candidate. R343/R295/R275/R163
+replay GAs, R102 V1 FAILED 4/6 and V2 0/4 independent sources remain
+separate and unchanged. Exact owned files, scenario inventory, false-positive
+risks, producer gaps, privacy boundaries and AWS protocol references:
+[GA R371–R380](RULE_BATCH_371-380.md).
+
+**Next sequential source-development GA: R381–R390 only after the
+coherent source/test/docs candidate is published and live HEAD rechecked.**
