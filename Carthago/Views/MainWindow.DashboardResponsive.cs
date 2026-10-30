@@ -22,6 +22,11 @@ public partial class MainWindow
             _ => "DashboardKpiWidePanel"
         });
 
+        // GA UI-06: visual-only CLI panel; no command runner or state adapter.
+        DashboardCliCompanionPanel.Width = mode == ResponsiveLayoutMode.Wide ? 408 : double.NaN;
+        DashboardCliCompanionPanel.HorizontalAlignment = mode == ResponsiveLayoutMode.Wide
+            ? HorizontalAlignment.Right : HorizontalAlignment.Stretch;
+
         if (mode == ResponsiveLayoutMode.Compact)
         {
             DashboardTriageGrid.Height = 840;

@@ -1075,6 +1075,75 @@
                   </Grid>
                 </Border>
 
+                
+                <!-- GA UI-06: reference-aligned terminal companion, visual only.
+                     No CLI command dispatcher, process, output stream or simulated telemetry is connected. -->
+                <Border x:Name="DashboardCliCompanionPanel"
+                        Style="{StaticResource PageSurface}"
+                        Width="408"
+                        HorizontalAlignment="Right"
+                        Padding="12"
+                        Margin="0,0,0,10"
+                        AutomationProperties.Name="Carthago CLI companion, unavailable">
+                  <Grid>
+                    <Grid.RowDefinitions>
+                      <RowDefinition Height="Auto"/>
+                      <RowDefinition Height="Auto"/>
+                      <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <DockPanel Margin="0,0,0,10" LastChildFill="True">
+                      <Border DockPanel.Dock="Right"
+                              Background="{StaticResource PillBgBrush}"
+                              BorderBrush="{StaticResource CardBorderBrush}"
+                              BorderThickness="1"
+                              CornerRadius="5"
+                              Padding="8,3">
+                        <TextBlock Text="UNAVAILABLE"
+                                   FontSize="10"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextMutedBrush}"/>
+                      </Border>
+                      <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&gt;_"
+                                   FontFamily="Consolas"
+                                   FontSize="14"
+                                   FontWeight="Bold"
+                                   Foreground="{StaticResource AccentBrush}"
+                                   Margin="0,0,9,0"/>
+                        <TextBlock Text="Carthago CLI"
+                                   Style="{StaticResource DashboardSectionTitle}"
+                                   VerticalAlignment="Center"/>
+                      </StackPanel>
+                    </DockPanel>
+                    <Border Grid.Row="1"
+                            Background="{StaticResource AppBgBrush}"
+                            BorderBrush="{StaticResource SoftDividerBrush}"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="12"
+                            MinHeight="88">
+                      <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="No CLI session connected"
+                                   FontFamily="Consolas"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextSubtleBrush}"/>
+                        <TextBlock Text="Command execution and terminal output are not implemented in this Windows GUI."
+                                   FontFamily="Consolas"
+                                   FontSize="11"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,6,0,0"/>
+                      </StackPanel>
+                    </Border>
+                    <TextBlock Grid.Row="2"
+                               Text="Visual companion only · no commands are accepted or executed."
+                               FontSize="10"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               TextWrapping="Wrap"
+                               Margin="0,8,0,0"/>
+                  </Grid>
+                </Border>
                 <Expander Header="Layout manager" IsExpanded="False" Visibility="Collapsed" Margin="0,0,0,18">
                   <Border Style="{StaticResource CommandBarSurface}" Padding="14">
                     <StackPanel>
