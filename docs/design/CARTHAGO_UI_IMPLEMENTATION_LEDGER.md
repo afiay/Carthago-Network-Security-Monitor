@@ -636,3 +636,84 @@ or modify the independent rule automation.
 **Technical references:** [WPF AutomationProperties.LiveSetting](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.livesetting);
 [WPF visibility](https://learn.microsoft.com/en-us/dotnet/api/system.windows.visibility);
 [prior GA UI-09](#ga-ui-09--narrow-window-pps-chart-header-and-capture-status-readability).
+
+
+## GA UI-11 — Accessible incident-triage row semantics
+
+**2026-10-30 · SOURCE CANDIDATE — UNVERIFIED.** Started from live
+`feature/carthago-reliability-hardening` HEAD
+`8bf50590e8b6c432a8748726fae41bef77e10906`, after independent detection GA R451–R460.
+UI source commit: `b5504d05a7c3042a4d908211991c7c2baab91bee`.
+The documentation commit is a descendant of the source commit; its
+publication SHA must be taken from the live remote after the protected
+non-forced update. **Automated tests authored: 0; executed: 0.**
+No build, replay, CI, runner job, benchmark or production capture.
+
+### Reference, original source and narrow accessibility contract
+
+The exact approved Library image
+`libfile_b0a34361560c8191b641e432b3e6b15c` was retrieved and
+visually inspected. Its left-hand prioritized incident queue and right-hand
+investigation panel remain the visual guide; the screenshot's risk scores,
+IP addresses, timestamps and rule labels are demonstration content, not
+production facts. This GA changes **only the incident/signal triage list's
+accessible descriptions**, not its appearance, sorting, selection, or
+incident linkage.
+
+| Surface | Actual source and binding | Truthfulness/accessibility boundary |
+| --- | --- | --- |
+| Triage list | `DashboardAnomalyList` in `MainWindow.xaml` receives an explicit accessible name and help text explaining arrow-key selection and the existing `SelectionChanged` detail update. | Does not imply that every incident is confirmed, that scores are detection confidence, or that the screen reader has been validated. |
+| Triage item | Existing `ListBoxItem` container style binds `AutomationProperties.Name` to `SocAnomalyVm.AccessibilityLabel`. The private UI-only computed property combines the **already displayed** kind, title, severity, local risk score (out of 100), subtitle, and local time. | The computed label introduces no telemetry, new incident identifiers, payload capture, data persistence, or fabricated evidence. It does not turn a signal into a correlated incident. |
+| Visual/focus behavior | Existing severity rail, risk badge, item selection border, keyboard-focus border, `DashboardSignalPanel`, and selected-detail handler are unchanged. | Visual focus contrast, spoken ordering, high-DPI clipping and assistive-technology behavior remain unverified. |
+| Other dashboard areas | Existing KPI strips, local PPS ScottPlot, 10-sample average/120-point history, Live Events, unavailable CLI companion, sidebar and Cisco tools remain untouched. | The approved reference's inbound/outbound Mbps lines remain demo-only; no new series or producer was introduced. |
+
+### Static divergence, ownership and concurrency review
+
+- **Owned source paths:** `Carthago/Views/MainWindow.xaml`,
+  `Carthago/Views/MainWindow.Dashboard.cs`; this ledger is the sole
+  documentation path. `SocAnomalyVm` is an existing private nested
+  UI-only projection, and its consumers (`BuildSocAnomalyItems`,
+  `DashboardAnomalyList`, `DashboardAnomalyList_SelectionChanged`)
+  were inspected before editing.
+- Compared the original UI-04 triage binding, UI-01–10 ledger, current
+  WPF XAML and partials, approved reference, and the live detection
+  R451–R460 changed paths. No detection batch changed UI-owned paths
+  since UI-10. Existing rule IDs, modes, thresholds, confidence floors,
+  approvals, privacy/journal restrictions and evidence contracts are
+  unchanged.
+- The list name, item binding and private computed property were each
+  statically checked for a single insertion. The item label contains only
+  values already present in the visible row; it adds no sensitive evidence
+  fields. No UI event handler or shared API changed.
+- Source-only inspection is **not** XAML parsing, WPF compilation,
+  accessibility validation, screenshot comparison or runtime verification.
+  Actual UI Automation exposure and possible nested-text duplication
+  require owner-authorized Windows testing.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED AS TESTS; UNEXECUTED
+
+1. Keyboard Tab reaches the triage list; arrow keys move between existing incident/signal rows.
+2. Selection changes the existing investigation panel without new handlers or focus traps.
+3. Screen reader announces the list purpose and non-confidence risk-score caveat.
+4. Each incident row announces kind, title, severity, local risk, subtitle and local time.
+5. Each anomaly signal remains identified as SIGNAL, never as a confirmed incident.
+6. Long titles and endpoint subtitles remain visually truncated with existing full-text tooltips.
+7. No rows: list label remains understandable and existing empty-state behavior is unchanged.
+8. Risk score zero/100 and mixed severity values remain labeled local risk, not detection confidence.
+9. Widths 1440, 1100, 1099, 1024, 1023 and 640, high DPI and high contrast: no new clipping/focus regression.
+10. Chart PPS, Live Events filters, CLI unavailable state, navigation, Cisco and rule work remain unchanged.
+
+**Open quality GAs:** pinned-SHA Windows WPF build; screen-reader
+inspection of list-item names, focus and reading order; keyboard
+navigation; high-contrast and 125–200% DPI; responsive screenshot
+comparison; incident selection regression and privacy review after
+explicit owner test authorization. **Tests executed: 0.**
+
+**Next independent UI GA UI-12:** inspect the live branch and approved
+reference, then consider one focused incident-investigation panel
+accessibility/readability improvement. Preserve all previous UI GAs,
+actual telemetry boundaries, and the separate detection automation.
+
+**Technical references:**
+[WPF AutomationProperties.Name](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.name);
+[WPF layout](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/layout).
