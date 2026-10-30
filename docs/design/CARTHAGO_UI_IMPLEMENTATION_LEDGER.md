@@ -189,7 +189,7 @@ or change shared telemetry contracts.
 | High-priority incidents | `DashboardAnomalyList`, `MainWindow.Dashboard.cs` `BuildSocAnomalyItems` | **GA UI-04 CANDIDATE — UNVERIFIED:** up to four unresolved incidents by risk then two anomaly signals (five-signal fallback); typed provenance, selected-row focus. No demo rule mapping. |
 | Investigation / evidence inspector | `DashboardSignalPanel`, `DashboardDetailReasonsItems`, `DashboardDetailRulesItems`, `DashboardDetailEvidenceSummaryText` | **GA UI-04 CANDIDATE — UNVERIFIED:** direct incident selection and reported evidence/event counts only; no raw payload or verified chain-of-custody claim. |
 | Live events table | `MainWindow.xaml` `DashboardLiveEventsGrid`; `MainWindow.DashboardEvents.cs` UI-only projection of `_alerts` | **GA UI-05 SOURCE CANDIDATE — UNVERIFIED:** 80 most recently received local detections, severity/protocol/rule/endpoint filters, count-only evidence, delivery state and honest empty/paused/demo labels. |
-| Compact terminal companion | No verified embedded cross-platform CLI in current WPF shell | **NOT IMPLEMENTED.** Plan design-only placeholder with honest unavailable state; do not invent CLI output or working commands. |
+| Compact terminal companion | `MainWindow.xaml` `DashboardCliCompanionPanel`; `MainWindow.DashboardResponsive.cs` | **GA UI-06 SOURCE CANDIDATE — UNVERIFIED:** visual-only terminal card, explicit **UNAVAILABLE** state, no command input/output/runner; 408px right-aligned on Wide, stretched on Standard/Compact. |
 | Wide ≥1440 / Standard 1100–1439 / Compact <1100 | `Views/ResponsiveLayout.cs`, `MainWindow.Responsive.cs` | Existing breakpoints preserved; 1024–1099 is target Compact band, with graceful behavior below 1024. |
 | Windows and Linux GUI + terminal | WPF currently targets `net8.0-windows10.0.19041.0` | Future separate Avalonia/CLI architecture specification only; no migration in rule-hardening phase. |
 
@@ -198,7 +198,7 @@ or change shared telemetry contracts.
 - Do not edit `Engine/**`, `Models/**`, `Services/**`, rules, capture, tests, runners, workflows, `docs/RULE_HARDENING_PROGRESS.md` or rule evidence. No builds/tests until owner explicitly authorizes.
 - Preserve all sidebar `x:Name` identifiers and Click handlers, filters, Cisco tools, view navigation, ScottPlot/WebView2, and WPF window startup.
 - Source-only changes may have visual or runtime issues; validate with owner-authorized pinned-SHA Windows build and screenshot review later.
-- **Next UI GA UI-06:** visual-only CLI companion with unavailable state and separate Windows/Linux CLI + Avalonia design specification. GA UI-01–05 remain SOURCE CANDIDATES — UNVERIFIED until owner-authorized Windows verification.
+- **Next UI GA UI-07:** responsive/accessibility and visual-consistency audit, including the outstanding traffic-chart provenance mapping. GA UI-01–06 remain SOURCE CANDIDATES — UNVERIFIED until owner-authorized Windows verification.
 
 ## GA UI-05 — Recent local detection events
 
@@ -267,3 +267,60 @@ test pass or accuracy claim is established.
 with truthful unavailable state; first inspect existing CLI entrypoints
 and document future Windows/Linux CLI + Avalonia architecture without
 creating adapters or inventing working commands.
+
+## GA UI-06 — Compact CLI companion, visual only
+
+**2026-10-30 · SOURCE CANDIDATE — UNVERIFIED.** Live feature HEAD at start:
+`75caad103da26d1a3c2e1f5b207185ed76188b3f`, including the
+independent R401–R410 rule candidate and UI-05. UI source commit:
+`f61bd16d4609e88c51ebaa099050d6eb018e9188`. The design ledger and
+[future CLI/Avalonia specification](CARTHAGO_CLI_AVALONIA_FUTURE_ARCHITECTURE.md)
+are committed as its descendant. Final publication SHA is the feature ref
+after the single expected-HEAD non-forced update; a Git commit cannot contain
+its own SHA. **No builds, tests, replays, CI, Windows runner or capture executed.**
+
+### Reference mapping, evidence and limitations
+
+| Approved reference | UI-owned source | Honest behavior / divergence |
+| --- | --- | --- |
+| Dark navy terminal-style card at lower right | `Carthago/Views/MainWindow.xaml` `DashboardCliCompanionPanel` | Existing `PageSurface`, navy inset, cyan monospace glyph and quiet unavailable badge. **No fake prompt, command output, sample IPs, alerts or live terminal session.** |
+| Terminal connection / command status | Static, explicit `UNAVAILABLE` and `No CLI session connected` labels | Source audit found **no production CLI executable or command dispatcher**. `Carthago/Carthago.csproj` is a Windows WPF `WinExe`; `Carthago/Tests/Program.cs` is a test harness, `Carthago.Benchmarks/Program.cs` is a benchmark, and `scripts/*.ps1` are engineering scripts, not an embedded CLI. No adapter or process execution was added. |
+| Wide / Standard / Compact layout | `Carthago/Views/MainWindow.DashboardResponsive.cs` | Wide ≥1440: 408px card aligned right. Standard 1100–1439 and Compact <1100: stretch to available width. Below 1024 remains unverified. No existing breakpoints or other panel placement changed. |
+| Reference placement directly under investigation panel | Existing WPF dashboard preserves its incident detail layout and full-width Live Events table | **Intentional deviation:** card follows Live Events in the scrollable dashboard, aligned right on Wide. Avoids shrinking the eight-column event table or clipping the existing investigation panel. Revisit only after rendered-layout verification. |
+
+**Source-only divergence review:** Inspected the exact approved Library image
+`libfile_b0a34361560c8191b641e432b3e6b15c`, live feature HEAD, prior UI
+ledger, `MainWindow.xaml`, `Theme.xaml`, `Sidebar.xaml`,
+`MainWindow.Core.cs`, `MainWindow.xaml.cs`, responsive partials, existing
+CLI-like repository entrypoints and project targets. The source patch changes
+**only** `Carthago/Views/MainWindow.xaml` and
+`Carthago/Views/MainWindow.DashboardResponsive.cs`; this ledger and the
+separate future architecture spec are the only documentation paths.
+Static XAML tag nesting inspection found no mismatch (1,091 tokens);
+`DashboardCliCompanionPanel` occurs once. UI-01–05 controls, existing
+capture and event handlers, navigation, preferences, Cisco tools,
+ScottPlot, WebView2 and detection rules are not modified. Static inspection
+is **not** a compile, binding, accessibility or visual-render pass.
+
+### Planned acceptance GAs — NOT AUTHORED AS TESTS, UNEXECUTED
+
+1. Wide ≥1440: right-aligned compact card, no overlap with Live Events or sidebar.
+2. Standard 1100–1439: stretched card, legible text and no horizontal clipping.
+3. Compact 1024–1099: stretched card, existing scroll and navigation intact.
+4. Window below 1024 (down to existing 640px minimum): wrapped labels, no clipping.
+5. High-contrast, keyboard traversal and screen reader: unavailable status announced without an interactive fake terminal.
+6. Capture active/paused/error and demo toggles: companion remains **unavailable**, never claims capture or CLI connection.
+7. No `Process.Start`, shell, command dispatcher, command input, output stream, IPC or telemetry producer introduced.
+8. Live Events filtering and all existing incident selection, Cisco/network and settings handlers still function.
+9. Reference comparison: navy inset, cyan glyph, restrained unavailable badge; documented location deviation accepted or adjusted.
+10. Pinned-SHA Windows WPF compilation, startup, XAML resource resolution and visual screenshots **only after owner authorization**.
+
+**Open GAs:** compile/render verification, keyboard/accessibility, small-window
+behavior, actual traffic-chart provenance and screenshot fidelity, CLI design
+threat model, and platform-specific support matrix. No tests or runtime
+verification have occurred. This source candidate does not imply working
+CLI functionality or Windows/Linux GUI support.
+
+**Next UI GA UI-07:** responsiveness, accessibility and visual consistency
+review; inspect actual real-time traffic chart binding before changing chart
+presentation. Keep the independent ten-rule work and its files untouched.
