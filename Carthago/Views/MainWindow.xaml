@@ -471,27 +471,20 @@
                       </Grid.RowDefinitions>
                       <StackPanel>
                         <StackPanel Orientation="Horizontal">
-                          <TextBlock Text="Anomaly Timeline" Style="{StaticResource DashboardSectionTitle}"/>
+                          <TextBlock Text="Recent High-Priority Incidents" Style="{StaticResource DashboardSectionTitle}"/>
                           <TextBlock Text="  &#x24D8;" Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"/>
                         </StackPanel>
-                        <TextBlock Text="Behavior shifts, detection novelty, threat matches, and baseline deviations."
+                        <TextBlock Text="Unresolved correlated incidents first; anomaly signals remain available below."
                                    Foreground="{StaticResource TextMutedBrush}"
                                    FontSize="12"
                                    TextWrapping="Wrap"/>
                       </StackPanel>
 
-                      <Grid Grid.Row="1" Margin="0,10,0,8">
-                        <Grid.ColumnDefinitions>
-                          <ColumnDefinition Width="150"/>
-                          <ColumnDefinition Width="*"/>
-                          <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <ComboBox SelectedIndex="0" MinWidth="130" Margin="0,0,8,0">
-                          <ComboBoxItem Content="All categories"/>
-                        </ComboBox>
-                        <TextBox Grid.Column="1" Style="{StaticResource SearchBox}" Text="" ToolTip="Search anomalies" Margin="0,0,8,0"/>
-                        <CheckBox Grid.Column="2" Content="Linked incidents only" IsChecked="True" VerticalAlignment="Center"/>
-                      </Grid>
+                      <!-- Static source-only queue: no nonfunctional filter or search affordances. -->
+                      <TextBlock Grid.Row="1" Margin="0,9,0,8"
+                                 Text="LOCAL SNAPSHOT  ·  INCIDENTS BY RISK, THEN SIGNALS"
+                                 Style="{StaticResource MicroLabel}"
+                                 TextTrimming="CharacterEllipsis"/>
 
                       <ListBox x:Name="DashboardAnomalyList"
                                Grid.Row="2"
@@ -515,7 +508,7 @@
                             <Setter Property="Template">
                               <Setter.Value>
                                 <ControlTemplate TargetType="{x:Type ListBoxItem}">
-                                  <Border x:Name="ItemShell" Background="Transparent" BorderThickness="0" Padding="0">
+                                  <Border x:Name="ItemShell" Background="Transparent" BorderBrush="Transparent" BorderThickness="1" CornerRadius="7" Padding="0">
                                     <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
                                   </Border>
                                   <ControlTemplate.Triggers>
@@ -524,6 +517,10 @@
                                     </Trigger>
                                     <Trigger Property="IsSelected" Value="True">
                                       <Setter TargetName="ItemShell" Property="Opacity" Value="1"/>
+                                      <Setter TargetName="ItemShell" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                                    </Trigger>
+                                    <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                      <Setter TargetName="ItemShell" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
                                     </Trigger>
                                   </ControlTemplate.Triggers>
                                 </ControlTemplate>
@@ -535,7 +532,7 @@
                           <DataTemplate>
                             <Border Style="{StaticResource SocTimelineItem}"
                                     BorderBrush="{Binding AccentBrush}"
-                                    Height="50"
+                                    Height="64"
                                     Margin="0,0,0,3"
                                     ClipToBounds="True">
                               <Grid>
@@ -549,6 +546,7 @@
                                         BorderBrush="{Binding AccentBrush}"
                                         VerticalAlignment="Center">
                                   <TextBlock Text="{Binding RiskScore}"
+                                             ToolTip="Local risk score (0–100); not a confidence percentage"
                                              HorizontalAlignment="Center"
                                              VerticalAlignment="Center"
                                              FontSize="12"
@@ -556,6 +554,7 @@
                                              Foreground="{Binding AccentBrush}"/>
                                 </Border>
                                 <StackPanel Grid.Column="1" Margin="8,0,8,0" VerticalAlignment="Center" ClipToBounds="True">
+                                  <TextBlock Text="{Binding Kind}" FontSize="9" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" Margin="0,0,0,2"/>
                                   <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="12.5" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Title}"/>
                                   <TextBlock Text="{Binding Subtitle}" Foreground="{StaticResource TextMutedBrush}" FontSize="11" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" ToolTip="{Binding Subtitle}"/>
                                 </StackPanel>
@@ -599,10 +598,10 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel>
                           <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Signal Details" Style="{StaticResource DashboardSectionTitle}"/>
+                            <TextBlock Text="Incident Investigation" Style="{StaticResource DashboardSectionTitle}"/>
                             <TextBlock Text="  &#x24D8;" Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"/>
                           </StackPanel>
-                          <TextBlock Text="Explainable reasons, derived evidence, linked incident context, and next investigation steps."
+                          <TextBlock Text="Selected correlated incident or anomaly signal; risk is not a confidence claim."
                                      Foreground="{StaticResource TextMutedBrush}"
                                      FontSize="12"
                                      TextWrapping="Wrap"/>
@@ -685,6 +684,7 @@
                             <Grid.RowDefinitions>
                               <RowDefinition Height="Auto"/>
                               <RowDefinition Height="Auto"/>
+                              <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
                             <Border Style="{StaticResource DetailGridCard}" Margin="0,0,8,6">
@@ -744,6 +744,17 @@
                                   <Button x:Name="DashboardViewRelatedIncidentButton" Content="View Related Incident" MinWidth="154" Height="30" Style="{StaticResource SecondaryButton}" Click="DashboardViewRelatedIncident_Click" Margin="0,0,8,6"/>
                                   <Button Content="Full Detail" MinWidth="96" Height="30" Style="{StaticResource SecondaryButton}" Click="DashboardOpenSignalDetail_Click" Margin="0,0,8,6"/>
                                 </WrapPanel>
+                              </StackPanel>
+                            </Border>
+
+                            <Border Grid.Row="2" Grid.ColumnSpan="2" Style="{StaticResource DetailGridCard}" Margin="0,6,0,0">
+                              <StackPanel>
+                                <TextBlock Text="Evidence provenance (reported, not verified)" Style="{StaticResource SocSubHeader}"/>
+                                <TextBlock x:Name="DashboardDetailEvidenceSummaryText"
+                                           Text="No directly selected incident evidence."
+                                           Foreground="{StaticResource TextSubtleBrush}"
+                                           FontSize="11"
+                                           TextWrapping="Wrap"/>
                               </StackPanel>
                             </Border>
                         </Grid>

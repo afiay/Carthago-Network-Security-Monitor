@@ -30,6 +30,7 @@ namespace Carthago
         private readonly ObservableCollection<string> _dashboardDetailReasons = new();
         private readonly ObservableCollection<string> _dashboardDetailTags = new();
         private readonly ObservableCollection<string> _dashboardDetailRules = new();
+        // UI-04: provenance summary only; raw evidence remains in its existing incident workspace.
         private readonly ObservableCollection<DashboardWidgetDescriptor> _dashboardAvailableWidgets = new();
         private readonly ObservableCollection<StatisticsMetricDescriptor> _dashboardMetricOptions = new();
         private readonly ObservableCollection<DashboardPresetDescriptor> _dashboardAvailablePresets = new();
@@ -933,28 +934,29 @@ namespace Carthago
             var context = CreateMetricContext();
             ReplaceCollection(_dashboardKpis, BuildSocKpis(prefs, context));
             ReplaceCollection(_dashboardOverviewKpis, BuildSocOverviewKpis());
+            var priorTriageSelection = (DashboardAnomalyList.SelectedItem as SocAnomalyVm)?.Id;
             ReplaceCollection(_dashboardAnomalyItems, BuildSocAnomalyItems());
             ReplaceCollection(_dashboardHostRows, BuildSocHostRows());
             ReplaceCollection(_dashboardActionRows, BuildSocActionRows());
 
-            if (_dashboardAnomalyItems.Count > 0)
-            {
-                if (string.IsNullOrWhiteSpace(_selectedDashboardAnomalyId) || !_dashboardAnomalyItems.Any(item => string.Equals(item.Id, _selectedDashboardAnomalyId, StringComparison.OrdinalIgnoreCase)))
-                    _selectedDashboardAnomalyId = _dashboardAnomalyItems[0].Id;
+            // Keep a user's selected incident/signal through snapshot refreshes.
+            // A missing entry falls back to the highest-priority current item.
+            var selectedTriageItem = _dashboardAnomalyItems.FirstOrDefault(item =>
+                string.Equals(item.Id, priorTriageSelection, StringComparison.OrdinalIgnoreCase))
+                ?? _dashboardAnomalyItems.FirstOrDefault(item =>
+                    !string.IsNullOrWhiteSpace(item.IncidentId) &&
+                    string.Equals(item.IncidentId, _selectedDashboardIncidentId, StringComparison.OrdinalIgnoreCase))
+                ?? _dashboardAnomalyItems.FirstOrDefault();
+            DashboardAnomalyList.SelectedItem = selectedTriageItem;
+            _selectedDashboardAnomalyId = selectedTriageItem?.AnomalyId;
+            _selectedDashboardIncidentId = selectedTriageItem?.IncidentId;
 
-                var selected = _dashboardAnomalyItems.FirstOrDefault(item => string.Equals(item.Id, _selectedDashboardAnomalyId, StringComparison.OrdinalIgnoreCase));
-                if (selected != null && !Equals(DashboardAnomalyList.SelectedItem, selected))
-                    DashboardAnomalyList.SelectedItem = selected;
-            }
-            else
-            {
-                _selectedDashboardAnomalyId = null;
-                DashboardAnomalyList.SelectedItem = null;
-            }
-
-            DashboardAnomalyFooterText.Text = _dashboardAnomalySnapshot.Count == 0
-                ? "No anomaly signals yet. Start monitoring or run demo mode."
-                : $"Showing 1-{Math.Min(5, _dashboardAnomalySnapshot.Count)} of {_dashboardAnomalySnapshot.Count} anomalies";
+            var unresolvedCount = ActiveIncidents().Count();
+            var anomalyCount = _dashboardAnomalySnapshot.Count;
+            DashboardAnomalyFooterText.Text = unresolvedCount == 0 && anomalyCount == 0
+                ? "No correlated incidents or anomaly signals in recent local snapshots."
+                : $"Showing {_dashboardAnomalyItems.Count} items · {unresolvedCount} unresolved incidents (max 150) · {anomalyCount} anomaly signals (max 160)"
+                    + (_demoModeEnabled ? " · demo data may be included" : "");
 
             UpdateSocSignalDetails();
         }
@@ -1105,14 +1107,36 @@ namespace Carthago
             }
         }
 
+        // UI-04: show correlated unresolved incidents first, then independently observed
+        // anomaly signals. This is a bounded UI queue, not an authenticated evidence chain.
         private IEnumerable<SocAnomalyVm> BuildSocAnomalyItems()
-            => _dashboardAnomalySnapshot
+        {
+            var incidents = ActiveIncidents()
+                .OrderByDescending(incident => incident.RiskScore)
+                .ThenByDescending(incident => incident.UpdatedUtc)
+                .Take(4)
+                .Select(incident => new SocAnomalyVm
+                {
+                    Id = "incident:" + incident.Id,
+                    IncidentId = incident.Id,
+                    Kind = "INCIDENT",
+                    RiskScore = incident.RiskScore,
+                    Title = Safe(incident.Title, "Correlated incident"),
+                    Subtitle = $"{Safe(incident.PrimarySourceIp, "Unknown source")} → {Safe(incident.PrimaryDestinationHost, Safe(incident.PrimaryDestinationIp, "Unknown destination"))} · {Safe(incident.Status, "Status unavailable")}",
+                    Severity = NormalizeSeverity(incident.Severity).ToUpperInvariant(),
+                    TimeText = incident.UpdatedUtc.ToLocalTime().ToString("HH:mm:ss", CultureInfo.InvariantCulture),
+                    AccentBrush = BrushForSeverity(incident.Severity)
+                });
+
+            var signals = _dashboardAnomalySnapshot
                 .OrderByDescending(NormalizeAnomalyScore)
                 .ThenByDescending(anomaly => anomaly.CreatedUtc)
-                .Take(5)
+                .Take(2)
                 .Select(anomaly => new SocAnomalyVm
                 {
-                    Id = anomaly.Id,
+                    Id = "signal:" + anomaly.Id,
+                    AnomalyId = anomaly.Id,
+                    Kind = "SIGNAL",
                     RiskScore = NormalizeAnomalyScore(anomaly),
                     Title = Safe(anomaly.Title, Safe(anomaly.Category, "Anomaly signal")),
                     Subtitle = BuildAnomalySubtitle(anomaly),
@@ -1120,6 +1144,9 @@ namespace Carthago
                     TimeText = anomaly.CreatedUtc.ToLocalTime().ToString("HH:mm:ss", CultureInfo.InvariantCulture),
                     AccentBrush = BrushForSeverity(anomaly.Severity)
                 });
+
+            return incidents.Concat(signals);
+        }
 
         private static string CompactHostLabel(string? value)
         {
@@ -1239,7 +1266,10 @@ namespace Carthago
         private void DashboardAnomalyList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (DashboardAnomalyList.SelectedItem is SocAnomalyVm selected)
-                _selectedDashboardAnomalyId = selected.Id;
+            {
+                _selectedDashboardAnomalyId = selected.AnomalyId;
+                _selectedDashboardIncidentId = selected.IncidentId;
+            }
             UpdateSocSignalDetails();
         }
 
@@ -1284,6 +1314,18 @@ namespace Carthago
             DashboardDetailDetectedText.Text = detail.Detected;
             DashboardDetailRelatedIncidentText.Text = detail.RelatedIncident;
 
+            // Only a directly selected correlated incident can supply this summary.
+            // Never render raw evidence text or imply an independently verified chain.
+            var selectedIncidentId = (DashboardAnomalyList.SelectedItem as SocAnomalyVm)?.IncidentId;
+            var selectedIncident = _dashboardIncidentSnapshot.FirstOrDefault(incident =>
+                !string.IsNullOrWhiteSpace(selectedIncidentId) &&
+                string.Equals(incident.Id, selectedIncidentId, StringComparison.OrdinalIgnoreCase));
+            DashboardDetailEvidenceSummaryText.Text = selectedIncident == null
+                ? "No directly selected incident evidence. Anomaly signals alone do not prove an incident."
+                : selectedIncident.Evidence.Count == 0
+                    ? "No reported evidence entries in this incident snapshot."
+                    : $"{selectedIncident.Evidence.Count} reported evidence entries · {selectedIncident.RelatedEvents.Count} related events. Review the incident workspace for original context; this is not a verified chain of custody.";
+
             ReplaceCollection(_dashboardDetailReasons, detail.Reasons.Take(3).Select(reason => $"- {reason}"));
             ReplaceCollection(_dashboardDetailTags, detail.Tags.Take(5));
             ReplaceCollection(_dashboardDetailRules, detail.Rules.Take(5));
@@ -1295,13 +1337,16 @@ namespace Carthago
 
         private DashboardSignalDetailDialogModel CreateDashboardSignalDetailModel()
         {
-            var selected = string.IsNullOrWhiteSpace(_selectedDashboardAnomalyId)
-                ? _dashboardAnomalySnapshot.OrderByDescending(NormalizeAnomalyScore).FirstOrDefault()
-                : _dashboardAnomalySnapshot.FirstOrDefault(a => string.Equals(a.Id, _selectedDashboardAnomalyId, StringComparison.OrdinalIgnoreCase));
+            var triageItem = DashboardAnomalyList.SelectedItem as SocAnomalyVm;
+            var selected = string.IsNullOrWhiteSpace(triageItem?.AnomalyId)
+                ? null
+                : _dashboardAnomalySnapshot.FirstOrDefault(anomaly =>
+                    string.Equals(anomaly.Id, triageItem.AnomalyId, StringComparison.OrdinalIgnoreCase));
 
-            var incident = selected != null
-                ? FindRelatedIncident(selected)
-                : HighestRiskIncident();
+            var incident = !string.IsNullOrWhiteSpace(triageItem?.IncidentId)
+                ? _dashboardIncidentSnapshot.FirstOrDefault(item =>
+                    string.Equals(item.Id, triageItem.IncidentId, StringComparison.OrdinalIgnoreCase))
+                : selected != null ? FindRelatedIncident(selected) : HighestRiskIncident();
 
             if (selected == null && incident == null)
             {
@@ -1713,6 +1758,9 @@ namespace Carthago
         private sealed class SocAnomalyVm
         {
             public string Id { get; init; } = "";
+            public string? IncidentId { get; init; }
+            public string? AnomalyId { get; init; }
+            public string Kind { get; init; } = "SIGNAL";
             public int RiskScore { get; init; }
             public string Title { get; init; } = "";
             public string Subtitle { get; init; } = "";
