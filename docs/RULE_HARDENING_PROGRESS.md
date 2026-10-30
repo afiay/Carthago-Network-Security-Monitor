@@ -753,3 +753,11 @@ privacy and frozen evidence unchanged. R102 frozen V1 **FAILED 4/6**; V2
 independent licensed capture/review still pending. Pre-repair 4,675/4,733
 local xUnit checkpoint and replay failures do not verify these candidates.
 **Next R356–R360 only after expected-HEAD publication succeeds.**
+
+
+## R356–R360 candidate implementation — 2026-10-28
+
+From verified remote HEAD ebf08c4b59c0322308a5c8718c5d85c01095d1fc (R351–R355 already recorded), authored five consecutive DevOps HTTP provenance candidates: R356 parsed Jenkins crumb API GET shape (**operational request**, not malicious enumeration proof); R357 specific TeamCity bypass-shaped inbound HTTP request (**conditional**, bypass outcome blocked); R358 five-request Bamboo artifact burst (**conditional**, successful download blocked); R359 parser-owned Azure DevOps PAT-shaped URL query flag with pre-retention query redaction (**conditional**, HTTPS unsupported); R360 parser-owned exact Circle-Token header observation with pre-retention header redaction (**conditional**, HTTPS unsupported). All R356–R360 event HTTP paths are redacted. **63 rule xUnit invocations + 15 HTTP parser/privacy invocations = 78 authored, ZERO executed; CANDIDATE — UNVERIFIED.**
+
+No build, test, replay, benchmark, holdout, CI, runner or production capture invoked. Confidence floors R102 80%, R118 86%, R163 84%, existing modes, approvals, privacy and frozen evidence unchanged. R102 V1 **FAILED 4/6**, V2 independent reviewed capture **PENDING**. Four trusted-audit/SSRF replay blockers remain; prior xUnit counts are not evidence of this batch's correctness. Source 3d3126d92bee347598d3e2a44c354b8e3b31e1df; tests 31205081dea8e30eac04f110b8c48bbb3d03f7fe; exact paths, dispositions and scenario inventory: docs/RULE_BATCH_356-360.md.
+**Next R361–R365 only after expected-HEAD atomic publication.**
