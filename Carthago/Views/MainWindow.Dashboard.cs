@@ -1234,7 +1234,8 @@ namespace Carthago
                         Icon = index switch { 1 => "⌕", 2 => "▣", 3 => "◇", _ => "›" },
                         Title = action,
                         Subtitle = $"{Safe(incident.PrimarySourceIp, "Affected host")} • Risk {incident.RiskScore}",
-                        CountText = index.ToString(CultureInfo.InvariantCulture),
+                        CountText = $"#{index}",
+                        BadgeDescription = $"Suggested action {index} of {actions.Length} for the highest-risk local incident; list position, not a count, risk score or detection confidence.",
                         AccentBrush = BrushForScore(incident.RiskScore)
                     };
                 }
@@ -1245,13 +1246,15 @@ namespace Carthago
             if (_dashboardAnomalySnapshot.Count > 0)
             {
                 var top = _dashboardAnomalySnapshot.OrderByDescending(NormalizeAnomalyScore).First();
+                var riskScore = NormalizeAnomalyScore(top);
                 yield return new SocActionVm
                 {
                     Icon = "⌕",
                     Title = "Review highest-risk anomaly",
                     Subtitle = BuildAnomalySubtitle(top),
-                    CountText = NormalizeAnomalyScore(top).ToString(CultureInfo.InvariantCulture),
-                    AccentBrush = BrushForScore(NormalizeAnomalyScore(top))
+                    CountText = $"Risk {riskScore}",
+                    BadgeDescription = $"Local anomaly risk score {riskScore}; not detection confidence or validated accuracy.",
+                    AccentBrush = BrushForScore(riskScore)
                 };
                 yield break;
             }
@@ -1261,7 +1264,8 @@ namespace Carthago
                 Icon = "✓",
                 Title = "Continue baseline learning",
                 Subtitle = "No correlated incident currently requires action.",
-                CountText = "0",
+                CountText = "—",
+                BadgeDescription = "No numeric badge: baseline-learning suggestion with no correlated incident or anomaly signal in this local snapshot.",
                 AccentBrush = (Brush)(TryFindResource("OkBrush") ?? Brushes.LimeGreen)
             };
         }
@@ -1801,6 +1805,7 @@ namespace Carthago
             public string Title { get; init; } = "";
             public string Subtitle { get; init; } = "";
             public string CountText { get; init; } = "";
+            public string BadgeDescription { get; init; } = "";
             public Brush AccentBrush { get; init; } = Brushes.DeepSkyBlue;
         }
 

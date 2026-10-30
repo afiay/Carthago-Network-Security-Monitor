@@ -981,7 +981,9 @@
                                     HorizontalScrollBarVisibility="Disabled"
                                     MaxHeight="118"
                                     Margin="0,8,0,0">
-                        <ItemsControl x:Name="DashboardActionItemsControl">
+                        <ItemsControl x:Name="DashboardActionItemsControl"
+                                       AutomationProperties.Name="Suggested local review actions"
+                                       AutomationProperties.HelpText="Suggestions are informational, not executed here. Badges indicate action-list position, local anomaly risk, or no numeric value depending on the source.">
                           <ItemsControl.ItemTemplate>
                             <DataTemplate>
                               <Border Style="{StaticResource QueueListItem}">
@@ -996,8 +998,9 @@
                                     <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
                                     <TextBlock Text="{Binding Subtitle}" Foreground="{StaticResource TextMutedBrush}" FontSize="12" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="0,3,0,0"/>
                                   </StackPanel>
-                                  <Border Grid.Column="2" Style="{StaticResource RiskBadge}" BorderBrush="{Binding AccentBrush}" Background="#0B1728" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding CountText}" Foreground="{Binding AccentBrush}" FontWeight="Bold" FontSize="11"/>
+                                  <Border Grid.Column="2" Style="{StaticResource RiskBadge}" BorderBrush="{Binding AccentBrush}" Background="#0B1728" VerticalAlignment="Center"
+                                           ToolTip="{Binding BadgeDescription}">
+                                    <TextBlock Text="{Binding CountText}" AutomationProperties.Name="{Binding BadgeDescription}" Foreground="{Binding AccentBrush}" FontWeight="Bold" FontSize="11"/>
                                   </Border>
                                 </Grid>
                               </Border>
