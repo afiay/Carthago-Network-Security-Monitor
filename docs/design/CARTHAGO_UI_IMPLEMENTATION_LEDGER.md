@@ -1397,3 +1397,85 @@ UI-01–18 without changing telemetry, rules or shared contracts.
 [WPF AutomationProperties.Name](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.name);
 [WPF ItemsControl](https://learn.microsoft.com/en-us/dotnet/api/system.windows.controls.itemscontrol);
 [WPF layout](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/layout).
+
+## GA UI-19 — Recommended Actions badge semantics
+
+**2026-10-30 · SOURCE CANDIDATE — UNVERIFIED.** Starting live HEAD:
+`21cfd475d84b31aa17a21221f404ab00b77498fc`; prior UI-18 publication: `1ce64648131319bf8126f6943eb8907752f1ea70`.
+**UI source commit:** `cf4045ca7631c4e00553b8b52a2f438434c7de54`. **Tests authored: 0; executed: 0.**
+No builds, tests, replays, CI, runners, capture, WPF runtime or screenshots.
+
+### Approved reference, source contract and scope
+
+The exact approved Library image `libfile_b0a34361560c8191b641e432b3e6b15c`
+was retrieved and visually inspected. Its dark navy/graphite, cyan/teal
+and compact panel layout is a visual guide only. Screenshot IPs, Mbps,
+rule IDs, counts and confidence are **demo data**, not telemetry.
+
+The original `DashboardActionItemsControl` uses the private
+`BuildSocActionRows` projection. Its existing `CountText` badge was
+ambiguous: a 1–4 **list position** for the highest-risk correlated
+incident's recommended actions; a normalized **local anomaly risk score**
+for the anomaly-only fallback; or a literal zero for a baseline-learning
+suggestion. These values are not equivalent counts or confidence.
+
+This GA makes their **visible meanings** explicit: `#1`–`#4` for
+suggested-action position, `Risk N` for existing local anomaly risk,
+and `—` for a baseline suggestion with no numeric badge. The existing
+badge gets a source-specific tooltip and UI Automation name through a
+new private UI-only `SocActionVm.BadgeDescription`; the collection gets
+a neutral accessible name/help explaining that no suggested action is
+executed by the list. No scoring, evidence, incident, capture-health,
+rule, service, model, telemetry or command behavior is introduced.
+
+| Original source | Visible badge | Truthful limit |
+| --- | --- | --- |
+| Highest-risk incident `RecommendedActions`, max four | `#1`–`#4` | List order only, not evidence count, verified priority or confidence. |
+| Highest local anomaly signal | `Risk N` | Existing normalized local risk, not validated accuracy or confidence. |
+| Neither incident nor anomaly | `—` | Baseline suggestion, not proof of healthy monitoring or zero traffic. |
+
+### Ownership, static divergence and risks
+
+Changed only `Carthago/Views/MainWindow.xaml`, `Carthago/Views/MainWindow.Dashboard.cs` and
+`docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`. Original XAML badge binding, private VM and
+`BuildSocActionRows` consumers were inspected. Existing titles,
+subtitles, icon/brush, refresh, ordering, incident/anomaly fallbacks
+and action-list bound remain; anomaly risk normalization is reused once
+for the same badge/brush. Source-only checks cover unique action-list
+and badge binding, original local PPS ScottPlot, KPI and incident
+panels, read-only Live Events (80 displayed / 500 retained), visual-only
+unavailable CLI, Cisco/WebView2, capture/privacy and Wide ≥1440 /
+Standard 1100–1439 / Compact 1024–1099 / below-1024 paths.
+Intervening detection R531–R540 and protocol P0011–P0020 commits
+were on disjoint engine/services/tests/rule/protocol-doc paths.
+No shared API, project, runner, test or detection automation was edited.
+
+**Residual risks:** `Risk N` takes more horizontal width than a bare
+number; long action titles may truncate sooner. Actual UI Automation
+exposure, screen-reader duplicate reading, tooltip, high contrast,
+DPI and responsive visual fidelity remain **unverified**.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. One incident recommendation shows `#1` with list-position context.
+2. Four or more recommendations remain bounded to four, `#1`–`#4`.
+3. Missing incident recommendations retain the original review fallback.
+4. Anomaly-only badge shows `Risk N` matching existing normalized brush.
+5. Anomaly risk 0 and 100 are not announced as validated confidence.
+6. No incident/anomaly displays `—` and baseline suggestion, not capture health.
+7. Tooltip and UIA badge name expose source-specific meaning without duplication.
+8. At 1440, 1100, 1099, 1024, 1023 and 640px, badge and action title remain legible.
+9. At 125–200% DPI and high contrast, badge color and tooltip remain readable.
+10. Original chart, incident selection, Live Events, unavailable CLI, Cisco and independent detection/protocol streams remain unchanged.
+
+**Open quality GAs:** pinned-SHA Windows WPF build, UIA/keyboard,
+responsive/high-DPI screenshots, action fallback and risk-score
+regression after explicit owner test authorization. **Executed tests: 0.**
+
+**Next UI GA UI-20:** inspect live HEAD, exact Library image, ledger and
+WPF consumers for one independent accessibility/readability improvement
+outside completed UI-01–19.
+
+**References:** [WPF AutomationProperties.Name](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.name);
+[WPF ToolTip](https://learn.microsoft.com/en-us/dotnet/api/system.windows.frameworkelement.tooltip);
+[WPF layout](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/layout).
