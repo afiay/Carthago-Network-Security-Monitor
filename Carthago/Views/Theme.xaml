@@ -5,17 +5,17 @@
                     xmlns:views="clr-namespace:Carthago.Views">
 
   <!-- Palette -->
-  <SolidColorBrush x:Key="AppBgBrush" Color="#050B14"/>
-  <SolidColorBrush x:Key="HeaderBgBrush" Color="#081322"/>
-  <SolidColorBrush x:Key="SidebarBgBrush" Color="#070F1C"/>
-  <SolidColorBrush x:Key="CardBgBrush" Color="#0A1423"/>
-  <SolidColorBrush x:Key="CardElevatedBg" Color="#0E1A2B"/>
-  <SolidColorBrush x:Key="CardBorderBrush" Color="#1B2A40"/>
+  <SolidColorBrush x:Key="AppBgBrush" Color="#07121F"/>
+  <SolidColorBrush x:Key="HeaderBgBrush" Color="#0B1B2A"/>
+  <SolidColorBrush x:Key="SidebarBgBrush" Color="#081523"/>
+  <SolidColorBrush x:Key="CardBgBrush" Color="#0C1A29"/>
+  <SolidColorBrush x:Key="CardElevatedBg" Color="#102233"/>
+  <SolidColorBrush x:Key="CardBorderBrush" Color="#20384B"/>
 
-  <SolidColorBrush x:Key="AccentBrush" Color="#3B82F6"/>
-  <SolidColorBrush x:Key="AccentAltBrush" Color="#38BDF8"/>
-  <SolidColorBrush x:Key="AccentHoverBrush" Color="#60A5FA"/>
-  <SolidColorBrush x:Key="AccentPressedBrush" Color="#2563EB"/>
+  <SolidColorBrush x:Key="AccentBrush" Color="#24C9EC"/>
+  <SolidColorBrush x:Key="AccentAltBrush" Color="#42D8F4"/>
+  <SolidColorBrush x:Key="AccentHoverBrush" Color="#65E1F9"/>
+  <SolidColorBrush x:Key="AccentPressedBrush" Color="#15A4C7"/>
 
   <SolidColorBrush x:Key="WarnBrush" Color="#EF4444"/>
   <SolidColorBrush x:Key="OkBrush" Color="#22C55E"/>
@@ -25,8 +25,8 @@
   <SolidColorBrush x:Key="WarningBrush" Color="#F59E0B"/>
 
   <SolidColorBrush x:Key="TextBrush" Color="#F3F7FB"/>
-  <SolidColorBrush x:Key="TextSubtleBrush" Color="#BAC7D8"/>
-  <SolidColorBrush x:Key="TextMutedBrush" Color="#72839A"/>
+  <SolidColorBrush x:Key="TextSubtleBrush" Color="#C1D2DF"/>
+  <SolidColorBrush x:Key="TextMutedBrush" Color="#90A7B9"/>
   <SolidColorBrush x:Key="TextInverseBrush" Color="#0B1020"/>
   <SolidColorBrush x:Key="TextWarningBrush" Color="#F59E0B"/>
   <SolidColorBrush x:Key="TextInfoBrush" Color="#38BDF8"/>
@@ -45,9 +45,9 @@
   <SolidColorBrush x:Key="SeverityLowBrush" Color="#22C55E"/>
   <SolidColorBrush x:Key="SeverityUnknownBrush" Color="#94A3B8"/>
 
-  <SolidColorBrush x:Key="RowAltBrush" Color="#0D192A"/>
-  <SolidColorBrush x:Key="RowHoverBrush" Color="#10243A"/>
-  <SolidColorBrush x:Key="SelectionBgBrush" Color="#0B3152"/>
+  <SolidColorBrush x:Key="RowAltBrush" Color="#0E2030"/>
+  <SolidColorBrush x:Key="RowHoverBrush" Color="#133247"/>
+  <SolidColorBrush x:Key="SelectionBgBrush" Color="#123B53"/>
 
   <LinearGradientBrush x:Key="HeaderGradient" StartPoint="0,0" EndPoint="1,1">
     <GradientStop Color="#0B1728" Offset="0"/>
@@ -73,11 +73,11 @@
     <GradientStop Color="#081321" Offset="1"/>
   </LinearGradientBrush>
 
-  <SolidColorBrush x:Key="InputBgBrush" Color="#081321"/>
-  <SolidColorBrush x:Key="InputBorderBrush" Color="#24344B"/>
-  <SolidColorBrush x:Key="SoftDividerBrush" Color="#17243A"/>
-  <SolidColorBrush x:Key="SurfaceHoverBrush" Color="#10243A"/>
-  <SolidColorBrush x:Key="KeyboardFocusBrush" Color="#7DD3FC"/>
+  <SolidColorBrush x:Key="InputBgBrush" Color="#0B1C2B"/>
+  <SolidColorBrush x:Key="InputBorderBrush" Color="#29445A"/>
+  <SolidColorBrush x:Key="SoftDividerBrush" Color="#1B3245"/>
+  <SolidColorBrush x:Key="SurfaceHoverBrush" Color="#143449"/>
+  <SolidColorBrush x:Key="KeyboardFocusBrush" Color="#80E7FA"/>
 
   <!-- Layout scale -->
   <Thickness x:Key="PagePaddingWide">18,0,18,0</Thickness>
@@ -87,8 +87,8 @@
   <Thickness x:Key="CardPaddingCompact">12,10</Thickness>
 
   <LinearGradientBrush x:Key="AccentGradient" StartPoint="0,0" EndPoint="1,0">
-    <GradientStop Color="#38BDF8" Offset="0"/>
-    <GradientStop Color="#38BDF8" Offset="1"/>
+    <GradientStop Color="#24C9EC" Offset="0"/>
+    <GradientStop Color="#42D8F4" Offset="1"/>
   </LinearGradientBrush>
 
   <DropShadowEffect x:Key="CardShadow"
@@ -525,21 +525,21 @@
                   Background="{TemplateBinding Background}"
                   CornerRadius="9">
             <Grid>
-              <Border x:Name="ActiveRail" Width="2" Margin="0,6,0,6" HorizontalAlignment="Left" CornerRadius="2" Background="Transparent"/>
+              <Border x:Name="ActiveRail" Width="3" Margin="0,6,0,6" HorizontalAlignment="Left" CornerRadius="2" Background="Transparent"/>
               <ContentPresenter Margin="0"
                                 VerticalAlignment="Center"/>
             </Grid>
           </Border>
           <ControlTemplate.Triggers>
             <Trigger Property="Tag" Value="Active">
-              <Setter Property="Background" Value="#16293E"/>
+              <Setter Property="Background" Value="#123B53"/>
               <Setter TargetName="ActiveRail" Property="Background" Value="{StaticResource AccentBrush}"/>
             </Trigger>
             <Trigger Property="IsMouseOver" Value="True">
-              <Setter Property="Background" Value="#122133"/>
+              <Setter Property="Background" Value="#133247"/>
             </Trigger>
             <Trigger Property="IsPressed" Value="True">
-              <Setter Property="Background" Value="#17304D"/>
+              <Setter Property="Background" Value="#17465B"/>
             </Trigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>
@@ -895,16 +895,16 @@
 
 
   <LinearGradientBrush x:Key="KpiTileGradient" StartPoint="0,0" EndPoint="1,1">
-    <GradientStop Color="#101B2D" Offset="0"/>
-    <GradientStop Color="#0B1525" Offset="0.68"/>
-    <GradientStop Color="#08121F" Offset="1"/>
+    <GradientStop Color="#0F2232" Offset="0"/>
+    <GradientStop Color="#0C1B2B" Offset="0.68"/>
+    <GradientStop Color="#0A1826" Offset="1"/>
   </LinearGradientBrush>
 
   <Style x:Key="KpiTileCard" TargetType="Border">
     <Setter Property="Background" Value="{StaticResource KpiTileGradient}"/>
-    <Setter Property="BorderBrush" Value="#243A54"/>
+    <Setter Property="BorderBrush" Value="#244257"/>
     <Setter Property="BorderThickness" Value="1"/>
-    <Setter Property="CornerRadius" Value="14"/>
+    <Setter Property="CornerRadius" Value="9"/>
     <Setter Property="Padding" Value="15,12"/>
     <Setter Property="MinHeight" Value="102"/>
     <Setter Property="Effect" Value="{StaticResource CardShadow}"/>
@@ -1157,6 +1157,9 @@
     <Setter Property="Foreground" Value="{StaticResource TextSubtleBrush}"/>
     <Setter Property="VerticalAlignment" Value="Center"/>
     <Style.Triggers>
+      <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" Value="Active">
+        <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+      </DataTrigger>
       <DataTrigger Binding="{Binding IsCompact, RelativeSource={RelativeSource AncestorType={x:Type views:Sidebar}}}" Value="True">
         <Setter Property="Visibility" Value="Collapsed"/>
       </DataTrigger>
@@ -1185,7 +1188,7 @@
   </Style>
 
   <Style x:Key="SidebarActiveNavButton" TargetType="Button" BasedOn="{StaticResource NavButton}">
-    <Setter Property="Background" Value="#18283C"/>
+    <Setter Property="Background" Value="#123B53"/>
     <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
   </Style>
 

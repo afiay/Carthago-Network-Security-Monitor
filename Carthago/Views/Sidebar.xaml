@@ -8,18 +8,18 @@
           BorderBrush="{StaticResource CardBorderBrush}"
           BorderThickness="0,0,1,0">
     <DockPanel>
-      <Border x:Name="BrandHeader" DockPanel.Dock="Top" Padding="18,18,16,16" Background="#071321">
+      <Border x:Name="BrandHeader" DockPanel.Dock="Top" Padding="18,18,16,16" Background="{StaticResource HeaderBgBrush}">
         <Grid>
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="38"/>
             <ColumnDefinition Width="*"/>
           </Grid.ColumnDefinitions>
-          <Border Width="36" Height="36" CornerRadius="11" BorderBrush="{StaticResource AccentAltBrush}" BorderThickness="1" Background="#0A1B2F">
-            <TextBlock Text="◈" Foreground="{StaticResource OkBrush}" FontSize="19" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          <Border Width="36" Height="36" CornerRadius="11" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1" Background="#0B2637">
+            <TextBlock Text="C" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" FontSize="27" HorizontalAlignment="Center" VerticalAlignment="Center"/>
           </Border>
           <StackPanel x:Name="BrandText" Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center">
-            <TextBlock Text="Carthago" FontWeight="Bold" FontSize="17"/>
-            <TextBlock Text="AI Security Monitor" Foreground="{StaticResource TextSubtleBrush}" FontSize="11" Margin="0,1,0,0"/>
+            <TextBlock Text="CARTHAGO" FontWeight="SemiBold" FontSize="17"/>
+            <TextBlock Text="NETWORK SECURITY" Foreground="{StaticResource TextMutedBrush}" FontSize="10" Margin="0,1,0,0"/>
           </StackPanel>
         </Grid>
       </Border>
@@ -40,8 +40,8 @@
 
       <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel x:Name="NavigationStack" Margin="10,12,10,16">
-          <TextBlock Text="SECURITY VIEW" Style="{StaticResource SidebarSectionLabel}"/>
-          <Button x:Name="DashboardNavButton" Style="{StaticResource NavButton}" Click="Nav_Dashboard_Click" ToolTip="Dashboard" AutomationProperties.Name="Dashboard">
+          <TextBlock Text="WORKSPACE" Style="{StaticResource SidebarSectionLabel}"/>
+          <Button x:Name="DashboardNavButton" Style="{StaticResource NavButton}" Click="Nav_Dashboard_Click" ToolTip="Overview" AutomationProperties.Name="Overview">
             <Grid>
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="24"/>
@@ -49,64 +49,11 @@
                 <ColumnDefinition Width="Auto"/>
               </Grid.ColumnDefinitions>
               <TextBlock Text="▣" Foreground="{StaticResource TextMutedBrush}" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-              <TextBlock Grid.Column="1" Text="Dashboard" Style="{StaticResource SidebarNavTitle}" Margin="9,0,0,0"/>
+              <TextBlock Grid.Column="1" Text="Overview" Style="{StaticResource SidebarNavTitle}" Margin="9,0,0,0"/>
               
             </Grid>
           </Button>
-          <Button x:Name="IncidentsNavButton" Style="{StaticResource NavButton}" Click="Nav_Incidents_Click" ToolTip="Incidents" AutomationProperties.Name="Incidents">
-            <Grid>
-              <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="24"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-              </Grid.ColumnDefinitions>
-              <TextBlock Text="▤" Foreground="{StaticResource TextMutedBrush}" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-              <TextBlock Grid.Column="1" Text="Incidents" Style="{StaticResource SidebarNavTitle}" Margin="9,0,0,0"/>
-              
-            </Grid>
-          </Button>
-          <Button x:Name="AnomaliesNavButton" Style="{StaticResource NavButton}" Click="Nav_Anomalies_Click" ToolTip="Anomalies" AutomationProperties.Name="Anomalies">
-            <Grid>
-              <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="24"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-              </Grid.ColumnDefinitions>
-              <TextBlock Text="⌁" Foreground="{StaticResource TextMutedBrush}" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-              <TextBlock Grid.Column="1" Text="Anomalies" Style="{StaticResource SidebarNavTitle}" Margin="9,0,0,0"/>
-              <Border Grid.Column="2" Style="{StaticResource SidebarNavBadge}">
-                <TextBlock Text="400" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSubtleBrush}"/>
-              </Border>
-            </Grid>
-          </Button>
-          <Button x:Name="IncidentQueueNavButton" Style="{StaticResource NavButton}" Click="Nav_IncidentQueue_Click" ToolTip="Incident queue" AutomationProperties.Name="Incident Queue">
-            <Grid>
-              <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="24"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-              </Grid.ColumnDefinitions>
-              <TextBlock Text="▦" Foreground="{StaticResource TextMutedBrush}" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-              <TextBlock Grid.Column="1" Text="Incident Queue" Style="{StaticResource SidebarNavTitle}" Margin="9,0,0,0"/>
-              
-            </Grid>
-          </Button>
-          <Button x:Name="ThreatFeedNavButton" Style="{StaticResource NavButton}" Click="Nav_ThreatFeed_Click" ToolTip="Threat intelligence" AutomationProperties.Name="Threat Intelligence Feed">
-            <Grid>
-              <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="24"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-              </Grid.ColumnDefinitions>
-              <TextBlock Text="◎" Foreground="{StaticResource TextMutedBrush}" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-              <TextBlock Grid.Column="1" Text="Threat Feed" Style="{StaticResource SidebarNavTitle}" Margin="9,0,0,0"/>
-              
-            </Grid>
-          </Button>
-
-          <Separator Style="{StaticResource QuietSeparator}"/>
-          <TextBlock Text="ADVANCED / FORENSICS" Style="{StaticResource SidebarSectionLabel}"/>
-          <Button x:Name="RawTrafficNavButton" Style="{StaticResource NavButton}" Click="Nav_LiveTraffic_Click" ToolTip="Network traffic" AutomationProperties.Name="Network Traffic">
+          <Button x:Name="RawTrafficNavButton" Style="{StaticResource NavButton}" Click="Nav_LiveTraffic_Click" ToolTip="Live traffic" AutomationProperties.Name="Live Traffic">
             <Grid>
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="24"/>
@@ -114,7 +61,7 @@
                 <ColumnDefinition Width="Auto"/>
               </Grid.ColumnDefinitions>
               <TextBlock Text="∿" Foreground="{StaticResource TextMutedBrush}" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-              <TextBlock Grid.Column="1" Text="Raw Traffic" Style="{StaticResource SidebarNavTitle}" Margin="9,0,0,0"/>
+              <TextBlock Grid.Column="1" Text="Live Traffic" Style="{StaticResource SidebarNavTitle}" Margin="9,0,0,0"/>
               
             </Grid>
           </Button>
@@ -245,6 +192,58 @@
               </StackPanel>
             </StackPanel>
           </Expander>
+
+          <Button x:Name="IncidentsNavButton" Style="{StaticResource NavButton}" Click="Nav_Incidents_Click" ToolTip="Incidents" AutomationProperties.Name="Incidents">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="24"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+              </Grid.ColumnDefinitions>
+              <TextBlock Text="▤" Foreground="{StaticResource TextMutedBrush}" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              <TextBlock Grid.Column="1" Text="Incidents" Style="{StaticResource SidebarNavTitle}" Margin="9,0,0,0"/>
+              
+            </Grid>
+          </Button>
+          <Button x:Name="AnomaliesNavButton" Style="{StaticResource NavButton}" Click="Nav_Anomalies_Click" ToolTip="Anomalies" AutomationProperties.Name="Anomalies">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="24"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+              </Grid.ColumnDefinitions>
+              <TextBlock Text="⌁" Foreground="{StaticResource TextMutedBrush}" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              <TextBlock Grid.Column="1" Text="Anomalies" Style="{StaticResource SidebarNavTitle}" Margin="9,0,0,0"/>
+              <!-- No fabricated anomaly count: badges require a live bound source. -->
+            </Grid>
+          </Button>
+          <Button x:Name="IncidentQueueNavButton" Style="{StaticResource NavButton}" Click="Nav_IncidentQueue_Click" ToolTip="Incident queue" AutomationProperties.Name="Incident Queue">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="24"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+              </Grid.ColumnDefinitions>
+              <TextBlock Text="▦" Foreground="{StaticResource TextMutedBrush}" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              <TextBlock Grid.Column="1" Text="Incident Queue" Style="{StaticResource SidebarNavTitle}" Margin="9,0,0,0"/>
+              
+            </Grid>
+          </Button>
+          <Button x:Name="ThreatFeedNavButton" Style="{StaticResource NavButton}" Click="Nav_ThreatFeed_Click" ToolTip="Threat intelligence" AutomationProperties.Name="Threat Intelligence Feed">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="24"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+              </Grid.ColumnDefinitions>
+              <TextBlock Text="◎" Foreground="{StaticResource TextMutedBrush}" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              <TextBlock Grid.Column="1" Text="Threat Feed" Style="{StaticResource SidebarNavTitle}" Margin="9,0,0,0"/>
+              
+            </Grid>
+          </Button>
+
+          <Separator Style="{StaticResource QuietSeparator}"/>
+          <TextBlock Text="ADVANCED / FORENSICS" Style="{StaticResource SidebarSectionLabel}"/>
           <Button x:Name="RawDetectionsNavButton" Style="{StaticResource NavButton}" Click="Nav_Alerts_Click" ToolTip="Detection events" AutomationProperties.Name="Detection Events">
             <Grid>
               <Grid.ColumnDefinitions>
