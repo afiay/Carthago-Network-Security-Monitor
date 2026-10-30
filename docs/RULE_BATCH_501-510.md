@@ -1,6 +1,6 @@
 # GA R501–R510 — outbound data-loss and provider upload provenance
 
-**SOURCE CANDIDATE — UNVERIFIED · 2026-10-30.** Branch: `feature/carthago-reliability-hardening`. Inspected live base HEAD `fd8d2e3d11bfefa9f076f6f86607231ebadee235`. Source commit \`adb218809c7a23d058e04ea4c1d584ba1426a4ea\`; authored-test commit \`539346a00e9b1449ebe7d9d915cdd48eb3995fae\`; final atomic publication is the documentation-descendant remote branch HEAD (a commit cannot embed its own SHA). **230 concrete xUnit invocations AUTHORED, 0 EXECUTED.** No build, test, replay, holdout, CI, runner, benchmark or production capture.
+**SOURCE CANDIDATE — UNVERIFIED · 2026-10-30.** Branch: `feature/carthago-reliability-hardening`. Inspected live base HEAD `fd8d2e3d11bfefa9f076f6f86607231ebadee235`. Source commit `adb218809c7a23d058e04ea4c1d584ba1426a4ea`; authored-test commit `539346a00e9b1449ebe7d9d915cdd48eb3995fae`; final atomic publication is the documentation-descendant remote branch HEAD (a commit cannot embed its own SHA). **230 concrete xUnit invocations AUTHORED, 0 EXECUTED.** No build, test, replay, holdout, CI, runner, benchmark or production capture.
 
 ## Evidence-first review and ten-rule dispositions
 
