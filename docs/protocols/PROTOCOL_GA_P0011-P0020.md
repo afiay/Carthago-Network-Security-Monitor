@@ -1,0 +1,58 @@
+# Carthago protocol intelligence — GA P0011–P0020
+
+**Status:** SOURCE CANDIDATE — UNVERIFIED; TESTS AUTHORED; **0 EXECUTED**  
+**Branch:** feature/carthago-reliability-hardening  
+**Source base SHA:** 568a297281022f66c21bc6c92b28af6277571090 (live branch inspected 2026-10-30). **Source/authored-test/docs commit:** this cohesive candidate commit; **publication SHA:** the branch ref after its expected-HEAD update (the commit cannot contain its own SHA).  
+**Inventory:** exact P0011–P0020 from the owner's 2026-10-30 Library CSV; original Wireshark keys retained. No P IDs registered as RNNN rules.  
+**Previous:** [GA P0001–P0010](PROTOCOL_GA_P0001-P0010.md). **Next exact ten:** **P0021–P0030**.
+
+## Ten-entry source and decision matrix
+
+| P ID | Original key | Disposition | Source-backed baseline and new visibility | Falsifiable security value, required trusted producer and benign alternative |
+| --- | --- | --- | --- | --- |
+| P0011 | ldap | **IMPLEMENTED_ISOLATED** | [LdapMessageInspector](../../Carthago/Services/ProtocolIntelligence/LdapMessageInspector.cs) accepts one strict bounded LDAPv3 BER envelope only with caller-attested plaintext message boundary; port 389 in [PortServiceResolver](../../Carthago/Services/PortServiceResolver.cs) was only a hint. No live producer. | Message ID, operation tag, controls-present and bytes consumed could support directory-query volume analysis; normal searches/replication/admin tools look similar. Bind success, identity, attributes and access outcome need trusted LDAP/AD server audit; never expose DNs or credentials. |
+| P0012 | dcerpc | **IMPLEMENTED_ISOLATED** | [DceRpcPduInspector](../../Carthago/Services/ProtocolIntelligence/DceRpcPduInspector.cs) accepts one connection-oriented v5 PDU header at attested boundary, with endian and auth-trailer checks; no live producer or SMB pipe reassembly. | PDU type, call ID, flags, verifier presence/length could support RPC call-pattern correlation; normal endpoint management also uses RPC. Interface UUID, opnum, actor, success and server action need trusted RPC/Windows event source. |
+| P0013 | epm | **REJECTED_DUPLICATE_OR_NOT_A_PROTOCOL** | Endpoint Mapper is a DCE/RPC interface/service family, not a separately counted wire-framing protocol. | Endpoint enumeration may be benign administration or discovery; needs authenticated RPC binding context and interface UUID, not port 135 alone. |
+| P0014 | rdp | **DEFERRED** | [PortServiceResolver](../../Carthago/Services/PortServiceResolver.cs) has 3389 and optional RdpLike hints; reviewed [PacketHandler](../../Carthago/Services/PacketHandler.cs) lacks verified TPKT/X.224/CredSSP session and authenticated outcome producer. | Brute force, lateral access and session success require trusted TerminalServices/Windows event correlation; ordinary remote support is a confounder. TLS/CredSSP application content is NOT OBSERVABLE. |
+| P0015 | rdpudp | **REJECTED_DUPLICATE_OR_NOT_A_PROTOCOL** | UDP transport extension of RDP, not a new independent remote-desktop application protocol. | Requires trustworthy session association and UDP framing; UDP port presence is not a login or exploit. |
+| P0016 | smtp | **PARTIAL** | [PortServiceResolver](../../Carthago/Services/PortServiceResolver.cs) includes SMTP service/port and optional SmtpLike banner/verb hints, not a mail-server transaction outcome decoder. | Relay abuse/spam needs authenticated mail-server envelope sender/recipient, delivery and policy logs; bulk mail and backups are benign. STARTTLS hides subsequent commands. |
+| P0017 | imap | **DEFERRED** | IMAP/IMAPS port mappings exist, but no verified tagged command/response producer. | Mailbox abuse needs server account/session/outcome audit; normal client sync is benign. TLS ciphertext opaque; port 143/993 is not proof of message access. |
+| P0018 | snmp | **EXISTING** | [SharpSnmpClientAdapter](../../Carthago/Services/Cisco/SharpSnmpClientAdapter.cs) actively polls SNMP; it is NOT passive SNMP dissection or a trusted trap decoder. | Device change anomalies require authenticated poll source, asset identity, baseline and configuration audit; planned maintenance changes are benign. Reuse existing adapter. |
+| P0019 | nfs | **DEFERRED** | No proven NFS operation decoder in inspected packet producer; NFSv3 over ONC RPC differs from NFSv4. | Share abuse/exfiltration needs trusted NFS server operation outcomes, export identity and permissions; backups generate similar volume. |
+| P0020 | rpc | **DEFERRED** | Wireshark rpc key denotes ONC/Sun RPC, **not** P0012 DCE/RPC. No trusted ONC RPC record-marking/XID producer established. | ONC RPC program/procedure observations may contextualize NFS but cannot prove file operations; require transport boundaries and authenticated server/export context. |
+
+**Totals:** 2 implemented isolated, 1 partial, 1 existing active adapter, 4 deferred, 2 rejected as distinct protocols; **0 live integrations** and **0 new registered detection rules**. These are ten original research rows, not ten new decoders.
+
+## Parser limits, privacy and provenance
+
+- **LDAP:** definite-length, minimally encoded BER TLVs; maximum 65,535-byte envelope, nonnegative minimal message ID, recognized LDAP operation tag, optional controls TLV, first-message bytes-consumed. No credential, DN, attribute, SASL, StartTLS, bind result, success or replay inference. LDAP-over-TLS and midstream fragments are **NOT OBSERVABLE**. Deliberately bounded BER subset can reject valid extension forms; malformed/indefinite/overlong data fails closed.
+- **DCE/RPC:** v5 connection-oriented header, selected recognized PDU types, explicit endian handling, 16–16,384-byte fragment bound, request/response/bind minimum and auth verifier/padding bounds. Only first PDU is reported. No NDR, endpoint UUID, opnum, SMB named-pipe framing, authentication tokens, encrypted stubs or success. Fragment flags do not establish a completed call; large negotiated fragments, RTS and uncommon PDU types are deliberately excluded.
+- Both inspectors are stateless, deterministic, allocation-free on success and emit no alerts, logs, raw payload, JSONL events, UI messages, network requests or shared telemetry. A forged shape can resemble a protocol; a positive observation is neither an authenticated actor nor evidence of compromise. A trusted source must attest plaintext/PDU boundary before calling either inspector.
+- [PacketHandler](../../Carthago/Services/PacketHandler.cs) captures bounded early TCP bytes, **not** verified LDAP message boundaries or reassembled RPC PDUs. [TrafficRecord](../../Carthago/Models/TrafficRecord.cs) has no typed LDAP/RPC envelope producer. Both inspectors remain **ISOLATED — NOT LIVE-CAPTURE INTEGRATED**.
+- **BLOCKED — SHARED INTEGRATION:** Future separately approved patch must add provenance-tagged, bounded, reassembly-aware plaintext LDAP message and RPC PDU adapters, with source identity, authenticated trust level, fragment/retransmission behavior, TLS opacity, privacy redaction and optional typed observation contract. Require explicit owner approval, exact HEAD cross-stream review, compatibility/rollback evidence. Rollback removes optional adapter wiring while retaining isolated inspectors. Do not change PacketHandler, TrafficRecord, TrafficCaptureService, csproj, journal, UI, RNNN rules or shared tests unilaterally.
+
+## Threat refresh — 2026-10-30
+
+**P0014 RDP context: CONFIRMED_EXPLOITED_KNOWN_VULNERABILITY (CVE-2026-21533).** CISA's original bulletin dated **2026-02-10** includes Windows Remote Desktop Services elevation of privilege in KEV. Microsoft's same-day advisory describes a **local** privilege escalation requiring an already authorized low-privilege actor, not a remotely observable RDP-session exploit. Affected Windows builds vary by product and must be verified from the vendor's version matrix against actual asset inventory. No affected asset, patch state, exploit IOC, authenticated outcome or packet signature was established in this GA. **No CVE-specific detector is implemented.** [CISA bulletin](https://content.govdelivery.com/accounts/USDHSCISA/bulletins/4093c1e) · [Microsoft advisory](https://msrc.microsoft.com/update-guide/vulnerability/CVE-2026-21533) · [CISA KEV](https://www.cisa.gov/known-exploited-vulnerabilities-catalog).
+
+**P0011–P0013 and P0015–P0020: UNVERIFIED for any candidate-specific exploited CVE.** No cited dated vendor/CISA evidence here establishes an exploitable packet signature, affected deployment, IOC or successful attack for these entries; this does not mean the protocols have no vulnerabilities. FIRST EPSS is a daily CVE-level forecast, not evidence of actual exploitation or local exposure; no EPSS value was assumed. [FIRST EPSS](https://www.first.org/epss/) · [EPSS interpretation](https://www.first.org/epss/faq).
+
+Protocol specifications: [RFC 4511 LDAP](https://www.rfc-editor.org/rfc/rfc4511) (BER envelope, message ID, TLS boundaries), [Microsoft MS-RPCE bind_nak common header](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-rpce/92ba4942-0b1f-41aa-8924-69dd6e49b546), [MS-RPCE sec_trailer](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-rpce/ab45c6a5-951a-4096-b805-7347674dc6ab). Wireshark reference keys were used only for names; no dissector code was copied.
+
+## Authored scenarios — zero executed
+
+| Inspector and source | xUnit methods | Concrete authored invocations | Independent scenario classes |
+| --- | ---: | ---: | --- |
+| [LDAP](../../Carthago.Tests/ProtocolIntelligence/LdapMessageInspectorTests.cs) | 11 | 12 | Positive bind; benign HTTP negative; untrusted/TLS boundary; truncation; BER indefinite/nonminimal length; negative/nonminimal ID; unknown operation; controls and coalescence; unsolicited ID zero; repeated ID with no replay verdict; resource bound. |
+| [DCE/RPC](../../Carthago.Tests/ProtocolIntelligence/DceRpcPduInspectorTests.cs) | 12 | 13 | Positive request/bind; big-endian response; benign HTTP negative; truncated/forged length; unsupported version/representation/PDU type; auth verifier and forged padding; fragment flags and coalescence; untrusted boundary. |
+| **Total** | **23** | **25** | **0 executed**; no build, xUnit, replay, CI, runner, benchmark, packet capture or active scan. |
+
+Fixtures are synthetic, non-secret and specification-inspired, **not** vendor-verified wire captures. Future authorized Windows verification must compile and execute exact-SHA tests, add independently corroborated LDAP and SMB-RPC fixtures, and evaluate realistic TCP fragmentation/retransmission. Until then: **SOURCE CANDIDATE — UNVERIFIED**.
+
+## Source-only divergence and publication review
+
+Live base 568a297281022f66c21bc6c92b28af6277571090. Prior protocol commit 6b7975c131b6dcfc0817b792bb9ef6524cd18235. Five intervening commits affected R531–R540 detection files, two UI views and their separate ledgers; none overlapped protocol-owned paths. A new live HEAD must still be checked immediately before publication, with non-forced expected-HEAD atomic update.
+
+This GA owns two new Services/ProtocolIntelligence inspectors, two new Carthago.Tests/ProtocolIntelligence xUnit files, this document and [protocol progress ledger](PROTOCOL_EXPANSION_PROGRESS.md). It does not edit shared capture/telemetry, UI, detection rules, rule/UI ledgers, profiles, frozen holdouts, confidence floors, Shadow/Disabled, cooldowns, baseline, privacy, approvals or journal-first immutable raw DetectionEvents.
+
+**Next exact GA: P0021–P0030**. Continue independent source-only work; test execution still requires owner command **“now it’s test time.”**
