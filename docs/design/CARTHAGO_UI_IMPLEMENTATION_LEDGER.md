@@ -419,3 +419,55 @@ traffic, inventing Mbps series, or editing engine/telemetry. If UI-only
 reuse is not safely possible, document a precise integration proposal
 instead of changing shared contracts. The detection automation remains
 independent.
+
+## GA UI-08 — Visible local PPS chart (no new telemetry)
+
+**2026-10-30 · SOURCE CANDIDATE — UNVERIFIED.** Audited live feature HEAD
+`9d63cc62d619ad1438bed3d8f00b7a2a6d767662`, following GA UI-07 and independent detection GA R421–R430.
+Authoritative Library image `libfile_b0a34361560c8191b641e432b3e6b15c`
+was visually inspected. UI source commit: `b8f12da58a63e6999c966b1be10fe9b232e97f03`.
+This ledger commit is a direct descendant of the UI source commit; its
+publication SHA is the live branch HEAD after the protected update.
+**No builds, tests, replay, CI, Windows runner or capture executed.**
+
+### Evidence contract and approved-reference mapping
+
+| Reference element | Actual source and presentation | Truthfulness boundary |
+| --- | --- | --- |
+| Network Traffic (Real-time) chart | Existing `TrafficPlot` ScottPlot WPF instance moved from collapsed `DashboardLegacyInfrastructure` to a visible `DashboardTrafficChartPanel` immediately below the four operational KPI cards. Reuses `InitAllPlots` and `RenderTraffic` without duplicating controls. | Local captured **packets/second (PPS)** only, with the existing 10-sample moving average. Not the reference image's total/inbound/outbound Mbps. No new renderer or producer. |
+| Capture health | Existing `CaptureStatusText.Text` and `MonitoringStatusBadge.BorderBrush` ElementName bindings, same as the overview header. | PAUSED/ERROR/OFFLINE/DEGRADED display a caution about stale history and timer-generated zero samples; MONITORING hides the caution. A zero PPS sample does not prove sensor health or packet attribution. |
+| Chart window and empty state | `MainWindow.Core.cs` retains a 120-sample timestamp/PPS history sampled every second; `RenderTraffic` draws only when more than one sample exists. | Before two timer ticks, the plot has no line; no invented values, loading progress, or network-wide coverage. The existing timer can append zeros even when capture is inactive; this is a known producer limitation, not fixed or concealed by the UI. |
+| Responsive/reference fidelity | One full-width navy card with cyan/blue plot and amber moving-average overlay, placed between KPI strip and additional metrics; WPF Grid width follows the existing scroll viewport. | Reference has a chart left of the incident list with three Mbps series; this GA deliberately does **not** restructure the incident/investigation panels or fabricate unsupported series. Screenshot fidelity remains partial until owner-authorized rendering. |
+
+### Static divergence review and ownership
+
+- **Changed source:** `Carthago/Views/MainWindow.xaml` only. This ledger is the only documentation change. No new XAML control name or duplicate `TrafficPlot`; original Analytics `TrafficPlot_Analytics`, protocol/top-talker/severity plots and spark controls are unchanged.
+- Reused existing WPF ScottPlot v5 plotting, original `_trafficXs`/`_trafficYs`, 1-second timer, 120-point bound, existing axes/legend, and existing capture state. No `MainWindow.Plots.cs`, `MainWindow.Core.cs`, capture/model/service/engine/rule, test, project, workflow, or rule-doc edit.
+- No additional packet details, addresses, payloads, evidence, or demo telemetry are exposed. Global demo warnings remain intact; no chart value is represented as authenticated evidence.
+- No change to rule IDs, modes, thresholds, cooldowns, confidence floors, approvals, privacy/journal controls, preferences, navigation, Cisco tools, WebView2, or CLI unavailable state.
+- Source-only XAML anchor/named-control and owned-path review is **not** a compile, binding, visual, accessibility, or runtime verification pass. All new source/documentation remains **UNVERIFIED**.
+
+### Acceptance scenarios — PLANNED, NOT AUTHORED AS TESTS, UNEXECUTED
+
+1. WPF startup resolves the single `TrafficPlot` name and existing ScottPlot v5 styles.
+2. Before two timer ticks, chart is empty without invented values.
+3. Monitoring with captured packets: displayed PPS equals existing one-second packet bucket.
+4. At 11+ samples: optional 10-sample average aligns with the existing PPS history.
+5. Paused capture with retained points: PAUSED badge and stale/zero caution remain visible.
+6. Error, offline and degraded states: status and caution do not claim current traffic.
+7. Monitoring with zero packets: zero is not labeled proof of source health.
+8. Existing Analytics plot still renders independently and no duplicate plot is constructed.
+9. Wide/Standard/Compact and below-1024 windows: chart remains readable without clipping.
+10. Dashboard preferences, incident selection, Live Events filters, Cisco controls, CLI unavailable panel and keyboard navigation remain intact.
+
+**Open quality GAs:** pinned-SHA Windows WPF compilation; actual ScottPlot
+visibility/rendering and timestamp axes; capture-state transitions; keyboard
+and screen-reader accessibility; high-DPI layout; snapshot comparison with
+approved concept; demo/real provenance review. **Tests executed: 0.**
+No field accuracy, validation, production readiness, or certification is claimed.
+
+**Next UI GA UI-09:** audit the visible chart and overview accessibility/
+density at narrow widths; prefer source-only, UI-owned improvements. Do not
+add inbound/outbound Mbps without trusted producers or alter detection work.
+
+**Reference:** [WPF DataTrigger](https://learn.microsoft.com/en-us/dotnet/api/system.windows.datatrigger).
