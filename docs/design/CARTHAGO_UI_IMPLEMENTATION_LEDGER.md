@@ -825,3 +825,93 @@ association. No working CLI, invented telemetry, or shared API changes.
 **Technical reference:**
 [Microsoft WPF accessible name from a nearby TextBlock](https://learn.microsoft.com/en-us/accessibility-tools-docs/items/wpf/edit_name);
 [WPF layout](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/layout).
+
+## GA UI-13 — Live Events accessibility provenance and current grid status
+
+**2026-10-30 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE
+`feature/carthago-reliability-hardening` HEAD:
+`a49134b2582875d74431b1768e4a1bc215dc3700` (independent R471–R480 already published).
+UI source commit: `8066325a1c375c61b38dcc7740ca922f25add32c`. The docs/publication commit is a direct
+descendant and is identified by the protected remote branch ref after
+publication. **Automated tests authored: 0; executed: 0.** No builds,
+xUnit, replays, holdouts, CI, runners, benchmarks, live capture or running
+application screenshots were performed.
+
+### Reference mapping and source contracts
+
+The exact approved 1648×928 Library image
+`libfile_b0a34361560c8191b641e432b3e6b15c` was resolved and
+visually inspected. Its lower **Live Events** table is the reference for
+dense, legible incident-adjacent tabular information, but the image's
+endpoints, timestamps, rule IDs, confidence and evidence-chain entries are
+**demo-only**. This GA adds **accessibility semantics only** to the existing
+read-only `DashboardLiveEventsGrid` in `Carthago/Views/MainWindow.xaml`:
+
+| Existing element | UI-only change | Evidence/accessibility boundary |
+| --- | --- | --- |
+| `DashboardLiveEventsGrid` | Retains its accessible name; adds `AutomationProperties.HelpText` explaining the 80-row display bound, unverified recorded-event timezone, evidence reported presence/count only, and delivery status versus incident resolution. | The original `DashboardEventRowVm` projection reads local `DetectionEvent` data. No payload, raw evidence, chain-of-custody, transport success or resolution is inferred. |
+| `DashboardLiveEventsGrid` | `AutomationProperties.ItemStatus` binds to the **existing** `DashboardLiveEventsStatusText.Text` using `ElementName`. | Reuses the existing displayed count, retained 500 cap, newest-received-first ordering and capture caption. It does not claim a globally complete event history or authenticated capture health. |
+| `DashboardLiveEventsStatusText` | Explicit `AutomationProperties.LiveSetting="Off"`. | Existing refreshes may update the text; the GA does not deliberately request repeated live announcements. Actual UIA exposure/announcement behavior is **unverified**. |
+
+The original `InitializeDashboardLiveEvents`, `RefreshDashboardLiveEvents`,
+`DashboardLiveEventsFilterChanged`, `DashboardLiveEventsTextChanged`,
+`DashboardLiveEventsClearFilters_Click`, and `DashboardLiveEventsOpenDetections_Click`
+consumers were read before editing. All existing controls, names, column
+bindings, filter handlers, 80-row projection, 500-event retention text,
+selection behavior, virtualization and empty-state labels are unchanged.
+The UI remains a read-only local detection table, not a confirmed incident
+or verified evidence-chain viewer. No demo metrics or unsupported Mbps
+series were added.
+
+### Start/end static divergence and concurrency review
+
+- Start HEAD `a49134b2582875d74431b1768e4a1bc215dc3700`
+  is three commits ahead of UI-12 publication
+  `69c92a8065c3d280129190615f697a0a6c753e34`.
+  The intervening R471–R480 changes are confined to
+  `Carthago.Tests/**`, `Carthago/Engine/**` and detection docs;
+  no UI-owned path overlaps.
+- **Owned source file:** `Carthago/Views/MainWindow.xaml`.
+  **Owned documentation file:** this ledger. No shared model,
+  service, engine, rules, capture, privacy, journal, confidence,
+  thresholds, approvals, project, tests, Cisco, WebView2, ScottPlot,
+  navigation or CLI code was modified.
+- Source-only checks confirm unique `DashboardLiveEventsGrid` and
+  `DashboardLiveEventsStatusText` names, a single added `ItemStatus`
+  ElementName binding, and preservation of the original `DataGrid`
+  column definitions and event handlers. The approved dark navy/cyan
+  card geometry and all responsive breakpoints remain unchanged.
+- **Residual risks:** WPF ElementName resolution, UI Automation
+  `ItemStatus` exposure, screen-reader announcement timing and
+  possible duplication of the visible status footer have **not**
+  been verified. Static review is not compilation, XAML parsing,
+  runtime UIA inspection, accessibility certification or visual validation.
+  The recorded event timestamp's timezone is not independently verified.
+
+### Acceptance scenarios — PLANNED ONLY; UNEXECUTED
+
+1. With no local detection events, the existing honest empty message remains visible and grid help does not imply active capture.
+2. With one local event, the grid status reflects the same existing displayed/retained counts as the footer.
+3. With more than 80 matches, the UIA grid status and visible footer report only the bounded displayed count; no full-history claim.
+4. With 500 retained events, the original retention cap and newest-received-first caption remain unchanged.
+5. After severity/protocol/rule/endpoint filters, the grid status follows the original filtered count without changing results.
+6. When demo mode is enabled, the existing demo provenance warning remains visible and no event is presented as independently validated.
+7. Evidence presence/count does not reveal raw evidence or imply chain-of-custody; delivery is not read as incident resolution.
+8. MONITORING/DEGRADED/PAUSED/OFFLINE/ERROR state changes retain original capture caveats; a timer zero never proves health.
+9. Keyboard, screen reader, UIA inspection, high contrast, 125–200% DPI and 1440/1100/1099/1024/1023/640px widths show no clipping, focus trap or repeated live announcements.
+10. Incident selection, local PPS chart/average/history, AlertsGrid filters, CLI unavailable panel, Cisco and detection rule operation remain unchanged.
+
+**Open quality GAs:** owner-authorized pinned-SHA Windows WPF build,
+ElementName binding verification, UIA ItemStatus and HelpText inspection,
+screen-reader/keyboard review, responsive screenshots, capture/demo
+transitions, and regressions. **Tests executed: 0.**
+
+**Next independent UI GA UI-14:** inspect LIVE HEAD, reference and ledger
+for one focused Live Events keyboard/focus or narrow-width readability
+improvement, only if safe and not already implemented. Preserve all
+evidence boundaries and independent detection engineering.
+
+**Technical references:**
+[WPF AutomationProperties](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties);
+[WPF LiveSetting](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.livesetting);
+[WPF UIA ItemStatus](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationelement.automationelementinformation.itemstatus).
