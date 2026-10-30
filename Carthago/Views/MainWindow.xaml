@@ -32,6 +32,82 @@
       <ItemsPanelTemplate x:Key="DashboardKpiCompactPanel">
         <UniformGrid IsItemsHost="True" Columns="2"/>
       </ItemsPanelTemplate>
+      <ItemsPanelTemplate x:Key="DashboardOverviewKpiWidePanel">
+        <UniformGrid IsItemsHost="True" Columns="4"/>
+      </ItemsPanelTemplate>
+      <ItemsPanelTemplate x:Key="DashboardOverviewKpiStandardPanel">
+        <UniformGrid IsItemsHost="True" Columns="2"/>
+      </ItemsPanelTemplate>
+      <ItemsPanelTemplate x:Key="DashboardOverviewKpiCompactPanel">
+        <UniformGrid IsItemsHost="True" Columns="2"/>
+      </ItemsPanelTemplate>
+      <!-- GA UI-03: reusable card template for overview and preference metrics. -->
+      <Style x:Key="DashboardKpiItemContainerStyle" TargetType="{x:Type ContentPresenter}">
+                      <Setter Property="Margin" Value="0,0,10,10"/>
+                    </Style>
+      <DataTemplate x:Key="DashboardKpiCardTemplate">
+                      <Border Style="{StaticResource KpiTileCard}" Height="102">
+                        <Grid>
+                          <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                          </Grid.RowDefinitions>
+
+                          <DockPanel LastChildFill="True">
+                            <TextBlock DockPanel.Dock="Right"
+                                       Text="&#x22EE;"
+                                       Style="{StaticResource SocPanelMenuGlyph}"
+                                       Margin="8,-4,0,0"/>
+                            <StackPanel Orientation="Horizontal">
+                              <TextBlock Text="{Binding Title}" Style="{StaticResource MicroLabel}"/>
+                              <TextBlock Text="  &#x24D8;" Style="{StaticResource SocInfoGlyph}"/>
+                            </StackPanel>
+                          </DockPanel>
+
+                          <Grid Grid.Row="1" Margin="0,5,0,0">
+                            <Grid.ColumnDefinitions>
+                              <ColumnDefinition Width="*"/>
+                              <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                              <TextBlock Text="{Binding Value}"
+                                         FontSize="21"
+                                         FontWeight="Bold"/>
+                              <TextBlock Text="{Binding DeltaText}"
+                                         Foreground="{Binding AccentBrush}"
+                                         FontSize="11"
+                                         FontWeight="SemiBold"
+                                         Margin="8,6,0,0"/>
+                            </StackPanel>
+                            <Border Grid.Column="1"
+                                    Width="40"
+                                    Height="40"
+                                    CornerRadius="12"
+                                    Background="#0B1728"
+                                    BorderBrush="{Binding AccentBrush}"
+                                    BorderThickness="1"
+                                    Opacity="0.98">
+                              <TextBlock Text="{Binding Icon}"
+                                         FontSize="20"
+                                         Foreground="{Binding AccentBrush}"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center"/>
+                            </Border>
+                          </Grid>
+
+                          <TextBlock Grid.Row="2"
+                                     Text="{Binding TrendText}"
+                                     FontFamily="Consolas"
+                                     Foreground="{Binding AccentBrush}"
+                                     FontSize="12"
+                                     Height="16"
+                                     Opacity="0.95"
+                                     TextWrapping="NoWrap"
+                                     TextTrimming="None"/>
+                        </Grid>
+                      </Border>
+                    </DataTemplate>
     </ResourceDictionary>
   </Window.Resources>
 
@@ -339,84 +415,35 @@
                                VerticalAlignment="Center"/>
                   </StackPanel>
                 </Grid>
-                <!-- KPI strip -->
+                <!-- GA UI-03: screenshot-aligned four-card operational strip.
+                     Unavailable sensor and coverage contracts are never substituted with invented counts. -->
+                <ItemsControl x:Name="DashboardOverviewKpiItemsControl"
+                              Margin="0,0,0,8"
+                              HorizontalContentAlignment="Stretch"
+                              ItemTemplate="{StaticResource DashboardKpiCardTemplate}"
+                              ItemContainerStyle="{StaticResource DashboardKpiItemContainerStyle}">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                      <UniformGrid IsItemsHost="True" Columns="4"/>
+                    </ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                </ItemsControl>
+                <!-- Existing preference-controlled statistics remain accessible below the overview. -->
+                <TextBlock Text="Additional metrics"
+                           Style="{StaticResource DashboardSectionTitle}"
+                           FontSize="13"
+                           Margin="0,2,0,8"/>
                 <ItemsControl x:Name="DashboardKpiItemsControl" Margin="0,0,0,12"
-                              HorizontalContentAlignment="Stretch">
+                              HorizontalContentAlignment="Stretch"
+                              ItemTemplate="{StaticResource DashboardKpiCardTemplate}"
+                              ItemContainerStyle="{StaticResource DashboardKpiItemContainerStyle}">
                   <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                       <UniformGrid IsItemsHost="True" Columns="5"/>
                     </ItemsPanelTemplate>
                   </ItemsControl.ItemsPanel>
-                  <ItemsControl.ItemContainerStyle>
-                    <Style TargetType="{x:Type ContentPresenter}">
-                      <Setter Property="Margin" Value="0,0,10,10"/>
-                    </Style>
-                  </ItemsControl.ItemContainerStyle>
-                  <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                      <Border Style="{StaticResource KpiTileCard}" Height="102">
-                        <Grid>
-                          <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                            <RowDefinition Height="Auto"/>
-                          </Grid.RowDefinitions>
-
-                          <DockPanel LastChildFill="True">
-                            <TextBlock DockPanel.Dock="Right"
-                                       Text="&#x22EE;"
-                                       Style="{StaticResource SocPanelMenuGlyph}"
-                                       Margin="8,-4,0,0"/>
-                            <StackPanel Orientation="Horizontal">
-                              <TextBlock Text="{Binding Title}" Style="{StaticResource MicroLabel}"/>
-                              <TextBlock Text="  &#x24D8;" Style="{StaticResource SocInfoGlyph}"/>
-                            </StackPanel>
-                          </DockPanel>
-
-                          <Grid Grid.Row="1" Margin="0,5,0,0">
-                            <Grid.ColumnDefinitions>
-                              <ColumnDefinition Width="*"/>
-                              <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                              <TextBlock Text="{Binding Value}"
-                                         FontSize="21"
-                                         FontWeight="Bold"/>
-                              <TextBlock Text="{Binding DeltaText}"
-                                         Foreground="{Binding AccentBrush}"
-                                         FontSize="11"
-                                         FontWeight="SemiBold"
-                                         Margin="8,6,0,0"/>
-                            </StackPanel>
-                            <Border Grid.Column="1"
-                                    Width="40"
-                                    Height="40"
-                                    CornerRadius="12"
-                                    Background="#0B1728"
-                                    BorderBrush="{Binding AccentBrush}"
-                                    BorderThickness="1"
-                                    Opacity="0.98">
-                              <TextBlock Text="{Binding Icon}"
-                                         FontSize="20"
-                                         Foreground="{Binding AccentBrush}"
-                                         HorizontalAlignment="Center"
-                                         VerticalAlignment="Center"/>
-                            </Border>
-                          </Grid>
-
-                          <TextBlock Grid.Row="2"
-                                     Text="{Binding TrendText}"
-                                     FontFamily="Consolas"
-                                     Foreground="{Binding AccentBrush}"
-                                     FontSize="12"
-                                     Height="16"
-                                     Opacity="0.95"
-                                     TextWrapping="NoWrap"
-                                     TextTrimming="None"/>
-                        </Grid>
-                      </Border>
-                    </DataTemplate>
-                  </ItemsControl.ItemTemplate>
+                  
+                  
                 </ItemsControl>
 
                 <!-- Main triage area -->

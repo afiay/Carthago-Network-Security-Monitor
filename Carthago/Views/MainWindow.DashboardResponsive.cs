@@ -8,6 +8,13 @@ public partial class MainWindow
 {
     partial void ApplyDashboardResponsiveLayout(ResponsiveLayoutMode mode)
     {
+        DashboardOverviewKpiItemsControl.ItemsPanel = (ItemsPanelTemplate)FindResource(mode switch
+        {
+            ResponsiveLayoutMode.Compact => "DashboardOverviewKpiCompactPanel",
+            ResponsiveLayoutMode.Standard => "DashboardOverviewKpiStandardPanel",
+            _ => "DashboardOverviewKpiWidePanel"
+        });
+
         DashboardKpiItemsControl.ItemsPanel = (ItemsPanelTemplate)FindResource(mode switch
         {
             ResponsiveLayoutMode.Compact => "DashboardKpiCompactPanel",

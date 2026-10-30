@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Text.Json;
@@ -22,6 +23,7 @@ namespace Carthago
     {
         private readonly ObservableCollection<DashboardWidgetVm> _dashboardWidgets = new();
         private readonly ObservableCollection<SocKpiVm> _dashboardKpis = new();
+        private readonly ObservableCollection<SocKpiVm> _dashboardOverviewKpis = new();
         private readonly ObservableCollection<SocAnomalyVm> _dashboardAnomalyItems = new();
         private readonly ObservableCollection<SocHostVm> _dashboardHostRows = new();
         private readonly ObservableCollection<SocActionVm> _dashboardActionRows = new();
@@ -55,6 +57,7 @@ namespace Carthago
             EnsureSinkHost();
             DashboardWidgetItemsControl.ItemsSource = _dashboardWidgets;
             DashboardKpiItemsControl.ItemsSource = _dashboardKpis;
+            DashboardOverviewKpiItemsControl.ItemsSource = _dashboardOverviewKpis;
             DashboardAnomalyList.ItemsSource = _dashboardAnomalyItems;
             DashboardHostItemsControl.ItemsSource = _dashboardHostRows;
             DashboardActionItemsControl.ItemsSource = _dashboardActionRows;
@@ -543,6 +546,7 @@ namespace Carthago
             UpdateCaptureToggleButtonState();
 
             CaptureStatusText.Text = status.ToUpperInvariant();
+            UpdateDashboardOverviewThroughput(status);
 
             switch (status)
             {
@@ -928,6 +932,7 @@ namespace Carthago
 
             var context = CreateMetricContext();
             ReplaceCollection(_dashboardKpis, BuildSocKpis(prefs, context));
+            ReplaceCollection(_dashboardOverviewKpis, BuildSocOverviewKpis());
             ReplaceCollection(_dashboardAnomalyItems, BuildSocAnomalyItems());
             ReplaceCollection(_dashboardHostRows, BuildSocHostRows());
             ReplaceCollection(_dashboardActionRows, BuildSocActionRows());
@@ -952,6 +957,77 @@ namespace Carthago
                 : $"Showing 1-{Math.Min(5, _dashboardAnomalySnapshot.Count)} of {_dashboardAnomalySnapshot.Count} anomalies";
 
             UpdateSocSignalDetails();
+        }
+
+        // GA UI-03: these four cards reflect only observed local capture and recent analytics.
+        // Sensor inventory and rule-coverage denominators have no validated producer here.
+        private IEnumerable<SocKpiVm> BuildSocOverviewKpis()
+        {
+            var throughput = GetObservedDashboardThroughput(CaptureStatusText.Text);
+            yield return new SocKpiVm
+            {
+                Title = "Network Throughput",
+                Value = throughput.Value,
+                TrendText = throughput.Caption,
+                Icon = "⇅",
+                AccentBrush = (Brush)(TryFindResource("AccentBrush") ?? Brushes.DeepSkyBlue)
+            };
+
+            yield return new SocKpiVm
+            {
+                Title = "Active Sensors",
+                Value = "—",
+                TrendText = "Inventory unavailable",
+                Icon = "▣",
+                AccentBrush = Brushes.SlateGray
+            };
+
+            // The analytics snapshot is bounded to 150 recent incidents, not a global count.
+            var activeCount = ActiveIncidents().Count();
+            yield return new SocKpiVm
+            {
+                Title = "Open Incidents",
+                Value = activeCount.ToString(CultureInfo.InvariantCulture),
+                TrendText = _demoModeEnabled
+                    ? "Recent (max 150); demo may be included"
+                    : "Recent correlated (max 150)",
+                Icon = "!",
+                AccentBrush = BrushForScore(activeCount == 0 ? 0 : ActiveIncidents().Max(i => i.RiskScore))
+            };
+
+            yield return new SocKpiVm
+            {
+                Title = "Detection Coverage",
+                Value = "—",
+                TrendText = "No validated denominator",
+                Icon = "◇",
+                AccentBrush = Brushes.SlateGray
+            };
+        }
+
+        private (string Value, string Caption) GetObservedDashboardThroughput(string? status)
+        {
+            var monitoring = string.Equals(status, "MONITORING", StringComparison.OrdinalIgnoreCase);
+            var degraded = string.Equals(status, "DEGRADED", StringComparison.OrdinalIgnoreCase);
+            if (!monitoring && !degraded)
+                return ("—", string.Equals(status, "PAUSED", StringComparison.OrdinalIgnoreCase)
+                    ? "Capture paused" : "Capture unavailable");
+
+            if (_mbpsSeries.Count == 0)
+                return ("—", "Awaiting local capture sample");
+
+            return (FormatThroughput(_mbpsSeries[^1]), degraded
+                ? "Local capture · degraded" : "Local capture · observed");
+        }
+
+        private void UpdateDashboardOverviewThroughput(string status)
+        {
+            if (_dashboardOverviewKpis.Count == 0)
+                return;
+
+            var throughput = GetObservedDashboardThroughput(status);
+            _dashboardOverviewKpis[0].Value = throughput.Value;
+            _dashboardOverviewKpis[0].TrendText = throughput.Caption;
         }
 
         private IEnumerable<SocKpiVm> BuildSocKpis(DashboardPreferences prefs, StatisticsMetricContext context)
@@ -1600,12 +1676,36 @@ namespace Carthago
         private static bool Contains(string? value, string needle)
             => !string.IsNullOrWhiteSpace(value) && value.IndexOf(needle, StringComparison.OrdinalIgnoreCase) >= 0;
 
-        private sealed class SocKpiVm
+        private sealed class SocKpiVm : INotifyPropertyChanged
         {
+            private string _value = "—";
+            private string _trendText = "▁▁▁▁▁▁▁▁";
+
+            public event PropertyChangedEventHandler? PropertyChanged;
             public string Title { get; init; } = "";
-            public string Value { get; init; } = "—";
+            public string Value
+            {
+                get => _value;
+                set
+                {
+                    if (string.Equals(_value, value, StringComparison.Ordinal))
+                        return;
+                    _value = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Value)));
+                }
+            }
             public string DeltaText { get; init; } = "";
-            public string TrendText { get; init; } = "▁▁▁▁▁▁▁▁";
+            public string TrendText
+            {
+                get => _trendText;
+                set
+                {
+                    if (string.Equals(_trendText, value, StringComparison.Ordinal))
+                        return;
+                    _trendText = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TrendText)));
+                }
+            }
             public string Icon { get; init; } = "•";
             public Brush AccentBrush { get; init; } = Brushes.DeepSkyBlue;
         }
