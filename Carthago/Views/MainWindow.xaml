@@ -811,8 +811,10 @@
 
                             <Border Style="{StaticResource DetailGridCard}" Margin="0,0,8,6">
                               <StackPanel>
-                                <TextBlock Text="Reasons" Style="{StaticResource SocSubHeader}"/>
-                                <ItemsControl x:Name="DashboardDetailReasonsItems">
+                                <TextBlock x:Name="DashboardDetailReasonsLabel" Text="Reasons" Style="{StaticResource SocSubHeader}"/>
+                                <ItemsControl x:Name="DashboardDetailReasonsItems"
+                                              AutomationProperties.LabeledBy="{Binding ElementName=DashboardDetailReasonsLabel}"
+                                              AutomationProperties.HelpText="Local triage explanations for the selected incident or anomaly signal; not independently verified evidence.">
                                   <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                       <TextBlock Text="{Binding}" Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap" Margin="0,0,0,4"/>
@@ -824,8 +826,10 @@
 
                             <Border Grid.Column="1" Style="{StaticResource DetailGridCard}" Margin="0,0,0,6">
                               <StackPanel>
-                                <TextBlock Text="Tags" Style="{StaticResource SocSubHeader}"/>
-                                <ItemsControl x:Name="DashboardDetailTagsItems">
+                                <TextBlock x:Name="DashboardDetailTagsLabel" Text="Tags" Style="{StaticResource SocSubHeader}"/>
+                                <ItemsControl x:Name="DashboardDetailTagsItems"
+                                              AutomationProperties.LabeledBy="{Binding ElementName=DashboardDetailTagsLabel}"
+                                              AutomationProperties.HelpText="Tags from the selected local incident or anomaly signal; not independent confirmation of a threat.">
                                   <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate><WrapPanel IsItemsHost="True"/></ItemsPanelTemplate>
                                   </ItemsControl.ItemsPanel>
@@ -842,8 +846,10 @@
 
                             <Border Grid.Row="1" Style="{StaticResource DetailGridCard}" Margin="0,0,8,0">
                               <StackPanel>
-                                <TextBlock Text="Related rule IDs" Style="{StaticResource SocSubHeader}"/>
-                                <ItemsControl x:Name="DashboardDetailRulesItems">
+                                <TextBlock x:Name="DashboardDetailRulesLabel" Text="Related rule IDs" Style="{StaticResource SocSubHeader}"/>
+                                <ItemsControl x:Name="DashboardDetailRulesItems"
+                                              AutomationProperties.LabeledBy="{Binding ElementName=DashboardDetailRulesLabel}"
+                                              AutomationProperties.HelpText="Reported rule links for the selected local incident or anomaly signal; a rule ID is not proof of detection accuracy.">
                                   <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate><WrapPanel IsItemsHost="True"/></ItemsPanelTemplate>
                                   </ItemsControl.ItemsPanel>
