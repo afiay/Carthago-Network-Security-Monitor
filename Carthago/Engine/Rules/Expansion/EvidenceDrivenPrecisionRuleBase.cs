@@ -329,6 +329,41 @@ namespace Carthago.Engine.Rules.Expansion
                 case "R420":
                     return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
                         "QNAP_ADMIN_TARGET_AND_PROBE_PROVENANCE_UNAVAILABLE", "A normal QTS authentication request path does not prove a QNAP target or malicious probe.");
+
+            // GA R421-R430 — SOURCE CANDIDATE — UNVERIFIED.
+            // Generic management paths, ports, Host/Info and forged HTTP headers
+            // do not attest product identity, exposure or malicious probing.
+            // Fail closed before signal scoring, burst state or event creation.
+                case "R421":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "SYNOLOGY_DSM_TARGET_AND_PROBE_UNAVAILABLE", "Trusted Synology DSM asset identity and distinct admin-probe behavior are absent.");
+                case "R422":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "VCENTER_SOAP_TARGET_AND_PROBE_UNAVAILABLE", "Trusted vCenter identity and parsed SOAP operation provenance are absent.");
+                case "R423":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "ESXI_HOSTD_TARGET_AND_PROBE_UNAVAILABLE", "Trusted ESXi hostd identity and differentiated probe behavior are absent.");
+                case "R424":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "PROXMOX_API_EXPOSURE_PROVENANCE_UNAVAILABLE", "Trusted Proxmox identity and correlated externally reachable API response are absent.");
+                case "R425":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "SOLR_ADMIN_TARGET_AND_PROBE_UNAVAILABLE", "Validated Solr service identity and probe sequence are absent.");
+                case "R426":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "ELASTIC_CLUSTER_RESPONSE_AND_EXPOSURE_UNAVAILABLE", "Trusted Elasticsearch identity and correlated cluster-info response are absent.");
+                case "R427":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "KIBANA_CONSOLE_EXPOSURE_PROVENANCE_UNAVAILABLE", "Validated Kibana identity and access-control response evidence are absent.");
+                case "R428":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "GRAFANA_ADMIN_PROBE_PROVENANCE_UNAVAILABLE", "Verified Grafana identity and authenticated probe/audit context are absent.");
+                case "R429":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "PROMETHEUS_METRICS_EXPOSURE_PROVENANCE_UNAVAILABLE", "Trusted Prometheus identity and correlated metrics/query response are absent.");
+                case "R430":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "JUPYTER_TOKEN_PROBE_PROVENANCE_UNAVAILABLE", "Validated Jupyter identity and token-verification outcome are absent.");
             }
 
             var signalReasons = CollectSignals(record, spec).ToList();
