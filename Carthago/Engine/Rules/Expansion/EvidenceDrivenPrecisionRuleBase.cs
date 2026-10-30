@@ -290,6 +290,45 @@ namespace Carthago.Engine.Rules.Expansion
                 case "R410":
                     return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
                         "REDLINE_EXFIL_PAYLOAD_CORRELATION_UNAVAILABLE", "Validated RedLine payload or exfiltration content and response correlation.");
+            
+            // GA R411-R420 — SOURCE CANDIDATE — UNVERIFIED.
+            // Current packet/early-HTTP metadata cannot prove a named stealer,
+            // low-variance beacon timing, target appliance identity, exploit,
+            // successful login, Winbox session or UDP discovery exposure.
+            // Ordinary admin endpoints, port numbers and client-supplied
+            // headers are not authenticated appliance or attack evidence.
+            // Fail closed before generic signal scoring, window mutation,
+            // confidence, cooldown and DetectionEvent construction.
+                case "R411":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "LUMMA_FAMILY_SIGNATURE_UNAVAILABLE", "No independently vetted Lumma gate/payload signature or agent provenance is connected.");
+                case "R412":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "BEACON_JITTER_INTERVAL_PROVENANCE_UNAVAILABLE", "No validated per-flow independent interval series or low-variance calculation is connected; generic repeated HTTP requests are not beacon proof.");
+                case "R413":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "CITRIX_APPLIANCE_SCAN_PROVENANCE_UNAVAILABLE", "Generic Gateway login paths do not prove a Citrix asset or scanning behavior.");
+                case "R414":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "IVANTI_EXPLOIT_PROVENANCE_UNAVAILABLE", "A normal Ivanti API or VPN request shape does not establish exploitation or target identity.");
+                case "R415":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "F5_TMUI_TARGET_AND_PROBE_PROVENANCE_UNAVAILABLE", "TMUI login and management paths are not authenticated F5 target or attack evidence.");
+                case "R416":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "SONICWALL_EXPLOIT_SIGNATURE_UNAVAILABLE", "Generic VPN configuration filenames do not prove SonicWall identity or exploit behavior.");
+                case "R417":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "CISCO_ASA_WEBVPN_PROBE_PROVENANCE_UNAVAILABLE", "WebVPN routes and HTTP headers do not establish Cisco ASA asset identity or unauthorized probing.");
+                case "R418":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "MIKROTIK_WINBOX_PROTOCOL_AND_ASSET_UNAVAILABLE", "An inbound TCP destination port alone does not prove a Winbox session or a MikroTik appliance.");
+                case "R419":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "UBIQUITI_DISCOVERY_RESPONSE_AND_EXPOSURE_UNAVAILABLE", "UDP destination port 10001 does not establish a Ubiquiti discovery response or externally exposed device.");
+                case "R420":
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "QNAP_ADMIN_TARGET_AND_PROBE_PROVENANCE_UNAVAILABLE", "A normal QTS authentication request path does not prove a QNAP target or malicious probe.");
             }
 
             var signalReasons = CollectSignals(record, spec).ToList();
