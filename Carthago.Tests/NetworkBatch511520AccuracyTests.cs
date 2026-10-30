@@ -157,6 +157,7 @@ public sealed class NetworkBatch511520AccuracyTests
                 record.Destination = null;
                 record.HttpHost = null;
                 record.Sni = null;
+                record.ProcessName = null;
                 record.Info = null;
                 break;
             case "malformed-target":
