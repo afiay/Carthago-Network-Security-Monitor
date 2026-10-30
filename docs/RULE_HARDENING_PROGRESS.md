@@ -13,9 +13,9 @@ authored regression tests, batch specification and ledger update together.
 Distinguish authored tests from executed test evidence and a detector match
 from a validated operational alert.
 
-**Latest documented batch:** [R431–R440](RULE_BATCH_431-440.md) — SOURCE
-CANDIDATE — UNVERIFIED; 140 authored xUnit invocations, 0 executed.
-Next contiguous development GA is R441–R450, subject to live HEAD review.
+**Latest documented batch:** [R441–R450](RULE_BATCH_441-450.md) — SOURCE
+CANDIDATE — UNVERIFIED; 170 authored xUnit invocations, 0 executed.
+Next contiguous development GA is R451–R460, subject to live HEAD review.
 The 2026-10-30 author-only branch rewrite replaced historical HEAD
 `a7166038cd947339d9671d7a873babbd00db080a` with
 `4dd73f3f6de2c0c6b9a6fd299d0c306ebcc3a9cc`; historical commit
@@ -1023,3 +1023,35 @@ remain separate. Only detection evaluator, new boundary helper, new
 regression tests, this batch doc and progress ledger changed. No UI files.
 
 **Next contiguous GA: R441–R450**, conditional on live branch inspection.
+
+## GA R441–R450 — database and message-broker provenance boundary (2026-10-30)
+
+**SOURCE CANDIDATE — UNVERIFIED.** Live base HEAD
+`d074155048f8aed1dc8fbf2dd9c630663dc7d323` (UI GA UI-09 published). Source commit
+`20d3a534ad91f5aaac1bbb047a851414e25bf503`, authored-test commit
+`8c6eaa16d02fb03274fcedff0299c4b3423055ed`, source/test Kafka
+protocol wording correction `1e55dbbf8a962bef3923dc3cd68c18953c55107a`. Final publication is the
+documentation-descendant commit/remote HEAD after the single non-forced
+expected-HEAD update; a commit cannot contain its own SHA.
+
+All ten R441, R442, R443, R444, R445, R446, R447, R448, R449 and R450
+are **BLOCKED** pending trusted native-protocol decoding, authenticated
+service identity, server-response correlation or verified external
+accessibility. Reused the existing ServiceExposureEvidenceBoundary guard
+to fail closed before scoring, burst/cooldown state or event construction;
+no speculative positive, invented HTTP decryption or successful access.
+Original Alert modes, confidence **82%**, thresholds (**R442=4**, others 1),
+windows (**R442=10m**, others 15m), cooldown **30m**, severities
+(**R449 Medium**, others High), approvals, privacy, journal and baseline
+safeguards preserved. No new secret retention or UI changes.
+See [R441–R450 batch contract](RULE_BATCH_441-450.md) for ten individual
+reason codes, legitimate-traffic risks, original protocol mismatches,
+privacy limits and the exact authored scenario inventory.
+
+**170 concrete xUnit invocations AUTHORED; 0 EXECUTED.** No build, xUnit,
+replay, holdout, CI, runner, benchmark or production capture. The historical
+4,940/4,940 checkpoint predates these changes; frozen R102 V1 FAILED 4/6,
+V2 0/4 approved external sources and R343/R295/R275/R163 replay obligations
+remain separate. Exact five changed paths: the shared evaluator comment,
+service boundary helper, new test file, this batch doc and progress ledger.
+**Next contiguous GA: R451–R460**, subject to fresh live source inspection.
