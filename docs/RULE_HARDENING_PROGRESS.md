@@ -761,3 +761,42 @@ From verified remote HEAD ebf08c4b59c0322308a5c8718c5d85c01095d1fc (R351–R355 
 
 No build, test, replay, benchmark, holdout, CI, runner or production capture invoked. Confidence floors R102 80%, R118 86%, R163 84%, existing modes, approvals, privacy and frozen evidence unchanged. R102 V1 **FAILED 4/6**, V2 independent reviewed capture **PENDING**. Four trusted-audit/SSRF replay blockers remain; prior xUnit counts are not evidence of this batch's correctness. Source 3d3126d92bee347598d3e2a44c354b8e3b31e1df; tests 31205081dea8e30eac04f110b8c48bbb3d03f7fe; exact paths, dispositions and scenario inventory: docs/RULE_BATCH_356-360.md.
 **Next R361–R365 only after expected-HEAD atomic publication.**
+
+
+## 2026-10-30 — GA recovery checkpoint: R356–R360 published, NOT tested
+
+The three preserved unpublished R356–R360 commits were recovered on the existing
+\`feature/carthago-reliability-hardening\` branch with the exact original 19 file
+blobs and a non-forced, expected-HEAD-protected ref update. No unrelated paths
+changed. The recovered commit chain is:
+
+- implementation \`fd8ea1e354f5e7e68ff2ee152356793cf0812461\`
+  (original source \`3d3126d92bee347598d3e2a44c354b8e3b31e1df\`)
+- authored tests \`89b6478270bf4322f9c825a736946ed1f95b0084\`
+  (original source \`31205081dea8e30eac04f110b8c48bbb3d03f7fe\`)
+- documentation \`ced3fb4e8c3e0e247faa28c0c5c85db99d85efc4\`
+  (original source \`511bbb3ce502d6ff92efe316b4818e8d3f508151\`)
+
+**78 scenarios AUTHORED, ZERO executed for R356–R360.** No builds, xUnit,
+replays, holdouts, Actions workflow runs, or Windows runner jobs were launched
+for this recovery. The last recorded full xUnit \`4,940/4,940\` predates this
+candidate; its four replay blockers remain R343, R295, R275 and R163. R102
+V1 remains FAILED 4/6 and V2 remains 0/4 approved external evidence sources.
+Do not interpret publication as validation or promotion.
+
+**Next sequential development GA: R361–R365** (not R102/R343 and not
+R366–R370). Initial source reconnaissance confirmed all five existing generic
+rule shells; the next work is the five-rule evidence-precision review, advanced
+scenario authoring, and source-only candidate implementation. Preserve all
+runtime modes, thresholds, confidence floors, provenance and privacy controls.
+A source review flagged a potential R365 privacy boundary: the bounded HTTP
+parser currently lists other secret headers for redaction but not
+\`X-Vault-Token\`. Trace its retained-header path and author a regression
+contract before any R365 promotion; no live or synthetic test has confirmed
+this potential leak in this checkpoint. This observation is not permission to
+change alert policy or run tests.
+
+The hourly development automation remains disabled. The owner has not
+authorized test execution. All future writes must check current branch HEAD,
+avoid existing code duplication, and publish only via non-forced expected-HEAD
+protection.
