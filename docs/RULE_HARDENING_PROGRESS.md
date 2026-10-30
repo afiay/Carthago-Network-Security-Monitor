@@ -13,9 +13,12 @@ authored regression tests, batch specification and ledger update together.
 Distinguish authored tests from executed test evidence and a detector match
 from a validated operational alert.
 
-**Latest documented batch:** [R441–R450](RULE_BATCH_441-450.md) — SOURCE
-CANDIDATE — UNVERIFIED; 170 authored xUnit invocations, 0 executed.
-Next contiguous development GA is R451–R460, subject to live HEAD review.
+**Latest documented batch:** [R451–R460](RULE_BATCH_451-460.md) — SOURCE
+CANDIDATE — UNVERIFIED; 180 authored xUnit invocations, 0 executed.
+Source commit `7f94a2e37c53981cb71d5e927b99c9638c316db3`; authored-test commit `95f4be3099c80e25efbef50e85f289919d7d3066`.
+Atomic publication is the documentation-descendant commit at the live branch
+ref; a Git commit cannot embed its own SHA. Next contiguous development
+GA is R461–R470, subject to fresh live HEAD/source inspection.
 The 2026-10-30 author-only branch rewrite replaced historical HEAD
 `a7166038cd947339d9671d7a873babbd00db080a` with
 `4dd73f3f6de2c0c6b9a6fd299d0c306ebcc3a9cc`; historical commit
@@ -1055,3 +1058,11 @@ V2 0/4 approved external sources and R343/R295/R275/R163 replay obligations
 remain separate. Exact five changed paths: the shared evaluator comment,
 service boundary helper, new test file, this batch doc and progress ledger.
 **Next contiguous GA: R451–R460**, subject to fresh live source inspection.
+
+
+## GA R451–R460 source-only publication — 2026-10-30
+
+- Ten consecutive rules R451, R452, R453, R454, R455, R456, R457, R458, R459, R460: **BLOCKED** on missing authenticated MQTT/DB outcome, calibrated mDNS discovery/host-role, SSDP/IPP/NetBIOS protocol or printer identity evidence.
+- Source `7f94a2e37c53981cb71d5e927b99c9638c316db3`; authored tests `95f4be3099c80e25efbef50e85f289919d7d3066`; [batch specification](RULE_BATCH_451-460.md). Publication commit is the documentation commit at the branch HEAD when the atomic expected-HEAD update succeeds; the run report records its exact SHA.
+- **180 xUnit invocations authored, 0 executed; SOURCE CANDIDATE — UNVERIFIED.** No build, test, replay, CI, runner or capture was run. Original thresholds, modes, confidence floors, privacy, approvals and historical holdout evidence preserved.
+- Next independent ten-rule GA: **R461–R470**, after live HEAD inspection.
