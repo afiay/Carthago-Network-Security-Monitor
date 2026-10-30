@@ -1761,3 +1761,44 @@ The live feature HEAD, prior UI-22 source/ledger, intervening protocol changes, 
 **Next independent UI GA UI-24:** inspect latest live HEAD, approved reference, ledger and original WPF consumers for one new safe UI-owned accessibility/readability/visual-consistency improvement outside UI-01–23.
 
 **References:** [WPF AutomationProperties.ItemStatus](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.itemstatus); [WPF AutomationProperties.LiveSetting](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.livesetting).
+
+## GA UI-24 — Truthful local capture status in the global footer
+
+**2026-10-30 · SOURCE CANDIDATE — UNVERIFIED.** Starting live feature HEAD: `2ae551a61a542833bda954d8ad3bc524ec94cae2` (independent protocol P0051–P0060 source candidate already present). **UI source commit:** `4ee0df8fcb8ed0c851dc540626bf47beaae97321`. **Owned paths:** `Carthago/Views/MainWindow.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md` only. **Tests authored: 0; executed: 0.** No dotnet build/test, xUnit, replay, holdout, CI, GitHub Actions, Windows runner, benchmark, capture, or running-WPF inspection.
+
+### Approved reference, original consumers and provenance
+
+Retrieved and visually inspected exact approved ChatGPT Library PNG `libfile_b0a34361560c8191b641e432b3e6b15c` (1648×928). Its navy/graphite/cyan/teal design, restrained severity, navigation, card geometry, incident triage and responsive layout are retained. Screenshot IPs, rule IDs, timestamps, confidence, Mbps series and sensor metrics are **DEMO ONLY**; they are not Carthago observations.
+
+Original `MainWindow.xaml` global footer contained an unconditional green indicator with **"All systems operational"**, a hard-coded **"DB: Healthy"** label, and initial **"Telemetry: On"** text. The WPF `UpdateMonitoringHeader` consumer in `MainWindow.Dashboard.cs` already computes a bounded local capture status from the existing capture error, flow state, sink host and control state. It updates `FooterTelemetryStateText.Text` and `Foreground` for Monitoring/Paused/Error/Degraded/Offline and updates `FooterUtcText.Text`. It does **not** establish overall system, database or sensor health. `CaptureStatusText` and `MonitoringStatusBadge` remain separate existing header indicators. No code path was found that substantiates the footer's static global-health/database claims.
+
+### One cohesive UI-owned improvement
+
+The global footer now says **"Local capture state"** rather than **"All systems operational"**. Its small status dot binds to the existing `FooterTelemetryStateText.Foreground` (neutral at startup, then the original capture-state color), rather than being unconditionally green. A tooltip and WPF help text explicitly distinguish capture state from overall system/database/sensor health. The right-hand label now reads **"Capture:"**, retaining the existing `FooterTelemetryStateText` x:Name and original `UpdateMonitoringHeader` updates. Its initial placeholder is neutral **"Unknown"**, not unsupported **"On"**. The hard-coded **"DB: Healthy"** pair is removed, while the existing UTC clock, footer layout and original state producer remain intact.
+
+This change adds **no** capture-health check, database check, telemetry, timer, polling, binding converter, API, action, navigation behavior or security claim. No status logic, consumer, event handler, model, service, engine, rule, protocol, evidence, trust/privacy control or automation setting is modified. The local PPS ScottPlot (ten-sample average, bounded 120-point history), KPIs, prioritized incidents, investigation, read-only Live Events (80 displayed/500 retained), explicitly UNAVAILABLE visual-only CLI, Cisco/WebView2 and responsive thresholds remain untouched.
+
+### Static divergence review and residual risks
+
+Start: live feature HEAD `2ae551a61a542833bda954d8ad3bc524ec94cae2` is a protocol P0051–P0060 commit directly following UI-23 publication HEAD `121ebc81a09e49d4543697ee2216b29259844c38`; the intervening protocol paths are independent of `Carthago/Views/**` and `docs/design/**`. Prior UI-23 source and ledger, the approved image, footer XAML, `MainWindow.Dashboard.cs` `UpdateMonitoringHeader`, header capture badge, and dashboard responsive partial were read. Source candidate changes only the footer XAML. Before publication, recheck remote HEAD, parent/tree, complete changed paths, WPF names/bindings, documentation source SHA and concurrent detection/protocol paths; publish only with a fresh expected-SHA lease.
+
+**Risks:** WPF forward `ElementName` binding to `FooterTelemetryStateText.Foreground`, initialization timing, actual status-color updates, UI Automation help text, high-contrast themes, keyboard/screen-reader output, 125–200% DPI and below-1024 footer layout are **UNVERIFIED**. The footer reflects the existing local capture-state projection, which is **not** a database/sensor/global-health verdict or proof of live packets. No runtime evidence or accessibility score is claimed.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. Before first status refresh, footer shows neutral Unknown rather than asserting On/healthy.
+2. Monitoring state reuses existing On text/color, without asserting database or sensor health.
+3. Paused state reuses existing Paused text/color and the status dot follows it.
+4. Offline state reuses existing Offline text/color and avoids an unconditional green dot.
+5. Error state reuses existing Error text/color and leaves error provenance in the original header.
+6. Degraded state reuses existing Degraded text/color and does not imply healthy capture.
+7. Tooltip and UI Automation help text describe the narrow capture-state provenance without exposing secrets.
+8. UTC footer time remains updated by the existing consumer; no new timer is introduced.
+9. At 1440/1100/1099/1024/1023/640px, 125–200% DPI and high contrast, footer content and focus/reading order remain legible.
+10. KPIs, local PPS, incident/investigation, Live Events, unavailable CLI, Cisco/WebView2/ScottPlot, privacy and independent detection/protocol streams remain unchanged.
+
+**Open quality GAs:** pinned-SHA Windows WPF build, actual status transitions, UI Automation/screen reader, keyboard, high contrast/DPI and responsive screenshots only after explicit owner authorization. **Executed tests: 0.**
+
+**Next independent UI GA UI-25:** inspect live HEAD, exact approved image, ledger and WPF consumers for one new cohesive UI-owned accessibility/readability/visual-consistency improvement outside UI-01–24.
+
+**References:** [WPF ElementName binding](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/data/how-to-bind-the-properties-of-two-controls); [WPF AutomationProperties.HelpText](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.helptext); [WPF layout](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/layout).
