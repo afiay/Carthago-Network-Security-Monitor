@@ -13,11 +13,13 @@
 
 | [GA P0011–P0020](PROTOCOL_GA_P0011-P0020.md) | 568a297281022f66c21bc6c92b28af6277571090 | P0011–P0020 | 2 IMPLEMENTED_ISOLATED (LDAP, DCE/RPC), 1 PARTIAL (SMTP), 1 EXISTING (active SNMP), 4 DEFERRED, 2 REJECTED; 0 integrated | 23 / 25 | 0 | Source-only bounded LDAP BER and DCE/RPC v5 header inspectors; attested message/PDU boundary required |
 
-**Last completed research GA:** P0011–P0020 (source-only, unverified). **Next exact ten IDs:** **P0021–P0030**. Do not skip blocked candidates, invent new P IDs, rewrite historical outcomes, or treat authored tests as executed. Recover live HEAD and compare concurrent detection/UI stream paths before publication.
+| [GA P0021–P0030](PROTOCOL_GA_P0021-P0030.md) | d0cf9e925b65038bd9dfe74b4238533e12f71b1b | P0021–P0030 | 3 IMPLEMENTED_ISOLATED (PostgreSQL startup, RESP2, AMQP preface), 2 PARTIAL (DHCPv4, NBNS metadata), 5 DEFERRED; 0 integrated | 38 / 43 | 0 | Source-only bounded protocol observers; trusted plaintext message boundary required; no shared integration |
+
+**Last completed research GA:** P0021–P0030 (source-only, unverified). **Next exact ten IDs:** **P0031–P0040**. Do not skip blocked candidates, invent new P IDs, rewrite historical outcomes, or treat authored tests as executed. Recover live HEAD and compare concurrent detection/UI stream paths before publication.
 
 ## Unresolved independent obligations
 
 - Owner approval and cross-stream review for any shared capture/telemetry/record schema integration; source-only isolated work may continue meanwhile.
 - First actual build/xUnit/Windows replay awaits explicit owner command **“now it’s test time.”**
 - Live sensor provenance, TCP stream boundaries, DTLS 1.3 encrypted records, endpoint/proxy logs and NetScaler asset/config/IOC correlation are not established by these isolated inspectors.
-- Continue source-only with P0021–P0030; preserve detection and UI ledgers, frozen holdouts, journal-first raw DetectionEvents, privacy, cooldowns, thresholds and rule IDs.
+- Continue source-only with P0031–P0040; preserve detection and UI ledgers, frozen holdouts, journal-first raw DetectionEvents, privacy, cooldowns, thresholds and rule IDs.
