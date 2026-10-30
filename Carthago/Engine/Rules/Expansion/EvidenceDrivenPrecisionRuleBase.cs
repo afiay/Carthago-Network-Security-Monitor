@@ -157,6 +157,15 @@ namespace Carthago.Engine.Rules.Expansion
                 return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
                     missingOtCommandEvidence.Code, missingOtCommandEvidence.Detail);
 
+            // GA R481-R490 — SOURCE CANDIDATE — UNVERIFIED.
+            // Wire framing, ports, HTTP method names, packet Info and spoofed
+            // audit headers cannot attest decoded OT operations or outcomes.
+            // Stop before generic scoring, burst counters and cooldown state.
+            var otDeepGap = OtDeepOperationEvidenceBoundary.GetMissingProducer(spec.RuleId);
+            if (otDeepGap is { } missingOtDeepEvidence)
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                    missingOtDeepEvidence.Code, missingOtDeepEvidence.Detail);
+
             if (spec.RequireHttp && !HasHttpContext(record))
                 return NoMatch(RuleNoMatchReasonCategory.NotApplicableProtocol, "HTTP_CONTEXT_REQUIRED", "Rule requires HTTP method, URI, host, headers, or HTTP protocol context.");
 
