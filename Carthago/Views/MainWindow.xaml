@@ -489,7 +489,9 @@
                                       Height="240"
                                       MinHeight="180"
                                       AutomationProperties.Name="Local packets per second history"
-                                      AutomationProperties.HelpText="Local packet counts per second and a ten-sample moving average. Not inbound or outbound throughput."/>
+                                      AutomationProperties.HelpText="Local timer PPS and ten-sample moving average only; not inbound/outbound Mbps or proof of active capture. The current local timer summary is available as item status."
+                                      AutomationProperties.ItemStatus="{Binding Text, ElementName=DashboardTrafficChartTextSummary}"
+                                      AutomationProperties.LiveSetting="Off"/>
                     <!-- GA UI-10: truthful waiting state; no additional telemetry. -->
                     <Border x:Name="DashboardTrafficChartWaitingPanel"
                             Grid.Row="1"
