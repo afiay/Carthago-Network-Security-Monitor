@@ -723,9 +723,12 @@
                         </StackPanel>
                         <StackPanel Grid.Column="1" HorizontalAlignment="Right">
                           <TextBlock Text="RISK SCORE" Style="{StaticResource MicroLabel}" HorizontalAlignment="Right"/>
-                          <Border x:Name="DashboardDetailRiskRing" Width="84" Height="84" CornerRadius="42" BorderThickness="6" BorderBrush="{StaticResource WarnBrush}" Margin="0,4,0,0">
+                          <Border x:Name="DashboardDetailRiskRing" Width="84" Height="84" CornerRadius="42" BorderThickness="6" BorderBrush="{StaticResource WarnBrush}" Margin="0,4,0,0"
+                                  ToolTip="Local risk score unavailable; baseline learning is not proof of capture health.">
                             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                              <TextBlock x:Name="DashboardDetailRiskText" Text="&#x2014;" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center"/>
+                              <TextBlock x:Name="DashboardDetailRiskText" Text="&#x2014;" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center"
+                                         AutomationProperties.Name="Local risk score unavailable"
+                                         AutomationProperties.HelpText="Local risk scores are estimates, not detection confidence or verified accuracy."/>
                               <TextBlock x:Name="DashboardDetailRiskBadgeText" Text="Learning" Foreground="{StaticResource WarnBrush}" FontSize="10" FontWeight="Bold" HorizontalAlignment="Center"/>
                             </StackPanel>
                           </Border>

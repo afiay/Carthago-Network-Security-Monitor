@@ -8,6 +8,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text.Json;
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -1312,6 +1313,12 @@ namespace Carthago
             DashboardDetailRiskBadgeText.Foreground = detail.RiskBrush;
             DashboardDetailRiskText.Text = detail.RiskText;
             DashboardDetailRiskBadgeText.Text = detail.RiskLabel;
+            // Describe the currently selected local score without presenting it as detection confidence.
+            string riskDescription = detail.RiskText == "—"
+                ? "Local risk score unavailable. No selected signal; baseline learning is not proof of capture health."
+                : $"Selected local risk score {detail.RiskText}, {detail.RiskLabel} band. Local ranking estimate, not detection confidence or verified accuracy.";
+            AutomationProperties.SetName(DashboardDetailRiskText, riskDescription);
+            DashboardDetailRiskRing.ToolTip = riskDescription;
             DashboardDetailTitleText.Text = detail.Title;
             DashboardDetailSubtitleText.Text = detail.Subtitle;
             DashboardDetailSourceText.Text = detail.Source;
