@@ -263,10 +263,9 @@
       <Grid Grid.Row="1">
 
         <!-- ===== Legacy analytics infrastructure =====
-             These hidden controls keep the existing traffic/plot update pipeline alive
-             after the main dashboard became widget-driven. They are not displayed
-             on the minimal workspace, but MainWindow.Core.cs and MainWindow.Plots.cs
-             still update them for advanced/analytics views and compatibility. -->
+             Legacy protocol and spark plots remain hidden for existing update paths.
+             The original TrafficPlot is now visible in the Security Overview.
+             MainWindow.Core.cs and MainWindow.Plots.cs continue to update it. -->
         <Grid x:Name="DashboardLegacyInfrastructure"
               Visibility="Collapsed"
               IsHitTestVisible="False"
@@ -285,7 +284,7 @@
             <TextBlock x:Name="Alerts60sText"/>
           </StackPanel>
           <StackPanel Grid.Row="1">
-            <ScottPlot:WpfPlot x:Name="TrafficPlot"/>
+
             <ScottPlot:WpfPlot x:Name="ProtocolPlot"/>
             <ScottPlot:WpfPlot x:Name="TopTalkersPlot"/>
             <ScottPlot:WpfPlot x:Name="SeverityPlot"/>
@@ -436,6 +435,76 @@
                     </ItemsPanelTemplate>
                   </ItemsControl.ItemsPanel>
                 </ItemsControl>
+                <!-- GA UI-08: existing local PPS ScottPlot, moved from collapsed legacy infrastructure. -->
+                <Border x:Name="DashboardTrafficChartPanel"
+                        Style="{StaticResource PageSurface}"
+                        Padding="14"
+                        Margin="0,0,0,12"
+                        AutomationProperties.Name="Local packet-rate history chart">
+                  <Grid>
+                    <Grid.RowDefinitions>
+                      <RowDefinition Height="Auto"/>
+                      <RowDefinition Height="*"/>
+                      <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid Margin="0,0,0,8">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                      </Grid.ColumnDefinitions>
+                      <StackPanel>
+                        <TextBlock Text="Network Traffic (Local PPS)"
+                                   Style="{StaticResource DashboardSectionTitle}"/>
+                        <TextBlock Text="Local capture samples, rolling 120-second window"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   FontSize="11"
+                                   TextWrapping="Wrap"/>
+                      </StackPanel>
+                      <StackPanel Grid.Column="1"
+                                  Orientation="Horizontal"
+                                  VerticalAlignment="Center"
+                                  Margin="12,0,0,0">
+                        <Ellipse Width="8" Height="8"
+                                 Fill="{Binding BorderBrush, ElementName=MonitoringStatusBadge}"
+                                 VerticalAlignment="Center"
+                                 Margin="0,0,6,0"/>
+                        <TextBlock Text="{Binding Text, ElementName=CaptureStatusText}"
+                                   Foreground="{Binding BorderBrush, ElementName=MonitoringStatusBadge}"
+                                   FontSize="11"
+                                   FontWeight="SemiBold"
+                                   VerticalAlignment="Center"/>
+                      </StackPanel>
+                    </Grid>
+                    <ScottPlot:WpfPlot x:Name="TrafficPlot"
+                                      Grid.Row="1"
+                                      Height="240"
+                                      MinHeight="180"
+                                      AutomationProperties.Name="Local packets per second history"
+                                      AutomationProperties.HelpText="Local packet counts per second and a ten-sample moving average. Not inbound or outbound throughput."/>
+                    <StackPanel Grid.Row="2" Margin="0,8,0,0">
+                      <TextBlock Text="PPS and 10-sample average only; no inbound/outbound or Mbps series are available here."
+                                 Foreground="{StaticResource TextMutedBrush}"
+                                 FontSize="11"
+                                 TextWrapping="Wrap"/>
+                      <TextBlock Text="Capture not fully active: retained history and timer-generated zeros may not reflect new observations."
+                                 Foreground="{StaticResource TextMutedBrush}"
+                                 FontSize="11"
+                                 Margin="0,4,0,0"
+                                 TextWrapping="Wrap">
+                        <TextBlock.Style>
+                          <Style TargetType="{x:Type TextBlock}">
+                            <Setter Property="Visibility" Value="Visible"/>
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding Text, ElementName=CaptureStatusText}" Value="MONITORING">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </TextBlock.Style>
+                      </TextBlock>
+                    </StackPanel>
+                  </Grid>
+                </Border>
                 <!-- Existing preference-controlled statistics remain accessible below the overview. -->
                 <TextBlock Text="Additional metrics"
                            Style="{StaticResource DashboardSectionTitle}"
