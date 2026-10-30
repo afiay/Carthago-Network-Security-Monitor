@@ -43,6 +43,10 @@ namespace Carthago.Engine.Rules.Expansion
                     "TLS/443 and a Bluetooth gateway label cannot prove trusted gateway role, correlated outbound egress, or an unapproved destination."),
                 "R469" => ("ADB_PROTOCOL_HANDSHAKE_AND_ACCESS_POLICY_UNAVAILABLE",
                     "TCP/5555 or an Android Debug Bridge label does not prove a decoded ADB handshake, successful access, or unauthorized device exposure."),
+                "R471" => ("RDP_CLIPBOARD_FILE_CHANNEL_PROVENANCE_UNAVAILABLE",
+                    "TCP/3389 and an RDP label cannot reveal an encrypted clipboard virtual-channel file transfer, its direction, or approved-session policy."),
+                "R472" => ("REMOTE_SUPPORT_SESSION_AND_ASSET_POLICY_UNAVAILABLE",
+                    "A remote-support process or service name cannot prove an authenticated remote-control session, approved tool inventory, or unexpected use."),
                 "R470" => ("MDM_ENROLLMENT_OUTCOME_BURST_UNAVAILABLE",
                     "MDM URLs, HTTP methods or repeated traffic do not establish authenticated enrollment outcomes, distinct devices, or a calibrated burst."),
                 _ => null

@@ -147,6 +147,16 @@ namespace Carthago.Engine.Rules.Expansion
                 return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
                     missingLocalDiscoveryEvidence.Code, missingLocalDiscoveryEvidence.Detail);
 
+            // GA R473-R480 — SOURCE CANDIDATE — UNVERIFIED.
+            // OT protocol framing and port labels cannot establish operation,
+            // command authorization, successful outcomes, or a burst baseline.
+            // Evaluate before RequireHttp (R478 has an inherited HTTP mismatch)
+            // and before all generic scoring, counters and cooldown mutations.
+            var otCommandGap = OtCommandEvidenceBoundary.GetMissingProducer(spec.RuleId);
+            if (otCommandGap is { } missingOtCommandEvidence)
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                    missingOtCommandEvidence.Code, missingOtCommandEvidence.Detail);
+
             if (spec.RequireHttp && !HasHttpContext(record))
                 return NoMatch(RuleNoMatchReasonCategory.NotApplicableProtocol, "HTTP_CONTEXT_REQUIRED", "Rule requires HTTP method, URI, host, headers, or HTTP protocol context.");
 
