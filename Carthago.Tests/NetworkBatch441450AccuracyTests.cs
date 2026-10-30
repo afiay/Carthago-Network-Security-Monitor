@@ -27,7 +27,7 @@ public sealed class NetworkBatch441450AccuracyTests
             ("R445", "ClickHouse HTTP SQL Probe", "CLICKHOUSE_SQL_REQUEST_RESPONSE_UNAVAILABLE", "/?query=SELECT%201", 8123, true),
             ("R446", "Neo4j Browser Exposure Probe", "NEO4J_BROWSER_TARGET_AND_RESPONSE_UNAVAILABLE", "/browser/", 7474, true),
             ("R447", "RabbitMQ Management Probe", "RABBITMQ_MANAGEMENT_TARGET_AND_RESPONSE_UNAVAILABLE", "/api/overview", 15672, true),
-            ("R448", "Kafka Broker External Access", "KAFKA_BROKER_HANDSHAKE_UNAVAILABLE", "", 9092, false),
+            ("R448", "Kafka Broker External Access", "KAFKA_BROKER_REQUEST_RESPONSE_UNAVAILABLE", "", 9092, false),
             ("R449", "Zookeeper Four Letter Word Probe", "ZOOKEEPER_FOUR_LETTER_COMMAND_UNAVAILABLE", "", 2181, false),
             ("R450", "NATS Broker External Access", "NATS_CLIENT_SERVER_HANDSHAKE_UNAVAILABLE", "", 4222, false),
     };
