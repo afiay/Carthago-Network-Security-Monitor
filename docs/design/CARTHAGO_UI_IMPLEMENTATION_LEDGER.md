@@ -105,6 +105,78 @@ investigation panel (existing `DashboardAnomalyList`, `DashboardSignalPanel`
 and real evidence models). Do not edit engine/rules/tests or fabricate
 incident proof.
 
+## GA UI-04 — Prioritized incident triage and evidence provenance
+
+**2026-10-30 · SOURCE CANDIDATE — UNVERIFIED.** Live feature-branch HEAD
+at the start of this GA: `55e6a1e0547a5369197aecea495091f535e97a1a` (the detection stream had already
+published R381–R390). The UI-only source commit is `b7978f9889d33360d0b3ad3b6c6848035ba6c824`,
+followed by static source-correction commit `08e16e12dd740ca4f5be9608001c6469ab417742`. This ledger
+is committed as their direct descendant; the **final published ledger commit**
+is the remote feature-branch HEAD after the expected-SHA update. No build,
+xUnit, UI screenshot, replay, holdout, CI, Windows runner, or capture executed.
+
+### Approved reference and implemented contracts
+
+| Reference element | UI implementation | Evidence boundary |
+| --- | --- | --- |
+| Recent high-priority incidents | Existing `DashboardAnomalyList` now shows up to **four unresolved correlated incidents** first, sorted by `RiskScore` then `UpdatedUtc`; then up to **two anomaly signals**. When there are no unresolved incidents, retain the previous five-signal fallback. | `_dashboardIncidentSnapshot` is a **bounded recent 150-item analytics snapshot**; `_dashboardAnomalySnapshot` is bounded to 160. Not a global incident inventory, full chronology, confirmed compromise, or externally verified outcome. |
+| Severity and risk | Severity badge and accent use original incident/anomaly severity; circular numeric badge uses existing incident risk or normalized anomaly score. `INCIDENT` / `SIGNAL` labels distinguish provenance. | **Local risk score, not a confidence percentage**. Never use demo R343/R102/R275 mappings or screenshot IPs as actual facts. |
+| Selected incident investigation | Reuses `DashboardSignalPanel`, `DashboardAnomalyList_SelectionChanged`, `CreateDashboardSignalDetailModel`, and the existing incident/anomaly detail dialog/navigation. The selected queue entry carries separate `IncidentId` and `AnomalyId` so a signal ID cannot be mistaken for an incident ID. | For an anomaly, only explicit `Incident.RelatedAnomalies` linkage can identify a related incident; **same-source-IP coincidence no longer claims correlation** in this UI path. |
+| Evidence provenance | New `DashboardDetailEvidenceSummaryText` shows only the selected incident's count of **reported** `Evidence` entries and `RelatedEvents` count. Existing reasons/tags/related-rule IDs remain visible. | No raw evidence payload is newly displayed, no chain-of-custody or successful detection is asserted, and an unlinked signal shows an honest unavailable message. Open the existing incident workspace for original context. |
+| Queue usability | Source-only selection highlighting and keyboard-focus border; old unbound search/category/linked-only controls replaced with truthful noninteractive ordering caption. | No fake search/filter behavior. Existing named controls and Click handlers remain. Demo mode warns that snapshot items **may include demo data**; no individual event is falsely labeled as live. |
+
+The screenshot's dedicated real-time chart, confidence percentages, incident timestamps,
+evidence-chain chronology and export actions remain **visual reference only** where no
+verified UI producer or authorization contract was established. The existing detail
+dialog and navigation were reused rather than introducing a new evidence exporter.
+
+### Static divergence review and ownership
+
+- Owned paths changed: `Carthago/Views/MainWindow.xaml`,
+  `Carthago/Views/MainWindow.Dashboard.cs`, and this
+  `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`. No engine, rules,
+  model, services, tests, workflow, runner, project, or rule-doc changes.
+- Compared against live HEAD `55e6a1e0547a5369197aecea495091f535e97a1a`; prior UI GA UI-01/02/03
+  remained intact. The independent R381–R390 detection stream had published
+  only its owned paths. The remote HEAD must be rechecked before publication.
+- Static inspection confirmed XAML element nesting and 1,011 tag tokens, existing
+  `DashboardAnomalyList` / `DashboardSignalPanel` names, existing
+  selection/navigation handlers, separate incident/anomaly identifiers,
+  and source-only evidence counts. **This is not a XAML compile or binding pass.**
+- Selection across snapshot refreshes preserves the prior visible item when
+  present; a disappeared item falls back to the first current priority entry.
+  Existing widget preferences, capture controls, Cisco/network tools,
+  ScottPlot, WebView2 and global status UI were not modified.
+- The UI's `FindRelatedIncident` now requires explicit anomaly linkage.
+  This prevents a host-IP-only false association in the dashboard but may
+  show fewer related incidents when the analytics producer lacks linkage;
+  that limitation is intentional and should be evaluated at test time.
+
+### Planned acceptance scenarios — NOT AUTHORED AS TESTS, UNEXECUTED
+
+1. Four unresolved incidents with mixed risk/severity: descending risk, then update time.
+2. Resolved incident among recent 150: excluded from triage; KPI behavior unchanged.
+3. No unresolved incidents and five signals: five-signal fallback remains visible.
+4. Four incidents and two signals: six typed rows, no mixed-ID navigation.
+5. Select a correlated incident: detail title/source/destination/reasons/rules match its snapshot.
+6. Select an unlinked anomaly: no incident evidence or host-IP-only correlation claim.
+7. Select an explicitly linked anomaly: related incident only via `RelatedAnomalies`.
+8. Reported evidence count zero/nonzero: truthful count and no new raw evidence.
+9. Demo mode on/off: global provenance warning present only when demo is enabled.
+10. Snapshot update/remove selected entry: selection remains stable or falls back without stale detail.
+11. Keyboard focus and selection contrast in Wide/Standard/Compact and below 1024.
+12. Existing Full Detail, Investigate Host, Related Incident, navigation and widget preference regressions.
+
+**Outstanding quality GAs:** owner-authorized pinned-SHA Windows WPF compilation,
+rendered screenshot comparison, UI thread/event reentrancy checks, keyboard
+accessibility, text truncation, risk-color semantics, incident/anomaly provenance,
+and demo/production separation. None executed. This source candidate does not
+establish commercial quality, field accuracy, or certification.
+
+**Next UI GA UI-05:** live events presentation using existing real event producers
+and filters, with honest empty/unavailable states. Do not duplicate capture
+or change shared telemetry contracts.
+
 ## Visual-reference to real-code map
 
 | Approved visual element | Existing code / evidence | Current disposition and next action |
@@ -114,8 +186,8 @@ incident proof.
 | Security Overview header, monitoring state | `Views/MainWindow.xaml` `SocDashboardWorkspace`, `CommandHeader`, `CaptureStatusText`; `MainWindow.Dashboard.cs` `UpdateMonitoringHeader` | GA UI-02 candidate: dashboard-only title and live text/indicator bound to actual capture status; no fake active state. |
 | Four KPI cards (throughput, sensors, incidents, coverage) | `MainWindow.xaml` `DashboardOverviewKpiItemsControl`, `MainWindow.Dashboard.cs` `_dashboardOverviewKpis`, `MainWindow.DashboardResponsive.cs` | **GA UI-03 SOURCE CANDIDATE — UNVERIFIED:** observed local throughput and bounded unresolved incidents; sensors/coverage explicitly unavailable. Original preference-controlled five metrics retained in `DashboardKpiItemsControl`. |
 | Real-time traffic chart | `MainWindow.xaml` hidden legacy `TrafficPlot` / widget workspace; `MainWindow.Plots.cs` | Preserve ScottPlot; assess safe reuse and real telemetry provenance, no simulated chart. |
-| High-priority incidents | `DashboardAnomalyList`, incident snapshot in `MainWindow.Dashboard.cs` | Real incident pipeline exists; visual grouping and severity badges pending. Never map screenshot sample R343/R102/R275 titles to actual rules. |
-| Investigation / evidence inspector | `DashboardSignalPanel`, `DashboardDetailReasonsItems`, `DashboardDetailRulesItems` | Existing details are populated from app state; visual refinement pending. Evidence is not proof of unsupported outcomes. |
+| High-priority incidents | `DashboardAnomalyList`, `MainWindow.Dashboard.cs` `BuildSocAnomalyItems` | **GA UI-04 CANDIDATE — UNVERIFIED:** up to four unresolved incidents by risk then two anomaly signals (five-signal fallback); typed provenance, selected-row focus. No demo rule mapping. |
+| Investigation / evidence inspector | `DashboardSignalPanel`, `DashboardDetailReasonsItems`, `DashboardDetailRulesItems`, `DashboardDetailEvidenceSummaryText` | **GA UI-04 CANDIDATE — UNVERIFIED:** direct incident selection and reported evidence/event counts only; no raw payload or verified chain-of-custody claim. |
 | Live events table | Existing raw traffic / detection views and `DataGrid` styles | Proposed dashboard integration; preserve event filtering and avoid duplicating capture engine. |
 | Compact terminal companion | No verified embedded cross-platform CLI in current WPF shell | **NOT IMPLEMENTED.** Plan design-only placeholder with honest unavailable state; do not invent CLI output or working commands. |
 | Wide ≥1440 / Standard 1100–1439 / Compact <1100 | `Views/ResponsiveLayout.cs`, `MainWindow.Responsive.cs` | Existing breakpoints preserved; 1024–1099 is target Compact band, with graceful behavior below 1024. |
@@ -126,4 +198,4 @@ incident proof.
 - Do not edit `Engine/**`, `Models/**`, `Services/**`, rules, capture, tests, runners, workflows, `docs/RULE_HARDENING_PROGRESS.md` or rule evidence. No builds/tests until owner explicitly authorizes.
 - Preserve all sidebar `x:Name` identifiers and Click handlers, filters, Cisco tools, view navigation, ScottPlot/WebView2, and WPF window startup.
 - Source-only changes may have visual or runtime issues; validate with owner-authorized pinned-SHA Windows build and screenshot review later.
-- **Next UI GA:** high-priority incidents list and selected-incident evidence inspector; preserve actual incident provenance and demo boundaries. GA UI-03 KPI strip is SOURCE CANDIDATE — UNVERIFIED until owner-authorized Windows verification.
+- **Next UI GA UI-05:** live events presentation with real existing event bindings and honest unavailable states. GA UI-01–04 remain SOURCE CANDIDATES — UNVERIFIED until owner-authorized Windows verification.
