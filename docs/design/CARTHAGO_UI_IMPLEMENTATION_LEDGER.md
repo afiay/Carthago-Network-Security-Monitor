@@ -324,3 +324,98 @@ CLI functionality or Windows/Linux GUI support.
 **Next UI GA UI-07:** responsiveness, accessibility and visual consistency
 review; inspect actual real-time traffic chart binding before changing chart
 presentation. Keep the independent ten-rule work and its files untouched.
+
+
+## GA UI-07 — Narrow-window KPI readability and chart provenance audit
+
+**2026-10-30 · SOURCE CANDIDATE — UNVERIFIED.** Audited LIVE branch HEAD
+`a806a3b1ed710c3724b4c1d0de1113fc689977eb` after the independent R411–R420 source candidate and UI-06.
+Approved visual reference `libfile_b0a34361560c8191b641e432b3e6b15c`
+was materialized and visually inspected. The source candidate changes only
+`Carthago/Views/MainWindow.xaml`,
+`Carthago/Views/MainWindow.Responsive.cs`, and
+`Carthago/Views/MainWindow.DashboardResponsive.cs`. This ledger is a
+direct descendant of the UI-only source commit. The final publication SHA
+is the live feature HEAD after the expected-SHA, non-forced ref update;
+it cannot be embedded in its own commit.
+
+### Cohesive responsive/accessibility improvement
+
+- Preserve the approved Wide (≥1440) four-column operational KPI strip,
+  Standard (1100–1439) two-column strip, and Compact (1024–1099)
+  two-column strip. Below 1024, stack **both** operational and
+  preference-controlled KPI strips into one column, down to the existing
+  640px minimum window. Existing sidebar, incident triage, command bar,
+  Live Events, and CLI companion layouts remain unchanged.
+- Keep the existing `ResponsiveLayout.Resolve` thresholds and
+  `ApplyDashboardResponsiveLayout` partial contract private to the UI.
+  Track only the **1024px crossing** within Compact mode so resize changes
+  are applied without rebuilding the panels on every pixel change.
+- The shared KPI trend caption now uses `CharacterEllipsis` and exposes
+  its full text in a tooltip. This avoids uncontrolled horizontal
+  overflow without replacing unavailable values or truncating the
+  underlying model. Actual screen-reader behavior and tooltip accessibility
+  remain unverified.
+- Preserve all existing `SocKpiVm` bindings, card titles, live throughput,
+  bounded incident snapshot, honest unavailable sensors/coverage, and
+  preference-controlled additional metrics. No invented telemetry,
+  event producer, or new control handler.
+
+### Real-time traffic chart provenance (audit only; no chart edits)
+
+- `MainWindow.DataEvents.cs` increments `_ppsBucket` once per
+  `TrafficRecordReceived` and adds nonnegative `record.Length` to
+  `_bytesBucket`. `MainWindow.Core.cs` samples these once per second,
+  appending timestamped packet counts to bounded
+  `_trafficXs`/`_trafficYs` (120 seconds) and separately computing
+  `_mbpsSeries` from observed local bytes.
+- `MainWindow.Plots.cs` `RenderTraffic` draws **packets/second** plus
+  optional 10-sample moving average into the existing hidden legacy
+  `TrafficPlot` and the Analytics `TrafficPlot_Analytics` ScottPlot
+  controls. The Security Overview does **not** currently expose the
+  approved screenshot's visible three-series Mbps chart. Do not relabel
+  PPS as Mbps or infer inbound/outbound series from an aggregate counter.
+- Capture-paused timer ticks can produce zero PPS samples even without
+  active capture. A future dashboard chart must distinguish missing/
+  paused observation from an observed zero and must reuse actual
+  producers and existing ScottPlot controls, not fabricate series.
+  No chart XAML, plot logic, model, capture or service code changed.
+
+### Static divergence review and outstanding GAs
+
+Compared original source, UI-01–06 ledger, live rule commit paths, exact
+resource keys, partial declarations/call sites, reference visual,
+privacy/mode restrictions, and UI-owned changed paths. The source
+changes only KPI presentation and same-mode resize invalidation; no
+engine/models/services, rules, tests, workflows, Cisco, WebView2,
+ScottPlot, shared project/API, or detection ledger edits.
+Source-only review is **not** a WPF compile, runtime binding pass,
+screenshot verification, accessibility pass, or evidence validation.
+
+**Planned acceptance scenarios — NOT AUTHORED AS TESTS; UNEXECUTED:**
+1. Width 1440: four overview cards; optional metrics unchanged.
+2. Width 1100: two overview cards per row; existing Standard shell.
+3. Width 1099 and 1024: two overview cards per row; existing Compact shell.
+4. Width 1023 and 640: one column in both KPI strips, vertical scrolling.
+5. Resize 1023→1024→1023: strip switches without duplicate cards or lost bindings.
+6. Long trend text: ellipsis and full-text tooltip; no misleading values.
+7. Capture paused/error/degraded: truthful unavailable/observed throughput.
+8. Keyboard, screen-reader, high-contrast, 125–200% DPI and translated text:
+   readable labels without clipping; pending verification.
+9. Preference toggles: original optional cards preserved and correctly ordered.
+10. Live Events filters, incident selection, Cisco tools, navigation and
+    CLI unavailable panel remain unchanged.
+
+**Outstanding quality GAs:** owner-authorized pinned-SHA Windows build,
+WPF rendered reference screenshots across width/DPI modes,
+keyboard/screen-reader verification, card binding and preference regression,
+and real traffic-series capture-state validation. **Tests executed: 0.**
+No field accuracy, production readiness, or certification is claimed.
+
+**Next UI GA UI-08:** investigate a reference-aligned **visible real-time
+traffic chart** using the existing locally observed PPS series and ScottPlot
+without reusing hidden plot controls unsafely, claiming inbound/outbound
+traffic, inventing Mbps series, or editing engine/telemetry. If UI-only
+reuse is not safely possible, document a precise integration proposal
+instead of changing shared contracts. The detection automation remains
+independent.
