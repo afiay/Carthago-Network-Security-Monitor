@@ -1274,8 +1274,28 @@
                           <DataGridTextColumn Header="Rule" Binding="{Binding RuleId}" Width="76"/>
                           <DataGridTextColumn Header="Severity" Binding="{Binding Severity}" Width="85"/>
                           <DataGridTextColumn Header="Protocol" Binding="{Binding Protocol}" Width="80"/>
-                          <DataGridTextColumn Header="Evidence" Binding="{Binding EvidenceSummary}" Width="128"/>
-                          <DataGridTextColumn Header="Delivery" Binding="{Binding DeliveryStatus}" Width="105"/>
+                          <DataGridTextColumn Header="Evidence" Binding="{Binding EvidenceSummary}" Width="128">
+                            <DataGridTextColumn.HeaderStyle>
+                              <Style TargetType="{x:Type DataGridColumnHeader}"
+                                     BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+                                <Setter Property="ToolTip"
+                                        Value="Reported evidence presence or structured-item count only. Raw evidence is not shown and chain of custody is not verified."/>
+                                <Setter Property="AutomationProperties.HelpText"
+                                        Value="Reported evidence presence or structured-item count only; not evidence payload or verified chain of custody."/>
+                              </Style>
+                            </DataGridTextColumn.HeaderStyle>
+                          </DataGridTextColumn>
+                          <DataGridTextColumn Header="Delivery" Binding="{Binding DeliveryStatus}" Width="105">
+                            <DataGridTextColumn.HeaderStyle>
+                              <Style TargetType="{x:Type DataGridColumnHeader}"
+                                     BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+                                <Setter Property="ToolTip"
+                                        Value="Recorded detection-event delivery status, not investigation progress, remediation or incident resolution."/>
+                                <Setter Property="AutomationProperties.HelpText"
+                                        Value="Detection-event delivery transport status only; not investigation or incident resolution."/>
+                              </Style>
+                            </DataGridTextColumn.HeaderStyle>
+                          </DataGridTextColumn>
                         </DataGrid.Columns>
                       </DataGrid>
                       <TextBlock x:Name="DashboardLiveEmptyText"
