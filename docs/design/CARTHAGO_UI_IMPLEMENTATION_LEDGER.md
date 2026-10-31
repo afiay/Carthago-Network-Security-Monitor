@@ -2285,3 +2285,44 @@ Make only the **existing informational TextBlock** in the shared KPI card templa
 **Next independent UI GA UI-37:** inspect fresh LIVE HEAD, exact approved reference, ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–36.
 
 **References:** [WPF ToolTipService.ShowsToolTipOnKeyboardFocus](https://learn.microsoft.com/dotnet/api/system.windows.controls.tooltipservice.showstooltiponkeyboardfocus); [WPF KeyboardNavigation.IsTabStop](https://learn.microsoft.com/en-us/dotnet/api/system.windows.input.keyboardnavigation.istabstop); [WPF FocusVisualStyle](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/styling-for-focus-in-controls-and-focusvisualstyle).
+
+## GA UI-37 — Keyboard access to three dashboard summary information glyphs
+
+**2026-10-31 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE branch HEAD: `de175b4a613f24514714048f1080e37ed37faa56`; prior GA UI-36 source `61b9c4ca72bea080a89a551b393b5848b0ef7e63`, publication `74cbcf62817a987dbbcf5e593c3f222a6fd5fbea`. **Exact GA UI-37 source SHA:** `ded80d734ebc7ef4fa6359389888079425defd19`. **Owned changed paths:** `Carthago/Views/MainWindow.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`. **Tests authored: 0; executed: 0.** No builds, xUnit, replays, holdouts, CI, GitHub Actions, runners, benchmarks, production capture or running-WPF screenshots.
+
+### Approved reference, provenance and original consumers
+
+Resolved and visually inspected exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c`: dark navy/graphite surfaces, cyan/teal accents, restrained severity, left navigation, operational KPI cards, traffic chart, incidents, investigation and local events. All screenshot IPs, rule IDs, Mbps, confidence, timestamps and CLI lines are **DEMO ONLY**, not application telemetry or capture-health evidence. Preserve Wide >=1440, Standard 1100–1439, Compact 1024–1099, graceful below 1024, 10-sample PPS average/120-point bounded ScottPlot history, incident-first ranking, investigation, read-only local Live Events (80 displayed/500 retained), explicitly **UNAVAILABLE** visual-only CLI, Cisco/WebView2, privacy and security boundaries.
+
+Audited live branch HEAD, recent commits, ledger through UI-36, `MainWindow.xaml` dashboard summary panel headings and their original tooltip/AutomationProperties consumers, `MainWindow.Dashboard.cs` local host/action/shortcut producers and navigation handlers, `MainWindow.xaml.cs`, `MainWindow.Navigation.cs`, `MainWindow.Responsive.cs`, `MainWindow.DashboardResponsive.cs`, `MainWindow.DashboardEvents.cs`, `Sidebar.xaml(.cs)` and `Views/Theme.xaml` `SocInfoGlyph`/`KeyboardFocusVisual`. GA UI-32 already added accurate hover-only source explanations to **High-Risk Hosts**, **Recommended Actions**, and **Raw / Advanced Shortcuts**, but the three information glyphs remained non-focusable. GA UI-36 addressed a separate shared KPI-card glyph, not these summary panels. No viewmodel, shared API or new source contract is required.
+
+### One cohesive UI-owned improvement
+
+On exactly the three existing summary-panel information `TextBlock` glyphs, add `Focusable=True`, `KeyboardNavigation.IsTabStop=True`, the existing `KeyboardFocusVisual`, and `ToolTipService.ShowsToolTipOnKeyboardFocus=True`. Add `AutomationProperties.HelpText` identical to each already-established source-specific tooltip, while retaining its existing `AutomationProperties.Name`. The glyphs remain informational, with no command, menu, Click, route, live region or new data producer. Preserve the original captions, tooltips, glyph text, `SocInfoGlyph` style, geometry, responsive layout, incident/host/action list bindings, existing navigation and capture behavior. No new screenshot data, telemetry, risk calculation, remediation or security assertion.
+
+### Start/end static divergence and publication guard
+
+**Start:** LIVE HEAD `de175b4a613f24514714048f1080e37ed37faa56` descends from UI-36 publication via three independent commits: protocol GA P0181–P0190, DNS wire-name codec and test-source compilation corrections. Comparison against `74cbcf62817a987dbbcf5e593c3f222a6fd5fbea` found only independent `Carthago/Services/**`, `Carthago.Tests/**`, and `docs/protocols/**` paths; no overlap with these two UI-owned paths. The candidate source commit `ded80d734ebc7ef4fa6359389888079425defd19` has parent `de175b4a613f24514714048f1080e37ed37faa56` and changes only `MainWindow.xaml`; original handlers, WPF partials, named controls, resources and privacy boundaries are untouched.
+
+**End/publication gate:** re-read LIVE remote HEAD immediately before publication; compare intervening commits and paths, verify candidate parent/tree, source/docs blobs and owned-path-only diff, and publish complete source/docs ancestry with exactly one non-forced atomic GitHub `update_ref` using `expected_sha` on the existing branch. If the branch advances with disjoint changes, rebuild both private commits from fresh HEAD and obtain a fresh lease; STOP on overlap or missing atomic lease guarantee. Never overwrite independent changes or publish partially.
+
+**Residual risks:** actual Windows WPF compilation, keyboard focus traversal on `TextBlock`, focus-outline rendering, tooltip timing, screen-reader announcements, UI Automation HelpText exposure, high contrast, 125–200% DPI and responsive screenshots remain **UNVERIFIED**. Three additional tab stops may increase keyboard navigation burden. Tooltip focus behavior may vary with WPF version or assistive technology. The informational text describes local ranking, suggestions and existing view destinations; it does not certify detection confidence, host inventory completeness, remediation or capture health. No new host/event data is collected, stored, transmitted or logged.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. Tab and Shift+Tab reach the three existing summary information glyphs in predictable order without activating commands.
+2. Keyboard focus uses the existing cyan focus visual and remains legible without changing unfocused layout.
+3. Keyboard focus exposes the existing High-Risk Hosts local-ranking tooltip; risk remains explicitly distinct from confidence.
+4. Keyboard focus exposes the existing Recommended Actions explanation; no remediation executes.
+5. Keyboard focus exposes the existing Raw / Advanced Shortcuts destination explanation; no separate PCAP/forensics workspace is claimed.
+6. Hover behavior, existing tooltip wording, AutomationProperties.Name and new matching HelpText remain consistent; inspect real screen-reader behavior.
+7. All original panel headings, host/action/shortcut bindings, navigation handlers, names, styling and geometry remain unchanged.
+8. At 1440/1100/1099/1024/1023/640px, 125–200% DPI and high contrast, tooltips/focus outlines are readable without clipping.
+9. Local PPS ScottPlot, KPIs, incident investigation, read-only Live Events, unavailable CLI, Cisco/WebView2, capture controls and navigation are unaffected.
+10. No demo telemetry, fabricated health claim, new privacy/security behavior or independent detection/protocol change is introduced.
+
+**Open quality GAs:** pinned-SHA Windows WPF build, actual tab/focus/tooltip/UI Automation/screen-reader inspection, high-contrast/DPI/responsive screenshots and source-provenance review **only after owner says “now it is test time.”** **Executed tests: 0.**
+
+**Next independent UI GA UI-38:** inspect fresh LIVE HEAD, approved reference, ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–37.
+
+**References:** [WPF keyboard tooltip behavior](https://learn.microsoft.com/dotnet/api/system.windows.controls.tooltipservice.showstooltiponkeyboardfocus); [WPF keyboard tab stop](https://learn.microsoft.com/dotnet/api/system.windows.input.keyboardnavigation.istabstop); [WPF focus visuals](https://learn.microsoft.com/dotnet/desktop/wpf/advanced/styling-for-focus-in-controls-and-focusvisualstyle); [WPF UI Automation HelpText](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.helptext).
