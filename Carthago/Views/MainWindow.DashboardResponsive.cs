@@ -12,6 +12,18 @@ public partial class MainWindow
         // This changes presentation only, not the selected incident or its source values.
         DashboardDetailFactsGrid.Columns = narrowKpis ? 2 : 3;
 
+        // GA UI-44: keep gutters aligned when the existing six fact cards wrap to two columns.
+        // The three-column margins remain identical to the original design.
+        DashboardDetailDestinationCard.Margin = narrowKpis
+            ? new Thickness(0, 0, 0, 6)
+            : new Thickness(0, 0, 8, 6);
+        DashboardDetailProtocolCard.Margin = narrowKpis
+            ? new Thickness(0, 0, 8, 6)
+            : new Thickness(0, 0, 0, 6);
+        DashboardDetailCategoryCard.Margin = narrowKpis
+            ? new Thickness(0, 0, 0, 6)
+            : new Thickness(0, 0, 8, 0);
+
         var overviewPanelKey = narrowKpis ? "DashboardOverviewKpiNarrowPanel" : mode switch
         {
             ResponsiveLayoutMode.Compact => "DashboardOverviewKpiCompactPanel",

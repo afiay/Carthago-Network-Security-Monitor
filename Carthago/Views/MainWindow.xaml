@@ -789,19 +789,19 @@
                             <TextBlock x:Name="DashboardDetailSourceText" AutomationProperties.LabeledBy="{Binding ElementName=DashboardDetailSourceLabel}" Text="&#x2014;" Style="{StaticResource MonoValue}" Margin="0,4,0,0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                           </StackPanel>
                         </Border>
-                        <Border Style="{StaticResource DetailGridCard}" Margin="0,0,8,6">
+                        <Border x:Name="DashboardDetailDestinationCard" Style="{StaticResource DetailGridCard}" Margin="0,0,8,6">
                           <StackPanel>
                             <TextBlock x:Name="DashboardDetailDestinationLabel" Text="Destination" Style="{StaticResource MicroLabel}"/>
                             <TextBlock x:Name="DashboardDetailDestinationText" AutomationProperties.LabeledBy="{Binding ElementName=DashboardDetailDestinationLabel}" Text="&#x2014;" Style="{StaticResource MonoValue}" Margin="0,4,0,0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                           </StackPanel>
                         </Border>
-                        <Border Style="{StaticResource DetailGridCard}" Margin="0,0,0,6">
+                        <Border x:Name="DashboardDetailProtocolCard" Style="{StaticResource DetailGridCard}" Margin="0,0,0,6">
                           <StackPanel>
                             <TextBlock x:Name="DashboardDetailProtocolLabel" Text="Protocol / port" Style="{StaticResource MicroLabel}"/>
                             <TextBlock x:Name="DashboardDetailProtocolText" AutomationProperties.LabeledBy="{Binding ElementName=DashboardDetailProtocolLabel}" Text="&#x2014;" Style="{StaticResource MonoValue}" Margin="0,4,0,0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                           </StackPanel>
                         </Border>
-                        <Border Style="{StaticResource DetailGridCard}" Margin="0,0,8,0">
+                        <Border x:Name="DashboardDetailCategoryCard" Style="{StaticResource DetailGridCard}" Margin="0,0,8,0">
                           <StackPanel>
                             <TextBlock x:Name="DashboardDetailCategoryLabel" Text="Category" Style="{StaticResource MicroLabel}"/>
                             <TextBlock x:Name="DashboardDetailCategoryText" AutomationProperties.LabeledBy="{Binding ElementName=DashboardDetailCategoryLabel}" Text="&#x2014;" Style="{StaticResource MonoValue}" Margin="0,4,0,0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
