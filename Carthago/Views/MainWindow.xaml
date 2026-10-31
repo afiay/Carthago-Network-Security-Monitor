@@ -59,6 +59,21 @@
         <Setter Property="Margin" Value="2,0,2,0"/>
         <Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}"/>
       </Style>
+      <!-- GA UI-47: source-accurate cell-level context for reported evidence and delivery status. -->
+      <Style x:Key="DashboardLiveEvidenceCellText"
+             TargetType="{x:Type TextBlock}"
+             BasedOn="{StaticResource {x:Type TextBlock}}">
+        <Setter Property="Margin" Value="2,0,2,0"/>
+        <Setter Property="ToolTip" Value="Reported evidence presence or count only; no raw evidence or verified chain of custody is displayed."/>
+        <Setter Property="AutomationProperties.HelpText" Value="This cell reports evidence presence or structured-item count only, not raw evidence or a verified chain of custody."/>
+      </Style>
+      <Style x:Key="DashboardLiveDeliveryCellText"
+             TargetType="{x:Type TextBlock}"
+             BasedOn="{StaticResource {x:Type TextBlock}}">
+        <Setter Property="Margin" Value="2,0,2,0"/>
+        <Setter Property="ToolTip" Value="Recorded detection-event delivery transport status, not investigation progress, remediation or incident resolution."/>
+        <Setter Property="AutomationProperties.HelpText" Value="This cell reports detection-event delivery transport status only, not investigation progress, remediation or incident resolution."/>
+      </Style>
       <DataTemplate x:Key="DashboardKpiCardTemplate">
                       <Border Style="{StaticResource KpiTileCard}" Height="102">
                         <Grid>
@@ -1389,7 +1404,8 @@
                               </Style>
                             </DataGridTextColumn.HeaderStyle>
                           </DataGridTextColumn>
-                          <DataGridTextColumn Header="Evidence" Binding="{Binding EvidenceSummary}" Width="128">
+                          <DataGridTextColumn Header="Evidence" Binding="{Binding EvidenceSummary}" Width="128"
+                                               ElementStyle="{StaticResource DashboardLiveEvidenceCellText}">
                             <DataGridTextColumn.HeaderStyle>
                               <Style TargetType="{x:Type DataGridColumnHeader}"
                                      BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
@@ -1400,7 +1416,8 @@
                               </Style>
                             </DataGridTextColumn.HeaderStyle>
                           </DataGridTextColumn>
-                          <DataGridTextColumn Header="Delivery" Binding="{Binding DeliveryStatus}" Width="105">
+                          <DataGridTextColumn Header="Delivery" Binding="{Binding DeliveryStatus}" Width="105"
+                                               ElementStyle="{StaticResource DashboardLiveDeliveryCellText}">
                             <DataGridTextColumn.HeaderStyle>
                               <Style TargetType="{x:Type DataGridColumnHeader}"
                                      BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
