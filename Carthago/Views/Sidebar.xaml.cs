@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // File: Views/Sidebar.xaml.cs
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Media;
 
@@ -88,6 +89,9 @@ namespace Carthago.Views
                     continue;
                 var isActive = ReferenceEquals(button, active);
                 button.Tag = isActive ? "Active" : null;
+                // Expose the existing visual navigation selection to assistive technology.
+                // This is a navigation cue, not a monitoring or capture-health assertion.
+                AutomationProperties.SetItemStatus(button, isActive ? "Current navigation selection" : string.Empty);
                 button.Background = isActive
                     ? (Brush)(TryFindResource("SelectionBgBrush") ?? new SolidColorBrush(Color.FromRgb(11, 49, 82)))
                     : _transparentBrush;
