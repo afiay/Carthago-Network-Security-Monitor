@@ -244,8 +244,17 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
               </Grid.RowDefinitions>
-              <TextBlock Text="Last analysis" Style="{StaticResource MicroLabel}"/>
-              <TextBlock x:Name="HeaderLastAnalysisText" Grid.Row="1" Text="Waiting for traffic" Foreground="{StaticResource TextSubtleBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,5,0,0"/>
+              <TextBlock x:Name="HeaderLastAnalysisLabel" Text="Last analysis" Style="{StaticResource MicroLabel}"/>
+              <TextBlock x:Name="HeaderLastAnalysisText"
+                         Grid.Row="1"
+                         Text="Waiting for traffic"
+                         Foreground="{StaticResource TextSubtleBrush}"
+                         FontSize="12"
+                         TextWrapping="Wrap"
+                         Margin="0,5,0,0"
+                         AutomationProperties.LabeledBy="{Binding ElementName=HeaderLastAnalysisLabel}"
+                         AutomationProperties.HelpText="Last recorded local analysis time or existing capture and flow diagnostic. A recorded timestamp does not prove active capture, current traffic or healthy event delivery."
+                         AutomationProperties.LiveSetting="Off"/>
             </Grid>
           </Border>
 

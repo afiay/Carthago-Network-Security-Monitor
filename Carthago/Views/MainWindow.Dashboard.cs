@@ -579,6 +579,7 @@ namespace Carthago
                 ? "Source: waiting for selection"
                 : $"Source: {selectedSource}";
 
+            // LastAnalysisUtc is a historical observation, not a live capture-health guarantee.
             var lastAnalysis = _sinkHost?.Analytics.LastAnalysisUtc;
             HeaderLastAnalysisText.Text = status == "Error"
                 ? $"Capture failed: {captureError}"
@@ -591,7 +592,7 @@ namespace Carthago
                 : status == "Monitoring" && flow.State == Carthago.Services.CaptureFlowState.Starting
                 ? "Capture starting · waiting for first events"
                 : lastAnalysis.HasValue
-                ? $"●  {lastAnalysis.Value.ToLocalTime():yyyy-MM-dd HH:mm:ss}    (Live)"
+                ? $"●  {lastAnalysis.Value.ToLocalTime():yyyy-MM-dd HH:mm:ss}    (recorded)"
                 : "Last analysis: waiting for traffic";
             HeaderLastAnalysisText.ToolTip = $"{sourceHealth.ToDisplayText()}\nFlow diagnostic: {flow.Reason}";
 
