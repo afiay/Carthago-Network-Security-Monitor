@@ -250,7 +250,16 @@
               <Button x:Name="StartButton" Content="&#x25B6;  Start Monitoring" Width="164" Height="36" Style="{StaticResource PrimaryButton}" Click="StartButton_Click"/>
               <Button x:Name="StopButton" Content="&#x23F8;  Pause Monitoring" Width="148" Height="36" Style="{StaticResource SecondaryButton}" Click="StopButton_Click" IsEnabled="False" Visibility="Collapsed"/>
               <Button x:Name="TestRepButton" Content="Test Reputation" Width="132" Height="36" Style="{StaticResource SecondaryButton}" Click="TestReputation_Click" Margin="8,0,0,0"/>
-              <Button Content="&#x22EE;" Width="40" Height="36" Style="{StaticResource SecondaryButton}" ToolTip="More dashboard actions" AutomationProperties.Name="More dashboard actions" Margin="8,0,0,0"/>
+              <!-- GA UI-28: the ellipsis has no connected menu, command or click handler. -->
+              <Button Content="&#x22EE;"
+                      Width="40" Height="36"
+                      Style="{StaticResource SecondaryButton}"
+                      IsEnabled="False"
+                      ToolTipService.ShowOnDisabled="True"
+                      ToolTip="Additional dashboard actions are unavailable in this view."
+                      AutomationProperties.Name="More dashboard actions unavailable"
+                      AutomationProperties.HelpText="No additional dashboard actions menu is implemented here. Use the available visible controls."
+                      Margin="8,0,0,0"/>
             </WrapPanel>
             <WrapPanel HorizontalAlignment="Right" Margin="0,5,0,0">
               <CheckBox x:Name="AnomaliesOnlyToggle" Content="Show anomalies only" VerticalAlignment="Center" Checked="AnomaliesOnlyToggle_Changed" Unchecked="AnomaliesOnlyToggle_Changed"/>
