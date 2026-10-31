@@ -1843,3 +1843,44 @@ Start: live branch HEAD `98a680fd304af2e093c209b3c7eae3f726aa57bb` directly foll
 **Next independent UI GA UI-26:** inspect fresh live HEAD, approved image, ledger and WPF consumers for one new cohesive safe UI-owned accessibility/readability/visual-consistency improvement outside UI-01–25.
 
 **References:** [WPF AutomationProperties.LabeledBy](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.labeledby); [WPF AutomationProperties.HelpText](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.helptext); [WPF layout](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/layout).
+
+## GA UI-26 — Visible labels for Live Events severity and protocol filters
+
+**2026-10-31 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE feature HEAD: `3934a509872fd0eedbf26fdcbe35c57f3d0c3fb1` (independent P0071–P0080 Geneve/HSRPv1 protocol candidate present). **UI source commit:** `5e76e01cbfb6313f9ab107e620195d44cfe6a312`. **Exact owned paths:** `Carthago/Views/MainWindow.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md` only. **Tests authored: 0; executed: 0.** No dotnet build/test, xUnit, replay, holdout, CI, GitHub Actions, runner, benchmark, capture or running-WPF inspection.
+
+### Approved visual reference, original consumers and provenance
+
+Resolved and visually inspected the exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c`: dark navy/graphite dashboard, cyan/teal accents, restrained severity, compact controls, left navigation and operational incident triage. Screenshot IPs, rule IDs, confidence, timestamps, sensor metrics and inbound/outbound Mbps lines are **DEMO ONLY**, not Carthago observations. The actual chart remains local PPS with its existing ten-sample average and bounded 120-point history. No screenshot data is copied into source.
+
+The original `MainWindow.xaml` Live Events filter row has two `ComboBox` controls (`DashboardLiveSeverityFilter`, `DashboardLiveProtocolFilter`) with existing `AutomationProperties.Name`, tooltips, selection options and `DashboardLiveEventsFilterChanged` handlers, but no visible captions. GA UI-16 already provided visible Rule and Search labels for the **different free-text** filters. `MainWindow.DashboardEvents.cs` reads the original ComboBox `SelectedItem.Tag` values in `RefreshDashboardLiveEvents`, filters the existing bounded local `_alerts` collection, and preserves the 80-row display/500-event retention, no-match message and capture/evidence caveats. The clear-filters handler resets the original ComboBox selection indices and text boxes. `MainWindow.DashboardResponsive.cs` governs existing width adaptations; it does not depend on the ComboBox parent type. No engine, service, model, shared API, capture or evidence contract is needed.
+
+### One cohesive UI-owned improvement
+
+Add visible compact **Severity** and **Protocol** captions beside the two existing Live Events dropdowns, using the same muted 11px label treatment as the existing Rule/Search captions. Associate each original ComboBox with its new visible TextBlock using WPF `AutomationProperties.LabeledBy`. A horizontal `StackPanel` wraps each dropdown and owns its original outer margin; the dropdown retains its 142px width, 30px height, `x:Name`, tooltip, `AutomationProperties.Name`, options, `SelectedIndex` and `SelectionChanged` handler. This completes the four-filter row's visible identification without redoing GA UI-16's text-box labels or changing filtering semantics.
+
+The change is strictly presentational and accessibility metadata. Existing severity/protocol matching, event provenance, sorting, read-only local Live Events, status and evidence disclaimers, navigation, KPIs, prioritized incidents, investigation, explicitly **UNAVAILABLE** visual-only CLI, Cisco, WebView2 and ScottPlot remain untouched. No telemetry, fabricated capture health, command execution, new tab stops, shared contracts or security-control changes.
+
+### Static divergence review and residual risks
+
+**Start:** live feature HEAD `3934a509872fd0eedbf26fdcbe35c57f3d0c3fb1` follows GA UI-25 publication `984c9bbea00f68d7dc2f6b8b5f0d163880ddcba4` with independent P0071–P0080 changes confined to protocol inspectors, protocol tests and `docs/protocols/**`. The prior UI-01–25 ledger, exact approved image, original XAML filter controls, `MainWindow.DashboardEvents.cs` event/filter/clear consumers, `MainWindow.DashboardResponsive.cs` and UI source commit were inspected. Source change is only the two dropdown wrappers/captions and two `LabeledBy` bindings; documentation is appended in `docs/design/**`. **End review must recheck** live remote HEAD, all concurrent paths, private source/docs commit ancestry, original WPF partials, unique names and label targets, privacy, visual reference and ledger source SHA. Publish the complete two-commit candidate only with one non-forced expected-SHA lease; stop if safe reconciliation is unavailable.
+
+**Risks:** adding two captions increases filter-row width and may wrap the existing `WrapPanel` earlier at Compact, below 1024, high DPI or localization. Actual WPF `ElementName` label resolution, ComboBox UI Automation exposure, screen-reader verbosity, keyboard order, high contrast and visual screenshot comparison are **UNVERIFIED**. Static review does not establish compilation or accessibility success.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. All four filter controls show distinct visible Severity, Protocol, Rule and Search captions without adding interactive tab stops.
+2. Severity dropdown retains All severities/Critical/High/Medium/Low/Info selections and existing filtering.
+3. Protocol dropdown retains All protocols/TCP/UDP/ICMP selections and existing filtering; other protocols remain accessible under All.
+4. Rule ID and endpoint search retain original TextChanged handlers, matching and GA UI-16 captions.
+5. Clear filters restores both dropdowns to index zero and clears both text filters without event-handler regressions.
+6. Empty and filtered-empty Live Events states keep their existing distinct messages and provenance.
+7. UI Automation inspection resolves both new `LabeledBy` references and original accessible names without confusing announcements.
+8. Keyboard navigation, focus indication, tooltip display and screen-reader reading order remain usable.
+9. At 1440/1100/1099/1024/1023/640px, 125–200% DPI and high contrast, the row wraps gracefully and controls remain visible without clipping.
+10. Read-only 80-row grid/500-event retention, frozen Event time, local PPS, incident triage, unavailable CLI, Cisco/WebView2/ScottPlot, privacy and independent detection/protocol streams remain unchanged.
+
+**Open quality GAs:** pinned-SHA Windows WPF build, actual ComboBox filtering and clear interactions, UI Automation/screen reader, keyboard, high-contrast/DPI and responsive screenshots, and provenance regression only after explicit owner authorization. **Executed tests: 0.**
+
+**Next independent UI GA UI-27:** inspect fresh live HEAD, approved image, ledger and WPF consumers for one cohesive safe UI-owned accessibility/readability/visual-consistency improvement outside UI-01–26.
+
+**References:** [WPF AutomationProperties.LabeledBy](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.labeledby); [WPF WrapPanel](https://learn.microsoft.com/en-us/dotnet/api/system.windows.controls.wrappanel); [WPF ComboBox](https://learn.microsoft.com/en-us/dotnet/api/system.windows.controls.combobox).
