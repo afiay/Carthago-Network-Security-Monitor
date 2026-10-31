@@ -1884,3 +1884,42 @@ The change is strictly presentational and accessibility metadata. Existing sever
 **Next independent UI GA UI-27:** inspect fresh live HEAD, approved image, ledger and WPF consumers for one cohesive safe UI-owned accessibility/readability/visual-consistency improvement outside UI-01–26.
 
 **References:** [WPF AutomationProperties.LabeledBy](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.labeledby); [WPF WrapPanel](https://learn.microsoft.com/en-us/dotnet/api/system.windows.controls.wrappanel); [WPF ComboBox](https://learn.microsoft.com/en-us/dotnet/api/system.windows.controls.combobox).
+
+## GA UI-27 — Truthful navigation for host/finding review buttons
+
+**2026-10-31 · SOURCE CANDIDATE — UNVERIFIED.** Start LIVE `feature/carthago-reliability-hardening` HEAD: `0df43e2e4237b93375ddb29a0d25ecb1c48fcbda`; preceding UI-26 publication: `59cbc728164559c05659edfdccc04d7ab2d54707`. **UI source commit:** `b1a6a26b6c0c8b8aebe0317ad1c5b62270922efd`. **Exact owned paths:** `Carthago/Views/MainWindow.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md` only. **Tests authored: 0; executed: 0.** No builds, xUnit, replays, holdouts, CI, GitHub Actions, runners, benchmarks, production capture or running-UI screenshots.
+
+### Reference, original consumers and provenance
+
+The exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c` was resolved and visually inspected at 1648×928. It defines dark navy/graphite surfaces, restrained severity and cyan/teal emphasis; its IP addresses, metrics, rule IDs, timestamps, confidence, Mbps series and terminal output are **DEMO ONLY**. The actual chart remains local PPS with its existing ten-sample average and bounded 120-point history; no demo data, capture-health assertions or additional telemetry are introduced.
+
+The original High-Risk Hosts footer button said **View all high-risk hosts** and the Incident Investigation action said **Investigate Host**, but both invoke the existing `DashboardInvestigateHost_Click` in `MainWindow.Dashboard.cs`. That handler opens the existing correlated incident workspace when `_selectedDashboardIncidentId` is available, otherwise navigates to the existing **Anomalies** view; it does **not** open a complete host inventory or a dedicated host investigation. The five-row host projection, related-item/risk semantics, incident selection, existing button handlers, source/target identifiers, and responsive layout consumers were inspected. The separate GA UI-20 shortcut changes and GA UI-18 host-row count/accessibility changes are not repeated.
+
+### One cohesive UI-owned improvement
+
+Rename the High-Risk Hosts footer action to **Review findings →** and the Incident Investigation action to **Review finding**. Both retain their existing `DashboardInvestigateHost_Click` handlers and button styling, dimensions and placement. Add truthful mouse tooltips and WPF `AutomationProperties.Name` / `HelpText` explaining that the existing destination is the correlated incident workspace when available, otherwise the Anomalies view. The host-panel button explicitly disclaims a complete host inventory; the investigation button does not imply isolation of a host. No new controls, focus stops, navigation destinations, data models, services, detection/protocol rules, telemetry, security controls or shared APIs are introduced.
+
+### Static divergence review and residual risks
+
+**Start:** inspected LIVE HEAD `0df43e2e4237b93375ddb29a0d25ecb1c48fcbda`, recent commits, full design ledger through UI-26, original WPF XAML and the `MainWindow.Dashboard.cs` click handler, `MainWindow.DashboardEvents.cs`, `MainWindow.DashboardResponsive.cs`, existing UI resources and original consumer names. The independent P0081–P0090 STUN/RADIUS candidate is a direct descendant of UI-26 publication and modifies only protocol inspector, protocol test and `docs/protocols/**` paths; no UI overlap. The source candidate changes only the two existing button declarations and preserves their handlers, x:Name (where present), styles, layout, and privacy/evidence boundaries. **End:** review source/docs commit ancestry and changed paths against live HEAD immediately before one expected-SHA publication; any concurrent change requires a fresh disjoint-path reconciliation or STOP.
+
+**Risks:** real WPF tooltip and UI Automation exposure, screen-reader reading order, keyboard focus, narrow-window wrapping, high contrast and 125–200% DPI are unverified. The destination remains conditional on existing incident selection; neither button promises to show all hosts. This is source-only and is not evidence of compilation, UI accessibility conformance, or navigation execution.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. High-Risk Hosts footer visibly reads **Review findings →** and no longer promises a full host inventory.
+2. Incident Investigation primary action visibly reads **Review finding**, not a dedicated host investigation.
+3. Both buttons retain their original `DashboardInvestigateHost_Click` handler and focus behavior.
+4. With an available correlated incident, the existing handler opens its incident workspace without new routing.
+5. Without an available incident ID, the existing handler opens the Anomalies view.
+6. Mouse tooltips explain both conditional destinations and the absence of host inventory/isolation.
+7. UI Automation exposes distinct neutral names and truthful help text; screen-reader behavior is inspected.
+8. At 1440/1100/1099/1024/1023/640px, 125–200% DPI and high contrast, labels and tooltips remain legible.
+9. Five-row host snapshot, local risk scores, incident triage, investigation actions, keyboard focus and navigation remain unchanged.
+10. Read-only 80-row/500-retained Live Events, local PPS ScottPlot, unavailable CLI, Cisco/WebView2, privacy and independent detection/protocol streams remain unchanged.
+
+**Open quality GAs:** pinned-SHA Windows WPF compilation, actual conditional navigation, UI Automation/screen reader, keyboard, high contrast/DPI and responsive screenshots only after the owner's explicit “now it is test time” authorization. **Executed tests: 0.**
+
+**Next independent UI GA UI-28:** inspect live branch, approved image, ledger and original WPF consumers for one cohesive new UI-owned accessibility/readability/visual-consistency improvement outside UI-01–27.
+
+**References:** [WPF Button](https://learn.microsoft.com/en-us/dotnet/api/system.windows.controls.button); [WPF AutomationProperties](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties).
