@@ -2582,3 +2582,46 @@ Keep original `Header` captions, `Binding` expressions, widths (76/85/80), order
 **Next independent UI GA UI-44:** inspect fresh LIVE HEAD, approved reference, ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–43.
 
 **References:** [WPF DataGridColumn.HeaderStyle](https://learn.microsoft.com/dotnet/api/system.windows.controls.datagridcolumn.headerstyle); [WPF AutomationProperties.HelpText](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.helptext).
+
+## GA UI-44 — Investigation fact-card gutter consistency below 1024px
+
+**2026-10-31 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE `feature/carthago-reliability-hardening` HEAD: `f2105a9002004a670781a4b39d071314fd677acb`; previous GA UI-43 source `01cb70212b174dac2b56d0f8b019dcf1b4cdb323`, publication `eb80cef02b46aec19c4000e9324325fd2022b309`. Independent GA P0251–P0260 MPTCP inspector source/test/documentation changes were present at the starting HEAD and remain untouched. **Exact GA UI-44 source SHA:** `169f73e26687652d45a0aa7b828daf13bfc3f665`. **Owned paths:** `Carthago/Views/MainWindow.xaml`, `Carthago/Views/MainWindow.DashboardResponsive.cs` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md` only. **Tests authored: 0; tests executed: 0.** No build, dotnet test, xUnit, replay, holdout, CI, GitHub Actions, runner, benchmark, production capture or running-WPF screenshot.
+
+### Approved reference, source/consumer audit and reason for change
+
+Resolved and **visually inspected** the exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c`: navy/graphite operational dashboard, cyan/teal accents, restrained severity, left navigation, KPIs, traffic chart, prioritized incidents, investigation, read-only local Live Events and visual-only unavailable CLI. Its IPs, Mbps lines, rule IDs, timestamps, confidence and metrics are **DEMO ONLY**, not actual capture, detection, telemetry or system-health evidence.
+
+Inspected LIVE HEAD/recent commits, this ledger through GA UI-43, `MainWindow.xaml` six investigation fact cards, `MainWindow.DashboardResponsive.cs`, `MainWindow.Responsive.cs` threshold/consumer, `MainWindow.Dashboard.cs` original fact assignments, `MainWindow.Core.cs`, `MainWindow.xaml.cs`, `MainWindow.DashboardEvents.cs`, `Theme.xaml` `DetailGridCard`, and the existing WPF partial names. GA UI-38 intentionally changed six facts from three to two columns below 1024px, retaining original per-card margins and documenting the risk of **asymmetric two-column gutters**. At three columns, the six margins align by row; at two columns, the old right-edge margins no longer align with each row. GA UI-44 addresses only that identified visual consistency gap. It does not repeat the column-count change or any UI-01–43 behavior.
+
+### One cohesive UI-owned improvement
+
+Name only three existing `Border` fact cards: `DashboardDetailDestinationCard`, `DashboardDetailProtocolCard` and `DashboardDetailCategoryCard`. Within the existing `ApplyDashboardResponsiveLayout`, use the **existing** `narrowKpis` threshold to assign their margins for a consistent two-column row gutter below 1024px: source/destination (8px/0px right), protocol/category (8px/0px right), detected/related incident (existing 8px/0px right); first two rows retain 6px bottom margins and the last row retains zero. At/above 1024px the three named cards explicitly retain their **original** margins (destination `Thickness(0,0,8,6)`, protocol `Thickness(0,0,0,6)`, category `Thickness(0,0,8,0)`; WPF ordering is left/top/right/bottom). Original fact order, labels, text, bindings, tooltips, theme, border/padding, layout height and responsive thresholds remain.
+
+No new focus stops, event handlers, navigation, values, telemetry, model, service, protocol, detection, capture, trust/privacy/security, shared API, tests, data collection or external calls. Preserve Wide >=1440, Standard 1100–1439, Compact 1024–1099 and graceful below 1024; local PPS ScottPlot 10-sample average/bounded 120-point history; prioritized incidents, investigation, read-only Live Events 80 displayed/500 retained, explicitly UNAVAILABLE visual-only CLI, Cisco/WebView2 and original privacy boundaries.
+
+### Start/end static divergence, provenance and publication guard
+
+**Start:** LIVE `f2105a9002004a670781a4b39d071314fd677acb` is one independent protocol commit after GA UI-43 publication `eb80cef02b46aec19c4000e9324325fd2022b309`. Its disjoint paths are `Carthago.Tests/ProtocolIntelligence/MptcpCapableSynInspectorTests.cs`, `Carthago/Services/ProtocolIntelligence/MptcpCapableSynInspector.cs`, `docs/protocols/PROTOCOL_EXPANSION_PROGRESS.md` and `docs/protocols/PROTOCOL_GA_P0251-P0260.md`. No independent file was edited. Private source commit `169f73e26687652d45a0aa7b828daf13bfc3f665` descends directly from `f2105a9002004a670781a4b39d071314fd677acb` and modifies only `Carthago/Views/MainWindow.xaml` (three new names) and `Carthago/Views/MainWindow.DashboardResponsive.cs` (three margin assignments). The source diff contains no other modifications. Original partial consumers, names, data values, navigation, privacy and reference fidelity remain unchanged.
+
+**End/publication gate:** immediately before publication, re-read LIVE remote HEAD and compare concurrent detection/protocol/UI changes against `f2105a9002004a670781a4b39d071314fd677acb`. Verify private source/docs ancestry, exact owned-path diff, unique named elements, three-column original margins, two-column consistent gutters, approved reference and privacy boundaries. Publish the complete two-commit candidate through **one** non-forced atomic GitHub `update_ref` with `expected_sha` on the same existing branch. If the HEAD moves on disjoint paths, reconstruct both commits from the fresh HEAD and obtain a fresh lease; STOP on conflict or missing guarantee. No partial publication, branch/PR creation, force push, history rewrite or independent automation changes.
+
+**Residual risks:** Windows compilation and generated WPF named-field resolution, actual responsive card reflow, text truncation, height/scroll constraints caused by the third row, visual alignment at window thresholds, keyboard/screen-reader order, high contrast, 125–200% DPI, rapid resize transitions and 1440/1100/1099/1024/1023/640px screenshots are **UNVERIFIED**. The extra row below 1024 remains; this GA addresses gutters only. No screenshot-derived values or evidence payloads are introduced.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. At 1440px Wide and 1100px Standard, six fact cards retain the original three-column order and 8px inter-card gutters.
+2. At 1099px and 1024px Compact, three columns and all six original margins remain.
+3. At 1023px and 640px, two columns show three rows, each with a consistent 8px inter-card gutter and no extra trailing right margin.
+4. Below 1024px, first and second fact rows retain 6px bottom gutters and the third row has no bottom gutter.
+5. Resize across 1024px repeatedly; the existing layout switches two/three columns and margins together without stale spacing.
+6. Selected incident, selected anomaly and waiting states preserve all six fact values, labels, truncation and original self-text tooltips.
+7. Investigation details, reasons, tags, related rule IDs, action buttons, evidence provenance and original scrolling remain unaffected.
+8. Inspect 1440/1100/1099/1024/1023/640px at 125–200% DPI, high contrast, keyboard traversal and screen-reader reading order.
+9. KPIs, local PPS ScottPlot, Live Events 80/500 read-only bounds, unavailable CLI, sidebar, Cisco/WebView2 and capture controls remain unaffected.
+10. Verify no demo IP/metrics/timestamps/confidence, new telemetry, trust/security/privacy claims, shared API change or independent detection/protocol modification.
+
+**Open quality GAs:** pinned-SHA Windows WPF compilation, actual responsive screenshot, accessibility, DPI/high-contrast and keyboard/screen-reader inspection **only when the owner explicitly says “now it is test time.”** **Executed tests: 0.**
+
+**Next independent UI GA UI-45:** inspect fresh LIVE HEAD, approved reference, ledger and WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–44.
+
+**References:** [WPF UniformGrid](https://learn.microsoft.com/dotnet/api/system.windows.controls.primitives.uniformgrid); [WPF FrameworkElement.Margin](https://learn.microsoft.com/dotnet/api/system.windows.frameworkelement.margin).
