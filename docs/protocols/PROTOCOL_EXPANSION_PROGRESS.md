@@ -17,7 +17,7 @@
 
 | [GA P0031–P0040](PROTOCOL_GA_P0031-P0040.md) | f9fcc016081620c20bf9130ea33194d225c0f263 | P0031–P0040 | 2 IMPLEMENTED_ISOLATED (WireGuard, IKEv2-only), 3 PARTIAL (Modbus, Modbus/TCP, DNP3), 1 DEFERRED (ESP), 4 BLOCKED L2 (EAPOL, ARP, LLDP, STP); 0 integrated | 29 / 38 | 0 | Complete caller-attested UDP envelopes only; no runtime producer, authentication, decryption or exploit claims |
 
-**Last completed research GA:** P0141–P0150 (source-only, unverified). **Next exact ten IDs:** **P0151–P0160**. Do not skip blocked candidates, invent new P IDs, rewrite historical outcomes, or treat authored tests as executed. Recover live HEAD and compare concurrent detection/UI stream paths before publication.
+**Last completed research GA:** P0151–P0160 (source-only, unverified). **Next exact ten IDs:** **P0161–P0170**. Do not skip blocked candidates, invent new P IDs, rewrite historical outcomes, or treat authored tests as executed. Recover live HEAD and compare concurrent detection/UI stream paths before publication.
 
 | [GA P0041–P0050](PROTOCOL_GA_P0041-P0050.md) | 691717f8a3302f58454dfcb9e6da45993b17a442 | P0041–P0050 | 3 IMPLEMENTED_ISOLATED (OPC UA UACP, IEC104 APCI, BGP-4 envelope), 2 PARTIAL (S7, BACnet), 1 DEFERRED (MMS), 4 BLOCKED L2 (GOOSE, PROFINET DCP/IO, EtherCAT); 0 integrated | 42 / 50 | 0 | Source-only bounded inspectors, synthetic authored xUnit scenarios, no trusted TCP reassembly or L2 producer |
 
@@ -28,7 +28,7 @@
 - Owner approval and cross-stream review for any shared capture/telemetry/record schema integration; source-only isolated work may continue meanwhile.
 - First actual build/xUnit/Windows replay awaits explicit owner command **“now it’s test time.”**
 - Live sensor provenance, TCP stream boundaries, DTLS 1.3 encrypted records, endpoint/proxy logs and NetScaler asset/config/IOC correlation are not established by these isolated inspectors.
-- Continue source-only with P0151–P0160; preserve detection and UI ledgers, frozen holdouts, journal-first raw DetectionEvents, privacy, cooldowns, thresholds and rule IDs.
+- Continue source-only with P0161–P0170; preserve detection and UI ledgers, frozen holdouts, journal-first raw DetectionEvents, privacy, cooldowns, thresholds and rule IDs.
 
 | [GA P0071–P0080](PROTOCOL_GA_P0071-P0080.md) | 984c9bbea00f68d7dc2f6b8b5f0d163880ddcba4 | P0071–P0080 | 2 IMPLEMENTED_ISOLATED (Geneve, HSRP v1), 1 EXISTING (VLAN), 1 DEFERRED (GTP), 5 BLOCKED input/L2 (PPP, PPPoE, MPLS, CDP, UDLD), 1 REJECTED as separately counted variant (GTPv2-C); 0 integrated | 33 / 41 | 0 | Source-only bounded Geneve and HSRP v1 inspectors; no trusted live UDP envelope, HSRP authentication or runtime registration |
 
@@ -45,3 +45,5 @@
 | [GA P0131–P0140](PROTOCOL_GA_P0131-P0140.md) | 187823c5e5d291791ac567c8da1766dbf9a0e6a5 | P0131–P0140 | 3 IMPLEMENTED_ISOLATED (MQTT-SN, RTP, RTCP), 3 DEFERRED (IEC103, Thrift, SIP), 2 BLOCKED L2 (HSR, HSR/PRP supervision), 2 REJECTED subcomponents (IEC ASDU, SIPfrag); 0 integrated | 47 / 49 | 0 | Bounded source-only UDP inspectors, Cisco HTTP-on-SIP-phone vendor advisory distinguished from SIP exploitation, no shared capture/telemetry edits |
 
 | [GA P0141–P0150](PROTOCOL_GA_P0141-P0150.md) | ad1cd1b2e9425c215fd906d0babb697e19c8f7e2 | P0141–P0150 | 1 IMPLEMENTED_ISOLATED (Diameter base envelope), 1 PARTIAL (gQUIC metadata), 4 DEFERRED (H.323, MGCP, MEGACO, AFS Rx), 3 BLOCKED L4/SIGTRAN (SS7 SCCP, DCCP, SCTP), 1 REJECTED independent protocol (NFSACL); 0 integrated | 22 / 25 | 0 | RFC 6733 bounded AVP/header inspector; no SCTP/TCP trusted producer, auth outcomes or shared integration |
+
+| [GA P0151–P0160](PROTOCOL_GA_P0151-P0160.md) | 6572b2e4d68efc267c2532c48a98a1c5d5f0a28a | P0151–P0160 | 3 IMPLEMENTED_ISOLATED (Portmapper v2, Cassandra CQL v4, Couchbase-compatible KV), 1 PARTIAL (BOOTP port hint), 4 DEFERRED (RSTAT, X11, XDMCP, SAP HANA), 2 REJECTED independent distinctness (NFSAUTH, SPNEGO); 0 live integrated | 52 / 65 | 0 | Source-only bounded RPC/XDR, CQL and KV envelope inspectors; strict producer attestation, no live registration, no shared changes |\n
