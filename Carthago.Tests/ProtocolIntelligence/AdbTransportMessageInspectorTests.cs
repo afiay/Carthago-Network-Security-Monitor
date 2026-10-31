@@ -112,7 +112,7 @@ namespace Carthago.Tests.ProtocolIntelligence
         [Fact] public async Task ParallelInspectionIsDeterministic()
         {
             var results = await Task.WhenAll(Enumerable.Range(0, 32)
-                .Select(_ => Task.Run(() => Inspect(Packet(), out _))));
+                .Select(_ => Task.Run(() => Inspect(Packet(), out var observation))));
             Assert.All(results, Assert.True);
         }
 

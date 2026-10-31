@@ -93,7 +93,7 @@ namespace Carthago.Tests.ProtocolIntelligence
         [Fact] public async Task ConcurrentIndependentPacketsAreDeterministic()
         {
             var results = await Task.WhenAll(Enumerable.Range(0, 32)
-                .Select(_ => Task.Run(() => Inspect(Packet(), out _))));
+                .Select(_ => Task.Run(() => Inspect(Packet(), out var observation))));
             Assert.All(results, result => Assert.True(result));
         }
 

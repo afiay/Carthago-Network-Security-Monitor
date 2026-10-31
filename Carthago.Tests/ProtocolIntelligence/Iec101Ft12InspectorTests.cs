@@ -46,7 +46,7 @@ namespace Carthago.Tests.ProtocolIntelligence
         {
             Assert.True(Inspect(Fixed(width), out var r, addressWidth: width));
             Assert.Equal(Iec101Ft12FrameKind.Fixed, r.Kind);
-            Assert.Equal(9, r.LinkFunctionCode);
+            Assert.Equal<byte?>((byte)9, r.LinkFunctionCode);
             Assert.Null(r.AsduType);
         }
         [Theory][InlineData(1)][InlineData(2)]

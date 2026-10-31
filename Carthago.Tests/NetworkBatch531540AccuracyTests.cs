@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Carthago.Engine.Rules;
 using Carthago.Engine.Rules.Expansion;
 using Carthago.Models;
 using Xunit;
@@ -116,7 +117,7 @@ public sealed class NetworkBatch531540AccuracyTests
             _ => throw new ArgumentOutOfRangeException(nameof(id))
         };
 
-    private static Task<RuleEvaluationResult> Evaluate(
+    private static ValueTask<RuleEvaluationResult> Evaluate(
         PrecisionTelemetryDetectionRuleBase rule, TrafficRecord record, int seconds = 0)
         => rule.EvaluateAsync(new RuleEvaluationContext(
             record, Sensitivity.Balanced, Epoch.AddSeconds(seconds)));
