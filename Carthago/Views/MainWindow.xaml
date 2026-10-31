@@ -65,8 +65,13 @@
                             <!-- KPI card has no overflow command; use the existing information glyph. -->
                             <StackPanel Orientation="Horizontal">
                               <TextBlock x:Name="DashboardKpiCardTitle" Text="{Binding Title}" Style="{StaticResource MicroLabel}"/>
+                              <!-- GA UI-36: informational glyph is keyboard-focusable; no command or menu is introduced. -->
                               <TextBlock Text="  &#x24D8;"
                                           Style="{StaticResource SocInfoGlyph}"
+                                          Focusable="True"
+                                          KeyboardNavigation.IsTabStop="True"
+                                          FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
+                                          ToolTipService.ShowsToolTipOnKeyboardFocus="True"
                                           ToolTip="{Binding InformationText}"
                                           AutomationProperties.Name="{Binding InformationAccessibilityName}"
                                           AutomationProperties.HelpText="{Binding InformationText}"/>
