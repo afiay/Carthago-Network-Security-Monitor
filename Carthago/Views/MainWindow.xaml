@@ -1206,6 +1206,10 @@
                     <DockPanel LastChildFill="True">
                       <Button DockPanel.Dock="Right"
                               Content="All detections &#x2192;"
+                              ToolTip="Open the existing Raw Detections view. Navigation only; no evidence export or capture starts here."
+                              ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                              AutomationProperties.Name="Open Raw Detections"
+                              AutomationProperties.HelpText="Opens the existing Raw Detections view and its sidebar filters. Dashboard Live Events filters are unchanged; this action does not export evidence, start capture or verify delivery."
                               MinWidth="130"
                               Height="30"
                               Style="{StaticResource SecondaryButton}"
