@@ -2453,3 +2453,46 @@ Preserve Wide >=1440, Standard 1100–1439, Compact 1024–1099 and graceful bel
 **Next independent UI GA UI-41:** inspect fresh LIVE HEAD, exact approved image, ledger and WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–40.
 
 **Reference:** [WPF AutomationProperties.HelpText](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.helptext); [WPF accessibility](https://learn.microsoft.com/dotnet/desktop/wpf/advanced/accessibility).
+
+## GA UI-41 — Live Events recorded-time header provenance
+
+**2026-10-31 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE branch HEAD: `1b725bff495ed4675e38755780ca51923bae3a67`; prior GA UI-40 source `ca932d39a1dc34687e5d62a9a44aada43f78961b`, publication `72ab688179bbb20c8ee8ab46b5862154ef465e59`. Independent protocol documentation GA P0221–P0230 was present before this UI work. **Exact GA UI-41 source SHA:** `6232c8f1a63f60bcd661a74f6c945585dd7b9da3`. **Owned paths:** `Carthago/Views/MainWindow.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md` only. **Tests authored: 0; executed: 0.** No dotnet build/test, xUnit, replay, holdout, CI, GitHub Actions, runner, benchmark, production capture, running-WPF inspection or screenshot.
+
+### Approved reference and audited original consumers
+
+Resolved and **visually inspected** exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c`: navy/graphite security overview, cyan/teal accents, restrained severity, left navigation, operational KPIs, traffic chart, prioritized incidents, investigation, read-only local Live Events and visual-only CLI. Its IPs, metrics, rule IDs, timestamps, confidence, Mbps lines and CLI text are **DEMO ONLY**; no screenshot value is observed telemetry or evidence of capture health.
+
+Audited LIVE remote branch HEAD, recent commits, this ledger through UI-40, `MainWindow.xaml` Live Events grid, `MainWindow.DashboardEvents.cs` event projection and original filters, `MainWindow.Dashboard.cs`, `MainWindow.xaml.cs`, `MainWindow.DashboardResponsive.cs`, `MainWindow.Responsive.cs`, `MainWindow.GridInteractions.cs` and `Theme.xaml`. Original `DashboardEventRowVm.FromDetection` formats `DetectionEvent.Timestamp` with `yyyy-MM-dd HH:mm:ss` without conversion and explicitly avoids asserting its timezone; a default timestamp displays `—`. The read-only `DashboardLiveEventsGrid` already states the timezone caveat at grid level and in provenance text, but its visible **Event time** column header had no contextual tooltip or header-level Automation HelpText. GA UI-33 addressed Evidence/Delivery headers; UI-40 addressed filters; neither changed this header. No shared API or viewmodel change is necessary.
+
+### One cohesive UI-owned improvement
+
+Add `DataGridTextColumn.HeaderStyle` only to the original **Event time** column, based on the existing theme's `DataGridColumnHeader` style, with a tooltip and `AutomationProperties.HelpText` explaining that the value is the recorded detection-event timestamp as supplied, timezone **unverified**, and does not establish active capture or successful delivery. Keep the original `Header="Event time"`, `Binding="{Binding EventTime}"`, width 144, frozen-first-column behavior, column order, formatting, keyboard behavior, filters, row virtualization, 80 displayed/500 retained, evidence/privacy boundaries, status/provenance captions and event producers unchanged. No new focus stops, controls, events, data conversions, telemetry, time-zone claims, capture-health claims or network calls.
+
+Preserve Wide >=1440, Standard 1100–1439, Compact 1024–1099 and graceful below 1024; local PPS ScottPlot ten-sample average and bounded 120-point history; operational KPIs, prioritized incidents, investigation, read-only Live Events, explicitly **UNAVAILABLE** visual-only CLI, Cisco/WebView2, trust/privacy and independent detection/protocol streams.
+
+### Start/end static divergence, publication guard and risks
+
+**Start:** LIVE HEAD `1b725bff495ed4675e38755780ca51923bae3a67` descends from GA UI-40 publication `72ab688179bbb20c8ee8ab46b5862154ef465e59` by one independent protocol-documentation commit. Comparison shows only `docs/protocols/PROTOCOL_EXPANSION_PROGRESS.md` and `docs/protocols/PROTOCOL_GA_P0221-P0230.md`; no UI-owned overlap. Prepared private source commit `6232c8f1a63f60bcd661a74f6c945585dd7b9da3` has parent `1b725bff495ed4675e38755780ca51923bae3a67` and changes only `Carthago/Views/MainWindow.xaml`. Original XAML names, WPF partial consumers, filters, responsive rules, theme resource keys, shared APIs, privacy and security remain untouched.
+
+**End/publication gate:** immediately before publication re-read LIVE remote HEAD and compare any concurrent detection/protocol/UI paths against `1b725bff495ed4675e38755780ca51923bae3a67`; verify private source/docs commit ancestry, exact source SHA in this ledger, two owned paths, original names/consumers and reference fidelity. Publish complete source/docs chain via **one** non-forced atomic GitHub `update_ref` with `expected_sha` on the existing branch. If remote moves disjointly, reconstruct both private commits on fresh HEAD with fresh lease; STOP on conflict or missing guarantee. No partial publication, force push, new branch, PR, history rewrite or independent automation change.
+
+**Residual risks:** WPF compilation, DataGrid header style lookup, tooltip presentation, actual UI Automation HelpText exposure, keyboard-only header discovery, screen-reader announcements, high contrast, 125–200% DPI, horizontal scrolling/frozen column and responsive 1440/1100/1099/1024/1023/640px screenshots remain **UNVERIFIED**. Tooltips may not be discoverable by keyboard alone. Text is static explanatory metadata; it does not prove event timing accuracy, active capture, delivery health or detection quality. No new IP, host, event, evidence payload, personal data or external transmission.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. Hover Event time column header: tooltip explains recorded timestamp, unverified timezone and no capture/delivery inference.
+2. UI Automation inspection exposes the Event time header's contextual HelpText without replacing the visible caption.
+3. Original timestamp formatting `yyyy-MM-dd HH:mm:ss` and default `—` remain unchanged; no timezone conversion occurs.
+4. Frozen first 144px column remains visible while horizontally scrolling all seven remaining columns.
+5. Original DataGrid header theme, typography, foreground, border and column geometry remain unchanged.
+6. Original row selection, keyboard cell focus, read-only virtualization, event order and 80/500 bounds remain unchanged.
+7. At 1440/1100/1099/1024/1023/640px and 125–200% DPI/high contrast, tooltip and header remain readable; inspect screen-reader/keyboard limitations.
+8. Evidence/Delivery header explanations, Severity/Protocol/Rule/Search filters and Clear filters behavior remain unchanged.
+9. Local PPS ScottPlot, KPIs, incident investigation, unavailable CLI, Cisco/WebView2, sidebar and monitoring/capture controls remain unchanged.
+10. No fabricated demo telemetry, capture-health assertion, privacy/security change, shared API change or independent detection/protocol file modification occurs.
+
+**Open quality GAs:** pinned-SHA Windows WPF build and actual keyboard/screen-reader/UI Automation/tooltip/high-contrast/DPI/responsive screenshot inspection **only after the owner explicitly says “now it is test time.”** **Executed tests: 0.**
+
+**Next independent UI GA UI-42:** inspect fresh LIVE HEAD, approved reference, ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–41.
+
+**Reference:** [Microsoft WPF DataGridColumn.HeaderStyle](https://learn.microsoft.com/dotnet/api/system.windows.controls.datagridcolumn.headerstyle); [WPF AutomationProperties.HelpText](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.helptext).
