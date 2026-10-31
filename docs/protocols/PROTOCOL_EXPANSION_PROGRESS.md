@@ -17,7 +17,7 @@
 
 | [GA P0031–P0040](PROTOCOL_GA_P0031-P0040.md) | f9fcc016081620c20bf9130ea33194d225c0f263 | P0031–P0040 | 2 IMPLEMENTED_ISOLATED (WireGuard, IKEv2-only), 3 PARTIAL (Modbus, Modbus/TCP, DNP3), 1 DEFERRED (ESP), 4 BLOCKED L2 (EAPOL, ARP, LLDP, STP); 0 integrated | 29 / 38 | 0 | Complete caller-attested UDP envelopes only; no runtime producer, authentication, decryption or exploit claims |
 
-**Last completed research GA:** P0241–P0250 (source-only, unverified). **Next exact ten IDs:** **P0251–P0260**. Do not skip blocked candidates, invent new P IDs, rewrite historical outcomes, or treat authored tests as executed. Recover live HEAD and compare concurrent detection/UI stream paths before publication.
+**Last completed research GA:** P0251–P0260 (source-only, unverified). **Next exact ten IDs:** **P0261–P0270**. Do not skip blocked candidates, invent new P IDs, rewrite historical outcomes, or treat authored tests as executed. Recover live HEAD and compare concurrent detection/UI stream paths before publication.
 
 | [GA P0041–P0050](PROTOCOL_GA_P0041-P0050.md) | 691717f8a3302f58454dfcb9e6da45993b17a442 | P0041–P0050 | 3 IMPLEMENTED_ISOLATED (OPC UA UACP, IEC104 APCI, BGP-4 envelope), 2 PARTIAL (S7, BACnet), 1 DEFERRED (MMS), 4 BLOCKED L2 (GOOSE, PROFINET DCP/IO, EtherCAT); 0 integrated | 42 / 50 | 0 | Source-only bounded inspectors, synthetic authored xUnit scenarios, no trusted TCP reassembly or L2 producer |
 
@@ -64,3 +64,5 @@
 | [GA P0231–P0240](PROTOCOL_GA_P0231-P0240.md) | f1a94e19b0d943cd6c7d722c480995ec02f7d820 | P0231–P0240 | 1 IMPLEMENTED_ISOLATED (BFCP header), 1 DEFERRED (ANCP), 3 BLOCKED input (BACP, BCP, CAN), 5 REJECTED as independently counted (RPC registry interface, ACN umbrella, BACnet APDU, BCP BPDU/NCP); 0 integrated | 17 / 17 | 0 | RFC 8855 bounded plaintext BFCP source inspector; Siemens 2026-10-13 vendor advisory does not imply BACnet exploit; no trusted BFCP producer, shared integration or executed tests |
 
 | [GA P0241–P0250](PROTOCOL_GA_P0241-P0250.md) | d473bf336cc29ffee00eb21fabc73ce1624b9a52 | P0241–P0250 | 1 IMPLEMENTED_ISOLATED (GVCP request envelope), 1 EXISTING (ICMP), 4 DEFERRED (CAST, DJI UAV, ECP21, ForCES), 3 BLOCKED native input (CANeth, PPP CBCP/CCP), 1 REJECTED separately counted CIP Motion profile; 0 integrated | 18 / 18 | 0 | Source-only bounded GVCP requests, synthetic authored tests, Basler/ODVA/IETF references; no trusted GVCP producer, shared integration or executed tests |
+
+| [GA P0251–P0260](PROTOCOL_GA_P0251-P0260.md) | eb80cef02b46aec19c4000e9324325fd2022b309 | P0251–P0260 | 1 IMPLEMENTED_ISOLATED (MPTCP v1 MP_CAPABLE initial SYN), 1 EXISTING (ICMPv6), 2 DEFERRED (IDRP, IPDC), 6 BLOCKED native input (IEC 61883, IPCP, IPv6CP, LACP, LCP, MCTP control); 0 integrated | 19 / 19 | 0 | RFC 8684 bounded TCP SYN option inspector, no trusted runtime TCP-option producer, no shared integration, 0 tests executed |
