@@ -2001,3 +2001,43 @@ Change the host-table column caption from **Trend** to **Activity**, with a tool
 **Next independent UI GA UI-30:** inspect fresh live HEAD, the approved image, ledger and original WPF consumers for one cohesive UI-owned accessibility/readability/visual-consistency improvement outside UI-01–29.
 
 **References:** [WPF AutomationProperties.Name](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.name); [WPF TextBlock](https://learn.microsoft.com/en-us/dotnet/api/system.windows.controls.textblock); [WPF ToolTip](https://learn.microsoft.com/en-us/dotnet/api/system.windows.frameworkelement.tooltip).
+
+
+## GA UI-30 — Truthful KPI information and inert overflow affordance
+
+**2026-10-31 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE feature HEAD: `b7ef734a074c81de78b8ea0c9192fa4b92adc78d`; previous UI-29 publication: `11a2a9d68f885b4fef01b7985d35bf84327a6126`. **Exact UI source commit:** `4ca29b0aa34da618b5766de82c8d6245f428af88`. **Owned paths:** `Carthago/Views/MainWindow.xaml`, `Carthago/Views/MainWindow.Dashboard.cs` and this `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`. **Tests authored: 0; executed: 0.** No dotnet build/test, xUnit, replay, holdout, CI, GitHub Actions, Windows runner, benchmark, production capture or running-WPF inspection.
+
+### Approved reference, original consumers and provenance
+
+Resolved and visually inspected the exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c`: navy/graphite panels, cyan/teal accents, restrained severity, compact operational KPI cards and left navigation. Its IPs, metrics, rule IDs, timestamps, confidence, inbound/outbound Mbps and terminal content are **DEMO ONLY**. The actual traffic chart remains local PPS with the existing ten-sample moving average and bounded 120-point history; no demo data or capture-health claims were introduced.
+
+Audited the original `DashboardKpiCardTemplate`, both `DashboardOverviewKpiItemsControl` and `DashboardKpiItemsControl`, the private `SocKpiVm`, `BuildSocOverviewKpis`, `BuildSocKpis`, `UpdateDashboardOverviewThroughput`, the responsive partials and existing theme resources. The KPI header's vertical ellipsis was a static `TextBlock` with **no Click, Command, menu, focus action or consumer**, yet suggested a per-card menu. The adjacent static information glyph had no tooltip or source explanation. GA UI-17's value-label association remains intact and is not repeated as a new feature. KPI producers are local, with unavailable sensor inventory and detection-coverage denominators, bounded correlated incident/anomaly snapshots and relative activity indicators.
+
+### One cohesive UI-owned improvement
+
+Remove only the inert KPI-card overflow glyph; retain the existing information glyph, KPI values, title, trend/delta, icons, accent brushes, cards and responsive templates. Bind the existing info glyph's tooltip and WPF AutomationProperties.Name/HelpText to read-only **private UI-only** explanatory properties; bind the same HelpText to the existing value without altering its LabeledBy. The explanation maps all nine existing KPI titles to their actual local sources and caveats: local throughput versus PPS, unavailable sensors/coverage, max-150 recent unresolved correlated incidents, locally ranked hosts, 15-minute anomaly/threat fallback totals, relative timestamp bars and baseline learning. **Threat Feed Hits** remains a legacy visible title; its explanation disclaims independently verified external intelligence. No metric, polling, data source, capture status, telemetry, security, navigation, command, shared API or detection/protocol change.
+
+### Start/end static divergence review and residual risks
+
+**Start:** inspected LIVE HEAD `b7ef734a074c81de78b8ea0c9192fa4b92adc78d` and compared it with UI-29 publication; three independent protocol commits introduced only `Carthago/Services/ProtocolIntelligence/**`, `Carthago.Tests/ProtocolIntelligence/**` and `docs/protocols/**` changes, with no overlap. Reviewed the exact approved image, original XAML and private WPF partial/consumer/viewmodel API, existing theme, responsive panel selection and full ledger through UI-29. **Source scope:** a single shared KPI template's static ellipsis/info/value accessibility attributes and one computed private viewmodel explanation. Existing values, trend calculations, source provenance, privacy, incident/host sorting and all non-UI paths remain untouched.
+
+**End:** static publication review must confirm source/docs ancestry and blobs, only the three owned paths, no concurrent UI overlap, original x:Names/consumer bindings and a single non-forced expected-SHA lease update. If live HEAD moves, reconcile disjoint changes with a fresh lease or STOP. **Residual risks:** a non-focusable `TextBlock` tooltip may not be keyboard-reachable; WPF UI Automation peer exposure and screen-reader behavior are unverified. HelpText on the KPI value provides an additional inspection surface, not proof of accessibility. Tooltip length, high contrast, 125–200% DPI and narrow-window layouts require Windows inspection. This source-only candidate is not evidence of compilation or validated KPI correctness.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. Both overview and optional KPI cards no longer show an inert vertical-ellipsis menu glyph.
+2. The existing info glyph stays visible without a new menu, command or focus stop.
+3. Hover tooltips describe each of the four overview KPI sources and unavailable sensor/coverage values.
+4. Hover tooltips describe each of the five optional KPI sources and bounded/recent-fallback semantics.
+5. UI Automation inspects the per-card info name/help and value help text; keyboard-only tooltip reachability is assessed rather than assumed.
+6. Existing KPI value-label associations, values, icons, accent, trends/deltas and reactive throughput updates remain unchanged.
+7. Local throughput is not confused with the PPS chart, inbound/outbound rates or capture-health certification.
+8. At 1440/1100/1099/1024/1023/640px, high contrast and 125–200% DPI, headers, tooltips and value labels remain readable.
+9. Existing incidents, risk ranking, local PPS chart, investigation and read-only Live Events (80 displayed/500 retained) remain unchanged.
+10. Explicitly unavailable visual-only CLI, Cisco/WebView2/ScottPlot, privacy and independent detection/protocol streams remain untouched.
+
+**Open quality GAs:** pinned-SHA Windows WPF build, actual tooltip/UI Automation/screen-reader/keyboard inspection, high-contrast/DPI/responsive screenshots and provenance review only after the owner says “now it is test time.” **Executed tests: 0.**
+
+**Next independent UI GA UI-31:** inspect live feature HEAD, the exact approved image, ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–30.
+
+**References:** [WPF ToolTip](https://learn.microsoft.com/en-us/dotnet/api/system.windows.frameworkelement.tooltip); [WPF AutomationProperties.HelpText](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.helptext); [WPF DataTemplate](https://learn.microsoft.com/en-us/dotnet/api/system.windows.datatemplate).
