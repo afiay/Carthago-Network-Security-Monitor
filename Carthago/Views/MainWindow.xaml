@@ -945,8 +945,13 @@
                           <TextBlock Text="High-Risk Hosts" Style="{StaticResource DashboardSectionTitle}"
                                      AutomationProperties.HelpText="Up to five hosts from recent local correlated incidents, or anomaly signals when no incident hosts are available. Risk is a local ranking score, not detection confidence."/>
                           <TextBlock Text="  &#x24D8;" Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"
+                                     Focusable="True"
+                                     KeyboardNavigation.IsTabStop="True"
+                                     FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
+                                     ToolTipService.ShowsToolTipOnKeyboardFocus="True"
                                      ToolTip="Local host ranking: correlated incident hosts take priority; anomaly signals are the fallback. Risk is not detection confidence."
-                                     AutomationProperties.Name="High-risk hosts source information"/>
+                                     AutomationProperties.Name="High-risk hosts source information"
+                                     AutomationProperties.HelpText="Local host ranking: correlated incident hosts take priority; anomaly signals are the fallback. Risk is not detection confidence."/>
                         </StackPanel>
                       </DockPanel>
                       <Grid Margin="0,6,0,4">
@@ -1033,8 +1038,13 @@
                           <TextBlock Text="Recommended Actions" Style="{StaticResource DashboardSectionTitle}"
                                      AutomationProperties.HelpText="Local review suggestions only; this panel does not execute remediation. Numbered badges indicate position, while anomaly badges can show local risk scores."/>
                           <TextBlock Text="  &#x24D8;" Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"
+                                     Focusable="True"
+                                     KeyboardNavigation.IsTabStop="True"
+                                     FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
+                                     ToolTipService.ShowsToolTipOnKeyboardFocus="True"
                                      ToolTip="Suggested local review steps, not automatic remediation. Badge meaning depends on the source; see each row."
-                                     AutomationProperties.Name="Recommended actions source information"/>
+                                     AutomationProperties.Name="Recommended actions source information"
+                                     AutomationProperties.HelpText="Suggested local review steps, not automatic remediation. Badge meaning depends on the source; see each row."/>
                         </StackPanel>
                       </DockPanel>
                       <ScrollViewer VerticalScrollBarVisibility="Auto"
@@ -1078,8 +1088,13 @@
                           <TextBlock Text="Raw / Advanced Shortcuts" Style="{StaticResource DashboardSectionTitle}"
                                      AutomationProperties.HelpText="Existing Live Traffic and Detection Events navigation only. No separate PCAP Explorer or forensics workspace is opened."/>
                           <TextBlock Text="  &#x24D8;" Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"
+                                     Focusable="True"
+                                     KeyboardNavigation.IsTabStop="True"
+                                     FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
+                                     ToolTipService.ShowsToolTipOnKeyboardFocus="True"
                                      ToolTip="These shortcuts open existing Live Traffic or Detection Events views, not separate PCAP or forensics workspaces."
-                                     AutomationProperties.Name="Raw and advanced shortcut destinations information"/>
+                                     AutomationProperties.Name="Raw and advanced shortcut destinations information"
+                                     AutomationProperties.HelpText="These shortcuts open existing Live Traffic or Detection Events views, not separate PCAP or forensics workspaces."/>
                         </StackPanel>
                       </DockPanel>
                       <UniformGrid Columns="2" Margin="0,8,0,0">
