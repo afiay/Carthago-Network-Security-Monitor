@@ -2539,3 +2539,46 @@ Preserve Wide >=1440, Standard 1100–1439, Compact 1024–1099, graceful below 
 **Next independent UI GA UI-43:** inspect fresh LIVE HEAD, approved reference, ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–42.
 
 **References:** [WPF DataGridColumn.HeaderStyle](https://learn.microsoft.com/dotnet/api/system.windows.controls.datagridcolumn.headerstyle); [WPF AutomationProperties.HelpText](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.helptext).
+
+## GA UI-43 — Live Events classification-header provenance
+
+**2026-10-31 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE branch HEAD: `595377c8f93e4ea74b69f78df23d4fa38b4bc114`; prior GA UI-42 source `5461f49f1d2026dde6a49c0f21f7ce0dd51353f1`, documentation/publication `d473bf336cc29ffee00eb21fabc73ce1624b9a52`. Independent GA P0241–P0250 GVCP protocol changes were already present at the starting HEAD. **Exact GA UI-43 source SHA:** `01cb70212b174dac2b56d0f8b019dcf1b4cdb323`. **Owned paths:** `Carthago/Views/MainWindow.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md` only. **Tests authored: 0; tests executed: 0.** No dotnet build/test, xUnit, replay, holdout, CI, GitHub Actions, runner, benchmark, production capture, running-WPF inspection or screenshot.
+
+### Approved design reference and source/consumer audit
+
+Resolved and **visually inspected** the exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c`: navy/graphite dashboard, cyan/teal accents, restrained severity, left navigation, operational KPIs, traffic chart, prioritized incidents, investigation, read-only Live Events and visual-only CLI. Image IPs, metrics, rule IDs, timestamps, confidence, Mbps lines and CLI content are **DEMO ONLY**, never observed telemetry, verified traffic, capture health or protocol evidence.
+
+Audited the LIVE branch, recent commits, this ledger through GA UI-42, `MainWindow.xaml`, `MainWindow.DashboardEvents.cs`, `MainWindow.Dashboard.cs`, `MainWindow.Core.cs`, `MainWindow.xaml.cs`, `MainWindow.Filters.cs`, `MainWindow.GridInteractions.cs`, `MainWindow.DashboardResponsive.cs` and `Theme.xaml`. The original `DashboardEventRowVm.FromDetection` projects `DetectionEvent.RuleId`, `DetectionEvent.Severity.ToString()` and `DetectionEvent.Protocol` into the read-only grid, with an em dash for absent rule/protocol text. The existing theme supplies the implicit `DataGridColumnHeader` style. Earlier UI-33/41/42 documented Evidence/Delivery, Event time and Source/Destination header provenance; UI-40 documented filter HelpText. Rule/Severity/Protocol headers still had no corresponding header-level context. No model, engine, service, detection, protocol, shared API or viewmodel change is necessary.
+
+### One cohesive UI-owned improvement
+
+Add distinct, source-accurate `DataGridTextColumn.HeaderStyle` tooltip and `AutomationProperties.HelpText` to the existing **Rule**, **Severity** and **Protocol** headers, each inheriting the original implicit `DataGridColumnHeader` style. **Rule** means the rule ID reported on the detection event, not proof of evaluation accuracy or current enablement. **Severity** is the event's reported classification, not verified impact or incident priority. **Protocol** is the event's reported protocol label, not independent packet inspection or protocol-decoder verification.
+
+Keep original `Header` captions, `Binding` expressions, widths (76/85/80), order, frozen Event time, existing tooltips on other headers, row selection, keyboard order, virtualization, horizontal scrolling, filtering, 80 displayed/500 retained bounds, status/provenance labels and privacy boundary. No new focus stops, handlers, transformations, event values, external calls, data collection, telemetry, capture-health claims or security changes. Preserve Wide >=1440, Standard 1100–1439, Compact 1024–1099, graceful below 1024, local PPS ScottPlot ten-sample average and bounded 120-point history, prioritized incidents, investigation, unavailable visual-only CLI and Cisco/WebView2 behavior.
+
+### Start/end static divergence and publication guard
+
+**Start:** `595377c8f93e4ea74b69f78df23d4fa38b4bc114` is one independent protocol commit ahead of GA UI-42 publication `d473bf336cc29ffee00eb21fabc73ce1624b9a52`. The pre-existing disjoint changes were `Carthago.Tests/ProtocolIntelligence/GvcpCommandInspectorTests.cs`, `Carthago/Services/ProtocolIntelligence/GvcpCommandInspector.cs`, `docs/protocols/PROTOCOL_EXPANSION_PROGRESS.md` and `docs/protocols/PROTOCOL_GA_P0241-P0250.md`; none is modified here. Prepared private source commit `01cb70212b174dac2b56d0f8b019dcf1b4cdb323` descends directly from the starting HEAD and modifies only `Carthago/Views/MainWindow.xaml`. Original XAML names, WPF partial consumers, UI theme, event projections, privacy, trust and approved reference remain unchanged.
+
+**End/publication gate:** immediately before publication, re-read LIVE remote HEAD and compare concurrent detection/protocol/UI paths with the starting HEAD; inspect private source/docs commit ancestry and changed paths, exact source SHA, original bindings, style inheritance, naming, privacy and reference fidelity. Publish the **complete** two-commit source/docs candidate via **one** non-forced atomic GitHub `update_ref` with `expected_sha` lease on the existing branch. If HEAD moved on disjoint paths, reconstruct both private commits on fresh HEAD and use a fresh lease; STOP on conflict or missing guarantee. No force push, history rewrite, new branch, PR, partial publication or independent automation change.
+
+**Residual risks:** Windows compilation, WPF DataGrid header style resolution, tooltip rendering, UI Automation HelpText exposure, keyboard-only header discovery, screen-reader announcements, high-contrast rendering, 125–200% DPI, horizontal scrolling and 1440/1100/1099/1024/1023/640px screenshots are **UNVERIFIED**. Header tooltips may be undiscoverable by keyboard alone. These static descriptions do not verify rule accuracy, enabled state, event severity, packet attribution, protocol decoding, capture health or detection quality. No new IPs, evidence payloads, personal data or external transmission.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. Hover Rule header: tooltip distinguishes reported rule ID from rule accuracy, execution or enablement.
+2. Hover Severity header: tooltip distinguishes event classification from verified impact or incident priority.
+3. Hover Protocol header: tooltip distinguishes event protocol label from independently verified packet decoding.
+4. UI Automation inspection exposes all three contextual HelpText values without replacing visible captions.
+5. Rule/Severity/Protocol retain their original bindings, 76/85/80 widths, order, em-dash fallback where applicable and theme styling.
+6. Frozen Event time, horizontal scrolling, read-only row selection, keyboard cell navigation, virtualization and 80/500 bounds remain unchanged.
+7. At 1440/1100/1099/1024/1023/640px and 125–200% DPI/high contrast, inspect header readability, tooltip visibility and keyboard/screen-reader limitations.
+8. Earlier Event time, Source/Destination, Evidence/Delivery header guidance, four filters, Clear filters, provenance and status captions remain unchanged.
+9. Local PPS ScottPlot, KPIs, incident investigation, unavailable CLI, Cisco/WebView2, sidebar and monitoring/capture controls remain unaffected.
+10. No demo telemetry, verified rule/protocol/impact claim, capture-health assertion, privacy/security change, shared API change or independent detection/protocol file modification occurs.
+
+**Open quality GAs:** pinned-SHA Windows WPF build and actual keyboard/screen-reader/UI Automation/tooltip/high-contrast/DPI/responsive screenshot inspection **only after the owner explicitly says “now it is test time.”** **Executed tests: 0.**
+
+**Next independent UI GA UI-44:** inspect fresh LIVE HEAD, approved reference, ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–43.
+
+**References:** [WPF DataGridColumn.HeaderStyle](https://learn.microsoft.com/dotnet/api/system.windows.controls.datagridcolumn.headerstyle); [WPF AutomationProperties.HelpText](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.helptext).
