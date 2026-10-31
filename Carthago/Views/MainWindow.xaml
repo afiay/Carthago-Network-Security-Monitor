@@ -940,14 +940,15 @@
                         <TextBlock Grid.Column="1" Text="Risk" Style="{StaticResource MicroLabel}" HorizontalAlignment="Right"/>
                         <TextBlock Grid.Column="2" Text="Items" Style="{StaticResource MicroLabel}" HorizontalAlignment="Right"
                                    ToolTip="Related correlated incidents, or anomaly signals when no incident hosts are available."/>
-                        <TextBlock Grid.Column="3" Text="Trend" Style="{StaticResource MicroLabel}" Margin="12,0,0,0"/>
+                        <TextBlock Grid.Column="3" Text="Activity" Style="{StaticResource MicroLabel}" Margin="12,0,0,0"
+                                   ToolTip="Relative activity over the past 60 minutes in eight time buckets, oldest to newest. Based on incident updates or anomaly creations, not packet traffic or changes in risk."/>
                       </Grid>
                       <ScrollViewer VerticalScrollBarVisibility="Auto"
                                     HorizontalScrollBarVisibility="Disabled"
                                     MaxHeight="112">
                         <ItemsControl x:Name="DashboardHostItemsControl"
                                       AutomationProperties.Name="High-risk hosts from local observations"
-                                      AutomationProperties.HelpText="Up to five host rows. Items counts correlated incidents, or anomaly signals when no incident hosts are available. Risk is a local ranking score, not detection confidence.">
+                                      AutomationProperties.HelpText="Up to five host rows. Items counts correlated incidents, or anomaly signals when no incident hosts are available. Risk is a local ranking score, not detection confidence. Activity bars show relative timestamp density over 60 minutes, not traffic or risk trends.">
                           <ItemsControl.ItemTemplate>
                             <DataTemplate>
                               <Grid Margin="0,1,0,1" MinHeight="20">
@@ -981,6 +982,8 @@
                                            VerticalAlignment="Center"/>
                                 <TextBlock Grid.Column="3"
                                            Text="{Binding TrendText}"
+                                           ToolTip="{Binding ActivityAccessibilityLabel}"
+                                           AutomationProperties.Name="{Binding ActivityAccessibilityLabel}"
                                            FontSize="12"
                                            FontFamily="Consolas"
                                            Foreground="{Binding AccentBrush}"

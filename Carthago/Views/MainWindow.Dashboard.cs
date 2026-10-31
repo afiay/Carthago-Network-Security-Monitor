@@ -1803,6 +1803,13 @@ namespace Carthago
                 $"Host {Host}; local risk score {RiskScore}; {ActiveIncidents} " +
                 $"{RelatedItemKind}{(ActiveIncidents == 1 ? "" : "s")}.";
             public string TrendText { get; init; } = "▁▁▁▁▁▁▁▁";
+            // The glyphs are relative 60-minute timestamp buckets, not traffic or risk trends.
+            public string ActivityAccessibilityLabel =>
+                $"Host {Host}; eight relative activity buckets over the past 60 minutes, oldest to newest, based on " +
+                (RelatedItemKind == "correlated incident"
+                    ? "correlated incident last-update timestamps"
+                    : "anomaly signal creation timestamps") +
+                ". Not packet traffic, a risk-score trend, or an absolute event count.";
             public Brush AccentBrush { get; init; } = Brushes.Orange;
         }
 
