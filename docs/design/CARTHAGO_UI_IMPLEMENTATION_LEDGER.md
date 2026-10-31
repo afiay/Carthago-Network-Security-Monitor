@@ -2080,3 +2080,44 @@ Give the **existing visible** Capture source label the unique name `HeaderCaptur
 **Next independent UI GA UI-32:** inspect fresh live HEAD, exact approved image, ledger and WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–31.
 
 **References:** [WPF AutomationProperties.LabeledBy](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.labeledby); [WPF AutomationProperties.HelpText](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.helptext); [WPF ComboBox](https://learn.microsoft.com/en-us/dotnet/api/system.windows.controls.combobox).
+
+## GA UI-32 — Truthful lower-widget headers and local source explanations
+
+**2026-10-31 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE feature HEAD: `0692fc326ed5d1b804000b24e610014b88b76bcf`, following GA UI-31 publication `187823c5e5d291791ac567c8da1766dbf9a0e6a5`. **Exact UI source commit:** `7a62278d22473cbe1a28b04d3d882170a22e92f0`. **Owned paths:** `Carthago/Views/MainWindow.xaml` and this `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`. **Tests authored: 0; executed: 0.** No dotnet build/test, xUnit, replay, holdout, CI, GitHub Actions, runner, benchmark, capture or running-WPF inspection.
+
+### Approved reference, existing consumers and provenance
+
+Resolved and visually inspected exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c` (1672×941): navy/graphite surfaces, cyan/teal accents, restrained severity, compact operational layout and left navigation. Screenshot IPs, timestamps, confidence, Mbps lines, rule IDs and terminal output are **DEMO ONLY**, not product telemetry. Real traffic remains local PPS with the existing ten-sample average and bounded 120-point history; the visual-only CLI remains explicitly **UNAVAILABLE**.
+
+Audited `MainWindow.xaml` lower `DashboardSummaryGrid` and all three original headers, `Theme.xaml` (`SocPanelMenuGlyph` and `SocInfoGlyph`), `MainWindow.Dashboard.cs` (`BuildSocHostRows`, `BuildSocActionRows`, original shortcut and finding handlers), `MainWindow.DashboardResponsive.cs` (Wide/Standard/Compact panel positioning), existing host/action ItemsControl bindings, and ledger through UI-31. Each header displayed a static northeast-pointing arrow styled as a panel menu glyph with **no command, click handler, expansion or navigation**. The adjacent information glyphs had no explanatory tooltip. Existing real buttons already navigate to Live Traffic, Detection Events, a selected incident workspace or Anomalies. Local host ranking favors correlated incident hosts and uses anomaly-signal hosts only when none exist; action suggestions are informational and do not perform remediation.
+
+### One cohesive UI-owned improvement
+
+Remove the three misleading static pseudo-launch arrows from **High-Risk Hosts**, **Recommended Actions**, and **Raw / Advanced Shortcuts**. Preserve each heading, the existing muted information glyph and all panel geometry, colors, buttons and list content. Give each existing information glyph a concise, source-specific mouse tooltip and WPF AutomationProperties.Name; give the existing section heading a source-limitation AutomationProperties.HelpText. Hosts disclose incident-first/anomaly-fallback ranking and distinguish local risk from detection confidence; actions disclose informational suggestions and source-dependent badges; shortcuts disclose that existing Live Traffic/Detection Events views open rather than separate PCAP/forensics workspaces. No new focus stops, actions, handlers, collections, telemetry, capture logic, scores, security controls, shared contracts, viewmodels or theme resources.
+
+### Start/end static divergence review and residual risks
+
+**Start:** LIVE HEAD `0692fc326ed5d1b804000b24e610014b88b76bcf` descends from UI-31 publication via independent GA P0131–P0140 commits affecting only `Carthago/Services/ProtocolIntelligence/**`, `Carthago.Tests/ProtocolIntelligence/**` and `docs/protocols/**`; no overlap with the two UI-owned paths. The exact approved image, original WPF source/partials, theme, navigation consumers, layout breakpoints and prior ledger were inspected before editing. **Candidate static review:** `7a62278d22473cbe1a28b04d3d882170a22e92f0` differs from the starting HEAD only in `Carthago/Views/MainWindow.xaml` (three decorative arrows removed, three source-specific header explanations added); original header names and button handlers remain. The three old `SocPanelMenuGlyph` instances are absent in the source candidate; the shared theme style is intentionally untouched.
+
+**End/publication gate:** re-read LIVE remote HEAD immediately before publishing, compare all intervening changes against the starting HEAD, confirm source/docs ancestry and exact blob/path ownership, and publish both commits together via exactly ONE non-forced `update_ref` with `expected_sha` lease. If HEAD moves, reconcile disjoint changes safely with a fresh lease or STOP. No other branch, workflow, runner, rule/protocol file or automation may be changed.
+
+**Residual risks:** non-focusable TextBlock info glyphs have no established keyboard-only tooltip access; WPF UI Automation peer exposure, screen-reader announcement, tooltip wrapping/placement, high contrast, 125–200% DPI and 1440/1100/1099/1024/1023/640px responsive screenshots remain **UNVERIFIED**. Removing right-docked decorative arrows could change header whitespace slightly. Static review is not a build, runtime proof or accessibility certification. No new personal data is stored, transmitted or collected; existing local host identifiers remain within their original UI bindings.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. All three lower widget headers retain their original headings and muted information glyphs but no inert northeast pseudo-launch arrows.
+2. High-Risk Hosts information tooltip truthfully describes incident-first host ranking and anomaly fallback without suggesting a complete host inventory.
+3. Host heading help text distinguishes local risk ranking from detection confidence.
+4. Recommended Actions tooltip/help describe suggestions only, without implying execution or remediation.
+5. Recommended Actions badges retain original position/local-risk/no-number semantics and row tooltip behavior.
+6. Raw / Advanced Shortcuts tooltip/help describe existing Live Traffic and Detection Events destinations, not separate PCAP/forensics interfaces.
+7. All original finding-navigation and four shortcut button click handlers remain connected, with unchanged focus and selection.
+8. At 1440/1100/1099/1024/1023/640px, 125–200% DPI and high contrast, headers and hover tooltips remain legible; actual screen-reader and keyboard-only exposure are inspected, not assumed.
+9. Original local PPS ScottPlot, operational KPIs, prioritized incidents, investigation and read-only Live Events (80 shown/500 retained) remain unchanged.
+10. Visual-only unavailable CLI, Cisco/WebView2/ScottPlot behavior, privacy, provenance and independent detection/protocol streams remain untouched.
+
+**Open quality GAs:** pinned-SHA Windows WPF build, real UI Automation/screen-reader/keyboard/tooltip review, high-contrast/DPI/responsive screenshots and provenance regression **only after the owner explicitly says “now it is test time.”** **Executed tests: 0.**
+
+**Next independent UI GA UI-33:** inspect fresh live HEAD, exact approved reference, ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–32.
+
+**References:** [WPF ToolTip](https://learn.microsoft.com/en-us/dotnet/api/system.windows.frameworkelement.tooltip); [WPF AutomationProperties.HelpText](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.helptext); [WPF TextBlock](https://learn.microsoft.com/en-us/dotnet/api/system.windows.controls.textblock).
