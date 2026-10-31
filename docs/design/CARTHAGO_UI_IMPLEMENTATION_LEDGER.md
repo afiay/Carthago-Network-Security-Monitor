@@ -2326,3 +2326,44 @@ On exactly the three existing summary-panel information `TextBlock` glyphs, add 
 **Next independent UI GA UI-38:** inspect fresh LIVE HEAD, approved reference, ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–37.
 
 **References:** [WPF keyboard tooltip behavior](https://learn.microsoft.com/dotnet/api/system.windows.controls.tooltipservice.showstooltiponkeyboardfocus); [WPF keyboard tab stop](https://learn.microsoft.com/dotnet/api/system.windows.input.keyboardnavigation.istabstop); [WPF focus visuals](https://learn.microsoft.com/dotnet/desktop/wpf/advanced/styling-for-focus-in-controls-and-focusvisualstyle); [WPF UI Automation HelpText](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.helptext).
+
+## GA UI-38 — Below-1024 incident investigation fact-card readability
+
+**2026-10-31 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE branch HEAD: `ba498943d762b962ed3e0c146cbd242ed5504510`; previous GA UI-37 source `ded80d734ebc7ef4fa6359389888079425defd19`, publication `92b4e346f798f439646edbebcb34d278582cf529`. Independent protocol GA P0191–P0200 is present in the starting HEAD. **Exact GA UI-38 source commit:** `b8578005ddcda5982b9debe80747540c6f49c0d3`. **Owned paths:** `Carthago/Views/MainWindow.xaml`, `Carthago/Views/MainWindow.DashboardResponsive.cs`, and this `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`. **Tests authored: 0; executed: 0.** No build, xUnit, replays, holdouts, CI, GitHub Actions, runners, benchmarks, production capture or running-WPF screenshots.
+
+### Approved reference, source and consumer audit
+
+Resolved and visually inspected the exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c`: navy/graphite security overview, cyan/teal accents, restrained severity, left navigation, operational KPIs, traffic chart, incident investigation, local events and visual-only CLI. All screenshot IPs, rule IDs, timestamps, Mbps, confidence percentages and terminal lines are **DEMO ONLY**; none are used as application telemetry or capture-health evidence. Preserve Wide >=1440, Standard 1100–1439, Compact 1024–1099 and graceful below 1024, the local PPS ScottPlot ten-sample average and bounded 120-point history, prioritized incidents/anomalies, investigation, read-only local Live Events (80 displayed / 500 retained), explicitly **UNAVAILABLE** CLI, Cisco/WebView2 and all existing privacy/security boundaries.
+
+Inspected live HEAD, recent commits and ledger through GA UI-37; `MainWindow.xaml` investigation panel, six existing `DetailGridCard` fact cells and their labels/values; `MainWindow.DashboardResponsive.cs` and `MainWindow.Responsive.cs` layout consumers; `ResponsiveLayout.cs` thresholds; `MainWindow.Dashboard.cs` original selected-incident/anomaly fact assignments; `MainWindow.xaml.cs` initialization; `MainWindow.Navigation.cs`, `MainWindow.Core.cs`, `MainWindow.DashboardEvents.cs`, `Sidebar.xaml(.cs)` and `Theme.xaml`. No shared API, new viewmodel, data producer, capture behavior or detection/protocol change is required. GA UI-12/21/25 established fact labels, risk provenance and supporting-context semantics; this change is confined to **narrow-window fact-card layout**, not those behaviors.
+
+### One cohesive UI-owned improvement
+
+Name the existing six-field `UniformGrid` `DashboardDetailFactsGrid` without changing its children, source bindings, original three-column XAML default, labels, values, colors, card styles, margins or tooltips. In the existing `ApplyDashboardResponsiveLayout` method, use the already-computed `narrowKpis` threshold to show **two fact columns below 1024px**, while retaining **three columns at 1024px and above**. The six original fact cards retain order (source host, destination, protocol/port, category, detected, related incident). This gives long hostnames and timestamps more horizontal space in the narrowest view, at the cost of one additional fact row. No change to selected item, incident triage, risk scoring, capture, telemetry, handlers, routes, PPS, Live Events or CLI. The name is unique in the audited source.
+
+### Start/end static divergence, provenance and publication gate
+
+**Start:** `ba498943d762b962ed3e0c146cbd242ed5504510` descends from the prior UI-37 publication `92b4e346f798f439646edbebcb34d278582cf529` via independent protocol P0191–P0200 changes. The GA UI-38 private source commit `b8578005ddcda5982b9debe80747540c6f49c0d3` is a direct child of `ba498943d762b962ed3e0c146cbd242ed5504510` and changes only `Carthago/Views/MainWindow.xaml` (one named grid) and `Carthago/Views/MainWindow.DashboardResponsive.cs` (one existing responsive property assignment). Existing WPF partials, original consumers, resource names, privacy/security boundaries, and independent paths are not edited. Source-only static review confirms these two changed paths and the intended diff; it does **not** establish compilation or runtime behavior.
+
+**End/publication gate:** re-read LIVE remote HEAD immediately before publishing; compare any concurrent detection/protocol/UI changes and paths, review exact candidate parent/tree, source/docs blobs, naming and the full owned-path diff. Publish the complete two-commit source/docs chain via **one** non-forced atomic GitHub `update_ref` using `expected_sha` on the same existing branch. If HEAD moves with disjoint changes, rebuild both private commits from the fresh HEAD and use a fresh lease; STOP on overlap, unavailable lease guarantee or uncertain ownership. Never publish partially, force push, rewrite history, create a branch/PR, or change independent automations.
+
+**Residual risks:** Windows WPF compilation and generated `x:Name` field resolution, actual grid reflow, card height and internal scroll space, tooltip clipping, row margins, keyboard and screen-reader reading order, high contrast, 125–200% DPI, 1440/1100/1099/1024/1023/640px screenshots and rapid resize transitions are **UNVERIFIED**. Existing per-card margins were preserved; the two-column wrap may produce asymmetric horizontal gaps or a taller fact region and must be inspected. The narrower breakpoint follows the existing `narrowKpis` threshold and does not change how capture or incidents work. No new host, IP, event, rule, timestamp, confidence or personal data is collected, stored, transmitted or logged.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. At 1440px Wide and 1100px Standard, the existing six incident fact cards remain in three columns with original order, styling, values and tooltips.
+2. At 1099px and 1024px Compact, the same three-column fact layout remains unchanged.
+3. At 1023px and 640px, the six fact cards wrap into two columns and three rows without horizontal overflow or clipped headings.
+4. Resize across 1023/1024 repeatedly; the existing responsive method restores the correct number of columns without stale presentation.
+5. At 125%, 150% and 200% DPI, hostnames, destination, protocol/port, category, detected timestamp and related incident remain readable or expose their original full-value tooltips.
+6. The incident investigation panel retains accessible labels and predictable keyboard/screen-reader reading order; no unintended focus stops are introduced.
+7. The selected correlated incident/anomaly and its six original values remain identical before and after resizing, including waiting/empty states.
+8. The added fact row does not conceal reasons, tags, related rule IDs, recommended actions or the Full detail control; internal scroll behavior remains usable.
+9. PPS ScottPlot history/average, KPI cards, prioritized incidents, Live Events 80/500 retention, visual-only unavailable CLI, Cisco/WebView2, sidebar and capture controls remain unchanged.
+10. No screenshot demo values, fabricated telemetry, capture-health assertions, privacy/security changes, shared API changes or independent detection/protocol modifications appear.
+
+**Open quality GAs:** pinned-SHA Windows WPF build, actual responsive/keyboard/screen-reader/high-contrast/DPI inspection and screenshots **only after the owner explicitly says “now it is test time.”** **Executed tests: 0.**
+
+**Next independent UI GA UI-39:** inspect fresh LIVE HEAD, exact approved reference, ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–38.
+
+**References:** [WPF UniformGrid](https://learn.microsoft.com/en-us/dotnet/api/system.windows.controls.primitives.uniformgrid); [WPF responsive layout and panels](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/panels-overview); [WPF accessibility](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/accessibility).
