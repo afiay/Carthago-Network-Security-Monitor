@@ -2041,3 +2041,42 @@ Remove only the inert KPI-card overflow glyph; retain the existing information g
 **Next independent UI GA UI-31:** inspect live feature HEAD, the exact approved image, ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–30.
 
 **References:** [WPF ToolTip](https://learn.microsoft.com/en-us/dotnet/api/system.windows.frameworkelement.tooltip); [WPF AutomationProperties.HelpText](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.helptext); [WPF DataTemplate](https://learn.microsoft.com/en-us/dotnet/api/system.windows.datatemplate).
+
+## GA UI-31 — Accessible capture-source selector with truthful selection caveat
+
+**2026-10-31 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE feature HEAD: `9fe13ce3ed1ecf40f2ef242724882f39744ac2df`, following GA UI-30 publication `7c33d95aa8f9f8a88e8247b85744f8b90dd6af28`. **Exact UI source commit:** `2a5a62bb427e18402bf4a883901ad801b4098528`. **Owned paths:** `Carthago/Views/MainWindow.xaml` and this `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`. **Tests authored: 0; executed: 0.** No dotnet build/test, xUnit, replay, holdout, CI, GitHub Actions, Windows runner, benchmark, production capture or running-WPF inspection.
+
+### Approved reference, original consumers and provenance
+
+Resolved and visually inspected the exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c` (1672×941): navy/graphite panels, cyan/teal accents, restrained severity, left navigation and operational status. Its IPs, timestamps, metrics, rule IDs, confidence, inbound/outbound Mbps and terminal output are **DEMO ONLY**, not actual Carthago evidence. The live chart remains local PPS with its existing ten-sample average and bounded 120-point history.
+
+Audited original `MainWindow.xaml` header and `DeviceComboBox`, `MainWindow.Core.cs` (device loading, selection inspection, start/pause and capture-failure consumers), `MainWindow.Responsive.cs` (header-group positioning), `MainWindow.xaml.cs`, `MainWindow.DashboardResponsive.cs`, `MainWindow.Settings.cs`, theme and the ledger through GA UI-30. The existing visible **Capture source** label was an unnamed `TextBlock` with no explicit `AutomationProperties.LabeledBy` association on the adjacent `DeviceComboBox`. Selecting a device does **not** itself establish active or healthy capture; existing Start Monitoring and status consumers determine actual operation. This is a new header selector association, **not** GA UI-17 KPI value labeling or GA UI-26 Live Events filter labeling.
+
+### One cohesive UI-owned improvement
+
+Give the **existing visible** Capture source label the unique name `HeaderCaptureSourceLabel`; set `AutomationProperties.LabeledBy` on the original `DeviceComboBox` to that label. Clarify the selector's existing tooltip and add concise `AutomationProperties.HelpText` that a selected device requires the existing Start Monitoring action and is not evidence of capture health. Keep the original `DeviceComboBox` name, options, item template, sizing, theme, focus behavior, capture-service consumers and all monitoring handlers unchanged. No new status producer, capture control, command, selection handler, data source, shared contract, telemetry, privacy change or security logic.
+
+### Start/end static divergence review and residual risks
+
+**Start:** LIVE HEAD `9fe13ce3ed1ecf40f2ef242724882f39744ac2df` descends from UI-30 publication by three independent protocol commits affecting only `Carthago/Services/ProtocolIntelligence/Iec101Ft12Inspector.cs`, `Carthago.Tests/ProtocolIntelligence/Iec101Ft12InspectorTests.cs` and `docs/protocols/**`; no overlap with the two UI-owned paths. Inspected the approved image, WPF partials, source-selection consumer calls, responsive layout, original label/selector and existing UI Automation labeling patterns. **Source scope:** one existing label name and tooltip/accessibility metadata on the adjacent original ComboBox; no change to `Engine/**`, `Models/**`, `Services/**`, detection/protocol rules, tests, benchmarks, workflows, runners, rule/protocol docs, project, shared APIs, security controls or automations.
+
+**End publication requirement:** recheck live remote HEAD immediately before publication, compare all intervening changes, inspect source/docs ancestry and exact changed paths, verify unique label and original consumer names, and publish both private commits together via ONE non-forced `update_ref` with `expected_sha` lease. On overlap or uncertain lease guarantee STOP without publication. **Residual risks:** WPF `LabeledBy` binding and AutomationPeer exposure, screen-reader label precedence, disabled-selector announcement, tooltip verbosity, keyboard navigation, high contrast, 125–200% DPI and 1440/1100/1099/1024/1023/640px layouts are **UNVERIFIED**. The tooltip describes limitations; it does not measure capture health. Source review does not prove compilation, runtime correctness or accessibility compliance.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. The visible Capture source label retains its original typography and position in the header.
+2. `DeviceComboBox` remains the same named ComboBox, with its original item template, width and source options.
+3. UI Automation inspection checks that `DeviceComboBox` resolves its `LabeledBy` to the visible Capture source label.
+4. Screen-reader inspection checks the selector's accessible label and help text without claiming verified announcement behavior.
+5. The selector tooltip explains that choosing a device does not mean capture is running or healthy.
+6. Original `LoadDevices`, `StartButton_Click`, `StopButton_Click`, startup capture and capture-failure consumers retain their semantics.
+7. When the selector is disabled during monitoring, the source selection and focus state behave as before; no new capture-health inference appears.
+8. At 1440/1100/1099/1024/1023/640px, high contrast and 125–200% DPI, the header label, selector and tooltip remain readable without clipping.
+9. Existing KPIs, prioritized incidents, investigation, local PPS ScottPlot and read-only Live Events (80 shown/500 retained) remain unchanged.
+10. Unavailable visual-only CLI, Cisco/WebView2/ScottPlot, privacy, provenance and independent detection/protocol streams remain untouched.
+
+**Open quality GAs:** pinned-SHA Windows WPF build, real UI Automation/screen-reader and tooltip inspection, keyboard/high-contrast/DPI/responsive screenshots and provenance regression **only after the owner explicitly says “now it is test time.”** **Executed tests: 0.**
+
+**Next independent UI GA UI-32:** inspect fresh live HEAD, exact approved image, ledger and WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–31.
+
+**References:** [WPF AutomationProperties.LabeledBy](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.labeledby); [WPF AutomationProperties.HelpText](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.helptext); [WPF ComboBox](https://learn.microsoft.com/en-us/dotnet/api/system.windows.controls.combobox).
