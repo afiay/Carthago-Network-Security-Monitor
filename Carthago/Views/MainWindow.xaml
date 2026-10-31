@@ -927,10 +927,12 @@
                   <Border x:Name="DashboardHostsPanel" Grid.Column="0" Style="{StaticResource PageSurface}" Padding="14" Margin="0,0,12,0">
                     <StackPanel>
                       <DockPanel LastChildFill="True">
-                        <TextBlock DockPanel.Dock="Right" Text="&#x2197;" Style="{StaticResource SocPanelMenuGlyph}"/>
                         <StackPanel Orientation="Horizontal">
-                          <TextBlock Text="High-Risk Hosts" Style="{StaticResource DashboardSectionTitle}"/>
-                          <TextBlock Text="  &#x24D8;" Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"/>
+                          <TextBlock Text="High-Risk Hosts" Style="{StaticResource DashboardSectionTitle}"
+                                     AutomationProperties.HelpText="Up to five hosts from recent local correlated incidents, or anomaly signals when no incident hosts are available. Risk is a local ranking score, not detection confidence."/>
+                          <TextBlock Text="  &#x24D8;" Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"
+                                     ToolTip="Local host ranking: correlated incident hosts take priority; anomaly signals are the fallback. Risk is not detection confidence."
+                                     AutomationProperties.Name="High-risk hosts source information"/>
                         </StackPanel>
                       </DockPanel>
                       <Grid Margin="0,6,0,4">
@@ -1013,10 +1015,12 @@
                   <Border x:Name="DashboardActionsPanel" Grid.Column="1" Style="{StaticResource PageSurface}" Padding="14" Margin="0,0,12,0">
                     <StackPanel>
                       <DockPanel LastChildFill="True">
-                        <TextBlock DockPanel.Dock="Right" Text="&#x2197;" Style="{StaticResource SocPanelMenuGlyph}"/>
                         <StackPanel Orientation="Horizontal">
-                          <TextBlock Text="Recommended Actions" Style="{StaticResource DashboardSectionTitle}"/>
-                          <TextBlock Text="  &#x24D8;" Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"/>
+                          <TextBlock Text="Recommended Actions" Style="{StaticResource DashboardSectionTitle}"
+                                     AutomationProperties.HelpText="Local review suggestions only; this panel does not execute remediation. Numbered badges indicate position, while anomaly badges can show local risk scores."/>
+                          <TextBlock Text="  &#x24D8;" Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"
+                                     ToolTip="Suggested local review steps, not automatic remediation. Badge meaning depends on the source; see each row."
+                                     AutomationProperties.Name="Recommended actions source information"/>
                         </StackPanel>
                       </DockPanel>
                       <ScrollViewer VerticalScrollBarVisibility="Auto"
@@ -1056,10 +1060,12 @@
                   <Border x:Name="DashboardOperationsPanel" Grid.Column="2" Style="{StaticResource PageSurface}" Padding="12" Margin="0">
                     <StackPanel>
                       <DockPanel LastChildFill="True">
-                        <TextBlock DockPanel.Dock="Right" Text="&#x2197;" Style="{StaticResource SocPanelMenuGlyph}"/>
                         <StackPanel Orientation="Horizontal">
-                          <TextBlock Text="Raw / Advanced Shortcuts" Style="{StaticResource DashboardSectionTitle}"/>
-                          <TextBlock Text="  &#x24D8;" Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"/>
+                          <TextBlock Text="Raw / Advanced Shortcuts" Style="{StaticResource DashboardSectionTitle}"
+                                     AutomationProperties.HelpText="Existing Live Traffic and Detection Events navigation only. No separate PCAP Explorer or forensics workspace is opened."/>
+                          <TextBlock Text="  &#x24D8;" Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"
+                                     ToolTip="These shortcuts open existing Live Traffic or Detection Events views, not separate PCAP or forensics workspaces."
+                                     AutomationProperties.Name="Raw and advanced shortcut destinations information"/>
                         </StackPanel>
                       </DockPanel>
                       <UniformGrid Columns="2" Margin="0,8,0,0">
