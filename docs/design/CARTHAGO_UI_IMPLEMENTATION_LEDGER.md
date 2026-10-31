@@ -2244,3 +2244,44 @@ Keep the existing **Last analysis** caption, status `x:Name`, status text produc
 **Next independent UI GA UI-36:** inspect fresh LIVE HEAD, exact approved reference, ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–35.
 
 **References:** [WPF AutomationProperties.LabeledBy](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.labeledby); [WPF AutomationProperties.HelpText](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.helptext); [WPF AutomationProperties.LiveSetting](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.livesetting).
+
+## GA UI-36 — Keyboard access to existing KPI information glyphs
+
+**2026-10-31 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE branch HEAD: `5f271c6b19fa157916639a4ff62404d821427d65`. Prior GA UI-35 publication: `f59c495cbf84d627f165e3b6c35cca2787481cda`; prior UI source: `d364b4818e667c5d71ece820acb562267ac73772`. **Exact GA UI-36 source commit:** `61b9c4ca72bea080a89a551b393b5848b0ef7e63`. **Owned paths:** `Carthago/Views/MainWindow.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`. **Tests authored: 0; executed: 0.** No builds, xUnit, replays, holdouts, CI, GitHub Actions, runners, benchmarks, production capture or running-WPF screenshots.
+
+### Approved reference and original consumer audit
+
+Resolved and visually inspected exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c`: dark navy/graphite dashboard, cyan/teal accents, restrained severity, left navigation, KPI strip, incident investigation and event table. All screenshot IPs, rule IDs, Mbps, confidence, timestamps and terminal lines are **DEMO ONLY**. No screenshot telemetry was inserted. Preserve Wide >=1440, Standard 1100–1439, Compact 1024–1099 and graceful below 1024; local PPS ScottPlot (10-sample average, bounded 120-point history), prioritized incident/anomaly snapshots (150/160), investigation, read-only local Live Events (80 displayed / 500 retained), explicitly **UNAVAILABLE** visual-only CLI, Cisco/WebView2 and all existing capture and security behavior.
+
+Inspected live HEAD and recent commits, ledger through UI-35, `MainWindow.xaml` shared `DashboardKpiCardTemplate` and its two ItemsControl consumers, `MainWindow.Dashboard.cs` `SocKpiVm.InformationText`/`InformationAccessibilityName` and original KPI metric producers, `Theme.xaml` `SocInfoGlyph`/`KeyboardFocusVisual`, `MainWindow.xaml.cs`, `MainWindow.DashboardEvents.cs`, `MainWindow.Responsive.cs`, `MainWindow.DashboardResponsive.cs`, and navigation/partials. GA UI-30 already supplies source-specific read-only KPI descriptions to the existing information glyph and KPI value; it does not make the glyph keyboard-focusable. No source or shared contract change is required.
+
+### One cohesive UI-owned improvement
+
+Make only the **existing informational TextBlock** in the shared KPI card template focusable and a tab stop; apply the existing cyan `KeyboardFocusVisual` and WPF `ToolTipService.ShowsToolTipOnKeyboardFocus=True` to expose the already-bound `InformationText` when keyboard-focused. Preserve the original glyph, title, source-specific tooltip and UI Automation Name/HelpText bindings, card geometry, styles, value, trend, colors, layout, ItemsControl data and responsive consumers. The glyph remains **informational only**: no Button, Click, Command, menu, action, live region, metric producer or new data flow. This applies to the existing overview and additional KPI cards through the same template, without duplicating cards or adding controls.
+
+### Static divergence, provenance and publication guard
+
+**Start:** LIVE HEAD `5f271c6b19fa157916639a4ff62404d821427d65` descends from UI-35 publication and includes independent protocol changes. Compare intervening files before publication; do not modify detection/protocol paths. Source candidate `61b9c4ca72bea080a89a551b393b5848b0ef7e63` is a direct child of `5f271c6b19fa157916639a4ff62404d821427d65`, changing only `Carthago/Views/MainWindow.xaml`. The original shared KPI template is the only modified source region; all WPF partials, viewmodel producers, theme keys, control names, monitoring APIs and privacy boundaries are unchanged.
+
+**End/publication gate:** re-read LIVE remote HEAD immediately before publication, compare intervening paths and original consumers, verify private source/docs ancestry, owned path diff and blobs, then publish both commits via **one** non-forced atomic `update_ref` with `expected_sha` lease on the existing branch. On disjoint concurrent changes, rebuild from fresh HEAD; STOP on overlap or missing lease guarantee. Never publish partially or alter independent automations.
+
+**Residual risks:** WPF compilation, TextBlock tab traversal, keyboard-focused tooltip appearance/timing, UI Automation peer announcements, screen-reader behavior, keyboard focus outline clipping, 125–200% DPI, high contrast and responsive screenshots are **UNVERIFIED**. The change introduces one additional focus stop per visible KPI card (up to nine by default); confirm this does not burden keyboard navigation. Tooltip content is an explanation of the existing local source, not capture-health, sensor coverage or detection-accuracy proof. No new host, IP, event or personal data is collected, stored, logged or transmitted.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. Tab reaches the existing information glyph in every visible overview and additional KPI card without activating any command.
+2. Keyboard focus visibly uses the existing cyan `KeyboardFocusVisual`, without changing unfocused card geometry or colors.
+3. Keyboard focus displays the original source-specific `InformationText` tooltip, and Shift+Tab/Tab dismisses or moves it appropriately.
+4. Mouse hover continues to display the same original tooltip and does not trigger an action.
+5. UI Automation exposes the existing metric-specific `InformationAccessibilityName` and `InformationText` HelpText on the focusable glyph; inspect actual screen-reader behavior.
+6. All nine known KPI explanation variants preserve their original source limitations; unavailable sensor/coverage values remain unavailable.
+7. Existing KPI value, trend glyph, metric updates, layout preferences, and overview/additional ItemsControl bindings remain unchanged.
+8. Wide/Standard/Compact and below-1024 layout at 1440/1100/1099/1024/1023/640px, 125–200% DPI and high contrast keep glyph, focus outline and tooltip readable without clipping.
+9. Local PPS ScottPlot, incidents/investigation, read-only Live Events, unavailable CLI, Cisco/WebView2, monitoring controls and navigation remain untouched.
+10. No demo telemetry or new capture-health/accuracy claim appears; independent detection/protocol paths, security and privacy boundaries remain unchanged.
+
+**Open quality GAs:** pinned-SHA Windows WPF build, actual tab/focus/tooltip/UI Automation/screen-reader inspection, high-contrast/DPI/responsive screenshots and provenance regression **only after the owner says “now it is test time.”** **Executed tests: 0.**
+
+**Next independent UI GA UI-37:** inspect fresh LIVE HEAD, exact approved reference, ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–36.
+
+**References:** [WPF ToolTipService.ShowsToolTipOnKeyboardFocus](https://learn.microsoft.com/dotnet/api/system.windows.controls.tooltipservice.showstooltiponkeyboardfocus); [WPF KeyboardNavigation.IsTabStop](https://learn.microsoft.com/en-us/dotnet/api/system.windows.input.keyboardnavigation.istabstop); [WPF FocusVisualStyle](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/styling-for-focus-in-controls-and-focusvisualstyle).
