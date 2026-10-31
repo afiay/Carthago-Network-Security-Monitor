@@ -2162,3 +2162,44 @@ Keep the existing **Evidence** and **Delivery** column captions, bindings, width
 **Next independent UI GA UI-34:** inspect fresh live HEAD, exact approved image, ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–33.
 
 **References:** [WPF DataGridTextColumn.HeaderStyle](https://learn.microsoft.com/en-us/dotnet/api/system.windows.controls.datagridcolumn.headerstyle); [WPF AutomationProperties.HelpText](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.helptext); [WPF DataGridColumnHeader](https://learn.microsoft.com/en-us/dotnet/api/system.windows.controls.primitives.datagridcolumnheader).
+
+## GA UI-34 — Expose existing sidebar selection to assistive technology
+
+**2026-10-31 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE feature HEAD: `380aab8680414dd45a87e14265099851b83c3f2a`, after GA UI-33 publication `6572b2e4d68efc267c2532c48a98a1c5d5f0a28a` and independent GA P0151–P0160 protocol source commit. **Exact UI source commit:** `b7c3bbc2ae3804951ebe051a700acc6e354eba5c`. **Owned paths:** `Carthago/Views/Sidebar.xaml.cs` and this `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`. **Tests authored: 0; executed: 0.** No build, dotnet test, xUnit, replay, holdout, CI, GitHub Actions, runner, benchmark, production capture or running-WPF inspection.
+
+### Approved reference, original navigation consumers and provenance
+
+Resolved and visually inspected exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c` (1672×941). It establishes navy/graphite surfaces, cyan/teal accents, restrained severity, left navigation, operational KPIs and compact incident/event layout. Screenshot IPs, rule IDs, confidence, timestamps, Mbps series and terminal lines are **DEMO ONLY**, not live telemetry. The original local PPS ScottPlot (10-sample average, 120-point bounded history), prioritized incidents, investigation, read-only Live Events (80 shown/500 retained) and explicitly **UNAVAILABLE** visual-only CLI are untouched.
+
+Audited `Sidebar.xaml` navigation Button names and existing AutomationProperties.Name labels, `Sidebar.xaml.cs` (`SetActiveNavButton`, `ActivateNav`, click handlers, `IsCompact`), `MainWindow.Navigation.cs`, `MainWindow.xaml.cs` navigation/event wiring, `MainWindow.Responsive.cs`, `MainWindow.DashboardResponsive.cs`, `Theme.xaml` navigation styling, `MainWindow.xaml` and ledger through UI-33. The sidebar already sets the active button's `Tag` to `Active` and applies `SelectionBgBrush`, but does not expose that visual selection via a per-button UI Automation status. The existing MainWindow navigation consumers call `ActivateNav` to keep the sidebar selection in sync. No new navigation state or route is introduced.
+
+### One cohesive UI-owned improvement
+
+In the existing `SetActiveNavButton` loop, mirror the *same* visual selection to WPF `AutomationProperties.ItemStatus` on each original sidebar Button: `Current navigation selection` for the selected button, and an empty status for the others. This reports sidebar selection only, **not** successful route loading, capture health, incident state or any monitoring assertion. Keep the original `Tag`, brush, control names, button labels, click handlers, route mappings, focus order, keyboard behavior, filters, collapsed/compact presentation and responsive breakpoints. Import `System.Windows.Automation` in the UI-owned sidebar partial only. No shared contract, new viewmodel, action, event, telemetry producer, security control or service modification.
+
+### Start/end static divergence review and residual risks
+
+**Start:** LIVE HEAD `380aab8680414dd45a87e14265099851b83c3f2a` is one commit ahead of UI-33 publication, with independent GA P0151–P0160 files only in `Carthago/Services/ProtocolIntelligence/**`, `Carthago.Tests/ProtocolIntelligence/**` and `docs/protocols/**`; no overlap with the two UI-owned paths. The exact approved image, original WPF source/partials, navigation consumers, theme, names, provenance and prior GAs were inspected. **Private source candidate:** `b7c3bbc2ae3804951ebe051a700acc6e354eba5c` has parent `380aab8680414dd45a87e14265099851b83c3f2a` and modifies only `Carthago/Views/Sidebar.xaml.cs` (one import, one attached-property assignment and explanatory comments). No change to the original navigation event wiring or visual selection.
+
+**End/publication gate:** re-read LIVE remote HEAD immediately before publishing, compare intervening detection/protocol and UI paths, confirm commit ancestry and exact source/docs blobs, and publish the complete source/docs chain via exactly **ONE** non-forced `update_ref` with `expected_sha` lease on the existing branch. If HEAD moves, reconcile disjoint changes with a fresh lease or STOP on overlap/uncertain guarantee. No branch, PR, automation, workflow, runner, rule or protocol file may be changed.
+
+**Residual risks:** Windows WPF compilation and actual `AutomationProperties.ItemStatus` peer exposure, screen-reader announcement, active/cleared status on programmatic navigation, compact-mode discoverability, keyboard focus, high contrast, DPI and responsive screenshots remain **UNVERIFIED**. Existing initial `Loaded` selection defaults to Overview and existing click handlers may mark selection before view navigation completes; the added status mirrors that same preexisting visual state and does not certify route success. Static inspection is not an accessibility certification. No new personal information is collected, persisted, transmitted or logged; all event and host data remain in their original bindings.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. Initial sidebar Overview selection exposes `Current navigation selection` on its original Button UI Automation peer.
+2. Clicking an existing navigation button moves the accessible status to that selected button, preserving the original route/event.
+3. Previously selected buttons have an empty ItemStatus rather than stale selection.
+4. Programmatic `ActivateNav` transitions update the same status, including dashboard, incidents and detection events.
+5. No additional keyboard focus stops, changed button names, click commands, filter handlers or navigation routes.
+6. Existing `Tag`, selected background brush, hover and focus styles remain visually identical.
+7. Wide (>=1440), Standard (1100–1439), Compact (1024–1099) and below-1024 presentations retain existing navigation and discoverability; inspect 1440/1100/1099/1024/1023/640px, 125–200% DPI and high contrast.
+8. Real UI Automation and screen-reader behavior distinguish navigation selection from route-loading success and from capture/monitoring status.
+9. Original local PPS chart, KPIs, incident queue, investigation, read-only Live Events, Cisco/WebView2/ScottPlot and explicitly unavailable CLI remain unchanged.
+10. No demo telemetry or new privacy/security claim appears, and independent detection/protocol streams remain untouched.
+
+**Open quality GAs:** pinned-SHA Windows WPF build, UI Automation/screen-reader/keyboard review, compact/high-contrast/DPI/responsive screenshots and navigation-provenance regression **only after the owner explicitly says “now it is test time.”** **Executed tests: 0.**
+
+**Next independent UI GA UI-35:** inspect fresh LIVE HEAD, exact approved reference, ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–34.
+
+**References:** [WPF AutomationProperties.ItemStatus](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.itemstatus); [WPF AutomationProperties.SetItemStatus](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.setitemstatus); [WPF Button](https://learn.microsoft.com/en-us/dotnet/api/system.windows.controls.button).
