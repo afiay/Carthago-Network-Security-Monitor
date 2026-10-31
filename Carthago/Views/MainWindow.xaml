@@ -1300,7 +1300,17 @@
                           </Style>
                         </DataGrid.CellStyle>
                         <DataGrid.Columns>
-                          <DataGridTextColumn Header="Event time" Binding="{Binding EventTime}" Width="144"/>
+                          <DataGridTextColumn Header="Event time" Binding="{Binding EventTime}" Width="144">
+                            <DataGridTextColumn.HeaderStyle>
+                              <Style TargetType="{x:Type DataGridColumnHeader}"
+                                     BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+                                <Setter Property="ToolTip"
+                                        Value="Recorded detection-event timestamp as supplied, shown without timezone conversion or verification. Not proof of capture health or event delivery."/>
+                                <Setter Property="AutomationProperties.HelpText"
+                                        Value="Timestamp recorded on the local detection event, formatted as supplied. Timezone is unverified; the time does not establish active capture or successful delivery."/>
+                              </Style>
+                            </DataGridTextColumn.HeaderStyle>
+                          </DataGridTextColumn>
                           <DataGridTextColumn Header="Source" Binding="{Binding Source}" Width="*"
                                               MinWidth="120"/>
                           <DataGridTextColumn Header="Destination" Binding="{Binding Destination}" Width="*"
