@@ -782,7 +782,7 @@
                         </StackPanel>
                       </Border>
 
-                      <UniformGrid Grid.Row="2" Columns="3" Margin="0,0,0,10">
+                      <UniformGrid x:Name="DashboardDetailFactsGrid" Grid.Row="2" Columns="3" Margin="0,0,0,10">
                         <Border Style="{StaticResource DetailGridCard}" Margin="0,0,8,6">
                           <StackPanel>
                             <TextBlock x:Name="DashboardDetailSourceLabel" Text="Source host" Style="{StaticResource MicroLabel}"/>

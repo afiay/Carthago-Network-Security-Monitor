@@ -8,6 +8,10 @@ public partial class MainWindow
 {
     partial void ApplyDashboardResponsiveLayout(ResponsiveLayoutMode mode, bool narrowKpis)
     {
+        // Preserve three fact columns at 1024px and above; allow two below 1024px.
+        // This changes presentation only, not the selected incident or its source values.
+        DashboardDetailFactsGrid.Columns = narrowKpis ? 2 : 3;
+
         var overviewPanelKey = narrowKpis ? "DashboardOverviewKpiNarrowPanel" : mode switch
         {
             ResponsiveLayoutMode.Compact => "DashboardOverviewKpiCompactPanel",
