@@ -1923,3 +1923,42 @@ Rename the High-Risk Hosts footer action to **Review findings →** and the Inci
 **Next independent UI GA UI-28:** inspect live branch, approved image, ledger and original WPF consumers for one cohesive new UI-owned accessibility/readability/visual-consistency improvement outside UI-01–27.
 
 **References:** [WPF Button](https://learn.microsoft.com/en-us/dotnet/api/system.windows.controls.button); [WPF AutomationProperties](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties).
+
+## GA UI-28 — Truthful availability for the unconnected dashboard ellipsis
+
+**2026-10-31 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE feature HEAD: `50fe4885cf1150d479ed59bfcf72a3e501344c82`; previous UI-27 publication: `fecc45af2eaa7870d1c3fa33b5aad662d9cc7b83`. **Exact UI source commit:** `513236c0eec3df63a345edc13e19a145c5404bd1`. **Owned paths:** `Carthago/Views/MainWindow.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md` only. **Tests authored: 0; tests executed: 0.** No build, xUnit, replay, holdout, CI, GitHub Actions, runner, benchmark, capture or running-WPF inspection.
+
+### Approved reference, original consumer audit and provenance
+
+The exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c` was resolved and visually inspected. Its navy/graphite surfaces, cyan/teal accents, restrained severity, header command-bar proportions and operational triage design remain authoritative. Screenshot IPs, metrics, timestamps, rule IDs, confidence and Mbps/inbound/outbound lines are DEMO ONLY. Carthago's actual chart remains local PPS with the existing ten-sample average and bounded 120-point history; no demo telemetry or capture-health claims were introduced.
+
+The original `MainWindow.xaml` header contained a visible ellipsis `Button` with tooltip and accessible name **More dashboard actions**, but **no Click handler, Command or menu**. It has no x:Name and no producer/consumer references. The existing `SecondaryButton` theme style has no command or menu trigger and already supports disabled opacity; original `MainWindow.Core.cs` Start/Pause Monitoring and source selection consumers, dashboard settings/navigation partials, responsive code and other visible header controls were reviewed. This control does not offer a working overflow menu. GA UI-20's actual shortcut destinations and GA UI-27's finding-review buttons are separate and untouched.
+
+### One cohesive UI-owned improvement
+
+Keep the original 40×36 ellipsis, placement, `SecondaryButton` theme and dark palette, but mark the nonfunctional overflow affordance `IsEnabled="False"` rather than presenting an apparently actionable menu. Provide `ToolTipService.ShowOnDisabled="True"`, a truthful unavailable tooltip, `AutomationProperties.Name="More dashboard actions unavailable"` and concise `AutomationProperties.HelpText` stating that no menu is implemented. No menu, commands, click handlers, tab stops, shared contracts, monitoring behavior, telemetry, incident logic, security controls or new dependencies are introduced. Existing visible Start/Pause, Test Reputation and Customize actions are unchanged.
+
+### Start/end static divergence review and residual risks
+
+**Start:** inspected the live feature HEAD, the prior UI-27 source/ledger and intervening independent protocol/detection commit paths; inspected the approved reference, original XAML, `Theme.xaml` `SecondaryButton` template, `MainWindow.Core.cs` header consumers and dashboard/navigation/responsive partials. The exact single source edit is limited to the existing unconnected ellipsis declaration; documentation is appended under `docs/design/**`. No `Engine/**`, `Models/**`, `Services/**`, detection/protocol rules, telemetry/capture/trust/privacy, tests, benchmarks, workflows, runners, rule/protocol docs, project, shared APIs, security controls or automation settings/schedules are edited.
+
+**End publication requirement:** recheck live remote HEAD, compare concurrent changed paths, source/docs ancestry, XAML button uniqueness, source provenance and original consumer bindings. Publish both private commits in ONE non-forced expected-SHA-protected `update_ref` on the existing branch only. On any overlapping or uncertain change STOP instead of overwriting. The disabled button may remain visible in UI Automation but might not be announced by every screen reader; disabled tooltip presentation, high contrast, 125–200% DPI, keyboard navigation and visual fidelity are **UNVERIFIED**. Disabled styling uses existing theme opacity and is not proof of accessible contrast.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. The header ellipsis remains in its original 40×36 location and preserves the original dark-theme button style.
+2. The ellipsis is disabled and no longer implies an operable menu; no menu or action is invented.
+3. Hovering the disabled ellipsis displays the truthful unavailable tooltip via `ToolTipService.ShowOnDisabled`.
+4. UI Automation inspection evaluates the unavailable name/help text and disabled state without promising screen-reader support.
+5. Keyboard navigation skips the unavailable action and retains usable focus order for existing header controls.
+6. Start/Pause Monitoring and capture source selection retain their original handlers and semantics.
+7. Test Reputation and Customize retain their original actions; no new overflow navigation is added.
+8. At 1440/1100/1099/1024/1023/640px, high contrast and 125–200% DPI, disabled state and tooltip remain readable without clipping.
+9. Existing operational KPIs, local PPS chart, prioritized incidents, investigation and read-only Live Events (80 shown/500 retained) are unchanged.
+10. Explicitly unavailable visual-only CLI, Cisco/WebView2/ScottPlot, privacy, provenance and independent detection/protocol streams remain untouched.
+
+**Open quality GAs:** pinned-SHA Windows WPF build, actual disabled tooltip and UI Automation/screen-reader inspection, keyboard, high contrast/DPI and responsive screenshots, and provenance review only after the owner says “now it is test time”. **Executed tests: 0.**
+
+**Next independent UI GA UI-29:** inspect fresh live HEAD, approved image, ledger and WPF consumers for one new cohesive UI-owned accessibility/readability/visual-consistency improvement outside UI-01–28.
+
+**References:** [WPF Button.IsEnabled](https://learn.microsoft.com/en-us/dotnet/api/system.windows.uielement.isenabled); [WPF ToolTipService.ShowOnDisabled](https://learn.microsoft.com/en-us/dotnet/api/system.windows.controls.tooltipservice.showondisabled); [WPF AutomationProperties](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties).
