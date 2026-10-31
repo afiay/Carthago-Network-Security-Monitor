@@ -1196,6 +1196,7 @@
                                   Width="142" Height="30"
                                   SelectedIndex="0"
                                   ToolTip="Filter locally observed detection severity"
+                                  AutomationProperties.HelpText="Filter the retained local detection events by reported severity. This does not change detection or capture."
                                   AutomationProperties.Name="Live events severity"
                                   AutomationProperties.LabeledBy="{Binding ElementName=DashboardLiveSeverityFilterLabel}"
                                   SelectionChanged="DashboardLiveEventsFilterChanged">
@@ -1218,6 +1219,7 @@
                                   Width="142" Height="30"
                                   SelectedIndex="0"
                                   ToolTip="Filter by observed protocol; other protocols remain available under All"
+                                  AutomationProperties.HelpText="Filter retained local detection events by reported protocol. All protocols also includes protocols not listed individually."
                                   AutomationProperties.Name="Live events protocol"
                                   AutomationProperties.LabeledBy="{Binding ElementName=DashboardLiveProtocolFilterLabel}"
                                   SelectionChanged="DashboardLiveEventsFilterChanged">
@@ -1239,6 +1241,7 @@
                                  Width="90" Height="30"
                                  VerticalContentAlignment="Center"
                                  ToolTip="Filter by exact rule ID or part of a rule ID"
+                                 AutomationProperties.HelpText="Filter retained local detection events by exact or partial rule ID; this does not enable, disable or evaluate rules."
                                  AutomationProperties.Name="Live events rule ID"
                                  AutomationProperties.LabeledBy="{Binding ElementName=DashboardLiveRuleFilterLabel}"
                                  TextChanged="DashboardLiveEventsTextChanged"/>
@@ -1254,11 +1257,13 @@
                                  Width="182" Height="30"
                                  VerticalContentAlignment="Center"
                                  ToolTip="Search visible event source, destination, rule or protocol; no evidence payload search"
+                                 AutomationProperties.HelpText="Search retained local event source, destination, rule ID or protocol metadata; not raw evidence payloads or archived events."
                                  AutomationProperties.Name="Search live event endpoints"
                                  AutomationProperties.LabeledBy="{Binding ElementName=DashboardLiveSearchFilterLabel}"
                                  TextChanged="DashboardLiveEventsTextChanged"/>
                       </StackPanel>
                       <Button Content="Clear filters"
+                      AutomationProperties.HelpText="Reset only the four dashboard Live Events filters. Retained detection events and other views are not cleared."
                               Height="30" MinWidth="104"
                               Margin="0,0,0,6"
                               Style="{StaticResource SecondaryButton}"
