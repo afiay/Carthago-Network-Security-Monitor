@@ -52,6 +52,13 @@
       <Style x:Key="DashboardKpiItemContainerStyle" TargetType="{x:Type ContentPresenter}">
                       <Setter Property="Margin" Value="0,0,10,10"/>
                     </Style>
+      <!-- GA UI-46: preserve original endpoint-cell typography and spacing; expose full current text on hover. -->
+      <Style x:Key="DashboardLiveEndpointCellText"
+             TargetType="{x:Type TextBlock}"
+             BasedOn="{StaticResource {x:Type TextBlock}}">
+        <Setter Property="Margin" Value="2,0,2,0"/>
+        <Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+      </Style>
       <DataTemplate x:Key="DashboardKpiCardTemplate">
                       <Border Style="{StaticResource KpiTileCard}" Height="102">
                         <Grid>
@@ -1326,7 +1333,7 @@
                             </DataGridTextColumn.HeaderStyle>
                           </DataGridTextColumn>
                           <DataGridTextColumn Header="Source" Binding="{Binding Source}" Width="*"
-                                              MinWidth="120">
+                                              MinWidth="120" ElementStyle="{StaticResource DashboardLiveEndpointCellText}">
                             <DataGridTextColumn.HeaderStyle>
                               <Style TargetType="{x:Type DataGridColumnHeader}"
                                      BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
@@ -1338,7 +1345,7 @@
                             </DataGridTextColumn.HeaderStyle>
                           </DataGridTextColumn>
                           <DataGridTextColumn Header="Destination" Binding="{Binding Destination}" Width="*"
-                                              MinWidth="120">
+                                              MinWidth="120" ElementStyle="{StaticResource DashboardLiveEndpointCellText}">
                             <DataGridTextColumn.HeaderStyle>
                               <Style TargetType="{x:Type DataGridColumnHeader}"
                                      BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
