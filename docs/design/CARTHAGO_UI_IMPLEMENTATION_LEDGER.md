@@ -2625,3 +2625,46 @@ No new focus stops, event handlers, navigation, values, telemetry, model, servic
 **Next independent UI GA UI-45:** inspect fresh LIVE HEAD, approved reference, ledger and WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–44.
 
 **References:** [WPF UniformGrid](https://learn.microsoft.com/dotnet/api/system.windows.controls.primitives.uniformgrid); [WPF FrameworkElement.Margin](https://learn.microsoft.com/dotnet/api/system.windows.frameworkelement.margin).
+
+## GA UI-45 — Keyboard-accessible guidance for the two triage-panel information glyphs
+
+**2026-10-31 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE `feature/carthago-reliability-hardening` HEAD: `10a7826a9a5ed66f381960e853d02b81e4859b6f`; prior GA UI-44 source `169f73e26687652d45a0aa7b828daf13bfc3f665`, publication `5c87b8489f4821eda1c815f7880e46a3ddaa911a`. Independent GA P0261–P0270 PCP MAP inspector source/test/protocol documentation was already present at starting HEAD and is not modified. **Exact GA UI-45 source SHA:** `8007eabb294e18ab3131257d13ed3c88b49e5d1d`. **Owned paths:** `Carthago/Views/MainWindow.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md` only. **Tests authored: 0; tests executed: 0.** No dotnet build/test, xUnit, replay, holdout, CI, GitHub Actions, runner, benchmark, capture, running-WPF inspection or screenshot.
+
+### Approved reference and original consumer audit
+
+Resolved and **visually inspected** the exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c`. Preserve navy/graphite, cyan/teal, restrained severity, left navigation, operational KPIs, traffic visualization, prioritized incident queue, investigation, read-only Live Events and the explicitly **UNAVAILABLE** visual-only CLI. Image IPs, rule IDs, timestamps, confidence, Mbps and metrics are **DEMO ONLY**; none is observed traffic, capture-health or detection-quality evidence.
+
+Inspected LIVE branch, recent commits, ledger through GA UI-44, `MainWindow.xaml`, `MainWindow.Dashboard.cs` original `DashboardAnomalyList` selection/`UpdateSocSignalDetails` consumers, `MainWindow.DashboardResponsive.cs`, `MainWindow.Responsive.cs`, `MainWindow.DashboardEvents.cs` and `Theme.xaml` `SocInfoGlyph`/`KeyboardFocusVisual` resources. The existing **Recent High-Priority Incidents** and **Incident Investigation** heading glyphs were visual-only `TextBlock` elements without hover explanations, keyboard focus or accessibility names. The adjacent visible explanatory subtitles, existing list item accessibility labels, incident selection, local risk estimate and prior GA UI-36/37 keyboard-focus pattern provide source-consistent guidance without requiring a shared contract.
+
+### One cohesive UI-owned improvement
+
+Give the **two existing triage heading information glyphs** source-specific hover tooltips, keyboard focus and WPF UI Automation metadata. Add `Focusable=True`, `KeyboardNavigation.IsTabStop=True`, existing `KeyboardFocusVisual`, `ToolTipService.ShowsToolTipOnKeyboardFocus=True`, distinct `AutomationProperties.Name` and `AutomationProperties.HelpText`. Queue guidance explains unresolved correlated incidents before anomaly signals, and that local risk estimates are not detection confidence or verified impact. Investigation guidance explains selected incident/anomaly provenance and that risk is not detection confidence, verified impact or proof of capture health.
+
+Original heading captions, glyph text, theme, margins, selection events, queue ranking, data bindings, local risk computation, detail updates, navigation and responsive behavior remain unchanged. No new buttons, commands, handlers, data producers, telemetry, models, services, detection/protocol code, capture, privacy/security/trust controls, shared APIs, external calls or synthetic data. Preserve Wide >=1440, Standard 1100–1439, Compact 1024–1099, graceful below 1024, local PPS ScottPlot ten-sample average and bounded 120-point history, read-only Live Events 80 displayed/500 retained, unavailable CLI and Cisco/WebView2.
+
+### Start/end static divergence and publication guard
+
+**Start:** `10a7826a9a5ed66f381960e853d02b81e4859b6f` is one independent protocol documentation commit after GA UI-44 publication. Disjoint paths: `Carthago.Tests/ProtocolIntelligence/PcpMapInspectorTests.cs`, `Carthago/Services/ProtocolIntelligence/PcpMapInspector.cs`, `docs/protocols/PROTOCOL_EXPANSION_PROGRESS.md`, `docs/protocols/PROTOCOL_GA_P0261-P0270.md`. The private GA UI-45 source commit `8007eabb294e18ab3131257d13ed3c88b49e5d1d` descends from the starting HEAD, modifies only `Carthago/Views/MainWindow.xaml`, and adds metadata/focus/tooltip attributes to exactly two existing glyphs. Existing WPF partial consumers, theme keys, names, incident selection, demo-only provenance and privacy boundary remain unchanged.
+
+**End/publication gate:** immediately before publishing, re-read LIVE remote HEAD and compare concurrent detection/protocol/UI changes with the starting HEAD; verify private source/docs ancestry, exact owned-path diff, original WPF names and consumers, privacy, reference fidelity and source SHA. Publish the complete source/docs candidate via **one** non-forced atomic GitHub `update_ref` with `expected_sha` lease on the same branch. If HEAD moved on disjoint paths, rebuild both commits on the fresh HEAD and use a fresh lease; STOP on conflict or missing guarantee. No partial publication, new branch, PR, force push, history rewrite or independent automation change.
+
+**Residual risks:** Windows compilation, WPF tooltip-on-keyboard-focus behavior, actual keyboard tab order and extra focus stops, UI Automation name/HelpText exposure, screen-reader announcements, focus outline, high contrast, 125–200% DPI, 1440/1100/1099/1024/1023/640px rendering and screenshots remain **UNVERIFIED**. Two additional keyboard stops may increase traversal effort; actual accessibility improvement is not yet demonstrated. Static guidance does not verify incident severity, risk quality, protocol decoding, capture health or event delivery.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. Hover the Recent High-Priority Incidents information glyph: local queue ordering and risk-estimate caveat appear.
+2. Hover the Incident Investigation information glyph: selected incident/anomaly and capture-health caveat appear.
+3. Keyboard Tab reaches both information glyphs in logical panel order with the existing cyan focus visual.
+4. Keyboard focus can reveal each original glyph's tooltip without activating any command or changing selection.
+5. UI Automation exposes distinct names and HelpText for both glyphs without claiming risk is confidence.
+6. Existing `DashboardAnomalyList` selection and `UpdateSocSignalDetails` still update investigation identically.
+7. Existing queue rows, risk badges, incident details, original glyph text, colors, panel geometry and theme remain unchanged.
+8. Inspect 1440/1100/1099/1024/1023/640px at 125–200% DPI, high contrast, keyboard traversal and screen-reader reading order.
+9. Local PPS ScottPlot, KPIs, read-only Live Events 80/500, unavailable CLI, sidebar, Cisco/WebView2 and monitoring/capture controls remain unaffected.
+10. Verify no screenshot demo values, new telemetry, verified impact/capture claim, security/privacy/shared API change or independent detection/protocol file edit.
+
+**Open quality GAs:** pinned-SHA Windows WPF compilation, actual tooltip/focus/screen-reader/UI Automation inspection, high-contrast/DPI and responsive screenshots **only when the owner explicitly says “now it is test time.”** **Executed tests: 0.**
+
+**Next independent UI GA UI-46:** inspect fresh LIVE HEAD, approved reference, ledger and WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–45.
+
+**References:** [WPF FrameworkElement.Focusable](https://learn.microsoft.com/dotnet/api/system.windows.uielement.focusable); [WPF ToolTipService.ShowsToolTipOnKeyboardFocus](https://learn.microsoft.com/dotnet/api/system.windows.controls.tooltipservice.showstooltiponkeyboardfocus); [WPF AutomationProperties.HelpText](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.helptext).
