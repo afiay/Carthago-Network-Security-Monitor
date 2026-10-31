@@ -2799,3 +2799,45 @@ Preserve the original caption/arrow, DockPanel placement, MinWidth=130, Height=3
 **Next independent UI GA UI-49:** inspect fresh LIVE HEAD, approved reference, ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–48.
 
 **References:** [WPF ToolTipService.ShowsToolTipOnKeyboardFocus](https://learn.microsoft.com/dotnet/api/system.windows.controls.tooltipservice.showstooltiponkeyboardfocus); [WPF AutomationProperties.Name](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.name); [WPF AutomationProperties.HelpText](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.helptext).
+
+
+## GA UI-49 — Keyboard-discoverable scope for both Signal Investigation detail triggers
+
+**2026-11-01 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE `feature/carthago-reliability-hardening` HEAD: `4fac77433bc2f1fd47887cd9c5558f55aa26e7e1`; prior published GA UI-48 docs HEAD `30dae3d9b0a142e774bccd06cbb911914785c386`. Exact UI source commit: `7e8a4d79b0f23ba79e94fb07ce786e677ee43a65`. Approved concept reference: ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c`, visually inspected in this GA. Source-owned path: `Carthago/Views/MainWindow.xaml`; ledger-owned path: `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`. No other paths may change. No tests, builds, replays, runners, CI, screenshots of running software or production capture were executed.
+
+### Reference, live-source and consumer audit
+
+The approved image remains a **DEMO ONLY** composition: navy/graphite, cyan/teal, restrained severity, left navigation, operational KPIs, traffic plot, prioritized incidents, investigation, local Live Events and an illustrated CLI. Its IPs, Mbps, rule IDs, timestamps, confidence and capture-health indicators are not real data. Inspected LIVE remote HEAD and one independent P0301–P0310 IPFIX protocol source/test/docs commit since GA UI-48; audited this ledger through GA UI-48, `MainWindow.xaml`, `MainWindow.Dashboard.cs`, `MainWindow.DashboardEvents.cs`, `MainWindow.Navigation.cs`, `MainWindow.Responsive.cs`, `MainWindow.DashboardResponsive.cs`, `MainWindow.xaml.cs`, `MainWindow.Core.cs`, `DashboardSignalDetailDialog.xaml`, `DashboardSignalDetailDialog.xaml.cs`, and `Theme.xaml`. No prior GA UI-01–48 added accessible scope metadata to the two existing **Full detail** / **Full Detail** triggers.
+
+The two original dashboard buttons both call `DashboardOpenSignalDetail_Click`. That handler builds `CreateDashboardSignalDetailModel()`, opens `DashboardSignalDetailDialog` modally via `ShowDialog()`, and responds to the dialog's optional `RequestedAction` by navigating to the existing incident or anomaly view. The dialog's existing `CopySummary_Click` copies a text summary to the clipboard. The model can reflect the selected incident/anomaly or an existing fallback incident; therefore the tooltip says **current local incident or anomaly context**, not a guaranteed selected or verified incident. The upper `DashboardOpenSignalDetailButton` remains `Visibility=Collapsed`; the lower `Full Detail` button remains visible and uses the same handler. Existing `SecondaryButton` inherits the theme keyboard-focus outline. The nearby `View Related Incident` and `Review finding` buttons and their original enablement/handlers are not modified.
+
+### One cohesive UI-owned improvement
+
+Add identical, source-accurate hover and keyboard-focus tooltips, `AutomationProperties.Name` and `AutomationProperties.HelpText` to **both existing Full Detail triggers**. The guidance describes the existing modal Signal Investigation detail, optional clipboard summary and incident/anomaly navigation, and distinguishes opening a dialog from capture activation, raw evidence export, remediation or verification. Preserve the original captions, names, widths, heights, styles, focus order, collapsed state, click handlers, modal dialog, clipboard implementation, conditional navigation and data producers. No new controls, focus stops, commands, bindings, telemetry, services, models, capture/trust/privacy, detection/protocol changes, shared API or security controls. Do not change the dialog itself.
+
+Preserve Wide >=1440, Standard 1100–1439, Compact 1024–1099, graceful below 1024, local PPS ScottPlot 10-sample average and bounded 120-point history, prioritized incidents/investigation, read-only Live Events 80 displayed/500 retained, explicitly UNAVAILABLE visual-only CLI and Cisco/WebView2/ScottPlot behavior. No screenshot DEMO values introduced.
+
+### Start/end static divergence and publication gate
+
+**Start:** LIVE `4fac77433bc2f1fd47887cd9c5558f55aa26e7e1` is one protocol-only commit ahead of UI-48 publication `30dae3d9b0a142e774bccd06cbb911914785c386`. Disjoint independent paths: `Carthago.Tests/ProtocolIntelligence/IpfixMessageInspectorTests.cs`, `Carthago/Services/ProtocolIntelligence/IpfixMessageInspector.cs`, `docs/protocols/PROTOCOL_EXPANSION_PROGRESS.md`, `docs/protocols/PROTOCOL_GA_P0301-P0310.md`. The private UI source commit `7e8a4d79b0f23ba79e94fb07ce786e677ee43a65` descends from that LIVE HEAD and changes only `Carthago/Views/MainWindow.xaml`, limited to the two existing buttons. Their original handler/visibility/style and consumers remain unchanged.
+
+**End/publication gate:** re-read LIVE remote HEAD immediately before publication, compare all intervening paths and inspect source/ledger provenance, exact UI-only diff, unchanged consumers, image fidelity, privacy and capture boundaries. Prepare a separate private ledger commit descending from the source commit. Publish both commits together through **one non-forced atomic `update_ref` with `expected_sha` lease** on the same branch. If concurrent changes touch owned paths or the lease guarantee is unavailable, STOP; if disjoint, rebuild both private commits on fresh LIVE HEAD and recheck before publication. Never partially publish or change independent automations.
+
+**Residual risks:** Windows WPF compilation, keyboard-focus tooltip display, UI Automation metadata resolution, screen-reader announcements, the collapsed header trigger, focus visual, clipboard and optional dialog navigation, high contrast, 125–200% DPI and responsive screenshots at 1440/1100/1099/1024/1023/640px are **UNVERIFIED**. Tooltip text may be verbose for assistive technology. Static handler inspection does not prove runtime behavior or accessibility compliance.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. Hover the visible lower **Full Detail** button: guidance names the existing Signal Investigation dialog, not a new investigation service.
+2. Keyboard Tab to the visible lower button: original focus outline remains and tooltip appears on keyboard focus; no extra focus stop.
+3. UI Automation exposes the accessible name **Open signal investigation detail** and source-accurate HelpText; verify actual screen-reader presentation on Windows.
+4. Activate the lower button with mouse, Enter and Space: existing handler opens the existing modal dialog without changing incident selection.
+5. Inspect the upper **Full detail** trigger: metadata matches the lower button and it remains collapsed unless original behavior changes it.
+6. In the dialog, verify existing **Copy summary** copies only the original summary and that no clipboard action occurs merely by opening it.
+7. Verify existing optional **Open incident** / **Open anomalies** dialog actions preserve their routes and are not implied when unavailable.
+8. Check 1440/1100/1099/1024/1023/640px, 125–200% DPI and high contrast for tooltip placement, clipping and keyboard focus.
+9. Verify KPIs, local PPS plot, incidents, Live Events 80/500, unavailable CLI, Cisco/WebView2 and capture controls are unaffected.
+10. Confirm no fabricated telemetry, verified evidence/health claim, raw evidence export, capture, remediation, shared API, privacy/security or independent detection/protocol changes.
+
+**Open quality GAs:** pinned-SHA Windows WPF compilation and actual UI/keyboard/UI Automation/screen-reader/high-contrast/DPI/responsive inspection **only after owner says “now it is test time.”** **Executed tests: 0.**
+
+**Next independent UI GA UI-50:** inspect fresh LIVE HEAD, approved image, ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–49.
