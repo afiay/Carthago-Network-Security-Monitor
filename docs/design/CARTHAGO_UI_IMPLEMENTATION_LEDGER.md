@@ -2756,3 +2756,46 @@ No new focus stops, commands, event handlers, data producers, telemetry, engine,
 **Next independent UI GA UI-48:** inspect fresh LIVE HEAD, approved reference, ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–47.
 
 **References:** [WPF DataGridTextColumn.ElementStyle](https://learn.microsoft.com/dotnet/api/system.windows.controls.datagridboundcolumn.elementstyle); [WPF AutomationProperties.HelpText](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.helptext); [WPF TextBlock.TextTrimming](https://learn.microsoft.com/dotnet/api/system.windows.controls.textblock.texttrimming).
+
+## GA UI-48 — Keyboard-discoverable navigation scope for Live Events “All detections”
+
+**2026-10-31 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE HEAD: 2b72e5cf3dfc1eed71039d512a8fcdb617785679 on existing feature/carthago-reliability-hardening. Prior GA UI-47 source c146d0059980d6c884ccdbc8a74cb95b86197067; publication e1bda7ffed1c38601dea991d94e321871a17e1f5. Independent GA P0291–P0300 protocol documentation was already present at the starting HEAD and is not edited. **Exact GA UI-48 source SHA: 478f0a44cf03649622b5b99917bb005707ff130e.** **Owned paths:** Carthago/Views/MainWindow.xaml and docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md only. **Tests authored: 0; tests executed: 0.** No build, dotnet test, xUnit, replay, holdout, CI, GitHub Actions, runner, benchmark, capture, running-WPF inspection or screenshot.
+
+### Approved reference, original consumers and distinct need
+
+Resolved and **visually inspected** the exact approved ChatGPT Library image libfile_b0a34361560c8191b641e432b3e6b15c: navy/graphite, cyan/teal, restrained severity, left navigation, operational KPIs, local traffic visualization, prioritized incidents, investigation, read-only Live Events and explicitly UNAVAILABLE visual-only CLI. Its IPs, Mbps, rule IDs, timestamps, confidence and other metrics are **DEMO ONLY**, not capture, monitoring or detection-quality evidence.
+
+Inspected LIVE remote branch, recent commits, ledger through UI-47, MainWindow.xaml, MainWindow.DashboardEvents.cs, MainWindow.Navigation.cs, MainWindow.Dashboard.cs, MainWindow.Responsive.cs, MainWindow.DashboardResponsive.cs, MainWindow.xaml.cs, MainWindow.Core.cs, Sidebar.xaml.cs and Carthago/Views/Theme.xaml. Existing DashboardLiveEventsOpenDetections_Click delegates directly to Nav_Alerts_Click; the existing route calls ShowView(AlertsView), selects sidebar Alerts and shows sidebar detection filters. The dashboard Live Events filter controls are separate and are not changed by that handler. The existing All detections button inherits SecondaryButton and its keyboard focus visual, but lacked specific accessible naming and scope guidance. The adjacent Open Live Traffic button already has its own name/HelpText. This improvement does not repeat UI-01–47.
+
+### One cohesive UI-owned change
+
+Add exactly four WPF attributes to the existing Live Events **All detections →** Button: a navigation-only hover ToolTip naming the existing Raw Detections view, ToolTipService.ShowsToolTipOnKeyboardFocus=True, AutomationProperties.Name=Open Raw Detections, and source-accurate AutomationProperties.HelpText describing the existing route/sidebar filters while distinguishing navigation from dashboard filtering, evidence export, capture activation and delivery verification.
+
+Preserve the original caption/arrow, DockPanel placement, MinWidth=130, Height=30, SecondaryButton style, Click=DashboardLiveEventsOpenDetections_Click, original route, tab order and focus outline. No new focus stop, handler, command, filter behavior, data binding, data producer, telemetry, evidence payload, engine, model, service, protocol/detection rule, capture/trust/privacy/security control, shared API or external call. Preserve Wide >=1440, Standard 1100–1439, Compact 1024–1099 and graceful below 1024; local PPS ScottPlot 10-sample average and bounded 120-point history; prioritized incidents/investigation; read-only local Live Events 80 displayed/500 retained; unavailable visual-only CLI; Cisco/WebView2 and privacy/capture boundaries. No demo values added.
+
+### Start/end static divergence, provenance and publication guard
+
+**Start:** LIVE 2b72e5cf3dfc1eed71039d512a8fcdb617785679 is one independent protocol documentation commit after GA UI-47 publication e1bda7ffed1c38601dea991d94e321871a17e1f5. Disjoint paths: docs/protocols/PROTOCOL_EXPANSION_PROGRESS.md and docs/protocols/PROTOCOL_GA_P0291-P0300.md. Private source commit 478f0a44cf03649622b5b99917bb005707ff130e descends directly from 2b72e5cf3dfc1eed71039d512a8fcdb617785679 and changes only Carthago/Views/MainWindow.xaml: four attributes on one existing navigation button. Original WPF partial consumers, sidebar route, filter semantics, names, theme, privacy and capture boundaries remain unchanged.
+
+**End/publication gate:** immediately before publishing, re-read LIVE remote HEAD and compare concurrent detection/protocol/UI paths with 2b72e5cf3dfc1eed71039d512a8fcdb617785679; verify two private commits, ancestry, exact owned-path diff, original handler/theme, source SHA, approved reference and privacy. Publish the complete candidate only through ONE non-forced atomic GitHub update_ref with expected_sha lease on the same existing branch. If HEAD moves on disjoint paths, reconstruct both commits from the fresh HEAD and obtain a fresh lease; STOP on conflict or missing guarantee. No partial publication, branches, PRs, force push, history rewrite or independent automation changes.
+
+**Residual risks:** Windows compilation, WPF attached-property resolution, actual keyboard-focus tooltip display, UI Automation Name/HelpText exposure, screen-reader announcement/verbosity, focus outline, high contrast, 125–200% DPI, 1440/1100/1099/1024/1023/640px screenshots and responsive clipping are **UNVERIFIED**. The metadata is not proof of accessibility compliance or monitoring success. Route behavior is inspected statically, not executed.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. Hover All detections: tooltip identifies the existing Raw Detections view and navigation-only scope.
+2. Tab to the existing button: the original focus visual remains and tooltip is available on keyboard focus without another tab stop.
+3. UI Automation exposes Open Raw Detections and distinct HelpText; inspect actual screen-reader announcements, not assume them.
+4. Activate with mouse, Enter and Space: existing DashboardLiveEventsOpenDetections_Click delegates to Nav_Alerts_Click and shows AlertsView.
+5. Existing sidebar Alerts selection and detection-filter presentation remain unchanged.
+6. Dashboard Severity/Protocol/Rule/Search filters and Clear filters behavior are unchanged when navigating away and back.
+7. Original button caption, arrow, width/height, style, placement, keyboard order and focus outline remain.
+8. Inspect 1440/1100/1099/1024/1023/640px, 125–200% DPI and high contrast for tooltip readability, focus and clipping.
+9. KPIs, local PPS ScottPlot, incidents/investigation, Live Events 80/500 read-only bounds, unavailable CLI, Cisco/WebView2 and capture controls remain unaffected.
+10. Verify no screenshot demo telemetry, evidence export, capture or delivery-health assertion, privacy/security/shared API change or independent detection/protocol edit.
+
+**Open quality GAs:** pinned-SHA Windows WPF compilation and actual tooltip, keyboard, UI Automation, screen-reader, high-contrast/DPI and responsive screenshot inspection **only when owner explicitly says “now it is test time.”** **Executed tests: 0.**
+
+**Next independent UI GA UI-49:** inspect fresh LIVE HEAD, approved reference, ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–48.
+
+**References:** [WPF ToolTipService.ShowsToolTipOnKeyboardFocus](https://learn.microsoft.com/dotnet/api/system.windows.controls.tooltipservice.showstooltiponkeyboardfocus); [WPF AutomationProperties.Name](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.name); [WPF AutomationProperties.HelpText](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.helptext).
