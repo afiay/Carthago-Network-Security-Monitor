@@ -17,7 +17,7 @@
 
 | [GA P0031–P0040](PROTOCOL_GA_P0031-P0040.md) | f9fcc016081620c20bf9130ea33194d225c0f263 | P0031–P0040 | 2 IMPLEMENTED_ISOLATED (WireGuard, IKEv2-only), 3 PARTIAL (Modbus, Modbus/TCP, DNP3), 1 DEFERRED (ESP), 4 BLOCKED L2 (EAPOL, ARP, LLDP, STP); 0 integrated | 29 / 38 | 0 | Complete caller-attested UDP envelopes only; no runtime producer, authentication, decryption or exploit claims |
 
-**Last completed research GA:** P0111–P0120 (source-only, unverified). **Next exact ten IDs:** **P0121–P0130**. Do not skip blocked candidates, invent new P IDs, rewrite historical outcomes, or treat authored tests as executed. Recover live HEAD and compare concurrent detection/UI stream paths before publication.
+**Last completed research GA:** P0121–P0130 (source-only, unverified). **Next exact ten IDs:** **P0131–P0140**. Do not skip blocked candidates, invent new P IDs, rewrite historical outcomes, or treat authored tests as executed. Recover live HEAD and compare concurrent detection/UI stream paths before publication.
 
 | [GA P0041–P0050](PROTOCOL_GA_P0041-P0050.md) | 691717f8a3302f58454dfcb9e6da45993b17a442 | P0041–P0050 | 3 IMPLEMENTED_ISOLATED (OPC UA UACP, IEC104 APCI, BGP-4 envelope), 2 PARTIAL (S7, BACnet), 1 DEFERRED (MMS), 4 BLOCKED L2 (GOOSE, PROFINET DCP/IO, EtherCAT); 0 integrated | 42 / 50 | 0 | Source-only bounded inspectors, synthetic authored xUnit scenarios, no trusted TCP reassembly or L2 producer |
 
@@ -28,7 +28,7 @@
 - Owner approval and cross-stream review for any shared capture/telemetry/record schema integration; source-only isolated work may continue meanwhile.
 - First actual build/xUnit/Windows replay awaits explicit owner command **“now it’s test time.”**
 - Live sensor provenance, TCP stream boundaries, DTLS 1.3 encrypted records, endpoint/proxy logs and NetScaler asset/config/IOC correlation are not established by these isolated inspectors.
-- Continue source-only with P0121–P0130; preserve detection and UI ledgers, frozen holdouts, journal-first raw DetectionEvents, privacy, cooldowns, thresholds and rule IDs.
+- Continue source-only with P0131–P0140; preserve detection and UI ledgers, frozen holdouts, journal-first raw DetectionEvents, privacy, cooldowns, thresholds and rule IDs.
 
 | [GA P0071–P0080](PROTOCOL_GA_P0071-P0080.md) | 984c9bbea00f68d7dc2f6b8b5f0d163880ddcba4 | P0071–P0080 | 2 IMPLEMENTED_ISOLATED (Geneve, HSRP v1), 1 EXISTING (VLAN), 1 DEFERRED (GTP), 5 BLOCKED input/L2 (PPP, PPPoE, MPLS, CDP, UDLD), 1 REJECTED as separately counted variant (GTPv2-C); 0 integrated | 33 / 41 | 0 | Source-only bounded Geneve and HSRP v1 inspectors; no trusted live UDP envelope, HSRP authentication or runtime registration |
 
@@ -39,3 +39,5 @@
 | [GA P0101–P0110](PROTOCOL_GA_P0101-P0110.md) | 0871d7a795e3f9cd7d6ce780cb02152309fbc72a | P0101–P0110 | 2 IMPLEMENTED_ISOLATED (LPD top-level command, RFB version), 1 DEFERRED (IPMI), 1 BLOCKED USB (IPPUSB), 6 REJECTED independently counted RDP channel/transport variants; 0 integrated | 33 / 40 | 0 | RFC 1179/6143 bounded source-only inspectors; AMI BMC advisory context not packet exploit evidence; no trusted producer |
 
 | [GA P0111–P0120](PROTOCOL_GA_P0111-P0120.md) | 11a2a9d68f885b4fef01b7985d35bf84327a6126 | P0111–P0120 | 1 IMPLEMENTED_ISOLATED (CIP encapsulation extension), 1 PARTIAL (SMB pipes), 4 DEFERRED (CIP objects/safety/PCCC), 1 BLOCKED L2 (MRP), 3 REJECTED as independently counted (RDP audio, NetBIOS umbrella, CIP Safety Validator); 0 integrated | 20 / 21 | 0 | Strict bounded EtherNet/IP session/CPF observer; no runtime producer or CIP object/safety claim; no shared-core edits |
+
+| [GA P0121–P0130](PROTOCOL_GA_P0121-P0130.md) | 7c33d95aa8f9f8a88e8247b85744f8b90dd6af28 | P0121–P0130 | 1 IMPLEMENTED_ISOLATED (IEC101 FT1.2 serial), 4 BLOCKED input (PROFINET MRRT/PTCP/RSI L2; BACnet MS/TP serial), 5 REJECTED separately counted EtherCAT/IEC104 components; 0 live integrated | 14 / 17 | 0 | Strict serial framing, no trusted producer, source-only and no shared edits |
