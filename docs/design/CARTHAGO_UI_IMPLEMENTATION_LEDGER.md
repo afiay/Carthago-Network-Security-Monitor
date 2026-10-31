@@ -2203,3 +2203,44 @@ In the existing `SetActiveNavButton` loop, mirror the *same* visual selection to
 **Next independent UI GA UI-35:** inspect fresh LIVE HEAD, exact approved reference, ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–34.
 
 **References:** [WPF AutomationProperties.ItemStatus](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.itemstatus); [WPF AutomationProperties.SetItemStatus](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.setitemstatus); [WPF Button](https://learn.microsoft.com/en-us/dotnet/api/system.windows.controls.button).
+
+## GA UI-35 — Truthful last-analysis timestamp and accessible header context
+
+**2026-10-31 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE feature HEAD: `90d3cc1cac10f8da4462fcaa58ccbf4ae0ac8c9b`, after GA UI-34 publication `bb4eeb68989f4fe38223a181249787661c4fd74c` and the independent GA P0161–P0170 protocol commit. **Exact UI source commit:** `d364b4818e667c5d71ece820acb562267ac73772`. **Owned paths:** `Carthago/Views/MainWindow.xaml`, `Carthago/Views/MainWindow.Dashboard.cs`, and this `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`. **Tests authored: 0; executed: 0.** No build, dotnet test, xUnit, replay, holdout, CI, GitHub Actions, runner, benchmark, capture or running-WPF screenshot.
+
+### Approved reference, producer and consumer audit
+
+Resolved and visually inspected the exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c` (1672×941): navy/graphite shell, cyan/teal accents, restrained severity, left navigation, operational KPIs, local traffic chart and compact incident/event panels. All screenshot IPs, timestamps, rule IDs, confidence, Mbps series and terminal lines are **DEMO ONLY**; no reference values were inserted. Preserve the local PPS ScottPlot (10-sample average, bounded 120-point history), incident-first triage, investigation, read-only local Live Events (80 displayed/500 retained), unavailable visual-only CLI, Cisco/WebView2 and breakpoints Wide >=1440, Standard 1100–1439, Compact 1024–1099 and graceful below 1024.
+
+Audited `MainWindow.xaml` command-header status, source and analysis groups; `MainWindow.Dashboard.cs` `UpdateMonitoringHeader`, its `_sinkHost?.Analytics.LastAnalysisUtc` producer, existing error/degraded/waiting branches, capture-source/flow tooltip and timer; `MainWindow.xaml.cs`, `MainWindow.Navigation.cs`, `MainWindow.Responsive.cs`, `MainWindow.DashboardResponsive.cs`, `MainWindow.DashboardEvents.cs`, `Sidebar.xaml(.cs)`, `Theme.xaml` and the UI ledger through UI-34. The prior header displayed a historical `LastAnalysisUtc` timestamp with the suffix **(Live)** even if the current monitoring status was paused or offline. The existing timestamp conversion uses `ToLocalTime()`; it is not a live-capture or capture-health proof. The original diagnostic tooltip comes from the existing capture-source/flow pipeline and remains unchanged.
+
+### One cohesive UI-owned improvement
+
+Keep the existing **Last analysis** caption, status `x:Name`, status text producer, local timestamp conversion, error/degraded/waiting branches, tooltip, capture badge, start/pause controls, header geometry and responsive consumers. Give the existing visible caption the unique name `HeaderLastAnalysisLabel`; associate the original `HeaderLastAnalysisText` with it using `AutomationProperties.LabeledBy`, add truthful `HelpText` explaining recorded analysis versus capture/event-delivery health, and set `AutomationProperties.LiveSetting=Off` to avoid declaring an unsolicited live region on the periodically refreshed status. Change only the historical timestamp suffix from **(Live)** to **(recorded)**. Do not alter `LastAnalysisUtc`, monitoring/capture/flow state calculations, status conditions, diagnostics, telemetry, services, privacy or any security control.
+
+### Static divergence, provenance and publication guard
+
+**Start:** LIVE HEAD `90d3cc1cac10f8da4462fcaa58ccbf4ae0ac8c9b` descends from GA UI-34 publication through one independent P0161–P0170 protocol commit changing only `Carthago/Services/ProtocolIntelligence/**`, `Carthago.Tests/ProtocolIntelligence/**` and `docs/protocols/**`. No overlap with these three UI-owned paths. Source candidate `d364b4818e667c5d71ece820acb562267ac73772` has parent `90d3cc1cac10f8da4462fcaa58ccbf4ae0ac8c9b` and changes only the two WPF UI paths; the existing status updater, source-health tooltip, capture source, event consumers, names and responsive layout remain intact. The reference image, naming, historical timestamp provenance and privacy boundaries were inspected.
+
+**End/publication gate:** re-read LIVE remote HEAD immediately before publication; compare all intervening changes and owned-path blobs, inspect source/docs ancestry and final diff, then publish the complete source/docs chain with exactly one non-forced `update_ref` protected by `expected_sha` on the same existing branch. On disjoint concurrent changes, rebuild both private commits on fresh HEAD with a new lease; STOP on any overlap, missing guarantee or uncertainty. No partial publication, history rewrite, branch/PR creation or independent-stream modification.
+
+**Residual risks:** actual Windows WPF compilation, `AutomationProperties.LabeledBy` resolution, accessible name/value announcements, screen-reader reading order, disabled/paused status, high contrast, keyboard focus, 125–200% DPI and 1440/1100/1099/1024/1023/640px rendering remain **UNVERIFIED**. The historical timestamp may remain visible during paused/offline states; the new suffix disclaims liveness but does not prove accuracy or freshness. The original capture-source/flow diagnostic tooltip remains unchanged; no new host/event data is collected, transmitted, persisted or logged. Static review is not runtime validation or accessibility certification.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. Last analysis visible caption and existing status element are unchanged in placement, text source and `x:Name`.
+2. Historical `LastAnalysisUtc` displays local date/time with **(recorded)**, never **(Live)**.
+3. Paused/offline monitoring with an old analysis timestamp does not claim current traffic or active capture.
+4. Error, degraded, starting, idle and waiting branches retain their original status text and conditions.
+5. Existing source-health and flow-diagnostic tooltip remains sourced from the original capture pipeline.
+6. The status element's UI Automation `LabeledBy` resolves to the unique visible Last analysis caption and its HelpText explains recorded data limitations.
+7. Periodic status updates do not create a new assertive or polite live region; screen-reader behavior is inspected on Windows.
+8. Wide, Standard, Compact and below-1024 layouts preserve header wrapping and label readability at 125–200% DPI and high contrast.
+9. PPS ScottPlot, incident selection/investigation, KPI cards, read-only Live Events, unavailable CLI, Cisco/WebView2 and all navigation remain untouched.
+10. No demo telemetry or new capture-health assertion appears; independent detection/protocol paths, privacy and security boundaries are unchanged.
+
+**Open quality GAs:** pinned-SHA Windows WPF build, actual UI Automation/screen-reader/keyboard inspection, paused/offline timestamp review, high-contrast/DPI/responsive screenshots and status-provenance regression **only after the owner explicitly says “now it is test time.”** **Executed tests: 0.**
+
+**Next independent UI GA UI-36:** inspect fresh LIVE HEAD, exact approved reference, ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–35.
+
+**References:** [WPF AutomationProperties.LabeledBy](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.labeledby); [WPF AutomationProperties.HelpText](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.helptext); [WPF AutomationProperties.LiveSetting](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.livesetting).
