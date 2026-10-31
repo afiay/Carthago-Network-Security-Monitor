@@ -17,7 +17,7 @@
 
 | [GA P0031–P0040](PROTOCOL_GA_P0031-P0040.md) | f9fcc016081620c20bf9130ea33194d225c0f263 | P0031–P0040 | 2 IMPLEMENTED_ISOLATED (WireGuard, IKEv2-only), 3 PARTIAL (Modbus, Modbus/TCP, DNP3), 1 DEFERRED (ESP), 4 BLOCKED L2 (EAPOL, ARP, LLDP, STP); 0 integrated | 29 / 38 | 0 | Complete caller-attested UDP envelopes only; no runtime producer, authentication, decryption or exploit claims |
 
-**Last completed research GA:** P0161–P0170 (source-only, unverified). **Next exact ten IDs:** **P0171–P0180**. Do not skip blocked candidates, invent new P IDs, rewrite historical outcomes, or treat authored tests as executed. Recover live HEAD and compare concurrent detection/UI stream paths before publication.
+**Last completed research GA:** P0171–P0180 (source-only, unverified). **Next exact ten IDs:** **P0181–P0190**. Do not skip blocked candidates, invent new P IDs, rewrite historical outcomes, or treat authored tests as executed. Recover live HEAD and compare concurrent detection/UI stream paths before publication.
 
 | [GA P0041–P0050](PROTOCOL_GA_P0041-P0050.md) | 691717f8a3302f58454dfcb9e6da45993b17a442 | P0041–P0050 | 3 IMPLEMENTED_ISOLATED (OPC UA UACP, IEC104 APCI, BGP-4 envelope), 2 PARTIAL (S7, BACnet), 1 DEFERRED (MMS), 4 BLOCKED L2 (GOOSE, PROFINET DCP/IO, EtherCAT); 0 integrated | 42 / 50 | 0 | Source-only bounded inspectors, synthetic authored xUnit scenarios, no trusted TCP reassembly or L2 producer |
 
@@ -48,3 +48,5 @@
 
 | [GA P0151–P0160](PROTOCOL_GA_P0151-P0160.md) | 6572b2e4d68efc267c2532c48a98a1c5d5f0a28a | P0151–P0160 | 3 IMPLEMENTED_ISOLATED (Portmapper v2, Cassandra CQL v4, Couchbase-compatible KV), 1 PARTIAL (BOOTP port hint), 4 DEFERRED (RSTAT, X11, XDMCP, SAP HANA), 2 REJECTED independent distinctness (NFSAUTH, SPNEGO); 0 live integrated | 52 / 65 | 0 | Source-only bounded RPC/XDR, CQL and KV envelope inspectors; strict producer attestation, no live registration, no shared changes |\n
 | [GA P0161–P0170](PROTOCOL_GA_P0161-P0170.md) | bb4eeb68989f4fe38223a181249787661c4fd74c | P0161–P0170 | 3 IMPLEMENTED_ISOLATED (TDS 7.x envelope, OpenFlow 1.3 envelope, BFD v1 Control), 7 DEFERRED (BMP, RIP, RIPng, PCEP, AFP, AFS, 9P); 0 integrated | 32 / 49 | 0 | Strict source-only message boundaries and privacy; no trusted TCP reassembly/SQL audit/controller or router producer; CISA direct KEV retrieval blocked (403); no CVE exploit claims or shared changes |
+
+| [GA P0171–P0180](PROTOCOL_GA_P0171-P0180.md) | f59c495cbf84d627f165e3b6c35cca2787481cda | P0171–P0180 | 2 IMPLEMENTED_ISOLATED (AJP/1.3 envelope, ADB classic transport), 6 DEFERRED (ADB host smart socket, AgentX, Art-Net, ZMTP, AODV, CAPWAP), 1 BLOCKED L2 (AoE), 1 REJECTED separately counted ADB service; 0 integrated | 23 / 35 | 0 | Bounded AJP/ADB source-only inspectors; Apache CVE-2020-1938 vendor advisory, no packet exploit assertion; no shared producer or integration |\n
