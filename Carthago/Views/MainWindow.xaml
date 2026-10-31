@@ -868,7 +868,14 @@
                               <StackPanel>
                                 <TextBlock Text="Recommended actions" Style="{StaticResource SocSubHeader}"/>
                                 <WrapPanel>
-                                  <Button x:Name="DashboardInvestigateHostButton" Content="Investigate Host" MinWidth="126" Height="30" Style="{StaticResource PrimaryButton}" Click="DashboardInvestigateHost_Click" Margin="0,0,8,6"/>
+                                  <Button x:Name="DashboardInvestigateHostButton"
+                                           Content="Review finding"
+                                           MinWidth="126" Height="30"
+                                           Style="{StaticResource PrimaryButton}"
+                                           ToolTip="Opens a correlated incident workspace when available; otherwise opens Anomalies."
+                                           AutomationProperties.Name="Review local finding"
+                                           AutomationProperties.HelpText="Opens a correlated incident workspace when available; otherwise opens the Anomalies view. Does not isolate a host."
+                                           Click="DashboardInvestigateHost_Click" Margin="0,0,8,6"/>
                                   <Button x:Name="DashboardViewRelatedIncidentButton" Content="View Related Incident" MinWidth="154" Height="30" Style="{StaticResource SecondaryButton}" Click="DashboardViewRelatedIncident_Click" Margin="0,0,8,6"/>
                                   <Button Content="Full Detail" MinWidth="96" Height="30" Style="{StaticResource SecondaryButton}" Click="DashboardOpenSignalDetail_Click" Margin="0,0,8,6"/>
                                 </WrapPanel>
@@ -977,7 +984,13 @@
                           </ItemsControl.ItemTemplate>
                         </ItemsControl>
                       </ScrollViewer>
-                      <Button Content="View all high-risk hosts  &#x2192;" Width="190" Height="30" HorizontalAlignment="Left" Style="{StaticResource SecondaryButton}" Click="DashboardInvestigateHost_Click" Margin="0,8,0,0"/>
+                      <Button Content="Review findings  &#x2192;"
+                               Width="190" Height="30" HorizontalAlignment="Left"
+                               Style="{StaticResource SecondaryButton}"
+                               ToolTip="Opens a correlated incident workspace when available; otherwise opens Anomalies. This is not a host inventory."
+                               AutomationProperties.Name="Review local findings"
+                               AutomationProperties.HelpText="Opens a correlated incident workspace when available; otherwise opens the Anomalies view. Does not open a complete host inventory."
+                               Click="DashboardInvestigateHost_Click" Margin="0,8,0,0"/>
                     </StackPanel>
                   </Border>
 
