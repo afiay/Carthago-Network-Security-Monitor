@@ -1335,9 +1335,39 @@
                               </Style>
                             </DataGridTextColumn.HeaderStyle>
                           </DataGridTextColumn>
-                          <DataGridTextColumn Header="Rule" Binding="{Binding RuleId}" Width="76"/>
-                          <DataGridTextColumn Header="Severity" Binding="{Binding Severity}" Width="85"/>
-                          <DataGridTextColumn Header="Protocol" Binding="{Binding Protocol}" Width="80"/>
+                          <DataGridTextColumn Header="Rule" Binding="{Binding RuleId}" Width="76">
+                            <DataGridTextColumn.HeaderStyle>
+                              <Style TargetType="{x:Type DataGridColumnHeader}"
+                                     BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+                                <Setter Property="ToolTip"
+                                        Value="Rule ID reported on the local detection event. This label does not verify rule evaluation quality or current rule enablement."/>
+                                <Setter Property="AutomationProperties.HelpText"
+                                        Value="Reported detection-event rule identifier only; not proof of rule accuracy, evaluation or current enablement."/>
+                              </Style>
+                            </DataGridTextColumn.HeaderStyle>
+                          </DataGridTextColumn>
+                          <DataGridTextColumn Header="Severity" Binding="{Binding Severity}" Width="85">
+                            <DataGridTextColumn.HeaderStyle>
+                              <Style TargetType="{x:Type DataGridColumnHeader}"
+                                     BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+                                <Setter Property="ToolTip"
+                                        Value="Severity reported by the local detection event. It is not an independently verified impact assessment or incident priority."/>
+                                <Setter Property="AutomationProperties.HelpText"
+                                        Value="Reported detection-event severity classification, not independently verified impact or incident priority."/>
+                              </Style>
+                            </DataGridTextColumn.HeaderStyle>
+                          </DataGridTextColumn>
+                          <DataGridTextColumn Header="Protocol" Binding="{Binding Protocol}" Width="80">
+                            <DataGridTextColumn.HeaderStyle>
+                              <Style TargetType="{x:Type DataGridColumnHeader}"
+                                     BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+                                <Setter Property="ToolTip"
+                                        Value="Protocol label supplied by the local detection event. This display does not independently verify packets or protocol decoding."/>
+                                <Setter Property="AutomationProperties.HelpText"
+                                        Value="Reported detection-event protocol metadata only; not independently verified packet inspection or protocol decoding."/>
+                              </Style>
+                            </DataGridTextColumn.HeaderStyle>
+                          </DataGridTextColumn>
                           <DataGridTextColumn Header="Evidence" Binding="{Binding EvidenceSummary}" Width="128">
                             <DataGridTextColumn.HeaderStyle>
                               <Style TargetType="{x:Type DataGridColumnHeader}"
