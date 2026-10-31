@@ -1120,30 +1120,49 @@
                       </StackPanel>
                     </DockPanel>
                     <WrapPanel Grid.Row="1" Margin="0,12,0,9">
-                      <ComboBox x:Name="DashboardLiveSeverityFilter"
-                                Width="142" Height="30" Margin="0,0,8,6"
-                                SelectedIndex="0"
-                                ToolTip="Filter locally observed detection severity"
-                                AutomationProperties.Name="Live events severity"
-                                SelectionChanged="DashboardLiveEventsFilterChanged">
-                        <ComboBoxItem Content="All severities" Tag=""/>
-                        <ComboBoxItem Content="Critical" Tag="Critical"/>
-                        <ComboBoxItem Content="High" Tag="High"/>
-                        <ComboBoxItem Content="Medium" Tag="Medium"/>
-                        <ComboBoxItem Content="Low" Tag="Low"/>
-                        <ComboBoxItem Content="Info" Tag="Info"/>
-                      </ComboBox>
-                      <ComboBox x:Name="DashboardLiveProtocolFilter"
-                                Width="142" Height="30" Margin="0,0,8,6"
-                                SelectedIndex="0"
-                                ToolTip="Filter by observed protocol; other protocols remain available under All"
-                                AutomationProperties.Name="Live events protocol"
-                                SelectionChanged="DashboardLiveEventsFilterChanged">
-                        <ComboBoxItem Content="All protocols" Tag=""/>
-                        <ComboBoxItem Content="TCP" Tag="TCP"/>
-                        <ComboBoxItem Content="UDP" Tag="UDP"/>
-                        <ComboBoxItem Content="ICMP" Tag="ICMP"/>
-                      </ComboBox>
+                      <!-- GA UI-26: visible captions for the two remaining dropdown filters. -->
+                      <StackPanel Orientation="Horizontal" Height="30" Margin="0,0,8,6">
+                        <TextBlock x:Name="DashboardLiveSeverityFilterLabel"
+                                   Text="Severity"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   FontSize="11"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,6,0"/>
+                        <ComboBox x:Name="DashboardLiveSeverityFilter"
+                                  Width="142" Height="30"
+                                  SelectedIndex="0"
+                                  ToolTip="Filter locally observed detection severity"
+                                  AutomationProperties.Name="Live events severity"
+                                  AutomationProperties.LabeledBy="{Binding ElementName=DashboardLiveSeverityFilterLabel}"
+                                  SelectionChanged="DashboardLiveEventsFilterChanged">
+                          <ComboBoxItem Content="All severities" Tag=""/>
+                          <ComboBoxItem Content="Critical" Tag="Critical"/>
+                          <ComboBoxItem Content="High" Tag="High"/>
+                          <ComboBoxItem Content="Medium" Tag="Medium"/>
+                          <ComboBoxItem Content="Low" Tag="Low"/>
+                          <ComboBoxItem Content="Info" Tag="Info"/>
+                        </ComboBox>
+                      </StackPanel>
+                      <StackPanel Orientation="Horizontal" Height="30" Margin="0,0,8,6">
+                        <TextBlock x:Name="DashboardLiveProtocolFilterLabel"
+                                   Text="Protocol"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   FontSize="11"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,6,0"/>
+                        <ComboBox x:Name="DashboardLiveProtocolFilter"
+                                  Width="142" Height="30"
+                                  SelectedIndex="0"
+                                  ToolTip="Filter by observed protocol; other protocols remain available under All"
+                                  AutomationProperties.Name="Live events protocol"
+                                  AutomationProperties.LabeledBy="{Binding ElementName=DashboardLiveProtocolFilterLabel}"
+                                  SelectionChanged="DashboardLiveEventsFilterChanged">
+                          <ComboBoxItem Content="All protocols" Tag=""/>
+                          <ComboBoxItem Content="TCP" Tag="TCP"/>
+                          <ComboBoxItem Content="UDP" Tag="UDP"/>
+                          <ComboBoxItem Content="ICMP" Tag="ICMP"/>
+                        </ComboBox>
+                      </StackPanel>
                       <!-- GA UI-16: visible, non-interactive labels for the two free-text filters. -->
                       <StackPanel Orientation="Horizontal" Height="30" Margin="0,0,8,6">
                         <TextBlock x:Name="DashboardLiveRuleFilterLabel"
