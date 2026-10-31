@@ -17,7 +17,7 @@
 
 | [GA P0031–P0040](PROTOCOL_GA_P0031-P0040.md) | f9fcc016081620c20bf9130ea33194d225c0f263 | P0031–P0040 | 2 IMPLEMENTED_ISOLATED (WireGuard, IKEv2-only), 3 PARTIAL (Modbus, Modbus/TCP, DNP3), 1 DEFERRED (ESP), 4 BLOCKED L2 (EAPOL, ARP, LLDP, STP); 0 integrated | 29 / 38 | 0 | Complete caller-attested UDP envelopes only; no runtime producer, authentication, decryption or exploit claims |
 
-**Last completed research GA:** P0231–P0240 (source-only, unverified). **Next exact ten IDs:** **P0241–P0250**. Do not skip blocked candidates, invent new P IDs, rewrite historical outcomes, or treat authored tests as executed. Recover live HEAD and compare concurrent detection/UI stream paths before publication.
+**Last completed research GA:** P0241–P0250 (source-only, unverified). **Next exact ten IDs:** **P0251–P0260**. Do not skip blocked candidates, invent new P IDs, rewrite historical outcomes, or treat authored tests as executed. Recover live HEAD and compare concurrent detection/UI stream paths before publication.
 
 | [GA P0041–P0050](PROTOCOL_GA_P0041-P0050.md) | 691717f8a3302f58454dfcb9e6da45993b17a442 | P0041–P0050 | 3 IMPLEMENTED_ISOLATED (OPC UA UACP, IEC104 APCI, BGP-4 envelope), 2 PARTIAL (S7, BACnet), 1 DEFERRED (MMS), 4 BLOCKED L2 (GOOSE, PROFINET DCP/IO, EtherCAT); 0 integrated | 42 / 50 | 0 | Source-only bounded inspectors, synthetic authored xUnit scenarios, no trusted TCP reassembly or L2 producer |
 
@@ -28,7 +28,7 @@
 - Owner approval and cross-stream review for any shared capture/telemetry/record schema integration; source-only isolated work may continue meanwhile.
 - First actual build/xUnit/Windows replay awaits explicit owner command **“now it’s test time.”**
 - Live sensor provenance, TCP stream boundaries, DTLS 1.3 encrypted records, endpoint/proxy logs and NetScaler asset/config/IOC correlation are not established by these isolated inspectors.
-- Continue source-only with P0241–P0250; preserve detection and UI ledgers, frozen holdouts, journal-first raw DetectionEvents, privacy, cooldowns, thresholds and rule IDs.
+- Continue source-only with P0251–P0260; preserve detection and UI ledgers, frozen holdouts, journal-first raw DetectionEvents, privacy, cooldowns, thresholds and rule IDs.
 
 | [GA P0071–P0080](PROTOCOL_GA_P0071-P0080.md) | 984c9bbea00f68d7dc2f6b8b5f0d163880ddcba4 | P0071–P0080 | 2 IMPLEMENTED_ISOLATED (Geneve, HSRP v1), 1 EXISTING (VLAN), 1 DEFERRED (GTP), 5 BLOCKED input/L2 (PPP, PPPoE, MPLS, CDP, UDLD), 1 REJECTED as separately counted variant (GTPv2-C); 0 integrated | 33 / 41 | 0 | Source-only bounded Geneve and HSRP v1 inspectors; no trusted live UDP envelope, HSRP authentication or runtime registration |
 
@@ -62,3 +62,5 @@
 | [GA P0221–P0230](PROTOCOL_GA_P0221-P0230.md) | 72ab688179bbb20c8ee8ab46b5862154ef465e59 | P0221–P0230 | 0 IMPLEMENTED_ISOLATED, 2 DEFERRED (OCSP, PANA), 5 BLOCKED input (HIP, IGAP, PPP PAP, swIPe, RLC), 3 REJECTED as independently counted (RMCP security wrapper, TEAP method, RRAS RPC interface); 0 integrated | 0 / 0 | 0 | Source-only spec/producer/privacy reconciliation; TEAP RFC 9930 supersedes 7170; no runtime producer, parser, authored tests or shared-core changes |
 
 | [GA P0231–P0240](PROTOCOL_GA_P0231-P0240.md) | f1a94e19b0d943cd6c7d722c480995ec02f7d820 | P0231–P0240 | 1 IMPLEMENTED_ISOLATED (BFCP header), 1 DEFERRED (ANCP), 3 BLOCKED input (BACP, BCP, CAN), 5 REJECTED as independently counted (RPC registry interface, ACN umbrella, BACnet APDU, BCP BPDU/NCP); 0 integrated | 17 / 17 | 0 | RFC 8855 bounded plaintext BFCP source inspector; Siemens 2026-10-13 vendor advisory does not imply BACnet exploit; no trusted BFCP producer, shared integration or executed tests |
+
+| [GA P0241–P0250](PROTOCOL_GA_P0241-P0250.md) | d473bf336cc29ffee00eb21fabc73ce1624b9a52 | P0241–P0250 | 1 IMPLEMENTED_ISOLATED (GVCP request envelope), 1 EXISTING (ICMP), 4 DEFERRED (CAST, DJI UAV, ECP21, ForCES), 3 BLOCKED native input (CANeth, PPP CBCP/CCP), 1 REJECTED separately counted CIP Motion profile; 0 integrated | 18 / 18 | 0 | Source-only bounded GVCP requests, synthetic authored tests, Basler/ODVA/IETF references; no trusted GVCP producer, shared integration or executed tests |
