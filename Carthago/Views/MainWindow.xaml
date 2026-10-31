@@ -62,13 +62,14 @@
                           </Grid.RowDefinitions>
 
                           <DockPanel LastChildFill="True">
-                            <TextBlock DockPanel.Dock="Right"
-                                       Text="&#x22EE;"
-                                       Style="{StaticResource SocPanelMenuGlyph}"
-                                       Margin="8,-4,0,0"/>
+                            <!-- KPI card has no overflow command; use the existing information glyph. -->
                             <StackPanel Orientation="Horizontal">
                               <TextBlock x:Name="DashboardKpiCardTitle" Text="{Binding Title}" Style="{StaticResource MicroLabel}"/>
-                              <TextBlock Text="  &#x24D8;" Style="{StaticResource SocInfoGlyph}"/>
+                              <TextBlock Text="  &#x24D8;"
+                                          Style="{StaticResource SocInfoGlyph}"
+                                          ToolTip="{Binding InformationText}"
+                                          AutomationProperties.Name="{Binding InformationAccessibilityName}"
+                                          AutomationProperties.HelpText="{Binding InformationText}"/>
                             </StackPanel>
                           </DockPanel>
 
@@ -79,7 +80,8 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                               <TextBlock Text="{Binding Value}"
-                                         AutomationProperties.LabeledBy="{Binding ElementName=DashboardKpiCardTitle}"
+                                          AutomationProperties.LabeledBy="{Binding ElementName=DashboardKpiCardTitle}"
+                                          AutomationProperties.HelpText="{Binding InformationText}"
                                          FontSize="21"
                                          FontWeight="Bold"/>
                               <TextBlock Text="{Binding DeltaText}"

@@ -1746,6 +1746,21 @@ namespace Carthago
 
             public event PropertyChangedEventHandler? PropertyChanged;
             public string Title { get; init; } = "";
+            // Read-only UI explanations of existing KPI sources; no new producer or sampling.
+            public string InformationAccessibilityName => $"{Title} metric information";
+            public string InformationText => Title switch
+            {
+                "Network Throughput" => "Latest local throughput sample when capture reports monitoring or degraded. This is not the local PPS chart, an inbound/outbound breakdown, or proof of capture health.",
+                "Active Sensors" => "Sensor inventory is unavailable; this card does not establish a live sensor count.",
+                "Open Incidents" => "Unresolved correlated incidents from the bounded recent local snapshot (maximum 150); not a global count. Demo detections may be included when demo mode is enabled.",
+                "Detection Coverage" => "No validated active-rule denominator is available; detection coverage is not established.",
+                "Active Incidents" => "Unresolved correlated incidents from a bounded local snapshot. The 15-minute change uses creation timestamps; activity bars are relative, not throughput.",
+                "High Risk Hosts" => "Distinct source hosts in unresolved correlated incidents with local risk at least 50. This is not a complete host inventory or verified detection confidence.",
+                "New Anomalies (15m)" => "Shows the 15-minute anomaly count when nonzero; otherwise falls back to the bounded local anomaly snapshot total. Activity bars use creation timestamps.",
+                "Threat Feed Hits" => "Local anomaly classification based on category, tags or related rule IDs, not independently verified external threat intelligence. Uses recent 15-minute count when nonzero, otherwise snapshot total.",
+                "Baseline Confidence" => "Local baseline learning/readiness indicator. This is not detection accuracy, validated confidence, or proof of capture health.",
+                _ => "Local dashboard metric; system-wide coverage and detection accuracy are not established."
+            };
             public string Value
             {
                 get => _value;
