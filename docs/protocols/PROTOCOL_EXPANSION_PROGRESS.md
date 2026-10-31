@@ -17,7 +17,7 @@
 
 | [GA P0031–P0040](PROTOCOL_GA_P0031-P0040.md) | f9fcc016081620c20bf9130ea33194d225c0f263 | P0031–P0040 | 2 IMPLEMENTED_ISOLATED (WireGuard, IKEv2-only), 3 PARTIAL (Modbus, Modbus/TCP, DNP3), 1 DEFERRED (ESP), 4 BLOCKED L2 (EAPOL, ARP, LLDP, STP); 0 integrated | 29 / 38 | 0 | Complete caller-attested UDP envelopes only; no runtime producer, authentication, decryption or exploit claims |
 
-**Last completed research GA:** P0271–P0280 (source-only research, unverified). **Next exact ten IDs:** **P0281–P0290**. Do not skip blocked candidates, invent new P IDs, rewrite historical outcomes, or treat authored tests as executed. Recover live HEAD and compare concurrent detection/UI stream paths before publication.
+**Last completed research GA:** P0281–P0290 (source-only research, unverified). **Next exact ten IDs:** **P0291–P0300**. Do not skip blocked candidates, invent new P IDs, rewrite historical outcomes, or treat authored tests as executed. Recover live HEAD and compare concurrent detection/UI stream paths before publication.
 
 | [GA P0041–P0050](PROTOCOL_GA_P0041-P0050.md) | 691717f8a3302f58454dfcb9e6da45993b17a442 | P0041–P0050 | 3 IMPLEMENTED_ISOLATED (OPC UA UACP, IEC104 APCI, BGP-4 envelope), 2 PARTIAL (S7, BACnet), 1 DEFERRED (MMS), 4 BLOCKED L2 (GOOSE, PROFINET DCP/IO, EtherCAT); 0 integrated | 42 / 50 | 0 | Source-only bounded inspectors, synthetic authored xUnit scenarios, no trusted TCP reassembly or L2 producer |
 
@@ -28,7 +28,7 @@
 - Owner approval and cross-stream review for any shared capture/telemetry/record schema integration; source-only isolated work may continue meanwhile.
 - First actual build/xUnit/Windows replay awaits explicit owner command **“now it’s test time.”**
 - Live sensor provenance, TCP stream boundaries, DTLS 1.3 encrypted records, endpoint/proxy logs and NetScaler asset/config/IOC correlation are not established by these isolated inspectors.
-- Continue source-only with P0281–P0290; preserve detection and UI ledgers, frozen holdouts, journal-first raw DetectionEvents, privacy, cooldowns, thresholds and rule IDs.
+- Continue source-only with P0291–P0300; preserve detection and UI ledgers, frozen holdouts, journal-first raw DetectionEvents, privacy, cooldowns, thresholds and rule IDs.
 
 | [GA P0071–P0080](PROTOCOL_GA_P0071-P0080.md) | 984c9bbea00f68d7dc2f6b8b5f0d163880ddcba4 | P0071–P0080 | 2 IMPLEMENTED_ISOLATED (Geneve, HSRP v1), 1 EXISTING (VLAN), 1 DEFERRED (GTP), 5 BLOCKED input/L2 (PPP, PPPoE, MPLS, CDP, UDLD), 1 REJECTED as separately counted variant (GTPv2-C); 0 integrated | 33 / 41 | 0 | Source-only bounded Geneve and HSRP v1 inspectors; no trusted live UDP envelope, HSRP authentication or runtime registration |
 
@@ -70,3 +70,5 @@
 | [GA P0261–P0270](PROTOCOL_GA_P0261-P0270.md) | 5c87b8489f4821eda1c815f7880e46a3ddaa911a | P0261–P0270 | 1 IMPLEMENTED_ISOLATED (PCP v2 MAP), 5 DEFERRED (MRCPv2, NetPerfMeter, OCP.1, OsmoTRX, PFCP), 3 BLOCKED native input (PPP OSINLCP, PROFINET RT, PPPMuxCP), 1 REJECTED duplicate (NPMP/NetPerfMeter); 0 integrated | 28 / 28 | 0 | RFC 6887 bounded source-only MAP envelope; no trusted UDP/PCP producer, no mapping outcome or shared-core changes; CISA KEV direct retrieval 403 |
 
 | [GA P0271–P0280](PROTOCOL_GA_P0271-P0280.md) | 974e3f01cf786b84e8a08b57e20d9b2144b678b7 | P0271–P0280 | 0 IMPLEMENTED_ISOLATED, 4 DEFERRED (Skinny, TPNCP, WiMAX ASNCP, DCC), 4 BLOCKED input (PRP L2, SDLC serial, VSNCP PPP, ASAP SCTP), 2 REJECTED subcomponents (PW Ethernet CW, TTE PCF); 0 integrated | 0 / 0 | 0 | Source-first protocol distinctness and producer/ownership reconciliation; Cisco 2026-10-21/27 vendor advisory is not a Skinny exploit; no source/tests/shared-core changes |
+
+| [GA P0281–P0290](PROTOCOL_GA_P0281-P0290.md) | 84b569b1edfbd53fdfbacb862781276c491601b0 | P0281–P0290 | 1 IMPLEMENTED_ISOLATED (RGMP RFC 3488), 5 DEFERRED (Kismet drone/client, LMP, NDMP, RLM), 2 BLOCKED native input (E-LMI L2, IrLMP), 2 REJECTED independent distinctness (IPMI session wrapper, generic nm); 0 integrated | 23 / 23 | 0 | Strict stateless RGMP IPv4 protocol-2/TTL-1/224.0.0.25 checksum and forbidden-group inspector; Supermicro BMC advisory not detectable; no shared producer or tests executed |
