@@ -2410,3 +2410,46 @@ Preserve Wide >=1440, Standard 1100–1439, Compact 1024–1099 and graceful bel
 **Next independent UI GA UI-40:** inspect fresh LIVE HEAD, approved reference, ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–39.
 
 **Reference:** [Microsoft WPF ToolTip property](https://learn.microsoft.com/en-us/dotnet/api/system.windows.frameworkelement.tooltip); [WPF accessibility](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/accessibility).
+
+## GA UI-40 — Live Events filter and reset accessibility context
+
+**2026-10-31 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE branch HEAD: `19113199f4aa12e3fa884d689984ff564cdeea54`; prior GA UI-39 source `6d7f6101cf5205c97b9617053e1bc1669cb85a57`, publication `acc73a5b092d54d9eab76eec7cc20523aaab0e82`. Independent protocol GA P0211–P0220 documentation was present at the start. **Exact GA UI-40 source SHA:** `ca932d39a1dc34687e5d62a9a44aada43f78961b`. **Owned paths:** `Carthago/Views/MainWindow.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md` only. **Tests authored: 0; executed: 0.** No dotnet build/test, xUnit, replay, holdout, CI, GitHub Actions, runner, benchmark, production capture, running-WPF inspection or screenshot.
+
+### Approved reference, original consumers and provenance
+
+Resolved and **visually inspected** the exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c`: navy/graphite security overview, cyan/teal accents, restrained severity, left navigation, operational KPIs, traffic chart, prioritized incidents, investigation, read-only local Live Events and visual-only CLI. All screenshot IPs, rule IDs, metrics, timestamps, confidence, Mbps lines and CLI text are **DEMO ONLY**, not observed telemetry or capture-health evidence.
+
+Reviewed LIVE HEAD, recent commits, this ledger through UI-39, `MainWindow.xaml` Live Events filter row, `MainWindow.DashboardEvents.cs` filter/reset handlers and original `_alerts` projection, `MainWindow.xaml.cs`, `MainWindow.Filters.cs`, `MainWindow.Dashboard.cs`, `MainWindow.DashboardResponsive.cs`, `MainWindow.Responsive.cs`, `MainWindow.GridInteractions.cs` and `Theme.xaml`. The four controls already have visible labels (UI-16 and UI-26), existing tooltips, automation names, bindings and event handlers. UI-33 covered Evidence/Delivery **column headers**, not these filter controls. Original filtering operates on locally retained `_alerts` (500 max) and shows at most 80 rows; the reset button clears only the four dashboard filters. No shared API, new viewmodel or producer is needed.
+
+### One cohesive UI-owned improvement
+
+Add explicit `AutomationProperties.HelpText` to the **existing** Severity and Protocol ComboBoxes, Rule and Search TextBoxes, and Clear filters Button. Explain the existing retained-local-event scope, that protocol All includes other protocols, rule filtering does not alter rule execution, metadata search excludes raw evidence and archived records, and reset does not delete retained events or reset other views. Reuse original captions, `AutomationProperties.Name`/`LabeledBy`, tooltips, selected options, widths, colors, margins, focus/tab order, `SelectionChanged`, `TextChanged` and `Click` handlers. No new focus stops, filtering conditions, data collection, capture-health assertions, commands or security behavior.
+
+Preserve Wide >=1440, Standard 1100–1439, Compact 1024–1099 and graceful below 1024; real local PPS ScottPlot ten-sample average and bounded 120-point history; KPIs, prioritized incidents/investigation, read-only Live Events (80 displayed/500 retained), explicitly **UNAVAILABLE** visual-only CLI, Cisco/WebView2, trust/privacy and independent detection/protocol streams.
+
+### Start/end static divergence and publication gate
+
+**Start:** `19113199f4aa12e3fa884d689984ff564cdeea54` descends from UI-39 publication `acc73a5b092d54d9eab76eec7cc20523aaab0e82` by one independent protocol-docs commit; GitHub comparison shows only `docs/protocols/PROTOCOL_EXPANSION_PROGRESS.md` and `docs/protocols/PROTOCOL_GA_P0211-P0220.md`, no UI-owned overlap. Prepared private source commit `ca932d39a1dc34687e5d62a9a44aada43f78961b` is a direct child of `19113199f4aa12e3fa884d689984ff564cdeea54` and changes only `Carthago/Views/MainWindow.xaml`, adding five static WPF help-text attributes. Original consumers, APIs, capture/detection behavior, theme and responsive logic are unchanged.
+
+**End/publication gate:** immediately re-read LIVE branch HEAD and compare concurrent detection/protocol/UI paths against `19113199f4aa12e3fa884d689984ff564cdeea54`; verify source/docs ancestry, source SHA, exact owned paths, WPF names/consumers, privacy and approved reference. Publish the **complete** two-commit chain with **one** non-forced atomic GitHub `update_ref` and `expected_sha` lease on the existing branch. If HEAD moves disjointly, reconstruct both private commits on the fresh HEAD with a new lease; STOP on conflict or unavailable lease guarantee. Never overwrite independent work or publish partially.
+
+**Residual risks:** Windows WPF compilation, UI Automation HelpText exposure, actual screen-reader phrasing, keyboard focus order, tooltip behavior, filter semantics in a running app, high contrast, 125–200% DPI and 1440/1100/1099/1024/1023/640px screenshots remain **UNVERIFIED**. The static help text is descriptive and does not prove actual event delivery, monitoring health, rule coverage or accuracy. No new event, host, IP, rule, evidence payload or personal data is collected, logged, stored or transmitted.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. Keyboard Tab/Shift+Tab reaches the original four filter controls and Clear filters button in the original order without added focus stops.
+2. UI Automation exposes the Severity filter's existing visible label and new retained-local-event HelpText.
+3. Protocol filter HelpText accurately describes the All option, including protocols outside TCP/UDP/ICMP.
+4. Rule filter HelpText explains exact/partial ID filtering without suggesting rule activation or rule evaluation changes.
+5. Search filter HelpText explains source/destination/rule/protocol metadata only, not evidence payload or archived-event search.
+6. Clear filters HelpText and original handler preserve retained detection rows and other views' independent filters.
+7. Original ComboBox selections, TextBox text, filtering, empty/no-match messages, row order and 80/500 bounds remain unchanged.
+8. Wide 1440, Standard 1100, Compact 1099/1024 and below-1024 1023/640px, 125–200% DPI and high contrast preserve labels, controls and focus outlines.
+9. Local PPS ScottPlot, KPIs, incident selection/investigation, unavailable CLI, Cisco/WebView2, sidebar and capture controls remain unaffected.
+10. No fabricated demo telemetry, capture-health proof, privacy/security change, shared API change or independent detection/protocol file modification occurs.
+
+**Open quality GAs:** pinned-SHA Windows WPF build, real keyboard/screen-reader/UI Automation/filter/tooltip inspection, high-contrast/DPI/responsive screenshots and source-provenance review **only after the owner explicitly says “now it is test time.”** **Executed tests: 0.**
+
+**Next independent UI GA UI-41:** inspect fresh LIVE HEAD, exact approved image, ledger and WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–40.
+
+**Reference:** [WPF AutomationProperties.HelpText](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.helptext); [WPF accessibility](https://learn.microsoft.com/dotnet/desktop/wpf/advanced/accessibility).
