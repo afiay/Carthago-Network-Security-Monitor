@@ -2367,3 +2367,46 @@ Name the existing six-field `UniformGrid` `DashboardDetailFactsGrid` without cha
 **Next independent UI GA UI-39:** inspect fresh LIVE HEAD, exact approved reference, ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–38.
 
 **References:** [WPF UniformGrid](https://learn.microsoft.com/en-us/dotnet/api/system.windows.controls.primitives.uniformgrid); [WPF responsive layout and panels](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/panels-overview); [WPF accessibility](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/accessibility).
+
+## GA UI-39 — Full-text hover for truncated investigation heading and summary
+
+**2026-10-31 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE `feature/carthago-reliability-hardening` HEAD: `208f1ccb943b7434098f95e7516d2c3b69b95b42`. Previous GA UI-38 source `b8578005ddcda5982b9debe80747540c6f49c0d3`, publication `588780d08dc730be0001ff164c11133dd1853cd7`. Independent GA P0201–P0210 protocol work was already present in the starting HEAD. **Exact GA UI-39 source SHA:** `6d7f6101cf5205c97b9617053e1bc1669cb85a57`. **Authorized changed paths:** `Carthago/Views/MainWindow.xaml` and this `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md` only. **Tests authored: 0; executed: 0.** No build, test, replay, holdout, CI, GitHub Actions, runner, benchmark, capture, running WPF inspection or screenshot.
+
+### Approved reference, WPF consumer audit and scope
+
+Resolved and **visually inspected** exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c`: dark navy/graphite dashboard, cyan/teal accents, restrained severity, left navigation, operational KPIs, local traffic chart, incident investigation, read-only Live Events and visual-only CLI. Screenshot IPs, metrics, timestamps, rule IDs, confidence and inbound/outbound Mbps lines are **DEMO ONLY**; none are used as observed telemetry, detection accuracy or capture-health evidence.
+
+Audited the live remote HEAD and the ledger through UI-38, `MainWindow.xaml` investigation header/facts and existing WPF partials `MainWindow.Dashboard.cs`, `MainWindow.DashboardResponsive.cs`, `MainWindow.Responsive.cs`, `MainWindow.xaml.cs`, `MainWindow.DashboardEvents.cs` and `Theme.xaml`. The existing investigation `DashboardDetailTitleText` and `DashboardDetailSubtitleText` are programmatically populated from the current local incident/anomaly/empty-state projection by `MainWindow.Dashboard.cs`. Both already wrap but are bounded by `MaxHeight` (54px and 36px) with `TextTrimming="CharacterEllipsis"`; neither previously exposed the full value by hover. The six fact values already have self-text tooltips; UI-38 changed only their responsive columns, not these heading/summary fields. No shared API or viewmodel change is necessary.
+
+### One cohesive UI-owned improvement
+
+Add `ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"` to the **existing two investigation header TextBlocks only**. Hover can expose the same full currently displayed title/summary value when the bounded visual text is truncated. The self-text bindings track the original `Text` dependency property, including selected incident, selected anomaly and waiting states, without caching, copying, transforming or persisting values. Retain existing `x:Name`, text, wrapping, trimming, maximum heights, margins, colors, layout, selection, labels and code-behind assignments. No new focus stop, command, navigation, evidence payload, telemetry or capture-state claim. Tooltip presentation and accessibility remain **UNVERIFIED** until owner-authorized Windows inspection.
+
+Preserve Wide >=1440, Standard 1100–1439, Compact 1024–1099 and graceful below 1024; local PPS ScottPlot ten-sample average and bounded 120-point history; prioritized incidents, six-field investigation, read-only local Live Events (80 displayed/500 retained), explicitly **UNAVAILABLE** visual-only CLI, Cisco/WebView2 and privacy/security boundaries. No demo values introduced.
+
+### Start/end static divergence, provenance and publication guard
+
+**Start:** LIVE HEAD `208f1ccb943b7434098f95e7516d2c3b69b95b42` is one independent protocol commit after UI-38 publication `588780d08dc730be0001ff164c11133dd1853cd7`. GitHub comparison shows the intervening paths only in `Carthago/Services/ProtocolIntelligence/IgrpPacketInspector.cs`, `Carthago.Tests/ProtocolIntelligence/IgrpPacketInspectorTests.cs` and `docs/protocols/**`; no UI ownership overlap. The private source commit `6d7f6101cf5205c97b9617053e1bc1669cb85a57` has parent `208f1ccb943b7434098f95e7516d2c3b69b95b42`, modifies only `Carthago/Views/MainWindow.xaml`, and changes exactly two TextBlock opening tags. Original WPF partial consumers, route handlers, names, responsive logic, data producers, security/privacy and independent streams are read-only.
+
+**End/publication gate:** immediately before publication re-read LIVE remote HEAD, compare concurrent commits and changed paths against `208f1ccb943b7434098f95e7516d2c3b69b95b42`, review private source/docs commit ancestry, source SHA in ledger, exact two owned paths, original consumer names and bindings, and approved reference fidelity. Publish both prepared commits together via exactly one non-forced atomic GitHub `update_ref` with `expected_sha` on the existing branch. If moved, reconcile disjoint paths against fresh HEAD with new private commits and lease; STOP on conflict or unavailable guarantee. Never publish partially, force push, create branch/PR, rewrite history or modify independent automations.
+
+**Residual risks:** WPF compilation and tooltip binding resolution, full text availability on hover, tooltip delay/placement and clipping near window edges, dynamic title/summary updates while hovering, keyboard-only access (TextBlocks remain non-focusable), screen-reader exposure, high contrast, 125–200% DPI, 1440/1100/1099/1024/1023/640px layouts and screenshots remain **UNVERIFIED**. Hover is not a substitute for keyboard or screen-reader review. The text is the same locally selected incident/anomaly projection already shown in the UI; no raw evidence, new host/event data, personal data, external request or security claim is introduced.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. Hover over a long incident title; the tooltip shows its complete existing title even when the 54px header is trimmed.
+2. Hover over a long anomaly description; the tooltip shows the complete existing summary even when the 36px subtitle is trimmed.
+3. Change the selected incident/anomaly and confirm both tooltip texts track the new original `Text` values without stale content.
+4. In waiting/empty states, both tooltips reflect the original waiting text and introduce no synthetic events or monitoring claims.
+5. At Wide 1440px and Standard 1100px, headings retain original geometry, wrapping, typography, severity treatment and selection.
+6. At Compact 1099/1024px and below-1024 1023/640px, tooltip placement remains legible without obscuring investigation controls.
+7. At 125%, 150% and 200% DPI and high contrast, long titles and summaries remain accessible by hover; inspect keyboard/screen-reader limitations separately.
+8. Existing six fact cards, responsive two/three columns, fact tooltips, reasons, tags, rules, actions and Full detail control remain unchanged.
+9. Local PPS ScottPlot, KPIs, Live Events 80/500, visual-only unavailable CLI, Cisco/WebView2, navigation and capture controls remain unchanged.
+10. No fabricated screenshot data, telemetry, capture-health assertion, privacy/security change, shared API modification or independent detection/protocol file change occurs.
+
+**Open quality GAs:** pinned-SHA Windows WPF build and actual tooltip/keyboard/screen-reader/high-contrast/DPI/responsive screenshot inspection **only after owner explicitly says “now it is test time.”** **Executed tests: 0.**
+
+**Next independent UI GA UI-40:** inspect fresh LIVE HEAD, approved reference, ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–39.
+
+**Reference:** [Microsoft WPF ToolTip property](https://learn.microsoft.com/en-us/dotnet/api/system.windows.frameworkelement.tooltip); [WPF accessibility](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/accessibility).
