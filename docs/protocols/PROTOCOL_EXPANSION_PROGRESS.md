@@ -17,7 +17,7 @@
 
 | [GA P0031–P0040](PROTOCOL_GA_P0031-P0040.md) | f9fcc016081620c20bf9130ea33194d225c0f263 | P0031–P0040 | 2 IMPLEMENTED_ISOLATED (WireGuard, IKEv2-only), 3 PARTIAL (Modbus, Modbus/TCP, DNP3), 1 DEFERRED (ESP), 4 BLOCKED L2 (EAPOL, ARP, LLDP, STP); 0 integrated | 29 / 38 | 0 | Complete caller-attested UDP envelopes only; no runtime producer, authentication, decryption or exploit claims |
 
-**Last completed research GA:** P0191–P0200 (source-only, unverified). **Next exact ten IDs:** **P0201–P0210**. Do not skip blocked candidates, invent new P IDs, rewrite historical outcomes, or treat authored tests as executed. Recover live HEAD and compare concurrent detection/UI stream paths before publication.
+**Last completed research GA:** P0201–P0210 (source-only, unverified). **Next exact ten IDs:** **P0211–P0220**. Do not skip blocked candidates, invent new P IDs, rewrite historical outcomes, or treat authored tests as executed. Recover live HEAD and compare concurrent detection/UI stream paths before publication.
 
 | [GA P0041–P0050](PROTOCOL_GA_P0041-P0050.md) | 691717f8a3302f58454dfcb9e6da45993b17a442 | P0041–P0050 | 3 IMPLEMENTED_ISOLATED (OPC UA UACP, IEC104 APCI, BGP-4 envelope), 2 PARTIAL (S7, BACnet), 1 DEFERRED (MMS), 4 BLOCKED L2 (GOOSE, PROFINET DCP/IO, EtherCAT); 0 integrated | 42 / 50 | 0 | Source-only bounded inspectors, synthetic authored xUnit scenarios, no trusted TCP reassembly or L2 producer |
 
@@ -28,7 +28,7 @@
 - Owner approval and cross-stream review for any shared capture/telemetry/record schema integration; source-only isolated work may continue meanwhile.
 - First actual build/xUnit/Windows replay awaits explicit owner command **“now it’s test time.”**
 - Live sensor provenance, TCP stream boundaries, DTLS 1.3 encrypted records, endpoint/proxy logs and NetScaler asset/config/IOC correlation are not established by these isolated inspectors.
-- Continue source-only with P0201–P0210; preserve detection and UI ledgers, frozen holdouts, journal-first raw DetectionEvents, privacy, cooldowns, thresholds and rule IDs.
+- Continue source-only with P0211–P0220; preserve detection and UI ledgers, frozen holdouts, journal-first raw DetectionEvents, privacy, cooldowns, thresholds and rule IDs.
 
 | [GA P0071–P0080](PROTOCOL_GA_P0071-P0080.md) | 984c9bbea00f68d7dc2f6b8b5f0d163880ddcba4 | P0071–P0080 | 2 IMPLEMENTED_ISOLATED (Geneve, HSRP v1), 1 EXISTING (VLAN), 1 DEFERRED (GTP), 5 BLOCKED input/L2 (PPP, PPPoE, MPLS, CDP, UDLD), 1 REJECTED as separately counted variant (GTPv2-C); 0 integrated | 33 / 41 | 0 | Source-only bounded Geneve and HSRP v1 inspectors; no trusted live UDP envelope, HSRP authentication or runtime registration |
 
@@ -54,3 +54,5 @@
 | [GA P0181–P0190](PROTOCOL_GA_P0181-P0190.md) | c5dd41dc0edb9b0b80969955243077a808d56277 | P0181–P0190 | 1 IMPLEMENTED_ISOLATED (RMCP v1 ASF envelope), 4 DEFERRED (WLCCP, CMP, DOP, SHICP), 1 BLOCKED L2 (RRCP), 4 REJECTED distinctness (Bluetooth HCI monitor transport, RDP auth channel, DNS control RPC interface, BACnet/SC virtual-link component); 0 integrated | 22 / 31 | 0 | DMTF DSP0136 strict ASF UDP/623 inspector; Supermicro 2026-10-26 RMCP+ vendor advisory NOT detectable by ASF parser; no shared producer or tests executed |
 
 | [GA P0191–P0200](PROTOCOL_GA_P0191-P0200.md) | 92b4e346f798f439646edbebcb34d278582cf529 | P0191–P0200 | 1 IMPLEMENTED_ISOLATED (Firebird XDR wire envelope), 5 DEFERRED (FSRVP, WTLS, MS-RAP, MS-LSAD, MSCML), 3 BLOCKED input (Bluetooth SMP, Cisco CGMP L2, LTE RRC), 1 REJECTED non-wire protocol (Linux net_dm); 0 integrated | 24 / 30 | 0 | Firebird 2026-04-17 vendor advisory context; bounded privacy-safe PDU inspector; no shared producer, no builds/tests executed |
+
+| [GA P0201–P0210](PROTOCOL_GA_P0201-P0210.md) | 588780d08dc730be0001ff164c11133dd1853cd7 | P0201–P0210 | 1 IMPLEMENTED_ISOLATED (IGRP v1), 1 DEFERRED (withdrawn H.282), 4 BLOCKED native input (802.11 management, 6LoWPAN, FC Name Server, FC Fabric Config), 4 REJECTED independently counted (RRC umbrella, SCCP management, CWIDS capture format, DCE/RPC management interface); 0 integrated | 21 / 27 | 0 | Cisco IGRP official wire spec; vendor wireless advisories without known exploitation; strict source-only checksum/length inspector; no shared producer or tests executed |
