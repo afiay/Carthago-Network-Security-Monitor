@@ -613,7 +613,14 @@
                       <StackPanel>
                         <StackPanel Orientation="Horizontal">
                           <TextBlock Text="Recent High-Priority Incidents" Style="{StaticResource DashboardSectionTitle}"/>
-                          <TextBlock Text="  &#x24D8;" Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"/>
+                          <TextBlock Text="  &#x24D8;" Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"
+                                     Focusable="True"
+                                     KeyboardNavigation.IsTabStop="True"
+                                     FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
+                                     ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                                     ToolTip="Local snapshot: unresolved correlated incidents are prioritized before anomaly signals. Risk scores are local ranking estimates, not detection confidence or verified impact."
+                                     AutomationProperties.Name="About prioritized incidents"
+                                     AutomationProperties.HelpText="The queue prioritizes unresolved correlated incidents and then anomaly signals. Risk scores are local estimates, not detection confidence or verified impact."/>
                         </StackPanel>
                         <TextBlock Text="Unresolved correlated incidents first; anomaly signals remain available below."
                                    Foreground="{StaticResource TextMutedBrush}"
@@ -745,7 +752,14 @@
                         <StackPanel>
                           <StackPanel Orientation="Horizontal">
                             <TextBlock Text="Incident Investigation" Style="{StaticResource DashboardSectionTitle}"/>
-                            <TextBlock Text="  &#x24D8;" Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"/>
+                            <TextBlock Text="  &#x24D8;" Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"
+                                       Focusable="True"
+                                       KeyboardNavigation.IsTabStop="True"
+                                       FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
+                                       ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                                       ToolTip="Investigation displays the currently selected correlated incident or anomaly signal. Its local risk score is not detection confidence, verified impact or proof of capture health."
+                                       AutomationProperties.Name="About incident investigation"
+                                       AutomationProperties.HelpText="Details reflect the selected local incident or anomaly signal. Risk is an estimate, not detection confidence, verified impact or proof of capture health."/>
                           </StackPanel>
                           <TextBlock Text="Selected correlated incident or anomaly signal; risk is not a confidence claim."
                                      Foreground="{StaticResource TextMutedBrush}"
