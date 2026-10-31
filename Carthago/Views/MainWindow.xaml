@@ -801,6 +801,10 @@
                           </Border>
                           <Button x:Name="DashboardOpenSignalDetailButton"
                                   Content="Full detail"
+                                  ToolTip="Opens the existing Signal Investigation dialog for the current local incident or anomaly context. Opening it does not start capture or verify evidence."
+                                  ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                                  AutomationProperties.Name="Open signal investigation detail"
+                                  AutomationProperties.HelpText="Opens a modal detail view of the current local incident or anomaly context. The dialog can copy a summary or offer navigation to incident or anomaly views; opening it does not capture traffic, export raw evidence or remediate."
                                   Width="94"
                                   Height="28"
                                   HorizontalAlignment="Right"
@@ -940,7 +944,12 @@
                                            AutomationProperties.HelpText="Opens a correlated incident workspace when available; otherwise opens the Anomalies view. Does not isolate a host."
                                            Click="DashboardInvestigateHost_Click" Margin="0,0,8,6"/>
                                   <Button x:Name="DashboardViewRelatedIncidentButton" Content="View Related Incident" MinWidth="154" Height="30" Style="{StaticResource SecondaryButton}" Click="DashboardViewRelatedIncident_Click" Margin="0,0,8,6"/>
-                                  <Button Content="Full Detail" MinWidth="96" Height="30" Style="{StaticResource SecondaryButton}" Click="DashboardOpenSignalDetail_Click" Margin="0,0,8,6"/>
+                                  <Button Content="Full Detail"
+                                          ToolTip="Opens the existing Signal Investigation dialog for the current local incident or anomaly context. Opening it does not start capture or verify evidence."
+                                          ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                                          AutomationProperties.Name="Open signal investigation detail"
+                                          AutomationProperties.HelpText="Opens a modal detail view of the current local incident or anomaly context. The dialog can copy a summary or offer navigation to incident or anomaly views; opening it does not capture traffic, export raw evidence or remediate."
+                                          MinWidth="96" Height="30" Style="{StaticResource SecondaryButton}" Click="DashboardOpenSignalDetail_Click" Margin="0,0,8,6"/>
                                 </WrapPanel>
                               </StackPanel>
                             </Border>
