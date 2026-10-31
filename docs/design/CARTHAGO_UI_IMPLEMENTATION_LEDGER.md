@@ -1962,3 +1962,42 @@ Keep the original 40×36 ellipsis, placement, `SecondaryButton` theme and dark p
 **Next independent UI GA UI-29:** inspect fresh live HEAD, approved image, ledger and WPF consumers for one new cohesive UI-owned accessibility/readability/visual-consistency improvement outside UI-01–28.
 
 **References:** [WPF Button.IsEnabled](https://learn.microsoft.com/en-us/dotnet/api/system.windows.uielement.isenabled); [WPF ToolTipService.ShowOnDisabled](https://learn.microsoft.com/en-us/dotnet/api/system.windows.controls.tooltipservice.showondisabled); [WPF AutomationProperties](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties).
+
+## GA UI-29 — Truthful 60-minute host-activity sparkline labels and accessible description
+
+**2026-10-31 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE feature HEAD: `073e1173610f4dc8863d5c44f4d8ea6c20a501bd`, a direct descendant of GA UI-28 publication `0871d7a795e3f9cd7d6ce780cb02152309fbc72a` with independent P0101–P0110 protocol source/tests/docs already present. **Exact UI source commit:** `1f2a08d89a013d90a49f64d7618c5f3dac083c84`. **Owned paths:** `Carthago/Views/MainWindow.xaml`, `Carthago/Views/MainWindow.Dashboard.cs`, and this `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`. **Tests authored: 0; executed: 0.** No dotnet build/test, xUnit, replay, holdout, CI, GitHub Actions, Windows runner, benchmark, production capture or running-WPF inspection.
+
+### Approved reference, source audit and provenance
+
+Resolved and visually inspected the exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c`: dark navy/graphite panels, cyan/teal emphasis, restrained severity, compact four-column host table, left navigation and incident investigation. The image's IPs, timestamps, metrics, rule IDs, confidence, Mbps/inbound/outbound traffic lines and terminal output are **DEMO ONLY**, not observed Carthago data. The actual ScottPlot chart remains local PPS with ten-sample moving average and bounded 120-point history.
+
+In the original High-Risk Hosts projection, `BuildSocHostRows` in `MainWindow.Dashboard.cs` takes at most five host rows from the existing correlated incident snapshot, falling back to anomaly-signal hosts only when no incident hosts are available. `TrendText` is produced by the unchanged `BuildTrendText` helper: eight relative Unicode bars over a 60-minute window, using incident `UpdatedUtc` timestamps or anomaly `CreatedUtc` timestamps. Bars are normalized to the largest time bucket; they are **not** packet throughput, risk-score change, absolute event counts or validated detection confidence. The original XAML labeled the column **Trend** with no explanation and rendered the bar glyphs without a source-specific accessible name. The existing private `SocHostVm` is consumed only by this dashboard's host `ItemsControl`; the original host identifier, risk, Items count, ordering, source-kind fallback and prior GA UI-18 accessibility label remain unchanged.
+
+### One cohesive UI-owned improvement
+
+Change the host-table column caption from **Trend** to **Activity**, with a tooltip explaining the existing 60-minute, eight-bucket relative timestamp presentation and its limitations. Extend the host-list `AutomationProperties.HelpText` to distinguish activity bars from traffic/risk trends. Add a read-only computed `SocHostVm.ActivityAccessibilityLabel` from the already-held host identifier and `RelatedItemKind`, distinguishing **correlated incident last-update timestamps** from **anomaly signal creation timestamps** without adding data sources. Bind that label to the existing sparkline TextBlock's tooltip and `AutomationProperties.Name`. Keep `TrendText` glyphs, `BuildTrendText`, source timestamps, colors, table dimensions, sorting, selection, consumers and telemetry unchanged. No new commands, interactive controls, handlers, collections, shared APIs, capture-health claims or security logic.
+
+### Start/end static divergence review and residual risks
+
+**Start:** reviewed live feature HEAD `073e1173610f4dc8863d5c44f4d8ea6c20a501bd`, the preceding UI-28 ledger/source, exact approved reference, original host XAML, private `SocHostVm` consumers, `BuildSocHostRows`, `BuildTrendText`, dashboard event/responsive partials and source provenance. Since UI-28, independent P0101–P0110 changed only protocol inspector source, protocol tests and `docs/protocols/**`; there is no overlap with the three UI-owned paths. Source candidate changes only the host-table header, host-list help, existing sparkline accessibility/tooltip bindings, and a computed private UI viewmodel label. **End publication requirement:** inspect fresh remote HEAD, compare all intervening paths, verify source/docs ancestry and exact changed files/blobs, naming and privacy before a single non-forced expected-SHA-protected `update_ref`. On overlap or missing safe lease guarantee STOP without publishing.
+
+**Risks:** relative glyph heights are not absolute counts; the all-low-bar appearance can be misunderstood without the tooltip. Full host identifiers already held in local UI are exposed in the tooltip/accessibility name, not persisted or transmitted by this change. Actual WPF binding resolution, UI Automation output, screen-reader verbosity, tooltip placement, high contrast, 125–200% DPI and narrow-width readability are **UNVERIFIED**. Static source review is not compilation, runtime testing or accessibility certification.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. The High-Risk Hosts column visibly reads **Activity**, retaining its existing 84px column and layout.
+2. The column tooltip explains eight relative buckets over 60 minutes and explicitly disclaims traffic/risk trends.
+3. Incident-host activity uses existing correlated incident `UpdatedUtc` timestamps without changing the projection.
+4. Anomaly-only fallback uses existing anomaly `CreatedUtc` timestamps without changing the projection.
+5. The accessible sparkline label names the correct source kind and full already-held host identifier, not raw bar glyphs.
+6. Screen-reader and UI Automation inspection assess tooltip/name exposure without announcing unsupported confidence or absolute counts.
+7. Existing five-row bound, host compaction/tooltip, Items counts, local risk scores, severity colors, ordering and finding navigation remain unchanged.
+8. At 1440/1100/1099/1024/1023/640px, 125–200% DPI and high contrast, the Activity caption and bars remain legible and do not clip or misalign.
+9. Keyboard focus, navigation, incident investigation, local PPS chart and read-only Live Events (80 displayed/500 retained) remain unchanged.
+10. Unavailable visual-only CLI, Cisco/WebView2/ScottPlot, privacy, provenance and independent detection/protocol streams remain untouched.
+
+**Open quality GAs:** pinned-SHA Windows WPF build, actual UI Automation/screen reader and tooltip review, keyboard/high-contrast/DPI/responsive screenshots, and provenance regression **only after the owner explicitly says “now it is test time.”** **Executed tests: 0.**
+
+**Next independent UI GA UI-30:** inspect fresh live HEAD, the approved image, ledger and original WPF consumers for one cohesive UI-owned accessibility/readability/visual-consistency improvement outside UI-01–29.
+
+**References:** [WPF AutomationProperties.Name](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationproperties.name); [WPF TextBlock](https://learn.microsoft.com/en-us/dotnet/api/system.windows.controls.textblock); [WPF ToolTip](https://learn.microsoft.com/en-us/dotnet/api/system.windows.frameworkelement.tooltip).
