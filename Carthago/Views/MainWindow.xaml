@@ -205,7 +205,7 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
               </Grid.RowDefinitions>
-              <TextBlock Text="Capture source" Style="{StaticResource MicroLabel}"/>
+              <TextBlock x:Name="HeaderCaptureSourceLabel" Text="Capture source" Style="{StaticResource MicroLabel}"/>
               <ComboBox x:Name="DeviceComboBox"
                         Grid.Row="1"
                         MinWidth="180"
@@ -217,7 +217,9 @@
                         Foreground="{StaticResource TextBrush}"
                         BorderBrush="{StaticResource InputBorderBrush}"
                         TextElement.Foreground="{StaticResource TextBrush}"
-                        ToolTip="Choose a network device to monitor">
+                        ToolTip="Choose a local network capture source. Selection alone does not mean capture is running or healthy."
+                        AutomationProperties.LabeledBy="{Binding ElementName=HeaderCaptureSourceLabel}"
+                        AutomationProperties.HelpText="Choose the local capture device, then use Start Monitoring. Selecting a device does not establish that capture is active or healthy.">
                 <ComboBox.ItemTemplate>
                   <DataTemplate>
                     <TextBlock Text="{Binding}"
