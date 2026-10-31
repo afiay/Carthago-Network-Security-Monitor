@@ -1312,9 +1312,29 @@
                             </DataGridTextColumn.HeaderStyle>
                           </DataGridTextColumn>
                           <DataGridTextColumn Header="Source" Binding="{Binding Source}" Width="*"
-                                              MinWidth="120"/>
+                                              MinWidth="120">
+                            <DataGridTextColumn.HeaderStyle>
+                              <Style TargetType="{x:Type DataGridColumnHeader}"
+                                     BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+                                <Setter Property="ToolTip"
+                                        Value="Source endpoint reported by the local detection event. Not a verified host identity or independently corroborated packet attribution."/>
+                                <Setter Property="AutomationProperties.HelpText"
+                                        Value="Reported detection-event source endpoint metadata; host identity and packet attribution are not independently verified here."/>
+                              </Style>
+                            </DataGridTextColumn.HeaderStyle>
+                          </DataGridTextColumn>
                           <DataGridTextColumn Header="Destination" Binding="{Binding Destination}" Width="*"
-                                              MinWidth="120"/>
+                                              MinWidth="120">
+                            <DataGridTextColumn.HeaderStyle>
+                              <Style TargetType="{x:Type DataGridColumnHeader}"
+                                     BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+                                <Setter Property="ToolTip"
+                                        Value="Destination endpoint reported by the local detection event. Not proof that the endpoint was reached or a connection succeeded."/>
+                                <Setter Property="AutomationProperties.HelpText"
+                                        Value="Reported detection-event destination endpoint metadata; endpoint reachability and successful connection are not established by this column."/>
+                              </Style>
+                            </DataGridTextColumn.HeaderStyle>
+                          </DataGridTextColumn>
                           <DataGridTextColumn Header="Rule" Binding="{Binding RuleId}" Width="76"/>
                           <DataGridTextColumn Header="Severity" Binding="{Binding Severity}" Width="85"/>
                           <DataGridTextColumn Header="Protocol" Binding="{Binding Protocol}" Width="80"/>
