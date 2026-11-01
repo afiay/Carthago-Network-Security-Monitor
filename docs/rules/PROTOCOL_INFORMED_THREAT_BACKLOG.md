@@ -41,3 +41,11 @@ The live [registry](../../Carthago/Engine/Rules/Catalog/RuleRegistry.cs) contain
 | Completed | **P0051 NTP**, existing **R242** monlist request burst; R001/R017 generic scans | **R546 authored**: three **distinct public NTP endpoints** probed by one RFC1918 host using bounded, packet-classified mode-7 monlist requests within five minutes; R242 counts repeated requests per same pair, not fanout | Existing PacketHandler → OtProtocolLight → typed ApplicationProtocol, IpVersion, L4Len, UDP ports and addresses; Medium/Shadow/80%, ten-minute cooldown; no response, amplification, vulnerability or authenticated-source claim. [GA R546](../RULE_BATCH_546-546.md). |
 
 Next proposed rule cursor **R547**, subject to fresh live registry audit. Do not repeat completed protocol GAs or add isolated protocol inspectors. Historical P inventory remains unchanged.
+
+## GA R547 — public-to-private BACnet Who-Is target fanout
+
+| Priority | P research / prior rule overlap | New producer-backed disposition | Limits / policy |
+| --- | --- | --- | --- |
+| Completed | **P0046 BACnet**, related **P0382 BVLC**; R241 Who-Is/I-Am packet burst, R545 I-Am external pair, R223 generic ICS internet | **R547 authored:** three distinct RFC1918 destinations targeted within 5m by one public IPv4 source using wire-classified BACnet Who-Is requests on UDP/47808; packet ID deduplication and source-keyed bounded state; [GA R547](../RULE_BATCH_547-547.md). | High / Shadow / 80%, 10m cooldown; **SOURCE CANDIDATE — UNVERIFIED**, 19 xUnit methods / 25 invocations authored, 0 executed; requires visible IPv4 UDP producer. No authenticated identity, server reply, vulnerable asset or exploit claim. |
+
+**Threat research:** MITRE ATT&CK ICS [T0846](https://attack.mitre.org/techniques/T0846/) and [DET0739](https://attack.mitre.org/detectionstrategies/DET0739/) updated 2026-10-13 emphasize operational-fidelity and approved-asset context. CISA KEV retrieval returned HTTP 403; no candidate-specific exploitation or EPSS score asserted. Cross-boundary Who-Is can be legitimate BBMD/foreign-device routing, commissioning or inventory. **Next proposed cursor R548** subject to live registry/producer review. Historical P inventory and protocol ledger remain immutable.
