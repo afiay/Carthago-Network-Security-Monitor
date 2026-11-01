@@ -3056,3 +3056,46 @@ The private source commit `a468978c0ec49dce725bb4c86fd420c807e0a174` descends fr
 **Next independent UI GA UI-55:** inspect fresh LIVE HEAD, exact approved reference, ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–54.
 
 **References:** [WPF FrameworkElement.ToolTip](https://learn.microsoft.com/dotnet/api/system.windows.frameworkelement.tooltip); [WPF TextBlock.TextTrimming](https://learn.microsoft.com/dotnet/api/system.windows.controls.textblock.texttrimming); [WPF ToolTipService](https://learn.microsoft.com/dotnet/api/system.windows.controls.tooltipservice).
+
+## GA UI-55 — Keyboard-focus destination guidance for Raw / Advanced shortcut tiles
+
+**2026-11-01 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE `feature/carthago-reliability-hardening` HEAD: `3ba828431effefc948b83028617060a9a6495a99`. Prior GA UI-54 source `a468978c0ec49dce725bb4c86fd420c807e0a174`, documentation/publication `36d88e246ec4f1c5318a694b6433af832625481c`. Independent P0361–P0370 SOME/IP-SD source/tests/protocol documentation were already present at the starting HEAD. **Exact GA UI-55 source commit SHA:** `04ccd17466d8bb2da07e69314f70823fe19f7aa8`; **source XAML blob SHA:** `a49f77bea55e1178dab9b212b62559850ce9f8ba`. **Owned paths only:** `Carthago/Views/MainWindow.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`. **Tests authored: 0; executed: 0.** No build, dotnet test, xUnit, replay, holdout, CI, runner, benchmark, capture or running-app screenshot.
+
+### Approved reference, original consumers and distinct scope
+
+Resolved and **visually inspected** exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c` (1648×928). The reference's navy/graphite/cyan/teal, restrained severity, left navigation, operational KPIs, prioritized incidents, investigation, local PPS ScottPlot (10-sample average, bounded 120-point history), read-only local Live Events (80 displayed/500 retained) and explicitly **UNAVAILABLE** visual-only CLI remain unchanged. Existing Wide >=1440, Standard 1100–1439, Compact 1024–1099 and below-1024 behavior remain unchanged. Screenshot IPs, traffic Mbps lines, rule IDs, timestamps, confidence, sensor counts and health indicators are **DEMO ONLY**; no values or monitoring/capture health are inferred.
+
+Audited LIVE branch/recent commits, ledger through GA UI-54, `MainWindow.xaml`, `MainWindow.xaml.cs`, `MainWindow.Core.cs`, `MainWindow.Dashboard.cs`, `MainWindow.DashboardEvents.cs`, `MainWindow.DashboardResponsive.cs`, `MainWindow.Navigation.cs` and `Theme.xaml`. The existing four `Raw / Advanced Shortcuts` tile buttons already have source-accurate visible labels and AutomationProperties.Name/HelpText (GA UI-20 and GA UI-32); however they lack pointer/keyboard-focus tooltips. Their original handlers route `DashboardRawTraffic_Click` and `DashboardPcapExplorer_Click` to `Nav_LiveTraffic_Click`, and `DashboardRawDetections_Click` and `DashboardForensicsWorkspace_Click` to `Nav_Alerts_Click`. The navigation partial activates the corresponding existing sidebar traffic or detection filters. No separate PCAP Explorer or forensics workspace is opened. This GA is limited to **keyboard-discoverable hover/focus guidance on these four existing tile controls**, not a repeat of earlier destination naming, accessible labels, or routing changes.
+
+### One cohesive UI-owned improvement
+
+Add `ToolTip` and `ToolTipService.ShowsToolTipOnKeyboardFocus="True"` to the four existing Raw Traffic, Raw Detections, Traffic Analysis and Detection Investigation shortcut tiles. Tooltips describe the actual existing destination and explicitly avoid claiming separate PCAP/forensics workspaces, capture activation, verified detections or evidence export. Original `Click` handlers, `AutomationProperties.Name`/`HelpText`, button styles, visual text, order, tab stops, tile geometry, colors, routing, sidebar filters and data remain untouched. Exactly eight static WPF attributes are added across four existing buttons; no new controls, bindings, commands, models, viewmodels, telemetry, detection/protocol code, capture or shared API.
+
+The private source commit `04ccd17466d8bb2da07e69314f70823fe19f7aa8` descends directly from starting LIVE HEAD `3ba828431effefc948b83028617060a9a6495a99` and changes only `Carthago/Views/MainWindow.xaml`. Its blob is `a49f77bea55e1178dab9b212b62559850ce9f8ba`.
+
+### Start/end static divergence and publication guard
+
+**Start:** comparing prior GA UI-54 publication `36d88e246ec4f1c5318a694b6433af832625481c` with starting LIVE HEAD `3ba828431effefc948b83028617060a9a6495a99` shows one independent P0361–P0370 SOME/IP-SD protocol commit. Its changed paths are `Carthago/Services/ProtocolIntelligence/SomeIpSdEnvelopeInspector.cs`, `Carthago.Tests/ProtocolIntelligence/SomeIpSdEnvelopeInspectorTests.cs`, `docs/protocols/PROTOCOL_EXPANSION_PROGRESS.md`, and `docs/protocols/PROTOCOL_GA_P0361-P0370.md`; none overlap UI-owned files. The new candidate does not change WPF partial hooks/consumers, names, routing, capture/trust/privacy, Cisco/WebView2/ScottPlot, responsive thresholds or reference interpretation.
+
+**End/publication gate:** re-read LIVE remote HEAD immediately before publishing, compare all intervening commits and changed paths, and inspect prepared source/docs blobs, the four original handlers, existing accessible labels, naming, provenance, privacy and approved reference. Publish **complete private source+documentation commit chain only** using **one non-forced atomic GitHub `update_ref` with exact `expected_sha` lease**. If moved, reconcile disjoint changes onto fresh HEAD with new private commits and a fresh lease; STOP on overlap, conflict, failed lease or missing guarantee. Never publish partially, force push, rewrite history, create branches/PRs or change independent streams/automations.
+
+**Residual risks:** Windows compilation, actual keyboard-focus tooltip behavior, screen-reader/UI Automation presentation, tooltip positioning, focus traversal, high contrast, 125–200% DPI, and 1440/1100/1099/1024/1023/640px rendering remain **UNVERIFIED**. WPF tooltip presentation can vary by Windows accessibility client; static metadata alone is not proof of accessible usability. No telemetry/capture-health or verified-security claims are introduced.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. Hover Raw Traffic: tooltip accurately describes existing Live Traffic and traffic filters, without promising capture.
+2. Keyboard-focus Raw Traffic: tooltip appears without adding a Tab stop; UI Automation retains original accessible Name/HelpText.
+3. Hover and keyboard-focus Raw Detections: tooltip describes existing Detection Events and detection filters without promising verification or evidence export.
+4. Hover and keyboard-focus Traffic Analysis: tooltip clarifies it opens existing Live Traffic, not a separate PCAP Explorer.
+5. Hover and keyboard-focus Detection Investigation: tooltip clarifies it opens existing Detection Events, not a separate forensics workspace.
+6. Activate each tile: verify the original `DashboardRawTraffic_Click`, `DashboardRawDetections_Click`, `DashboardPcapExplorer_Click` and `DashboardForensicsWorkspace_Click` routes and sidebar filter behavior.
+7. Navigate four tiles with Tab/Shift+Tab: original focus order, styles, dimensions and neighboring Open Live Traffic button remain unchanged.
+8. Inspect 1440/1100/1099/1024/1023/640px, high contrast and 125–200% DPI for tooltip placement, contrast and clipping.
+9. Confirm operational KPIs, local PPS ScottPlot, incidents/investigation, read-only Live Events 80/500, unavailable CLI, Cisco/WebView2 and capture/trust/privacy remain unchanged.
+10. Confirm only two UI-owned paths changed, no fabricated reference data, no detection/protocol/test/workflow/runner/automation or shared API edits.
+
+**Open quality GAs:** pinned-SHA Windows compilation and actual tooltip/keyboard/screen-reader/high-contrast/DPI/responsive inspection only after the owner says **“now it is test time.”** **Executed tests: 0.**
+
+**Next independent UI GA UI-56:** inspect fresh LIVE HEAD, approved image, this ledger and WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–55.
+
+**References:** [WPF ToolTipService.ShowsToolTipOnKeyboardFocus](https://learn.microsoft.com/dotnet/api/system.windows.controls.tooltipservice.showstooltiponkeyboardfocus); [WPF FrameworkElement.ToolTip](https://learn.microsoft.com/dotnet/api/system.windows.frameworkelement.tooltip); [WPF AutomationProperties.HelpText](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.helptext).
