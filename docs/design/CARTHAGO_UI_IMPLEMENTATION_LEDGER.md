@@ -3637,3 +3637,42 @@ Source commit `0babc9e293634336dcfb574a74299933d1478d3b` changes **only** `Carth
 **Next independent UI GA UI-69:** inspect fresh LIVE HEAD, approved reference, ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–68.
 
 **References:** [WPF AutomationProperties.LabeledBy](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.labeledby); [WPF AutomationProperties.HelpText](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.helptext); [WPF ToolTipService.ShowsToolTipOnKeyboardFocus](https://learn.microsoft.com/dotnet/api/system.windows.controls.tooltipservice.showstooltiponkeyboardfocus).
+
+## GA UI-69 — Dashboard-mode flags: truthful keyboard and accessibility guidance
+
+**2026-11-01 · SOURCE CANDIDATE — UNVERIFIED.** Start LIVE branch `feature/carthago-reliability-hardening` HEAD: `aae4c8eb59bce398d9cc27418574699bde5c4dde`. Prior GA UI-68 source `0babc9e293634336dcfb574a74299933d1478d3b`; prior documentation/publication `3bfb8562a7b63307277e82b59cfe49ff14a43e8b`. **Exact GA UI-69 source SHA:** `05990b4793085f5a53323a72babb1f3799d66b6f`, source blob `686ce5ab575ead0859789428de8d2a1ac537d5f1`. Owned paths: `Carthago/Views/MainWindow.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md` only. Tests authored/executed: **0/0**. No builds, XAML compilation, xUnit, replay, holdout, CI, Actions, runner, benchmark, capture or running-WPF screenshot.
+
+### Reference, provenance and start divergence
+
+Resolved and **visually inspected** exact approved Library image `libfile_b0a34361560c8191b641e432b3e6b15c` (1672×941). Preserve navy/graphite/cyan/teal, restrained severity, left nav, operational KPIs, prioritized incidents/investigation, local PPS ScottPlot (optional 10-sample average, bounded 120-point history), read-only local Live Events (80 displayed / 500 retained), explicitly **UNAVAILABLE** visual-only CLI, Cisco/WebView2/ScottPlot and capture/privacy/trust boundaries. Preserve Wide >=1440, Standard 1100–1439, Compact 1024–1099, graceful below 1024. Reference IPs, metrics, rule IDs, timestamps, confidence, Mbps lines and terminal text are **DEMO ONLY**, not telemetry or verified capture health.
+
+The supplied UI-66 instruction was stale: UI-66, UI-67 and UI-68 are already published; do not repeat UI-01–68. Prior UI-68 publication to starting LIVE HEAD was **one independent R545 BACnet I-Am rule candidate** changing only `Carthago.Tests/R545AdvancedAccuracyBatchTests.cs`, `Carthago/Engine/Rules/Catalog/RuleRegistry.cs`, `Carthago/Engine/Rules/Expansion/R545_ExternalBacnetIAmAnnouncementRule.cs`, `docs/RULE_BATCH_545-545.md`, `docs/RULE_HARDENING_PROGRESS.md` and `docs/rules/PROTOCOL_INFORMED_THREAT_BACKLOG.md`. No UI-owned overlap.
+
+Static read-only audit: LIVE HEAD and recent commits, ledger through UI-68, `MainWindow.xaml`, `MainWindow.Settings.cs`, `MainWindow.Core.cs`, `MainWindow.Dashboard.cs`, `MainWindow.DashboardResponsive.cs`, `MainWindow.Responsive.cs`, `MainWindow.xaml.cs`, `MainWindow.Navigation.cs`, `Theme.xaml`, and original read-only `Models/DashboardPreferences.cs`, `Services/DashboardLayoutService.cs`, `Services/DashboardPresetService.cs`. The existing `DashboardMinimalModeCheck` and `DashboardEmptyByDefaultCheck` load `UseMinimalDashboard` and `ShowEmptyDashboardByDefault` through `MainWindow.Core.cs`. Their original Checked/Unchecked `DashboardSectionToggle_Changed` handler persists the flags **immediately** through `PreferencesService.Update` when loaded and not syncing; it does not wait for Save settings. `RefreshDashboardLayoutFromPreferences` derives workspace visibility from configured enabled/available widgets, **not directly from either flag**. The existing `DashboardResetLayout_Click` replaces the layout with `DashboardPresetService.CreateEmptyMinimal()`; the widget-add handler separately sets `ShowEmptyDashboardByDefault=false`. Thus toggling these flags alone must not be presented as clearing configured widgets, retained incidents/events or capture.
+
+### One cohesive UI-owned change
+
+Add source-accurate hover ToolTips, `ToolTipService.ShowsToolTipOnKeyboardFocus="True"`, and `AutomationProperties.HelpText` bound to the ToolTip with `RelativeSource Self` on **exactly these two existing dashboard-mode checkboxes**. Guidance distinguishes immediate preference persistence from widget-driven presentation, and points to the existing Reset dashboard command for actual layout replacement. One provenance comment; **six new WPF attributes, seven XAML additions, zero deletions**. Preserve original captions, check states, handlers, preferences writer, keyboard order, dimensions, styling, responsive layout, source/consumer contracts, capture/privacy/trust and independent streams. No new focus stop, API, preference, telemetry, detection/protocol rule, security control or external request.
+
+### End static review, publication gate and risks
+
+Private source commit `05990b4793085f5a53323a72babb1f3799d66b6f` is a direct child of starting LIVE HEAD, with **only** `Carthago/Views/MainWindow.xaml` changed. This ledger-only commit must be its direct descendant. Static review of original XAML names/handlers, WPF partial consumers, unchanged theme/responsive paths, reference fidelity, privacy and independent R545 paths is not proof of compilation or runtime behavior. Immediately before publication, re-read LIVE remote HEAD and compare any concurrent changes; if disjoint, reconstruct a fresh private source/docs chain on new HEAD and use a fresh lease. STOP on UI-owned overlap, conflict, divergent ancestry or missing atomic lease. Publish complete candidate through **one non-forced atomic GitHub `update_ref` with matching `expected_sha`** on the same branch; no partial publication, branch/PR, force push, history rewrite or automation edit.
+
+**Risks unverified:** Windows WPF parsing/compilation, ToolTip keyboard focus, HelpText binding, screen-reader announcements, high contrast, DPI 125–200%, widths 1440/1100/1099/1024/1023/640px, preference write failures and actual widget-driven dashboard response. These flags may not visibly alter an already configured workspace; tooltips avoid promising otherwise. No verified UI/accessibility or capture-health claim.
+
+### Acceptance scenarios — PLANNED ONLY, NOT AUTHORED OR EXECUTED
+
+1. Tab to **Use minimal dashboard**: original caption/check state/focus order and tooltip/HelpText remain coherent.
+2. Tab to **Empty dashboard by default**: original caption/check state/focus order and tooltip/HelpText remain coherent.
+3. Toggle minimal with loaded UI: original handler persists immediately without Save settings.
+4. Toggle empty-by-default with loaded UI: original handler persists immediately without removing configured widgets.
+5. With enabled widgets, inspect widget-driven workspace and honest tooltip wording after either toggle.
+6. Activate existing Reset dashboard separately: inspect `CreateEmptyMinimal()` replacement without incident/event deletion.
+7. Add widget with existing picker: inspect `ShowEmptyDashboardByDefault=false` original writer.
+8. Inspect hover/focus, UI Automation, screen reader, high contrast, 125–200% DPI and widths 1440/1100/1099/1024/1023/640px.
+9. Confirm unchanged KPIs, local PPS/10-sample average/120-point history, incident investigation, Live Events 80/500, unavailable CLI, Cisco/WebView2/ScottPlot and capture/privacy/trust boundaries.
+10. Compare exact source/docs blobs, ancestry and independent changes; confirm only two owned paths and **zero** builds/tests/replays/CI/runners/capture.
+
+**Next independent UI GA UI-70:** fresh LIVE HEAD, approved reference, ledger and original WPF consumers; one new distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–69. All acceptance remains deferred until owner says **“now it is test time.”**
+
+**References:** [WPF AutomationProperties.HelpText](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.helptext); [WPF ToolTipService.ShowsToolTipOnKeyboardFocus](https://learn.microsoft.com/dotnet/api/system.windows.controls.tooltipservice.showstooltiponkeyboardfocus); [WPF RelativeSource Self](https://learn.microsoft.com/dotnet/desktop/wpf/advanced/relativesource-markupextension).
