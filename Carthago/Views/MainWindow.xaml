@@ -1513,16 +1513,37 @@
                           </DataGridTextColumn>
                         </DataGrid.Columns>
                       </DataGrid>
-                      <TextBlock x:Name="DashboardLiveEmptyText"
-                                 Text="No local detection events observed in this session."
-                                 Foreground="{StaticResource TextSubtleBrush}"
-                                 FontSize="12"
-                                 TextAlignment="Center"
-                                 TextWrapping="Wrap"
-                                 HorizontalAlignment="Center"
-                                 VerticalAlignment="Center"
-                                 MaxWidth="420"
-                                 IsHitTestVisible="False"/>
+                      <!-- GA UI-71: visually distinguish the existing source-driven empty/no-match message from event rows; no new data or state. -->
+                      <Border Visibility="{Binding Visibility, ElementName=DashboardLiveEmptyText}"
+                              IsHitTestVisible="False"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center"
+                              MaxWidth="460"
+                              Margin="12"
+                              Padding="18,12"
+                              Background="{StaticResource PillBgBrush}"
+                              BorderBrush="{StaticResource SoftDividerBrush}"
+                              BorderThickness="1"
+                              CornerRadius="10">
+                        <StackPanel>
+                          <TextBlock Text="NO ROWS TO DISPLAY"
+                                     Foreground="{StaticResource AccentBrush}"
+                                     FontSize="10"
+                                     FontWeight="SemiBold"
+                                     TextAlignment="Center"
+                                     Margin="0,0,0,5"/>
+                          <TextBlock x:Name="DashboardLiveEmptyText"
+                                     Text="No local detection events observed in this session."
+                                     Foreground="{StaticResource TextSubtleBrush}"
+                                     FontSize="12"
+                                     TextAlignment="Center"
+                                     TextWrapping="Wrap"
+                                     HorizontalAlignment="Center"
+                                     VerticalAlignment="Center"
+                                     MaxWidth="420"
+                                     IsHitTestVisible="False"/>
+                        </StackPanel>
+                      </Border>
                     </Grid>
                     <StackPanel Grid.Row="3" Margin="0,8,0,0">
                       <TextBlock x:Name="DashboardLiveEventsStatusText"
