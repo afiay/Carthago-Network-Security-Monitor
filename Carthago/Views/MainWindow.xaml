@@ -2364,15 +2364,22 @@
                               Unchecked="DashboardSectionToggle_Changed"/>
                   </UniformGrid>
 
+                  <!-- GA UI-69: clarify the two saved dashboard flags without claiming they clear configured widgets. -->
                   <WrapPanel Grid.Row="2"
                              Margin="0,14,0,0">
                     <CheckBox x:Name="DashboardMinimalModeCheck"
                               Content="Use minimal dashboard"
+                              ToolTip="Saves the minimal-dashboard preference immediately. The visible workspace is populated from enabled configured widgets; toggling this flag alone does not remove widgets, reset the layout, or control capture."
+                              ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                              AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                               Margin="0,0,18,0"
                               Checked="DashboardSectionToggle_Changed"
                               Unchecked="DashboardSectionToggle_Changed"/>
                     <CheckBox x:Name="DashboardEmptyByDefaultCheck"
                               Content="Empty dashboard by default"
+                              ToolTip="Saves the empty-by-default preference immediately. Existing enabled widgets remain configured and this flag alone does not clear the current workspace. Use Reset dashboard to replace the layout with an empty minimal dashboard; retained events and incidents are not deleted."
+                              ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                              AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                               Checked="DashboardSectionToggle_Changed"
                               Unchecked="DashboardSectionToggle_Changed"/>
                   </WrapPanel>
