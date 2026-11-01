@@ -3676,3 +3676,38 @@ Private source commit `05990b4793085f5a53323a72babb1f3799d66b6f` is a direct chi
 **Next independent UI GA UI-70:** fresh LIVE HEAD, approved reference, ledger and original WPF consumers; one new distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–69. All acceptance remains deferred until owner says **“now it is test time.”**
 
 **References:** [WPF AutomationProperties.HelpText](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.helptext); [WPF ToolTipService.ShowsToolTipOnKeyboardFocus](https://learn.microsoft.com/dotnet/api/system.windows.controls.tooltipservice.showstooltiponkeyboardfocus); [WPF RelativeSource Self](https://learn.microsoft.com/dotnet/desktop/wpf/advanced/relativesource-markupextension).
+
+## GA UI-70 — Developer demo provenance: distinguish simulated analytics from live capture
+
+**2026-11-01 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE `feature/carthago-reliability-hardening` HEAD `760e31061f2428f2b05c1e29614cf228402e28b4`, with independent GA R546 NTP mode-7 UDP/123 fanout rule candidate already present and untouched. Prior UI-69 source `05990b4793085f5a53323a72babb1f3799d66b6f`; prior UI-69 publication `881d67c7a1d17a1a3cecda3917923a86aad88bc8`. **Exact UI-70 source commit:** `78c4deead4a7b5e5e67f87011847c6461227f5f1`; source blob `b314568d9e3c4b3a93eced163987be076a33d88f`. **Owned paths:** `Carthago/Views/MainWindow.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md` only. Tests authored/executed: **0/0**. No build, WPF compilation, screenshot of running software, xUnit, replay, holdout, CI, Actions, runner, benchmark or capture.
+
+### Approved visual reference and source audit
+
+Resolved and visually inspected exact ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c`. The approved concept uses navy/graphite surfaces, restrained cyan/teal accents, subdued panel borders, left navigation, operational KPIs, prioritized incidents/investigation and dense read-only local events. All sample addresses, confidence, throughput, rules, times and terminal lines in that image are **DEMO ONLY**; its terminal is visual-only and **UNAVAILABLE**. The screenshot does not show developer settings; the new banner uses existing theme tokens rather than copying sample telemetry. Preserve Wide >=1440, Standard 1100–1439, Compact 1024–1099 and graceful below 1024, ScottPlot local PPS with optional 10-sample average and bounded 120-point history, Live Events 80 displayed/500 retained, Cisco/WebView2/ScottPlot and privacy/trust/capture boundaries.
+
+Start divergence audit read LIVE branch HEAD and recent commits, ledger through UI-69, existing `MainWindow.xaml` and `Theme.xaml`, plus original WPF partials `MainWindow.Demo.cs`, `MainWindow.Core.cs`, `MainWindow.Settings.cs`, `MainWindow.Dashboard.cs`, `MainWindow.Responsive.cs`, `MainWindow.xaml.cs`. The existing `InitializeDemoMode` reveals `DemoModeGroup` in debug builds or with `--demo-mode`. `RunDemoIncident_Click` creates tagged simulated analytics records, anomaly signals and detection events and refreshes dashboard incident views; `ClearDemoData_Click` clears tagged demo data, and `OpenDemoIncidentQueue_Click` navigates to Incidents. Existing analytics-demo dashboard widget actions reuse these handlers. None of these operations establishes live capture health. The original second-row explanatory text correctly says raw packet, sink and forensic views continue to show real capture data.
+
+### One cohesive UI-owned change
+
+Replace **only** the existing first explanatory `TextBlock` in `DemoModeGroup` with a non-focusable, visually bounded provenance banner. Reuse `PillAccentBgBrush`, `CardBorderBrush`, `AccentBrush` and `TextSubtleBrush` already defined in `Views/Theme.xaml`. Display **SIMULATED ANALYTICS · NOT LIVE CAPTURE** above the existing developer-mode activation explanation, which also clarifies that the panel is not evidence of capture health. Keep the separate raw-capture explanation, three original buttons and handlers, status message, four grid rows, focus order, x:Names, GroupBox visibility, navigation, preference writers, data producers and runtime semantics unchanged. No new interactive control, source/consumer contract, telemetry, simulated incident, external request or security control. This improves visible provenance hierarchy rather than repeating earlier tooltip-only GAs.
+
+### Publication guard and static review
+
+Source commit `78c4deead4a7b5e5e67f87011847c6461227f5f1` is a direct child of starting LIVE HEAD, changing only `Carthago/Views/MainWindow.xaml`. The documentation commit must be its direct child, changing only this ledger. Re-read LIVE HEAD immediately before publication and compare any concurrent detection/protocol/UI changes. Publish the complete two-commit candidate via **one non-forced atomic GitHub `update_ref` with `expected_sha` lease** on the same branch. If moved, reconcile disjoint changes with a fresh private chain and lease; STOP on overlap, missing guarantee or divergent ancestry. Verify post-publication remote HEAD, both blobs and exactly two owned paths. No branch, PR, force push, history rewrite or automation edits.
+
+**Unverified risks:** Windows WPF XAML parsing/compilation; whether a new static banner wraps acceptably at 1440/1100/1099/1024/1023/640px; 125–200% DPI, high contrast and screen-reader reading order; actual distinction between simulated analytics and live packet views; source-dependent demo visibility and status updates. Static source review is not runtime proof.
+
+### Acceptance scenarios — PLANNED ONLY, NOT AUTHORED OR EXECUTED
+
+1. In a debug build, inspect the existing developer section: the banner states simulated analytics, not live capture, with original actions and status below.
+2. In a release build without `--demo-mode`, inspect that the entire GroupBox remains collapsed, with no new focus stop.
+3. In an authorized release demo launch, inspect that `--demo-mode` reveals the same original GroupBox and banner.
+4. Inspect the new cyan-tinted banner, contrast and line wrapping at 1440/1100/1099/1024/1023/640px and 125–200% DPI.
+5. Inspect high-contrast theme and assistive-technology reading order; banner text must not imply validated monitoring health.
+6. Activate **Simulate compromised laptop** in a controlled demo; inspect tagged analytics and unchanged original handler.
+7. Activate **Clear demo data**; inspect tagged-demo cleanup without deletion of real incidents, capture, sink or forensic data.
+8. Activate **Open incident queue**; inspect original navigation and status update without a new capture or simulation trigger.
+9. Inspect dashboard widgets, PPS, KPIs, incidents, read-only Live Events 80/500, unavailable CLI, Cisco/WebView2/ScottPlot, privacy and capture boundaries for unchanged behavior.
+10. Inspect commit ancestry, exact owned paths and blobs against the approved reference; confirm **zero** builds, tests, replays, CI, runners, benchmarks or production capture.
+
+**Next independent UI GA UI-71:** fresh LIVE HEAD, approved reference, ledger and WPF consumers; choose one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–70. All acceptance remains deferred until owner explicitly says **“now it is test time.”**
