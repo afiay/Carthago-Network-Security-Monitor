@@ -2451,9 +2451,24 @@
                     <RowDefinition Height="Auto"/>
                   </Grid.RowDefinitions>
 
-                  <TextBlock Text="Developer-only simulated security scenario. Run the app with --demo-mode to reveal this section outside debug builds."
-                             Foreground="{StaticResource TextSubtleBrush}"
-                             TextWrapping="Wrap"/>
+                  <!-- GA UI-70: visually separate simulated analytics from live capture without changing demo actions. -->
+                  <Border Background="{StaticResource PillAccentBgBrush}"
+                          BorderBrush="{StaticResource CardBorderBrush}"
+                          BorderThickness="1"
+                          CornerRadius="8"
+                          Padding="12,10">
+                    <StackPanel>
+                      <TextBlock Text="SIMULATED ANALYTICS · NOT LIVE CAPTURE"
+                                 FontWeight="SemiBold"
+                                 FontSize="12"
+                                 Foreground="{StaticResource AccentBrush}"
+                                 TextWrapping="Wrap"/>
+                      <TextBlock Text="Developer-only scenario controls. Visible in debug builds or when launched with --demo-mode; this panel is not evidence of capture health."
+                                 Foreground="{StaticResource TextSubtleBrush}"
+                                 Margin="0,4,0,0"
+                                 TextWrapping="Wrap"/>
+                    </StackPanel>
+                  </Border>
 
                   <TextBlock Grid.Row="1"
                              Margin="0,8,0,0"
