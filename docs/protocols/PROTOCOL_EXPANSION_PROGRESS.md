@@ -17,7 +17,7 @@
 
 | [GA P0031–P0040](PROTOCOL_GA_P0031-P0040.md) | f9fcc016081620c20bf9130ea33194d225c0f263 | P0031–P0040 | 2 IMPLEMENTED_ISOLATED (WireGuard, IKEv2-only), 3 PARTIAL (Modbus, Modbus/TCP, DNP3), 1 DEFERRED (ESP), 4 BLOCKED L2 (EAPOL, ARP, LLDP, STP); 0 integrated | 29 / 38 | 0 | Complete caller-attested UDP envelopes only; no runtime producer, authentication, decryption or exploit claims |
 
-**Last completed research GA:** P0441–P0450 (source-only: 1 isolated OMAPI startup inspector, 2 deferred, 4 blocked, 3 rejected; 13 authored xUnit methods / 23 invocations, 0 executed). **Next exact ten IDs:** **P0451–P0460**. No live integration, shared-core edits, or detection/UI modifications; recover live HEAD before the next GA.
+**Last completed research GA:** P0451–P0460 (source-only: 1 isolated ZEPv2 UDP envelope inspector, 4 deferred, 3 blocked, 2 rejected; 18 authored xUnit methods / 31 invocations, 0 executed). **Next exact ten IDs:** **P0461–P0470**. No live integration, shared-core edits, or detection/UI modifications; recover live HEAD before the next GA.
 
 | [GA P0041–P0050](PROTOCOL_GA_P0041-P0050.md) | 691717f8a3302f58454dfcb9e6da45993b17a442 | P0041–P0050 | 3 IMPLEMENTED_ISOLATED (OPC UA UACP, IEC104 APCI, BGP-4 envelope), 2 PARTIAL (S7, BACnet), 1 DEFERRED (MMS), 4 BLOCKED L2 (GOOSE, PROFINET DCP/IO, EtherCAT); 0 integrated | 42 / 50 | 0 | Source-only bounded inspectors, synthetic authored xUnit scenarios, no trusted TCP reassembly or L2 producer |
 
@@ -28,7 +28,7 @@
 - Owner approval and cross-stream review for any shared capture/telemetry/record schema integration; source-only isolated work may continue meanwhile.
 - First actual build/xUnit/Windows replay awaits explicit owner command **“now it’s test time.”**
 - Live sensor provenance, TCP stream boundaries, DTLS 1.3 encrypted records, endpoint/proxy logs and NetScaler asset/config/IOC correlation are not established by these isolated inspectors.
-- Continue source-only with P0451–P0460; preserve detection and UI ledgers, frozen holdouts, journal-first raw DetectionEvents, privacy, cooldowns, thresholds and rule IDs.
+- Continue source-only with P0461–P0470; preserve detection and UI ledgers, frozen holdouts, journal-first raw DetectionEvents, privacy, cooldowns, thresholds and rule IDs.
 
 | [GA P0071–P0080](PROTOCOL_GA_P0071-P0080.md) | 984c9bbea00f68d7dc2f6b8b5f0d163880ddcba4 | P0071–P0080 | 2 IMPLEMENTED_ISOLATED (Geneve, HSRP v1), 1 EXISTING (VLAN), 1 DEFERRED (GTP), 5 BLOCKED input/L2 (PPP, PPPoE, MPLS, CDP, UDLD), 1 REJECTED as separately counted variant (GTPv2-C); 0 integrated | 33 / 41 | 0 | Source-only bounded Geneve and HSRP v1 inspectors; no trusted live UDP envelope, HSRP authentication or runtime registration |
 
@@ -104,3 +104,5 @@
 | [GA P0431–P0440](PROTOCOL_GA_P0431-P0440.md) | 788b1dc037ce6143abf89482ec0adb8ed91e75fc | P0431–P0440 | 0 IMPLEMENTED_ISOLATED, 4 DEFERRED (DCE DFS FLDB, Lithionics BMS, LNP DB Query, NDPS), 5 BLOCKED native/trusted input (FC Zone Server, FDDI, Frame Relay LMI, MPLS-TP FM, MTP3 management), 1 REJECTED independently counted (HCI USB transport); 0 integrated | 0 / 0 | 0 | Source-only first-party spec and actual capture/adapter review; no trusted producer, no parser or tests authored; CISA KEV 403; no CVE exploitation or EPSS claim |
 
 | [GA P0441–P0450](PROTOCOL_GA_P0441-P0450.md) | bc2afc7fa895b19e30deedeed000c273f419b443 | P0441–P0450 | 1 IMPLEMENTED_ISOLATED (OMAPI startup only), 2 DEFERRED (PVFS, SRVSVC), 4 BLOCKED native signaling (RANAP, RNSAP, RRLP, LAPD TEI), 3 REJECTED independent counting (RPRIV, RS_ATTR, RS_REPADM); 0 integrated | 13 / 23 | 0 | ISC 2026-10-01 OMAPI memory-usage vendor notice; bounded 8-byte startup prefix inspector, synthetic xUnit; no producer or exploitation claim; CISA KEV 403, EPSS unasserted, shared paths unchanged |
+
+| [GA P0451–P0460](PROTOCOL_GA_P0451-P0460.md) | 2c0f349fde97f8e9b3cd3692167db2b755bff837 | P0451–P0460 | 1 IMPLEMENTED_ISOLATED (ZEPv2 UDP envelope), 4 DEFERRED (VRT, WASSP, WSP, WTP), 3 BLOCKED native input (802.11, 802.15.4, Zigbee NWK), 2 REJECTED independent distinctness (802.11 aggregate, Network Monitor info); 0 integrated | 18 / 31 | 0 | Bounded ZEPv2 Data/Ack source inspector with attested complete UDP envelope, privacy-safe metadata, synthetic xUnit scenarios; no live producer or shared changes; Silicon Labs 2026-10-22 and Wireshark 2026-09-23 vendor advisories not claimed detected |
