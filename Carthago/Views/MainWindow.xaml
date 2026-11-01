@@ -310,7 +310,14 @@
             </WrapPanel>
             <WrapPanel HorizontalAlignment="Right" Margin="0,5,0,0">
               <CheckBox x:Name="AnomaliesOnlyToggle" Content="Show anomalies only" VerticalAlignment="Center" Checked="AnomaliesOnlyToggle_Changed" Unchecked="AnomaliesOnlyToggle_Changed"/>
-              <Button Content="Customize" Width="104" Height="30" Style="{StaticResource SecondaryButton}" Click="DashboardOpenSettings_Click" Margin="12,0,0,0"/>
+              <Button Content="Customize" Width="104" Height="30"
+                      Style="{StaticResource SecondaryButton}"
+                      Click="DashboardOpenSettings_Click"
+                      ToolTip="Opens the existing System Settings view. Navigation only; this does not edit the dashboard layout or start capture."
+                      ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                      AutomationProperties.Name="Open System Settings"
+                      AutomationProperties.HelpText="Navigates to the existing Settings view, selects System Settings in the sidebar, and hides sidebar filters. Does not change dashboard layout or activate capture."
+                      Margin="12,0,0,0"/>
             </WrapPanel>
           </StackPanel>
         </Grid>
