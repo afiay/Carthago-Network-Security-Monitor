@@ -1,6 +1,6 @@
 # Carthago protocol intelligence — GA P0421–P0430
 
-**Branch:** `feature/carthago-reliability-hardening` only. **Source-only audit base HEAD:** `b2f80001442922b40008321a9d4e32eda0e535d7` (2026-11-01). **Source blob:** `53948752b43af596b1104ae93191776f3d9fdd6d`. **Authored-test blob:** `80f12b92b650efe3b10df5b3ec669b5797d5978b`. **Publication SHA:** the resulting atomic commit in branch history (a commit cannot contain its own future SHA). **Status:** **SOURCE CANDIDATE — UNVERIFIED; TESTS AUTHORED 15 METHODS / 26 CONCRETE INVOCATIONS; TESTS EXECUTED 0; BUILDS 0; LIVE INTEGRATIONS 0**.
+**Branch:** `feature/carthago-reliability-hardening` only. **Source-only audit base HEAD:** `b2f80001442922b40008321a9d4e32eda0e535d7` (2026-11-01). **Source blob:** `53948752b43af596b1104ae93191776f3d9fdd6d`. **Authored-test blob:** `80f12b92b650efe3b10df5b3ec669b5797d5978b`. **Publication SHA:** the resulting atomic commit in branch history (a commit cannot contain its own future SHA). **Status:** **SOURCE CANDIDATE — UNVERIFIED; TESTS AUTHORED 15 METHODS / 27 CONCRETE INVOCATIONS; TESTS EXECUTED 0; BUILDS 0; LIVE INTEGRATIONS 0**.
 
 **Inventory provenance:** owner's original `/Carthago Protocol Expansion/Carthago_500_Protocol_Source_Audit_2026-10-30.csv`, exact immutable P0421–P0430 records, source keys and labels preserved. Companion `Carthago_Corrected_500_Protocol_Audit_2026-10-30.md` (2026-10-30). The historical snapshot `3eefe8873fcfb2156ea8badbf4a8676b7cdbba02` is not a publication lease. Previous [GA P0411–P0420](PROTOCOL_GA_P0411-P0420.md); **next P0431–P0440**. P IDs are research identifiers, not detection-rule IDs.
 
@@ -41,9 +41,11 @@ Accepts at most 4,096 bytes; requires at least 37 bytes, three exact four-byte A
 
 ## Authored source-only scenarios and verification
 
-[Authored xUnit suite](../../Carthago.Tests/ProtocolIntelligence/DistccRequestPrefixInspectorTests.cs): **15 xUnit methods, 26 concrete parameterized invocations**, including v1/v2 positive, opaque output, HTTP negative, five independent attestation failures, four truncations, malformed hex, wrong token order, unsupported versions, count/argument bounds, missing bytes, oversize, stateless repeated calls, concurrent calls and ciphertext fail-closed. Synthetic, non-secret, provenance-labelled fixtures only.
+[Authored xUnit suite](../../Carthago.Tests/ProtocolIntelligence/DistccRequestPrefixInspectorTests.cs): **15 xUnit methods, 27 concrete parameterized invocations**, including v1/v2 positive, opaque output, HTTP negative, five independent attestation failures, four truncations, malformed hex, wrong token order, unsupported versions, count/argument bounds, missing bytes, oversize, stateless repeated calls, concurrent calls and ciphertext fail-closed. Synthetic, non-secret, provenance-labelled fixtures only.
 
-**Tests authored: 15 methods / 26 invocations. Tests executed: 0. Builds: 0.** No dotnet, xUnit, replay, holdout, CI, runner, benchmark, scan, real capture or GitHub Actions executed. **SOURCE CANDIDATE — UNVERIFIED**; source inspection cannot prove compilation or precision.
+**Tests authored: 15 methods / 27 invocations. Tests executed: 0. Builds: 0.** No dotnet, xUnit, replay, holdout, CI, runner, benchmark, scan, real capture or GitHub Actions executed. **SOURCE CANDIDATE — UNVERIFIED**; source inspection cannot prove compilation or precision.
+
+**Documentation correction:** the authored suite contains 9 [Fact] methods and 6 [Theory] methods with 18 [InlineData] rows: **15 methods, 27 invocations**. The first GA publication `04790805c3d2741979716882b43e25cd273017e1` understated invocations by one; no test execution or source behavior changed.
 
 ## Publication safety and next GA
 
