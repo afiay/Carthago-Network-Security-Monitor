@@ -3559,3 +3559,42 @@ Prepared private UI source commit `739eaaadea0348a3b8a333c6d6568a2336ca1195` and
 **Next independent UI GA UI-67:** inspect fresh LIVE HEAD, approved reference, ledger and WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–66.
 
 **References:** [WPF AutomationProperties.LabeledBy](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.labeledby); [WPF AutomationProperties.HelpText](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.helptext); [WPF ToolTipService.ShowsToolTipOnKeyboardFocus](https://learn.microsoft.com/dotnet/api/system.windows.controls.tooltipservice.showstooltiponkeyboardfocus).
+
+## GA UI-67 — Accessible scope of enrichment and capture preferences
+
+**2026-11-01 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE `feature/carthago-reliability-hardening` HEAD: `5310cc0b0898579bb7d8a9f2d4545b09cb6305c4`. Prior GA UI-66 source `739eaaadea0348a3b8a333c6d6568a2336ca1195`; prior docs/publication `16a13365ef1c45234c751288a6e8ff181f1c8794`. **Exact GA UI-67 source SHA:** `cdb1608b2c6f0f7f901f90c152752b0f2f00e5d9`. Source blob: `d514aa395cc98e6cdc2e986670cf7c21d0003fcb`. Owned paths: `Carthago/Views/MainWindow.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md` only. **Tests authored: 0; executed: 0.** No builds, XAML compilation, xUnit, replays, holdouts, CI, Actions, runners, benchmarks, production capture or running-app screenshots.
+
+### Reference, provenance and initial static divergence
+
+Resolved and **visually inspected** exact approved Library image `libfile_b0a34361560c8191b641e432b3e6b15c` (1672×941). Preserve navy/graphite/cyan/teal, restrained severity, left navigation, operational KPIs, prioritized incidents/investigation, local PPS ScottPlot (10-sample average and bounded 120-point history), read-only local Live Events (80 displayed / 500 retained), explicitly **UNAVAILABLE** visual-only CLI, and Cisco/WebView2/ScottPlot and privacy/capture boundaries. Preserve Wide >=1440, Standard 1100–1439, Compact 1024–1099 and graceful below 1024. Screenshot IPs, metrics, rule IDs, timestamps, confidence, Mbps lines and CLI text are **DEMO ONLY**; no fabricated telemetry or verified capture/sensor health.
+
+The supplied GA UI-66 continuation instruction was stale: GA UI-66 had already been published at `16a13365ef1c45234c751288a6e8ff181f1c8794`; do not repeat it. At start LIVE `5310cc0b0898579bb7d8a9f2d4545b09cb6305c4` was exactly one independent P0481–P0490 protocol-documentation reconciliation beyond UI-66, modifying only `docs/protocols/PROTOCOL_EXPANSION_PROGRESS.md` and `docs/protocols/PROTOCOL_GA_P0481-P0490.md`; no UI-owned overlap. Read the ledger through UI-66, `MainWindow.xaml`, `MainWindow.Settings.cs`, `MainWindow.Core.cs`, `MainWindow.Dashboard.cs`, `MainWindow.xaml.cs`, Navigation, Responsive, DashboardResponsive, `Views/Theme.xaml` and read-only `Models/AppPreferences.cs` and `Services/TrafficCaptureService.cs`. The existing three Enrichment & Capture checkboxes are read by `SaveSettings_Click` and persisted through `PreferencesService.Update`; none has a direct Checked/Unchecked handler. `QueueAutoStartCaptureIfConfigured` attempts capture on a later launch only if source/Start-control conditions hold. The traffic enrichment consumer reads `EnableWhois` and `EnableReputation` for eligible public IPs; WHOIS and AbuseIPDB can involve external lookups, and reputation requires an API key. No checkbox click itself proves capture, lookup, credential validity or result.
+
+### One cohesive UI-owned change
+
+On existing `AutoStartCheck`, `EnableWhoisCheck` and `EnableRepCheck` only, add truthful hover and keyboard-focus tooltips and bind `AutomationProperties.HelpText` to each existing control's ToolTip. The three messages distinguish checkbox editing from **Save**; disclose conditional *next-launch* capture, public-IP external WHOIS/ASN/organization lookup, and public-IP external AbuseIPDB lookup plus API-key requirement. Each checkbox retains its original visible Content, accessible name derivation, IsChecked source, handlers (none added), persistence, focus order, geometry and theme. No extra controls, preferences, service calls, API, capture logic, network requests, telemetry, rules, privacy/trust controls or demo data were introduced. **Exactly 12 XAML additions and 3 XAML deletions** in the private source commit (the three self-closing control lines are expanded).
+
+### End static divergence and publication guard
+
+Private source commit `cdb1608b2c6f0f7f901f90c152752b0f2f00e5d9` is a direct child of `5310cc0b0898579bb7d8a9f2d4545b09cb6305c4`; its compare contains **only** `Carthago/Views/MainWindow.xaml`. This ledger update is the second private commit and must remain its descendant. Immediately before publication, re-read LIVE remote HEAD and compare concurrent detection/protocol changes. If disjoint, reconstruct both commits on the fresh HEAD with a fresh expected-SHA lease; STOP for overlapping UI-owned paths, conflicting content, non-fast-forward ancestry or missing lease guarantee. Publish **both commits together only**, via exactly one non-forced atomic GitHub `update_ref` with matching `expected_sha` on the same branch; never publish partially or touch independent streams/automations. Static source inspection is **not** proof of WPF compilation, actual tooltip focus, screen-reader announcements, external lookup behavior or successful preference persistence.
+
+**Residual risks:** XAML parsing and compilation; WPF tooltip behavior on keyboard focus; UI Automation HelpText and assistive-technology announcements; high contrast, DPI 125–200%, widths 1440/1100/1099/1024/1023/640px; Save failures; conditional startup capture and external WHOIS/AbuseIPDB lookup failures; invalid/missing API key. No guarantee of packet flow, capture health, privacy effects beyond existing behavior or enrichment results.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. Tab to **Start capture on launch**; verify original caption and state, tooltip and HelpText; checking alone does not initiate capture.
+2. Save Auto-Start setting under authorized conditions and inspect persisted preference; only on a subsequent launch with a source and enabled Start control may startup capture be attempted.
+3. Tab to **Resolve WHOIS / ASN / Org**; verify hover/keyboard tooltip and HelpText disclose eligible public-IP external lookups and no immediate request on click.
+4. Save WHOIS preference under authorized conditions; inspect enrichment gating on eligible versus private/special IPs and failure behavior without assuming successful lookup.
+5. Tab to **AbuseIPDB reputation lookups**; verify hover/keyboard tooltip and HelpText disclose external lookups and API-key requirement.
+6. Save reputation preference under authorized conditions; inspect eligible-public-IP lookup gating with configured/missing key, and verify checking alone does not validate or query.
+7. Inspect keyboard focus, UI Automation names/HelpText, screen-reader output, tooltip wrapping and high contrast without claiming success from static XAML.
+8. Inspect 125–200% DPI and 1440/1100/1099/1024/1023/640px widths for original Enrichment & Capture geometry, label readability and focus order.
+9. Confirm unchanged Cisco/WebView2/ScottPlot, local PPS/10-sample average/120-point history, prioritized incidents/investigation, read-only Live Events 80/500, unavailable CLI and privacy/capture/trust boundaries.
+10. Verify final changed paths/blobs and concurrent protocol/detection ancestry; confirm exactly two owned files and **zero** builds/tests/replays/CI/runners/capture.
+
+**Open quality GAs:** pinned-SHA Windows WPF compilation, live tooltip/keyboard/UI Automation/visual review, and controlled capture/enrichment scenarios only after owner says **“now it is test time.”** **Executed tests: 0.**
+
+**Next independent UI GA UI-68:** inspect fresh LIVE HEAD, approved reference, ledger and WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–67.
+
+**References:** [WPF AutomationProperties.HelpText](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.helptext); [WPF ToolTipService.ShowsToolTipOnKeyboardFocus](https://learn.microsoft.com/dotnet/api/system.windows.controls.tooltipservice.showstooltiponkeyboardfocus).
