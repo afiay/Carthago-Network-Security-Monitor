@@ -3013,3 +3013,46 @@ The private source commit `38340b79782d2daf439628a0019160250a862016` descends di
 **Next independent UI GA UI-54:** inspect fresh LIVE HEAD, approved image, ledger and WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–53.
 
 **References:** [WPF AutomationProperties.HelpText](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.helptext); [WPF FrameworkElement.ToolTip](https://learn.microsoft.com/dotnet/api/system.windows.frameworkelement.tooltip).
+
+## GA UI-54 — Full-text hover for truncated Recommended Actions rows
+
+**2026-11-01 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE `feature/carthago-reliability-hardening` HEAD: `0689f736fa730e245031c1eafaf58c9175435677`. Prior GA UI-53 source `38340b79782d2daf439628a0019160250a862016`, publication `65a7833e3c00c1644d062928cbc205d9d806f5af`. The independent P0351–P0360 protocol research/documentation reconciliation commit `0689f736fa730e245031c1eafaf58c9175435677` was already present and untouched. **Exact GA UI-54 source commit SHA:** `a468978c0ec49dce725bb4c86fd420c807e0a174`; **source XAML blob:** `015834cce90899cff767729f7d32704caaaaf78e`. **Owned paths only:** `Carthago/Views/MainWindow.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`. **Tests authored: 0; executed: 0.** No builds, dotnet test, xUnit, replays, holdouts, CI, GitHub Actions, runners, benchmarking, production capture or running-app screenshots.
+
+### Approved reference and original-consumer audit
+
+Resolved and **visually inspected** the exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c` (1648×928). Its navy/graphite/cyan/teal visual system, restrained severity, left navigation, operational KPIs, prioritized incidents, investigation, local PPS ScottPlot (10-sample average, bounded 120-point history), read-only local Live Events (80 displayed / 500 retained), and explicitly **UNAVAILABLE visual-only CLI** are not altered. Preserve Wide >=1440, Standard 1100–1439, Compact 1024–1099 and graceful below 1024. Screenshot IPs, Mbps lines, timestamps, rule IDs, confidence and sensor/coverage figures are **DEMO ONLY**; no example values or capture-health claims were added.
+
+Static inspection included the live remote ref, prior UI-53 candidate and intervening protocol paths, this ledger through UI-53, `MainWindow.xaml`, `MainWindow.xaml.cs`, `MainWindow.Core.cs`, `MainWindow.Navigation.cs`, `MainWindow.Dashboard.cs`, `MainWindow.DashboardEvents.cs`, `MainWindow.DashboardResponsive.cs` and `Theme.xaml`. The existing `DashboardActionItemsControl` binds to the private `_dashboardActionRows` collection populated by `BuildSocActionRows`. Incident rows use up to four existing `Incident.RecommendedActions` strings with a host/risk subtitle; anomaly fallback uses the existing anomaly summary; baseline fallback uses a static informational suggestion. The title and subtitle TextBlocks already use `TextTrimming="CharacterEllipsis"`, so long strings can be visually clipped within the narrow summary panel. GA UI-27 clarified badge provenance and GA UI-32/36 clarified panel info glyphs; neither exposes the full **Recommended Actions title and subtitle** when clipped. No shared contract, viewmodel or new source is needed.
+
+### One cohesive UI-owned improvement
+
+On the **two existing Recommended Actions row TextBlocks only**, add `ToolTip="{Binding Title}"` to the already `Text="{Binding Title}"` title and `ToolTip="{Binding Subtitle}"` to the already `Text="{Binding Subtitle}"` subtitle. Hover reveals the **same full current displayed string**, without a second source, inference, transformation or persistence. This also covers incident, anomaly and baseline fallback rows and refreshes with the existing item data context. The tooltip is not conditional on actual clipping. Preserve text bindings, trimming, font, foreground, alignment, row dimensions, scrolling, badge semantics and badge tooltip, item ordering, risk calculations, keyboard order and original navigation. No new focus stops, controls, handlers, commands, services, engines, models, protocols, detection logic, capture, security or telemetry.
+
+The private source commit `a468978c0ec49dce725bb4c86fd420c807e0a174` descends from the exact starting HEAD `0689f736fa730e245031c1eafaf58c9175435677` and changes **only** `Carthago/Views/MainWindow.xaml`: two existing TextBlocks receive one tooltip binding each; no other XAML lines are edited. Source blob `015834cce90899cff767729f7d32704caaaaf78e`.
+
+### Start/end static divergence and publication guard
+
+**Start:** compare prior GA UI-53 publication `65a7833e3c00c1644d062928cbc205d9d806f5af` against starting LIVE HEAD `0689f736fa730e245031c1eafaf58c9175435677`: exactly one independent P0351–P0360 documentation commit changed `docs/protocols/PROTOCOL_EXPANSION_PROGRESS.md` and `docs/protocols/PROTOCOL_GA_P0351-P0360.md`. These paths are disjoint from UI ownership. Existing WPF partials/consumers, action VM properties, resource keys, naming, navigation, privacy/capture/trust boundaries, Cisco/WebView2/ScottPlot and the approved-reference interpretation remain unchanged by the proposed source diff.
+
+**End/publication gate:** re-read LIVE remote branch HEAD immediately before publishing, compare all intervening commits and paths, inspect prepared source+ledger Git objects and WPF consumers, naming, provenance, privacy and approved reference, and publish the **complete source+ledger private chain only** through one non-forced atomic GitHub `update_ref` with exact `expected_sha` lease. If the branch moved, reconcile disjoint independent work with fresh HEAD and new private commits; STOP on overlap, conflict, absent lease guarantee or unsafe merge. Never publish a partial candidate, create branches/PRs, rewrite history, or modify independent streams/automations.
+
+**Residual risks:** Windows compilation, tooltip display and placement for long/untrusted incident text, dynamic row refresh, high contrast, 125–200% DPI, narrow-window clipping and scrolling, UI Automation/screen-reader behavior and keyboard-only discoverability are **UNVERIFIED**. Tooltips on non-focusable TextBlocks do not establish keyboard-only access; the underlying TextBlock text remains present in the visual/automation tree, subject to actual Windows inspection. Subtitle text can include reported host identifiers already visible in the row; the tooltip exposes no new identifiers or raw evidence. No detection-quality, remediation, verified impact, packet-attribution or capture-health claim is added.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. Hover a truncated incident action title; tooltip shows the full exact current `Title` without ellipsis.
+2. Hover a truncated incident host/risk subtitle; tooltip shows the full current `Subtitle` without asserting verified host identity or impact.
+3. With anomaly-only fallback, verify title/subtitle tooltips reflect the existing anomaly summary and no incident-specific assertion.
+4. With no incidents/anomalies, verify baseline-learning title/subtitle tooltips match the existing informational strings.
+5. Refresh incident/anomaly snapshots and switch fallback states; verify tooltips track the current row and never retain previous text.
+6. Verify up to four incident action rows, original order, list scrolling, `#N` badge, anomaly `Risk N` badge, baseline `—` badge and existing `BadgeDescription` tooltips remain unchanged.
+7. Inspect UI Automation and screen-reader reading of title/subtitle and tooltip; check duplicate narration, hover discoverability and keyboard-only limitations.
+8. Inspect 1440/1100/1099/1024/1023/640px, high contrast and 125–200% DPI for tooltip placement, overflow, clipping and unchanged summary-panel geometry.
+9. Verify unchanged operational KPIs, local PPS ScottPlot, incident selection, investigation, Live Events 80/500, unavailable visual-only CLI, Cisco/WebView2, and privacy/capture/trust boundaries.
+10. Confirm only two authorized paths changed; no fabricated screenshot metrics, shared API, engine/model/service, protocol/detection, test/benchmark/workflow/runner/automation or unrelated modifications.
+
+**Open quality GAs:** pinned-SHA Windows compilation, actual tooltip/keyboard/screen-reader/high-contrast/DPI/responsive inspection **only after the owner says “now it is test time.”** **Executed tests: 0.**
+
+**Next independent UI GA UI-55:** inspect fresh LIVE HEAD, exact approved reference, ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–54.
+
+**References:** [WPF FrameworkElement.ToolTip](https://learn.microsoft.com/dotnet/api/system.windows.frameworkelement.tooltip); [WPF TextBlock.TextTrimming](https://learn.microsoft.com/dotnet/api/system.windows.controls.textblock.texttrimming); [WPF ToolTipService](https://learn.microsoft.com/dotnet/api/system.windows.controls.tooltipservice).
