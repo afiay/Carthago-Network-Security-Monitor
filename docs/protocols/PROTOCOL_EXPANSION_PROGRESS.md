@@ -17,9 +17,6 @@
 
 | [GA P0031–P0040](PROTOCOL_GA_P0031-P0040.md) | f9fcc016081620c20bf9130ea33194d225c0f263 | P0031–P0040 | 2 IMPLEMENTED_ISOLATED (WireGuard, IKEv2-only), 3 PARTIAL (Modbus, Modbus/TCP, DNP3), 1 DEFERRED (ESP), 4 BLOCKED L2 (EAPOL, ARP, LLDP, STP); 0 integrated | 29 / 38 | 0 | Complete caller-attested UDP envelopes only; no runtime producer, authentication, decryption or exploit claims |
 
-**Last completed research GA:** P0471–P0480 (2 isolated source inspectors: rexec and BitTorrent LSD; 4 deferred, 1 blocked L2, 3 rejected; 34 authored xUnit methods / 53 invocations, 0 executed). **Next exact ten IDs:** **P0481–P0490**. Original P0472 inventory audit classification corrected from capture metadata to genuine legacy rexec wire protocol; no P-ID substitution. No live integration, shared-core edits, or detection/UI modifications; recover live HEAD before the next GA.
-
-
 | [GA P0041–P0050](PROTOCOL_GA_P0041-P0050.md) | 691717f8a3302f58454dfcb9e6da45993b17a442 | P0041–P0050 | 3 IMPLEMENTED_ISOLATED (OPC UA UACP, IEC104 APCI, BGP-4 envelope), 2 PARTIAL (S7, BACnet), 1 DEFERRED (MMS), 4 BLOCKED L2 (GOOSE, PROFINET DCP/IO, EtherCAT); 0 integrated | 42 / 50 | 0 | Source-only bounded inspectors, synthetic authored xUnit scenarios, no trusted TCP reassembly or L2 producer |
 
 | [GA P0051–P0060](PROTOCOL_GA_P0051-P0060.md) | 121ebc81a09e49d4543697ee2216b29259844c38 | P0051–P0060 | 2 IMPLEMENTED_ISOLATED (Telnet IAC, OSPFv2 envelope), 1 PARTIAL (NTP), 1 EXISTING limited (Syslog), 3 DEFERRED (POP3, rsync, rlogin), 2 BLOCKED Wi-Fi/L2 (RSNA EAPOL, WPS), 1 REJECTED (WBXML encoding); 0 integrated | 27 / 34 | 0 | Bounded isolated RFC 854 and RFC 2328 source inspectors; no TCP/IP trusted producer, no auth/LSA/credential claims |\n\n| [GA P0061–P0070](PROTOCOL_GA_P0061-P0070.md) | 8b12fdbb335a58ffb98a80fd3f2064415bdd22d5 | P0061–P0070 | 2 IMPLEMENTED_ISOLATED (GRE, VXLAN), 7 DEFERRED (EIGRP, IGMP, PIM, L2TP, PPTP, SSTP, IPsec AH), 1 BLOCKED L2/LLC (IS-IS); 0 integrated | 33 / 40 | 0 | Bounded strict RFC 2784/2890/7348 source-only inspectors, synthetic tests, Arista CVE-2026-7473 vendor threat context, no shared producer |
@@ -111,3 +108,14 @@
 | [GA P0461–P0470](PROTOCOL_GA_P0461-P0470.md) | 042d3db820872d2dbce4f5b70060346b75054575 | P0461–P0470 | 1 IMPLEMENTED_ISOLATED (ERSPAN Type II), 2 DEFERRED (Steam discovery, Auto-RP), 4 BLOCKED (AT serial, FabricPath, Cisco HDLC, Cisco MetaData), 3 REJECTED (Network Monitor config, ATSvc independent count, DPAUXMON capture format); 0 integrated | 22 / 27 | 0 | Cisco-authored ERSPAN 2017 draft Type II framing, bounded isolated source and synthetic xUnit, no live producer; Cisco 2022 multicast guidance, CISA KEV 403, EPSS unasserted |
 
 | [GA P0471–P0480](PROTOCOL_GA_P0471-P0480.md) | 2de0c4921dccfe23d05e6cdbe55edafe46d405cd | P0471–P0480 | 2 IMPLEMENTED_ISOLATED (rexec, BitTorrent LSD), 4 DEFERRED (HP ERM, IRemoteWinspool, LGE Monitor, lwres), 1 BLOCKED native L2 (Cisco ISL), 3 REJECTED independent distinctness (ETW, FC single-byte command, GSMTAP log); 0 integrated | 34 / 53 | 0 | Source-only privacy-safe bounded rexec and BEP14 inspectors; P0472 historical inventory reclassification documented; no trusted runtime producers or shared edits; CISA KEV 403; no tests executed |
+
+| [GA P0481–P0490](PROTOCOL_GA_P0481-P0490.md) | 16a13365ef1c45234c751288a6e8ff181f1c8794 | P0481–P0490 | 0 IMPLEMENTED_ISOLATED, 3 DEFERRED (MS-MSRP, Delivery Optimization, RELOAD), 7 REJECTED independent counting (MQ PCF, NFLOG, nl80211, pktgen, raw SIP, DCOM IRemoteActivation, OSI ROS); 0 integrated | 0 / 0 | 0 | Source-only original-inventory correction: RFC 6940 RELOAD is genuine; IBM 2026-09-14 MQ CVE-2026-11378 is not a PCF exploit claim; Windows DO host telemetry proposed but not collected; no code, tests, shared edits or executed validation |
+
+## Current cursor and independent obligations
+
+**Last completed research GA:** P0481–P0490 (3 deferred, 7 rejected as independently counted, 0 new parsers and 0 integrations). **Next exact ten IDs:** **P0491–P0500**. The original P0488 RELOAD distinctness was corrected against RFC 6940 without changing its immutable P ID.
+
+- Shared capture/telemetry/schema integrations require separate explicit owner approval and fresh cross-stream review; all proposals remain unimplemented.
+- Builds, xUnit, replay, holdout, CI and runner execution await explicit owner command **“now it's test time.”**
+- Preserve JSONL journal-first DetectionEvents, R102/R118/R163 floors, frozen holdout V1, privacy, source provenance, existing detection/UI streams and their owned ledgers.
+- Source-only continuation: P0491–P0500. Do not infer live capture integration from isolated code or port labels.
