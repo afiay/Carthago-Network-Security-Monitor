@@ -1000,15 +1000,29 @@
                             </Border>
 
                             <Border Grid.Row="2" Grid.ColumnSpan="2" Style="{StaticResource DetailGridCard}" Margin="0,6,0,0">
-                              <StackPanel>
-                                <TextBlock x:Name="DashboardDetailEvidenceSummaryLabel" Text="Evidence provenance (reported, not verified)" Style="{StaticResource SocSubHeader}"/>
-                                <TextBlock x:Name="DashboardDetailEvidenceSummaryText"
-                                           AutomationProperties.LabeledBy="{Binding ElementName=DashboardDetailEvidenceSummaryLabel}"
-                                           Text="No directly selected incident evidence."
-                                           Foreground="{StaticResource TextSubtleBrush}"
-                                           FontSize="11"
-                                           TextWrapping="Wrap"/>
-                              </StackPanel>
+                              <!-- GA UI-73: decorative provenance keyline distinguishes reported context from incident facts. -->
+                              <Grid>
+                                <Grid.ColumnDefinitions>
+                                  <ColumnDefinition Width="3"/>
+                                  <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0"
+                                        Background="{StaticResource AccentBrush}"
+                                        Opacity="0.65"
+                                        CornerRadius="2"
+                                        IsHitTestVisible="False"
+                                        Focusable="False"
+                                        SnapsToDevicePixels="True"/>
+                                <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                                  <TextBlock x:Name="DashboardDetailEvidenceSummaryLabel" Text="Evidence provenance (reported, not verified)" Style="{StaticResource SocSubHeader}"/>
+                                  <TextBlock x:Name="DashboardDetailEvidenceSummaryText"
+                                             AutomationProperties.LabeledBy="{Binding ElementName=DashboardDetailEvidenceSummaryLabel}"
+                                             Text="No directly selected incident evidence."
+                                             Foreground="{StaticResource TextSubtleBrush}"
+                                             FontSize="11"
+                                             TextWrapping="Wrap"/>
+                                </StackPanel>
+                              </Grid>
                             </Border>
                         </Grid>
                       </ScrollViewer>
