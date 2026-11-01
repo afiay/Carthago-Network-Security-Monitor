@@ -2238,67 +2238,92 @@
                              Foreground="{StaticResource TextSubtleBrush}"
                              TextWrapping="Wrap"/>
 
+                  <!-- GA UI-63: existing dashboard-section guidance on keyboard focus and via UI Automation; original preference handlers unchanged. -->
                   <UniformGrid Grid.Row="1"
                                Columns="2"
                                Margin="0,8,0,0">
                     <CheckBox x:Name="DashboardShowIncidentsCheck"
                               Content="Show Incidents"
                               ToolTip="Display correlated security incidents on the dashboard."
+                              ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                              AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                               Checked="DashboardSectionToggle_Changed"
                               Unchecked="DashboardSectionToggle_Changed"/>
                     <CheckBox x:Name="DashboardShowAnomaliesCheck"
                               Content="Show Anomalies"
                               ToolTip="Display anomaly-first behavior signals."
+                              ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                              AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                               Checked="DashboardSectionToggle_Changed"
                               Unchecked="DashboardSectionToggle_Changed"/>
                     <CheckBox x:Name="DashboardShowStatisticsCheck"
                               Content="Show Statistics"
                               ToolTip="Display selected security metrics as configurable cards."
+                              ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                              AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                               Checked="DashboardSectionToggle_Changed"
                               Unchecked="DashboardSectionToggle_Changed"/>
                     <CheckBox x:Name="DashboardShowTimelineCheck"
                               Content="Show Timeline"
                               ToolTip="Display recent anomaly and incident timeline events."
+                              ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                              AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                               Checked="DashboardSectionToggle_Changed"
                               Unchecked="DashboardSectionToggle_Changed"/>
                     <CheckBox x:Name="DashboardShowBaselineCheck"
                               Content="Show Baseline learning"
                               ToolTip="Display deterministic baseline learning status."
+                              ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                              AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                               Checked="DashboardSectionToggle_Changed"
                               Unchecked="DashboardSectionToggle_Changed"/>
                     <CheckBox x:Name="DashboardShowMlCheck"
                               Content="Show ML-assisted scoring"
                               ToolTip="Display optional ML-assisted behavior score status."
+                              ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                              AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                               Checked="DashboardSectionToggle_Changed"
                               Unchecked="DashboardSectionToggle_Changed"/>
                     <CheckBox x:Name="DashboardShowRecommendedActionsCheck"
                               Content="Show Recommended actions"
                               ToolTip="Display response guidance from the highest-priority incident."
+                              ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                              AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                               Checked="DashboardSectionToggle_Changed"
                               Unchecked="DashboardSectionToggle_Changed"/>
                     <CheckBox x:Name="DashboardShowRawSummaryCheck"
                               Content="Show Raw/Advanced shortcuts"
                               ToolTip="Show quick links to raw forensic data. Raw data remains available from navigation even if this is disabled."
+                              ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                              AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                               Checked="DashboardSectionToggle_Changed"
                               Unchecked="DashboardSectionToggle_Changed"/>
                     <CheckBox x:Name="DashboardShowCiscoCheck"
                               Content="Show Cisco section"
                               ToolTip="Display Cisco/syslog shortcut widgets."
+                              ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                              AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                               Checked="DashboardSectionToggle_Changed"
                               Unchecked="DashboardSectionToggle_Changed"/>
                     <CheckBox x:Name="DashboardShowSinkCheck"
                               Content="Show External delivery"
                               ToolTip="Display sink delivery shortcut widgets."
+                              ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                              AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                               Checked="DashboardSectionToggle_Changed"
                               Unchecked="DashboardSectionToggle_Changed"/>
                     <CheckBox x:Name="DashboardShowForensicsCheck"
                               Content="Show Forensics shortcuts"
                               ToolTip="Display raw traffic, raw detections, and advanced investigation shortcuts."
+                              ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                              AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                               Checked="DashboardSectionToggle_Changed"
                               Unchecked="DashboardSectionToggle_Changed"/>
                     <CheckBox x:Name="DashboardShowDemoCheck"
                               Content="Show Developer demo section"
                               ToolTip="Available only when demo mode is enabled."
+                              ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                              AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                               Checked="DashboardSectionToggle_Changed"
                               Unchecked="DashboardSectionToggle_Changed"/>
                   </UniformGrid>
