@@ -570,6 +570,7 @@ namespace Carthago.Engine.Rules.Catalog
                 new R545_ExternalBacnetIAmAnnouncementRule(),
                 new R546_NtpMonlistOutboundTargetFanoutRule(),
                 new R547_ExternalBacnetWhoIsTargetFanoutRule(),
+                new R548_ExternalModbusWriteTargetFanoutRule(),
             };
         }
 
