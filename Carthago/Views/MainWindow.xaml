@@ -2350,28 +2350,39 @@
                         <RowDefinition Height="Auto"/>
                       </Grid.RowDefinitions>
                       <StackPanel>
-                        <TextBlock Text="Recommended layouts"
+                        <TextBlock x:Name="DashboardPresetsLabel" Text="Recommended layouts"
                                    FontWeight="SemiBold"/>
                         <TextBlock Text="Apply a preset, then customize or reorder widgets."
                                    Foreground="{StaticResource TextMutedBrush}"
                                    Margin="0,3,0,0"
                                    TextWrapping="Wrap"/>
                       </StackPanel>
+                      <!-- GA UI-64: existing preset controls disclose selection versus immediate preference replacement. -->
                       <WrapPanel Grid.Row="1"
                                  Margin="0,10,0,0"
                                  HorizontalAlignment="Left">
                         <ComboBox x:Name="DashboardPresetCombo"
                                   Width="240"
-                                  DisplayMemberPath="Name"/>
+                                  DisplayMemberPath="Name"
+                                  ToolTip="Select a dashboard layout preset. Selection alone does not change the dashboard; Apply preset replaces the current dashboard layout preferences."
+                                  ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                                  AutomationProperties.LabeledBy="{Binding ElementName=DashboardPresetsLabel}"
+                                  AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
                         <Button Content="Apply preset"
                                 Width="120"
                                 Margin="8,0,0,0"
                                 Style="{StaticResource SecondaryButton}"
+                                ToolTip="Replace current dashboard layout and section visibility with the selected preset, or the minimal Security Overview if none is selected. Applies without confirmation; does not start capture or delete incidents or retained events."
+                                ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                                AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                                 Click="DashboardApplyPreset_Click"/>
                         <Button Content="Reset dashboard"
                                 Width="130"
                                 Margin="8,0,0,0"
                                 Style="{StaticResource SecondaryButton}"
+                                ToolTip="Replace current dashboard layout preferences with an empty minimal dashboard. Applies without confirmation; does not delete incidents or retained events or start or stop capture."
+                                ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                                AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                                 Click="DashboardResetLayout_Click"/>
                       </WrapPanel>
                     </Grid>
