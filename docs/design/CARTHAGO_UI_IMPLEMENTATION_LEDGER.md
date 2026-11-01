@@ -2841,3 +2841,46 @@ Preserve Wide >=1440, Standard 1100–1439, Compact 1024–1099, graceful below 
 **Open quality GAs:** pinned-SHA Windows WPF compilation and actual UI/keyboard/UI Automation/screen-reader/high-contrast/DPI/responsive inspection **only after owner says “now it is test time.”** **Executed tests: 0.**
 
 **Next independent UI GA UI-50:** inspect fresh LIVE HEAD, approved image, ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–49.
+
+## GA UI-50 — Full recorded metadata-cell text in read-only Live Events
+
+**2026-11-01 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE `feature/carthago-reliability-hardening` HEAD: `92a61e5e5b753bca00501b74cf42cf19b1a01361`; prior published GA UI-49 source `7e8a4d79b0f23ba79e94fb07ce786e677ee43a65` and publication `e99396fa6e86e4cdb5b960ea3e419fc086b5d2e9`. Exact GA UI-50 source commit: `44461c7405bf42c0b3f469c43bfbe0bf2ef799b4`. **Authorized paths:** `Carthago/Views/MainWindow.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md` only. **Tests authored: 0; tests executed: 0.** No dotnet build/test, xUnit, replays, holdouts, CI, GitHub Actions, runners, benchmarking, production capture, runtime WPF inspection or screenshot execution.
+
+### Approved reference and original WPF consumers
+
+Resolved and **visually inspected** the exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c`. The navy/graphite surfaces, cyan/teal accents, restrained severity, left navigation, operational KPIs, traffic chart, prioritized incidents, investigation and read-only Live Events remain the design reference; the illustrated CLI is **UNAVAILABLE, visual-only** in the application. The image's IPs, Mbps, metrics, rule IDs, timestamps, confidence and monitoring indicators are **DEMO ONLY**, not real telemetry or capture-health evidence.
+
+Audited LIVE remote branch HEAD and recent commits, this ledger through GA UI-49, `MainWindow.xaml`, `MainWindow.DashboardEvents.cs`, `MainWindow.Dashboard.cs`, `MainWindow.DashboardResponsive.cs`, `MainWindow.Responsive.cs`, `MainWindow.Navigation.cs`, `MainWindow.Core.cs`, `MainWindow.xaml.cs`, `Sidebar.xaml.cs` and `Theme.xaml`. The original `DashboardEventRowVm.FromDetection` supplies formatted `EventTime`, `RuleId`, `Severity` and `Protocol` as strings; `RefreshDashboardLiveEvents` supplies a bounded, filtered read-only projection. The existing theme gives `TextBlock` character-ellipsis trimming and the DataGrid its original typography, padding, focus and virtualization. GA UI-41/43 clarified these headers; GA UI-46 added endpoint-cell full-text hover; GA UI-47 clarified Evidence/Delivery cells. No previous UI-01–49 added full-text hover to the four remaining recorded metadata cells.
+
+### One cohesive UI-owned change
+
+Add one `DashboardLiveMetadataCellText` `TextBlock` style scoped to the existing Live Events grid and apply it **only** to the existing **Event time, Rule, Severity and Protocol** `DataGridTextColumn.ElementStyle` properties. The style inherits the existing TextBlock theme, retains the original 2px horizontal margins, and binds the hover tooltip to `Text` on the current cell TextBlock. This exposes the complete **currently displayed string** when a narrow column visually truncates it; it does **not** query event payloads, infer timezone, verify rule evaluation, prove severity impact or perform protocol inspection. The tooltip is available on hover even when text is not truncated; it is not conditional on clipping. No new focus stop, handler, data binding to underlying event sources, value, status, event ordering, filter behavior, column width/order, virtualization or data producer. Existing Source/Destination, Evidence/Delivery cell styles and all header tooltips remain unchanged.
+
+Preserve Wide >=1440, Standard 1100–1439, Compact 1024–1099 and graceful below 1024, left navigation, local PPS ScottPlot 10-sample average / bounded 120-point history, prioritized incidents/investigation, Live Events 80 displayed / 500 retained, unavailable visual-only CLI, Cisco/WebView2/ScottPlot behavior and capture/trust/privacy boundaries. No engine, model, service, detection/protocol, telemetry, evidence payload, shared API, security control or screenshot DEMO value changed.
+
+### Start/end static divergence, provenance and publication gate
+
+**Start:** LIVE `92a61e5e5b753bca00501b74cf42cf19b1a01361` is one independent GA P0311–P0320 GDB RSP protocol commit ahead of UI-49 publication `e99396fa6e86e4cdb5b960ea3e419fc086b5d2e9`. The intervening independent paths are `Carthago.Tests/ProtocolIntelligence/GdbRspCommandInspectorTests.cs`, `Carthago/Services/ProtocolIntelligence/GdbRspCommandInspector.cs`, `docs/protocols/PROTOCOL_EXPANSION_PROGRESS.md` and `docs/protocols/PROTOCOL_GA_P0311-P0320.md`. They are disjoint and untouched. Private source commit `44461c7405bf42c0b3f469c43bfbe0bf2ef799b4` descends directly from LIVE `92a61e5e5b753bca00501b74cf42cf19b1a01361` and changes only `Carthago/Views/MainWindow.xaml` (one style declaration and four column style references). The original WPF partials/consumers, names, headers, routes, filtering, privacy and capture boundaries are unchanged.
+
+**End/publication guard:** re-read LIVE remote HEAD immediately before publication; compare intervening detection/protocol/UI changes and confirm exact owned paths, ancestry, source blob, ledger, approved reference, unchanged consumers/APIs and no demo telemetry. Prepare the separate private ledger commit descending from the source commit. Publish both together through **ONE non-forced atomic GitHub `update_ref` with `expected_sha` lease** on the same existing branch. If concurrent commits touch owned paths or lease protection is unavailable, STOP; if disjoint, reconstruct both commits on fresh LIVE HEAD and recheck. No partial publication, new branches, PRs, force push, history rewrite or independent automation changes.
+
+**Residual risks:** Windows WPF compilation, `DataGridTextColumn.ElementStyle` resolution, actual hover tooltip rendering and virtualized-cell reuse, long rule IDs/protocol labels, timestamp display and timezone interpretation, keyboard-only discovery, UI Automation/screen-reader behavior, high contrast, 125–200% DPI, 1440/1100/1099/1024/1023/640px layouts and responsive clipping are **UNVERIFIED**. Hover tooltips do not independently establish keyboard accessibility or screen-reader announcement. Static inspection is not proof of compilation, accessibility compliance, detection quality or capture health.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. Hover a truncated Event time cell: tooltip displays the complete current formatted timestamp without timezone inference or conversion.
+2. Hover a truncated Rule ID: tooltip displays the full current identifier without implying rule accuracy or enablement.
+3. Hover a long Protocol label: tooltip displays the full current label without implying verified protocol decoding.
+4. Hover Severity and non-truncated metadata: tooltip reflects the current displayed text, with no invented impact or conditional clipping claim.
+5. Filter by Severity, Protocol, Rule and Search, then reset: tooltip values track the displayed rows; filtering semantics remain unchanged.
+6. Scroll horizontally and vertically with recycled/virtualized rows: tooltip never shows a stale row value; frozen Event time behavior remains.
+7. Verify all four column widths, original order, 2px margins, character ellipsis, header explanations and theme colors remain unchanged.
+8. Inspect 1440/1100/1099/1024/1023/640px, high contrast and 125–200% DPI for tooltip clipping/readability; assess keyboard and screen-reader limitations.
+9. Verify original read-only Live Events 80/500 limits, event provenance, KPI/ScottPlot, incidents, CLI unavailability and Cisco/WebView2 behavior remain unchanged.
+10. Confirm no new telemetry, capture/health assertions, evidence exposure, protocol/detection rule change, shared API/security/privacy change or edits to independent streams.
+
+**Open quality GAs:** pinned-SHA Windows WPF compilation and actual tooltip, virtualization, keyboard, UI Automation, screen-reader, high-contrast, DPI and responsive screenshot inspection **only after owner explicitly says “now it is test time.”** **Executed tests: 0.**
+
+**Next independent UI GA UI-51:** inspect fresh LIVE HEAD, approved reference, ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–50.
+
+**References:** [WPF DataGridTextColumn.ElementStyle](https://learn.microsoft.com/dotnet/api/system.windows.controls.datagridboundcolumn.elementstyle); [WPF TextBlock.TextTrimming](https://learn.microsoft.com/dotnet/api/system.windows.controls.textblock.texttrimming); [WPF ToolTip](https://learn.microsoft.com/dotnet/api/system.windows.frameworkelement.tooltip).
