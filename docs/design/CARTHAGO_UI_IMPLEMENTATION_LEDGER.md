@@ -2970,3 +2970,46 @@ The private source commit `acddf69055626cf9e691fe4f70ec64bdff52a9af` descends di
 **Next independent UI GA UI-53:** inspect fresh LIVE HEAD, exact approved reference, this ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–52.
 
 **References:** [WPF ToolTipService.ShowOnDisabled](https://learn.microsoft.com/dotnet/api/system.windows.controls.tooltipservice.showondisabled); [WPF ToolTipService.ShowsToolTipOnKeyboardFocus](https://learn.microsoft.com/dotnet/api/system.windows.controls.tooltipservice.showstooltiponkeyboardfocus); [WPF AutomationProperties.HelpText](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.helptext).
+
+## GA UI-53 — Source-accurate numeric-cell guidance for High-Risk Hosts
+
+**2026-11-01 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE `feature/carthago-reliability-hardening` HEAD: `a5698cd642c26c438f658c1b2915ab233ede357c`. Prior GA UI-52 source `acddf69055626cf9e691fe4f70ec64bdff52a9af`, publication `fe38d99133eec71c6d10bd2951f4732782fdec4f`. Independent P0341–P0350 OSCORE outer-option inspector work was already present at the starting HEAD. **Exact GA UI-53 source SHA:** `38340b79782d2daf439628a0019160250a862016`; **UI source blob:** `98ac275e9137fa3e60b605c6ff795cbf00474a66`. **Owned paths only:** `Carthago/Views/MainWindow.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`. **Tests authored: 0; executed: 0.** No build, dotnet test, xUnit, replay, holdout, CI, runner, benchmark, production capture or running-app screenshot.
+
+### Approved reference, original consumers and distinct scope
+
+Resolved and **visually inspected** exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c` (1648×928). Its navy/graphite/cyan/teal palette, restrained severity, left navigation, KPIs, prioritized incidents, investigation, local PPS ScottPlot (10-sample average, bounded 120-point history), read-only local Live Events (80 displayed/500 retained), and explicitly **UNAVAILABLE visual-only CLI** remain unchanged. Wide >=1440, Standard 1100–1439, Compact 1024–1099 and graceful below 1024 remain the existing layout contracts. Reference IPs, Mbps lines, timestamps, rule IDs, confidence, sensor counts and monitoring badges are **DEMO ONLY**; no values or capture health are inferred.
+
+Audited live branch/ref and its recent commits, the implementation ledger through UI-52, `MainWindow.xaml`, `MainWindow.xaml.cs`, `MainWindow.Core.cs`, `MainWindow.Navigation.cs`, `MainWindow.Dashboard.cs`, `MainWindow.DashboardEvents.cs`, `MainWindow.DashboardResponsive.cs` and `Theme.xaml`. The original `DashboardHostItemsControl` binds to private `_dashboardHostRows` populated by `BuildSocHostRows`. Its `SocHostVm.RiskScore` is the maximum local score of grouped **unresolved correlated incidents** for each host, or the maximum normalized anomaly score only when there are no incident hosts. Its existing `ActiveIncidents` numeric property represents the number of unresolved correlated incidents, or the number of anomaly signals in that fallback. The existing full-host tooltip, accessible host-row name, eight-bucket activity description, visual values, grouping, order and five-row bound already exist (UI-18/UI-29). This GA specifically clarifies the **previously unexplained per-cell numeric meanings**; it does not repeat host identity or trend work.
+
+### One cohesive UI-owned improvement
+
+Add source-accurate `ToolTip` and `AutomationProperties.HelpText` to each of the two **existing** High-Risk Hosts numeric TextBlocks: `RiskScore` and `ActiveIncidents`. Risk guidance explains the maximum local group score and distinguishes it from detection confidence or verified impact. Items guidance explains incident-count versus anomaly-signal-count fallback and distinguishes the count from packets or verified incident impact. The tooltip and HelpText are **static explanations**, not new metrics. Existing `Text` bindings, accessible host label, foregrounds, fonts, alignment, spacing, item templates, keyboard focus, responsive widths and source data remain unchanged. No additional focus stops, controls, handlers, models, viewmodels, commands, telemetry, capture, security, protocol or detection changes.
+
+The private source commit `38340b79782d2daf439628a0019160250a862016` descends directly from starting LIVE HEAD `a5698cd642c26c438f658c1b2915ab233ede357c` and changes only `Carthago/Views/MainWindow.xaml`. The source diff consists of four WPF attributes on two existing numeric TextBlocks. Source blob `98ac275e9137fa3e60b605c6ff795cbf00474a66`.
+
+### Start/end static divergence and publication guard
+
+**Start:** comparison of GA UI-52 publication `fe38d99133eec71c6d10bd2951f4732782fdec4f` with LIVE HEAD `a5698cd642c26c438f658c1b2915ab233ede357c` found one independent P0341–P0350 OSCORE protocol commit. Its changed paths were `Carthago/Services/ProtocolIntelligence/OscoreOuterOptionInspector.cs`, `Carthago.Tests/ProtocolIntelligence/OscoreOuterOptionInspectorTests.cs`, `docs/protocols/PROTOCOL_EXPANSION_PROGRESS.md`, and `docs/protocols/PROTOCOL_GA_P0341-P0350.md`; all disjoint from UI-owned files. Existing WPF partials/consumers, naming, routing, source and data contracts, privacy, capture/trust boundaries, Cisco/WebView2/ScottPlot and approved-reference interpretation are unchanged by this candidate.
+
+**End/publication gate:** re-read LIVE remote branch HEAD **immediately before publication**, compare all intervening commits and paths, recheck both prepared source/docs blobs, XAML attributes and existing consumers, naming and provenance, and publish the **complete source+ledger private commit chain only** with one non-forced atomic GitHub `update_ref` and exact `expected_sha` lease. If the branch moves, reconcile only disjoint independent changes on a fresh HEAD and rebuild both private commits; STOP on overlap, failed lease, absent guarantee or unresolvable conflict. Never publish partially, create branches/PRs, rewrite history, modify independent streams or change their automations.
+
+**Residual risks:** Windows compilation, WPF tooltip rendering on numeric TextBlocks, UI Automation HelpText exposure, screen-reader verbosity or duplicate announcements alongside the existing host accessible name, high contrast, 125–200% DPI, 1440/1100/1099/1024/1023/640px layout, pointer accessibility and row refresh are **UNVERIFIED**. The non-focusable numeric cells' hover tooltips do not establish keyboard-only discoverability; the host row accessible name remains the primary existing non-pointer explanation. Existing displayed host identifiers can be sensitive; no new identifiers, capture-health assertions or data collection were added.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. Hover the Risk numeric cell in a correlated-incident host row: the tooltip explains maximum local risk, not detection confidence.
+2. Hover the Items numeric cell in that row: the tooltip explains grouped unresolved correlated incidents, not packet counts.
+3. With no incident hosts and anomaly-signal fallback active, confirm Risk guidance remains truthful for normalized anomaly risk.
+4. In anomaly fallback, confirm Items guidance accurately describes signal counts rather than falsely claiming incidents.
+5. Inspect UI Automation HelpText and screen-reader presentation for both numeric cells; check duplicate narration against the existing host accessible name.
+6. Confirm original `RiskScore` and `ActiveIncidents` values, host truncation/full-host tooltip, five-row bound, ordering, activity glyphs and risk colors are unchanged.
+7. Refresh source snapshots: ensure the two static tooltips remain truthful and no stale per-row values or cross-row labels are introduced.
+8. Inspect 1440/1100/1099/1024/1023/640px, high contrast and 125–200% DPI for tooltip legibility, clipping and unchanged layout.
+9. Verify unchanged operational KPIs, local PPS chart, prioritized incidents, investigation, Live Events 80/500, unavailable visual-only CLI, Cisco/WebView2 and privacy/capture/trust boundaries.
+10. Confirm no fabricated screenshot telemetry and no engine/model/service/protocol/detection/shared API/security/test/benchmark/workflow/runner/automation or unrelated path edits.
+
+**Open quality GAs:** pinned-SHA Windows compilation and actual UI, tooltip, keyboard, screen-reader, high-contrast, DPI and responsive inspection **only when the owner says “now it is test time.”** **Executed tests: 0.**
+
+**Next independent UI GA UI-54:** inspect fresh LIVE HEAD, approved image, ledger and WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–53.
+
+**References:** [WPF AutomationProperties.HelpText](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.helptext); [WPF FrameworkElement.ToolTip](https://learn.microsoft.com/dotnet/api/system.windows.frameworkelement.tooltip).
