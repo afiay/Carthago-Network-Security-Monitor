@@ -3781,3 +3781,40 @@ Source commit is a direct child of the pinned baseline, changing only `Carthago/
 10. Verify exact source/docs blobs, commit ancestry, owned-path diff and absence of tests/builds/CI/runners/replays/benchmarks/capture.
 
 **Next independent UI GA UI-73:** inspect fresh LIVE HEAD, approved image, ledger and original WPF consumers; choose one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–72. All acceptance remains deferred until owner explicitly says **“now it is test time.”**
+
+## GA UI-73 — Investigation evidence provenance: restrained visual keyline
+
+**2026-11-02 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE `feature/carthago-reliability-hardening` HEAD: `6b98dd2d52f0ec8929903754504dc90511ba8062`. Previous GA UI-72 source `bc8c92b8114b893f106a7465d47c71b47187c090`, publication `f5f4b706a61d681533b05bc87536f8dee84ac430`. **Exact UI-73 source commit:** `e47cac2595438d4cb5b9be45f31a0cbe23279e28`; source XAML blob `9ec3ee84545f1a68330db98f9bc3c8efdf6798c8`. Authorized owned paths **only**: `Carthago/Views/MainWindow.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`. No tests, builds, xUnit, replays, holdouts, CI, Actions, runners, benchmarks, production capture or running-WPF screenshots: **ZERO**. Acceptance below is **PLANNED AND UNEXECUTED**.
+
+### Approved reference, baseline and initial static divergence review
+
+**FIRST** resolved and visually inspected exact ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c`: navy/graphite SOC shell, cyan/teal accents, quiet borders, restrained severity, persistent left navigation, KPIs, traffic panel, prioritized incident triage/investigation and dense event table. All depicted IPs, timestamps, rule IDs, metrics, confidence, Mbps and terminal output are **DEMO ONLY**, not telemetry or capture-health contracts. The CLI remains explicitly **UNAVAILABLE** and visual-only. Preserve Wide >=1440, Standard 1100–1439, Compact 1024–1099, graceful below 1024, local PPS ScottPlot optional 10-sample average/bounded 120-point history, read-only local Live Events 80 displayed/500 retained, Cisco/WebView2/ScottPlot, privacy/trust/capture boundaries.
+
+Starting HEAD follows UI-72 publication by **two independent R549 default Basic cross-subnet fanout rule commits**, with changes confined to engine rule registry/source, R549 tests, and rule/backlog docs. Compared `f5f4b706a61d681533b05bc87536f8dee84ac430..6b98dd2d52f0ec8929903754504dc90511ba8062`: no UI-owned overlap. Inspected LIVE recent commits, design ledger through UI-72, `MainWindow.xaml`, `Theme.xaml`, `Sidebar.xaml`, `MainWindow.xaml.cs`, `MainWindow.Dashboard.cs`, `MainWindow.DashboardEvents.cs`, `MainWindow.DashboardResponsive.cs`, `MainWindow.Responsive.cs`, `MainWindow.Core.cs` and `MainWindow.Settings.cs`. The original `DashboardDetailEvidenceSummaryText` is populated by `MainWindow.Dashboard.cs` using the directly selected correlated incident snapshot, with an explicit no-evidence path and counts of reported evidence/related events; it never asserts a verified chain. `DashboardDetailEvidenceSummaryLabel` is its existing accessible label. No shared API or producer change is needed.
+
+### One cohesive UI-owned visual change
+
+In the existing investigation **Evidence provenance (reported, not verified)** `DetailGridCard`, replace the inner StackPanel with a two-column Grid containing a **decorative, non-hit-testable, non-focusable 3px cyan keyline at 65% opacity** and the unchanged label and dynamic summary in the second column with a 10px gutter. Reuse the existing `AccentBrush` and original `DetailGridCard` surface/border. The visible accent creates a restrained provenance subsection distinct from nearby investigation facts and actions. The text, accessible label association, original `x:Name` values, message content, bindings, selection handlers, incident/anomaly source logic, card position and parent layout are unchanged. The keyline conveys **section hierarchy only**, not verified evidence, severity, risk or capture health. No new telemetry, capture state, command, focus stop, event, viewmodel, preference, external request, shared contract or security control.
+
+This is distinct from UI-04's incident/evidence content, UI-12's labeled facts, UI-25's grouping and UI-70–72's demo banner, Live Events empty state and host-row dividers.
+
+### End static review, publication guard and unverified risks
+
+Source commit `e47cac2595438d4cb5b9be45f31a0cbe23279e28` is a private direct child of baseline `6b98dd2d52f0ec8929903754504dc90511ba8062` and changes only `Carthago/Views/MainWindow.xaml`; the documentation commit must be its direct child and change only this ledger. Before publication re-read LIVE HEAD and compare intervening independent detection/protocol/UI changes. Publish the **complete two-commit candidate** via exactly **one non-forced atomic GitHub `update_ref` with `expected_sha` lease** on the same branch. On movement, reconstruct on disjoint fresh base with fresh lease; STOP on conflict, overlap or missing guarantee. Post-publication check HEAD, ancestry, two exact blobs and exactly two owned paths. No branch/PR creation, force push, history rewrite or automation changes.
+
+**Unverified risks:** Windows WPF XAML parsing/compilation; Grid width allocation and keyline vertical sizing; 3px/65%-opacity contrast and high-contrast visibility; 10px inset reducing text width and possible clipping in narrow windows; long dynamic evidence counts/wrapping; 125–200% DPI, 1440/1100/1099/1024/1023/640px; assistive-technology reading order and whether decorative Border remains absent from keyboard focus. Static inspection is not rendering, accessibility or compilation verification.
+
+### Acceptance scenarios — PLANNED ONLY, NOT AUTHORED OR EXECUTED
+
+1. Select a correlated incident with reported evidence; inspect unchanged count and related-event wording alongside the subdued keyline.
+2. Select a correlated incident with zero evidence; inspect the existing no-evidence message, with no implied verified chain.
+3. Select an anomaly with no directly selected incident; inspect the original explicit provenance caveat.
+4. Switch selections repeatedly; confirm the original `DashboardDetailEvidenceSummaryText` is updated and `DashboardDetailEvidenceSummaryLabel` remains the accessible label.
+5. Inspect the keyline for visual hierarchy only, without severity, confidence, sensor-health or capture-status implication.
+6. Inspect keyboard focus and screen-reader order; the decorative Border must not add a focus stop or obscure action buttons.
+7. Inspect narrow-width text wrapping, label visibility and card gutters at 1440/1100/1099/1024/1023/640px and 125–200% DPI.
+8. Inspect standard/high-contrast rendering, opacity, color differentiation and original card surface/border.
+9. Inspect unchanged prioritized incidents, KPIs, PPS 10-sample/120-point bounds, local Live Events 80/500, explicitly unavailable CLI, Cisco/WebView2/ScottPlot and capture/privacy/trust boundaries.
+10. Verify final source/docs blobs, direct-parent commit ancestry, exact owned-path diff, preserved independent R549 changes and **zero** builds/tests/replays/CI/runners/benchmarks/capture.
+
+**Next independent UI GA UI-74:** inspect fresh LIVE HEAD, exact approved reference, ledger and original WPF consumers; choose one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–73. All acceptance remains deferred until the owner explicitly says **“now it is test time.”**
