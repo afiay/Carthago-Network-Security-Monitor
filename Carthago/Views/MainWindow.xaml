@@ -1169,6 +1169,8 @@
                       </DockPanel>
                       <UniformGrid Columns="2" Margin="0,8,0,0">
                         <Button Style="{StaticResource ShortcutTile}" Click="DashboardRawTraffic_Click"
+                                ToolTip="Opens the existing Live Traffic view and its traffic filters. Navigation only; this shortcut does not start capture or export packets."
+                                ToolTipService.ShowsToolTipOnKeyboardFocus="True"
                                 AutomationProperties.Name="Raw Traffic"
                                 AutomationProperties.HelpText="Opens the existing Live Traffic view and its traffic filters.">
                           <Grid>
@@ -1181,6 +1183,8 @@
                           </Grid>
                         </Button>
                         <Button Style="{StaticResource ShortcutTile}" Click="DashboardRawDetections_Click"
+                                ToolTip="Opens the existing Detection Events view and its detection filters. Navigation only; this shortcut does not verify detections or export evidence."
+                                ToolTipService.ShowsToolTipOnKeyboardFocus="True"
                                 AutomationProperties.Name="Raw Detections"
                                 AutomationProperties.HelpText="Opens the existing Detection Events view and its detection filters.">
                           <Grid>
@@ -1193,6 +1197,8 @@
                           </Grid>
                         </Button>
                         <Button Style="{StaticResource ShortcutTile}" Click="DashboardPcapExplorer_Click"
+                                ToolTip="Opens the existing Live Traffic view. No separate PCAP Explorer is opened and this shortcut does not start capture."
+                                ToolTipService.ShowsToolTipOnKeyboardFocus="True"
                                 AutomationProperties.Name="Traffic Analysis"
                                 AutomationProperties.HelpText="Opens the existing Live Traffic view, not a separate PCAP Explorer.">
                           <Grid>
@@ -1205,6 +1211,8 @@
                           </Grid>
                         </Button>
                         <Button Style="{StaticResource ShortcutTile}" Click="DashboardForensicsWorkspace_Click"
+                                ToolTip="Opens the existing Detection Events view. No separate forensics workspace is opened and this shortcut does not export raw evidence."
+                                ToolTipService.ShowsToolTipOnKeyboardFocus="True"
                                 AutomationProperties.Name="Detection Investigation"
                                 AutomationProperties.HelpText="Opens the existing Detection Events view, not a separate Forensics Workspace.">
                           <Grid>
