@@ -1135,8 +1135,8 @@
                                   </Grid.ColumnDefinitions>
                                   <TextBlock Text="{Binding Icon}" FontSize="18" Foreground="{Binding AccentBrush}" VerticalAlignment="Center"/>
                                   <StackPanel Grid.Column="1">
-                                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
-                                    <TextBlock Text="{Binding Subtitle}" Foreground="{StaticResource TextMutedBrush}" FontSize="12" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="0,3,0,0"/>
+                                    <TextBlock Text="{Binding Title}" ToolTip="{Binding Title}" FontWeight="SemiBold" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{Binding Subtitle}" ToolTip="{Binding Subtitle}" Foreground="{StaticResource TextMutedBrush}" FontSize="12" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="0,3,0,0"/>
                                   </StackPanel>
                                   <Border Grid.Column="2" Style="{StaticResource RiskBadge}" BorderBrush="{Binding AccentBrush}" Background="#0B1728" VerticalAlignment="Center"
                                            ToolTip="{Binding BadgeDescription}">
