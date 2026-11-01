@@ -3315,3 +3315,46 @@ The existing footer left indicator, `Capture:` label, status colors, UTC sample,
 **Next independent UI GA UI-61:** inspect fresh LIVE HEAD, approved image, ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–60.
 
 **References:** [WPF AutomationProperties.Name](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.name); [WPF AutomationProperties.HelpText](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.helptext); [WPF RelativeSource Self](https://learn.microsoft.com/dotnet/desktop/wpf/advanced/relativesource-markupextension).
+
+## GA UI-61 — Source-accurate local PPS chart capture-status context
+
+**2026-11-01 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE `feature/carthago-reliability-hardening` HEAD: `3528b93902d79900d252fda1940b3e121564637f`. Prior GA UI-60 source `aae4285f77aa513722cfd7bd70aa43f4d3b86fd2`, documentation/publication `b2f80001442922b40008321a9d4e32eda0e535d7`. Two intervening independent protocol commits, `04790805c3d2741979716882b43e25cd273017e1` and `3528b93902d79900d252fda1940b3e121564637f`, added GA P0421–P0430 distcc-prefix protocol source/tests/docs and corrected its authored-invocation count. They are disjoint and remain untouched. **Exact UI source commit:** `2900c46b9f38b1d9cb85004bf25c500c03333fae` (direct child of starting HEAD). **UI XAML blob:** `69994223314118c887339f276add57cd304c50fe`. **Owned paths only:** `Carthago/Views/MainWindow.xaml` and this `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`. **Tests authored: 0; executed: 0.** No dotnet build/test, xUnit, replay, holdout, CI, GitHub Actions, runner, benchmark, production capture or running-WPF screenshot.
+
+### Approved reference, original consumers and non-duplication
+
+Resolved and **visually inspected** exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c` (1648×928). Preserve navy/graphite/cyan/teal, restrained severity, left navigation, operational KPIs, local PPS ScottPlot (10-sample moving average, bounded 120-point history), prioritized incidents, investigation, read-only Live Events (80 displayed / 500 retained), and explicitly **UNAVAILABLE** visual-only CLI. Wide >=1440, Standard 1100–1439, Compact 1024–1099, graceful below 1024, Cisco/WebView2/ScottPlot and privacy/capture boundaries remain unchanged. Reference IPs, Mbps lines, counts, timestamps, rule IDs, confidence and CLI output are **DEMO ONLY**, not observations.
+
+Inspected LIVE ref and recent commits, ledger through UI-60, `MainWindow.xaml`, `MainWindow.xaml.cs`, `MainWindow.Core.cs`, `MainWindow.Dashboard.cs`, `MainWindow.Plots.cs`, `MainWindow.Navigation.cs`, `MainWindow.Responsive.cs`, `MainWindow.DashboardResponsive.cs`, `MainWindow.DashboardEvents.cs` and `Theme.xaml`. The **PPS chart-header** capture label (not the footer state) is the existing unnamed TextBlock whose `Text` binds to `CaptureStatusText.Text` and whose foreground binds to `MonitoringStatusBadge.BorderBrush`. `UpdateMonitoringHeader` sets `CaptureStatusText.Text` to `MONITORING`, `PAUSED`, `DEGRADED`, `ERROR` or `OFFLINE` based on local capture/error/flow/sink state. Its XAML initial source is `Paused`; the label inherits that value before header refresh. `MainWindow.Plots.cs` `RenderTraffic` displays local PPS timer samples, optional ten-sample average and text summary; zero timer samples may occur without active capture. This is not global throughput, authenticated packet reception or sensor health.
+
+GA UI-60 addressed the **right-hand global footer** value `FooterTelemetryStateText`, which maps Monitoring to `On`. GA UI-61 addresses the **separate PPS chart-header label**, whose actual text remains the uppercase monitoring-header projection. Earlier chart GAs covered chart labels, waiting state, source warnings and summary but did not add the chart-header capture-label's own current-value UI Automation Name or hover provenance. This is one distinct chart-context improvement, not a duplicate footer change.
+
+### One cohesive UI-owned improvement
+
+On the existing PPS chart-header status TextBlock only, add (1) a hover `ToolTip` explaining the five local capture/flow states, no packet-flow proof and timer-generated zero possibility; (2) `AutomationProperties.Name` bound to the **same displayed Text** through `RelativeSource Self`; and (3) static `AutomationProperties.HelpText` describing local PPS context rather than global traffic or verified sensor health. One explanatory XAML comment, **three added WPF attributes**, no new control or focus stop. Preserve the original `Text` and foreground `ElementName` bindings, font, geometry, status dot, producer, chart summary, chart renderer, plot, navigation, commands, theme and responsive repositioning below 1024px. No engine/model/service, protocol/detection, telemetry, capture, trust/privacy, shared API, test, benchmark, workflow, runner or automation change.
+
+### Start/end static divergence and publication guard
+
+**Start:** LIVE HEAD `3528b93902d79900d252fda1940b3e121564637f` is two disjoint protocol commits ahead of UI-60 publication `b2f80001442922b40008321a9d4e32eda0e535d7`; their four changed paths are outside UI ownership. The original WPF source/partials and chart status consumer, chart renderer, theme, names, responsive breakpoints, privacy boundaries and approved reference were inspected. Prepared source commit is a direct child of LIVE starting HEAD; its single changed path is the authorized XAML.
+
+**End/publication gate:** immediately before publication re-read LIVE remote HEAD, compare concurrent detection/protocol/UI changes with the full private source/docs chain, and confirm exact source/docs blobs, parentage, changed paths, WPF consumers/APIs, naming, provenance, privacy and reference fidelity. Publish **both** private commits together through **one non-forced atomic GitHub `update_ref` with exact `expected_sha` lease** on the existing branch. If moved, reconcile disjoint work onto fresh HEAD with new private commits and fresh lease; STOP on overlap, conflict or missing atomicity. No partial publication, new branch/PR, force push or history rewrite.
+
+**Residual risks:** Windows XAML parsing/compilation, UI Automation Name self-binding and updates, screen-reader browse-mode discoverability (status TextBlock is non-focusable), tooltip hover timing, repeated status refresh, ambiguous Monitoring versus packet reception, high contrast, 125–200% DPI and 1440/1100/1099/1024/1023/640px presentation remain **UNVERIFIED**. Metadata does not establish screen-reader announcements or capture health.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. Before monitoring-header refresh, chart label and accessible Name reflect the original `Paused` source text; no fabricated Monitoring or packet-flow claim.
+2. After header refresh, chart status and accessible Name mirror `MONITORING`, `PAUSED`, `DEGRADED`, `ERROR` or `OFFLINE` from the original producer without changing the state calculation.
+3. Hover the chart status label: tooltip explains the local capture/flow projection and explicitly rejects packet-flow or sensor-health proof.
+4. Inspect UI Automation Name/HelpText and screen-reader browse mode; do not assume keyboard Tab can focus the unchanged non-focusable TextBlock.
+5. Confirm chart status dot and label retain the original `MonitoringStatusBadge.BorderBrush` binding, including degraded/error/paused/offline color behavior.
+6. Confirm `RenderTraffic` still uses local PPS timer samples, ten-sample average and bounded 120-point history; zero samples remain possible without capture.
+7. Confirm global footer `On` projection and UTC clock, chart text summary, waiting overlay and capture-state producer remain untouched.
+8. Inspect 1440/1100/1099/1024/1023/640px, 125–200% DPI and high contrast for unchanged chart-header geometry, below-1024 repositioning, tooltip legibility and focus order.
+9. Verify unchanged operational KPIs, incident queue/investigation, read-only Live Events 80/500, unavailable visual-only CLI, Cisco/WebView2/ScottPlot and privacy/trust/capture boundaries.
+10. Confirm exactly two authorized paths in complete source/docs candidate, all independent protocol/detection changes preserved, no screenshot demo data and **zero** builds/tests/replays/CI/runners/capture.
+
+**Open quality GAs:** pinned-SHA Windows WPF compilation and actual tooltip/UI Automation/screen-reader/high-contrast/DPI/responsive inspection **only after owner says “now it is test time.”** **Executed tests: 0.**
+
+**Next independent UI GA UI-62:** inspect fresh LIVE HEAD, approved image, ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–61.
+
+**References:** [WPF AutomationProperties.Name](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.name); [WPF AutomationProperties.HelpText](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.helptext); [WPF RelativeSource Self](https://learn.microsoft.com/dotnet/desktop/wpf/advanced/relativesource-markupextension).
