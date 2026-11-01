@@ -3188,3 +3188,44 @@ Exactly **three WPF attributes** are added to two existing buttons. No new contr
 **Next independent UI GA UI-58:** inspect fresh LIVE HEAD, approved image, this ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–57.
 
 **References:** [WPF ToolTipService.ShowsToolTipOnKeyboardFocus](https://learn.microsoft.com/dotnet/api/system.windows.controls.tooltipservice.showstooltiponkeyboardfocus); [WPF AutomationProperties.HelpText](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.helptext).
+
+## GA UI-58 — Keyboard-discoverable System Settings destination for dashboard Customize
+
+**2026-11-01 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE `feature/carthago-reliability-hardening` HEAD: `f8388d27cbf1105336364a2b49cf4862d79ee029`. Prior GA UI-57 source `f4ef51f806c74e012d0eeeef76a73b2e89cfbd8b`, docs/publication `a032e83b3c4e2b6fb9cf65a585c7474195ac8261`. Intervening independent P0391–P0400 protocol source audit/documentation commit `f8388d27cbf1105336364a2b49cf4862d79ee029` touched only `docs/protocols/PROTOCOL_EXPANSION_PROGRESS.md` and `docs/protocols/PROTOCOL_GA_P0391-P0400.md`; it was already in the starting HEAD and remains untouched. **Exact GA UI-58 source commit:** `688f941864d4228b76ea9b4262dc4f6b19c87046`; **XAML source blob:** `9b26f60b2011279aa130e3a97fc275b445270858`. **Owned paths only:** `Carthago/Views/MainWindow.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`. **Tests authored: 0; executed: 0.** No build, dotnet test, xUnit, replay, holdout, CI, GitHub Actions, runner, benchmark, production capture or running-WPF screenshot.
+
+### Approved image, source audit and non-duplication
+
+Resolved and **visually inspected** exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c` (1648×928). Preserve navy/graphite/cyan/teal, restrained severity, left navigation, operational KPI cards, local PPS ScottPlot (ten-sample moving average, bounded 120-point history), prioritized incidents, investigation, read-only local Live Events (80 displayed / 500 retained), and explicitly **UNAVAILABLE** visual-only CLI. Wide >=1440, Standard 1100–1439, Compact 1024–1099 and graceful below 1024 remain unchanged. Screenshot IPs, Mbps traces, sensor/coverage values, timestamps, rule IDs, confidence and CLI output are **DEMO ONLY**, not evidence or actual capture health.
+
+Inspected LIVE branch/recent commits and ledger through GA UI-57, `MainWindow.xaml`, `MainWindow.xaml.cs`, `MainWindow.Dashboard.cs`, `MainWindow.Navigation.cs`, `MainWindow.Core.cs`, `MainWindow.Responsive.cs`, `MainWindow.DashboardResponsive.cs`, and `Theme.xaml`. The visible header **Customize** button has `DashboardOpenSettings_Click` but previously lacked explicit destination tooltip and accessible Name/HelpText. Original handler in `MainWindow.Dashboard.cs` delegates to `Nav_Settings_Click`; `MainWindow.Navigation.cs` displays the existing `SettingsView`, activates `SystemSettings` sidebar selection and hides sidebar filters. It does **not** invoke the hidden dashboard layout-manager editor, edit preferences, or activate capture. GA UI-20/48/55/57 documented other navigation buttons; GA UI-31 documented the adjacent capture-source selector. No previous GA UI-01–57 provided keyboard-focus destination guidance on **this Customize header button**.
+
+### One cohesive UI-owned improvement
+
+Add exactly four WPF attributes to the **existing** header Customize button: a truthful hover `ToolTip` naming the existing System Settings view and navigation-only scope; `ToolTipService.ShowsToolTipOnKeyboardFocus="True"`; `AutomationProperties.Name="Open System Settings"`; and `AutomationProperties.HelpText` describing the actual Settings view, sidebar selection/filter visibility, and the absence of dashboard-layout editing or capture activation. The original visible caption **Customize**, width 104, height 30, `SecondaryButton` style, margin, handler, route, tab/focus order and responsive group are preserved. No new control, command, layout editor, focus stop, viewmodel, event producer, telemetry, preference write, capture action or shared API. Source-only commit `688f941864d4228b76ea9b4262dc4f6b19c87046` is a direct child of starting LIVE HEAD `f8388d27cbf1105336364a2b49cf4862d79ee029`; its sole changed path is `Carthago/Views/MainWindow.xaml`.
+
+### Start/end static divergence and publication guard
+
+**Start:** prior GA UI-57 publication `a032e83b3c4e2b6fb9cf65a585c7474195ac8261` to LIVE `f8388d27cbf1105336364a2b49cf4862d79ee029` is one disjoint protocol-docs-only commit (P0391–P0400). Existing WPF partials/consumers, handler names, responsive breakpoints, theme, local PPS ScottPlot, Cisco/WebView2, privacy/capture/trust boundaries, and approved-reference interpretation are not modified. `DashboardOpenSettings_Click` and `Nav_Settings_Click` were read, not executed.
+
+**End/publication gate:** immediately before publication re-read LIVE branch HEAD and compare intervening detection/protocol/UI changes; inspect both private Git blobs, commit parentage, exact owned changed paths, original WPF consumers, names, provenance, privacy and approved reference. Publish the **complete source+ledger chain only** with **one non-forced atomic GitHub `update_ref` and exact `expected_sha` lease** on the same existing branch. If HEAD moves, reconcile disjoint work onto fresh HEAD with new private commits and a fresh lease; STOP on overlap, conflict or missing guarantee. Never publish a partial candidate, create branches/PRs, rewrite history, force push, or modify independent streams/automations.
+
+**Residual risks:** Windows WPF compilation, tooltip rendering on hover and keyboard focus, actual screen-reader/UI Automation Name/HelpText exposure, tooltip timing/placement, focus after Settings navigation, high contrast, 125–200% DPI and 1440/1100/1099/1024/1023/640px screenshots remain **UNVERIFIED**. An accessible metadata declaration is not proof of screen-reader behavior. No fabricated reference telemetry, capture-health claim, evidence payload or incident-resolution assertion is added.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. Hover the existing header Customize button: tooltip describes navigation to System Settings, not inline dashboard layout editing.
+2. Tab-focus Customize: the same tooltip becomes discoverable without new focus stops or a changed tab order.
+3. Inspect UI Automation: accessible Name is "Open System Settings" and HelpText accurately describes the existing destination and limitations.
+4. Activate Customize by mouse: the original `DashboardOpenSettings_Click` delegates to `Nav_Settings_Click` and opens `SettingsView`.
+5. Activate Customize by keyboard: the existing `SystemSettings` sidebar selection and sidebar-filter hiding occur; no new route or command is introduced.
+6. Confirm that simply navigating to Settings does not alter the dashboard layout, write preferences, start/stop capture, or claim capture health.
+7. Confirm original visible caption, dimensions, theme, focus visual, handler, neighboring anomalies-only toggle and capture-source selector remain unchanged.
+8. Inspect Wide 1440, Standard 1100, Compact 1099/1024, and below-1024 1023/640px with 125–200% DPI and high contrast for tooltip legibility, focus and unchanged header positioning.
+9. Verify unchanged operational KPIs, local PPS/ten-sample average/120-point history, prioritized incidents, investigation, Live Events 80/500, visual-only unavailable CLI and Cisco/WebView2/ScottPlot.
+10. Confirm exactly two authorized paths in the complete candidate, zero fabricated screenshot metrics, and no engine/model/service/detection/protocol/shared API/security/test/benchmark/workflow/runner/automation changes.
+
+**Open quality GAs:** pinned-SHA Windows WPF compilation and real tooltip/keyboard/screen-reader/high-contrast/DPI/responsive inspection **only after owner says “now it is test time.”** **Executed tests: 0.**
+
+**Next independent UI GA UI-59:** inspect fresh LIVE HEAD, exact approved image, ledger and WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–58.
+
+**References:** [WPF ToolTipService.ShowsToolTipOnKeyboardFocus](https://learn.microsoft.com/dotnet/api/system.windows.controls.tooltipservice.showstooltiponkeyboardfocus); [WPF AutomationProperties.Name](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.name); [WPF AutomationProperties.HelpText](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.helptext).
