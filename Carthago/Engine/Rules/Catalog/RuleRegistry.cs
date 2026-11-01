@@ -568,6 +568,7 @@ namespace Carthago.Engine.Rules.Catalog
                 new R543_RuleConfigProfileDriftRule(),
                 new R544_ExcessiveSuppressionRatioRule(),
                 new R545_ExternalBacnetIAmAnnouncementRule(),
+                new R546_NtpMonlistOutboundTargetFanoutRule(),
             };
         }
 

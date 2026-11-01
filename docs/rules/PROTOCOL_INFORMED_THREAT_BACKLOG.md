@@ -33,3 +33,11 @@ The live [registry](../../Carthago/Engine/Rules/Catalog/RuleRegistry.cs) contain
 - **ASHRAE BACnet interpretation**, 2025, describes BBMD/foreign-device routing that can be legitimate: https://www.ashrae.org/file%20library/technical%20resources/standards%20and%20guidelines/standards%20intepretations/ic-135-2024-8.pdf .
 - **FIRST EPSS** estimates future exploitation probability, not observed compromise. No invented score is assigned: https://www.first.org/epss/ .
 - Preserve R102/R118/R163 floors 80/86/84%, frozen R102 V1 4/6, pending V2 provenance, original config and journal-first semantics. No shared sensor/telemetry edits, tests, CI, runners, or live capture without explicit owner approval.
+
+## GA R546 — newly resolved reachable threat predicate
+
+| Priority | Research and overlap | Source-backed decision | Evidence / policy |
+| --- | --- | --- | --- |
+| Completed | **P0051 NTP**, existing **R242** monlist request burst; R001/R017 generic scans | **R546 authored**: three **distinct public NTP endpoints** probed by one RFC1918 host using bounded, packet-classified mode-7 monlist requests within five minutes; R242 counts repeated requests per same pair, not fanout | Existing PacketHandler → OtProtocolLight → typed ApplicationProtocol, IpVersion, L4Len, UDP ports and addresses; Medium/Shadow/80%, ten-minute cooldown; no response, amplification, vulnerability or authenticated-source claim. [GA R546](../RULE_BATCH_546-546.md). |
+
+Next proposed rule cursor **R547**, subject to fresh live registry audit. Do not repeat completed protocol GAs or add isolated protocol inspectors. Historical P inventory remains unchanged.
