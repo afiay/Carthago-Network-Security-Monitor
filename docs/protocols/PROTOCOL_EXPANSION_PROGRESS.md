@@ -17,7 +17,7 @@
 
 | [GA P0031–P0040](PROTOCOL_GA_P0031-P0040.md) | f9fcc016081620c20bf9130ea33194d225c0f263 | P0031–P0040 | 2 IMPLEMENTED_ISOLATED (WireGuard, IKEv2-only), 3 PARTIAL (Modbus, Modbus/TCP, DNP3), 1 DEFERRED (ESP), 4 BLOCKED L2 (EAPOL, ARP, LLDP, STP); 0 integrated | 29 / 38 | 0 | Complete caller-attested UDP envelopes only; no runtime producer, authentication, decryption or exploit claims |
 
-**Last completed research GA:** P0331–P0340 (source-only, unverified). **Next exact ten IDs:** **P0341–P0350**. Do not skip blocked candidates, invent new P IDs, rewrite historical outcomes, or treat authored tests as executed. Recover live HEAD and compare concurrent detection/UI stream paths before publication.
+**Last completed research GA:** P0341–P0350 (source-only, unverified). **Next exact ten IDs:** **P0351–P0360**. Do not skip blocked candidates, invent new P IDs, rewrite historical outcomes, or treat authored tests as executed. Recover live HEAD and compare concurrent detection/UI stream paths before publication.
 
 | [GA P0041–P0050](PROTOCOL_GA_P0041-P0050.md) | 691717f8a3302f58454dfcb9e6da45993b17a442 | P0041–P0050 | 3 IMPLEMENTED_ISOLATED (OPC UA UACP, IEC104 APCI, BGP-4 envelope), 2 PARTIAL (S7, BACnet), 1 DEFERRED (MMS), 4 BLOCKED L2 (GOOSE, PROFINET DCP/IO, EtherCAT); 0 integrated | 42 / 50 | 0 | Source-only bounded inspectors, synthetic authored xUnit scenarios, no trusted TCP reassembly or L2 producer |
 
@@ -28,7 +28,7 @@
 - Owner approval and cross-stream review for any shared capture/telemetry/record schema integration; source-only isolated work may continue meanwhile.
 - First actual build/xUnit/Windows replay awaits explicit owner command **“now it’s test time.”**
 - Live sensor provenance, TCP stream boundaries, DTLS 1.3 encrypted records, endpoint/proxy logs and NetScaler asset/config/IOC correlation are not established by these isolated inspectors.
-- Continue source-only with P0341–P0350; preserve detection and UI ledgers, frozen holdouts, journal-first raw DetectionEvents, privacy, cooldowns, thresholds and rule IDs.
+- Continue source-only with P0351–P0360; preserve detection and UI ledgers, frozen holdouts, journal-first raw DetectionEvents, privacy, cooldowns, thresholds and rule IDs.
 
 | [GA P0071–P0080](PROTOCOL_GA_P0071-P0080.md) | 984c9bbea00f68d7dc2f6b8b5f0d163880ddcba4 | P0071–P0080 | 2 IMPLEMENTED_ISOLATED (Geneve, HSRP v1), 1 EXISTING (VLAN), 1 DEFERRED (GTP), 5 BLOCKED input/L2 (PPP, PPPoE, MPLS, CDP, UDLD), 1 REJECTED as separately counted variant (GTPv2-C); 0 integrated | 33 / 41 | 0 | Source-only bounded Geneve and HSRP v1 inspectors; no trusted live UDP envelope, HSRP authentication or runtime registration |
 
@@ -82,3 +82,5 @@
 | [GA P0321–P0330](PROTOCOL_GA_P0321-P0330.md) | 5e0284a8006ab0ceeb363ee86d8599d986181bd0 | P0321–P0330 | 1 IMPLEMENTED_ISOLATED (legacy HICP Configure shape), 3 DEFERRED (HCRT, iWARP, LSDP), 2 BLOCKED native L2 input (Ethernet Loop/CTP, MACsec), 4 REJECTED independently counted (Linux Generic Netlink host API, H.235 H.323 security layer, X.509 logotype extension, LSARPC DCE/RPC interface); 0 integrated | 20 / 28 | 0 | HMS HICP UDP/3250, NVD CVE-2024-23767 (2024-06-26, updated 2026-06-17), strict bounded source-only Configure request metadata, no trusted producer or device outcome, CISA KEV 403/EPSS unavailable, no tests executed |
 
 | [GA P0331–P0340](PROTOCOL_GA_P0331-P0340.md) | 8f2e575a814d3eebe1325fe6ded399d40a729a38 | P0331–P0340 | 1 IMPLEMENTED_ISOLATED (MSDP SA/KeepAlive), 3 DEFERRED (MailSlot, MNDP, MS-WSP), 4 BLOCKED trusted/native input (Meraki MDP, MRDISC, NBIPX, Nortel NDP), 2 REJECTED independently counted (NEGOEX subprotocol, Linux Netlink host socket); 0 integrated | 13 / 16 | 0 | RFC 3618 bounded source-only MSDP TLV inspector; Cisco 2016-09-28 vendor advisory no known malicious use at publication; no TCP reassembly producer, shared changes or executed tests |
+
+| [GA P0341–P0350](PROTOCOL_GA_P0341-P0350.md) | fe38d99133eec71c6d10bd2951f4732782fdec4f | P0341–P0350 | 1 IMPLEMENTED_ISOLATED (OSCORE outer CoAP/UDP option 9 metadata), 2 DEFERRED (NMAS, NSIP), 7 REJECTED independent distinctness (four Network Monitor metadata surfaces, HP-UX NETTL trace, Netscape certificate extensions, PeekRemote capture wrapper); 0 integrated | 25 / 31 | 0 | RFC 8613 bounded stateless outer-option inspector; Debian/NVD CVE-2026-29013 context not detectable as exploit; no trusted UDP producer, no shared edits, CISA KEV 403 and EPSS unavailable; no builds/tests executed |
