@@ -953,7 +953,18 @@
                                            AutomationProperties.Name="Review local finding"
                                            AutomationProperties.HelpText="Opens a correlated incident workspace when available; otherwise opens the Anomalies view. Does not isolate a host."
                                            Click="DashboardInvestigateHost_Click" Margin="0,0,8,6"/>
-                                  <Button x:Name="DashboardViewRelatedIncidentButton" Content="View Related Incident" MinWidth="154" Height="30" Style="{StaticResource SecondaryButton}" Click="DashboardViewRelatedIncident_Click" Margin="0,0,8,6"/>
+                                  <!-- GA UI-52: existing linked-incident navigation; explain its conditional availability without changing the handler. -->
+                                  <Button x:Name="DashboardViewRelatedIncidentButton"
+                                          Content="View Related Incident"
+                                          ToolTip="Opens the correlated incident workspace when a related incident is available. Otherwise this action is unavailable; it does not start capture, export raw evidence or remediate."
+                                          ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                                          ToolTipService.ShowOnDisabled="True"
+                                          AutomationProperties.Name="Open related incident workspace"
+                                          AutomationProperties.HelpText="Opens the existing incident workspace only when a related correlated incident is available. No capture, raw evidence export, remediation or verification is performed."
+                                          MinWidth="154" Height="30"
+                                          Style="{StaticResource SecondaryButton}"
+                                          Click="DashboardViewRelatedIncident_Click"
+                                          Margin="0,0,8,6"/>
                                   <Button Content="Full Detail"
                                           ToolTip="Opens the existing Signal Investigation dialog for the current local incident or anomaly context. Opening it does not start capture or verify evidence."
                                           ToolTipService.ShowsToolTipOnKeyboardFocus="True"
