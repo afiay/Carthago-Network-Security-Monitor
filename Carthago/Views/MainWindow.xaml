@@ -1060,6 +1060,8 @@
                                            VerticalAlignment="Center"/>
                                 <TextBlock Grid.Column="1"
                                            Text="{Binding RiskScore}"
+                                           ToolTip="Maximum local risk score for this host group; not detection confidence or verified impact."
+                                           AutomationProperties.HelpText="Maximum local risk score among unresolved correlated incidents, or among anomaly signals when no incident hosts are available. Not detection confidence or verified impact."
                                            FontSize="12"
                                            Foreground="{Binding AccentBrush}"
                                            FontWeight="Bold"
@@ -1067,6 +1069,8 @@
                                            VerticalAlignment="Center"/>
                                 <TextBlock Grid.Column="2"
                                            Text="{Binding ActiveIncidents}"
+                                           ToolTip="Number of unresolved correlated incidents for this host, or anomaly signals in the fallback when no incident hosts are available."
+                                           AutomationProperties.HelpText="Count of grouped unresolved correlated incidents, or anomaly signals when no incident hosts are available. Not a packet count or verified incident impact."
                                            FontSize="12"
                                            Foreground="{StaticResource TextSubtleBrush}"
                                            HorizontalAlignment="Right"
