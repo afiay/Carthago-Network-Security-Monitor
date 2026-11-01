@@ -2162,7 +2162,10 @@
                   <StackPanel Grid.Column="1"
                               Orientation="Horizontal">
                     <CheckBox x:Name="AutoStartCheck"
-                              Content="Start capture on launch"/>
+                              Content="Start capture on launch"
+                              ToolTip="Save to request capture at the next application launch when a capture source and enabled Start control are available. Checking alone does not start capture or confirm packet flow."
+                              ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                              AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
                   </StackPanel>
                   <TextBlock Grid.Row="1"
                              Grid.ColumnSpan="2"
@@ -2178,7 +2181,10 @@
                               Grid.Column="1"
                               Orientation="Horizontal">
                     <CheckBox x:Name="EnableWhoisCheck"
-                              Content="Resolve WHOIS / ASN / Org"/>
+                              Content="Resolve WHOIS / ASN / Org"
+                              ToolTip="Save to enable external WHOIS, ASN and organization lookups for eligible public IPs in processed traffic. Checking alone does not make a request; lookup results are not guaranteed."
+                              ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                              AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
                   </StackPanel>
 
                   <!-- Reputation -->
@@ -2189,7 +2195,10 @@
                               Grid.Column="1"
                               Orientation="Horizontal">
                     <CheckBox x:Name="EnableRepCheck"
-                              Content="AbuseIPDB reputation lookups"/>
+                              Content="AbuseIPDB reputation lookups"
+                              ToolTip="Save to enable external AbuseIPDB reputation lookups for eligible public IPs in processed traffic. A valid API key is required. Checking alone does not validate credentials or make a request."
+                              ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                              AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
                   </StackPanel>
                   <TextBlock Grid.Row="4"
                              Grid.ColumnSpan="2"
