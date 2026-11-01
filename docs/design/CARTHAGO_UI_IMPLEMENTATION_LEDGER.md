@@ -2927,3 +2927,46 @@ Source commit `36ff441d92769cdb637aae954a4902806a662daa` descends directly from 
 **Next independent UI GA UI-52:** inspect fresh LIVE HEAD, approved image, ledger and WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–51.
 
 **References:** [WPF AutomationProperties.HelpText](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.helptext); [WPF FrameworkElement.ToolTip](https://learn.microsoft.com/dotnet/api/system.windows.frameworkelement.tooltip); [DateTime.ToLocalTime](https://learn.microsoft.com/dotnet/api/system.datetime.tolocaltime).
+
+## GA UI-52 — Truthful conditional navigation for the related incident action
+
+**2026-11-01 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE `feature/carthago-reliability-hardening` HEAD: `abc69cf065c4f19855fee89bf659706c005c3b8d`. Prior GA UI-51 source `36ff441d92769cdb637aae954a4902806a662daa`, publication `8f2e575a814d3eebe1325fe6ded399d40a729a38`. **Exact GA UI-52 source SHA:** `acddf69055626cf9e691fe4f70ec64bdff52a9af`. **UI source blob:** `5d6e36d010f3c233972c6c4429c85ac7d4081c15`. **Owned paths only:** `Carthago/Views/MainWindow.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`. **Tests authored: 0; tests executed: 0.** No dotnet build/test, xUnit, replays, holdouts, CI, GitHub Actions, runners, benchmarks, live capture or running-software screenshots.
+
+### Approved reference, original consumers and non-duplicated scope
+
+Resolved and **visually inspected** exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c` (1648×928). Preserve its navy/graphite surfaces, cyan/teal accents, restrained severity, left navigation, operational KPIs, prioritized incidents, selected investigation, read-only local Live Events (80 displayed / 500 retained), local PPS ScottPlot (10-sample average, bounded 120-point history), and **UNAVAILABLE visual-only CLI**. Preserve Wide >=1440, Standard 1100–1439, Compact 1024–1099 and graceful below 1024. All reference screenshot IPs, Mbps/traffic lines, monitoring badges, sensor counts, rule IDs, confidence, timestamps and CLI output are **DEMO ONLY**; no application values or capture-health claims are inferred from the image.
+
+Audited live remote HEAD and recent commits, the ledger through GA UI-51, `MainWindow.xaml`, `MainWindow.xaml.cs`, `MainWindow.Core.cs`, `MainWindow.Navigation.cs`, `MainWindow.Dashboard.cs`, `MainWindow.DashboardEvents.cs`, `MainWindow.DashboardResponsive.cs`, and `Theme.xaml`. The existing `DashboardViewRelatedIncidentButton` in Incident Investigation / Recommended actions has `Click="DashboardViewRelatedIncident_Click"`. That handler returns if `_selectedDashboardIncidentId` is absent; otherwise it calls `OpenSelectedIncidentWorkspace()`, which delegates to the existing `OpenIncidentWorkspace`. `UpdateSocSignalDetails` already sets `IsEnabled = detail.CanOpenIncident`. Unlike the existing **Review finding** (GA UI-27) and **Full Detail** (GA UI-49) controls, this particular button previously had no source-specific tooltip or UI Automation explanation. This is distinct from UI-01–51.
+
+### One cohesive UI-owned improvement
+
+Add only static WPF metadata to the existing `View Related Incident` button: a truthful hover tooltip, keyboard-focus tooltip support, disabled-state tooltip support, `AutomationProperties.Name` and `AutomationProperties.HelpText`. Explain that it opens an existing correlated-incident workspace only when a related incident is available; an unavailable action is not a promise of incident linkage. Opening it does **not** start packet capture, export raw evidence, remediate, or verify impact/detection accuracy. The existing caption, `MinWidth=154`, `Height=30`, `SecondaryButton` style, margin, handler, conditional enablement, tab order and all incident/anomaly data remain unchanged. No new controls, focus stops, route, commands, data producers, services, protocols, telemetry, security controls, API contracts, capture behavior or evidence payloads.
+
+The private source commit `acddf69055626cf9e691fe4f70ec64bdff52a9af` descends directly from the starting LIVE HEAD and changes only `Carthago/Views/MainWindow.xaml` (12 added lines, one replaced line). All independent protocol/detection work remains outside UI ownership.
+
+### Start/end static divergence and publication guard
+
+**Start:** the only commit since GA UI-51 publication was `abc69cf065c4f19855fee89bf659706c005c3b8d`, independent P0331–P0340 MSDP protocol work in `Carthago/Services/ProtocolIntelligence/MsdpEnvelopeInspector.cs`, `Carthago.Tests/ProtocolIntelligence/MsdpEnvelopeInspectorTests.cs` and `docs/protocols/**`. Its paths are disjoint from the UI-owned source and ledger. No changes to WPF partial hooks, consumers, naming, route mappings, source values, privacy/capture/trust boundaries, Cisco/WebView2/ScottPlot or approved-reference interpretation.
+
+**End/publication gate:** re-read LIVE remote HEAD **immediately before publication**; compare all intervening commits and changed paths, and recheck UI XAML/ledger blobs, existing handler, conditional `IsEnabled`, unchanged WPF partials/consumers, naming and privacy. Publish the **complete** private source+documentation commit chain only with **ONE** non-forced atomic GitHub `update_ref` carrying the exact `expected_sha` lease on the same existing branch. If the branch moves, reconcile only disjoint independent changes onto fresh HEAD, rebuild the complete private chain and recheck a fresh lease. Stop on overlap, failed lease or missing guarantee; never publish partially, force push, create branches/PRs, rewrite history or modify independent automations.
+
+**Residual risks:** WPF compilation, actual enabled/disabled tooltip behavior, `ToolTipService.ShowOnDisabled`, keyboard focus, UI Automation exposure, screen-reader announcements, high contrast, 125–200% DPI, 1440/1100/1099/1024/1023/640px layout, focus traversal and selection/navigation are **UNVERIFIED**. Tooltips on disabled controls may be discoverable by mouse but not keyboard; the static metadata does not establish assistive-technology usability or accessibility compliance. A related incident may be unavailable while an anomaly remains selected; the existing disabled state is authoritative, not a health signal.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. With a selected correlated incident, hover `View Related Incident`: tooltip describes opening the existing incident workspace only.
+2. Keyboard-focus the enabled button: verify the contextual tooltip and accessible name/HelpText in Windows UI Automation.
+3. Select an anomaly with no related incident: verify the original `CanOpenIncident` disabled state remains, with disabled-state tooltip available on hover.
+4. Confirm no linked incident produces no new navigation or invented incident, and no fallback capture/telemetry action.
+5. Activate the enabled button: verify the original `DashboardViewRelatedIncident_Click` → `OpenSelectedIncidentWorkspace` route and original incident workspace.
+6. Confirm opening does not capture packets, export raw evidence, remediate, or assert verification of detection accuracy or incident impact.
+7. Navigate the adjacent **Review finding** and **Full Detail** controls by keyboard: no new Tab stop, handler change or order regression.
+8. Inspect 1440/1100/1099/1024/1023/640px, high contrast and 125–200% DPI for legible tooltip and unchanged panel geometry.
+9. Verify unchanged local PPS chart, 80/500 read-only Live Events, unavailable CLI, Cisco/WebView2/ScottPlot and capture/trust/privacy boundaries.
+10. Confirm only the two authorized paths changed, no fabricated screenshot metrics, no independent protocol/detection/test/workflow/runner/automation modifications.
+
+**Open quality GAs:** pinned-SHA Windows compilation, actual keyboard/tooltip/screen-reader/high-contrast/DPI/responsive inspection **only after the owner says “now it is test time.”** **Executed tests: 0.**
+
+**Next independent UI GA UI-53:** inspect fresh LIVE HEAD, exact approved reference, this ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–52.
+
+**References:** [WPF ToolTipService.ShowOnDisabled](https://learn.microsoft.com/dotnet/api/system.windows.controls.tooltipservice.showondisabled); [WPF ToolTipService.ShowsToolTipOnKeyboardFocus](https://learn.microsoft.com/dotnet/api/system.windows.controls.tooltipservice.showstooltiponkeyboardfocus); [WPF AutomationProperties.HelpText](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.helptext).
