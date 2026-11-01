@@ -2224,16 +2224,25 @@
                   </StackPanel>
 
                   <!-- API key -->
-                  <TextBlock Grid.Row="6"
+                  <!-- GA UI-68: make the existing session-only credential action discoverable without exposing the secret. -->
+                  <TextBlock x:Name="SettingsAbuseApiKeyLabel"
+                             Grid.Row="6"
                              Text="AbuseIPDB API Key"
                              VerticalAlignment="Center"/>
                   <WrapPanel Grid.Row="6"
                              Grid.Column="1">
                     <PasswordBox x:Name="AbuseApiKeyBox"
                                  Width="300"
-                                 ToolTip="Prefer .env / environment variables for persistence"
+                                 ToolTip="Enter an AbuseIPDB API key. This masked field and Save settings do not persist the key. Use the adjacent session button to apply an in-memory override; it does not validate credentials or initiate a lookup. For persistence, use the existing environment or .env configuration."
+                                 ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                                 AutomationProperties.LabeledBy="{Binding ElementName=SettingsAbuseApiKeyLabel}"
+                                 AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                                  Margin="0,0,8,0"/>
                     <Button Content="Use for this session"
+                            ToolTip="Applies a nonempty key for this running session only and refreshes the displayed key status. Does not save preferences, validate credentials, enable reputation lookups, or initiate a request. Empty input shows a warning."
+                            ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                            AutomationProperties.Name="Use AbuseIPDB API key for this session"
+                            AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                             Click="ApplyApiKey_Click"
                             MinWidth="160"/>
                   </WrapPanel>
