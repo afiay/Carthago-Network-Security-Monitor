@@ -2198,7 +2198,9 @@
                              Text="Requires a valid AbuseIPDB API key. For best results, set ABUSEIPDB_API_KEY in a .env file or environment variable."/>
 
                   <!-- BPF filter -->
-                  <TextBlock Grid.Row="5"
+                  <!-- GA UI-66: label the existing BPF field and disclose Save's active-Npcap effect without changing capture logic. -->
+                  <TextBlock x:Name="SettingsDefaultBpfLabel"
+                             Grid.Row="5"
                              Text="Default BPF Filter"
                              VerticalAlignment="Center"/>
                   <StackPanel Grid.Row="5"
@@ -2206,7 +2208,10 @@
                               Orientation="Horizontal">
                     <TextBox x:Name="DefaultFilterText"
                              Width="300"
-                             ToolTip="Example: tcp or port 443"/>
+                             ToolTip="Default BPF expression for Npcap capture (for example, tcp or port 443). Editing alone does not apply it. Save stores the default; when Npcap capture is active, Save also reapplies the filter and may briefly restart capture. Blank clears the saved default. This is not an ETW filter."
+                             ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                             AutomationProperties.LabeledBy="{Binding ElementName=SettingsDefaultBpfLabel}"
+                             AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
                   </StackPanel>
 
                   <!-- API key -->
