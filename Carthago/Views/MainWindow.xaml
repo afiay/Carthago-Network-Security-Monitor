@@ -2435,7 +2435,13 @@
                       VerticalAlignment="Center">
             <TextBlock Text="Capture:" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,6,0"/>
             <TextBlock x:Name="FooterTelemetryStateText" Text="Unknown" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,18,0"/>
-            <TextBlock x:Name="FooterUtcText" Text="UTC --:--:--" Foreground="{StaticResource TextMutedBrush}"/>
+            <!-- GA UI-59: expose the sampled UTC clock's current text and its provenance without altering the producer. -->
+            <TextBlock x:Name="FooterUtcText"
+                       Text="UTC --:--:--"
+                       Foreground="{StaticResource TextMutedBrush}"
+                       ToolTip="UTC system-clock time-of-day (HH:mm:ss) sampled at the last monitoring-header refresh; date omitted. Not an event timestamp or proof of clock synchronization."
+                       AutomationProperties.Name="{Binding Text, RelativeSource={RelativeSource Self}}"
+                       AutomationProperties.HelpText="UTC system-clock time-of-day sampled at the last monitoring-header refresh; date omitted. This display does not represent packet, detection or incident time or verify clock synchronization."/>
           </StackPanel>
         </Grid>
       </Border>
