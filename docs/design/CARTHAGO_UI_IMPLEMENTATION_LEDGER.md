@@ -3746,3 +3746,38 @@ Private source commit `9280e3b194e545767d5cede871be51eab58c9747` is a direct chi
 10. Inspect exact two-commit ancestry and two owned paths against approved image and independent R547 changes; confirm **zero** builds/tests/replays/CI/runners/benchmarks/capture.
 
 **Next independent UI GA UI-72:** inspect fresh LIVE HEAD, approved reference, ledger and original WPF consumers; choose one new UI-owned visual/accessibility/readability improvement outside UI-01–71. All acceptance remains deferred until owner says **“now it is test time.”**
+
+## GA UI-72 — High-Risk Hosts: subdued row separators for dense triage readability
+
+**2026-11-01 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE remote branch HEAD: `d93f8b3308ba38d7c809e1248849fc0db1530d3d`. Prior UI-71 source `9280e3b194e545767d5cede871be51eab58c9747`, publication `dc51ac8486607462b59e66bfa2fbfa52aa8198c6`. **Exact UI-72 source commit:** `bc8c92b8114b893f106a7465d47c71b47187c090`; source XAML blob `eb6a9eda4bf064ca2aaf0af6b8672a3b466b584f`. Owned paths: `Carthago/Views/MainWindow.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md` only. Builds, tests, replays, holdouts, CI, GitHub Actions, runners, benchmarks, screenshots of running WPF and production capture: **ZERO**. Acceptance scenarios below are **PLANNED ONLY, NOT AUTHORED OR EXECUTED**.
+
+### Approved design reference and initial divergence review
+
+**FIRST** resolved and visually inspected exact ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c`: navy/graphite panels, cyan/teal accents, quiet dividers, restrained severity, left navigation, KPI cards, prioritized incidents, investigation and dense local event tables. Its IPs, metrics, rule IDs, confidence percentages, Mbps plots, timestamps and terminal lines are **DEMO ONLY**. The CLI remains visual-only and explicitly **UNAVAILABLE**; no screenshot claim is live capture or telemetry. Preserve Wide >=1440, Standard 1100–1439, Compact 1024–1099 and graceful below 1024; local PPS ScottPlot optional 10-sample average/bounded 120-point history; read-only local Live Events 80 displayed/500 retained; Cisco/WebView2/ScottPlot and capture/trust/privacy boundaries.
+
+Read live HEAD, recent commits, ledger through UI-71, `MainWindow.xaml`, `Theme.xaml`, `Sidebar.xaml`, `MainWindow.xaml.cs`, and the original `MainWindow.Dashboard.cs`, `MainWindow.DashboardEvents.cs`, `MainWindow.DashboardResponsive.cs`, `MainWindow.Responsive.cs`, `MainWindow.Core.cs` and `MainWindow.Settings.cs` partials. The starting HEAD follows UI-71 publication by **two independent R548 external Modbus write fanout detection candidate commits**, changing engine/rule registry, R548 source/tests and rule/backlog docs only. No UI overlap. `DashboardHostItemsControl` binds to the private `_dashboardHostRows` populated by `BuildSocHostRows()`: at most five locally grouped unresolved incident source hosts, with anomaly-signal fallback only when no incident hosts exist. Existing columns are Host, Risk, Items and Activity. The local risk score is **not** detection confidence; Activity is relative timestamp density, **not** packet traffic or risk history. Host rows are a non-interactive `ItemsControl` DataTemplate in a 112px-max-height ScrollViewer. `DashboardSummaryGrid` is repositioned by the original responsive partial.
+
+### One cohesive UI-owned design change
+
+Add **one non-hit-testable 1px bottom divider** to each existing High-Risk Hosts row template, spanning the four existing columns. Reuse the existing theme `SoftDividerBrush` (`#1B3245`) and enable pixel snapping. The divider occupies the existing row's layout rather than adding a new row, card, column, focus stop or scrollbar contract. Preserve the original 20px minimum row height, margins, four fixed column widths, text/truncation, score accent, full-host tooltip, accessibility names/help, Items/Activity semantics, sorting, five-row bound, navigation and original producers/consumers. This is a **visible row-scanning improvement**, distinct from UI-18's semantic row labels, UI-53's numeric tooltips, and UI-71's Live Events empty-state card. No new count, telemetry, status, external request, capture control, handler, viewmodel, API or detection/protocol change.
+
+### Static end review, risks and publication discipline
+
+Source commit is a direct child of the pinned baseline, changing only `Carthago/Views/MainWindow.xaml`; its documentation descendant changes only this ledger. Recheck LIVE HEAD and compare any intervening independent changes immediately before publication. Publish the complete private two-commit chain by exactly **one non-forced GitHub `update_ref` with `expected_sha` lease** on the existing branch; if HEAD moves, reconstruct on a new disjoint base and fresh lease or STOP on overlap/uncertainty. Post-publication verify remote HEAD, both blobs, ancestry and exactly two owned paths. No branches, PRs, force pushes, history rewrites or automation changes.
+
+**Unverified risks:** Windows WPF XAML parsing/compilation; 1px divider visibility, device-pixel alignment and contrast in standard/high-contrast themes; whether the line touches glyph descenders at 20px row minimum; last-row border appearance; scrollbar and clipping at 112px max height; horizontal alignment of 170/48/62/84px columns at 1440/1100/1099/1024/1023/640px and 125–200% DPI; screen-reader/keyboard reading order. No claim of rendered success, validated accessibility or unchanged runtime behavior.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED OR EXECUTED
+
+1. With five incident-group host rows, inspect one subtle divider per displayed row without altered values, sort order or source grouping.
+2. With one incident host, inspect its single divider; no fabricated empty rows or extra counts.
+3. With no incident hosts and anomaly fallback, inspect the same separators while Items still means anomaly-signal count.
+4. With zero hosts, inspect that no artificial row/divider is shown.
+5. Inspect all Host/Risk/Items/Activity column alignment, compact host ellipsis and full-host tooltip.
+6. Verify that row separators are not keyboard-focusable, do not intercept hover and do not alter accessible host names.
+7. Inspect 112px scroll viewport, five-row visibility, row clipping and last-divider treatment.
+8. Inspect Wide/Standard/Compact/below-1024 layouts, 125–200% DPI and high-contrast rendering.
+9. Verify PPS, KPIs, incidents/investigation, read-only local Live Events 80/500, unavailable CLI, Cisco/WebView2/ScottPlot and privacy/capture/trust boundaries are unchanged.
+10. Verify exact source/docs blobs, commit ancestry, owned-path diff and absence of tests/builds/CI/runners/replays/benchmarks/capture.
+
+**Next independent UI GA UI-73:** inspect fresh LIVE HEAD, approved image, ledger and original WPF consumers; choose one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–72. All acceptance remains deferred until owner explicitly says **“now it is test time.”**
