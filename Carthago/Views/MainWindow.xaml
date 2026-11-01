@@ -2434,7 +2434,14 @@
                       Orientation="Horizontal"
                       VerticalAlignment="Center">
             <TextBlock Text="Capture:" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,6,0"/>
-            <TextBlock x:Name="FooterTelemetryStateText" Text="Unknown" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,18,0"/>
+            <!-- GA UI-60: expose the existing local capture-state projection, not a global health verdict. -->
+            <TextBlock x:Name="FooterTelemetryStateText"
+                       Text="Unknown"
+                       Foreground="{StaticResource TextMutedBrush}"
+                       Margin="0,0,18,0"
+                       ToolTip="Current local capture-state projection at the last monitoring-header refresh. On does not prove packet flow; Paused, Degraded, Error and Offline are local capture states. Unknown before refresh. Not overall system, database or sensor health."
+                       AutomationProperties.Name="{Binding Text, RelativeSource={RelativeSource Self}}"
+                       AutomationProperties.HelpText="Current local capture state, refreshed by the existing monitoring header. On is the Monitoring projection, not proof of received packets. Paused, Degraded, Error and Offline reflect local capture and flow conditions. Unknown before refresh. No overall system, database or sensor-health claim."/>
             <!-- GA UI-59: expose the sampled UTC clock's current text and its provenance without altering the producer. -->
             <TextBlock x:Name="FooterUtcText"
                        Text="UTC --:--:--"
