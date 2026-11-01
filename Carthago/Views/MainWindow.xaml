@@ -540,7 +540,11 @@
                                  Fill="{Binding BorderBrush, ElementName=MonitoringStatusBadge}"
                                  VerticalAlignment="Center"
                                  Margin="0,0,6,0"/>
+                        <!-- GA UI-61: clarify the chart's local capture/flow status without claiming packet reception. -->
                         <TextBlock Text="{Binding Text, ElementName=CaptureStatusText}"
+                                   ToolTip="Current local capture/flow status from the monitoring header (Monitoring, Paused, Degraded, Error or Offline). Monitoring does not prove packet flow; local PPS timer samples can be zero without active capture."
+                                   AutomationProperties.Name="{Binding Text, RelativeSource={RelativeSource Self}}"
+                                   AutomationProperties.HelpText="Current local capture/flow projection for the PPS chart, not verified packet reception, sensor health or network-wide traffic. Monitoring is not proof of observed packets; timer zeros can occur without active capture."
                                    Foreground="{Binding BorderBrush, ElementName=MonitoringStatusBadge}"
                                    FontSize="11"
                                    FontWeight="SemiBold"
