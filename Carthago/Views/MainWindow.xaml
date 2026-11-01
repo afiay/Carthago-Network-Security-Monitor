@@ -1073,6 +1073,13 @@
                                   <ColumnDefinition Width="62"/>
                                   <ColumnDefinition Width="84"/>
                                 </Grid.ColumnDefinitions>
+                                <!-- GA UI-72: subdued, non-interactive row separator for local host rankings. -->
+                                <Border Grid.ColumnSpan="4"
+                                        BorderBrush="{StaticResource SoftDividerBrush}"
+                                        BorderThickness="0,0,0,1"
+                                        VerticalAlignment="Bottom"
+                                        IsHitTestVisible="False"
+                                        SnapsToDevicePixels="True"/>
                                 <TextBlock Text="{Binding HostDisplay}"
                                            AutomationProperties.Name="{Binding AccessibilityLabel}"
                                            ToolTip="{Binding Host}"
