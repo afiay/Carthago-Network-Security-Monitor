@@ -2047,12 +2047,17 @@
                     <RowDefinition Height="Auto"/>
                   </Grid.RowDefinitions>
 
-                  <TextBlock Text="Sensitivity"
+                  <!-- GA UI-65: clarify staged sensitivity selection and the scope of Save/Reset without changing preference handlers. -->
+                  <TextBlock x:Name="SettingsSensitivityLabel" Text="Sensitivity"
                              VerticalAlignment="Center"/>
                   <ComboBox x:Name="SensitivityCombo"
                             Grid.Column="1"
                             Width="220"
                             SelectedIndex="1"
+                            ToolTip="Choose Relaxed, Balanced or Aggressive detection sensitivity. Changing selection alone does not save it; Save persists this and other settings and reapplies runtime preferences."
+                            ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                            AutomationProperties.LabeledBy="{Binding ElementName=SettingsSensitivityLabel}"
+                            AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                             SelectionChanged="SensitivityCombo_SelectionChanged">
                     <ComboBoxItem Content="Relaxed"/>
                     <ComboBoxItem Content="Balanced"/>
@@ -2115,10 +2120,18 @@
                     <Button Content="Save"
                             Width="100"
                             Style="{StaticResource PrimaryButton}"
+                            ToolTip="Save sensitivity, capture auto-start, default BPF filter, WHOIS, reputation, anomaly presentation and dashboard section preferences. Runtime preferences are reapplied, including the active Npcap filter when applicable."
+                            ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                            AutomationProperties.Name="Save settings"
+                            AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                             Click="SaveSettings_Click"/>
                     <Button Content="Reset"
                             Width="100"
                             Margin="8,0,0,0"
+                            ToolTip="Reset all application preferences to defaults, not only sensitivity. Applies without a confirmation prompt and reapplies runtime preferences, including the active Npcap filter when applicable."
+                            ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                            AutomationProperties.Name="Reset all settings"
+                            AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                             Click="ResetSettings_Click"/>
                   </StackPanel>
                 </Grid>
