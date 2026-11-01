@@ -223,7 +223,13 @@
                       Background="{StaticResource PillAccentBgBrush}"
                       CornerRadius="10"
                       Padding="12,5">
-                <TextBlock x:Name="AnomalyModeText" Text="Anomalies only" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentAltBrush}"/>
+                <!-- GA UI-62: the badge reflects the presentation preference, not capture or detection health. -->
+                <TextBlock x:Name="AnomalyModeText"
+                           Text="Anomalies only"
+                           ToolTip="Current dashboard presentation preference: Anomalies only or Expanded telemetry. Not a capture, sensor-health or detection-accuracy indicator."
+                           AutomationProperties.Name="{Binding Text, RelativeSource={RelativeSource Self}}"
+                           AutomationProperties.HelpText="Current ShowAnomaliesOnly dashboard preference: Anomalies only or Expanded telemetry. Not proof of active capture, sensor health or verified detection."
+                           FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentAltBrush}"/>
               </Border>
             </StackPanel>
           </Border>
@@ -309,7 +315,14 @@
                       Margin="8,0,0,0"/>
             </WrapPanel>
             <WrapPanel HorizontalAlignment="Right" Margin="0,5,0,0">
-              <CheckBox x:Name="AnomaliesOnlyToggle" Content="Show anomalies only" VerticalAlignment="Center" Checked="AnomaliesOnlyToggle_Changed" Unchecked="AnomaliesOnlyToggle_Changed"/>
+              <CheckBox x:Name="AnomaliesOnlyToggle"
+                        Content="Show anomalies only"
+                        VerticalAlignment="Center"
+                        ToolTip="Changes the existing anomaly-first dashboard presentation preference. The header badge shows Anomalies only or Expanded telemetry; this does not start or stop capture."
+                        ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                        AutomationProperties.HelpText="Changes the existing ShowAnomaliesOnly dashboard preference; the header badge reflects the selected setting. Not a capture or detection-quality control."
+                        Checked="AnomaliesOnlyToggle_Changed"
+                        Unchecked="AnomaliesOnlyToggle_Changed"/>
               <Button Content="Customize" Width="104" Height="30"
                       Style="{StaticResource SecondaryButton}"
                       Click="DashboardOpenSettings_Click"
