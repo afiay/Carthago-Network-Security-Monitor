@@ -2884,3 +2884,46 @@ Preserve Wide >=1440, Standard 1100–1439, Compact 1024–1099 and graceful bel
 **Next independent UI GA UI-51:** inspect fresh LIVE HEAD, approved reference, ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–50.
 
 **References:** [WPF DataGridTextColumn.ElementStyle](https://learn.microsoft.com/dotnet/api/system.windows.controls.datagridboundcolumn.elementstyle); [WPF TextBlock.TextTrimming](https://learn.microsoft.com/dotnet/api/system.windows.controls.textblock.texttrimming); [WPF ToolTip](https://learn.microsoft.com/dotnet/api/system.windows.frameworkelement.tooltip).
+
+## GA UI-51 — Source-accurate local time provenance for prioritized queue rows
+
+**2026-11-01 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE `feature/carthago-reliability-hardening` HEAD: `ff2d29347cbbcf7e9667ae2b7258b3423dcc02c7`. Prior GA UI-50 source `44461c7405bf42c0b3f469c43bfbe0bf2ef799b4`; publication `5e0284a8006ab0ceeb363ee86d8599d986181bd0`. **Exact GA UI-51 source SHA:** `36ff441d92769cdb637aae954a4902806a662daa`. **Owned paths only:** `Carthago/Views/MainWindow.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`. **Tests authored: 0; tests executed: 0.** No dotnet build/test, xUnit, replays, holdouts, CI, GitHub Actions, runners, benchmarks, live capture or runtime screenshots.
+
+### Approved visual reference, consumer audit and distinct scope
+
+Resolved and **visually inspected** exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c` (1648×928). Preserve navy/graphite, cyan/teal, restrained severity, left navigation, operational KPIs, local PPS ScottPlot 10-sample average with 120-point bound, prioritized incidents, selected investigation, read-only Live Events 80 shown / 500 retained, and explicitly **UNAVAILABLE visual-only CLI**. Preserve Wide >=1440, Standard 1100–1439, Compact 1024–1099 and graceful layout below 1024. All screenshot IPs, traffic/Mbps, sensor counts, timestamps, rule IDs, severity/confidence percentages, monitoring indicators and CLI text are **DEMO ONLY**, not application telemetry or capture-health claims.
+
+Static inspection included LIVE remote HEAD/recent commit, this ledger through UI-50, `MainWindow.xaml`, `MainWindow.Dashboard.cs`, `MainWindow.DashboardEvents.cs`, `MainWindow.DashboardResponsive.cs`, `MainWindow.Navigation.cs`, `MainWindow.Core.cs`, `MainWindow.xaml.cs`, and `Theme.xaml`. The existing `DashboardAnomalyList` is populated by `BuildSocAnomalyItems`; `SocAnomalyVm.TimeText` is formatted as local `HH:mm:ss` using `incident.UpdatedUtc.ToLocalTime()` for correlated incidents and `anomaly.CreatedUtc.ToLocalTime()` for anomaly signals. `SocAnomalyVm.AccessibilityLabel` already announces local time. The original `ListBoxItem` automation name, item template, keyboard focus border and selection handler remain in place. No UI-01–50 candidate had added this queue-time origin explanation.
+
+### One cohesive UI-owned change
+
+In the existing prioritized incident/anomaly `ListBox.ItemContainerStyle`, add `AutomationProperties.HelpText` explaining the existing local-clock time: incident last update versus anomaly creation, `HH:mm:ss` with date omitted, not a packet-capture or event-delivery timestamp. On the existing `TimeText` TextBlock, add a matching hover `ToolTip`. These are static explanatory UI attributes only. **No new focus stop, timestamp computation, conversion, timezone inference, date, binding, command, selection behavior, queue ordering, score, risk label, status or data producer.** No change to the existing `AccessibilityLabel` or `DashboardAnomalyList_SelectionChanged` consumer. Tooltip may appear even when the time text is not clipped. No tooltip claims that an incident update equals first detection or packet attribution.
+
+Source commit `36ff441d92769cdb637aae954a4902806a662daa` descends directly from starting LIVE `ff2d29347cbbcf7e9667ae2b7258b3423dcc02c7` and changes only `Carthago/Views/MainWindow.xaml`. Existing Cisco/WebView2/ScottPlot, detection/protocol, telemetry/capture, trust/privacy/security, shared APIs, tests and independent automations remain outside scope.
+
+### Start/end static divergence and publication protection
+
+**Start:** LIVE `ff2d29347cbbcf7e9667ae2b7258b3423dcc02c7` is one independent P0321–P0330 HICP protocol candidate ahead of UI-50 publication `5e0284a8006ab0ceeb363ee86d8599d986181bd0`. Its intervening paths are `Carthago.Tests/ProtocolIntelligence/HicpConfigurationAttemptInspectorTests.cs`, `Carthago/Services/ProtocolIntelligence/HicpConfigurationAttemptInspector.cs`, `docs/protocols/PROTOCOL_EXPANSION_PROGRESS.md` and `docs/protocols/PROTOCOL_GA_P0321-P0330.md`; all disjoint and untouched. Private source changes one UI XAML path only. No new names, WPF partial hooks, engine calls, services, protocol rules, data values or altered privacy/capture claims.
+
+**End/publication gate:** immediately re-read LIVE remote HEAD, compare all intervening paths and provenance, review the exact UI source diff and unchanged partials/consumers, source/docs Git blobs, approved reference and absence of fabricated telemetry. Publish **only** the complete source+ledger commit chain with ONE non-forced atomic GitHub `update_ref` using `expected_sha` lease on the same branch. If concurrent work touches owned paths, lease protection fails or conflicts cannot be safely reconciled, STOP. If only disjoint independent changes arrive, rebuild both private commits on the new HEAD and recheck before a fresh lease. Never publish partially, create branches/PRs, rewrite history or change independent automations.
+
+**Residual risks:** WPF compilation, actual ListBoxItem HelpText exposure, assistive-technology announcements, tooltip rendering and hover behavior, virtualized/recycled queue rows, clock presentation, high contrast, 125–200% DPI, 1440/1100/1099/1024/1023/640px layouts, selection/focus and screen-reader verbosity are **UNVERIFIED**. Static provenance review does not prove Windows UI Automation compatibility or accessibility compliance. Local time is a presentation conversion; no timezone metadata is added to the displayed HH:mm:ss.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. Hover an incident queue time: tooltip correctly identifies local HH:mm:ss as incident **last update**, not initial detection.
+2. Hover an anomaly signal time: tooltip correctly identifies local HH:mm:ss as **signal creation**.
+3. Confirm both kinds omit the calendar date and neither tooltip invents one or asserts verified timezone.
+4. Confirm neither tooltip nor row HelpText implies packet-capture timestamp, delivery success or verified incident impact.
+5. With keyboard focus on a row, verify original item accessible name and the added HelpText are exposed appropriately in Windows UI Automation and screen readers.
+6. Navigate the queue with arrow keys: existing focus border, selection, ordering and Incident Investigation update remain unchanged, with no extra Tab stop.
+7. Refresh and recycle queue rows: the existing bound local time remains current and the static tooltip never implies another row's values.
+8. Inspect 1440/1100/1099/1024/1023/640px, high contrast and 125–200% DPI for readable time/tooltip without clipping or layout regression.
+9. Verify unchanged operational KPIs, local PPS chart, Live Events 80/500 read-only filters, visual-only unavailable CLI, Cisco/WebView2 and capture/trust/privacy boundaries.
+10. Confirm no fabricated screenshot data, engine/model/service/protocol/detection/shared API/security/test/automation changes or unrelated repository path edits.
+
+**Open quality GAs:** pinned-SHA Windows compilation and actual UI, keyboard, tooltip, screen-reader, high-contrast, DPI and responsive inspection **only when the owner says “now it is test time.”** **Executed tests: 0.**
+
+**Next independent UI GA UI-52:** inspect fresh LIVE HEAD, approved image, ledger and WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–51.
+
+**References:** [WPF AutomationProperties.HelpText](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.helptext); [WPF FrameworkElement.ToolTip](https://learn.microsoft.com/dotnet/api/system.windows.frameworkelement.tooltip); [DateTime.ToLocalTime](https://learn.microsoft.com/dotnet/api/system.datetime.tolocaltime).
