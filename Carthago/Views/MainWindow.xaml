@@ -687,6 +687,8 @@
                             <Setter Property="BorderThickness" Value="0"/>
                             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
                             <Setter Property="AutomationProperties.Name" Value="{Binding AccessibilityLabel}"/>
+                            <!-- GA UI-51: explain local-clock queue time without a new focus stop or selection change. -->
+                            <Setter Property="AutomationProperties.HelpText" Value="The row time is local HH:mm:ss without a date. Correlated incidents show last update; anomaly signals show creation. This is not a packet-capture or event-delivery timestamp."/>
                             <Setter Property="Template">
                               <Setter.Value>
                                 <ControlTemplate TargetType="{x:Type ListBoxItem}">
@@ -744,7 +746,8 @@
                                   <Border Style="{StaticResource RiskBadge}" BorderBrush="{Binding AccentBrush}" Background="#0B1728">
                                     <TextBlock Text="{Binding Severity}" FontSize="8.5" FontWeight="Bold" Foreground="{Binding AccentBrush}" TextTrimming="CharacterEllipsis"/>
                                   </Border>
-                                  <TextBlock Text="{Binding TimeText}" Foreground="{StaticResource TextMutedBrush}" FontSize="11" HorizontalAlignment="Right" Margin="0,4,0,0"/>
+                                  <TextBlock Text="{Binding TimeText}" Foreground="{StaticResource TextMutedBrush}" FontSize="11" HorizontalAlignment="Right" Margin="0,4,0,0"
+                                             ToolTip="Local time (HH:mm:ss, date omitted). Incidents: last update; signals: creation. Not a packet-capture or delivery timestamp."/>
                                 </StackPanel>
                               </Grid>
                             </Border>
