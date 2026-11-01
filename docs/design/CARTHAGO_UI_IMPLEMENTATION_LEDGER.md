@@ -3142,3 +3142,49 @@ Private source commit `49af4979745e721d226ff94e81ae2d25e1db7235` descends direct
 **Next independent UI GA UI-57:** inspect fresh LIVE HEAD, approved reference, ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–56.
 
 **References:** [WPF ToolTipService.ShowsToolTipOnKeyboardFocus](https://learn.microsoft.com/dotnet/api/system.windows.controls.tooltipservice.showstooltiponkeyboardfocus); [WPF AutomationProperties.HelpText](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.helptext).
+
+## GA UI-57 — Keyboard-discoverable dashboard panel footer navigation
+
+**2026-11-01 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE `feature/carthago-reliability-hardening` HEAD: `8e159ef6a87215e06fc67dc2e29c451a2f46c99a`. Prior GA UI-56 source `49af4979745e721d226ff94e81ae2d25e1db7235`, documentation/publication `fe34d1126d512a22faafbb6389d8f72f4cacb252`. Independent GA P0381–P0390 BACnet BVLC control inspector source, authored tests and protocol documentation were already present in the starting HEAD; this UI stream did not edit or execute them. **Exact GA UI-57 source commit:** `f4ef51f806c74e012d0eeeef76a73b2e89cfbd8b`; **source XAML blob:** `8436e1c4642335dd6b6241efe7863a4ac5116cf5`. **Owned paths only:** `Carthago/Views/MainWindow.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`. **Tests authored: 0; tests executed: 0.** No dotnet build/test, xUnit, replay, holdout, CI, GitHub Actions, runner, benchmark, production capture or running-WPF screenshot.
+
+### Approved image, source audit and distinct scope
+
+Resolved and **visually inspected** the exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c` (1648×928), not an approximate substitute. Its deep navy/graphite, cyan/teal, restrained severity, left navigation, operational KPI cards, local PPS ScottPlot (10-sample average, bounded 120-point history), prioritized incidents, investigation, read-only local Live Events (80 displayed / 500 retained) and explicitly **UNAVAILABLE** visual-only CLI remain unchanged. Existing Wide >=1440, Standard 1100–1439, Compact 1024–1099 and graceful below-1024 presentation are not changed. Screenshot IPs, Mbps curves, timestamps, rule IDs, confidence and capture-health/sensor graphics are **DEMO ONLY**; none is imported into telemetry or represented as observed.
+
+Audited LIVE remote HEAD/recent commits, ledger through GA UI-56, `MainWindow.xaml`, `MainWindow.Dashboard.cs`, `MainWindow.Navigation.cs`, `MainWindow.xaml.cs`, `MainWindow.Core.cs`, `MainWindow.DashboardResponsive.cs` and `Theme.xaml`. The visible **Review findings →** button in the High-Risk Hosts panel already has truthful hover ToolTip and UI Automation Name/HelpText but lacks keyboard-focus tooltip discoverability. `DashboardInvestigateHost_Click` calls `OpenSelectedIncidentWorkspace()` if an incident is selected, otherwise `Nav_Anomalies_Click`. The visible **Open Live Traffic →** footer in Raw / Advanced Shortcuts already has an accessible Name/HelpText but no ToolTip. `DashboardRawTraffic_Click` delegates to `Nav_LiveTraffic_Click`, which activates `LiveTrafficView` and the existing sidebar traffic filters. GA UI-20 corrected footer labels/destinations and GA UI-55 added focus tooltips to the **four shortcut tiles**, not these two separate **panel footer buttons**. GA UI-56 covered Live Events filters. No new handler, shared contract, viewmodel, telemetry producer or route is needed.
+
+### One cohesive UI-owned change
+
+Complete keyboard-focus contextual guidance on the **two existing dashboard summary-panel footer navigation buttons** only:
+
+- **Review findings →**: retain its original truthful hover ToolTip, accessible Name/HelpText, button style and `DashboardInvestigateHost_Click` handler; add `ToolTipService.ShowsToolTipOnKeyboardFocus="True"` so the existing incident-or-anomaly destination explanation is available when focused.
+- **Open Live Traffic →**: add a truthful hover ToolTip, `Opens the existing Live Traffic view and its sidebar traffic filters. Navigation only; this button does not start capture.`, and `ToolTipService.ShowsToolTipOnKeyboardFocus="True"`. Preserve its existing accessible Name/HelpText, caption, dimensions, `DashboardRawTraffic_Click` handler, and actual traffic-filter destination.
+
+Exactly **three WPF attributes** are added to two existing buttons. No new controls, focus stops, event handlers, source values, commands, data bindings, navigation routes, state changes, layout resources or UI partials. No capture activation, evidence export, remediation, verified detection, or host inventory is implied. The source commit `f4ef51f806c74e012d0eeeef76a73b2e89cfbd8b` is a direct child of starting HEAD `8e159ef6a87215e06fc67dc2e29c451a2f46c99a`, changes only `Carthago/Views/MainWindow.xaml`, and contains the source blob `8436e1c4642335dd6b6241efe7863a4ac5116cf5`.
+
+### Start/end static divergence and publication guard
+
+**Start:** compare prior GA UI-56 publication `fe34d1126d512a22faafbb6389d8f72f4cacb252` with LIVE `8e159ef6a87215e06fc67dc2e29c451a2f46c99a`: exactly one independent GA P0381–P0390 protocol commit, changing `Carthago/Services/ProtocolIntelligence/BacnetBvlcControlInspector.cs`, `Carthago.Tests/ProtocolIntelligence/BacnetBvlcControlInspectorTests.cs`, `docs/protocols/PROTOCOL_EXPANSION_PROGRESS.md` and `docs/protocols/PROTOCOL_GA_P0381-P0390.md`. These paths are disjoint from UI ownership. Original WPF partials/consumers, names, sidebar routes, accessible metadata, responsive breakpoints, theme resources, local PPS ScottPlot, Cisco/WebView2, privacy/capture/trust boundaries and approved-reference interpretation remain unchanged by the source diff.
+
+**End/publication gate:** re-read LIVE remote branch HEAD immediately before publication, compare any concurrent detection/protocol commits and their changed paths, inspect both prepared Git blobs, exact source parentage and WPF consumers/naming/privacy/provenance/reference. Publish **the complete private source+ledger chain only** via **one non-forced atomic GitHub `update_ref` with exact `expected_sha` lease** on the existing branch. If moved, reconcile only disjoint changes onto the fresh HEAD with new private commits and fresh lease; STOP on overlap, conflict or absent lease guarantee. Never publish a partial candidate, create branches/PRs, force push, rewrite history or alter independent streams or their automations.
+
+**Residual risks:** Windows compilation, actual tooltip visibility and keyboard-focus timing, screen-reader/UI Automation announcements, conditional incident/anomaly navigation, focus retention on view changes, high contrast, 125–200% DPI and 1440/1100/1099/1024/1023/640px screenshots remain **UNVERIFIED**. Keyboard-focus tooltip metadata does not itself prove accessible presentation on Windows. Tooltip content contains no new host identifiers, telemetry, evidence payloads or capture-health claims.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. Hover Review findings: existing tooltip describes incident workspace when available, otherwise Anomalies; no host-inventory claim.
+2. Tab-focus Review findings: original tooltip is discoverable on keyboard focus; original accessible Name/HelpText unchanged.
+3. Activate Review findings with selected incident: original incident workspace opens; no new capture, export or remediation.
+4. Activate Review findings without selected incident: original Anomalies navigation occurs.
+5. Hover Open Live Traffic: new tooltip names existing Live Traffic and sidebar traffic filters, not capture activation.
+6. Tab-focus Open Live Traffic: new tooltip is discoverable, original accessible Name/HelpText and focus order unchanged.
+7. Activate Open Live Traffic: original `DashboardRawTraffic_Click` route and traffic filters work; neighboring four tiles remain unchanged.
+8. Inspect 1440/1100/1099/1024/1023/640px, high contrast and 125–200% DPI for tooltip placement, legibility, clipping, focus and unchanged footer geometry.
+9. Verify unchanged operational KPIs, local PPS ScottPlot, incident selection/investigation, Live Events 80/500, unavailable visual-only CLI, Cisco/WebView2 and capture/privacy/trust.
+10. Confirm only two UI-owned paths in the complete candidate, no fabricated screenshot data and no engine/model/service/detection/protocol/shared API/security/test/benchmark/workflow/runner/automation edits.
+
+**Open quality GAs:** pinned-SHA Windows WPF compilation, real tooltip/keyboard/screen-reader/high-contrast/DPI/responsive inspection **only after owner says “now it is test time.”** **Executed tests: 0.**
+
+**Next independent UI GA UI-58:** inspect fresh LIVE HEAD, approved image, this ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–57.
+
+**References:** [WPF ToolTipService.ShowsToolTipOnKeyboardFocus](https://learn.microsoft.com/dotnet/api/system.windows.controls.tooltipservice.showstooltiponkeyboardfocus); [WPF AutomationProperties.HelpText](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.helptext).
