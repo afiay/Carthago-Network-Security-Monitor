@@ -1095,6 +1095,7 @@
                                Width="190" Height="30" HorizontalAlignment="Left"
                                Style="{StaticResource SecondaryButton}"
                                ToolTip="Opens a correlated incident workspace when available; otherwise opens Anomalies. This is not a host inventory."
+                               ToolTipService.ShowsToolTipOnKeyboardFocus="True"
                                AutomationProperties.Name="Review local findings"
                                AutomationProperties.HelpText="Opens a correlated incident workspace when available; otherwise opens the Anomalies view. Does not open a complete host inventory."
                                Click="DashboardInvestigateHost_Click" Margin="0,8,0,0"/>
@@ -1226,6 +1227,8 @@
                         </Button>
                       </UniformGrid>
                       <Button Content="Open Live Traffic  &#x2192;" Width="180" Height="30" HorizontalAlignment="Left" Style="{StaticResource SecondaryButton}" Click="DashboardRawTraffic_Click" Margin="0,8,0,0"
+                              ToolTip="Opens the existing Live Traffic view and its sidebar traffic filters. Navigation only; this button does not start capture."
+                              ToolTipService.ShowsToolTipOnKeyboardFocus="True"
                               AutomationProperties.Name="Open Live Traffic"
                               AutomationProperties.HelpText="Opens the existing Live Traffic view."/>
                     </StackPanel>
