@@ -26,7 +26,7 @@
 - Owner approval and cross-stream review for any shared capture/telemetry/record schema integration; source-only isolated work may continue meanwhile.
 - First actual build/xUnit/Windows replay awaits explicit owner command **“now it’s test time.”**
 - Live sensor provenance, TCP stream boundaries, DTLS 1.3 encrypted records, endpoint/proxy logs and NetScaler asset/config/IOC correlation are not established by these isolated inspectors.
-- Continue source-only with P0481–P0490; preserve detection and UI ledgers, frozen holdouts, journal-first raw DetectionEvents, privacy, cooldowns, thresholds and rule IDs.
+- Historical instruction to continue P0481–P0490 is superseded by completed P0491–P0500; preserve detection and UI ledgers, frozen holdouts, journal-first raw DetectionEvents, privacy, cooldowns, thresholds and rule IDs.
 
 | [GA P0071–P0080](PROTOCOL_GA_P0071-P0080.md) | 984c9bbea00f68d7dc2f6b8b5f0d163880ddcba4 | P0071–P0080 | 2 IMPLEMENTED_ISOLATED (Geneve, HSRP v1), 1 EXISTING (VLAN), 1 DEFERRED (GTP), 5 BLOCKED input/L2 (PPP, PPPoE, MPLS, CDP, UDLD), 1 REJECTED as separately counted variant (GTPv2-C); 0 integrated | 33 / 41 | 0 | Source-only bounded Geneve and HSRP v1 inspectors; no trusted live UDP envelope, HSRP authentication or runtime registration |
 
@@ -111,11 +111,14 @@
 
 | [GA P0481–P0490](PROTOCOL_GA_P0481-P0490.md) | 16a13365ef1c45234c751288a6e8ff181f1c8794 | P0481–P0490 | 0 IMPLEMENTED_ISOLATED, 3 DEFERRED (MS-MSRP, Delivery Optimization, RELOAD), 7 REJECTED independent counting (MQ PCF, NFLOG, nl80211, pktgen, raw SIP, DCOM IRemoteActivation, OSI ROS); 0 integrated | 0 / 0 | 0 | Source-only original-inventory correction: RFC 6940 RELOAD is genuine; IBM 2026-09-14 MQ CVE-2026-11378 is not a PCF exploit claim; Windows DO host telemetry proposed but not collected; no code, tests, shared edits or executed validation |
 
+| [GA P0491–P0500](PROTOCOL_GA_P0491-P0500.md) | 1d04a1f7edcde9df3eb0554793e4f488aca5db44 | P0491–P0500 | 1 IMPLEMENTED_ISOLATED (rsh request), 2 DEFERRED (rquota, MS-RSVD), 2 BLOCKED native input (RPL L2, SLARP serial HDLC), 5 REJECTED independent wire-protocol count (FC SB3, DCE secidmap, GSMA SGP.22/32 suites, spoolss RPC endpoint); 0 integrated | 15 / 32 | 0 | BSD/Oracle rshd source-only bounded stateless request inspector; synthetic tests; 0 builds/tests, no shared capture changes; KEV 403, EPSS not asserted; final P0500 inventory ID |
+
 ## Current cursor and independent obligations
 
-**Last completed research GA:** P0481–P0490 (3 deferred, 7 rejected as independently counted, 0 new parsers and 0 integrations). **Next exact ten IDs:** **P0491–P0500**. The original P0488 RELOAD distinctness was corrected against RFC 6940 without changing its immutable P ID.
+**Last completed research GA:** **P0491–P0500**, the final original ten IDs. **Next exact contiguous P-ID GA: NONE**; all P0001–P0500 research IDs now have source-only dispositions. This is **not** 500 verified distinct protocols or 500 live decoders. The independent distinct eligible count is not established; see [GA 0](PROTOCOL_GA_0_RECONCILIATION.md).
 
-- Shared capture/telemetry/schema integrations require separate explicit owner approval and fresh cross-stream review; all proposals remain unimplemented.
+- **Final GA outcome:** 1 isolated rsh request inspector, 2 deferred, 2 blocked native input, 5 rejected independently counted; 15 xUnit methods / 32 concrete invocations authored, 0 executed, 0 runtime integrations.
+- Shared capture/telemetry/schema integration requires separate explicit owner approval and fresh cross-stream review; no runtime wiring was authorized.
 - Builds, xUnit, replay, holdout, CI and runner execution await explicit owner command **“now it's test time.”**
 - Preserve JSONL journal-first DetectionEvents, R102/R118/R163 floors, frozen holdout V1, privacy, source provenance, existing detection/UI streams and their owned ledgers.
-- Source-only continuation: P0491–P0500. Do not infer live capture integration from isolated code or port labels.
+- **No further hourly P-ID continuation is warranted** unless the owner establishes a new distinct, evidence-audited backlog or authorizes integration/validation.
