@@ -3520,3 +3520,42 @@ Inspect the prepared private source/docs commit chain and exact changed paths/bl
 **Next independent UI GA UI-66:** inspect fresh LIVE HEAD, approved reference, ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–65.
 
 **References:** [WPF AutomationProperties.LabeledBy](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.labeledby); [WPF AutomationProperties.HelpText](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.helptext); [WPF ToolTipService.ShowsToolTipOnKeyboardFocus](https://learn.microsoft.com/dotnet/api/system.windows.controls.tooltipservice.showstooltiponkeyboardfocus).
+
+## GA UI-66 — Accessible default BPF filter scope and Save effects
+
+**2026-11-01 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE `feature/carthago-reliability-hardening` HEAD: `39774f0cc12fbd04a764d5a1ea689becb498975c`. Prior GA UI-65 UI source `1924cccb267eadde36bc34f27589aa3f89d7fc25`; prior docs/publication `2de0c4921dccfe23d05e6cdbe55edafe46d405cd`. **Exact GA UI-66 UI source SHA:** `739eaaadea0348a3b8a333c6d6568a2336ca1195`. Source blob: `f67866dcaa5cff0a825c66825686eef408771ce6`. Authorized owned paths: `Carthago/Views/MainWindow.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md` only. **Tests authored: 0; executed: 0.** No build, XAML compilation, xUnit, replay, holdout, CI, Actions, runner, benchmark, production capture or running-app screenshot.
+
+### Approved design reference, initial divergence and original consumers
+
+Resolved and **visually inspected** exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c` (1672×941). Maintain navy/graphite/cyan/teal, restrained severity, left navigation, operational KPIs, prioritized incidents/investigation, local PPS ScottPlot with optional 10-sample average and bounded 120-point history, read-only local Live Events (80 displayed / 500 retained), and explicitly **UNAVAILABLE** visual-only CLI. Preserve Wide >=1440, Standard 1100–1439, Compact 1024–1099, graceful below 1024. Screenshot IPs, metrics, rule IDs, timestamps, confidence, Mbps lines and terminal content are **DEMO ONLY**; none are measured telemetry, verified capture or sensor health.
+
+Before source preparation, LIVE HEAD `39774f0cc12fbd04a764d5a1ea689becb498975c` was exactly one independent protocol commit beyond GA UI-65 publication: P0471–P0480 rexec/BEP14 LSD inspectors, tests and protocol docs; comparison found **no UI-owned path overlap**. Read `MainWindow.xaml`, `MainWindow.Settings.cs`, `MainWindow.Core.cs`, `MainWindow.xaml.cs`, `MainWindow.Navigation.cs`, `MainWindow.Responsive.cs`, `MainWindow.DashboardResponsive.cs`, `MainWindow.Plots.cs`, `Views/Theme.xaml` and read-only `Services/TrafficCaptureService.cs`. The existing `DefaultFilterText` is read by `SaveSettings_Click`: whitespace maps to null; otherwise the value is trimmed and persisted in `PreferencesService.Update` as `DefaultCaptureFilter`. The handler then calls `ApplyRuntimePreferences(..., applyActiveCaptureFilter: true)`, which updates the default and applies it to an active Npcap capture when the original source-selection/state conditions hold. `TrafficCaptureService.ApplyFilter` can stop, close, reopen and restart a running Npcap device while applying a filter; ETW is not a BPF target. Editing the TextBox alone has no write or capture effect. Save also persists other settings (covered separately by GA UI-65). The original `ToolTip` only gave a BPF syntax example.
+
+### One cohesive UI-owned change
+
+In **Settings > Enrichment & Capture**, name the existing visible **Default BPF Filter** label `SettingsDefaultBpfLabel` and associate it with the existing `DefaultFilterText` TextBox via `AutomationProperties.LabeledBy`. Replace its example-only tooltip with truthful guidance about Npcap-only BPF scope, editing versus Save, whitespace clearing the saved default, and possible brief restart of an active Npcap capture when Save reapplies the filter. Expose the same guidance on keyboard focus and through `AutomationProperties.HelpText` bound to the tooltip. Exactly **one existing focusable control** gains three accessibility attributes; no new control, focus stop, validation, API, handler, service, preference, capture action, layout, color, rule, telemetry or security change. Existing label text, TextBox name, width, value, handler paths and responsive geometry are unchanged.
+
+### End static divergence and publication guard
+
+Prepared private UI source commit `739eaaadea0348a3b8a333c6d6568a2336ca1195` and this documentation-only commit on its descendant tree; only the two authorized paths may differ from the starting HEAD. Immediately before publication, re-read LIVE remote HEAD and compare any concurrent detection/protocol commits with the starting HEAD. If disjoint, reconstruct the complete source/docs chain on the fresh HEAD and use a fresh expected-SHA lease; STOP on UI-owned overlap, conflict, missing lease guarantee or divergent ancestry. Publish **only complete source plus ledger** through **one non-forced atomic GitHub `update_ref`** with `expected_sha` on this same branch. Post-publication verify remote HEAD and changed paths/blobs. This is static source review only, not evidence of compilation or live accessibility.
+
+**Residual risks:** WPF XAML parsing/compilation, `LabeledBy` resolution, TextBox keyboard-focus tooltip and screen-reader HelpText exposure, high-contrast readability, DPI 125–200%, widths 1440/1100/1099/1024/1023/640px, invalid BPF syntax, preference-write errors, and Npcap stop/reopen/restart or filter failures remain **UNVERIFIED**. Tooltip disclosure does not add validation, confirmation, rollback or capture safety guarantees. No verified packet flow, system health or detection claims.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. In Settings > Enrichment & Capture, keyboard-focus `DefaultFilterText`; UI Automation should associate the unchanged **Default BPF Filter** label via `LabeledBy`.
+2. Hover and keyboard-focus the field; inspect complete tooltip visibility, wording and HelpText in WPF and at least one assistive-technology client.
+3. Enter a BPF example such as `tcp or port 443` without Save; verify the current preference and capture filter are unchanged.
+4. Enter only whitespace, then Save in a controlled authorized test; inspect the saved null default and original `SetDefaultFilter` behavior.
+5. Save a valid BPF with Npcap capture inactive; inspect persisted preference and default filter without claiming live packet filtering.
+6. Save with active Npcap capture under controlled conditions; observe original `ApplyFilter` stop/reopen/restart behavior and failure presentation.
+7. Save with ETW selected; verify BPF is not presented as an ETW filter and the original conditional Npcap application remains unchanged.
+8. Inspect field focus, text clipping, high contrast, 125–200% DPI and widths 1440/1100/1099/1024/1023/640px; ensure no layout/focus regression.
+9. Confirm unchanged Cisco/WebView2/ScottPlot, local PPS/10-sample average/120-point history, incident prioritization/investigation, read-only Live Events 80/500, unavailable CLI, and privacy/capture/trust boundaries.
+10. Compare source and docs commits and blobs with approved reference and concurrent independent changes; confirm exactly two authorized paths and **zero** builds/tests/replays/CI/runners/capture.
+
+**Open quality GAs:** pinned-SHA Windows WPF compilation, keyboard/screen-reader/visual checks and capture-filter scenario tests only when the owner says **“now it is test time.”** **Executed tests: 0.**
+
+**Next independent UI GA UI-67:** inspect fresh LIVE HEAD, approved reference, ledger and WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–66.
+
+**References:** [WPF AutomationProperties.LabeledBy](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.labeledby); [WPF AutomationProperties.HelpText](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.helptext); [WPF ToolTipService.ShowsToolTipOnKeyboardFocus](https://learn.microsoft.com/dotnet/api/system.windows.controls.tooltipservice.showstooltiponkeyboardfocus).
