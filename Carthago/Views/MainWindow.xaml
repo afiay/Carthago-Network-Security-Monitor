@@ -59,6 +59,13 @@
         <Setter Property="Margin" Value="2,0,2,0"/>
         <Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}"/>
       </Style>
+      <!-- GA UI-50: reveal full current recorded text in the remaining narrow event-metadata cells without changing values. -->
+      <Style x:Key="DashboardLiveMetadataCellText"
+             TargetType="{x:Type TextBlock}"
+             BasedOn="{StaticResource {x:Type TextBlock}}">
+        <Setter Property="Margin" Value="2,0,2,0"/>
+        <Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+      </Style>
       <!-- GA UI-47: source-accurate cell-level context for reported evidence and delivery status. -->
       <Style x:Key="DashboardLiveEvidenceCellText"
              TargetType="{x:Type TextBlock}"
@@ -1349,7 +1356,8 @@
                           </Style>
                         </DataGrid.CellStyle>
                         <DataGrid.Columns>
-                          <DataGridTextColumn Header="Event time" Binding="{Binding EventTime}" Width="144">
+                          <DataGridTextColumn Header="Event time" Binding="{Binding EventTime}" Width="144"
+                                              ElementStyle="{StaticResource DashboardLiveMetadataCellText}">
                             <DataGridTextColumn.HeaderStyle>
                               <Style TargetType="{x:Type DataGridColumnHeader}"
                                      BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
@@ -1384,7 +1392,8 @@
                               </Style>
                             </DataGridTextColumn.HeaderStyle>
                           </DataGridTextColumn>
-                          <DataGridTextColumn Header="Rule" Binding="{Binding RuleId}" Width="76">
+                          <DataGridTextColumn Header="Rule" Binding="{Binding RuleId}" Width="76"
+                                              ElementStyle="{StaticResource DashboardLiveMetadataCellText}">
                             <DataGridTextColumn.HeaderStyle>
                               <Style TargetType="{x:Type DataGridColumnHeader}"
                                      BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
@@ -1395,7 +1404,8 @@
                               </Style>
                             </DataGridTextColumn.HeaderStyle>
                           </DataGridTextColumn>
-                          <DataGridTextColumn Header="Severity" Binding="{Binding Severity}" Width="85">
+                          <DataGridTextColumn Header="Severity" Binding="{Binding Severity}" Width="85"
+                                              ElementStyle="{StaticResource DashboardLiveMetadataCellText}">
                             <DataGridTextColumn.HeaderStyle>
                               <Style TargetType="{x:Type DataGridColumnHeader}"
                                      BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
@@ -1406,7 +1416,8 @@
                               </Style>
                             </DataGridTextColumn.HeaderStyle>
                           </DataGridTextColumn>
-                          <DataGridTextColumn Header="Protocol" Binding="{Binding Protocol}" Width="80">
+                          <DataGridTextColumn Header="Protocol" Binding="{Binding Protocol}" Width="80"
+                                              ElementStyle="{StaticResource DashboardLiveMetadataCellText}">
                             <DataGridTextColumn.HeaderStyle>
                               <Style TargetType="{x:Type DataGridColumnHeader}"
                                      BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
