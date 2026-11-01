@@ -17,7 +17,7 @@
 
 | [GA P0031–P0040](PROTOCOL_GA_P0031-P0040.md) | f9fcc016081620c20bf9130ea33194d225c0f263 | P0031–P0040 | 2 IMPLEMENTED_ISOLATED (WireGuard, IKEv2-only), 3 PARTIAL (Modbus, Modbus/TCP, DNP3), 1 DEFERRED (ESP), 4 BLOCKED L2 (EAPOL, ARP, LLDP, STP); 0 integrated | 29 / 38 | 0 | Complete caller-attested UDP envelopes only; no runtime producer, authentication, decryption or exploit claims |
 
-**Last completed research GA:** P0391–P0400 (source-only protocol/input audit; 0 new parsers, 0 tests authored or executed). **Next exact ten IDs:** **P0401–P0410**. Do not skip blocked candidates, invent new P IDs, rewrite historical outcomes, or treat authored tests as executed. Recover live HEAD and compare concurrent detection/UI stream paths before publication.
+**Last completed research GA:** P0401–P0410 (source-only protocol/input audit; 0 new parsers, 0 tests authored or executed). **Next exact ten IDs:** **P0411–P0420**. Do not skip blocked candidates, invent new P IDs, rewrite historical outcomes, or treat authored tests as executed. Recover live HEAD and compare concurrent detection/UI stream paths before publication.
 
 | [GA P0041–P0050](PROTOCOL_GA_P0041-P0050.md) | 691717f8a3302f58454dfcb9e6da45993b17a442 | P0041–P0050 | 3 IMPLEMENTED_ISOLATED (OPC UA UACP, IEC104 APCI, BGP-4 envelope), 2 PARTIAL (S7, BACnet), 1 DEFERRED (MMS), 4 BLOCKED L2 (GOOSE, PROFINET DCP/IO, EtherCAT); 0 integrated | 42 / 50 | 0 | Source-only bounded inspectors, synthetic authored xUnit scenarios, no trusted TCP reassembly or L2 producer |
 
@@ -28,7 +28,7 @@
 - Owner approval and cross-stream review for any shared capture/telemetry/record schema integration; source-only isolated work may continue meanwhile.
 - First actual build/xUnit/Windows replay awaits explicit owner command **“now it’s test time.”**
 - Live sensor provenance, TCP stream boundaries, DTLS 1.3 encrypted records, endpoint/proxy logs and NetScaler asset/config/IOC correlation are not established by these isolated inspectors.
-- Continue source-only with P0401–P0410; preserve detection and UI ledgers, frozen holdouts, journal-first raw DetectionEvents, privacy, cooldowns, thresholds and rule IDs.
+- Continue source-only with P0411–P0420; preserve detection and UI ledgers, frozen holdouts, journal-first raw DetectionEvents, privacy, cooldowns, thresholds and rule IDs.
 
 | [GA P0071–P0080](PROTOCOL_GA_P0071-P0080.md) | 984c9bbea00f68d7dc2f6b8b5f0d163880ddcba4 | P0071–P0080 | 2 IMPLEMENTED_ISOLATED (Geneve, HSRP v1), 1 EXISTING (VLAN), 1 DEFERRED (GTP), 5 BLOCKED input/L2 (PPP, PPPoE, MPLS, CDP, UDLD), 1 REJECTED as separately counted variant (GTPv2-C); 0 integrated | 33 / 41 | 0 | Source-only bounded Geneve and HSRP v1 inspectors; no trusted live UDP envelope, HSRP authentication or runtime registration |
 
@@ -94,3 +94,5 @@
 | [GA P0381–P0390](PROTOCOL_GA_P0381-P0390.md) | fe34d1126d512a22faafbb6389d8f72f4cacb252 | P0381–P0390 | 1 IMPLEMENTED_ISOLATED (BACnet BVLC control extension; 0 new distinct protocols), 1 DEFERRED (Boot Parameters), 4 BLOCKED native input (ISO14443, ISO7816, IEEE LLC, GPRS LLC), 4 REJECTED as independently counted (3GPP Diameter AVP layer, EtherCAT Switch Link, Extreme Mesh header, HP LLC subheader); 0 integrated | 14 / 22 | 0 | Source-only strict BACnet BVLC 0x81 control inspector; Siemens 2026-08-11 BACnet-family CVE-2026-59693 vendor advisory **not** BVLC exploit evidence; no shared producer or executed tests |
 
 | [GA P0391–P0400](PROTOCOL_GA_P0391-P0400.md) | a032e83b3c4e2b6fb9cf65a585c7474195ac8261 | P0391–P0400 | 0 IMPLEMENTED_ISOLATED, 0 EXISTING/PARTIAL, 3 DEFERRED (Pegasus LSC, MPEG-TS, RTmac), 5 BLOCKED trusted/native input (MAC Control, Modbus RTU, MPLS MAC withdrawal, NTSCF, QLLC), 2 REJECTED independently counted (PW Frame Relay control word, SAToP control word); 0 integrated | 0 / 0 | 0 | Source-only RFC 7769/4619/4553/1613, Modbus Organization and Wireshark catalog review; no verified native sensor, deployed fixtures, candidate-specific exploit claim, source/test/shared-core change, build or test execution |
+
+| [GA P0401–P0410](PROTOCOL_GA_P0401-P0410.md) | 710174ccfaead3a9eaa642ce705a622ad8e3f4f4 | P0401–P0410 | 0 IMPLEMENTED_ISOLATED, 2 DEFERRED (MS-SCMR, T.124), 6 BLOCKED native input (IEC 61850 SV, Token Ring MAC, USB CDC, AWDL action, Bluetooth ATT, Bluetooth AVCTP), 2 REJECTED separate distinctness (AVTP TSCF subtype, AWDL data-frame duplicate); 0 integrated | 0 / 0 | 0 | IEC/ITU/Microsoft/IEEE/USB-IF/Bluetooth SIG source reconciliation; native-media producer gaps; no candidate-specific exploitation evidence or EPSS; no C# source, tests or shared-core changes |
