@@ -3099,3 +3099,46 @@ The private source commit `04ccd17466d8bb2da07e69314f70823fe19f7aa8` descends di
 **Next independent UI GA UI-56:** inspect fresh LIVE HEAD, approved image, this ledger and WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–55.
 
 **References:** [WPF ToolTipService.ShowsToolTipOnKeyboardFocus](https://learn.microsoft.com/dotnet/api/system.windows.controls.tooltipservice.showstooltiponkeyboardfocus); [WPF FrameworkElement.ToolTip](https://learn.microsoft.com/dotnet/api/system.windows.frameworkelement.tooltip); [WPF AutomationProperties.HelpText](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.helptext).
+
+## GA UI-56 — Keyboard-focus filter guidance in read-only Live Events
+
+**2026-11-01 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE `feature/carthago-reliability-hardening` HEAD: `df49577886a511639333acc2643ae5384ea7af61`. Prior GA UI-55 source `04ccd17466d8bb2da07e69314f70823fe19f7aa8`, docs/publication `0e48047c071c2fcea02181764ec648bc8bde3517`. The intervening independent P0371–P0380 protocol reconciliation modified only `docs/protocols/PROTOCOL_EXPANSION_PROGRESS.md` and `docs/protocols/PROTOCOL_GA_P0371-P0380.md`; it was already present and is untouched. **Exact GA UI-56 source commit:** `49af4979745e721d226ff94e81ae2d25e1db7235`; **source XAML blob:** `c1b513e85304ba179ee233406e8c988e5c24e678`. **Owned paths only:** `Carthago/Views/MainWindow.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`. **Tests authored: 0; executed: 0.** No builds, dotnet tests, xUnit, replays, holdouts, CI, runners, benchmarks, production capture or running-app screenshots.
+
+### Approved reference, consumers and non-duplication
+
+Resolved and **visually inspected** the exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c` (1648×928). Preserve navy/graphite/cyan/teal, restrained severity, left navigation, operational KPIs, local PPS ScottPlot (10-sample average, bounded 120-point history), prioritized incidents, investigation, read-only local Live Events (80 displayed / 500 retained), and explicitly **UNAVAILABLE visual-only CLI**. Existing Wide >=1440, Standard 1100–1439, Compact 1024–1099 and graceful below-1024 behavior remain unchanged. Screenshot IPs, Mbps series, timestamps, rule IDs, confidence, sensor counts and capture-health graphics are **DEMO ONLY**; no fabricated values or claims are added.
+
+Static audit included the LIVE branch and recent commit divergence, ledger through UI-55, `MainWindow.xaml`, `MainWindow.xaml.cs`, `MainWindow.Core.cs`, `MainWindow.Dashboard.cs`, `MainWindow.DashboardEvents.cs`, `MainWindow.DashboardResponsive.cs`, `MainWindow.Navigation.cs`, `MainWindow.DataEvents.cs`, `MainWindow.Filters.cs`, `MainWindow.Responsive.cs` and `Theme.xaml`. The existing Live Events filter row has four keyboard-focusable controls (Severity, Protocol, Rule, Search) with source-accurate hover ToolTips and UI Automation Name/HelpText. The Clear filters button already has truthful HelpText but no tooltip. The original `DashboardLiveEventsClearFilters_Click` resets exactly the two ComboBox selected indices and clears the two TextBoxes, then refreshes the bounded local display. `RefreshDashboardLiveEvents` filters existing retained `_alerts` and takes up to 80 rows; `MainWindow.DataEvents.cs` retains at most 500 events. GA UI-16/26/39 covered visible filter labels and HelpText; GA UI-55 covered shortcut tiles, not **keyboard-focus tooltip discoverability across the Live Events filter row**. No shared contract, viewmodel, data producer or new handler is needed.
+
+### One cohesive UI-owned improvement
+
+Add `ToolTipService.ShowsToolTipOnKeyboardFocus="True"` to the four existing Severity/Protocol/Rule/Search filter controls, retaining their original ToolTip strings. Give the existing **Clear filters** button a truthful hover tooltip, `Reset only the four dashboard Live Events filters. Retained local detection events and filters in other views are not cleared.`, and enable the same keyboard-focus tooltip behavior. **Exactly six WPF attributes added across five existing controls; zero deletions.** Existing `AutomationProperties.Name`/`HelpText`, visible captions, focus/tab order, dimensions, bindings, filter selection/text handlers, refresh, read-only grid, virtualization, frozen time column, status/provenance labels and source values remain unchanged. No telemetry, capture, rule evaluation, protocol inspection, evidence export, remediation, storage or security changes.
+
+Private source commit `49af4979745e721d226ff94e81ae2d25e1db7235` descends directly from starting LIVE HEAD `df49577886a511639333acc2643ae5384ea7af61`, changing only `Carthago/Views/MainWindow.xaml` (+6/-0). Source blob `c1b513e85304ba179ee233406e8c988e5c24e678` is prepared but remains **unverified** until Windows inspection is authorized.
+
+### Start/end static divergence and publication guard
+
+**Start:** prior GA UI-55 publication `0e48047c071c2fcea02181764ec648bc8bde3517` to LIVE HEAD `df49577886a511639333acc2643ae5384ea7af61` shows exactly one disjoint protocol documentation commit (P0371–P0380); no UI paths overlap. The new source-only diff changes no WPF partials, handlers, bindings, API names, theme, responsive breakpoints, Cisco/WebView2/ScottPlot, privacy/trust/capture or approved-reference interpretation. The original consumer explicitly resets only the four filter values, not retained events.
+
+**End/publication gate:** immediately before publication re-read LIVE branch HEAD, compare all intervening changes with the private source/docs chain, inspect both Git blobs, original WPF consumers, naming, provenance, privacy and approved image. Publish **complete source+ledger chain only** through a single non-forced atomic GitHub `update_ref` with `expected_sha` lease on the same branch. If moved, reconcile disjoint independent work onto fresh HEAD with new private commits and a fresh lease; STOP on overlapping paths, conflicts or missing guarantee. Never publish a partial candidate, create branches/PRs, rewrite history, force push or alter independent streams/automations.
+
+**Residual risks:** Windows compilation, actual WPF keyboard-focus tooltip behavior, ComboBox popup focus, text-entry focus, screen-reader/UI Automation narration, tooltip overlap and lifetime, high contrast, 125–200% DPI, and responsive 1440/1100/1099/1024/1023/640px remain **UNVERIFIED**. Tooltip presentation may differ by Windows accessibility client. Existing accessible labels/HelpText remain primary non-tooltip descriptions. Clear filters never clears underlying retained events; no capture-health, packet attribution, detection-quality or verified-impact assertion is introduced.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED; UNEXECUTED
+
+1. Tab-focus Severity: existing tooltip appears; accessible label, HelpText and selected value remain unchanged.
+2. Tab-focus Protocol: existing tooltip appears; All protocols still includes protocols beyond the individual dropdown entries.
+3. Tab-focus Rule: existing tooltip appears without changing the exact/partial rule-ID filter or invoking rule evaluation.
+4. Tab-focus Search: existing tooltip appears without implying raw evidence or archived-event search.
+5. Hover and Tab-focus Clear filters: new tooltip explains only four dashboard filter values reset, not retained event deletion or other views' filters.
+6. Activate Clear filters after combined filtering: existing ComboBox indices/text values reset and bounded retained events reappear without loss, preserving 80 displayed / 500 retained limits.
+7. Tab/Shift+Tab through five existing controls: no new focus stops, handler changes, duplicated accessible names or focus traps; inspect ComboBox popup interaction and screen-reader announcements.
+8. Inspect 1440/1100/1099/1024/1023/640px, high contrast and 125–200% DPI for tooltip legibility, placement and unchanged filter geometry.
+9. Verify unchanged operational KPIs, local PPS ScottPlot, prioritized incidents, investigation, Live Events row provenance, unavailable CLI, Cisco/WebView2 and privacy/capture/trust.
+10. Confirm exactly two authorized paths in the complete candidate, no fabricated reference telemetry and no engine/model/service/detection/protocol/shared API/security/test/workflow/runner/automation edits.
+
+**Open quality GAs:** pinned-SHA Windows compilation and actual tooltip, keyboard, screen-reader, high-contrast, DPI and responsive inspection only after owner says **“now it is test time.”** **Executed tests: 0.**
+
+**Next independent UI GA UI-57:** inspect fresh LIVE HEAD, approved reference, ledger and original WPF consumers for one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–56.
+
+**References:** [WPF ToolTipService.ShowsToolTipOnKeyboardFocus](https://learn.microsoft.com/dotnet/api/system.windows.controls.tooltipservice.showstooltiponkeyboardfocus); [WPF AutomationProperties.HelpText](https://learn.microsoft.com/dotnet/api/system.windows.automation.automationproperties.helptext).
