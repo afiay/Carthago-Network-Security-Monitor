@@ -3925,3 +3925,40 @@ Source commit `77e4f4431f2749a9f3324e6339730b8b55a22588` is a direct child of pi
 10. Inspect final source/docs blobs, direct-parent commits, exact owned-path diff, expected-SHA publication lease and **zero** builds/tests/replays/CI/runners/benchmarks/capture.
 
 **Next independent UI GA UI-77:** inspect fresh LIVE HEAD, exact approved image, ledger and original WPF consumers; choose one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–76. Acceptance remains deferred until the owner explicitly says **“now it is test time.”**
+
+## GA UI-77 — Live Events: visible keyboard focus across the local filter toolbar
+
+**2026-11-02 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE `feature/carthago-reliability-hardening` HEAD: `bd0c37fc3f8383a61e6bd5fb80e6a69e1927bb47`. Previous GA UI-76 source `77e4f4431f2749a9f3324e6339730b8b55a22588`, publication `63adc5f2eee48b8019f7ae5b713c6a4ee50f041c`. **Exact GA UI-77 source commit:** `5971452d357da0dd9c9c37b5d6772aacc2c3d512`; source XAML blob `369b1f8163c82b1443c00d89987c0b66ad5988c4`. Owned paths only: `Carthago/Views/MainWindow.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`. **ZERO** builds, dotnet tests, xUnit, replays, holdouts, CI, GitHub Actions, runners, benchmarks, production capture, running-WPF screenshots or authored/executed tests. All acceptance below is **PLANNED ONLY — UNEXECUTED**.
+
+### Exact approved design reference and initial static divergence review
+
+**FIRST** retrieved and visually inspected the exact ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c`. The approved concept depicts navy/graphite surfaces, cyan/teal accents, persistent left navigation, operational KPIs, traffic plot, prioritized incident queue, investigation, a compact Live Events filter row and dense table. Its IP addresses, metrics, rule IDs, timestamps, confidence, Mbps lines and terminal text are **DEMO ONLY**, not verified telemetry, capture health or executable CLI. Preserve the existing explicitly **UNAVAILABLE** visual-only CLI.
+
+Starting HEAD is exactly **one independent R553 cross-subnet SMB2 WRITE request-fanout detection source/tests/docs commit** (`bd0c37fc3f8383a61e6bd5fb80e6a69e1927bb47`) after GA UI-76 publication; comparison shows **no UI-owned path overlap**. Read recent live commits, ledger through UI-76, `MainWindow.xaml`, `Theme.xaml`, `Sidebar.xaml`, and original `MainWindow.DashboardEvents.cs`, `MainWindow.Dashboard.cs`, `MainWindow.DashboardResponsive.cs`, `MainWindow.Responsive.cs`, `MainWindow.Core.cs`, `MainWindow.Settings.cs`, `MainWindow.xaml.cs`, and `MainWindow.Navigation.cs` consumers. The local events producer and filtering remain in `MainWindow.DashboardEvents.cs`; four named filters drive the existing severity/protocol/rule/search projection. `DashboardLiveEventsGrid` is read-only and bounded to 80 displayed rows from up to 500 retained local records. No new shared contract, producer, viewmodel, data source, control handler, settings writer or API is needed.
+
+### One cohesive UI-owned accessibility/visual-consistency enhancement
+
+The GA UI-75 subdued toolbar groups four existing input controls and a Clear filters button. The Clear filters button already inherits `KeyboardFocusVisual` from the theme's `PrimaryButton` / `SecondaryButton` style, while the four inputs have no explicit keyboard-focus visual in their XAML and the theme's custom ComboBox template has no dedicated focus trigger. Assign the **existing** `FocusVisualStyle="{StaticResource KeyboardFocusVisual}"` to exactly four existing controls: `DashboardLiveSeverityFilter`, `DashboardLiveProtocolFilter`, `DashboardLiveRuleFilter`, and `DashboardLiveSearchFilter`. This makes their intended keyboard focus presentation consistent with the already-styled Clear button without changing the shared theme or global controls. The existing 2px `KeyboardFocusBrush` focus-adorner template is reused; no new color, label, button, focus stop or visual control is introduced. This is distinct from GA UI-15's grid-cell focus outline, GA UI-40/56's filter scope/tooltips, and GA UI-75's toolbar grouping.
+
+Source diff: **four attribute additions, zero deletions** in `MainWindow.xaml`. Existing input sizes, filter order, tooltips, AutomationProperties labels/help, ComboBox/TextBox handlers, selection and filtering logic, wrapping `WrapPanel`, grid, status and provenance remain unchanged. Preserve Wide >=1440, Standard 1100–1439, Compact 1024–1099 and graceful below 1024; local PPS ScottPlot 10-sample average/120-point history; prioritized incidents, investigation, read-only local Live Events 80/500, Cisco/WebView2/ScottPlot, privacy/capture/trust boundaries and independent detection/protocol streams. No fabricated telemetry or capture health.
+
+### Static end review, publication guard and unverified risks
+
+Private source commit `5971452d357da0dd9c9c37b5d6772aacc2c3d512` is a direct child of pinned baseline `bd0c37fc3f8383a61e6bd5fb80e6a69e1927bb47` and changes **only** `Carthago/Views/MainWindow.xaml` (four additions). The private documentation descendant changes **only** this ledger. Re-read LIVE remote HEAD immediately before publication; compare any intervening detection/protocol/UI paths. Publish the complete two-commit chain via **one non-forced atomic GitHub `update_ref` with `expected_sha` lease** on the same branch. If HEAD moved, reconcile only disjoint paths against a fresh HEAD and new expected-SHA lease; STOP on overlap, conflicts or missing atomic guarantee. After publication inspect remote HEAD, direct-parent ancestry, both file blobs, exact owned-path diff, independent R553 preservation and zero test execution.
+
+**Unverified risks:** WPF XAML parsing/compilation; whether WPF actually renders a `FocusVisualStyle` adorner on the custom-templated ComboBoxes and standard TextBoxes; 2px outline visibility/contrast against the toolbar; focus-adorner clipping at the toolbar Border or WrapPanel edges; keyboard vs pointer focus distinctions; tab sequence and assistive reading order; filter popup focus return; high-contrast themes, 125–200% DPI, 1440/1100/1099/1024/1023/640px widths, and disabled/empty states. Static inspection is **not** Windows rendering, accessibility or compilation verification.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED OR EXECUTED
+
+1. At 1440px, keyboard Tab/Shift+Tab across Severity, Protocol, Rule, Search and Clear; inspect intended consistent visible focus outline without new stops.
+2. At 1100/1099/1024/1023/640px, inspect wrapped toolbar controls and focus-adorner containment at row and Border edges.
+3. At 125%, 150%, 200% DPI, inspect 2px focus outline visibility and control alignment.
+4. Inspect standard/high-contrast themes for readable, non-clipped keyboard focus and adequate distinction from hover/selection.
+5. Open and close both ComboBox popups using keyboard; inspect focus return, selected value and existing filter semantics.
+6. Type and clear both TextBox filters using keyboard; inspect unchanged rule/search projection, caret, focus and tooltip presentation.
+7. Use Clear filters and verify existing four-filter reset, no retained-event deletion and unchanged focus order.
+8. Inspect read-only grid, frozen first column, empty/no-match states, status/provenance and 80 displayed/500 retained boundaries.
+9. Inspect unchanged operational KPIs, PPS average/history, prioritized incidents/investigation, unavailable CLI, Cisco/WebView2/ScottPlot, privacy/capture/trust and independent R553 files.
+10. Inspect final source/docs blobs, two direct-parent commits, exact owned-path diff, fresh expected-SHA publication lease and **zero** builds/tests/replays/CI/runners/benchmarks/capture.
+
+**Next independent UI GA UI-78:** inspect fresh LIVE HEAD, exact approved reference, ledger and original WPF consumers; choose one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–77. All acceptance remains deferred until owner explicitly says **“now it is test time.”**
