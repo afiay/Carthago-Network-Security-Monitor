@@ -13,7 +13,7 @@ using Carthago.Services;
 
 namespace Carthago.Views
 {
-    public partial class HostIntegrityPage : Page
+    public partial class HostIntegrityPage : Page, IResponsiveLayoutAware
     {
         private readonly RootkitDetectorService _rootkitService = new();
         private readonly InstalledSoftwareInventoryService _appService = new();
@@ -27,7 +27,58 @@ namespace Carthago.Views
         public HostIntegrityPage()
         {
             InitializeComponent();
+            ResponsiveLayout.ApplyWhenLoaded(this, ApplyResponsiveLayout);
+            SizeChanged += (_, args) =>
+            {
+                if (args.WidthChanged && ActualWidth > 0)
+                    ApplyResponsiveLayout(ResponsiveLayout.Resolve(Window.GetWindow(this)?.ActualWidth ?? ActualWidth));
+            };
             Loaded += HostIntegrityPage_Loaded;
+        }
+
+        // GA UI-96: presentation-only reflow. Existing inventory data and scan handlers are untouched.
+        public void ApplyResponsiveLayout(ResponsiveLayoutMode mode)
+        {
+            var compact = mode == ResponsiveLayoutMode.Compact;
+            var veryNarrow = compact && ActualWidth > 0 && ActualWidth < 700;
+
+            Grid.SetRow(HostHeroAction, compact ? 1 : 0);
+            Grid.SetColumn(HostHeroAction, compact ? 0 : 1);
+            HostHeroAction.HorizontalAlignment = compact ? HorizontalAlignment.Left : HorizontalAlignment.Right;
+            HostHeroAction.Margin = compact ? new Thickness(0, 14, 0, 0) : new Thickness(0);
+
+            HostMetricFirstColumn.Width = new GridLength(1, GridUnitType.Star);
+            HostMetricSecondColumn.Width = veryNarrow
+                ? new GridLength(0)
+                : new GridLength(1, GridUnitType.Star);
+            HostMetricThirdColumn.Width = compact
+                ? new GridLength(0)
+                : new GridLength(1.25, GridUnitType.Star);
+            HostMetricSecondRow.Height = compact ? GridLength.Auto : new GridLength(0);
+            HostMetricThirdRow.Height = veryNarrow ? GridLength.Auto : new GridLength(0);
+
+            Grid.SetRow(HostScoreCard, 0);
+            Grid.SetColumn(HostScoreCard, 0);
+            Grid.SetColumnSpan(HostScoreCard, 1);
+            HostScoreCard.Margin = veryNarrow ? new Thickness(0, 0, 0, 12) : new Thickness(0, 0, 12, 0);
+
+            Grid.SetRow(HostRiskCard, veryNarrow ? 1 : 0);
+            Grid.SetColumn(HostRiskCard, veryNarrow ? 0 : 1);
+            Grid.SetColumnSpan(HostRiskCard, 1);
+            HostRiskCard.Margin = veryNarrow ? new Thickness(0, 0, 0, 12) : new Thickness(0, 0, 12, 0);
+
+            Grid.SetRow(HostScanCard, veryNarrow ? 2 : compact ? 1 : 0);
+            Grid.SetColumn(HostScanCard, compact ? 0 : 2);
+            Grid.SetColumnSpan(HostScanCard, compact && !veryNarrow ? 2 : 1);
+            HostScanCard.Margin = compact && !veryNarrow ? new Thickness(0, 12, 0, 0) : new Thickness(0);
+
+            Grid.SetRow(ShowOnlySuspiciousDriversCheck, compact ? 1 : 0);
+            Grid.SetColumn(ShowOnlySuspiciousDriversCheck, compact ? 0 : 1);
+            ShowOnlySuspiciousDriversCheck.Margin = compact ? new Thickness(0, 10, 0, 0) : new Thickness(0);
+
+            Grid.SetRow(ShowOnlySuspiciousAppsCheck, compact ? 1 : 0);
+            Grid.SetColumn(ShowOnlySuspiciousAppsCheck, compact ? 0 : 1);
+            ShowOnlySuspiciousAppsCheck.Margin = compact ? new Thickness(0, 10, 0, 0) : new Thickness(0);
         }
 
         private async void HostIntegrityPage_Loaded(object sender, RoutedEventArgs e)
