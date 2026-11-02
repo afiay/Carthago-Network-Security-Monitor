@@ -4462,3 +4462,54 @@ Publication procedure: prepare source commit and this docs commit privately, rec
 10. Verify source/docs blobs, exactly four authorized changed paths, direct-parent two-commit ancestry, fresh expected-SHA publication lease and **zero** builds/tests/replays/holdouts/CI/runners/benchmarks/capture.
 
 **Next independent UI GA UI-91:** continue a **meaningful screen-visible** reference-led redesign, prioritizing the lower Dashboard/Live Events information architecture or Incident Queue composition. Never substitute tooltip-only or micro-copy changes for a visual GA. Preserve all owner restrictions and defer runtime acceptance until explicit **“now it is test time.”**
+
+
+## GA UI-91 — Reference-led Live Events operations band (visual redesign)
+
+**2026-11-02 · SOURCE CANDIDATE — UNVERIFIED.** Pinned LIVE remote starting HEAD: `2c8d0fc14f3881e9d2dd530518852c8afa2e61ea`; independent R437 Redis trusted-audit source/tests/docs and the pre-existing UI-90 KPI XAML ordering correction `c23549223b` were already present and were not modified. Prepared private UI source commit `225f994b0238539dbbd4155474aaf3376ebc7d56`, direct child of the pinned HEAD; source tree `96011595fb092013274575e2a3a781f07cf15d57`. No builds, dotnet/xUnit tests, replays, holdouts, CI/Actions, runners, benchmarking, production capture or running-WPF screenshots were executed **by this GA**. All scenarios below are **PLANNED, UNEXECUTED**.
+
+### Reference fidelity and start-of-GA divergence
+
+FIRST retrieved and visually inspected the exact approved ChatGPT Library screenshot `libfile_b0a34361560c8191b641e432b3e6b15c` (1648×928 dark SOC concept). The lower band places a dense local event table below the chart/incident area and a dark CLI companion at the right. The reference's IPs, metrics, rule IDs, timestamps, percentages, confidence and Mbps are DEMO ONLY; none were copied into live source. The actual CLI is **UNAVAILABLE** and remains explicitly non-interactive, not the working terminal shown in the concept.
+
+Reviewed the LIVE branch, latest 12 commits, ledger through UI-90, `MainWindow.xaml`, `Theme.xaml`, `MainWindow.DashboardResponsive.cs`, `MainWindow.Responsive.cs`, and `MainWindow.DashboardEvents.cs` consumers. The existing `DashboardLiveEventsGrid` is populated only by the retained local `DetectionEvent` projection, limited to 80 displayed rows and 500 retained events. Existing severity/protocol/rule/search filters, empty-state text, capture-state-derived status and provenance, and navigation to Raw Detections are reused. `DashboardCliCompanionPanel` remains visual-only, with no dispatcher, process, adapter or telemetry binding. No changed model, service, detection, capture, privacy, trust, security or shared API.
+
+### Before → after: substantial visible composition
+
+- **Lower operations canvas:** formerly the Live Events card spanned the full dashboard width and the 408px CLI card sat below it. Now a named `DashboardLowerGrid` docks Live Events and the CLI side by side on Wide (≥1440px), approximately 2.65:1 with a 12px gutter; Standard 1100–1439, Compact 1024–1099 and below 1024 stack the full-width event stream above the unavailable CLI. This creates the reference's lower two-zone SOC composition without fabricating a working terminal.
+- **Event-stream identity:** the previously plain title becomes a larger 20px `Live Events` heading beneath a cyan `LOCAL DETECTION STREAM` eyebrow in a restrained navy gradient header. The original honest subtitle and Raw Detections navigation remain.
+- **Operational density:** the read-only table increases from 190px to 300px high, rows from 27px to 34px and column headers from 30px to 38px, improving scanability and showing more observed rows before scrolling. The first time column remains frozen, with horizontal scrolling for narrow content and existing virtualization intact.
+- **Severity visual hierarchy:** the severity text column becomes a bounded badge template using only the existing `DashboardEventRowVm.Severity` string, with restrained Critical/High/Medium/Low/Info palettes and neutral fallback. This is a visual classification of reported severity, not independently verified incident impact.
+- **Filter and provenance bands:** a distinct `FILTER LOCAL EVENTS` toolbar and blue-toned footer create clear functional layers. All four existing filters and their event handlers remain unchanged; the footer still displays the source-driven row/retention/capture caption and evidence/delivery caveats.
+- **Theme ownership:** four new UI-only style/gradient resources are isolated in `Theme.xaml`; the responsive partial positions the two existing cards without new event producers, handlers or bindings.
+
+**Static visual-impact assessment:** source shows a significant screen-visible two-column lower layout, taller event grid, distinct header/toolbar/footer zones and severity pills. Actual WPF rendering, DPI behavior, layout clipping and screen-reader experience remain **UNVERIFIED**.
+
+### Owned files, source provenance and end-of-GA static review
+
+Owned source paths:
+1. `Carthago/Views/MainWindow.xaml` — blob `5dabf655b7b5668d9ac272870a6af0b4a3822400`.
+2. `Carthago/Views/Theme.xaml` — blob `95ca08dafa58c1c6b796e13d1007218c0d605d15`.
+3. `Carthago/Views/MainWindow.DashboardResponsive.cs` — blob `226f276108bca4a54daddf3f5548ad2317de0ca9`.
+4. `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md` — documentation only.
+
+Static source review: the existing named Live Events grid, four filters, empty-state, status/provenance, CLI, chart, KPI, triage and investigation controls remain; the new names are `DashboardLowerGrid`, `DashboardLowerPrimaryRow`, `DashboardLowerSecondaryRow`, `DashboardLowerEventsColumn`, `DashboardLowerCliColumn`. The responsive partial references only the new lower row/column definitions and original named panels. No new binding producer or event handler, and no change to event retention, source values, rule severity, capture, ScottPlot, Cisco or WebView2. Independent commits since UI-90 touch R437 trusted-audit source/tests/docs, validation documentation and the separate UI-90 KPI ordering correction, not the new lower band.
+
+**Risks — UNVERIFIED:** at exactly 1440px, the event table may need horizontal scrolling beside the CLI; at 125–200% DPI, row labels, badges and toolbar may clip or overflow; the 300px grid increases overall vertical scroll; some reported severity values may use neutral fallback; generated WPF names and new resource references are uncompiled; the unavailable CLI may leave unused vertical space beside the event grid. These require owner-authorized WPF visual inspection. No success or accessibility claim is inferred from static source.
+
+Publication protocol: create the private source/docs direct-parent chain, re-read LIVE remote HEAD and concurrent changes immediately before publication, publish the **complete** chain via exactly one non-forced atomic `update_ref` with `expected_sha` lease on `feature/carthago-reliability-hardening`; stop on overlap or missing lease guarantee. Verify resulting branch HEAD, ancestry and exactly four owned changed paths.
+
+### Acceptance scenarios — PLANNED ONLY, UNEXECUTED
+
+1. At 1648px Wide, compare lower event-stream/CLI side-by-side composition, header, filters, severity badges and footer to the approved reference without copying demo content.
+2. At 1440px Wide and 125%, 150%, 200% DPI, inspect CLI width, event-column scroll, frozen time column, badge clipping and panel gutters.
+3. At Standard 1100–1439, verify full-width Live Events above the unavailable CLI with no horizontal card overlap.
+4. At Compact 1024–1099 and below 1024 (including 800/640), verify vertical stacking, filter wrap, keyboard reachability and preserved outer scrolling.
+5. Verify the existing local detection stream still shows at most 80 rows from at most 500 retained events and preserves source-driven empty/no-match messages.
+6. Verify Critical, High, Medium, Low, Info and unknown reported severities display the intended non-authoritative pill colors without changing underlying severity.
+7. Verify severity/protocol/rule/search and Clear filters retain original handlers, results and no-capture/no-export behavior.
+8. Verify event time, source, destination, rule, protocol, evidence presence/count and delivery metadata remain read-only, accurately attributed and horizontally scrollable.
+9. Verify the CLI is visibly UNAVAILABLE and does not execute commands, and existing PPS ScottPlot, triage/investigation, Cisco/WebView2, capture/privacy/trust boundaries are unchanged.
+10. Verify source/docs blobs, exactly four owned paths, direct-parent ancestry, expected-SHA atomic publication and **zero** GA builds/tests/replays/holdouts/CI/runners/benchmarks/capture.
+
+**Next independent GA UI-92:** redesign Incident Queue / Investigation screen composition at section scale, not tooltip micro-edits. Maintain reference-led visual impact and all ownership/test restrictions.
