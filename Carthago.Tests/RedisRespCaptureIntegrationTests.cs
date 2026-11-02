@@ -200,6 +200,10 @@ public sealed class RedisRespCaptureIntegrationTests
         Assert.True(reply.RedisRespConfigSetReplyOkObserved);
         Assert.False(reply.RedisRespConfigSetReplyErrorObserved);
         Assert.Equal("redis.resp2", reply.ApplicationProtocol);
+        Assert.Null(reply.HttpMethod);
+        Assert.Null(reply.HttpUri);
+        Assert.Null(reply.HttpHost);
+        Assert.Null(reply.HttpRequestHeaders);
         Assert.Equal(6379, reply.SourcePort);
         Assert.Equal("10.4.0.9", reply.Destination);
         Assert.DoesNotContain(privateValue,
@@ -215,7 +219,23 @@ public sealed class RedisRespCaptureIntegrationTests
             Encoding.ASCII.GetBytes("-NOPERM unauthorized CONFIG SET\r\n"));
         Assert.False(reply.RedisRespConfigSetReplyOkObserved);
         Assert.True(reply.RedisRespConfigSetReplyErrorObserved);
+        Assert.Equal("redis.resp2", reply.ApplicationProtocol);
+        Assert.Null(reply.HttpMethod);
+        Assert.Null(reply.HttpUri);
+        Assert.Null(reply.HttpHost);
+        Assert.Null(reply.HttpRequestHeaders);
         Assert.DoesNotContain("NOPERM", reply.Info ?? string.Empty);
+    }
+
+    [Fact]
+    public void Http_Request_On_Redis_Port_Remains_Http_When_Not_Resp2()
+    {
+        var http = Encoding.ASCII.GetBytes(
+            "GET /health HTTP/1.1\r\nHost: redis.example\r\n\r\n");
+        var observed = Parse(http, destinationPort: 6379);
+        Assert.False(observed.RedisRespConfigSetRequestObserved);
+        Assert.Equal("HTTP", observed.ApplicationProtocol);
+        Assert.Equal("GET", observed.HttpMethod);
     }
 
     [Theory]
