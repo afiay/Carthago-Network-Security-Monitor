@@ -910,6 +910,38 @@
     <Setter Property="Effect" Value="{StaticResource CardShadow}"/>
   </Style>
 
+  <!-- GA UI-90: screen-visible operations composition; existing shared styles remain intact. -->
+  <LinearGradientBrush x:Key="DashboardHeroGradient" StartPoint="0,0" EndPoint="1,1">
+    <GradientStop Color="#112D42" Offset="0"/>
+    <GradientStop Color="#0B2032" Offset="0.58"/>
+    <GradientStop Color="#091725" Offset="1"/>
+  </LinearGradientBrush>
+  <LinearGradientBrush x:Key="DashboardKpiGradient" StartPoint="0,0" EndPoint="1,1">
+    <GradientStop Color="#10293A" Offset="0"/>
+    <GradientStop Color="#0C1B2B" Offset="1"/>
+  </LinearGradientBrush>
+  <Style x:Key="DashboardHeroCard" TargetType="Border">
+    <Setter Property="Background" Value="{StaticResource DashboardHeroGradient}"/>
+    <Setter Property="BorderBrush" Value="#2B5369"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="16"/>
+    <Setter Property="Padding" Value="22,18"/>
+  </Style>
+  <Style x:Key="DashboardOverviewKpiCard" TargetType="Border" BasedOn="{StaticResource KpiTileCard}">
+    <Setter Property="Background" Value="{StaticResource DashboardKpiGradient}"/>
+    <Setter Property="BorderBrush" Value="#2B4C61"/>
+    <Setter Property="CornerRadius" Value="14"/>
+    <Setter Property="Padding" Value="18,14"/>
+    <Setter Property="MinHeight" Value="132"/>
+    <Setter Property="Effect" Value="{x:Null}"/>
+  </Style>
+  <Style x:Key="DashboardFocusPanel" TargetType="Border" BasedOn="{StaticResource PageSurface}">
+    <Setter Property="Background" Value="{StaticResource CardSurfaceGradient}"/>
+    <Setter Property="BorderBrush" Value="#2A485E"/>
+    <Setter Property="CornerRadius" Value="14"/>
+    <Setter Property="Padding" Value="16"/>
+  </Style>
+
   <Style x:Key="DetailGridCard" TargetType="Border">
     <Setter Property="Background" Value="#081524"/>
     <Setter Property="BorderBrush" Value="{StaticResource InputBorderBrush}"/>

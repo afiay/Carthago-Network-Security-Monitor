@@ -82,8 +82,10 @@
         <Setter Property="AutomationProperties.HelpText" Value="This cell reports detection-event delivery transport status only, not investigation progress, remediation or incident resolution."/>
       </Style>
       <DataTemplate x:Key="DashboardKpiCardTemplate">
-                      <Border Style="{StaticResource KpiTileCard}" Height="102">
+                      <Border Style="{StaticResource DashboardOverviewKpiCard}" Height="132">
                         <Grid>
+                          <Border Grid.RowSpan="3" Width="3" HorizontalAlignment="Left" Margin="-17,0,0,0"
+                                  Background="{Binding AccentBrush}" CornerRadius="2" Opacity="0.9" IsHitTestVisible="False"/>
                           <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
@@ -116,7 +118,7 @@
                               <TextBlock Text="{Binding Value}"
                                           AutomationProperties.LabeledBy="{Binding ElementName=DashboardKpiCardTitle}"
                                           AutomationProperties.HelpText="{Binding InformationText}"
-                                         FontSize="21"
+                                         FontSize="27"
                                          FontWeight="Bold"/>
                               <TextBlock Text="{Binding DeltaText}"
                                          Foreground="{Binding AccentBrush}"
@@ -125,15 +127,15 @@
                                          Margin="8,6,0,0"/>
                             </StackPanel>
                             <Border Grid.Column="1"
-                                    Width="40"
-                                    Height="40"
+                                    Width="46"
+                                    Height="46"
                                     CornerRadius="12"
                                     Background="#0B1728"
                                     BorderBrush="{Binding AccentBrush}"
                                     BorderThickness="1"
                                     Opacity="0.98">
                               <TextBlock Text="{Binding Icon}"
-                                         FontSize="20"
+                                         FontSize="22"
                                          Foreground="{Binding AccentBrush}"
                                          HorizontalAlignment="Center"
                                          VerticalAlignment="Center"/>
@@ -469,36 +471,57 @@
               </Border>
 
               <StackPanel x:Name="SocDashboardWorkspace" Visibility="Collapsed" Margin="0,0,0,4">
-                <!-- GA UI-02: the overview heading is scoped to the dashboard, not the global command bar.
-                     Monitoring state and severity color come from the existing capture status pipeline. -->
-                <Grid Margin="0,0,0,14" MinHeight="42">
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                  </Grid.ColumnDefinitions>
-                  <TextBlock Text="Security Overview"
-                             FontSize="24"
-                             FontWeight="SemiBold"
-                             Foreground="{StaticResource TextBrush}"
-                             TextTrimming="CharacterEllipsis"
-                             VerticalAlignment="Center"/>
-                  <StackPanel Grid.Column="1"
-                              Orientation="Horizontal"
-                              HorizontalAlignment="Right"
-                              VerticalAlignment="Center"
-                              Margin="16,0,0,0">
-                    <Ellipse Width="9"
-                             Height="9"
-                             Fill="{Binding BorderBrush, ElementName=MonitoringStatusBadge}"
-                             VerticalAlignment="Center"
-                             Margin="0,0,7,0"/>
-                    <TextBlock Text="{Binding Text, ElementName=CaptureStatusText}"
-                               Foreground="{Binding BorderBrush, ElementName=MonitoringStatusBadge}"
-                               FontSize="12"
-                               FontWeight="SemiBold"
-                               VerticalAlignment="Center"/>
-                  </StackPanel>
-                </Grid>
+                <!-- GA UI-90: reference-led operations hero, grounded in existing capture status. -->
+                <Border Style="{StaticResource DashboardHeroCard}" Margin="0,0,0,16">
+                  <Grid x:Name="DashboardHeroGrid">
+                    <Grid.RowDefinitions>
+                      <RowDefinition Height="Auto"/>
+                      <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*"/>
+                      <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Row="0" Margin="0,0,16,0">
+                      <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <Border Width="26" Height="3" Background="{StaticResource AccentBrush}" CornerRadius="2" VerticalAlignment="Center" Margin="0,0,9,0"/>
+                        <TextBlock Text="CARTHAGO  /  LOCAL SECURITY OPERATIONS"
+                                   Foreground="{StaticResource AccentAltBrush}"
+                                   FontSize="10" FontWeight="Bold"
+                                   VerticalAlignment="Center"/>
+                      </StackPanel>
+                      <TextBlock Text="Security Overview"
+                                 FontSize="30" FontWeight="SemiBold"
+                                 Foreground="{StaticResource TextBrush}"
+                                 TextTrimming="CharacterEllipsis"/>
+                      <TextBlock Text="Local packet-rate history, prioritized signals and investigation context."
+                                 Foreground="{StaticResource TextSubtleBrush}"
+                                 FontSize="12" TextWrapping="Wrap"
+                                 Margin="0,7,0,0" MaxWidth="650"/>
+                    </StackPanel>
+                    <Border x:Name="DashboardHeroStatusCard"
+                            Grid.Row="0" Grid.Column="1"
+                            HorizontalAlignment="Right" VerticalAlignment="Center"
+                            Background="{StaticResource PillBgBrush}"
+                            BorderBrush="{StaticResource SoftDividerBrush}"
+                            BorderThickness="1" CornerRadius="11"
+                            Padding="14,10" MinWidth="154">
+                      <StackPanel>
+                        <TextBlock Text="LOCAL CAPTURE STATE"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   FontSize="10" FontWeight="SemiBold"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,7,0,0">
+                          <Ellipse Width="9" Height="9"
+                                   Fill="{Binding BorderBrush, ElementName=MonitoringStatusBadge}"
+                                   VerticalAlignment="Center" Margin="0,0,8,0"/>
+                          <TextBlock Text="{Binding Text, ElementName=CaptureStatusText}"
+                                     Foreground="{Binding BorderBrush, ElementName=MonitoringStatusBadge}"
+                                     FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        </StackPanel>
+                      </StackPanel>
+                    </Border>
+                  </Grid>
+                </Border>
                 <!-- GA UI-03: screenshot-aligned four-card operational strip.
                      Unavailable sensor and coverage contracts are never substituted with invented counts. -->
                 <ItemsControl x:Name="DashboardOverviewKpiItemsControl"
@@ -513,11 +536,23 @@
                     </ItemsPanelTemplate>
                   </ItemsControl.ItemsPanel>
                 </ItemsControl>
+                <!-- GA UI-90: reference-aligned three-panel operational composition at Wide.
+                     Standard and Compact stack chart before triage through the existing responsive partial. -->
+                <Grid x:Name="DashboardFocusGrid" Height="480" Margin="0,0,0,14">
+                  <Grid.RowDefinitions>
+                    <RowDefinition x:Name="DashboardFocusPrimaryRow" Height="*"/>
+                    <RowDefinition x:Name="DashboardFocusSecondaryRow" Height="0"/>
+                  </Grid.RowDefinitions>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition x:Name="DashboardFocusTrafficColumn" Width="1.85*"/>
+                    <ColumnDefinition x:Name="DashboardFocusTriageColumn" Width="2.15*"/>
+                  </Grid.ColumnDefinitions>
                 <!-- GA UI-08: existing local PPS ScottPlot, moved from collapsed legacy infrastructure. -->
                 <Border x:Name="DashboardTrafficChartPanel"
-                        Style="{StaticResource PageSurface}"
+                        Grid.Row="0" Grid.Column="0"
+                        Style="{StaticResource DashboardFocusPanel}"
                         Padding="14"
-                        Margin="0,0,0,12"
+                        Margin="0,0,12,0"
                         AutomationProperties.Name="Local packet-rate history chart">
                   <Grid>
                     <Grid.RowDefinitions>
@@ -640,26 +675,8 @@
                     </StackPanel>
                   </Grid>
                 </Border>
-                <!-- Existing preference-controlled statistics remain accessible below the overview. -->
-                <TextBlock Text="Additional metrics"
-                           Style="{StaticResource DashboardSectionTitle}"
-                           FontSize="13"
-                           Margin="0,2,0,8"/>
-                <ItemsControl x:Name="DashboardKpiItemsControl" AutomationProperties.Name="Additional dashboard metric cards" Margin="0,0,0,12"
-                              HorizontalContentAlignment="Stretch"
-                              ItemTemplate="{StaticResource DashboardKpiCardTemplate}"
-                              ItemContainerStyle="{StaticResource DashboardKpiItemContainerStyle}">
-                  <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                      <UniformGrid IsItemsHost="True" Columns="5"/>
-                    </ItemsPanelTemplate>
-                  </ItemsControl.ItemsPanel>
-                  
-                  
-                </ItemsControl>
-
                 <!-- Main triage area -->
-                <Grid x:Name="DashboardTriageGrid" Height="404" Margin="0,0,0,10">
+                <Grid x:Name="DashboardTriageGrid" Grid.Row="0" Grid.Column="1" Height="480" Margin="0">
                   <Grid.RowDefinitions>
                     <RowDefinition x:Name="DashboardTriagePrimaryRow" Height="*"/>
                     <RowDefinition x:Name="DashboardTriageSecondaryRow" Height="0"/>
@@ -671,7 +688,7 @@
 
                   <Border x:Name="DashboardTimelinePanel"
                           Grid.Column="0"
-                          Style="{StaticResource PageSurface}"
+                          Style="{StaticResource DashboardFocusPanel}"
                           Padding="14"
                           Margin="0,0,12,0">
                     <Grid>
@@ -818,7 +835,7 @@
 
                   <Border x:Name="DashboardSignalPanel"
                           Grid.Column="1"
-                          Style="{StaticResource PageSurface}"
+                          Style="{StaticResource DashboardFocusPanel}"
                           Padding="14">
                     <Grid>
                       <Grid.RowDefinitions>
@@ -1058,6 +1075,27 @@
                     </Grid>
                   </Border>
                 </Grid>
+
+                </Grid>
+
+                <!-- Preference-controlled secondary metrics follow the main operations canvas. -->
+                <!-- Existing preference-controlled statistics remain accessible below the overview. -->
+                <TextBlock Text="Additional metrics"
+                           Style="{StaticResource DashboardSectionTitle}"
+                           FontSize="13"
+                           Margin="0,2,0,8"/>
+                <ItemsControl x:Name="DashboardKpiItemsControl" AutomationProperties.Name="Additional dashboard metric cards" Margin="0,0,0,12"
+                              HorizontalContentAlignment="Stretch"
+                              ItemTemplate="{StaticResource DashboardKpiCardTemplate}"
+                              ItemContainerStyle="{StaticResource DashboardKpiItemContainerStyle}">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                      <UniformGrid IsItemsHost="True" Columns="5"/>
+                    </ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  
+                  
+                </ItemsControl>
 
                 <!-- Lower widgets -->
                 <Grid x:Name="DashboardSummaryGrid" Height="202" Margin="0,0,0,10">

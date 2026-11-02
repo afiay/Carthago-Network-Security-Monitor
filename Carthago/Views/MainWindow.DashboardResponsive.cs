@@ -24,6 +24,33 @@ public partial class MainWindow
             ? new Thickness(0, 0, 0, 6)
             : new Thickness(0, 0, 8, 0);
 
+        // GA UI-90: hero status flows below the title only when the shell is below 1024px.
+        Grid.SetRow(DashboardHeroStatusCard, narrowKpis ? 1 : 0);
+        Grid.SetColumn(DashboardHeroStatusCard, narrowKpis ? 0 : 1);
+        DashboardHeroStatusCard.HorizontalAlignment = narrowKpis
+            ? HorizontalAlignment.Left : HorizontalAlignment.Right;
+        DashboardHeroStatusCard.Margin = narrowKpis
+            ? new Thickness(0, 14, 0, 0) : new Thickness(12, 0, 0, 0);
+
+        // Wide: chart | prioritized queue | investigation.
+        // Standard/Compact: chart above the existing responsive triage grid.
+        var wideFocus = mode == ResponsiveLayoutMode.Wide;
+        DashboardFocusGrid.Height = wideFocus ? 480 : double.NaN;
+        DashboardFocusTrafficColumn.Width = new GridLength(wideFocus ? 1.85 : 1, GridUnitType.Star);
+        DashboardFocusTriageColumn.Width = wideFocus
+            ? new GridLength(2.15, GridUnitType.Star) : new GridLength(0);
+        DashboardFocusPrimaryRow.Height = wideFocus
+            ? new GridLength(1, GridUnitType.Star) : GridLength.Auto;
+        DashboardFocusSecondaryRow.Height = wideFocus
+            ? new GridLength(0) : GridLength.Auto;
+        Grid.SetRow(DashboardTrafficChartPanel, 0);
+        Grid.SetColumn(DashboardTrafficChartPanel, 0);
+        Grid.SetRow(DashboardTriageGrid, wideFocus ? 0 : 1);
+        Grid.SetColumn(DashboardTriageGrid, wideFocus ? 1 : 0);
+        DashboardTrafficChartPanel.Margin = wideFocus
+            ? new Thickness(0, 0, 12, 0) : new Thickness(0, 0, 0, 12);
+        DashboardTriageGrid.Margin = new Thickness(0);
+
         var overviewPanelKey = narrowKpis ? "DashboardOverviewKpiNarrowPanel" : mode switch
         {
             ResponsiveLayoutMode.Compact => "DashboardOverviewKpiCompactPanel",
@@ -115,7 +142,7 @@ public partial class MainWindow
             return;
         }
 
-        DashboardTriageGrid.Height = 404;
+        DashboardTriageGrid.Height = 480;
         DashboardTriageTimelineColumn.Width = new GridLength(1.05, GridUnitType.Star);
         DashboardTriageDetailColumn.Width = new GridLength(1.65, GridUnitType.Star);
         DashboardTriagePrimaryRow.Height = new GridLength(1, GridUnitType.Star);
