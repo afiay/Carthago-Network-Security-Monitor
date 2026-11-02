@@ -29,6 +29,7 @@ namespace Carthago.Services
         private const int MaxTrackedFlows = 16384;
         private const int MinUsefulSegment = 8;
         private static readonly TimeSpan FlowIdleTimeout = TimeSpan.FromMinutes(5);
+        private static readonly TimeSpan RedisReplyMaxAge = TimeSpan.FromSeconds(30);
         private readonly Dictionary<FlowKey, TcpStreamState> _tcp = new();
         private readonly object _tcpSync = new();
         private int _flowOperations;
@@ -40,6 +41,7 @@ namespace Carthago.Services
             public DateTime LastSeenUtc { get; set; }
             // Exactly one pending Redis CONFIG SET per bounded TCP flow.
             public bool RedisConfigSetPending;
+            public DateTime RedisConfigSetRequestedUtc;
         }
 
         private sealed class DirectionState
@@ -430,8 +432,14 @@ namespace Carthago.Services
                                 // A second client payload before a reply clears
                                 // the single outstanding request even if valid.
                                 lock (_tcpSync)
+                                {
                                     if (_tcp.TryGetValue(tcpFlow, out var flow))
+                                    {
                                         flow.RedisConfigSetPending = admitted;
+                                        flow.RedisConfigSetRequestedUtc = admitted
+                                            ? DateTime.UtcNow : default;
+                                    }
+                                }
                             }
                             else if (!c2s && tcpAck && !tcpSyn
                                 && sport == 6379 && dport is > 0 and <= 65535
@@ -442,8 +450,12 @@ namespace Carthago.Services
                                 {
                                     if (_tcp.TryGetValue(tcpFlow, out var flow))
                                     {
-                                        pending = flow.RedisConfigSetPending;
+                                        pending = flow.RedisConfigSetPending
+                                            && IsWithinRedisReplyWindow(
+                                                flow.RedisConfigSetRequestedUtc,
+                                                DateTime.UtcNow);
                                         flow.RedisConfigSetPending = false;
+                                        flow.RedisConfigSetRequestedUtc = default;
                                     }
                                 }
 
@@ -769,6 +781,7 @@ namespace Carthago.Services
                 dir.Invalid = false;
                 dir.TlsActive = false;
                 state.RedisConfigSetPending = false;
+                state.RedisConfigSetRequestedUtc = default;
             }
         }
 
@@ -789,6 +802,14 @@ namespace Carthago.Services
                     (clientToServer ? state.C2S : state.S2C).TlsActive;
             }
         }
+
+        // Strictly bounded request/reply correlation. No wall-clock timeouts,
+        // timers, retained wire payloads or background workers are required.
+        internal static bool IsWithinRedisReplyWindow(DateTime requestUtc, DateTime replyUtc)
+            => requestUtc.Kind == DateTimeKind.Utc
+                && replyUtc.Kind == DateTimeKind.Utc
+                && replyUtc >= requestUtc
+                && replyUtc - requestUtc <= RedisReplyMaxAge;
 
         private bool ShouldAcceptSegment(FlowKey key, bool clientToServer, uint seq,
             ReadOnlySpan<byte> payload, out ReadOnlySpan<byte> normalized,
