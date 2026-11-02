@@ -199,7 +199,7 @@ namespace Carthago.Tests.ProtocolIntelligence
             Assert.False(Resp2CommandInspector.TryInspect(request, false, out _));
             Assert.False(Resp2CommandInspector.TryInspect(
                 request.AsSpan(0, request.Length - 1), true, out _));
-            var reply = Encoding.ASCII.GetBytes("+OK\\r\\n");
+            var reply = Encoding.ASCII.GetBytes("+OK\r\n");
             Assert.False(Resp2CommandInspector.TryInspect(reply, true, out _));
         }
 
