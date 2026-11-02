@@ -5,10 +5,13 @@ Set-StrictMode -Version Latest
 function Get-SourceViews([string]$Source) {
     # Keep positions aligned. Strings are retained only in the data view;
     # comments and string contents can never become declarations/constructors.
-    # Raw/interpolated strings and directives require manual review: do not
-    # attempt to interpret conditional compilation or interpolation expressions.
-    if ($Source -match '"""|\$"|\$@"|@\$"|(?m)^\s*#') { return $null }
-    $pattern = '//[^\r\n]*|/\*[\s\S]*?\*/|@"(?:[^"]|"")*"|"(?:\\.|[^"\\])*"|''(?:\\.|[^''\\])*'''
+    # Simple C# interpolated strings are opaque: their embedded expressions
+    # are neither executable source evidence nor explicit test-data rows.
+    # Quoted expressions, raw/verbatim interpolation and compiler directives
+    # still require manual review rather than guessed lexical interpretation.
+    if ($Source -match '"""|\$@"|@\$"|(?m)^\s*#') { return $null }
+    if ($Source -match '\$"(?:\\.|[^"\\])*?\{[^}\r\n]*"') { return $null }
+    $pattern = '//[^\r\n]*|/\*[\s\S]*?\*/|\$"(?:\\.|[^"\\])*"|@"(?:[^"]|"")*"|"(?:\\.|[^"\\])*"|''(?:\\.|[^''\\])*'''
     $code = [Text.StringBuilder]::new($Source)
     $data = [Text.StringBuilder]::new($Source)
     foreach ($m in [regex]::Matches($Source, $pattern)) {
@@ -16,7 +19,7 @@ function Get-SourceViews([string]$Source) {
         for ($i = $m.Index; $i -lt $m.Index + $m.Length; $i++) {
             if ($Source[$i] -ne "`r" -and $Source[$i] -ne "`n") {
                 $code[$i] = ' '
-                if ($comment) { $data[$i] = ' ' }
+                if ($comment -or $m.Value.StartsWith('$"')) { $data[$i] = ' ' }
             }
         }
     }
@@ -119,7 +122,7 @@ function Get-RuleSourceInventory {
         status='SOURCE CANDIDATE — UNVERIFIED'; readyForExecutionSelection=$false
         testsExecutedByInventory=0; operationallyVerifiedCount=$null
         rules=$ordered; diagnostics=@($diagnostics.ToArray())
-        limitations=@('Textual candidate index, not semantic C# analysis.', 'No compiler/project guards, MemberData binding, test outcome or producer provenance established.', 'Content packs and descriptors require separate consumer review.', 'All associations need review; absence does not prove absence of coverage.')
+        limitations=@('Textual candidate index, not semantic C# analysis.', 'No compiler/project guards, MemberData binding, test outcome or producer provenance established.', 'Simple interpolated strings are opaque; complex interpolation and raw strings remain unsupported.', 'Content packs and descriptors require separate consumer review.', 'All associations need review; absence does not prove absence of coverage.')
     }
 }
 Export-ModuleMember -Function Get-RuleSourceInventory

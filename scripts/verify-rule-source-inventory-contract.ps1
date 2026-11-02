@@ -62,4 +62,56 @@ Assert-Contract (@($e.diagnostics | Where-Object code -eq 'NONCANONICAL_CORE_ID'
 $pack = $registry.Replace('new R3000_LastRule(),', 'new PACK001_Rule(),')
 $f = Get-RuleSourceInventory -RegistrySource $pack -Sources $files -SourceSha ('a' * 40)
 Assert-Contract (@($f.diagnostics | Where-Object code -eq 'UNRESOLVED_REGISTRATION').Count -eq 1) 'pack-not-core'
+
+# VC-002B: common grouped files contain simple interpolated helper strings.
+# Such strings must not suppress real literal tuples or manufacture data rows.
+$interpolated = @{} + $files
+$interpolated['Carthago.Tests/GroupedInterpolated.cs'] = @'
+public class SharedTests {
+ private static string Host(int n) => $"10.0.{n / 2}.{n % 2}";
+ private static readonly (string Id, int N)[] Rules = { ("R999", 1) };
+ [Theory] [MemberData(nameof(Cases))] public void Case(string id) {}
+}
+'@
+$g = Get-RuleSourceInventory -RegistrySource $registry -Sources $interpolated -SourceSha ('a' * 40)
+Assert-Contract (@($g.diagnostics | Where-Object { $_.code -eq 'UNSUPPORTED_SOURCE_SYNTAX' -and $_.path -eq 'Carthago.Tests/GroupedInterpolated.cs' }).Count -eq 0) 'simple-interpolation-supported'
+Assert-Contract (@(@($g.rules | Where-Object ruleId -eq 'R999')[0].associations |
+    Where-Object kind -eq 'data-row-candidate').Count -eq 1) 'literal-grouped-row-retained'
+$opaque = @{} + $files
+$opaque['Carthago.Tests/InterpolatedDecoy.cs'] = @'
+public class SharedTests {
+ private static string Label(int n) => $"R999,{n}";
+ [Fact] public void Example() {}
+}
+'@
+$h = Get-RuleSourceInventory -RegistrySource $registry -Sources $opaque -SourceSha ('a' * 40)
+Assert-Contract (@(@($h.rules | Where-Object ruleId -eq 'R999')[0].associations |
+    Where-Object kind -eq 'data-row-candidate').Count -eq 0) 'interpolated-string-not-data-row'
+$quoted = @{} + $files
+$quoted['Carthago.Tests/NestedQuotedInterpolation.cs'] = @'
+public class R999Tests {
+ private static string Label(System.Guid id) => $"{id.ToString("N")}";
+ [Fact] public void Example() {}
+}
+'@
+$i = Get-RuleSourceInventory -RegistrySource $registry -Sources $quoted -SourceSha ('a' * 40)
+Assert-Contract (@($i.diagnostics | Where-Object { $_.code -eq 'UNSUPPORTED_SOURCE_SYNTAX' -and $_.path -eq 'Carthago.Tests/NestedQuotedInterpolation.cs' }).Count -eq 1) 'quoted-interpolation-fails-closed'
+$verbatim = @{} + $files
+$verbatim['Carthago.Tests/VerbatimInterpolation.cs'] = @'
+public class R999Tests {
+ private static string Label(int n) => $@"R999-{n}";
+ [Fact] public void Example() {}
+}
+'@
+$j = Get-RuleSourceInventory -RegistrySource $registry -Sources $verbatim -SourceSha ('a' * 40)
+Assert-Contract (@($j.diagnostics | Where-Object { $_.code -eq 'UNSUPPORTED_SOURCE_SYNTAX' -and $_.path -eq 'Carthago.Tests/VerbatimInterpolation.cs' }).Count -eq 1) 'verbatim-interpolation-fails-closed'
+$conditional = @{} + $files
+$conditional['Carthago.Tests/Guarded.cs'] = @'
+#if CARTHAGO_DNS_WIRE_STAGE3
+public class R999Tests { [Fact] public void FutureOnly() {} }
+#endif
+'@
+$k = Get-RuleSourceInventory -RegistrySource $registry -Sources $conditional -SourceSha ('a' * 40)
+Assert-Contract (@($k.diagnostics | Where-Object { $_.code -eq 'UNSUPPORTED_SOURCE_SYNTAX' -and $_.path -eq 'Carthago.Tests/Guarded.cs' }).Count -eq 1) 'compiler-guard-not-eligible'
+
 Write-Host 'Source-inventory contract assertions completed; no rule accuracy or operational claim.'
