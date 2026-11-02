@@ -181,7 +181,7 @@ public sealed class R546AdvancedAccuracyBatchTests
     public async Task Separate_Sources_Do_Not_Share_Distinct_Target_Counts()
     {
         var rule = new R546_NtpMonlistOutboundTargetFanoutRule();
-        Assert.False((await rule.EvaluateAsync(At(Sample("10.45.0.20", "8.8.8.8"))).Matched);
+        Assert.False((await rule.EvaluateAsync(At(Sample("10.45.0.20", "8.8.8.8")))).Matched);
         Assert.False((await rule.EvaluateAsync(At(Sample("10.45.0.21", "1.1.1.1"), 1))).Matched);
         Assert.False((await rule.EvaluateAsync(At(Sample("10.45.0.20", "9.9.9.9"), 2))).Matched);
     }
@@ -190,7 +190,7 @@ public sealed class R546AdvancedAccuracyBatchTests
     public async Task Expired_Window_Does_Not_Recycle_Old_Targets()
     {
         var rule = new R546_NtpMonlistOutboundTargetFanoutRule();
-        Assert.False((await rule.EvaluateAsync(At(Sample(destination: "8.8.8.8"))).Matched);
+        Assert.False((await rule.EvaluateAsync(At(Sample(destination: "8.8.8.8")))).Matched);
         Assert.False((await rule.EvaluateAsync(At(Sample(destination: "1.1.1.1"), 1))).Matched);
         Assert.False((await rule.EvaluateAsync(At(Sample(destination: "9.9.9.9"), 302))).Matched);
     }
