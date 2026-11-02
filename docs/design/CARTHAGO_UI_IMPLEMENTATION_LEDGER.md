@@ -3888,3 +3888,40 @@ Private source commit `6291c341d9aa717f56f8296e4a70c0d9af59e87a` is a direct chi
 10. Inspect exact source/docs blobs, two direct-parent commits, only two owned changed paths, fresh expected-SHA publication lease and **zero** tests/builds/replays/CI/runners/benchmarks/capture.
 
 **Next independent UI GA UI-76:** inspect fresh LIVE HEAD, exact approved image, ledger and original WPF consumers; choose one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–75. Acceptance remains deferred until the owner explicitly says **“now it is test time.”**
+
+## GA UI-76 — Recommended Actions: visible review-only context
+
+**2026-11-02 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE `feature/carthago-reliability-hardening` HEAD: `9e8ebdaa63a6365c742754f9e2555813f348a3cb`. Prior GA UI-75 source `6291c341d9aa717f56f8296e4a70c0d9af59e87a`, publication `9b3691c9063bf74815b1fb7405e64f7f17a62e40`. **Exact private GA UI-76 source commit:** `77e4f4431f2749a9f3324e6339730b8b55a22588`; updated XAML blob `fd0f6586aa733b9ecc924d8de033ad98ae4687c7`. Owned paths only: `Carthago/Views/MainWindow.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`. No builds, tests, xUnit, replays, holdouts, CI, GitHub Actions, runners, benchmarking, capture or running-WPF screenshots; authored/executed tests **0/0**. All scenarios below are **PLANNED ONLY — UNEXECUTED**.
+
+### Approved reference, starting divergence and original consumers
+
+**FIRST** resolved and visually inspected exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c` (native 1672×941 image; ledger's original visual reference described 1648×928). The concept depicts navy/graphite surfaces, cyan/teal accents, left navigation, operational KPIs, local traffic chart, prioritized incidents, investigation, dense Live Events and illustrative terminal panel. All screenshot IPs, Mbps lines, metrics, rule IDs, timestamps and confidence values are **DEMO ONLY**. No fabricated telemetry, capture-health state, or working CLI; existing CLI remains explicitly **UNAVAILABLE** visual-only.
+
+Starting HEAD follows GA UI-75 publication by two independent R552 NTP rule source/tests/docs commits `95857da83ab80faec3f5659e6469859ca1d8701c` and `9e8ebdaa63a6365c742754f9e2555813f348a3cb`; their files are independent and not modified. Inspected live recent commits and ledger through UI-75; audited `MainWindow.xaml`, `Theme.xaml`, `Sidebar.xaml`, and original `MainWindow.Dashboard.cs`, `MainWindow.DashboardEvents.cs`, `MainWindow.DashboardResponsive.cs`, `MainWindow.Responsive.cs`, `MainWindow.Settings.cs`, `MainWindow.Navigation.cs`, `MainWindow.Plots.cs` and `MainWindow.xaml.cs` partials. `DashboardActionItemsControl` is populated from `_dashboardActionRows`; its source `SocActionVm` rows represent local incident suggestions (badges `#1` etc. are list positions), anomaly review suggestions (badges can be local risk scores), or baseline-learning guidance (no numeric badge). No item executes remediation. Existing panel header information glyph and tooltips describe this but require discovery; the screenshot-inspired panel should visibly distinguish informational guidance from actionable buttons.
+
+### One cohesive UI-owned readability enhancement
+
+Add a single **visible muted, wrapping status line** directly below the existing `Recommended Actions` heading: **“Review suggestions only · no automatic remediation”**. Reuse existing `TinyStatusText` style, retain the existing header, source-driven row text, icons, badges, tooltips, item template, scroll viewer, bindings, and all navigation/handlers. This is a visible at-a-glance distinction between informational review suggestions and the adjacent real `Raw / Advanced Shortcuts` buttons; it does not repeat prior UI-54's truncated-row tooltips or UI-36's hover/focus explanation. No new focus stop, button, remediation, capture, data producer, model, shared API, viewmodel, or security behavior. No other source file changed.
+
+Preserve Wide >=1440, Standard 1100–1439, Compact 1024–1099 and graceful below 1024; local PPS ScottPlot optional 10-sample average and bounded 120-point history; prioritized incidents and investigation; read-only local Live Events 80 displayed/500 retained; Cisco/WebView2/ScottPlot; unavailable visual-only CLI; capture/privacy/trust boundaries and independent detection/protocol streams.
+
+### Static end review, publication and deferred risks
+
+Source commit `77e4f4431f2749a9f3324e6339730b8b55a22588` is a direct child of pinned starting HEAD `9e8ebdaa63a6365c742754f9e2555813f348a3cb` and changes only `Carthago/Views/MainWindow.xaml`. Documentation commit is its direct child and changes only this ledger. The XAML edit adds one non-interactive TextBlock with an existing theme style and no x:Name, event, binding or contract changes. Re-read LIVE remote HEAD **immediately before publication** and compare concurrent detection/protocol/UI changes. Publish complete two-commit chain with **one non-forced atomic GitHub `update_ref` with `expected_sha` lease** on the same branch. If moved, reconcile disjoint paths on a fresh base and fresh lease; STOP on overlap, conflict or missing atomic guarantee. After publication verify remote HEAD, commit ancestry, exact blobs, only two owned changed paths, preserved independent R552 work and zero test execution.
+
+**Unverified risks:** Windows WPF XAML parsing/compilation; caption line wrapping and contrast; fixed 202px Wide panel and 210/216px Standard/Compact panel heights with existing 118px maximum action scroll viewer; text clipping or scrolling at 1440/1100/1099/1024/1023/640px, 125–200% DPI and high-contrast themes; screen-reader announcement order, readability and keyboard focus continuity; long suggested-action titles and badge semantics. Static inspection does **not** prove rendering, accessibility or successful compilation.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED OR EXECUTED
+
+1. Inspect Wide >=1440px Recommended Actions header, visible muted caption and unmodified row/badge hierarchy.
+2. Inspect Standard 1100–1439px and Compact 1024–1099px for caption wrapping, unobscured list rows and scroll controls.
+3. Inspect 1023px and 640px widths for graceful wrapping and no unintended horizontal clipping.
+4. Inspect 125%, 150%, 200% DPI and standard/high-contrast themes for legibility and fixed-panel containment.
+5. Inspect incident-backed rows: badge `#n` remains list position, not risk or confidence; caption remains accurate.
+6. Inspect anomaly-backed rows: local risk badge remains unchanged and caption does not imply automated remediation.
+7. Inspect baseline-learning fallback: no fabricated active incidents, numeric scores or capture-health claims.
+8. Use keyboard and screen reader through Recommended Actions and adjacent Raw/Advanced buttons; ensure no new focus stop or misleading action semantics.
+9. Inspect unchanged PPS average/history, operational KPIs, incidents/investigation, Live Events 80/500, unavailable CLI, Cisco/WebView2/ScottPlot, privacy/capture/trust and independent R552 files.
+10. Inspect final source/docs blobs, direct-parent commits, exact owned-path diff, expected-SHA publication lease and **zero** builds/tests/replays/CI/runners/benchmarks/capture.
+
+**Next independent UI GA UI-77:** inspect fresh LIVE HEAD, exact approved image, ledger and original WPF consumers; choose one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–76. Acceptance remains deferred until the owner explicitly says **“now it is test time.”**
