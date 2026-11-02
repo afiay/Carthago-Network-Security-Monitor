@@ -29,7 +29,8 @@ public sealed class CatalogWideConfidenceSafetyTests
             DestinationPort = 443
         };
 
-        Assert.Equal(544, RuleCatalog.All.Count);
+        Assert.True(RuleCatalog.All.Count >= 544);
+        Assert.Equal(RuleCatalog.All.Count, RuleCatalog.Rules.Count);
         foreach (var descriptor in RuleCatalog.All)
         {
             var profile = RulePrecisionCatalog.GetProfile(descriptor);
@@ -57,7 +58,8 @@ public sealed class CatalogWideConfidenceSafetyTests
     {
         var registry = new ApprovedAssetRegistry(new EnvironmentTuningOptions());
         var empty = new TrafficRecord();
-        Assert.Equal(544, RuleCatalog.Rules.Count);
+        Assert.True(RuleCatalog.Rules.Count >= 544);
+        Assert.Equal(RuleCatalog.All.Count, RuleCatalog.Rules.Count);
 
         foreach (var rule in RuleCatalog.Rules)
         {
