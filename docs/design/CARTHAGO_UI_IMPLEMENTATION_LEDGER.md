@@ -4563,3 +4563,46 @@ Static source review covered `IncidentsPage.xaml`, `IncidentQueuePage.xaml`, the
 **Next UI GA UI-93:** continue a substantial reference-led **Anomalies workspace** visual redesign (section architecture, evidence density and responsive layout), never tooltip-only micro-edits. Keep SOURCE CANDIDATE — UNVERIFIED until explicit owner authorization: **“now it is test time.”**
 
 **Publication reconciliation:** initial starting HEAD `6099bfa8c9bff2150caadc7dbf89f332752a1a42`; additional disjoint independent changes through `adb7c642c388d9013dad33cb2c69dfbac7959ece` were preserved. The final GA UI-92 source commit is `c9db9e94d311b6c83583f43a3976cb844b640b98`, directly parented to the reconciled live HEAD. No independent files were overwritten.
+
+
+## GA UI-93 — Anomaly Intelligence: reference-led visual operations workspace
+
+**2026-11-02 · SOURCE CANDIDATE — UNVERIFIED.** Exact approved ChatGPT Library reference `libfile_b0a34361560c8191b641e432b3e6b15c` was retrieved and visually inspected FIRST, before any GitHub inspection or source work. Starting live feature-branch HEAD: `395f01162c771c13cca004c7c64115fe1ff2f4b3`. Prior GA UI-92 publication: `91ab8a05e2ac4ec1e886d69f9ebc52d9ccac7eae`. Independent intervening commits harden Redis pinned mTLS/audit source/tests and validation docs; their files and schedules remain untouched. Prepared private **source commit `886b99fa46385d5902942f1f39ec0dba309564b0`**, direct child of starting HEAD; source tree `d7e59b5d2b66523dabe02f3dd5dc1f3f10a46d8b`. The source and this documentation must be published together through exactly one non-forced expected-SHA lease. No builds, tests, replays, holdouts, CI/Actions, runners, benchmarks, capture or running-WPF screenshots were executed by this GA.
+
+### Approved-reference mapping, provenance and visible before → after
+
+The approved 1648×928 screenshot shows dark navy/graphite operations cards, cyan hierarchy, strong page identity, prominent numerical tiles, a priority triage queue and adjacent investigation with layered evidence. Its IPs, rule IDs, timestamps, confidence, Mbps, status claims and CLI content are **DEMO ONLY**. No screenshot values were copied into real application data. Existing local capture, analytics, privacy/trust and detection producers are unchanged.
+
+- **Page identity:** formerly the Anomalies screen began abruptly with five small KPI tiles. Now a full-width navy/teal **Anomaly Intelligence** gradient hero introduces the behavior-analytics workflow, a cyan operations eyebrow and a **RECENT LOCAL SNAPSHOT** count bound to the existing `RawSignalCount` viewmodel property. This count describes a bounded local anomaly snapshot, not a global sensor or network total.
+- **KPI architecture:** the five existing metrics become taller 124px gradient cards with larger values, consistent padding and restrained color rails. Existing values, deltas, labels and source bindings remain. The Baseline Confidence card's previous five permanently green bars are replaced by a single neutral cyan/teal accent and an explicit local-baseline-not-rule-coverage caption; the static full-green graphic could otherwise imply an unsupported perfect baseline state.
+- **Queue/filter architecture:** previously category, search, severity, linked-only and Reset were compressed into one five-column grid inside a 45%-width triage pane. The new dark filter band provides a **full-width search row** and a **wrapping control row** for category, severity, linked-only and Reset. Existing names, handlers, option values, bindings and keyboard controls are retained. Wrapping is source-designed to improve reachability as the queue pane narrows, but is not yet visually verified.
+- **Triage and investigation:** both primary panels now use coherent dark gradient surfaces, 17px padding, teal borders and **cyan eyebrow → 20px title → context subtitle → separator** hierarchy. The original queue, pagination, selected-anomaly detail, evidence, navigation and action handlers remain in place.
+- **Evidence readability:** existing investigation fact cards adopt darker navy surfaces with quiet borders and more deliberate padding. Entity History, Baseline Drift/Peer Group and Analyst Actions supporting panels adopt the same panel geometry and stronger titled-section hierarchy. Existing baseline/model/evidence data and disabled states are unchanged.
+- **Responsive contract:** existing `AnomaliesPage.ApplyResponsiveLayout` still controls 5/3/2 KPI columns and Wide/Standard two-pane versus Compact stacked primary/supporting panels; the new hero is vertically composed and filter controls wrap. Below 1024px, a 162px category selector and 158px severity selector may still require careful reachability review. No responsive C# or shared API edits were necessary.
+
+**Static visual-impact assessment:** the source changes a full page header, five metric cards, primary panel geometry, filter arrangement, evidence surfaces and three supporting sections. This is a section/screen-scale visual redesign, not tooltip-only. Actual WPF rendering, XAML parsing, keyboard accessibility, DPI behavior and clipping are **UNVERIFIED**.
+
+### Ownership, source provenance and start/end divergence review
+
+- `Carthago/Views/AnomaliesPage.xaml`: source blob `97e22abe5c4bbe675057d544a8303e5ba43bc5a8` (previous `e3e120fd11f4b4406d01ad585c935c2b201ce27a`).
+- `Carthago/Views/Theme.xaml`: source blob `c5492c0f9aa953f38af83da43b01daa3dfec33e8` (previous `0dea075161829e52278fe9af4408d31084b7e5d7`). Seven new `AnomalyOps*` resources are page-specific, leaving the incident/dashboard visual systems intact.
+- `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`: documentation only, committed as direct child of the source commit.
+
+Start review inspected live branch/recent commits, ledger through UI-92, `AnomaliesPage.xaml`, `AnomaliesPage.xaml.cs` including `ApplyResponsiveLayout`, the incident-page responsive precedent, and shared `Theme.xaml`. End static source review found the original named KPI grid, primary/supporting row/column definitions, `QueuePanel`, `InvestigationPanel`, `AnomaliesList`, filters, pagination, evidence and empty-state controls still present exactly once. The original filter/selection/navigation handler names, analytics producers, `SinkHost` consumers and responsive partial contract remain. Only two UI-owned files plus this ledger are intended to differ. No Engine/Models/Services, detection/protocol, telemetry/capture/trust/privacy, tests, workflows, runners, project file, rule/protocol docs or independent automation settings were modified. No new working CLI, adapters, fake telemetry or monitoring claims.
+
+**Risks — UNVERIFIED:** the taller hero/KPIs/filter band increase vertical scrolling; at 1440px the left 45%-width pane may wrap filter controls into multiple rows; 125–200% DPI and widths below 1024 may still clip fixed-width selectors, long queue rows or investigation facts; new WPF StaticResource references and grid-row shifts have not been compiled; source severity converter fallback and baseline health wording require visual/accessibility review. The approved screenshot's demonstration data must never be treated as observed capture.
+
+### Planned acceptance scenarios — ALL UNEXECUTED
+
+1. At 1648px compare hero, five KPI cards, queue, investigation and evidence hierarchy to the approved reference without using demo data as facts.
+2. At Wide 1440px and 125%, 150%, 200% DPI inspect panel proportions, filter wrapping, selected-row highlight and evidence fact-card truncation.
+3. At Standard 1100–1439 inspect existing three-column KPI reflow and queue/investigation layout, with full-width search remaining usable.
+4. At Compact 1024–1099 inspect two-column KPI cards, stacked panels, wrapped filters and supporting analysis sections.
+5. At 1023/800/640px inspect outer scrolling, combo reachability, hero wrapping, page headers and keyboard focus.
+6. Confirm `RawSignalCount`, five KPI values/deltas and baseline health remain bound to original local sources, without simulated coverage or false always-green indicators.
+7. Confirm category, severity, search, linked-only, Reset, pagination and queue selection retain original handlers, options and state transitions.
+8. Confirm selected anomaly investigation, baseline comparison, model explanation, top ML signals, tags, related rule IDs, evidence and analyst action buttons retain original content and disabled states.
+9. Confirm independent Incident Queue, Overview local PPS ScottPlot (10-sample average/120-point history), Live Events 80/500, visual-only UNAVAILABLE CLI, Cisco/WebView2, privacy/trust/capture boundaries remain unchanged.
+10. Verify published source/docs blob SHAs, exactly three authorized changed paths, source→docs direct-parent ancestry, one non-forced expected-SHA publication and **zero** builds/tests/replays/holdouts/CI/runners/benchmarks/capture.
+
+**Next UI GA UI-94:** continue reference-led screen-visible redesign with Anomalies evidence/queue density or Settings operational composition after fresh live-head, ledger and consumer audit. Never substitute tooltip micro-edits; keep all changes **SOURCE CANDIDATE — UNVERIFIED** until the owner explicitly says **“now it is test time.”**
