@@ -6,7 +6,7 @@ namespace Carthago.Services.ProtocolIntelligence
     /// <summary>
     /// Strict, bounded RESP2 array-of-bulk-strings client-command framing.
     /// Requires caller-attested plaintext command boundary and direction.
-    /// Returns only a fixed command family and argument count; never keys,
+    /// Returns only a fixed command family, argument count and CONFIG SET\n    /// request-shape flag; never keys,
     /// credentials, Lua, RESTORE payloads, values, or server outcomes.
     /// ISOLATED: no TCP reassembly or capture registration.
     /// </summary>
@@ -31,6 +31,7 @@ namespace Carthago.Services.ProtocolIntelligence
                 return false;
 
             Resp2CommandKind command = default;
+            bool isConfigSetRequest = false;
             for (int index = 0; index < elementCount; index++)
             {
                 if (!TryReadLengthLine(bytes, ref cursor, (byte)'$',
@@ -44,6 +45,14 @@ namespace Carthago.Services.ProtocolIntelligence
                     if (command == Resp2CommandKind.Unknown)
                         return false;
                 }
+                else if (index == 1 && command == Resp2CommandKind.Config
+                    // CONFIG SET requires one or more parameter/value pairs.
+                    // Do not retain any parameter, value, or credential bytes.
+                    && elementCount >= 4 && elementCount % 2 == 0)
+                {
+                    isConfigSetRequest = AsciiEqualsIgnoreCase(
+                        bytes.Slice(cursor, dataLength), "SET"u8);
+                }
 
                 cursor += dataLength;
                 if (cursor + 2 > bytes.Length || bytes[cursor] != '\r'
@@ -52,7 +61,7 @@ namespace Carthago.Services.ProtocolIntelligence
                 cursor += 2;
             }
 
-            observation = new(command, elementCount - 1, cursor);
+            observation = new(command, elementCount - 1, cursor, isConfigSetRequest);
             return true;
         }
 
@@ -144,5 +153,6 @@ namespace Carthago.Services.ProtocolIntelligence
     public readonly record struct Resp2CommandObservation(
         Resp2CommandKind Command,
         int ArgumentCount,
-        int BytesConsumed);
+        int BytesConsumed,
+        bool IsConfigSetRequest = false);
 }
