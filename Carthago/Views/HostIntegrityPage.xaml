@@ -1,115 +1,237 @@
 <!-- SPDX-License-Identifier: MIT -->
 <!-- File: Views/HostIntegrityPage.xaml -->
+<!-- GA UI-96: visual-only local inventory workspace; scan and context-menu handlers remain original. -->
 <Page x:Class="Carthago.Views.HostIntegrityPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       Title="Host Integrity">
 
-    <Grid Background="{StaticResource AppBgBrush}">
-        <Grid.RowDefinitions>
+  <Page.Resources>
+    <LinearGradientBrush x:Key="HostIntegrityHeroGradient" StartPoint="0,0" EndPoint="1,1">
+      <GradientStop Color="#10243A" Offset="0"/>
+      <GradientStop Color="#0B1C2F" Offset="0.62"/>
+      <GradientStop Color="#0B2834" Offset="1"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="HostIntegrityMetricGradient" StartPoint="0,0" EndPoint="1,1">
+      <GradientStop Color="#101F32" Offset="0"/>
+      <GradientStop Color="#0B192A" Offset="1"/>
+    </LinearGradientBrush>
+    <Style x:Key="HostIntegrityEyebrow" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="10.5"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+      <Setter Property="CharacterSpacing" Value="1"/>
+    </Style>
+    <Style x:Key="HostIntegrityMetricCard" TargetType="Border">
+      <Setter Property="Background" Value="{StaticResource HostIntegrityMetricGradient}"/>
+      <Setter Property="BorderBrush" Value="#2A465A"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="14"/>
+      <Setter Property="Padding" Value="16,14"/>
+      <Setter Property="MinHeight" Value="102"/>
+    </Style>
+    <Style x:Key="HostIntegrityGridHeader" TargetType="DataGridColumnHeader"
+           BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+      <Setter Property="Background" Value="#12283A"/>
+      <Setter Property="Foreground" Value="{StaticResource TextSubtleBrush}"/>
+      <Setter Property="Padding" Value="12,10"/>
+      <Setter Property="FontSize" Value="11.5"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+    <Style x:Key="HostInventoryGrid" TargetType="DataGrid"
+           BasedOn="{StaticResource {x:Type DataGrid}}">
+      <Setter Property="Background" Value="#091828"/>
+      <Setter Property="BorderBrush" Value="#264157"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="RowHeight" Value="38"/>
+      <Setter Property="ColumnHeaderHeight" Value="42"/>
+      <Setter Property="AlternatingRowBackground" Value="#102337"/>
+      <Setter Property="ColumnHeaderStyle" Value="{StaticResource HostIntegrityGridHeader}"/>
+      <Setter Property="HeadersVisibility" Value="Column"/>
+      <Setter Property="SelectionMode" Value="Single"/>
+      <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+    </Style>
+  </Page.Resources>
+
+  <Grid Background="{StaticResource AppBackdropGradient}">
+    <Grid Margin="18,12,18,16">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="*"/>
+      </Grid.RowDefinitions>
+
+      <!-- Local scan provenance and action, not an active-capture indicator. -->
+      <Border Grid.Row="0"
+              Background="{StaticResource HostIntegrityHeroGradient}"
+              BorderBrush="#2A5264"
+              BorderThickness="1"
+              CornerRadius="16"
+              Padding="22,20"
+              Margin="0,0,0,14">
+        <Grid x:Name="HostHeroGrid">
+          <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+          </Grid.RowDefinitions>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+          </Grid.ColumnDefinitions>
+          <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,16,0">
+            <TextBlock Text="LOCAL ENDPOINT  /  INVENTORY REVIEW"
+                       Style="{StaticResource HostIntegrityEyebrow}"/>
+            <TextBlock Text="Host Integrity &amp; Software Hygiene"
+                       FontSize="28"
+                       FontWeight="SemiBold"
+                       Foreground="{StaticResource TextBrush}"
+                       TextWrapping="Wrap"
+                       Margin="0,6,0,8"/>
+            <TextBlock x:Name="SummaryText"
+                       Text="Awaiting local inventory scan"
+                       FontSize="12.5"
+                       Foreground="{StaticResource TextSubtleBrush}"
+                       TextWrapping="Wrap"/>
+          </StackPanel>
+          <Border x:Name="HostHeroAction" Grid.Row="0" Grid.Column="1"
+                  Background="#0B2638" BorderBrush="#326078"
+                  BorderThickness="1" CornerRadius="12"
+                  Padding="12" VerticalAlignment="Center">
+            <StackPanel>
+              <TextBlock Text="INVENTORY ACTION"
+                         Style="{StaticResource HostIntegrityEyebrow}"
+                         Margin="0,0,0,8"/>
+              <Button x:Name="RescanButton" Content="Rescan"
+                      Width="124" Height="38"
+                      Style="{StaticResource PrimaryButton}"
+                      Click="RescanButton_Click"/>
+            </StackPanel>
+          </Border>
+        </Grid>
+      </Border>
+
+      <!-- Score/risk are derived from the existing local driver and software scan. -->
+      <Grid x:Name="HostMetricGrid" Grid.Row="1" Margin="0,0,0,14">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition x:Name="HostMetricSecondRow" Height="0"/>
+          <RowDefinition x:Name="HostMetricThirdRow" Height="0"/>
         </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition x:Name="HostMetricFirstColumn" Width="1*"/>
+          <ColumnDefinition x:Name="HostMetricSecondColumn" Width="1*"/>
+          <ColumnDefinition x:Name="HostMetricThirdColumn" Width="1.25*"/>
+        </Grid.ColumnDefinitions>
 
-        <!-- ===== Header / Summary ===== -->
-        <Border Grid.Row="0"
-                Background="{StaticResource HeaderGradient}"
-                CornerRadius="8"
-                Padding="10"
-                BorderBrush="{StaticResource CardBorderBrush}"
-                BorderThickness="1"
-                Margin="0,0,0,8">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-
-                <!-- Title + summary -->
-                <StackPanel Grid.Column="0"
-                            Orientation="Vertical">
-                    <TextBlock Text="Host Integrity &amp; Software Hygiene"
-                               FontSize="18"
-                               FontWeight="SemiBold"/>
-                    <TextBlock x:Name="SummaryText"
-                               Margin="0,4,0,0"
-                               Foreground="{StaticResource TextSubtleBrush}"
-                               FontSize="12"
-                               Text="Ready"/>
-                    <TextBlock x:Name="ScanTimeText"
-                               Margin="0,2,0,0"
-                               Foreground="{StaticResource TextSubtleBrush}"
-                               FontSize="11"
-                               Text="Last scan: -"/>
-                </StackPanel>
-
-                <!-- Score + risk + rescan -->
-                <StackPanel Grid.Column="1"
-                            Orientation="Horizontal"
-                            VerticalAlignment="Center">
-                    <StackPanel Orientation="Horizontal"
-                                Margin="0,0,16,0"
-                                VerticalAlignment="Center">
-                        <TextBlock Text="Score:"
-                                   Margin="0,0,4,0"
-                                   VerticalAlignment="Center"/>
-                        <TextBlock x:Name="HostScoreText"
-                                   FontSize="18"
-                                   FontWeight="Bold"
-                                   VerticalAlignment="Center"
-                                   Text="0"/>
-                        <TextBlock Text="   Risk:"
-                                   Margin="12,0,4,0"
-                                   VerticalAlignment="Center"/>
-                        <TextBlock x:Name="HostRiskText"
-                                   FontSize="18"
-                                   FontWeight="Bold"
-                                   VerticalAlignment="Center"
-                                   Text="Info"/>
-                    </StackPanel>
-
-                    <Button x:Name="RescanButton"
-                            Content="Rescan"
-                            Width="110"
-                            Height="28"
-                            Style="{StaticResource PrimaryButton}"
-                            Click="RescanButton_Click"/>
-                </StackPanel>
-            </Grid>
+        <Border x:Name="HostScoreCard" Grid.Row="0" Grid.Column="0"
+                Style="{StaticResource HostIntegrityMetricCard}"
+                Margin="0,0,12,0">
+          <StackPanel>
+            <TextBlock Text="HIGHEST OBSERVED SCORE"
+                       Style="{StaticResource HostIntegrityEyebrow}"/>
+            <TextBlock x:Name="HostScoreText" Text="—"
+                       FontSize="31" FontWeight="SemiBold"
+                       Foreground="{StaticResource TextBrush}"
+                       Margin="0,5,0,0"/>
+            <TextBlock Text="Maximum score across local scan records"
+                       Foreground="{StaticResource TextMutedBrush}"
+                       FontSize="11" TextWrapping="Wrap" Margin="0,3,0,0"/>
+          </StackPanel>
         </Border>
 
-        <!-- ===== Body: tabs ===== -->
-        <Border Grid.Row="1"
-                Background="{StaticResource CardBgBrush}"
-                BorderBrush="{StaticResource CardBorderBrush}"
-                BorderThickness="1"
-                CornerRadius="8">
-            <DockPanel Margin="6">
+        <Border x:Name="HostRiskCard" Grid.Row="0" Grid.Column="1"
+                Style="{StaticResource HostIntegrityMetricCard}"
+                Margin="0,0,12,0">
+          <StackPanel>
+            <TextBlock Text="HIGHEST OBSERVED RISK"
+                       Style="{StaticResource HostIntegrityEyebrow}"/>
+            <TextBlock x:Name="HostRiskText" Text="Not scanned"
+                       FontSize="26" FontWeight="SemiBold"
+                       Foreground="{StaticResource TextBrush}"
+                       Margin="0,6,0,0"/>
+            <TextBlock Text="Local score classification, not a security guarantee"
+                       Foreground="{StaticResource TextMutedBrush}"
+                       FontSize="11" TextWrapping="Wrap" Margin="0,3,0,0"/>
+          </StackPanel>
+        </Border>
 
-                <TabControl x:Name="IntegrityTabControl">
+        <Border x:Name="HostScanCard" Grid.Row="0" Grid.Column="2"
+                Style="{StaticResource HostIntegrityMetricCard}">
+          <StackPanel>
+            <TextBlock Text="SCAN PROVENANCE"
+                       Style="{StaticResource HostIntegrityEyebrow}"/>
+            <TextBlock Text="Local driver &amp; software inventory"
+                       FontSize="15" FontWeight="SemiBold"
+                       Foreground="{StaticResource TextBrush}"
+                       TextWrapping="Wrap" Margin="0,7,0,6"/>
+            <TextBlock x:Name="ScanTimeText" Text="Not scanned"
+                       FontSize="11.5" Foreground="{StaticResource TextSubtleBrush}"
+                       TextWrapping="Wrap"/>
+          </StackPanel>
+        </Border>
+      </Grid>
 
-                    <!-- === Tab 1: Kernel & Drivers === -->
-                    <TabItem Header="Kernel &amp; Drivers">
-                        <Grid Margin="4">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-
-                            <StackPanel Grid.Row="0"
-                                        Orientation="Horizontal"
-                                        HorizontalAlignment="Right"
-                                        Margin="0,0,0,4">
-                                <CheckBox x:Name="ShowOnlySuspiciousDriversCheck"
-                                          Content="Show only suspicious"
-                                          IsChecked="True"
-                                          Checked="ShowOnlySuspiciousDriversCheck_Changed"
-                                          Unchecked="ShowOnlySuspiciousDriversCheck_Changed"/>
-                            </StackPanel>
-
-                            <DataGrid x:Name="DriversGrid"
+      <!-- Evidence tables remain read-only, virtualized and horizontally scrollable. -->
+      <Border Grid.Row="2"
+              Background="{StaticResource CardSurfaceGradient}"
+              BorderBrush="#29475B"
+              BorderThickness="1"
+              CornerRadius="16"
+              Padding="16,14,16,16">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+          </Grid.RowDefinitions>
+          <StackPanel Grid.Row="0" Margin="2,0,2,12">
+            <TextBlock Text="LOCAL EVIDENCE  /  INVENTORY"
+                       Style="{StaticResource HostIntegrityEyebrow}"/>
+            <TextBlock Text="Driver &amp; software review"
+                       FontSize="20" FontWeight="SemiBold"
+                       Foreground="{StaticResource TextBrush}"
+                       Margin="0,5,0,4"/>
+            <TextBlock Text="Read-only local scan results. Use the existing tabs and suspicious-only filters to inspect inventory records."
+                       Foreground="{StaticResource TextSubtleBrush}"
+                       FontSize="12" TextWrapping="Wrap"/>
+          </StackPanel>
+          <TabControl x:Name="IntegrityTabControl" Grid.Row="1"
+                      Style="{StaticResource TabControl.Themed}">
+            <TabItem Header="Kernel &amp; Drivers">
+              <Grid Margin="4,12,4,4">
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto"/>
+                  <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Grid x:Name="DriverFilterGrid" Grid.Row="0" Margin="0,0,0,6">
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                  </Grid.RowDefinitions>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                  </Grid.ColumnDefinitions>
+                  <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,12,0">
+                    <TextBlock Text="Kernel &amp; driver inventory"
+                               FontSize="15" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextBrush}"/>
+                    <TextBlock Text="Local driver state, signatures, paths and risk indicators"
+                               FontSize="11.5" TextWrapping="Wrap"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               Margin="0,3,0,0"/>
+                  </StackPanel>
+                  <CheckBox x:Name="ShowOnlySuspiciousDriversCheck"
+                            Grid.Row="0" Grid.Column="1"
+                            VerticalAlignment="Center"
+                            Content="Show only suspicious"
+                            IsChecked="True"
+                            Checked="ShowOnlySuspiciousDriversCheck_Changed"
+                            Unchecked="ShowOnlySuspiciousDriversCheck_Changed"/>
+                </Grid>
+                <DataGrid x:Name="DriversGrid"
+                                      Style="{StaticResource HostInventoryGrid}"
                                       Grid.Row="1"
-                                      Margin="0,4,0,0"
+                                      Margin="0,10,0,0"
                                       AutoGenerateColumns="False"
                                       IsReadOnly="True"
                                       CanUserAddRows="False"
@@ -169,31 +291,45 @@
                                                         Width="220"/>
                                 </DataGrid.Columns>
                             </DataGrid>
-                        </Grid>
-                    </TabItem>
+              </Grid>
+            </TabItem>
 
-                    <!-- === Tab 2: Installed Software === -->
-                    <TabItem Header="Installed Software">
-                        <Grid Margin="4">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-
-                            <StackPanel Grid.Row="0"
-                                        Orientation="Horizontal"
-                                        HorizontalAlignment="Right"
-                                        Margin="0,0,0,4">
-                                <CheckBox x:Name="ShowOnlySuspiciousAppsCheck"
-                                          Content="Show only suspicious"
-                                          IsChecked="True"
-                                          Checked="ShowOnlySuspiciousAppsCheck_Changed"
-                                          Unchecked="ShowOnlySuspiciousAppsCheck_Changed"/>
-                            </StackPanel>
-
-                            <DataGrid x:Name="AppsGrid"
+            <TabItem Header="Installed Software">
+              <Grid Margin="4,12,4,4">
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto"/>
+                  <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Grid x:Name="AppFilterGrid" Grid.Row="0" Margin="0,0,0,6">
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                  </Grid.RowDefinitions>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                  </Grid.ColumnDefinitions>
+                  <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,12,0">
+                    <TextBlock Text="Installed software inventory"
+                               FontSize="15" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextBrush}"/>
+                    <TextBlock Text="Local publisher, installation, exposure and hygiene observations"
+                               FontSize="11.5" TextWrapping="Wrap"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               Margin="0,3,0,0"/>
+                  </StackPanel>
+                  <CheckBox x:Name="ShowOnlySuspiciousAppsCheck"
+                            Grid.Row="0" Grid.Column="1"
+                            VerticalAlignment="Center"
+                            Content="Show only suspicious"
+                            IsChecked="True"
+                            Checked="ShowOnlySuspiciousAppsCheck_Changed"
+                            Unchecked="ShowOnlySuspiciousAppsCheck_Changed"/>
+                </Grid>
+                <DataGrid x:Name="AppsGrid"
+                                      Style="{StaticResource HostInventoryGrid}"
                                       Grid.Row="1"
-                                      Margin="0,4,0,0"
+                                      Margin="0,10,0,0"
                                       AutoGenerateColumns="False"
                                       IsReadOnly="True"
                                       CanUserAddRows="False"
@@ -259,12 +395,11 @@
                                                         Width="260"/>
                                 </DataGrid.Columns>
                             </DataGrid>
-                        </Grid>
-                    </TabItem>
-
-                </TabControl>
-            </DockPanel>
-        </Border>
-
+              </Grid>
+            </TabItem>
+          </TabControl>
+        </Grid>
+      </Border>
     </Grid>
+  </Grid>
 </Page>
