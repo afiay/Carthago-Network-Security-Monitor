@@ -79,7 +79,8 @@ public sealed class RedisRespCaptureIntegrationTests
     private static (TrafficRecord Request, TrafficRecord Reply) Exchange(
         byte[] request, byte[] reply, bool witnessedSynAck = true,
         uint replySequence = 101, bool additionalClientPayload = false,
-        bool retransmitRequest = false)
+        bool retransmitRequest = false, byte? closingFlags = null,
+        bool precedingServerData = false)
     {
         var handler = new PacketHandler();
         var link = (PacketDotNet.LinkLayers)12;
@@ -103,6 +104,19 @@ public sealed class RedisRespCaptureIntegrationTests
         if (retransmitRequest)
             Assert.NotNull(handler.ParseFrame(
                 Frame(request, 40000, 6379, 1, 0x18), link));
+
+        if (closingFlags.HasValue)
+            Assert.NotNull(handler.ParseFrame(
+                Frame(Array.Empty<byte>(), 40000, 6379,
+                    (uint)(1 + request.Length), closingFlags.Value), link));
+
+        if (precedingServerData)
+        {
+            var other = Encoding.ASCII.GetBytes("+PONG\r\n");
+            Assert.NotNull(handler.ParseFrame(
+                Frame(other, 6379, 40000, 101, 0x18), link));
+            replySequence = (uint)(101 + other.Length);
+        }
 
         var replyRecord = Assert.IsType<TrafficRecord>(handler.ParseFrame(
             Frame(reply, 6379, 40000, replySequence, 0x18), link));
@@ -240,6 +254,39 @@ public sealed class RedisRespCaptureIntegrationTests
             .Reply.RedisRespConfigSetReplyOkObserved);
         Assert.False(Exchange(req, reply, retransmitRequest: true)
             .Reply.RedisRespConfigSetReplyOkObserved);
+    }
+
+    [Theory]
+    [InlineData((byte)0x11)] // FIN + ACK
+    [InlineData((byte)0x14)] // RST + ACK
+    public void Connection_Termination_Cancels_Outstanding_Config_Set(byte flags)
+    {
+        var (_, reply) = Exchange(Request("CONFIG", "SET", "timeout", "30"),
+            Encoding.ASCII.GetBytes("+OK\r\n"), closingFlags: flags);
+        Assert.False(reply.RedisRespConfigSetReplyOkObserved);
+    }
+
+    [Fact]
+    public void Prior_Server_Data_Consumes_The_Only_Eligible_Response()
+    {
+        var (_, reply) = Exchange(Request("CONFIG", "SET", "timeout", "30"),
+            Encoding.ASCII.GetBytes("+OK\r\n"), precedingServerData: true);
+        Assert.False(reply.RedisRespConfigSetReplyOkObserved);
+    }
+
+    [Fact]
+    public void Redis_Reply_Correlation_Has_A_Thirty_Second_Deadline()
+    {
+        var start = new DateTime(2026, 11, 2, 12, 0, 0, DateTimeKind.Utc);
+        Assert.True(PacketHandler.IsWithinRedisReplyWindow(start, start));
+        Assert.True(PacketHandler.IsWithinRedisReplyWindow(start,
+            start.AddSeconds(30)));
+        Assert.False(PacketHandler.IsWithinRedisReplyWindow(start,
+            start.AddSeconds(31)));
+        Assert.False(PacketHandler.IsWithinRedisReplyWindow(start,
+            start.AddMilliseconds(-1)));
+        Assert.False(PacketHandler.IsWithinRedisReplyWindow(default,
+            start));
     }
 
     [Fact]
