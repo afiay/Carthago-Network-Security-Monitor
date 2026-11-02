@@ -42,8 +42,11 @@ public sealed class RedisRespCaptureIntegrationTests
         frame[3] = (byte)frame.Length;
         frame[8] = 64;
         frame[9] = 6; // TCP
-        IPAddress.Parse("10.4.0.9").GetAddressBytes().CopyTo(frame, 12);
-        IPAddress.Parse("10.4.0.10").GetAddressBytes().CopyTo(frame, 16);
+        var reverse = sourcePort == 6379;
+        IPAddress.Parse(reverse ? "10.4.0.10" : "10.4.0.9")
+            .GetAddressBytes().CopyTo(frame, 12);
+        IPAddress.Parse(reverse ? "10.4.0.9" : "10.4.0.10")
+            .GetAddressBytes().CopyTo(frame, 16);
         frame[20] = (byte)(sourcePort >> 8);
         frame[21] = (byte)sourcePort;
         frame[22] = (byte)(destinationPort >> 8);
@@ -71,6 +74,39 @@ public sealed class RedisRespCaptureIntegrationTests
             Frame(payload, sourcePort, destinationPort, payloadSequence, 0x18),
             (PacketDotNet.LinkLayers)12);
         return Assert.IsType<TrafficRecord>(observed);
+    }
+
+    private static (TrafficRecord Request, TrafficRecord Reply) Exchange(
+        byte[] request, byte[] reply, bool witnessedSynAck = true,
+        uint replySequence = 101, bool additionalClientPayload = false,
+        bool retransmitRequest = false)
+    {
+        var handler = new PacketHandler();
+        var link = (PacketDotNet.LinkLayers)12;
+
+        // Distinct initial sequence numbers prove which direction's first
+        // application payload is being admitted; no request bytes are cached.
+        Assert.NotNull(handler.ParseFrame(
+            Frame(Array.Empty<byte>(), 40000, 6379, 0, 0x02), link));
+        if (witnessedSynAck)
+            Assert.NotNull(handler.ParseFrame(
+                Frame(Array.Empty<byte>(), 6379, 40000, 100, 0x12), link));
+
+        var requestRecord = Assert.IsType<TrafficRecord>(handler.ParseFrame(
+            Frame(request, 40000, 6379, 1, 0x18), link));
+
+        if (additionalClientPayload)
+            Assert.NotNull(handler.ParseFrame(
+                Frame(Request("PING"), 40000, 6379,
+                    (uint)(1 + request.Length), 0x18), link));
+
+        if (retransmitRequest)
+            Assert.NotNull(handler.ParseFrame(
+                Frame(request, 40000, 6379, 1, 0x18), link));
+
+        var replyRecord = Assert.IsType<TrafficRecord>(handler.ParseFrame(
+            Frame(reply, 6379, 40000, replySequence, 0x18), link));
+        return (requestRecord, replyRecord);
     }
 
     [Fact]
