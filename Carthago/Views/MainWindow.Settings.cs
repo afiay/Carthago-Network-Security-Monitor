@@ -5,12 +5,36 @@ using System.Windows;
 using System.Windows.Controls;
 using Carthago.Models;
 using Carthago.Services;
+using Carthago.Views;
 
 namespace Carthago
 {
     public partial class MainWindow : Window
     {
         // ======== UI Handlers for Settings ========
+
+        // GA UI-94: Settings-only responsive presentation, preserving all preferences and handlers.
+        private void ApplySettingsResponsiveLayout(ResponsiveLayoutMode mode, bool narrowKpis)
+        {
+            var wide = mode == ResponsiveLayoutMode.Wide;
+            SettingsOpsLeftColumn.Width = new GridLength(wide ? 0.95 : 1, GridUnitType.Star);
+            SettingsOpsRightColumn.Width = wide
+                ? new GridLength(1.45, GridUnitType.Star) : new GridLength(0);
+
+            Grid.SetRow(SettingsCaptureGroup, wide ? 0 : 1);
+            Grid.SetColumn(SettingsCaptureGroup, wide ? 1 : 0);
+            Grid.SetRow(SettingsDashboardGroup, wide ? 1 : 2);
+            Grid.SetColumnSpan(SettingsDashboardGroup, wide ? 2 : 1);
+            Grid.SetRow(DemoModeGroup, wide ? 2 : 3);
+            Grid.SetColumnSpan(DemoModeGroup, wide ? 2 : 1);
+
+            SettingsCaptureGroup.Margin = wide
+                ? new Thickness(12, 0, 0, 14) : new Thickness(0, 0, 0, 14);
+            SettingsDashboardSectionsGrid.Columns = narrowKpis ? 1 : wide ? 3 : 2;
+            SettingsSensitivityLabelColumn.Width = new GridLength(narrowKpis ? 130 : 160);
+            SettingsCaptureLabelColumn.Width = new GridLength(narrowKpis ? 130 : 160);
+        }
+
 
         private void SaveSettings_Click(object sender, RoutedEventArgs e)
         {

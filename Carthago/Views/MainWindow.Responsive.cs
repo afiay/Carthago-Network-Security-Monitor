@@ -45,6 +45,7 @@ public partial class MainWindow
         _dashboardNarrowKpis = narrowKpis;
         ApplyShellLayout(mode);
         ApplyDashboardResponsiveLayout(mode, narrowKpis);
+        ApplySettingsResponsiveLayout(mode, narrowKpis);
         ApplyResponsiveLayoutTo(AnomaliesFrame.Content);
         ApplyResponsiveLayoutTo(IncidentsFrame.Content);
         ApplyResponsiveLayoutTo(ThreatFeedFrame.Content);

@@ -2177,30 +2177,46 @@
         <!-- ===== Settings ===== -->
         <Grid x:Name="SettingsView"
               Visibility="Collapsed">
-          <Border Background="{StaticResource CardBgBrush}"
-                  BorderBrush="{StaticResource CardBorderBrush}"
-                  BorderThickness="1"
-                  CornerRadius="10"
-                  Padding="30"
-                  MaxWidth="800"
-                  HorizontalAlignment="Center"
+          <Border Style="{StaticResource SettingsOpsFrame}"
+                  HorizontalAlignment="Stretch"
                   VerticalAlignment="Stretch">
             <ScrollViewer x:Name="SettingsScrollViewer"
                           VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled"
                           HorizontalContentAlignment="Stretch">
               <StackPanel>
-              <TextBlock Text="Settings"
-                         FontSize="20"
-                         FontWeight="Bold"
-                         Margin="0,0,0,10"/>
+                <!-- GA UI-94: screen-visible Settings visual architecture, source candidate. -->
+                <Border Style="{StaticResource SettingsOpsHero}" Margin="0,0,0,18">
+                  <StackPanel>
+                    <TextBlock Text="APPLICATION PREFERENCES  /  LOCAL CONFIGURATION"
+                               FontSize="11" FontWeight="Bold"
+                               Foreground="{StaticResource AccentBrush}"/>
+                    <TextBlock Text="Settings" FontSize="29" FontWeight="Bold"
+                               Foreground="{StaticResource TextBrush}" Margin="0,7,0,5"/>
+                    <TextBlock Text="Tune detection sensitivity, optional enrichment and your operational workspace. Dashboard section toggles apply immediately; Save persists the main preferences."
+                               Foreground="{StaticResource TextSubtleBrush}"
+                               TextWrapping="Wrap" MaxWidth="950" HorizontalAlignment="Left"/>
+                  </StackPanel>
+                </Border>
+                <Grid x:Name="SettingsOpsLayout">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition x:Name="SettingsOpsLeftColumn" Width="*"/>
+                    <ColumnDefinition x:Name="SettingsOpsRightColumn" Width="0"/>
+                  </Grid.ColumnDefinitions>
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                  </Grid.RowDefinitions>
 
               <!-- Sensitivity -->
-              <GroupBox Header="Detection Sensitivity"
-                        Margin="0,4,0,0">
+              <GroupBox x:Name="SettingsDetectionGroup" Grid.Row="0" Grid.Column="0"
+                        Header="Detection Sensitivity" Style="{StaticResource SettingsOpsGroup}"
+                        Margin="0,0,0,14">
                 <Grid Margin="10">
                   <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="160"/>
+                    <ColumnDefinition x:Name="SettingsSensitivityLabelColumn" Width="160"/>
                     <ColumnDefinition Width="*"/>
                   </Grid.ColumnDefinitions>
                   <Grid.RowDefinitions>
@@ -2302,11 +2318,12 @@
               </GroupBox>
 
               <!-- Enrichment & Capture -->
-               <GroupBox Header="Enrichment &amp; Capture"
-                         Margin="0,8,0,0">
+               <GroupBox x:Name="SettingsCaptureGroup" Grid.Row="1" Grid.Column="0"
+                         Header="Enrichment &amp; Capture" Style="{StaticResource SettingsOpsGroup}"
+                         Margin="0,0,0,14">
                 <Grid Margin="10">
                   <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="160"/>
+                    <ColumnDefinition x:Name="SettingsCaptureLabelColumn" Width="160"/>
                     <ColumnDefinition Width="*"/>
                   </Grid.ColumnDefinitions>
                   <Grid.RowDefinitions>
@@ -2435,8 +2452,9 @@
               </GroupBox>
 
 
-              <GroupBox Header="Dashboard &amp; Sections"
-                        Margin="0,8,0,0">
+              <GroupBox x:Name="SettingsDashboardGroup" Grid.Row="2" Grid.Column="0"
+                        Header="Dashboard &amp; Sections" Style="{StaticResource SettingsOpsGroup}"
+                        Margin="0,0,0,14">
                 <Grid Margin="10">
                   <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -2452,9 +2470,8 @@
                              TextWrapping="Wrap"/>
 
                   <!-- GA UI-63: existing dashboard-section guidance on keyboard focus and via UI Automation; original preference handlers unchanged. -->
-                  <UniformGrid Grid.Row="1"
-                               Columns="2"
-                               Margin="0,8,0,0">
+                  <UniformGrid x:Name="SettingsDashboardSectionsGrid"
+                               Grid.Row="1" Columns="2" Margin="0,14,0,0">
                     <CheckBox x:Name="DashboardShowIncidentsCheck"
                               Content="Show Incidents"
                               ToolTip="Display correlated security incidents on the dashboard."
@@ -2616,10 +2633,9 @@
                 </Grid>
               </GroupBox>
 
-              <GroupBox x:Name="DemoModeGroup"
-                        Header="Developer Demo Mode"
-                        Margin="0,8,0,0"
-                        Visibility="Collapsed">
+              <GroupBox x:Name="DemoModeGroup" Grid.Row="3" Grid.Column="0"
+                        Header="Developer Demo Mode" Style="{StaticResource SettingsOpsGroup}"
+                        Margin="0,0,0,14" Visibility="Collapsed">
                 <Grid Margin="10">
                   <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -2685,7 +2701,7 @@
                   </Border>
                 </Grid>
               </GroupBox>
-
+                </Grid>
               </StackPanel>
             </ScrollViewer>
           </Border>
