@@ -4698,3 +4698,50 @@ Initial inspection: live branch ref and recent commits, ledger through UI-94, `S
 10. Verify exact four authorized paths, source/docs direct-parent ancestry, single non-forced expected-SHA publication and **zero** builds/tests/replays/holdouts/CI/Actions/runners/benchmarks/capture.
 
 **Next UI GA UI-96:** a fresh reference-led, screen-visible operations enhancement after live-head/ledger/consumer audit; prioritize content readability or visual information architecture without repeating navigation or tooltip-only batches. All changes remain **SOURCE CANDIDATE — UNVERIFIED** until the owner explicitly says **“now it is test time.”**
+
+
+## GA UI-96 — Host Integrity: local inventory evidence workspace redesign
+
+**2026-11-02 · SOURCE CANDIDATE — UNVERIFIED.** The exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c` was retrieved and visually inspected **before** GitHub source inspection. Starting LIVE feature-branch HEAD: `02d9440207a6af995242da24334684b3000a505c`. Prior UI publication GA UI-95: `323828de3d49b3894205ba650d40d134d344fc82`. The subsequent independent verification ledger, UI chart-redraw, R566 Redis detection and CSA session/archive/export candidate commits were already on the live branch; none was changed. This UI-owned milestone follows GA UI-95 and does **not** repeat the navigation, incident, anomaly, dashboard, Live Events or Settings redesigns.
+
+### Approved reference mapping and screen-visible before → after
+
+The approved image shows a dark navy/graphite SOC shell, cyan operational hierarchy, large high-signal KPI cards, organized investigation panels and dense readable evidence tables. Its sensor counts, Mbps, rule IDs, incident confidence, timestamps, IPs and CLI output are **DEMO ONLY**. No screenshot values or capture-health indicators were introduced.
+
+- **Page composition:** formerly a small 18px heading and cramped horizontal score/risk/rescan row above a flat tabbed grid. Now a full-width navy/teal gradient hero with 28px page title, cyan local-inventory eyebrow, existing dynamic scan summary, and a dedicated rescan action surface. The hero does not claim active monitoring or a successful scan.
+- **Three evidence-grounded metric cards:** the original code-behind's `HostScoreText`, `HostRiskText` and `ScanTimeText` are redistributed into prominent dark cards labeled **Highest Observed Score**, **Highest Observed Risk**, and **Scan Provenance**. The values remain produced by the existing local driver/software scan; the score is a maximum of scanned records, not a whole-device assurance or live capture metric. Before any successful scan, the XAML placeholders are neutral (em dash / Not scanned) rather than a synthetic score of zero or `Info` risk.
+- **Inventory investigation panel:** a new layered dark evidence surface gives the existing two tabs a shared title, provenance explanation, consistent padding and clearer section hierarchy. Driver and software tables retain all original columns, read-only/virtualized behavior, horizontal and vertical scrolling, original context menus and existing suspicious-only filters. Table rows become 38px and headers 42px with alternating dark surfaces and restrained borders.
+- **Responsive layout:** Wide >=1440 and Standard 1100–1439 show three metric cards across; Compact 1024–1099 stacks the scan-provenance card beneath two metric cards and moves each suspicious-only filter beneath its tab heading; below 1024 the same compact layout applies, with a further single-column three-card stack when actual page width falls below 700px. Hero rescan action moves beneath the summary in Compact. Existing MainWindow responsive dispatch is reused through the UI-only `IResponsiveLayoutAware` interface; no shared contract changed.
+- **No operational invention:** no new telemetry, score computation, detection, driver scan, uninstall action, command, capture source, security policy, network request, synthetic badge or persistence change. This milestone improves a previously under-styled local inventory screen rather than making another tooltip-only change.
+
+### Static ownership and consumer/divergence review
+
+At start, inspected the live remote branch SHA and recent commits, ledger through GA UI-95, exact reference image, `HostIntegrityPage.xaml`, `HostIntegrityPage.xaml.cs`, `MainWindow.Navigation.cs`, `MainWindow.Responsive.cs`, `MainWindow.xaml`, `ResponsiveLayout.cs` and existing `Theme.xaml` styles. The navigation creates `HostIntegrityPage` on demand and already calls `ApplyResponsiveLayoutTo(HostIntegrityFrame.Content)`. The original code-behind writes the same five scan/action/filter controls and reads the same two DataGrid selections. The new responsive method only repositions named UI elements and does not call scan or data services.
+
+Source commit ancestry (all private until one atomic publication): `02d9440207a6af995242da24334684b3000a505c` → `105aa408188c7612edf1c068d2c1cd0d578e4c12` (page architecture) → `9733dd17196c47b74f0e8bfd26be5a54a4f6ddfa` (responsive UI) → `021c90f19c48ed05d6ca0e71685b6599bc850bfe` (WPF-supported typography source correction). Final source tree: `85fb557a7924c1665fcba6743bfc35a6ebf1bb1f`.
+
+**Authorized source paths / blobs:**
+1. `Carthago/Views/HostIntegrityPage.xaml` — `2576e26de1bddc21f61d624078be162e104dd801` (prior `0622533d4f689b1bc8ca173113975000460a5534`).
+2. `Carthago/Views/HostIntegrityPage.xaml.cs` — `2d8ef8787c5fb6b5c75b0ac20f7a04eb63d42a73` (prior `4a99043fd62ee91fb84afd66b1d068457602937d`).
+3. `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md` — this entry.
+
+**Static end review:** original `SummaryText`, `ScanTimeText`, `HostScoreText`, `HostRiskText`, `RescanButton`, `IntegrityTabControl`, `DriversGrid`, `AppsGrid`, both suspicious-only checkboxes and all original click/checked/unchecked/context-menu handlers are retained. All original DataGrid columns and bindings are preserved. Only two `Carthago/Views/**` files plus this `docs/design/**` ledger change. No Engine, Models, Services, rules/protocols, telemetry/capture/trust/privacy, tests, benchmarks, workflows, runners, project files, shared APIs, or independent automation settings changed.
+
+**Static visual-impact assessment:** major full-screen visual reorganization of an existing page, including a 28px gradient hero, separate action surface, three KPI cards, a structured evidence workspace, taller dark tables and explicit compact reflow. This is source inspection, **not** a rendered WPF screenshot or a verified layout.
+
+**Risks — UNVERIFIED:** new WPF resources and DataGrid style inheritance require compilation; 3-card Standard widths, hero rescan reflow, scan-timestamp wrapping, 700px nested breakpoint, 125–200% DPI, tab-header visibility, keyboard navigation and horizontal evidence scrolling require actual Windows visual verification. The existing local scan can fail or be incomplete; no new health claims are made. Existing context-menu uninstall/open-location actions remain available and unchanged. At small window heights the evidence grid may be short; users may need scrolling or resizing.
+
+### Planned acceptance scenarios — ALL UNEXECUTED
+
+1. Compare hero, dark/cyan hierarchy, three cards and evidence surface against the approved screenshot while ignoring all DEMO metrics.
+2. At Wide >=1440 and 125%, 150%, 200% DPI inspect three metric cards, rescan action, title wrapping and table height.
+3. At Standard 1100–1439 inspect three-card density, dynamic scan-summary text and scan-time provenance.
+4. At Compact 1024–1099 inspect two metric cards plus stacked scan card, rescan action and both filter placements.
+5. At 1023, 800, 700 and 640px inspect the additional actual-width <700 single-column stack, no clipping and accessible tab headers.
+6. Verify the initial neutral unscanned placeholders and existing successful-scan summary, highest-score/risk values and scan times.
+7. Verify Rescan, driver/app suspicious-only toggles, both grid selections and all original context-menu actions retain their exact behavior.
+8. Verify all original driver and software columns, bindings, read-only virtualization, horizontal scrolling, keyboard focus and screen-reader labels.
+9. Verify Dashboard local PPS ScottPlot 10-sample average/120-point history, Live Events 80/500, prioritized incidents, visual-only UNAVAILABLE CLI, Cisco/WebView2 and privacy/capture/trust boundaries remain unaffected.
+10. Verify published three-path change scope, source→docs parent ancestry, one non-forced expected-SHA branch update, and **zero** builds/tests/replays/holdouts/CI/Actions/runners/benchmarks/production capture.
+
+**Next UI GA UI-97:** after fresh live-head/reference/consumer audit, deliver another cohesive screen-visible operations redesign (consider Threat Feed evidence density or Integrations configuration architecture). Do not repeat tooltip-only batches. All UI changes remain **SOURCE CANDIDATE — UNVERIFIED** until explicit owner authorization: **“now it is test time.”**
