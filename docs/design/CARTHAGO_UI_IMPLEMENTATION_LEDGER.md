@@ -4147,3 +4147,40 @@ Private source commit `d551064b9bf5b4e3140143cacf8ebd5a55664b28` is a direct chi
 10. Inspect final source/docs blobs, two direct-parent commits, exact two owned paths, fresh expected-SHA lease and **zero** builds/tests/replays/CI/runners/benchmarks/capture.
 
 **Next independent UI GA UI-83:** inspect fresh LIVE HEAD, exact approved image, ledger and original WPF consumers; choose one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–82. Acceptance remains deferred until the owner explicitly says **“now it is test time.”**
+
+## GA UI-83 — Investigation: bounded, readable local tag and rule chips
+
+**2026-11-02 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE `feature/carthago-reliability-hardening` HEAD: `4dc058b6142606b249cceef369095d72013b02a4`. Previous GA UI-82 source `d551064b9bf5b4e3140143cacf8ebd5a55664b28`, publication `8c053c93cbc23b13a522b2c329e3e57cf5635d3c`. **Private UI source commit:** `d296795dd2bb0efaa848bf502fa2619c0175b52d`; new `Carthago/Views/MainWindow.xaml` blob `ae7d6c4a05fe97beba4387d331332d1a94a453f5`. Authorized changed paths: **only** `Carthago/Views/MainWindow.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`. **ZERO** dotnet builds/tests, xUnit, replays, holdouts, CI/GitHub Actions, runners, benchmarks, production capture, running-WPF screenshots or executed acceptance scenarios. All scenarios below are **PLANNED ONLY — UNEXECUTED**.
+
+### Approved design reference, starting divergence and source consumers
+
+**FIRST** resolved and visually inspected exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c` (1648×928). Its navy/graphite/cyan/teal, restrained severity, left navigation, KPIs, traffic graph, incident investigation and dense event presentation remain the visual reference. Screenshot IPs, rule IDs, confidence, timestamps, Mbps and terminal output are **DEMO ONLY**, not live telemetry or capture health; the WPF CLI remains explicitly **UNAVAILABLE**, visual-only.
+
+Read LIVE remote HEAD, recent commits, this ledger through UI-82, `MainWindow.xaml`, `Theme.xaml`, `Sidebar.xaml`, and original `MainWindow.Dashboard.cs`, `MainWindow.DashboardResponsive.cs`, `MainWindow.Responsive.cs`, `MainWindow.Core.cs`, `MainWindow.xaml.cs`, `MainWindow.Plots.cs` and `MainWindow.DashboardEvents.cs`. Compared previous UI-82 publication to starting HEAD: **23 intervening commits**, changing **22 non-UI files** (independent R558/R559 rule/registry/tests/docs, protocol-inspector work and packet-fixture corrections). None changed the two UI-owned paths. They were present before this candidate and are not modified. Original `DashboardDetailTagsItems` and `DashboardDetailRulesItems` bind to source-driven `ObservableCollection<string>` values populated from selected local incident or anomaly context; the original `WrapPanel` and `ScrollViewer` remain. Related rule IDs are reported links, not detection-quality proof. No consumer, binding, producer, data model, rule registration, viewmodel or event handler is changed.
+
+### One cohesive UI-owned readability improvement
+
+Within the **Incident Investigation** supporting-context area, apply `MaxWidth="180"`, `TextWrapping="Wrap"` and `ToolTip="{Binding}"` to the existing **Tags** and **Related rule IDs** pill `TextBlock` templates. The per-chip width is bounded rather than allowing unusually long source-driven strings to dictate the horizontal layout; wrapping keeps the original text available in the scrollable investigation context, and the hover tooltip exposes the same complete current value. Preserve the existing `Pill` style, typography, color, source text, item counts, ordering, labels, item bindings and original selection/navigation behavior. No new focus stops, controls, network operations, fake values, commands or telemetry. This is distinct from UI-39 investigation heading full-text hover, UI-46/50 event-cell hover, UI-54 action-row hover and UI-81 host-header guidance.
+
+Source-only comparison of `4dc058b6142606b249cceef369095d72013b02a4` to `d296795dd2bb0efaa848bf502fa2619c0175b52d` changes **only** `Carthago/Views/MainWindow.xaml` (**3 additions, 2 deletions**); the documentation descendant changes only this ledger. Preserve Wide ≥1440, Standard 1100–1439, Compact 1024–1099 and graceful below 1024; local PPS ScottPlot ten-sample average and bounded 120-point history; prioritized incidents and investigation; read-only local Live Events 80 displayed/500 retained; unavailable visual-only CLI; Cisco/WebView2/ScottPlot; privacy/capture/trust boundaries and independent detection/protocol streams.
+
+### Static end review, publication lease and risks
+
+Source commit `d296795dd2bb0efaa848bf502fa2619c0175b52d` is a direct child of pinned LIVE baseline `4dc058b6142606b249cceef369095d72013b02a4`. Its blob/tree are private until the complete source-plus-ledger chain is published. Recheck LIVE remote HEAD **immediately before** publication, compare any intervening detection/protocol/UI paths and publish the **complete** two-commit chain using exactly **one non-forced atomic GitHub `update_ref` with `expected_sha` lease** on the same branch. If moved, reconcile only disjoint paths on fresh HEAD and lease; **STOP** on overlap, conflict or missing lease guarantee. After publication, inspect remote HEAD, direct-parent ancestry, both published blobs, exact two-file scope and independent-stream preservation.
+
+**Unverified risks:** WPF XAML parsing/compilation; actual wrapping of long or unbroken tag/rule strings; pill-height expansion and vertical scrolling inside the height-limited investigation card; high-contrast and 125–200% DPI readability; hover tooltip behavior and mouse-only tooltip discoverability; screen-reader announcement of source strings; 1440/1100/1099/1024/1023/640px layouts. The UI still displays existing local values, with no new disclosure source, but privacy and accessibility behavior have **not** been runtime-verified. Static source review is not test, rendering or accessibility evidence.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED OR EXECUTED
+
+1. At ≥1440px, inspect ordinary short Tags/Related rule IDs for unchanged pill spacing, hierarchy and source text.
+2. At 1100/1099/1024/1023/640px, inspect long-chip wrapping and absence of horizontal overflow or clipped neighboring panels.
+3. At 125%, 150% and 200% DPI, inspect pill-height expansion, card containment and vertical scroll reachability.
+4. In standard/high-contrast themes, inspect pill borders, text contrast, tooltip contrast and non-color-only meaning.
+5. With long or unbroken source-driven tags, inspect the 180px width bound, full displayed value and hover tooltip.
+6. With long or unbroken related rule IDs, inspect the same bound, wrapping and complete original identifier.
+7. With empty Tags/Rules and fallback “No linked rule,” inspect original empty/fallback behavior and no fabricated evidence.
+8. Inspect keyboard and screen-reader reading order: no added Tab stops; unchanged source values and existing group labels.
+9. Inspect unchanged local PPS 10-sample/120-point behavior, KPIs, incidents, read-only Live Events 80/500, unavailable CLI, Cisco/WebView2/ScottPlot, privacy/capture/trust and independent R558/R559/protocol/test files.
+10. Inspect published source/docs blobs, two direct-parent commits, exact two owned paths, fresh expected-SHA lease and **zero** builds/tests/replays/CI/runners/benchmarks/capture.
+
+**Next independent UI GA UI-84:** inspect fresh LIVE HEAD, exact approved image, ledger and original WPF consumers; choose one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–83. Acceptance remains deferred until the owner explicitly says **“now it is test time.”**
