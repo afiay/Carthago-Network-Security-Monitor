@@ -4036,3 +4036,40 @@ Private source commit `189f02b3aae63bbbd5c3c06c49c86e5b250dd304` is a direct chi
 10. Inspect exact source/docs blobs, two direct-parent commits, owned-path-only diff, fresh expected-SHA lease and **zero** builds/tests/replays/CI/runners/benchmarks/capture.
 
 **Next independent UI GA UI-80:** inspect fresh LIVE HEAD, exact approved image, ledger and original WPF consumers; choose one new cohesive UI-owned accessibility/readability/visual-consistency improvement outside UI-01–79. All acceptance remains deferred until owner explicitly says **“now it is test time.”**
+
+## GA UI-80 — Prioritized triage: readable local snapshot and dynamic provenance at narrow widths
+
+**2026-11-02 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE `feature/carthago-reliability-hardening` HEAD: `8ba88290449ed56afe1cd11006d5884fa5a9e3cc`. Previous GA UI-79 source `189f02b3aae63bbbd5c3c06c49c86e5b250dd304`, publication `8dac306cc76696f7cb399fe6a4be3cb284376260`. The intervening independent R556 external SMB2 write subnet-fanout detection candidate `8ba88290449ed56afe1cd11006d5884fa5a9e3cc` was already on the branch and remains untouched. **Exact private UI source commit:** `058bbced9ba0f5fb3d3f6033947631625f9f19d9`; updated `MainWindow.xaml` blob `096d72402596addf73a07dc6aa9184cbab73057a`. Owned paths: only `Carthago/Views/MainWindow.xaml` and this ledger. **ZERO** builds, dotnet tests, xUnit, replays, holdouts, CI, GitHub Actions, runners, benchmarks, production capture, running-WPF screenshots, authored or executed acceptance tests. All scenarios below are **PLANNED ONLY — UNEXECUTED**.
+
+### Approved image, starting divergence and original consumers
+
+**FIRST** resolved and visually inspected the exact ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c` (1648×928). Its navy/graphite/cyan/teal security overview uses a persistent left nav, operational KPI strip, network chart, prioritized incident queue, investigation and dense read-only events. Screenshot IPs, metrics, rule IDs, timestamps, confidence, Mbps traces and CLI text are **DEMO ONLY**. The image does not establish live capture, packet reception, telemetry or a functioning CLI; Carthago's companion remains explicitly **UNAVAILABLE** and visual-only.
+
+Reviewed live HEAD and recent commits, ledger through UI-79, `MainWindow.xaml`, `Theme.xaml`, `Sidebar.xaml`, and existing `MainWindow.Dashboard.cs`, `MainWindow.DashboardEvents.cs`, `MainWindow.DashboardResponsive.cs`, `MainWindow.Responsive.cs`, `MainWindow.Core.cs`, `MainWindow.Plots.cs`, `MainWindow.Navigation.cs`, `MainWindow.Settings.cs`, and `MainWindow.xaml.cs` partials. The existing `RefreshSocDashboardWorkspace` writer updates `DashboardAnomalyFooterText.Text` with an honest bounded local queue count, unresolved incidents (max 150), anomaly signals (max 160), and conditional `demo data may be included` provenance. The original triage panel uses a fixed 404px dashboard grid with Auto caption/footer rows and a star-sized list row. No new producer, handler, shared API, model, service or viewmodel is required.
+
+### One cohesive UI-owned readability improvement
+
+The long static `LOCAL SNAPSHOT · INCIDENTS BY RISK, THEN SIGNALS` caption previously used `TextTrimming="CharacterEllipsis"`; the source-driven `DashboardAnomalyFooterText` had no wrapping or full-text hover. At narrower panel widths, either may truncate critical ranking or demo-provenance context. Change only these **two existing triage text blocks**: allow the static queue caption to wrap rather than ellipsize, and allow the dynamic footer to wrap while exposing its **actual current Text** in a noninteractive hover tooltip. No new copy, color, data, focus stop, handler, event, selection, filter, navigation, layout breakpoint or evidence claim. The footer's existing `x:Name` and `AutomationProperties.ItemStatus` consumer remain intact. The wrapping is distinct from UI-04's triage content/ordering, UI-51's local-clock timestamp guidance, UI-74's row hover/selection and UI-79's Live Events footer surface.
+
+Source diff: **only** `Carthago/Views/MainWindow.xaml`, 4 additions and 2 deletions. Preserve navy/graphite/cyan/teal, restrained severity, left nav, KPI cards, prioritized incident selection and investigation, local PPS ScottPlot 10-sample average and 120-point history, read-only local Live Events 80 displayed/500 retained, explicitly unavailable visual-only CLI, Wide ≥1440/Standard 1100–1439/Compact 1024–1099 and graceful below 1024, Cisco/WebView2/ScottPlot, privacy/capture/trust and independent rule/protocol streams.
+
+### Static end review, publication lease and remaining risks
+
+Private source commit `058bbced9ba0f5fb3d3f6033947631625f9f19d9` is a direct child of `8ba88290449ed56afe1cd11006d5884fa5a9e3cc`; its comparison changes **only** the XAML file. The private documentation descendant changes **only** this ledger. Recheck LIVE remote HEAD immediately before publication, compare any intervening detection/protocol/UI paths, and publish the **complete** two-commit chain via exactly **one non-forced atomic GitHub `update_ref` with `expected_sha` lease** on the same branch. If moved, reconcile only disjoint paths on a fresh HEAD and lease; STOP on overlap, conflict or missing guarantee. After publication inspect final HEAD, direct-parent ancestry, both file blobs, exact two-file scope and independent R556 preservation.
+
+**Unverified risks:** Windows XAML parsing/compilation; actual text wrapping and contrast; a longer footer may consume more height within the fixed 404px triage grid, reducing the star-sized incident list viewport; scroll/selection focus containment; hover tooltip availability and keyboard/assistive reading order; standard/high-contrast themes, 125–200% DPI and 1440/1100/1099/1024/1023/640px widths. Static source review is not Windows rendering, accessibility verification or test evidence.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED OR EXECUTED
+
+1. At ≥1440px, inspect the triage caption and source-driven footer for readable hierarchy without unnecessary crowding.
+2. At 1100/1099/1024/1023/640px, inspect caption/footer wrapping and absence of clipped ranking/demo provenance.
+3. At 125%, 150%, 200% DPI, inspect Auto rows, list viewport, vertical scrolling and 404px triage containment.
+4. Inspect standard/high-contrast themes for muted text legibility and no color-only meaning.
+5. With no incidents/signals, inspect the original honest empty-snapshot footer message without truncation.
+6. With bounded unresolved incidents and anomaly signals, inspect exact current counts and the full hover tooltip.
+7. With demo mode enabled, inspect the unchanged conditional `demo data may be included` text and its full tooltip; never infer that individual events are live.
+8. Keyboard/screen-reader inspection: unchanged ListBox item status, selection/focus, original TextBlock names and no new tab stop.
+9. Inspect unchanged KPIs, local PPS averaging/history, incident detail, read-only Live Events 80/500, unavailable CLI, Cisco/WebView2/ScottPlot, privacy/capture/trust and independent R556 files.
+10. Inspect published source/docs blobs, direct-parent ancestry, exact owned-path diff, fresh expected-SHA lease and **zero** builds/tests/replays/CI/runners/benchmarks/capture.
+
+**Next independent UI GA UI-81:** inspect fresh LIVE HEAD, exact approved image, ledger and original WPF consumers; choose one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–80. Acceptance remains deferred until the owner explicitly says **“now it is test time.”**
