@@ -4760,3 +4760,37 @@ Source commit ancestry (all private until one atomic publication): `02d9440207a6
 **Planned acceptance scenarios — ALL UNEXECUTED:** (1) Wide reference fidelity; (2) Standard 1100–1439 layout; (3) Compact 1024–1099 and below 1024; (4) DPI 125/150/200%; (5) local KPI/provenance integrity; (6) severity/source/search/pagination; (7) selected evidence and incident actions; (8) keyboard/high contrast; (9) unchanged PPS, Live Events, CLI and capture/privacy; (10) two authorized paths, one expected-SHA atomic publication, zero builds/tests/replays/holdouts/CI/runners/benchmarks/production capture.
 
 **Next GA UI-98:** fresh reference-led screen-visible improvement, not tooltip-only. Testing prohibited until “now it is test time.”
+
+
+## GA UI-98 — Integration Control Center: destination configuration workspace redesign
+
+**2026-11-03 · SOURCE CANDIDATE — UNVERIFIED.** Approved Library screenshot `libfile_b0a34361560c8191b641e432b3e6b15c` was retrieved and visually inspected **before** GitHub access. Live initial HEAD `d3282c2bda5be027109c0fafbd99ccf1f2c48e70`; preceding documented UI milestone GA UI-97. Recent remote commits at initial inspection: d3282c2bda5b:feat(rules): complete R572-R576 candidate group and correct FTP test fixture escapes | 1db47eee3dbc:feat(rules): atomic R572-R575 Redis and FTP correlation candidates | b172d8d32531:feat(rules): add R571 Redis OK then HTTP default admin and repair R568 test syntax | c3615a1ddaf2:feat(rules): add R570 Modbus write before default HTTP admin candidate | c5ebe8d294a4:feat(rules): add R569 FTP upload command before HTTP default admin candidate. Prepared UI source commit `02a435352e516f018fbf21202077b0772f8a9703`; source tree `e8b3b38cefb9070e59b285364fbe10b846d250b6`.
+
+### Screen-visible before → after and reference fidelity
+
+Previously the Integrations view was a plain full-page themed tab strip and narrow 140px-label / fixed-width fields, with no page-level operational hierarchy and little separation of connector sections. GA UI-98 introduces a full-width 28px navy/teal gradient "Integration Control Center" hero, restrained cyan configuration-only provenance chip, three gradient destination-family cards (OTLP/Azure; CEF/Splunk/Elastic; Kafka/JSONL/Webhook), and eight dark bordered configuration surfaces with prominent connector titles, descriptive subtitles and dividers. The approved screenshot informs the dark SOC composition, cyan hierarchy, large title, coherent card architecture and visual rhythm, not its DEMO metrics, IPs, rule IDs, timestamps, confidence or health assertions. No simulated connection or export status was added.
+
+The eight original tabs remain and still expose the original opt-in checkboxes, endpoint/host/port/index fields, password boxes, Save/Reload and OTLP test-metric buttons. The themed TabControl becomes a vertical connector rail at Wide >=1440 and Standard 1100–1439; at Compact 1024–1099 and below 1024 it becomes a top tab strip, using the existing `IResponsiveLayoutAware` interface and `ResponsiveLayout.ApplyWhenLoaded`. Three destination-family cards wrap naturally as available width narrows. Per-tab ScrollViewer adds horizontal scrolling to preserve access to existing fixed-width fields when the available content area is narrow; no field width, credentials, bindings, settings behavior or service contracts changed. Static visual-impact assessment: page-scale hierarchy and tab-navigation architecture with eight redesigned configuration surfaces; **not** a rendered or accepted WPF layout.
+
+### Static ownership, consumers, provenance and divergence
+
+Inspected live branch HEAD, recent commits, prior GA UI-96/UI-97 ledger, `IntegrationsPage.xaml`, `IntegrationsPage.xaml.cs`, existing `Theme.xaml` `TabControl.Themed` and `TabItem.Themed` resources, `MainWindow.xaml` IntegrationsFrame, `MainWindow.Responsive.cs` existing `ApplyResponsiveLayoutTo(IntegrationsFrame.Content)`, `MainWindow.Navigation.cs`, `Sidebar.xaml` IntegrationsNavButton, and `ResponsiveLayout.cs` breakpoint/dispatch contract. Existing shell already supports the page-level interface, so no shared API or external service changes were needed.
+
+Static end review preserved all eight connector tabs, all 17 named button handlers, existing bindings, `SplunkTokenBox` and `KafkaSaslPassBox` credential controls, and original preferences/reload actions. Changes are limited to `Carthago/Views/IntegrationsPage.xaml`, `Carthago/Views/IntegrationsPage.xaml.cs`, and this `docs/design/**` ledger. XAML source blob `b0ecd2c7ec125f0498937290a8919372d360ec25` → `8606725ab11e14c2231c4389123661327895b379`; code-behind blob `1025534d88e89c5ec096dd5385bb8a0588621b36` → `6b77727efa77f94c8247ac6c2430756842de148d`. No Engine, Models, Services, detection/protocol rules/docs, telemetry/capture/trust/privacy, tests, benchmarks, workflows, runners, project file, shared APIs, or independent automations touched. Dashboard PPS ScottPlot 10-sample/120-point history, prioritized incidents, investigation, read-only Live Events 80/500, explicitly unavailable visual-only CLI, Cisco/WebView2 remain unchanged.
+
+**Risks — UNVERIFIED:** WPF XAML parsing and tab template placement, 8-tab left rail sizing, Compact multirow top tabs, horizontal field scrolling, nested ScrollViewer height, 125–200% DPI, high contrast, keyboard tab order, credential field visibility and narrow screen action buttons require Windows visual review. The existing Elastic API-key text field was not altered or presented as protected. The existing OTLP test-metric action was retained, **not executed**. No connection, sink delivery, privacy, or capture behavior was tested or claimed.
+
+### Planned acceptance scenarios — ALL UNEXECUTED
+
+1. At Wide >=1440 visually compare header/cards/nav hierarchy to approved reference, ignoring all demo values.
+2. At Standard 1100–1439 inspect vertical connector rail, form width, action alignment and scrolling.
+3. At Compact 1024–1099 inspect top tabs, wrapping destination cards and accessible inputs.
+4. Below 1024 (1023/800/640) inspect top-tab wrapping and horizontal field scroll without clipping.
+5. At 125%, 150% and 200% DPI inspect title wrapping, navigation, nested scrolling and card density.
+6. Verify all eight tab destinations, existing enabled checkboxes and saved settings values.
+7. Verify all original Save, Save + Reload and OTLP Send Test Metric handlers are still wired; do not execute until authorized.
+8. Verify password controls and credential privacy, focus, keyboard navigation, screen readers and high contrast.
+9. Verify untouched PPS ScottPlot, Live Events 80/500, incident investigation, unavailable CLI, Cisco/WebView2 and capture/trust boundaries.
+10. Confirm only three authorized paths, direct-parent source/docs ancestry, one non-forced expected-SHA branch update, and **zero** builds/tests/replays/holdouts/CI/Actions/runners/benchmarks/production capture.
+
+**Next UI GA UI-99:** fresh live-ledger/reference audit followed by another substantial, visible screen-scale improvement, not tooltip-only work. All runtime acceptance remains deferred until owner says “now it is test time.”
