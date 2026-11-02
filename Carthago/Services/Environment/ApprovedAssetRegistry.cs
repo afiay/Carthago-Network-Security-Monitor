@@ -38,6 +38,7 @@ namespace Carthago.Services.EnvironmentTuning
         private readonly ApprovedDestinationRegistry _destinations;
         private readonly ApprovedServiceRegistry _services;
         private readonly HashSet<string> _adminHosts;
+        private readonly HashSet<string> _redisServers;
         private readonly HashSet<string> _domainControllers;
         private readonly HashSet<string> _modbusControllers;
         private readonly HashSet<string> _bacnetControllers;
@@ -49,6 +50,7 @@ namespace Carthago.Services.EnvironmentTuning
             _destinations = new ApprovedDestinationRegistry(Options);
             _services = new ApprovedServiceRegistry(_destinations);
             _adminHosts = ToSet(Options.Approved.AdminHosts);
+            _redisServers = ToSet(Options.Approved.RedisServers);
             _domainControllers = ToSet(Options.Approved.DomainControllers);
             _modbusControllers = ToSet(Options.Approved.ModbusControllers);
             _bacnetControllers = ToSet(Options.Approved.BacnetControllers);
@@ -80,6 +82,7 @@ namespace Carthago.Services.EnvironmentTuning
         }
 
         public bool HasApprovedAdminHosts => _adminHosts.Count > 0;
+        public bool HasApprovedRedisServers => _redisServers.Count > 0;
         public bool HasApprovedOtSegments => _otSegments.Length > 0;
         public bool HasApprovedModbusControllers => _modbusControllers.Count > 0;
         public bool HasApprovedBacnetControllers => _bacnetControllers.Count > 0;
@@ -87,6 +90,7 @@ namespace Carthago.Services.EnvironmentTuning
         public bool HasKnownDynamicDnsDomains => Options.Approved.KnownDynamicDnsDomains.Count > 0;
 
         public bool IsAdminHost(string? value) => Match(_adminHosts, value);
+        public bool IsApprovedRedisServer(string? value) => Match(_redisServers, value);
         public bool IsDomainController(string? value) => Match(_domainControllers, value);
         public bool IsApprovedModbusController(string? value) => Match(_modbusControllers, value);
         public bool IsApprovedBacnetController(string? value) => Match(_bacnetControllers, value);
