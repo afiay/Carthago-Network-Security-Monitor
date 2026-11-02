@@ -577,6 +577,7 @@ namespace Carthago.Engine.Rules.Catalog
                 new R552_ExternalNtpMonlistPrivateSubnetFanoutRule(),
                 new R553_CrossSubnetSmb2WriteRequestFanoutRule(),
                 new R554_Smb2WriteThenExternalFtpUploadRule(),
+                new R555_ExternalFtpUploadCommandSubnetFanoutRule(),
             };
         }
 
