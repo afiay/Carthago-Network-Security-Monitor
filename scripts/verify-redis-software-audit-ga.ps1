@@ -39,6 +39,8 @@ try {
 
     $filters = @(
         "FullyQualifiedName~RedisSoftwareAuditSourceTests"
+        "FullyQualifiedName~RedisAuditMutualTlsRelayReceiverTests"
+        "FullyQualifiedName~RedisAuditSinkMetricsHealthTests"
         "FullyQualifiedName~RedisRespCaptureIntegrationTests"
         "FullyQualifiedName~RedisTrustedAuditCandidateGateTests"
         "FullyQualifiedName~TrustedAuditReceiptVerifierTests"
