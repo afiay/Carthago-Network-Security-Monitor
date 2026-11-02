@@ -8,7 +8,9 @@ namespace Carthago.Services.ProtocolIntelligence
     /// Requires caller-attested plaintext command boundary and direction.
     /// Returns only a fixed command family, argument count and CONFIG SET\n    /// request-shape flag; never keys,
     /// credentials, Lua, RESTORE payloads, values, or server outcomes.
-    /// ISOLATED: no TCP reassembly or capture registration.
+    /// PacketHandler now invokes this only on SYN-anchored first TCP payloads
+    /// for cleartext client traffic to port 6379. No general TCP reassembly,
+    /// authenticated Redis identity or response/outcome decoder is present.
     /// </summary>
     public static class Resp2CommandInspector
     {
