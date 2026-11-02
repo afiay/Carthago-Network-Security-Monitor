@@ -59,16 +59,22 @@ public sealed class R275R343R485PairedReplayTests
             Assert.True(coverage.ExplicitNegativePassed >= 1);
             Assert.Equal(0, coverage.ExplicitNegativeFailed);
 
-            if (scenario.Rule is "R275" or "R343")
+            if (scenario.Rule is "R275" or "R343" or "R485")
             {
-                // These maliciously labeled scenarios lack a trusted identity
-                // provider / WinRM audit producer. Keep the missing positive
-                // visible instead of manufacturing a result from packet Info.
+                // Trusted identity, WinRM, or confirmed BACnet operation
+                // provenance is missing. Keep every malicious positive label and
+                // its detector miss visible in replay quality metrics.
                 Assert.DoesNotContain(scenario.Rule, positive.ActualMatches);
                 Assert.Contains(scenario.Rule, positive.MissingExpectedMatches);
                 Assert.Contains(positive.ExpectedRuleDiagnostics,
                     item => item.RuleId == scenario.Rule && (item.Outcome is "NoMatch" or "MissingTelemetry"));
                 Assert.True(coverage.PositiveMissed >= 1);
+                if (scenario.Rule == "R485")
+                    Assert.Contains(positive.ExpectedRuleDiagnostics,
+                        item => item.RuleId == "R485"
+                            && item.NoMatchReasons.Any(reason =>
+                                reason.Contains("BACNET_WRITEPROPERTY_CONFIRMED_REQUEST_UNAVAILABLE",
+                                    StringComparison.Ordinal)));
             }
             else
             {
