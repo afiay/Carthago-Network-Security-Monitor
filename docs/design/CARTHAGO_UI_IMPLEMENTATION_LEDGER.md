@@ -4513,3 +4513,53 @@ Publication protocol: create the private source/docs direct-parent chain, re-rea
 10. Verify source/docs blobs, exactly four owned paths, direct-parent ancestry, expected-SHA atomic publication and **zero** GA builds/tests/replays/holdouts/CI/runners/benchmarks/capture.
 
 **Next independent GA UI-92:** redesign Incident Queue / Investigation screen composition at section scale, not tooltip micro-edits. Maintain reference-led visual impact and all ownership/test restrictions.
+
+
+## GA UI-92 — Incident operations visual architecture: triage and investigation
+
+**2026-11-02 · SOURCE CANDIDATE — UNVERIFIED.** Approved reference: ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c`, visually inspected before repository work (1648×928 dark SOC concept). **Starting live branch HEAD:** `6099bfa8c9bff2150caadc7dbf89f332752a1a42`; the latest prior design ledger GA was UI-91 (publication `3cd94a6a25de849a90f63997106a49047f13421d`). The intervening 22 independent commits concerned Redis trusted-audit source/tests/config and validation documentation; no prior UI-owned paths changed. **Prepared UI source commit:** `c9db9e94d311b6c83583f43a3976cb844b640b98`, direct child of starting HEAD; **source tree:** `e17b34a81e1dc37c6770e5215d2367c38f9c6713`. This entry is documentation only and must publish together with source via one atomic expected-SHA lease.
+
+### Visual intent and approved reference mapping
+
+The screenshot shows a deep-navy SOC with prominent top-level identity, cyan information hierarchy, concise operational KPIs, a prioritized incident list and an adjacent investigation pane. GA UI-90/91 already addressed the Overview and local Live Events/CLI band; GA UI-92 extends the *same visible language* to both real incident workspaces. Screenshot metrics, IPs, throughput, rule IDs, times, confidence, CLI output and monitoring-health labels are **DEMO ONLY** and are not inserted into application data or used to assert capture health.
+
+**Before → after (screen-visible, not tooltip-only):**
+- **Both Incidents and Incident Queue:** previously opened directly on a KPI strip without an operational hero. Each now begins with a full-width gradient **incident operations banner** (29px title, cyan section eyebrow, descriptive subtitle, status chip bound to existing `ActiveIncidentCount` or `QueueCountLabel`). Existing KPI, queue and investigation sections move down one explicit Grid row; no producer or navigation contract changes.
+- **KPI visual system:** five Incidents metrics and the existing Incident Queue KPI template now use the same navy gradient, 124px minimum-height tile, more deliberate padding and 13px corner geometry. All counts/deltas remain bound to their original viewmodels; severity accents remain source-derived, not synthetic.
+- **Triage and investigation composition:** both workspaces adopt coherent, softly graded panels with 17px padding and quiet teal borders. Their primary headers become distinct **cyan eyebrow → 20px title → source-accurate subtitle → action controls** vertical zones. This moves buttons below titles, reducing competition for horizontal space in the two-column workspace and making the actions more visible without changing click handlers.
+- **Incidents queue rows:** existing risk score, severity, status, timestamp, title and source are retained but now sit inside bounded dark case cards with an explicit source-severity color rail and cyan-selected border. The existing `ListBoxItem` selection remains the binding source for the new visual state.
+- **Supporting evidence:** timeline, related anomalies, affected hosts and response checklist in Incidents, and the corresponding triage support panels in Incident Queue, adopt the shared panel treatment. Their data templates and source bindings remain intact.
+- **Shared visual ownership:** seven new incident-only brushes/styles in `Theme.xaml`; no global replacement of other page styles. No new working CLI, new sensors, detection telemetry, simulated incidents or new actions.
+
+### Responsive composition and static end review
+
+Existing responsive contracts are reused without changing their code: Wide ≥1440 uses the existing five-column Incidents KPI strip and side-by-side triage/investigation; Standard 1100–1439 uses three KPI columns and the existing adaptive panel placement; Compact 1024–1099 and below 1024 use the existing two-column KPI and stacked-panel behavior. The hero is deliberately vertically composed, with wrapping text and a left-aligned bound status chip, to avoid a fixed-width secondary hero column. Incident Queue KPI `WrapPanel` and the existing 900px horizontally scrollable tabular queue are preserved.
+
+Static source review covered `IncidentsPage.xaml`, `IncidentQueuePage.xaml`, their `.xaml.cs` consumers and `IResponsiveLayoutAware` implementations, `MainWindow.Navigation.cs`, `Theme.xaml`, the prior UI-90/91 dashboard changes and ledger. The original `x:Name` references for KPI grids, primary/supporting row and column definitions, list selections, filters, investigation bodies, empty states, actions and response controls remain. No `Click` or event handler was added, removed or renamed. Existing severity converter, status/selection bindings and queue pagination remain. Only two page root row indices changed to accommodate the new banners; the responsive partials still operate on their original named elements. No model, service, detection, protocol, capture, trust/privacy, telemetry, workflow, test or shared API path changed.
+
+**Owned paths and exact source blob provenance:**
+1. `Carthago/Views/Theme.xaml` — `0dea075161829e52278fe9af4408d31084b7e5d7`.
+2. `Carthago/Views/IncidentsPage.xaml` — `c9483df877aaa9a9db4fd4823e063d9e2e5a6050`.
+3. `Carthago/Views/IncidentQueuePage.xaml` — `e8ac3695916d2784f26f8352af4f0cb7baf6aed3`.
+4. `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md` — this documentation update.
+
+**Static visual-impact assessment:** source introduces two prominent new screen headers, six enlarged/restyled KPI types, cohesive two-pane panel framing, stacked action zones and severity-coded selectable case cards. This is a visible section-scale change on both incident screens; **actual WPF rendering, compilation, accessibility and DPI behavior are UNVERIFIED**. No tests or running screenshots were produced.
+
+**Risks — UNVERIFIED:** additional hero and KPI height increases vertical scrolling; 29px hero titles and status chips may need DPI-specific wrapping; fixed-width queue filters, incident list status badges and the 900px Incident Queue table can still require scrolling on narrow widths; queue selection template and new StaticResource resolution have not been compiled; source-severity color rail inherits converter fallback semantics; stacked action buttons may increase header height; the previously identified Incidents text-search event wiring issue remains unmodified. Preserve existing privacy and clipboard boundaries.
+
+### Planned acceptance — ALL UNEXECUTED
+
+1. At 1648px, visually compare both new hero banners, KPI hierarchy, panel surfaces and selected-case treatment with the approved reference; ignore its demo values.
+2. At 1440px and 125%, 150% and 200% DPI, inspect queue row rails, selected border, action placement, status chips and all case text for clipping.
+3. At Standard 1100–1439, inspect three-column Incidents KPIs, adaptive queue/investigation placement and supporting panels.
+4. At Compact 1024–1099, inspect two-column Incidents KPIs, stacked workspace, title wraps and keyboard reachability.
+5. Below 1024 (1023/800/640px), inspect hero vertical flow, queue filter reachability, table horizontal scrolling and full-page scrolling.
+6. Verify the five Incidents KPI values and Incident Queue KPI values remain bound to existing local source/viewmodel state without demo data.
+7. Verify case selection updates the adjacent investigation, severity rails and selected borders, with unchanged source severity/status and no synthetic impact claims.
+8. Verify Copy JSON, Clear, Acknowledge, Resolve, queue pagination, filters, notes, investigation actions and navigation preserve original handlers and safety semantics.
+9. Verify timeline, affected hosts, evidence, related anomalies, checklist, local PPS/Live Events 80/500, unavailable CLI, Cisco/WebView2/ScottPlot and capture/privacy/trust boundaries remain unchanged.
+10. Verify exact source/docs blobs, only four authorized paths, direct-parent commit chain, one non-forced expected-SHA lease and **zero** builds/tests/replays/holdouts/CI/runners/benchmarks/capture.
+
+**Next UI GA UI-93:** continue a substantial reference-led **Anomalies workspace** visual redesign (section architecture, evidence density and responsive layout), never tooltip-only micro-edits. Keep SOURCE CANDIDATE — UNVERIFIED until explicit owner authorization: **“now it is test time.”**
+
+**Publication reconciliation:** initial starting HEAD `6099bfa8c9bff2150caadc7dbf89f332752a1a42`; additional disjoint independent changes through `adb7c642c388d9013dad33cb2c69dfbac7959ece` were preserved. The final GA UI-92 source commit is `c9db9e94d311b6c83583f43a3976cb844b640b98`, directly parented to the reconciled live HEAD. No independent files were overwritten.
