@@ -338,11 +338,38 @@ public sealed class RedisRespCaptureIntegrationTests
     }
 
     [Fact]
+    public void Reused_Tcp_Tuple_Cannot_Use_Stale_SynAck_As_New_Server_Provenance()
+    {
+        var handler = new PacketHandler();
+        var link = (PacketDotNet.LinkLayers)12;
+        var request = Request("CONFIG", "SET", "timeout", "30");
+
+        Assert.NotNull(handler.ParseFrame(
+            Frame(Array.Empty<byte>(), 40000, 6379, 0, 0x02), link));
+        Assert.NotNull(handler.ParseFrame(
+            Frame(Array.Empty<byte>(), 6379, 40000, 100, 0x12), link));
+
+        // New connection reuses both ports; no SYN-ACK for the new session.
+        Assert.NotNull(handler.ParseFrame(
+            Frame(Array.Empty<byte>(), 40000, 6379, 200, 0x02), link));
+        var observedRequest = Assert.IsType<TrafficRecord>(handler.ParseFrame(
+            Frame(request, 40000, 6379, 201, 0x18), link));
+        Assert.True(observedRequest.RedisRespConfigSetRequestObserved);
+
+        var reply = Assert.IsType<TrafficRecord>(handler.ParseFrame(
+            Frame(Encoding.ASCII.GetBytes("+OK\r\n"),
+                6379, 40000, 101, 0x18), link));
+        Assert.False(reply.RedisRespConfigSetReplyOkObserved);
+    }
+
+    [Fact]
     public void Imported_Json_Cannot_Forge_Capture_Only_Provenance()
     {
         var record = Assert.IsType<TrafficRecord>(JsonSerializer.Deserialize<TrafficRecord>(
-            "{\"ApplicationProtocol\":\"redis.resp2\",\"RedisRespConfigSetRequestObserved\":true}"));
+            "{\"ApplicationProtocol\":\"redis.resp2\",\"RedisRespConfigSetRequestObserved\":true,\"RedisRespConfigSetReplyOkObserved\":true,\"RedisRespConfigSetReplyErrorObserved\":true}"));
         Assert.False(record.RedisRespConfigSetRequestObserved);
+        Assert.False(record.RedisRespConfigSetReplyOkObserved);
+        Assert.False(record.RedisRespConfigSetReplyErrorObserved);
     }
 
     [Fact]
