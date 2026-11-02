@@ -4377,3 +4377,43 @@ The private source commit is a direct child of pinned LIVE HEAD; this ledger com
 10. Verify final source/docs blobs, direct-parent two-commit ancestry, exact two owned paths, fresh expected-SHA lease and **zero** builds/tests/replays/holdouts/CI/runners/benchmarks/capture.
 
 **Next independent UI GA UI-89:** inspect fresh LIVE HEAD, exact approved image, ledger and original WPF consumers; choose one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–88. Acceptance remains deferred until the owner explicitly says **“now it is test time.”**
+
+
+## GA UI-89 — Incident Investigation: accessible status-action consequences
+
+**2026-11-02 · SOURCE CANDIDATE — UNVERIFIED.** Pinned starting LIVE remote branch `feature/carthago-reliability-hardening` HEAD: `d360e050d32b8844d7719f4d8968e3c60062c905` (GA UI-88 publication). Private source commit: `77a239406e697afe1cd0233ccc2925aa37948e6e` (direct child of pinned HEAD); previous XAML blob: `6f42f1fc343eee232d839d664c1070fd8c7dc03e`; candidate XAML blob: `cb396b48780d7106b701b42daee6ddb63caa471c`. **Authorized paths only:** `Carthago/Views/IncidentsPage.xaml` and this `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`. All acceptance below is **PLANNED ONLY — UNEXECUTED**. **ZERO** builds, dotnet/xUnit tests, replays, holdouts, CI/GitHub Actions, runners, benchmarks, production capture or running-WPF screenshots.
+
+### Approved reference, static starting divergence and original consumers
+
+**FIRST** resolved and visually inspected exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c` (1648×928): navy/graphite surfaces, cyan/teal active accents, restrained severity, left navigation, operational KPIs, traffic chart, prioritized incidents, investigation and dense local Live Events. Screenshot IPs, rule IDs, timestamps, confidence, Mbps, sensor status and CLI output are **DEMO ONLY** and are not inserted or represented as capture-health or observed telemetry. Actual CLI remains **UNAVAILABLE**, visual-only.
+
+At start inspected live remote branch ref and recent branch commits, ledger through GA UI-88, `IncidentsPage.xaml`, its original `IncidentsPage.xaml.cs` partial, `MainWindow.Navigation.cs`, `MainWindow.Responsive.cs`, `ResponsiveLayout.cs`, `Sidebar.xaml` and `Theme.xaml`. Prior UI-88 was already published at the pinned HEAD; no intervening independent commits were present at initial audit. `Ack_Click` returns when `_vm.Selected` is null, otherwise calls `_host.Analytics.UpdateIncidentStatus(id, "Acknowledged")`. `Resolve_Click` similarly requests `"Resolved"`; neither handler presents confirmation. The two existing `SecondaryButton` controls use the shared focus visual and preserve original button dimensions and click handlers. `IncidentsList.SelectionChanged` updates the selected incident; responsive columns are managed by existing page/shell partials. No service, analytics producer, persistence, capture or security control is edited.
+
+### One cohesive UI-owned improvement
+
+On the existing **Incident Investigation** Acknowledge and Resolve action buttons, add concise hover and keyboard-focus `ToolTip`, `ToolTipService.ShowsToolTipOnKeyboardFocus="True"`, explicit `AutomationProperties.Name` and tooltip-bound `AutomationProperties.HelpText`. The guidance distinguishes selected-incident **status updates** from network remediation, explains no-selection no-op and the absence of a confirmation step. Preserve original captions, widths, margins, `SecondaryButton` styles, `Ack_Click`/`Resolve_Click` handlers, focus order, selection, queue, incident status writer and all underlying behavior. No new command, model, API, network request, capture change or security bypass. Distinct from UI-87 Copy JSON/Clear and UI-88 severity/unresolved filtering.
+
+Source-only delta: `Carthago/Views/IncidentsPage.xaml` (8 added attribute lines, 2 existing self-closing lines replaced). This ledger is the only documentation change. Preserve Wide ≥1440, Standard 1100–1439, Compact 1024–1099 and graceful below 1024; local PPS ScottPlot ten-sample average and bounded 120-point history; operational KPIs, prioritized incidents, investigation, read-only local Live Events 80 displayed/500 retained, explicitly unavailable visual-only CLI, Cisco/WebView2/ScottPlot and privacy/capture/trust boundaries.
+
+**Pre-existing separate issue, not changed:** the Incident Queue `SearchBox_TextChanged` handler is defined in code-behind but not wired in inspected XAML or constructor; incident text search may not update its filter. This GA neither fixes nor asserts that search works.
+
+### Publication lease, end divergence review and unverified risks
+
+The private source commit has only the authorized XAML path and is a direct child of pinned starting HEAD; the documentation commit is its direct child. Immediately before publishing, re-read LIVE remote HEAD and compare any concurrent detection/protocol/UI paths. Publish **both commits together** with one non-forced atomic GitHub `update_ref` using matching `expected_sha` on the same branch; if moved, reconstruct against fresh HEAD only when paths are disjoint and use a fresh lease, otherwise **STOP**. After publication inspect final ref, ancestry, published blobs and exact two owned paths. Do not create a branch, PR or automation, rewrite history, or modify independent streams.
+
+**Risks — UNVERIFIED:** WPF XAML parsing/compilation; tooltip and UI Automation Name/HelpText exposure by the existing WPF button templates; screen-reader reading order; keyboard-focus tooltip behavior; high-contrast legibility; long-tooltip containment at 1440/1100/1099/1024/1023/800/640px and 125–200% DPI. The status update is an existing operational action without a confirmation dialog; the text documents but does not change that risk. No static source inspection proves successful status persistence, rendering, accessibility or runtime correctness.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED OR EXECUTED
+
+1. At Wide ≥1440px, verify unchanged Acknowledge/Resolve captions, button widths, placement and visual hierarchy.
+2. At Standard 1100–1439px, Compact 1024–1099px and below 1024 (1023/800/640px), inspect toolbar containment and tooltip placement.
+3. At 125%, 150% and 200% DPI, inspect button focus outlines, tooltips, investigation scrolling and clipped text.
+4. With keyboard and screen reader, inspect accessible names/help text, focus order, keyboard-focus tooltips and high-contrast legibility.
+5. With no selected incident, inspect that both original handlers return without status request; tooltips remain truthful.
+6. With a selected incident, inspect Acknowledge requests `Acknowledged` through the existing analytics status writer without confirmation.
+7. With a selected incident, inspect Resolve requests `Resolved` without confirmation and does not invoke capture or remediation commands.
+8. Inspect incident selection, queue refresh, filter behavior, status display and the separately unresolved search wiring; do not claim text search correctness.
+9. Inspect unchanged local PPS 10-sample/120-point behavior, KPIs, incidents, Live Events 80/500, unavailable CLI, Cisco/WebView2/ScottPlot, privacy/capture/trust and independent detection/protocol paths.
+10. Inspect final source/docs blobs, direct-parent two-commit chain, exact two owned paths, expected-SHA publication lease and **zero** builds/tests/replays/holdouts/CI/runners/benchmarks/capture.
+
+**Next independent UI GA UI-90:** inspect fresh LIVE HEAD, exact approved image, ledger and original WPF consumers; choose one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–89. Acceptance remains deferred until the owner explicitly says **“now it is test time.”**
