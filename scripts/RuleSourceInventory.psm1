@@ -26,6 +26,75 @@ function Get-SourceViews([string]$Source) {
     [pscustomobject]@{ Code = $code.ToString(); Data = $data.ToString() }
 }
 
+function Find-SourceBlockEnd([string]$Code, [int]$Open) {
+    $depth = 0
+    for ($i = $Open; $i -lt $Code.Length; $i++) {
+        if ($Code[$i] -eq '{') { $depth++ }
+        if ($Code[$i] -eq '}') {
+            $depth--
+            if ($depth -eq 0) { return $i }
+        }
+    }
+    return -1
+}
+
+function Get-TestSourceDeclarations($View) {
+    $code = $View.Code
+    $classes = [Collections.Generic.List[object]]::new()
+    $methods = [Collections.Generic.List[object]]::new()
+    $namespaces = @([regex]::Matches($code, '\bnamespace\s+(?<name>[A-Za-z_][\w.]*)\s*[;{]'))
+    # Multiple namespace declarations need a semantic reader, not a guessed prefix.
+    if ($namespaces.Count -gt 1) { return [pscustomobject]@{ classes=@(); methods=@(); unresolved=$true } }
+    $prefix = if ($namespaces.Count -eq 1) { $namespaces[0].Groups['name'].Value + '.' } else { '' }
+    foreach ($m in [regex]::Matches($code, '\bclass\s+(?<name>[A-Za-z_]\w*)\s*(?::[^{};]+)?\s*\{')) {
+        $open = $m.Index + $m.Length - 1
+        $end = Find-SourceBlockEnd $code $open
+        if ($end -lt 0) { return [pscustomobject]@{ classes=@(); methods=@(); unresolved=$true } }
+        $parents = @($classes | Where-Object { $_.open -lt $m.Index -and $_.end -gt $end } | Sort-Object open -Descending)
+        $identity = $prefix + $m.Groups['name'].Value
+        if ($parents.Count) { $identity = $parents[0].identity + '+' + $m.Groups['name'].Value }
+        $classes.Add([pscustomobject]@{ start=$m.Index; open=$open; end=$end; identity=$identity })
+    }
+    # Supported declaration shape only: attributed public void/Task methods.
+    # Generic methods, expression bodies, inherited tests, custom attributes and
+    # project/compiler eligibility remain unresolved, not inferred runnable.
+    $pattern = '(?s)(?<attrs>(?:\[[^\[\]]*\]\s*)+)public\s+(?:async\s+)?(?:void|(?:System\.Threading\.Tasks\.)?Task)\s+(?<name>[A-Za-z_]\w*)\s*\([^{};]*?\)\s*\{'
+    foreach ($m in [regex]::Matches($code, $pattern)) {
+        $attrs = $m.Groups['attrs'].Value
+        if ($attrs -notmatch '\[\s*(?:Xunit\.)?(?:Fact|Theory)(?:Attribute)?\b') { continue }
+        $owners = @($classes | Where-Object { $_.open -lt $m.Index -and $_.end -gt $m.Index } | Sort-Object open -Descending)
+        if (-not $owners.Count) { continue }
+        $owner = $owners[0]
+        # Only direct class members, never a method-looking fragment nested in
+        # another method/property body. Strings/comments are already masked.
+        $between = $code.Substring($owner.open + 1, $m.Index - $owner.open - 1)
+        if (([regex]::Matches($between, '\{').Count - [regex]::Matches($between, '\}').Count) -ne 0) { continue }
+        $open = $m.Index + $m.Length - 1
+        $end = Find-SourceBlockEnd $code $open
+        if ($end -lt 0 -or $end -ge $owner.end) { continue }
+        $providers = @([regex]::Matches($attrs, '\[\s*(?:Xunit\.)?MemberData\s*\(\s*nameof\s*\(\s*(?<name>[A-Za-z_]\w*)\s*\)') | ForEach-Object { $_.Groups['name'].Value } | Sort-Object -Unique)
+        $methods.Add([pscustomobject]@{
+            identity=$owner.identity + '.' + $m.Groups['name'].Value; owningClass=$owner.identity
+            start=$m.Index; open=$open; end=$end; memberDataNames=$providers
+            bindingStatus='SOURCE_DECLARATION_ONLY'
+        })
+    }
+    [pscustomobject]@{ classes=@($classes.ToArray()); methods=@($methods.ToArray()); unresolved=$false }
+}
+
+function New-SourceAssociation([string]$Path, [string]$Kind, [int]$Index, $View, $Declarations) {
+    $owners = @($Declarations.classes | Where-Object { $_.start -le $Index -and $_.end -gt $Index } | Sort-Object open -Descending)
+    $owner = if ($owners.Count) { $owners[0].identity } else { $null }
+    $methods = @($Declarations.methods | Where-Object { $_.owningClass -ceq $owner })
+    $containing = @($methods | Where-Object { $_.start -le $Index -and $_.end -gt $Index })
+    [pscustomobject]@{
+        path=$Path; kind=$Kind; line=1 + ([regex]::Matches($View.Code.Substring(0,$Index), "`n").Count)
+        owningClass=$owner; declaredTestMethods=@($methods | ForEach-Object { $_.identity })
+        containingTestMethod=$(if ($containing.Count -eq 1) { $containing[0].identity } else { $null })
+        status='NEEDS_REVIEW'
+    }
+}
+
 function Get-RuleSourceInventory {
     [CmdletBinding()]
     param(
@@ -52,6 +121,20 @@ function Get-RuleSourceInventory {
         if ($null -eq $view) {
             $diagnostics.Add([pscustomobject]@{ code='UNSUPPORTED_SOURCE_SYNTAX'; path=$path; ruleId=$null })
         } else { $views[$path] = $view }
+    }
+    $declarations = @{}
+    $testDeclarations = [Collections.Generic.List[object]]::new()
+    foreach ($path in @($views.Keys | Where-Object { $_ -like 'Carthago.Tests/*' } | Sort-Object)) {
+        $declarations[$path] = Get-TestSourceDeclarations $views[$path]
+        if ($declarations[$path].unresolved) {
+            $diagnostics.Add([pscustomobject]@{ code='TEST_SCOPE_UNRESOLVED'; path=$path; ruleId=$null })
+        }
+        foreach ($method in $declarations[$path].methods) {
+            $testDeclarations.Add([pscustomobject]@{
+                path=$path; identity=$method.identity; owningClass=$method.owningClass
+                memberDataNames=$method.memberDataNames; bindingStatus=$method.bindingStatus
+            })
+        }
     }
     $rules = [Collections.Generic.List[object]]::new()
     $seen = @{}
@@ -91,14 +174,14 @@ function Get-RuleSourceInventory {
             }
             foreach ($kind in $patterns.Keys) {
                 foreach ($m in [regex]::Matches($v.Code, $patterns[$kind])) {
-                    $associations.Add([pscustomobject]@{ path=$path; kind=$kind; line=1 + ([regex]::Matches($v.Code.Substring(0,$m.Index), "`n").Count); status='NEEDS_REVIEW' })
+                    $associations.Add((New-SourceAssociation $path $kind $m.Index $v $declarations[$path]))
                 }
             }
             # Evidence of explicit tuple/InlineData/switch syntax, not proof
             # of a MemberData binding or actual parameterized test invocation.
             $dataPattern = '(?:\(|\[\s*InlineData\s*\()\s*"' + [regex]::Escape($id) + '"\s*,|"' + [regex]::Escape($id) + '"\s*=>'
             foreach ($m in [regex]::Matches($v.Data, $dataPattern)) {
-                $associations.Add([pscustomobject]@{ path=$path; kind='data-row-candidate'; line=1 + ([regex]::Matches($v.Data.Substring(0,$m.Index), "`n").Count); status='NEEDS_REVIEW' })
+                $associations.Add((New-SourceAssociation $path 'data-row-candidate' $m.Index $v $declarations[$path]))
             }
         }
         $rules.Add([pscustomobject]@{
@@ -118,10 +201,10 @@ function Get-RuleSourceInventory {
         $previous = $rule.numericId
     }
     [pscustomobject]@{
-        schemaVersion=1; sourceSha=$SourceSha; generatedAtUtc=[DateTime]::UtcNow.ToString('o')
+        schemaVersion=2; sourceSha=$SourceSha; generatedAtUtc=[DateTime]::UtcNow.ToString('o')
         status='SOURCE CANDIDATE — UNVERIFIED'; readyForExecutionSelection=$false
         testsExecutedByInventory=0; operationallyVerifiedCount=$null
-        rules=$ordered; diagnostics=@($diagnostics.ToArray())
+        rules=$ordered; testDeclarations=@($testDeclarations.ToArray()); diagnostics=@($diagnostics.ToArray())
         limitations=@('Textual candidate index, not semantic C# analysis.', 'No compiler/project guards, MemberData binding, test outcome or producer provenance established.', 'Simple interpolated strings are opaque; complex interpolation and raw strings remain unsupported.', 'Content packs and descriptors require separate consumer review.', 'All associations need review; absence does not prove absence of coverage.')
     }
 }

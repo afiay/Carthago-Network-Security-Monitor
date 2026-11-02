@@ -114,4 +114,32 @@ public class R999Tests { [Fact] public void FutureOnly() {} }
 $k = Get-RuleSourceInventory -RegistrySource $registry -Sources $conditional -SourceSha ('a' * 40)
 Assert-Contract (@($k.diagnostics | Where-Object { $_.code -eq 'UNSUPPORTED_SOURCE_SYNTAX' -and $_.path -eq 'Carthago.Tests/Guarded.cs' }).Count -eq 1) 'compiler-guard-not-eligible'
 
+# VC-002C: file co-location must not attribute sibling or nested methods.
+$scoped = @{} + $files
+$scoped['Carthago.Tests/Scoped.cs'] = @'
+namespace Carthago.Tests;
+public class R999Tests {
+ [Fact] public void OwnCase() { var rule = new R999_ThreeRule(); }
+ public class Nested { [Fact] public void NestedCase() {} }
+}
+public class R2999Helper { public void NotATest() { var rule = new R2999_PenultimateRule(); } }
+public class UnrelatedTests { [Fact] public void SiblingCase() {} }
+'@
+$l = Get-RuleSourceInventory -RegistrySource $registry -Sources $scoped -SourceSha ('a' * 40)
+$own = @(@($l.rules | Where-Object ruleId -eq 'R999')[0].associations |
+    Where-Object { $_.path -eq 'Carthago.Tests/Scoped.cs' -and $_.kind -eq 'direct-class-candidate' })[0]
+Assert-Contract ($own.owningClass -eq 'Carthago.Tests.R999Tests') 'qualified-class-owner'
+Assert-Contract (($own.declaredTestMethods -join ',') -eq 'Carthago.Tests.R999Tests.OwnCase') 'no-sibling-or-nested-method-borrowing'
+$ctor = @(@($l.rules | Where-Object ruleId -eq 'R999')[0].associations |
+    Where-Object { $_.path -eq 'Carthago.Tests/Scoped.cs' -and $_.kind -eq 'constructor-reference' })[0]
+Assert-Contract ($ctor.containingTestMethod -eq 'Carthago.Tests.R999Tests.OwnCase') 'constructor-in-own-test-method'
+$helper = @(@($l.rules | Where-Object ruleId -eq 'R2999')[0].associations |
+    Where-Object { $_.path -eq 'Carthago.Tests/Scoped.cs' -and $_.kind -eq 'constructor-reference' })[0]
+Assert-Contract ($helper.declaredTestMethods.Count -eq 0 -and $null -eq $helper.containingTestMethod) 'helper-never-borrows-sibling-test'
+$nested = @($l.testDeclarations | Where-Object { $_.identity -eq 'Carthago.Tests.R999Tests+Nested.NestedCase' })
+Assert-Contract ($nested.Count -eq 1) 'nested-identity-separated'
+$provider = @($a.testDeclarations | Where-Object { $_.identity -eq 'SharedTests.Case' })[0]
+Assert-Contract (($provider.memberDataNames -join ',') -eq 'Cases') 'memberdata-nameof-reference-retained'
+Assert-Contract ($provider.bindingStatus -eq 'SOURCE_DECLARATION_ONLY' -and -not $l.readyForExecutionSelection) 'declaration-not-execution-eligibility'
+
 Write-Host 'Source-inventory contract assertions completed; no rule accuracy or operational claim.'
