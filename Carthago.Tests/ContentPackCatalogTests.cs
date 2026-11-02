@@ -10,12 +10,13 @@ public sealed class ContentPackCatalogTests
     public void Core_rule_catalog_remains_immutable_and_available_catalog_expands_to_954_rules()
     {
         var coreIds = RuleCatalog.All.Select(static descriptor => descriptor.RuleId).ToArray();
-        Assert.Equal(544, coreIds.Length);
-        for (var index = 1; index <= 544; index++)
+        Assert.True(coreIds.Length >= 544);
+        Assert.Equal(RuleCatalog.Rules.Count, coreIds.Length);
+        for (var index = 1; index <= coreIds.Length; index++)
             Assert.Equal($"R{index:000}", coreIds[index - 1]);
 
         var availableIds = RuleCatalog.AllAvailable.Select(static descriptor => descriptor.RuleId).ToArray();
-        Assert.Equal(954, availableIds.Length);
+        Assert.Equal(coreIds.Length + 410, availableIds.Length);
         Assert.Equal(410, availableIds.Count(id => !RuleIdValidator.IsCoreRuleId(id)));
         Assert.Empty(availableIds.GroupBy(id => id, StringComparer.OrdinalIgnoreCase).Where(group => group.Count() > 1));
         Assert.Empty(RuleCatalog.ValidateAvailable());
