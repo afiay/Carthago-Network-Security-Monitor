@@ -4299,3 +4299,42 @@ Prepare complete source-plus-ledger private two-commit chain. Recheck LIVE remot
 10. Verify final two-commit ancestry, exact two owned paths, source/docs blob hashes, expected-SHA publication lease, and **zero** tests/builds/replays/holdouts/CI/runners/benchmarks/capture.
 
 **Next independent UI GA UI-87:** inspect fresh LIVE HEAD, exact approved image, ledger and original WPF consumers; choose one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–86. Acceptance remains deferred until owner explicitly says **“now it is test time.”**
+
+## GA UI-87 — Incident Queue: clipboard and in-memory Clear action transparency
+
+**2026-11-02 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE remote `feature/carthago-reliability-hardening` HEAD: `c6a97dcd0a5630ebea62d3a91a694520ef7eb42c`; prior GA UI-86 publication `54a084bda5805ce1170a2570ba31852377f8767b`. Private source commit `e60004eecb893c35ce8910f3070ab6446d002c8e`; source `Carthago/Views/IncidentsPage.xaml` blob `78c3e39db181cbcd986491d3c4c0ef72f1f1ceb6`. Authorized changed paths: **only** `Carthago/Views/IncidentsPage.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`. **ZERO** builds, dotnet/xUnit tests, replays, holdouts, CI/GitHub Actions, runners, benchmarks, production capture, running-WPF screenshots or executed acceptance scenarios. All scenarios below are **PLANNED ONLY — UNEXECUTED**.
+
+### Approved reference, live divergence and original consumers
+
+**FIRST** resolved and visually inspected exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c` (1648×928). Its deep navy/graphite, cyan/teal navigation, restrained severity, operational KPIs, traffic chart, prioritized incidents, investigation and dense local event presentation remain the design reference. Screenshot IPs, rule IDs, confidence, timestamps, Mbps lines, metrics, sensors and terminal output are **DEMO ONLY**; they are not runtime telemetry or capture health. The WPF CLI remains explicitly **UNAVAILABLE**, visual-only.
+
+Inspected LIVE remote HEAD and recent independent changes, this ledger through UI-86, `IncidentsPage.xaml`, its original `IncidentsPage.xaml.cs` handlers, `Theme.xaml`, `Sidebar.xaml`, `MainWindow.xaml`, `MainWindow.Dashboard.cs`, `MainWindow.Navigation.cs`, `MainWindow.Responsive.cs`, `MainWindow.xaml.cs` and `ResponsiveLayout.cs`. Since GA UI-86, the pinned baseline includes 1 independent commit(s) on non-UI paths, which remain untouched. `MainWindow` instantiates the original `IncidentsPage` and applies its existing `IResponsiveLayoutAware` layout. `CopyJson_Click` serializes only the selected incident's existing `ToExportObject()` and writes it to the system clipboard via `Clipboard.SetText`; without a selection, it returns. `Clear_Click` calls `_vm.All.Clear()`, clears the current selection and updates empty/detail states. It does **not** call an incident-status writer, persistence deletion or global preference reset, and it has no confirmation dialog. New incident updates or reopening the page may repopulate the view. No data producer, consumer, handler, shared API, model, detection rule or capture/privacy control is changed.
+
+Static source note outside this GA's change: the `SearchBox_TextChanged` method exists, but the reviewed XAML and page code-behind do not visibly attach `TextChanged` to `SearchBox`. Search behavior therefore must **not** be asserted as functioning without a later separately authorized investigation. No repair or test was attempted here.
+
+### One cohesive UI-owned accessibility and action-scope improvement
+
+Add source-accurate hover/keyboard-focus `ToolTip`, `ToolTipService.ShowsToolTipOnKeyboardFocus`, explicit `AutomationProperties.Name` and tooltip-bound `AutomationProperties.HelpText` to the two existing **Incident Queue** toolbar buttons **Copy JSON** and **Clear**. Copy guidance distinguishes clipboard transfer from a file export and explains the no-selection no-op. Clear guidance distinguishes an immediate, non-confirmed **in-memory queue clear** from resolving incidents or deleting persisted records, and notes that the list can repopulate. Original captions, widths, ordering, styles, handlers, selection, serialization, clipboard content, event subscriptions, incident statuses, navigation and responsive geometry remain unchanged. No new control, Tab stop, fake value, network call, remediation, telemetry or capture action. This differs from GA UI-85's Signal Investigation modal actions and GA UI-86's Anomaly Triage filter scope.
+
+Source change is only `Carthago/Views/IncidentsPage.xaml` (attributes on two existing buttons); this ledger is the only documentation change. Preserve Wide ≥1440, Standard 1100–1439, Compact 1024–1099 and graceful below 1024; navy/graphite/cyan/teal and restrained severity; local PPS ScottPlot ten-sample average and bounded 120-point history; operational KPIs, prioritized incidents and investigation, read-only Live Events 80 displayed/500 retained, visual-only unavailable CLI, Cisco/WebView2/ScottPlot and all privacy/capture/trust boundaries.
+
+### Static end review, publication lease and unverified risks
+
+The source commit is a direct child of the pinned baseline, with only the authorized XAML path; its documentation descendant changes only this ledger. Recheck LIVE remote HEAD immediately before publishing, compare intervening independent detection/protocol/UI paths and publish the **complete** source-plus-docs two-commit chain only via **one non-forced atomic GitHub `update_ref` with matching `expected_sha` lease** on the same branch. If moved, reconcile disjoint paths against fresh HEAD and lease; **STOP** on overlap, conflict or missing guarantee. After publication inspect final HEAD, direct-parent ancestry, both blobs and exact two-path ownership diff.
+
+**Risks — UNVERIFIED:** WPF XAML parsing/compilation; actual keyboard-triggered tooltip behavior, UI Automation Name/HelpText announcements, screen-reader reading order, focus outlines and high-contrast legibility; long tooltip readability at 1440/1100/1099/1024/1023/640px and 125–200% DPI. The original Copy JSON operation may put local incident identifiers/evidence on an OS clipboard accessible to other clipboard consumers. Clear removes the current view contents without confirmation and may repopulate; this change describes but does not change those behaviors. Static inspection is not proof of compilation, accessibility, security or runtime behavior.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED OR EXECUTED
+
+1. At ≥1440px inspect the original Incident Queue Copy JSON and Clear captions, widths, order and unchanged visual hierarchy.
+2. At 1100/1099/1024/1023/800/640px inspect toolbar containment, focus and tooltip visibility without new layout overflow.
+3. At 125%, 150% and 200% DPI inspect tooltip text, button focus and responsive incident queue/investigation layout.
+4. In standard/high-contrast themes inspect keyboard-focus outlines, tooltip contrast and screen-reader accessible names/help text.
+5. With no incident selected, inspect Copy JSON no-op and truthful tooltip; no clipboard modification should be claimed without running.
+6. With an incident selected, inspect Copy JSON serialization to clipboard, absence of file creation and review of local data disclosure.
+7. Inspect Clear without confirmation: in-memory queue/selection empty, no incident-status update or persisted-record deletion.
+8. Inspect later incident updates and page reopening for potential queue repopulation; verify original data subscriptions and selection behavior.
+9. Inspect unchanged local PPS 10-sample/120-point behavior, KPI provenance, incidents, Live Events 80/500, unavailable CLI, Cisco/WebView2/ScottPlot, privacy/capture/trust and all independent rule/protocol paths.
+10. Inspect final source/docs blobs, direct-parent two-commit chain, exact two owned paths, expected-SHA publication lease, and **zero** builds/tests/replays/holdouts/CI/runners/benchmarks/capture.
+
+**Next independent UI GA UI-88:** inspect fresh LIVE HEAD, exact approved image, ledger and original WPF consumers; choose one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–87. Acceptance remains deferred until the owner explicitly says **“now it is test time.”**
