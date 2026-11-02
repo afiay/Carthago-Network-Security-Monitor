@@ -12,6 +12,7 @@
         MinWidth="640"
         MinHeight="480"
         WindowStartupLocation="CenterScreen"
+        PreviewKeyDown="MainWindow_SessionFileKeyDown"
         SnapsToDevicePixels="True"
         UseLayoutRounding="True">
 
@@ -176,13 +177,30 @@
           Margin="18,0,18,0">
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
         <RowDefinition Height="*"/>
         <RowDefinition Height="Auto"/>
       </Grid.RowDefinitions>
 
+      <!-- Native session files and analytical workbook export; deliberately outside the capture hot path. -->
+      <Menu Grid.Row="0"
+            Margin="0,5,0,9"
+            Background="#101E32"
+            Foreground="#E6EEF8"
+            AutomationProperties.Name="Carthago application menu">
+        <MenuItem Header="_File">
+          <MenuItem Header="_Open Session..." InputGestureText="Ctrl+O" Click="FileOpen_Click"/>
+          <Separator/>
+          <MenuItem Header="_Save Session" InputGestureText="Ctrl+S" Click="FileSave_Click"/>
+          <MenuItem Header="Save Session _As..." InputGestureText="Ctrl+Shift+S" Click="FileSaveAs_Click"/>
+          <Separator/>
+          <MenuItem Header="Export to _Excel..." Click="FileExportExcel_Click"/>
+        </MenuItem>
+      </Menu>
+
       <!-- ===== Header bar ===== -->
       <Border x:Name="CommandHeader"
-              Grid.Row="0"
+              Grid.Row="1"
               Style="{StaticResource TopCommandSurface}"
               Margin="0,0,0,14"
               Padding="12,12,12,10"
@@ -339,7 +357,7 @@
       </Border>
 
       <!-- ===== Content views ===== -->
-      <Grid Grid.Row="1">
+      <Grid Grid.Row="2">
 
         <!-- ===== Legacy analytics infrastructure =====
              Legacy protocol and spark plots remain hidden for existing update paths.
@@ -2727,7 +2745,7 @@
       </Grid>
 
       <!-- ===== Global status footer ===== -->
-      <Border Grid.Row="2"
+      <Border Grid.Row="3"
               Background="{StaticResource AppFooterSurface}"
               BorderBrush="{StaticResource CardBorderBrush}"
               BorderThickness="1"
