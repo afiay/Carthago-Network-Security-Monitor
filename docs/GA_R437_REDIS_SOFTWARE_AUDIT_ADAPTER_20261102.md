@@ -1,6 +1,6 @@
 # GA R437 — Redis Software audit-source adapter and TCP evidence diagnostics
 
-**Status: SOURCE CANDIDATE — UNVERIFIED**. Code and synthetic tests committed to the existing `feature/carthago-reliability-hardening` branch. No owner Windows build, xUnit, original-source capture or independent detection-quality run has yet checked this GA. **Last exact owner GREEN:** `65826c3ec087cbd7c5306f1f32ce8dbc86d24e31` — Release build, **9,854/9,854 xUnit**. The hourly automation can append unrelated commits, which remain separately unverified.
+**Verification status: SOURCE-CODE GA GREEN at owner-tested SHA `6099bfa8c9bff2150caadc7dbf89f332752a1a42`; ORIGINAL-SOURCE/DETECTION-QUALITY GATES PENDING.** The owner ran `scripts/verify-redis-software-audit-ga.ps1` on Windows on 2026-11-02: Release build GREEN with no reported compiler/analyzer warnings, targeted **125/125 PASS**, full xUnit **9,870/9,870 PASS**, zero failed/skipped. Owner-local TRXs: `build-verify/redis-audit-ga-20261102-193912/redis-source-targeted.trx` and `build-verify/redis-audit-ga-20261102-193912/full-regression.trx`. Earlier exact checkpoint `65826c3` passed 9,854/9,854; the source was authored as CANDIDATE and only this exact tested SHA received Windows unit-test verification. **This does NOT mean an authenticated original-source Redis collector, real capture, independent detection-quality metrics or R437 alert promotion has been verified.** Later branch commits are outside the tested checkpoint.
 
 ## Purpose and actual output
 
