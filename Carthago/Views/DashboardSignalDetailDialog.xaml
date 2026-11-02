@@ -262,7 +262,7 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 <TextBlock
-                           Text="The dashboard stays intentionally compact. Use this dialog for deeper evidence review and next actions when a signal needs more attention."
+                           Text="Copy Summary writes this local investigation summary to the system clipboard, including host details, risk, reasons and rule IDs. Review before sharing; navigation buttons open existing views only."
                            Style="{StaticResource MicroLabel}"
                            TextWrapping="Wrap"
                            VerticalAlignment="Center"/>
@@ -271,23 +271,39 @@
                            HorizontalAlignment="Right"
                            Margin="0,12,0,0">
                     <Button Content="Copy Summary"
+                            ToolTip="Copies the selected local investigation summary to the system clipboard, including source, destination, risk, reasons, tags, related rule IDs and recommended actions. Review before sharing; this is not an evidence-file export or verification."
+                            ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                            AutomationProperties.Name="Copy local investigation summary"
+                            AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                             Width="118"
                             Margin="0,0,8,0"
                             Style="{StaticResource SecondaryButton}"
                             Click="CopySummary_Click"/>
                     <Button Content="Open Anomalies"
+                            ToolTip="Opens the existing Anomalies view when this context has a related anomaly ID. Navigation only; does not start capture or verify the signal."
+                            ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                            AutomationProperties.Name="Open related anomaly view"
+                            AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                             Width="122"
                             Margin="0,0,8,0"
                             Style="{StaticResource SecondaryButton}"
                             IsEnabled="{Binding CanOpenAnomalies}"
                             Click="OpenAnomalies_Click"/>
                     <Button Content="Open Incident"
+                            ToolTip="Opens the existing Incidents workspace and selects the related incident when an incident ID is available. Navigation only; no remediation or evidence validation."
+                            ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                            AutomationProperties.Name="Open related incident"
+                            AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                             Width="122"
                             Margin="0,0,8,0"
                             Style="{StaticResource PrimaryButton}"
                             IsEnabled="{Binding CanOpenIncident}"
                             Click="OpenIncident_Click"/>
                     <Button Content="Close"
+                            ToolTip="Closes Signal Investigation without requesting navigation."
+                            ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                            AutomationProperties.Name="Close signal investigation"
+                            AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                             Width="92"
                             Style="{StaticResource SecondaryButton}"
                             Click="Close_Click"/>
