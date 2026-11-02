@@ -78,7 +78,8 @@ namespace Carthago.Services.TrustedAudit
             _serverCertificate = serverCertificate
                 ?? throw new ArgumentNullException(nameof(serverCertificate));
             if (!_serverCertificate.HasPrivateKey
-                || !ValidAt(_serverCertificate, DateTimeOffset.UtcNow))
+                || !ValidAt(_serverCertificate, DateTimeOffset.UtcNow)
+                || !HasExplicitEku(_serverCertificate, "1.3.6.1.5.5.7.3.1"))
                 throw new ArgumentException(
                     "The TLS receiver needs an unexpired server certificate with private key.",
                     nameof(serverCertificate));
@@ -105,7 +106,7 @@ namespace Carthago.Services.TrustedAudit
             DateTimeOffset checkedAtUtc)
         {
             if (peer == null || !ValidAt(peer, checkedAtUtc)
-                || !ClientAuthenticationAllowed(peer))
+                || !HasExplicitEku(peer, "1.3.6.1.5.5.7.3.2"))
                 return false;
 
             try
@@ -284,16 +285,17 @@ namespace Carthago.Services.TrustedAudit
             => now.UtcDateTime >= cert.NotBefore.ToUniversalTime()
                 && now.UtcDateTime <= cert.NotAfter.ToUniversalTime();
 
-        private static bool ClientAuthenticationAllowed(X509Certificate2 cert)
+        private static bool HasExplicitEku(X509Certificate2 cert, string requiredOid)
         {
-            // Certificates with no EKU extension are rejected: the relay must
-            // explicitly have client-auth capability, not a server-only cert.
-            foreach (var ext in cert.Extensions)
+            // Require the purpose-specific EKU for BOTH the server certificate
+            // and the pinned relay client certificate. A missing EKU or a
+            // cert scoped only to the opposite TLS role is rejected.
+            foreach (var extension in cert.Extensions)
             {
-                if (ext is X509EnhancedKeyUsageExtension eku)
+                if (extension is X509EnhancedKeyUsageExtension eku)
                 {
                     foreach (var oid in eku.EnhancedKeyUsages)
-                        if (oid.Value == "1.3.6.1.5.5.7.3.2")
+                        if (oid.Value == requiredOid)
                             return true;
                     return false;
                 }
