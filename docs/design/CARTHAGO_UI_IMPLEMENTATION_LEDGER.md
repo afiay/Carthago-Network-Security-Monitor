@@ -4745,3 +4745,18 @@ Source commit ancestry (all private until one atomic publication): `02d9440207a6
 10. Verify published three-path change scope, source→docs parent ancestry, one non-forced expected-SHA branch update, and **zero** builds/tests/replays/holdouts/CI/Actions/runners/benchmarks/production capture.
 
 **Next UI GA UI-97:** after fresh live-head/reference/consumer audit, deliver another cohesive screen-visible operations redesign (consider Threat Feed evidence density or Integrations configuration architecture). Do not repeat tooltip-only batches. All UI changes remain **SOURCE CANDIDATE — UNVERIFIED** until explicit owner authorization: **“now it is test time.”**
+
+
+## GA UI-97 — Threat Feed Intelligence visual redesign
+
+**2026-11-03 · SOURCE CANDIDATE — UNVERIFIED.** Approved Library image `libfile_b0a34361560c8191b641e432b3e6b15c` visually inspected first. Previous GA UI-96. Live initial HEAD `2ab60c05bdde264d20b0030c3c25a4e1f0239e30`. Source commit `21a1b54cc1776cd0ae74168f35b9352c75df21b6`. Source path `Carthago/Views/ThreatFeedPage.xaml` blob `8c76c7b977bb11f164781e983c7ba56c4ede3812` → `e640441f580c484df74bf012633c1161239c70fe`.
+
+**Visible before → after:** Previously Threat Feed began with fixed-width KPI cards and an ungrouped filter toolbar. It now has a full-width navy/teal 28px operational hero with local-evidence provenance, taller 154px gradient KPI cards with 32px values, a cyan queue accent and dark framed filter controls. The reference informs layout, dark/cyan hierarchy and operational density; its metrics, IPs, rules, confidence, timestamps and capture-health data are DEMO ONLY and were not copied. Static visual-impact assessment: significant screen-level hierarchy change, not a rendered screenshot.
+
+**Responsive/source review:** Existing `ApplyResponsiveLayout` keeps Wide >=1440 queue/investigation side by side and Standard/Compact stacking as already implemented. Hero adds a new top Grid row; KPI, queue and supporting workspace rows shift down by one. Existing `Kpis`, `SeverityFilter`, `SourceFilter`, `SearchBox`, `ThreatMatchesList`, `InvestigationPanel`, `FeedSourcesPanel`, `IndicatorTypesPanel` and `FeedHealthPanel` names, bindings, events, original local evidence projection, six-row pagination, incident navigation and clipboard actions remain untouched. Inspected live HEAD/recent independent commits, prior GA ledger, XAML and code-behind/consumers. End static divergence: only this UI view and ledger intended; no Engine/Models/Services, rules/protocols, telemetry/capture/privacy/trust, tests, benchmarks, workflows, runners, project, shared APIs or automation changes. Dashboard PPS ScottPlot 10-sample/120-point history, Live Events 80/500, unavailable visual-only CLI, Cisco/WebView2 untouched.
+
+**Risks — UNVERIFIED:** WPF compilation, XAML resource resolution, fixed KPI wrap, taller page scroll, 125–200% DPI, narrow filter wrapping, high-contrast and keyboard/screen-reader behavior require Windows verification. No visual rendering or successful behavior claim.
+
+**Planned acceptance scenarios — ALL UNEXECUTED:** (1) Wide reference fidelity; (2) Standard 1100–1439 layout; (3) Compact 1024–1099 and below 1024; (4) DPI 125/150/200%; (5) local KPI/provenance integrity; (6) severity/source/search/pagination; (7) selected evidence and incident actions; (8) keyboard/high contrast; (9) unchanged PPS, Live Events, CLI and capture/privacy; (10) two authorized paths, one expected-SHA atomic publication, zero builds/tests/replays/holdouts/CI/runners/benchmarks/production capture.
+
+**Next GA UI-98:** fresh reference-led screen-visible improvement, not tooltip-only. Testing prohibited until “now it is test time.”
