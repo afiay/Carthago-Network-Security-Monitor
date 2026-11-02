@@ -3,7 +3,6 @@
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
-using System.Windows.Media;
 
 namespace Carthago.Views
 {
@@ -41,7 +40,7 @@ namespace Carthago.Views
             BrandText.Visibility = compact ? Visibility.Collapsed : Visibility.Visible;
             ProductFooter.Visibility = compact ? Visibility.Collapsed : Visibility.Visible;
             BrandHeader.Padding = compact ? new Thickness(12, 18, 12, 16) : new Thickness(18, 18, 16, 16);
-            NavigationStack.Margin = compact ? new Thickness(2, 12, 2, 16) : new Thickness(10, 12, 10, 16);
+            NavigationStack.Margin = compact ? new Thickness(2, 12, 2, 16) : new Thickness(8, 12, 8, 18);
 
             if (compact)
                 HideAllFilters();
@@ -71,8 +70,6 @@ namespace Carthago.Views
         public event RoutedEventHandler? SinkEventsFilterClearRequested;
 
 
-        private readonly Brush _transparentBrush = Brushes.Transparent;
-
         private void SetActiveNavButton(Button? active)
         {
             var buttons = new[]
@@ -92,9 +89,6 @@ namespace Carthago.Views
                 // Expose the existing visual navigation selection to assistive technology.
                 // This is a navigation cue, not a monitoring or capture-health assertion.
                 AutomationProperties.SetItemStatus(button, isActive ? "Current navigation selection" : string.Empty);
-                button.Background = isActive
-                    ? (Brush)(TryFindResource("SelectionBgBrush") ?? new SolidColorBrush(Color.FromRgb(11, 49, 82)))
-                    : _transparentBrush;
             }
         }
 

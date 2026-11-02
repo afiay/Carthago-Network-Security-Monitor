@@ -508,38 +508,100 @@
     <Setter Property="ItemContainerStyle" Value="{StaticResource TabItem.Themed}"/>
   </Style>
 
-  <!-- Sidebar -->
+  <!-- GA UI-95: consistent visual navigation shell, no changes to destinations or commands. -->
+  <LinearGradientBrush x:Key="SidebarOperationsGradient" StartPoint="0,0" EndPoint="1,0">
+    <GradientStop Color="#091B2C" Offset="0"/>
+    <GradientStop Color="#081523" Offset="1"/>
+  </LinearGradientBrush>
+  <LinearGradientBrush x:Key="SidebarBrandGradient" StartPoint="0,0" EndPoint="1,1">
+    <GradientStop Color="#12364C" Offset="0"/>
+    <GradientStop Color="#0B2336" Offset="0.6"/>
+    <GradientStop Color="#091A2B" Offset="1"/>
+  </LinearGradientBrush>
+  <LinearGradientBrush x:Key="SidebarFooterGradient" StartPoint="0,0" EndPoint="1,0">
+    <GradientStop Color="#0A2233" Offset="0"/>
+    <GradientStop Color="#071321" Offset="1"/>
+  </LinearGradientBrush>
+  <LinearGradientBrush x:Key="SidebarActiveGradient" StartPoint="0,0" EndPoint="1,0">
+    <GradientStop Color="#16435C" Offset="0"/>
+    <GradientStop Color="#102D43" Offset="1"/>
+  </LinearGradientBrush>
+  <Style x:Key="SidebarSectionDivider" TargetType="Separator">
+    <Setter Property="Margin" Value="8,16,8,5"/>
+    <Setter Property="Height" Value="1"/>
+    <Setter Property="Background" Value="#244458"/>
+    <Setter Property="Opacity" Value="0.85"/>
+    <Style.Triggers>
+      <DataTrigger Binding="{Binding IsCompact, RelativeSource={RelativeSource AncestorType={x:Type views:Sidebar}}}" Value="True">
+        <Setter Property="Margin" Value="9,10,9,5"/>
+      </DataTrigger>
+    </Style.Triggers>
+  </Style>
+  <Style x:Key="SidebarNavIconFrame" TargetType="Border">
+    <Setter Property="Width" Value="26"/>
+    <Setter Property="Height" Value="26"/>
+    <Setter Property="CornerRadius" Value="8"/>
+    <Setter Property="Background" Value="#0E283A"/>
+    <Setter Property="BorderBrush" Value="#24465C"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="HorizontalAlignment" Value="Center"/>
+    <Setter Property="VerticalAlignment" Value="Center"/>
+    <Style.Triggers>
+      <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" Value="Active">
+        <Setter Property="Background" Value="#15445E"/>
+        <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+      </DataTrigger>
+    </Style.Triggers>
+  </Style>
+  <Style x:Key="SidebarNavGlyph" TargetType="TextBlock">
+    <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
+    <Setter Property="FontSize" Value="16"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+    <Setter Property="HorizontalAlignment" Value="Center"/>
+    <Setter Property="VerticalAlignment" Value="Center"/>
+    <Setter Property="TextAlignment" Value="Center"/>
+    <Style.Triggers>
+      <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" Value="Active">
+        <Setter Property="Foreground" Value="{StaticResource AccentAltBrush}"/>
+      </DataTrigger>
+    </Style.Triggers>
+  </Style>
   <Style x:Key="NavButton" TargetType="Button">
     <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
     <Setter Property="Background" Value="Transparent"/>
     <Setter Property="HorizontalContentAlignment" Value="Left"/>
-    <Setter Property="Padding" Value="10,8"/>
-    <Setter Property="Margin" Value="0,2,0,0"/>
+    <Setter Property="Padding" Value="8,6"/>
+    <Setter Property="Margin" Value="0,2,0,1"/>
+    <Setter Property="MinHeight" Value="42"/>
     <Setter Property="BorderThickness" Value="0"/>
     <Setter Property="Cursor" Value="Hand"/>
     <Setter Property="FocusVisualStyle" Value="{StaticResource KeyboardFocusVisual}"/>
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="Button">
-          <Border x:Name="NavChrome"
-                  Background="{TemplateBinding Background}"
-                  CornerRadius="9">
+          <Border x:Name="NavChrome" Background="{TemplateBinding Background}"
+                  BorderBrush="Transparent" BorderThickness="1" CornerRadius="10">
             <Grid>
-              <Border x:Name="ActiveRail" Width="3" Margin="0,6,0,6" HorizontalAlignment="Left" CornerRadius="2" Background="Transparent"/>
-              <ContentPresenter Margin="0"
-                                VerticalAlignment="Center"/>
+              <Border x:Name="ActiveRail" Width="3" Margin="0,7,0,7"
+                      HorizontalAlignment="Left" CornerRadius="2" Background="Transparent"/>
+              <ContentPresenter Margin="0" VerticalAlignment="Center"
+                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"/>
             </Grid>
           </Border>
           <ControlTemplate.Triggers>
             <Trigger Property="Tag" Value="Active">
-              <Setter Property="Background" Value="#123B53"/>
+              <Setter TargetName="NavChrome" Property="Background" Value="{StaticResource SidebarActiveGradient}"/>
+              <Setter TargetName="NavChrome" Property="BorderBrush" Value="#2B647C"/>
               <Setter TargetName="ActiveRail" Property="Background" Value="{StaticResource AccentBrush}"/>
             </Trigger>
             <Trigger Property="IsMouseOver" Value="True">
-              <Setter Property="Background" Value="#133247"/>
+              <Setter TargetName="NavChrome" Property="Background" Value="#15364C"/>
             </Trigger>
             <Trigger Property="IsPressed" Value="True">
-              <Setter Property="Background" Value="#17465B"/>
+              <Setter TargetName="NavChrome" Property="Background" Value="#17465B"/>
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter TargetName="NavChrome" Property="Opacity" Value="0.55"/>
             </Trigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>
@@ -548,7 +610,7 @@
     <Style.Triggers>
       <DataTrigger Binding="{Binding IsCompact, RelativeSource={RelativeSource AncestorType={x:Type views:Sidebar}}}" Value="True">
         <Setter Property="HorizontalContentAlignment" Value="Center"/>
-        <Setter Property="Padding" Value="10,9"/>
+        <Setter Property="Padding" Value="6,7"/>
       </DataTrigger>
     </Style.Triggers>
   </Style>
@@ -1172,10 +1234,10 @@
 
 
   <Style x:Key="SidebarSectionLabel" TargetType="TextBlock">
-    <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
+    <Setter Property="Foreground" Value="{StaticResource AccentAltBrush}"/>
     <Setter Property="FontSize" Value="10.5"/>
     <Setter Property="FontWeight" Value="Bold"/>
-    <Setter Property="Margin" Value="8,16,8,7"/>
+    <Setter Property="Margin" Value="10,16,8,8"/>
     <Style.Triggers>
       <DataTrigger Binding="{Binding IsCompact, RelativeSource={RelativeSource AncestorType={x:Type views:Sidebar}}}" Value="True">
         <Setter Property="Visibility" Value="Collapsed"/>

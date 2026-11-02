@@ -4,27 +4,32 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <Border x:Name="SidebarRoot"
-          Background="{StaticResource SidebarBgBrush}"
-          BorderBrush="{StaticResource CardBorderBrush}"
+          Background="{StaticResource SidebarOperationsGradient}"
+          BorderBrush="#21415A"
           BorderThickness="0,0,1,0">
     <DockPanel>
-      <Border x:Name="BrandHeader" DockPanel.Dock="Top" Padding="18,18,16,16" Background="{StaticResource HeaderBgBrush}">
+      <Border x:Name="BrandHeader" DockPanel.Dock="Top" Padding="18,18,16,16"
+              Background="{StaticResource SidebarBrandGradient}"
+              BorderBrush="#1D455D" BorderThickness="0,0,0,1">
         <Grid>
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="38"/>
             <ColumnDefinition Width="*"/>
           </Grid.ColumnDefinitions>
-          <Border Width="36" Height="36" CornerRadius="11" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1" Background="#0B2637">
-            <TextBlock Text="C" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" FontSize="27" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          <Border Width="36" Height="36" CornerRadius="11" BorderBrush="#3DD5F2" BorderThickness="1.5" Background="#103B53">
+            <Grid>
+              <TextBlock Text="C" Foreground="{StaticResource AccentAltBrush}" FontWeight="Bold" FontSize="26" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              <Border Width="5" Height="5" CornerRadius="3" Background="{StaticResource AccentBrush}" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,5,4,0"/>
+            </Grid>
           </Border>
           <StackPanel x:Name="BrandText" Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center">
-            <TextBlock Text="CARTHAGO" FontWeight="SemiBold" FontSize="17"/>
-            <TextBlock Text="NETWORK SECURITY" Foreground="{StaticResource TextMutedBrush}" FontSize="10" Margin="0,1,0,0"/>
+            <TextBlock Text="CARTHAGO" FontWeight="Bold" FontSize="18" Foreground="{StaticResource TextBrush}"/>
+            <TextBlock Text="NETWORK SECURITY" Foreground="{StaticResource AccentAltBrush}" FontSize="9.5" FontWeight="SemiBold" Margin="0,3,0,0"/>
           </StackPanel>
         </Grid>
       </Border>
 
-      <Border x:Name="ProductFooter" DockPanel.Dock="Bottom" BorderBrush="{StaticResource SoftDividerBrush}" BorderThickness="0,1,0,0" Padding="16,10" Background="#07111F">
+      <Border x:Name="ProductFooter" DockPanel.Dock="Bottom" BorderBrush="#1D455D" BorderThickness="0,1,0,0" Padding="16,14" Background="{StaticResource SidebarFooterGradient}">
         <Grid>
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
@@ -39,16 +44,18 @@
       </Border>
 
       <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel x:Name="NavigationStack" Margin="10,12,10,16">
+        <StackPanel x:Name="NavigationStack" Margin="8,12,8,18">
           <TextBlock Text="WORKSPACE" Style="{StaticResource SidebarSectionLabel}"/>
           <Button x:Name="DashboardNavButton" Style="{StaticResource NavButton}" Click="Nav_Dashboard_Click" ToolTip="Overview" AutomationProperties.Name="Overview">
             <Grid>
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="24"/>
+                <ColumnDefinition Width="28"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
               </Grid.ColumnDefinitions>
-              <TextBlock Text="▣" Foreground="{StaticResource TextMutedBrush}" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              <Border Style="{StaticResource SidebarNavIconFrame}">
+                <TextBlock Text="▣" Style="{StaticResource SidebarNavGlyph}"/>
+              </Border>
               <TextBlock Grid.Column="1" Text="Overview" Style="{StaticResource SidebarNavTitle}" Margin="9,0,0,0"/>
               
             </Grid>
@@ -56,11 +63,13 @@
           <Button x:Name="RawTrafficNavButton" Style="{StaticResource NavButton}" Click="Nav_LiveTraffic_Click" ToolTip="Live traffic" AutomationProperties.Name="Live Traffic">
             <Grid>
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="24"/>
+                <ColumnDefinition Width="28"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
               </Grid.ColumnDefinitions>
-              <TextBlock Text="∿" Foreground="{StaticResource TextMutedBrush}" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              <Border Style="{StaticResource SidebarNavIconFrame}">
+                <TextBlock Text="∿" Style="{StaticResource SidebarNavGlyph}"/>
+              </Border>
               <TextBlock Grid.Column="1" Text="Live Traffic" Style="{StaticResource SidebarNavTitle}" Margin="9,0,0,0"/>
               
             </Grid>
@@ -196,11 +205,13 @@
           <Button x:Name="IncidentsNavButton" Style="{StaticResource NavButton}" Click="Nav_Incidents_Click" ToolTip="Incidents" AutomationProperties.Name="Incidents">
             <Grid>
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="24"/>
+                <ColumnDefinition Width="28"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
               </Grid.ColumnDefinitions>
-              <TextBlock Text="▤" Foreground="{StaticResource TextMutedBrush}" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              <Border Style="{StaticResource SidebarNavIconFrame}">
+                <TextBlock Text="▤" Style="{StaticResource SidebarNavGlyph}"/>
+              </Border>
               <TextBlock Grid.Column="1" Text="Incidents" Style="{StaticResource SidebarNavTitle}" Margin="9,0,0,0"/>
               
             </Grid>
@@ -208,11 +219,13 @@
           <Button x:Name="AnomaliesNavButton" Style="{StaticResource NavButton}" Click="Nav_Anomalies_Click" ToolTip="Anomalies" AutomationProperties.Name="Anomalies">
             <Grid>
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="24"/>
+                <ColumnDefinition Width="28"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
               </Grid.ColumnDefinitions>
-              <TextBlock Text="⌁" Foreground="{StaticResource TextMutedBrush}" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              <Border Style="{StaticResource SidebarNavIconFrame}">
+                <TextBlock Text="⌁" Style="{StaticResource SidebarNavGlyph}"/>
+              </Border>
               <TextBlock Grid.Column="1" Text="Anomalies" Style="{StaticResource SidebarNavTitle}" Margin="9,0,0,0"/>
               <!-- No fabricated anomaly count: badges require a live bound source. -->
             </Grid>
@@ -220,11 +233,13 @@
           <Button x:Name="IncidentQueueNavButton" Style="{StaticResource NavButton}" Click="Nav_IncidentQueue_Click" ToolTip="Incident queue" AutomationProperties.Name="Incident Queue">
             <Grid>
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="24"/>
+                <ColumnDefinition Width="28"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
               </Grid.ColumnDefinitions>
-              <TextBlock Text="▦" Foreground="{StaticResource TextMutedBrush}" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              <Border Style="{StaticResource SidebarNavIconFrame}">
+                <TextBlock Text="▦" Style="{StaticResource SidebarNavGlyph}"/>
+              </Border>
               <TextBlock Grid.Column="1" Text="Incident Queue" Style="{StaticResource SidebarNavTitle}" Margin="9,0,0,0"/>
               
             </Grid>
@@ -232,26 +247,30 @@
           <Button x:Name="ThreatFeedNavButton" Style="{StaticResource NavButton}" Click="Nav_ThreatFeed_Click" ToolTip="Threat intelligence" AutomationProperties.Name="Threat Intelligence Feed">
             <Grid>
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="24"/>
+                <ColumnDefinition Width="28"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
               </Grid.ColumnDefinitions>
-              <TextBlock Text="◎" Foreground="{StaticResource TextMutedBrush}" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              <Border Style="{StaticResource SidebarNavIconFrame}">
+                <TextBlock Text="◎" Style="{StaticResource SidebarNavGlyph}"/>
+              </Border>
               <TextBlock Grid.Column="1" Text="Threat Feed" Style="{StaticResource SidebarNavTitle}" Margin="9,0,0,0"/>
               
             </Grid>
           </Button>
 
-          <Separator Style="{StaticResource QuietSeparator}"/>
+          <Separator Style="{StaticResource SidebarSectionDivider}"/>
           <TextBlock Text="ADVANCED / FORENSICS" Style="{StaticResource SidebarSectionLabel}"/>
           <Button x:Name="RawDetectionsNavButton" Style="{StaticResource NavButton}" Click="Nav_Alerts_Click" ToolTip="Detection events" AutomationProperties.Name="Detection Events">
             <Grid>
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="24"/>
+                <ColumnDefinition Width="28"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
               </Grid.ColumnDefinitions>
-              <TextBlock Text="◇" Foreground="{StaticResource TextMutedBrush}" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              <Border Style="{StaticResource SidebarNavIconFrame}">
+                <TextBlock Text="◇" Style="{StaticResource SidebarNavGlyph}"/>
+              </Border>
               <TextBlock Grid.Column="1" Text="Raw Detections" Style="{StaticResource SidebarNavTitle}" Margin="9,0,0,0"/>
               
             </Grid>
@@ -369,11 +388,13 @@
           <Button x:Name="SinkDeliveryNavButton" Style="{StaticResource NavButton}" Click="Nav_SinkEvents_Click" ToolTip="External delivery" AutomationProperties.Name="External Event Delivery">
             <Grid>
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="24"/>
+                <ColumnDefinition Width="28"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
               </Grid.ColumnDefinitions>
-              <TextBlock Text="◈" Foreground="{StaticResource TextMutedBrush}" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              <Border Style="{StaticResource SidebarNavIconFrame}">
+                <TextBlock Text="◈" Style="{StaticResource SidebarNavGlyph}"/>
+              </Border>
               <TextBlock Grid.Column="1" Text="Sink Delivery" Style="{StaticResource SidebarNavTitle}" Margin="9,0,0,0"/>
               
             </Grid>
@@ -499,11 +520,13 @@
           <Button x:Name="PcapExplorerNavButton" Style="{StaticResource NavButton}" Click="Nav_LiveTraffic_Click" ToolTip="Packet capture explorer" AutomationProperties.Name="Packet Capture Explorer">
             <Grid>
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="24"/>
+                <ColumnDefinition Width="28"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
               </Grid.ColumnDefinitions>
-              <TextBlock Text="▧" Foreground="{StaticResource TextMutedBrush}" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              <Border Style="{StaticResource SidebarNavIconFrame}">
+                <TextBlock Text="▧" Style="{StaticResource SidebarNavGlyph}"/>
+              </Border>
               <TextBlock Grid.Column="1" Text="PCAP Explorer" Style="{StaticResource SidebarNavTitle}" Margin="9,0,0,0"/>
               
             </Grid>
@@ -511,26 +534,30 @@
           <Button x:Name="ForensicsNavButton" Style="{StaticResource NavButton}" Click="Nav_Alerts_Click" ToolTip="Forensics workspace" AutomationProperties.Name="Forensics Workspace">
             <Grid>
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="24"/>
+                <ColumnDefinition Width="28"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
               </Grid.ColumnDefinitions>
-              <TextBlock Text="⌕" Foreground="{StaticResource TextMutedBrush}" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              <Border Style="{StaticResource SidebarNavIconFrame}">
+                <TextBlock Text="⌕" Style="{StaticResource SidebarNavGlyph}"/>
+              </Border>
               <TextBlock Grid.Column="1" Text="Forensics Workspace" Style="{StaticResource SidebarNavTitle}" Margin="9,0,0,0"/>
               
             </Grid>
           </Button>
 
-          <Separator Style="{StaticResource QuietSeparator}"/>
+          <Separator Style="{StaticResource SidebarSectionDivider}"/>
           <TextBlock Text="PLATFORM" Style="{StaticResource SidebarSectionLabel}"/>
           <Button x:Name="AnalyticsNavButton" Style="{StaticResource NavButton}" Click="Nav_Analytics_Click" ToolTip="Security analytics" AutomationProperties.Name="Security Analytics">
             <Grid>
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="24"/>
+                <ColumnDefinition Width="28"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
               </Grid.ColumnDefinitions>
-              <TextBlock Text="▥" Foreground="{StaticResource TextMutedBrush}" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              <Border Style="{StaticResource SidebarNavIconFrame}">
+                <TextBlock Text="▥" Style="{StaticResource SidebarNavGlyph}"/>
+              </Border>
               <TextBlock Grid.Column="1" Text="Analytics" Style="{StaticResource SidebarNavTitle}" Margin="9,0,0,0"/>
               
             </Grid>
@@ -538,11 +565,13 @@
           <Button x:Name="IntegrationsNavButton" Style="{StaticResource NavButton}" Click="Nav_Integrations_Click" ToolTip="Integrations" AutomationProperties.Name="Integrations">
             <Grid>
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="24"/>
+                <ColumnDefinition Width="28"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
               </Grid.ColumnDefinitions>
-              <TextBlock Text="▨" Foreground="{StaticResource TextMutedBrush}" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              <Border Style="{StaticResource SidebarNavIconFrame}">
+                <TextBlock Text="▨" Style="{StaticResource SidebarNavGlyph}"/>
+              </Border>
               <TextBlock Grid.Column="1" Text="Integrations" Style="{StaticResource SidebarNavTitle}" Margin="9,0,0,0"/>
               
             </Grid>
@@ -550,11 +579,13 @@
           <Button x:Name="HostIntegrityNavButton" Style="{StaticResource NavButton}" Click="Nav_HostIntegrity_Click" ToolTip="Host integrity" AutomationProperties.Name="Host Integrity">
             <Grid>
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="24"/>
+                <ColumnDefinition Width="28"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
               </Grid.ColumnDefinitions>
-              <TextBlock Text="▱" Foreground="{StaticResource TextMutedBrush}" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              <Border Style="{StaticResource SidebarNavIconFrame}">
+                <TextBlock Text="▱" Style="{StaticResource SidebarNavGlyph}"/>
+              </Border>
               <TextBlock Grid.Column="1" Text="Host Integrity" Style="{StaticResource SidebarNavTitle}" Margin="9,0,0,0"/>
               
             </Grid>
@@ -562,26 +593,30 @@
           <Button x:Name="CiscoToolsNavButton" Style="{StaticResource NavButton}" Click="Nav_CiscoTools_Click" ToolTip="Cisco device tools" AutomationProperties.Name="Cisco Device Tools">
             <Grid>
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="24"/>
+                <ColumnDefinition Width="28"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
               </Grid.ColumnDefinitions>
-              <TextBlock Text="▤" Foreground="{StaticResource TextMutedBrush}" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              <Border Style="{StaticResource SidebarNavIconFrame}">
+                <TextBlock Text="▤" Style="{StaticResource SidebarNavGlyph}"/>
+              </Border>
               <TextBlock Grid.Column="1" Text="Cisco Tools" Style="{StaticResource SidebarNavTitle}" Margin="9,0,0,0"/>
               
             </Grid>
           </Button>
 
-          <Separator Style="{StaticResource QuietSeparator}"/>
+          <Separator Style="{StaticResource SidebarSectionDivider}"/>
           <TextBlock Text="SETTINGS" Style="{StaticResource SidebarSectionLabel}"/>
           <Button x:Name="CaptureSourcesNavButton" Style="{StaticResource NavButton}" Click="Nav_Settings_Click" ToolTip="Capture sources" AutomationProperties.Name="Capture Sources">
             <Grid>
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="24"/>
+                <ColumnDefinition Width="28"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
               </Grid.ColumnDefinitions>
-              <TextBlock Text="▦" Foreground="{StaticResource TextMutedBrush}" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              <Border Style="{StaticResource SidebarNavIconFrame}">
+                <TextBlock Text="▦" Style="{StaticResource SidebarNavGlyph}"/>
+              </Border>
               <TextBlock Grid.Column="1" Text="Capture &amp; Sources" Style="{StaticResource SidebarNavTitle}" Margin="9,0,0,0"/>
               
             </Grid>
@@ -589,11 +624,13 @@
           <Button x:Name="DetectionRulesNavButton" Style="{StaticResource NavButton}" Click="Nav_Settings_Click" ToolTip="Detection rules" AutomationProperties.Name="Detection Rules">
             <Grid>
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="24"/>
+                <ColumnDefinition Width="28"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
               </Grid.ColumnDefinitions>
-              <TextBlock Text="◇" Foreground="{StaticResource TextMutedBrush}" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              <Border Style="{StaticResource SidebarNavIconFrame}">
+                <TextBlock Text="◇" Style="{StaticResource SidebarNavGlyph}"/>
+              </Border>
               <TextBlock Grid.Column="1" Text="Detection Rules" Style="{StaticResource SidebarNavTitle}" Margin="9,0,0,0"/>
               
             </Grid>
@@ -601,11 +638,13 @@
           <Button x:Name="ReputationNavButton" Style="{StaticResource NavButton}" Click="Nav_Settings_Click" ToolTip="Reputation settings" AutomationProperties.Name="Reputation Settings">
             <Grid>
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="24"/>
+                <ColumnDefinition Width="28"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
               </Grid.ColumnDefinitions>
-              <TextBlock Text="◎" Foreground="{StaticResource TextMutedBrush}" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              <Border Style="{StaticResource SidebarNavIconFrame}">
+                <TextBlock Text="◎" Style="{StaticResource SidebarNavGlyph}"/>
+              </Border>
               <TextBlock Grid.Column="1" Text="Reputation" Style="{StaticResource SidebarNavTitle}" Margin="9,0,0,0"/>
               
             </Grid>
@@ -613,11 +652,13 @@
           <Button x:Name="UsersRolesNavButton" Style="{StaticResource NavButton}" Click="Nav_Settings_Click" ToolTip="Users and roles" AutomationProperties.Name="Users and Roles">
             <Grid>
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="24"/>
+                <ColumnDefinition Width="28"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
               </Grid.ColumnDefinitions>
-              <TextBlock Text="♙" Foreground="{StaticResource TextMutedBrush}" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              <Border Style="{StaticResource SidebarNavIconFrame}">
+                <TextBlock Text="♙" Style="{StaticResource SidebarNavGlyph}"/>
+              </Border>
               <TextBlock Grid.Column="1" Text="Users &amp; Roles" Style="{StaticResource SidebarNavTitle}" Margin="9,0,0,0"/>
               
             </Grid>
@@ -625,24 +666,28 @@
           <Button x:Name="SystemSettingsNavButton" Style="{StaticResource NavButton}" Click="Nav_Settings_Click" ToolTip="System settings" AutomationProperties.Name="System Settings">
             <Grid>
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="24"/>
+                <ColumnDefinition Width="28"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
               </Grid.ColumnDefinitions>
-              <TextBlock Text="⚙" Foreground="{StaticResource TextMutedBrush}" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              <Border Style="{StaticResource SidebarNavIconFrame}">
+                <TextBlock Text="⚙" Style="{StaticResource SidebarNavGlyph}"/>
+              </Border>
               <TextBlock Grid.Column="1" Text="System Settings" Style="{StaticResource SidebarNavTitle}" Margin="9,0,0,0"/>
               
             </Grid>
           </Button>
 
-          <Separator Style="{StaticResource QuietSeparator}"/>
+          <Separator Style="{StaticResource SidebarSectionDivider}"/>
           <Button Style="{StaticResource NavButton}">
             <Grid>
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="24"/>
+                <ColumnDefinition Width="28"/>
                 <ColumnDefinition Width="*"/>
               </Grid.ColumnDefinitions>
-              <TextBlock Text="≪" Foreground="{StaticResource TextMutedBrush}" FontSize="15" HorizontalAlignment="Center"/>
+              <Border Style="{StaticResource SidebarNavIconFrame}">
+                <TextBlock Text="≪" Style="{StaticResource SidebarNavGlyph}"/>
+              </Border>
               <TextBlock Grid.Column="1" Text="Collapse" Style="{StaticResource SidebarNavTitle}" Margin="9,0,0,0"/>
             </Grid>
           </Button>
