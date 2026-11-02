@@ -148,6 +148,8 @@ namespace Carthago.Engine.Rules
         // Records without header telemetry keep their existing behavior.
         private static bool HasConsistentDeviceHostHeader(TrafficRecord record)
         {
+            if (string.IsNullOrWhiteSpace(record.HttpHost))
+                return false;
             if (string.IsNullOrWhiteSpace(record.HttpRequestHeaders))
                 return true;
 
