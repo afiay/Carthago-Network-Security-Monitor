@@ -150,7 +150,8 @@ public sealed class RedisSoftwareAuditSourceTests
             Encoding.UTF8.GetBytes("{}"),
             Encoding.UTF8.GetBytes("{"),
             Encoding.UTF8.GetBytes(new string('x', 16385)),
-            Encoding.UTF8.GetBytes("{\"ts\":1793640000,\"ts\":1793640000}"),
+            Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(Command())
+                .Replace("\"audit_seq\":1", "\"audit_seq\":1,\"audit_seq\":1")),
             Command(status: 8),
             Command(status: 11),
             Command(serverPort: "0"),
