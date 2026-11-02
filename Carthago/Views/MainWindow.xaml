@@ -1077,10 +1077,23 @@
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="Host" Style="{StaticResource MicroLabel}"/>
                         <TextBlock Grid.Column="1" Text="Risk" Style="{StaticResource MicroLabel}" HorizontalAlignment="Right"/>
+                        <!-- GA UI-81: make source-specific column guidance discoverable by keyboard without altering local host data. -->
                         <TextBlock Grid.Column="2" Text="Items" Style="{StaticResource MicroLabel}" HorizontalAlignment="Right"
-                                   ToolTip="Related correlated incidents, or anomaly signals when no incident hosts are available."/>
+                                   Focusable="True"
+                                   KeyboardNavigation.IsTabStop="True"
+                                   FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
+                                   ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                                   ToolTip="Related correlated incidents, or anomaly signals when no incident hosts are available."
+                                   AutomationProperties.Name="High-risk hosts: related items column"
+                                   AutomationProperties.HelpText="Counts unresolved correlated incidents for each host, or anomaly signals when no incident hosts are available. Not packet counts or verified impact."/>
                         <TextBlock Grid.Column="3" Text="Activity" Style="{StaticResource MicroLabel}" Margin="12,0,0,0"
-                                   ToolTip="Relative activity over the past 60 minutes in eight time buckets, oldest to newest. Based on incident updates or anomaly creations, not packet traffic or changes in risk."/>
+                                   Focusable="True"
+                                   KeyboardNavigation.IsTabStop="True"
+                                   FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
+                                   ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                                   ToolTip="Relative activity over the past 60 minutes in eight time buckets, oldest to newest. Based on incident updates or anomaly creations, not packet traffic or changes in risk."
+                                   AutomationProperties.Name="High-risk hosts: relative activity column"
+                                   AutomationProperties.HelpText="Eight relative 60-minute time buckets, oldest to newest, from incident last-update or anomaly creation timestamps. Not packet traffic, absolute event counts or a risk-score trend."/>
                       </Grid>
                       <ScrollViewer VerticalScrollBarVisibility="Auto"
                                     HorizontalScrollBarVisibility="Disabled"
