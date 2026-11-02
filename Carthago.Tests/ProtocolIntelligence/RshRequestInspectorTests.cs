@@ -137,3 +137,4 @@ namespace Carthago.Tests.ProtocolIntelligence
             });
         }
     }
+}
