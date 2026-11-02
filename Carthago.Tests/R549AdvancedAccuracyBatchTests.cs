@@ -76,7 +76,7 @@ public sealed class R549AdvancedAccuracyBatchTests
         frame[20] = 0xc7; frame[21] = 0x38; // TCP source port 51000
         frame[23] = 80; frame[32] = 0x50; frame[33] = 0x18;
         payload.CopyTo(frame, 40);
-        var record = new PacketHandler().ParseFrame(frame, (LinkLayers)12);
+        var record = new PacketHandler().ParseFrame(frame, (PacketDotNet.LinkLayers)12);
         Assert.NotNull(record);
         Assert.True(record.HttpBasicDefaultCredentialObserved);
         Assert.Equal("HTTP", record.ApplicationProtocol);
