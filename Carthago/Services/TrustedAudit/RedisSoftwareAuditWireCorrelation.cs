@@ -9,6 +9,7 @@ namespace Carthago.Services.TrustedAudit
 {
     public enum RedisSoftwareWireCorrelationStatus
     {
+        MalformedVendorNotification,
         NoAuditEvent,
         AuditNotCommand,
         GenericCommandNotConfig,
