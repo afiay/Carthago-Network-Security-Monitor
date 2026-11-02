@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
-// GA storage lifecycle — SOURCE CANDIDATE — UNVERIFIED (owner Windows tests pending).
+// GA storage lifecycle — 3 tests owner-verified GREEN at 6ccb316 (2026-11-02).
+// Subsequent source changes remain CANDIDATE — UNVERIFIED until rerun.
 using System;
 using System.IO;
 using System.Linq;
@@ -59,11 +60,11 @@ public sealed class LocalStoreLifecycleTests
         });
 
         release.Set();
-        await Task.WhenAll(writers);
+        var results = await Task.WhenAll(writers);
         await closing;
 
-        var accepted = writers.Where(task => task.Result.Saved)
-            .Select(task => task.Result.Id)
+        var accepted = results.Where(result => result.Saved)
+            .Select(result => result.Id)
             .ToHashSet(StringComparer.Ordinal);
         accepted.Add("seed");
         Assert.False(store.SaveIncident(new Incident { Id = "late", Title = "Must fail" }));
@@ -103,11 +104,11 @@ public sealed class LocalStoreLifecycleTests
         });
 
         release.Set();
-        await Task.WhenAll(writers);
+        var results = await Task.WhenAll(writers);
         await closing;
 
-        var accepted = writers.Where(task => task.Result.Saved)
-            .Select(task => task.Result.Host)
+        var accepted = results.Where(result => result.Saved)
+            .Select(result => result.Host)
             .ToHashSet(StringComparer.Ordinal);
         accepted.Add("seed");
 
