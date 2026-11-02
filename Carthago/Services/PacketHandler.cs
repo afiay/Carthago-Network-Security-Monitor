@@ -773,6 +773,17 @@ namespace Carthago.Services
             lock (_tcpSync)
             {
                 var state = GetOrAddState(key, DateTime.UtcNow);
+                // A new client SYN invalidates both directions of a reused
+                // 5-tuple, so an old SYN-ACK cannot authenticate this flow.
+                if (clientToServer)
+                {
+                    state.S2C.Init = false;
+                    state.S2C.SynAnchored = false;
+                    state.S2C.NextSeq = 0;
+                    state.S2C.Collected = 0;
+                    state.S2C.Invalid = false;
+                    state.S2C.TlsActive = false;
+                }
                 var dir = clientToServer ? state.C2S : state.S2C;
                 dir.Init = true;
                 dir.SynAnchored = true;
@@ -803,8 +814,8 @@ namespace Carthago.Services
             }
         }
 
-        // Strictly bounded request/reply correlation. No wall-clock timeouts,
-        // timers, retained wire payloads or background workers are required.
+        // Strictly bounded UTC request/reply age check without scheduled timers,
+        // retained wire payloads or background workers.
         internal static bool IsWithinRedisReplyWindow(DateTime requestUtc, DateTime replyUtc)
             => requestUtc.Kind == DateTimeKind.Utc
                 && replyUtc.Kind == DateTimeKind.Utc
