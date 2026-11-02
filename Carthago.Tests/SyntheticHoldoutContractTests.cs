@@ -42,8 +42,8 @@ public sealed class SyntheticHoldoutContractTests
             Assert.Matches("^[a-f0-9]{40}$", entry.GetProperty("gitBlobSha").GetString()!);
             Assert.False(path.Contains("..", StringComparison.Ordinal));
             var fullPath = Path.GetFullPath(Path.Combine(root, path.Replace('/', Path.DirectorySeparatorChar)));
-            Assert.True(fullPath.StartsWith(holdoutRoot + Path.DirectorySeparatorChar,
-                StringComparison.OrdinalIgnoreCase));
+            Assert.StartsWith(holdoutRoot + Path.DirectorySeparatorChar, fullPath,
+                StringComparison.OrdinalIgnoreCase);
             Assert.True(File.Exists(fullPath));
 
             var group = entry.GetProperty("classification").GetString()!;
