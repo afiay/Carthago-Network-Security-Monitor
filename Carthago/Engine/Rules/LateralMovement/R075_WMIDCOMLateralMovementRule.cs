@@ -25,7 +25,8 @@ namespace Carthago.Engine.Rules.LateralMovement
                 return ValueTask.FromResult(RuleEvaluationResult.NoMatch(Descriptor.RuleId));
             var threshold=RuleEngine.GetRuleIntSetting("R075","Threshold",3,1,int.MaxValue);
             var seconds=RuleEngine.GetRuleIntSetting("R075","WindowSeconds",300,1,86400);
-            if (!_state.Observe(source+":135:"+app.ToUpperInvariant(),destination,c.TimestampUtc,threshold,TimeSpan.FromSeconds(seconds)))
+            var classifiedProtocol = string.Equals(app, "WMI", StringComparison.OrdinalIgnoreCase) ? "WMI" : "DCOM";
+            if (!_state.Observe(source+":135:"+classifiedProtocol,destination,c.TimestampUtc,threshold,TimeSpan.FromSeconds(seconds)))
                 return ValueTask.FromResult(RuleEvaluationResult.NoMatch(Descriptor.RuleId));
             return ValueTask.FromResult(RuleEvaluationResult.Match(Descriptor.RuleId,
                 NetworkBatch071075Evidence.Alert(Descriptor,c,"Internal host initiated classified administrative connections to distinct internal endpoints.")));
