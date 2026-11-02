@@ -200,6 +200,14 @@ namespace Carthago.Services.TrustedAudit
                     "R437_RELAY_MTLS_HANDSHAKE_TIMEOUT");
             }
 
+            // ClientCertificateRequired requests mTLS but must NOT be
+            // interpreted as proof that a client certificate was actually
+            // presented and authenticated. Refuse server-only TLS even if
+            // the OS handshake completed without the peer certificate.
+            if (!tls.IsMutuallyAuthenticated || tls.RemoteCertificate == null)
+                return new(RedisAuditRelaySessionStatus.PeerAuthenticationFailed, 0,
+                    "R437_RELAY_MTLS_CLIENT_CERTIFICATE_REQUIRED");
+
             var frames = 0;
             var lengthPrefix = new byte[4];
             while (frames < MaxFramesPerSession)
