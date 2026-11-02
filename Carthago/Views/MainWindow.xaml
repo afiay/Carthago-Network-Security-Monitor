@@ -1593,20 +1593,29 @@
                         </StackPanel>
                       </Border>
                     </Grid>
-                    <StackPanel Grid.Row="3" Margin="0,8,0,0">
-                      <TextBlock x:Name="DashboardLiveEventsStatusText"
-                                 Text="Waiting for local detection events."
-                                 AutomationProperties.LiveSetting="Off"
-                                 Foreground="{StaticResource TextSubtleBrush}"
-                                 FontSize="11"
-                                 TextWrapping="Wrap"/>
-                      <TextBlock x:Name="DashboardLiveEventsProvenanceText"
-                                 Text="Evidence column reports presence/count only; delivery is not incident resolution."
-                                 Foreground="{StaticResource TextMutedBrush}"
-                                 FontSize="11"
-                                 Margin="0,3,0,0"
-                                 TextWrapping="Wrap"/>
-                    </StackPanel>
+                    <!-- GA UI-79: keep local event status and provenance together in a subdued, non-interactive footer. -->
+                    <Border Grid.Row="3"
+                            Margin="0,8,0,0"
+                            Padding="10,7"
+                            Background="{StaticResource PillBgBrush}"
+                            BorderBrush="{StaticResource SoftDividerBrush}"
+                            BorderThickness="1"
+                            CornerRadius="6">
+                      <StackPanel>
+                        <TextBlock x:Name="DashboardLiveEventsStatusText"
+                                   Text="Waiting for local detection events."
+                                   AutomationProperties.LiveSetting="Off"
+                                   Foreground="{StaticResource TextSubtleBrush}"
+                                   FontSize="11"
+                                   TextWrapping="Wrap"/>
+                        <TextBlock x:Name="DashboardLiveEventsProvenanceText"
+                                   Text="Evidence column reports presence/count only; delivery is not incident resolution."
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   FontSize="11"
+                                   Margin="0,3,0,0"
+                                   TextWrapping="Wrap"/>
+                      </StackPanel>
+                    </Border>
                   </Grid>
                 </Border>
 
