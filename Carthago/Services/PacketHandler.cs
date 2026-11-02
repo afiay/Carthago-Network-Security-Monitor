@@ -10,6 +10,7 @@ using Carthago.Models;
 using Carthago.Engine.Rules;
 using Carthago.Services.Flow;
 using Carthago.Services.Fingerprints;
+using Carthago.Services.ProtocolIntelligence;
 using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
@@ -390,6 +391,21 @@ namespace Carthago.Services
                             // only when the captured bytes validate the frame.
                             if (OtProtocolLight.TryIdentifyTcp(normPayload, sport, dport, out var otProtocol))
                                 rec.ApplicationProtocol = otProtocol;
+
+                            // -------- Bounded Redis RESP2 command shape --------
+                            // Only full, plaintext, client-to-service framed requests
+                            // at the observed TCP/6379 endpoint may set the capture flag.
+                            // No key, config parameter, value, or reply is stored here.
+                            // The packet classifier is not general TCP reassembly and
+                            // cannot attest server success or administrator intent.
+                            if (c2s && dport == 6379 && sport is > 0 and <= 65535
+                                && sport != 6379 && !IsTlsActive(tcpFlow, c2s)
+                                && Resp2CommandInspector.TryInspect(normPayload,
+                                    verifiedPlaintextClientCommandBoundary: true, out var resp))
+                            {
+                                rec.ApplicationProtocol = "redis.resp2";
+                                rec.RedisRespConfigSetRequestObserved = resp.IsConfigSetRequest;
+                            }
 
                             // -------- Bounded FTP and SMB2 request framing --------
                             if (c2s && NetworkBatch246250Wire.FtpUpload(normPayload, sport, dport, out var ftpOperation))
