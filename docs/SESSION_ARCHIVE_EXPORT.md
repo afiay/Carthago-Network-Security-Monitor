@@ -9,11 +9,22 @@
 | File → Open Session | Ctrl+O | Opens `.csa` in an offline, read-only viewer. |
 | File → Save Session | Ctrl+S | Saves the available current analysis; subsequent saves reuse the selected path. |
 | File → Save Session As | Ctrl+Shift+S | Selects a new `.csa` path. |
+| File → Auto-save during monitoring | Opt-in checkbox | Saves to the active `.csa` path every 60 seconds while scanning. |
 | File → Export to Excel | Menu | Writes `.xlsx` with separate category worksheets. |
 
 The session viewer can also export the opened archive to `.xlsx` without restoring
 it into active capture. Opening a file does not create detection evidence, restart
 capture, import journal entries or change alert policy.
+
+File → Open also selects that validated `.csa` archive as the current Save and
+Auto-save destination. Future saves merge distinct historical category records
+with the currently available analysis; duplicate stable event/record IDs are
+not appended repeatedly, and more recently updated incidents take precedence.
+File → Save As carries the active session's previous records to the chosen new
+file. Auto-save is disabled by default, prompts for a path if one is missing,
+does not run outside active monitoring, and skips a tick if another file
+operation is underway. When a save fails, Auto-save turns off and displays the
+error once; monitoring continues and the existing archive remains in place.
 
 ## Native format
 
@@ -63,6 +74,10 @@ complete historical record of every packet or every rule. Specifically:
 - Evidence and timelines originate from these retained alert/incident records.
 - Save is a non-atomic view across active processing queues: in-flight messages
   may not yet have reached the relevant UI or analytics cache.
+- The 60-second Auto-save checkpoint retains previous **saved** rows, but cannot
+  recover rows evicted from the UI **between** checkpoints. It is not yet a
+  lossless background packet recorder. Disk growth and increasingly expensive
+  checkpoint merges need future performance validation and bounded streaming.
 
 The manifest and Overview sheet disclose these limits. Captured-packet and
 dropped-queue counters are included as separate metadata; they must not be

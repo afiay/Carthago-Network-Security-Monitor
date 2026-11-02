@@ -193,6 +193,16 @@
           <Separator/>
           <MenuItem Header="_Save Session" InputGestureText="Ctrl+S" Click="FileSave_Click"/>
           <MenuItem Header="Save Session _As..." InputGestureText="Ctrl+Shift+S" Click="FileSaveAs_Click"/>
+          <MenuItem x:Name="AutoSaveDuringMonitoringMenuItem"
+                    Header="Auto-save during _monitoring (every 60 seconds)"
+                    IsCheckable="True"
+                    IsChecked="False"
+                    ToolTip="Opt-in: periodically save available analysis to the active .csa file while scanning. The archive retains previous saved records; high-rate traffic can still exceed the UI retention window."
+                    Checked="AutoSaveDuringMonitoring_Checked"
+                    Unchecked="AutoSaveDuringMonitoring_Unchecked"/>
+          <MenuItem x:Name="LastAutoSaveStatusMenuItem"
+                    Header="Last auto-save: not yet saved"
+                    IsEnabled="False"/>
           <Separator/>
           <MenuItem Header="Export to _Excel..." Click="FileExportExcel_Click"/>
         </MenuItem>
