@@ -75,10 +75,23 @@ public partial class MainWindow
             ? new Thickness(0, 6, 0, 0)
             : new Thickness(12, 0, 0, 0);
 
-        // GA UI-06: visual-only CLI panel; no command runner or state adapter.
-        DashboardCliCompanionPanel.Width = mode == ResponsiveLayoutMode.Wide ? 408 : double.NaN;
-        DashboardCliCompanionPanel.HorizontalAlignment = mode == ResponsiveLayoutMode.Wide
-            ? HorizontalAlignment.Right : HorizontalAlignment.Stretch;
+        // GA UI-91: dock the unavailable CLI beside the local event stream on Wide;
+        // stack below the full-width, horizontally scrollable event table otherwise.
+        var wideLower = mode == ResponsiveLayoutMode.Wide;
+        DashboardLowerEventsColumn.Width = new GridLength(wideLower ? 2.65 : 1, GridUnitType.Star);
+        DashboardLowerCliColumn.Width = wideLower
+            ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
+        DashboardLowerPrimaryRow.Height = GridLength.Auto;
+        DashboardLowerSecondaryRow.Height = wideLower ? new GridLength(0) : GridLength.Auto;
+        Grid.SetRow(DashboardLiveEventsPanel, 0);
+        Grid.SetColumn(DashboardLiveEventsPanel, 0);
+        Grid.SetRow(DashboardCliCompanionPanel, wideLower ? 0 : 1);
+        Grid.SetColumn(DashboardCliCompanionPanel, wideLower ? 1 : 0);
+        DashboardLiveEventsPanel.Margin = wideLower
+            ? new Thickness(0, 0, 12, 0) : new Thickness(0, 0, 0, 10);
+        DashboardCliCompanionPanel.Margin = new Thickness(0);
+        DashboardCliCompanionPanel.Width = double.NaN;
+        DashboardCliCompanionPanel.HorizontalAlignment = HorizontalAlignment.Stretch;
 
         if (mode == ResponsiveLayoutMode.Compact)
         {

@@ -1366,11 +1366,21 @@
                 </Grid>
 
 
-                <!-- GA UI-05: bounded, observed detection events; never a fabricated incident chronology. -->
+                <!-- GA UI-91: responsive operations band for the local event stream and unavailable CLI. -->
+                <Grid x:Name="DashboardLowerGrid" Margin="0,0,0,10">
+                  <Grid.RowDefinitions>
+                    <RowDefinition x:Name="DashboardLowerPrimaryRow" Height="Auto"/>
+                    <RowDefinition x:Name="DashboardLowerSecondaryRow" Height="0"/>
+                  </Grid.RowDefinitions>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition x:Name="DashboardLowerEventsColumn" Width="2.65*"/>
+                    <ColumnDefinition x:Name="DashboardLowerCliColumn" Width="1*"/>
+                  </Grid.ColumnDefinitions>
+                  <!-- Local detections only; approved reference data is DEMO ONLY. -->
                 <Border x:Name="DashboardLiveEventsPanel"
-                        Style="{StaticResource PageSurface}"
-                        Padding="14"
-                        Margin="0,0,0,10">
+                        Style="{StaticResource DashboardLiveEventsSurface}"
+                        Grid.Row="0" Grid.Column="0"
+                        Margin="0,0,12,0">
                   <Grid>
                     <Grid.RowDefinitions>
                       <RowDefinition Height="Auto"/>
@@ -1378,7 +1388,10 @@
                       <RowDefinition Height="Auto"/>
                       <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                    <DockPanel LastChildFill="True">
+                    <Border Grid.Row="0" Background="{StaticResource DashboardLiveEventsHeaderGradient}"
+                            BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1"
+                            CornerRadius="10" Padding="14,12">
+                      <DockPanel LastChildFill="True">
                       <Button DockPanel.Dock="Right"
                               Content="All detections &#x2192;"
                               ToolTip="Open the existing Raw Detections view. Navigation only; no evidence export or capture starts here."
@@ -1390,23 +1403,23 @@
                               Style="{StaticResource SecondaryButton}"
                               Click="DashboardLiveEventsOpenDetections_Click"/>
                       <StackPanel>
-                        <TextBlock Text="Live Events" Style="{StaticResource DashboardSectionTitle}"/>
+                        <TextBlock Text="LOCAL DETECTION STREAM" Foreground="{StaticResource AccentBrush}"
+                                   FontSize="10" FontWeight="Bold" Margin="0,0,0,4"/>
+                        <TextBlock Text="Live Events" Style="{StaticResource DashboardSectionTitle}" FontSize="20" FontWeight="Bold"/>
                         <TextBlock Text="Recent local detection events, not incident-resolution or evidence-chain records."
                                    Foreground="{StaticResource TextMutedBrush}"
                                    FontSize="11"
                                    TextWrapping="Wrap"
                                    Margin="0,3,8,0"/>
                       </StackPanel>
-                    </DockPanel>
+                      </DockPanel>
+                    </Border>
                     <!-- GA UI-75: group the existing four local Live Events filters as one subdued visual toolbar. -->
-                    <Border Grid.Row="1"
-                            Margin="0,12,0,9"
-                            Padding="10,9,10,3"
-                            Background="{StaticResource PillBgBrush}"
-                            BorderBrush="{StaticResource SoftDividerBrush}"
-                            BorderThickness="1"
-                            CornerRadius="8">
-                      <WrapPanel>
+                    <Border Grid.Row="1" Margin="0,10,0,10" Style="{StaticResource DashboardLiveEventsToolbar}">
+                      <StackPanel>
+                        <TextBlock Text="FILTER LOCAL EVENTS" Foreground="{StaticResource TextMutedBrush}"
+                                   FontSize="10" FontWeight="SemiBold" Margin="0,0,0,9"/>
+                        <WrapPanel>
                       <!-- GA UI-26: visible captions for the two remaining dropdown filters. -->
                       <StackPanel Orientation="Horizontal" Height="30" Margin="0,0,8,6">
                         <TextBlock x:Name="DashboardLiveSeverityFilterLabel"
@@ -1501,11 +1514,12 @@
                               Margin="0,0,0,6"
                               Style="{StaticResource SecondaryButton}"
                               Click="DashboardLiveEventsClearFilters_Click"/>
-                      </WrapPanel>
+                        </WrapPanel>
+                      </StackPanel>
                     </Border>
                     <Grid Grid.Row="2">
                       <DataGrid x:Name="DashboardLiveEventsGrid"
-                                Height="190"
+                                Height="300"
                                 AutoGenerateColumns="False"
                                 IsReadOnly="True"
                                 CanUserAddRows="False"
@@ -1514,8 +1528,8 @@
                                 HeadersVisibility="Column"
                                 GridLinesVisibility="Horizontal"
                                 HorizontalGridLinesBrush="{StaticResource SoftDividerBrush}"
-                                RowHeight="27"
-                                ColumnHeaderHeight="30"
+                                RowHeight="34"
+                                ColumnHeaderHeight="38"
                                 VirtualizingPanel.IsVirtualizing="True"
                                 VirtualizingPanel.VirtualizationMode="Recycling"
                                 EnableRowVirtualization="True"
@@ -1583,18 +1597,25 @@
                               </Style>
                             </DataGridTextColumn.HeaderStyle>
                           </DataGridTextColumn>
-                          <DataGridTextColumn Header="Severity" Binding="{Binding Severity}" Width="85"
-                                              ElementStyle="{StaticResource DashboardLiveMetadataCellText}">
-                            <DataGridTextColumn.HeaderStyle>
-                              <Style TargetType="{x:Type DataGridColumnHeader}"
-                                     BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
-                                <Setter Property="ToolTip"
-                                        Value="Severity reported by the local detection event. It is not an independently verified impact assessment or incident priority."/>
-                                <Setter Property="AutomationProperties.HelpText"
-                                        Value="Reported detection-event severity classification, not independently verified impact or incident priority."/>
-                              </Style>
-                            </DataGridTextColumn.HeaderStyle>
-                          </DataGridTextColumn>
+                          <DataGridTemplateColumn Header="Severity" Width="104">
+                             <DataGridTemplateColumn.CellTemplate>
+                               <DataTemplate>
+                                 <Border Style="{StaticResource DashboardLiveEventsSeverityPill}">
+                                   <TextBlock Text="{Binding Severity}" FontSize="10" FontWeight="Bold"
+                                              Foreground="{StaticResource TextBrush}" HorizontalAlignment="Center"/>
+                                 </Border>
+                               </DataTemplate>
+                             </DataGridTemplateColumn.CellTemplate>
+                             <DataGridTemplateColumn.HeaderStyle>
+                               <Style TargetType="{x:Type DataGridColumnHeader}"
+                                      BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+                                 <Setter Property="ToolTip"
+                                         Value="Severity reported by the local detection event. It is not an independently verified impact assessment or incident priority."/>
+                                 <Setter Property="AutomationProperties.HelpText"
+                                         Value="Reported detection-event severity classification, not independently verified impact or incident priority."/>
+                               </Style>
+                             </DataGridTemplateColumn.HeaderStyle>
+                           </DataGridTemplateColumn>
                           <DataGridTextColumn Header="Protocol" Binding="{Binding Protocol}" Width="80"
                                               ElementStyle="{StaticResource DashboardLiveMetadataCellText}">
                             <DataGridTextColumn.HeaderStyle>
@@ -1666,13 +1687,7 @@
                       </Border>
                     </Grid>
                     <!-- GA UI-79: keep local event status and provenance together in a subdued, non-interactive footer. -->
-                    <Border Grid.Row="3"
-                            Margin="0,8,0,0"
-                            Padding="10,7"
-                            Background="{StaticResource PillBgBrush}"
-                            BorderBrush="{StaticResource SoftDividerBrush}"
-                            BorderThickness="1"
-                            CornerRadius="6">
+                    <Border Grid.Row="3" Margin="0,10,0,0" Style="{StaticResource DashboardLiveEventsFooter}">
                       <StackPanel>
                         <TextBlock x:Name="DashboardLiveEventsStatusText"
                                    Text="Waiting for local detection events."
@@ -1695,11 +1710,9 @@
                 <!-- GA UI-06: reference-aligned terminal companion, visual only.
                      No CLI command dispatcher, process, output stream or simulated telemetry is connected. -->
                 <Border x:Name="DashboardCliCompanionPanel"
-                        Style="{StaticResource PageSurface}"
-                        Width="408"
-                        HorizontalAlignment="Right"
-                        Padding="12"
-                        Margin="0,0,0,10"
+                         Grid.Row="0" Grid.Column="1"
+                         Style="{StaticResource PageSurface}"
+                         HorizontalAlignment="Stretch" Padding="14" Margin="0"
                         AutomationProperties.Name="Carthago CLI companion, unavailable">
                   <Grid>
                     <Grid.RowDefinitions>
@@ -1760,6 +1773,7 @@
                                Margin="0,8,0,0"/>
                   </Grid>
                 </Border>
+                </Grid>
                 <Expander Header="Layout manager" IsExpanded="False" Visibility="Collapsed" Margin="0,0,0,18">
                   <Border Style="{StaticResource CommandBarSurface}" Padding="14">
                     <StackPanel>
