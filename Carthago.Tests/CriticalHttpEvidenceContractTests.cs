@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 using System;
 using System.Threading.Tasks;
+using System.Text;
+using Carthago.Services;
 using Carthago.Engine.Rules;
 using Carthago.Engine.Rules.Expansion;
 using Carthago.Engine.Rules.Payloads;
@@ -52,9 +54,22 @@ public sealed class CriticalHttpEvidenceContractTests
     [Fact]
     public async Task R365_Observed_Vault_Token_Still_Produces_A_Detection()
     {
-        var record = Http("/v1/auth/token/lookup-self", "vault token exposure hvs.ABCDEFGHIJKLMNOPQRSTUVWXYZ123456");
-        record.HttpHost = "vault.internal";
-        record.HttpRequestHeaders = "X-Vault-Token: hvs.ABCDEFGHIJKLMNOPQRSTUVWXYZ123456";
-        Assert.True((await new R365_HashiCorpVaultTokenInHTTPRule().EvaluateAsync(Context(record))).Matched);
+        const string syntheticToken = "hvs.ABCDEFGHIJKLMNOPQRSTUVWXYZ123456";
+        var wire = "GET /v1/auth/token/lookup-self HTTP/1.1\r\n"
+            + "Host: vault.internal\r\nX-Vault-Token: " + syntheticToken + "\r\n\r\n";
+        Assert.True(HttpLight.TryParseHttp(Encoding.ASCII.GetBytes(wire), out var parsed));
+        Assert.True(parsed.ObservedVaultTokenPattern);
+        var record = Http(parsed.Path!, string.Empty);
+        record.IsTcp = true;
+        record.SourcePort = 50000;
+        record.HttpMethod = parsed.Method;
+        record.HttpHost = parsed.Host;
+        record.HttpRequestHeaders = parsed.JoinedHeaderLines;
+        record.HttpVaultTokenPatternObserved = parsed.ObservedVaultTokenPattern;
+        var result = await new R365_HashiCorpVaultTokenInHTTPRule().EvaluateAsync(Context(record));
+        Assert.True(result.Matched);
+        var evt = Assert.Single(result.Events);
+        Assert.DoesNotContain(syntheticToken, evt.Evidence ?? string.Empty);
+        Assert.DoesNotContain(syntheticToken, evt.Summary ?? string.Empty);
     }
 }
