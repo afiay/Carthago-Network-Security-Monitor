@@ -1171,6 +1171,11 @@
                                      AutomationProperties.HelpText="Suggested local review steps, not automatic remediation. Badge meaning depends on the source; see each row."/>
                         </StackPanel>
                       </DockPanel>
+                      <!-- GA UI-76: visible source-accurate guidance; these are review suggestions, not commands. -->
+                      <TextBlock Text="Review suggestions only &#x2022; no automatic remediation"
+                                 Style="{StaticResource TinyStatusText}"
+                                 TextWrapping="Wrap"
+                                 Margin="0,3,0,0"/>
                       <ScrollViewer VerticalScrollBarVisibility="Auto"
                                     HorizontalScrollBarVisibility="Disabled"
                                     MaxHeight="118"
