@@ -8,7 +8,8 @@ using Xunit;
 
 namespace Carthago.Tests.ProtocolIntelligence
 {
-    // Hand-authored RESP2 framing examples, not captured traffic or executed tests.
+    // Hand-authored RESP2 framing examples; no original capture provenance,
+    // authenticated server outcome or production readiness is claimed.
     public sealed class Resp2CommandInspectorTests
     {
         private static byte[] Command(params string[] fields)
