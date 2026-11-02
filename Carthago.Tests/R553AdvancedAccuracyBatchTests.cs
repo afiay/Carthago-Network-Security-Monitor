@@ -197,7 +197,7 @@ public sealed class R553AdvancedAccuracyBatchTests
     public async Task Separate_Sources_Do_Not_Share_Target_Count()
     {
         var rule = new R553_CrossSubnetSmb2WriteRequestFanoutRule();
-        Assert.False((await rule.EvaluateAsync(At(Sample("10.90.1.10", "10.91.1.20"))).Matched);
+        Assert.False((await rule.EvaluateAsync(At(Sample("10.90.1.10", "10.91.1.20")))).Matched);
         Assert.False((await rule.EvaluateAsync(At(Sample("10.90.1.11", "10.92.2.20"), 1))).Matched);
         Assert.False((await rule.EvaluateAsync(At(Sample("10.90.1.10", "192.168.3.20"), 2))).Matched);
     }
@@ -206,7 +206,7 @@ public sealed class R553AdvancedAccuracyBatchTests
     public async Task Expired_Window_Does_Not_Count_Stale_Subnets()
     {
         var rule = new R553_CrossSubnetSmb2WriteRequestFanoutRule();
-        Assert.False((await rule.EvaluateAsync(At(Sample(destination: "10.91.1.20"))).Matched);
+        Assert.False((await rule.EvaluateAsync(At(Sample(destination: "10.91.1.20")))).Matched);
         Assert.False((await rule.EvaluateAsync(At(Sample(destination: "10.92.2.20"), 1))).Matched);
         Assert.False((await rule.EvaluateAsync(At(Sample(destination: "192.168.3.20"), 302))).Matched);
     }
