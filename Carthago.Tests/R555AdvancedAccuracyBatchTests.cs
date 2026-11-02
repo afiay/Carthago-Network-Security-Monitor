@@ -56,7 +56,7 @@ public sealed class R555AdvancedAccuracyBatchTests
         frame[22] = 0; frame[23] = 21;
         frame[32] = 0x50; frame[33] = 0x18;
         payload.CopyTo(frame, 40);
-        var record = new PacketHandler().ParseFrame(frame, (LinkLayers)12);
+        var record = new PacketHandler().ParseFrame(frame, (PacketDotNet.LinkLayers)12);
         Assert.NotNull(record);
         return record!;
     }
