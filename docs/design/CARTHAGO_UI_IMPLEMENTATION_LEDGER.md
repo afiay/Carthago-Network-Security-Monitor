@@ -3999,3 +3999,40 @@ Private source commit `9606aee37ec16fc69d4dcb9ea5935acd97199d2c` is a direct chi
 10. Inspect final source/docs blobs, direct-parent commits, exact two owned paths, fresh expected-SHA publication lease and **zero** builds/tests/replays/CI/runners/benchmarks/capture.
 
 **Next independent UI GA UI-79:** inspect fresh LIVE HEAD, exact approved image, ledger and original WPF consumers; choose one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–78. Acceptance remains deferred until the owner explicitly says **“now it is test time.”**
+
+## GA UI-79 — Live Events: visually grouped status and provenance footer
+
+**2026-11-02 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE branch `feature/carthago-reliability-hardening` HEAD: `0ec50f7fa45cb1c580239214356d45a3422d8f86`. Previous GA UI-78 source `9606aee37ec16fc69d4dcb9ea5935acd97199d2c`, publication `383d2f04391dbe36d9ba96ce3b2592d360cc85c3`. **Exact GA UI-79 source commit:** `189f02b3aae63bbbd5c3c06c49c86e5b250dd304`; source XAML blob `78b2c1709ca19889682ecbf55cd967d832a1c311`. Authorized paths only: `Carthago/Views/MainWindow.xaml` and this design ledger. **ZERO** dotnet builds, xUnit tests, replays, holdouts, CI, GitHub Actions, runners, benchmarks, production capture, running-WPF screenshots or authored/executed acceptance tests. All scenarios below are **PLANNED ONLY — UNEXECUTED**.
+
+### Reference, divergence and original consumers
+
+**FIRST** retrieved and visually inspected exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c` (1648×928). The concept uses navy/graphite surfaces, cyan/teal accents, restrained severity, left navigation, KPIs, traffic chart, incident queue, investigation and a compact read-only Live Events table. Screenshot IPs, metrics, rule IDs, timestamps, confidence, Mbps traces and terminal text are **DEMO ONLY**, not observed telemetry or capture health. CLI remains explicitly **UNAVAILABLE** and visual-only.
+
+Compared starting live HEAD with GA UI-78 publication: exactly one disjoint independent R555 external FTP upload-command subnet-fanout rule source/tests/docs commit `0ec50f7fa45cb1c580239214356d45a3422d8f86`; no UI-owned paths changed. Reviewed recent branch commits, design ledger through UI-78, `MainWindow.xaml`, `Theme.xaml`, `Sidebar.xaml`, and the existing `MainWindow.Dashboard.cs`, `MainWindow.DashboardEvents.cs`, `MainWindow.DashboardResponsive.cs`, `MainWindow.Responsive.cs`, `MainWindow.Plots.cs`, `MainWindow.Core.cs` and `MainWindow.xaml.cs` consumers. The original `MainWindow.DashboardEvents.cs` updates two named TextBlocks with local shown/retained counts, capture-status caveat, demo provenance and evidence/delivery qualifications; filters remain four local inputs and the grid remains read-only, at most 80 displayed from 500 retained. No new data, binding, shared contract, producer, handler, viewmodel or service is required.
+
+### One cohesive UI-owned visual hierarchy improvement
+
+Within the existing Live Events panel, enclose the **unchanged** `DashboardLiveEventsStatusText` and `DashboardLiveEventsProvenanceText` in one quiet, non-interactive footer `Border` (existing `PillBgBrush`, `SoftDividerBrush`, 1px border, 6px corners, 10×7 padding). Keep both text blocks' names, initial text, existing source-updated values, `AutomationProperties.LiveSetting`, foregrounds, font sizes, wrapping, and the 3px interline gap. The footer visually groups observed-local-count/capture caveats with their provenance without presenting them as verified evidence. This is distinct from UI-13's source status, UI-47's evidence/delivery cell guidance, UI-71's no-rows overlay, UI-75's filter toolbar and UI-78's table row guides. The approved screenshot's dense, quiet table hierarchy remains the design reference, not a telemetry specification.
+
+Only `Carthago/Views/MainWindow.xaml` changes in the source commit; no theme, global control, layout breakpoint, event consumer, filter, row, test, detection or protocol path changes. Preserve Wide ≥1440, Standard 1100–1439, Compact 1024–1099 and graceful below 1024; local PPS ScottPlot 10-sample average and bounded 120-point history, prioritized incidents, investigation, Cisco/WebView2/ScottPlot, read-only Live Events 80/500, unavailable CLI, and privacy/capture/trust boundaries.
+
+### Static end review, publication guard and unverified risks
+
+Private source commit `189f02b3aae63bbbd5c3c06c49c86e5b250dd304` is a direct child of pinned baseline `0ec50f7fa45cb1c580239214356d45a3422d8f86` and changes only `Carthago/Views/MainWindow.xaml`; its private documentation descendant changes only this ledger. Before publication, re-read LIVE remote HEAD, compare any intervening rule/protocol/UI changes, and publish the **complete** two-commit candidate via **one non-forced atomic GitHub `update_ref` with `expected_sha` lease** on the same branch. If HEAD moved, reconcile only disjoint paths against a fresh baseline/lease; STOP on overlap, conflict or missing atomic guarantee. After publication inspect final remote HEAD, direct-parent ancestry, both published blobs, exact owned-path diff and independent R555 preservation. Static review does **not** establish compilation, actual rendering, accessibility or correct runtime behavior.
+
+**Unverified risks:** WPF XAML parsing; actual footer visibility and contrast; 1px border appearance at 125–200% DPI and high contrast; the added 14px vertical padding plus 2px border may increase panel height and push lower content down; wrapping of long status/provenance lines at 1440/1100/1099/1024/1023/640px; keyboard and assistive reading order; empty/no-match overlay interaction, horizontal scrolling and virtualization. No running-WPF screenshot or test was executed.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED OR EXECUTED
+
+1. At ≥1440px inspect quiet separation of event rows, footer status and provenance; confirm the footer does not resemble a verified-capture badge.
+2. At 1100/1099/1024/1023/640px inspect wrapping, footer border containment and vertical dashboard scrolling.
+3. At 125%, 150%, 200% DPI inspect padding, 1px border and text legibility.
+4. In standard/high-contrast themes inspect subdued contrast and clear status/provenance hierarchy.
+5. With zero events and with non-matching filters inspect the existing empty/no-match overlay and readable footer.
+6. With local rows and capture Monitoring/Degraded/Offline inspect unchanged source-driven status text, not inferred capture health.
+7. With demo mode enabled inspect unchanged demo-provenance text and no fake events from this presentation change.
+8. Keyboard/assistive review: no new focus stop, unchanged grid/filters/reading order and two original named TextBlocks.
+9. Inspect unchanged KPIs, PPS average/history, incident queue, investigation, read-only 80/500 events, unavailable CLI, Cisco/WebView2/ScottPlot, privacy/capture/trust and R555 independent files.
+10. Inspect exact source/docs blobs, two direct-parent commits, owned-path-only diff, fresh expected-SHA lease and **zero** builds/tests/replays/CI/runners/benchmarks/capture.
+
+**Next independent UI GA UI-80:** inspect fresh LIVE HEAD, exact approved image, ledger and original WPF consumers; choose one new cohesive UI-owned accessibility/readability/visual-consistency improvement outside UI-01–79. All acceptance remains deferred until owner explicitly says **“now it is test time.”**
