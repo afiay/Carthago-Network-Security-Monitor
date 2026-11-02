@@ -20,7 +20,6 @@
       <Setter Property="FontSize" Value="10.5"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
       <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
-      <Setter Property="CharacterSpacing" Value="1"/>
     </Style>
     <Style x:Key="HostIntegrityMetricCard" TargetType="Border">
       <Setter Property="Background" Value="{StaticResource HostIntegrityMetricGradient}"/>
