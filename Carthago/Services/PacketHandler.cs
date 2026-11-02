@@ -502,7 +502,18 @@ namespace Carthago.Services
                             }
 
                             // -------- HTTP --------
-                            if (normPayload.Length >= 4 && HttpLight.TryParseHttp(normPayload, out var http))
+                            // A complete SYN-anchored RESP2 CONFIG SET response was
+                            // already verified above on TCP/6379. The generic HTTP
+                            // request-line classifier can mistake RESP error/status
+                            // lines for HTTP and overwrite redis.resp2 (including
+                            // injecting contradictory HTTP fields). Preserve the
+                            // stronger wire-derived protocol attribution instead.
+                            // Other traffic, including HTTP on a nonstandard port,
+                            // continues through the existing HTTP parser unchanged.
+                            if (!string.Equals(rec.ApplicationProtocol, "redis.resp2",
+                                    StringComparison.Ordinal)
+                                && normPayload.Length >= 4
+                                && HttpLight.TryParseHttp(normPayload, out var http))
                             {
                                 rec.ApplicationProtocol = "HTTP";
                                 rec.HttpMethod = http.Method ?? rec.HttpMethod;
