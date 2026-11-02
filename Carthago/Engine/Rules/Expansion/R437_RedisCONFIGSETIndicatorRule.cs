@@ -6,6 +6,14 @@ using Carthago.Services.EnvironmentTuning;
 
 namespace Carthago.Engine.Rules.Expansion
 {
+    internal enum RedisConfigSetClientAssessment
+    {
+        MissingEndpoints,
+        PolicyUnconfigured,
+        ApprovedAdminHost,
+        UnapprovedClient
+    }
+
     public sealed class R437_RedisCONFIGSETIndicatorRule : DatabaseServiceExposurePrecisionDetectionRuleBase
     {
         private static readonly RuleDescriptor Rule = new(
@@ -69,32 +77,49 @@ namespace Carthago.Engine.Rules.Expansion
                 // A source allowlist is mandatory even for candidate evaluation.
                 // Neither a spoofable wire reply nor the absence of an allowlist
                 // may be promoted to a security incident.
-                if (!record.IsTcp || record.SourcePort != 6379
-                    || string.IsNullOrWhiteSpace(record.Source)
-                    || string.IsNullOrWhiteSpace(record.Destination))
-                    return NoMatch(RuleNoMatchReasonCategory.MissingTelemetry,
-                        "REDIS_CONFIG_SET_CORRELATED_ENDPOINTS_UNAVAILABLE",
-                        "Source, destination and Redis server direction are required to evaluate a correlated command reply.");
-
-                var approvals = ApprovedAssetRegistry.Current;
-                if (!approvals.HasApprovedAdminHosts)
-                    return NoMatch(RuleNoMatchReasonCategory.MissingTelemetry,
-                        "REDIS_CONFIG_SET_ADMIN_CLIENT_POLICY_UNCONFIGURED",
-                        "Configure Approved.AdminHosts to classify the client of a correlated CONFIG SET reply; no default approval or unapproved status is inferred.");
-
-                if (approvals.IsAdminHost(record.Destination))
-                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
-                        "REDIS_CONFIG_SET_APPROVED_ADMIN_CLIENT",
-                        "The correlated client is on the configured admin-host allowlist; this does not establish a completed configuration change.");
-
-                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
-                    "REDIS_CONFIG_SET_UNAPPROVED_CLIENT_REQUIRES_SERVER_IDENTITY",
-                    "The correlated client is not on the configured admin-host allowlist, but server identity, trusted audit and authorization context remain insufficient for an alert.");
+                switch (AssessCorrelatedClient(record, ApprovedAssetRegistry.Current))
+                {
+                    case RedisConfigSetClientAssessment.MissingEndpoints:
+                        return NoMatch(RuleNoMatchReasonCategory.MissingTelemetry,
+                            "REDIS_CONFIG_SET_CORRELATED_ENDPOINTS_UNAVAILABLE",
+                            "Source, destination and Redis server direction are required to evaluate a correlated command reply.");
+                    case RedisConfigSetClientAssessment.PolicyUnconfigured:
+                        return NoMatch(RuleNoMatchReasonCategory.MissingTelemetry,
+                            "REDIS_CONFIG_SET_ADMIN_CLIENT_POLICY_UNCONFIGURED",
+                            "Configure Approved.AdminHosts to classify the client of a correlated CONFIG SET reply; no default approval or unapproved status is inferred.");
+                    case RedisConfigSetClientAssessment.ApprovedAdminHost:
+                        return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                            "REDIS_CONFIG_SET_APPROVED_ADMIN_CLIENT",
+                            "The correlated client is on the configured admin-host allowlist; this does not establish a completed configuration change.");
+                    default:
+                        return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                            "REDIS_CONFIG_SET_UNAPPROVED_CLIENT_REQUIRES_SERVER_IDENTITY",
+                            "The correlated client is not on the configured admin-host allowlist, but server identity, trusted audit and authorization context remain insufficient for an alert.");
+                }
             }
 
             // Bare command shape, ports, Info, or request/response text remain
             // subject to the original hard missing-producer evidence boundary.
             return EvaluateSpec(context, Spec);
+        }
+
+        // Pure policy assessment allows tests to use isolated registries instead
+        // of racing over the process-wide ApprovedAssetRegistry.Current.
+        // A missing allowlist never means every client is unapproved.
+        internal static RedisConfigSetClientAssessment AssessCorrelatedClient(
+            TrafficRecord record, ApprovedAssetRegistry approvals)
+        {
+            if (record == null || !record.IsTcp || record.SourcePort != 6379
+                || string.IsNullOrWhiteSpace(record.Source)
+                || string.IsNullOrWhiteSpace(record.Destination))
+                return RedisConfigSetClientAssessment.MissingEndpoints;
+
+            if (!approvals.HasApprovedAdminHosts)
+                return RedisConfigSetClientAssessment.PolicyUnconfigured;
+
+            return approvals.IsAdminHost(record.Destination)
+                ? RedisConfigSetClientAssessment.ApprovedAdminHost
+                : RedisConfigSetClientAssessment.UnapprovedClient;
         }
     }
 }
