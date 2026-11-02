@@ -50,7 +50,7 @@ Explicit diagnostic statuses ONLY. R437 alert admission remains CLOSED.
 - Requires an operator-provided source identifier (3–64 ASCII letters/digits/dot/underscore/hyphen) and **exact 64-character lowercase SHA-256 hash of the complete client certificate DER**.
 - Validates peer time validity, explicit X.509 clientAuth EKU (`1.3.6.1.5.5.7.3.2`) and the pinned full-certificate hash using constant-time equality. It deliberately rejects unrelated CA-issued certificates, cert-name matches, expired certificates, unknown peers and server-only EKU. Pinned self-signed certs are supported; revocation checking is disabled because the operator's specific pinned leaf and manual rotation/revocation are the trust policy.
 - Requires the **already-started** listener to bind IPv4/IPv6 loopback, otherwise rejects before accepting any connection. The receiver never opens a listening socket on its own.
-- Uses `SslStream.AuthenticateAsServerAsync`, requires a client certificate, and limits negotiation to TLS 1.2 and TLS 1.3.
+- Uses `SslStream.AuthenticateAsServerAsync`, requires a client certificate, and limits negotiation to TLS 1.2 and TLS 1.3. **After** the handshake it explicitly checks `IsMutuallyAuthenticated` and a non-null remote certificate: requesting a certificate alone must never admit a server-only TLS session (source hardening `05f23ee`).
 - Accepts one connection at a time, performs synchronous-in-order backpressure through awaited callbacks; no unbounded queue or retained command JSON.
 - Reads a **fully bounded length-prefixed** message format: 4-byte network-order signed length (positive 1–16,384) then exactly that many bytes. The relay **must** implement this framing; it is **not** claimed to be Redis Software's native framing.
 - Closes/rejects zero/oversized, truncated, invalid frames or handler exceptions without leaking command contents into diagnostics. Limits authenticated sessions to 512 frames and per-frame or handshake deadline to 15 seconds, with caller cancellation.
@@ -76,7 +76,7 @@ Explicit diagnostic statuses ONLY. R437 alert admission remains CLOSED.
 
 ### Tests authored — not executed
 
-- `Carthago.Tests/RedisAuditMutualTlsRelayReceiverTests.cs`: ephemeral RSA test certificates, pinned client certificate validity/EKU/thumbprint, self-contained loopback TLS sessions, exact length framing and two vendor events, wrong peer refusal before event processing, 0/oversized frame refusal, malformed event session closure, bridge-to-existing-Redis-intake integration and no external binds.
+- `Carthago.Tests/RedisAuditMutualTlsRelayReceiverTests.cs`: ephemeral RSA test certificates, pinned client certificate validity/EKU/thumbprint, self-contained loopback TLS sessions, exact length framing and two vendor events, wrong peer **and missing client certificate** refusal before event processing, 0/oversized frame refusal, malformed event session closure, bridge-to-existing-Redis-intake integration and no external binds. Certificate EKU/expiry negative checks are separately pinned to avoid accidentally testing only hash mismatch.
 - `Carthago.Tests/RedisAuditSinkMetricsHealthTests.cs`: counter baseline/monotonic/drops, sticky disconnect loss/reset, pending backlog, stale/non-UTC samples and bounded source cardinality.
 
 These are **synthetic tests only**. No Redis server, real audit producer, certificate secret, capture service or external monitoring system is used.
