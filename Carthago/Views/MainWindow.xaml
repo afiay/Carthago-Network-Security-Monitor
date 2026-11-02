@@ -2266,6 +2266,7 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                   </Grid.RowDefinitions>
 
                   <!-- Auto-start -->
@@ -2316,6 +2317,7 @@
                              Grid.ColumnSpan="2"
                              Margin="0,4,0,8"
                              Foreground="{StaticResource TextWarningBrush}"
+                             TextWrapping="Wrap"
                              Text="Requires a valid AbuseIPDB API key. For best results, set ABUSEIPDB_API_KEY in a .env file or environment variable."/>
 
                   <!-- BPF filter -->
@@ -2360,12 +2362,23 @@
                   </WrapPanel>
 
                   <!-- Status line -->
+                  <!-- GA UI-84: key configuration status is not credential validation or lookup success. -->
                   <TextBlock x:Name="ApiKeyStatusText"
                              Grid.Row="7"
                              Grid.ColumnSpan="2"
                              Margin="0,8,0,0"
                              Foreground="{StaticResource TextSubtleBrush}"
+                             TextWrapping="Wrap"
+                             AutomationProperties.Name="{Binding Text, RelativeSource={RelativeSource Self}}"
+                             AutomationProperties.HelpText="Configuration status only; not proof of valid credentials or a successful lookup. The existing status producer can describe an environment-provided key as a session override."
                              Text="Key status: unknown"/>
+                  <TextBlock Grid.Row="8"
+                             Grid.ColumnSpan="2"
+                             Margin="0,3,0,0"
+                             Foreground="{StaticResource TextMutedBrush}"
+                             FontSize="11"
+                             TextWrapping="Wrap"
+                             Text="Configuration status only &#x2022; not a credential validation or lookup result."/>
                 </Grid>
               </GroupBox>
 
