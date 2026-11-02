@@ -4606,3 +4606,49 @@ Start review inspected live branch/recent commits, ledger through UI-92, `Anomal
 10. Verify published source/docs blob SHAs, exactly three authorized changed paths, source→docs direct-parent ancestry, one non-forced expected-SHA publication and **zero** builds/tests/replays/holdouts/CI/runners/benchmarks/capture.
 
 **Next UI GA UI-94:** continue reference-led screen-visible redesign with Anomalies evidence/queue density or Settings operational composition after fresh live-head, ledger and consumer audit. Never substitute tooltip micro-edits; keep all changes **SOURCE CANDIDATE — UNVERIFIED** until the owner explicitly says **“now it is test time.”**
+
+
+## GA UI-94 — Settings operations: full-width visual configuration architecture
+
+**2026-11-02 · SOURCE CANDIDATE — UNVERIFIED.** Exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c` (1672×941 dark SOC screenshot) was retrieved and visually inspected **before GitHub inspection**. Starting live branch HEAD: `210c029df97c00ac5d104441ad16e3fc7021ab73`. Prior design publication GA UI-93: `e28fb36b93d4c8bb83a825c613c0539401d48820`. Intervening independent R563 Modbus and R564 Redis commits were already present and are preserved. Private source commit `537f03c7af9d76b80a005ea862b1a934e960b070` is a direct child of `210c029df97c00ac5d104441ad16e3fc7021ab73`, with source tree `b9c784ddce6c62ae4be2fd426e68a52c930478f7`. Source and this ledger entry must publish together through one non-forced atomic expected-SHA lease.
+
+### Approved reference and visible before → after
+
+The reference uses a deep-navy SOC shell, cyan information hierarchy, prominent page identity and layered operational cards. Its IPs, throughput, sensor counts, incident counts, rule IDs, confidence, timestamps and capture-health indicators are **DEMO ONLY** and have not been introduced into application data.
+
+- **Full-width Settings shell:** previously a centered max-800px form with a small plain title; now a full-width graphite/navy operations workspace with a 29px title, cyan **APPLICATION PREFERENCES / LOCAL CONFIGURATION** eyebrow and accurate configuration context. No fake monitoring status is displayed.
+- **Four visual sections:** Detection Sensitivity, Enrichment & Capture, Dashboard & Sections and developer-only Demo Mode retain their existing GroupBoxes/handlers but use dedicated dark gradient cards, 20px headings, cyan section eyebrows, teal divider lines, 14px corner geometry and consistent padding. This is a screen-visible layout redesign, not tooltip-only.
+- **Wide ≥1440:** Detection Sensitivity and Enrichment & Capture appear side by side in a 0.95:1.45 two-column grid, followed by a full-width Dashboard & Sections card and the full-width demo card if enabled. The capture panel has more room for its existing 300px BPF and masked-key controls.
+- **Standard 1100–1439:** cards stack in one column and dashboard section toggles use two columns.
+- **Compact 1024–1099:** stacked cards and two-column dashboard toggles. **Below 1024:** dashboard toggles become one column, and the sensitivity/capture label columns narrow from 160px to 130px for control reachability.
+- **Behavior boundaries:** all existing controls, x:Names, bindings, click/selection handlers, session-only API-key masking, WHOIS/reputation options, BPF semantics, preference Save/Reset scope, immediate dashboard toggle persistence, presets, developer demo visibility and original runtime filter effects remain unchanged in source. No working CLI, new capture, synthetic telemetry, network lookup, or fabricated security-health signal.
+
+### Static start/end divergence and provenance
+
+Start review inspected the live branch, recent commits, ledger through UI-93, `MainWindow.xaml`, `Theme.xaml`, `MainWindow.Settings.cs`, `MainWindow.Responsive.cs`, Settings navigation and the existing Dashboard responsive pattern. End source review found the original `SaveSettings_Click`, `ResetSettings_Click`, `ApplyApiKey_Click`, `DashboardSectionToggle_Changed`, `SensitivityCombo_SelectionChanged` and demo handlers still referenced. The existing responsive dispatcher now invokes a Settings-only layout method; no other responsive consumer, service, engine, rule, protocol, capture/trust/privacy, test, workflow, runner, project or shared API was edited.
+
+**Owned paths / source blobs:**
+1. `Carthago/Views/MainWindow.xaml` — `bbf03c09cdae81a4e5c15ed91f26be8d237715d0` (prior `5dabf655b7b5668d9ac272870a6af0b4a3822400`).
+2. `Carthago/Views/Theme.xaml` — `1dc73eb447f7ea12e75c4ba3ea91c7aa25568e3b` (prior `c5492c0f9aa953f38af83da43b01daa3dfec33e8`).
+3. `Carthago/Views/MainWindow.Settings.cs` — `1d7a390bf49ebcc2bd969df03db9387f721a8b15` (prior `ffc4b7f7fdcfc6ed53fb8fe42b832334eb5c34b8`).
+4. `Carthago/Views/MainWindow.Responsive.cs` — `01605d572744938443ecb455f42dde1a813a6b70` (prior `1a4b6bcfbaf89a1f39d3e665f28e5da65395f31d`).
+5. `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md` — this entry.
+
+**Static visual-impact assessment:** full-width hero, four visibly restyled cards, a new side-by-side Wide configuration composition, responsive stacked layouts and 3/2/1 dashboard-toggle density. **WPF compilation, runtime rendering, keyboard behavior, screen-reader semantics, high-DPI behavior and screenshots remain UNVERIFIED.** No tests/builds/replays/holdouts/CI/Actions/runners/benchmarks/production capture were executed.
+
+**Risks — UNVERIFIED:** at 1440px and high DPI, the narrower sensitivity card's three-column factor explanation may crowd; existing fixed-width 300px BPF/password and 220px sensitivity controls may need scrolling at 640px; custom GroupBox templates may affect focus/automation header semantics or contrast; 3-column dashboard checkboxes may have uneven row heights; the pre-existing API-key status ambiguity between environment and session overrides remains.
+
+### Planned acceptance — ALL UNEXECUTED
+
+1. Visually compare the full-width Settings hero, cyan hierarchy, dark section cards and spacing with the approved 1672px screenshot, ignoring its DEMO values.
+2. At Wide 1440px and 125%, 150%, 200% DPI, inspect side-by-side sensitivity/capture cards, factor comparison, BPF/key controls and gutters.
+3. At Standard 1100–1439, inspect single-column cards and two-column dashboard toggles.
+4. At Compact 1024–1099, inspect stacked configuration, section title wrapping and keyboard reachability.
+5. Below 1024 (1023, 800, 640), inspect single-column toggles, 130px label widths, masked credentials, full scrolling and absence of clipping.
+6. Verify Save/Reset preserve original preference scope, messages, no-confirmation behavior and active Npcap filter reapplication.
+7. Verify dashboard toggles still persist immediately, and presets apply/reset without deleting incidents or retained events.
+8. Verify WHOIS, AbuseIPDB, session-only key override, BPF and auto-start controls retain their original behavior and source-accurate status.
+9. Verify developer demo remains explicitly SIMULATED and source-gated; local PPS ScottPlot, Live Events 80/500, unavailable CLI, Cisco/WebView2 and capture/privacy/trust boundaries remain untouched.
+10. Verify exactly five authorized paths, source→docs direct-parent ancestry, one non-forced expected-SHA publication and **zero** builds/tests/replays/holdouts/CI/runners/benchmarks/capture.
+
+**Next independent GA UI-95:** continue reference-led, screen-visible improvement to evidence density or navigation consistency after a fresh live-head and consumer audit; never revert to tooltip-only batches. No tests until the owner explicitly authorizes **“now it is test time.”**
