@@ -144,6 +144,65 @@ namespace Carthago.Tests.ProtocolIntelligence
                 Command("SCAN", "0"), true, out _));
         }
 
+        [Theory]
+        [InlineData("CONFIG", "SET")]
+        [InlineData("config", "set")]
+        public void Valid_Config_Set_Request_Is_Classified_Without_Keeping_Arguments(
+            string command, string subcommand)
+        {
+            const string sensitiveValue = "test-config-secret-marker";
+            var bytes = Command(command, subcommand, "requirepass", sensitiveValue);
+            Assert.True(Resp2CommandInspector.TryInspect(bytes, true, out var observed));
+            Assert.Equal(Resp2CommandKind.Config, observed.Command);
+            Assert.Equal(3, observed.ArgumentCount);
+            Assert.Equal(bytes.Length, observed.BytesConsumed);
+            Assert.True(observed.IsConfigSetRequest);
+            Assert.DoesNotContain("requirepass", observed.ToString());
+            Assert.DoesNotContain(sensitiveValue, observed.ToString());
+        }
+
+        [Fact]
+        public void Multi_Parameter_Config_Set_Requires_Complete_Validated_Pairs()
+        {
+            var valid = Command("CONFIG", "SET", "timeout", "30", "maxmemory", "4096");
+            Assert.True(Resp2CommandInspector.TryInspect(valid, true, out var accepted));
+            Assert.True(accepted.IsConfigSetRequest);
+
+            var incomplete = Command("CONFIG", "SET", "timeout", "30", "maxmemory");
+            Assert.True(Resp2CommandInspector.TryInspect(incomplete, true, out var observed));
+            Assert.False(observed.IsConfigSetRequest);
+        }
+
+        [Fact]
+        public void Config_Get_Or_Set_Data_Cannot_Be_Misclassified_As_Config_Set_Request()
+        {
+            foreach (var fields in new[]
+            {
+                new[] { "CONFIG", "GET", "dir" },
+                new[] { "CONFIG", "SET", "dir" },
+                new[] { "CONFIG", "SET", "dir", "value", "dangling" },
+                new[] { "SET", "CONFIG", "SET" },
+                new[] { "CONFIG", "SETX", "dir", "value" },
+                new[] { "CONFIG", "GET", "SET", "dir" }
+            })
+            {
+                var bytes = Command(fields);
+                Assert.True(Resp2CommandInspector.TryInspect(bytes, true, out var result));
+                Assert.False(result.IsConfigSetRequest);
+            }
+        }
+
+        [Fact]
+        public void Untrusted_Direction_And_Truncated_Config_Set_Request_Fail_Closed()
+        {
+            var request = Command("CONFIG", "SET", "dir", "/tmp");
+            Assert.False(Resp2CommandInspector.TryInspect(request, false, out _));
+            Assert.False(Resp2CommandInspector.TryInspect(
+                request.AsSpan(0, request.Length - 1), true, out _));
+            var reply = Encoding.ASCII.GetBytes("+OK\\r\\n");
+            Assert.False(Resp2CommandInspector.TryInspect(reply, true, out _));
+        }
+
         [Fact]
         public void ArgumentsAreNeverReflectedInObservation()
         {
