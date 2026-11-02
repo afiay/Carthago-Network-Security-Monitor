@@ -53,8 +53,11 @@ namespace Carthago.Engine.Rules.Expansion
             if (!NetworkBatch186190Evidence.DnsResponse(context.Record, out var query))
                 return NoMatch();
 
+            if (context.Record.DnsTtl is not { } ttl)
+                return NoMatch();
+
             var maxTtl = IntSetting(Descriptor.RuleId, "MaxTtlSeconds", 1, 0, 30);
-            if (context.Record.DnsTtl.Value > maxTtl || IsKnownTelemetryRoot(RootDomain(query)))
+            if (ttl > maxTtl || IsKnownTelemetryRoot(RootDomain(query)))
                 return NoMatch();
 
             var window = TimeSpan.FromSeconds(IntSetting(Descriptor.RuleId, "WindowSeconds", 300, 60, 3600));
