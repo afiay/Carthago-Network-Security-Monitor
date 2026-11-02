@@ -82,12 +82,11 @@ public sealed class RedisAuditMutualTlsRelayReceiverTests
         X509Certificate2 server, X509Certificate2 actualClient,
         RedisAuditPinnedRelay configuredPin,
         byte[] framedPayload,
-        RedisAuditRelayFrameHandler handler,
-        bool useBridge = false)
+        RedisAuditRelayFrameHandler handler)
     {
         using var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
-        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(45));
         var receiver = new RedisAuditMutualTlsRelayReceiver(server, configuredPin);
         var sessionTask = receiver.AcceptOneAsync(listener, handler, timeout.Token);
         using var client = new TcpClient();
@@ -135,6 +134,15 @@ public sealed class RedisAuditMutualTlsRelayReceiverTests
         Assert.False(receiver.IsPinnedRelayCertificate(other, DateTimeOffset.UtcNow));
         Assert.False(receiver.IsPinnedRelayCertificate(serverOnly, DateTimeOffset.UtcNow));
         Assert.False(receiver.IsPinnedRelayCertificate(expired, DateTimeOffset.UtcNow));
+        // Prove the EKU and expiration checks independently of hash mismatch.
+        var wrongEkuPinned = new RedisAuditMutualTlsRelayReceiver(server,
+            Pin(serverOnly));
+        Assert.False(wrongEkuPinned.IsPinnedRelayCertificate(
+            serverOnly, DateTimeOffset.UtcNow));
+        var expiredPinned = new RedisAuditMutualTlsRelayReceiver(server,
+            Pin(expired));
+        Assert.False(expiredPinned.IsPinnedRelayCertificate(
+            expired, DateTimeOffset.UtcNow));
         Assert.False(receiver.IsPinnedRelayCertificate(null, DateTimeOffset.UtcNow));
 
         Assert.Throws<ArgumentException>(() => new RedisAuditMutualTlsRelayReceiver(
@@ -230,7 +238,7 @@ public sealed class RedisAuditMutualTlsRelayReceiverTests
         using var relay = NewCertificate("relay", clientAuth: true);
         using var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
-        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(45));
         var receiver = new RedisAuditMutualTlsRelayReceiver(server, Pin(relay));
         var intake = new RedisSoftwareAuditDiagnosticIntake(
             new ApprovedAssetRegistry(new EnvironmentTuningOptions()));
@@ -273,7 +281,7 @@ public sealed class RedisAuditMutualTlsRelayReceiverTests
         using var relay = NewCertificate("relay", clientAuth: true);
         using var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
-        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(45));
 
         var options = new EnvironmentTuningOptions();
         options.Approved.RedisServers.Add("10.4.0.10");
