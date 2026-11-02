@@ -66,8 +66,8 @@ namespace Carthago.Engine.Rules.Expansion
 
             if (!hasCloudflaredProcess || !hasTunnelEndpoint)
                 return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
-                    "CLOUDFLARED_HANDSHAKE_NOT_CORROBORATED",
-                    "Rule requires both a cloudflared process and a Cloudflare tunnel TLS endpoint.");
+                    "CLOUDFLARED_TUNNEL_SESSION_PROVENANCE_UNAVAILABLE",
+                    "Trusted connector identity and authenticated Cloudflare Tunnel session provenance are unavailable.");
 
             return EvaluateSpec(context, Spec);
         }
