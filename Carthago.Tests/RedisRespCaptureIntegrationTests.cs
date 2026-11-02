@@ -338,6 +338,41 @@ public sealed class RedisRespCaptureIntegrationTests
     }
 
     [Fact]
+    public async Task Rejected_Config_Set_Reply_Is_Not_Security_Detection()
+    {
+        var (_, reply) = Exchange(Request("CONFIG", "SET", "timeout", "30"),
+            Encoding.ASCII.GetBytes("-NOPERM no permission\r\n"));
+        var result = await new R437_RedisCONFIGSETIndicatorRule().EvaluateAsync(
+            new RuleEvaluationContext(reply, Sensitivity.Balanced, DateTime.UtcNow));
+        Assert.False(result.Matched);
+        Assert.Empty(result.Events);
+        Assert.Contains(result.NoMatchReasons,
+            reason => reason.Code == "REDIS_CONFIG_SET_SERVER_REJECTED");
+    }
+
+    [Fact]
+    public void Missing_Correlated_Endpoints_Cannot_Be_Classified_As_Unapproved()
+    {
+        var registry = new Carthago.Services.EnvironmentTuning.ApprovedAssetRegistry(
+            new Carthago.Services.EnvironmentTuning.EnvironmentTuningOptions
+            {
+                Approved = new Carthago.Services.EnvironmentTuning.ApprovedEnvironmentOptions
+                {
+                    AdminHosts = { "10.4.0.9" }
+                }
+            });
+
+        var missingDestination = new TrafficRecord
+        {
+            Protocol = "TCP", IsTcp = true, Source = "10.4.0.10",
+            SourcePort = 6379
+        };
+        Assert.Equal(RedisConfigSetClientAssessment.MissingEndpoints,
+            R437_RedisCONFIGSETIndicatorRule.AssessCorrelatedClient(
+                missingDestination, registry));
+    }
+
+    [Fact]
     public void Reused_Tcp_Tuple_Cannot_Use_Stale_SynAck_As_New_Server_Provenance()
     {
         var handler = new PacketHandler();
