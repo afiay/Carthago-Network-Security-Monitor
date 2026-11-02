@@ -292,6 +292,11 @@ public sealed class R553AdvancedAccuracyBatchTests
         Assert.Equal(88, rule.PrecisionProfile.MinimumConfidence);
         Assert.Equal(RulePrecisionMaturity.Candidate, rule.PrecisionProfile.Maturity);
         Assert.Single(RuleRegistry.CreateDefaultRules().Where(r => r.Descriptor.RuleId == "R553"));
-        Assert.True(RulePrecisionCatalog.Validate("R553", Sample()).CanEvaluate);
+        // The parser-labelled record does not preserve raw payload bytes.
+        // Central precision validation must not treat ApplicationProtocol alone
+        // as proof of the independent Payload telemetry requirement.
+        var validation = RulePrecisionCatalog.Validate("R553", Sample());
+        Assert.False(validation.CanEvaluate);
+        Assert.Contains("Payload", validation.MissingTelemetry);
     }
 }
