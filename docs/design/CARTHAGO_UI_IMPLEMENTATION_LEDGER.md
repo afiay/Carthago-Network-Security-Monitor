@@ -4262,3 +4262,40 @@ Private source commit is direct child of pinned LIVE HEAD; the complete source-p
 10. Inspect final remote HEAD, direct-parent two-commit ancestry, exact two owned paths, fresh expected-SHA lease, no changes to independent automations, and **zero** tests/builds/replays/CI/runners/benchmarks/capture.
 
 **Next independent UI GA UI-86:** inspect fresh LIVE HEAD, exact approved image, ledger and original WPF consumers; choose one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–85. Acceptance remains deferred until owner explicitly says **“now it is test time.”**
+
+## GA UI-86 — Anomaly triage filter scope and accessible names
+
+**2026-11-02 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE remote `feature/carthago-reliability-hardening` HEAD: `0f76cfd5835883dcc08d3f973d1277e46a751c99`; previous GA UI-85 publication `57e7d5aef88bfde97f1d82b63b399b1e7090b082`; private UI source commit `b3b0c0262752dcb33485bc9ba5a49eb91ccbc097` (direct child of starting HEAD); source XAML blob `e3e120fd11f4b4406d01ad585c935c2b201ce27a`. Authorized paths **only** `Carthago/Views/AnomaliesPage.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`. No test, build, replay, holdout, CI, runner, benchmark or production capture was run; all acceptance scenarios below are **PLANNED ONLY — UNEXECUTED**.
+
+### Approved reference, source provenance and starting divergence
+
+**FIRST** retrieved and visually inspected exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c`. Its navy/graphite/cyan/teal SOC palette, left navigation, compact filtering, KPIs, incident triage, investigation and event density guide the existing WPF visual consistency. All screenshot IPs, Mbps curves, rule IDs, timestamps, confidence, sensor counts and health indicators are **DEMO ONLY**, not telemetry. The screenshot's CLI is illustrative; the actual WPF CLI remains explicitly **UNAVAILABLE**, visual-only.
+
+Pinned live remote HEAD, recent commit comparison, ledger through UI-85, `AnomaliesPage.xaml`, `AnomaliesPage.xaml.cs`, `Theme.xaml`, `ResponsiveLayout.cs`, `MainWindow.Navigation.cs`, `MainWindow.Responsive.cs`, `MainWindow.DashboardResponsive.cs` and original event consumers were statically inspected. Since UI-85, 1 independent commit(s) changed 5 non-UI path(s): Carthago.Tests/R561AdvancedAccuracyBatchTests.cs, Carthago/Engine/Rules/Catalog/RuleRegistry.cs, Carthago/Engine/Rules/Expansion/R561_RedisConfigSetRejectedReplyBurstRule.cs, docs/RULE_BATCH_561-561.md, docs/rules/PROTOCOL_INFORMED_THREAT_BACKLOG.md. No UI-owned overlap at preparation. The original `CategoryFilter` and `SeverityFilter` selection handlers update only the anomaly viewmodel and call `ApplyFilter`; `SearchBox_TextChanged` searches local anomaly fields; `OnlyLinkedBox_Changed` requires `HasRelatedIncident`; `ResetFilters_Click` clears these four filter dimensions, not global preferences. `AnomaliesPage.ApplyResponsiveLayout` and `MainWindow` responsive partials govern existing layouts. No handlers or model contracts changed.
+
+### One cohesive UI-owned accessibility improvement
+
+In the existing **Anomaly Triage Queue filter toolbar**, add source-accurate `AutomationProperties.Name`, hover/keyboard-focus `ToolTip`, `ToolTipService.ShowsToolTipOnKeyboardFocus` and tooltip-bound `AutomationProperties.HelpText` to the existing **Category**, **Search**, **Severity**, **Linked only** and **Reset** controls. Guidance distinguishes category/severity restrictions, local queue search without an external lookup, linked-only filtering without creating incident links, and the **queue-only** Reset scope without changing application settings. The five controls retain their original visible text, geometry, styles, focus order, handlers, bindings, filter data and reset behavior. No new controls, focus stops, telemetry, capture, remediation, security control or external service integration. This is separate from UI-65 Settings sensitivity and UI-75/UI-77 Live Events toolbar work.
+
+Source change is exclusively `Carthago/Views/AnomaliesPage.xaml` with five existing-control attribute edits; this ledger is the only documentation change. Preserve Wide ≥1440, Standard 1100–1439, Compact 1024–1099 and graceful below 1024; local PPS ScottPlot ten-sample average and bounded 120-point history; operational KPIs, prioritized incidents/investigation, read-only Live Events 80 displayed/500 retained, visual-only unavailable CLI, Cisco/WebView2/ScottPlot, privacy/capture/trust boundaries and independent detection/protocol streams.
+
+### Static end review, publication and risks
+
+Prepare complete source-plus-ledger private two-commit chain. Recheck LIVE remote HEAD **immediately before** publication, compare concurrent detection/protocol/UI paths, and publish **only** via one non-forced atomic `update_ref` with matching `expected_sha` lease on the **same branch**. If moved, reconcile disjoint paths against the new HEAD and fresh lease; STOP on overlap, conflict or missing guarantee. Verify final remote HEAD, direct-parent ancestry, both blobs and exact two-path diff after publication. No branch, PR, history rewrite, force push or independent automation mutation.
+
+**Risks — UNVERIFIED:** WPF XAML parsing/compilation; whether the existing WPF ComboBox and TextBox templates expose the intended automation Name/HelpText and keyboard-triggered tooltips; screen-reader announcement order; long tooltip readability; keyboard focus outline contrast; compact filter widths and clipping at 1440/1100/1099/1024/1023/640px; 125–200% DPI and high-contrast behavior. Static review is not Windows rendering, accessibility or runtime validation.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED OR EXECUTED
+
+1. Inspect all five original anomaly queue filter controls at Wide ≥1440px: captions, selected values, order and no added visible widgets.
+2. Inspect Standard 1100–1439px, Compact 1024–1099px and below 1024 (1023/800/640px) for toolbar containment, labels and unchanged horizontal/vertical scroll behavior.
+3. At 125%, 150% and 200% DPI, inspect control visibility, tooltip readability, keyboard focus and available scroll.
+4. In standard and high-contrast themes, inspect tooltip text, focus visibility and screen-reader labels/help text for all five controls.
+5. Change category and severity individually; confirm original local filter semantics and all-categories/all-severities defaults.
+6. Enter search text; confirm filtering of local anomaly titles, addresses, reasons, evidence, incident context and rule IDs, with no network lookup.
+7. Toggle Linked only; confirm only records with an existing related incident remain, without creating or changing incident links.
+8. Select Reset; confirm it clears only anomaly category, severity, search and linked-only filters and does not reset global preferences or detection settings.
+9. Inspect unchanged KPI provenance, local PPS 10-sample/120-point behavior, incident triage, Live Events 80/500, unavailable CLI, Cisco/WebView2/ScottPlot, privacy/capture/trust and independent rule/protocol files.
+10. Verify final two-commit ancestry, exact two owned paths, source/docs blob hashes, expected-SHA publication lease, and **zero** tests/builds/replays/holdouts/CI/runners/benchmarks/capture.
+
+**Next independent UI GA UI-87:** inspect fresh LIVE HEAD, exact approved image, ledger and original WPF consumers; choose one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–86. Acceptance remains deferred until owner explicitly says **“now it is test time.”**
