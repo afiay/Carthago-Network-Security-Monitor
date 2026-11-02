@@ -2,6 +2,7 @@
 // File: Engine/Rules/Expansion/R437_RedisCONFIGSETIndicatorRule.cs
 using System;
 using Carthago.Models;
+using Carthago.Services.EnvironmentTuning;
 
 namespace Carthago.Engine.Rules.Expansion
 {
@@ -54,6 +55,46 @@ namespace Carthago.Engine.Rules.Expansion
         public R437_RedisCONFIGSETIndicatorRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
-            => EvaluateSpec(context, Spec);
+        {
+            var record = context.Record;
+
+            if (record.RedisRespConfigSetReplyErrorObserved)
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                    "REDIS_CONFIG_SET_SERVER_REJECTED",
+                    "A correlated RESP2 error reply was observed; no CONFIG SET acceptance or configuration change can be claimed.");
+
+            if (record.RedisRespConfigSetReplyOkObserved)
+            {
+                // The correlated +OK is an unauthenticated wire reply.
+                // A source allowlist is mandatory even for candidate evaluation.
+                // Neither a spoofable wire reply nor the absence of an allowlist
+                // may be promoted to a security incident.
+                if (!record.IsTcp || record.SourcePort != 6379
+                    || string.IsNullOrWhiteSpace(record.Source)
+                    || string.IsNullOrWhiteSpace(record.Destination))
+                    return NoMatch(RuleNoMatchReasonCategory.MissingTelemetry,
+                        "REDIS_CONFIG_SET_CORRELATED_ENDPOINTS_UNAVAILABLE",
+                        "Source, destination and Redis server direction are required to evaluate a correlated command reply.");
+
+                var approvals = ApprovedAssetRegistry.Current;
+                if (!approvals.HasApprovedAdminHosts)
+                    return NoMatch(RuleNoMatchReasonCategory.MissingTelemetry,
+                        "REDIS_CONFIG_SET_ADMIN_CLIENT_POLICY_UNCONFIGURED",
+                        "Configure Approved.AdminHosts to classify the client of a correlated CONFIG SET reply; no default approval or unapproved status is inferred.");
+
+                if (approvals.IsAdminHost(record.Destination))
+                    return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                        "REDIS_CONFIG_SET_APPROVED_ADMIN_CLIENT",
+                        "The correlated client is on the configured admin-host allowlist; this does not establish a completed configuration change.");
+
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                    "REDIS_CONFIG_SET_UNAPPROVED_CLIENT_REQUIRES_SERVER_IDENTITY",
+                    "The correlated client is not on the configured admin-host allowlist, but server identity, trusted audit and authorization context remain insufficient for an alert.");
+            }
+
+            // Bare command shape, ports, Info, or request/response text remain
+            // subject to the original hard missing-producer evidence boundary.
+            return EvaluateSpec(context, Spec);
+        }
     }
 }
