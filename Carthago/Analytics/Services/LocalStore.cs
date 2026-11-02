@@ -17,6 +17,10 @@ namespace Carthago.Analytics.Services
         private const int DefaultBaselineRetentionDays = 30;
 
         private readonly LiteDatabase _db;
+        // Serialize reads/writes with disposal so a successful write cannot race
+        // a closing LiteDB handle. Each store instance owns its own gate.
+        private readonly object _dbGate = new();
+        private bool _disposed;
         private readonly ILiteCollection<BaselineSnapshot> _baselines;
         private readonly ILiteCollection<Incident> _incidents;
         private readonly ILiteCollection<AnomalySignal> _anomalies;
@@ -50,196 +54,241 @@ namespace Carthago.Analytics.Services
 
         public IReadOnlyList<Incident> LoadIncidents(int limit = 200)
         {
-            try
+            lock (_dbGate)
             {
-                return _incidents.Query()
-                    .OrderByDescending(x => x.UpdatedUtc)
-                    .Limit(Math.Max(1, limit))
-                    .ToList()
-                    .Select(NormalizeIncident)
-                    .ToList();
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"[LocalStore] Failed to load incidents: {ex.Message}");
-                return Array.Empty<Incident>();
+                if (_disposed) return Array.Empty<Incident>();
+                try
+                {
+                    return _incidents.Query()
+                        .OrderByDescending(x => x.UpdatedUtc)
+                        .Limit(Math.Max(1, limit))
+                        .ToList()
+                        .Select(NormalizeIncident)
+                        .ToList();
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"[LocalStore] Failed to load incidents: {ex.Message}");
+                    return Array.Empty<Incident>();
+                }
             }
         }
 
         public IReadOnlyList<AnomalySignal> LoadAnomalies(int limit = 500)
         {
-            try
+            lock (_dbGate)
             {
-                return _anomalies.Query()
-                    .OrderByDescending(x => x.UpdatedUtc)
-                    .Limit(Math.Max(1, limit))
-                    .ToList()
-                    .Select(NormalizeAnomaly)
-                    .ToList();
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"[LocalStore] Failed to load anomalies: {ex.Message}");
-                return Array.Empty<AnomalySignal>();
+                if (_disposed) return Array.Empty<AnomalySignal>();
+                try
+                {
+                    return _anomalies.Query()
+                        .OrderByDescending(x => x.UpdatedUtc)
+                        .Limit(Math.Max(1, limit))
+                        .ToList()
+                        .Select(NormalizeAnomaly)
+                        .ToList();
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"[LocalStore] Failed to load anomalies: {ex.Message}");
+                    return Array.Empty<AnomalySignal>();
+                }
             }
         }
 
         public IReadOnlyList<BaselineSnapshot> LoadBaselineSnapshots()
         {
-            try
+            lock (_dbGate)
             {
-                return _baselines.Query()
-                    .OrderByDescending(x => x.LastUpdatedUtc)
-                    .ToList()
-                    .Select(NormalizeBaselineSnapshot)
-                    .ToList();
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"[LocalStore] Failed to load baselines: {ex.Message}");
-                return Array.Empty<BaselineSnapshot>();
+                if (_disposed) return Array.Empty<BaselineSnapshot>();
+                try
+                {
+                    return _baselines.Query()
+                        .OrderByDescending(x => x.LastUpdatedUtc)
+                        .ToList()
+                        .Select(NormalizeBaselineSnapshot)
+                        .ToList();
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"[LocalStore] Failed to load baselines: {ex.Message}");
+                    return Array.Empty<BaselineSnapshot>();
+                }
             }
         }
 
         public bool SaveIncident(Incident incident)
         {
-            if (incident == null) return false;
+            lock (_dbGate)
+            {
+                if (_disposed) return false;
+                if (incident == null) return false;
 
-            try
-            {
-                _incidents.Upsert(NormalizeIncident(incident));
-                PruneIncidentsIfNeeded();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"[LocalStore] Failed to save incident {incident.Id}: {ex.Message}");
-                return false;
+                try
+                {
+                    _incidents.Upsert(NormalizeIncident(incident));
+                    PruneIncidentsIfNeeded();
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"[LocalStore] Failed to save incident {incident.Id}: {ex.Message}");
+                    return false;
+                }
             }
         }
 
         public void SaveAnomaly(AnomalySignal anomaly)
         {
-            if (anomaly == null) return;
+            lock (_dbGate)
+            {
+                if (_disposed) return;
+                if (anomaly == null) return;
 
-            try
-            {
-                _anomalies.Upsert(NormalizeAnomaly(anomaly));
-                PruneAnomaliesIfNeeded();
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"[LocalStore] Failed to save anomaly {anomaly.Id}: {ex.Message}");
+                try
+                {
+                    _anomalies.Upsert(NormalizeAnomaly(anomaly));
+                    PruneAnomaliesIfNeeded();
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"[LocalStore] Failed to save anomaly {anomaly.Id}: {ex.Message}");
+                }
             }
         }
 
         public bool SaveBaselineSnapshots(IEnumerable<BaselineSnapshot> snapshots)
         {
-            if (snapshots == null) return false;
-
-            try
+            lock (_dbGate)
             {
-                // Legacy records have generated ObjectId _id values. Preserve those
-                // IDs when updating by HostId rather than inserting a conflicting row.
-                var documents = _db.GetCollection("baseline_snapshots");
-                foreach (var snapshot in snapshots)
+                if (_disposed) return false;
+                if (snapshots == null) return false;
+
+                try
                 {
-                    if (snapshot == null || string.IsNullOrWhiteSpace(snapshot.HostId))
-                        continue;
+                    // Legacy records have generated ObjectId _id values. Preserve those
+                    // IDs when updating by HostId rather than inserting a conflicting row.
+                    var documents = _db.GetCollection("baseline_snapshots");
+                    foreach (var snapshot in snapshots)
+                    {
+                        if (snapshot == null || string.IsNullOrWhiteSpace(snapshot.HostId))
+                            continue;
 
-                    var normalized = NormalizeBaselineSnapshot(snapshot);
-                    var previous = documents.FindOne(Query.EQ("HostId", normalized.HostId));
-                    var document = BsonMapper.Global.ToDocument(normalized);
-                    document["_id"] = previous != null ? previous["_id"] : new BsonValue(normalized.HostId);
-                    documents.Upsert(document);
+                        var normalized = NormalizeBaselineSnapshot(snapshot);
+                        var previous = documents.FindOne(Query.EQ("HostId", normalized.HostId));
+                        var document = BsonMapper.Global.ToDocument(normalized);
+                        document["_id"] = previous != null ? previous["_id"] : new BsonValue(normalized.HostId);
+                        documents.Upsert(document);
+                    }
+
+                    PruneBaselinesIfNeeded();
+                    return true;
                 }
-
-                PruneBaselinesIfNeeded();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"[LocalStore] Failed to save baseline snapshots: {ex.Message}");
-                return false;
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"[LocalStore] Failed to save baseline snapshots: {ex.Message}");
+                    return false;
+                }
             }
         }
 
         public void UpdateIncidentSummary(string id, string summary)
         {
-            try
+            lock (_dbGate)
             {
-                var incident = _incidents.FindById(id);
-                if (incident == null) return;
+                if (_disposed) return;
+                try
+                {
+                    var incident = _incidents.FindById(id);
+                    if (incident == null) return;
 
-                incident.Summary = summary;
-                incident.UpdatedUtc = DateTime.UtcNow;
-                incident.IsAnalyzing = false;
-                _incidents.Update(incident);
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"[LocalStore] Failed to update summary for {id}: {ex.Message}");
+                    incident.Summary = summary;
+                    incident.UpdatedUtc = DateTime.UtcNow;
+                    incident.IsAnalyzing = false;
+                    _incidents.Update(incident);
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"[LocalStore] Failed to update summary for {id}: {ex.Message}");
+                }
             }
         }
 
         public void UpdateIncidentStatus(string id, string status)
         {
-            try
+            lock (_dbGate)
             {
-                var incident = _incidents.FindById(id);
-                if (incident == null) return;
+                if (_disposed) return;
+                try
+                {
+                    var incident = _incidents.FindById(id);
+                    if (incident == null) return;
 
-                incident.Status = status;
-                incident.UpdatedUtc = DateTime.UtcNow;
-                _incidents.Update(incident);
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"[LocalStore] Failed to update status for {id}: {ex.Message}");
+                    incident.Status = status;
+                    incident.UpdatedUtc = DateTime.UtcNow;
+                    _incidents.Update(incident);
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"[LocalStore] Failed to update status for {id}: {ex.Message}");
+                }
             }
         }
 
         public void DeleteIncidents(Func<Incident, bool> predicate)
         {
-            if (predicate == null)
-                return;
+            lock (_dbGate)
+            {
+                if (_disposed) return;
+                if (predicate == null)
+                    return;
 
-            try
-            {
-                foreach (var incident in _incidents.Query().ToList().Where(predicate).ToList())
-                    _incidents.Delete(incident.Id);
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"[LocalStore] Failed to delete incidents: {ex.Message}");
+                try
+                {
+                    foreach (var incident in _incidents.Query().ToList().Where(predicate).ToList())
+                        _incidents.Delete(incident.Id);
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"[LocalStore] Failed to delete incidents: {ex.Message}");
+                }
             }
         }
 
         public void DeleteAnomalies(Func<AnomalySignal, bool> predicate)
         {
-            if (predicate == null)
-                return;
+            lock (_dbGate)
+            {
+                if (_disposed) return;
+                if (predicate == null)
+                    return;
 
-            try
-            {
-                foreach (var anomaly in _anomalies.Query().ToList().Where(predicate).ToList())
-                    _anomalies.Delete(anomaly.Id);
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"[LocalStore] Failed to delete anomalies: {ex.Message}");
+                try
+                {
+                    foreach (var anomaly in _anomalies.Query().ToList().Where(predicate).ToList())
+                        _anomalies.Delete(anomaly.Id);
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"[LocalStore] Failed to delete anomalies: {ex.Message}");
+                }
             }
         }
 
         public void Dispose()
         {
-            try
+            lock (_dbGate)
             {
-                _db.Dispose();
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"[LocalStore] Dispose failed: {ex.Message}");
+                if (_disposed) return;
+                _disposed = true;
+                try
+                {
+                    _db.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"[LocalStore] Dispose failed: {ex.Message}");
+                }
             }
         }
 
