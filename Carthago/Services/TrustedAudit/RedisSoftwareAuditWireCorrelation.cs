@@ -59,7 +59,8 @@ namespace Carthago.Services.TrustedAudit
             if (audit.CommandClass != RedisSoftwareCommandClass.GenericConfig)
                 return Fail(RedisSoftwareWireCorrelationStatus.GenericCommandNotConfig,
                     "R437_VENDOR_AUDIT_NOT_CONFIG");
-            if (continuity?.Status != RedisAuditDeliveryStatus.Contiguous
+            if (continuity == null
+                || continuity.Status != RedisAuditDeliveryStatus.Contiguous
                 || continuity.CurrentSequence != audit.AuditSequence)
                 return Fail(RedisSoftwareWireCorrelationStatus.AuditStreamNotContinuous,
                     "R437_VENDOR_AUDIT_DELIVERY_NOT_CONTIGUOUS");
@@ -94,9 +95,9 @@ namespace Carthago.Services.TrustedAudit
                 return Fail(RedisSoftwareWireCorrelationStatus.TimestampMismatch,
                     "R437_VENDOR_AUDIT_WIRE_TIME_MISMATCH");
 
-            if (audit.CommandOutcome == RedisSoftwareCommandOutcome.Succeeded
+            if ((audit.CommandOutcome == RedisSoftwareCommandOutcome.Succeeded)
                     != capturedServerReply.RedisRespConfigSetReplyOkObserved
-                || audit.CommandOutcome == RedisSoftwareCommandOutcome.Failed
+                || (audit.CommandOutcome == RedisSoftwareCommandOutcome.Failed)
                     != capturedServerReply.RedisRespConfigSetReplyErrorObserved)
                 return Fail(RedisSoftwareWireCorrelationStatus.ReplyStatusMismatch,
                     "R437_VENDOR_AUDIT_WIRE_OUTCOME_MISMATCH");
