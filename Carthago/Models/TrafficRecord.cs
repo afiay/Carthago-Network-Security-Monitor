@@ -126,6 +126,12 @@ namespace Carthago.Models
         public bool MqttWillTopicObserved { get; set; }
         public bool MqttWillControlTopicObserved { get; set; }
 
+        // ===== Redis RESP2 (wire-derived, request only) =====
+        // Set only by the bounded packet parser. JSON/imported records cannot
+        // claim this signal; do not retain configuration names or values.
+        // This proves a request shape, not Redis authorization or server outcome.
+        public bool RedisRespConfigSetRequestObserved { get; internal set; }
+
         // ===== HTTP =====
         public string? HttpMethod { get; set; }
         public string? HttpHost { get; set; }
