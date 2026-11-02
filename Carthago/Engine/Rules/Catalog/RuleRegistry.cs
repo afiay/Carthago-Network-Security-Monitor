@@ -581,6 +581,7 @@ namespace Carthago.Engine.Rules.Catalog
                 new R556_ExternalSmb2WriteTargetSubnetFanoutRule(),
                 new R557_OutboundModbusWritePublicSubnetFanoutRule(),
                 new R558_InternalNtpMonlistCrossSubnetSweepRule(),
+                new R559_InternalCrossSubnetBacnetDiscoveryThenModbusWriteRule(),
             };
         }
 
