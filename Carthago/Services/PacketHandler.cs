@@ -38,6 +38,8 @@ namespace Carthago.Services
             public DirectionState C2S { get; } = new();
             public DirectionState S2C { get; } = new();
             public DateTime LastSeenUtc { get; set; }
+            // Exactly one pending Redis CONFIG SET per bounded TCP flow.
+            public bool RedisConfigSetPending;
         }
 
         private sealed class DirectionState
@@ -49,9 +51,6 @@ namespace Carthago.Services
             public int Collected;
             public bool Invalid;
             public bool TlsActive;
-            // One outstanding CONFIG SET only; no pipeline or command bytes.
-            // The existing bounded TCP flow store owns this lifetime.
-            public bool RedisConfigSetPending;
         }
 
         public TrafficRecord? ParsePacket(PacketCapture e)
@@ -380,6 +379,15 @@ namespace Carthago.Services
                         LatencyTracker.NoteSynAck(tcpFlow, DateTime.UtcNow);
                         InitSeq(tcpFlow, clientToServer: false, seqPlus1: unchecked(seq + 1));
                     }
+
+                    // FIN or RST terminates any pending request, including on
+                    // empty-payload segments that skip L7 inspection.
+                    if (tcpFlagsField.HasValue && (tcpFlagsField.Value & 0x05) != 0)
+                    {
+                        lock (_tcpSync)
+                            if (_tcp.TryGetValue(tcpFlow, out var flow))
+                                flow.RedisConfigSetPending = false;
+                    }
                 }
 
                 // ====== L7 — span-routed, avoid double parse ======
@@ -404,7 +412,8 @@ namespace Carthago.Services
                             // payload must likewise follow an observed SYN-ACK.
                             // Extra client data, pipelining, gaps or ambiguous replies
                             // invalidate pending state; no command bytes are retained.
-                            if (c2s && dport == 6379 && sport is > 0 and <= 65535
+                            if (c2s && tcpAck && !tcpSyn
+                                && dport == 6379 && sport is > 0 and <= 65535
                                 && sport != 6379)
                             {
                                 bool admitted = false;
@@ -413,9 +422,9 @@ namespace Carthago.Services
                                         verifiedPlaintextClientCommandBoundary: true, out var resp))
                                 {
                                     rec.ApplicationProtocol = "redis.resp2";
-                                    rec.RedisRespConfigSetRequestObserved = resp.IsConfigSetRequest;
                                     admitted = resp.IsConfigSetRequest
                                         && resp.BytesConsumed == normPayload.Length;
+                                    rec.RedisRespConfigSetRequestObserved = admitted;
                                 }
 
                                 // A second client payload before a reply clears
@@ -424,7 +433,8 @@ namespace Carthago.Services
                                     if (_tcp.TryGetValue(tcpFlow, out var flow))
                                         flow.RedisConfigSetPending = admitted;
                             }
-                            else if (!c2s && sport == 6379 && dport is > 0 and <= 65535
+                            else if (!c2s && tcpAck && !tcpSyn
+                                && sport == 6379 && dport is > 0 and <= 65535
                                 && dport != 6379)
                             {
                                 bool pending = false;
