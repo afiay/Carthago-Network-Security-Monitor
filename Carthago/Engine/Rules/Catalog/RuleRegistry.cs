@@ -589,6 +589,7 @@ namespace Carthago.Engine.Rules.Catalog
                 new R564_ExternalRedisConfigSetOkSubnetFanoutRule(),
                 new R565_DefaultBasicAdminThenFtpCallbackRule(),
                 new R566_DefaultBasicAdminThenRedisConfigOkRule(),
+                new R567_DefaultBasicAdminThenRedisConfigDeniedRule(),
             };
         }
 
