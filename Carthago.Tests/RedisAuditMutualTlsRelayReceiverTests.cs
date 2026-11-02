@@ -153,6 +153,25 @@ public sealed class RedisAuditMutualTlsRelayReceiverTests
     }
 
     [Fact]
+    public void Server_Certificate_Requires_Private_Key_Validity_And_ServerAuth_Eku()
+    {
+        using var validServer = NewCertificate("server", serverAuth: true);
+        using var relay = NewCertificate("relay", clientAuth: true);
+        using var wrongEku = NewCertificate("client-only", clientAuth: true);
+        using var expiredServer = NewCertificate("expired-server",
+            serverAuth: true, expired: true);
+        using var publicOnly = new X509Certificate2(
+            validServer.Export(X509ContentType.Cert));
+
+        Assert.Throws<ArgumentException>(() =>
+            new RedisAuditMutualTlsRelayReceiver(wrongEku, Pin(relay)));
+        Assert.Throws<ArgumentException>(() =>
+            new RedisAuditMutualTlsRelayReceiver(expiredServer, Pin(relay)));
+        Assert.Throws<ArgumentException>(() =>
+            new RedisAuditMutualTlsRelayReceiver(publicOnly, Pin(relay)));
+    }
+
+    [Fact]
     public async Task Pinned_Mtls_Receives_Two_Length_Framed_Events_Without_Retaining_Json()
     {
         using var server = NewCertificate("server", serverAuth: true);
