@@ -22,7 +22,7 @@ namespace Carthago.Engine.Rules.Expansion
                 "R436" => ("MONGODB_WIRE_EXPOSURE_PROVENANCE_UNAVAILABLE",
                     "No parsed MongoDB wire request/response or verified externally accessible service is connected."),
                 "R437" => ("REDIS_RESP_CONFIG_SET_UNAVAILABLE",
-                    "Redis CONFIG SET requires attributed RESP command arguments and context, not a port or string in Info."),
+                    "A bounded Redis RESP2 CONFIG SET request shape may be observed on the capture path, but no independently attributed server response, authorization context, or completed configuration change reaches R437. Port, Info, or request flags alone cannot prove abuse."),
                 "R438" => ("REDIS_RESP_REPLICATION_UNAVAILABLE",
                     "No attributed Redis REPLICAOF/SLAVEOF command, replication-state change, or response provenance is connected."),
                 "R439" => ("MEMCACHED_STATS_COMMAND_SEQUENCE_UNAVAILABLE",
