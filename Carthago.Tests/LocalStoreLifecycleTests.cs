@@ -44,6 +44,7 @@ public sealed class LocalStoreLifecycleTests
     {
         var path = UniquePath();
         var store = new LocalStore(path);
+        Assert.True(store.SaveIncident(new Incident { Id = "seed", Title = "Acknowledged before racing" }));
         using var release = new ManualResetEventSlim(false);
         var writers = Enumerable.Range(0, 32).Select(i => Task.Run(() =>
         {
@@ -64,6 +65,7 @@ public sealed class LocalStoreLifecycleTests
         var accepted = writers.Where(task => task.Result.Saved)
             .Select(task => task.Result.Id)
             .ToHashSet(StringComparer.Ordinal);
+        accepted.Add("seed");
         Assert.False(store.SaveIncident(new Incident { Id = "late", Title = "Must fail" }));
 
         using var reopened = new LocalStore(path);
@@ -79,6 +81,10 @@ public sealed class LocalStoreLifecycleTests
     {
         var path = UniquePath();
         var store = new LocalStore(path);
+        Assert.True(store.SaveBaselineSnapshots(new[]
+        {
+            new BaselineSnapshot { HostId = "seed", ObservationWindows = 1 }
+        }));
         using var release = new ManualResetEventSlim(false);
         var writers = Enumerable.Range(0, 16).Select(i => Task.Run(() =>
         {
@@ -103,6 +109,7 @@ public sealed class LocalStoreLifecycleTests
         var accepted = writers.Where(task => task.Result.Saved)
             .Select(task => task.Result.Host)
             .ToHashSet(StringComparer.Ordinal);
+        accepted.Add("seed");
 
         using var reopened = new LocalStore(path);
         var persisted = reopened.LoadBaselineSnapshots()
