@@ -45,7 +45,7 @@ public sealed class R572AdvancedAccuracyBatchTests
         Assert.NotNull(h.ParseFrame(Frame(client, "10.4.1.10", 42001, 6379, 1, 0x18, config ? Request("CONFIG", "SET", "timeout", "30") : Request("PING")), link));
         return Assert.IsType<TrafficRecord>(h.ParseFrame(Frame("10.4.1.10", client, 6379, 42001, 101, 0x18, response ?? Encoding.ASCII.GetBytes("-ERR no permission\r\n")), link));
     }
-    private static TrafficRecord Ftp(string command = "STOR synthetic.bin\\r\\n", string client = "8.8.8.8")
+    private static TrafficRecord Ftp(string command = "STOR synthetic.bin\r\n", string client = "8.8.8.8")
         => Assert.IsType<TrafficRecord>(new PacketHandler().ParseFrame(Frame("10.4.1.10", client, 51002, 21, 1, 0x18, Encoding.ASCII.GetBytes(command)), (PacketDotNet.LinkLayers)12));
     private static RuleEvaluationContext At(TrafficRecord r, int seconds = 0) => new(r, Sensitivity.Balanced, Start.AddSeconds(seconds));
 
@@ -54,7 +54,7 @@ public sealed class R572AdvancedAccuracyBatchTests
     [Fact] public async Task EqualTimestampRejected() { var r = new R572_RedisErrorThenFtpUploadRule(); Assert.False((await r.EvaluateAsync(At(Redis()))).Matched); Assert.False((await r.EvaluateAsync(At(Ftp()))).Matched); }
     [Fact] public async Task ExpiredWindowRejected() { var r = new R572_RedisErrorThenFtpUploadRule(); Assert.False((await r.EvaluateAsync(At(Redis()))).Matched); Assert.False((await r.EvaluateAsync(At(Ftp(), 121))).Matched); }
     [Fact] public async Task DuplicateIdsRejected() { var r = new R572_RedisErrorThenFtpUploadRule(); var a = Redis(); var b = Ftp(); b.Id = a.Id; Assert.False((await r.EvaluateAsync(At(a))).Matched); Assert.False((await r.EvaluateAsync(At(b, 1))).Matched); }
-    [Fact] public async Task FtpReadRejected() { var r = new R572_RedisErrorThenFtpUploadRule(); Assert.False((await r.EvaluateAsync(At(Ftp(command: "RETR synthetic.bin\\r\\n")))).Matched); Assert.False((await r.EvaluateAsync(At(Ftp(), 1))).Matched); }
+    [Fact] public async Task FtpReadRejected() { var r = new R572_RedisErrorThenFtpUploadRule(); Assert.False((await r.EvaluateAsync(At(Ftp(command: "RETR synthetic.bin\r\n")))).Matched); Assert.False((await r.EvaluateAsync(At(Ftp(), 1))).Matched); }
     [Fact] public async Task OppositeRedisStatusRejected() { var r = new R572_RedisErrorThenFtpUploadRule(); Assert.False((await r.EvaluateAsync(At(Redis(response: Encoding.ASCII.GetBytes("+OK\\r\\n")))).Matched); Assert.False((await r.EvaluateAsync(At(Ftp(), 1))).Matched); }
     [Fact] public void CandidateShadowRegisteredOnce() { var r = Assert.IsType<R572_RedisErrorThenFtpUploadRule>(Assert.Single(RuleRegistry.CreateDefaultRules().Where(x => x.Descriptor.RuleId == "R572"))); Assert.Equal(RulePrecisionMaturity.Candidate, r.PrecisionProfile.Maturity); Assert.Equal(RuleRuntimeMode.Shadow, r.PrecisionProfile.DefaultMode); }
 }

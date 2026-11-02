@@ -598,6 +598,7 @@ namespace Carthago.Engine.Rules.Catalog
                 new R573_RedisOkThenFtpUploadRule(),
                 new R574_RedisErrorAfterFtpUploadRule(),
                 new R575_RedisOkAfterFtpUploadRule(),
+                new R576_RedisConfigAttemptThenFtpUploadRule(),
             };
         }
 
