@@ -286,7 +286,7 @@ public sealed class R551AdvancedAccuracyBatchTests
     {
         var rule = new R551_ExternalBacnetDiscoveryThenModbusWriteRule();
         Assert.True((await TwoPairs(rule)).Matched);
-        Assert.True((await rule.EvaluateAsync(At(Discovery(target: "10.45.3.20"), 10))).Suppressed);
+        Assert.False((await rule.EvaluateAsync(At(Discovery(target: "10.45.3.20"), 10))).Matched);
         Assert.True((await rule.EvaluateAsync(At(Write(target: "10.45.3.20"), 11))).Suppressed);
         Assert.False((await rule.EvaluateAsync(At(Discovery(target: "10.45.4.20"), 12))).Matched);
         var result = await rule.EvaluateAsync(At(Write(target: "10.45.4.20"), 13));
