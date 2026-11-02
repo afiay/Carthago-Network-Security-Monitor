@@ -139,13 +139,21 @@
                         Height="36"
                         Margin="0,0,8,0"
                         ItemsSource="{Binding CategoryOptions}"
-                        SelectedItem="{Binding FilterCategory}"/>
+                        SelectedItem="{Binding FilterCategory}"
+                        AutomationProperties.Name="Anomaly category filter"
+                        ToolTip="Filter this local anomaly queue by category. All categories removes the category restriction."
+                        ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                        AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
 
               <Grid Grid.Column="1" Margin="0,0,8,0">
                 <TextBox x:Name="SearchBox"
                          Height="36"
                          Style="{StaticResource SearchBox}"
-                         TextChanged="SearchBox_TextChanged"/>
+                         TextChanged="SearchBox_TextChanged"
+                         AutomationProperties.Name="Search anomaly queue"
+                         ToolTip="Search local anomaly titles, addresses, reasons, evidence, incident context and related rule IDs. No external lookup."
+                         ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                         AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
                 <TextBlock Text="Search anomalies, hosts, IPs..."
                            Foreground="{StaticResource TextMutedBrush}"
                            Margin="12,0,0,0"
@@ -167,7 +175,11 @@
               <ComboBox x:Name="SeverityFilter"
                         Grid.Column="2"
                         Height="36"
-                        Margin="0,0,8,0">
+                        Margin="0,0,8,0"
+                        AutomationProperties.Name="Anomaly severity filter"
+                        ToolTip="Filter this local anomaly queue by severity. All severities removes the severity restriction."
+                        ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                        AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}">
                 <ComboBoxItem Content="All severities" IsSelected="True"/>
                 <ComboBoxItem Content="Critical"/>
                 <ComboBoxItem Content="High"/>
@@ -181,14 +193,22 @@
                         VerticalAlignment="Center"
                         Margin="0,0,10,0"
                         Checked="OnlyLinkedBox_Changed"
-                        Unchecked="OnlyLinkedBox_Changed"/>
+                        Unchecked="OnlyLinkedBox_Changed"
+                        AutomationProperties.Name="Show only anomalies linked to incidents"
+                        ToolTip="Show only anomalies that already have a related incident. This does not create or link incidents."
+                        ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                        AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
 
               <Button Grid.Column="4"
                       Content="Reset"
                       Width="68"
                       Height="36"
                       Style="{StaticResource SecondaryButton}"
-                      Click="ResetFilters_Click"/>
+                      Click="ResetFilters_Click"
+                      AutomationProperties.Name="Reset anomaly queue filters"
+                      ToolTip="Clear category, severity, search and linked-only filters for this anomaly queue. Does not reset application preferences or detection settings."
+                      ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                      AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
             </Grid>
 
             <ScrollViewer Grid.Row="2"
