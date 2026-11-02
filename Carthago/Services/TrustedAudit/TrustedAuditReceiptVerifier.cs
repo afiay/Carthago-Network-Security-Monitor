@@ -104,7 +104,11 @@ namespace Carthago.Services.TrustedAudit
                 ["R343"] = "WinRmEncodedCommandExecuted",
                 ["R295"] = "KubernetesPodExecAuthorized",
                 ["R275"] = "OAuthDeviceFlowAbuseConfirmed",
-                ["R163"] = "HttpMetadataRequestCausallyLinked"
+                ["R163"] = "HttpMetadataRequestCausallyLinked",
+                // Requires an independent, operator-approved Redis audit collector
+                // that can distinguish CONFIG SET from generic CONFIG commands.
+                // Verifying this signed claim never authorizes a live R437 alert.
+                ["R437"] = "RedisConfigSetCommandSucceeded"
             };
 
         private readonly Dictionary<string, (byte[] PublicKey, HashSet<string> AllowedRules)> _issuers =
