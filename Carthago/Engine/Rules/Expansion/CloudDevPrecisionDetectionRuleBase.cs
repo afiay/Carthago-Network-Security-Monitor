@@ -205,7 +205,22 @@ namespace Carthago.Engine.Rules.Expansion
             // Cloud provider request targets and vault/account host labels are
             // potentially sensitive. Do not retain them in event summaries.
             if (Descriptor.RuleId is "R381" or "R382" or "R383" or "R384" or "R385" or "R386" or "R387" or "R388" or "R389" or "R390")
+            {
                 evt.DestinationHost = "[REDACTED]";
+                // Preserve the same privacy boundary in both evidence representations.
+                // Merely redacting DestinationHost leaves the original host in
+                // the legacy evidence string and in structured destinationHost.
+                if (evt.StructuredEvidence != null)
+                {
+                    var safe = evt.StructuredEvidence.Items.Select(item =>
+                        item.Key.Equals("destinationHost", StringComparison.OrdinalIgnoreCase)
+                            ? item with { Value = "[REDACTED]" } : item).ToArray();
+                    evt.StructuredEvidence = new DetectionEvidenceSet(safe, evt.StructuredEvidence.Summary);
+                }
+                if (evt.Evidence != null)
+                    evt.Evidence = Regex.Replace(evt.Evidence, @"destinationHost=[^;]*",
+                        "destinationHost=[REDACTED]", RegexOptions.IgnoreCase);
+            }
 
             var effectiveCooldownKey = string.IsNullOrWhiteSpace(cooldownKey) ? null : $"{Descriptor.RuleId}:{cooldownKey}";
             var cooldown = PrecisionProfile.Cooldown ?? TimeSpan.Zero;
