@@ -590,6 +590,7 @@ namespace Carthago.Engine.Rules.Catalog
                 new R565_DefaultBasicAdminThenFtpCallbackRule(),
                 new R566_DefaultBasicAdminThenRedisConfigOkRule(),
                 new R567_DefaultBasicAdminThenRedisConfigDeniedRule(),
+                new R568_RedisConfigDeniedThenDefaultBasicAdminRule(),
             };
         }
 
