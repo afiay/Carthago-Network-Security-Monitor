@@ -49,6 +49,9 @@ namespace Carthago.Services
             public int Collected;
             public bool Invalid;
             public bool TlsActive;
+            // One outstanding CONFIG SET only; no pipeline or command bytes.
+            // The existing bounded TCP flow store owns this lifetime.
+            public bool RedisConfigSetPending;
         }
 
         public TrafficRecord? ParsePacket(PacketCapture e)
@@ -395,21 +398,59 @@ namespace Carthago.Services
                             if (OtProtocolLight.TryIdentifyTcp(normPayload, sport, dport, out var otProtocol))
                                 rec.ApplicationProtocol = otProtocol;
 
-                            // -------- Bounded Redis RESP2 command shape --------
-                            // Only complete first client payloads following an
-                            // observed TCP SYN, at the expected TCP sequence and
-                            // destination port 6379, may set the capture flag.
-                            // No key, config parameter, value, or reply is stored here.
-                            // The packet classifier is not general TCP reassembly and
-                            // cannot attest server success or administrator intent.
-                            if (c2s && synAnchoredFirstPayload
-                                && dport == 6379 && sport is > 0 and <= 65535
-                                && sport != 6379 && !IsTlsActive(tcpFlow, c2s)
-                                && Resp2CommandInspector.TryInspect(normPayload,
-                                    verifiedPlaintextClientCommandBoundary: true, out var resp))
+                            // -------- Bounded Redis RESP2 correlation --------
+                            // Only a complete first client request immediately
+                            // after the observed SYN is admitted. The first server
+                            // payload must likewise follow an observed SYN-ACK.
+                            // Extra client data, pipelining, gaps or ambiguous replies
+                            // invalidate pending state; no command bytes are retained.
+                            if (c2s && dport == 6379 && sport is > 0 and <= 65535
+                                && sport != 6379)
                             {
-                                rec.ApplicationProtocol = "redis.resp2";
-                                rec.RedisRespConfigSetRequestObserved = resp.IsConfigSetRequest;
+                                bool admitted = false;
+                                if (synAnchoredFirstPayload && !IsTlsActive(tcpFlow, c2s)
+                                    && Resp2CommandInspector.TryInspect(normPayload,
+                                        verifiedPlaintextClientCommandBoundary: true, out var resp))
+                                {
+                                    rec.ApplicationProtocol = "redis.resp2";
+                                    rec.RedisRespConfigSetRequestObserved = resp.IsConfigSetRequest;
+                                    admitted = resp.IsConfigSetRequest
+                                        && resp.BytesConsumed == normPayload.Length;
+                                }
+
+                                // A second client payload before a reply clears
+                                // the single outstanding request even if valid.
+                                lock (_tcpSync)
+                                    if (_tcp.TryGetValue(tcpFlow, out var flow))
+                                        flow.RedisConfigSetPending = admitted;
+                            }
+                            else if (!c2s && sport == 6379 && dport is > 0 and <= 65535
+                                && dport != 6379)
+                            {
+                                bool pending = false;
+                                lock (_tcpSync)
+                                {
+                                    if (_tcp.TryGetValue(tcpFlow, out var flow))
+                                    {
+                                        pending = flow.RedisConfigSetPending;
+                                        flow.RedisConfigSetPending = false;
+                                    }
+                                }
+
+                                // A wire-correlated RESP +OK is NOT authenticated
+                                // server identity, authorized administration or
+                                // proof of a completed security-relevant change.
+                                if (pending && synAnchoredFirstPayload
+                                    && !IsTlsActive(tcpFlow, c2s)
+                                    && Resp2SimpleReplyInspector.TryInspect(normPayload,
+                                        out var reply))
+                                {
+                                    rec.ApplicationProtocol = "redis.resp2";
+                                    rec.RedisRespConfigSetReplyOkObserved =
+                                        reply == Resp2SimpleReplyKind.Ok;
+                                    rec.RedisRespConfigSetReplyErrorObserved =
+                                        reply == Resp2SimpleReplyKind.Error;
+                                }
                             }
 
                             // -------- Bounded FTP and SMB2 request framing --------
@@ -717,6 +758,7 @@ namespace Carthago.Services
                 dir.Collected = 0;
                 dir.Invalid = false;
                 dir.TlsActive = false;
+                state.RedisConfigSetPending = false;
             }
         }
 
@@ -750,12 +792,16 @@ namespace Carthago.Services
             {
                 var state = GetOrAddState(key, DateTime.UtcNow);
                 var dir = clientToServer ? state.C2S : state.S2C;
-                if (dir.Invalid || dir.Collected >= MaxInspectBytesPerDir) return false;
+                if (dir.Invalid || dir.Collected >= MaxInspectBytesPerDir)
+                {
+                    state.RedisConfigSetPending = false;
+                    return false;
+                }
 
                 // Checked under the flow lock before changing sequence state.
-                // No SYN, missing bytes, retransmits, or later stream segments
-                // can claim an attested application-command boundary.
-                synAnchoredFirstPayload = clientToServer && dir.Init && dir.SynAnchored
+                // Both client and server first-payload boundaries must be
+                // SYN-anchored and TCP-sequence-contiguous.
+                synAnchoredFirstPayload = dir.Init && dir.SynAnchored
                     && dir.Collected == 0 && dir.NextSeq == seq;
                 int overlap = 0;
                 if (!dir.Init)
@@ -768,12 +814,26 @@ namespace Carthago.Services
                 {
                     // Signed subtraction handles normal uint TCP sequence wraparound.
                     int diff = unchecked((int)(seq - dir.NextSeq));
-                    if (diff > 0) { dir.Invalid = true; return false; } // missing segment
+                    if (diff > 0)
+                    {
+                        dir.Invalid = true;
+                        state.RedisConfigSetPending = false;
+                        return false; // missing segment
+                    }
                     if (diff < 0)
                     {
                         long overlap64 = -(long)diff;
-                        if (overlap64 >= payload.Length) return false; // retransmission
-                        if (overlap64 > 3) { dir.Invalid = true; return false; }
+                        if (overlap64 >= payload.Length)
+                        {
+                            state.RedisConfigSetPending = false;
+                            return false; // retransmission while pending: fail closed
+                        }
+                        if (overlap64 > 3)
+                        {
+                            dir.Invalid = true;
+                            state.RedisConfigSetPending = false;
+                            return false;
+                        }
                         overlap = (int)overlap64;
                     }
                 }
