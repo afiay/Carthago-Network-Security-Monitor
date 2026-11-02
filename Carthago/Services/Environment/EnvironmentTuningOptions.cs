@@ -17,6 +17,9 @@ namespace Carthago.Services.EnvironmentTuning
         public List<string> VpnGateways { get; set; } = new();
         public List<string> CloudStorageProviders { get; set; } = new();
         public List<string> AdminHosts { get; set; } = new();
+        // Explicit Redis server inventory for verified-audit candidates only.
+        // Absence means unconfigured, never automatically trusted.
+        public List<string> RedisServers { get; set; } = new();
         public List<string> DomainControllers { get; set; } = new();
         public List<string> KubernetesApiServers { get; set; } = new();
         public List<string> CiCdServers { get; set; } = new();
