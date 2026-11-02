@@ -11,6 +11,8 @@ namespace Carthago.Services.TrustedAudit
     public enum RedisAuditCandidateStatus
     {
         MissingVerifiedAudits,
+        SignatureOrReplayRejected,
+        IndependentAuditCorrelationRejected,
         WrongRuleOrOperation,
         MissingWireResponse,
         AuditEndpointMismatch,
