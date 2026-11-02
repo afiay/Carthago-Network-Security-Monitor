@@ -35,13 +35,33 @@
         <RowDefinition Height="Auto"/>
         <RowDefinition Height="Auto"/>
         <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
       </Grid.RowDefinitions>
 
+      <Border Grid.Row="0" Style="{StaticResource IncidentOpsHeroCard}" Margin="0,0,0,16">
+        <StackPanel>
+          <TextBlock Text="INCIDENT RESPONSE / LOCAL CASES" Style="{StaticResource IncidentOpsEyebrow}"/>
+          <TextBlock Text="Incident Investigation" FontSize="29" FontWeight="Bold"
+                     Foreground="{StaticResource TextBrush}" Margin="0,6,0,4" TextWrapping="Wrap"/>
+          <TextBlock Text="Prioritize correlated cases, inspect evidence and record analyst decisions." Foreground="{StaticResource TextSubtleBrush}"
+                     FontSize="12.5" TextWrapping="Wrap"/>
+          <Border Background="#112F43" BorderBrush="#37657A" BorderThickness="1"
+                  CornerRadius="11" Padding="14,9" HorizontalAlignment="Left" Margin="0,12,0,0">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="ACTIVE CASES" Style="{StaticResource IncidentOpsEyebrow}"
+                         VerticalAlignment="Center" Margin="0,0,14,0"/>
+              <TextBlock Text="{Binding ActiveIncidentCount}" FontSize="23"
+                         FontWeight="Bold" Foreground="{StaticResource TextBrush}"/>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </Border>
+
       <UniformGrid x:Name="KpiGrid"
-                   Grid.Row="0"
+                   Grid.Row="1"
                    Columns="5"
                    Margin="0,0,0,16">
-        <Border Style="{StaticResource AnomalyKpiCard}" Margin="0,0,10,0" BorderBrush="{StaticResource SeverityHighBrush}">
+        <Border Style="{StaticResource IncidentOpsKpiCard}" Margin="0,0,10,0" BorderBrush="{StaticResource SeverityHighBrush}">
           <StackPanel>
             <TextBlock Text="Active Incidents" Style="{StaticResource TinyStatusText}"/>
             <TextBlock Text="{Binding ActiveIncidentCount}" FontSize="28" FontWeight="Bold" Margin="0,8,0,0"/>
@@ -49,7 +69,7 @@
             <Border Height="4" Background="{StaticResource SeverityHighBrush}" CornerRadius="3" Margin="0,10,0,0"/>
           </StackPanel>
         </Border>
-        <Border Style="{StaticResource AnomalyKpiCard}" Margin="0,0,10,0" BorderBrush="{StaticResource SeverityCriticalBrush}">
+        <Border Style="{StaticResource IncidentOpsKpiCard}" Margin="0,0,10,0" BorderBrush="{StaticResource SeverityCriticalBrush}">
           <StackPanel>
             <TextBlock Text="Critical Incidents" Style="{StaticResource TinyStatusText}"/>
             <TextBlock Text="{Binding CriticalIncidentCount}" FontSize="28" FontWeight="Bold" Margin="0,8,0,0"/>
@@ -57,7 +77,7 @@
             <Border Height="4" Background="{StaticResource SeverityCriticalBrush}" CornerRadius="3" Margin="0,10,0,0"/>
           </StackPanel>
         </Border>
-        <Border Style="{StaticResource AnomalyKpiCard}" Margin="0,0,10,0" BorderBrush="{StaticResource AccentBrush}">
+        <Border Style="{StaticResource IncidentOpsKpiCard}" Margin="0,0,10,0" BorderBrush="{StaticResource AccentBrush}">
           <StackPanel>
             <TextBlock Text="New in 1h" Style="{StaticResource TinyStatusText}"/>
             <TextBlock Text="{Binding NewInHourCount}" FontSize="28" FontWeight="Bold" Margin="0,8,0,0"/>
@@ -65,7 +85,7 @@
             <Border Height="4" Background="{StaticResource AccentBrush}" CornerRadius="3" Margin="0,10,0,0"/>
           </StackPanel>
         </Border>
-        <Border Style="{StaticResource AnomalyKpiCard}" Margin="0,0,10,0" BorderBrush="{StaticResource SeverityMediumBrush}">
+        <Border Style="{StaticResource IncidentOpsKpiCard}" Margin="0,0,10,0" BorderBrush="{StaticResource SeverityMediumBrush}">
           <StackPanel>
             <TextBlock Text="In Investigation" Style="{StaticResource TinyStatusText}"/>
             <TextBlock Text="{Binding InInvestigationCount}" FontSize="28" FontWeight="Bold" Margin="0,8,0,0"/>
@@ -73,7 +93,7 @@
             <Border Height="4" Background="{StaticResource SeverityMediumBrush}" CornerRadius="3" Margin="0,10,0,0"/>
           </StackPanel>
         </Border>
-        <Border Style="{StaticResource AnomalyKpiCard}" BorderBrush="{StaticResource OkBrush}">
+        <Border Style="{StaticResource IncidentOpsKpiCard}" BorderBrush="{StaticResource OkBrush}">
           <StackPanel>
             <TextBlock Text="Resolved Today" Style="{StaticResource TinyStatusText}"/>
             <TextBlock Text="{Binding ResolvedTodayCount}" FontSize="28" FontWeight="Bold" Foreground="{StaticResource OkBrush}" Margin="0,8,0,0"/>
@@ -83,7 +103,7 @@
         </Border>
       </UniformGrid>
 
-      <Grid x:Name="PrimaryWorkspaceGrid" Grid.Row="1">
+      <Grid x:Name="PrimaryWorkspaceGrid" Grid.Row="2">
         <Grid.RowDefinitions>
           <RowDefinition x:Name="PrimaryWorkspaceTopRow" Height="Auto"/>
           <RowDefinition x:Name="PrimaryWorkspaceBottomRow" Height="0"/>
@@ -94,7 +114,7 @@
         </Grid.ColumnDefinitions>
 
         <Border x:Name="QueuePanel" Grid.Column="0"
-                Style="{StaticResource AnomalyPageSurface}"
+                Style="{StaticResource IncidentOpsPanel}"
                 Margin="0,0,14,0">
           <Grid>
             <Grid.RowDefinitions>
@@ -104,15 +124,15 @@
             </Grid.RowDefinitions>
 
             <StackPanel Grid.Row="0">
-              <DockPanel>
-                <StackPanel DockPanel.Dock="Left">
+              <StackPanel>
+                <StackPanel>
+                  <TextBlock Text="PRIORITY TRIAGE" Style="{StaticResource IncidentOpsEyebrow}" Margin="0,0,0,6"/>
                   <TextBlock Text="{Binding WorkspaceTitle}"
-                             Style="{StaticResource AnomalySectionTitle}"/>
+                             Style="{StaticResource IncidentOpsPanelTitle}"/>
                   <TextBlock Text="{Binding WorkspaceSubtitle}"
                              Style="{StaticResource AnomalySectionMeta}"/>
                 </StackPanel>
-                <StackPanel DockPanel.Dock="Right"
-                            Orientation="Horizontal">
+                <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                   <Button Content="Copy JSON"
                           Width="92"
                           Style="{StaticResource SecondaryButton}"
@@ -131,7 +151,7 @@
                           AutomationProperties.Name="Clear displayed incident queue"
                           AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
                 </StackPanel>
-              </DockPanel>
+              </StackPanel>
 
               <Grid Margin="0,14,0,0">
                 <Grid.ColumnDefinitions>
@@ -185,12 +205,16 @@
                 </ListBox.ItemContainerStyle>
                 <ListBox.ItemTemplate>
                   <DataTemplate>
-                    <Grid>
+                    <Border Style="{StaticResource IncidentOpsQueueRow}">
+                      <Grid>
                       <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="56"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="92"/>
                       </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Width="3" Margin="0,2,0,2" CornerRadius="2"
+                                Background="{Binding Severity, Converter={StaticResource SeverityBrush}}"
+                                HorizontalAlignment="Left" VerticalAlignment="Stretch"/>
 
                       <Grid Grid.Column="0"
                             Width="42"
@@ -254,7 +278,8 @@
                                    Margin="0,8,0,0"
                                    HorizontalAlignment="Right"/>
                       </StackPanel>
-                    </Grid>
+                      </Grid>
+                    </Border>
                   </DataTemplate>
                 </ListBox.ItemTemplate>
               </ListBox>
@@ -286,23 +311,23 @@
         </Border>
 
         <Border x:Name="InvestigationPanel" Grid.Column="1"
-                Style="{StaticResource AnomalyPageSurface}">
+                Style="{StaticResource IncidentOpsPanel}">
           <Grid>
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto"/>
               <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <DockPanel Grid.Row="0"
+            <StackPanel Grid.Row="0"
                        Margin="0,0,0,12">
-              <StackPanel DockPanel.Dock="Left">
-                <TextBlock Text="Incident Investigation"
-                           Style="{StaticResource AnomalySectionTitle}"/>
+              <StackPanel>
+                <TextBlock Text="SELECTED CASE / ANALYSIS" Style="{StaticResource IncidentOpsEyebrow}" Margin="0,0,0,6"/>
+                  <TextBlock Text="Incident Investigation"
+                           Style="{StaticResource IncidentOpsPanelTitle}"/>
                 <TextBlock Text="Case evidence, impact, analyst feedback, and response decisions for the selected incident."
                            Style="{StaticResource AnomalySectionMeta}"/>
               </StackPanel>
-              <StackPanel DockPanel.Dock="Right"
-                          Orientation="Horizontal">
+              <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                 <Button Content="Acknowledge"
                         Width="106"
                         Style="{StaticResource SecondaryButton}"
@@ -321,7 +346,7 @@
                         AutomationProperties.Name="Resolve selected incident"
                         AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
               </StackPanel>
-            </DockPanel>
+            </StackPanel>
 
             <StackPanel x:Name="DetailsScrollViewer"
                         Grid.Row="1"
@@ -632,7 +657,7 @@
         </Border>
       </Grid>
 
-      <Grid x:Name="SupportingWorkspaceGrid" Grid.Row="2"
+      <Grid x:Name="SupportingWorkspaceGrid" Grid.Row="3"
             Margin="0,14,0,0">
         <Grid.RowDefinitions>
           <RowDefinition x:Name="SupportingWorkspaceFirstRow" Height="Auto"/>
@@ -647,7 +672,7 @@
           <ColumnDefinition x:Name="SupportingWorkspaceFourthColumn" Width="0.95*"/>
         </Grid.ColumnDefinitions>
 
-        <Border x:Name="TimelinePanel" Style="{StaticResource AnomalyPageSurface}" Margin="0,0,10,0">
+        <Border x:Name="TimelinePanel" Style="{StaticResource IncidentOpsPanel}" Margin="0,0,10,0">
           <StackPanel>
             <TextBlock Text="Incident Timeline / Activity"
                        Style="{StaticResource AnomalySectionTitle}"/>
@@ -685,7 +710,7 @@
           </StackPanel>
         </Border>
 
-        <Border x:Name="RelatedAnomaliesPanel" Grid.Column="1" Style="{StaticResource AnomalyPageSurface}" Margin="0,0,10,0">
+        <Border x:Name="RelatedAnomaliesPanel" Grid.Column="1" Style="{StaticResource IncidentOpsPanel}" Margin="0,0,10,0">
           <StackPanel>
             <TextBlock Text="Related Anomalies"
                        Style="{StaticResource AnomalySectionTitle}"/>
@@ -705,7 +730,7 @@
           </StackPanel>
         </Border>
 
-        <Border x:Name="AffectedHostsPanel" Grid.Column="2" Style="{StaticResource AnomalyPageSurface}" Margin="0,0,10,0">
+        <Border x:Name="AffectedHostsPanel" Grid.Column="2" Style="{StaticResource IncidentOpsPanel}" Margin="0,0,10,0">
           <StackPanel>
             <TextBlock Text="Affected Hosts"
                        Style="{StaticResource AnomalySectionTitle}"/>
@@ -742,7 +767,7 @@
           </StackPanel>
         </Border>
 
-        <Border x:Name="ResponseChecklistPanel" Grid.Column="3" Style="{StaticResource AnomalyPageSurface}">
+        <Border x:Name="ResponseChecklistPanel" Grid.Column="3" Style="{StaticResource IncidentOpsPanel}">
           <StackPanel>
             <TextBlock Text="Response Checklist"
                        Style="{StaticResource AnomalySectionTitle}"/>

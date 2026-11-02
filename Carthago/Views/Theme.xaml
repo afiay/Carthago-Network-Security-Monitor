@@ -1281,4 +1281,54 @@
       </DataTrigger>
     </Style.Triggers>
   </Style>
+
+  <!-- GA UI-92 incident operations visual system: source candidate only. -->
+  <LinearGradientBrush x:Key="IncidentOpsHeroGradient" StartPoint="0,0" EndPoint="1,1">
+    <GradientStop Color="#15394D" Offset="0"/>
+    <GradientStop Color="#102638" Offset="0.55"/>
+    <GradientStop Color="#0A1928" Offset="1"/>
+  </LinearGradientBrush>
+  <Style x:Key="IncidentOpsHeroCard" TargetType="Border" BasedOn="{StaticResource DashboardHeroCard}">
+    <Setter Property="Background" Value="{StaticResource IncidentOpsHeroGradient}"/>
+    <Setter Property="BorderBrush" Value="#32647B"/>
+    <Setter Property="CornerRadius" Value="16"/>
+    <Setter Property="Padding" Value="22,18"/>
+  </Style>
+  <Style x:Key="IncidentOpsKpiCard" TargetType="Border" BasedOn="{StaticResource AnomalyKpiCard}">
+    <Setter Property="Background" Value="{StaticResource DashboardKpiGradient}"/>
+    <Setter Property="BorderBrush" Value="#29495D"/>
+    <Setter Property="Padding" Value="17,15"/>
+    <Setter Property="CornerRadius" Value="13"/>
+    <Setter Property="MinHeight" Value="124"/>
+    <Setter Property="Effect" Value="{x:Null}"/>
+  </Style>
+  <Style x:Key="IncidentOpsPanel" TargetType="Border" BasedOn="{StaticResource AnomalyPageSurface}">
+    <Setter Property="Background" Value="{StaticResource CardSurfaceGradient}"/>
+    <Setter Property="BorderBrush" Value="#2A4A60"/>
+    <Setter Property="CornerRadius" Value="14"/>
+    <Setter Property="Padding" Value="17"/>
+  </Style>
+  <Style x:Key="IncidentOpsEyebrow" TargetType="TextBlock">
+    <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+    <Setter Property="FontSize" Value="11"/>
+    <Setter Property="FontWeight" Value="Bold"/>
+  </Style>
+  <Style x:Key="IncidentOpsPanelTitle" TargetType="TextBlock">
+    <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+    <Setter Property="FontSize" Value="20"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+    <Setter Property="TextWrapping" Value="Wrap"/>
+  </Style>
+  <Style x:Key="IncidentOpsQueueRow" TargetType="Border" BasedOn="{StaticResource QueueListItem}">
+    <Setter Property="Background" Value="#0E2232"/>
+    <Setter Property="BorderBrush" Value="#27455B"/>
+    <Setter Property="Padding" Value="11,11"/>
+    <Setter Property="Margin" Value="0,0,0,8"/>
+    <Style.Triggers>
+      <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+        <Setter Property="Background" Value="{StaticResource SelectionBgBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+      </DataTrigger>
+    </Style.Triggers>
+  </Style>
 </ResourceDictionary>
