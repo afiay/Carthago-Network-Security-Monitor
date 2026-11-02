@@ -270,7 +270,7 @@ public sealed class R556AdvancedAccuracyBatchTests
             frame[22] = 0x01; frame[23] = 0xbd; // TCP destination 445
             frame[32] = 0x50; frame[33] = 0x18; // TCP data offset 20, PSH/ACK
             payload.CopyTo(frame, 40);
-            var record = new PacketHandler().ParseFrame(frame, (LinkLayers)12);
+            var record = new PacketHandler().ParseFrame(frame, (PacketDotNet.LinkLayers)12);
             Assert.NotNull(record);
             return record!;
         }
