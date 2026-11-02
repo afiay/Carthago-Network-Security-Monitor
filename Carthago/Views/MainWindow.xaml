@@ -738,7 +738,7 @@
                         </ListBox.ItemContainerStyle>
                         <ListBox.ItemTemplate>
                           <DataTemplate>
-                            <Border Style="{StaticResource SocTimelineItem}"
+                            <Border x:Name="TriageRowCard" Style="{StaticResource SocTimelineItem}"
                                     BorderBrush="{Binding AccentBrush}"
                                     Height="64"
                                     Margin="0,0,0,3"
@@ -775,6 +775,14 @@
                                 </StackPanel>
                               </Grid>
                             </Border>
+                            <DataTemplate.Triggers>
+                              <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType={x:Type ListBoxItem}}}" Value="True">
+                                <Setter TargetName="TriageRowCard" Property="Background" Value="{StaticResource RowHoverBrush}"/>
+                              </DataTrigger>
+                              <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type ListBoxItem}}}" Value="True">
+                                <Setter TargetName="TriageRowCard" Property="Background" Value="{StaticResource SelectionBgBrush}"/>
+                              </DataTrigger>
+                            </DataTemplate.Triggers>
                           </DataTemplate>
                         </ListBox.ItemTemplate>
                       </ListBox>
