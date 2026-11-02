@@ -116,12 +116,20 @@
                   <Button Content="Copy JSON"
                           Width="92"
                           Style="{StaticResource SecondaryButton}"
-                          Click="CopyJson_Click"/>
+                          Click="CopyJson_Click"
+                          ToolTip="Copies the selected incident's JSON details to the system clipboard, not a file. With no incident selected, nothing is copied."
+                          ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                          AutomationProperties.Name="Copy selected incident JSON to clipboard"
+                          AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
                   <Button Content="Clear"
                           Width="74"
                           Margin="8,0,0,0"
                           Style="{StaticResource SecondaryButton}"
-                          Click="Clear_Click"/>
+                          Click="Clear_Click"
+                          ToolTip="Clears the current in-memory incident queue without confirmation. Does not resolve incidents or delete persisted records; subsequent updates or reopening may repopulate the list."
+                          ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                          AutomationProperties.Name="Clear displayed incident queue"
+                          AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
                 </StackPanel>
               </DockPanel>
 
