@@ -60,11 +60,11 @@ public sealed class NetworkBatch511520AccuracyTests
         "sensitive-uri",
     };
 
-    public static IEnumerable<object[]> MissingProducerCases()
+    public static IEnumerable<object?[]> MissingProducerCases()
     {
         foreach (var rule in Rules)
             foreach (var variation in Variations)
-                yield return new object[] { rule.Id, rule.Reason, rule.Host, rule.Application,
+                yield return new object?[] { rule.Id, rule.Reason, rule.Host, rule.Application,
                     rule.Method, rule.Path, rule.Port, variation };
     }
 
