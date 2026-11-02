@@ -33,7 +33,8 @@ public sealed class RedisRespCaptureIntegrationTests
         return bytes.ToArray();
     }
 
-    private static TrafficRecord Parse(byte[] payload, int sourcePort = 40000, int destinationPort = 6379)
+    private static byte[] Frame(byte[] payload, int sourcePort, int destinationPort,
+        uint sequence, byte flags)
     {
         var frame = new byte[40 + payload.Length];
         frame[0] = 0x45; // IPv4 and 20-byte header
@@ -47,11 +48,28 @@ public sealed class RedisRespCaptureIntegrationTests
         frame[21] = (byte)sourcePort;
         frame[22] = (byte)(destinationPort >> 8);
         frame[23] = (byte)destinationPort;
+        frame[24] = (byte)(sequence >> 24);
+        frame[25] = (byte)(sequence >> 16);
+        frame[26] = (byte)(sequence >> 8);
+        frame[27] = (byte)sequence;
         frame[32] = 0x50; // TCP data offset 5 words
-        frame[33] = 0x18; // PSH, ACK
+        frame[33] = flags;
         payload.CopyTo(frame, 40);
+        return frame;
+    }
 
-        var observed = new PacketHandler().ParseFrame(frame, (PacketDotNet.LinkLayers)12);
+    private static TrafficRecord Parse(byte[] payload, int sourcePort = 40000,
+        int destinationPort = 6379, bool witnessedSyn = true, uint payloadSequence = 1)
+    {
+        var handler = new PacketHandler();
+        if (witnessedSyn)
+            Assert.NotNull(handler.ParseFrame(
+                Frame(Array.Empty<byte>(), sourcePort, destinationPort, 0, 0x02),
+                (PacketDotNet.LinkLayers)12));
+
+        var observed = handler.ParseFrame(
+            Frame(payload, sourcePort, destinationPort, payloadSequence, 0x18),
+            (PacketDotNet.LinkLayers)12);
         return Assert.IsType<TrafficRecord>(observed);
     }
 
@@ -107,6 +125,16 @@ public sealed class RedisRespCaptureIntegrationTests
         var first = Request("GET", "key");
         var combined = first.Concat(body).ToArray();
         Assert.False(Parse(combined).RedisRespConfigSetRequestObserved);
+    }
+
+    [Fact]
+    public void Midstream_And_Missing_Tcp_Bytes_Are_Not_Trusted_Command_Boundaries()
+    {
+        var request = Request("CONFIG", "SET", "dir", "/tmp");
+        Assert.False(Parse(request, witnessedSyn: false)
+            .RedisRespConfigSetRequestObserved);
+        Assert.False(Parse(request, payloadSequence: 2)
+            .RedisRespConfigSetRequestObserved);
     }
 
     [Fact]
