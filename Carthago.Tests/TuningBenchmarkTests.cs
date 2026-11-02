@@ -379,7 +379,7 @@ namespace Carthago.Tests
             // in the replay report; the outer verification gate remains red.
             var names = new[]
             {
-                "modbus-write-function", "rclone-exfil", "redis-config-set", "ssrf-imds"
+                "modbus-write-function", "ssrf-imds"
             };
             foreach (var name in names)
             {
@@ -394,7 +394,9 @@ namespace Carthago.Tests
                 ("ad-psremoting-encoded-command", "R343"),
                 ("kubernetes-pod-exec", "R295"),
                 ("bacnet-write-property", "R485"),
-                ("cloudflared-tunnel", "R516")
+                ("cloudflared-tunnel", "R516"),
+                ("rclone-exfil", "R508"),
+                ("redis-config-set", "R437")
             })
             {
                 var sample = report.SampleResults.Single(item => item.Name == unavailable.Item1);
@@ -414,6 +416,18 @@ namespace Carthago.Tests
                         diagnostic => diagnostic.RuleId == "R516"
                             && diagnostic.NoMatchReasons.Any(reason =>
                                 reason.Contains("CLOUDFLARED_TUNNEL_SESSION_PROVENANCE_UNAVAILABLE",
+                                    StringComparison.Ordinal)));
+                if (unavailable.Item2 == "R508")
+                    Assert.Contains(sample.ExpectedRuleDiagnostics,
+                        diagnostic => diagnostic.RuleId == "R508"
+                            && diagnostic.NoMatchReasons.Any(reason =>
+                                reason.Contains("RCLONE_PROCESS_USERAGENT_AND_EGRESS_PROVENANCE_UNAVAILABLE",
+                                    StringComparison.Ordinal)));
+                if (unavailable.Item2 == "R437")
+                    Assert.Contains(sample.ExpectedRuleDiagnostics,
+                        diagnostic => diagnostic.RuleId == "R437"
+                            && diagnostic.NoMatchReasons.Any(reason =>
+                                reason.Contains("REDIS_RESP_CONFIG_SET_UNAVAILABLE",
                                     StringComparison.Ordinal)));
             }
         }
