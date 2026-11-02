@@ -84,13 +84,13 @@
       <DataTemplate x:Key="DashboardKpiCardTemplate">
                       <Border Style="{StaticResource DashboardOverviewKpiCard}" Height="132">
                         <Grid>
-                          <Border Grid.RowSpan="3" Width="3" HorizontalAlignment="Left" Margin="-17,0,0,0"
-                                  Background="{Binding AccentBrush}" CornerRadius="2" Opacity="0.9" IsHitTestVisible="False"/>
                           <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="Auto"/>
                           </Grid.RowDefinitions>
+                          <Border Grid.RowSpan="3" Width="3" HorizontalAlignment="Left" Margin="-17,0,0,0"
+                                  Background="{Binding AccentBrush}" CornerRadius="2" Opacity="0.9" IsHitTestVisible="False"/>
 
                           <DockPanel LastChildFill="True">
                             <!-- KPI card has no overflow command; use the existing information glyph. -->
