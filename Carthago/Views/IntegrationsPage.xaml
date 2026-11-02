@@ -5,22 +5,117 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       Title="Integrations">
 
-        <!-- Theme is centralized via App.xaml (Themes/Theme.Blue.xaml). -->
 
-        <Grid Background="{StaticResource AppBackdropGradient}">
-                <Border Style="{StaticResource PageSurface}" Margin="0">
+  <Page.Resources>
+    <Style x:Key="IntegrationDestinationCard" TargetType="Border">
+      <Setter Property="CornerRadius" Value="12"/>
+      <Setter Property="BorderBrush" Value="#285268"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="Padding" Value="16,14"/>
+      <Setter Property="Margin" Value="0,0,12,12"/>
+      <Setter Property="Width" Value="290"/>
+      <Setter Property="Background">
+        <Setter.Value>
+          <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#102B40" Offset="0"/>
+            <GradientStop Color="#091A2B" Offset="1"/>
+          </LinearGradientBrush>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="IntegrationConfigurationCard" TargetType="Border">
+      <Setter Property="CornerRadius" Value="12"/>
+      <Setter Property="BorderBrush" Value="#274A60"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="Padding" Value="22,20"/>
+      <Setter Property="Margin" Value="10,16,10,10"/>
+      <Setter Property="Background">
+        <Setter.Value>
+          <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#10273B" Offset="0"/>
+            <GradientStop Color="#091725" Offset="1"/>
+          </LinearGradientBrush>
+        </Setter.Value>
+      </Setter>
+    </Style>
+  </Page.Resources>
+
+  <!-- UI-98: configuration-only presentation, not sink status or telemetry. -->
+  <Grid Background="{StaticResource AppBackdropGradient}">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*"/>
+    </Grid.RowDefinitions>
+    <Border Grid.Row="0" CornerRadius="14" BorderBrush="#28556C"
+            BorderThickness="1" Padding="24,20" Margin="0,0,0,16">
+      <Border.Background>
+        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+          <GradientStop Color="#13334A" Offset="0"/>
+          <GradientStop Color="#0C1D31" Offset="0.58"/>
+          <GradientStop Color="#123B3D" Offset="1"/>
+        </LinearGradientBrush>
+      </Border.Background>
+      <StackPanel>
+        <TextBlock Text="PLATFORM / INTEGRATION DESTINATIONS" FontSize="11"
+                   FontWeight="Bold" Foreground="#55D7E8" Margin="0,0,0,8"/>
+        <TextBlock Text="Integration Control Center" FontSize="28"
+                   FontWeight="Bold" Foreground="#F2F8FF" TextWrapping="Wrap"/>
+        <TextBlock Text="Configure telemetry, security exports and local delivery using the existing destination settings."
+                   FontSize="13" Foreground="#B7CCDB" Margin="0,8,0,0" TextWrapping="Wrap"/>
+        <Border Background="#102C3B" BorderBrush="#2C596A" BorderThickness="1"
+                CornerRadius="7" Padding="10,7" Margin="0,14,0,0"
+                HorizontalAlignment="Left">
+          <TextBlock Text="CONFIGURATION ONLY  ·  NO CONNECTIVITY STATUS IMPLIED"
+                     FontSize="11" FontWeight="SemiBold" Foreground="#89D7E4" TextWrapping="Wrap"/>
+        </Border>
+      </StackPanel>
+    </Border>
+    <WrapPanel Grid.Row="1" Margin="0,0,0,8">
+      <Border Style="{StaticResource IntegrationDestinationCard}">
+        <StackPanel>
+          <TextBlock Text="01  TELEMETRY &amp; CLOUD" FontSize="11" FontWeight="Bold" Foreground="#54D4E8"/>
+          <TextBlock Text="OTLP · Azure" FontSize="17" FontWeight="SemiBold" Margin="0,7,0,4"/>
+          <TextBlock Text="Collector and cloud ingestion settings" Foreground="#A9C1D2" FontSize="12" TextWrapping="Wrap"/>
+        </StackPanel>
+      </Border>
+      <Border Style="{StaticResource IntegrationDestinationCard}">
+        <StackPanel>
+          <TextBlock Text="02  SECURITY EXPORT" FontSize="11" FontWeight="Bold" Foreground="#54D4E8"/>
+          <TextBlock Text="CEF · Splunk · Elastic" FontSize="17" FontWeight="SemiBold" Margin="0,7,0,4"/>
+          <TextBlock Text="Security platform destination settings" Foreground="#A9C1D2" FontSize="12" TextWrapping="Wrap"/>
+        </StackPanel>
+      </Border>
+      <Border Style="{StaticResource IntegrationDestinationCard}">
+        <StackPanel>
+          <TextBlock Text="03  STREAM &amp; LOCAL" FontSize="11" FontWeight="Bold" Foreground="#54D4E8"/>
+          <TextBlock Text="Kafka · JSONL · Webhook" FontSize="17" FontWeight="SemiBold" Margin="0,7,0,4"/>
+          <TextBlock Text="Streaming and file/webhook delivery settings" Foreground="#A9C1D2" FontSize="12" TextWrapping="Wrap"/>
+        </StackPanel>
+      </Border>
+    </WrapPanel>
+    <Border Grid.Row="2" Style="{StaticResource PageSurface}" Padding="12" Margin="0">
 
                         <!-- Use the themed TabControl -->
-                        <TabControl Style="{StaticResource TabControl.Themed}"
-                                    TabStripPlacement="Top"
-                                    Margin="0">
+                        <TabControl x:Name="IntegrationsTabs" Style="{StaticResource TabControl.Themed}"
+                                    TabStripPlacement="Left"
+                                    MinHeight="400" Margin="0">
 
                                 <!-- =============== OTLP ================= -->
                                 <TabItem Header="OTLP / OpenTelemetry">
                                         <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                                      HorizontalScrollBarVisibility="Auto"
                                                       Background="Transparent">
-                                                <StackPanel Margin="12"
+                                                <Border Style="{StaticResource IntegrationConfigurationCard}">
+                                                <StackPanel Margin="0"
                                                             Orientation="Vertical">
+                                                  <TextBlock Text="DESTINATION CONFIGURATION" FontSize="11"
+                                                             Foreground="#55D5E7" FontWeight="Bold" Margin="0,0,0,7"/>
+                                                  <TextBlock Text="OTLP telemetry export" FontSize="23" FontWeight="Bold"
+                                                             Foreground="#EDF6FF" TextWrapping="Wrap"/>
+                                                  <TextBlock Text="Configure the collector endpoint and the existing OTLP controls." FontSize="12.5" Foreground="#ADC4D4"
+                                                             TextWrapping="Wrap" Margin="0,7,0,12"/>
+                                                  <Border Height="1" Background="#29485A" Margin="0,0,0,16"/>
                                                         <CheckBox Content="Enable OTLP"
                                                                   IsChecked="{Binding EnableOtlp, Mode=TwoWay}"/>
 
@@ -57,14 +152,24 @@
                                                                         Click="Otlp_Test_Click"/>
                                                         </StackPanel>
                                                 </StackPanel>
+                                                </Border>
                                         </ScrollViewer>
                                 </TabItem>
 
                                 <!-- =============== Azure ================= -->
                                 <TabItem Header="Azure (DCE/DCR)">
                                         <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                                      HorizontalScrollBarVisibility="Auto"
                                                       Background="Transparent">
-                                                <StackPanel Margin="12">
+                                                <Border Style="{StaticResource IntegrationConfigurationCard}">
+                                                <StackPanel Margin="0">
+                                                  <TextBlock Text="DESTINATION CONFIGURATION" FontSize="11"
+                                                             Foreground="#55D5E7" FontWeight="Bold" Margin="0,0,0,7"/>
+                                                  <TextBlock Text="Azure ingestion" FontSize="23" FontWeight="Bold"
+                                                             Foreground="#EDF6FF" TextWrapping="Wrap"/>
+                                                  <TextBlock Text="Configure cloud ingestion identifiers and stream routing." FontSize="12.5" Foreground="#ADC4D4"
+                                                             TextWrapping="Wrap" Margin="0,7,0,12"/>
+                                                  <Border Height="1" Background="#29485A" Margin="0,0,0,16"/>
                                                         <CheckBox Content="Enable Azure"
                                                                   IsChecked="{Binding EnableAzure, Mode=TwoWay}"/>
 
@@ -109,14 +214,24 @@
                                                                         Click="Azure_Reload_Click"/>
                                                         </StackPanel>
                                                 </StackPanel>
+                                                </Border>
                                         </ScrollViewer>
                                 </TabItem>
 
                                 <!-- =============== CEF (Syslog) ================= -->
                                 <TabItem Header="CEF (Syslog)">
                                         <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                                      HorizontalScrollBarVisibility="Auto"
                                                       Background="Transparent">
-                                                <StackPanel Margin="12">
+                                                <Border Style="{StaticResource IntegrationConfigurationCard}">
+                                                <StackPanel Margin="0">
+                                                  <TextBlock Text="DESTINATION CONFIGURATION" FontSize="11"
+                                                             Foreground="#55D5E7" FontWeight="Bold" Margin="0,0,0,7"/>
+                                                  <TextBlock Text="CEF syslog delivery" FontSize="23" FontWeight="Bold"
+                                                             Foreground="#EDF6FF" TextWrapping="Wrap"/>
+                                                  <TextBlock Text="Set the destination host, port and TLS preference." FontSize="12.5" Foreground="#ADC4D4"
+                                                             TextWrapping="Wrap" Margin="0,7,0,12"/>
+                                                  <Border Height="1" Background="#29485A" Margin="0,0,0,16"/>
                                                         <CheckBox Content="Enable CEF"
                                                                   IsChecked="{Binding EnableCef, Mode=TwoWay}"/>
 
@@ -156,14 +271,24 @@
                                                                         Click="Cef_Reload_Click"/>
                                                         </StackPanel>
                                                 </StackPanel>
+                                                </Border>
                                         </ScrollViewer>
                                 </TabItem>
 
                                 <!-- =============== Splunk HEC ================= -->
                                 <TabItem Header="Splunk HEC">
                                         <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                                      HorizontalScrollBarVisibility="Auto"
                                                       Background="Transparent">
-                                                <StackPanel Margin="12">
+                                                <Border Style="{StaticResource IntegrationConfigurationCard}">
+                                                <StackPanel Margin="0">
+                                                  <TextBlock Text="DESTINATION CONFIGURATION" FontSize="11"
+                                                             Foreground="#55D5E7" FontWeight="Bold" Margin="0,0,0,7"/>
+                                                  <TextBlock Text="Splunk HEC delivery" FontSize="23" FontWeight="Bold"
+                                                             Foreground="#EDF6FF" TextWrapping="Wrap"/>
+                                                  <TextBlock Text="Set HEC routing fields and the existing protected token input." FontSize="12.5" Foreground="#ADC4D4"
+                                                             TextWrapping="Wrap" Margin="0,7,0,12"/>
+                                                  <Border Height="1" Background="#29485A" Margin="0,0,0,16"/>
                                                         <CheckBox Content="Enable Splunk HEC"
                                                                   IsChecked="{Binding EnableSplunkHec, Mode=TwoWay}"/>
 
@@ -229,14 +354,24 @@
                                                                         Click="Splunk_Reload_Click"/>
                                                         </StackPanel>
                                                 </StackPanel>
+                                                </Border>
                                         </ScrollViewer>
                                 </TabItem>
 
                                 <!-- =============== Elastic ================= -->
                                 <TabItem Header="Elastic">
                                         <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                                      HorizontalScrollBarVisibility="Auto"
                                                       Background="Transparent">
-                                                <StackPanel Margin="12">
+                                                <Border Style="{StaticResource IntegrationConfigurationCard}">
+                                                <StackPanel Margin="0">
+                                                  <TextBlock Text="DESTINATION CONFIGURATION" FontSize="11"
+                                                             Foreground="#55D5E7" FontWeight="Bold" Margin="0,0,0,7"/>
+                                                  <TextBlock Text="Elastic export" FontSize="23" FontWeight="Bold"
+                                                             Foreground="#EDF6FF" TextWrapping="Wrap"/>
+                                                  <TextBlock Text="Configure the destination, index and authentication field." FontSize="12.5" Foreground="#ADC4D4"
+                                                             TextWrapping="Wrap" Margin="0,7,0,12"/>
+                                                  <Border Height="1" Background="#29485A" Margin="0,0,0,16"/>
                                                         <CheckBox Content="Enable Elastic"
                                                                   IsChecked="{Binding EnableElastic, Mode=TwoWay}"/>
 
@@ -281,14 +416,24 @@
                                                                         Click="Elastic_Reload_Click"/>
                                                         </StackPanel>
                                                 </StackPanel>
+                                                </Border>
                                         </ScrollViewer>
                                 </TabItem>
 
                                 <!-- =============== Kafka ================= -->
                                 <TabItem Header="Kafka">
                                         <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                                      HorizontalScrollBarVisibility="Auto"
                                                       Background="Transparent">
-                                                <StackPanel Margin="12">
+                                                <Border Style="{StaticResource IntegrationConfigurationCard}">
+                                                <StackPanel Margin="0">
+                                                  <TextBlock Text="DESTINATION CONFIGURATION" FontSize="11"
+                                                             Foreground="#55D5E7" FontWeight="Bold" Margin="0,0,0,7"/>
+                                                  <TextBlock Text="Kafka streaming" FontSize="23" FontWeight="Bold"
+                                                             Foreground="#EDF6FF" TextWrapping="Wrap"/>
+                                                  <TextBlock Text="Set brokers, topic and the existing protected SASL password input." FontSize="12.5" Foreground="#ADC4D4"
+                                                             TextWrapping="Wrap" Margin="0,7,0,12"/>
+                                                  <Border Height="1" Background="#29485A" Margin="0,0,0,16"/>
                                                         <CheckBox Content="Enable Kafka"
                                                                   IsChecked="{Binding EnableKafka, Mode=TwoWay}"/>
 
@@ -339,14 +484,24 @@
                                                                         Click="Kafka_Reload_Click"/>
                                                         </StackPanel>
                                                 </StackPanel>
+                                                </Border>
                                         </ScrollViewer>
                                 </TabItem>
 
                                 <!-- =============== File (JSONL) ================= -->
                                 <TabItem Header="File (JSONL)">
                                         <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                                      HorizontalScrollBarVisibility="Auto"
                                                       Background="Transparent">
-                                                <StackPanel Margin="12">
+                                                <Border Style="{StaticResource IntegrationConfigurationCard}">
+                                                <StackPanel Margin="0">
+                                                  <TextBlock Text="DESTINATION CONFIGURATION" FontSize="11"
+                                                             Foreground="#55D5E7" FontWeight="Bold" Margin="0,0,0,7"/>
+                                                  <TextBlock Text="Local JSONL delivery" FontSize="23" FontWeight="Bold"
+                                                             Foreground="#EDF6FF" TextWrapping="Wrap"/>
+                                                  <TextBlock Text="Choose the output directory and existing file rotation options." FontSize="12.5" Foreground="#ADC4D4"
+                                                             TextWrapping="Wrap" Margin="0,7,0,12"/>
+                                                  <Border Height="1" Background="#29485A" Margin="0,0,0,16"/>
                                                         <CheckBox Content="Enable File Sink"
                                                                   IsChecked="{Binding EnableFileSink, Mode=TwoWay}"/>
 
@@ -388,14 +543,24 @@
                                                                         Click="File_Reload_Click"/>
                                                         </StackPanel>
                                                 </StackPanel>
+                                                </Border>
                                         </ScrollViewer>
                                 </TabItem>
 
                                 <!-- =============== Webhook ================= -->
                                 <TabItem Header="Webhook">
                                         <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                                      HorizontalScrollBarVisibility="Auto"
                                                       Background="Transparent">
-                                                <StackPanel Margin="12">
+                                                <Border Style="{StaticResource IntegrationConfigurationCard}">
+                                                <StackPanel Margin="0">
+                                                  <TextBlock Text="DESTINATION CONFIGURATION" FontSize="11"
+                                                             Foreground="#55D5E7" FontWeight="Bold" Margin="0,0,0,7"/>
+                                                  <TextBlock Text="Webhook delivery" FontSize="23" FontWeight="Bold"
+                                                             Foreground="#EDF6FF" TextWrapping="Wrap"/>
+                                                  <TextBlock Text="Configure the outbound webhook destination URL." FontSize="12.5" Foreground="#ADC4D4"
+                                                             TextWrapping="Wrap" Margin="0,7,0,12"/>
+                                                  <Border Height="1" Background="#29485A" Margin="0,0,0,16"/>
                                                         <CheckBox Content="Enable Webhook"
                                                                   IsChecked="{Binding EnableWebhook, Mode=TwoWay}"/>
 
@@ -422,6 +587,7 @@
                                                                         Click="Webhook_Reload_Click"/>
                                                         </StackPanel>
                                                 </StackPanel>
+                                                </Border>
                                         </ScrollViewer>
                                 </TabItem>
 

@@ -10,14 +10,19 @@ using Carthago.Telemetry; // <- OtelMetrics
 
 namespace Carthago.Views
 {
-    public partial class IntegrationsPage : Page
+    public partial class IntegrationsPage : Page, IResponsiveLayoutAware
     {
+        // Reuses existing shell breakpoints; presentation only, no destination state changes.
+        public void ApplyResponsiveLayout(ResponsiveLayoutMode mode)
+            => IntegrationsTabs.TabStripPlacement = mode == ResponsiveLayoutMode.Compact ? Dock.Top : Dock.Left;
+
         private readonly SinkHost _sinkHost;
         private readonly EdrXdrViewModel _vm;
 
         public IntegrationsPage(SinkHost? sinkHost)
         {
             InitializeComponent();
+            ResponsiveLayout.ApplyWhenLoaded(this, ApplyResponsiveLayout);
 
             _sinkHost = sinkHost ?? throw new ArgumentNullException(nameof(sinkHost));
             _vm = new EdrXdrViewModel();
