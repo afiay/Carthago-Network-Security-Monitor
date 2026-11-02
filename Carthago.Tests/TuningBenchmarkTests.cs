@@ -379,7 +379,7 @@ namespace Carthago.Tests
             // in the replay report; the outer verification gate remains red.
             var names = new[]
             {
-                "bacnet-write-property", "cloudflared-tunnel",
+                "cloudflared-tunnel",
                 "modbus-write-function", "rclone-exfil", "redis-config-set", "ssrf-imds"
             };
             foreach (var name in names)
@@ -393,7 +393,8 @@ namespace Carthago.Tests
 
             foreach (var unavailable in new[] {
                 ("ad-psremoting-encoded-command", "R343"),
-                ("kubernetes-pod-exec", "R295")
+                ("kubernetes-pod-exec", "R295"),
+                ("bacnet-write-property", "R485")
             })
             {
                 var sample = report.SampleResults.Single(item => item.Name == unavailable.Item1);
@@ -402,6 +403,12 @@ namespace Carthago.Tests
                 Assert.Contains(unavailable.Item2, sample.MissingExpectedMatches);
                 Assert.Contains(sample.ExpectedRuleDiagnostics,
                     diagnostic => diagnostic.RuleId == unavailable.Item2 && diagnostic.Outcome != "Matched");
+                if (unavailable.Item2 == "R485")
+                    Assert.Contains(sample.ExpectedRuleDiagnostics,
+                        diagnostic => diagnostic.RuleId == "R485"
+                            && diagnostic.NoMatchReasons.Any(reason =>
+                                reason.Contains("BACNET_WRITEPROPERTY_CONFIRMED_REQUEST_UNAVAILABLE",
+                                    StringComparison.Ordinal)));
             }
         }
 
