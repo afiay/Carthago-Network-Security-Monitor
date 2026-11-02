@@ -28,7 +28,7 @@ public sealed class BacnetWritePrecisionTests
     }
 
     [Fact]
-    public async Task External_Bacnet_Write_Uses_Verified_Ot_Inventory_For_Precision_Eligibility()
+    public async Task Unverified_Bacnet_WriteProperty_Text_Cannot_Substitute_For_Confirmed_Apdu()
     {
         var record = new TrafficRecord
         {
@@ -38,19 +38,12 @@ public sealed class BacnetWritePrecisionTests
         };
         var rule = new R485_BACnetWritePropertyRequestRule();
         var detection = await rule.EvaluateAsync(new RuleEvaluationContext(record, Sensitivity.Balanced, DateTime.UtcNow));
-        Assert.True(detection.Matched);
-        var evt = Assert.Single(detection.Events);
-        var configured = new ApprovedAssetRegistry(new EnvironmentTuningOptions
-        {
-            Approved = new ApprovedEnvironmentOptions { OtSegments = { "10.20.0.0/24" } }
-        });
-
-        var withoutInventory = RulePrecisionRuntimeEvaluator.Evaluate(rule.Descriptor, evt, record,
-            RuleMode.Alert, "OTSegment", new ApprovedAssetRegistry(new EnvironmentTuningOptions()));
-        var withInventory = RulePrecisionRuntimeEvaluator.Evaluate(rule.Descriptor, evt, record,
-            RuleMode.Alert, "OTSegment", configured);
-
-        Assert.Equal(RuleMode.Shadow, withoutInventory.EffectiveMode);
-        Assert.Equal(RuleMode.Alert, withInventory.EffectiveMode);
+        // This fixture has only a descriptive Info string, not a parser-decoded
+        // confirmed BACnet WriteProperty APDU. It must not produce an event.
+        // The missing positive remains visible in the labeled replay benchmark.
+        Assert.False(detection.Matched);
+        Assert.Empty(detection.Events);
+        Assert.Contains(detection.NoMatchReasons,
+            reason => reason.Code == "BACNET_WRITEPROPERTY_CONFIRMED_REQUEST_UNAVAILABLE");
     }
 }
