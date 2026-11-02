@@ -148,7 +148,8 @@ namespace Carthago.Engine.Rules
         // Records without header telemetry keep their existing behavior.
         private static bool HasConsistentDeviceHostHeader(TrafficRecord record)
         {
-            if (string.IsNullOrWhiteSpace(record.HttpHost))
+            var expectedHost = record.HttpHost;
+            if (string.IsNullOrWhiteSpace(expectedHost))
                 return false;
             if (string.IsNullOrWhiteSpace(record.HttpRequestHeaders))
                 return true;
@@ -168,7 +169,7 @@ namespace Carthago.Engine.Rules
                 // or ambiguous ports as a single trusted HTTP Host.
                 var observed = line[(separator + 1)..].Trim();
                 if (observed.Length == 0 || observed.Contains(',')
-                    || !observed.Equals(record.HttpHost.Trim(), StringComparison.OrdinalIgnoreCase))
+                    || !observed.Equals(expectedHost.Trim(), StringComparison.OrdinalIgnoreCase))
                     return false;
             }
 
