@@ -4110,3 +4110,40 @@ Private source commit `b94c6e11b4e9bddae86e1dcf1ead7115bb82ffd8` is a direct chi
 10. Inspect final source/docs blobs, direct-parent commits, exact two owned paths, fresh expected-SHA publication lease and **zero** builds/tests/replays/CI/runners/benchmarks/capture.
 
 **Next independent UI GA UI-82:** inspect fresh LIVE HEAD, exact approved image, ledger and original WPF consumers; choose one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–81. Acceptance remains deferred until the owner explicitly says **“now it is test time.”**
+
+## GA UI-82 — Local PPS chart: truthful, persistent series key
+
+**2026-11-02 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE `feature/carthago-reliability-hardening` HEAD: `06391978183a8356dd709f0d1c5722bc4249fe59`. Prior GA UI-81 source `b94c6e11b4e9bddae86e1dcf1ead7115bb82ffd8`, publication `06391978183a8356dd709f0d1c5722bc4249fe59`. No intervening detection/protocol changes at the initial read; the independent R557 Modbus candidate already in the baseline remains untouched. **Exact private UI source commit:** `d551064b9bf5b4e3140143cacf8ebd5a55664b28`; updated `MainWindow.xaml` blob `40d88518f5d0abc0b427b36e2b136cbfb380840e`. Owned paths: only `Carthago/Views/MainWindow.xaml` and this ledger. **ZERO** builds, dotnet tests, xUnit, replays, holdouts, CI, GitHub Actions, runners, benchmarks, production capture, running-WPF screenshots, or authored/executed acceptance tests. All scenarios below are **PLANNED ONLY — UNEXECUTED**.
+
+### Reference, live baseline and original consumers
+
+**FIRST** resolved and visually inspected the exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c` (1648×928). Its navy/graphite/cyan/teal dashboard includes a visible traffic-series key beneath the chart. The screenshot's Mbps, inbound/outbound traces, rule IDs, confidence, timestamps, IPs and CLI output are **DEMO ONLY**, not Carthago telemetry or evidence. Actual WPF `TrafficPlot` displays only local timer PPS and its ten-sample average; the CLI remains explicitly **UNAVAILABLE** and visual-only.
+
+Reviewed LIVE HEAD, recent branch commits, ledger through UI-81, `MainWindow.xaml`, `Theme.xaml`, `Sidebar.xaml`, and original WPF partials `MainWindow.Dashboard.cs`, `MainWindow.DashboardResponsive.cs`, `MainWindow.DashboardEvents.cs`, `MainWindow.Responsive.cs`, `MainWindow.Core.cs`, `MainWindow.Plots.cs`, `MainWindow.Navigation.cs`, `MainWindow.Settings.cs`, `MainWindow.xaml.cs`. In `RenderTraffic()`, the existing local PPS line is solid blue `#60A5FA`; the ten-sample moving average is dashed amber `#F59E0B` and appears only with more than ten timer samples. ScottPlot already manages its own legend when the average is drawn; this new static key makes series meaning discoverable before that threshold and independently of the plot's native legend. `DashboardTrafficChartTextSummary`, waiting overlay, monitoring status, original series/plot APIs, capture timer and all source consumers remain unchanged.
+
+### One cohesive UI-owned visual/readability improvement
+
+Add a compact wrapping **two-series key** immediately above the existing chart text summary in the chart's footer. Draw two decorative WPF `Line` swatches using the exact plot-series colors and solid/dashed strokes, with explicit visible labels **“Local PPS · solid blue”** and **“10-sample average · dashed amber (11+ samples)”**. Add concise UI Automation context to the containing `WrapPanel` stating that timer samples are not proof of active capture or network-wide traffic. The text does not imply the average is visible before eleven samples. The swatches are noninteractive; there are no new handlers, focus stops, producers, plot data, status claims or simulated traffic. The wrapping key follows the approved screenshot's chart/legend hierarchy without fabricating inbound/outbound or Mbps series. This differs from UI-08 chart placement, UI-10 waiting state, UI-22 accessible current summary, and UI-61 capture-state guidance.
+
+The source-only change is **18 XAML additions, zero deletions** in `Carthago/Views/MainWindow.xaml`; the documentation is the only other changed file. Preserve navy/graphite/cyan/teal, restrained severity, left navigation, real KPI provenance, local PPS 10-sample average and bounded 120-point history, prioritized incidents and investigation, read-only local Live Events 80 displayed/500 retained, explicitly unavailable visual-only CLI, Wide ≥1440/Standard 1100–1439/Compact 1024–1099 and graceful below 1024, Cisco/WebView2/ScottPlot, privacy/capture/trust and independent detection/protocol streams.
+
+### Static end review, publication lease and remaining risks
+
+Private source commit `d551064b9bf5b4e3140143cacf8ebd5a55664b28` is a direct child of the pinned baseline; its comparison changes **only** `MainWindow.xaml`. The private documentation descendant changes **only** this ledger. Recheck LIVE remote HEAD immediately before publication, compare intervening detection/protocol/UI paths, and publish the **complete** two-commit chain with exactly **one non-forced atomic GitHub `update_ref` and `expected_sha` lease** on the same branch. If the remote moved, reconcile only disjoint paths against fresh HEAD; STOP on overlap, conflict or missing lease guarantee. After publication inspect final remote HEAD, direct-parent ancestry, both file blobs, exact two-file ownership diff and independent-stream preservation.
+
+**Unverified risks:** Windows XAML parsing/compilation and actual rendering; static legend may duplicate ScottPlot's own native legend after eleven samples; additional footer height and WrapPanel wrapping at compact/narrow widths; swatch/label alignment and line-dash rendering; color/line-pattern legibility in high contrast and 125–200% DPI; UI Automation announcements on nonfocusable containers. The labels carry meaning without relying solely on color, but accessibility has **not** been verified. Static inspection does not prove WPF behavior.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED OR EXECUTED
+
+1. At ≥1440px, inspect the two legend swatches and labels for hierarchy, matching series colors and line patterns.
+2. At 1100/1099/1024/1023/640px, inspect WrapPanel reflow, plot width and no clipped labels.
+3. At 125%, 150%, 200% DPI, inspect swatch alignment, footer height and chart-summary containment.
+4. In standard/high-contrast themes, inspect color, solid/dashed distinctions and text readability.
+5. With zero or one timer sample, inspect the original waiting overlay and the truthful static legend without asserting a plotted series.
+6. With 2–10 timer samples, inspect the blue local PPS plot and absence of amber moving-average series.
+7. With 11+ timer samples, inspect the dashed amber moving average, native ScottPlot legend and possible visual duplication.
+8. Inspect keyboard/assistive reading order and ensure decorative lines add no Tab stops or false monitoring announcement.
+9. Inspect unchanged KPI provenance, local PPS 10-sample/120-point behavior, incidents, investigation, read-only Live Events 80/500, unavailable CLI, Cisco/WebView2/ScottPlot, privacy/capture/trust and independent detection/protocol files.
+10. Inspect final source/docs blobs, two direct-parent commits, exact two owned paths, fresh expected-SHA lease and **zero** builds/tests/replays/CI/runners/benchmarks/capture.
+
+**Next independent UI GA UI-83:** inspect fresh LIVE HEAD, exact approved image, ledger and original WPF consumers; choose one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–82. Acceptance remains deferred until the owner explicitly says **“now it is test time.”**
