@@ -24,7 +24,7 @@ namespace Carthago.Engine.Rules.Health
         {
             cancellationToken.ThrowIfCancellationRequested();
             var lastFeed = context.HealthSnapshot.LastThreatFeedUpdateUtc;
-            if (!HealthEvidenceGate.IsFresh(context)
+            if (!lastFeed.HasValue || !HealthEvidenceGate.IsFresh(context)
                 || !_transition.Observe(lastFeed, context.HealthSnapshot.TimestampUtc))
                 return ValueTask.FromResult(RuleEvaluationResult.NoMatch(Descriptor.RuleId));
             return ValueTask.FromResult(RuleEvaluationResult.Match(Descriptor.RuleId, CreateHealthEvent(context, $"Threat feed stale: last update {lastFeed.Value:O}.")));
