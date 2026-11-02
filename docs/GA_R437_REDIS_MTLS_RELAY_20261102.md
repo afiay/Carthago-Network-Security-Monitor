@@ -46,7 +46,7 @@ Explicit diagnostic statuses ONLY. R437 alert admission remains CLOSED.
 
 ### `Carthago/Services/TrustedAudit/RedisAuditMutualTlsRelayReceiver.cs`
 
-- Requires an operator-provided server certificate **with private key**, valid at construction; **does not** create, export or store keys or a default trust store.
+- Requires an operator-provided server certificate **with private key**, valid at construction and explicitly authorized for the `serverAuth` EKU (`1.3.6.1.5.5.7.3.1`); **does not** create, export or store keys or a default trust store. A client-only, expired or public-only server certificate is rejected (source `bf6e9ec`).
 - Requires an operator-provided source identifier (3–64 ASCII letters/digits/dot/underscore/hyphen) and **exact 64-character lowercase SHA-256 hash of the complete client certificate DER**.
 - Validates peer time validity, explicit X.509 clientAuth EKU (`1.3.6.1.5.5.7.3.2`) and the pinned full-certificate hash using constant-time equality. It deliberately rejects unrelated CA-issued certificates, cert-name matches, expired certificates, unknown peers and server-only EKU. Pinned self-signed certs are supported; revocation checking is disabled because the operator's specific pinned leaf and manual rotation/revocation are the trust policy.
 - Requires the **already-started** listener to bind IPv4/IPv6 loopback, otherwise rejects before accepting any connection. The receiver never opens a listening socket on its own.
@@ -76,7 +76,7 @@ Explicit diagnostic statuses ONLY. R437 alert admission remains CLOSED.
 
 ### Tests authored — not executed
 
-- `Carthago.Tests/RedisAuditMutualTlsRelayReceiverTests.cs`: ephemeral RSA test certificates, pinned client certificate validity/EKU/thumbprint, self-contained loopback TLS sessions, exact length framing and two vendor events, wrong peer **and missing client certificate** refusal before event processing, 0/oversized frame refusal, malformed event session closure, bridge-to-existing-Redis-intake integration and no external binds. Certificate EKU/expiry negative checks are separately pinned to avoid accidentally testing only hash mismatch.
+- `Carthago.Tests/RedisAuditMutualTlsRelayReceiverTests.cs`: ephemeral RSA test certificates, pinned client certificate validity/EKU/thumbprint, server certificate private-key/serverAuth/expiration checks, self-contained loopback TLS sessions, exact length framing and two vendor events, wrong peer **and missing client certificate** refusal before event processing, 0/oversized frame refusal, malformed event session closure, bridge-to-existing-Redis-intake integration and no external binds. Certificate EKU/expiry negative checks are separately pinned to avoid accidentally testing only hash mismatch. The extra server certificate negative test is source commit `b2c1abc`.
 - `Carthago.Tests/RedisAuditSinkMetricsHealthTests.cs`: counter baseline/monotonic/drops, sticky disconnect loss/reset, pending backlog, stale/non-UTC samples and bounded source cardinality.
 
 These are **synthetic tests only**. No Redis server, real audit producer, certificate secret, capture service or external monitoring system is used.
@@ -84,7 +84,7 @@ These are **synthetic tests only**. No Redis server, real audit producer, certif
 ## Operator setup prerequisites (not performed in this GA)
 
 1. Provision a Redis Software audit sink using the official Redis configuration and enable `connection_and_crud` for the relevant database. **Do not point Redis Software's native plain TCP sink directly at Carthago's mTLS receiver.**
-2. Deploy an operator-managed relay receiving the actual Redis Software sink with strictly verified full-event framing, access-controlled same-host/protected transport, audit source/certificate provenance and explicit loss/backpressure monitoring. This relay is **not included** in the current GA.
+2. Deploy an operator-managed relay receiving the actual Redis Software sink with strictly verified full-event framing, access-controlled same-host/protected transport, audit source/certificate provenance and explicit loss/backpressure monitoring. Map each provisioned relay identity to **one expected source/worker sequence namespace**; avoid mixing unrelated Redis Software sources behind one shared relay ID. This relay is **not included** in the current GA.
 3. On the Carthago machine, provision and protect a TLS **server** certificate with private key in OS-managed storage; provision a dedicated short-lived, distinct TLS clientAuth certificate in the relay's secure store.
 4. Obtain the relay's **full certificate DER SHA-256** hash (lowercase 64 hex digits) out-of-band and pin it to an explicit local `RedisAuditPinnedRelay` identifier. Do not pin the Redis Software JSON `srcip` or `trgip` as a TLS identity.
 5. Create a `TcpListener(IPAddress.Loopback, port)` explicitly and call `RedisAuditMutualTlsDiagnosticBridge.AcceptOneAsync(...)`, with a capture-only lookup and a sanitized diagnostic sink. The source ID must come solely from the pinned relay identity. Keep this off by default until operator security review.
