@@ -79,6 +79,7 @@ namespace Carthago.Services.EnvironmentTuning
             Configure(options);
         }
 
+        public bool HasApprovedAdminHosts => _adminHosts.Count > 0;
         public bool HasApprovedOtSegments => _otSegments.Length > 0;
         public bool HasApprovedModbusControllers => _modbusControllers.Count > 0;
         public bool HasApprovedBacnetControllers => _bacnetControllers.Count > 0;
