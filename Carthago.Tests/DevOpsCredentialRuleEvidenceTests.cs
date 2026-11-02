@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 using System;
 using System.Threading.Tasks;
+using System.Text;
+using Carthago.Services;
 using Carthago.Engine.Rules;
 using Carthago.Engine.Rules.Expansion;
 using Carthago.Models;
@@ -76,9 +78,18 @@ public sealed class DevOpsCredentialRuleEvidenceTests
             .EvaluateAsync(Context(benign))).Matched);
 
         var syntheticToken = new string('A', 52);
-        benign.HttpUri = "/example/_apis/projects?pat=" + syntheticToken;
+        var wire = "GET /example/_apis/projects?pat=" + syntheticToken
+            + " HTTP/1.1\r\nHost: dev.azure.com\r\n\r\n";
+        Assert.True(HttpLight.TryParseHttp(Encoding.ASCII.GetBytes(wire), out var parsed));
+        Assert.True(parsed.ObservedAzureDevOpsPatUrlPattern);
+        var observed = Record(parsed.Host!, parsed.Path!, string.Empty);
+        observed.IsTcp = true;
+        observed.SourcePort = 50000;
+        observed.HttpMethod = parsed.Method;
+        observed.HttpRequestHeaders = parsed.JoinedHeaderLines;
+        observed.HttpAzureDevOpsPatUrlObserved = parsed.ObservedAzureDevOpsPatUrlPattern;
         var result = await new R359_AzureDevOpsPATInURLRule()
-            .EvaluateAsync(Context(benign));
+            .EvaluateAsync(Context(observed));
         Assert.True(result.Matched);
 
         // The URL query is inspection input, never materialized in
