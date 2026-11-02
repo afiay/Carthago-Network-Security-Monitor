@@ -593,6 +593,7 @@ namespace Carthago.Engine.Rules.Catalog
                 new R568_RedisConfigDeniedThenDefaultBasicAdminRule(),
                 new R569_FtpUploadAttemptThenDefaultBasicAdminRule(),
                 new R570_ModbusWriteThenDefaultBasicAdminRule(),
+                new R571_RedisConfigOkThenDefaultBasicAdminRule(),
             };
         }
 

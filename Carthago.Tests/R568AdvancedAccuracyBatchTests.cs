@@ -65,7 +65,7 @@ public sealed class R568AdvancedAccuracyBatchTests
         foreach (var seed in new[] { Http(credential: "YWRtaW46c3Ryb25n"), Http(path: "/status") })
         {
             var rule = new R568_RedisConfigDeniedThenDefaultBasicAdminRule();
-            Assert.False((await rule.EvaluateAsync(At(Redis())).Matched);
+            Assert.False((await rule.EvaluateAsync(At(Redis()))).Matched);
             Assert.False((await rule.EvaluateAsync(At(seed, 1))).Matched);
         }
     }
@@ -82,7 +82,7 @@ public sealed class R568AdvancedAccuracyBatchTests
     [Fact] public async Task WindowAndDuplicateIdsFailClosed()
     {
         var late = new R568_RedisConfigDeniedThenDefaultBasicAdminRule();
-        Assert.False((await late.EvaluateAsync(At(Redis())).Matched);
+        Assert.False((await late.EvaluateAsync(At(Redis()))).Matched);
         Assert.False((await late.EvaluateAsync(At(Http(), 121))).Matched);
         var duplicate = new R568_RedisConfigDeniedThenDefaultBasicAdminRule();
         var http = Http(); var redis = Redis(); http.Id = redis.Id;
