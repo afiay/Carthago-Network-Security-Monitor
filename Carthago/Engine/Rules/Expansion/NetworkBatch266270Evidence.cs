@@ -129,8 +129,8 @@ namespace Carthago.Engine.Rules.Expansion
                 || !(string.Equals(r.DnsRcode, "SERVFAIL", StringComparison.OrdinalIgnoreCase)
                     || string.Equals(r.DnsRcode, "REFUSED", StringComparison.OrdinalIgnoreCase)))
                 return false;
-            rcode = r.DnsRcode!.ToLowerInvariant();
-            return true;
+            rcode = r.DnsRcode?.ToLowerInvariant() ?? string.Empty;
+            return rcode.Length > 0;
         }
         internal sealed class FirstObserved
         {
