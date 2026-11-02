@@ -526,6 +526,43 @@ public sealed class RedisRespCaptureIntegrationTests
     }
 
     [Fact]
+    public void Opt_In_Vendor_Intake_Consumes_All_Event_Types_And_Remains_Nonalerting()
+    {
+        var (_, wireReply) = Exchange(Request("CONFIG", "SET", "timeout", "30"),
+            Encoding.ASCII.GetBytes("+OK\r\n"));
+        var options = new EnvironmentTuningOptions();
+        options.Approved.RedisServers.Add("10.4.0.10");
+        options.Approved.AdminHosts.Add("10.4.0.8");
+        var intake = new RedisSoftwareAuditDiagnosticIntake(
+            new ApprovedAssetRegistry(options));
+        var utc = DateTimeOffset.FromUnixTimeSeconds(
+            RedisSoftwareAuditSourceTests.EventSecond);
+
+        var connection = intake.Inspect("configured-audit-relay",
+            RedisSoftwareAuditSourceTests.Connection(), null, utc);
+        Assert.Equal(RedisSoftwareWireCorrelationStatus.AuditNotCommand,
+            connection.Status);
+        var result = intake.Inspect("configured-audit-relay",
+            RedisSoftwareAuditSourceTests.Command(), wireReply, utc);
+        Assert.Equal(RedisSoftwareWireCorrelationStatus.GenericConfigSubcommandUnproven,
+            result.Status);
+        Assert.False(result.AlertPermitted);
+
+        // Replayed vendor audit_seq cannot be accepted as another command.
+        var duplicate = intake.Inspect("configured-audit-relay",
+            RedisSoftwareAuditSourceTests.Command(), wireReply, utc);
+        Assert.Equal(RedisSoftwareWireCorrelationStatus.AuditStreamNotContinuous,
+            duplicate.Status);
+        Assert.False(duplicate.AlertPermitted);
+
+        var malformed = intake.Inspect("configured-audit-relay",
+            Encoding.ASCII.GetBytes("{bad json"), wireReply, utc);
+        Assert.Equal(RedisSoftwareWireCorrelationStatus.MalformedVendorNotification,
+            malformed.Status);
+        Assert.False(malformed.AlertPermitted);
+    }
+
+    [Fact]
     public void Imported_Json_Cannot_Forge_Capture_Only_Provenance()
     {
         var record = Assert.IsType<TrafficRecord>(JsonSerializer.Deserialize<TrafficRecord>(
