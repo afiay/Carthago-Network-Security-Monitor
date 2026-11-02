@@ -58,6 +58,14 @@ namespace Carthago.Engine.Rules.Expansion
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var record = context.Record;
+            // Missing packet endpoints are a core telemetry failure, independently
+            // of the unavailable authenticated connector/session producer.
+            if (string.IsNullOrWhiteSpace(record.Source)
+                || string.IsNullOrWhiteSpace(record.Destination))
+                return NoMatch(RuleNoMatchReasonCategory.MissingTelemetry,
+                    "MISSING_CORE_TELEMETRY",
+                    "A captured source and destination are required to evaluate a Cloudflare tunnel session.");
+
             var hasCloudflaredProcess = (record.ProcessName ?? string.Empty).Contains("cloudflared", StringComparison.OrdinalIgnoreCase);
             var endpoint = string.Join(" ", record.Sni, record.TlsSni, record.HttpHost);
             var hasTunnelEndpoint = endpoint.Contains("trycloudflare.com", StringComparison.OrdinalIgnoreCase)
