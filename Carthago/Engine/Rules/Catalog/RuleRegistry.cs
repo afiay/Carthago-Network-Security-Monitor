@@ -573,6 +573,7 @@ namespace Carthago.Engine.Rules.Catalog
                 new R548_ExternalModbusWriteTargetFanoutRule(),
                 new R549_CrossSubnetDefaultBasicCredentialFanoutRule(),
                 new R550_BacnetCrossBoundaryDiscoveryReplyRule(),
+                new R551_ExternalBacnetDiscoveryThenModbusWriteRule(),
             };
         }
 
