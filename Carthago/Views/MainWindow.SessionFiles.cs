@@ -7,7 +7,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Threading;
 using Carthago.Analytics.Models;
 using Carthago.Models;
 using Carthago.Services.SessionFiles;
@@ -21,62 +20,6 @@ public partial class MainWindow
     private readonly CarthagoExcelExportService _excelExportService = new();
     private string? _lastSavedLiveSessionPath;
     private bool _fileOperationInProgress;
-    private readonly DispatcherTimer _autoSaveTimer = new()
-    {
-        Interval = TimeSpan.FromSeconds(60)
-    };
-    private bool _autoSaveTimerWired;
-
-    private async void AutoSaveDuringMonitoring_Checked(object sender, RoutedEventArgs e)
-    {
-        if (!_autoSaveTimerWired)
-        {
-            _autoSaveTimer.Tick += AutoSaveTimer_Tick;
-            Closed += (_, __) => _autoSaveTimer.Stop();
-            _autoSaveTimerWired = true;
-        }
-
-        if (_lastSavedLiveSessionPath is null)
-        {
-            string? selected = AskSessionSavePath();
-            if (selected is null)
-            {
-                AutoSaveDuringMonitoringMenuItem.IsChecked = false;
-                return;
-            }
-            _lastSavedLiveSessionPath = selected;
-        }
-
-        _autoSaveTimer.Start();
-        if (StopButton?.IsEnabled == true && !_fileOperationInProgress)
-            await AutoSaveNowAsync();
-    }
-
-    private void AutoSaveDuringMonitoring_Unchecked(object sender, RoutedEventArgs e)
-        => _autoSaveTimer.Stop();
-
-    private async void AutoSaveTimer_Tick(object? sender, EventArgs e)
-    {
-        if (StopButton?.IsEnabled != true || _fileOperationInProgress) return;
-        await AutoSaveNowAsync();
-    }
-
-    private async Task AutoSaveNowAsync()
-    {
-        string? destination = _lastSavedLiveSessionPath;
-        if (destination is null) return;
-        bool saved = await SaveLiveSessionAsync(destination, showSuccess: false);
-        if (saved)
-        {
-            LastAutoSaveStatusMenuItem.Header = $"Last auto-save: {DateTime.Now:HH:mm:ss}";
-        }
-        else if (AutoSaveDuringMonitoringMenuItem.IsChecked)
-        {
-            // One failure notice comes from the shared save error handler;
-            // uncheck to avoid a popup every minute while monitoring continues.
-            AutoSaveDuringMonitoringMenuItem.IsChecked = false;
-        }
-    }
 
     private void MainWindow_SessionFileKeyDown(object sender, KeyEventArgs e)
     {
@@ -109,7 +52,7 @@ public partial class MainWindow
         await RunFileOperationAsync(async () =>
         {
             var snapshot = await _sessionArchiveService.OpenAsync(dialog.FileName);
-            // Opened session becomes the active Save/Auto-save destination.
+            // Opened session becomes the active manual Save destination.
             // Historical rows are retained by the merger, never trusted as live evidence.
             _lastSavedLiveSessionPath = dialog.FileName;
             var viewer = new CarthagoSessionViewerWindow(snapshot)
@@ -169,9 +112,8 @@ public partial class MainWindow
         return dialog.ShowDialog(this) == true ? dialog.FileName : null;
     }
 
-    private async Task<bool> SaveLiveSessionAsync(string destination, bool showSuccess = true)
+    private async Task SaveLiveSessionAsync(string destination)
     {
-        bool saved = false;
         await RunFileOperationAsync(async () =>
         {
             var snapshot = await CaptureAvailableAnalysisAsync();
@@ -183,17 +125,12 @@ public partial class MainWindow
             }
             await _sessionArchiveService.SaveAsync(destination, snapshot);
             _lastSavedLiveSessionPath = destination;
-            saved = true;
-            if (showSuccess)
-                MessageBox.Show(this,
-                    "Session saved as .csa, preserving distinct records from the active session. " +
-                    "It is not a raw PCAP or proof of lossless packet history. " +
-                    "Coverage limitations are recorded in the archive.",
-                    "Carthago session", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(this,
+                "Session saved as .csa, preserving distinct records from the active session. " +
+                "It is not a raw PCAP or proof of lossless packet history. " +
+                "Coverage limitations are recorded in the archive.",
+                "Carthago session", MessageBoxButton.OK, MessageBoxImage.Information);
         });
-        if (!saved && AutoSaveDuringMonitoringMenuItem.IsChecked)
-            AutoSaveDuringMonitoringMenuItem.IsChecked = false;
-        return saved;
     }
 
     private async Task RunFileOperationAsync(Func<Task> operation)
