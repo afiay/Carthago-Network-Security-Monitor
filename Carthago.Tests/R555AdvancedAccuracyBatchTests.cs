@@ -285,6 +285,11 @@ public sealed class R555AdvancedAccuracyBatchTests
         Assert.Equal(88, rule.PrecisionProfile.MinimumConfidence);
         Assert.Equal(RulePrecisionMaturity.Candidate, rule.PrecisionProfile.Maturity);
         Assert.Single(RuleRegistry.CreateDefaultRules().Where(r => r.Descriptor.RuleId == "R555"));
-        Assert.True(RulePrecisionCatalog.Validate("R555", Upload()).CanEvaluate);
+        // The parser-labelled record does not preserve raw payload bytes.
+        // Central precision validation must not treat ApplicationProtocol alone
+        // as proof of the independent Payload telemetry requirement.
+        var validation = RulePrecisionCatalog.Validate("R555", Upload());
+        Assert.False(validation.CanEvaluate);
+        Assert.Contains("Payload", validation.MissingTelemetry);
     }
 }
