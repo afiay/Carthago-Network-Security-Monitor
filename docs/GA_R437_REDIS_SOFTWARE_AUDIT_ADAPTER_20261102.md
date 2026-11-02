@@ -45,7 +45,9 @@ The earlier GA exposed `TrafficRecord.RedisRespConfigSetReplyOkObserved` / `Redi
 
 ## Exact-SHA owner Windows verification gate (only on authorization)
 
-From a clean feature-branch checkout, fast-forward, record exact `git rev-parse HEAD`, then `dotnet build -c Release` **before** any `--no-build` test.
+An operator-invoked, fail-fast script is now included at `scripts/verify-redis-software-audit-ga.ps1` (commit `c6529fe`). From the repository root on Windows, the owner can run `& .\\scripts\\verify-redis-software-audit-ga.ps1` to check the branch, clean tree, fast-forward, exact SHA, Release build, targeted Redis tests, and full xUnit suite with separate TRX in a fresh results directory. `-TargetedOnly` explicitly skips the full suite and must never be represented as a full GA. **This script was authored, not executed.**
+
+Alternatively, from a clean feature-branch checkout, fast-forward, record exact `git rev-parse HEAD`, then `dotnet build -c Release` **before** any `--no-build` test.
 
 Targeted filter:
 
