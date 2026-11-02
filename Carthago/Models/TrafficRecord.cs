@@ -126,11 +126,14 @@ namespace Carthago.Models
         public bool MqttWillTopicObserved { get; set; }
         public bool MqttWillControlTopicObserved { get; set; }
 
-        // ===== Redis RESP2 (wire-derived, request only) =====
-        // Set only by the bounded packet parser. JSON/imported records cannot
-        // claim this signal; do not retain configuration names or values.
-        // This proves a request shape, not Redis authorization or server outcome.
+        // ===== Redis RESP2 (wire-derived request/reply correlation) =====
+        // Set exclusively by PacketHandler. Serialized/imported records cannot
+        // claim these signals. Never retain CONFIG keys/values or reply error text.
+        // A flow-correlated +OK is a network reply, NOT authenticated server
+        // identity, approved administrator activity, or a proven configuration change.
         public bool RedisRespConfigSetRequestObserved { get; internal set; }
+        public bool RedisRespConfigSetReplyOkObserved { get; internal set; }
+        public bool RedisRespConfigSetReplyErrorObserved { get; internal set; }
 
         // ===== HTTP =====
         public string? HttpMethod { get; set; }
