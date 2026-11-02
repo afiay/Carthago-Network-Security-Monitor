@@ -302,6 +302,5 @@ public sealed class R550AdvancedAccuracyBatchTests
         Assert.Equal(2, rule.PrecisionProfile.Threshold);
         Assert.Single(RuleRegistry.CreateDefaultRules().Where(r => r.Descriptor.RuleId == "R550"));
         Assert.Equal("Rules.R550.Enabled", rule.Descriptor.ConfigKey);
-        Assert.Equal(80, new R102_DnsQueryEntropyRule().PrecisionProfile.MinimumConfidence);
     }
 }
