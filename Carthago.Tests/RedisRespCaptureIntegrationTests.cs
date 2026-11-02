@@ -140,9 +140,8 @@ public sealed class RedisRespCaptureIntegrationTests
     [Fact]
     public void Imported_Json_Cannot_Forge_Capture_Only_Provenance()
     {
-        var record = JsonSerializer.Deserialize<TrafficRecord>(
-            "{\"ApplicationProtocol\":\"redis.resp2\",\"RedisRespConfigSetRequestObserved\":true}");
-        Assert.NotNull(record);
+        var record = Assert.IsType<TrafficRecord>(JsonSerializer.Deserialize<TrafficRecord>(
+            "{\"ApplicationProtocol\":\"redis.resp2\",\"RedisRespConfigSetRequestObserved\":true}"));
         Assert.False(record.RedisRespConfigSetRequestObserved);
     }
 
