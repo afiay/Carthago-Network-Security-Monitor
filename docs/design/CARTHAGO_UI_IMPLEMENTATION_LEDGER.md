@@ -3853,3 +3853,38 @@ Private source commit `95687189a7d184e8a575ef342ade232cd59c4b23` is a direct chi
 10. Inspect exact source/docs blobs, direct-parent commit ancestry, owned-path diff, untouched independent R550 changes and **zero** builds/tests/replays/CI/runners/benchmarks/capture.
 
 **Next independent UI GA UI-75:** inspect fresh LIVE HEAD, exact approved reference, ledger and original WPF consumers; choose one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–74. All acceptance remains deferred until owner explicitly says **“now it is test time.”**
+
+## GA UI-75 — Live Events: visually grouped local filter toolbar
+
+**2026-11-02 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE `feature/carthago-reliability-hardening` HEAD: `0a70a91627be68f3470614db4a62455bfa8f18a9`. Previous GA UI-74 source `95687189a7d184e8a575ef342ade232cd59c4b23`, publication `6d9b7f8578f996926fb599523cb03a5e94180312`. **Exact GA UI-75 source commit:** `6291c341d9aa717f56f8296e4a70c0d9af59e87a`; source XAML blob `285a1c9876df709c4601fd317d6f92f9ff7853f6`. Owned paths only: `Carthago/Views/MainWindow.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`. Builds, dotnet tests, xUnit, replays, holdouts, CI, GitHub Actions, runners, benchmarks, production capture, running-WPF screenshots and authored/executed tests: **ZERO**. Scenarios below are **PLANNED ONLY; UNEXECUTED**.
+
+### Approved reference and initial static divergence review
+
+**FIRST** resolved and visually inspected exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c` (1648×928). Reference has navy/graphite panels, cyan/teal accents, restrained red/amber severity, persistent left navigation, operational KPIs, a traffic plot, prioritized incidents, investigation and a dense Live Events table with filters directly above it. Its IPs, timestamps, Mbps lines, rule IDs, metrics, confidence and terminal text are **DEMO ONLY**, never live telemetry, verified capture health or data sources. Preserve existing Wide >=1440, Standard 1100–1439, Compact 1024–1099, graceful below 1024, local PPS ScottPlot 10-sample average/120-point history, read-only local Live Events 80 displayed/500 retained and the explicitly **UNAVAILABLE** visual-only CLI.
+
+Starting HEAD follows GA UI-74 publication by **two independent R551 BACnet-to-Modbus rule source/tests/docs commits** (`19aca99dca435d51b02ce9edeb53aab20a06bce6`, `0a70a91627be68f3470614db4a62455bfa8f18a9`); comparison against UI-74 publication showed **no UI-owned path overlap**. Read live recent commits and the ledger through UI-74; inspected `MainWindow.xaml`, `Theme.xaml`, `Sidebar.xaml`, `MainWindow.DashboardEvents.cs`, `MainWindow.DashboardResponsive.cs`, `MainWindow.Responsive.cs`, `MainWindow.Dashboard.cs`, `MainWindow.xaml.cs`, `MainWindow.Core.cs`, `MainWindow.Settings.cs` and `MainWindow.Navigation.cs`. The original `DashboardLiveEventsGrid` is read-only, virtualized, with a frozen first column; `MainWindow.DashboardEvents.cs` reads four existing filters, projects at most 80 rows from the retained local collection (max 500), updates source-driven empty/status/provenance text and navigates to existing Raw Detections. The existing `WrapPanel` already wraps filter controls at narrow widths. No shared API, viewmodel, data source or producer change is required.
+
+### One cohesive UI-owned visual change
+
+Wrap the **existing Live Events severity, protocol, rule and search filters plus Clear filters** in one restrained, non-interactive `Border` occupying the original `Grid.Row="1"`. Reuse theme `PillBgBrush` and `SoftDividerBrush`, a 1px outline, 8px corner radius and 10px/9px/10px/3px padding. The original `WrapPanel` remains the child, with **all existing named controls, labels, handlers, tooltips, accessible metadata, control sizes, order and margins unchanged**. This is a visible filter-toolbar grouping and scan-hierarchy improvement, distinct from UI-16/26 filter labels and UI-71 empty-state styling. The decorative container adds no keyboard focus stop, action, telemetry, new filter, capture behavior or fabricated status. The event table, header, status/provenance, 80/500 limits, investigation, Cisco/WebView2/ScottPlot, detection/protocol/security controls and privacy/trust boundaries remain source-unchanged.
+
+### Static end review, publication guard and unverified risks
+
+Private source commit `6291c341d9aa717f56f8296e4a70c0d9af59e87a` is a direct child of pinned baseline `0a70a91627be68f3470614db4a62455bfa8f18a9`, with only `Carthago/Views/MainWindow.xaml` changed (11 additions, 2 deletions). The private documentation descendant changes only this ledger. Re-read LIVE remote HEAD **immediately before publication**; compare intervening detection/protocol/UI changes. Publish the complete private two-commit chain via **one non-forced atomic GitHub `update_ref` with `expected_sha` lease** on the existing branch. On HEAD movement, reconcile only disjoint paths on a fresh base and fresh lease; STOP on overlap, conflicts or absent atomic guarantee. After publication, inspect HEAD, direct ancestry, source/docs blobs, exact owned-path diff and preserved independent R551 files. No new branch, PR, repository, automation, force push or history rewrite.
+
+**Unverified risks:** Windows WPF XAML parsing/compilation; border/padding consuming horizontal room and causing earlier filter wrapping, especially 1024/1023/640px; auto-height toolbar growing with wrapped rows; extra vertical space above the fixed-height 190px table; 1px border visibility and color contrast in high-contrast themes; 125–200% DPI; keyboard tab order, screen-reader reading order, tooltip presentation and whether the non-interactive wrapper affects focus; scrolling/selection, empty state and long labels. Static inspection is **not** rendered UI, accessibility or compilation verification.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED OR EXECUTED
+
+1. At 1440px, inspect the subdued filter toolbar, unchanged labels and visible separation from the read-only event table.
+2. At 1100/1099/1024/1023/640px, inspect natural WrapPanel line breaks, control visibility, scroll containment and absence of horizontal clipping.
+3. At 125%, 150% and 200% DPI, inspect toolbar padding, 1px border, label/control alignment and row wrapping.
+4. Inspect standard/high-contrast themes for readable inputs, focus outlines and restrained toolbar background/border.
+5. Use keyboard Tab/Shift+Tab through severity, protocol, rule, search and Clear filters; ensure no additional focus stop.
+6. Apply each of the original four filters and Clear filters; verify unchanged event projection and retained local data.
+7. With zero events, nonmatching filters and populated events, inspect original empty-state overlay and unchanged 190px virtualized read-only grid.
+8. Inspect frozen Event time column, horizontal scrolling, accessibility metadata and original 80 displayed/500 retained boundaries.
+9. Inspect unchanged operational KPIs, local PPS 10-sample average/120-point bound, prioritized incidents/investigation, unavailable CLI, Cisco/WebView2/ScottPlot, capture/trust/privacy and independent R551 detection/protocol files.
+10. Inspect exact source/docs blobs, two direct-parent commits, only two owned changed paths, fresh expected-SHA publication lease and **zero** tests/builds/replays/CI/runners/benchmarks/capture.
+
+**Next independent UI GA UI-76:** inspect fresh LIVE HEAD, exact approved image, ledger and original WPF consumers; choose one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–75. Acceptance remains deferred until the owner explicitly says **“now it is test time.”**
