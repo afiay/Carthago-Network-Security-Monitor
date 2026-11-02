@@ -1344,6 +1344,7 @@
                                    VerticalAlignment="Center"
                                    Margin="0,0,6,0"/>
                         <ComboBox x:Name="DashboardLiveSeverityFilter"
+                                  FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
                                   Width="142" Height="30"
                                   SelectedIndex="0"
                                   ToolTip="Filter locally observed detection severity"
@@ -1368,6 +1369,7 @@
                                    VerticalAlignment="Center"
                                    Margin="0,0,6,0"/>
                         <ComboBox x:Name="DashboardLiveProtocolFilter"
+                                  FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
                                   Width="142" Height="30"
                                   SelectedIndex="0"
                                   ToolTip="Filter by observed protocol; other protocols remain available under All"
@@ -1391,6 +1393,7 @@
                                    VerticalAlignment="Center"
                                    Margin="0,0,6,0"/>
                         <TextBox x:Name="DashboardLiveRuleFilter"
+                                  FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
                                  Width="90" Height="30"
                                  VerticalContentAlignment="Center"
                                  ToolTip="Filter by exact rule ID or part of a rule ID"
@@ -1408,6 +1411,7 @@
                                    VerticalAlignment="Center"
                                    Margin="0,0,6,0"/>
                         <TextBox x:Name="DashboardLiveSearchFilter"
+                                  FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
                                  Width="182" Height="30"
                                  VerticalContentAlignment="Center"
                                  ToolTip="Search visible event source, destination, rule or protocol; no evidence payload search"
