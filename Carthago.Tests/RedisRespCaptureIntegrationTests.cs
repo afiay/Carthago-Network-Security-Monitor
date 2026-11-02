@@ -251,7 +251,7 @@ public sealed class RedisRespCaptureIntegrationTests
     }
 
     [Fact]
-    public void Correlated_Server_Reply_And_AdminHosts_Policy_Remain_NonAlerting()
+    public async Task Correlated_Server_Reply_And_AdminHosts_Policy_Remain_NonAlerting()
     {
         var (_, reply) = Exchange(Request("CONFIG", "SET", "timeout", "30"),
             Encoding.ASCII.GetBytes("+OK\r\n"));
@@ -284,9 +284,8 @@ public sealed class RedisRespCaptureIntegrationTests
             R437_RedisCONFIGSETIndicatorRule.AssessCorrelatedClient(reply, other));
 
         // A wire-correlated +OK cannot be promoted to an alert by default.
-        var result = new R437_RedisCONFIGSETIndicatorRule().EvaluateAsync(
-            new RuleEvaluationContext(reply, Sensitivity.Balanced, DateTime.UtcNow))
-            .GetAwaiter().GetResult();
+        var result = await new R437_RedisCONFIGSETIndicatorRule().EvaluateAsync(
+            new RuleEvaluationContext(reply, Sensitivity.Balanced, DateTime.UtcNow));
         Assert.False(result.Matched);
         Assert.Empty(result.Events);
     }
