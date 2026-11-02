@@ -206,6 +206,77 @@ public sealed class RedisTrustedAuditCandidateGateTests
     }
 
     [Fact]
+    public void End_To_End_Signed_Intake_Requires_Two_Pinned_Independent_Issuers()
+    {
+        using var firstKey = RSA.Create(2048);
+        using var secondKey = RSA.Create(2048);
+        var verifier = new TrustedAuditReceiptVerifier(new[]
+        {
+            new TrustedAuditIssuer("redis-audit-primary",
+                Convert.ToBase64String(firstKey.ExportSubjectPublicKeyInfo()),
+                new[] { "R437" }),
+            new TrustedAuditIssuer("redis-audit-secondary",
+                Convert.ToBase64String(secondKey.ExportSubjectPublicKeyInfo()),
+                new[] { "R437" })
+        }, () => Now);
+        var intake = new RedisSignedAuditCandidateIntake(verifier, Registry());
+        var first = Sign(firstKey, Claim("redis-audit-primary"));
+        var second = Sign(secondKey, Claim("redis-audit-secondary"));
+
+        var accepted = intake.Assess(first, second, Reply(), Now);
+        Assert.Equal(RedisAuditCandidateStatus.UnapprovedClientRequiresTransactionBinding,
+            accepted.Status);
+        Assert.False(accepted.AlertPermitted);
+
+        // Once a pair was consumed by the replay verifier, presenting it
+        // again is never a second independent audit observation.
+        var replay = intake.Assess(first, second, Reply(), Now);
+        Assert.Equal(RedisAuditCandidateStatus.SignatureOrReplayRejected, replay.Status);
+        Assert.False(replay.AlertPermitted);
+    }
+
+    [Fact]
+    public void Invalid_Signer_Or_One_Receipt_Cannot_Enter_The_Trusted_Audit_Path()
+    {
+        using var key = RSA.Create(2048);
+        using var attacker = RSA.Create(2048);
+        var verifier = new TrustedAuditReceiptVerifier(new[]
+        {
+            new TrustedAuditIssuer("redis-audit-primary",
+                Convert.ToBase64String(key.ExportSubjectPublicKeyInfo()),
+                new[] { "R437" })
+        }, () => Now);
+        var intake = new RedisSignedAuditCandidateIntake(verifier, Registry());
+        var first = Sign(key, Claim("redis-audit-primary"));
+        var forged = Sign(attacker, Claim("redis-audit-primary"));
+
+        Assert.Equal(RedisAuditCandidateStatus.MissingVerifiedAudits,
+            intake.Assess(first, null, Reply(), Now).Status);
+        Assert.Equal(RedisAuditCandidateStatus.SignatureOrReplayRejected,
+            intake.Assess(forged, first, Reply(), Now).Status);
+    }
+
+    [Fact]
+    public void One_Signer_Cannot_Corroborate_Their_Own_Two_Signed_Events()
+    {
+        using var key = RSA.Create(2048);
+        var verifier = new TrustedAuditReceiptVerifier(new[]
+        {
+            new TrustedAuditIssuer("redis-audit-primary",
+                Convert.ToBase64String(key.ExportSubjectPublicKeyInfo()),
+                new[] { "R437" })
+        }, () => Now);
+        var intake = new RedisSignedAuditCandidateIntake(verifier, Registry());
+
+        var result = intake.Assess(
+            Sign(key, Claim("redis-audit-primary")),
+            Sign(key, Claim("redis-audit-primary")), Reply(), Now);
+        Assert.Equal(RedisAuditCandidateStatus.IndependentAuditCorrelationRejected,
+            result.Status);
+        Assert.False(result.AlertPermitted);
+    }
+
+    [Fact]
     public void Generic_Config_Command_Is_Not_An_Attestable_R437_Config_Set_Outcome()
     {
         using var key = RSA.Create(2048);
