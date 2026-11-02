@@ -113,9 +113,33 @@
         <RowDefinition Height="Auto"/>
         <RowDefinition Height="Auto"/>
         <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
       </Grid.RowDefinitions>
-
-      <ItemsControl Grid.Row="0"
+      <!-- UI-97: visible local-evidence hero; no simulated feed-health claim. -->
+      <Border Grid.Row="0" CornerRadius="14" BorderBrush="#24506A" BorderThickness="1"
+              Padding="24,22" Margin="0,0,0,18">
+        <Border.Background>
+          <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#102D45" Offset="0"/>
+            <GradientStop Color="#0B1B2E" Offset="0.58"/>
+            <GradientStop Color="#123A40" Offset="1"/>
+          </LinearGradientBrush>
+        </Border.Background>
+        <StackPanel>
+          <TextBlock Text="THREAT INTELLIGENCE / LOCAL EVIDENCE" Foreground="#50D5E8"
+                     FontSize="11" FontWeight="Bold" Margin="0,0,0,8"/>
+          <TextBlock Text="Threat Feed Intelligence" FontSize="28" FontWeight="Bold"
+                     Foreground="#F2F8FF" TextWrapping="Wrap"/>
+          <TextBlock Text="Prioritize observed indicators, inspect related evidence, and investigate linked incidents."
+                     FontSize="13" Foreground="#B6CADA" TextWrapping="Wrap" Margin="0,8,0,0"/>
+          <Border Background="#10293A" BorderBrush="#2A5668" BorderThickness="1"
+                  CornerRadius="7" Padding="12,8" Margin="0,14,0,0" HorizontalAlignment="Left">
+            <TextBlock Text="LOCAL MATCHES  ·  NOT A LIVE FEED HEALTH ASSERTION"
+                       Foreground="#8BD7E3" FontSize="11" FontWeight="SemiBold" TextWrapping="Wrap"/>
+          </Border>
+        </StackPanel>
+      </Border>
+      <ItemsControl Grid.Row="1"
                     ItemsSource="{Binding Kpis}"
                     Margin="0,0,0,16">
         <ItemsControl.ItemsPanel>
@@ -126,9 +150,14 @@
         <ItemsControl.ItemTemplate>
           <DataTemplate>
             <Border Style="{StaticResource AnomalyKpiCard}"
-                    Width="251"
-                    Margin="0,0,12,12"
-                    BorderBrush="{Binding AccentBrush}">
+                    Width="251" MinHeight="154" Padding="18,17"
+                    Margin="0,0,12,12" BorderBrush="{Binding AccentBrush}">
+              <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                  <GradientStop Color="#102B42" Offset="0"/>
+                  <GradientStop Color="#091727" Offset="1"/>
+                </LinearGradientBrush>
+              </Border.Background>
               <Grid>
                 <Grid.RowDefinitions>
                   <RowDefinition Height="Auto"/>
@@ -147,9 +176,9 @@
                 </DockPanel>
                 <TextBlock Grid.Row="1"
                            Text="{Binding Value}"
-                           FontSize="28"
+                           FontSize="32"
                            FontWeight="Bold"
-                           Margin="0,8,0,0"/>
+                           Margin="0,10,0,0"/>
                 <TextBlock Grid.Row="2"
                            Text="{Binding Delta}"
                            Foreground="{Binding AccentBrush}"
@@ -169,7 +198,7 @@
         </ItemsControl.ItemTemplate>
       </ItemsControl>
 
-      <Grid x:Name="PrimaryWorkspaceGrid" Grid.Row="1"
+      <Grid x:Name="PrimaryWorkspaceGrid" Grid.Row="2"
             Grid.IsSharedSizeScope="True"
             Margin="0,0,0,14">
         <Grid.RowDefinitions>
@@ -193,6 +222,7 @@
             </Grid.RowDefinitions>
 
             <StackPanel>
+              <Border Height="3" Background="#2DC8DC" CornerRadius="2" Margin="0,0,0,14"/>
               <DockPanel>
                 <StackPanel DockPanel.Dock="Left">
                   <TextBlock Text="Threat Feed Matches"
@@ -208,7 +238,8 @@
                            TextWrapping="Wrap"/>
               </DockPanel>
 
-              <WrapPanel Margin="0,14,0,0">
+              <Border Background="#0A1C2C" BorderBrush="#254157" BorderThickness="1" CornerRadius="10" Padding="12" Margin="0,14,0,0">
+              <WrapPanel>
                 <ComboBox x:Name="SeverityFilter"
                           Width="152"
                           Height="38"
@@ -248,6 +279,7 @@
                         ToolTip="More actions"
                         Content="..."/>
               </WrapPanel>
+              </Border>
             </StackPanel>
 
             <ScrollViewer Grid.Row="1"
@@ -755,7 +787,7 @@
         </Border>
       </Grid>
 
-      <Grid x:Name="SupportingWorkspaceGrid" Grid.Row="2">
+      <Grid x:Name="SupportingWorkspaceGrid" Grid.Row="3">
         <Grid.RowDefinitions>
           <RowDefinition x:Name="SupportingWorkspaceFirstRow" Height="Auto"/>
           <RowDefinition x:Name="SupportingWorkspaceSecondRow" Height="0"/>
