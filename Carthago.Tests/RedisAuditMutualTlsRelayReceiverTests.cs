@@ -209,6 +209,68 @@ public sealed class RedisAuditMutualTlsRelayReceiverTests
     }
 
     [Fact]
+    public async Task No_Client_Certificate_Cannot_Enter_A_Mutual_Tls_Session()
+    {
+        using var server = NewCertificate("server", serverAuth: true);
+        using var pinned = NewCertificate("required-relay", clientAuth: true);
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(45));
+
+        var receiver = new RedisAuditMutualTlsRelayReceiver(server, Pin(pinned));
+        var delivered = 0;
+        var receiving = receiver.AcceptOneAsync(listener, (_, _, _) =>
+        {
+            delivered++;
+            return ValueTask.CompletedTask;
+        }, timeout.Token);
+
+        using var client = new TcpClient();
+        await client.ConnectAsync(IPAddress.Loopback,
+            ((IPEndPoint)listener.LocalEndpoint).Port, timeout.Token);
+
+        // Supply NO TLS client certificate, but pin the test server cert.
+        using (var tls = new SslStream(client.GetStream()))
+        {
+            try
+            {
+                var options = new SslClientAuthenticationOptions
+                {
+                    TargetHost = "localhost",
+                    ClientCertificates = new X509CertificateCollection(),
+                    EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13,
+                    CertificateRevocationCheckMode = X509RevocationMode.NoCheck,
+                    RemoteCertificateValidationCallback = (_, remote, _, _) =>
+                    {
+                        if (remote == null) return false;
+                        using var observed = new X509Certificate2(remote);
+                        return CryptographicOperations.FixedTimeEquals(
+                            observed.GetCertHash(HashAlgorithmName.SHA256),
+                            server.GetCertHash(HashAlgorithmName.SHA256));
+                    }
+                };
+                await tls.AuthenticateAsClientAsync(options, timeout.Token);
+            }
+            catch (AuthenticationException)
+            {
+                // Some TLS providers reject the missing certificate during
+                // handshake; others let it complete and the receiver must
+                // enforce IsMutuallyAuthenticated before reading any events.
+            }
+            catch (IOException)
+            {
+                // Windows TLS can report a rejected handshake as transport IO.
+            }
+        }
+
+        var result = await receiving.WaitAsync(timeout.Token);
+        Assert.Equal(RedisAuditRelaySessionStatus.PeerAuthenticationFailed,
+            result.Status);
+        Assert.Equal(0, delivered);
+        Assert.False(result.AlertPermitted);
+    }
+
+    [Fact]
     public async Task Oversized_And_Zero_Length_Frames_Fail_Before_Handler()
     {
         using var server = NewCertificate("server", serverAuth: true);
