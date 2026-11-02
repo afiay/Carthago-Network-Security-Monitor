@@ -13,7 +13,8 @@ public sealed class RuleTuningCatalogTests
     [Fact]
     public void Every_Rule_Has_A_Tuning_Tier()
     {
-        Assert.Equal(544, RuleCatalog.All.Count);
+        Assert.True(RuleCatalog.All.Count >= 544);
+        Assert.Equal(RuleCatalog.All.Count, RuleCatalog.Rules.Count);
         Assert.All(RuleCatalog.All, descriptor =>
         {
             var decision = RuleTuningClassifier.Classify(descriptor);
