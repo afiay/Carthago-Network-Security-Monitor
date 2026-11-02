@@ -30,9 +30,12 @@ namespace Carthago.Engine.Rules.Expansion
         private static bool Endpoints(TrafficRecord r, out IPAddress source, out IPAddress destination)
         {
             source = IPAddress.None; destination = IPAddress.None;
-            return r.Id != Guid.Empty && IPAddress.TryParse(r.Source, out source)
-                && IPAddress.TryParse(r.Destination, out destination)
-                && source.AddressFamily == destination.AddressFamily && !source.Equals(destination)
+            if (r.Id == Guid.Empty || !IPAddress.TryParse(r.Source, out var parsedSource)
+                || !IPAddress.TryParse(r.Destination, out var parsedDestination))
+                return false;
+            source = parsedSource;
+            destination = parsedDestination;
+            return source.AddressFamily == destination.AddressFamily && !source.Equals(destination)
                 && (r.IpVersion == 4 && source.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork
                     || r.IpVersion == 6 && source.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6);
         }
@@ -126,7 +129,7 @@ namespace Carthago.Engine.Rules.Expansion
                 || !(string.Equals(r.DnsRcode, "SERVFAIL", StringComparison.OrdinalIgnoreCase)
                     || string.Equals(r.DnsRcode, "REFUSED", StringComparison.OrdinalIgnoreCase)))
                 return false;
-            rcode = r.DnsRcode.ToLowerInvariant();
+            rcode = r.DnsRcode!.ToLowerInvariant();
             return true;
         }
         internal sealed class FirstObserved
