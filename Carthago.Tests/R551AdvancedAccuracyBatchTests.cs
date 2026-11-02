@@ -50,7 +50,7 @@ public sealed class R551AdvancedAccuracyBatchTests
             frame[25] = (byte)udpLength;
         }
         payload.CopyTo(frame, 20 + transportHeader);
-        var record = new PacketHandler().ParseFrame(frame, (LinkLayers)12);
+        var record = new PacketHandler().ParseFrame(frame, (PacketDotNet.LinkLayers)12);
         Assert.NotNull(record);
         return record!;
     }
