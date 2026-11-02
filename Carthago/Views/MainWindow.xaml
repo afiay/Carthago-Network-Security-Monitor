@@ -645,6 +645,13 @@
                                      Foreground="{StaticResource TextMutedBrush}" Margin="6,0,0,0" VerticalAlignment="Center"/>
                         </StackPanel>
                       </WrapPanel>
+                       <TextBlock x:Name="DashboardChartRefreshCountdownText"
+                                  Text="Charts refresh in 3s"
+                                  Foreground="{StaticResource TextMutedBrush}"
+                                  FontSize="11"
+                                  FontWeight="SemiBold"
+                                  AutomationProperties.Name="Seconds until the next chart redraw"
+                                  Margin="0,0,0,4"/>
                        <TextBlock x:Name="DashboardTrafficChartTextSummary"
                                   Text="Waiting for local PPS timer samples; no packet-rate observation is available yet."
                                   Foreground="{StaticResource TextMutedBrush}"
@@ -2087,10 +2094,20 @@
           </GroupBox>
 
           <!-- Charts under -->
-          <GroupBox Header="Traffic Over Time"
-                    Grid.Row="1"
+          <GroupBox Grid.Row="1"
                     Grid.Column="0"
                     Margin="5">
+            <GroupBox.Header>
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Traffic Over Time"/>
+                <TextBlock x:Name="AnalyticsChartRefreshCountdownText"
+                           Text="Charts refresh in 3s"
+                           Foreground="{StaticResource TextMutedBrush}"
+                           FontSize="11"
+                           Margin="12,0,0,0"
+                           AutomationProperties.Name="Seconds until the next chart redraw"/>
+              </StackPanel>
+            </GroupBox.Header>
             <ScottPlot:WpfPlot x:Name="TrafficPlot_Analytics"/>
           </GroupBox>
 

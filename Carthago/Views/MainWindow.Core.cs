@@ -24,6 +24,11 @@ namespace Carthago
         // ===== Timers / Counters =====
         private readonly System.Windows.Threading.DispatcherTimer _ppsTimer =
             new() { Interval = TimeSpan.FromSeconds(1) };
+        private const int ChartRefreshIntervalSeconds = 3;
+        private int _secondsUntilChartRefresh = ChartRefreshIntervalSeconds;
+        private bool _protocolChartDirty;
+        private bool _talkerChartDirty;
+        private bool _severityChartDirty;
         private bool _startupAutoCaptureQueued;
         private bool _syncingSettingsUi;
 
@@ -122,7 +127,33 @@ namespace Carthago
                 foreach (var key in _connLastSeen.Where(kv => kv.Value < cutoff).Select(kv => kv.Key).ToList())
                     _connLastSeen.Remove(key);
 
-                RenderTraffic();
+                // Keep packet-rate samples and KPI counters live at 1 Hz.
+                // Rebuild the charts only once per three timer ticks.
+                _secondsUntilChartRefresh--;
+                if (_secondsUntilChartRefresh <= 0)
+                {
+                    RenderTraffic();
+                    if (_protocolChartDirty)
+                    {
+                        RenderProtocol();
+                        _protocolChartDirty = false;
+                    }
+                    if (_talkerChartDirty)
+                    {
+                        RenderTopTalkers();
+                        _talkerChartDirty = false;
+                    }
+                    if (_severityChartDirty)
+                    {
+                        RenderSeverity();
+                        _severityChartDirty = false;
+                    }
+                    _secondsUntilChartRefresh = ChartRefreshIntervalSeconds;
+                }
+
+                string chartCountdown = $"Charts refresh in {_secondsUntilChartRefresh}s";
+                DashboardChartRefreshCountdownText.Text = chartCountdown;
+                AnalyticsChartRefreshCountdownText.Text = chartCountdown;
                 UpdateKpis();
             };
             _ppsTimer.Start();

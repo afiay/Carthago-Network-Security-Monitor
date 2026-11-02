@@ -22,7 +22,7 @@ namespace Carthago
                 if (!_protocolCounts.ContainsKey(proto))
                     _protocolCounts[proto] = 0;
                 _protocolCounts[proto]++;
-                RenderProtocol();
+                _protocolChartDirty = true;
 
                 if (!string.IsNullOrWhiteSpace(record.Source))
                 {
@@ -34,7 +34,7 @@ namespace Carthago
                     string connKey = $"{record.Source}>{record.Destination}:{(record.DestinationPort?.ToString() ?? "-")}";
                     _connLastSeen[connKey] = DateTime.UtcNow;
 
-                    RenderTopTalkers();
+                    _talkerChartDirty = true;
                 }
             });
         }
@@ -51,7 +51,7 @@ namespace Carthago
                 if (!_severityCounts.ContainsKey(sev))
                     _severityCounts[sev] = 0;
                 _severityCounts[sev]++;
-                RenderSeverity();
+                _severityChartDirty = true;
                 RefreshDashboardLayoutFromPreferences();
             });
         }
