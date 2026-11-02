@@ -140,7 +140,11 @@
                 </Grid.ColumnDefinitions>
                 <ComboBox x:Name="SeverityFilter"
                           Height="38"
-                          VerticalContentAlignment="Center">
+                          VerticalContentAlignment="Center"
+                          ToolTip="Filters this local incident queue by severity. All shows every severity. This selection does not change incident status or detection settings."
+                          ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                          AutomationProperties.Name="Incident queue severity filter"
+                          AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}">
                   <ComboBoxItem Content="All" IsSelected="True"/>
                   <ComboBoxItem Content="Critical"/>
                   <ComboBoxItem Content="High"/>
@@ -160,7 +164,11 @@
                         Content="Open incidents only"
                         Margin="0,10,0,0"
                         Checked="OnlyUnackedBox_Changed"
-                        Unchecked="OnlyUnackedBox_Changed"/>
+                        Unchecked="OnlyUnackedBox_Changed"
+                        ToolTip="Shows only incidents whose status is not Resolved. Acknowledged or investigating incidents may still appear. This filter does not change incident status."
+                        ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                        AutomationProperties.Name="Show only unresolved incidents in queue"
+                        AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
             </StackPanel>
 
             <Grid Grid.Row="1"
