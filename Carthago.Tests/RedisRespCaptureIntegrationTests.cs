@@ -174,6 +174,124 @@ public sealed class RedisRespCaptureIntegrationTests
     }
 
     [Fact]
+    public void Strict_Config_Set_First_Command_And_First_Server_Ok_Reply_Correlate()
+    {
+        const string privateValue = "do-not-retain-this-redis-config-value";
+        var (request, reply) = Exchange(
+            Request("CONFIG", "SET", "requirepass", privateValue),
+            Encoding.ASCII.GetBytes("+OK\r\n"));
+
+        Assert.True(request.RedisRespConfigSetRequestObserved);
+        Assert.False(request.RedisRespConfigSetReplyOkObserved);
+        Assert.True(reply.RedisRespConfigSetReplyOkObserved);
+        Assert.False(reply.RedisRespConfigSetReplyErrorObserved);
+        Assert.Equal("redis.resp2", reply.ApplicationProtocol);
+        Assert.Equal(6379, reply.SourcePort);
+        Assert.Equal("10.4.0.9", reply.Destination);
+        Assert.DoesNotContain(privateValue,
+            string.Join("|", reply.Info, reply.ApplicationProtocol,
+                reply.HttpUserAgent, reply.HttpRequestHeaders, reply.HttpUri));
+    }
+
+    [Fact]
+    public void Server_Error_Is_Recorded_As_Rejection_Not_Ok()
+    {
+        var (_, reply) = Exchange(
+            Request("CONFIG", "SET", "timeout", "30"),
+            Encoding.ASCII.GetBytes("-NOPERM unauthorized CONFIG SET\r\n"));
+        Assert.False(reply.RedisRespConfigSetReplyOkObserved);
+        Assert.True(reply.RedisRespConfigSetReplyErrorObserved);
+        Assert.DoesNotContain("NOPERM", reply.Info ?? string.Empty);
+    }
+
+    [Theory]
+    [InlineData("+PONG\r\n")]
+    [InlineData(":1\r\n")]
+    [InlineData("+OK\r\n+OK\r\n")]
+    [InlineData("+OK\r")]
+    public void Unsupported_Coalesced_Or_Truncated_Server_Replies_Fail_Closed(string wire)
+    {
+        var (_, reply) = Exchange(
+            Request("CONFIG", "SET", "timeout", "30"),
+            Encoding.ASCII.GetBytes(wire));
+        Assert.False(reply.RedisRespConfigSetReplyOkObserved);
+        Assert.False(reply.RedisRespConfigSetReplyErrorObserved);
+    }
+
+    [Fact]
+    public void Missing_SynAck_Or_Gapped_Server_Sequence_Cannot_Confirm_The_Request()
+    {
+        var req = Request("CONFIG", "SET", "timeout", "30");
+        var reply = Encoding.ASCII.GetBytes("+OK\r\n");
+        Assert.False(Exchange(req, reply, witnessedSynAck: false)
+            .Reply.RedisRespConfigSetReplyOkObserved);
+        Assert.False(Exchange(req, reply, replySequence: 102)
+            .Reply.RedisRespConfigSetReplyOkObserved);
+    }
+
+    [Fact]
+    public void Pipelining_Extra_Client_Data_And_Request_Retransmits_Clear_Correlation()
+    {
+        var req = Request("CONFIG", "SET", "timeout", "30");
+        var reply = Encoding.ASCII.GetBytes("+OK\r\n");
+        Assert.False(Exchange(req.Concat(Request("PING")).ToArray(), reply)
+            .Reply.RedisRespConfigSetReplyOkObserved);
+        Assert.False(Exchange(req, reply, additionalClientPayload: true)
+            .Reply.RedisRespConfigSetReplyOkObserved);
+        Assert.False(Exchange(req, reply, retransmitRequest: true)
+            .Reply.RedisRespConfigSetReplyOkObserved);
+    }
+
+    [Fact]
+    public void Request_Other_Than_Config_Set_Does_Not_Correlate_Ok_As_Write()
+    {
+        var (_, reply) = Exchange(Request("CONFIG", "GET", "timeout"),
+            Encoding.ASCII.GetBytes("+OK\r\n"));
+        Assert.False(reply.RedisRespConfigSetReplyOkObserved);
+    }
+
+    [Fact]
+    public void Correlated_Server_Reply_And_AdminHosts_Policy_Remain_NonAlerting()
+    {
+        var (_, reply) = Exchange(Request("CONFIG", "SET", "timeout", "30"),
+            Encoding.ASCII.GetBytes("+OK\r\n"));
+        Assert.True(reply.RedisRespConfigSetReplyOkObserved);
+
+        var missing = new Carthago.Services.EnvironmentTuning.ApprovedAssetRegistry(
+            new Carthago.Services.EnvironmentTuning.EnvironmentTuningOptions());
+        var approved = new Carthago.Services.EnvironmentTuning.ApprovedAssetRegistry(
+            new Carthago.Services.EnvironmentTuning.EnvironmentTuningOptions
+            {
+                Approved = new Carthago.Services.EnvironmentTuning.ApprovedEnvironmentOptions
+                {
+                    AdminHosts = { "10.4.0.9" }
+                }
+            });
+        var other = new Carthago.Services.EnvironmentTuning.ApprovedAssetRegistry(
+            new Carthago.Services.EnvironmentTuning.EnvironmentTuningOptions
+            {
+                Approved = new Carthago.Services.EnvironmentTuning.ApprovedEnvironmentOptions
+                {
+                    AdminHosts = { "10.4.0.7" }
+                }
+            });
+
+        Assert.Equal(RedisConfigSetClientAssessment.PolicyUnconfigured,
+            R437_RedisCONFIGSETIndicatorRule.AssessCorrelatedClient(reply, missing));
+        Assert.Equal(RedisConfigSetClientAssessment.ApprovedAdminHost,
+            R437_RedisCONFIGSETIndicatorRule.AssessCorrelatedClient(reply, approved));
+        Assert.Equal(RedisConfigSetClientAssessment.UnapprovedClient,
+            R437_RedisCONFIGSETIndicatorRule.AssessCorrelatedClient(reply, other));
+
+        // A wire-correlated +OK cannot be promoted to an alert by default.
+        var result = new R437_RedisCONFIGSETIndicatorRule().EvaluateAsync(
+            new RuleEvaluationContext(reply, Sensitivity.Balanced, DateTime.UtcNow))
+            .GetAwaiter().GetResult();
+        Assert.False(result.Matched);
+        Assert.Empty(result.Events);
+    }
+
+    [Fact]
     public void Imported_Json_Cannot_Forge_Capture_Only_Provenance()
     {
         var record = Assert.IsType<TrafficRecord>(JsonSerializer.Deserialize<TrafficRecord>(
