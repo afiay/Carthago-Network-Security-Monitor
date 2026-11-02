@@ -586,6 +586,7 @@ namespace Carthago.Engine.Rules.Catalog
                 new R561_RedisConfigSetRejectedReplyBurstRule(),
                 new R562_RedisConfigSetErrorToOkTransitionRule(),
                 new R563_DefaultBasicThenModbusWriteRule(),
+                new R564_ExternalRedisConfigSetOkSubnetFanoutRule(),
             };
         }
 
