@@ -200,7 +200,7 @@ public sealed class R557AdvancedAccuracyBatchTests
     public async Task Distinct_Private_Sources_Cannot_Combine_Target_Counts()
     {
         var rule = new R557_OutboundModbusWritePublicSubnetFanoutRule();
-        Assert.False((await rule.EvaluateAsync(At(Sample("10.45.0.8", "8.8.8.8"))).Matched);
+        Assert.False((await rule.EvaluateAsync(At(Sample("10.45.0.8", "8.8.8.8")))).Matched);
         Assert.False((await rule.EvaluateAsync(At(Sample("10.45.0.9", "1.1.1.1"), 1))).Matched);
         Assert.False((await rule.EvaluateAsync(At(Sample("10.45.0.8", "9.9.9.9"), 2))).Matched);
     }
@@ -209,7 +209,7 @@ public sealed class R557AdvancedAccuracyBatchTests
     public async Task Expired_Observation_Window_Does_Not_Recycle_Targets()
     {
         var rule = new R557_OutboundModbusWritePublicSubnetFanoutRule();
-        Assert.False((await rule.EvaluateAsync(At(Sample(destination: "8.8.8.8"))).Matched);
+        Assert.False((await rule.EvaluateAsync(At(Sample(destination: "8.8.8.8")))).Matched);
         Assert.False((await rule.EvaluateAsync(At(Sample(destination: "1.1.1.1"), 1))).Matched);
         Assert.False((await rule.EvaluateAsync(At(Sample(destination: "9.9.9.9"), 302))).Matched);
     }
