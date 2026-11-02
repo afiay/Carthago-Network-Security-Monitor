@@ -190,7 +190,7 @@ public sealed class R547AdvancedAccuracyBatchTests
     public async Task Distinct_Public_Sources_Cannot_Combine_Target_Counts()
     {
         var rule = new R547_ExternalBacnetWhoIsTargetFanoutRule();
-        Assert.False((await rule.EvaluateAsync(At(Sample("8.8.8.8", "10.45.0.20"))).Matched);
+        Assert.False((await rule.EvaluateAsync(At(Sample("8.8.8.8", "10.45.0.20")))).Matched);
         Assert.False((await rule.EvaluateAsync(At(Sample("1.1.1.1", "10.45.1.20"), 1))).Matched);
         Assert.False((await rule.EvaluateAsync(At(Sample("8.8.8.8", "10.45.2.20"), 2))).Matched);
     }
@@ -199,7 +199,7 @@ public sealed class R547AdvancedAccuracyBatchTests
     public async Task Expired_Observation_Window_Does_Not_Recycle_Targets()
     {
         var rule = new R547_ExternalBacnetWhoIsTargetFanoutRule();
-        Assert.False((await rule.EvaluateAsync(At(Sample(destination: "10.45.0.20"))).Matched);
+        Assert.False((await rule.EvaluateAsync(At(Sample(destination: "10.45.0.20")))).Matched);
         Assert.False((await rule.EvaluateAsync(At(Sample(destination: "10.45.1.20"), 1))).Matched);
         Assert.False((await rule.EvaluateAsync(At(Sample(destination: "10.45.2.20"), 302))).Matched);
     }
