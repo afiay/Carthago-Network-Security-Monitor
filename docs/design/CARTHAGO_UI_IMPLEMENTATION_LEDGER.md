@@ -3962,3 +3962,40 @@ Private source commit `5971452d357da0dd9c9c37b5d6772aacc2c3d512` is a direct chi
 10. Inspect final source/docs blobs, two direct-parent commits, exact owned-path diff, fresh expected-SHA publication lease and **zero** builds/tests/replays/CI/runners/benchmarks/capture.
 
 **Next independent UI GA UI-78:** inspect fresh LIVE HEAD, exact approved reference, ledger and original WPF consumers; choose one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–77. All acceptance remains deferred until owner explicitly says **“now it is test time.”**
+
+## GA UI-78 — Live Events: subdued horizontal row guides for dense table scanning
+
+**2026-11-02 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE `feature/carthago-reliability-hardening` HEAD: `a4f4f4807a7541dbbba37ba54d6642c53ae1a58a`. Prior GA UI-77 source `5971452d357da0dd9c9c37b5d6772aacc2c3d512`, published documentation HEAD `66cb4863f6051bd4c2f7e9832760cb34199350aa`. **Private source commit:** `9606aee37ec16fc69d4dcb9ea5935acd97199d2c`; updated `MainWindow.xaml` blob `32e7468352981d2f19bc6796a22bd96c224c583b`. Owned paths only: `Carthago/Views/MainWindow.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`. No dotnet builds/tests, xUnit, replays, holdouts, CI, GitHub Actions, runners, benchmarks, production capture, running-WPF screenshots or acceptance tests were executed; **zero authored and zero executed tests**. All scenarios below are **PLANNED ONLY — UNEXECUTED**.
+
+### Approved reference, baseline and original WPF consumers
+
+**FIRST** resolved and visually inspected exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c`. The concept has deep navy/graphite surfaces, cyan/teal highlights, restrained red/amber severity, persistent left navigation, operational KPI strip, traffic chart, incident triage and investigation, and a dense events table with subtle horizontal row boundaries. Screenshot IPs, metrics, Mbps series, rule IDs, timestamps, confidence and terminal text are **DEMO ONLY**. The image does not establish live capture, current telemetry or a functioning CLI. The existing CLI is explicitly **UNAVAILABLE**, visual-only.
+
+Compared the live branch with GA UI-77 publication: exactly one intervening independent R554 SMB2 WRITE-to-FTP detection source/tests/docs commit `a4f4f4807a7541dbbba37ba54d6642c53ae1a58a`; no UI-owned overlap. Inspected recent commits, design ledger through UI-77, `MainWindow.xaml`, `Theme.xaml`, `Sidebar.xaml`, and existing `MainWindow.DashboardEvents.cs`, `MainWindow.Dashboard.cs`, `MainWindow.DashboardResponsive.cs`, `MainWindow.Responsive.cs`, `MainWindow.Core.cs`, `MainWindow.xaml.cs`, `MainWindow.Navigation.cs`, `MainWindow.Settings.cs` and `MainWindow.Plots.cs` partials. The Live Events grid is read-only, single-selection, 27px rows, 30px column headers, with first column frozen, recycling virtualization, and no row actions. `MainWindow.DashboardEvents.cs` projects at most 80 displayed events from at most 500 retained local detections using existing four filters and status/provenance text. The global theme already defines `SoftDividerBrush`, alternating row backgrounds and selection/hover backgrounds; `DashboardLiveEventsGrid` alone explicitly suppressed all grid lines.
+
+### One cohesive UI-owned visual-consistency improvement
+
+On the existing `DashboardLiveEventsGrid` only, replace `GridLinesVisibility="None"` with `GridLinesVisibility="Horizontal"` and explicitly set `HorizontalGridLinesBrush="{StaticResource SoftDividerBrush}"`. This restores quiet horizontal row boundaries within the dense local events table, echoing the approved concept while retaining existing alternating row backgrounds, hover/selection colors and the theme's keyboard-only cell focus visual. It is distinct from UI-72's **High-Risk Hosts** row separators, UI-75's **filter toolbar** grouping and UI-77's **filter input** focus visibility; no global DataGrid or other table is changed.
+
+Exactly one XAML attribute value changes and one XAML attribute is added. No new focusable element, command, event handler, binding, viewmodel, telemetry, data source, model, API, rule or shared resource. Preserve original column widths, row/header heights, grid virtualization, first-column freeze, read-only behavior, filters, 80/500 limits, empty state, and status/provenance. Preserve Wide >=1440, Standard 1100–1439, Compact 1024–1099 and graceful below 1024; local PPS ScottPlot 10-sample average and bounded 120-point history, prioritized incidents, investigation, Cisco/WebView2/ScottPlot, capture/trust/privacy boundaries and independent detection/protocol streams.
+
+### Static end review, publication guard and deferred risks
+
+Private source commit `9606aee37ec16fc69d4dcb9ea5935acd97199d2c` is a direct child of pinned baseline `a4f4f4807a7541dbbba37ba54d6642c53ae1a58a`, changes only `Carthago/Views/MainWindow.xaml` and retains unrelated R554 files. Its private documentation descendant changes only this ledger. Before publication, re-read LIVE remote HEAD and compare intervening detection/protocol/UI paths. Publish the complete two-commit candidate with exactly **one non-forced atomic GitHub `update_ref` using `expected_sha` lease** on the same branch. If HEAD moved, reconcile only disjoint paths against a fresh base and fresh lease; STOP on overlap, conflicts or missing atomic guarantee. After publication, inspect HEAD, direct-parent ancestry, exact file blobs, owned-path diff, and independent work. Static review does not establish runtime success.
+
+**Unverified risks:** Windows WPF XAML parsing/compilation; actual visibility and thickness of 1px-style horizontal grid lines with 27px rows; interaction with alternating/hover/selected row backgrounds, frozen first column and cell focus adorner; visual density and contrast in standard/high-contrast themes; DPI scaling 125–200%; 1440/1100/1099/1024/1023/640px widths, horizontal/vertical scrolling, virtualization recycling and empty/no-match states. No actual Windows rendering or accessibility checks were performed.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED OR EXECUTED
+
+1. At >=1440px, inspect restrained horizontal guides between existing read-only Live Events rows and unchanged header hierarchy.
+2. At 1100/1099/1024/1023/640px, inspect row-guide continuity, frozen Event time column and horizontal scrolling.
+3. At 125%, 150% and 200% DPI, inspect line thickness, alignment and dense 27px row readability.
+4. Inspect standard/high-contrast themes for divider visibility without overwhelming text or severity labels.
+5. Inspect alternating row backgrounds, mouse hover and selected-row contrast against new horizontal guides.
+6. Keyboard-navigate grid cells; inspect existing focus adorner, single-row selection and screen-reader reading order.
+7. Populate, filter and clear existing events; verify source-driven no-event/no-match overlay and unchanged 80 displayed/500 retained behavior.
+8. Scroll virtualized rows vertically/horizontally; verify recycled row guides and unchanged first-column freeze.
+9. Inspect unchanged KPIs, local PPS average/history, prioritized incidents, investigation, unavailable CLI, Cisco/WebView2/ScottPlot, privacy/capture/trust and independent R554 files.
+10. Inspect final source/docs blobs, direct-parent commits, exact two owned paths, fresh expected-SHA publication lease and **zero** builds/tests/replays/CI/runners/benchmarks/capture.
+
+**Next independent UI GA UI-79:** inspect fresh LIVE HEAD, exact approved image, ledger and original WPF consumers; choose one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–78. Acceptance remains deferred until the owner explicitly says **“now it is test time.”**
