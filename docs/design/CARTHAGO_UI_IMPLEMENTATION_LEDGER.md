@@ -4652,3 +4652,49 @@ Start review inspected the live branch, recent commits, ledger through UI-93, `M
 10. Verify exactly five authorized paths, source→docs direct-parent ancestry, one non-forced expected-SHA publication and **zero** builds/tests/replays/holdouts/CI/runners/benchmarks/capture.
 
 **Next independent GA UI-95:** continue reference-led, screen-visible improvement to evidence density or navigation consistency after a fresh live-head and consumer audit; never revert to tooltip-only batches. No tests until the owner explicitly authorizes **“now it is test time.”**
+
+
+## GA UI-95 — Cross-screen security operations navigation shell
+
+**2026-11-02 · SOURCE CANDIDATE — UNVERIFIED.** Exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c` was retrieved and **visually inspected first**, before any GitHub inspection. It depicts a dark left navigation rail, strong Carthago brand identity, cyan active navigation and distinct SOC panel hierarchy. Its IPs, throughput, incident/rule counts, timestamps, confidence and CLI text are **DEMO ONLY**. No screenshot data or implied capture-health state was added. Starting live feature-branch HEAD `fc5846abd0d4d9940a6462f8795f2f3668a3a448`, with prior UI GA-94 publication `7f4139f23b2a3aef757e0f2d05eba97f0733dca2`; independent R565 detection source/tests/docs already existed and were not touched. Private source commit `a9d5e039998472dc6a99fc4476cfa561b08e3d87` (source tree `ef3ed8e94ba137820e422f014c580bef343916ff`) is a direct child of that starting HEAD. Source and this ledger must be published together in one non-forced expected-SHA branch update.
+
+### Reference mapping and visible before → after
+
+- **Navigation shell:** previously a mostly flat dark left column with a plain header; now a layered navy/graphite gradient rail with a teal-tinted brand header, clearer 18px Carthago wordmark, cyan secondary identity and a refined bordered brand glyph. The footer receives a matching dark gradient. This changes the visible application shell on every screen without altering navigation destinations.
+- **Primary navigation:** previously small unframed Unicode icons and relatively tight rows; now all **20 existing sidebar glyphs** (19 named destinations plus the existing inert Collapse visual) have consistent 26px dark framed icon surfaces in 28px grid slots. The 42px minimum row height, aligned text, tighter but deliberate gutters and stronger section labels create a more legible, repeated navigation rhythm.
+- **Active/hover hierarchy:** previously `SetActiveNavButton` assigned a local `Background` value, which could override theme-driven hover/active styling; now it only maintains the existing `Tag="Active"` and `AutomationProperties.ItemStatus` selection cues. The UI-owned `NavButton` template supplies a visible cyan selection rail, navy/teal active gradient, outlined selected row, hover and pressed surfaces. Original click handlers, keyboard focus visual and selected-nav mapping remain.
+- **Section organization:** WORKSPACE, ADVANCED / FORENSICS, PLATFORM and SETTINGS retain their original order, scroll position model, filter expanders and destination names. Four sidebar-specific dividers and cyan section headings distinguish groups without hiding any page or creating new functionality.
+- **Responsive fidelity:** existing MainWindow shell widths (Wide 216, Standard 200, Compact 60) and thresholds remain unchanged. The existing compact glyph-only navigation, brand text/footer collapse, 320px temporary filter drawer, and scrollable navigation are preserved in source; icon frames and nav padding were sized for the 60px rail. Actual rendering and high-DPI reachability remain unverified.
+- **No synthetic operations:** no monitoring/capture health, new badges, telemetry, CLI execution, network requests or source-level incident/protocol changes. The existing `Collapse` visual remains inert; this GA does not claim it works.
+
+**Static visual-impact assessment:** a persistent, cross-screen visual shell refresh affecting brand, all 20 icon presentations, active/hover rows, group rhythm and footer. Unlike UI-01–89 micro-edits, the visible navigation system is restructured across every workspace. This is source inspection only; **actual WPF appearance has not been rendered or validated**.
+
+### Ownership, provenance and static divergence review
+
+Initial inspection: live branch ref and recent commits, ledger through UI-94, `Sidebar.xaml`, `Sidebar.xaml.cs`, `Theme.xaml`, `MainWindow.xaml`, `MainWindow.Navigation.cs`, `MainWindow.Responsive.cs`, and all existing sidebar event handlers, filter consumers, navigation keys and active-state controls. End static source review: all 19 named nav controls and original click handlers remain; the 20 original glyph strings are retained within new icon frames; all four sections and filter expanders retain their names/order; active selection continues to use `Tag` and automation item status. No new C# APIs, handlers, services or dependencies.
+
+**UI-owned source blobs (previous → new):**
+
+1. `Carthago/Views/Sidebar.xaml`: `1868699ec454733b0c56bd93fdc72bb165316a1c` → `eacc8dc348f0b57ae182f82df21697bf92d0d96e`.
+2. `Carthago/Views/Sidebar.xaml.cs`: `30cf0d63ff32818861a52a3ccd399c8753c6f3c2` → `0c422f0d0b189390870376a8ec4f594614e09181`.
+3. `Carthago/Views/Theme.xaml`: `1dc73eb447f7ea12e75c4ba3ea91c7aa25568e3b` → `9ea915a3d3f6975209011cd8dfe800d8e6d97662`.
+4. `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`: this documentation-only entry.
+
+**Ownership boundaries:** only `Carthago/Views/**` and `docs/design/**`. No `Engine/**`, `Models/**`, `Services/**`, rule/protocol files/docs, telemetry/capture/trust/privacy, tests, workflows, runners, `Carthago.csproj`, shared APIs or independent automations were modified. Local PPS ScottPlot (10-sample average, 120-point history), prioritized incidents, investigation, read-only Live Events (80 shown/500 retained), visual-only UNAVAILABLE CLI, Cisco and WebView2 are untouched.
+
+**Risks — UNVERIFIED:** new WPF template/resource resolution and icon alignment have not been compiled; active-versus-hover trigger precedence, keyboard focus, 60px Compact icon centering, 200px Standard long-label clipping, filter drawer expansion, high-contrast/DPI and 19-button scrolling require Windows visual verification. The existing inert Collapse visual and settings destinations that share the Settings view remain unchanged. Removing the previous code-behind background assignment is intended to permit theme active/hover styling; its runtime effect is unverified.
+
+### Planned acceptance scenarios — ALL UNEXECUTED
+
+1. At 1648px compare brand, active rail, icon framing and dark section hierarchy with the approved screenshot; treat all screenshot data as demo only.
+2. At Wide >=1440 and 125%, 150%, 200% DPI inspect 216px sidebar, title fit, active gradients, icon alignment, footer and navigation scroll.
+3. At Standard 1100–1439 inspect 200px sidebar, long labels, active/hover contrast and section separators.
+4. At Compact 1024–1099 inspect 60px glyph-only rail, centered 26px frames, hidden headings/footer and navigation focus/scroll.
+5. Below 1024 (1023/800/640) inspect compact rail and existing 320px temporary traffic/detection/sink filter drawers for clipping and dismissal.
+6. Verify each named navigation destination, current selection, hover/pressed states, focus visual, tooltips and automation item status with keyboard and pointer.
+7. Verify filter expanders and Apply/Clear controls retain original events and are reachable in full/compact modes.
+8. Confirm `Collapse` remains inert (no false functionality claim), settings routes retain existing destinations and no synthetic incident/capture badges appear.
+9. Confirm Dashboard PPS ScottPlot, Live Events 80/500, prioritized incidents/investigation, UNAVAILABLE visual-only CLI, Cisco/WebView2, and privacy/trust/capture boundaries remain unchanged.
+10. Verify exact four authorized paths, source/docs direct-parent ancestry, single non-forced expected-SHA publication and **zero** builds/tests/replays/holdouts/CI/Actions/runners/benchmarks/capture.
+
+**Next UI GA UI-96:** a fresh reference-led, screen-visible operations enhancement after live-head/ledger/consumer audit; prioritize content readability or visual information architecture without repeating navigation or tooltip-only batches. All changes remain **SOURCE CANDIDATE — UNVERIFIED** until the owner explicitly says **“now it is test time.”**
