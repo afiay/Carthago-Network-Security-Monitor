@@ -40,65 +40,83 @@
         <RowDefinition Height="Auto"/>
         <RowDefinition Height="Auto"/>
         <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
       </Grid.RowDefinitions>
 
+      <Border Grid.Row="0" Style="{StaticResource AnomalyOpsHeroCard}" Margin="0,0,0,16">
+        <StackPanel>
+          <TextBlock Text="BEHAVIOR ANALYTICS / LOCAL OBSERVATIONS" Style="{StaticResource AnomalyOpsEyebrow}"/>
+          <TextBlock Text="Anomaly Intelligence" FontSize="29" FontWeight="Bold"
+                     Foreground="{StaticResource TextBrush}" Margin="0,7,0,5" TextWrapping="Wrap"/>
+          <TextBlock Text="Triage observed signals, compare local baselines and investigate recorded evidence."
+                     FontSize="12.5" Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap"/>
+          <Border Background="#103247" BorderBrush="#356A80" BorderThickness="1"
+                  CornerRadius="10" Padding="13,9" HorizontalAlignment="Left" Margin="0,14,0,0">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="RECENT LOCAL SNAPSHOT" Style="{StaticResource AnomalyOpsEyebrow}"
+                         VerticalAlignment="Center" Margin="0,0,12,0"/>
+              <TextBlock Text="{Binding RawSignalCount}" FontSize="20" FontWeight="Bold"
+                         Foreground="{StaticResource TextBrush}" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </Border>
+
       <UniformGrid x:Name="KpiGrid"
-                   Grid.Row="0"
+                   Grid.Row="1"
                    Columns="5"
                    Margin="0,0,0,14">
-        <Border Style="{StaticResource AnomalyKpiCard}" Margin="0,0,10,0">
+        <Border Style="{StaticResource AnomalyOpsKpiCard}" Margin="0,0,10,0">
           <StackPanel>
             <TextBlock Text="New Anomalies (15m)" Style="{StaticResource TinyStatusText}"/>
-            <TextBlock Text="{Binding NewAnomalies15m}" FontSize="24" FontWeight="Bold" Margin="0,6,0,2"/>
+            <TextBlock Text="{Binding NewAnomalies15m}" FontSize="28" FontWeight="Bold" Margin="0,8,0,3"/>
             <TextBlock Text="{Binding NewAnomaliesDeltaText}" Style="{StaticResource TinyStatusText}" Foreground="{StaticResource TextSuccessBrush}"/>
             <Border Height="3" Background="{StaticResource AccentBrush}" CornerRadius="2" Margin="0,11,0,0"/>
           </StackPanel>
         </Border>
 
-        <Border Style="{StaticResource AnomalyKpiCard}" Margin="0,0,10,0">
+        <Border Style="{StaticResource AnomalyOpsKpiCard}" Margin="0,0,10,0">
           <StackPanel>
             <TextBlock Text="High Severity" Style="{StaticResource TinyStatusText}"/>
-            <TextBlock Text="{Binding HighSeverityCount}" FontSize="24" FontWeight="Bold" Margin="0,6,0,2"/>
+            <TextBlock Text="{Binding HighSeverityCount}" FontSize="28" FontWeight="Bold" Margin="0,8,0,3"/>
             <TextBlock Text="{Binding HighSeverityDeltaText}" Style="{StaticResource TinyStatusText}" Foreground="{StaticResource SeverityHighBrush}"/>
             <Border Height="3" Background="{StaticResource SeverityHighBrush}" CornerRadius="2" Margin="0,11,0,0"/>
           </StackPanel>
         </Border>
 
-        <Border Style="{StaticResource AnomalyKpiCard}" Margin="0,0,10,0">
+        <Border Style="{StaticResource AnomalyOpsKpiCard}" Margin="0,0,10,0">
           <StackPanel>
             <TextBlock Text="Behavior Drift" Style="{StaticResource TinyStatusText}"/>
-            <TextBlock Text="{Binding BehaviorDriftPercent, StringFormat={}{0}%}" FontSize="24" FontWeight="Bold" Margin="0,6,0,2"/>
+            <TextBlock Text="{Binding BehaviorDriftPercent, StringFormat={}{0}%}" FontSize="28" FontWeight="Bold" Margin="0,8,0,3"/>
             <TextBlock Text="{Binding BehaviorDriftDeltaText}" Style="{StaticResource TinyStatusText}" Foreground="#A855F7"/>
             <Border Height="3" Background="#8B5CF6" CornerRadius="2" Margin="0,11,0,0"/>
           </StackPanel>
         </Border>
 
-        <Border Style="{StaticResource AnomalyKpiCard}" Margin="0,0,10,0">
+        <Border Style="{StaticResource AnomalyOpsKpiCard}" Margin="0,0,10,0">
           <StackPanel>
             <TextBlock Text="Linked Incidents" Style="{StaticResource TinyStatusText}"/>
-            <TextBlock Text="{Binding LinkedIncidentsCount}" FontSize="24" FontWeight="Bold" Margin="0,6,0,2"/>
+            <TextBlock Text="{Binding LinkedIncidentsCount}" FontSize="28" FontWeight="Bold" Margin="0,8,0,3"/>
             <TextBlock Text="{Binding LinkedIncidentsDeltaText}" Style="{StaticResource TinyStatusText}" Foreground="{StaticResource AccentAltBrush}"/>
             <Border Height="3" Background="{StaticResource AccentAltBrush}" CornerRadius="2" Margin="0,11,0,0"/>
           </StackPanel>
         </Border>
 
-        <Border Style="{StaticResource AnomalyKpiCard}">
+        <Border Style="{StaticResource AnomalyOpsKpiCard}">
           <StackPanel>
             <TextBlock Text="Baseline Confidence" Style="{StaticResource TinyStatusText}"/>
-            <TextBlock Text="{Binding BaselineConfidenceLabel}" FontSize="22" FontWeight="Bold" Foreground="{StaticResource OkBrush}" Margin="0,6,0,2"/>
+            <TextBlock Text="{Binding BaselineConfidenceLabel}" FontSize="26" FontWeight="Bold" Foreground="{StaticResource TextBrush}" Margin="0,8,0,3"/>
             <TextBlock Text="{Binding BaselineHealthText}" Style="{StaticResource TinyStatusText}" Foreground="{StaticResource TextSuccessBrush}" TextWrapping="Wrap"/>
-            <UniformGrid Columns="5" Margin="0,11,0,0">
-              <Border Height="7" CornerRadius="4" Margin="0,0,5,0" Background="{StaticResource OkBrush}"/>
-              <Border Height="7" CornerRadius="4" Margin="0,0,5,0" Background="{StaticResource OkBrush}"/>
-              <Border Height="7" CornerRadius="4" Margin="0,0,5,0" Background="{StaticResource OkBrush}"/>
-              <Border Height="7" CornerRadius="4" Margin="0,0,5,0" Background="{StaticResource OkBrush}"/>
-              <Border Height="7" CornerRadius="4" Background="{StaticResource OkBrush}"/>
-            </UniformGrid>
+            <Border Height="4" CornerRadius="3" Margin="0,12,0,0"
+                    Background="{StaticResource AccentAltBrush}"/>
+            <TextBlock Text="Local baseline status · not rule coverage"
+                       FontSize="10.5" Foreground="{StaticResource TextMutedBrush}"
+                       Margin="0,6,0,0" TextWrapping="Wrap"/>
           </StackPanel>
         </Border>
       </UniformGrid>
 
-      <Grid x:Name="PrimaryWorkspaceGrid" Grid.Row="1" Margin="0,0,0,14">
+      <Grid x:Name="PrimaryWorkspaceGrid" Grid.Row="2" Margin="0,0,0,14">
         <Grid.RowDefinitions>
           <RowDefinition x:Name="PrimaryWorkspaceTopRow" Height="Auto"/>
           <RowDefinition x:Name="PrimaryWorkspaceBottomRow" Height="0"/>
@@ -109,7 +127,7 @@
         </Grid.ColumnDefinitions>
 
         <Border x:Name="QueuePanel" Grid.Column="0"
-                Style="{StaticResource AnomalyQueuePanel}"
+                Style="{StaticResource AnomalyOpsPanel}"
                 Margin="0,0,12,0">
           <Grid>
             <Grid.RowDefinitions>
@@ -120,96 +138,84 @@
               <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <StackPanel Grid.Row="0" Margin="0,0,0,12">
-              <TextBlock Text="Anomaly Triage Queue" Style="{StaticResource AnomalySectionTitle}"/>
-              <TextBlock Text="Select the anomaly that matters, then pivot into baseline, host, rule, and model evidence." Style="{StaticResource AnomalySectionMeta}"/>
+            <StackPanel Grid.Row="0" Margin="0,0,0,15">
+              <TextBlock Text="PRIORITY SIGNALS" Style="{StaticResource AnomalyOpsEyebrow}" Margin="0,0,0,6"/>
+              <TextBlock Text="Anomaly Triage Queue" Style="{StaticResource AnomalyOpsPanelTitle}"/>
+              <TextBlock Text="Select a recorded signal to inspect its baseline, host, rule and model context."
+                         Style="{StaticResource AnomalySectionMeta}" Margin="0,6,0,0"/>
+              <Border Height="1" Background="{StaticResource SoftDividerBrush}" Margin="0,13,0,0"/>
             </StackPanel>
 
-            <Grid Grid.Row="1" Margin="0,0,0,10">
-              <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1.0*"/>
-                <ColumnDefinition Width="1.28*"/>
-                <ColumnDefinition Width="0.82*"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
-              </Grid.ColumnDefinitions>
-
-              <ComboBox x:Name="CategoryFilter"
-                        Grid.Column="0"
-                        Height="36"
-                        Margin="0,0,8,0"
-                        ItemsSource="{Binding CategoryOptions}"
-                        SelectedItem="{Binding FilterCategory}"
-                        AutomationProperties.Name="Anomaly category filter"
-                        ToolTip="Filter this local anomaly queue by category. All categories removes the category restriction."
-                        ToolTipService.ShowsToolTipOnKeyboardFocus="True"
-                        AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
-
-              <Grid Grid.Column="1" Margin="0,0,8,0">
-                <TextBox x:Name="SearchBox"
-                         Height="36"
-                         Style="{StaticResource SearchBox}"
-                         TextChanged="SearchBox_TextChanged"
-                         AutomationProperties.Name="Search anomaly queue"
-                         ToolTip="Search local anomaly titles, addresses, reasons, evidence, incident context and related rule IDs. No external lookup."
-                         ToolTipService.ShowsToolTipOnKeyboardFocus="True"
-                         AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
-                <TextBlock Text="Search anomalies, hosts, IPs..."
-                           Foreground="{StaticResource TextMutedBrush}"
-                           Margin="12,0,0,0"
-                           VerticalAlignment="Center"
-                           IsHitTestVisible="False">
-                  <TextBlock.Style>
-                    <Style TargetType="TextBlock">
-                      <Setter Property="Visibility" Value="Collapsed"/>
-                      <Style.Triggers>
-                        <DataTrigger Binding="{Binding ElementName=SearchBox, Path=Text}" Value="">
-                          <Setter Property="Visibility" Value="Visible"/>
-                        </DataTrigger>
-                      </Style.Triggers>
-                    </Style>
-                  </TextBlock.Style>
-                </TextBlock>
-              </Grid>
-
-              <ComboBox x:Name="SeverityFilter"
-                        Grid.Column="2"
-                        Height="36"
-                        Margin="0,0,8,0"
-                        AutomationProperties.Name="Anomaly severity filter"
-                        ToolTip="Filter this local anomaly queue by severity. All severities removes the severity restriction."
-                        ToolTipService.ShowsToolTipOnKeyboardFocus="True"
-                        AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}">
-                <ComboBoxItem Content="All severities" IsSelected="True"/>
-                <ComboBoxItem Content="Critical"/>
-                <ComboBoxItem Content="High"/>
-                <ComboBoxItem Content="Medium"/>
-                <ComboBoxItem Content="Low"/>
-              </ComboBox>
-
-              <CheckBox x:Name="OnlyLinkedBox"
-                        Grid.Column="3"
-                        Content="Linked only"
-                        VerticalAlignment="Center"
-                        Margin="0,0,10,0"
-                        Checked="OnlyLinkedBox_Changed"
-                        Unchecked="OnlyLinkedBox_Changed"
-                        AutomationProperties.Name="Show only anomalies linked to incidents"
-                        ToolTip="Show only anomalies that already have a related incident. This does not create or link incidents."
-                        ToolTipService.ShowsToolTipOnKeyboardFocus="True"
-                        AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
-
-              <Button Grid.Column="4"
-                      Content="Reset"
-                      Width="68"
-                      Height="36"
-                      Style="{StaticResource SecondaryButton}"
-                      Click="ResetFilters_Click"
-                      AutomationProperties.Name="Reset anomaly queue filters"
-                      ToolTip="Clear category, severity, search and linked-only filters for this anomaly queue. Does not reset application preferences or detection settings."
-                      ToolTipService.ShowsToolTipOnKeyboardFocus="True"
-                      AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
-            </Grid>
+            <Border Grid.Row="1" Style="{StaticResource AnomalyOpsFilterBand}" Margin="0,0,0,14">
+              <StackPanel>
+                <TextBlock Text="FILTER LOCAL SIGNALS" Style="{StaticResource AnomalyOpsEyebrow}"
+                           Margin="0,0,0,9"/>
+                <Grid>
+                  <TextBox x:Name="SearchBox"
+                           Height="38"
+                           Style="{StaticResource SearchBox}"
+                           TextChanged="SearchBox_TextChanged"
+                           AutomationProperties.Name="Search anomaly queue"
+                           ToolTip="Search local anomaly titles, addresses, reasons, evidence, incident context and related rule IDs. No external lookup."
+                           ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                           AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
+                  <TextBlock Text="Search anomalies, hosts, IPs..."
+                             Foreground="{StaticResource TextMutedBrush}"
+                             Margin="12,0,0,0"
+                             VerticalAlignment="Center"
+                             IsHitTestVisible="False">
+                    <TextBlock.Style>
+                      <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding ElementName=SearchBox, Path=Text}" Value="">
+                            <Setter Property="Visibility" Value="Visible"/>
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </TextBlock.Style>
+                  </TextBlock>
+                </Grid>
+                <WrapPanel Margin="0,11,0,0">
+                  <ComboBox x:Name="CategoryFilter"
+                            Width="162" Height="38" Margin="0,0,9,9"
+                            ItemsSource="{Binding CategoryOptions}"
+                            SelectedItem="{Binding FilterCategory}"
+                            AutomationProperties.Name="Anomaly category filter"
+                            ToolTip="Filter this local anomaly queue by category. All categories removes the category restriction."
+                            ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                            AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
+                  <ComboBox x:Name="SeverityFilter"
+                            Width="158" Height="38" Margin="0,0,9,9"
+                            AutomationProperties.Name="Anomaly severity filter"
+                            ToolTip="Filter this local anomaly queue by severity. All severities removes the severity restriction."
+                            ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                            AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}">
+                    <ComboBoxItem Content="All severities" IsSelected="True"/>
+                    <ComboBoxItem Content="Critical"/>
+                    <ComboBoxItem Content="High"/>
+                    <ComboBoxItem Content="Medium"/>
+                    <ComboBoxItem Content="Low"/>
+                  </ComboBox>
+                  <CheckBox x:Name="OnlyLinkedBox"
+                            Content="Linked only" VerticalAlignment="Center"
+                            Margin="0,0,13,9"
+                            Checked="OnlyLinkedBox_Changed"
+                            Unchecked="OnlyLinkedBox_Changed"
+                            AutomationProperties.Name="Show only anomalies linked to incidents"
+                            ToolTip="Show only anomalies that already have a related incident. This does not create or link incidents."
+                            ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                            AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
+                  <Button Content="Reset" Width="78" Height="38" Margin="0,0,0,9"
+                          Style="{StaticResource SecondaryButton}"
+                          Click="ResetFilters_Click"
+                          AutomationProperties.Name="Reset anomaly queue filters"
+                          ToolTip="Clear category, severity, search and linked-only filters for this anomaly queue. Does not reset application preferences or detection settings."
+                          ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                          AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
+                </WrapPanel>
+              </StackPanel>
+            </Border>
 
             <ScrollViewer Grid.Row="2"
                           Grid.RowSpan="2"
@@ -441,16 +447,18 @@
         </Border>
 
         <Border x:Name="InvestigationPanel" Grid.Column="1"
-                Style="{StaticResource AnomalyPageSurface}">
+                Style="{StaticResource AnomalyOpsPanel}">
           <Grid>
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto"/>
               <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <StackPanel Grid.Row="0" Margin="0,0,0,12">
-              <TextBlock Text="Selected Anomaly Investigation" Style="{StaticResource AnomalySectionTitle}"/>
-              <TextBlock Text="{Binding SelectedWindowLabel}" Style="{StaticResource AnomalySectionMeta}"/>
+            <StackPanel Grid.Row="0" Margin="0,0,0,15">
+              <TextBlock Text="EVIDENCE / SELECTED SIGNAL" Style="{StaticResource AnomalyOpsEyebrow}" Margin="0,0,0,6"/>
+              <TextBlock Text="Selected Anomaly Investigation" Style="{StaticResource AnomalyOpsPanelTitle}"/>
+              <TextBlock Text="{Binding SelectedWindowLabel}" Style="{StaticResource AnomalySectionMeta}" Margin="0,6,0,0"/>
+              <Border Height="1" Background="{StaticResource SoftDividerBrush}" Margin="0,13,0,0"/>
             </StackPanel>
 
             <Grid Grid.Row="1">
@@ -515,42 +523,42 @@
                     <RowDefinition Height="Auto"/>
                   </Grid.RowDefinitions>
 
-                  <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource DetailGridCard}" Margin="0,0,8,8">
+                  <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource AnomalyOpsEvidenceCard}" Margin="0,0,8,8">
                     <StackPanel>
                       <TextBlock Text="Source host" Style="{StaticResource AnomalyFieldLabel}"/>
                       <TextBlock Text="{Binding Selected.SourceLabel}" Style="{StaticResource AnomalyFieldValue}" ToolTip="{Binding Selected.SourceLabel}"/>
                     </StackPanel>
                   </Border>
 
-                  <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource DetailGridCard}" Margin="4,0,4,8">
+                  <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource AnomalyOpsEvidenceCard}" Margin="4,0,4,8">
                     <StackPanel>
                       <TextBlock Text="Destination" Style="{StaticResource AnomalyFieldLabel}"/>
                       <TextBlock Text="{Binding Selected.DestinationLabel}" Style="{StaticResource AnomalyFieldValue}" ToolTip="{Binding Selected.DestinationLabel}"/>
                     </StackPanel>
                   </Border>
 
-                  <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource DetailGridCard}" Margin="8,0,0,8">
+                  <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource AnomalyOpsEvidenceCard}" Margin="8,0,0,8">
                     <StackPanel>
                       <TextBlock Text="Protocol / port" Style="{StaticResource AnomalyFieldLabel}"/>
                       <TextBlock Text="{Binding Selected.ProtocolPortLabel}" Style="{StaticResource AnomalyFieldValue}" ToolTip="{Binding Selected.ProtocolPortLabel}"/>
                     </StackPanel>
                   </Border>
 
-                  <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource DetailGridCard}" Margin="0,0,8,0">
+                  <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource AnomalyOpsEvidenceCard}" Margin="0,0,8,0">
                     <StackPanel>
                       <TextBlock Text="Detected" Style="{StaticResource AnomalyFieldLabel}"/>
                       <TextBlock Text="{Binding Selected.CreatedLabelLong}" Style="{StaticResource AnomalyFieldValue}" ToolTip="{Binding Selected.CreatedLabelLong}"/>
                     </StackPanel>
                   </Border>
 
-                  <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource DetailGridCard}" Margin="4,0,4,0">
+                  <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource AnomalyOpsEvidenceCard}" Margin="4,0,4,0">
                     <StackPanel>
                       <TextBlock Text="Category" Style="{StaticResource AnomalyFieldLabel}"/>
                       <TextBlock Text="{Binding Selected.CategoryLabel}" Style="{StaticResource AnomalyFieldValue}" ToolTip="{Binding Selected.CategoryLabel}"/>
                     </StackPanel>
                   </Border>
 
-                  <Border Grid.Row="1" Grid.Column="2" Style="{StaticResource DetailGridCard}" Margin="8,0,0,0">
+                  <Border Grid.Row="1" Grid.Column="2" Style="{StaticResource AnomalyOpsEvidenceCard}" Margin="8,0,0,0">
                     <StackPanel>
                       <TextBlock Text="Linked incident" Style="{StaticResource AnomalyFieldLabel}"/>
                       <TextBlock Text="{Binding Selected.RelatedIncidentTitle}" Style="{StaticResource AnomalyFieldValue}" ToolTip="{Binding Selected.RelatedIncidentTitle}"/>
@@ -588,7 +596,7 @@
                     </StackPanel>
                   </Border>
 
-                  <Border Grid.Column="1" Style="{StaticResource DetailGridCard}" Margin="4,0,4,0">
+                  <Border Grid.Column="1" Style="{StaticResource AnomalyOpsEvidenceCard}" Margin="4,0,4,0">
                     <StackPanel>
                       <TextBlock Text="Model Explanation" Style="{StaticResource AnomalySectionTitle}" FontSize="13.5"/>
                       <TextBlock Text="{Binding ModelSummary}" Style="{StaticResource AnomalySectionMeta}" Margin="0,0,0,10"/>
@@ -619,7 +627,7 @@
                     </StackPanel>
                   </Border>
 
-                  <Border Grid.Column="2" Style="{StaticResource DetailGridCard}" Margin="8,0,0,0">
+                  <Border Grid.Column="2" Style="{StaticResource AnomalyOpsEvidenceCard}" Margin="8,0,0,0">
                     <StackPanel>
                       <TextBlock Text="Top ML Signals" Style="{StaticResource AnomalySectionTitle}" FontSize="13.5"/>
                       <TextBlock Text="Only the strongest recorded feature contributors are shown here." Style="{StaticResource AnomalySectionMeta}" Margin="0,0,0,10"/>
@@ -666,7 +674,7 @@
                     <ColumnDefinition Width="0.44*"/>
                   </Grid.ColumnDefinitions>
 
-                  <Border Grid.Column="0" Style="{StaticResource DetailGridCard}" Margin="0,0,8,0">
+                  <Border Grid.Column="0" Style="{StaticResource AnomalyOpsEvidenceCard}" Margin="0,0,8,0">
                     <StackPanel>
                       <TextBlock Text="Tags" Style="{StaticResource AnomalyFieldLabel}"/>
                       <ItemsControl ItemsSource="{Binding Selected.Tags}">
@@ -686,7 +694,7 @@
                     </StackPanel>
                   </Border>
 
-                  <Border Grid.Column="1" Style="{StaticResource DetailGridCard}" Margin="8,0,0,0">
+                  <Border Grid.Column="1" Style="{StaticResource AnomalyOpsEvidenceCard}" Margin="8,0,0,0">
                     <StackPanel>
                       <TextBlock Text="Related rule IDs" Style="{StaticResource AnomalyFieldLabel}"/>
                       <ItemsControl x:Name="RelatedRulesItems" ItemsSource="{Binding Selected.RelatedRuleIds}">
@@ -720,7 +728,7 @@
                   </Border>
                 </Grid>
 
-                <Border Style="{StaticResource DetailGridCard}">
+                <Border Style="{StaticResource AnomalyOpsEvidenceCard}">
                   <StackPanel>
                     <TextBlock Text="Recommended actions" Style="{StaticResource AnomalyFieldLabel}"/>
                     <WrapPanel>
@@ -767,7 +775,7 @@
         </Border>
       </Grid>
 
-      <Grid x:Name="SupportingWorkspaceGrid" Grid.Row="2">
+      <Grid x:Name="SupportingWorkspaceGrid" Grid.Row="3">
         <Grid.RowDefinitions>
           <RowDefinition x:Name="SupportingWorkspaceFirstRow" Height="Auto"/>
           <RowDefinition x:Name="SupportingWorkspaceSecondRow" Height="0"/>
@@ -779,7 +787,7 @@
           <ColumnDefinition x:Name="SupportingWorkspaceThirdColumn" Width="0.28*"/>
         </Grid.ColumnDefinitions>
 
-        <Border x:Name="EntityHistoryPanel" Grid.Column="0" Style="{StaticResource AnomalyPageSurface}" Margin="0,0,12,0">
+        <Border x:Name="EntityHistoryPanel" Grid.Column="0" Style="{StaticResource AnomalyOpsPanel}" Margin="0,0,12,0">
           <Grid>
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto"/>
@@ -788,7 +796,8 @@
             </Grid.RowDefinitions>
 
             <StackPanel Grid.Row="0" Margin="0,0,0,10">
-              <TextBlock Text="Entity Behavior History" Style="{StaticResource AnomalySectionTitle}"/>
+              <TextBlock Text="HISTORY / OBSERVED METRICS" Style="{StaticResource AnomalyOpsEyebrow}" Margin="0,0,0,6"/>
+              <TextBlock Text="Entity Behavior History" Style="{StaticResource AnomalyOpsPanelTitle}"/>
               <TextBlock Text="{Binding SelectedWindowLabel}" Style="{StaticResource AnomalySectionMeta}"/>
             </StackPanel>
 
@@ -836,7 +845,7 @@
           </Grid>
         </Border>
 
-        <Border x:Name="BaselineDriftPanel" Grid.Column="1" Style="{StaticResource AnomalyPageSurface}" Margin="0,0,12,0">
+        <Border x:Name="BaselineDriftPanel" Grid.Column="1" Style="{StaticResource AnomalyOpsPanel}" Margin="0,0,12,0">
           <Grid>
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto"/>
@@ -845,7 +854,8 @@
             </Grid.RowDefinitions>
 
             <StackPanel Grid.Row="0" Margin="0,0,0,10">
-              <TextBlock Text="Baseline Drift &amp; Peer Group" Style="{StaticResource AnomalySectionTitle}"/>
+              <TextBlock Text="BASELINE / LOCAL COMPARISON" Style="{StaticResource AnomalyOpsEyebrow}" Margin="0,0,0,6"/>
+              <TextBlock Text="Baseline Drift &amp; Peer Group" Style="{StaticResource AnomalyOpsPanelTitle}"/>
               <TextBlock Text="{Binding PeerGroupHeader}" Style="{StaticResource AnomalySectionMeta}"/>
             </StackPanel>
 
@@ -889,7 +899,7 @@
           </Grid>
         </Border>
 
-        <Border x:Name="ModelSummaryPanel" Grid.Column="2" Style="{StaticResource AnomalyPageSurface}">
+        <Border x:Name="ModelSummaryPanel" Grid.Column="2" Style="{StaticResource AnomalyOpsPanel}">
           <Grid>
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto"/>
@@ -897,7 +907,8 @@
             </Grid.RowDefinitions>
 
             <StackPanel Grid.Row="0" Margin="0,0,0,10">
-              <TextBlock Text="Analyst Actions &amp; Shortcuts" Style="{StaticResource AnomalySectionTitle}"/>
+              <TextBlock Text="WORKFLOW / EXISTING ACTIONS" Style="{StaticResource AnomalyOpsEyebrow}" Margin="0,0,0,6"/>
+              <TextBlock Text="Analyst Actions &amp; Shortcuts" Style="{StaticResource AnomalyOpsPanelTitle}"/>
               <TextBlock Text="Use the shell for deeper evidence and the closest live workspace for each action." Style="{StaticResource AnomalySectionMeta}"/>
             </StackPanel>
 
