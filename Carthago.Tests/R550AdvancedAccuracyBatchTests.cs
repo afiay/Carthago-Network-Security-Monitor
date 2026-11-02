@@ -42,7 +42,7 @@ public sealed class R550AdvancedAccuracyBatchTests
         var udpLength = bytes.Length + 8;
         frame[24] = (byte)(udpLength >> 8); frame[25] = (byte)udpLength;
         bytes.CopyTo(frame, 28);
-        var record = new PacketHandler().ParseFrame(frame, (LinkLayers)12);
+        var record = new PacketHandler().ParseFrame(frame, (PacketDotNet.LinkLayers)12);
         Assert.NotNull(record);
         return record!;
     }
