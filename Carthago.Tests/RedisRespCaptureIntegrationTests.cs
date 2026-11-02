@@ -12,6 +12,8 @@ using Carthago.Engine.Rules;
 using Carthago.Engine.Rules.Expansion;
 using Carthago.Models;
 using Carthago.Services;
+using Carthago.Services.EnvironmentTuning;
+using Carthago.Services.TrustedAudit;
 using Xunit;
 
 namespace Carthago.Tests;
@@ -415,6 +417,112 @@ public sealed class RedisRespCaptureIntegrationTests
             Frame(Encoding.ASCII.GetBytes("+OK\r\n"),
                 6379, 40000, 101, 0x18), link));
         Assert.False(reply.RedisRespConfigSetReplyOkObserved);
+    }
+
+    [Fact]
+    public void Redis_Software_Command_Audit_Joins_Real_Packet_Producer_Without_Alert_Promotion()
+    {
+        var (_, reply) = Exchange(
+            Request("CONFIG", "SET", "timeout", "30"),
+            Encoding.ASCII.GetBytes("+OK\r\n"));
+        Assert.True(reply.RedisRespConfigSetReplyOkObserved);
+        Assert.Equal("redis.resp2", reply.ApplicationProtocol);
+
+        Assert.True(RedisSoftwareAuditNotificationParser.TryParse(
+            RedisSoftwareAuditSourceTests.Connection(), out var opened));
+        Assert.True(RedisSoftwareAuditNotificationParser.TryParse(
+            RedisSoftwareAuditSourceTests.Command(), out var command));
+        var first = Assert.IsType<RedisSoftwareAuditObservation>(opened);
+        var audited = Assert.IsType<RedisSoftwareAuditObservation>(command);
+
+        var continuity = new RedisSoftwareAuditContinuityTracker();
+        Assert.Equal(RedisAuditDeliveryStatus.FirstObservation,
+            continuity.Observe("operator-redis-source", first).Status);
+        var healthy = continuity.Observe("operator-redis-source", audited);
+        Assert.True(healthy.NoGapObserved);
+
+        var options = new EnvironmentTuningOptions();
+        options.Approved.RedisServers.Add("10.4.0.10");
+        options.Approved.AdminHosts.Add("10.4.0.8");
+        var approvals = new ApprovedAssetRegistry(options);
+        var at = DateTimeOffset.FromUnixTimeSeconds(
+            RedisSoftwareAuditSourceTests.EventSecond);
+
+        var candidate = RedisSoftwareAuditWireCorrelation.Assess(
+            audited, healthy, reply, at, approvals);
+        Assert.Equal(RedisSoftwareWireCorrelationStatus.GenericConfigSubcommandUnproven,
+            candidate.Status);
+        Assert.False(candidate.AlertPermitted);
+        Assert.False(candidate.ConfigSetVerified);
+        Assert.False(candidate.AuthenticatedRedisServer);
+
+        options = new EnvironmentTuningOptions();
+        options.Approved.RedisServers.Add("10.4.0.10");
+        options.Approved.AdminHosts.Add("10.4.0.9");
+        var benign = RedisSoftwareAuditWireCorrelation.Assess(
+            audited, healthy, reply, at, new ApprovedAssetRegistry(options));
+        Assert.Equal(RedisSoftwareWireCorrelationStatus.ApprovedAdminClient,
+            benign.Status);
+        Assert.False(benign.AlertPermitted);
+    }
+
+    [Fact]
+    public void Redis_Software_Command_Audit_Rejects_Wrong_Port_Clock_Status_And_Gap()
+    {
+        var (_, reply) = Exchange(
+            Request("CONFIG", "SET", "timeout", "30"),
+            Encoding.ASCII.GetBytes("+OK\r\n"));
+        var at = DateTimeOffset.FromUnixTimeSeconds(
+            RedisSoftwareAuditSourceTests.EventSecond);
+        var registry = new ApprovedAssetRegistry(new EnvironmentTuningOptions
+        {
+            Approved = new ApprovedEnvironmentOptions
+            {
+                RedisServers = { "10.4.0.10" },
+                AdminHosts = { "10.4.0.8" }
+            }
+        });
+        var tracker = new RedisSoftwareAuditContinuityTracker();
+        Assert.True(RedisSoftwareAuditNotificationParser.TryParse(
+            RedisSoftwareAuditSourceTests.Connection(), out var opened));
+        tracker.Observe("operator-redis-source",
+            Assert.IsType<RedisSoftwareAuditObservation>(opened));
+
+        Assert.True(RedisSoftwareAuditNotificationParser.TryParse(
+            RedisSoftwareAuditSourceTests.Command(), out var valid));
+        var audit = Assert.IsType<RedisSoftwareAuditObservation>(valid);
+        var healthy = tracker.Observe("operator-redis-source", audit);
+
+        Assert.Equal(RedisSoftwareWireCorrelationStatus.TimestampMismatch,
+            RedisSoftwareAuditWireCorrelation.Assess(
+                audit, healthy, reply, at.AddSeconds(31), registry).Status);
+
+        Assert.True(RedisSoftwareAuditNotificationParser.TryParse(
+            RedisSoftwareAuditSourceTests.Command(serverPort: "6380"), out var wrongPort));
+        Assert.Equal(RedisSoftwareWireCorrelationStatus.EndpointOrPortMismatch,
+            RedisSoftwareAuditWireCorrelation.Assess(
+                wrongPort, healthy, reply, at, registry).Status);
+
+        Assert.True(RedisSoftwareAuditNotificationParser.TryParse(
+            RedisSoftwareAuditSourceTests.Command(status: 10), out var failedAudit));
+        Assert.Equal(RedisSoftwareWireCorrelationStatus.ReplyStatusMismatch,
+            RedisSoftwareAuditWireCorrelation.Assess(
+                failedAudit, healthy, reply, at, registry).Status);
+
+        Assert.True(RedisSoftwareAuditNotificationParser.TryParse(
+            RedisSoftwareAuditSourceTests.Command(command: "get"), out var getAudit));
+        Assert.Equal(RedisSoftwareWireCorrelationStatus.GenericCommandNotConfig,
+            RedisSoftwareAuditWireCorrelation.Assess(
+                getAudit, healthy, reply, at, registry).Status);
+
+        Assert.True(RedisSoftwareAuditNotificationParser.TryParse(
+            RedisSoftwareAuditSourceTests.Command(sequence: 3), out var gapped));
+        var gapEvent = Assert.IsType<RedisSoftwareAuditObservation>(gapped);
+        var gap = tracker.Observe("operator-redis-source", gapEvent);
+        Assert.Equal(RedisAuditDeliveryStatus.SequenceGap, gap.Status);
+        Assert.Equal(RedisSoftwareWireCorrelationStatus.AuditStreamNotContinuous,
+            RedisSoftwareAuditWireCorrelation.Assess(
+                gapEvent, gap, reply, at, registry).Status);
     }
 
     [Fact]
