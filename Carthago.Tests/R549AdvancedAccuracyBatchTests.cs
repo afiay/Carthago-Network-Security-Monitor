@@ -228,7 +228,7 @@ public sealed class R549AdvancedAccuracyBatchTests
     public async Task Different_Sources_Cannot_Accumulate_Each_Others_Targets()
     {
         var rule = new R549_CrossSubnetDefaultBasicCredentialFanoutRule();
-        Assert.False((await rule.EvaluateAsync(At(Sample(destination: "10.2.1.20"))).Matched);
+        Assert.False((await rule.EvaluateAsync(At(Sample(destination: "10.2.1.20")))).Matched);
         Assert.False((await rule.EvaluateAsync(At(Sample(source: "10.1.1.11", destination: "10.3.1.20"), 1))).Matched);
         Assert.False((await rule.EvaluateAsync(At(Sample(destination: "10.4.1.20"), 2))).Matched);
     }
@@ -237,7 +237,7 @@ public sealed class R549AdvancedAccuracyBatchTests
     public async Task Expired_Window_Does_Not_Reuse_Old_Subnets()
     {
         var rule = new R549_CrossSubnetDefaultBasicCredentialFanoutRule();
-        Assert.False((await rule.EvaluateAsync(At(Sample(destination: "10.2.1.20"))).Matched);
+        Assert.False((await rule.EvaluateAsync(At(Sample(destination: "10.2.1.20")))).Matched);
         Assert.False((await rule.EvaluateAsync(At(Sample(destination: "10.3.1.20"), 1))).Matched);
         Assert.False((await rule.EvaluateAsync(At(Sample(destination: "10.4.1.20"), 302))).Matched);
     }
