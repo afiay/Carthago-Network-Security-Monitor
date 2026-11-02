@@ -4223,3 +4223,42 @@ The private source commit is a direct child of starting HEAD; source blob `7d9ca
 10. Inspect final source/docs blobs, direct-parent commit chain, exact two owned paths, fresh expected-SHA lease and **zero** builds/tests/replays/holdouts/CI/runners/benchmarks/capture.
 
 **Next independent UI GA UI-85:** inspect fresh LIVE HEAD, exact approved image, ledger and original WPF consumers; choose one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–84. Acceptance remains deferred until the owner explicitly says **“now it is test time.”**
+
+## GA UI-85 — Signal Investigation: clipboard and navigation action clarity
+
+**2026-11-02 · SOURCE CANDIDATE — UNVERIFIED.** Pinned starting LIVE `feature/carthago-reliability-hardening` HEAD: `2a2fd493522d6183ea55fb46ecb83a2c4037e753`. Previous published GA UI-84 source `85b062db403d6a2be6cd45af30c86015d1239bb4`, documentation/publication `dc04e9810d673cef7f73ec3caff377d2ae651c5c`. Private GA UI-85 source commit `a8aa21565d3d9ebba2dec1f3bc6ebe19defb8bc9`, direct child of pinned starting HEAD; exact changed dialog XAML blob `b192c72607423e7ccda74be71bdd8a76f8b07f44`. Authorized paths: **only** `Carthago/Views/DashboardSignalDetailDialog.xaml` and this ledger. No tests authored or executed; **zero** builds, dotnet/xUnit, XAML compilation, replays, holdouts, CI/GitHub Actions, runners, benchmarking, production capture or running-app screenshots. Acceptance scenarios below are **PLANNED ONLY — UNEXECUTED**.
+
+### Approved reference, divergence and original consumers
+
+**FIRST** resolved and visually inspected exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c`: restrained navy/graphite/cyan/teal security dashboard, left navigation, operational KPIs, traffic chart, prioritized incidents, investigation, dense events and illustrative CLI. All screenshot IPs, Mbps lines, rule IDs, metrics, confidence and timestamps are **DEMO ONLY**; no claim of observed telemetry or capture health. The WPF CLI remains explicitly **UNAVAILABLE** and visual-only.
+
+Read live remote branch HEAD, recent commits, ledger through UI-84, `MainWindow.xaml`, `Theme.xaml`, `DashboardSignalDetailDialog.xaml` and its code-behind/model, `MainWindow.Dashboard.cs`, `MainWindow.Navigation.cs`, `MainWindow.DashboardResponsive.cs`, `MainWindow.Responsive.cs`, `MainWindow.Plots.cs`, `MainWindow.DashboardEvents.cs`, `MainWindow.Core.cs`, `MainWindow.Settings.cs` and `MainWindow.Filters.cs`. Compared UI-84 publication to starting LIVE HEAD: **39 independent commits**, affecting **14 non-UI paths** across R437 Redis rule/protocol/correlation, tests and validation documentation; neither owned path overlaps. Do not alter or discard these independent commits.
+
+The existing `DashboardSignalDetailDialog.xaml.cs` `CopySummary_Click` calls `Clipboard.SetText(Model.BuildClipboardSummary())`, which includes local title, subtitle, risk, source/destination, protocol, category, detected time, related incident, reasons, tags, rule IDs and recommended actions. It is **not** an evidence-file export or validation; clipboard contents can be shared by users or OS-level clipboard services. `OpenAnomalies_Click` and `OpenIncident_Click` only request navigation; the original `MainWindow.Dashboard.cs` consumer handles the request via `Nav_Anomalies_Click` or `OpenIncidentWorkspace`. Buttons are enabled only for available `AnomalyId` or `IncidentId`. `Close_Click` closes the dialog without requesting navigation. No clipboard, navigation, model, evidence or security implementation is modified.
+
+### One cohesive UI-owned improvement
+
+In the existing **Signal Investigation modal footer**, replace only the generic static caption with source-accurate visible guidance that **Copy Summary writes local investigation context to the system clipboard** and should be reviewed before sharing; the other actions only navigate to existing views. Add descriptive hover/keyboard-focus tooltips, explicit `AutomationProperties.Name`, and tooltip-bound `AutomationProperties.HelpText` to the existing **Copy Summary**, **Open Anomalies**, **Open Incident** and **Close** buttons. Keep original captions, widths, styling, order, handlers, enablement bindings, model, data fields, clipboard contents, modal sizing, scroll behavior and tab order. No new focusable elements, commands, navigation targets, telemetry, capture, network calls, evidence export or remediation. This is distinct from UI-49 (dashboard detail triggers), UI-52 (related-incident button), UI-55 (raw shortcut destinations), UI-68 (API-key session action), and UI-76 (dashboard review-only suggestions).
+
+Static source delta: only `Carthago/Views/DashboardSignalDetailDialog.xaml` in the source commit (one visible caption rewrite and accessibility metadata for four existing buttons). This ledger is the sole documentation change. Preserve Wide ≥1440, Standard 1100–1439, Compact 1024–1099, graceful below 1024; local PPS ScottPlot ten-sample average and 120-point bound; prioritized incidents, read-only Live Events 80 displayed/500 retained, visual-only unavailable CLI, Cisco/WebView2/ScottPlot, privacy/capture/trust and independent detection/protocol streams.
+
+### Publication, static end review and unverified risks
+
+Private source commit is direct child of pinned LIVE HEAD; the complete source-plus-ledger two-commit chain must be published only after **fresh** remote HEAD and concurrent-path comparison, using **one** non-forced atomic GitHub `update_ref` with matching `expected_sha` lease on the **same** branch. If moved, reconcile disjoint paths against fresh HEAD with a fresh lease; **STOP** for overlapping UI changes, conflicts or missing lease guarantee. After publication inspect remote HEAD, direct-parent ancestry, exact owned-path diff and both published blobs. Never publish partially or overwrite independent work.
+
+**Risks — UNVERIFIED:** WPF XAML parsing/compilation; actual tooltip display on hover/keyboard focus; UI Automation Name/HelpText announcements; clipboard warning visibility and line wrapping at 1440/1100/1099/1024/1023/640px; dialog min-size and owner/work-area constraints; footer height reducing scrollable investigation space at 125–200% DPI; standard/high-contrast text and focus presentation; accessibility reading order. Existing clipboard contents can include local network identifiers and context; added text warns of this but does not prevent sharing or prove OS clipboard privacy. Static source review is not compilation, rendering, accessibility or security validation.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED OR EXECUTED
+
+1. At Wide ≥1440px, inspect modal footer caption and four action buttons for original visual hierarchy, widths and ordering.
+2. At Standard 1100–1439 and Compact 1024–1099, inspect footer caption wrapping and full keyboard navigation.
+3. Below 1024 (including 1023/800/640px), inspect constrained modal width, footer containment and continued scrolling.
+4. At 125%, 150% and 200% DPI, inspect footer height, modal minimum dimensions, readable text and scroll reachability.
+5. In standard/high-contrast themes, inspect focus outlines, tooltips, captions and contrast.
+6. Inspect Copy Summary tooltip, keyboard-focus HelpText and original clipboard contents (host, risk, reasons, tags, rules and actions), without claiming export or evidence verification.
+7. Inspect Open Anomalies enabled only with an anomaly ID, navigation to the existing Anomalies view and no capture side effect.
+8. Inspect Open Incident enabled only with an incident ID, navigation to existing Incidents workspace/selection, and Close without navigation.
+9. Inspect unchanged KPI provenance, local PPS 10-sample/120-point behavior, incident triage, Live Events 80/500, unavailable CLI, Cisco/WebView2/ScottPlot, privacy/capture/trust and independent R437/protocol/test files.
+10. Inspect final remote HEAD, direct-parent two-commit ancestry, exact two owned paths, fresh expected-SHA lease, no changes to independent automations, and **zero** tests/builds/replays/CI/runners/benchmarks/capture.
+
+**Next independent UI GA UI-86:** inspect fresh LIVE HEAD, exact approved image, ledger and original WPF consumers; choose one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–85. Acceptance remains deferred until owner explicitly says **“now it is test time.”**
