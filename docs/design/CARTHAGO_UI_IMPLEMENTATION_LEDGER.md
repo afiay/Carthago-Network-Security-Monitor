@@ -4338,3 +4338,42 @@ The source commit is a direct child of the pinned baseline, with only the author
 10. Inspect final source/docs blobs, direct-parent two-commit chain, exact two owned paths, expected-SHA publication lease, and **zero** builds/tests/replays/holdouts/CI/runners/benchmarks/capture.
 
 **Next independent UI GA UI-88:** inspect fresh LIVE HEAD, exact approved image, ledger and original WPF consumers; choose one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–87. Acceptance remains deferred until the owner explicitly says **“now it is test time.”**
+
+## GA UI-88 — Incident Queue: accessible severity and unresolved-status filter guidance
+
+**2026-11-02 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE remote `feature/carthago-reliability-hardening` HEAD: `b1546fac88e9933b24687dfb1d49e5546a6724cc`; previous GA UI-87 publication: `b1546fac88e9933b24687dfb1d49e5546a6724cc`. Private UI source commit: `22b8d175944f38e152b6ba86ea47d506da164016` (direct child of starting HEAD); source XAML blob: `6f42f1fc343eee232d839d664c1070fd8c7dc03e`; prior XAML blob: `78c3e39db181cbcd986491d3c4c0ef72f1f1ceb6`. Authorized paths **only** `Carthago/Views/IncidentsPage.xaml` and `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`. **ZERO** builds, dotnet/xUnit tests, replays, holdouts, CI/GitHub Actions, runners, benchmarks, production capture, running-WPF screenshots or executed acceptance scenarios. All acceptance below is **PLANNED ONLY — UNEXECUTED**.
+
+### Reference fidelity, live divergence and original consumers
+
+**FIRST** resolved and visually inspected the exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c` (1648×928). Its navy/graphite/cyan/teal visual hierarchy, left navigation, operational KPIs, dense prioritized incident triage, investigation, restrained severity, chart and local event presentation remain the reference. The image's IPs, rule IDs, Mbps curves, timestamps, confidence, metrics, sensor state and terminal output are **DEMO ONLY**, never runtime evidence. The actual WPF CLI remains explicitly **UNAVAILABLE** and visual-only.
+
+At the start, inspected live remote branch HEAD and recent commits; ledger through GA UI-87; `IncidentsPage.xaml`, `IncidentsPage.xaml.cs`, `Theme.xaml`, `ResponsiveLayout.cs`, `Sidebar.xaml`, `MainWindow.xaml`, `MainWindow.Navigation.cs`, `MainWindow.Responsive.cs` and original consumers. No independent commits intervened between UI-87 and the pinned starting HEAD at preparation. Original `SeverityFilter.SelectionChanged` sets `_vm.FilterSeverity` and calls `ApplyFilter`; `OnlyUnackedBox_Changed` sets `_vm.OnlyUnacked` and calls `ApplyFilter`. `ApplyFilter` compares severity or accepts All; the checkbox excludes `IsResolved` items, where `IsResolved` means status equals `Resolved` (case-insensitive). Thus acknowledged/investigating incidents are not automatically excluded. These controls filter the existing local `CollectionViewSource` only; no status, persistence, security or detection setting is written. Responsive layout remains governed by the original view and shell partials.
+
+### One cohesive UI-owned improvement
+
+On the existing **Incident Queue** severity ComboBox and **Open incidents only** CheckBox, add concise source-accurate hover and keyboard-focus tooltips, explicit `AutomationProperties.Name` and tooltip-bound `AutomationProperties.HelpText`. Explain that All includes all severities and that Open incidents only excludes **Resolved**, not all acknowledged or investigating cases; neither filter changes incident status or detection settings. Retain visible labels, options, controls, selection/checked handlers, bindings, geometry, styling and focus order. No added focus stop, search behavior, model, event producer, capture, clipboard operation, network request or remediation. This is separate from UI-86's **Anomaly Triage Queue** filters and UI-87's Incident Queue Copy JSON/Clear actions.
+
+**Pre-existing separate finding, not fixed here:** `IncidentsPage.xaml.cs` contains `SearchBox_TextChanged`, but the inspected `IncidentsPage.xaml` does not attach `TextChanged="SearchBox_TextChanged"` and the constructor does not subscribe it. Search may therefore fail to update `_vm.Search`; do not assert that incident search works. This requires a separately scoped UI-owned correction and later runtime verification. GA UI-88 does not modify the search field or handler.
+
+Source-only delta: `Carthago/Views/IncidentsPage.xaml` (10 additions, 2 deletions from private source-commit comparison). This ledger is the sole documentation change. Preserve Wide ≥1440, Standard 1100–1439, Compact 1024–1099, graceful below 1024; local PPS ScottPlot ten-sample average and bounded 120-point history; operational KPIs, prioritized incidents, investigation, read-only local Live Events 80 displayed/500 retained, explicitly unavailable visual-only CLI, Cisco/WebView2/ScottPlot and privacy/capture/trust boundaries.
+
+### Publication, static end review and unverified risks
+
+The private source commit is a direct child of pinned LIVE HEAD; this ledger commit is its direct child. Immediately before publication, recheck LIVE remote HEAD and concurrent changed paths. Publish the **complete** two-commit candidate only through **one** non-forced atomic GitHub `update_ref` with matching `expected_sha` lease on the same branch. If moved, reconstruct against fresh HEAD only for disjoint paths and fresh lease; **STOP** on overlap/conflict or missing guarantee. After publication inspect remote HEAD, direct-parent ancestry, both blobs, exact two owned paths and independent stream preservation. No branch, PR, force push, history rewrite or independent automation mutation.
+
+**Risks — UNVERIFIED:** WPF XAML compilation; ComboBox/CheckBox template exposure of Name/HelpText; keyboard-focus tooltip triggering; screen-reader reading order; tooltip length/legibility; focus contrast in standard and high-contrast themes; containment at 1440/1100/1099/1024/1023/800/640px and 125–200% DPI. Existing incident search wiring remains an unresolved UI finding; this source-only enhancement does not fix or verify it. Static inspection cannot prove rendering, accessibility, filter runtime correctness or privacy/security outcomes.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED OR EXECUTED
+
+1. At Wide ≥1440px, inspect original Incident Queue severity ComboBox and Open incidents only checkbox captions, option order, widths and unchanged visual hierarchy.
+2. At Standard 1100–1439px, Compact 1024–1099px and below 1024 (1023/800/640px), inspect both filter controls and tooltip containment.
+3. At 125%, 150% and 200% DPI, inspect focus indicators, tooltip readability and queue/investigation scroll reachability.
+4. In standard/high-contrast themes, inspect keyboard-triggered tooltip presentation, screen-reader Name/HelpText and tab/focus order.
+5. Select All and each Critical/High/Medium/Low severity; verify local filtering and no incident status or detection setting changes.
+6. Toggle Open incidents only; verify it excludes only resolved cases, retains acknowledged/investigating unresolved cases and does not mutate incident status.
+7. Combine severity and unresolved filters; inspect current selection, empty states, count presentation and existing local view behavior.
+8. Separately investigate the pre-existing disconnected SearchBox_TextChanged handler; do not claim search correctness or repair as part of this GA.
+9. Inspect unchanged local PPS 10-sample/120-point behavior, KPI provenance, incidents, Live Events 80/500, unavailable CLI, Cisco/WebView2/ScottPlot, privacy/capture/trust and independent detection/protocol paths.
+10. Verify final source/docs blobs, direct-parent two-commit ancestry, exact two owned paths, fresh expected-SHA lease and **zero** builds/tests/replays/holdouts/CI/runners/benchmarks/capture.
+
+**Next independent UI GA UI-89:** inspect fresh LIVE HEAD, exact approved image, ledger and original WPF consumers; choose one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–88. Acceptance remains deferred until the owner explicitly says **“now it is test time.”**
