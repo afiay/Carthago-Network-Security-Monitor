@@ -306,12 +306,20 @@
                 <Button Content="Acknowledge"
                         Width="106"
                         Style="{StaticResource SecondaryButton}"
-                        Click="Ack_Click"/>
+                        Click="Ack_Click"
+                        ToolTip="Sets the selected incident's status to Acknowledged without confirmation. With no incident selected, no status update is requested."
+                        ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                        AutomationProperties.Name="Acknowledge selected incident"
+                        AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
                 <Button Content="Resolve"
                         Width="88"
                         Margin="8,0,0,0"
                         Style="{StaticResource SecondaryButton}"
-                        Click="Resolve_Click"/>
+                        Click="Resolve_Click"
+                        ToolTip="Sets the selected incident's status to Resolved without confirmation. This is an incident status action, not a network remediation command. With no selection, no update is requested."
+                        ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                        AutomationProperties.Name="Resolve selected incident"
+                        AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
               </StackPanel>
             </DockPanel>
 
