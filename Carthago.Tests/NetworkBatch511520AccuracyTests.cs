@@ -25,7 +25,7 @@ public sealed class NetworkBatch511520AccuracyTests
         ("R513", "SSH_DYNAMIC_FORWARD_COMMAND_AND_SOCKET_PROVENANCE_UNAVAILABLE", "ssh.example.test", "ssh", null, null, 22),
         ("R514", "CHISEL_AUTHENTICATED_HANDSHAKE_PROVENANCE_UNAVAILABLE", "tunnel.example.test", "http", "GET", "/tunnel", 8080),
         ("R515", "FRP_AUTHENTICATED_HANDSHAKE_PROVENANCE_UNAVAILABLE", "frp.example.test", "tcp", null, null, 7000),
-        ("R516", "CLOUDFLARED_TUNNEL_SESSION_PROVENANCE_UNAVAILABLE", "edge.example.test", "quic", null, null, 7844),
+        ("R516", "CLOUDFLARED_HANDSHAKE_NOT_CORROBORATED", "edge.example.test", "quic", null, null, 7844),
         ("R517", "NGROK_AGENT_TUNNEL_SESSION_PROVENANCE_UNAVAILABLE", "ngrok-free.app", "http", "GET", "/api/tunnels", 443),
         ("R518", "SSH_REVERSE_FORWARD_COMMAND_AND_LISTENER_PROVENANCE_UNAVAILABLE", "ssh.example.test", "ssh", null, null, 22),
         ("R519", "DOQ_ALPN_RESOLVER_IDENTITY_AND_APPROVAL_UNAVAILABLE", "resolver.example.test", "quic", null, null, 853),
