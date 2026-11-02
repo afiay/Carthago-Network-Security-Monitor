@@ -43,6 +43,8 @@ namespace Carthago.Services
         private sealed class DirectionState
         {
             public bool Init;
+            // True only after an observed TCP SYN, never on midstream fallback.
+            public bool SynAnchored;
             public uint NextSeq;
             public int Collected;
             public bool Invalid;
@@ -384,7 +386,8 @@ namespace Carthago.Services
                     {
                         // Normalize tiny fragments/overlaps for early bytes
                         bool c2s = clientToServer;
-                        if (ShouldAcceptSegment(tcpFlow, c2s, seq, l4Payload, out ReadOnlySpan<byte> normPayload))
+                        if (ShouldAcceptSegment(tcpFlow, c2s, seq, l4Payload,
+                            out ReadOnlySpan<byte> normPayload, out bool synAnchoredFirstPayload))
                         {
                             // -------- Bounded OT framing --------
                             // Port is a routing hint; ApplicationProtocol is set
@@ -393,12 +396,14 @@ namespace Carthago.Services
                                 rec.ApplicationProtocol = otProtocol;
 
                             // -------- Bounded Redis RESP2 command shape --------
-                            // Only full, plaintext, client-to-service framed requests
-                            // at the observed TCP/6379 endpoint may set the capture flag.
+                            // Only complete first client payloads following an
+                            // observed TCP SYN, at the expected TCP sequence and
+                            // destination port 6379, may set the capture flag.
                             // No key, config parameter, value, or reply is stored here.
                             // The packet classifier is not general TCP reassembly and
                             // cannot attest server success or administrator intent.
-                            if (c2s && dport == 6379 && sport is > 0 and <= 65535
+                            if (c2s && synAnchoredFirstPayload
+                                && dport == 6379 && sport is > 0 and <= 65535
                                 && sport != 6379 && !IsTlsActive(tcpFlow, c2s)
                                 && Resp2CommandInspector.TryInspect(normPayload,
                                     verifiedPlaintextClientCommandBoundary: true, out var resp))
@@ -707,6 +712,7 @@ namespace Carthago.Services
                 var state = GetOrAddState(key, DateTime.UtcNow);
                 var dir = clientToServer ? state.C2S : state.S2C;
                 dir.Init = true;
+                dir.SynAnchored = true;
                 dir.NextSeq = seqPlus1;
                 dir.Collected = 0;
                 dir.Invalid = false;
@@ -733,9 +739,11 @@ namespace Carthago.Services
         }
 
         private bool ShouldAcceptSegment(FlowKey key, bool clientToServer, uint seq,
-            ReadOnlySpan<byte> payload, out ReadOnlySpan<byte> normalized)
+            ReadOnlySpan<byte> payload, out ReadOnlySpan<byte> normalized,
+            out bool synAnchoredFirstPayload)
         {
             normalized = ReadOnlySpan<byte>.Empty;
+            synAnchoredFirstPayload = false;
             if (payload.IsEmpty) return false;
 
             lock (_tcpSync)
@@ -744,6 +752,11 @@ namespace Carthago.Services
                 var dir = clientToServer ? state.C2S : state.S2C;
                 if (dir.Invalid || dir.Collected >= MaxInspectBytesPerDir) return false;
 
+                // Checked under the flow lock before changing sequence state.
+                // No SYN, missing bytes, retransmits, or later stream segments
+                // can claim an attested application-command boundary.
+                synAnchoredFirstPayload = clientToServer && dir.Init && dir.SynAnchored
+                    && dir.Collected == 0 && dir.NextSeq == seq;
                 int overlap = 0;
                 if (!dir.Init)
                 {
