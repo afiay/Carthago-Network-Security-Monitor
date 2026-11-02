@@ -592,6 +592,24 @@
                                  MaxWidth="340"/>
                     </Border>
                     <StackPanel Grid.Row="2" Margin="0,8,0,0">
+                      <!-- GA UI-82: source-accurate plot key, matching the existing ScottPlot series; no new telemetry. -->
+                      <WrapPanel Margin="0,0,0,6"
+                                 AutomationProperties.Name="Local PPS plot series key"
+                                 AutomationProperties.HelpText="Blue solid line shows local timer packets per second. Amber dashed line is the ten-sample moving average, drawn only after at least eleven timer samples. Neither line proves active capture or network-wide traffic.">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,16,4">
+                          <Line X1="0" Y1="5" X2="24" Y2="5" Width="26" Height="10"
+                                Stroke="#60A5FA" StrokeThickness="2" VerticalAlignment="Center" IsHitTestVisible="False"/>
+                          <TextBlock Text="Local PPS · solid blue" FontSize="11"
+                                     Foreground="{StaticResource TextMutedBrush}" Margin="6,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                          <Line X1="0" Y1="5" X2="24" Y2="5" Width="26" Height="10"
+                                Stroke="#F59E0B" StrokeThickness="2" StrokeDashArray="3,2"
+                                VerticalAlignment="Center" IsHitTestVisible="False"/>
+                          <TextBlock Text="10-sample average · dashed amber (11+ samples)" FontSize="11"
+                                     Foreground="{StaticResource TextMutedBrush}" Margin="6,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                      </WrapPanel>
                        <TextBlock x:Name="DashboardTrafficChartTextSummary"
                                   Text="Waiting for local PPS timer samples; no packet-rate observation is available yet."
                                   Foreground="{StaticResource TextMutedBrush}"
