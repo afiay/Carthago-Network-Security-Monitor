@@ -1321,7 +1321,15 @@
                                    Margin="0,3,8,0"/>
                       </StackPanel>
                     </DockPanel>
-                    <WrapPanel Grid.Row="1" Margin="0,12,0,9">
+                    <!-- GA UI-75: group the existing four local Live Events filters as one subdued visual toolbar. -->
+                    <Border Grid.Row="1"
+                            Margin="0,12,0,9"
+                            Padding="10,9,10,3"
+                            Background="{StaticResource PillBgBrush}"
+                            BorderBrush="{StaticResource SoftDividerBrush}"
+                            BorderThickness="1"
+                            CornerRadius="8">
+                      <WrapPanel>
                       <!-- GA UI-26: visible captions for the two remaining dropdown filters. -->
                       <StackPanel Orientation="Horizontal" Height="30" Margin="0,0,8,6">
                         <TextBlock x:Name="DashboardLiveSeverityFilterLabel"
@@ -1412,7 +1420,8 @@
                               Margin="0,0,0,6"
                               Style="{StaticResource SecondaryButton}"
                               Click="DashboardLiveEventsClearFilters_Click"/>
-                    </WrapPanel>
+                      </WrapPanel>
+                    </Border>
                     <Grid Grid.Row="2">
                       <DataGrid x:Name="DashboardLiveEventsGrid"
                                 Height="190"
