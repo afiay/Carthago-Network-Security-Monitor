@@ -4073,3 +4073,40 @@ Private source commit `058bbced9ba0f5fb3d3f6033947631625f9f19d9` is a direct chi
 10. Inspect published source/docs blobs, direct-parent ancestry, exact owned-path diff, fresh expected-SHA lease and **zero** builds/tests/replays/CI/runners/benchmarks/capture.
 
 **Next independent UI GA UI-81:** inspect fresh LIVE HEAD, exact approved image, ledger and original WPF consumers; choose one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–80. Acceptance remains deferred until the owner explicitly says **“now it is test time.”**
+
+## GA UI-81 — High-Risk Hosts: keyboard-discoverable related-item and activity column guidance
+
+**2026-11-02 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE `feature/carthago-reliability-hardening` HEAD: `e4a3b2a38682a3a4b6c1b7ae2a2064aec632179e`. Previous GA UI-80 source `058bbced9ba0f5fb3d3f6033947631625f9f19d9`, publication `ddaea2f88f042713a1fc50bfe5a7400c10107b17`. One intervening independent R557 outbound Modbus write public-subnet fanout candidate `e4a3b2a38682a3a4b6c1b7ae2a2064aec632179e` (rule source, registration, tests and rule documentation) was already on the branch and is **not modified**. **Exact private UI source commit:** `b94c6e11b4e9bddae86e1dcf1ead7115bb82ffd8`; updated `MainWindow.xaml` blob `405d91a47c2db2fafab6f91319f682d444a57e92`. Owned paths: only `Carthago/Views/MainWindow.xaml` and this ledger. **ZERO** dotnet builds/tests, xUnit, replays, holdouts, CI, GitHub Actions, runners, benchmarks, production capture, running-WPF screenshots, or authored/executed acceptance tests. All scenarios below are **PLANNED ONLY — UNEXECUTED**.
+
+### Approved image, start divergence and source consumers
+
+**FIRST** resolved and visually inspected exact approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c` (1648×928). The image guides the navy/graphite/cyan/teal visual hierarchy, restrained severity, left navigation, KPIs, traffic chart, prioritized incident queue, investigation and dense local events. Screenshot IPs, rule IDs, confidence, timestamps, Mbps and CLI content are **DEMO ONLY**, never live telemetry, capture health or verified evidence. The CLI remains explicitly **UNAVAILABLE** and visual-only.
+
+Read the live HEAD and recent branch commits, ledger through UI-80, `MainWindow.xaml`, `Theme.xaml`, `Sidebar.xaml`, and original `MainWindow.Dashboard.cs`, `MainWindow.DashboardResponsive.cs`, `MainWindow.Responsive.cs`, `MainWindow.Core.cs` and `MainWindow.xaml.cs` partials. `BuildSocHostRows()` groups unresolved correlated incidents by source IP (fallback to grouped anomaly signals only when no incident hosts exist), limits the panel to five rows, calculates maximum local risk, related-item counts and relative 60-minute activity glyphs. `SocHostVm.ActivityAccessibilityLabel` specifies eight timestamp buckets, not packet traffic or a risk trend. The `KeyboardFocusVisual` resource already exists in `Theme.xaml`. The existing two column-header tooltips were mouse-hover-only; their source-specific explanations were not directly discoverable through keyboard focus.
+
+### One cohesive UI-owned accessibility enhancement
+
+Make only the existing **Items** and **Activity** column-header `TextBlock` elements keyboard-focusable/tab stops; apply the existing `KeyboardFocusVisual` and `ToolTipService.ShowsToolTipOnKeyboardFocus`, and add concise, source-accurate `AutomationProperties.Name` and `AutomationProperties.HelpText` to each. Preserve the exact visible header captions, original hover tooltip text, column widths, host row template, risk/count/activity values, ordering, colors, event handlers and bindings. **Items** is correlated incident count or fallback anomaly signal count, not packet count. **Activity** is eight relative buckets of incident last-update or anomaly creation timestamps across 60 minutes, not a traffic chart, absolute event count or risk trend. This is distinct from UI-29's per-row sparkline description, UI-53's numeric-cell guidance and UI-72's row separators: it exposes existing column-header meaning to keyboard users without introducing commands or producers.
+
+Source diff: **only** `Carthago/Views/MainWindow.xaml` (15 additions, 2 deletions). No viewmodel, theme, global resource, partial, service, shared API, engine, detection/protocol source, rule documentation or tests changed. Preserve Wide ≥1440, Standard 1100–1439, Compact 1024–1099 and graceful below 1024; local PPS ScottPlot 10-sample average and bounded 120-point history; prioritized incidents and investigation; read-only local Live Events 80 displayed/500 retained; unavailable CLI; Cisco/WebView2/ScottPlot; privacy/capture/trust boundaries and independent streams.
+
+### Static end review, publication guard and remaining risks
+
+Private source commit `b94c6e11b4e9bddae86e1dcf1ead7115bb82ffd8` is a direct child of pinned baseline `e4a3b2a38682a3a4b6c1b7ae2a2064aec632179e`; comparison shows only the XAML file. Its private documentation descendant changes only this ledger. Before publication, re-read LIVE remote HEAD and compare intervening detection/protocol/UI paths. Publish the **complete** two-commit chain using exactly **one non-forced atomic GitHub `update_ref` with `expected_sha` lease** on the same branch. If moved, reconcile only disjoint paths against a fresh baseline and lease; STOP on conflict, overlap or missing guarantee. After publication inspect final remote HEAD, direct-parent ancestry, both published blobs, two-file ownership diff and preservation of R557.
+
+**Unverified risks:** WPF XAML compilation and actual rendering; whether a focus visual and keyboard-triggered tooltip appear on a focusable `TextBlock` in the custom dashboard; potential extra Tab stops in a dense host panel; keyboard traversal, screen-reader announcement and tooltip dismissal; header focus-ring clipping in 62px/84px columns; high-contrast themes, 125–200% DPI, and 1440/1100/1099/1024/1023/640px widths. Static review is not compilation, rendering, accessibility verification or test evidence.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED OR EXECUTED
+
+1. At ≥1440px, inspect host header focus ring/tooltip appearance without changing the existing visible captions or column alignment.
+2. At 1100/1099/1024/1023/640px, inspect focus-ring containment and responsive host panel layout without horizontal clipping.
+3. At 125%, 150%, 200% DPI, inspect 62px Items and 84px Activity header focus visuals and text readability.
+4. In standard/high-contrast themes, inspect focus indicator contrast and tooltip legibility.
+5. Using Tab/Shift+Tab, verify the two new header stops appear in logical order and tooltip guidance is keyboard-discoverable.
+6. With assistive technology, inspect the header accessible names/help text and ensure no duplicate or misleading item counts are announced.
+7. With unresolved correlated incidents, inspect Items as incident counts and Activity as relative incident-update timestamp buckets.
+8. With no incident hosts but anomaly signals, inspect Items as fallback anomaly signal counts and Activity as relative anomaly-creation timestamp buckets.
+9. Inspect unchanged local PPS 10-sample/120-point behavior, KPIs, incident queue/investigation, Live Events 80/500, unavailable CLI, Cisco/WebView2/ScottPlot, privacy/capture/trust and independent R557 files.
+10. Inspect final source/docs blobs, direct-parent commits, exact two owned paths, fresh expected-SHA publication lease and **zero** builds/tests/replays/CI/runners/benchmarks/capture.
+
+**Next independent UI GA UI-82:** inspect fresh LIVE HEAD, exact approved image, ledger and original WPF consumers; choose one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–81. Acceptance remains deferred until the owner explicitly says **“now it is test time.”**
