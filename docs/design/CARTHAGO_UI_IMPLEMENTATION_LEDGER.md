@@ -3818,3 +3818,38 @@ Source commit `e47cac2595438d4cb5b9be45f31a0cbe23279e28` is a private direct chi
 10. Verify final source/docs blobs, direct-parent commit ancestry, exact owned-path diff, preserved independent R549 changes and **zero** builds/tests/replays/CI/runners/benchmarks/capture.
 
 **Next independent UI GA UI-74:** inspect fresh LIVE HEAD, exact approved reference, ledger and original WPF consumers; choose one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–73. All acceptance remains deferred until the owner explicitly says **“now it is test time.”**
+
+## GA UI-74 — Prioritized incident queue: visible hover and selected-row surfaces
+
+**2026-11-02 · SOURCE CANDIDATE — UNVERIFIED.** Starting LIVE `feature/carthago-reliability-hardening` HEAD: `78ad036c6794977c78d88614f9ab49f72654d29f`. Prior UI-73 source `e47cac2595438d4cb5b9be45f31a0cbe23279e28`, publication `f611cedba4b4d99c32976fb227383043f1b13878`. **Exact GA UI-74 source commit:** `95687189a7d184e8a575ef342ade232cd59c4b23`; source XAML blob `1e0218d97a808c9fe53de3eb89d168c0139aac29`. Only owned paths: `Carthago/Views/MainWindow.xaml` and this ledger. No builds, tests, xUnit, replays, holdouts, CI, Actions, runners, benchmarks, production capture or running-WPF screenshots. Authored/executed tests: **0/0**.
+
+### Approved reference, initial divergence and original consumers
+
+**FIRST** resolved and visually inspected exact ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c`. It depicts a navy/graphite SOC overview with cyan/teal accents, restrained severity, left navigation, KPIs, dense prioritized incidents/investigation and local Live Events. Its IPs, throughput/Mbps lines, rule IDs, confidence, timestamps and CLI text are **DEMO ONLY**, not capture/telemetry contracts; CLI remains explicitly **UNAVAILABLE** visual-only. Preserve Wide >=1440, Standard 1100–1439, Compact 1024–1099 and graceful below 1024, local PPS ScottPlot with optional 10-sample average and bounded 120-point history, read-only local Live Events 80 displayed/500 retained, Cisco/WebView2/ScottPlot and privacy/trust/capture boundaries.
+
+Starting LIVE HEAD follows UI-73 publication by three **independent R550 BACnet paired discovery** source/test/docs commits (`a2f0da3`, `3bacd83`, `78ad036`); those changes do not touch UI-owned files. Inspected recent commits, the ledger through UI-73, current `MainWindow.xaml`, `Theme.xaml`, and original `MainWindow.Dashboard.cs`, `MainWindow.DashboardEvents.cs`, `MainWindow.DashboardResponsive.cs`, `MainWindow.Responsive.cs`, `MainWindow.Core.cs`, `MainWindow.Navigation.cs`, `MainWindow.Plots.cs`, `MainWindow.xaml.cs` partials. `DashboardAnomalyList` is an existing WPF ListBox bound to `_dashboardAnomalyItems`. Original selection restores an item across refreshes and `DashboardAnomalyList_SelectionChanged` updates investigation details. The ListBoxItem template already has a cyan selected/focus border; the inner `SocTimelineItem` Border's opaque `#081524` background prevents an outer background-only change from being visible. Existing theme brushes `RowHoverBrush` and `SelectionBgBrush` are already defined; no new theme token or contract is required.
+
+### One cohesive UI-owned change
+
+Name only the **existing** incident/anomaly row Border `TriageRowCard`, and add two `DataTemplate.Triggers` that change **that inner Border's background**: `RowHoverBrush` on the parent ListBoxItem hover, `SelectionBgBrush` on selection (declared later to take priority when both apply). This provides a visible, restrained navy/cyan hover-to-selection hierarchy distinct from UI-04's outer selection/focus outline and UI-71/72/73's separate empty-state, host-divider and evidence-keyline treatments. Keep original queue items, severity/risk colors, scores, titles, timestamps, row height, margins, original hover opacity, selected/focus border, keyboard behavior, source collections, ordering, handlers, detail updates and data bindings unchanged. No new focus stop, action, simulated data, telemetry, security/capture behavior, shared API, viewmodel, detection or protocol change.
+
+### Static end review, publication guard and unverified risks
+
+Private source commit `95687189a7d184e8a575ef342ade232cd59c4b23` is a direct child of pinned baseline `78ad036c6794977c78d88614f9ab49f72654d29f` and changes only `Carthago/Views/MainWindow.xaml`. Documentation commit is its direct child and changes only this ledger. Before publication, re-read LIVE remote HEAD and compare all concurrent detection/protocol/UI changes. Publish the complete private two-commit candidate with **one non-forced atomic GitHub `update_ref` using `expected_sha` lease** on the same branch; on movement reconcile disjoint paths with a fresh private chain and lease, or STOP on overlap/uncertainty. Verify post-publication remote HEAD, ancestry, both blobs and exact two-file scope. No branch/PR, force push, history rewrite or automation edits.
+
+**Unverified risks:** WPF XAML parsing/compilation; `RelativeSource FindAncestor ListBoxItem` binding resolution inside a DataTemplate; hover/selection trigger precedence; selected state after collection refresh; contrast and readability of text and existing severity/risk accents against both fill colors; high-contrast themes, 125–200% DPI, 1440/1100/1099/1024/1023/640px widths; focus visuals and screen-reader/keyboard selection; retained row clipping in the fixed-height triage panel. Static source review is not proof of rendered or accessible behavior.
+
+### Acceptance scenarios — PLANNED ONLY; NOT AUTHORED OR EXECUTED
+
+1. Hover an unselected correlated-incident row; inspect subdued hover fill and unchanged text/severity/risk badge.
+2. Hover an unselected anomaly row; inspect the same hover treatment without implying a confirmed incident.
+3. Select a row with mouse; inspect selected fill and existing cyan outline, while investigation updates to that item.
+4. Move hover off the selected row; verify selection fill persists and hover fill disappears from unselected rows.
+5. Use arrow keys to select different rows; verify keyboard focus outline, selected fill and original investigation selection handler.
+6. Refresh the queue while a previously selected incident persists; verify original selection restoration and corresponding fill.
+7. Inspect empty queue, scrolling, text truncation, original 64px row height, risk badges and local-clock timestamps for no fabricated content.
+8. Inspect all breakpoints (1440/1100/1099/1024/1023/640px), 125–200% DPI, high contrast, keyboard focus and assistive-technology row names.
+9. Inspect unchanged PPS optional average/120-point bound, KPIs, read-only Live Events 80/500, unavailable CLI, Cisco/WebView2/ScottPlot and capture/privacy/trust boundaries.
+10. Inspect exact source/docs blobs, direct-parent commit ancestry, owned-path diff, untouched independent R550 changes and **zero** builds/tests/replays/CI/runners/benchmarks/capture.
+
+**Next independent UI GA UI-75:** inspect fresh LIVE HEAD, exact approved reference, ledger and original WPF consumers; choose one distinct UI-owned accessibility/readability/visual-consistency improvement outside UI-01–74. All acceptance remains deferred until owner explicitly says **“now it is test time.”**
