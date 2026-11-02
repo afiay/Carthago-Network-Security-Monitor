@@ -956,6 +956,7 @@
                             <Border Grid.Column="1" Style="{StaticResource DetailGridCard}" Margin="0,0,0,6">
                               <StackPanel>
                                 <TextBlock x:Name="DashboardDetailTagsLabel" Text="Tags" Style="{StaticResource SocSubHeader}"/>
+                                <!-- GA UI-83: bound long local tag/rule chips; preserve full source text and hover access. -->
                                 <ItemsControl x:Name="DashboardDetailTagsItems"
                                               AutomationProperties.LabeledBy="{Binding ElementName=DashboardDetailTagsLabel}"
                                               AutomationProperties.HelpText="Tags from the selected local incident or anomaly signal; not independent confirmation of a threat.">
@@ -965,7 +966,7 @@
                                   <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                       <Border Style="{StaticResource Pill}" Margin="0,0,6,6">
-                                        <TextBlock Text="{Binding}" FontSize="11"/>
+                                        <TextBlock Text="{Binding}" FontSize="11" MaxWidth="180" TextWrapping="Wrap" ToolTip="{Binding}"/>
                                       </Border>
                                     </DataTemplate>
                                   </ItemsControl.ItemTemplate>
@@ -985,7 +986,7 @@
                                   <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                       <Border Style="{StaticResource Pill}" Margin="0,0,6,6">
-                                        <TextBlock Text="{Binding}" FontFamily="Consolas" FontSize="11"/>
+                                        <TextBlock Text="{Binding}" FontFamily="Consolas" FontSize="11" MaxWidth="180" TextWrapping="Wrap" ToolTip="{Binding}"/>
                                       </Border>
                                     </DataTemplate>
                                   </ItemsControl.ItemTemplate>
