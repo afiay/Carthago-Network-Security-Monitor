@@ -1870,3 +1870,19 @@ Focused tests redirect RuleEngine journal writes to temporary test directories s
 **Production-default boundary:** the resolver is default-null and no live signed-receipt inbox or operator bootstrap is connected. Ordinary application behavior therefore remains unchanged.
 
 **Verification status:** SOURCE CANDIDATE — UNVERIFIED. The prior 107/107 promotion-policy GREEN remains valid; this new runtime hook requires focused owner execution.
+
+#### 2026-11-03 — R275 trusted runtime hook focused owner verification GREEN (114/114)
+
+Owner-provided local PowerShell output for branch commit `8f4a771c1bf2fb859e44638bb18e72dcf3b403fe`, before the subsequent nullable-guard correction, confirms execution of the focused R275 resolver, promotion-policy, internal capability, OAuth device-flow, Entra source and paired-replay test filter.
+
+Observed result:
+- `Carthago` and `Carthago.Tests` Release builds succeeded.
+- **114 total; 114 succeeded; 0 failed; 0 skipped.**
+- Focused test duration: **18.3 seconds**.
+- Overall build/test command completed in **87.9 seconds** with **2 reported warning occurrences** for `CS8604`, both originating at `Carthago/Engine/Rules/Abstractions/RulePrecisionRuntimeEvaluator.cs:65` (same nullability diagnostic reported for different build targets).
+
+**Classification:** GREEN for the focused R275 integration tests **on commit `8f4a771` only**. The trusted runtime hook's authored source-candidate designation above is superseded **for that exact tested revision**, not for later untested revisions. This does not establish complete-system regression success, live trusted signed-receipt intake, or production promotion.
+
+Follow-up source correction: commit `a7589023a470ad2aa26e2309a5c88a3f27838c19` adds an explicit `descriptor is null` guard before the R275-only descriptor check to address `CS8604`. This is a source-level correction, **not yet reverified by owner test output**.
+
+**Remaining validation gates:** (1) rerun the identical focused 114-test filter on the corrected commit; (2) run the entire `Carthago.Tests` Release suite and record its exact counts. **Both are PENDING; do not label the corrected commit or full suite GREEN without execution evidence.** Do not alter R275 confidence floor, telemetry selector semantics, promotion policy, tuning or holdout fixtures.
