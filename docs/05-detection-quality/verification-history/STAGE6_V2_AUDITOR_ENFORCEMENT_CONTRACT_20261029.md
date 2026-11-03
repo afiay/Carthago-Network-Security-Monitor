@@ -301,3 +301,19 @@ This run therefore provides evidence that the **auditor now rejects A01 for the 
 Live-branch commit `ecc261d72649fd0b323c5a50712ce941476aca91` fixes only the verifier invocation boundary. During the child invocation, the parent temporarily uses `ErrorActionPreference=Continue`, captures `$LASTEXITCODE`, restores the previous value in `finally`, and then executes the pre-existing privacy and exact-reason assertions. No production auditor behavior was relaxed.
 
 **Gate state remains BLOCKED / NOT GREEN pending owner rerun of the full focused harness.**
+
+
+### 2026-11-03 focused rerun — GREEN through A04, A06 wrong-path rejection
+
+With the parent native-command harness corrected, the owner reran the complete focused auditor contract. The following cases reached and matched their expected category/reason: `BASELINE`, `A13`, `A01`, `A01-case`, `A02`, `A03`, and `A04`.
+
+A06 then rejected for an **unexpected reason**, and the harness correctly stopped with “do not count as RED or GREEN.” Live source inspection identified the cause: the A06 fixture changes one serialized malicious QNAME to `tampered.example`, while the auditor checked the three-distinct-long-TXT eligibility predicate before original-frame binding. The fixture therefore failed the long-TXT semantic gate before reaching the intended `serialized record differs from decoded PCAP` comparison. A08-qtype had the same ordering risk because changing the serialized QTYPE from TXT to A could also be intercepted by the same semantic predicate.
+
+This is not evidence that packet binding is broken. It is an ordering defect in the audit path relative to this contract's stated purpose. The contract table explicitly requires:
+- A06: serialized QNAME differs from captured packet -> `serialized record differs from decoded PCAP`.
+- A08-qtype: serialized QTYPE differs from captured packet -> same packet-binding rejection.
+- A16-distinct: captured packet and serialized record agree, but malicious evidence has fewer than three distinct long TXT QNAMEs -> long-TXT eligibility rejection.
+
+Commit `d637df90e904d8386d995253bced9ca991e0510d` moves the malicious long-TXT eligibility predicate to after complete selected-frame binding. The earlier source-independence, schema, expected-rule, source/session/origin and frame-reuse checks remain unchanged. This ensures A06/A08 exercise provenance binding while A16 still exercises semantic eligibility after authentic packet attribution.
+
+**Gate status:** partial GREEN through A04; A06 invalid for RED/GREEN; full matrix pending rerun after the ordering fix. No holdout approval, freeze, label review or detector accuracy claim follows from this change.
