@@ -1636,3 +1636,23 @@ The parser accepts only a narrow projection of Microsoft Entra `SigninLogs`. It 
 **Trust boundary:** the output remains `FromTrustedProviderTransport=false`. No Microsoft credential, Graph/Log Analytics client, trusted transport, private signing key, rule-engine wiring or alert promotion was introduced. This layer validates provider semantics only; it does not prove the JSON came from Microsoft Entra.
 
 **Verification status:** SOURCE CANDIDATE — UNVERIFIED. The new Entra parser tests and the earlier R275 signed-candidate tests must be run together before marking this increment GREEN.
+
+#### 2026-11-03 — R275 trusted IdP candidate verification GREEN (56/56)
+
+The owner fast-forwarded `feature/carthago-reliability-hardening` to `5f95521611e1549cd89c20d6149ea71fc7e75b36` and executed the focused R275 verification:
+
+`dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~MicrosoftEntraDeviceCodeAuditIntakeTests|FullyQualifiedName~OAuthDeviceFlowAuditCandidateGateTests|FullyQualifiedName~R275AdvancedAccuracyBatchTests|FullyQualifiedName~R275R343R485PairedReplayTests"`
+
+Observed result:
+- Carthago build succeeded.
+- Carthago.Tests build succeeded.
+- **56 total; 56 succeeded; 0 failed; 0 skipped**.
+- Focused test duration: 16.9 seconds; overall command completed with build success.
+
+**Classification:** GREEN for the authored synthetic R275 provider-semantics and signed-candidate boundary.
+
+This verifies the strict Microsoft Entra projected `SigninLogs` parser, RSA-PSS trust-anchor enforcement, replay rejection, independent-issuer correlation, endpoint/time corroboration, packet-only false-positive protections and explicit non-promotion of the candidate path into R275.
+
+**Scope boundary:** this does not prove a live Microsoft Entra collector, tenant authentication, provider transport provenance, signing-key custody, real phishing-label truth, production alert quality or rule-engine integration. R275 remains fail-closed in normal rule evaluation until a separately reviewed trusted producer is wired through an authenticated capability path.
+
+No confidence floor, runtime mode, holdout fixture, V1/V2 state or alert policy changed.
