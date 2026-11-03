@@ -14,3 +14,8 @@ No shared PacketHandler/TrafficRecord, sensor, UI, verification coordinator, hol
 ## R606–R615 research-derived source candidates
 
 Ten independently implemented HTTP/DNS request or query rules, original workbook IDs R3035, R2312, R2273, R2960, R3039, R3042, R2158, R3048, R2965, R2550. See [R606–R615 documentation](../03-detection-rules/batches/RULE_BATCH_606-615.md). **SOURCE CANDIDATE — UNVERIFIED; xUnit authored, 0 executed.** Next unallocated rule ID: R616. No convergence.
+
+
+## R616–R625 source candidate batch
+
+Ten independent rules drawn from original workbook rows R2269, R2280, R2283, R2922, R2941, R3070, R2237, R2904, R2956, R2979. Includes 4 HTTP, 2 DNS and 4 conditionally resolved local process egress signals. See [R616–R625](../../RULE_BATCH_616-625.md). **SOURCE CANDIDATE — UNVERIFIED; xUnit authored, 0 executed.** Next ID: R626. No convergence.

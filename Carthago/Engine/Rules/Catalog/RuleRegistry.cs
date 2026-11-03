@@ -638,6 +638,16 @@ namespace Carthago.Engine.Rules.Catalog
                 new R613_CobaltStrikeLikeDnsStagingLabelRule(),
                 new R614_HistoricalDprkDomainDnsQueryRule(),
                 new R615_AnonfilesDomainDnsQueryRule(),
+                new R616_ExchangeEcpVirtualDirectoryResetRequestRule(),
+                new R617_SolarWindsSupernovaClazzRequestRule(),
+                new R618_ExchangeProxyShellAutodiscoverBackendRequestRule(),
+                new R619_EncodedJavaExpressionUriRequestRule(),
+                new R620_LocaltoNetServiceDnsQueryRule(),
+                new R621_HistoricalThreeCxDomainDnsQueryRule(),
+                new R622_NotepadExternalTcpEgressRule(),
+                new R623_DialerExternalTcpEgressRule(),
+                new R624_AddInUtilExternalTcpEgressRule(),
+                new R625_EquationEditorExternalTcpEgressRule(),
             };
         }
 
