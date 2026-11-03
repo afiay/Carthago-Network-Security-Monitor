@@ -2,6 +2,7 @@
 // R275 selector-safe trusted runtime resolver tests.
 // SOURCE CANDIDATE — UNVERIFIED. Default runtime remains resolver-free.
 using System;
+using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -15,8 +16,53 @@ using Xunit;
 
 namespace Carthago.Tests;
 
+[CollectionDefinition("R275 RuleEngine runtime serial", DisableParallelization = true)]
+public sealed class R275RuleEngineRuntimeSerialCollection
+{
+}
+
+[Collection("R275 RuleEngine runtime serial")]
 public sealed class R275TrustedRuntimeResolverTests
 {
+    private sealed class TempJournalScope : IDisposable
+    {
+        private readonly string _directory;
+        private readonly IDisposable _scope;
+        private int _disposed;
+
+        public TempJournalScope()
+        {
+            _directory = Path.Combine(
+                Path.GetTempPath(),
+                "carthago-r275-runtime-" + Guid.NewGuid().ToString("N"));
+            var journal = new DetectionJournal(new DetectionJournalOptions
+            {
+                DirectoryPath = _directory,
+                FlushAfterEveryWrite = true,
+                CreateDirectoryIfMissing = true
+            });
+            _scope = RuleEngine.PushDetectionJournalForTests(journal);
+        }
+
+        public void Dispose()
+        {
+            if (System.Threading.Interlocked.Exchange(ref _disposed, 1) != 0)
+                return;
+
+            _scope.Dispose();
+            try
+            {
+                if (Directory.Exists(_directory))
+                    Directory.Delete(_directory, recursive: true);
+            }
+            catch
+            {
+                // Best-effort cleanup only; the test's trust result does not
+                // depend on temporary-file deletion.
+            }
+        }
+    }
+
     private static TrafficRecord TlsOnlyFlow() => new()
     {
         Source = "203.0.113.25",
@@ -173,6 +219,7 @@ public sealed class R275TrustedRuntimeResolverTests
     [Fact]
     public void Default_Runtime_Does_Not_Bypass_Http_Selector_For_Tls_Only_R275()
     {
+        using var journal = new TempJournalScope();
         var flow = TlsOnlyFlow();
 
         var events = RuleEngine.Evaluate(flow, Sensitivity.Balanced);
@@ -190,6 +237,7 @@ public sealed class R275TrustedRuntimeResolverTests
     [Fact]
     public void Valid_Internal_Resolver_Can_Narrowly_Bypass_Selector_And_Telemetry_For_R275()
     {
+        using var journal = new TempJournalScope();
         var flow = TlsOnlyFlow();
 
         using (RuleEngine.PushR275TrustedRuntimeResolver(new ValidResolver()))
@@ -214,6 +262,7 @@ public sealed class R275TrustedRuntimeResolverTests
     [Fact]
     public void Public_Packet_Context_Cannot_Masquerade_As_Trusted_Runtime_Context()
     {
+        using var journal = new TempJournalScope();
         var flow = TlsOnlyFlow();
 
         using (RuleEngine.PushR275TrustedRuntimeResolver(
@@ -231,6 +280,7 @@ public sealed class R275TrustedRuntimeResolverTests
     [Fact]
     public void Resolver_Exception_Fails_Closed_And_Does_Not_Interrupt_Engine()
     {
+        using var journal = new TempJournalScope();
         var flow = TlsOnlyFlow();
 
         using (RuleEngine.PushR275TrustedRuntimeResolver(new ThrowingResolver()))
@@ -247,6 +297,7 @@ public sealed class R275TrustedRuntimeResolverTests
     [Fact]
     public void Resolver_Scope_Restores_Default_Null_Runtime_State()
     {
+        using var journal = new TempJournalScope();
         var flow = TlsOnlyFlow();
 
         using (RuleEngine.PushR275TrustedRuntimeResolver(new ValidResolver()))
