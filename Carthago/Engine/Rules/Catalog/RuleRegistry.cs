@@ -608,6 +608,16 @@ namespace Carthago.Engine.Rules.Catalog
                 new R583_OutboundBacnetWhoIsSubnetFanoutRule(),
                 new R584_OutboundSmb2WriteSubnetFanoutRule(),
                 new R585_ExternalThreeServiceAdministrativeProbeRule(),
+                new R586_Wp2ShellPluginAccessRequestRule(),
+                new R587_ScreenConnectSetupWizardPathRequestRule(),
+                new R588_SolarWindsSupernovaHandlerRequestRule(),
+                new R589_WebLogicKeystoreScriptRequestRule(),
+                new R590_RejettoHfsSearchPayloadRequestRule(),
+                new R591_AdSelfServiceSuspiciousEndpointRequestRule(),
+                new R592_DewmodeWebshellQueryRequestRule(),
+                new R593_ApacheSparkDoAsBacktickRequestRule(),
+                new R594_BitbucketArchiveExecPrefixRequestRule(),
+                new R595_GrafanaPluginTraversalRequestRule(),
             };
         }
 
