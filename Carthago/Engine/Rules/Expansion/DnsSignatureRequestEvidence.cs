@@ -42,7 +42,7 @@ namespace Carthago.Engine.Rules.Expansion
   }
   internal static DetectionEvent RedactQuery(DetectionEvent evt,string query)
   {
-   if(evt==null||string.IsNullOrWhiteSpace(query))return evt;
+   if(string.IsNullOrWhiteSpace(query))return evt;
    static string? Redact(string? value,string q)
     =>value?.Replace(q,"[REDACTED]",StringComparison.OrdinalIgnoreCase);
    evt.DestinationHost=Redact(evt.DestinationHost,query);

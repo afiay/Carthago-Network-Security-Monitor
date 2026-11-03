@@ -56,10 +56,11 @@ public sealed class RedisAuditMutualTlsRelayReceiverTests
         => new()
         {
             TargetHost = "localhost",
-            ClientCertificates = new X509CertificateCollection { client },
-            LocalCertificateSelectionCallback = (_, _, _, _, _) => client,
+            ClientCertificateContext = SslStreamCertificateContext.Create(
+                client, additionalCertificates: null, offline: true),
             EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13,
             CertificateRevocationCheckMode = X509RevocationMode.NoCheck,
+            AllowTlsResume = false,
             RemoteCertificateValidationCallback = (_, remote, _, _) =>
             {
                 if (remote == null) return false;
@@ -260,6 +261,7 @@ public sealed class RedisAuditMutualTlsRelayReceiverTests
                     ClientCertificates = new X509CertificateCollection(),
                     EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13,
                     CertificateRevocationCheckMode = X509RevocationMode.NoCheck,
+                    AllowTlsResume = false,
                     RemoteCertificateValidationCallback = (_, remote, _, _) =>
                     {
                         if (remote == null) return false;

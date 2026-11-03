@@ -64,6 +64,7 @@ namespace Carthago.Engine.Rules.Expansion
           confidence.AddEvidence(0.35,"distinct-workbook-predicate");
           confidence.AddCorrelation(0.12,"coherent-source-destination");
         },count:1,windowSeconds:300);
+      DnsSignatureRequestEvidence.RedactQuery(evt,query);
       return RuleEvaluationResult.Match(Descriptor.RuleId,evt);
     }
     

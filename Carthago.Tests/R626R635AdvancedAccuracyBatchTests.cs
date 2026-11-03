@@ -81,6 +81,7 @@ public sealed class R626R635AdvancedAccuracyBatchTests
   public async Task WebRequestWrongMethodMalformedAndInfoOnlyReject(string id,string method,string hit,string miss)
   {
     var rule=Rule(id);
+    Assert.False((await rule.EvaluateAsync(At(Http(method,miss),-1))).Matched);
     var wrong=Http("DELETE",hit);
     var info=Http(method,"/safe");info.Info=hit;
     var tls=Http(method,hit);tls.TlsVersion="TLS1.3";
@@ -95,7 +96,9 @@ public sealed class R626R635AdvancedAccuracyBatchTests
   [Theory,MemberData(nameof(HttpCases))]
   public async Task WebRequestDuplicateIdCooldownAndNoRawUriEvidence(string id,string method,string hit,string miss)
   {
-    var rule=Rule(id);var a=Http(method,hit);
+    var rule=Rule(id);
+    Assert.False((await rule.EvaluateAsync(At(Http(method,miss),8))).Matched);
+    var a=Http(method,hit);
     var e=Assert.Single((await rule.EvaluateAsync(At(a,10))).Events);
     var data=JsonSerializer.Serialize(e);
     Assert.DoesNotContain(hit,data);Assert.Contains("request_only_unknown",data);
@@ -156,6 +159,8 @@ public sealed class R626R635AdvancedAccuracyBatchTests
   {
     var rule=Rule(id);
     TrafficRecord Make(){var r=Process(proc,port);if(id=="R635"){r.TlsVersion="TLS1.3";r.Sni="www.youtube.com";}return r;}
+    var near=Process(proc,wrong);if(id=="R635"){near.TlsVersion="TLS1.3";near.Sni="www.microsoft.com";}
+    Assert.False((await rule.EvaluateAsync(At(near,-1))).Matched);
     var pid=Make();pid.ProcessId=0;
     var internalHost=Make();internalHost.Destination="10.1.2.12";
     var udp=Make();udp.IsTcp=false;udp.IsUdp=true;
@@ -170,6 +175,8 @@ public sealed class R626R635AdvancedAccuracyBatchTests
   {
     var rule=Rule(id);
     TrafficRecord Make(){var r=Process(proc,port);if(id=="R635"){r.TlsVersion="TLS1.3";r.Sni="www.youtube.com";}return r;}
+    var near=Process(proc,wrong);if(id=="R635"){near.TlsVersion="TLS1.3";near.Sni="www.microsoft.com";}
+    Assert.False((await rule.EvaluateAsync(At(near,8))).Matched);
     var a=Make();var evt=Assert.Single((await rule.EvaluateAsync(At(a,10))).Events);
     var raw=JsonSerializer.Serialize(evt);
     Assert.Contains("process_flow_identity_unverified",raw);

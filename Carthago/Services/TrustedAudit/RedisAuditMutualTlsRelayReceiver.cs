@@ -151,8 +151,21 @@ namespace Carthago.Services.TrustedAudit
             connection.NoDelay = true;
 
             using var tls = new SslStream(connection.GetStream(),
-                leaveInnerStreamOpen: false,
-                (_, peerCertificate, _, _) =>
+                leaveInnerStreamOpen: false);
+
+            // The leaf certificate pin is the complete relay trust root.
+            // No global CA store, packet metadata, Redis JSON issuer field
+            // or certificate subject is accepted as a source identity.
+            // Keep validation on the authentication options so the platform
+            // cannot fall back to default CA trust before the explicit pin check.
+            var serverOptions = new SslServerAuthenticationOptions
+            {
+                ServerCertificate = _serverCertificate,
+                ClientCertificateRequired = true,
+                EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13,
+                CertificateRevocationCheckMode = X509RevocationMode.NoCheck,
+                AllowTlsResume = false,
+                RemoteCertificateValidationCallback = (_, peerCertificate, _, _) =>
                 {
                     try
                     {
@@ -164,17 +177,7 @@ namespace Carthago.Services.TrustedAudit
                     {
                         return false;
                     }
-                });
-
-            // The leaf certificate pin is the complete relay trust root.
-            // No global CA store, packet metadata, Redis JSON issuer field
-            // or certificate subject is accepted as a source identity.
-            var serverOptions = new SslServerAuthenticationOptions
-            {
-                ServerCertificate = _serverCertificate,
-                ClientCertificateRequired = true,
-                EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13,
-                CertificateRevocationCheckMode = X509RevocationMode.NoCheck
+                }
             };
 
             using var sessionBudget = CancellationTokenSource.CreateLinkedTokenSource(
