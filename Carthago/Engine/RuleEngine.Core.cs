@@ -165,6 +165,7 @@ namespace Carthago.Services
                     var descriptor = rule.Descriptor;
 
                     RuleEvaluationContext? trustedR275Context = null;
+                    var trustedR275Reason = "R275_TRUSTED_RUNTIME_RESOLVER_UNAVAILABLE";
                     var trustedR275Ready = string.Equals(
                             descriptor.RuleId, "R275", StringComparison.Ordinal)
                         && TryResolveR275TrustedContext(
@@ -173,7 +174,7 @@ namespace Carthago.Services
                             now,
                             healthSnapshot,
                             out trustedR275Context,
-                            out var trustedR275Reason);
+                            out trustedR275Reason);
 
                     trace.SelectorReasonsByRuleId[descriptor.RuleId] = trustedR275Ready
                         ? trustedR275Reason
