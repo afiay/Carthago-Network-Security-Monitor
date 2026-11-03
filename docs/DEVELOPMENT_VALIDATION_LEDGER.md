@@ -1481,3 +1481,17 @@ Live-branch inspection established the exact A11 control flow without inference:
 The verifier captured the child through Windows PowerShell's formatted native-error stream and matched known reason strings as contiguous text. Line wrapping/whitespace inserted by PowerShell formatting can split a known reason across lines, producing `UNRECOGNIZED_SANITIZED_REASON` even when the underlying auditor throw is the expected one. Commit `551f3fd8d7d72ba232840f3d6bcc760ef0166d3e` changes only verifier reason matching: it normalizes whitespace on a copy of the private log before comparing against the fixed allowlist. The original private log remains unchanged for privacy scanning; no raw packet/provenance content is surfaced.
 
 **Current gate:** GREEN through A10-session. A11 remains **pending focused rerun** after pulling `551f3fd8`. No V1/V2 fixture, source approval, detector policy, or confidence floor changed.
+
+
+#### 2026-11-03 — A11 focused rerun GREEN after verifier reason normalization
+
+The owner fast-forwarded the existing feature branch to `6e87e37babde4996b05d7798e8be96c679f6f370` and reran only:
+`verify-v2-auditor-enforcement.ps1 -AuthorizedTestTime -OnlyScenario A11`.
+
+Observed result:
+- `AUDITOR CONTRACT: A11 observed expected exit category and reason; private output checked.`
+- `Focused auditor scenario completed: A11. No source approved or holdout frozen.`
+
+**Classification:** A11 is now **GREEN** for the synthetic auditor-enforcement contract. The prior `UNRECOGNIZED_SANITIZED_REASON` was confirmed as a verifier formatting issue, not an auditor-policy defect. No V1/V2 fixture, source approval, freeze state, detector confidence floor or production alert policy changed.
+
+**Cumulative Stage 6 progress:** GREEN now includes `BASELINE`, `A13`, `A01`, `A01-case`, `A02`, `A03`, `A04`, `A06`, `A08-qtype`, `A08-port`, `A09`, `A09-missing`, `A10`, `A10-origin`, `A10-session`, and `A11`. Remaining synthetic cases have not yet been re-observed in this owner session and must not be inferred GREEN.
