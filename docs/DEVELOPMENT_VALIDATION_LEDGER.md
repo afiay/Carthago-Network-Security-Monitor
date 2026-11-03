@@ -1840,3 +1840,33 @@ This verifies default-deny promotion, independent approved-issuer enforcement, a
 **Scope boundary:** production runtime is still unwired. No normal application path currently constructs `OAuthDeviceFlowPromotionAuthorization`, so ordinary packet processing remains fail-closed despite the promotion policy itself now being test-verified.
 
 No confidence floor, default runtime mode, replay classification, holdout fixture, V1/V2 state or production alert configuration changed.
+
+#### 2026-11-03 — R275 selector-safe trusted RuleEngine runtime hook authored
+
+After the explicit R275 promotion policy reached 107/107 GREEN, the first RuleEngine runtime-integration hook was authored without broadening R275's normal HTTP telemetry profile and without connecting a production receipt inbox.
+
+Source commits:
+- `9550d5e1e81eba95441ffd165af199e30b404546` — default-null internal R275 trusted runtime context resolver hook.
+- `b1390e7065d948e6da01171b52fbdc57d2c0776f` — narrow R275 selector/telemetry bypass when a trusted context is already resolved.
+- `02819ad4d6ceeaf8d9db3a0bf5a244e27005326d` — explicit selector-reason initialization.
+- `e1b95d0ddfeeb7b00769de69780c2a0cf85bfe0a` — engine-level resolver tests.
+- `72a2e2e251a10055ba9d7b365f0ad39bc6655a59` — test namespace correction.
+- `58994682a2d3746acfadbbae6f7c808dc88ac97e` — internal scoped detection-journal isolation hook.
+- `023c814561c7cb6d53cce5497d0da3e89592e8ba` — route RuleEngine journaling through the default-preserving isolation hook.
+- `d85775b1fa1d05f00735f9a924df2caefbd919e9` — temporary-journal and non-parallel resolver-test isolation.
+- `17d50e3cd57433d9f8f3e75818194d0dd2e53609` — internal-only trusted R275 precision telemetry evaluation path.
+- `6db55173e09869bce24a916672284f086b9abfd9` — thread resolver-backed R275 state through result handling.
+- `5d0622e1bba9db0717ff4769ef5629786998c8ea` — use trusted precision evaluation only for resolver-backed R275.
+- `7242e7e7a140d05bea2a12aade611cc823c4329a` — profile-safe resolver assertions and public-vs-trusted precision coverage.
+
+The ordinary R275 precision profile still requires HTTP telemetry; it was not changed to TLS or Flow. RuleEngine consults the trusted resolver only for R275. A resolver result is accepted only if the context is bound to the exact same record/timestamp and already contains both the opaque R275 capability and opaque promotion authorization.
+
+Without a resolver, with an invalid/public context, or after a resolver exception, the original selector and telemetry path remains authoritative. With a valid trusted context, only R275 may bypass its raw HTTP selector/telemetry check. Public `RulePrecisionRuntimeEvaluator.Evaluate` is unchanged; the new trusted telemetry override is internal and restricted to R275.
+
+Downstream confidence, evidence-family, tuning-profile, suppression and runtime-mode gates remain active. In particular, the default tuning profile may still Shadow a matched R275 candidate; the trusted resolver does not automatically force paging.
+
+Focused tests redirect RuleEngine journal writes to temporary test directories so synthetic runtime detections do not enter the machine's normal journal.
+
+**Production-default boundary:** the resolver is default-null and no live signed-receipt inbox or operator bootstrap is connected. Ordinary application behavior therefore remains unchanged.
+
+**Verification status:** SOURCE CANDIDATE — UNVERIFIED. The prior 107/107 promotion-policy GREEN remains valid; this new runtime hook requires focused owner execution.
