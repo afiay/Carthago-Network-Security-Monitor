@@ -4977,3 +4977,49 @@ Next GA UI-106: fresh reference-led meaningful redesign of another workspace. No
 **Planned acceptance scenarios — ALL UNEXECUTED:** (1) visual comparison to approved SOC reference; (2) Wide >=1440 hero and cards; (3) Standard 1100–1439 KPI wrapping; (4) Compact 1024–1099 queue-count fit; (5) below 1024 graceful scrolling; (6) 125/150/200% DPI; (7) empty and populated QueueCountLabel binding; (8) existing queue selection/filter/investigation actions; (9) unchanged detection/privacy/PPS/Live Events/CLI; (10) exact two-path ownership and single expected-SHA atomic publication with zero builds/tests/replays/holdouts/CI/runners/benchmarks/capture.
 
 **Next GA UI-109:** responsive command-hero reflow and/or a substantial evidence-workspace redesign, based on fresh live ledger and source audit. No tests until owner explicitly says “now it is test time.”
+
+
+## GA UI-109 — Control contrast recovery: menus, dropdowns and default buttons
+
+**2026-11-03 · SOURCE CANDIDATE — UNVERIFIED.** Owner supplied a runtime screenshot showing the File menu opening with Windows light popup chrome while Carthago's inherited light text remained active, making disabled commands nearly unreadable. Live initial HEAD after reconciling an independent enrichment/export commit: `20cce6696804239590fb583ae08a70354a21923c`. Previous recorded UI milestone GA UI-108. Source commit `2000c1e2a6c7b3c7f2c288db15e5c6f3ebc6d7cc`.
+
+### Visible defect → source correction
+
+- **Menus / context menus:** `Theme.xaml` had no shared `MenuItem` or `ContextMenu` template, so WPF could fall back to light Windows popup surfaces. GA UI-109 introduces Carthago-owned navy/graphite menu chrome with cyan/teal hover and open states, dark separators, readable gesture text, and muted-but-readable disabled commands. File-menu command enablement and click handlers are unchanged.
+- **Dropdowns:** the existing custom dark `ComboBox` / `ComboBoxItem` templates are retained. Disabled dropdown items now explicitly use the muted Carthago foreground at readable opacity instead of relying on platform-default disabled rendering.
+- **Buttons:** static XAML audit found 13 buttons still using default WPF button chrome: ten in `CiscoToolsPanel.xaml`, two in `MainWindow.xaml`, and the IPS side-navigation button. Those controls now explicitly use `SecondaryButton`; handlers, widths, names and enabled-state logic are unchanged. The IPS wrapper keeps zero outer margin so navigation geometry is not intentionally shifted.
+- **Toggle:** the External Delivery Monitor's `PauseToggle` was the sole unstyled `ToggleButton` in the audited WPF views. It now uses a dedicated dark `SecondaryToggleButton` template with hover, checked and disabled states.
+- **Generated context menus:** because `Theme.xaml` is merged at application scope, XAML and code-created context menus inherit the same dark surface without changing their commands.
+
+### Static ownership / divergence review
+
+Inspected live branch HEAD and recent independent commits, `App.xaml` theme merge, `Theme.xaml`, `MainWindow.xaml`, all 20 repository WPF XAML files for default Button/ToggleButton/MenuItem/ContextMenu usage, and the documentation routing indexes. The independent enrichment/export commit that moved HEAD after preparation did not touch any candidate UI path or this ledger; candidate blobs were rebased onto that newer tree before publication preparation.
+
+Authorized paths only:
+1. `Carthago/Views/Theme.xaml`
+2. `Carthago/Views/CiscoToolsPanel.xaml`
+3. `Carthago/Views/MainWindow.xaml`
+4. `Carthago/Views/Controls/SideNavIpsButton.xaml`
+5. `Carthago/Views/SinkEventsPage.xaml`
+6. `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`
+
+No Engine, Models, Services, detection/protocol rules, telemetry/capture/trust/privacy, tests, benchmarks, workflows, runners, project files, shared APIs, shared docs indexes, or automation settings were modified. Dashboard PPS ScottPlot 10-sample moving average / 120-point history, Live Events 80 displayed / 500 retained, prioritized incidents, visual-only UNAVAILABLE CLI, Cisco/WebView2 behavior and session-file command logic are untouched.
+
+**Static visual-impact assessment:** cross-application contrast recovery. File and DataGrid context menus should use dark Carthago surfaces instead of light OS popup chrome; previously default buttons should no longer appear as Windows light buttons; disabled items remain visually disabled without becoming illegible. This assessment is source-only and is **not** a claim of rendered WPF acceptance.
+
+**Risks — UNVERIFIED:** custom `MenuItem` popup placement, keyboard navigation, access-key underlines, ContextMenu focus behavior, high-contrast mode, DPI 125/150/200%, long shortcut text, nested menu behavior if added later, and the side-navigation button's exact rendered geometry require Windows verification. No build or runtime rendering was performed.
+
+### Planned acceptance scenarios — ALL UNEXECUTED
+
+1. Open File and confirm the popup is dark with readable Open/Save/Save As/Export labels and shortcut text.
+2. Confirm disabled Save commands remain visibly disabled but readable, and enabled-state logic is unchanged.
+3. Open all DataGrid context menus in Dashboard, Host Integrity and Cisco Tools and verify consistent dark chrome.
+4. Exercise keyboard navigation, Alt/access keys, Escape, arrow keys and Enter through File/context menus.
+5. Inspect ComboBox normal, hover, selected and disabled-item states across Dashboard, Settings, Threat Feed and Cisco.
+6. Inspect all 13 previously default buttons plus the External Delivery pause toggle for consistent dark styling.
+7. Check Wide/Standard/Compact layouts and the IPS side-navigation button for geometry regressions.
+8. Inspect 125%, 150% and 200% DPI plus Windows high-contrast behavior.
+9. Confirm command handlers, capture/session logic, Cisco operations, PPS, Live Events, privacy/trust and security behavior are unchanged.
+10. Confirm exact six-path ownership, one non-forced expected-SHA branch publication, and zero builds/tests/replays/holdouts/CI/Actions/runners/benchmarks/production capture.
+
+**Next UI GA UI-110:** resume a substantial reference-led operational workspace redesign after fresh live-head and consumer audit. Do not return to tooltip-only work. Runtime verification remains pending until explicit owner authorization.
