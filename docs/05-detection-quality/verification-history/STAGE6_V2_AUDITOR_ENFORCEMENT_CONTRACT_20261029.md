@@ -286,3 +286,18 @@ Existing hash/frame/transport/QTYPE/record comparisons and human-review boundari
 `./scripts/verify-v2-auditor-enforcement.ps1 -AuthorizedTestTime`
 
 Do not count the implementation commit itself as a passing test. Do not freeze or evaluate V2 while readiness remains 0/4. V1 remains historically FAILED 4/6 and immutable.
+
+
+### 2026-11-03 rerun after source enforcement — A01 rejection observed, parent harness blocked
+
+The owner pulled the branch containing the new source-independence enforcement and reran the same authorized auditor contract. `BASELINE` and `A13` again passed. For A01, the child auditor emitted the exact intended code:
+
+`Source audit: SOURCE_INDEPENDENCE_MIRROR`
+
+The parent harness nevertheless terminated at its native `powershell.exe` call with `NativeCommandError`. The reason is specific to the harness boundary: global `$ErrorActionPreference='Stop'` converts the child process's stderr from an expected negative-control failure into a parent terminating error before `InvokeAudit` can evaluate the child exit code and scan the sanitized log.
+
+This run therefore provides evidence that the **auditor now rejects A01 for the intended reason**, but it does **not** close the whole regression matrix GREEN because A01 bookkeeping and subsequent cases were never reached by the parent.
+
+Live-branch commit `ecc261d72649fd0b323c5a50712ce941476aca91` fixes only the verifier invocation boundary. During the child invocation, the parent temporarily uses `ErrorActionPreference=Continue`, captures `$LASTEXITCODE`, restores the previous value in `finally`, and then executes the pre-existing privacy and exact-reason assertions. No production auditor behavior was relaxed.
+
+**Gate state remains BLOCKED / NOT GREEN pending owner rerun of the full focused harness.**
