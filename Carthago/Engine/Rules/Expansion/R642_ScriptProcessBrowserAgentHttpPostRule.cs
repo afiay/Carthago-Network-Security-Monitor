@@ -70,6 +70,6 @@ namespace Carthago.Engine.Rules.Expansion
       
       return RuleEvaluationResult.Match(Descriptor.RuleId,evt);
     }
-    private static bool Specific(TrafficRecord r,string method,string uri){if(method!="POST"||r.ProcessId<=0||r.HttpUserAgent is not {Length:>10 and <260} agent)return false;var p=r.ProcessName?.Trim().Replace('\\','/').Split('/').Last().ToLowerInvariant();if(p is not ("powershell.exe" or "pwsh.exe" or "wscript.exe" or "cscript.exe" or "mshta.exe"))return false;return agent.Contains("Mozilla/5.0",StringComparison.OrdinalIgnoreCase)&&(agent.Contains("Chrome/",StringComparison.OrdinalIgnoreCase)||agent.Contains("Firefox/",StringComparison.OrdinalIgnoreCase)||agent.Contains("Edg/",StringComparison.OrdinalIgnoreCase));}
+    private static bool Specific(TrafficRecord r,string method,string uri){if(method!="POST"||r.ProcessId<=0||r.HttpUserAgent is not {Length:>10 and <260})return false;var p=r.ProcessName?.Trim().Replace('\\','/').Split('/').Last().ToLowerInvariant();if(p is not ("powershell.exe" or "pwsh.exe" or "wscript.exe" or "cscript.exe" or "mshta.exe"))return false;return r.HttpUserAgent.Contains("Mozilla/5.0",StringComparison.OrdinalIgnoreCase)&&(r.HttpUserAgent.Contains("Chrome/",StringComparison.OrdinalIgnoreCase)||r.HttpUserAgent.Contains("Firefox/",StringComparison.OrdinalIgnoreCase)||r.HttpUserAgent.Contains("Edg/",StringComparison.OrdinalIgnoreCase));}
   }
 }
