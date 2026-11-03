@@ -1451,3 +1451,20 @@ Live-branch inspection showed the A06 fixture changes one serialized QNAME to `t
 The Stage 6 contract explicitly defines A06 and A08-qtype as original-PCAP binding controls. Commit `d637df90e904d8386d995253bced9ca991e0510d` therefore reorders only the malicious long-TXT eligibility check so it runs **after every selected serialized record has been verified against its original PCAP frame**. Existing schema, hash, frame-reuse, transport, source-independence, expected-match and privacy checks remain fail-closed. This is a trust-ordering correction: untrusted serialized packet semantics are no longer used for the long-TXT eligibility decision before packet binding.
 
 **Current gate:** PARTIAL GREEN through A04; A06 prior run is INVALID FOR RED/GREEN due wrong rejection reason. Full auditor-enforcement matrix must be rerun after pulling `d637df90` or later. V2 remains PENDING_EXTERNAL_CAPTURE_AND_REVIEW with 0/4 real external pairs; V1 remains immutable.
+
+
+#### 2026-11-03 — V2 auditor rerun GREEN through A10-session; A11 wrong-reason mismatch
+
+After pulling the A06/A08 ordering correction, the owner reran `verify-v2-auditor-enforcement.ps1 -AuthorizedTestTime`. The focused harness matched the expected exit category and reason for:
+`BASELINE`, `A13`, `A01`, `A01-case`, `A02`, `A03`, `A04`, `A06`, `A08-qtype`, `A08-port`, `A09`, `A09-missing`, `A10`, `A10-origin`, and `A10-session`.
+
+The next case, `A11`, rejected but for an **unexpected reason**. The harness correctly stopped and did not count A11 as RED or GREEN. The owner-visible transcript did not expose the actual stable rejection category because the verifier intentionally retained the private child log.
+
+Live-branch inspection showed the A11 fixture only changes `analystReviewedLabel` from true to false, while the contract expects the generic `incomplete external attribution or label review` rejection. Because the actual reason was not observable from the sanitized parent output, no auditor behavior was changed by inference.
+
+Commit `27f3fa8357ba81ec58bfb9466c13505951eea23e` updates only the verifier harness:
+- adds a bounded `-OnlyScenario` selector for the existing fixed synthetic scenarios;
+- adds a hardcoded safe-reason classifier containing only contract reason strings;
+- on mismatch, reports `expected=<safe reason> actual=<safe reason or UNRECOGNIZED_SANITIZED_REASON>` without publishing the private child log.
+
+**Current gate:** GREEN through A10-session. A11 remains INVALID FOR RED/GREEN pending one focused `-OnlyScenario A11` diagnostic run. No V1/V2 fixtures, auditor policy, source approval or confidence floor changed.
