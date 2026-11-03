@@ -171,6 +171,7 @@ public sealed class MicrosoftEntraDeviceCodeAuditIntakeTests
 
     [Theory]
     [InlineData("2026-11-03")]
+    [InlineData("2026-11-03T21:00:00+01:00")]
     [InlineData("not-a-time")]
     public void Invalid_Timestamp_Is_Rejected(string timestamp)
     {
