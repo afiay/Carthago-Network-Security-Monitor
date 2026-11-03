@@ -8,6 +8,7 @@ Use --check to fail when the generated catalog is out of date.
 import argparse
 import collections
 import hashlib
+import html
 import os
 import re
 import sys
@@ -173,9 +174,9 @@ def generate(rules: list[Rule], source_revision: str) -> str:
     for category, records in sorted(by_category.items(), key=lambda item: item[0].lower()):
         slug = re.sub(r"[^a-z0-9]+", "-", f"{category}-{len(records)}-rules".lower()).strip("-")
         lines.append(f"| [{clean_cell(category)}](#{slug}) | {len(records)} |")
-    lines.extend(["", "## All registered rules", "", "Use your browser's Find command for a rule ID, name, category, or phrase. Every rule has a direct implementation link and its nearest recorded batch where available.", ""])
+    lines.extend(["", "## Browse rule documentation", "", "Select a category below, then expand any rule to view its documentation **on this page**. GitHub supports these native expandable sections without JavaScript. Use the category links above to jump directly to a group. Each entry is generated from its C# descriptor, with links to the authoritative batch evidence; authored tests are not proof of test execution.", ""])
     for category, records in sorted(by_category.items(), key=lambda item: item[0].lower()):
-        lines.extend([f"### {category}: {len(records)} rules", "", "| ID | Name | Description (source) | Severity | Default enabled | Implementation | Batch evidence | Verification record |", "| --- | --- | --- | --- | --- | --- | --- | --- |"])
+        lines.extend([f"### {category}: {len(records)} rules", "", "<details>", f"<summary>Choose a rule from {len(records)} {html.escape(category)} entries</summary>", ""])
         for rule in records:
             if rule.batch:
                 batch = relative_link(rule.batch, rule.batch.stem.replace("RULE_BATCH_", ""))
@@ -183,17 +184,21 @@ def generate(rules: list[Rule], source_revision: str) -> str:
                 batch = "[Selected rule overview](guides/R273_R544_SelectedRules.md) — no batch GA"
             else:
                 batch = "Not located"
-            lines.append("| " + " | ".join([
-                rule.identifier,
-                clean_cell(rule.name, 90),
-                clean_cell(rule.description),
-                clean_cell(rule.severity),
-                clean_cell(rule.enabled),
-                relative_link(rule.source, "C# source"),
-                batch,
-                clean_cell(rule.verification),
-            ]) + " |")
-        lines.append("")
+            lines.extend([
+                "<details>",
+                f"<summary><strong>{rule.identifier} — {html.escape(rule.name)}</strong> · {html.escape(rule.severity)}</summary>",
+                "",
+                f"- **Description:** {html.escape(rule.description)}",
+                f"- **Category:** {html.escape(rule.category)}",
+                f"- **Severity:** {html.escape(rule.severity)}",
+                f"- **Enabled by default:** {html.escape(rule.enabled)}",
+                f"- **Implementation:** {relative_link(rule.source, 'C# source')}",
+                f"- **Detailed evidence and test scenarios:** {batch}",
+                f"- **Verification record:** {html.escape(rule.verification)}",
+                "",
+                "</details>", "",
+            ])
+        lines.extend(["</details>", ""])
     missing = [rule.identifier for rule in rules if rule.batch is None]
     lines.extend(["## Evidence coverage notes", ""])
     if missing:
