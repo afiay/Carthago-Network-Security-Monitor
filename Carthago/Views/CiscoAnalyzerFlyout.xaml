@@ -51,10 +51,11 @@
             <Setter Property="AlternationCount" Value="2"/>
         </Style>
     </Window.Resources>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
     <Grid Margin="18">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- UI-104: Cisco local syslog analysis, never simulated telemetry. -->
@@ -74,29 +75,29 @@
                                FontSize="12.5" Foreground="#B7CAD8" TextWrapping="Wrap" Margin="0,8,0,0"/>
                 </StackPanel>
             </Border>
-            <UniformGrid Columns="4">
-                <Border Style="{StaticResource AnalyzerMetricCard}" Margin="0,0,10,0">
+            <UniformGrid x:Name="AnalyzerMetricsGrid" Columns="4" Rows="1">
+                <Border x:Name="TotalMetricCard" Style="{StaticResource AnalyzerMetricCard}" Margin="0,0,10,0">
                     <StackPanel>
                         <TextBlock Text="TOTAL EVENTS" Style="{StaticResource AnalyzerMetricLabel}"/>
                         <TextBlock Text="{Binding TotalEvents}" Style="{StaticResource AnalyzerMetricValue}"/>
                         <TextBlock Text="Observed syslog records" Style="{StaticResource AnalyzerMetricNote}"/>
                     </StackPanel>
                 </Border>
-                <Border Style="{StaticResource AnalyzerMetricCard}" Margin="0,0,10,0">
+                <Border x:Name="ErrorMetricCard" Style="{StaticResource AnalyzerMetricCard}" Margin="0,0,10,0">
                     <StackPanel>
                         <TextBlock Text="ERROR EVENTS" Style="{StaticResource AnalyzerMetricLabel}"/>
                         <TextBlock Text="{Binding ErrorEvents}" Style="{StaticResource AnalyzerMetricValue}" Foreground="#F3B35B"/>
                         <TextBlock Text="Severity: Error" Style="{StaticResource AnalyzerMetricNote}"/>
                     </StackPanel>
                 </Border>
-                <Border Style="{StaticResource AnalyzerMetricCard}" Margin="0,0,10,0">
+                <Border x:Name="CriticalMetricCard" Style="{StaticResource AnalyzerMetricCard}" Margin="0,0,10,0">
                     <StackPanel>
                         <TextBlock Text="CRITICAL EVENTS" Style="{StaticResource AnalyzerMetricLabel}"/>
                         <TextBlock Text="{Binding CriticalEvents}" Style="{StaticResource AnalyzerMetricValue}" Foreground="#FF7076"/>
                         <TextBlock Text="Severity: Critical" Style="{StaticResource AnalyzerMetricNote}"/>
                     </StackPanel>
                 </Border>
-                <Border Style="{StaticResource AnalyzerMetricCard}">
+                <Border x:Name="ActivityMetricCard" Style="{StaticResource AnalyzerMetricCard}">
                     <StackPanel>
                         <TextBlock Text="WEIGHTED ACTIVITY / LAST 60 MIN" Style="{StaticResource AnalyzerMetricLabel}" TextWrapping="Wrap"/>
                         <Viewbox Stretch="Uniform" StretchDirection="DownOnly" Margin="0,9,0,0">
@@ -110,18 +111,21 @@
         </StackPanel>
 
         <!-- Tables -->
-        <Grid Grid.Row="1"
-              Margin="0,14,0,0">
+        <Grid x:Name="AnalyzerEvidenceGrid" Grid.Row="1" Margin="0,18,0,0">
+            <Grid.RowDefinitions>
+                <RowDefinition x:Name="EvidenceFirstRow" Height="Auto"/>
+                <RowDefinition x:Name="EvidenceSecondRow" Height="0"/>
+            </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition x:Name="EvidenceFirstColumn" Width="*"/>
+                <ColumnDefinition x:Name="EvidenceSecondColumn" Width="*"/>
             </Grid.ColumnDefinitions>
 
             <!-- Top devices -->
-            <GroupBox Background="#0C1C2D" Foreground="#E8F4FA" BorderBrush="#29516A" BorderThickness="1" FontSize="14" FontWeight="SemiBold" Padding="10" Header="Top devices by errors"
+            <GroupBox x:Name="TopDevicesPanel" Background="#0C1C2D" Foreground="#E8F4FA" BorderBrush="#29516A" BorderThickness="1" FontSize="14" FontWeight="SemiBold" Padding="14" Header="Top devices by errors"
                       Grid.Column="0"
                       Margin="0,0,8,0">
-                <DataGrid ItemsSource="{Binding TopErrorDevices}"
+                <DataGrid Height="270" HorizontalScrollBarVisibility="Auto" ItemsSource="{Binding TopErrorDevices}"
                           AutoGenerateColumns="False"
                           IsReadOnly="True"
                           HeadersVisibility="Column"
@@ -150,10 +154,10 @@
             </GroupBox>
 
             <!-- Top categories -->
-            <GroupBox Background="#0C1C2D" Foreground="#E8F4FA" BorderBrush="#29516A" BorderThickness="1" FontSize="14" FontWeight="SemiBold" Padding="10" Header="Top categories"
+            <GroupBox x:Name="TopCategoriesPanel" Background="#0C1C2D" Foreground="#E8F4FA" BorderBrush="#29516A" BorderThickness="1" FontSize="14" FontWeight="SemiBold" Padding="14" Header="Top categories"
                       Grid.Column="1"
                       Margin="8,0,0,0">
-                <DataGrid ItemsSource="{Binding TopCategories}"
+                <DataGrid Height="270" HorizontalScrollBarVisibility="Auto" ItemsSource="{Binding TopCategories}"
                           AutoGenerateColumns="False"
                           IsReadOnly="True"
                           HeadersVisibility="Column"
@@ -182,4 +186,5 @@
             </GroupBox>
         </Grid>
     </Grid>
+    </ScrollViewer>
 </Window>

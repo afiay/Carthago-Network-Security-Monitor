@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 using Carthago.Models;
 
@@ -38,6 +39,38 @@ namespace Carthago.Views
             TimelinePoints = ComputeTimelinePoints(eventsList);
 
             DataContext = this;
+            Loaded += (_, _) => ApplyAnalyzerComposition(ActualWidth);
+            SizeChanged += (_, _) => ApplyAnalyzerComposition(ActualWidth);
+        }
+
+        // Presentation-only reflow; preserves all Cisco event projections and bindings.
+        private void ApplyAnalyzerComposition(double width)
+        {
+            if (!double.IsFinite(width) || width <= 0)
+                return;
+            var wide = width >= 1440;
+            var stacked = width < 1100;
+            AnalyzerMetricsGrid.Columns = wide ? 4 : 2;
+            AnalyzerMetricsGrid.Rows = wide ? 1 : 2;
+            var cards = new FrameworkElement[]
+            {
+                TotalMetricCard, ErrorMetricCard, CriticalMetricCard, ActivityMetricCard
+            };
+            for (var i = 0; i < cards.Length; i++)
+                cards[i].Margin = new Thickness(0, 0,
+                    (wide ? i < 3 : i % 2 == 0) ? 12 : 0,
+                    !wide && i < 2 ? 12 : 0);
+
+            EvidenceFirstColumn.Width = new GridLength(1, GridUnitType.Star);
+            EvidenceSecondColumn.Width = stacked ? new GridLength(0) : new GridLength(1, GridUnitType.Star);
+            EvidenceFirstRow.Height = GridLength.Auto;
+            EvidenceSecondRow.Height = stacked ? GridLength.Auto : new GridLength(0);
+            Grid.SetRow(TopDevicesPanel, 0);
+            Grid.SetColumn(TopDevicesPanel, 0);
+            Grid.SetRow(TopCategoriesPanel, stacked ? 1 : 0);
+            Grid.SetColumn(TopCategoriesPanel, stacked ? 0 : 1);
+            TopDevicesPanel.Margin = stacked ? new Thickness(0, 0, 0, 14) : new Thickness(0, 0, 8, 0);
+            TopCategoriesPanel.Margin = stacked ? new Thickness(0) : new Thickness(8, 0, 0, 0);
         }
 
         private static IReadOnlyList<DeviceErrorSummary> ComputeTopDevices(
