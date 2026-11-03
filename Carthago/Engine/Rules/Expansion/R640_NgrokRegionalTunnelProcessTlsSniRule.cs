@@ -17,8 +17,8 @@ namespace Carthago.Engine.Rules.Expansion
       DefaultSeverity:SeverityLevel.Low,ConfigKey:"Rules.R640.Enabled",EnabledByDefault:true);
     private static readonly RulePrecisionProfile Profile=CreateEvidenceDrivenProfile(new PrecisionRuleSpec
     {
-      RuleId="R640",Name:"Local process TLS SNI contact to regional ngrok tunnel endpoints",Category="EvasionInfra",
-      Description:"Source-only candidate from R2267: No established tunnel, authentication, ownership or file transfer can be inferred from SNI and best-effort PID attribution.",
+      RuleId="R640",Name="Local process TLS SNI contact to regional ngrok tunnel endpoints",Category="EvasionInfra",
+      Description="Source-only candidate from R2267: No established tunnel, authentication, ownership or file transfer can be inferred from SNI and best-effort PID attribution.",
       Severity=SeverityLevel.Low,Maturity=RulePrecisionMaturity.Candidate,RuntimeMode=RuleRuntimeMode.Shadow,
       RequiredTelemetry=new[]{RuleTelemetryKind.Flow,RuleTelemetryKind.Process},
       RequiredFields=new[]{"source","destination_or_host","protocol_or_port","process.name","process.id"},

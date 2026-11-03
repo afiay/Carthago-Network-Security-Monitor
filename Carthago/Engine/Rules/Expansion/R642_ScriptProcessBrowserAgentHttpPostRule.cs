@@ -17,8 +17,8 @@ namespace Carthago.Engine.Rules.Expansion
       DefaultSeverity:SeverityLevel.Medium,ConfigKey:"Rules.R642.Enabled",EnabledByDefault:true);
     private static readonly RulePrecisionProfile Profile=CreateEvidenceDrivenProfile(new PrecisionRuleSpec
     {
-      RuleId="R642",Name:"Script interpreter HTTP POST with browser-like user agent",Category="HttpApi",
-      Description:"Source-only candidate from R2769: No process parent lineage or API-caller provenance; a browser-like User-Agent is not proof of spoofing and the local PID may be untrusted.",
+      RuleId="R642",Name="Script interpreter HTTP POST with browser-like user agent",Category="HttpApi",
+      Description="Source-only candidate from R2769: No process parent lineage or API-caller provenance; a browser-like User-Agent is not proof of spoofing and the local PID may be untrusted.",
       Severity=SeverityLevel.Medium,Maturity=RulePrecisionMaturity.Candidate,RuntimeMode=RuleRuntimeMode.Shadow,
       RequiredTelemetry=new[]{RuleTelemetryKind.Flow,RuleTelemetryKind.Http},
       RequiredFields=new[]{"source","destination_or_host","protocol_or_port","http.method","http.uri"},

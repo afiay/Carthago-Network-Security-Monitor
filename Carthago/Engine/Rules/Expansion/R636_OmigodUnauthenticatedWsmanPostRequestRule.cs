@@ -17,8 +17,8 @@ namespace Carthago.Engine.Rules.Expansion
       DefaultSeverity:SeverityLevel.High,ConfigKey:"Rules.R636.Enabled",EnabledByDefault:true);
     private static readonly RulePrecisionProfile Profile=CreateEvidenceDrivenProfile(new PrecisionRuleSpec
     {
-      RuleId="R636",Name:"OMIGOD-like unauthenticated WSMan POST attempt",Category="HttpApi",
-      Description:"Source-only candidate from R3013: HTTP 200, server command and successful exploit are unavailable; absence of an Authorization header in the capture summary is not authenticated absence.",
+      RuleId="R636",Name="OMIGOD-like unauthenticated WSMan POST attempt",Category="HttpApi",
+      Description="Source-only candidate from R3013: HTTP 200, server command and successful exploit are unavailable; absence of an Authorization header in the capture summary is not authenticated absence.",
       Severity=SeverityLevel.High,Maturity=RulePrecisionMaturity.Candidate,RuntimeMode=RuleRuntimeMode.Shadow,
       RequiredTelemetry=new[]{RuleTelemetryKind.Flow,RuleTelemetryKind.Http},
       RequiredFields=new[]{"source","destination_or_host","protocol_or_port","http.method","http.uri"},

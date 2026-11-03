@@ -17,8 +17,8 @@ namespace Carthago.Engine.Rules.Expansion
       DefaultSeverity:SeverityLevel.Low,ConfigKey:"Rules.R639.Enabled",EnabledByDefault:true);
     private static readonly RulePrecisionProfile Profile=CreateEvidenceDrivenProfile(new PrecisionRuleSpec
     {
-      RuleId="R639",Name:"Local process TLS SNI contact to ngrok developer-domain variants",Category="EvasionInfra",
-      Description:"Source-only candidate from R2146: TLS SNI alone does not establish an initiated connection, use of a tunnel or payload transfer; approved ngrok deployments are common.",
+      RuleId="R639",Name="Local process TLS SNI contact to ngrok developer-domain variants",Category="EvasionInfra",
+      Description="Source-only candidate from R2146: TLS SNI alone does not establish an initiated connection, use of a tunnel or payload transfer; approved ngrok deployments are common.",
       Severity=SeverityLevel.Low,Maturity=RulePrecisionMaturity.Candidate,RuntimeMode=RuleRuntimeMode.Shadow,
       RequiredTelemetry=new[]{RuleTelemetryKind.Flow,RuleTelemetryKind.Process},
       RequiredFields=new[]{"source","destination_or_host","protocol_or_port","process.name","process.id"},

@@ -17,8 +17,8 @@ namespace Carthago.Engine.Rules.Expansion
       DefaultSeverity:SeverityLevel.Medium,ConfigKey:"Rules.R643.Enabled",EnabledByDefault:true);
     private static readonly RulePrecisionProfile Profile=CreateEvidenceDrivenProfile(new PrecisionRuleSpec
     {
-      RuleId="R643",Name:"Sequential EtherNet/IP ListIdentity private-subnet discovery walk",Category="OtIcsDeep",
-      Description:"Source-only candidate from R2707: Does not establish PLC identity, authorized engineer inventory, full subnet scan or unauthorized access. Capture can miss packets and suppress a true walk.",
+      RuleId="R643",Name="Sequential EtherNet/IP ListIdentity private-subnet discovery walk",Category="OtIcsDeep",
+      Description="Source-only candidate from R2707: Does not establish PLC identity, authorized engineer inventory, full subnet scan or unauthorized access. Capture can miss packets and suppress a true walk.",
       Severity=SeverityLevel.Medium,Maturity=RulePrecisionMaturity.Candidate,RuntimeMode=RuleRuntimeMode.Shadow,
       RequiredTelemetry=new[]{RuleTelemetryKind.Flow,RuleTelemetryKind.OtIcsProtocol},
       RequiredFields=new[]{"source","destination_or_host","protocol_or_port","process.name","process.id"},

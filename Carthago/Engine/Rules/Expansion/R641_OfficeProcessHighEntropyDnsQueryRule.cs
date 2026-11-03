@@ -17,8 +17,8 @@ namespace Carthago.Engine.Rules.Expansion
       DefaultSeverity:SeverityLevel.Medium,ConfigKey:"Rules.R641.Enabled",EnabledByDefault:true);
     private static readonly RulePrecisionProfile Profile=CreateEvidenceDrivenProfile(new PrecisionRuleSpec
     {
-      RuleId="R641",Name:"Office process-associated high-entropy DNS query",Category="DnsAdvanced",
-      Description:"Source-only candidate from R2012: Best-effort process association and domain entropy cannot establish a DGA or process execution; Office telemetry may be absent.",
+      RuleId="R641",Name="Office process-associated high-entropy DNS query",Category="DnsAdvanced",
+      Description="Source-only candidate from R2012: Best-effort process association and domain entropy cannot establish a DGA or process execution; Office telemetry may be absent.",
       Severity=SeverityLevel.Medium,Maturity=RulePrecisionMaturity.Candidate,RuntimeMode=RuleRuntimeMode.Shadow,
       RequiredTelemetry=new[]{RuleTelemetryKind.Flow,RuleTelemetryKind.Dns},
       RequiredFields=new[]{"source","destination_or_host","protocol_or_port","dns_qname","dns_qtype"},

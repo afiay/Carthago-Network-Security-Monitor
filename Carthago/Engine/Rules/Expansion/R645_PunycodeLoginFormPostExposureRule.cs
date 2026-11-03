@@ -17,8 +17,8 @@ namespace Carthago.Engine.Rules.Expansion
       DefaultSeverity:SeverityLevel.Low,ConfigKey:"Rules.R645.Enabled",EnabledByDefault:true);
     private static readonly RulePrecisionProfile Profile=CreateEvidenceDrivenProfile(new PrecisionRuleSpec
     {
-      RuleId="R645",Name:"Cleartext login-form POST to a punycode HTTP host",Category="HttpApi",
-      Description:"Source-only candidate from R1342: Cannot inspect credential contents, verify domain mimicry or infer phishing; legitimate internationalized domains and tests may match.",
+      RuleId="R645",Name="Cleartext login-form POST to a punycode HTTP host",Category="HttpApi",
+      Description="Source-only candidate from R1342: Cannot inspect credential contents, verify domain mimicry or infer phishing; legitimate internationalized domains and tests may match.",
       Severity=SeverityLevel.Low,Maturity=RulePrecisionMaturity.Candidate,RuntimeMode=RuleRuntimeMode.Shadow,
       RequiredTelemetry=new[]{RuleTelemetryKind.Flow,RuleTelemetryKind.Http},
       RequiredFields=new[]{"source","destination_or_host","protocol_or_port","http.method","http.uri"},

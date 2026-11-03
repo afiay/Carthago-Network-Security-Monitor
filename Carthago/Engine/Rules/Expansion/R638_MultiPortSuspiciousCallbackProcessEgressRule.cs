@@ -17,8 +17,8 @@ namespace Carthago.Engine.Rules.Expansion
       DefaultSeverity:SeverityLevel.Medium,ConfigKey:"Rules.R638.Enabled",EnabledByDefault:true);
     private static readonly RulePrecisionProfile Profile=CreateEvidenceDrivenProfile(new PrecisionRuleSpec
     {
-      RuleId="R638",Name:"Process outbound TCP contact across multiple callback-associated ports",Category="EvasionInfra",
-      Description:"Source-only candidate from R2190: The workbook's Linux log producer is absent; only a best-effort locally attributed Windows TCP-flow analogue is implemented. Distinct port contact is not confirmed malware.",
+      RuleId="R638",Name="Process outbound TCP contact across multiple callback-associated ports",Category="EvasionInfra",
+      Description="Source-only candidate from R2190: The workbook's Linux log producer is absent; only a best-effort locally attributed Windows TCP-flow analogue is implemented. Distinct port contact is not confirmed malware.",
       Severity=SeverityLevel.Medium,Maturity=RulePrecisionMaturity.Candidate,RuntimeMode=RuleRuntimeMode.Shadow,
       RequiredTelemetry=new[]{RuleTelemetryKind.Flow,RuleTelemetryKind.Process},
       RequiredFields=new[]{"source","destination_or_host","protocol_or_port","process.name","process.id"},
@@ -70,7 +70,7 @@ namespace Carthago.Engine.Rules.Expansion
       
       return RuleEvaluationResult.Match(Descriptor.RuleId,evt);
     }
-    private static bool Specific(TrafficRecord r,string name){return name is not ("chrome.exe" or "firefox.exe" or "msedge.exe" or "svchost.exe") && return r.DestinationPort is 888 or 999 or 2200 or 2222 or 4000 or 4444 or 6789 or 8531 or 50501;}private sealed class Slot{internal readonly HashSet<int> Ports=new();internal readonly HashSet<Guid> Seen=new();internal DateTime Latest=DateTime.MinValue;internal DateTime First;}
+    private static bool Specific(TrafficRecord r,string name){return name is not ("chrome.exe" or "firefox.exe" or "msedge.exe" or "svchost.exe") && r.DestinationPort is 888 or 999 or 2200 or 2222 or 4000 or 4444 or 6789 or 8531 or 50501;}private sealed class Slot{internal readonly HashSet<int> Ports=new();internal readonly HashSet<Guid> Seen=new();internal DateTime Latest=DateTime.MinValue;internal DateTime First;}
 private readonly Dictionary<string,Slot> _slots=new(StringComparer.Ordinal);
 private readonly object _gate=new();
 private bool PairOfPorts(TrafficRecord r,string process,DateTime at){

@@ -17,8 +17,8 @@ namespace Carthago.Engine.Rules.Expansion
       DefaultSeverity:SeverityLevel.Low,ConfigKey:"Rules.R637.Enabled",EnabledByDefault:true);
     private static readonly RulePrecisionProfile Profile=CreateEvidenceDrivenProfile(new PrecisionRuleSpec
     {
-      RuleId="R637",Name:"Historical GALLIUM-associated DNS indicator query",Category="DnsAdvanced",
-      Description:"Source-only candidate from R2385: Historical 2019 research, stale domains and possible reuse; DNS query is not evidence of actor attribution.",
+      RuleId="R637",Name="Historical GALLIUM-associated DNS indicator query",Category="DnsAdvanced",
+      Description="Source-only candidate from R2385: Historical 2019 research, stale domains and possible reuse; DNS query is not evidence of actor attribution.",
       Severity=SeverityLevel.Low,Maturity=RulePrecisionMaturity.Candidate,RuntimeMode=RuleRuntimeMode.Shadow,
       RequiredTelemetry=new[]{RuleTelemetryKind.Flow,RuleTelemetryKind.Dns},
       RequiredFields=new[]{"source","destination_or_host","protocol_or_port","dns_qname","dns_qtype"},

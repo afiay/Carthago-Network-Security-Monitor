@@ -17,8 +17,8 @@ namespace Carthago.Engine.Rules.Expansion
       DefaultSeverity:SeverityLevel.Medium,ConfigKey:"Rules.R644.Enabled",EnabledByDefault:true);
     private static readonly RulePrecisionProfile Profile=CreateEvidenceDrivenProfile(new PrecisionRuleSpec
     {
-      RuleId="R644",Name:"Internal RDP listener SYN-ACK response to public client",Category="IdentityAccess",
-      Description:"Source-only candidate from R2472: An SYN-ACK proves network handshake response only, not authenticated RDP access or true external Internet exposure through NAT.",
+      RuleId="R644",Name="Internal RDP listener SYN-ACK response to public client",Category="IdentityAccess",
+      Description="Source-only candidate from R2472: An SYN-ACK proves network handshake response only, not authenticated RDP access or true external Internet exposure through NAT.",
       Severity=SeverityLevel.Medium,Maturity=RulePrecisionMaturity.Candidate,RuntimeMode=RuleRuntimeMode.Shadow,
       RequiredTelemetry=new[]{RuleTelemetryKind.Flow,RuleTelemetryKind.Flow},
       RequiredFields=new[]{"source","destination_or_host","protocol_or_port","tcp.flags","source.port"},
