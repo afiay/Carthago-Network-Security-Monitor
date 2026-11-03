@@ -308,3 +308,20 @@ Focused tests cover:
 - reflection proof that the capability is not exposed through the public context API.
 
 **Status:** SOURCE CANDIDATE — UNVERIFIED until the expanded focused R275 suite is executed.
+
+## 2026-11-03 internal capability delivery verification — GREEN
+
+The owner ran the expanded focused R275 suite at revision `1851539ffbd71c27579dc135000a8678711adb36`.
+
+Observed:
+- `Carthago` build succeeded;
+- `Carthago.Tests` build succeeded;
+- **99 tests passed**;
+- **0 failed**;
+- **0 skipped**;
+- focused xUnit duration **14.6 seconds**;
+- total command/build duration **40.9 seconds**.
+
+The internal non-ambient capability delivery boundary is GREEN. Public packet-only construction still produces `TRUSTED_DEVICE_CODE_ABUSE_EVENT_UNAVAILABLE`; only the internal capability path reaches `TRUSTED_DEVICE_CODE_CAPABILITY_PRESENT_NOT_PROMOTED`, and that path remains non-alerting.
+
+The next engineering boundary is an explicit promotion policy. It must be separate from capability possession, default-deny, operator-controlled, bound to the exact verified capability/context, preserve existing false-positive protections, and remain testable without changing production defaults.
