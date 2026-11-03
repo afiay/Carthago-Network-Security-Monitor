@@ -92,7 +92,7 @@ During owner-authorized test time:
 ```powershell
 dotnet test .\Carthago.Tests\Carthago.Tests.csproj `
   -c Release `
-  --filter "FullyQualifiedName~R275PromotionPolicyTests|FullyQualifiedName~R275TrustedCapabilityContextTests|FullyQualifiedName~OAuthDeviceFlowExternalSigningRequestTests|FullyQualifiedName~MicrosoftEntraDeviceFlowClaimMaterialBuilderTests|FullyQualifiedName~MicrosoftEntraLogAnalyticsDeviceCodeSourceTests|FullyQualifiedName~MicrosoftEntraDeviceCodeAuditIntakeTests|FullyQualifiedName~OAuthDeviceFlowAuditCandidateGateTests|FullyQualifiedName~R275AdvancedAccuracyBatchTests|FullyQualifiedName~R275R343R485PairedReplayTests"
+  --filter "FullyQualifiedName~R275TrustedRuntimeResolverTests|FullyQualifiedName~R275PromotionPolicyTests|FullyQualifiedName~R275TrustedCapabilityContextTests|FullyQualifiedName~OAuthDeviceFlowExternalSigningRequestTests|FullyQualifiedName~MicrosoftEntraDeviceFlowClaimMaterialBuilderTests|FullyQualifiedName~MicrosoftEntraLogAnalyticsDeviceCodeSourceTests|FullyQualifiedName~MicrosoftEntraDeviceCodeAuditIntakeTests|FullyQualifiedName~OAuthDeviceFlowAuditCandidateGateTests|FullyQualifiedName~R275AdvancedAccuracyBatchTests|FullyQualifiedName~R275R343R485PairedReplayTests"
 ```
 
 Do not mark this increment GREEN until the focused tests complete successfully on CARTHAGE.
@@ -380,3 +380,41 @@ Observed:
 The explicit R275 promotion policy is therefore GREEN at the contract-test level. A verified capability alone remains insufficient; only a separately authorized, exact-bound promotion capability can produce the privacy-minimized High-severity R275 event.
 
 Production runtime remains intentionally unwired. No normal packet-processing or public-context path constructs the promotion authorization, so the default application behavior has not changed. The next engineering boundary is operator-controlled runtime integration that is disabled by default and cannot derive trust from packet fields alone.
+
+
+## Selector-safe trusted runtime integration hook
+
+The first RuleEngine runtime-integration hook is now authored while preserving the normal selector profile:
+
+- `Carthago/Engine/RuleEngine.R275TrustedRuntime.cs`
+- `Carthago/Engine/RuleEngine.Core.cs`
+- `Carthago/Engine/Rules/Abstractions/RulePrecisionRuntimeEvaluator.cs`
+- `Carthago/Engine/RuleEngine.Tuning.cs`
+- `Carthago/Engine/RuleEngine.TestIsolation.cs`
+- `Carthago.Tests/R275TrustedRuntimeResolverTests.cs`
+
+The existing R275 precision profile still requires `Http` telemetry for ordinary packet selection. It was **not** broadened to all TLS/flow traffic.
+
+Instead, RuleEngine has a default-null internal `IOAuthDeviceFlowTrustedRuntimeContextResolver`. Only R275 consults this resolver. A resolver result is accepted only when it returns a `RuleEvaluationContext` for the exact same `TrafficRecord` and timestamp and that context already contains both the opaque trusted R275 capability and the opaque promotion authorization.
+
+When no resolver exists, when it returns an ordinary public context, or when it throws, RuleEngine follows the original selector/telemetry path and fails closed.
+
+When a valid trusted context exists, RuleEngine can narrowly override R275's HTTP selector skip and raw-packet telemetry validation for that one evaluation. This does **not** change R275's public precision profile or any other rule's selector behavior.
+
+The downstream precision evaluator now has a separate internal-only `EvaluateTrustedR275` path. Public `RulePrecisionRuntimeEvaluator.Evaluate` continues to report missing HTTP telemetry for a TLS-only packet. The trusted path may mark the encrypted-flow telemetry boundary satisfied only for R275 after the resolver-backed capability and promotion authorization have already been validated. Confidence, evidence-family, tuning-profile, suppression and runtime-mode gates remain active.
+
+The resolver itself is still default-null and no production inbox/source bootstrap is connected. Therefore ordinary runtime behavior remains unchanged.
+
+Focused engine tests use a temporary detection journal through an internal scoped journal override so synthetic R275 events never enter the machine's normal journal. The test collection is non-parallel because `RuleEngine.LastEvaluationTrace` and related engine state are shared.
+
+Focused coverage includes:
+- default TLS-only R275 remains selector-skipped without a resolver;
+- a valid internal resolver reaches R275 despite the ordinary HTTP selector gate;
+- public packet-only context cannot masquerade as trusted runtime context;
+- resolver exceptions fail closed without failing the rule engine;
+- resolver scope restores the default-null state;
+- normal R275 profile remains HTTP-gated;
+- public precision evaluation still reports missing HTTP telemetry;
+- internal trusted R275 precision evaluation satisfies only that telemetry boundary.
+
+**Status:** SOURCE CANDIDATE — UNVERIFIED. The prior 107/107 promotion-policy verification remains GREEN; this runtime-integration hook requires the updated focused suite.
