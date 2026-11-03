@@ -339,3 +339,15 @@ Live source review proves the A11 auditor branch: the mutation sets `analystRevi
 The fault was therefore isolated to the verifier's handling of Windows PowerShell-formatted child error text. Commit `551f3fd8d7d72ba232840f3d6bcc760ef0166d3e` normalizes whitespace only for reason matching, while preserving the untouched private log for existing privacy assertions. This does not relax the accepted reason allowlist or alter the auditor.
 
 **Gate remains pending:** rerun only A11 after pulling the verifier fix. A full matrix rerun is required only after the focused A11 diagnostic turns GREEN.
+
+
+### 2026-11-03 A11 focused rerun — GREEN
+
+After pulling the verifier whitespace-normalization fix, the owner reran only A11:
+`verify-v2-auditor-enforcement.ps1 -AuthorizedTestTime -OnlyScenario A11`.
+
+The harness matched the expected exit category and exact safe reason, completed the private-output scan, and printed the focused-completion statement. A11 is therefore **GREEN** within the synthetic auditor-enforcement scope.
+
+This closes the earlier A11 diagnostic-format blocker. It does not approve any external source, reviewer, license, malicious label, privacy decision or holdout freeze. V2 remains `PENDING_EXTERNAL_CAPTURE_AND_REVIEW` with 0/4 external reviewed pairs; V1 remains immutable.
+
+**Remaining Stage 6 cases still requiring observed results in this session:** `A11-review-type`, `A11-license`, `A12`, `A12-provenance`, `A14`, and `A16-distinct`.
