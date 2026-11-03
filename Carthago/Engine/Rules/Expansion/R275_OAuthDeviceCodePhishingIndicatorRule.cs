@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MIT
 // File: Engine/Rules/Expansion/R275_OAuthDeviceCodePhishingIndicatorRule.cs
 using System;
+using System.Collections.Concurrent;
 using Carthago.Models;
+using Carthago.Services;
+using Carthago.Services.TrustedAudit;
 
 namespace Carthago.Engine.Rules.Expansion
 {
@@ -50,11 +53,67 @@ namespace Carthago.Engine.Rules.Expansion
         };
 
         private static readonly RulePrecisionProfile Profile = CreateEvidenceDrivenProfile(Spec);
+        private static readonly ConcurrentDictionary<string, DateTime> PromotionCooldowns =
+            new(StringComparer.Ordinal);
+        private const int MaxPromotionCooldownKeys = 8192;
 
         public R275_OAuthDeviceCodePhishingIndicatorRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
+            if (context.TrustedR275Capability != null
+                && context.TrustedR275PromotionAuthorization != null)
+            {
+                var evt = CreateDetectionEvent(
+                    context,
+                    SeverityLevel.High,
+                    "Admin-confirmed compromised OAuth device-code sign-in corroborated by two independent trusted audit issuers.",
+                    new[]
+                    {
+                        new DetectionEvidenceItem(
+                            "identity.signal",
+                            "admin-confirmed-device-code-compromise",
+                            "trusted-idp-audit"),
+                        new DetectionEvidenceItem(
+                            "identity.audit.independentIssuers",
+                            "2",
+                            "trusted-idp-audit"),
+                        new DetectionEvidenceItem(
+                            "identity.networkBinding",
+                            "exact-flow-and-time",
+                            "trusted-idp-audit"),
+                        new DetectionEvidenceItem(
+                            "identity.promotionPolicy",
+                            OAuthDeviceFlowPromotionAuthorization.PolicyId,
+                            "promotion-policy")
+                    },
+                    confidence => confidence
+                        .AddEvidence(0.65, "admin-confirmed-device-code-compromise")
+                        .AddCorrelation(0.25, "two-independent-signed-audit-receipts")
+                        .AddEvidence(0.05, "exact-network-flow-binding"));
+
+                var cooldown = Profile.Cooldown ?? TimeSpan.Zero;
+                if (cooldown > TimeSpan.Zero
+                    && IsPromotionSuppressed(
+                        context.TrustedR275Capability.TraceHash,
+                        context.TimestampUtc,
+                        cooldown,
+                        out var remaining))
+                {
+                    SuppressForCooldown(
+                        evt,
+                        $"R275 trusted-evidence cooldown active for {remaining.TotalSeconds:F0}s.");
+                    EvidenceBuilder.AppendEvidence(
+                        evt,
+                        "suppression.remainingSeconds",
+                        Math.Ceiling(remaining.TotalSeconds)
+                            .ToString(System.Globalization.CultureInfo.InvariantCulture),
+                        "rule");
+                }
+
+                return RuleEvaluationResult.Match(Descriptor.RuleId, evt);
+            }
+
             if (context.TrustedR275Capability != null)
             {
                 // The capability proves that the exact packet/context reached the
@@ -72,6 +131,39 @@ namespace Carthago.Engine.Rules.Expansion
             return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
                 "TRUSTED_DEVICE_CODE_ABUSE_EVENT_UNAVAILABLE",
                 "A verified IdP audit event or independently corroborated phishing action is required.");
+        }
+
+        private static bool IsPromotionSuppressed(
+            string traceHash,
+            DateTime now,
+            TimeSpan cooldown,
+            out TimeSpan remaining)
+        {
+            remaining = TimeSpan.Zero;
+
+            if (PromotionCooldowns.TryGetValue(traceHash, out var last))
+            {
+                var delta = now - last;
+                if (delta <= TimeSpan.Zero || delta < cooldown)
+                {
+                    remaining = delta <= TimeSpan.Zero
+                        ? cooldown
+                        : cooldown - delta;
+                    return true;
+                }
+            }
+
+            PromotionCooldowns[traceHash] = now;
+
+            if (PromotionCooldowns.Count > MaxPromotionCooldownKeys)
+            {
+                var staleBefore = now - cooldown - cooldown;
+                foreach (var entry in PromotionCooldowns)
+                    if (entry.Value < staleBefore)
+                        PromotionCooldowns.TryRemove(entry.Key, out _);
+            }
+
+            return false;
         }
     }
 }
