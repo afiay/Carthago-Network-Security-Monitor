@@ -618,6 +618,16 @@ namespace Carthago.Engine.Rules.Catalog
                 new R593_ApacheSparkDoAsBacktickRequestRule(),
                 new R594_BitbucketArchiveExecPrefixRequestRule(),
                 new R595_GrafanaPluginTraversalRequestRule(),
+                new R596_SonicWallJarrewriteAbuseRequestRule(),
+                new R597_ModxTvsClassKeyTraversalRequestRule(),
+                new R598_WindowsLocalPathInHttpQueryRule(),
+                new R599_ArcadyanAbstractConfigTraversalRequestRule(),
+                new R600_ExchangeHafniumThemesResourcePostRequestRule(),
+                new R601_ReGeorgHeaderlessControlQueryRequestRule(),
+                new R602_SolarWindsOrionResourceAuthBypassRequestRule(),
+                new R603_WebLogicJndiBindingLdapRequestRule(),
+                new R604_ExchangeViewStateQueryRequestRule(),
+                new R605_ConfluenceUploadFilenameTraversalRequestRule(),
             };
         }
 
