@@ -191,3 +191,19 @@ Microsoft references used:
 - https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/signinlogs
 
 **Status:** SOURCE CANDIDATE — UNVERIFIED until the updated focused R275 test command is executed.
+
+## 2026-11-03 authenticated source focused verification — GREEN
+
+The owner pulled revision `9c0d11ad7971a9f6b272611cc870abcea74217f6` and ran the expanded focused R275 suite containing the Azure Monitor Logs source-adapter tests, strict Entra parser tests, signed candidate-gate tests, existing R275 advanced accuracy controls and paired replay.
+
+Observed:
+- `Carthago` build succeeded;
+- `Carthago.Tests` build succeeded;
+- **66 tests passed**;
+- **0 failed**;
+- **0 skipped**;
+- focused xUnit duration **15.2 seconds**.
+
+The authenticated source increment is therefore **GREEN at the contract-test level**. The current source adapter correctly remains configuration-injected and non-alerting; it has not been exercised against a live tenant or workspace in this evidence record.
+
+The next engineering boundary is no longer HTTP/query parsing. It is the trusted producer handoff: converting an authenticated, privacy-minimized Entra observation into a separately signed R275 audit claim without placing signing keys or ambient trust inside the packet/rule process. That handoff must preserve replay protection, independent signer requirements and the current `TRUSTED_DEVICE_CODE_ABUSE_EVENT_UNAVAILABLE` behavior until explicitly wired and tested.
