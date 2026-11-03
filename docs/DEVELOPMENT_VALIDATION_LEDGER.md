@@ -1578,3 +1578,25 @@ Observed sanitized result:
 **Interpretation:** this run does not establish that Security auditing is disabled, that 4624/4688 are absent, or that R343 source code is defective. The current PowerShell token lacks enough access to verify the Security channel/audit-policy state. No Windows setting, ACL, event, registry value, detector policy or confidence floor was changed.
 
 Historical Stage 1 remains valid and separate: an earlier authorized elevated CARTHAGE lab proved 4688 PID/image-path correlation and then restored Process Creation auditing to `No Auditing`. Do not re-enable auditing merely to repeat that already-closed lab gate. The next current-state check is an already-authorized elevated **read-only** rerun of the same readiness script.
+
+
+#### 2026-11-03 — R343 elevated current-state readiness confirmed: OS telemetry BLOCKED, Security access verified
+
+From an already-authorized elevated Windows PowerShell session, the owner ran:
+`inspect-winrm-audit-readiness.ps1 -InspectAuditPolicy -InspectRecentEvents -LookbackMinutes 30`.
+
+Observed sanitized result:
+- Elevated administrator token: **True**.
+- Windows Event Log service: **Running**.
+- 4688 include-command-line local policy value: **NOT SET**.
+- Process Creation success-audit policy: **NO AUDITING**.
+- Security channel metadata: **READABLE**.
+- Security 4624 in the last 30 minutes: **OBSERVED (event ID only)**.
+- Security 4688 in the last 30 minutes: **NO MATCHING EVENTS**.
+- Final status: **BLOCKED — Process Creation success auditing is disabled; fresh Security 4688 evidence is not expected**.
+
+**Classification:** environment/producer prerequisite BLOCKED, not a Carthago regression. This elevated run resolves the prior non-elevated `ACCESS UNVERIFIED` state: Security-log access is available under the authorized administrator token, but the effective Windows Process Creation success-audit subcategory is currently disabled. The absent recent 4688 event is therefore consistent with the effective policy.
+
+Historical Stage 1 remains closed and valid: CARTHAGE previously enabled Process Creation auditing in a controlled lab, correlated a harmless local process to a 4688 event by PID/image path, and restored the setting to `No Auditing`. No reason exists to repeat that already-closed lab gate unless a new explicitly authorized producer experiment requires it.
+
+No Windows policy, command-line logging, ACL, registry setting, detector behavior, confidence floor, holdout fixture or alert mode was changed by this read-only check.
