@@ -22,7 +22,7 @@ namespace Carthago.Services
     /// - Self-learning inference on non-standard ports using lightweight features (hints)
     /// - Anomaly scoring for policy/detection use-cases
     /// - Cryptographic integrity for snapshot (SHA-256 + Merkle root)
-    /// - Adaptive background refresh (conditional GET, jitter, backoff)
+    /// - Local-first IANA registry loading; network updates occur only when explicitly requested
     /// </summary>
     public static class PortServiceResolver
     {
@@ -70,8 +70,11 @@ namespace Carthago.Services
         private const string IanaCsvUrl =
             "https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.csv";
 
-        private static readonly TimeSpan RefreshInterval = TimeSpan.FromDays(7);
-        private static readonly string DataDir = Path.Combine(AppContext.BaseDirectory, "Data", "IANA");
+        private static readonly string BundledCsvPath =
+            Path.Combine(AppContext.BaseDirectory, "service-names-port-numbers.csv");
+        private static readonly string DataDir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Carthago", "Data", "IANA");
         private static readonly string CsvPath = Path.Combine(DataDir, "service-names-port-numbers.csv");
         private static readonly string SnapshotPath = Path.Combine(DataDir, "port-services.snapshot.json");
         private static readonly string SnapshotShaPath = SnapshotPath + ".sha256";
@@ -89,8 +92,7 @@ namespace Carthago.Services
 
         private static readonly object _gate = new();
         private static volatile IndexSnapshot _idx = IndexSnapshot.Empty();
-        private static int _scheduledRefresh;
-        private static long _nextRefreshAttemptTicks;
+        private static int _localLoadState;
         private static DateTimeOffset _lastRefresh = DateTimeOffset.MinValue;
 
         // Lightweight learned frequencies: (port,proto,name) -> count
@@ -113,18 +115,26 @@ namespace Carthago.Services
         // ===== Public API =====
 
         /// <summary>
-        /// Eager warmup. Optional — lookups will lazily trigger refresh if stale.
+        /// Eager local warmup. This method never performs network I/O.
+        /// The persisted per-user cache/snapshot is preferred, then the bundled
+        /// IANA CSV shipped with Carthago is used as the deterministic baseline.
         /// </summary>
-        public static async Task InitializeAsync(CancellationToken ct = default)
+        public static Task InitializeAsync(CancellationToken ct = default)
         {
-            Directory.CreateDirectory(DataDir);
-            TryLoadSnapshot();
-            TryLoadLearned();
+            ct.ThrowIfCancellationRequested();
+            EnsureLocalIndexLoaded();
+            return Task.CompletedTask;
+        }
 
-            if (DateTimeOffset.UtcNow - _lastRefresh >= RefreshInterval || _idx.IsEmpty)
-            {
-                await RefreshFromIanaAsync(ct).ConfigureAwait(false);
-            }
+        /// <summary>
+        /// Explicitly updates the IANA service registry over HTTPS.
+        /// Normal lookups and initialization never call this method implicitly.
+        /// Downloaded mutable data is stored under the current user's LocalAppData.
+        /// </summary>
+        public static Task UpdateIanaDatabaseAsync(CancellationToken ct = default)
+        {
+            EnsureLocalIndexLoaded();
+            return RefreshFromIanaAsync(ct);
         }
 
         /// <summary>
@@ -136,7 +146,7 @@ namespace Carthago.Services
             info = default!;
             if (!ValidatePort(port)) return false;
 
-            MaybeScheduleRefresh();
+            EnsureLocalIndexLoaded();
             var proto = NormalizeProto(protocol);
             var snap = _idx;
 
@@ -183,6 +193,7 @@ namespace Carthago.Services
         public static IEnumerable<ServiceInfo> GetAllServicesForPort(int port)
         {
             if (!ValidatePort(port)) yield break;
+            EnsureLocalIndexLoaded();
             var snap = _idx;
 
             if (snap.ByPortProto.TryGetValue((port, "TCP"), out var tcp)) yield return tcp;
@@ -200,6 +211,7 @@ namespace Carthago.Services
         public static IReadOnlyList<(int Port, string Protocol)> GetPortsForService(string serviceName)
         {
             if (string.IsNullOrWhiteSpace(serviceName)) return Array.Empty<(int, string)>();
+            EnsureLocalIndexLoaded();
             var snap = _idx;
             return snap.ByName.TryGetValue(CanonName(serviceName), out var list)
                 ? list.AsReadOnly()
@@ -212,6 +224,7 @@ namespace Carthago.Services
         public static void AddCustomMapping(int port, string protocol, string name, string? description = null, bool overrideExisting = false)
         {
             if (!ValidatePort(port)) return;
+            EnsureLocalIndexLoaded();
             var proto = NormalizeProto(protocol);
             var nm = name?.Trim();
             if (string.IsNullOrEmpty(nm)) return;
@@ -243,6 +256,7 @@ namespace Carthago.Services
         public static void AddAlias(string existingServiceName, string alias)
         {
             if (string.IsNullOrWhiteSpace(existingServiceName) || string.IsNullOrWhiteSpace(alias)) return;
+            EnsureLocalIndexLoaded();
             var snap = _idx;
             var srcCanon = CanonName(existingServiceName);
             if (!snap.ByName.TryGetValue(srcCanon, out var entries)) return;
@@ -256,8 +270,11 @@ namespace Carthago.Services
             }
         }
 
-        /// <summary> Last time we refreshed from IANA (or loaded snapshot). </summary>
+        /// <summary> Last time the active IANA data was loaded or explicitly refreshed. </summary>
         public static DateTimeOffset LastUpdatedUtc => _lastRefresh;
+
+        internal static string BundledCsvPathForTests => BundledCsvPath;
+        internal static string WritableDataDirectoryForTests => DataDir;
 
         // ======= New: Explanations, Inference & Learning =======
 
@@ -454,44 +471,42 @@ namespace Carthago.Services
 
         // ===== Refresh plumbing =====
 
-        private static void MaybeScheduleRefresh()
+        private static void EnsureLocalIndexLoaded()
         {
-            if (DateTimeOffset.UtcNow - _lastRefresh < RefreshInterval) return;
-            if (DateTime.UtcNow.Ticks < Interlocked.Read(ref _nextRefreshAttemptTicks)) return;
-            if (Interlocked.CompareExchange(ref _scheduledRefresh, 1, 0) != 0) return;
+            if (Volatile.Read(ref _localLoadState) == 2) return;
 
-            // add jittered backoff if fetch fails repeatedly
-            _ = Task.Run(async () =>
+            lock (_gate)
             {
-                try
-                {
-                    int attempt = 0;
-                    while (true)
-                    {
-                        try
-                        {
-                            await RefreshFromIanaAsync().ConfigureAwait(false);
-                            Interlocked.Exchange(ref _nextRefreshAttemptTicks, 0);
-                            break;
-                        }
-                        catch (Exception ex)
-                        {
-                            attempt++;
-                            Interlocked.Exchange(ref _nextRefreshAttemptTicks,
-                                DateTime.UtcNow.Add(PortRefreshRetryPolicy.FailureCooldown(ex)).Ticks);
-                            Console.Error.WriteLine($"[PortServiceResolver] Background refresh attempt {attempt} failed: {ex.Message}");
-                            if (!PortRefreshRetryPolicy.ShouldRetry(ex, attempt)) break;
+                if (_localLoadState == 2) return;
+                _localLoadState = 1;
 
-                            await Task.Delay(PortRefreshRetryPolicy.RetryDelay(attempt)
-                                + TimeSpan.FromSeconds(Random.Shared.Next(0, 5))).ConfigureAwait(false);
-                        }
-                    }
-                }
-                finally
-                {
-                    Interlocked.Exchange(ref _scheduledRefresh, 0);
-                }
-            });
+                TryLoadSnapshot();
+
+                if (_idx.IsEmpty)
+                    TryLoadCsv(CsvPath, "IANA cache");
+
+                if (_idx.IsEmpty)
+                    TryLoadCsv(BundledCsvPath, "IANA bundled");
+
+                TryLoadLearned();
+                Volatile.Write(ref _localLoadState, 2);
+            }
+        }
+
+        private static void TryLoadCsv(string path, string source)
+        {
+            try
+            {
+                if (!File.Exists(path)) return;
+                string csv = File.ReadAllText(path);
+                RebuildFromCsv(csv);
+                if (!_idx.IsEmpty)
+                    _lastRefresh = new DateTimeOffset(File.GetLastWriteTimeUtc(path), TimeSpan.Zero);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"[PortServiceResolver] {source} load failed: {ex.Message}");
+            }
         }
 
         private static async Task RefreshFromIanaAsync(CancellationToken ct = default)
@@ -518,7 +533,16 @@ namespace Carthago.Services
             resp.EnsureSuccessStatusCode();
             var csvText = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
-            await File.WriteAllTextAsync(CsvPath, csvText, ct).ConfigureAwait(false);
+            string tempCsvPath = CsvPath + "." + Guid.NewGuid().ToString("N") + ".tmp";
+            try
+            {
+                await File.WriteAllTextAsync(tempCsvPath, csvText, ct).ConfigureAwait(false);
+                File.Move(tempCsvPath, CsvPath, overwrite: true);
+            }
+            finally
+            {
+                if (File.Exists(tempCsvPath)) File.Delete(tempCsvPath);
+            }
             RebuildFromCsv(csvText);
             _lastRefresh = resp.Content.Headers.LastModified?.UtcDateTime ?? DateTimeOffset.UtcNow;
             File.SetLastWriteTimeUtc(CsvPath, _lastRefresh.UtcDateTime);
@@ -635,6 +659,7 @@ namespace Carthago.Services
         {
             try
             {
+                Directory.CreateDirectory(DataDir);
                 var snap = _idx;
                 var list = new List<EntryWire>(snap.ByPortProto.Count);
                 foreach (var kv in snap.ByPortProto)
@@ -757,6 +782,7 @@ namespace Carthago.Services
         {
             try
             {
+                Directory.CreateDirectory(DataDir);
                 var list = new List<LearnedWire>(_learned.Count);
                 foreach (var kv in _learned)
                 {

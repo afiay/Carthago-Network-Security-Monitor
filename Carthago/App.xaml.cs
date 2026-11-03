@@ -47,6 +47,17 @@ namespace Carthago
                     "Configuration Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
 
+            // Warm the bundled IANA service registry locally before packet capture.
+            // This never performs network I/O; remote IANA updates are explicit only.
+            try
+            {
+                await PortServiceResolver.InitializeAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"[PortServiceResolver] local init failed: {ex.Message}");
+            }
+
             // Initialize threat feed (downloads to Data/ThreatIntel and refreshes in background)
             try
             {
