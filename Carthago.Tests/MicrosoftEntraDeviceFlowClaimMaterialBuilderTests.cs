@@ -147,6 +147,21 @@ public sealed class MicrosoftEntraDeviceFlowClaimMaterialBuilderTests
         Assert.Equal("R275_ENTRA_CAPTURE_TIME_MISMATCH", offsetReason);
     }
 
+    [Theory]
+    [InlineData("TCP")]
+    [InlineData("SSH")]
+    [InlineData("")]
+    public void Arbitrary_443_Application_Context_Cannot_Create_Material(string application)
+    {
+        var flow = Flow();
+        flow.ApplicationProtocol = application;
+
+        Assert.False(Builder().TryBuild(
+            Authenticated(), flow, Now,
+            out _, out var reason));
+        Assert.Equal("R275_CAPTURE_CORROBORATION_UNAVAILABLE", reason);
+    }
+
     [Fact]
     public void Missing_Or_NonTls443_Capture_Cannot_Create_Material()
     {
