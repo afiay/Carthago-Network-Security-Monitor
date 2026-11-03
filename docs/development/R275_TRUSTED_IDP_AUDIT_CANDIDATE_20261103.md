@@ -92,7 +92,7 @@ During owner-authorized test time:
 ```powershell
 dotnet test .\Carthago.Tests\Carthago.Tests.csproj `
   -c Release `
-  --filter "FullyQualifiedName~MicrosoftEntraDeviceFlowClaimMaterialBuilderTests|FullyQualifiedName~MicrosoftEntraLogAnalyticsDeviceCodeSourceTests|FullyQualifiedName~MicrosoftEntraDeviceCodeAuditIntakeTests|FullyQualifiedName~OAuthDeviceFlowAuditCandidateGateTests|FullyQualifiedName~R275AdvancedAccuracyBatchTests|FullyQualifiedName~R275R343R485PairedReplayTests"
+  --filter "FullyQualifiedName~OAuthDeviceFlowExternalSigningRequestTests|FullyQualifiedName~MicrosoftEntraDeviceFlowClaimMaterialBuilderTests|FullyQualifiedName~MicrosoftEntraLogAnalyticsDeviceCodeSourceTests|FullyQualifiedName~MicrosoftEntraDeviceCodeAuditIntakeTests|FullyQualifiedName~OAuthDeviceFlowAuditCandidateGateTests|FullyQualifiedName~R275AdvancedAccuracyBatchTests|FullyQualifiedName~R275R343R485PairedReplayTests"
 ```
 
 Do not mark this increment GREEN until the focused tests complete successfully on CARTHAGE.
@@ -242,3 +242,19 @@ Observed:
 The authenticated Entra-to-packet handoff is therefore GREEN at the contract-test level. The verified boundary now reaches privacy-minimized unsigned claim material whose destination IP comes from independent packet capture rather than from fabricated or inferred provider data.
 
 The next engineering boundary is the external signer request/receipt handoff. It must keep private keys outside the Carthago process, keep issuer identity operator-controlled, require independent signers, preserve replay resistance, and must not connect signed receipts to R275 alerting until separately reviewed and verified.
+
+
+## Keyless external-signer handoff
+
+A keyless external-signing request boundary is now authored:
+
+- `Carthago/Services/TrustedAudit/OAuthDeviceFlowExternalSigningRequest.cs`
+- `Carthago.Tests/OAuthDeviceFlowExternalSigningRequestTests.cs`
+
+The request can be created only from previously validated `MicrosoftEntraDeviceFlowClaimMaterial`. It fixes the schema version, rule ID `R275`, operation `OAuthDeviceFlowAbuseConfirmed`, UTC occurrence time, captured source/destination IPs and privacy-minimized actor/resource/trace hashes. The approved identity host remains available to an external signer for policy review but is deliberately not copied into `AuditClaim`.
+
+CARTHAGO does not hold a private key in this boundary. The external signer supplies only its operator-pinned issuer identity and a unique evidence ID to obtain an **unsigned** `AuditClaim` payload. The request exposes no signature method, private-key property or alert capability.
+
+Synthetic coverage proves that two separately keyed issuers can sign claims derived from the same fixed request, pass the existing `TrustedAuditReceiptVerifier` and `TrustedAuditReceiptCorrelation`, and still terminate at the existing non-alerting R275 gate with `R275_SIGNED_IDP_AUDIT_CANDIDATE_NOT_INTEGRATED`.
+
+**Status:** SOURCE CANDIDATE — UNVERIFIED until the expanded focused R275 suite is executed.
