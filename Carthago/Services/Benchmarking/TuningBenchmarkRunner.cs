@@ -76,14 +76,22 @@ namespace Carthago.Services.Benchmarking
                 static descriptor => descriptor.RuleId,
                 static descriptor => new CoverageAccumulator(descriptor.RuleId),
                 StringComparer.OrdinalIgnoreCase);
-            var profileAccumulators = options.Profiles
+            var profileNames = options.Profiles
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .Select(RuleTuningCatalog.NormalizeProfileName)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+            var deploymentProfileAccumulators = TuningBenchmarkDeploymentStates.All
                 .ToDictionary(
-                    static profile => profile,
-                    static profile => new ProfileAccumulator(profile),
+                    static state => state,
+                    state => profileNames.ToDictionary(
+                        static profile => profile,
+                        static profile => new ProfileAccumulator(profile),
+                        StringComparer.OrdinalIgnoreCase),
                     StringComparer.OrdinalIgnoreCase);
+            // Compatibility/default metrics remain the cold/unconfigured view.
+            var profileAccumulators =
+                deploymentProfileAccumulators[TuningBenchmarkDeploymentStates.ColdUnconfigured];
 
             var recommendShadow = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var recommendAlert = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -95,7 +103,8 @@ namespace Carthago.Services.Benchmarking
                 cancellationToken.ThrowIfCancellationRequested();
                 var sample = await LoadSampleAsync(file, cancellationToken).ConfigureAwait(false);
                 var classification = sample.Classification ?? InferClassification(file);
-                var approvedAssets = new ApprovedAssetRegistry(sample.EnvironmentTuning);
+                var coldApprovedAssets = new ApprovedAssetRegistry(new EnvironmentTuningOptions());
+                var calibratedApprovedAssets = new ApprovedAssetRegistry(sample.EnvironmentTuning);
 
                 RuleEngine.ResetRuntimeStateForReplay();
 
@@ -308,98 +317,115 @@ namespace Carthago.Services.Benchmarking
                     }
                 }
 
-                foreach (var profile in profileAccumulators.Values)
+                foreach (var deploymentState in TuningBenchmarkDeploymentStates.All)
                 {
-                    var profileSample = new TuningBenchmarkProfileSampleSummary
-                    {
-                        ProfileName = profile.ProfileName
-                    };
+                    var calibrated = string.Equals(
+                        deploymentState,
+                        TuningBenchmarkDeploymentStates.CalibratedConfigured,
+                        StringComparison.OrdinalIgnoreCase);
+                    var approvedAssets = calibrated ? calibratedApprovedAssets : coldApprovedAssets;
+                    var baselineReady = calibrated;
+                    var baselineLearningMode = !calibrated;
+                    var stateProfiles = new Dictionary<string, TuningBenchmarkProfileSampleSummary>(
+                        StringComparer.OrdinalIgnoreCase);
+                    sampleResult.DeploymentStateProfiles[deploymentState] = stateProfiles;
+                    var stateAccumulators = deploymentProfileAccumulators[deploymentState];
 
-                    foreach (var match in matches)
+                    foreach (var profile in stateAccumulators.Values)
                     {
-                        // Mirror live RuleEngine baseline eligibility: a replay
-                        // cannot page from a fresh isolated baseline simply because
-                        // a broad profile defaults to Alert.
-                        var readiness = BaselineStore.Current.Readiness;
-                        var decision = RuleTuningCatalog.Resolve(
-                            profile.ProfileName,
-                            match.Descriptor,
-                            match.Event,
-                            match.Record,
-                            approvedAssets,
-                            baselineLearningMode: sample.BaselineLearningMode || BaselineStore.Current.IsLearningMode,
-                            effectiveConfidenceScore: match.Event.ConfidenceScore,
-                            baselineReady: readiness.IsReady);
-                        // Apply the same independent precision checks used by live
-                        // capture. Alert is the unconstrained input here because
-                        // each replay profile already supplies its own policy mode.
-                        var precision = RulePrecisionRuntimeEvaluator.Evaluate(
-                            match.Descriptor, match.Event, match.Record, RuleMode.Alert, profile.ProfileName, approvedAssets);
-                        var evaluatedMode = RulePrecisionCatalog.MostRestrictive(
-                            decision.EffectiveMode, precision.EffectiveMode);
-
-                        var precisionMode = RulePrecisionCatalog.GetProfile(match.Descriptor).DefaultMode;
-                        var existingTrace = profileSample.RuleDecisions.FirstOrDefault(item =>
-                            string.Equals(item.RuleId, match.Descriptor.RuleId, StringComparison.OrdinalIgnoreCase));
-                        if (existingTrace == null || existingTrace.Confidence < match.Event.ConfidenceScore)
+                        var profileSample = new TuningBenchmarkProfileSampleSummary
                         {
-                            if (existingTrace != null)
-                                profileSample.RuleDecisions.Remove(existingTrace);
-                            profileSample.RuleDecisions.Add(new TuningBenchmarkRuleDecision
+                            ProfileName = profile.ProfileName
+                        };
+
+                        foreach (var match in matches)
+                        {
+                            var decision = RuleTuningCatalog.Resolve(
+                                profile.ProfileName,
+                                match.Descriptor,
+                                match.Event,
+                                match.Record,
+                                approvedAssets,
+                                baselineLearningMode: baselineLearningMode,
+                                effectiveConfidenceScore: match.Event.ConfidenceScore,
+                                baselineReady: baselineReady);
+                            // Apply the same independent precision checks used by live
+                            // capture. Alert is the unconstrained input here because
+                            // each replay profile already supplies its own policy mode.
+                            var precision = RulePrecisionRuntimeEvaluator.Evaluate(
+                                match.Descriptor, match.Event, match.Record, RuleMode.Alert,
+                                profile.ProfileName, approvedAssets);
+                            var evaluatedMode = RulePrecisionCatalog.MostRestrictive(
+                                decision.EffectiveMode, precision.EffectiveMode);
+
+                            var precisionMode = RulePrecisionCatalog.GetProfile(match.Descriptor).DefaultMode;
+                            var existingTrace = profileSample.RuleDecisions.FirstOrDefault(item =>
+                                string.Equals(item.RuleId, match.Descriptor.RuleId, StringComparison.OrdinalIgnoreCase));
+                            if (existingTrace == null || existingTrace.Confidence < match.Event.ConfidenceScore)
                             {
-                                RuleId = match.Descriptor.RuleId,
-                                Tier = decision.Tier.ToString(),
-                                DefaultMode = decision.DefaultMode.ToString(),
-                                PrecisionMode = precisionMode.ToString(),
-                                EffectiveMode = evaluatedMode.ToString(),
-                                Confidence = match.Event.ConfidenceScore,
-                                ConfidenceFloor = decision.ConfidenceFloor,
-                                Reasons = decision.Reasons.Select(static reason => reason.ToString()).ToList(),
-                                ReasonDetails = decision.ReasonDetails.ToList(),
-                                RuntimePrecisionReasons = precision.Reasons.ToList()
-                            });
+                                if (existingTrace != null)
+                                    profileSample.RuleDecisions.Remove(existingTrace);
+                                profileSample.RuleDecisions.Add(new TuningBenchmarkRuleDecision
+                                {
+                                    RuleId = match.Descriptor.RuleId,
+                                    Tier = decision.Tier.ToString(),
+                                    DefaultMode = decision.DefaultMode.ToString(),
+                                    PrecisionMode = precisionMode.ToString(),
+                                    EffectiveMode = evaluatedMode.ToString(),
+                                    Confidence = match.Event.ConfidenceScore,
+                                    ConfidenceFloor = decision.ConfidenceFloor,
+                                    Reasons = decision.Reasons.Select(static reason => reason.ToString()).ToList(),
+                                    ReasonDetails = decision.ReasonDetails.ToList(),
+                                    RuntimePrecisionReasons = precision.Reasons.ToList()
+                                });
+                            }
+
+                            switch (evaluatedMode)
+                            {
+                                case RuleMode.Alert:
+                                    profileSample.AlertRuleIds.Add(match.Descriptor.RuleId);
+                                    profile.AlertCount++;
+                                    profile.AlertRuleIds.Add(match.Descriptor.RuleId);
+                                    if (match.Event.Severity == SeverityLevel.Critical)
+                                        profileSample.CriticalAlertCount++;
+                                    break;
+                                case RuleMode.Shadow:
+                                    profileSample.ShadowRuleIds.Add(match.Descriptor.RuleId);
+                                    profile.ShadowCount++;
+                                    break;
+                                default:
+                                    profileSample.SuppressedRuleIds.Add(match.Descriptor.RuleId);
+                                    profile.SuppressedCount++;
+                                    break;
+                            }
                         }
 
-                        switch (evaluatedMode)
+                        profileSample.AlertRuleIds = Deduplicate(profileSample.AlertRuleIds);
+                        profileSample.ShadowRuleIds = Deduplicate(profileSample.ShadowRuleIds);
+                        profileSample.SuppressedRuleIds = Deduplicate(profileSample.SuppressedRuleIds);
+                        profileSample.CriticalAlertCount = matches
+                            .Where(match => profileSample.AlertRuleIds.Contains(
+                                match.Descriptor.RuleId, StringComparer.OrdinalIgnoreCase)
+                                && match.Event.Severity == SeverityLevel.Critical)
+                            .Select(static match => match.Descriptor.RuleId)
+                            .Distinct(StringComparer.OrdinalIgnoreCase)
+                            .Count();
+
+                        stateProfiles[profile.ProfileName] = profileSample;
+                        if (!calibrated)
+                            sampleResult.Profiles[profile.ProfileName] = profileSample;
+
+                        if (classification == ReplaySampleClassification.Benign)
                         {
-                            case RuleMode.Alert:
-                                profileSample.AlertRuleIds.Add(match.Descriptor.RuleId);
-                                profile.AlertCount++;
-                                profile.AlertRuleIds.Add(match.Descriptor.RuleId);
-                                if (match.Event.Severity == SeverityLevel.Critical)
-                                    profileSample.CriticalAlertCount++;
-                                break;
-                            case RuleMode.Shadow:
-                                profileSample.ShadowRuleIds.Add(match.Descriptor.RuleId);
-                                profile.ShadowCount++;
-                                break;
-                            default:
-                                profileSample.SuppressedRuleIds.Add(match.Descriptor.RuleId);
-                                profile.SuppressedCount++;
-                                break;
+                            profile.BenignAlertCount += profileSample.AlertRuleIds.Count;
+                            profile.BenignCriticalAlertCount += profileSample.CriticalAlertCount;
                         }
-                    }
-
-                    profileSample.AlertRuleIds = Deduplicate(profileSample.AlertRuleIds);
-                    profileSample.ShadowRuleIds = Deduplicate(profileSample.ShadowRuleIds);
-                    profileSample.SuppressedRuleIds = Deduplicate(profileSample.SuppressedRuleIds);
-                    profileSample.CriticalAlertCount = matches
-                        .Where(match => profileSample.AlertRuleIds.Contains(match.Descriptor.RuleId, StringComparer.OrdinalIgnoreCase) && match.Event.Severity == SeverityLevel.Critical)
-                        .Select(static match => match.Descriptor.RuleId)
-                        .Distinct(StringComparer.OrdinalIgnoreCase)
-                        .Count();
-
-                    sampleResult.Profiles[profile.ProfileName] = profileSample;
-
-                    if (classification == ReplaySampleClassification.Benign)
-                    {
-                        profile.BenignAlertCount += profileSample.AlertRuleIds.Count;
-                        profile.BenignCriticalAlertCount += profileSample.CriticalAlertCount;
-                    }
-                    else if (classification == ReplaySampleClassification.Malicious)
-                    {
-                        profile.MaliciousExpectedMatchCount += expectedMatchIds.Count;
-                        profile.MaliciousAlertMatchCount += expectedMatchIds.Count(id => profileSample.AlertRuleIds.Contains(id, StringComparer.OrdinalIgnoreCase));
+                        else if (classification == ReplaySampleClassification.Malicious)
+                        {
+                            profile.MaliciousExpectedMatchCount += expectedMatchIds.Count;
+                            profile.MaliciousAlertMatchCount += expectedMatchIds.Count(id =>
+                                profileSample.AlertRuleIds.Contains(id, StringComparer.OrdinalIgnoreCase));
+                        }
                     }
                 }
 
@@ -439,26 +465,52 @@ namespace Carthago.Services.Benchmarking
                 report.SampleResults.Add(sampleResult);
             }
 
-            foreach (var profile in profileAccumulators.Values)
+            foreach (var deploymentState in TuningBenchmarkDeploymentStates.All)
             {
-                if (profile.MaliciousExpectedMatchCount > 0)
+                var calibrated = string.Equals(
+                    deploymentState,
+                    TuningBenchmarkDeploymentStates.CalibratedConfigured,
+                    StringComparison.OrdinalIgnoreCase);
+                var stateResult = new TuningBenchmarkDeploymentStateResult
                 {
-                    profile.TruePositivePassRate = (double)profile.MaliciousAlertMatchCount / profile.MaliciousExpectedMatchCount;
+                    StateName = deploymentState,
+                    Description = calibrated
+                        ? "Counterfactual configured deployment: fixture-declared environment inventory is available and baseline readiness is established; detector predicates, profile defaults and precision floors are unchanged."
+                        : "Cold deployment: no environment inventory is supplied and baseline learning is active; detector predicates, profile defaults and precision floors are unchanged.",
+                    SimulatedBaselineReady = calibrated,
+                    SimulatedBaselineLearningMode = !calibrated,
+                    EnvironmentConfigurationSource = calibrated
+                        ? "Fixture-declared EnvironmentTuning"
+                        : "None"
+                };
+
+                foreach (var profile in deploymentProfileAccumulators[deploymentState].Values)
+                {
+                    if (profile.MaliciousExpectedMatchCount > 0)
+                    {
+                        profile.TruePositivePassRate =
+                            (double)profile.MaliciousAlertMatchCount / profile.MaliciousExpectedMatchCount;
+                    }
+
+                    stateResult.ProfileResults[profile.ProfileName] = new TuningBenchmarkProfileSummary
+                    {
+                        ProfileName = profile.ProfileName,
+                        AlertCount = profile.AlertCount,
+                        ShadowCount = profile.ShadowCount,
+                        SuppressedCount = profile.SuppressedCount,
+                        BenignAlertCount = profile.BenignAlertCount,
+                        BenignCriticalAlertCount = profile.BenignCriticalAlertCount,
+                        MaliciousExpectedMatchCount = profile.MaliciousExpectedMatchCount,
+                        MaliciousAlertMatchCount = profile.MaliciousAlertMatchCount,
+                        TruePositivePassRate = profile.TruePositivePassRate,
+                        AlertRuleIds = profile.AlertRuleIds
+                            .OrderBy(static id => id, StringComparer.OrdinalIgnoreCase).ToList()
+                    };
                 }
 
-                report.ProfileResults[profile.ProfileName] = new TuningBenchmarkProfileSummary
-                {
-                    ProfileName = profile.ProfileName,
-                    AlertCount = profile.AlertCount,
-                    ShadowCount = profile.ShadowCount,
-                    SuppressedCount = profile.SuppressedCount,
-                    BenignAlertCount = profile.BenignAlertCount,
-                    BenignCriticalAlertCount = profile.BenignCriticalAlertCount,
-                    MaliciousExpectedMatchCount = profile.MaliciousExpectedMatchCount,
-                    MaliciousAlertMatchCount = profile.MaliciousAlertMatchCount,
-                    TruePositivePassRate = profile.TruePositivePassRate,
-                    AlertRuleIds = profile.AlertRuleIds.OrderBy(static id => id, StringComparer.OrdinalIgnoreCase).ToList()
-                };
+                report.DeploymentStates[deploymentState] = stateResult;
+                if (!calibrated)
+                    report.ProfileResults = stateResult.ProfileResults;
             }
 
             report.RuleCoverage = ruleCoverage.Values
@@ -492,6 +544,22 @@ namespace Carthago.Services.Benchmarking
                 .ToList();
             report.Summary.ConfidenceDistribution = confidenceDistribution;
 
+            foreach (var deploymentState in TuningBenchmarkDeploymentStates.All)
+            {
+                var stateResult = report.DeploymentStates[deploymentState];
+                foreach (var profileName in stateResult.ProfileResults.Keys)
+                {
+                    stateResult.SampleLevelQualityByProfile[profileName] =
+                        DetectionQualityMetrics.FromReplaySamples(
+                            report.SampleResults, profileName, deploymentState);
+                }
+                stateResult.RecallGaps =
+                    TuningBenchmarkRecallGapAnalyzer.Analyze(report, deploymentState);
+                stateResult.DetectionFunnelByProfile =
+                    TuningBenchmarkDetectionFunnelAnalyzer.Analyze(report, deploymentState);
+            }
+
+            // Backward-compatible cold/unconfigured view.
             // Each gap is an expected malicious (sample, rule, profile) with
             // no alert; Shadow matches are not counted as alert true positives.
             report.RecallGaps = TuningBenchmarkRecallGapAnalyzer.Analyze(report);

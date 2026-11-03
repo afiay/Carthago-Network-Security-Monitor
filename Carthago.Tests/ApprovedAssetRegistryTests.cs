@@ -123,6 +123,40 @@ public sealed class ApprovedAssetRegistryTests
     }
 
     [Fact]
+    public void Approved_CiCd_Server_Satisfies_Runtime_Environment_Evidence_For_DevOps_Rule()
+    {
+        // Construct the rule once so its authored precision profile is
+        // registered in the runtime catalog, matching live RuleRegistry setup.
+        _ = new Carthago.Engine.Rules.Expansion.R356_JenkinsCrumbIssuerEnumerationRule();
+
+        var registry = new ApprovedAssetRegistry(new EnvironmentTuningOptions
+        {
+            Approved = new ApprovedEnvironmentOptions
+            {
+                CiCdServers = { "10.10.0.20" }
+            }
+        });
+        Assert.True(registry.HasApprovedCiCdServers);
+        Assert.True(registry.IsApprovedCiCdServer("10.10.0.20"));
+
+        var evt = CreateEvent("R356", "10.0.0.71", "10.10.0.20", 8080,
+            "jenkins crumbissuer cloud-devops threshold distinct",
+            host: "10.10.0.20", protocol: "HTTP");
+        evt.ConfidenceScore = 0.80;
+        var record = CreateRecord(evt);
+        record.HttpMethod = "GET";
+        record.HttpUri = "/crumbIssuer/api/json";
+        record.HttpHost = "10.10.0.20";
+        record.ApplicationProtocol = "HTTP";
+
+        var decision = RulePrecisionRuntimeEvaluator.Evaluate(
+            Descriptor("R356"), evt, record, RuleMode.Alert, "Research", registry);
+
+        Assert.DoesNotContain(decision.Reasons,
+            reason => reason.Contains("environment-scoped rule lacks", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public void Allowlist_Decision_Is_Recordable_As_Evidence_And_Does_Not_Delete_Detection()
     {
         var registry = new ApprovedAssetRegistry(new EnvironmentTuningOptions

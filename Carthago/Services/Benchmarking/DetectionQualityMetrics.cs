@@ -73,7 +73,8 @@ namespace Carthago.Services.Benchmarking
         }
 
         public static DetectionQualityMetrics FromReplaySamples(
-            IEnumerable<TuningBenchmarkSampleResult> samples, string profileName)
+            IEnumerable<TuningBenchmarkSampleResult> samples, string profileName,
+            string? deploymentState = null)
         {
             ArgumentNullException.ThrowIfNull(samples);
             if (string.IsNullOrWhiteSpace(profileName)) throw new ArgumentException("A profile is required.", nameof(profileName));
@@ -87,10 +88,16 @@ namespace Carthago.Services.Benchmarking
             {
                 if (sample == null) throw new ArgumentException("Replay samples cannot contain null entries.", nameof(samples));
 
-                var profile = sample.Profiles.FirstOrDefault(pair =>
+                var profiles = TuningBenchmarkDeploymentStates.ProfilesFor(sample, deploymentState);
+                var profile = profiles.FirstOrDefault(pair =>
                     string.Equals(pair.Key, profileName, StringComparison.OrdinalIgnoreCase)).Value;
                 if (profile == null)
-                    throw new InvalidOperationException($"Replay sample '{sample.Name}' has no '{profileName}' alert profile.");
+                {
+                    var stateLabel = string.IsNullOrWhiteSpace(deploymentState)
+                        ? TuningBenchmarkDeploymentStates.ColdUnconfigured : deploymentState;
+                    throw new InvalidOperationException(
+                        $"Replay sample '{sample.Name}' has no '{profileName}' alert profile for deployment state '{stateLabel}'.");
+                }
 
                 var alerted = profile.AlertRuleIds.Count > 0;
                 if (sample.Classification == ReplaySampleClassification.Malicious)

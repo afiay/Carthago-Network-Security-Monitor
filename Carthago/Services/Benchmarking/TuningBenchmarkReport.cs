@@ -81,7 +81,10 @@ namespace Carthago.Services.Benchmarking
         public List<TuningBenchmarkExpectedRuleDiagnostic> ExpectedRuleDiagnostics { get; set; } = new();
         public double MaximumConfidence { get; set; }
         public double AverageConfidence { get; set; }
+        // Backward-compatible default view: ColdUnconfigured.
         public Dictionary<string, TuningBenchmarkProfileSampleSummary> Profiles { get; set; } = new();
+        public Dictionary<string, Dictionary<string, TuningBenchmarkProfileSampleSummary>> DeploymentStateProfiles { get; set; }
+            = new(StringComparer.OrdinalIgnoreCase);
     }
 
     public sealed class TuningBenchmarkExpectedRuleDiagnostic
@@ -188,7 +191,10 @@ namespace Carthago.Services.Benchmarking
         public DateTime GeneratedAtUtc { get; set; }
         public string ReplayDirectory { get; set; } = string.Empty;
         public TuningBenchmarkSummary Summary { get; set; } = new();
+        // Backward-compatible default view: ColdUnconfigured.
         public Dictionary<string, TuningBenchmarkProfileSummary> ProfileResults { get; set; } = new();
+        public Dictionary<string, TuningBenchmarkDeploymentStateResult> DeploymentStates { get; set; }
+            = new(StringComparer.OrdinalIgnoreCase);
         public List<TuningBenchmarkSampleResult> SampleResults { get; set; } = new();
         public List<TuningBenchmarkRecallGap> RecallGaps { get; set; } = new();
         public Dictionary<string, TuningBenchmarkDetectionFunnel> DetectionFunnelByProfile { get; set; }

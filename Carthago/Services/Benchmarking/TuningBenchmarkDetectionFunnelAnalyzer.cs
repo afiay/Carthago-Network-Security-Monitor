@@ -17,12 +17,21 @@ namespace Carthago.Services.Benchmarking
     /// </summary>
     public static class TuningBenchmarkDetectionFunnelAnalyzer
     {
-        public static Dictionary<string, TuningBenchmarkDetectionFunnel> Analyze(TuningBenchmarkReport report)
+        public static Dictionary<string, TuningBenchmarkDetectionFunnel> Analyze(
+            TuningBenchmarkReport report,
+            string? deploymentState = null)
         {
             if (report == null) throw new ArgumentNullException(nameof(report));
 
-            var profiles = report.ProfileResults.Keys
-                .Concat(report.SampleResults.SelectMany(static sample => sample.Profiles.Keys))
+            var stateProfileResults = string.IsNullOrWhiteSpace(deploymentState)
+                || string.Equals(deploymentState, TuningBenchmarkDeploymentStates.ColdUnconfigured, StringComparison.OrdinalIgnoreCase)
+                    ? report.ProfileResults
+                    : report.DeploymentStates.TryGetValue(deploymentState, out var state)
+                        ? state.ProfileResults
+                        : new Dictionary<string, TuningBenchmarkProfileSummary>(StringComparer.OrdinalIgnoreCase);
+            var profiles = stateProfileResults.Keys
+                .Concat(report.SampleResults.SelectMany(sample =>
+                    TuningBenchmarkDeploymentStates.ProfilesFor(sample, deploymentState).Keys))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .OrderBy(static profile => profile, StringComparer.OrdinalIgnoreCase);
 
@@ -33,7 +42,8 @@ namespace Carthago.Services.Benchmarking
                 var eligibleEmitted = 0;
                 foreach (var sample in report.SampleResults)
                 {
-                    sample.Profiles.TryGetValue(profileName, out var profile);
+                    TuningBenchmarkDeploymentStates.ProfilesFor(sample, deploymentState)
+                        .TryGetValue(profileName, out var profile);
 
                     if (sample.Classification == ReplaySampleClassification.Benign)
                     {

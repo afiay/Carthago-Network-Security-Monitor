@@ -316,6 +316,68 @@ namespace Carthago.Tests
         }
 
         [Fact]
+        public async Task Benchmark_Separates_Cold_And_Calibrated_Deployment_States()
+        {
+            var report = await new TuningBenchmarkRunner().RunAsync(new TuningBenchmarkOptions
+            {
+                ReplayDirectory = GetReplayDirectory()
+            });
+
+            var cold = report.DeploymentStates[TuningBenchmarkDeploymentStates.ColdUnconfigured];
+            var calibrated = report.DeploymentStates[TuningBenchmarkDeploymentStates.CalibratedConfigured];
+
+            Assert.False(cold.SimulatedBaselineReady);
+            Assert.True(cold.SimulatedBaselineLearningMode);
+            Assert.True(calibrated.SimulatedBaselineReady);
+            Assert.False(calibrated.SimulatedBaselineLearningMode);
+            Assert.Equal("None", cold.EnvironmentConfigurationSource);
+            Assert.Equal("Fixture-declared EnvironmentTuning", calibrated.EnvironmentConfigurationSource);
+            Assert.Equal(report.ProfileResults.Keys.OrderBy(static name => name),
+                cold.ProfileResults.Keys.OrderBy(static name => name));
+
+            var scoredSampleCount = report.SampleResults.Count(sample =>
+                sample.Classification != ReplaySampleClassification.UnsupportedMalicious);
+            foreach (var profileName in cold.ProfileResults.Keys)
+            {
+                var coldFunnel = cold.DetectionFunnelByProfile[profileName];
+                var calibratedFunnel = calibrated.DetectionFunnelByProfile[profileName];
+                Assert.Equal(report.Summary.ExpectedMatchCount, coldFunnel.ExpectedMaliciousRules);
+                Assert.Equal(report.Summary.ExpectedMatchCount, calibratedFunnel.ExpectedMaliciousRules);
+                Assert.Equal(1.0, coldFunnel.DetectorRecognitionRate);
+                Assert.Equal(1.0, calibratedFunnel.DetectorRecognitionRate);
+
+                var coldQuality = cold.SampleLevelQualityByProfile[profileName];
+                var calibratedQuality = calibrated.SampleLevelQualityByProfile[profileName];
+                Assert.NotNull(coldQuality.Recall);
+                Assert.NotNull(calibratedQuality.Recall);
+                Assert.Equal(scoredSampleCount, coldQuality.TruePositives + coldQuality.FalsePositives
+                    + coldQuality.FalseNegatives + coldQuality.TrueNegatives);
+                Assert.Equal(scoredSampleCount, calibratedQuality.TruePositives + calibratedQuality.FalsePositives
+                    + calibratedQuality.FalseNegatives + calibratedQuality.TrueNegatives);
+            }
+
+            // Baseline readiness alone should release the high-confidence R102
+            // replay while preserving the authored 80% precision floor.
+            var dns = report.SampleResults.Single(sample =>
+                sample.Name == "r102-distinct-txt-burst-candidate");
+            Assert.DoesNotContain("R102",
+                TuningBenchmarkDeploymentStates.ProfilesFor(
+                    dns, TuningBenchmarkDeploymentStates.ColdUnconfigured)["SmallBusiness"].AlertRuleIds);
+            Assert.Contains("R102",
+                TuningBenchmarkDeploymentStates.ProfilesFor(
+                    dns, TuningBenchmarkDeploymentStates.CalibratedConfigured)["SmallBusiness"].AlertRuleIds);
+
+            // R356 has fixture-declared CI/CD inventory. Calibrated Research
+            // should no longer be blocked by a false "unconfigured" precision gate.
+            var jenkins = report.SampleResults.Single(sample => sample.Name == "devops-jenkins-crumb");
+            var calibratedResearch = TuningBenchmarkDeploymentStates.ProfilesFor(
+                jenkins, TuningBenchmarkDeploymentStates.CalibratedConfigured)["Research"];
+            var trace = Assert.Single(calibratedResearch.RuleDecisions, decision => decision.RuleId == "R356");
+            Assert.DoesNotContain(trace.RuntimePrecisionReasons,
+                reason => reason.Contains("environment-scoped rule lacks", StringComparison.OrdinalIgnoreCase));
+        }
+
+        [Fact]
         public async Task Benchmark_Detection_Funnel_Accounts_For_Every_Expected_Malicious_Rule()
         {
             var report = await new TuningBenchmarkRunner().RunAsync(new TuningBenchmarkOptions

@@ -14,7 +14,9 @@ namespace Carthago.Services.Benchmarking
     /// </summary>
     public static class TuningBenchmarkRecallGapAnalyzer
     {
-        public static List<TuningBenchmarkRecallGap> Analyze(TuningBenchmarkReport report)
+        public static List<TuningBenchmarkRecallGap> Analyze(
+            TuningBenchmarkReport report,
+            string? deploymentState = null)
         {
             if (report == null) throw new ArgumentNullException(nameof(report));
 
@@ -22,7 +24,7 @@ namespace Carthago.Services.Benchmarking
             foreach (var sample in report.SampleResults.Where(
                 static sample => sample.Classification == ReplaySampleClassification.Malicious))
             {
-                foreach (var profile in sample.Profiles.OrderBy(
+                foreach (var profile in TuningBenchmarkDeploymentStates.ProfilesFor(sample, deploymentState).OrderBy(
                     static pair => pair.Key, StringComparer.OrdinalIgnoreCase))
                 {
                     foreach (var ruleId in sample.ExpectedMatches.Distinct(StringComparer.OrdinalIgnoreCase))

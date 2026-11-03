@@ -205,6 +205,7 @@ public sealed class TuningBenchmarkDetectionFunnelTests
         {
             CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo(cultureName);
             var markdown = new TuningBenchmarkReportStore().ToMarkdown(report);
+            Assert.Contains("## Deployment State Comparison", markdown);
             Assert.Contains("## Detection, Policy, and Alert Funnel", markdown);
             Assert.Contains("100.0%", markdown);
             Assert.Contains("0.0%", markdown);

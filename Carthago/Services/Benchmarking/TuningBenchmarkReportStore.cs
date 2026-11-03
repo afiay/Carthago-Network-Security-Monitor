@@ -68,7 +68,7 @@ namespace Carthago.Services.Benchmarking
             if (summary.SampleLevelQuality is { } quality)
             {
                 sb.AppendLine();
-                sb.AppendLine("## Sample-level Detection Quality (SmallBusiness alert profile)");
+                sb.AppendLine("## Sample-level Detection Quality (SmallBusiness / ColdUnconfigured)");
                 sb.AppendLine($"- True positives: {quality.TruePositives}");
                 sb.AppendLine($"- False positives: {quality.FalsePositives}");
                 sb.AppendLine($"- False negatives: {quality.FalseNegatives}");
@@ -118,7 +118,51 @@ namespace Carthago.Services.Benchmarking
             }
 
             sb.AppendLine();
+            sb.AppendLine("## Deployment State Comparison");
+            sb.AppendLine("- ColdUnconfigured: no environment inventory and baseline learning active.");
+            sb.AppendLine("- CalibratedConfigured: fixture-declared environment inventory plus simulated baseline readiness.");
+            sb.AppendLine("- Detector predicates, profile defaults, precision modes, confidence scores and precision floors are identical between states.");
+            sb.AppendLine("- A recall increase therefore measures removal of baseline/environment readiness blockers only; remaining Shadow/Disabled decisions are still policy.");
+            sb.AppendLine();
+            sb.AppendLine("| State | Profile | TP | FP | FN | TN | Precision | Recall | F1 | Benign FPR | Simulated alerts | Shadow | Disabled |");
+            sb.AppendLine("| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |");
+            foreach (var state in report.DeploymentStates.Values
+                .OrderBy(static item => item.StateName, StringComparer.OrdinalIgnoreCase))
+            {
+                foreach (var row in state.SampleLevelQualityByProfile
+                    .OrderBy(static pair => pair.Key, StringComparer.OrdinalIgnoreCase))
+                {
+                    var metrics = row.Value;
+                    state.DetectionFunnelByProfile.TryGetValue(row.Key, out var funnel);
+                    sb.AppendLine($"| {EscapeCell(state.StateName)} | {EscapeCell(row.Key)} | {metrics.TruePositives} | {metrics.FalsePositives} | {metrics.FalseNegatives} | {metrics.TrueNegatives} | {FormatRatio(metrics.Precision)} | {FormatRatio(metrics.Recall)} | {FormatRatio(metrics.F1Score)} | {FormatRatio(metrics.FalsePositiveRate)} | {funnel?.SimulatedAlerted ?? 0} | {funnel?.PolicyShadowed ?? 0} | {funnel?.PolicyDisabled ?? 0} |");
+                }
+            }
+
+            if (report.DeploymentStates.TryGetValue(TuningBenchmarkDeploymentStates.ColdUnconfigured, out var cold)
+                && report.DeploymentStates.TryGetValue(TuningBenchmarkDeploymentStates.CalibratedConfigured, out var calibrated))
+            {
+                sb.AppendLine();
+                sb.AppendLine("### Calibration lift");
+                sb.AppendLine("| Profile | Cold recall | Calibrated recall | Recall lift | Cold FP | Calibrated FP |");
+                sb.AppendLine("| --- | ---: | ---: | ---: | ---: | ---: |");
+                foreach (var profileName in cold.SampleLevelQualityByProfile.Keys
+                    .Intersect(calibrated.SampleLevelQualityByProfile.Keys, StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(static name => name, StringComparer.OrdinalIgnoreCase))
+                {
+                    var coldMetrics = cold.SampleLevelQualityByProfile[profileName];
+                    var calibratedMetrics = calibrated.SampleLevelQualityByProfile[profileName];
+                    var coldRecall = coldMetrics.Recall;
+                    var calibratedRecall = calibratedMetrics.Recall;
+                    var lift = coldRecall.HasValue && calibratedRecall.HasValue
+                        ? calibratedRecall.Value - coldRecall.Value
+                        : (double?)null;
+                    sb.AppendLine($"| {EscapeCell(profileName)} | {FormatRatio(coldRecall)} | {FormatRatio(calibratedRecall)} | {FormatRatio(lift)} | {coldMetrics.FalsePositives} | {calibratedMetrics.FalsePositives} |");
+                }
+            }
+
+            sb.AppendLine();
             sb.AppendLine("## Profile Comparison — Alert-level Quality and Uncertainty");
+            sb.AppendLine("- Compatibility view: ColdUnconfigured.");
             sb.AppendLine("| Profile | TP | FP | FN | TN | Precision | Precision 95% | Recall | Balanced accuracy | MCC | Benign FPR | Benign FPR 95% |");
             sb.AppendLine("| --- | ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | --- |");
             foreach (var row in summary.SampleLevelQualityByProfile

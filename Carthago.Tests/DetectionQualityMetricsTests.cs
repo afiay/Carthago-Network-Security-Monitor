@@ -49,6 +49,32 @@ public sealed class DetectionQualityMetricsTests
     }
 
     [Fact]
+    public void Deployment_State_Selection_Uses_State_Specific_Alert_Outcomes()
+    {
+        var sample = Sample("stateful", ReplaySampleClassification.Malicious, false);
+        sample.DeploymentStateProfiles[TuningBenchmarkDeploymentStates.ColdUnconfigured] =
+            sample.Profiles;
+        sample.DeploymentStateProfiles[TuningBenchmarkDeploymentStates.CalibratedConfigured] =
+            new Dictionary<string, TuningBenchmarkProfileSampleSummary>
+            {
+                ["SmallBusiness"] = new()
+                {
+                    AlertRuleIds = new List<string> { "R102" }
+                }
+            };
+
+        var cold = DetectionQualityMetrics.FromReplaySamples(
+            new[] { sample }, "SmallBusiness", TuningBenchmarkDeploymentStates.ColdUnconfigured);
+        var calibrated = DetectionQualityMetrics.FromReplaySamples(
+            new[] { sample }, "SmallBusiness", TuningBenchmarkDeploymentStates.CalibratedConfigured);
+
+        Assert.Equal(0, cold.TruePositives);
+        Assert.Equal(1, cold.FalseNegatives);
+        Assert.Equal(1, calibrated.TruePositives);
+        Assert.Equal(0, calibrated.FalseNegatives);
+    }
+
+    [Fact]
     public void UndefinedDenominatorsAreNullRatherThanPretendingZeroPercent()
     {
         var metrics = DetectionQualityMetrics.FromReplaySamples(new[]

@@ -277,6 +277,18 @@ namespace Carthago.Engine.Rules
                 && (approvedAssets.IsInApprovedOtSegment(record.Destination)
                     || approvedAssets.IsApprovedModbusController(record.Destination)
                     || approvedAssets.IsApprovedBacnetController(record.Destination)))
+               || (profile.RequiredTelemetry.Contains(RuleTelemetryKind.DevOpsAudit)
+                    && approvedAssets != null
+                    && (approvedAssets.IsApprovedCiCdServer(record.Destination)
+                        || approvedAssets.IsApprovedCiCdServer(record.HttpHost)))
+               || (profile.RequiredTelemetry.Contains(RuleTelemetryKind.KubernetesAudit)
+                    && approvedAssets != null
+                    && (approvedAssets.IsApprovedKubernetesApiServer(record.Destination)
+                        || approvedAssets.IsApprovedKubernetesApiServer(record.HttpHost)))
+               || (profile.RequiredTelemetry.Contains(RuleTelemetryKind.Directory)
+                    && approvedAssets != null
+                    && (approvedAssets.IsDomainController(record.Destination)
+                        || approvedAssets.IsDomainController(record.HttpHost)))
                || observedKinds.Contains("environment", StringComparer.OrdinalIgnoreCase)
                || observedKinds.Contains("approved-asset", StringComparer.OrdinalIgnoreCase)
                || observedKinds.Contains("baseline", StringComparer.OrdinalIgnoreCase)
