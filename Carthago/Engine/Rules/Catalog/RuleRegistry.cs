@@ -678,6 +678,16 @@ namespace Carthago.Engine.Rules.Catalog
                 new R653_PublicModbusNonWriteHostSweepRule(),
                 new R654_PublicS7CommHostSweepRule(),
                 new R655_PublicEtherNetIpListIdentityHostSweepRule(),
+                new R656_OfficialGitRemoteProcessSmartHttpPushRequestRule(),
+                new R657_ScriptAttributedPasteApiHttpPostRequestRule(),
+                new R658_UniformIntervalOutboundProcessTcpPayloadSequenceRule(),
+                new R659_PublicManagementPortTriadToPrivateDeviceRule(),
+                new R660_EngineeringProcessDirectPublicDnsQueryRule(),
+                new R661_ScriptHostExternalMailServiceTcpEgressRule(),
+                new R662_IdeProcessVisualStudioDevTunnelTlsSniEgressRule(),
+                new R663_ExternalFtpStorAppeRequestPairRule(),
+                new R664_ScriptProcessLongEncodedHttpGetToIpLiteralRule(),
+                new R665_ExplorerWebDavThenExternalSmbSynSequenceRule(),
             };
         }
 

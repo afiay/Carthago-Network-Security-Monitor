@@ -34,3 +34,8 @@ Ten source-only candidate rules from original workbook research IDs R3013, R2385
 ## R646–R655 — distinct workbook-based SOURCE CANDIDATES
 
 Ten independent rules based on original research R1358, R1490, R1352, R1372, R1417, R1284, R1385, R2790, R2782, R2706. [Batch evidence](../03-detection-rules/batches/RULE_BATCH_646-655.md). xUnit authored, **0 executed**; no convergence. Next unallocated R656.
+
+
+## R656–R665 — independent workbook source candidates
+
+Ten separate rules from owner research IDs R1497, R1518, R1371, R1808, R2731, R1984, R2024, R1541, R1977, R1332. [Batch evidence](../03-detection-rules/batches/RULE_BATCH_656-665.md). SOURCE CANDIDATE — UNVERIFIED. xUnit authored, 0 executed. No convergence; next ID R666.
