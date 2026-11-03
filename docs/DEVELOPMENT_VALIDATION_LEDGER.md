@@ -1673,3 +1673,24 @@ The KQL is fixed and privacy-minimized, result count is capped at 100, lookback 
 **Security boundary:** authenticated provider transport is not a signed R275 receipt and does not authorize a rule match. The existing non-alerting signed-candidate boundary and normal R275 fail-closed behavior remain unchanged.
 
 **Verification status:** SOURCE CANDIDATE — UNVERIFIED. The new `MicrosoftEntraLogAnalyticsDeviceCodeSourceTests` must be executed together with the already-GREEN R275 focused suites before this increment is marked GREEN.
+
+#### 2026-11-03 — Authenticated R275 Entra source verification GREEN (66/66)
+
+The owner fast-forwarded `feature/carthago-reliability-hardening` to `9c0d11ad7971a9f6b272611cc870abcea74217f6` and executed:
+
+`dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~MicrosoftEntraLogAnalyticsDeviceCodeSourceTests|FullyQualifiedName~MicrosoftEntraDeviceCodeAuditIntakeTests|FullyQualifiedName~OAuthDeviceFlowAuditCandidateGateTests|FullyQualifiedName~R275AdvancedAccuracyBatchTests|FullyQualifiedName~R275R343R485PairedReplayTests"`
+
+Observed result:
+- `Carthago` build succeeded.
+- `Carthago.Tests` build succeeded.
+- **66 total; 66 succeeded; 0 failed; 0 skipped**.
+- Focused test duration: **15.2 seconds**.
+- Overall command completed with **Build succeeded** in **49.3 seconds**.
+
+**Classification:** GREEN for the authenticated Azure Monitor Logs source adapter plus the previously verified R275 Entra parser, signed-candidate boundary, advanced accuracy controls and paired replay.
+
+This verifies the injected `TokenCredential` contract, fixed Azure Monitor Logs endpoint and scope, bounded lookback, fixed privacy-minimized KQL, exact result-schema enforcement, sanitized HTTP failure mapping, strict Entra row parsing, RSA-PSS receipt verification, replay rejection, independent-issuer correlation, packet endpoint/time corroboration and explicit non-promotion into the live R275 rule.
+
+**Scope boundary:** no live Microsoft Entra tenant, Log Analytics workspace, production credential, signer private key or real phishing event was used in this run. The adapter's authenticated transport path is contract-tested with injected doubles. R275 remains fail-closed in ordinary rule evaluation until a separately reviewed producer-to-signed-receipt capability is integrated.
+
+No confidence floor, runtime mode, replay fixture classification, holdout V1/V2 state or alert policy changed.
