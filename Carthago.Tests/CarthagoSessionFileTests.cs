@@ -68,25 +68,58 @@ public sealed class CarthagoSessionFileTests
     }
 
     [Fact]
-    public async Task ExcelContainsSeparateCategorySheetsAndTreatsFormulaLikeValuesAsText()
+    public async Task ExcelContainsSeparateCategorySheetsPreservesNativeTypesAndTreatsFormulaLikeValuesAsText()
     {
         string directory = NewTestDirectory();
         try
         {
             string path = Path.Combine(directory, "investigation.xlsx");
             var snapshot = CarthagoSessionSnapshot.CreateEmpty();
-            snapshot.AddRows("Traffic", new[] { new { Source = "=HYPERLINK(\"https://example.test\")" } });
+            snapshot.AddRows("Traffic", new[]
+            {
+                new
+                {
+                    Source = "=HYPERLINK(\"https://example.test\")",
+                    Length = 1148,
+                    IsUdp = true
+                }
+            });
             await new CarthagoExcelExportService().ExportAsync(path, snapshot);
 
             using var document = SpreadsheetDocument.Open(path, false);
             var workbook = document.WorkbookPart!;
             string[] names = workbook.Workbook.Descendants<Sheet>().Select(s => s.Name!.Value!).ToArray();
             Assert.Equal(CarthagoSessionSnapshot.CategoryOrder, names);
+
             Sheet trafficSheet = workbook.Workbook.Descendants<Sheet>().Single(s => s.Name == "Traffic");
             var part = (WorksheetPart)workbook.GetPartById(trafficSheet.Id!.Value!);
-            var cells = part.Worksheet.Descendants<Cell>().ToArray();
-            Assert.All(cells, cell => Assert.Equal(CellValues.InlineString, cell.DataType!.Value));
-            Assert.Contains("=HYPERLINK", cells.Last().InlineString!.InnerText);
+            var rows = part.Worksheet.GetFirstChild<SheetData>()!.Elements<Row>().ToArray();
+            Assert.Equal(2, rows.Length);
+            Assert.Equal(1U, rows[0].RowIndex!.Value);
+            Assert.Equal(2U, rows[1].RowIndex!.Value);
+
+            Cell[] header = rows[0].Elements<Cell>().ToArray();
+            Cell[] data = rows[1].Elements<Cell>().ToArray();
+            Assert.Equal(new[] { "A1", "B1", "C1" }, header.Select(c => c.CellReference!.Value).ToArray());
+            Assert.Equal(new[] { "A2", "B2", "C2" }, data.Select(c => c.CellReference!.Value).ToArray());
+
+            Assert.Equal(CellValues.InlineString, data[0].DataType!.Value);
+            Assert.Null(data[0].CellFormula);
+            Assert.Contains("=HYPERLINK", data[0].InlineString!.InnerText);
+
+            Assert.Equal(CellValues.Number, data[1].DataType!.Value);
+            Assert.Equal("1148", data[1].CellValue!.Text);
+
+            Assert.Equal(CellValues.Boolean, data[2].DataType!.Value);
+            Assert.Equal("1", data[2].CellValue!.Text);
+
+            Pane pane = Assert.Single(part.Worksheet.Descendants<Pane>());
+            Assert.Equal(PaneStateValues.Frozen, pane.State!.Value);
+            Assert.Equal(1D, pane.VerticalSplit!.Value);
+            Assert.Equal("A2", pane.TopLeftCell!.Value);
+
+            AutoFilter filter = Assert.Single(part.Worksheet.Descendants<AutoFilter>());
+            Assert.Equal("A1:C2", filter.Reference!.Value);
         }
         finally { Directory.Delete(directory, recursive: true); }
     }
