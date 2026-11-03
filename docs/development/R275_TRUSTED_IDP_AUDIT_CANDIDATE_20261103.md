@@ -225,3 +225,20 @@ The IdP destination IP is taken only from the captured packet record. The result
 Host matching uses exact names or proper subdomains of configured hosts; lookalikes such as `login.microsoftonline.com.attacker.test` fail closed. Arbitrary TCP/443 application contexts also fail closed.
 
 **Status:** SOURCE CANDIDATE — UNVERIFIED. This boundary has not yet been executed in the owner test environment.
+
+## 2026-11-03 Entra-to-packet claim-material verification — GREEN
+
+The owner ran the expanded focused R275 suite at revision `1d7111398bdff3a72926b7b3b181e97d2adef0e2`.
+
+Observed:
+- `Carthago` build succeeded;
+- `Carthago.Tests` build succeeded;
+- **83 tests passed**;
+- **0 failed**;
+- **0 skipped**;
+- focused xUnit duration **13.7 seconds**;
+- total command/build duration **43.2 seconds**.
+
+The authenticated Entra-to-packet handoff is therefore GREEN at the contract-test level. The verified boundary now reaches privacy-minimized unsigned claim material whose destination IP comes from independent packet capture rather than from fabricated or inferred provider data.
+
+The next engineering boundary is the external signer request/receipt handoff. It must keep private keys outside the Carthago process, keep issuer identity operator-controlled, require independent signers, preserve replay resistance, and must not connect signed receipts to R275 alerting until separately reviewed and verified.
