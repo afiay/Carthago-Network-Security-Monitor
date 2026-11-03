@@ -16,6 +16,7 @@ using Carthago.Engine.Rules.Health;
 using Carthago.Models;
 using Carthago.Services.Diagnostics;
 using Carthago.Services.EnvironmentTuning;
+using Carthago.Services.TrustedAudit;
 
 namespace Carthago.Services
 {
@@ -162,7 +163,21 @@ namespace Carthago.Services
                 {
                     var rule = planEntry.Rule;
                     var descriptor = rule.Descriptor;
-                    trace.SelectorReasonsByRuleId[descriptor.RuleId] = planEntry.Reason;
+
+                    RuleEvaluationContext? trustedR275Context = null;
+                    var trustedR275Ready = string.Equals(
+                            descriptor.RuleId, "R275", StringComparison.Ordinal)
+                        && TryResolveR275TrustedContext(
+                            record,
+                            sensitivity,
+                            now,
+                            healthSnapshot,
+                            out trustedR275Context,
+                            out var trustedR275Reason);
+
+                    trace.SelectorReasonsByRuleId[descriptor.RuleId] = trustedR275Ready
+                        ? trustedR275Reason
+                        : planEntry.Reason;
 
                     var ruleMode = ResolveConfiguredRuleMode(rule, record);
                     RuleEvaluationResult ruleResult;
@@ -174,7 +189,7 @@ namespace Carthago.Services
                         {
                             ruleResult = RuleEvaluationResult.SkippedDisabled(descriptor.RuleId);
                         }
-                        else if (!planEntry.ShouldEvaluate)
+                        else if (!planEntry.ShouldEvaluate && !trustedR275Ready)
                         {
                             trace.SelectorSkippedRuleIds.Add(descriptor.RuleId);
                             missingTelemetryForRule = planEntry.Reason.Contains("telemetry", StringComparison.OrdinalIgnoreCase);
@@ -202,31 +217,46 @@ namespace Carthago.Services
                         else
                         {
                             trace.SelectedRuleIds.Add(descriptor.RuleId);
+                            if (trustedR275Ready && !planEntry.ShouldEvaluate)
+                                trace.RulesSelectedCount++;
                             RuleRuntimeTelemetryStore.RecordSelectorSelected(descriptor.RuleId, now);
-                            var telemetry = RuleTelemetryValidator.Validate(rule, record);
-                            missingTelemetryForRule = !telemetry.CanRunSafely || telemetry.MissingRequiredTelemetry.Count > 0;
-                            if (telemetry.Warnings.Count > 0)
+
+                            RuleTelemetryValidationResult? telemetry = null;
+                            if (!trustedR275Ready)
                             {
-                                trace.TelemetryWarnings.AddRange(telemetry.Warnings);
-                                if (telemetry.MissingRequiredTelemetry.Count > 0)
-                                    trace.MissingTelemetryByRuleId[descriptor.RuleId] = telemetry.MissingRequiredTelemetry.ToList();
+                                telemetry = RuleTelemetryValidator.Validate(rule, record);
+                                missingTelemetryForRule = !telemetry.CanRunSafely || telemetry.MissingRequiredTelemetry.Count > 0;
+                                if (telemetry.Warnings.Count > 0)
+                                {
+                                    trace.TelemetryWarnings.AddRange(telemetry.Warnings);
+                                    if (telemetry.MissingRequiredTelemetry.Count > 0)
+                                        trace.MissingTelemetryByRuleId[descriptor.RuleId] = telemetry.MissingRequiredTelemetry.ToList();
+                                }
                             }
 
                             var stopwatch = Stopwatch.StartNew();
                             try
                             {
-                                ruleResult = telemetry.CanRunSafely
-                                    ? rule.EvaluateAsync(context).AsTask().GetAwaiter().GetResult()
-                                    : RuleEvaluationResult.NoMatch(
-                                        descriptor.RuleId,
-                                        RuleNoMatchReasonCategory.MissingTelemetry,
-                                        "MISSING_REQUIRED_TELEMETRY",
-                                        telemetry.MissingRequiredTelemetry.Count > 0
-                                            ? "Rule did not evaluate because required telemetry is missing: " + string.Join(", ", telemetry.MissingRequiredTelemetry)
-                                            : "Rule did not evaluate because required telemetry validation failed.",
-                                        telemetry.MissingRequiredTelemetry
-                                            .Select((field, index) => new KeyValuePair<string, string>("missing." + index, field))
-                                            .ToDictionary(static pair => pair.Key, static pair => pair.Value, StringComparer.OrdinalIgnoreCase));
+                                if (trustedR275Ready)
+                                {
+                                    ruleResult = rule.EvaluateAsync(trustedR275Context!)
+                                        .AsTask().GetAwaiter().GetResult();
+                                }
+                                else
+                                {
+                                    ruleResult = telemetry!.CanRunSafely
+                                        ? rule.EvaluateAsync(context).AsTask().GetAwaiter().GetResult()
+                                        : RuleEvaluationResult.NoMatch(
+                                            descriptor.RuleId,
+                                            RuleNoMatchReasonCategory.MissingTelemetry,
+                                            "MISSING_REQUIRED_TELEMETRY",
+                                            telemetry.MissingRequiredTelemetry.Count > 0
+                                                ? "Rule did not evaluate because required telemetry is missing: " + string.Join(", ", telemetry.MissingRequiredTelemetry)
+                                                : "Rule did not evaluate because required telemetry validation failed.",
+                                            telemetry.MissingRequiredTelemetry
+                                                .Select((field, index) => new KeyValuePair<string, string>("missing." + index, field))
+                                                .ToDictionary(static pair => pair.Key, static pair => pair.Value, StringComparer.OrdinalIgnoreCase));
+                                }
                             }
                             finally
                             {
