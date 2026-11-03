@@ -12,9 +12,14 @@ namespace Carthago.Engine.Rules.Expansion
   internal static bool PrivatePair(TrafficRecord r,out IPAddress a,out IPAddress b)
   {
     a=IPAddress.None;b=IPAddress.None;
-    return r!=null && r.Id!=Guid.Empty && r.IpVersion==4
-      && IPAddress.TryParse(r.Source,out a) && IPAddress.TryParse(r.Destination,out b)
-      && Research646Evidence.Private(a) && Research646Evidence.Private(b);
+    if(r==null || r.Id==Guid.Empty || r.IpVersion!=4
+      || !IPAddress.TryParse(r.Source,out var parsedA) || parsedA is null
+      || !IPAddress.TryParse(r.Destination,out var parsedB) || parsedB is null)
+      return false;
+
+    a=parsedA;
+    b=parsedB;
+    return Research646Evidence.Private(a) && Research646Evidence.Private(b);
   }
   internal static bool PublicToPrivate(TrafficRecord r)
     => Research646Evidence.Pair(r,true,out _,out _);
