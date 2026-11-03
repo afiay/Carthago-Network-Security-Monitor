@@ -1970,3 +1970,26 @@ The owner fast-forwarded the existing branch from `3859d31` to `bf7e889b107a6cf3
 **Classification:** **DEVELOPMENT DETECTION-QUALITY REPLAY GREEN** at the owner-reported checked-out branch `bf7e889`; focused R163 regression **5/5 GREEN**. This establishes that the replay scorer and safety guardrails succeeded on the current development corpus, **not** per-rule field accuracy or production alert recall, complete producer integration, independent holdout success, or live detection delivery.
 
 **Open quality gaps:** explicit paired evidence for most registered rules; low policy-constrained alert recall; missing external independent R102 V2 source/provenance pairs (0/4); trusted runtime producer reachability and live performance are separate gates. Frozen V1 remains historical 4/6, unchanged. R102/R118/R163 floors (80%/86%/84%), R275's 80% floor, default modes, and all holdout states remain unchanged. The owner did not provide a contemporaneous `git rev-parse HEAD` output; this classification uses the fast-forward + command transcript without claiming independent exact-SHA runner attestation.
+
+#### 2026-11-03 — GA-03 paired replay evidence for four existing high-priority stateful rules authored
+
+The immediately preceding owner Windows verification was **5/5 R163 focused GREEN** and **`verify-local.ps1 -Details` development replay GREEN** on `bf7e889b107a6cf334e3bbefa990b7718818d53b`. That older checkpoint included 146 replay samples, 42/42 supported raw recognition, 0 benign alert false positives, 695 default registry entries with 0 contract issues, 7 paired-rule controls and 640 default rules without explicit replay controls. Those are historical observed counts, **not predicted counts for this candidate**.
+
+To close explicit development-replay evidence gaps without adding or re-registering any detection rules, GA-03 published **source-only commit `d5d53f50fd7b5206809d930c4d14cd108d77e469`** directly to the existing `feature/carthago-reliability-hardening` branch. Seven JSON fixtures and one xUnit benchmark-level contract were added:
+
+| Existing rule | Positive malicious development replay | Paired benign explicit nonmatch |
+| --- | --- | --- |
+| R001 TCP port scan | `ga03-r001-eight-distinct-tcp-syn-ports` — eight distinct destination ports, one source/target, initial SYN only (checked-in threshold 8) | `ga03-r001-retransmissions-and-synack` — repeated same-port SYNs plus distinct SYN/ACK responses cannot form a port scan |
+| R004 SSH authentication failures | `ga03-r004-twelve-attributed-ssh-failures` — 12 source/target/service-bound observed failure outcomes (checked-in auth-port threshold 25/2 = 12) | `ga03-r004-successful-ssh-and-banners` — accepted key exchanges and SSH banners must not count as failed credentials |
+| R017 internal host sweep | `ga03-r017-ten-private-host-syn-sweep` — 10 distinct private destinations on TCP/8080 (checked-in threshold 10) | `ga03-r017-retransmissions-and-ack-only` — repeat probes to one host and response-only ACKs do not establish distinct-host reconnaissance |
+| R030 internal administrative lateral sweep | `ga03-r030-eight-private-admin-syn-targets` — 8 distinct private targets on TCP/22 (rule threshold 8) | Reuses existing `r030-synack-not-lateral-sweep`; no duplicate negative fixture |
+
+Every new scenario exercises the existing RuleEngine stateful predicates through `TuningBenchmarkRunner` with **explicit per-rule labels**; labels in other samples are not automatically treated as negatives. The new `Carthago.Tests/Ga03ExistingRulePairedReplayTests.cs` loads the full development replay catalog, checks all four positive raw matches and benign explicit nonmatches, requires no sample assertion errors, confirms non-alerting negative decisions across available profiles and checks positive/negative evidence coverage bookkeeping.
+
+**Validation status: SOURCE CANDIDATE — UNVERIFIED.** Neither the new xUnit class nor `verify-local.ps1` was executed by the assistant. Do **not** claim new paired-rule counts or a new GREEN checkpoint until the owner has explicitly executed both verification gates and reported their results. Existing benchmark results can change when new labeled cases are added; reporting raw recognition, policy simulated alerts and field alert accuracy separately remains mandatory.
+
+Owner test-time instructions (after pulling new source):
+1. `dotnet test .\\Carthago.Tests\\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~Ga03ExistingRulePairedReplayTests"`
+2. If focused gate GREEN, `.\\verify-local.ps1 -Details` then `.\\scripts\\inspect-rule-evidence.ps1 -MissingPaired -Top 25` and record test counts, replay counts, rule audit counts, any failed assertion, total paired rules, benign alert outcomes and policy decisions.
+
+No existing predicate, thresholds, confidence floors, tuning profiles, event semantics, registry, Holdout V1 (frozen historical 4/6), Holdout V2 (0/4 reviewed external R102 pairs), production alert mode or unrelated automation were modified. This is offline developer synthetic evidence, not an independent field-quality claim.
