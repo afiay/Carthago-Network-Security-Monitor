@@ -55,6 +55,17 @@ namespace Carthago.Engine.Rules.Expansion
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
+            if (context.TrustedR275Capability != null)
+            {
+                // The capability proves that the exact packet/context reached the
+                // independently signed R275 audit boundary. Promotion remains a
+                // separate policy gate: plumbing trusted evidence into evaluation
+                // must not silently create a live alert.
+                return NoMatch(RuleNoMatchReasonCategory.RuntimePrecisionGate,
+                    "TRUSTED_DEVICE_CODE_CAPABILITY_PRESENT_NOT_PROMOTED",
+                    "Trusted R275 audit capability is present for this exact flow, but alert promotion is not yet authorized.");
+            }
+
             // Device-code initiation, even when query parameters mention user_code,
             // is not evidence of phishing. HTTPS payload is not decrypted by the
             // packet capture path and there is no trusted IdP device-flow audit.
