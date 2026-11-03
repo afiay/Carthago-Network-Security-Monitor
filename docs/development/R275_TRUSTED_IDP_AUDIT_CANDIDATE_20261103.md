@@ -258,3 +258,20 @@ CARTHAGO does not hold a private key in this boundary. The external signer suppl
 Synthetic coverage proves that two separately keyed issuers can sign claims derived from the same fixed request, pass the existing `TrustedAuditReceiptVerifier` and `TrustedAuditReceiptCorrelation`, and still terminate at the existing non-alerting R275 gate with `R275_SIGNED_IDP_AUDIT_CANDIDATE_NOT_INTEGRATED`.
 
 **Status:** SOURCE CANDIDATE — UNVERIFIED until the expanded focused R275 suite is executed.
+
+## 2026-11-03 keyless external-signer verification — GREEN
+
+The owner ran the expanded focused R275 suite at revision `2686157e96a0cbc1835eb6adaef31393c7cf0a3d`.
+
+Observed:
+- `Carthago` build succeeded;
+- `Carthago.Tests` build succeeded;
+- **92 tests passed**;
+- **0 failed**;
+- **0 skipped**;
+- focused xUnit duration **14.1 seconds**;
+- total command/build duration **45.1 seconds**.
+
+The keyless signer handoff is GREEN at the contract-test level. Synthetic independent signers can sign the fixed claim payload, pass the existing verifier and independent correlation boundary, and still cannot promote R275.
+
+The next engineering boundary is controlled capability delivery into rule evaluation without adding ambient trust to `TrafficRecord` or exposing a public constructor that can mint trusted evidence.
