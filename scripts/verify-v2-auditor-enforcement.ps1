@@ -207,6 +207,10 @@ function Get-ExpectedReason([string]$scenario) {
         default        { throw 'Unexpected auditor regression scenario.' }
     }
 }
+function Normalize-ReasonText([string]$text) {
+    if($null -eq $text) { return '' }
+    return ([regex]::Replace($text, '\s+', ' ')).Trim()
+}
 function Get-SanitizedObservedReason([string]$log) {
     $known=@(
         'SOURCE_INDEPENDENCE_MIRROR',
@@ -226,8 +230,9 @@ function Get-SanitizedObservedReason([string]$log) {
         'R102 malicious expected rule/confidence was altered',
         'R102 malicious encoded-TXT requires three distinct captured TXT'
     )
+    $normalized=Normalize-ReasonText $log
     foreach($reason in $known) {
-        if($log.IndexOf($reason,[StringComparison]::OrdinalIgnoreCase) -ge 0) {
+        if($normalized.IndexOf($reason,[StringComparison]::OrdinalIgnoreCase) -ge 0) {
             return $reason
         }
     }
@@ -278,7 +283,8 @@ function InvokeAudit([string]$scenario,[bool]$expectReject) {
     }
     if($expectReject) {
         $expectedReason=Get-ExpectedReason $scenario
-        if($log.IndexOf($expectedReason,[StringComparison]::OrdinalIgnoreCase) -lt 0) {
+        $normalizedLog=Normalize-ReasonText $log
+        if($normalizedLog.IndexOf($expectedReason,[StringComparison]::OrdinalIgnoreCase) -lt 0) {
             $actualReason=Get-SanitizedObservedReason $log
             throw ('AUDITOR CONTRACT FAIL: '+$scenario+' expected='+$expectedReason+' actual='+$actualReason+'; do not count as RED or GREEN.')
         }
