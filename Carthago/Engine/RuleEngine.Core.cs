@@ -278,7 +278,17 @@ namespace Carthago.Services
                         evaluationDuration,
                         missingTelemetryForRule,
                         IsCooldownSuppressed(ruleResult));
-                    ApplyRuleResult(ruleResult, rule, descriptor, record, sensitivity, now, trace, results, ruleMode);
+                    ApplyRuleResult(
+                        ruleResult,
+                        rule,
+                        descriptor,
+                        record,
+                        sensitivity,
+                        now,
+                        trace,
+                        results,
+                        ruleMode,
+                        trustedR275Ready);
                 }
             }
             catch (Exception ex)
@@ -355,7 +365,8 @@ namespace Carthago.Services
             DateTime now,
             RuleEvaluationTrace trace,
             List<DetectionEvent> results,
-            RuleMode ruleMode)
+            RuleMode ruleMode,
+            bool trustedR275Runtime)
         {
             var ruleId = string.IsNullOrWhiteSpace(ruleResult.RuleId) ? descriptor.RuleId : ruleResult.RuleId;
 
@@ -405,7 +416,12 @@ namespace Carthago.Services
             {
                 if (evt == null) continue;
                 PrepareDetectionEvent(evt, descriptor, record, sensitivity, now);
-                var tuningDecision = ResolveRuntimeTuningDecision(rule, evt, record, ruleMode);
+                var tuningDecision = ResolveRuntimeTuningDecision(
+                    rule,
+                    evt,
+                    record,
+                    ruleMode,
+                    trustedR275Runtime);
                 ApplyTuningDecisionToEvent(evt, tuningDecision);
                 ApplyNoiseBudget(evt, descriptor, tuningDecision, now);
                 ApplySuppressionPolicy(evt, descriptor, record, now);
