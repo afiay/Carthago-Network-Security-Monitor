@@ -1468,3 +1468,16 @@ Commit `27f3fa8357ba81ec58bfb9466c13505951eea23e` updates only the verifier harn
 - on mismatch, reports `expected=<safe reason> actual=<safe reason or UNRECOGNIZED_SANITIZED_REASON>` without publishing the private child log.
 
 **Current gate:** GREEN through A10-session. A11 remains INVALID FOR RED/GREEN pending one focused `-OnlyScenario A11` diagnostic run. No V1/V2 fixtures, auditor policy, source approval or confidence floor changed.
+
+
+#### 2026-11-03 — A11 focused diagnostic: auditor path correct, verifier reason matcher formatting-blocked
+
+The owner pulled the focused-diagnostic verifier and ran only `A11` with `-OnlyScenario A11`. The harness reported:
+`expected=incomplete external attribution or label review actual=UNRECOGNIZED_SANITIZED_REASON`.
+This result is **not RED or GREEN**.
+
+Live-branch inspection established the exact A11 control flow without inference: the fixture changes only `analystReviewedLabel` from boolean true to boolean false. The auditor's type guard accepts boolean false, then the subsequent external-attribution/review condition necessarily rejects `-not $p.analystReviewedLabel` with the intended `incomplete external attribution or label review` message before packet-dependent checks. Therefore no auditor policy change was justified.
+
+The verifier captured the child through Windows PowerShell's formatted native-error stream and matched known reason strings as contiguous text. Line wrapping/whitespace inserted by PowerShell formatting can split a known reason across lines, producing `UNRECOGNIZED_SANITIZED_REASON` even when the underlying auditor throw is the expected one. Commit `551f3fd8d7d72ba232840f3d6bcc760ef0166d3e` changes only verifier reason matching: it normalizes whitespace on a copy of the private log before comparing against the fixed allowlist. The original private log remains unchanged for privacy scanning; no raw packet/provenance content is surfaced.
+
+**Current gate:** GREEN through A10-session. A11 remains **pending focused rerun** after pulling `551f3fd8`. No V1/V2 fixture, source approval, detector policy, or confidence floor changed.
