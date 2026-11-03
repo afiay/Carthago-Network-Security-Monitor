@@ -11,7 +11,7 @@ using Carthago.Sinks;
 
 namespace Carthago.Views
 {
-    public partial class SinkEventsPage : Page, INotifyPropertyChanged
+    public partial class SinkEventsPage : Page, INotifyPropertyChanged, IResponsiveLayoutAware
     {
         private readonly SinkHost _host;
         private readonly Dispatcher _ui;
@@ -36,6 +36,7 @@ namespace Carthago.Views
         public SinkEventsPage(SinkHost host)
         {
             InitializeComponent();
+            ResponsiveLayout.ApplyWhenLoaded(this, ApplyResponsiveLayout);
 
             _host = host ?? throw new ArgumentNullException(nameof(host));
             _ui = Dispatcher;
@@ -65,6 +66,32 @@ namespace Carthago.Views
                 PauseToggle.Unchecked += (_, __) => Paused = false;
             }
             catch { /* PauseToggle not in XAML; ignore */ }
+        }
+
+        // UI-99: presentation-only reflow; existing sink events and row retention are unchanged.
+        public void ApplyResponsiveLayout(ResponsiveLayoutMode mode)
+        {
+            var wide = mode == ResponsiveLayoutMode.Wide;
+            DeliveryHeaderMainColumn.Width = new System.Windows.GridLength(1, System.Windows.GridUnitType.Star);
+            DeliveryHeaderActionColumn.Width = wide
+                ? new System.Windows.GridLength(0.48, System.Windows.GridUnitType.Star)
+                : new System.Windows.GridLength(0);
+            DeliveryHeaderActionRow.Height = wide
+                ? new System.Windows.GridLength(0)
+                : System.Windows.GridLength.Auto;
+            Grid.SetRow(DeliveryActionsPanel, wide ? 0 : 1);
+            Grid.SetColumn(DeliveryActionsPanel, wide ? 1 : 0);
+            DeliveryActionsPanel.Margin = wide
+                ? new System.Windows.Thickness(16, 0, 0, 0)
+                : new System.Windows.Thickness(0, 14, 0, 0);
+
+            ResponsiveLayout.ApplyAdaptiveColumns(
+                mode,
+                new[] { DeliveryMetricFirstColumn, DeliveryMetricSecondColumn, DeliveryMetricThirdColumn },
+                new[] { DeliveryMetricFirstRow, DeliveryMetricSecondRow, DeliveryMetricThirdRow },
+                new System.Windows.FrameworkElement[] { DeliveryEmittedMetric, DeliveryFailuresMetric, DeliveryDisplayMetric },
+                new[] { 1.0, 1.0, 1.0 },
+                12);
         }
 
         // -------- handlers (match SinkHost tuple events) --------
