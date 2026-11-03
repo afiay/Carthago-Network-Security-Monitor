@@ -92,7 +92,7 @@ During owner-authorized test time:
 ```powershell
 dotnet test .\Carthago.Tests\Carthago.Tests.csproj `
   -c Release `
-  --filter "FullyQualifiedName~R275TrustedCapabilityContextTests|FullyQualifiedName~OAuthDeviceFlowExternalSigningRequestTests|FullyQualifiedName~MicrosoftEntraDeviceFlowClaimMaterialBuilderTests|FullyQualifiedName~MicrosoftEntraLogAnalyticsDeviceCodeSourceTests|FullyQualifiedName~MicrosoftEntraDeviceCodeAuditIntakeTests|FullyQualifiedName~OAuthDeviceFlowAuditCandidateGateTests|FullyQualifiedName~R275AdvancedAccuracyBatchTests|FullyQualifiedName~R275R343R485PairedReplayTests"
+  --filter "FullyQualifiedName~R275PromotionPolicyTests|FullyQualifiedName~R275TrustedCapabilityContextTests|FullyQualifiedName~OAuthDeviceFlowExternalSigningRequestTests|FullyQualifiedName~MicrosoftEntraDeviceFlowClaimMaterialBuilderTests|FullyQualifiedName~MicrosoftEntraLogAnalyticsDeviceCodeSourceTests|FullyQualifiedName~MicrosoftEntraDeviceCodeAuditIntakeTests|FullyQualifiedName~OAuthDeviceFlowAuditCandidateGateTests|FullyQualifiedName~R275AdvancedAccuracyBatchTests|FullyQualifiedName~R275R343R485PairedReplayTests"
 ```
 
 Do not mark this increment GREEN until the focused tests complete successfully on CARTHAGE.
@@ -325,3 +325,41 @@ Observed:
 The internal non-ambient capability delivery boundary is GREEN. Public packet-only construction still produces `TRUSTED_DEVICE_CODE_ABUSE_EVENT_UNAVAILABLE`; only the internal capability path reaches `TRUSTED_DEVICE_CODE_CAPABILITY_PRESENT_NOT_PROMOTED`, and that path remains non-alerting.
 
 The next engineering boundary is an explicit promotion policy. It must be separate from capability possession, default-deny, operator-controlled, bound to the exact verified capability/context, preserve existing false-positive protections, and remain testable without changing production defaults.
+
+
+## Explicit promotion policy — authored, production-unwired
+
+A separate promotion layer is now authored:
+
+- `Carthago/Services/TrustedAudit/OAuthDeviceFlowPromotionPolicy.cs`
+- `Carthago/Services/TrustedAudit/OAuthDeviceFlowRuleCapability.cs`
+- `Carthago/Engine/Rules/Abstractions/RuleEvaluationContext.cs`
+- `Carthago/Engine/Rules/Expansion/R275_OAuthDeviceCodePhishingIndicatorRule.cs`
+- `Carthago.Tests/R275PromotionPolicyTests.cs`
+
+Promotion is **not** implied by possession of the trusted R275 capability. A second opaque `OAuthDeviceFlowPromotionAuthorization` must be created from explicit operator-supplied `OAuthDeviceFlowPromotionPolicyOptions`.
+
+The policy is default-deny. Promotion authorization requires all of the following:
+
+1. `Enabled=true`;
+2. the exact verified R275 capability is still bound to the same immutable packet snapshot and UTC timestamp;
+3. both independent signer IDs are present in the operator-approved issuer set;
+4. the capability's normalized identity host matches an operator-approved identity host or proper subdomain;
+5. the internal authorization remains bound to that exact capability/record/timestamp when `RuleEvaluationContext` is built.
+
+The public `RuleEvaluationContext` API remains unchanged and cannot attach the capability or promotion authorization.
+
+When both internal capabilities are present, R275 creates a High-severity detection event through the shared `CreateDetectionEvent` path with a confidence score built from:
+- admin-confirmed device-code compromise evidence;
+- two independent signed audit receipts;
+- exact packet/time correlation.
+
+The event intentionally does not emit actor/resource hashes, trace hashes, signer IDs, `user_code`, `device_code`, raw provider JSON or OAuth tokens.
+
+The R275 profile's existing 20-minute cooldown is enforced by a trace-keyed bounded cache. The cache is capped at 8,192 keys; after stale pruning, saturation fails closed by suppressing rather than allowing unbounded state growth.
+
+Production runtime remains unwired: no normal packet path constructs `OAuthDeviceFlowPromotionAuthorization`. Therefore the default application behavior is unchanged until a separate operator-controlled configuration/runtime integration is reviewed.
+
+Focused tests cover default-deny policy, missing issuer approval, lookalike-host rejection, authorization binding, actual privacy-minimized high-confidence event creation, capability-without-authorization NoMatch behavior, duplicate-trace cooldown suppression and reflection checks proving the authorization is absent from the public context surface.
+
+**Status:** SOURCE CANDIDATE — UNVERIFIED until the expanded focused R275 suite is executed.
