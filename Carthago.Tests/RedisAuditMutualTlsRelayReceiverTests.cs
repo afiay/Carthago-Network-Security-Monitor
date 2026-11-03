@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // R437 pinned relay transport GA — SOURCE CANDIDATE — UNVERIFIED.
-// All credentials/certificates are ephemeral self-signed test fixtures only.
+// All credentials/certificates are temporary self-signed test fixtures only.
 using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
@@ -41,9 +41,24 @@ public sealed class RedisAuditMutualTlsRelayReceiverTests
                 usages, true));
 
         var now = DateTimeOffset.UtcNow;
-        return expired
+        using var generated = expired
             ? request.CreateSelfSigned(now.AddDays(-3), now.AddDays(-1))
             : request.CreateSelfSigned(now.AddDays(-1), now.AddDays(2));
+
+        // SslStream uses Schannel on Windows. Schannel cannot reliably use
+        // CertificateRequest certificates whose private key exists only in
+        // this process. PKCS#12 round-tripping gives the temporary fixture a
+        // persisted key container that Schannel can acquire for mutual TLS.
+        var pkcs12 = generated.Export(X509ContentType.Pkcs12);
+        try
+        {
+            return new X509Certificate2(pkcs12, (string?)null,
+                X509KeyStorageFlags.DefaultKeySet | X509KeyStorageFlags.Exportable);
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(pkcs12);
+        }
     }
 
     private static RedisAuditPinnedRelay Pin(X509Certificate2 client)
