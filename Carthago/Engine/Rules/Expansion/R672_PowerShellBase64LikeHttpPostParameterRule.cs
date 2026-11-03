@@ -75,9 +75,10 @@ namespace Carthago.Engine.Rules.Expansion
  var index=uri.IndexOf("?data=",StringComparison.OrdinalIgnoreCase);
  if(index<0)index=uri.IndexOf("&data=",StringComparison.OrdinalIgnoreCase);
  if(index<0)return false;
- var start=index+6,end=uri.IndexOf('&',start);if(end<0)end=uri.Length;
+ int start=index+6;
+ int end=uri.IndexOf('&',start);if(end<0)end=uri.Length;
  if(end-start<80||end-start>600)return false;
- var letters=0,digits=0,nonAlphanumeric=0;
+ int letters=0,digits=0,nonAlphanumeric=0;
  for(int i=start;i<end;i++)
  {
   var c=uri[i];

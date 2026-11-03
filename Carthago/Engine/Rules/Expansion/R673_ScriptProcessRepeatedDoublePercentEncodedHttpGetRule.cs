@@ -72,7 +72,7 @@ namespace Carthago.Engine.Rules.Expansion
    }
    private static bool RepeatedDoubleEncoding(string uri)
 {
- var count=0,start=0;
+ int count=0,start=0;
  while((start=uri.IndexOf("%25",start,StringComparison.OrdinalIgnoreCase))>=0)
  {
   count++;start+=3;if(count>=4)return true;
