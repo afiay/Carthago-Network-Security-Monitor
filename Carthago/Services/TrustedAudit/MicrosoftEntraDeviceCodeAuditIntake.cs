@@ -158,7 +158,7 @@ namespace Carthago.Services.TrustedAudit
             }
 
             if (!ReadString(fields, "CreatedDateTime", out var timestampText)
-                || !timestampText.Contains('T', StringComparison.Ordinal)
+                || timestampText.IndexOf('T') < 0
                 || !(timestampText.EndsWith("Z", StringComparison.Ordinal)
                     || timestampText.EndsWith("+00:00", StringComparison.Ordinal))
                 || !DateTimeOffset.TryParse(timestampText, CultureInfo.InvariantCulture,
