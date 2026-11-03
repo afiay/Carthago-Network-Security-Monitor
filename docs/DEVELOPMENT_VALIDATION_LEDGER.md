@@ -1731,3 +1731,17 @@ This verifies that only an authenticated Entra observation can enter the claim-m
 **Scope boundary:** the output is still unsigned claim material only. No private signer key, signed envelope, verified receipt, live tenant event, rule-engine trust capability or R275 alert promotion is represented by this run.
 
 No confidence floor, runtime mode, replay classification, holdout fixture, V1/V2 state or alert policy changed.
+
+#### 2026-11-03 — R275 keyless external-signer handoff authored
+
+After the Entra-to-packet claim-material boundary reached 83/83 GREEN, a separate keyless signer handoff was authored.
+
+Source commits:
+- `9492588c386969a3087d8cb3db0cc048eba02fab` — immutable R275 external-signing request and unsigned claim creation.
+- `32af0092219e93cbe50044f55afbdda393f4fb32` — focused external-signer handoff tests.
+
+The request is created only from validated R275 claim material and fixes rule ID, operation, UTC time, source/destination IPs and privacy-minimized subject/trace hashes. The external signer supplies only its configured issuer ID and a unique evidence ID. No private key, signing operation, trust-store mutation or alert capability exists in this class.
+
+The focused synthetic end-to-end test uses two different RSA keys and two independently configured issuers, verifies both claims through the existing trusted-audit verifier, correlates them through the existing independent-issuer contract, and proves the result still terminates at `R275_SIGNED_IDP_AUDIT_CANDIDATE_NOT_INTEGRATED` with `AlertPermitted=false`.
+
+**Verification status:** SOURCE CANDIDATE — UNVERIFIED. The previously observed 83/83 claim-material GREEN remains valid; only this new external-signer handoff requires focused execution.
