@@ -2233,6 +2233,21 @@
           </Border>
         </Grid>
 
+        <!-- ===== Saved Session Archive ===== -->
+        <Grid x:Name="SessionArchiveView"
+              Visibility="Collapsed">
+          <Border Background="{StaticResource CardBgBrush}"
+                  CornerRadius="18"
+                  Padding="0"
+                  BorderBrush="{StaticResource CardBorderBrush}"
+                  BorderThickness="1"
+                  Margin="5">
+            <ContentControl x:Name="SessionArchiveContent"
+                            HorizontalContentAlignment="Stretch"
+                            VerticalContentAlignment="Stretch"/>
+          </Border>
+        </Grid>
+
         <!-- ===== Settings ===== -->
         <Grid x:Name="SettingsView"
               Visibility="Collapsed">

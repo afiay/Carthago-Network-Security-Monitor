@@ -55,12 +55,12 @@ public partial class MainWindow
             // Opened session becomes the active manual Save destination.
             // Historical rows are retained by the merger, never trusted as live evidence.
             _lastSavedLiveSessionPath = dialog.FileName;
-            var viewer = new CarthagoSessionViewerWindow(snapshot)
-            {
-                Owner = this,
-                Title = $"Carthago Session — {Path.GetFileName(dialog.FileName)}"
-            };
-            viewer.Show(); // Opening never imports archived telemetry into the live rule engine.
+            SessionArchiveContent.Content = new CarthagoSessionViewerControl(
+                snapshot,
+                Path.GetFileName(dialog.FileName));
+            ShowView(SessionArchiveView);
+            SidebarPanel?.HideAllFilters();
+            // Opening never imports archived telemetry into the live rule engine.
         });
     }
 

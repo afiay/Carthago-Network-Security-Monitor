@@ -26,6 +26,7 @@ namespace Carthago
             IncidentsView.Visibility = Visibility.Collapsed;
             ThreatFeedView.Visibility = Visibility.Collapsed;
             CiscoToolsView.Visibility = Visibility.Collapsed;
+            SessionArchiveView.Visibility = Visibility.Collapsed;
             SettingsView.Visibility = Visibility.Collapsed;
 
             // Show selected
