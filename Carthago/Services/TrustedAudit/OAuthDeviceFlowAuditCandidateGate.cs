@@ -58,6 +58,7 @@ namespace Carthago.Services.TrustedAudit
                 || !observedFlow.IsTcp
                 || observedFlow.DestinationPort != 443
                 || observedFlow.SourcePort is not (> 0 and <= 65535)
+                || !HasIdentityWebContext(observedFlow)
                 || !IPAddress.TryParse(observedFlow.Source, out var client)
                 || !IPAddress.TryParse(observedFlow.Destination, out var idp))
                 return Deny(OAuthDeviceFlowAuditCandidateStatus.MissingNetworkObservation,
@@ -82,6 +83,16 @@ namespace Carthago.Services.TrustedAudit
             // reviewed integration is required before R275 can consume this.
             return Deny(OAuthDeviceFlowAuditCandidateStatus.CorrelatedCandidateNotIntegrated,
                 "R275_SIGNED_IDP_AUDIT_CANDIDATE_NOT_INTEGRATED");
+        }
+
+        private static bool HasIdentityWebContext(TrafficRecord record)
+        {
+            var application = record.ApplicationProtocol ?? string.Empty;
+            var webProtocol = application.Equals("TLS", StringComparison.OrdinalIgnoreCase)
+                || application.Equals("HTTPS", StringComparison.OrdinalIgnoreCase)
+                || application.Equals("HTTP", StringComparison.OrdinalIgnoreCase);
+            var endpoint = record.Sni ?? record.TlsSni ?? record.HttpHost;
+            return webProtocol && !string.IsNullOrWhiteSpace(endpoint);
         }
 
         private static bool Within(DateTimeOffset audit, DateTimeOffset observed)
