@@ -1886,3 +1886,19 @@ Observed result:
 Follow-up source correction: commit `a7589023a470ad2aa26e2309a5c88a3f27838c19` adds an explicit `descriptor is null` guard before the R275-only descriptor check to address `CS8604`. This is a source-level correction, **not yet reverified by owner test output**.
 
 **Remaining validation gates:** (1) rerun the identical focused 114-test filter on the corrected commit; (2) run the entire `Carthago.Tests` Release suite and record its exact counts. **Both are PENDING; do not label the corrected commit or full suite GREEN without execution evidence.** Do not alter R275 confidence floor, telemetry selector semantics, promotion policy, tuning or holdout fixtures.
+
+#### 2026-11-03 — R275 nullable-guard correction focused re-verification GREEN (114/114)
+
+The owner ran the same 10-class focused R275 filter in Release after fast-forwarding the existing `feature/carthago-reliability-hardening` branch (reported `Already up to date`; last confirmed remote head before this record was `3859d3157aca71687442bc76dd3cf5a7890903ad`, containing the nullable-guard correction `a7589023a470ad2aa26e2309a5c88a3f27838c19`).
+
+Observed console output:
+- `dotnet test .\\Carthago.Tests\\Carthago.Tests.csproj -c Release --filter $filter --logger "trx;LogFileName=R275-postfix.trx"` built `Carthago` and `Carthago.Tests` successfully.
+- **114 total; 114 succeeded; 0 failed; 0 skipped**; focused test duration **20.2 seconds**; overall build/test **89.1 seconds**.
+- No compiler warnings were reported in this post-fix output, unlike the previous focused run where `CS8604` appeared.
+- Local evidence path (owner's Windows machine): `build-verify/test-results/R275-postfix.trx`.
+
+**Classification:** focused R275 trusted runtime hook and nullable correction **GREEN (114/114)** on the owner's checked-out branch revision, per owner console evidence. This is **not** a production integration/promotion approval; the trusted resolver's default-null boundary remains intact.
+
+The owner also initiated an unfiltered Release `Carthago.Tests` run with `--no-restore` and `Carthago-full.trx` logging. The supplied output contains a progress line `Carthago.Tests Testing (1484,1s)` but **no completion summary, exit code or TRX counters**. The visible synthetic `R006`, `FailingSink` and malformed-feedback messages are not sufficient to attribute a regression. **Full-suite status: INCOMPLETE / NOT VERIFIED**. Do not invent a pass count or infer failure/hang from the partial output; investigate the test process and result files.
+
+**Remaining gate:** obtain complete Release suite run evidence including total/pass/fail/skipped counts and exit code, and only then record whole-suite classification. R275 confidence floor (80%), public HTTP telemetry profile, promotion authorization, holdouts and production gates remain unchanged.
