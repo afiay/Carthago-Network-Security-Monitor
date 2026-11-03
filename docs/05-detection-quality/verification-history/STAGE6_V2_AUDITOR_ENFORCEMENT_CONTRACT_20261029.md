@@ -351,3 +351,16 @@ The harness matched the expected exit category and exact safe reason, completed 
 This closes the earlier A11 diagnostic-format blocker. It does not approve any external source, reviewer, license, malicious label, privacy decision or holdout freeze. V2 remains `PENDING_EXTERNAL_CAPTURE_AND_REVIEW` with 0/4 external reviewed pairs; V1 remains immutable.
 
 **Remaining Stage 6 cases still requiring observed results in this session:** `A11-review-type`, `A11-license`, `A12`, `A12-provenance`, `A14`, and `A16-distinct`.
+
+
+### 2026-11-03 remaining focused cases — five GREEN, A16 diagnostic capture fix required
+
+The owner executed the six remaining scenarios individually. `A11-review-type`, `A11-license`, `A12`, `A12-provenance`, and `A14` all matched their exact expected rejection category and passed the private-output checks.
+
+`A16-distinct` rejected but the verifier could not map the child output to the fixed safe reason allowlist, reporting `UNRECOGNIZED_SANITIZED_REASON`. This result is neither RED nor GREEN.
+
+Source inspection preserves the intended A16 semantics: the fixture writes the same duplicated long TXT name into both the synthetic PCAP and serialized record, so original-frame binding should succeed; only the post-binding distinct-long-TXT cardinality gate should reject it. No production-auditor change was therefore made on the basis of the unrecognized formatter output.
+
+Commit `f8cfbb09d9ff106cce5c4e7360243337a9ea312a` updates only the verifier to capture child output as objects and use `ErrorRecord.Exception.Message` before formatting. The resulting private log is still ephemeral, privacy-scanned, and never printed raw. A16 must be rerun alone before Stage 6 can be closed.
+
+**Cumulative status:** all Stage 6 synthetic cases except A16-distinct have observed GREEN outcomes in this owner-authorized session.
