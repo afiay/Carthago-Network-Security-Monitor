@@ -27,16 +27,7 @@ foreach ($line in ($listing -split "`n")) {
         $path = $Matches['path']; $oid = $Matches['oid']
         $sources[$path] = Read-GitObject @('cat-file', 'blob', $oid)
         $blobs.Add([pscustomobject]@{path=$path; blobSha=$oid})
-    } elseif ($line -match '\.cs"?
-        throw 'Unrecognized source path or mode; manual inventory review required.'
-    }
-}
-$result = Get-RuleSourceInventory -RegistrySource $registry -Sources $sources -SourceSha $SourceSha
-$result | Add-Member -NotePropertyName sourceBlobs -NotePropertyValue @($blobs.ToArray())
-$result | ConvertTo-Json -Depth 12
-# Intentionally no verifier invocation, output-file write, filter generation,
-# exit-as-acceptance decision, or consumption of holdout/TRX/capture artifacts.
-) {
+    } elseif ($line -match '\.cs"?$') {
         throw 'Unrecognized source path or mode; manual inventory review required.'
     }
 }
