@@ -2371,7 +2371,8 @@
                             ToolTipService.ShowsToolTipOnKeyboardFocus="True"
                             AutomationProperties.Name="Reset all settings"
                             AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
-                            Click="ResetSettings_Click"/>
+                            Click="ResetSettings_Click"
+            Style="{StaticResource SecondaryButton}"/>
                   </StackPanel>
                 </Grid>
               </GroupBox>
@@ -2486,7 +2487,8 @@
                             AutomationProperties.Name="Use AbuseIPDB API key for this session"
                             AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                             Click="ApplyApiKey_Click"
-                            MinWidth="160"/>
+                            MinWidth="160"
+            Style="{StaticResource SecondaryButton}"/>
                   </WrapPanel>
 
                   <!-- Status line -->

@@ -180,11 +180,13 @@
                                 <Button Content="Clear"
                                         Width="80"
                                         Margin="8,0,0,0"
-                                        Click="ClearDeviceForm_Click"/>
+                                        Click="ClearDeviceForm_Click"
+            Style="{StaticResource SecondaryButton}"/>
                                 <Button Content="Sort by worst health"
                                         Width="160"
                                         Margin="12,0,0,0"
-                                        Click="SortByWorstHealth_Click"/>
+                                        Click="SortByWorstHealth_Click"
+            Style="{StaticResource SecondaryButton}"/>
                                 <CheckBox x:Name="OnlyDegradedDevicesCheckBox"
                                           Content="Only degraded"
                                           Margin="12,0,0,0"
@@ -684,11 +686,13 @@
                                         Width="80"
                                         Margin="8,0,0,0"
                                         Click="StopListener_Click"
-                                        IsEnabled="False"/>
+                                        IsEnabled="False"
+            Style="{StaticResource SecondaryButton}"/>
                                 <Button Content="Clear"
                                         Width="80"
                                         Margin="8,0,0,0"
-                                        Click="ClearSyslog_Click"/>
+                                        Click="ClearSyslog_Click"
+            Style="{StaticResource SecondaryButton}"/>
                             </StackPanel>
 
                             <!-- Filters -->
@@ -745,12 +749,14 @@
                                 <Button Content="Security focus"
                                         Width="110"
                                         Margin="8,0,0,0"
-                                        Click="SecurityFocus_Click"/>
+                                        Click="SecurityFocus_Click"
+            Style="{StaticResource SecondaryButton}"/>
 
                                 <Button Content="Reset"
                                         Width="80"
                                         Margin="8,0,0,0"
-                                        Click="SyslogFilterReset_Click"/>
+                                        Click="SyslogFilterReset_Click"
+            Style="{StaticResource SecondaryButton}"/>
                             </StackPanel>
 
                             <!-- Summary -->
@@ -847,11 +853,13 @@
                                    Margin="0,0,0,6">
                             <Button Content="Load Rules"
                                     Width="110"
-                                    Click="LoadRules_Click"/>
+                                    Click="LoadRules_Click"
+            Style="{StaticResource SecondaryButton}"/>
                             <Button Content="Apply to all"
                                     Width="110"
                                     Margin="6,0,0,0"
-                                    Click="ApplyRulesToAll_Click"/>
+                                    Click="ApplyRulesToAll_Click"
+            Style="{StaticResource SecondaryButton}"/>
                             <CheckBox x:Name="AutoApplyRulesCheck"
                                       Content="Auto-apply"
                                       IsChecked="True"
@@ -869,11 +877,13 @@
                                        Opacity="0"/>
                             <Button Content="Export Incidents"
                                     Width="118"
-                                    Click="ExportIncidents_Click"/>
+                                    Click="ExportIncidents_Click"
+            Style="{StaticResource SecondaryButton}"/>
                             <Button Content="Copy MD"
                                     Width="90"
                                     Margin="6,0,0,0"
-                                    Click="CopyIncidentsMarkdown_Click"/>
+                                    Click="CopyIncidentsMarkdown_Click"
+            Style="{StaticResource SecondaryButton}"/>
                         </WrapPanel>
 
                         <!-- Incidents grid -->

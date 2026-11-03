@@ -76,6 +76,7 @@
             <WrapPanel Margin="0,16,0,0">
               <ToggleButton x:Name="PauseToggle" Width="128" Height="38"
                             Content="Pause display" Margin="0,0,10,10"
+                            Style="{StaticResource SecondaryToggleButton}"
                             ToolTip="Pause additions to this page; does not stop external sink delivery"/>
               <Button Content="Clear rows" Width="112" Height="38"
                       Style="{StaticResource SecondaryButton}" Margin="0,0,0,10"

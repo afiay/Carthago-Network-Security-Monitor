@@ -7,7 +7,9 @@
         Width="Auto">
     <Button x:Name="Btn"
             Padding="12,8"
-            HorizontalContentAlignment="Left">
+            HorizontalContentAlignment="Left"
+            Margin="0"
+            Style="{StaticResource SecondaryButton}">
         <StackPanel Orientation="Horizontal">
             <!-- Give children margin instead of using Spacing -->
             <TextBlock Text=""
