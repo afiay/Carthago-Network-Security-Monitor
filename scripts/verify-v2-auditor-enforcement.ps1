@@ -263,18 +263,27 @@ function InvokeAudit([string]$scenario,[bool]$expectReject) {
     BuildFixture $scenario
     $output=Join-Path $work 'private-auditor.log'
     # Expected negative controls intentionally make the child auditor exit
-    # nonzero. Under Windows PowerShell, native stderr is surfaced as a
-    # NativeCommandError and global ErrorActionPreference=Stop would terminate
-    # this parent before it can inspect the child's exit code and sanitized log.
+    # nonzero. Capture child objects in memory so NativeCommandError messages
+    # can be inspected from ErrorRecord.Exception.Message before PowerShell's
+    # formatter inserts wrapping/metadata. The normalized private log is still
+    # ephemeral and still passes through the existing privacy assertions.
     $previousErrorActionPreference=$ErrorActionPreference
     try {
         $ErrorActionPreference='Continue'
-        & powershell.exe -NoProfile -NonInteractive -File $auditor -CaptureDirectory $captureDir -CandidateDirectory $candidateDir -TsharkPath $TsharkPath *> $output
+        $childOutput=@(& powershell.exe -NoProfile -NonInteractive -File $auditor -CaptureDirectory $captureDir -CandidateDirectory $candidateDir -TsharkPath $TsharkPath 2>&1)
         $exit=$LASTEXITCODE
     } finally {
         $ErrorActionPreference=$previousErrorActionPreference
     }
-    $log=Get-Content -LiteralPath $output -Raw
+    $logLines=@($childOutput | ForEach-Object {
+        if($_ -is [System.Management.Automation.ErrorRecord]) {
+            [string]$_.Exception.Message
+        } else {
+            [string]$_
+        }
+    })
+    $log=($logLines -join "`n")
+    [IO.File]::WriteAllText($output,$log,[Text.UTF8Encoding]::new($false))
     Assert-PrivateAuditOutput $log
     $rejected=$exit -ne 0
     if($rejected -ne $expectReject) {
