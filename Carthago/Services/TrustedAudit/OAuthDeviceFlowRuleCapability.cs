@@ -2,6 +2,7 @@
 // R275 opaque rule-evaluation capability.
 // SOURCE CANDIDATE — UNVERIFIED. Internal-only and non-alerting.
 using System;
+using System.Linq;
 using Carthago.Models;
 
 namespace Carthago.Services.TrustedAudit
@@ -48,12 +49,15 @@ namespace Carthago.Services.TrustedAudit
             TraceHash = pair.First.TraceHash;
             FirstIssuerId = pair.First.IssuerId;
             SecondIssuerId = pair.Second.IssuerId;
+            IdentityHost = NormalizeHost(
+                FirstNonEmpty(record.Sni, record.TlsSni, record.HttpHost));
         }
 
         internal DateTimeOffset ObservedFlowUtc { get; }
         internal string TraceHash { get; }
         internal string FirstIssuerId { get; }
         internal string SecondIssuerId { get; }
+        internal string IdentityHost { get; }
 
         internal static bool TryCreate(
             CorrelatedAuditReceipts? pair,
@@ -101,6 +105,29 @@ namespace Carthago.Services.TrustedAudit
                 && string.Equals(record.Sni, _sni, StringComparison.Ordinal)
                 && string.Equals(record.TlsSni, _tlsSni, StringComparison.Ordinal)
                 && string.Equals(record.HttpHost, _httpHost, StringComparison.Ordinal);
+        }
+
+        private static string FirstNonEmpty(params string?[] values)
+        {
+            foreach (var value in values)
+                if (!string.IsNullOrWhiteSpace(value))
+                    return value;
+            return string.Empty;
+        }
+
+        private static string NormalizeHost(string? host)
+        {
+            if (string.IsNullOrWhiteSpace(host))
+                return string.Empty;
+            var normalized = host.Trim().TrimEnd('.').ToLowerInvariant();
+            if (normalized.Length is < 1 or > 253
+                || normalized.StartsWith(".", StringComparison.Ordinal)
+                || normalized.EndsWith(".", StringComparison.Ordinal)
+                || normalized.Contains("..", StringComparison.Ordinal)
+                || normalized.Any(c => !(char.IsAsciiLetterOrDigit(c)
+                    || c is '-' or '.')))
+                return string.Empty;
+            return normalized;
         }
     }
 }
