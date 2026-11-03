@@ -21,7 +21,7 @@ namespace Carthago.Engine.Rules.Expansion
                 "R485" => ("BACNET_WRITEPROPERTY_CONFIRMED_REQUEST_UNAVAILABLE",
                     "A BACnet name or replay description is not a complete capture-validated confirmed WriteProperty request; no authenticated controller, authorization or write outcome is proven."),
                 "R486" => ("BACNET_DEVICE_COMMUNICATION_CONTROL_REQUEST_UNAVAILABLE",
-                    "No decoded BACnet DeviceCommunicationControl service request, target device, invoke ID, or approved maintenance context is available."),
+                    "Only a complete packet-validated BACnet DeviceCommunicationControl disable attempt qualifies; generic BACnet names, replay text and unapproved controller context cannot establish this operation."),
                 "R487" => ("PROFINET_DCP_SET_NAME_FRAME_UNAVAILABLE",
                     "No validated PROFINET DCP Set Name request with service/type, station name, L2 source, and authorized engineering station is produced."),
                 "R488" => ("ETHERNETIP_LISTIDENTITY_DISTINCT_BURST_UNAVAILABLE",

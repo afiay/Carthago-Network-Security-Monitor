@@ -661,7 +661,7 @@ namespace Carthago.Services
                         // -------- BACnet WriteProperty confirmed request --------
                         // One complete BACnet/IP UDP request, destination 47808.
                         // Never claim an accepted/authorized property change.
-                        if (dport == 47808 && sport is > 0 and <= 65535
+                        if (isIPv4 && dport == 47808 && sport is > 0 and <= 65535
                             && completeIpPacket
                             && l4PayloadLen == ipPayloadLen - 8
                             && BacnetWritePropertyInspector.TryInspect(l4Payload,
@@ -669,6 +669,20 @@ namespace Carthago.Services
                         {
                             rec.ApplicationProtocol = "bacnet.writeproperty.request";
                             rec.BacnetWritePropertyRequestObserved = true;
+                        }
+
+                        // -------- BACnet DeviceCommunicationControl disable --------
+                        // A real, unsegmented request can originate on the same
+                        // UDP service port. No controller outcome or password is
+                        // inferred or retained by this capture-only signal.
+                        if (isIPv4 && dport == 47808 && sport is > 0 and <= 65535
+                            && completeIpPacket
+                            && l4PayloadLen == ipPayloadLen - 8
+                            && BacnetDeviceCommunicationControlInspector.TryInspect(
+                                l4Payload, verifiedCompletePlaintextUdpDatagram: true, out _))
+                        {
+                            rec.ApplicationProtocol = "bacnet.devicecommunicationcontrol.disable";
+                            rec.BacnetDeviceCommunicationDisableObserved = true;
                         }
 
                         // -------- Bounded CoAP and WS-Discovery requests --------

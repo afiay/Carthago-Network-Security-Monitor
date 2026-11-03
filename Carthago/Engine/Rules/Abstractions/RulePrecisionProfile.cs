@@ -732,6 +732,9 @@ namespace Carthago.Engine.Rules
                 "capture_only_bacnet_writeproperty" => record.BacnetWritePropertyRequestObserved
                     && record.IsUdp && !record.IsTcp && record.DestinationPort == 47808
                     && string.Equals(record.ApplicationProtocol, "bacnet.writeproperty.request", StringComparison.Ordinal),
+                "capture_only_bacnet_dcc_disable" => record.BacnetDeviceCommunicationDisableObserved
+                    && record.IsUdp && !record.IsTcp && record.DestinationPort == 47808
+                    && string.Equals(record.ApplicationProtocol, "bacnet.devicecommunicationcontrol.disable", StringComparison.Ordinal),
                 "destination_or_host" => HasAny(record.Destination, record.HttpHost, record.Sni, record.DnsQname),
                 "process.name" => HasAny(record.ProcessName),
                 "device_authentication_attempt" => SensitiveTelemetryContracts.HasDefaultCredentialAuthenticationAttempt(record),

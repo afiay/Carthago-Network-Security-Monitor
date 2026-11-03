@@ -141,6 +141,9 @@ namespace Carthago.Models
         // Neither flag proves server acceptance or successful modification.
         public bool LdapCleartextSimpleBindObserved { get; internal set; }
         public bool BacnetWritePropertyRequestObserved { get; internal set; }
+        // Live-packet-only unsegmented BACnet DeviceCommunicationControl
+        // disable-attempt shape; never authenticated or a successful outcome.
+        public bool BacnetDeviceCommunicationDisableObserved { get; internal set; }
 
         // ===== HTTP =====
         public string? HttpMethod { get; set; }
