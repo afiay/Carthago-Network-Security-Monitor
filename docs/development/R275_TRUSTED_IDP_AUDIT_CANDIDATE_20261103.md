@@ -139,3 +139,23 @@ The parser is intentionally **unsigned and untrusted**. It does not call Microso
 Microsoft schema references used for this contract:
 - https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/signinlogs
 - https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-authentication-flows
+
+## 2026-11-03 focused owner verification — GREEN
+
+The owner ran the documented focused test command at branch revision `5f95521611e1549cd89c20d6149ea71fc7e75b36`.
+
+Observed result:
+- build succeeded for `Carthago` and `Carthago.Tests`;
+- **56 tests passed**;
+- **0 failed**;
+- **0 skipped**.
+
+The GREEN scope covers:
+- `MicrosoftEntraDeviceCodeAuditIntakeTests`;
+- `OAuthDeviceFlowAuditCandidateGateTests`;
+- existing `R275AdvancedAccuracyBatchTests`;
+- existing `R275R343R485PairedReplayTests`.
+
+This closes the synthetic source-candidate verification for the current R275 increment. The parser/candidate boundary is now test-verified but remains non-alerting and not connected to the live rule engine.
+
+R275 still intentionally returns `TRUSTED_DEVICE_CODE_ABUSE_EVENT_UNAVAILABLE` through ordinary packet evaluation. A future live Entra producer must authenticate its source independently and must not convert raw provider JSON, OAuth codes, SNI or packet text directly into trusted rule evidence.
