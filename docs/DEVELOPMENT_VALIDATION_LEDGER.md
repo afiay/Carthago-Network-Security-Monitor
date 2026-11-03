@@ -1821,3 +1821,22 @@ When all promotion prerequisites are present, R275 uses the shared event builder
 **Production-default boundary:** no normal runtime code constructs `OAuthDeviceFlowPromotionAuthorization`; therefore ordinary packet evaluation remains fail-closed and the promotion path is not production-enabled by this increment.
 
 **Verification status:** SOURCE CANDIDATE — UNVERIFIED. The previously observed 99/99 capability-delivery GREEN remains valid; the new promotion-policy suite must now be executed.
+
+#### 2026-11-03 — R275 explicit promotion-policy verification GREEN (107/107)
+
+The owner fast-forwarded `feature/carthago-reliability-hardening` to `5d142366a75b6797e7906cce50e0ba49952ea6e7` and executed the expanded focused R275 suite including `R275PromotionPolicyTests`.
+
+Observed result:
+- `Carthago` build succeeded.
+- `Carthago.Tests` build succeeded.
+- **107 total; 107 succeeded; 0 failed; 0 skipped**.
+- Focused test duration: **19.8 seconds**.
+- Overall command completed with **Build succeeded** in **55.2 seconds**.
+
+**Classification:** GREEN for the explicit default-deny R275 promotion-policy layer plus all previously verified R275 source, signer and capability-delivery layers.
+
+This verifies default-deny promotion, independent approved-issuer enforcement, approved identity-host enforcement including lookalike rejection, exact promotion-authorization binding, privacy-minimized High-severity event creation, confidence above the existing R275 floor, capability-without-authorization NoMatch behavior, duplicate-trace cooldown suppression and the non-public promotion surface.
+
+**Scope boundary:** production runtime is still unwired. No normal application path currently constructs `OAuthDeviceFlowPromotionAuthorization`, so ordinary packet processing remains fail-closed despite the promotion policy itself now being test-verified.
+
+No confidence floor, default runtime mode, replay classification, holdout fixture, V1/V2 state or production alert configuration changed.
