@@ -5023,3 +5023,69 @@ No Engine, Models, Services, detection/protocol rules, telemetry/capture/trust/p
 10. Confirm exact six-path ownership, one non-forced expected-SHA branch publication, and zero builds/tests/replays/holdouts/CI/Actions/runners/benchmarks/production capture.
 
 **Next UI GA UI-110:** resume a substantial reference-led operational workspace redesign after fresh live-head and consumer audit. Do not return to tooltip-only work. Runtime verification remains pending until explicit owner authorization.
+
+
+## GA UI-110 — High-performance chart system and Analytics visual redesign
+
+**2026-11-03 · SOURCE CANDIDATE — UNVERIFIED.** Exact approved Library reference `libfile_b0a34361560c8191b641e432b3e6b15c` was retrieved and visually inspected before implementation. The reference's calm dark SOC chart surface, bright cyan live-traffic trace, restrained comparison line, strong panel hierarchy and readable evidence density inform this milestone; all reference Mbps, IPs, incident values, confidence, timestamps and rule IDs remain DEMO ONLY. Live publication base after reconciling independent accuracy work: `0df60438021697597efd6e3ad4b2cb8c6dbe1199`. Previous UI milestone: GA UI-109. UI source commit: `72629769225e5826c29929e33c20242cf671a52c`.
+
+### Before → after: visible chart transformation
+
+- **Dashboard local PPS:** the existing 120-point local PPS history remains the data boundary, but the visible line changes from generic blue Scatter rendering to a brighter cyan `SignalXY` trace aligned with the approved SOC reference. The existing amber 10-sample moving average remains, now derived once as samples arrive instead of recomputed from the full history during each redraw. The dashed line remains visible when at least eleven timer samples provide two moving-average points.
+- **Analytics workspace:** the former plain GroupBox chart grid is replaced by four coherent dark operational cards using the established `DashboardFocusPanel` design language. Titles and source-accurate subtitles move outside the plotting canvas so the charts themselves stay visually quieter and more legible.
+- **Top Talkers:** the existing Top 10 scope is preserved but changes from vertical bars with rotated IP labels to ranked horizontal bars. Highest packet-count source appears at the top, avoiding diagonal address labels.
+- **Protocol Mix:** protocol counts also change to horizontal bars with restrained teal/cyan emphasis for the highest-volume categories.
+- **Alert Severity:** the exploded pie becomes a calmer 62% donut with restrained severity colors and light labels on the dark surface.
+- **No invented telemetry:** all chart values remain produced by the existing local counters, detections and timer samples. No new capture-health assertion, inbound/outbound split, throughput estimate or demo metric was introduced.
+
+### Performance-oriented source changes
+
+The project already references ScottPlot.WPF 5.1.58; no dependency or project-file change was made. The source audit identified avoidable UI-thread work in the existing implementation:
+
+1. PPS redraws previously called `Plot.Clear()`, converted both rolling traffic lists to new arrays, rebuilt a Scatter plot, recomputed the complete moving-average array, then repeated the same work for the Dashboard and hidden Analytics traffic plots every redraw interval.
+2. Protocol, talker and severity charts rebuilt both hidden compatibility plots and Analytics plots.
+3. Two legacy KPI sparkline controls live inside a collapsed compatibility container yet were still cleared/rebuilt once per second by `UpdateKpis()`.
+
+GA UI-110 changes those paths as follows:
+
+- PPS uses ScottPlot `SignalXY` against the existing ascending `List<double>` rolling series, eliminating the former redraw-time `ToArray()` copies for traffic and moving-average data.
+- The 10-sample moving-average series is updated once per 1 Hz sample and trimmed against the same 120-point PPS window.
+- The 3-second chart refresh now redraws traffic only when Dashboard or Analytics is visible.
+- Protocol/talker/severity dirty flags remain dirty while Analytics is hidden, and those charts rebuild only when the Analytics workspace is actually visible.
+- Opening Analytics performs one immediate refresh so deferred charts are current on entry.
+- The two collapsed legacy sparklines no longer redraw while invisible.
+- Hidden compatibility plot controls remain in source for existing ownership/API stability but are removed from the recurring rendering hot path.
+
+These are source-level performance improvements based on reduced allocations and avoided off-screen rendering. **No benchmark or runtime performance result is claimed.**
+
+### Static ownership and consumer/divergence review
+
+Inspected the live branch, recent independent commits, GA UI-109 ledger tail, `MainWindow.Core.cs`, `MainWindow.Plots.cs`, Dashboard and Analytics XAML, `MainWindow.xaml.cs` Analytics navigation, existing ScottPlot usage, hidden compatibility plots and the current ScottPlot package declaration read-only. The live branch moved during preparation because independent accuracy commits landed; all four candidate UI blobs plus the UI ledger remained byte-identical, so the candidate was rebuilt on the newer base before publication preparation.
+
+**Authorized source paths:**
+1. `Carthago/Views/MainWindow.Core.cs`
+2. `Carthago/Views/MainWindow.Plots.cs`
+3. `Carthago/Views/MainWindow.xaml`
+4. `Carthago/Views/MainWindow.xaml.cs`
+5. `docs/design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md`
+
+No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, telemetry/capture/trust/privacy, tests, benchmarks, workflows, runners, shared APIs, shared documentation indexes or automation settings were modified. The local PPS timer remains 1 Hz; chart redraw cadence remains 3 seconds; PPS history remains 120 points; moving-average window remains 10 samples. Prioritized incidents, investigation, Live Events 80 displayed / 500 retained, visual-only UNAVAILABLE CLI, Cisco, WebView2 and map behavior are unchanged by this GA.
+
+**Static visual-impact assessment:** major chart and Analytics-workspace transformation: cyan live PPS rendering, quieter chart canvases, ranked horizontal bars, calmer severity donut and card-based Analytics composition. This is source inspection only, **not** rendered WPF validation.
+
+**Risks — UNVERIFIED:** ScottPlot 5.1.58 `SignalXY` list-backed rendering, horizontal-bar axis/tick layout, long protocol/source labels, donut labels, automatic axis margins, WPF chart sizing at 125/150/200% DPI, Analytics card density below 1100px, keyboard/accessibility behavior and UI-thread reduction require Windows runtime verification. No build, tests, profiler, benchmark or screenshot validation was run.
+
+### Planned acceptance scenarios — ALL UNEXECUTED
+
+1. Dashboard Wide >=1440: inspect cyan PPS trace, dark chart surface, 120-point time window and amber 10-sample average against the approved reference aesthetic.
+2. Verify exactly the same local timer PPS values are represented before/after and zeros are not presented as capture-health proof.
+3. Open Analytics after several minutes hidden and verify charts refresh immediately from accumulated local evidence.
+4. Confirm Top Talkers preserves Top 10 semantics and horizontal ranking puts the largest source at the top with readable IP labels.
+5. Confirm Protocol Mix preserves current protocol counts and horizontal labels remain readable with many protocol names.
+6. Confirm Alert Severity preserves Critical/High/Medium/Low/Info counts and the donut remains legible for zero/sparse categories.
+7. Observe UI responsiveness/CPU allocations with Dashboard visible, Analytics hidden and Analytics visible; compare against the previous redraw path without claiming improvement until measured.
+8. Inspect Wide, Standard 1100–1439, Compact 1024–1099, below 1024 and 125/150/200% DPI for clipping, plot sizing and card density.
+9. Confirm hidden compatibility charts/sparklines no longer consume recurring render work while all existing navigation, PPS, incidents, Live Events, CLI, Cisco/WebView2 and privacy/security behavior remains intact.
+10. Confirm exact five-path publication scope, source/docs direct-parent ancestry, one non-forced expected-SHA update, and **zero** builds/tests/replays/holdouts/CI/Actions/runners/benchmarks/production capture.
+
+**Next UI GA UI-111:** fresh live-reference/consumer audit, then continue a substantial visible workspace improvement; the pending Geography Map correctness/precision issue should be addressed separately without weakening chart performance or inventing geolocation certainty. All runtime acceptance remains pending until explicit owner authorization: **“now it is test time.”**
