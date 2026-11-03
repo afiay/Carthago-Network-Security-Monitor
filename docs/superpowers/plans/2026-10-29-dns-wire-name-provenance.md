@@ -146,3 +146,23 @@ Five failure modes especially likely to escape a straightforward happy-path test
 - [ ] Complete an independent whole-branch code review, reconcile documentation, then ask before merging into `main`; do not create additional branches.
 
 **Execution method:** Native, sequential implementation on the existing branch (no subagent dispatch). Pause before implementation until the project owner approves this plan and authorizes the intended focused red/green test stage.
+
+
+## 2026-11-03 owner execution update — DNS wire-source contract GREEN
+
+The owner executed the full currently implemented synthetic source contract at branch revision `2642ea3b6fa214e3227e8998ea8809f18891cdc8` with both optional layers enabled:
+
+`verify-dns-wire-source-contract.ps1 -TsharkPath 'C:\Program Files\Wireshark\tshark.exe' -IncludeV2Provenance -IncludeReplayCompatibility -AuthorizedTestTime`
+
+Observed GREEN results:
+- DNS framing: UDP/TCP preservation plus 5 invalid length-prefix negatives.
+- TShark raw descriptor handling: 5/6-member compatibility plus 10 ambiguity/invalid negatives.
+- Wire-source binding: 4 positive frame/question selections plus 5 invalid/ambiguous negatives.
+- V2 record schema: 1 valid layout plus 4 malformed rejects.
+- V2 frame/question provenance: 2 bound records plus 19 tampering/missing-original rejects.
+- Logical-source review: 7 mirror/overlap/session/origin/frame-reuse/non-ASCII scenarios; no independence auto-approval.
+- Replay bridge: 2 printable names accepted, 10 non-lossless names rejected; 3 original frame/question records bound and 11 source/schema/binary/review-state negatives rejected.
+
+This execution closes the **synthetic implementation contract** for the currently enabled source/provenance/replay surfaces. It does not satisfy the plan's separately listed external-source corroboration against a reviewed real PCAP, human source/license/privacy review, V2 freeze, holdout evaluation, or production detection-quality acceptance. Those remain separate gates.
+
+Historical unchecked plan steps above are retained as design history rather than rewritten retroactively; this section records the observed owner execution truth.
