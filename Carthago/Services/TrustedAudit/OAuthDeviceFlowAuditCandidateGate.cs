@@ -91,8 +91,10 @@ namespace Carthago.Services.TrustedAudit
             var webProtocol = application.Equals("TLS", StringComparison.OrdinalIgnoreCase)
                 || application.Equals("HTTPS", StringComparison.OrdinalIgnoreCase)
                 || application.Equals("HTTP", StringComparison.OrdinalIgnoreCase);
-            var endpoint = record.Sni ?? record.TlsSni ?? record.HttpHost;
-            return webProtocol && !string.IsNullOrWhiteSpace(endpoint);
+            var endpointObserved = !string.IsNullOrWhiteSpace(record.Sni)
+                || !string.IsNullOrWhiteSpace(record.TlsSni)
+                || !string.IsNullOrWhiteSpace(record.HttpHost);
+            return webProtocol && endpointObserved;
         }
 
         private static bool Within(DateTimeOffset audit, DateTimeOffset observed)
