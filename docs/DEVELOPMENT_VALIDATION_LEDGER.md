@@ -1902,3 +1902,21 @@ Observed console output:
 The owner also initiated an unfiltered Release `Carthago.Tests` run with `--no-restore` and `Carthago-full.trx` logging. The supplied output contains a progress line `Carthago.Tests Testing (1484,1s)` but **no completion summary, exit code or TRX counters**. The visible synthetic `R006`, `FailingSink` and malformed-feedback messages are not sufficient to attribute a regression. **Full-suite status: INCOMPLETE / NOT VERIFIED**. Do not invent a pass count or infer failure/hang from the partial output; investigate the test process and result files.
 
 **Remaining gate:** obtain complete Release suite run evidence including total/pass/fail/skipped counts and exit code, and only then record whole-suite classification. R275 confidence floor (80%), public HTTP telemetry profile, promotion authorization, holdouts and production gates remain unchanged.
+
+#### 2026-11-03 — Complete Carthago Release regression GREEN (10,669/10,669)
+
+The owner supplied the completed console transcript of the **unfiltered** `Carthago.Tests` Release diagnostic run after the R275 null-guard correction. The prior log excerpt ending at `Testing (1484,1s)` described an earlier incomplete attempt; it is **superseded for this validation gate** by the independently completed diagnostic run below.
+
+Executed scope: `dotnet test .\\Carthago.Tests\\Carthago.Tests.csproj -c Release --no-build --no-restore --logger "console;verbosity=normal" --logger "trx;LogFilePrefix=Carthago-full-diagnostic" --results-directory .\\build-verify\\test-results --blame-hang --blame-hang-timeout 15m --blame-hang-dump-type none`.
+
+Observed console evidence:
+- `Test Run Successful.` — **10,669 total; 10,669 passed; 0 failed; 0 skipped.**
+- Test duration **84.6 seconds**; full command/build duration **85.4 seconds**.
+- `FULL SUITE EXIT CODE: 0`.
+- One diagnostic infrastructure warning: `Data collector 'Blame' message: All tests finished running, Sequence file will not be generated.` This is not a compiler warning, failed test or hang.
+- Local TRX result path (on owner's Windows machine): `build-verify/test-results/Carthago-full-diagnostic_net8.0_20261103214103.trx`.
+- The earlier post-fix R275 focused verification was separately **114/114 GREEN** with no compiler warnings.
+
+**Classification:** BOTH REQUIRED R275 VALIDATION GATES COMPLETE — focused **114/114 GREEN** and unfiltered `Carthago.Tests` Release regression **10,669/10,669 GREEN**, per owner local console evidence. The transcript does not independently print `git rev-parse HEAD` at test time, so the result is attributed to the owner's checked-out existing branch, **without claiming exact-SHA attestation**.
+
+**Scope boundary:** test success does not enable production trusted receipt intake or authorize an R275 promotion. R275 80% confidence floor, raw HTTP telemetry profile, explicit promotion authorization, policy gates and frozen holdouts are unchanged. No frozen-holdout, benchmark, live capture or product-wide production acceptance is claimed by this unit-test gate.
