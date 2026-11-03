@@ -1618,3 +1618,20 @@ The implementation reuses the existing `TrustedAuditReceiptVerifier` and `Truste
 **Fail-closed boundary:** every assessment remains non-alerting (`AlertPermitted=false`). A fully correlated candidate returns `R275_SIGNED_IDP_AUDIT_CANDIDATE_NOT_INTEGRATED`. No trusted field was added to `TrafficRecord`, `RuleEvaluationContext` remains packet-only, and R275 itself still fails closed with `TRUSTED_DEVICE_CODE_ABUSE_EVENT_UNAVAILABLE`.
 
 **Verification status:** SOURCE CANDIDATE — UNVERIFIED. Focused tests are authored but have not yet been executed in this increment. No confidence floor, runtime mode, holdout fixture, replay classification, V1/V2 state or alert policy was changed.
+
+#### 2026-11-03 — Microsoft Entra device-code SigninLogs intake authored for R275
+
+A provider-facing, still-untrusted parser was added after checking Microsoft's current Azure Monitor `SigninLogs` schema.
+
+Source commits:
+- `856ae9c952df340ad19c25236c4d00483e30d50b` — strict projected `SigninLogs` parser.
+- `c30c1bbf296805b0a7795a15025948d40805a6c4` — focused Entra parser tests.
+- `40c3389e15be29bf0cdf415ffaae56c8b02ddb8b` — require explicit UTC timestamps.
+- `e87781a6764e5489c4e82b3737c431d1224bc5ab` — cover non-UTC timestamp rejection.
+- `99683f39b548228bcd5485c631924026e0273971` — portable UTC-shape check.
+
+The parser accepts only a narrow projection of Microsoft Entra `SigninLogs`. It recognizes only successful `AuthenticationProtocol=deviceCode` events whose risk state is `confirmedCompromised` and whose risk detail is `adminConfirmedSigninCompromised`. It validates typed identifiers and source IP, hashes user/app/resource/tenant identifiers before emitting an observation, and rejects unexpected PII/token fields.
+
+**Trust boundary:** the output remains `FromTrustedProviderTransport=false`. No Microsoft credential, Graph/Log Analytics client, trusted transport, private signing key, rule-engine wiring or alert promotion was introduced. This layer validates provider semantics only; it does not prove the JSON came from Microsoft Entra.
+
+**Verification status:** SOURCE CANDIDATE — UNVERIFIED. The new Entra parser tests and the earlier R275 signed-candidate tests must be run together before marking this increment GREEN.
