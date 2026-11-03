@@ -13,16 +13,16 @@ authored regression tests, batch specification and ledger update together.
 Distinguish authored tests from executed test evidence and a detector match
 from a validated operational alert.
 
-**New protocol-informed detection GA (2026-11-01):** [R546](RULE_BATCH_546-546.md) — one additional registered NTP mode-7 monlist **outbound distinct-target fanout** rule, P0051; Medium / **Shadow**, three public destinations in five minutes, minimum confidence 80%, ten-minute cooldown. [Research-to-threat backlog](rules/PROTOCOL_INFORMED_THREAT_BACKLOG.md). **SOURCE CANDIDATE — UNVERIFIED; 18 xUnit methods / 23 invocations authored; 0 executed.** R242 and all other prior rules, floors, sensors and holdouts unchanged. Next proposed R547, subject to live-ID audit.
+**New protocol-informed detection GA (2026-11-01):** [R546](03-detection-rules/batches/RULE_BATCH_546-546.md) — one additional registered NTP mode-7 monlist **outbound distinct-target fanout** rule, P0051; Medium / **Shadow**, three public destinations in five minutes, minimum confidence 80%, ten-minute cooldown. [Research-to-threat backlog](rules/PROTOCOL_INFORMED_THREAT_BACKLOG.md). **SOURCE CANDIDATE — UNVERIFIED; 18 xUnit methods / 23 invocations authored; 0 executed.** R242 and all other prior rules, floors, sensors and holdouts unchanged. Next proposed R547, subject to live-ID audit.
 
-**Previous protocol-informed detection GA (2026-11-01):** [R545](RULE_BATCH_545-545.md) — one new registered BACnet external-origin I-Am rule, High severity / **Shadow**, two wire-classified packets in five minutes, minimum confidence 80%, ten-minute cooldown. [Deduplicated source-to-rule backlog](rules/PROTOCOL_INFORMED_THREAT_BACKLOG.md). **SOURCE CANDIDATE — UNVERIFIED; 16 xUnit methods / 22 invocations authored; 0 executed.** Historical R001–R544, precision floors, holdouts and producer contracts unchanged. Next proposed R546, subject to fresh live-ID audit.
+**Previous protocol-informed detection GA (2026-11-01):** [R545](03-detection-rules/batches/RULE_BATCH_545-545.md) — one new registered BACnet external-origin I-Am rule, High severity / **Shadow**, two wire-classified packets in five minutes, minimum confidence 80%, ten-minute cooldown. [Deduplicated source-to-rule backlog](rules/PROTOCOL_INFORMED_THREAT_BACKLOG.md). **SOURCE CANDIDATE — UNVERIFIED; 16 xUnit methods / 22 invocations authored; 0 executed.** Historical R001–R544, precision floors, holdouts and producer contracts unchanged. Next proposed R546, subject to fresh live-ID audit.
 
-**Historical latest ten-rule continuation:** [R531–R540](RULE_BATCH_531-540.md) — **SOURCE CANDIDATE — UNVERIFIED**; all ten **BLOCKED** pending authenticated local health producer measurements and correlated outcomes. **210 authored xUnit invocations, 0 executed.** Source commit `9158181dd696f6c9158997a904ba104aa9044f3e`; authored-test commit `219a33a20f9b0ba54ce892f26848dbcbcf9d885e`; publication SHA is the resulting documentation-descendant live branch HEAD (a commit cannot embed its own SHA). Original modes, confidence floors, thresholds, cooldowns, maturity and privacy controls unchanged. Next contiguous IDs **R541–R550**, but only R541–R544 have existing classes at inspected HEAD; **R545–R550 are absent**, so do not invent them and reconcile the catalog before attempting the next ten-existing-rule GA.
-The prior [R521–R530](RULE_BATCH_521-530.md) remains **SOURCE CANDIDATE — UNVERIFIED** with 270 authored xUnit invocations, 0 executed.
-The prior [R511–R520](RULE_BATCH_511-520.md) remains **SOURCE CANDIDATE — UNVERIFIED** with 250 authored xUnit invocations, 0 executed.
-The prior [R501–R510](RULE_BATCH_501-510.md) remains **SOURCE CANDIDATE — UNVERIFIED** with 230 authored xUnit invocations, 0 executed.
-The prior [R481–R490](RULE_BATCH_481-490.md) remains **SOURCE CANDIDATE — UNVERIFIED** with 210 authored xUnit invocations, 0 executed.
-The prior [R471–R480](RULE_BATCH_471-480.md) remains **SOURCE CANDIDATE — UNVERIFIED** with 200 authored xUnit invocations, 0 executed. The 2026-10-30 author-only branch rewrite replaced historical HEAD `a7166038cd947339d9671d7a873babbd00db080a` with `4dd73f3f6de2c0c6b9a6fd299d0c306ebcc3a9cc`; old commit references are historical, never publication leases.
+**Historical latest ten-rule continuation:** [R531–R540](03-detection-rules/batches/RULE_BATCH_531-540.md) — **SOURCE CANDIDATE — UNVERIFIED**; all ten **BLOCKED** pending authenticated local health producer measurements and correlated outcomes. **210 authored xUnit invocations, 0 executed.** Source commit `9158181dd696f6c9158997a904ba104aa9044f3e`; authored-test commit `219a33a20f9b0ba54ce892f26848dbcbcf9d885e`; publication SHA is the resulting documentation-descendant live branch HEAD (a commit cannot embed its own SHA). Original modes, confidence floors, thresholds, cooldowns, maturity and privacy controls unchanged. Next contiguous IDs **R541–R550**, but only R541–R544 have existing classes at inspected HEAD; **R545–R550 are absent**, so do not invent them and reconcile the catalog before attempting the next ten-existing-rule GA.
+The prior [R521–R530](03-detection-rules/batches/RULE_BATCH_521-530.md) remains **SOURCE CANDIDATE — UNVERIFIED** with 270 authored xUnit invocations, 0 executed.
+The prior [R511–R520](03-detection-rules/batches/RULE_BATCH_511-520.md) remains **SOURCE CANDIDATE — UNVERIFIED** with 250 authored xUnit invocations, 0 executed.
+The prior [R501–R510](03-detection-rules/batches/RULE_BATCH_501-510.md) remains **SOURCE CANDIDATE — UNVERIFIED** with 230 authored xUnit invocations, 0 executed.
+The prior [R481–R490](03-detection-rules/batches/RULE_BATCH_481-490.md) remains **SOURCE CANDIDATE — UNVERIFIED** with 210 authored xUnit invocations, 0 executed.
+The prior [R471–R480](03-detection-rules/batches/RULE_BATCH_471-480.md) remains **SOURCE CANDIDATE — UNVERIFIED** with 200 authored xUnit invocations, 0 executed. The 2026-10-30 author-only branch rewrite replaced historical HEAD `a7166038cd947339d9671d7a873babbd00db080a` with `4dd73f3f6de2c0c6b9a6fd299d0c306ebcc3a9cc`; old commit references are historical, never publication leases.
 
 | Batch | Rules | Development status | Test evidence |
 | --- | --- | --- | --- |
@@ -858,7 +858,7 @@ Event HTTP path redaction now includes R371–R380. The existing full
 replay GAs, R102 V1 FAILED 4/6 and V2 0/4 independent sources remain
 separate and unchanged. Exact owned files, scenario inventory, false-positive
 risks, producer gaps, privacy boundaries and AWS protocol references:
-[GA R371–R380](RULE_BATCH_371-380.md).
+[GA R371–R380](03-detection-rules/batches/RULE_BATCH_371-380.md).
 
 **Next sequential source-development GA: R381–R390 only after the
 coherent source/test/docs candidate is published and live HEAD rechecked.**
@@ -900,7 +900,7 @@ approved sources remain unchanged; R102 80%, R118 86%, R163 84%,
 external R102 0.75 floors preserved. Exact ten profiles, changed source
 paths, false-positive risks, authoritative Azure/Cloudflare API references,
 94 authored scenario inventory and outstanding validation:
-[GA R381–R390](RULE_BATCH_381-390.md).
+[GA R381–R390](03-detection-rules/batches/RULE_BATCH_381-390.md).
 
 **Next contiguous ten-rule GA: R391–R400 after safe publication and
 live HEAD review.** No unrelated rule or UI changes were made in this GA.
@@ -936,7 +936,7 @@ CI, runner, benchmark or production capture. Original modes, thresholds,
 confidence floors, windows, cooldowns, approvals, privacy, journal,
 baseline and frozen R102 evidence unchanged. The historical 4,940/4,940
 checkpoint predates this candidate; R343/R295/R275/R163 replay GAs remain
-independent. See [GA R391–R400](RULE_BATCH_391-400.md) for source, exact
+independent. See [GA R391–R400](03-detection-rules/batches/RULE_BATCH_391-400.md) for source, exact
 scenario inventory, false-positive risks and missing producers.
 
 **Next contiguous ten-rule GA: R401–R410 after safe publication and
@@ -945,7 +945,7 @@ live HEAD review.** UI-owned files were not modified.
 
 ## GA R401–R410 — malware-family attribution provenance, 2026-10-30
 
-[Batch contract and scenario inventory](RULE_BATCH_401-410.md).
+[Batch contract and scenario inventory](03-detection-rules/batches/RULE_BATCH_401-410.md).
 **SOURCE CANDIDATE — UNVERIFIED**; all ten rules **BLOCKED** on missing
 independently validated family-specific signatures, authenticated agent/SMTP
 outcome, or LNK execution provenance. The shared evaluator fails closed
@@ -961,7 +961,7 @@ checkpoint does not verify this candidate. Next sequential GA: **R411–R420**.
 
 ## GA R411–R420 — unsupported family, cadence and appliance attribution, 2026-10-30
 
-[Ten-rule evidence contract and 120-scenario inventory](RULE_BATCH_411-420.md).
+[Ten-rule evidence contract and 120-scenario inventory](03-detection-rules/batches/RULE_BATCH_411-420.md).
 **SOURCE CANDIDATE — UNVERIFIED**. From inspected live base
 `e1e9fd5b862ced09bc7ab807f28e26639c976e0b` (including UI-06),
 source commit `408eaddaa0398ee120044edacef9b3556ed52d35` and
@@ -986,7 +986,7 @@ fresh live source review. UI-owned paths untouched.
 
 ## GA R421–R430 — management endpoint and service-exposure provenance, 2026-10-30
 
-[Ten-rule evidence contract and 120-scenario inventory](RULE_BATCH_421-430.md).
+[Ten-rule evidence contract and 120-scenario inventory](03-detection-rules/batches/RULE_BATCH_421-430.md).
 **SOURCE CANDIDATE — UNVERIFIED**; R421, R422, R423, R424, R425,
 R426, R427, R428, R429 and R430 all **BLOCKED** on missing trusted
 product identity, correlated response/outcome or verified probe context.
@@ -1015,7 +1015,7 @@ producers. No family/product attribution or login success from packet ports,
 paths, `Info`, forged headers or encrypted metadata. Original modes,
 severities, thresholds (including R439=4), windows, cooldowns, floors,
 approvals, privacy, journal and baseline controls preserved. See
-[R431–R440 batch contract](RULE_BATCH_431-440.md) for individual reasons,
+[R431–R440 batch contract](03-detection-rules/batches/RULE_BATCH_431-440.md) for individual reasons,
 legitimate-traffic risks and exact scenario matrix.
 
 **140 concrete xUnit invocations AUTHORED, 0 EXECUTED**; no builds,
@@ -1047,7 +1047,7 @@ Original Alert modes, confidence **82%**, thresholds (**R442=4**, others 1),
 windows (**R442=10m**, others 15m), cooldown **30m**, severities
 (**R449 Medium**, others High), approvals, privacy, journal and baseline
 safeguards preserved. No new secret retention or UI changes.
-See [R441–R450 batch contract](RULE_BATCH_441-450.md) for ten individual
+See [R441–R450 batch contract](03-detection-rules/batches/RULE_BATCH_441-450.md) for ten individual
 reason codes, legitimate-traffic risks, original protocol mismatches,
 privacy limits and the exact authored scenario inventory.
 
@@ -1063,7 +1063,7 @@ service boundary helper, new test file, this batch doc and progress ledger.
 ## GA R451–R460 source-only publication — 2026-10-30
 
 - Ten consecutive rules R451, R452, R453, R454, R455, R456, R457, R458, R459, R460: **BLOCKED** on missing authenticated MQTT/DB outcome, calibrated mDNS discovery/host-role, SSDP/IPP/NetBIOS protocol or printer identity evidence.
-- Source `7f94a2e37c53981cb71d5e927b99c9638c316db3`; authored tests `95f4be3099c80e25efbef50e85f289919d7d3066`; [batch specification](RULE_BATCH_451-460.md). Publication commit is the documentation commit at the branch HEAD when the atomic expected-HEAD update succeeds; the run report records its exact SHA.
+- Source `7f94a2e37c53981cb71d5e927b99c9638c316db3`; authored tests `95f4be3099c80e25efbef50e85f289919d7d3066`; [batch specification](03-detection-rules/batches/RULE_BATCH_451-460.md). Publication commit is the documentation commit at the branch HEAD when the atomic expected-HEAD update succeeds; the run report records its exact SHA.
 - **180 xUnit invocations authored, 0 executed; SOURCE CANDIDATE — UNVERIFIED.** No build, test, replay, CI, runner or capture was run. Original thresholds, modes, confidence floors, privacy, approvals and historical holdout evidence preserved.
 - Next independent ten-rule GA: **R461–R470**, after live HEAD inspection.
 
@@ -1074,7 +1074,7 @@ service boundary helper, new test file, this batch doc and progress ledger.
 source commit `bfe817ee7a3b0e24a7dbd6c255f27187b8905c9d`; authored-test commit `2cd4ba6eace2d4242e34f453bc1603cdec27a0bd`.
 Atomic publication is the documentation-descendant branch HEAD after the
 single non-forced expected-HEAD ref update; its SHA cannot be embedded in
-its own commit. See [R461–R470 batch specification](RULE_BATCH_461-470.md).
+its own commit. See [R461–R470 batch specification](03-detection-rules/batches/RULE_BATCH_461-470.md).
 
 **R461, R462, R463, R464, R465, R466, R467, R468, R469, R470:
 all BLOCKED.** Missing trusted DHCP lease/server outcomes, ARP binding
@@ -1094,7 +1094,7 @@ conditional on live HEAD inspection.
 
 ## GA R491–R500 — 2026-10-30 source-only candidate
 
-Publication base HEAD `316004fc4fe176ee3250add7c530282d3af30396`; source `77fd467f292c0b4ddccac0b28c2134f450f4baef`; authored tests `e64a5a3fcbedb5c3f7bea0ad842e4c016729e282`; atomic publication is the documentation-descendant commit at the branch ref. **230 authored, 0 executed**. All ten dispositions **BLOCKED**: R491 GOOSE L2/substation provenance; R492 historian query/result and asset authority; R493 browser password store; R494 SSH private key; R495 KeePass database; R496 VPN configuration; R497 browser cookies; R498 clipboard sync; R499 RDP file transfer; R500 archive-to-cloud sequence. [Individual evidence codes, original profiles, false-positive boundaries and exact scenarios](RULE_BATCH_491-500.md). No original modes, confidence floors, thresholds, windows, cooldowns, privacy, approvals or frozen GAs changed. **Next: R501–R510**, only after a fresh live audit.
+Publication base HEAD `316004fc4fe176ee3250add7c530282d3af30396`; source `77fd467f292c0b4ddccac0b28c2134f450f4baef`; authored tests `e64a5a3fcbedb5c3f7bea0ad842e4c016729e282`; atomic publication is the documentation-descendant commit at the branch ref. **230 authored, 0 executed**. All ten dispositions **BLOCKED**: R491 GOOSE L2/substation provenance; R492 historian query/result and asset authority; R493 browser password store; R494 SSH private key; R495 KeePass database; R496 VPN configuration; R497 browser cookies; R498 clipboard sync; R499 RDP file transfer; R500 archive-to-cloud sequence. [Individual evidence codes, original profiles, false-positive boundaries and exact scenarios](03-detection-rules/batches/RULE_BATCH_491-500.md). No original modes, confidence floors, thresholds, windows, cooldowns, privacy, approvals or frozen GAs changed. **Next: R501–R510**, only after a fresh live audit.
 
 ## GA R501–R510 — outbound upload and provider outcome evidence boundary (2026-10-30)
 
@@ -1107,7 +1107,7 @@ The source guard fails closed before generic scoring, burst/cooldown state
 or event construction. Original Alert profiles (84% confidence, thresholds,
 windows, 35m cooldowns), privacy, approvals, journal, baseline and frozen
 R102 evidence remain unchanged. See [ten individual dispositions, reason
-codes, legitimate-traffic risks and scenarios](RULE_BATCH_501-510.md).
+codes, legitimate-traffic risks and scenarios](03-detection-rules/batches/RULE_BATCH_501-510.md).
 
 **230 concrete xUnit invocations AUTHORED; ZERO EXECUTED.** No build,
 test, replay, holdout, CI, Windows runner, benchmark or production capture.

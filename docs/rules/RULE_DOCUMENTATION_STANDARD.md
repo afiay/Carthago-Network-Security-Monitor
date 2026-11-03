@@ -19,9 +19,13 @@ describe implemented behavior, not an aspiration or a rule's descriptive name.
 
 ## 2. Mandatory per-batch document
 
-Path: `docs/RULE_BATCH_NNN-NNN.md` for the actual contiguous batch, ten rules
+Path: `docs/03-detection-rules/batches/RULE_BATCH_NNN-NNN.md` for the actual contiguous batch, ten rules
 per recurring development GA as of R361; retain existing five-rule historical
-documents as authored.
+documents as authored. Historical batch paths were relocated without merging
+their evidence; use the [legacy-path register](../10-reference/LEGACY_DOCUMENTATION_PATHS.md)
+when resolving an old commit or automation transcript. New GAs must use the
+categorized path, regenerate [the topic index](../03-detection-rules/README.md),
+and update the unchanged-path [progress ledger](../RULE_HARDENING_PROGRESS.md).
 
 Use this concise hierarchy:
 

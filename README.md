@@ -4,6 +4,8 @@
 
 **Windows · C# · .NET 8 · WPF · Local-first security operations**
 
+**[Browse the complete documentation](docs/README.md)** — organized by architecture, detection rules, protocol research, verification, development, design, operations and integrations.
+
 Carthago is a Windows desktop application for observing network traffic, detecting suspicious behavior, and turning security signals into evidence-led investigations. It combines live packet analysis, a configurable detection engine, local event journaling, incident correlation, and optional forwarding to security and observability platforms.
 
 Built for security labs, detection engineering, and hands-on network operations, Carthago keeps the original evidence separate from dashboards, recommendations, and external integrations.
@@ -30,14 +32,14 @@ Built for security labs, detection engineering, and hands-on network operations,
 | Area | What Carthago provides |
 | --- | --- |
 | **Capture and visibility** | Windows network capture using SharpPcap or an ETW capture option; IPv4/IPv6, transport-layer, and selected DNS, HTTP, TLS, and QUIC metadata parsing. |
-| **Detection engineering** | **544 built-in rule registrations (R001–R544)** covering reconnaissance, identity, lateral movement, DNS, TLS, web/API activity, exfiltration, IoT/OT, cloud and development tooling, and platform health. |
+| **Detection engineering** | An expanding R-series rule catalog covering reconnaissance, identity, lateral movement, DNS, TLS, web/API activity, exfiltration, IoT/OT, cloud and development tooling, and platform health. See the live rule registry for the current count. |
 | **Context and enrichment** | Process association where available, service identification, WHOIS/RDAP, threat intelligence, reputation, and optional geolocation data. |
 | **Evidence and investigations** | Durable JSONL detection journal, outbox, incident correlation, entity-risk context, investigation timelines, and analyst feedback foundations. |
 | **Analyst experience** | WPF dashboards and workspaces for live traffic, alerts, anomalies, incidents, threat feeds, host integrity, integrations, and sink-delivery events. |
 | **Interoperability** | Optional forwarding to OTLP, Azure Monitor, Splunk HEC, Elasticsearch, Kafka, CEF Syslog, GELF HTTP, JSONL files, and webhooks. |
 | **Validation** | xUnit tests, deterministic rule/replay fixtures, a benchmark project, and rule-catalog precision/health checks. |
 
-The catalog size describes registered rules, **not 544 guaranteed detections**. Rules depend on available telemetry, configuration, thresholds, and validation maturity. See the [rule registry](Carthago/Engine/Rules/Catalog/RuleRegistry.cs) and [detection engineering model](Carthago/docs/DetectionEngineeringModel.md).
+The catalog describes registered rules, **not guaranteed detections**. Rules depend on available telemetry, configuration, thresholds, and validation maturity. See the [rule registry](Carthago/Engine/Rules/Catalog/RuleRegistry.cs) and [detection engineering model](docs/03-detection-rules/guides/DetectionEngineeringModel.md).
 
 ## Architecture
 
@@ -111,11 +113,11 @@ ABUSEIPDB_API_KEY=replace_with_your_own_key
 
 The application can run without this key; it warns that AbuseIPDB lookups are unavailable. Other external integrations may require their own credentials, endpoints, and network access.
 
-Configuration and generated runtime state are described in [Runtime Data](docs/runtime-data.md). Local journals, outboxes, feedback, baselines, packet captures, and generated reports should not be committed.
+Configuration and generated runtime state are described in [Runtime Data](docs/08-operations/runtime-data.md). Local journals, outboxes, feedback, baselines, packet captures, and generated reports should not be committed.
 
 ## Detection engineering
 
-The built-in catalog spans IDs **R001–R544**. Examples of covered signal families include:
+The built-in catalog spans the expanding R-series IDs. Examples of covered signal families include:
 
 - **Network behavior:** scanning, service exposure, lateral-movement patterns, novel destinations, and abnormal traffic volumes.
 - **Identity and web:** unusual authentication behavior, credential exposure indicators, suspicious HTTP/API requests, and TLS anomalies.
@@ -127,17 +129,17 @@ Each rule is modeled as a detection-engineering asset with metadata, telemetry r
 
 Start with:
 
-- [Detection engineering model](Carthago/docs/DetectionEngineeringModel.md)
-- [Rule precision profiles](Carthago/docs/RulePrecisionProfiles.md)
-- [Rule expansion R123–R272](Carthago/docs/R123_R272_SelectedRules.md)
-- [Rule expansion R273–R544](Carthago/docs/R273_R544_SelectedRules.md)
-- [Adding detection rules](Carthago/docs/AddingDetectionRules.md)
+- [Detection engineering model](docs/03-detection-rules/guides/DetectionEngineeringModel.md)
+- [Rule precision profiles](docs/03-detection-rules/guides/RulePrecisionProfiles.md)
+- [Rule expansion R123–R272](docs/03-detection-rules/guides/R123_R272_SelectedRules.md)
+- [Rule expansion R273–R544](docs/03-detection-rules/guides/R273_R544_SelectedRules.md)
+- [Adding detection rules](docs/03-detection-rules/guides/AddingDetectionRules.md)
 
 ### Investigation and guarded assistance
 
 Incident correlation, entity scoring, analyst feedback, and investigation context build on preserved journal evidence. The current [`LocalInvestigationCopilot`](Carthago/Services/InvestigationCopilot/LocalInvestigationCopilot.cs) provides **bounded, evidence-linked summaries** from supplied local facts; it is not a general-purpose conversational model and does not autonomously isolate or block endpoints.
 
-The v6 foundation also contains interfaces and models for response playbooks, sensors, content packs, hunting, and automation. **Full enforcement adapters, cloud fleet management, and some richer UI capabilities remain future work**, as noted in the [v6 vision](Carthago/docs/CarthagoV6Vision.md).
+The v6 foundation also contains interfaces and models for response playbooks, sensors, content packs, hunting, and automation. **Full enforcement adapters, cloud fleet management, and some richer UI capabilities remain future work**, as noted in the [v6 vision](docs/02-architecture/CarthagoV6Vision.md).
 
 ## Integrations
 
@@ -173,7 +175,7 @@ Run the replay benchmark (after restoring dependencies):
 .\scripts\run-replay-benchmark.ps1
 ```
 
-The [demo scenario](docs/demo-scenario.md) walks through an evolving suspicious host, correlated detections, incident evidence, and analyst feedback. See [Replay Testing](Carthago/docs/ReplayTesting.md) for sample expectations.
+The [demo scenario](docs/01-getting-started/demo-scenario.md) walks through an evolving suspicious host, correlated detections, incident evidence, and analyst feedback. See [Replay Testing](docs/05-detection-quality/guides/ReplayTesting.md) for sample expectations.
 
 These commands describe the intended Windows workflow; **this README update does not claim a fresh successful build, test run, or production certification**.
 
@@ -186,7 +188,7 @@ These commands describe the intended Windows workflow; **this README update does
 - **Controlled response:** containment recommendations are not automatic authorization to execute disruptive actions. Response integrations require deliberate review and safeguards.
 - **Platform scope:** this is a Windows desktop project. Current v6 foundations do not imply a production-ready, managed multi-sensor SaaS platform.
 
-For the documented architectural constraints, read [Architecture Safety Rules](Carthago/docs/ArchitectureSafetyRules.md).
+For the documented architectural constraints, read [Architecture Safety Rules](docs/02-architecture/ArchitectureSafetyRules.md).
 
 ## Project layout and documentation
 
@@ -197,19 +199,22 @@ Carthago.Benchmarks/    Replay and benchmarking console project
 Carthago/Tests/         Additional rule-architecture test harness
 Tests/                  Replay and other testing fixtures
 config/samples/         Example content-pack configurations
-docs/                   Demo, UI, runtime, and integration documentation
-Carthago/docs/          Detection engineering and v6 architecture guides
+docs/README.md          Complete categorized documentation navigation
+docs/01-*/ ... 10-*/    Getting started through reference, organized by topic
+docs/archive/           Historical UI implementation notes
+docs/rules/, docs/design/  Path-stable work contracts and current progress ledgers
 scripts/                Build, test, and replay benchmark scripts
 DOTNET.sln              Solution entry point
 ```
 
 Useful starting points:
 
-- [Architecture and safety](Carthago/docs/ArchitectureSafetyRules.md)
-- [Content packs](Carthago/docs/ContentPacks.md) · [pack examples](docs/ContentPacks/README.md)
-- [Investigation copilot](Carthago/docs/InvestigationCopilot.md) · [response playbooks](Carthago/docs/ResponsePlaybooks.md)
-- [Runtime data and persistence](docs/runtime-data.md)
-- [Demo and analyst walkthrough](docs/demo-scenario.md)
+- [All documentation](docs/README.md) · [legacy path map](docs/10-reference/LEGACY_DOCUMENTATION_PATHS.md)
+- [Architecture and safety](docs/02-architecture/ArchitectureSafetyRules.md)
+- [Content packs](docs/03-detection-rules/guides/ContentPacks.md) · [pack examples](docs/03-detection-rules/content-packs/README.md)
+- [Investigation copilot](docs/08-operations/guides/InvestigationCopilot.md) · [response playbooks](docs/08-operations/guides/ResponsePlaybooks.md)
+- [Runtime data and persistence](docs/08-operations/runtime-data.md)
+- [Demo and analyst walkthrough](docs/01-getting-started/demo-scenario.md)
 
 ## License
 

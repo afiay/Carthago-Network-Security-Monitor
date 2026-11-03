@@ -274,7 +274,7 @@ creating adapters or inventing working commands.
 `75caad103da26d1a3c2e1f5b207185ed76188b3f`, including the
 independent R401–R410 rule candidate and UI-05. UI source commit:
 `f61bd16d4609e88c51ebaa099050d6eb018e9188`. The design ledger and
-[future CLI/Avalonia specification](CARTHAGO_CLI_AVALONIA_FUTURE_ARCHITECTURE.md)
+[future CLI/Avalonia specification](../07-design/roadmap/CARTHAGO_CLI_AVALONIA_FUTURE_ARCHITECTURE.md)
 are committed as its descendant. Final publication SHA is the feature ref
 after the single expected-HEAD non-forced update; a Git commit cannot contain
 its own SHA. **No builds, tests, replays, CI, Windows runner or capture executed.**
