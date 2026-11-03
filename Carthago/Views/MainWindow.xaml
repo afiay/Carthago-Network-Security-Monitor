@@ -241,7 +241,7 @@
                   BorderThickness="1"
                   Padding="12,10"
                   Margin="0,0,12,0">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <WrapPanel VerticalAlignment="Center">
               <Border x:Name="MonitoringStatusBadge"
                       Style="{StaticResource Pill}"
                       Background="{StaticResource StatusMonitoringBgBrush}"
@@ -267,7 +267,7 @@
                            AutomationProperties.HelpText="Current ShowAnomaliesOnly dashboard preference: Anomalies only or Expanded telemetry. Not proof of active capture, sensor health or verified detection."
                            FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentAltBrush}"/>
               </Border>
-            </StackPanel>
+            </WrapPanel>
           </Border>
 
           <Border x:Name="CommandHeaderSourceGroup"
@@ -286,7 +286,7 @@
               <TextBlock x:Name="HeaderCaptureSourceLabel" Text="Capture source" Style="{StaticResource MicroLabel}"/>
               <ComboBox x:Name="DeviceComboBox"
                         Grid.Row="1"
-                        MinWidth="180"
+                        MinWidth="120"
                         MaxWidth="320"
                         Height="32"
                         HorizontalAlignment="Stretch"
@@ -338,11 +338,14 @@
             </Grid>
           </Border>
 
-          <StackPanel x:Name="CommandHeaderActionsGroup" Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="8,0,0,0">
+          <Border x:Name="CommandHeaderActionsSurface" Grid.Column="3"
+                  Background="#10273B" BorderBrush="#2B5267" BorderThickness="1"
+                  CornerRadius="10" Padding="12,10">
+          <StackPanel x:Name="CommandHeaderActionsGroup" VerticalAlignment="Center" HorizontalAlignment="Stretch">
             <WrapPanel HorizontalAlignment="Right">
-              <Button x:Name="StartButton" Content="&#x25B6;  Start Monitoring" Width="164" Height="42" Style="{StaticResource PrimaryButton}" Click="StartButton_Click"/>
-              <Button x:Name="StopButton" Content="&#x23F8;  Pause Monitoring" Width="148" Height="42" Style="{StaticResource SecondaryButton}" Click="StopButton_Click" IsEnabled="False" Visibility="Collapsed"/>
-              <Button x:Name="TestRepButton" Content="Test Reputation" Width="132" Height="42" Style="{StaticResource SecondaryButton}" Click="TestReputation_Click" Margin="8,0,0,0"/>
+              <Button x:Name="StartButton" Content="&#x25B6;  Start Monitoring" Width="164" Height="42" Margin="0,0,8,8" Style="{StaticResource PrimaryButton}" Click="StartButton_Click"/>
+              <Button x:Name="StopButton" Content="&#x23F8;  Pause Monitoring" Width="148" Height="42" Margin="0,0,8,8" Style="{StaticResource SecondaryButton}" Click="StopButton_Click" IsEnabled="False" Visibility="Collapsed"/>
+              <Button x:Name="TestRepButton" Content="Test Reputation" Width="132" Height="42" Style="{StaticResource SecondaryButton}" Click="TestReputation_Click" Margin="0,0,8,8"/>
               <!-- GA UI-28: the ellipsis has no connected menu, command or click handler. -->
               <Button Content="&#x22EE;"
                       Width="40" Height="42"
@@ -352,9 +355,9 @@
                       ToolTip="Additional dashboard actions are unavailable in this view."
                       AutomationProperties.Name="More dashboard actions unavailable"
                       AutomationProperties.HelpText="No additional dashboard actions menu is implemented here. Use the available visible controls."
-                      Margin="8,0,0,0"/>
+                      Margin="0,0,0,8"/>
             </WrapPanel>
-            <WrapPanel HorizontalAlignment="Right" Margin="0,5,0,0">
+            <WrapPanel HorizontalAlignment="Right" Margin="0,10,0,0">
               <CheckBox x:Name="AnomaliesOnlyToggle"
                         Content="Show anomalies only"
                         VerticalAlignment="Center"
@@ -373,6 +376,7 @@
                       Margin="12,0,0,0"/>
             </WrapPanel>
           </StackPanel>
+          </Border>
         </Grid>
       </Border>
 

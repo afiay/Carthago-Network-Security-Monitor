@@ -85,17 +85,17 @@ public partial class MainWindow
             PositionHeaderGroup(CommandHeaderStatusGroup, 0, 0);
             PositionHeaderGroup(CommandHeaderSourceGroup, 0, 1);
             PositionHeaderGroup(CommandHeaderAnalysisGroup, 0, 2);
-            PositionHeaderGroup(CommandHeaderActionsGroup, 0, 3);
+            PositionHeaderGroup(CommandHeaderActionsSurface, 0, 3);
 
             CommandHeaderStatusGroup.Margin = new Thickness(0, 0, 12, 0);
             CommandHeaderSourceGroup.Margin = new Thickness(0, 0, 12, 0);
             CommandHeaderAnalysisGroup.Margin = new Thickness(0, 0, 12, 0);
-            CommandHeaderStatusGroup.BorderThickness = new Thickness(0, 0, 1, 0);
-            CommandHeaderSourceGroup.BorderThickness = new Thickness(0, 0, 1, 0);
-            CommandHeaderAnalysisGroup.BorderThickness = new Thickness(0, 0, 1, 0);
+            CommandHeaderStatusGroup.BorderThickness = new Thickness(1);
+            CommandHeaderSourceGroup.BorderThickness = new Thickness(1);
+            CommandHeaderAnalysisGroup.BorderThickness = new Thickness(1);
             CommandHeader.MinHeight = 92;
             CommandHeader.Padding = new Thickness(12, 12, 12, 10);
-            CommandHeaderActionsGroup.HorizontalAlignment = HorizontalAlignment.Right;
+            CommandHeaderActionsGroup.HorizontalAlignment = HorizontalAlignment.Stretch;
             return;
         }
 
@@ -110,20 +110,20 @@ public partial class MainWindow
             CommandHeaderQuaternaryRow.Height = GridLength.Auto;
 
             PositionHeaderGroup(CommandHeaderStatusGroup, 0, 0);
-            PositionHeaderGroup(CommandHeaderActionsGroup, 1, 0);
+            PositionHeaderGroup(CommandHeaderActionsSurface, 1, 0);
             PositionHeaderGroup(CommandHeaderSourceGroup, 2, 0);
             PositionHeaderGroup(CommandHeaderAnalysisGroup, 3, 0);
 
             CommandHeaderStatusGroup.Margin = new Thickness(0, 0, 0, 8);
-            CommandHeaderActionsGroup.Margin = new Thickness(0, 0, 0, 8);
+            CommandHeaderActionsSurface.Margin = new Thickness(0, 0, 0, 8);
             CommandHeaderSourceGroup.Margin = new Thickness(0, 0, 0, 8);
             CommandHeaderAnalysisGroup.Margin = new Thickness(0);
-            CommandHeaderStatusGroup.BorderThickness = new Thickness(0, 0, 0, 1);
-            CommandHeaderSourceGroup.BorderThickness = new Thickness(0, 0, 0, 1);
-            CommandHeaderAnalysisGroup.BorderThickness = new Thickness(0);
+            CommandHeaderStatusGroup.BorderThickness = new Thickness(1);
+            CommandHeaderSourceGroup.BorderThickness = new Thickness(1);
+            CommandHeaderAnalysisGroup.BorderThickness = new Thickness(1);
             CommandHeader.MinHeight = 0;
             CommandHeader.Padding = new Thickness(8);
-            CommandHeaderActionsGroup.HorizontalAlignment = HorizontalAlignment.Left;
+            CommandHeaderActionsGroup.HorizontalAlignment = HorizontalAlignment.Stretch;
             return;
         }
 
@@ -136,20 +136,20 @@ public partial class MainWindow
         CommandHeaderQuaternaryRow.Height = new GridLength(0);
 
         PositionHeaderGroup(CommandHeaderStatusGroup, 0, 0);
-        PositionHeaderGroup(CommandHeaderActionsGroup, 0, 1);
+        PositionHeaderGroup(CommandHeaderActionsSurface, 0, 1);
         PositionHeaderGroup(CommandHeaderSourceGroup, 1, 0);
         PositionHeaderGroup(CommandHeaderAnalysisGroup, 1, 1);
 
         CommandHeaderStatusGroup.Margin = new Thickness(0, 0, 10, 8);
-        CommandHeaderActionsGroup.Margin = new Thickness(0, 0, 0, 8);
+        CommandHeaderActionsSurface.Margin = new Thickness(0, 0, 0, 8);
         CommandHeaderSourceGroup.Margin = new Thickness(0, 0, 10, 0);
         CommandHeaderAnalysisGroup.Margin = new Thickness(0);
-        CommandHeaderStatusGroup.BorderThickness = new Thickness(0, 0, 1, 0);
-        CommandHeaderSourceGroup.BorderThickness = new Thickness(0, 1, 1, 0);
-        CommandHeaderAnalysisGroup.BorderThickness = new Thickness(0, 1, 0, 0);
+        CommandHeaderStatusGroup.BorderThickness = new Thickness(1);
+        CommandHeaderSourceGroup.BorderThickness = new Thickness(1);
+        CommandHeaderAnalysisGroup.BorderThickness = new Thickness(1);
         CommandHeader.MinHeight = 0;
         CommandHeader.Padding = compact ? new Thickness(10) : new Thickness(12, 12, 12, 10);
-        CommandHeaderActionsGroup.HorizontalAlignment = HorizontalAlignment.Right;
+        CommandHeaderActionsGroup.HorizontalAlignment = HorizontalAlignment.Stretch;
     }
 
     private void ApplyResponsiveLayoutTo(object? content)
