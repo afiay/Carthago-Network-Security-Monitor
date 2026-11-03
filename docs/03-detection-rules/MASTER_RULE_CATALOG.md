@@ -1,6 +1,6 @@
 # Carthago — master detection-rule catalog
 
-**Source-content digest:** `3809d6679669ea492a02` · **Registered:** 635 unique R-series rules (`R001`–`R635`)
+**Source-content digest:** `3e7307d54302793f7305` · **Registered:** 645 unique R-series rules (`R001`–`R645`)
 
 This is the **single central navigation catalog** for registered detection rules. Metadata is extracted from each rule's actual C# `RuleDescriptor` at the cited snapshot. Source registration is not proof that telemetry can reach the predicate, an alert is emitted, tests passed, or detection quality was field-validated.
 
@@ -24,19 +24,19 @@ This is the **single central navigation catalog** for registered detection rules
 | [DevOpsSupplyChain](#devopssupplychain-20-rules) | 20 |
 | [DNS](#dns-7-rules) | 7 |
 | [Dns](#dns-10-rules) | 10 |
-| [DnsAdvanced](#dnsadvanced-27-rules) | 27 |
+| [DnsAdvanced](#dnsadvanced-29-rules) | 29 |
 | [Egress](#egress-6-rules) | 6 |
 | [EmailCollaboration](#emailcollaboration-20-rules) | 20 |
-| [EvasionInfra](#evasioninfra-25-rules) | 25 |
+| [EvasionInfra](#evasioninfra-28-rules) | 28 |
 | [EvasionTunnel](#evasiontunnel-16-rules) | 16 |
 | [Exfiltration](#exfiltration-2-rules) | 2 |
 | [ExfiltrationAdvanced](#exfiltrationadvanced-20-rules) | 20 |
 | [GeoIP](#geoip-1-rules) | 1 |
 | [HTTP](#http-7-rules) | 7 |
-| [HttpApi](#httpapi-58-rules) | 58 |
+| [HttpApi](#httpapi-61-rules) | 61 |
 | [ICMP](#icmp-2-rules) | 2 |
 | [Identity](#identity-1-rules) | 1 |
-| [IdentityAccess](#identityaccess-19-rules) | 19 |
+| [IdentityAccess](#identityaccess-20-rules) | 20 |
 | [IdentityAdvanced](#identityadvanced-20-rules) | 20 |
 | [IotOt](#iotot-10-rules) | 10 |
 | [IotOtAdvanced](#iototadvanced-34-rules) | 34 |
@@ -48,7 +48,7 @@ This is the **single central navigation catalog** for registered detection rules
 | [MalwareC2](#malwarec2-20-rules) | 20 |
 | [Network](#network-5-rules) | 5 |
 | [NetworkApplianceExposure](#networkapplianceexposure-20-rules) | 20 |
-| [OtIcsDeep](#oticsdeep-20-rules) | 20 |
+| [OtIcsDeep](#oticsdeep-21-rules) | 21 |
 | [Payload](#payload-1-rules) | 1 |
 | [Payloads](#payloads-10-rules) | 10 |
 | [PlatformHealthAdvanced](#platformhealthadvanced-16-rules) | 16 |
@@ -311,7 +311,7 @@ Use your browser's Find command for a rule ID, name, category, or phrase. Every 
 | R102 | DNS Tunneling via Long Labels | Flags suspiciously long or repeated high-entropy DNS labels in structured DNS telemetry, while excluding common validation and mail-authentication records. | High | true | [C# source](../../Carthago/Engine/Rules/Dns/R102_DNSTunnelingViaLongLabelsRule.cs) | [101-105](batches/RULE_BATCH_101-105.md) | Candidate — unverified (reported) |
 | R103 | DNS Beaconing With Stable Interval | Detects repeated DNS questions to the same root with low-jitter intervals, using windowed cadence analysis over structured DNS telemetry. | High | true | [C# source](../../Carthago/Engine/Rules/Dns/R103_DNSBeaconingWithStableIntervalRule.cs) | [101-105](batches/RULE_BATCH_101-105.md) | Candidate — unverified (reported) |
 
-### DnsAdvanced: 27 rules
+### DnsAdvanced: 29 rules
 
 | ID | Name | Description (source) | Severity | Default enabled | Implementation | Batch evidence | Verification record |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -339,9 +339,11 @@ Use your browser's Find command for a rule ID, name, category, or phrase. Every 
 | R613 | Cobalt Strike-like staging label DNS query | Parser-backed DNS query shape only; outcome unknown. | Medium | true | [C# source](../../Carthago/Engine/Rules/Expansion/R613_CobaltStrikeLikeDnsStagingLabelRule.cs) | [606-615](batches/RULE_BATCH_606-615.md) | Candidate — unverified (reported) |
 | R614 | Historical DPRK-associated DNS domain query | Parser-backed DNS query shape only; outcome unknown. | Medium | true | [C# source](../../Carthago/Engine/Rules/Expansion/R614_HistoricalDprkDomainDnsQueryRule.cs) | [606-615](batches/RULE_BATCH_606-615.md) | Candidate — unverified (reported) |
 | R615 | Anonfiles file-sharing domain DNS query | Parser-backed DNS query shape only; outcome unknown. | Medium | true | [C# source](../../Carthago/Engine/Rules/Expansion/R615_AnonfilesDomainDnsQueryRule.cs) | [606-615](batches/RULE_BATCH_606-615.md) | Candidate — unverified (reported) |
-| R620 | LocaltoNet Service DNS Query | DNS query: specific workbook candidate, detection only; Sigma originally requires an initiated process connection. This narrower DNS-only variant cannot attribute a proc… | Medium | true | [C# source](../../Carthago/Engine/Rules/Expansion/R620_LocaltoNetServiceDnsQueryRule.cs) | [616-625](../RULE_BATCH_616-625.md) | Candidate — unverified (reported) |
-| R621 | Historical 3CX-associated Domain DNS Query | DNS query: specific workbook candidate, detection only; Sigma requires association with 3CXDesktopApp.exe; a DNS QNAME cannot establish process or malware, and historica… | Medium | true | [C# source](../../Carthago/Engine/Rules/Expansion/R621_HistoricalThreeCxDomainDnsQueryRule.cs) | [616-625](../RULE_BATCH_616-625.md) | Candidate — unverified (reported) |
-| R629 | Hybrid Connection Manager DNS lookup to Azure Service Bus | Original R2475; R620 LocaltoNet domain alone; here an exact local process + DNS query conjunction, benign Azure connector likely. Only observable packet fields, no asser… | Low | true | [C# source](../../Carthago/Engine/Rules/Expansion/R629_HybridConnectionManagerServiceBusDnsRule.cs) | [626-635](../RULE_BATCH_626-635.md) | Candidate — unverified (reported) |
+| R620 | LocaltoNet Service DNS Query | DNS query: specific workbook candidate, detection only; Sigma originally requires an initiated process connection. This narrower DNS-only variant cannot attribute a proc… | Medium | true | [C# source](../../Carthago/Engine/Rules/Expansion/R620_LocaltoNetServiceDnsQueryRule.cs) | [616-625](batches/RULE_BATCH_616-625.md) | Candidate — unverified (reported) |
+| R621 | Historical 3CX-associated Domain DNS Query | DNS query: specific workbook candidate, detection only; Sigma requires association with 3CXDesktopApp.exe; a DNS QNAME cannot establish process or malware, and historica… | Medium | true | [C# source](../../Carthago/Engine/Rules/Expansion/R621_HistoricalThreeCxDomainDnsQueryRule.cs) | [616-625](batches/RULE_BATCH_616-625.md) | Candidate — unverified (reported) |
+| R629 | Hybrid Connection Manager DNS lookup to Azure Service Bus | Original R2475; R620 LocaltoNet domain alone; here an exact local process + DNS query conjunction, benign Azure connector likely. Only observable packet fields, no asser… | Low | true | [C# source](../../Carthago/Engine/Rules/Expansion/R629_HybridConnectionManagerServiceBusDnsRule.cs) | [626-635](batches/RULE_BATCH_626-635.md) | Candidate — unverified (reported) |
+| R637 | Historical GALLIUM-associated DNS indicator query | Historical GALLIUM-associated DNS indicator query. Observed evidence only; Historical 2019 research, stale domains and possible reuse; DNS query is not evidence of actor… | Low | true | [C# source](../../Carthago/Engine/Rules/Expansion/R637_HistoricalGalliumDnsIndicatorQueryRule.cs) | [636-645](batches/RULE_BATCH_636-645.md) | Candidate — unverified (reported) |
+| R641 | Office process-associated high-entropy DNS query | Office process-associated high-entropy DNS query. Observed evidence only; Best-effort process association and domain entropy cannot establish a DGA or process execution;… | Medium | true | [C# source](../../Carthago/Engine/Rules/Expansion/R641_OfficeProcessHighEntropyDnsQueryRule.cs) | [636-645](batches/RULE_BATCH_636-645.md) | Candidate — unverified (reported) |
 
 ### Egress: 6 rules
 
@@ -379,7 +381,7 @@ Use your browser's Find command for a rule ID, name, category, or phrase. Every 
 | R331 | Calendar Invite Phishing Link Pattern | Candidate R331 requires authenticated operation and outcome provenance; packet-only indicators cannot establish the named behavior. | Medium | true | [C# source](../../Carthago/Engine/Rules/Expansion/R331_CalendarInvitePhishingLinkPatternRule.cs) | [331-335](batches/RULE_BATCH_331-335.md) | Candidate — unverified (reported) |
 | R332 | Email Archive Export Download | Candidate R332 requires authenticated operation and outcome provenance; packet-only indicators cannot establish the named behavior. | High | true | [C# source](../../Carthago/Engine/Rules/Expansion/R332_EmailArchiveExportDownloadRule.cs) | [331-335](batches/RULE_BATCH_331-335.md) | Candidate — unverified (reported) |
 
-### EvasionInfra: 25 rules
+### EvasionInfra: 28 rules
 
 | ID | Name | Description (source) | Severity | Default enabled | Implementation | Batch evidence | Verification record |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -398,16 +400,19 @@ Use your browser's Find command for a rule ID, name, category, or phrase. Every 
 | R270 | Detection Pipeline Tampering Indicator | Detects detection pipeline tampering indicator only when concrete network, process, or pipeline evidence is present; descriptor-only matches are suppressed. | Critical | true | [C# source](../../Carthago/Engine/Rules/Expansion/R270_DetectionPipelineTamperingIndicatorRule.cs) | [266-270](batches/RULE_BATCH_266-270.md) | Candidate — unverified (reported) |
 | R271 | Threat Feed IOC With Low Reputation Overlap | Detects threat feed ioc with low reputation overlap only when concrete network, process, or pipeline evidence is present; descriptor-only matches are suppressed. | Critical | true | [C# source](../../Carthago/Engine/Rules/Expansion/R271_ThreatFeedIocWithLowReputationOverlapRule.cs) | [271-275](batches/RULE_BATCH_271-275.md) | Candidate — unverified (reported) |
 | R272 | Multi-Signal Rule Stack Surge From Host | Detects multi-signal rule stack surge from host only when concrete network, process, or pipeline evidence is present; descriptor-only matches are suppressed. | High | true | [C# source](../../Carthago/Engine/Rules/Expansion/R272_MultiSignalRuleStackSurgeFromHostRule.cs) | [271-275](batches/RULE_BATCH_271-275.md) | Candidate — unverified (reported) |
-| R622 | Notepad Process External TCP Egress | locally resolved process and external TCP flow: specific workbook candidate, detection only; Best-effort Windows process-to-flow mapping lacks authenticated execution or… | Medium | true | [C# source](../../Carthago/Engine/Rules/Expansion/R622_NotepadExternalTcpEgressRule.cs) | [616-625](../RULE_BATCH_616-625.md) | Candidate — unverified (reported) |
-| R623 | Dialer Process External TCP Egress | locally resolved process and external TCP flow: specific workbook candidate, detection only; Sigma requires System32 path, which is not reliably present in ProcessName.… | Medium | true | [C# source](../../Carthago/Engine/Rules/Expansion/R623_DialerExternalTcpEgressRule.cs) | [616-625](../RULE_BATCH_616-625.md) | Candidate — unverified (reported) |
-| R624 | AddInUtil Process External TCP Egress | locally resolved process and external TCP flow: specific workbook candidate, detection only; PID/name can be resolved only on visible local sockets and may be missing or… | High | true | [C# source](../../Carthago/Engine/Rules/Expansion/R624_AddInUtilExternalTcpEgressRule.cs) | [616-625](../RULE_BATCH_616-625.md) | Candidate — unverified (reported) |
-| R625 | Equation Editor Process External TCP Egress | locally resolved process and external TCP flow: specific workbook candidate, detection only; Process identity is best-effort and no signed executable path or malicious p… | High | true | [C# source](../../Carthago/Engine/Rules/Expansion/R625_EquationEditorExternalTcpEgressRule.cs) | [616-625](../RULE_BATCH_616-625.md) | Candidate — unverified (reported) |
-| R630 | PowerShell client outbound WinRM to public IP | Original R2215; R074 WinRM sweep and R027 generic admin egress; here attributed PowerShell client on WinRM port to public IP. Only observable packet fields, no asserted… | Medium | true | [C# source](../../Carthago/Engine/Rules/Expansion/R630_PowerShellOutboundPublicWinRmRule.cs) | [626-635](../RULE_BATCH_626-635.md) | Candidate — unverified (reported) |
-| R631 | Unusual command interpreter outbound RDP | Original R2221; R073 RDP lateral burst and R124 ingress exposure; this is specific unusual local process to a public RDP endpoint. Only observable packet fields, no asse… | Medium | true | [C# source](../../Carthago/Engine/Rules/Expansion/R631_CommandInterpreterOutboundRdpRule.cs) | [626-635](../RULE_BATCH_626-635.md) | Candidate — unverified (reported) |
-| R632 | Svchost RDP loopback flow candidate | Original R2238; R518 generic reverse SSH tunnel; this only observes the characteristic local loopback 3389 source-flow shape. Only observable packet fields, no asserted… | Low | true | [C# source](../../Carthago/Engine/Rules/Expansion/R632_SvchostRdpLoopbackFlowRule.cs) | [626-635](../RULE_BATCH_626-635.md) | Candidate — unverified (reported) |
-| R633 | Certutil external TCP request to unusual service | Original R2958; R266 first-seen process egress; this matches exact certutil basename and specific four ports regardless of first seen. Only observable packet fields, no… | Medium | true | [C# source](../../Carthago/Engine/Rules/Expansion/R633_CertutilExternalServiceTcpRule.cs) | [626-635](../RULE_BATCH_626-635.md) | Candidate — unverified (reported) |
-| R634 | Windows script host external TCP other than HTTP/DNS | Original R2963; R268 already matches script interpreter HTTP/DNS; this only matches non-HTTP/non-DNS external TCP. Only observable packet fields, no asserted outcome. | Medium | true | [C# source](../../Carthago/Engine/Rules/Expansion/R634_WindowsScriptHostNonHttpOutboundTcpRule.cs) | [626-635](../RULE_BATCH_626-635.md) | Candidate — unverified (reported) |
-| R635 | Nonbrowser Windows system host to public dead-drop service | Original R2350; R104 first-time cloud uploads, R110 service API egress; this requires a local nonbrowser process plus TLS SNI to a particular public service, no dead-dro… | Low | true | [C# source](../../Carthago/Engine/Rules/Expansion/R635_NonBrowserProcessDeadDropHostRule.cs) | [626-635](../RULE_BATCH_626-635.md) | Candidate — unverified (reported) |
+| R622 | Notepad Process External TCP Egress | locally resolved process and external TCP flow: specific workbook candidate, detection only; Best-effort Windows process-to-flow mapping lacks authenticated execution or… | Medium | true | [C# source](../../Carthago/Engine/Rules/Expansion/R622_NotepadExternalTcpEgressRule.cs) | [616-625](batches/RULE_BATCH_616-625.md) | Candidate — unverified (reported) |
+| R623 | Dialer Process External TCP Egress | locally resolved process and external TCP flow: specific workbook candidate, detection only; Sigma requires System32 path, which is not reliably present in ProcessName.… | Medium | true | [C# source](../../Carthago/Engine/Rules/Expansion/R623_DialerExternalTcpEgressRule.cs) | [616-625](batches/RULE_BATCH_616-625.md) | Candidate — unverified (reported) |
+| R624 | AddInUtil Process External TCP Egress | locally resolved process and external TCP flow: specific workbook candidate, detection only; PID/name can be resolved only on visible local sockets and may be missing or… | High | true | [C# source](../../Carthago/Engine/Rules/Expansion/R624_AddInUtilExternalTcpEgressRule.cs) | [616-625](batches/RULE_BATCH_616-625.md) | Candidate — unverified (reported) |
+| R625 | Equation Editor Process External TCP Egress | locally resolved process and external TCP flow: specific workbook candidate, detection only; Process identity is best-effort and no signed executable path or malicious p… | High | true | [C# source](../../Carthago/Engine/Rules/Expansion/R625_EquationEditorExternalTcpEgressRule.cs) | [616-625](batches/RULE_BATCH_616-625.md) | Candidate — unverified (reported) |
+| R630 | PowerShell client outbound WinRM to public IP | Original R2215; R074 WinRM sweep and R027 generic admin egress; here attributed PowerShell client on WinRM port to public IP. Only observable packet fields, no asserted… | Medium | true | [C# source](../../Carthago/Engine/Rules/Expansion/R630_PowerShellOutboundPublicWinRmRule.cs) | [626-635](batches/RULE_BATCH_626-635.md) | Candidate — unverified (reported) |
+| R631 | Unusual command interpreter outbound RDP | Original R2221; R073 RDP lateral burst and R124 ingress exposure; this is specific unusual local process to a public RDP endpoint. Only observable packet fields, no asse… | Medium | true | [C# source](../../Carthago/Engine/Rules/Expansion/R631_CommandInterpreterOutboundRdpRule.cs) | [626-635](batches/RULE_BATCH_626-635.md) | Candidate — unverified (reported) |
+| R632 | Svchost RDP loopback flow candidate | Original R2238; R518 generic reverse SSH tunnel; this only observes the characteristic local loopback 3389 source-flow shape. Only observable packet fields, no asserted… | Low | true | [C# source](../../Carthago/Engine/Rules/Expansion/R632_SvchostRdpLoopbackFlowRule.cs) | [626-635](batches/RULE_BATCH_626-635.md) | Candidate — unverified (reported) |
+| R633 | Certutil external TCP request to unusual service | Original R2958; R266 first-seen process egress; this matches exact certutil basename and specific four ports regardless of first seen. Only observable packet fields, no… | Medium | true | [C# source](../../Carthago/Engine/Rules/Expansion/R633_CertutilExternalServiceTcpRule.cs) | [626-635](batches/RULE_BATCH_626-635.md) | Candidate — unverified (reported) |
+| R634 | Windows script host external TCP other than HTTP/DNS | Original R2963; R268 already matches script interpreter HTTP/DNS; this only matches non-HTTP/non-DNS external TCP. Only observable packet fields, no asserted outcome. | Medium | true | [C# source](../../Carthago/Engine/Rules/Expansion/R634_WindowsScriptHostNonHttpOutboundTcpRule.cs) | [626-635](batches/RULE_BATCH_626-635.md) | Candidate — unverified (reported) |
+| R635 | Nonbrowser Windows system host to public dead-drop service | Original R2350; R104 first-time cloud uploads, R110 service API egress; this requires a local nonbrowser process plus TLS SNI to a particular public service, no dead-dro… | Low | true | [C# source](../../Carthago/Engine/Rules/Expansion/R635_NonBrowserProcessDeadDropHostRule.cs) | [626-635](batches/RULE_BATCH_626-635.md) | Candidate — unverified (reported) |
+| R638 | Process outbound TCP contact across multiple callback-associated ports | Process outbound TCP contact across multiple callback-associated ports. Observed evidence only; The workbook's Linux log producer is absent; only a best-effort locally a… | Medium | true | [C# source](../../Carthago/Engine/Rules/Expansion/R638_MultiPortSuspiciousCallbackProcessEgressRule.cs) | [636-645](batches/RULE_BATCH_636-645.md) | Candidate — unverified (reported) |
+| R639 | Local process TLS SNI contact to ngrok developer-domain variants | Local process TLS SNI contact to ngrok developer-domain variants. Observed evidence only; TLS SNI alone does not establish an initiated connection, use of a tunnel or pa… | Low | true | [C# source](../../Carthago/Engine/Rules/Expansion/R639_NgrokDevProcessTlsSniEgressRule.cs) | [636-645](batches/RULE_BATCH_636-645.md) | Candidate — unverified (reported) |
+| R640 | Local process TLS SNI contact to regional ngrok tunnel endpoints | Local process TLS SNI contact to regional ngrok tunnel endpoints. Observed evidence only; No established tunnel, authentication, ownership or file transfer can be inferr… | Low | true | [C# source](../../Carthago/Engine/Rules/Expansion/R640_NgrokRegionalTunnelProcessTlsSniRule.cs) | [636-645](batches/RULE_BATCH_636-645.md) | Candidate — unverified (reported) |
 
 ### EvasionTunnel: 16 rules
 
@@ -480,7 +485,7 @@ Use your browser's Find command for a rule ID, name, category, or phrase. Every 
 | R045 | Sparse-Header POST to Internet | Sparse-header POST to internet | Medium | true | [C# source](../../Carthago/Engine/Rules/Existing/R045_SparseHeaderPostToInternetRule.cs) | [041-045](batches/RULE_BATCH_041-045.md) | Candidate — unverified (reported) |
 | R047 | HTTP Basic Auth to IP Literal | HTTP Basic Auth to IP literal | Medium | true | [C# source](../../Carthago/Engine/Rules/Existing/R047_HttpBasicAuthToIpLiteralRule.cs) | [046-050](batches/RULE_BATCH_046-050.md) | Candidate — unverified (reported) |
 
-### HttpApi: 58 rules
+### HttpApi: 61 rules
 
 | ID | Name | Description (source) | Severity | Default enabled | Implementation | Batch evidence | Verification record |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -535,13 +540,16 @@ Use your browser's Find command for a rule ID, name, category, or phrase. Every 
 | R609 | Exchange encoded-at PowerShell SSRF request | Parser-backed HTTP request shape only; outcome unknown. | High | true | [C# source](../../Carthago/Engine/Rules/Expansion/R609_ExchangeEncodedAtPowerShellRequestRule.cs) | [606-615](batches/RULE_BATCH_606-615.md) | Candidate — unverified (reported) |
 | R610 | Exchange OWA calendar endpoint POST | Parser-backed HTTP request shape only; outcome unknown. | High | true | [C# source](../../Carthago/Engine/Rules/Expansion/R610_ExchangeOwaCalendarEndpointPostRule.cs) | [606-615](batches/RULE_BATCH_606-615.md) | Candidate — unverified (reported) |
 | R611 | Fortinet SAML remoteserver POST with anomalous Referer | Parser-backed HTTP request shape only; outcome unknown. | High | true | [C# source](../../Carthago/Engine/Rules/Expansion/R611_FortinetSamlRemoteserverPostRule.cs) | [606-615](batches/RULE_BATCH_606-615.md) | Candidate — unverified (reported) |
-| R616 | Exchange ECP Virtual Directory Reset Request | HTTP request: specific workbook candidate, detection only; The Sigma source requires HTTP 200 and machine-account username ending $, neither is established by the packet… | High | true | [C# source](../../Carthago/Engine/Rules/Expansion/R616_ExchangeEcpVirtualDirectoryResetRequestRule.cs) | [616-625](../RULE_BATCH_616-625.md) | Candidate — unverified (reported) |
-| R617 | SolarWinds SUPERNOVA LogoImageHandler Clazz Request | HTTP request: specific workbook candidate, detection only; Cannot observe original Sigma branch based solely on HTTP 500; only joint logoimagehandler+clazz URI is detect… | High | true | [C# source](../../Carthago/Engine/Rules/Expansion/R617_SolarWindsSupernovaClazzRequestRule.cs) | [616-625](../RULE_BATCH_616-625.md) | Candidate — unverified (reported) |
-| R618 | Exchange ProxyShell Autodiscover Back-End Request | HTTP request: specific workbook candidate, detection only; Workbook marks 200/301 response as success; rule recognizes only an HTTP request, without validating response. | High | true | [C# source](../../Carthago/Engine/Rules/Expansion/R618_ExchangeProxyShellAutodiscoverBackendRequestRule.cs) | [616-625](../RULE_BATCH_616-625.md) | Candidate — unverified (reported) |
-| R619 | Encoded Java Expression in HTTP Request URI | HTTP request: specific workbook candidate, detection only; Headers, HTTP status and server execution unavailable; may overlap general injection alerts but distinct exact… | Medium | true | [C# source](../../Carthago/Engine/Rules/Expansion/R619_EncodedJavaExpressionUriRequestRule.cs) | [616-625](../RULE_BATCH_616-625.md) | Candidate — unverified (reported) |
-| R626 | WordPress wp2shell plugin HTTP access | Original R2094; R087 generic webshell upload; here a particular wp2shell plugin access request, not a proved webshell installation. Only observable packet fields, no ass… | High | true | [C# source](../../Carthago/Engine/Rules/Expansion/R626_WordPressWp2shellPluginRequestRule.cs) | [626-635](../RULE_BATCH_626-635.md) | Candidate — unverified (reported) |
-| R627 | WebLogic keystore webshell-like URI request | Original R2286; R087 webshell upload; here direct WebLogic keystore path request without upload inference. Only observable packet fields, no asserted outcome. | High | true | [C# source](../../Carthago/Engine/Rules/Expansion/R627_WebLogicKeystoreJspRequestRule.cs) | [626-635](../RULE_BATCH_626-635.md) | Candidate — unverified (reported) |
-| R628 | Exchange ProxyToken RulesEditor NewObject request | Original R3031; R319 generic ECP probe, R616 ECP SetObject Reset; this matches a separate RulesEditor NewObject request. Only observable packet fields, no asserted outco… | High | true | [C# source](../../Carthago/Engine/Rules/Expansion/R628_ExchangeProxyTokenRulesEditorRequestRule.cs) | [626-635](../RULE_BATCH_626-635.md) | Candidate — unverified (reported) |
+| R616 | Exchange ECP Virtual Directory Reset Request | HTTP request: specific workbook candidate, detection only; The Sigma source requires HTTP 200 and machine-account username ending $, neither is established by the packet… | High | true | [C# source](../../Carthago/Engine/Rules/Expansion/R616_ExchangeEcpVirtualDirectoryResetRequestRule.cs) | [616-625](batches/RULE_BATCH_616-625.md) | Candidate — unverified (reported) |
+| R617 | SolarWinds SUPERNOVA LogoImageHandler Clazz Request | HTTP request: specific workbook candidate, detection only; Cannot observe original Sigma branch based solely on HTTP 500; only joint logoimagehandler+clazz URI is detect… | High | true | [C# source](../../Carthago/Engine/Rules/Expansion/R617_SolarWindsSupernovaClazzRequestRule.cs) | [616-625](batches/RULE_BATCH_616-625.md) | Candidate — unverified (reported) |
+| R618 | Exchange ProxyShell Autodiscover Back-End Request | HTTP request: specific workbook candidate, detection only; Workbook marks 200/301 response as success; rule recognizes only an HTTP request, without validating response. | High | true | [C# source](../../Carthago/Engine/Rules/Expansion/R618_ExchangeProxyShellAutodiscoverBackendRequestRule.cs) | [616-625](batches/RULE_BATCH_616-625.md) | Candidate — unverified (reported) |
+| R619 | Encoded Java Expression in HTTP Request URI | HTTP request: specific workbook candidate, detection only; Headers, HTTP status and server execution unavailable; may overlap general injection alerts but distinct exact… | Medium | true | [C# source](../../Carthago/Engine/Rules/Expansion/R619_EncodedJavaExpressionUriRequestRule.cs) | [616-625](batches/RULE_BATCH_616-625.md) | Candidate — unverified (reported) |
+| R626 | WordPress wp2shell plugin HTTP access | Original R2094; R087 generic webshell upload; here a particular wp2shell plugin access request, not a proved webshell installation. Only observable packet fields, no ass… | High | true | [C# source](../../Carthago/Engine/Rules/Expansion/R626_WordPressWp2shellPluginRequestRule.cs) | [626-635](batches/RULE_BATCH_626-635.md) | Candidate — unverified (reported) |
+| R627 | WebLogic keystore webshell-like URI request | Original R2286; R087 webshell upload; here direct WebLogic keystore path request without upload inference. Only observable packet fields, no asserted outcome. | High | true | [C# source](../../Carthago/Engine/Rules/Expansion/R627_WebLogicKeystoreJspRequestRule.cs) | [626-635](batches/RULE_BATCH_626-635.md) | Candidate — unverified (reported) |
+| R628 | Exchange ProxyToken RulesEditor NewObject request | Original R3031; R319 generic ECP probe, R616 ECP SetObject Reset; this matches a separate RulesEditor NewObject request. Only observable packet fields, no asserted outco… | High | true | [C# source](../../Carthago/Engine/Rules/Expansion/R628_ExchangeProxyTokenRulesEditorRequestRule.cs) | [626-635](batches/RULE_BATCH_626-635.md) | Candidate — unverified (reported) |
+| R636 | OMIGOD-like unauthenticated WSMan POST attempt | OMIGOD-like unauthenticated WSMan POST attempt. Observed evidence only; HTTP 200, server command and successful exploit are unavailable; absence of an Authorization head… | High | true | [C# source](../../Carthago/Engine/Rules/Expansion/R636_OmigodUnauthenticatedWsmanPostRequestRule.cs) | [636-645](batches/RULE_BATCH_636-645.md) | Candidate — unverified (reported) |
+| R642 | Script interpreter HTTP POST with browser-like user agent | Script interpreter HTTP POST with browser-like user agent. Observed evidence only; No process parent lineage or API-caller provenance; a browser-like User-Agent is not p… | Medium | true | [C# source](../../Carthago/Engine/Rules/Expansion/R642_ScriptProcessBrowserAgentHttpPostRule.cs) | [636-645](batches/RULE_BATCH_636-645.md) | Candidate — unverified (reported) |
+| R645 | Cleartext login-form POST to a punycode HTTP host | Cleartext login-form POST to a punycode HTTP host. Observed evidence only; Cannot inspect credential contents, verify domain mimicry or infer phishing; legitimate intern… | Low | true | [C# source](../../Carthago/Engine/Rules/Expansion/R645_PunycodeLoginFormPostExposureRule.cs) | [636-645](batches/RULE_BATCH_636-645.md) | Candidate — unverified (reported) |
 
 ### ICMP: 2 rules
 
@@ -556,7 +564,7 @@ Use your browser's Find command for a rule ID, name, category, or phrase. Every 
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | R004 | Brute Force | Repeated authentication attempts | High | true | [C# source](../../Carthago/Engine/Rules/Existing/R004_BruteForceRule.cs) | [001-005](batches/RULE_BATCH_001-005.md) | See historical verification record |
 
-### IdentityAccess: 19 rules
+### IdentityAccess: 20 rules
 
 | ID | Name | Description (source) | Severity | Default enabled | Implementation | Batch evidence | Verification record |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -579,6 +587,7 @@ Use your browser's Find command for a rule ID, name, category, or phrase. Every 
 | R553 | Cross-Subnet SMB2 Write Request Fanout | A private IPv4 client sends first-segment SMB2 WRITE request shapes to three distinct other private /24s in five minutes; outcomes and share identities are unknown. | High | true | [C# source](../../Carthago/Engine/Rules/Expansion/R553_CrossSubnetSmb2WriteRequestFanoutRule.cs) | [553-553](batches/RULE_BATCH_553-553.md) | Candidate — unverified (reported) |
 | R556 | External SMB2 Write Request Private-Subnet Fanout | A public IPv4 client sends bounded SMB2 WRITE request shapes to three distinct RFC1918 destination /24s in five minutes; authentication and write outcomes are unknown. | High | true | [C# source](../../Carthago/Engine/Rules/Expansion/R556_ExternalSmb2WriteTargetSubnetFanoutRule.cs) | [556-556](batches/RULE_BATCH_556-556.md) | Candidate — unverified (reported) |
 | R582 | Outbound Default HTTP Basic Admin Credential Fanout | One private source sends parser-confirmed known-default Basic credentials to admin routes at three public destination /24 networks in five minutes. | High | true | [C# source](../../Carthago/Engine/Rules/Expansion/R582_OutboundDefaultBasicAdminSubnetFanoutRule.cs) | [580-584](batches/RULE_BATCH_580-584.md) | Candidate — unverified (reported) |
+| R644 | Internal RDP listener SYN-ACK response to public client | Internal RDP listener SYN-ACK response to public client. Observed evidence only; An SYN-ACK proves network handshake response only, not authenticated RDP access or true… | Medium | true | [C# source](../../Carthago/Engine/Rules/Expansion/R644_RdpPublicClientSynAckExposureEvidenceRule.cs) | [636-645](batches/RULE_BATCH_636-645.md) | Candidate — unverified (reported) |
 
 ### IdentityAdvanced: 20 rules
 
@@ -802,7 +811,7 @@ Use your browser's Find command for a rule ID, name, category, or phrase. Every 
 | R431 | Airflow Admin Endpoint Probe | Detects Airflow Admin Endpoint Probe only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events… | High | true | [C# source](../../Carthago/Engine/Rules/Expansion/R431_AirflowAdminEndpointProbeRule.cs) | [431-440](batches/RULE_BATCH_431-440.md) | Candidate — unverified (reported) |
 | R432 | Consul Nomad Admin Probe | Detects Consul Nomad Admin Probe only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events retu… | High | true | [C# source](../../Carthago/Engine/Rules/Expansion/R432_ConsulNomadAdminProbeRule.cs) | [431-440](batches/RULE_BATCH_431-440.md) | Candidate — unverified (reported) |
 
-### OtIcsDeep: 20 rules
+### OtIcsDeep: 21 rules
 
 | ID | Name | Description (source) | Severity | Default enabled | Implementation | Batch evidence | Verification record |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -826,6 +835,7 @@ Use your browser's Find command for a rule ID, name, category, or phrase. Every 
 | R490 | IEC61850 MMS Write Indicator | Detects IEC61850 MMS Write Indicator only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only events… | Critical | true | [C# source](../../Carthago/Engine/Rules/Expansion/R490_IEC61850MMSWriteIndicatorRule.cs) | [481-490](batches/RULE_BATCH_481-490.md) | Candidate — unverified (reported) |
 | R491 | GOOSE Multicast Outside Substation | Detects GOOSE Multicast Outside Substation only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-only e… | Critical | true | [C# source](../../Carthago/Engine/Rules/Expansion/R491_GOOSEMulticastOutsideSubstationRule.cs) | [491-500](batches/RULE_BATCH_491-500.md) | Candidate — unverified (reported) |
 | R492 | Historian Bulk Query From Workstation | Detects Historian Bulk Query From Workstation only when concrete telemetry gates, rule-specific indicators, and threshold/cooldown controls are satisfied; descriptor-onl… | High | true | [C# source](../../Carthago/Engine/Rules/Expansion/R492_HistorianBulkQueryFromWorkstationRule.cs) | [491-500](batches/RULE_BATCH_491-500.md) | Candidate — unverified (reported) |
+| R643 | Sequential EtherNet/IP ListIdentity private-subnet discovery walk | Sequential EtherNet/IP ListIdentity private-subnet discovery walk. Observed evidence only; Does not establish PLC identity, authorized engineer inventory, full subnet sc… | Medium | true | [C# source](../../Carthago/Engine/Rules/Expansion/R643_SequentialEtherNetIpListIdentitySubnetWalkRule.cs) | [636-645](batches/RULE_BATCH_636-645.md) | Candidate — unverified (reported) |
 
 ### Payload: 1 rules
 

@@ -153,6 +153,9 @@ The master catalog is the central entry point; batch files remain historical *so
 - [RULE BATCH 586–595](batches/RULE_BATCH_586-595.md)
 - [RULE BATCH 596–605](batches/RULE_BATCH_596-605.md)
 - [RULE BATCH 606–615](batches/RULE_BATCH_606-615.md)
+- [RULE BATCH 616–625](batches/RULE_BATCH_616-625.md)
+- [RULE BATCH 626–635](batches/RULE_BATCH_626-635.md)
+- [RULE BATCH 636–645](batches/RULE_BATCH_636-645.md)
 
 ## Content packs
 
@@ -178,10 +181,3 @@ The master catalog is the central entry point; batch files remain historical *so
 - [RuleOwnedPrecisionDetectorMigration](guides/RuleOwnedPrecisionDetectorMigration.md)
 - [RulePrecisionProfiles](guides/RulePrecisionProfiles.md)
 - [RuleProfiles](guides/RuleProfiles.md)
-
-## New batches pending path normalization
-
-These live automation batch reports are also included in the master catalog, even before they are moved into the categorized batch directory.
-
-- [RULE_BATCH_616-625](../RULE_BATCH_616-625.md)
-- [RULE_BATCH_626-635](../RULE_BATCH_626-635.md)
