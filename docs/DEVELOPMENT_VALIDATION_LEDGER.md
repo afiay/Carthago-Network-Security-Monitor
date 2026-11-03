@@ -1801,3 +1801,23 @@ This verifies that the public `RuleEvaluationContext` remains packet-only; only 
 **Scope boundary:** no promotion policy is yet authorized by this evidence. A valid capability reaching rule evaluation is intentionally insufficient to emit an R275 detection event.
 
 No confidence floor, runtime mode, replay classification, holdout fixture, V1/V2 state or alert policy changed.
+
+#### 2026-11-03 — R275 explicit default-deny promotion policy authored
+
+After internal capability delivery reached 99/99 GREEN, the first actual R275 promotion-policy source increment was authored without wiring it into normal production context construction.
+
+Source commits:
+- `c37dd0383e7da9d13245d312af22954fbd687991` — expose normalized identity host internally on the bound R275 capability for independent policy enforcement.
+- `72842ee24101cd7e374977a85dd8bd2f3b80a996` — explicit default-deny promotion options and opaque promotion authorization.
+- `2dbe8a3015fb8aac75e46a7fe0b663545bfc5909` — bind promotion authorization to the internal `RuleEvaluationContext` path.
+- `d4212586b553cb4576f195aa3f1c8e826f9e4902` — authorized R275 event path with privacy-minimized evidence, high confidence and profile cooldown.
+- `7ba10752ee9e532aae085ae2ebe1f8fe22bb47f3` — adversarial promotion-policy tests.
+- `1373ffeb1146d9d2a4fcaf32ade649d686318040` — bound promotion cooldown state to 8,192 keys and fail closed on saturated recent state.
+
+Promotion now requires an explicit enabled policy, both independently verified issuer IDs in the approved issuer set, an approved identity host, exact capability/packet/timestamp binding and a separate internal promotion authorization. The public `RuleEvaluationContext` remains unchanged and cannot attach either trusted object.
+
+When all promotion prerequisites are present, R275 uses the shared event builder and emits only structural trusted-evidence markers. It does not emit OAuth codes, token material, actor/resource hashes, trace hashes or signer IDs. Confidence is derived from admin-confirmed compromise + independent signed corroboration + exact packet binding. Duplicate trace evidence is subject to the existing 20-minute R275 cooldown through a bounded fail-closed state cache.
+
+**Production-default boundary:** no normal runtime code constructs `OAuthDeviceFlowPromotionAuthorization`; therefore ordinary packet evaluation remains fail-closed and the promotion path is not production-enabled by this increment.
+
+**Verification status:** SOURCE CANDIDATE — UNVERIFIED. The previously observed 99/99 capability-delivery GREEN remains valid; the new promotion-policy suite must now be executed.
