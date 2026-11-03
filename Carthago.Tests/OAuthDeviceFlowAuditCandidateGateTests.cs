@@ -108,6 +108,22 @@ public sealed class OAuthDeviceFlowAuditCandidateGateTests
     }
 
     [Fact]
+    public void Arbitrary_Tcp_443_Without_Identity_Web_Context_Is_Not_Corroboration()
+    {
+        var flow = Flow();
+        flow.ApplicationProtocol = "TCP";
+        flow.Sni = null;
+        flow.HttpHost = null;
+
+        var assessed = OAuthDeviceFlowAuditCandidateGate.Assess(
+            Pair(), flow, Now);
+
+        Assert.Equal(OAuthDeviceFlowAuditCandidateStatus.MissingNetworkObservation,
+            assessed.Status);
+        Assert.False(assessed.AlertPermitted);
+    }
+
+    [Fact]
     public void Signed_Audit_Endpoints_Must_Match_Observed_Tls_Flow()
     {
         var flow = Flow();
