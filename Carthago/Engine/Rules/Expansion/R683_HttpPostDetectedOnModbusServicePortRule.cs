@@ -47,7 +47,8 @@ namespace Carthago.Engine.Rules.Expansion
  ||method!="POST"||r.DestinationPort!=502||r.TlsVersion!=null
  ||r.ApplicationProtocol!="HTTP"
  ||!uri.StartsWith("/api/",StringComparison.OrdinalIgnoreCase)
- ||!Research676Evidence.PublicToPrivate(r)&&!Research676Evidence.PrivatePair(r,out _,out _))
+ ||!Research676Evidence.PublicToPrivate(r)&&!Research676Evidence.PrivatePair(r,out _,out _)
+   &&!Research676Evidence.PrivateToPublic(r))
 return NoMatch();
      var observed=_cooldown.Observe(r.Source!,r.Destination!,r.Id,context.TimestampUtc);
      if(observed==WebSignatureObservation.None)return NoMatch();

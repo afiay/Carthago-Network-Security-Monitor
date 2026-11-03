@@ -38,7 +38,7 @@ namespace Carthago.Engine.Rules.Expansion
        "Candidate Shadow rule identity and registry uniqueness"}
    });
    private readonly WebSignatureCooldown _cooldown=new();
-   private readonly Research666TimedWindow _timed=new();
+   private readonly Research676CadenceWindow _timed=new();
    public R682_SystemUtilityBrowserAgentHttpGetHeartbeatRule():base(Rule,Profile){}
    protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
    {

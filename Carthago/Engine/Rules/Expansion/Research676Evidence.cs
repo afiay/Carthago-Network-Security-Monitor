@@ -144,4 +144,45 @@ namespace Carthago.Engine.Rules.Expansion
      }
    }
  }
+ 
+ internal sealed class Research676CadenceWindow
+ {
+   private sealed class Slot
+   {
+      internal DateTime First,Last;
+      internal int Count,Length;
+      internal readonly HashSet<Guid> Ids=new();
+   }
+   private readonly object _gate=new();
+   private readonly Dictionary<string,Slot> _slots=new(StringComparer.Ordinal);
+   internal bool Observe(string key,Guid id,int length,DateTime at,int threshold,bool interval)
+   {
+     if(string.IsNullOrWhiteSpace(key)||id==Guid.Empty||at.Kind!=DateTimeKind.Utc
+       ||length is <100 or >1000||threshold!=3||!interval)return false;
+     lock(_gate)
+     {
+       if(!_slots.TryGetValue(key,out var slot))
+       {
+         if(_slots.Count>=512)
+         {
+           foreach(var old in _slots.Where(x=>at>=x.Value.Last&&at-x.Value.Last>TimeSpan.FromMinutes(5))
+              .Select(x=>x.Key).ToArray())_slots.Remove(old);
+           if(_slots.Count>=512)return false;
+         }
+         slot=new Slot{First=at,Last=DateTime.MinValue,Length=length};
+         _slots.Add(key,slot);
+       }
+       if(at<=slot.Last||slot.Ids.Contains(id))return false;
+       if(slot.Count>0 && ((at-slot.Last).TotalSeconds<9||(at-slot.Last).TotalSeconds>31
+          ||Math.Abs(length-slot.Length)>100||at-slot.First>TimeSpan.FromMinutes(2)))
+       {slot.Count=0;slot.Ids.Clear();slot.First=at;slot.Length=length;}
+       if(slot.Ids.Count>=8)return false;
+       slot.Ids.Add(id);slot.Last=at;slot.Count++;
+       if(slot.Count<3)return false;
+       slot.Count=0;slot.Ids.Clear();slot.First=at;
+       return true;
+     }
+   }
+ }
+
 }
