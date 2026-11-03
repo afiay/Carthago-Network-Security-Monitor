@@ -18,9 +18,9 @@ Ten independently implemented HTTP/DNS request or query rules, original workbook
 
 ## R616–R625 source candidate batch
 
-Ten independent rules drawn from original workbook rows R2269, R2280, R2283, R2922, R2941, R3070, R2237, R2904, R2956, R2979. Includes 4 HTTP, 2 DNS and 4 conditionally resolved local process egress signals. See [R616–R625](../../RULE_BATCH_616-625.md). **SOURCE CANDIDATE — UNVERIFIED; xUnit authored, 0 executed.** Next ID: R626. No convergence.
+Ten independent rules drawn from original workbook rows R2269, R2280, R2283, R2922, R2941, R3070, R2237, R2904, R2956, R2979. Includes 4 HTTP, 2 DNS and 4 conditionally resolved local process egress signals. See [R616–R625](../RULE_BATCH_616-625.md). **SOURCE CANDIDATE — UNVERIFIED; xUnit authored, 0 executed.** Next ID: R626. No convergence.
 
 
 ## R626–R635 workbook-derived candidate batch
 
-Ten independent detectors, original IDs R2094, R2286, R3031, R2475, R2215, R2221, R2238, R2958, R2963, R2350. See [R626–R635](../../RULE_BATCH_626-635.md). All SOURCE CANDIDATE — UNVERIFIED, tests authored (0 executed). New rule IDs R636–R645 are unallocated. No convergence; no extra producers implied.
+Ten independent detectors, original IDs R2094, R2286, R3031, R2475, R2215, R2221, R2238, R2958, R2963, R2350. See [R626–R635](../RULE_BATCH_626-635.md). All SOURCE CANDIDATE — UNVERIFIED, tests authored (0 executed). New rule IDs R636–R645 are unallocated. No convergence; no extra producers implied.

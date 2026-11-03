@@ -6,6 +6,8 @@
 
 **[Browse the complete documentation](docs/README.md)** — organized by architecture, detection rules, protocol research, verification, development, design, operations and integrations.
 
+**[Master detection-rule catalog](docs/03-detection-rules/MASTER_RULE_CATALOG.md)** — one searchable index of every registered R-series rule, with source metadata and evidence links.
+
 Carthago is a Windows desktop application for observing network traffic, detecting suspicious behavior, and turning security signals into evidence-led investigations. It combines live packet analysis, a configurable detection engine, local event journaling, incident correlation, and optional forwarding to security and observability platforms.
 
 Built for security labs, detection engineering, and hands-on network operations, Carthago keeps the original evidence separate from dashboards, recommendations, and external integrations.

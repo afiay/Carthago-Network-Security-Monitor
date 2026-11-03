@@ -26,6 +26,10 @@ their evidence; use the [legacy-path register](../10-reference/LEGACY_DOCUMENTAT
 when resolving an old commit or automation transcript. New GAs must use the
 categorized path, regenerate [the topic index](../03-detection-rules/README.md),
 and update the unchanged-path [progress ledger](../RULE_HARDENING_PROGRESS.md).
+Also regenerate the [master rule catalog](../03-detection-rules/MASTER_RULE_CATALOG.md)
+using `python3 scripts/build_rule_catalog.py`, followed by
+`python3 scripts/build_docs_index.py` and static Markdown link inspection.
+These commands do not execute Carthago application tests.
 
 Use this concise hierarchy:
 

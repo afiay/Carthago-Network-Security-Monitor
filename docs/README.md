@@ -23,6 +23,7 @@ Canonical navigation for users, contributors, security analysts, detection engin
 ## Live working records
 
 - [Detection-rule hardening](RULE_HARDENING_PROGRESS.md) · [rule expansion cursor](rules/DETECTION_EXPANSION_CANDIDATE_CURSOR_20261103.md) · [rule writing contract](rules/RULE_DOCUMENTATION_STANDARD.md)
+- **[All registered detection rules — master catalog](03-detection-rules/MASTER_RULE_CATALOG.md)**
 - [Protocol research](protocols/PROTOCOL_EXPANSION_PROGRESS.md)
 - [Verification and validation ledger](DEVELOPMENT_VALIDATION_LEDGER.md)
 - [UI implementation ledger](design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md)
@@ -34,7 +35,7 @@ Write new user-facing guides under the numbered topic directories. For detection
 
 Keep the exact paths of ongoing automation ledgers, `docs/rules/*`, `docs/development/*`, `docs/superpowers/*`, `docs/contracts/*`, holdout manifests and other machine-consumed inputs. See the [stable-path register](10-reference/WORKFLOW_ANCHORS.md).
 
-After adding a new documentation page, run `python3 scripts/build_docs_index.py` from the repository root to refresh the navigation. `python3 scripts/check_docs_links.py` checks links only; it does not execute application tests.
+After adding a detection rule, run `python3 scripts/build_rule_catalog.py` and then `python3 scripts/build_docs_index.py` from the repository root. For other documentation changes, run the index generator alone. `python3 scripts/check_docs_links.py` checks links only; it does not execute application tests.
 
 ## Preservation policy
 

@@ -63,12 +63,13 @@ EXTRA = {
     ],
     "03-detection-rules": [
         "## Working source of truth", "",
+        "- **[Master detection-rule catalog](MASTER_RULE_CATALOG.md)** — every registered RNNN rule, direct source links and historical evidence",
         "- [Rule hardening progress ledger](../RULE_HARDENING_PROGRESS.md)",
         "- [Rule documentation standard](../rules/RULE_DOCUMENTATION_STANDARD.md)",
         "- [Detection expansion cursor](../rules/DETECTION_EXPANSION_CANDIDATE_CURSOR_20261103.md)",
         "- [Unified 2,500-rule admission cursor](../rules/UNIFIED_2500_RULE_ADMISSION_CURSOR.md)",
         "- [Protocol-informed backlog](../rules/PROTOCOL_INFORMED_THREAT_BACKLOG.md)",
-        "", "The batch files are historical *source-candidate evidence*, not proof of a green runtime or holdout. Two separate R001–R005 documents were retained because they represent distinct historical records.", "",
+        "", "The master catalog is the central entry point; batch files remain historical *source-candidate evidence*, not proof of a green runtime or holdout. Two separate R001–R005 documents were retained because they represent distinct historical records. Active automations may initially write new batches at the original `docs/RULE_BATCH_*` paths; the catalog links those too.", "",
     ],
     "04-protocols": [
         "## Current status", "", "- [Protocol expansion progress ledger](../protocols/PROTOCOL_EXPANSION_PROGRESS.md)",
@@ -116,6 +117,13 @@ def main():
         lines = [f"# {title}", "", description, "", "[Documentation home](../README.md)", ""]
         lines.extend(EXTRA.get(folder, []))
         lines.extend(list_documents(path, folder))
+        if folder == "03-detection-rules":
+            legacy_batches = sorted(DOCS.glob("RULE_BATCH_*.md"))
+            if legacy_batches:
+                lines.extend(["## New batches pending path normalization", "", "These live automation batch reports are also included in the master catalog, even before they are moved into the categorized batch directory.", ""])
+                for batch in legacy_batches:
+                    lines.append(f"- [{batch.stem}](../{batch.name})")
+                lines.append("")
         write(path / "README.md", lines)
 
     anchors = [
@@ -148,6 +156,7 @@ def main():
     lines.extend([
         "", "## Live working records", "",
         "- [Detection-rule hardening](RULE_HARDENING_PROGRESS.md) · [rule expansion cursor](rules/DETECTION_EXPANSION_CANDIDATE_CURSOR_20261103.md) · [rule writing contract](rules/RULE_DOCUMENTATION_STANDARD.md)",
+        "- **[All registered detection rules — master catalog](03-detection-rules/MASTER_RULE_CATALOG.md)**",
         "- [Protocol research](protocols/PROTOCOL_EXPANSION_PROGRESS.md)",
         "- [Verification and validation ledger](DEVELOPMENT_VALIDATION_LEDGER.md)",
         "- [UI implementation ledger](design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md)",
@@ -155,7 +164,7 @@ def main():
         "", "## Where new documents belong", "",
         "Write new user-facing guides under the numbered topic directories. For detection-rule batches, use `docs/03-detection-rules/batches/RULE_BATCH_NNN-NNN.md`; keep one batch page per scope and link it from the progress ledger. The historical batch pages remain immutable evidence except for explicit, traceable corrections.",
         "", "Keep the exact paths of ongoing automation ledgers, `docs/rules/*`, `docs/development/*`, `docs/superpowers/*`, `docs/contracts/*`, holdout manifests and other machine-consumed inputs. See the [stable-path register](10-reference/WORKFLOW_ANCHORS.md).",
-        "", "After adding a new documentation page, run `python3 scripts/build_docs_index.py` from the repository root to refresh the navigation. `python3 scripts/check_docs_links.py` checks links only; it does not execute application tests.",
+        "", "After adding a detection rule, run `python3 scripts/build_rule_catalog.py` and then `python3 scripts/build_docs_index.py` from the repository root. For other documentation changes, run the index generator alone. `python3 scripts/check_docs_links.py` checks links only; it does not execute application tests.",
         "", "## Preservation policy", "",
         "- Original research and verification claims retain their dates, scope and identity; review actual artifacts before elevating them to verified results.",
         "- The frozen V1 holdout remains unchanged; V2 manifests and provenance contracts retain their established paths.",
