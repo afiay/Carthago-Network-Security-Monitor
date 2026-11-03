@@ -39,6 +39,10 @@ namespace Carthago
         // rolling data for "Traffic over time"
         private readonly List<double> _trafficXs = new();
         private readonly List<double> _trafficYs = new();
+        // Derived once per sample for the 10-sample moving average.
+        // Keeping this rolling series avoids rebuilding averaging arrays during every redraw.
+        private readonly List<double> _trafficAverageXs = new();
+        private readonly List<double> _trafficAverageYs = new();
 
         // protocol / talkers / severity
         private readonly Dictionary<string, int> _protocolCounts = new(StringComparer.OrdinalIgnoreCase);
@@ -104,6 +108,7 @@ namespace Carthago
                 double x = DateTime.Now.ToOADate();
                 _trafficXs.Add(x);
                 _trafficYs.Add(_ppsBucket);
+                AppendTrafficAverage(x);
 
                 _ppsSeries.Add(_ppsBucket);
                 double mbps = (_bytesBucket * 8.0) / 1_000_000.0;
@@ -120,6 +125,7 @@ namespace Carthago
                     _trafficXs.RemoveAt(0);
                     _trafficYs.RemoveAt(0);
                 }
+                TrimTrafficAverageToWindow();
 
                 DateTime cutoff = DateTime.UtcNow - ActiveWindow;
                 foreach (var key in _hostLastSeen.Where(kv => kv.Value < cutoff).Select(kv => kv.Key).ToList())
@@ -128,26 +134,33 @@ namespace Carthago
                     _connLastSeen.Remove(key);
 
                 // Keep packet-rate samples and KPI counters live at 1 Hz.
-                // Rebuild the charts only once per three timer ticks.
+                // Redraw only the chart surface the analyst can currently see.
+                // Analytics-only charts stay dirty while hidden and refresh immediately when opened.
                 _secondsUntilChartRefresh--;
                 if (_secondsUntilChartRefresh <= 0)
                 {
-                    RenderTraffic();
-                    if (_protocolChartDirty)
+                    if (DashboardView.IsVisible || AnalyticsView.IsVisible)
+                        RenderTraffic();
+
+                    if (AnalyticsView.IsVisible)
                     {
-                        RenderProtocol();
-                        _protocolChartDirty = false;
+                        if (_protocolChartDirty)
+                        {
+                            RenderProtocol();
+                            _protocolChartDirty = false;
+                        }
+                        if (_talkerChartDirty)
+                        {
+                            RenderTopTalkers();
+                            _talkerChartDirty = false;
+                        }
+                        if (_severityChartDirty)
+                        {
+                            RenderSeverity();
+                            _severityChartDirty = false;
+                        }
                     }
-                    if (_talkerChartDirty)
-                    {
-                        RenderTopTalkers();
-                        _talkerChartDirty = false;
-                    }
-                    if (_severityChartDirty)
-                    {
-                        RenderSeverity();
-                        _severityChartDirty = false;
-                    }
+
                     _secondsUntilChartRefresh = ChartRefreshIntervalSeconds;
                 }
 
@@ -323,8 +336,12 @@ namespace Carthago
             int crit = recent.Count(a => a.Severity.ToString().Equals("Critical", StringComparison.OrdinalIgnoreCase));
             Alerts60sText.Text = cnt == 0 ? "0" : $"{cnt}  (C:{crit}  H:{hi})";
 
-            RenderSpark(PpsSpark, _ppsSeries);
-            RenderSpark(ThroughputSpark, _mbpsSeries);
+            // These legacy spark controls live in a collapsed compatibility container.
+            // Do not spend UI-thread work rebuilding them while they are not visible.
+            if (PpsSpark.IsVisible)
+                RenderSpark(PpsSpark, _ppsSeries);
+            if (ThroughputSpark.IsVisible)
+                RenderSpark(ThroughputSpark, _mbpsSeries);
         }
 
         protected override void OnClosed(EventArgs e)

@@ -8,13 +8,15 @@ namespace Carthago
 {
     public partial class MainWindow
     {
+        private const int TrafficAverageWindow = 10;
+
         // ======= Init Charts (ScottPlot v5 API) =======
         private void InitAllPlots()
         {
-            ScottPlot.Color bg = ScottPlot.Color.FromHex("#0B1220");
-            ScottPlot.Color panel = ScottPlot.Color.FromHex("#101826");
-            ScottPlot.Color grid = ScottPlot.Color.FromHex("#223048");
-            ScottPlot.Color ticks = ScottPlot.Color.FromHex("#9CA3AF");
+            ScottPlot.Color bg = ScottPlot.Color.FromHex("#07121F");
+            ScottPlot.Color panel = ScottPlot.Color.FromHex("#091827");
+            ScottPlot.Color grid = ScottPlot.Color.FromHex("#173149");
+            ScottPlot.Color ticks = ScottPlot.Color.FromHex("#9CB3C4");
 
             void StylePlot(WpfPlot wp)
             {
@@ -26,71 +28,71 @@ namespace Carthago
                 wp.Plot.Legend.IsVisible = false;
             }
 
-            // Traffic plots
+            // Traffic plots use the same rolling local PPS sources.
             StylePlot(TrafficPlot);
             StylePlot(TrafficPlot_Analytics);
             TrafficPlot.Plot.Axes.DateTimeTicksBottom();
             TrafficPlot_Analytics.Plot.Axes.DateTimeTicksBottom();
-            TrafficPlot.Plot.Title("Traffic Over Time");
             TrafficPlot.Plot.Axes.Bottom.Label.Text = "Time";
             TrafficPlot.Plot.Axes.Left.Label.Text = "Packets / sec";
-            TrafficPlot.Plot.Legend.IsVisible = true;
-
-            TrafficPlot_Analytics.Plot.Title("Traffic Over Time");
             TrafficPlot_Analytics.Plot.Axes.Bottom.Label.Text = "Time";
             TrafficPlot_Analytics.Plot.Axes.Left.Label.Text = "Packets / sec";
-            TrafficPlot_Analytics.Plot.Legend.IsVisible = true;
 
-            // Protocol / Talkers / Severity (both Dashboard and Analytics)
-            void StyleBars(WpfPlot wp, string title, string xLab, string yLab, bool rotate = true)
+            // Analytics-only charts are styled at startup, but data rendering is deferred
+            // until the Analytics workspace is visible.
+            void StyleBars(WpfPlot wp, string xLab, string yLab)
             {
                 StylePlot(wp);
-                wp.Plot.Title(title);
                 wp.Plot.Axes.Bottom.Label.Text = xLab;
                 wp.Plot.Axes.Left.Label.Text = yLab;
-                if (rotate)
-                {
-                    wp.Plot.Axes.Bottom.TickLabelStyle.Rotation = -45;
-                    wp.Plot.Axes.Bottom.TickLabelStyle.Alignment = ScottPlot.Alignment.MiddleRight;
-                }
             }
 
-            StyleBars(ProtocolPlot, "Protocol Distribution", "Protocol", "Count");
-            StyleBars(ProtocolPlot_Analytics, "Protocol Distribution", "Protocol", "Count");
-            StyleBars(TopTalkersPlot, "Top Talkers (by Source)", "Source IP", "Packets");
-            StyleBars(TopTalkersPlot_Analytics, "Top Talkers (by Source)", "Source IP", "Packets");
+            StyleBars(ProtocolPlot_Analytics, "Observed packets", "Protocol");
+            StyleBars(TopTalkersPlot_Analytics, "Packets", "Source IP");
 
-            StylePlot(SeverityPlot);
-            SeverityPlot.Plot.Title("Alert Severity Distribution");
             StylePlot(SeverityPlot_Analytics);
-            SeverityPlot_Analytics.Plot.Title("Alert Severity Distribution");
 
-            // Overview sparklines visuals
+            // Hidden compatibility plots remain initialized but are not redrawn in the hot path.
+            StylePlot(ProtocolPlot);
+            StylePlot(TopTalkersPlot);
+            StylePlot(SeverityPlot);
             PrepareSpark(PpsSpark);
             PrepareSpark(ThroughputSpark);
 
-            // seed with empties
             RenderTraffic();
-            RenderProtocol();
-            RenderTopTalkers();
-            RenderSeverity();
             UpdateKpis();
         }
 
-        // ======= Render helpers =======
-        private static double[] MovingAverage(IReadOnlyList<double> ys, int window)
+        // Compute the 10-sample average once when the timer appends a sample.
+        // This avoids allocating and recomputing a complete moving-average series on every chart redraw.
+        private void AppendTrafficAverage(double x)
         {
-            if (ys.Count == 0 || window <= 1) return Array.Empty<double>();
-            window = Math.Min(window, ys.Count);
-            double[] ma = new double[ys.Count - window + 1];
+            if (_trafficYs.Count < TrafficAverageWindow)
+                return;
+
             double sum = 0;
-            for (int i = 0; i < ys.Count; i++)
+            for (int i = _trafficYs.Count - TrafficAverageWindow; i < _trafficYs.Count; i++)
+                sum += _trafficYs[i];
+
+            _trafficAverageXs.Add(x);
+            _trafficAverageYs.Add(sum / TrafficAverageWindow);
+        }
+
+        private void TrimTrafficAverageToWindow()
+        {
+            if (_trafficXs.Count == 0)
             {
-                sum += ys[i];
-                if (i >= window) sum -= ys[i - window];
-                if (i >= window - 1) ma[i - (window - 1)] = sum / window;
+                _trafficAverageXs.Clear();
+                _trafficAverageYs.Clear();
+                return;
             }
-            return ma;
+
+            double oldestVisibleX = _trafficXs[0];
+            while (_trafficAverageXs.Count > 0 && _trafficAverageXs[0] < oldestVisibleX)
+            {
+                _trafficAverageXs.RemoveAt(0);
+                _trafficAverageYs.RemoveAt(0);
+            }
         }
 
         private void RenderTraffic()
@@ -106,114 +108,123 @@ namespace Carthago
                 ? $"No local PPS timer samples yet. Capture status: {captureStatus}. No packet-rate observation is available."
                 : $"Latest local timer PPS sample: {_trafficYs[^1]:0} packets/s; {sampleCount} of {TrafficWindowSeconds} retained samples. Capture status: {captureStatus}. Timer zeros can occur without active capture.";
 
-            void Draw(WpfPlot wp, bool withAverage)
+            void Draw(WpfPlot wp)
             {
                 wp.Plot.Clear();
 
                 if (_trafficXs.Count > 1)
                 {
-                    // main line
-                    var sp = wp.Plot.Add.Scatter(_trafficXs.ToArray(), _trafficYs.ToArray());
-                    sp.MarkerSize = 0;
-                    sp.LineWidth = 2;
-                    sp.Color = ScottPlot.Color.FromHex("#60A5FA"); // blue
-                    sp.LegendText = "PPS";
+                    // SignalXY is optimized for ascending X/Y data and can consume the rolling lists directly.
+                    // This removes the former ToArray allocations on every redraw.
+                    var pps = wp.Plot.Add.SignalXY(_trafficXs, _trafficYs);
+                    pps.MarkerSize = 0;
+                    pps.LineWidth = 2;
+                    pps.Color = ScottPlot.Color.FromHex("#31D4E7");
+                    pps.LegendText = "Local PPS";
 
-                    if (withAverage && _trafficYs.Count > 10)
+                    if (_trafficAverageYs.Count > 1)
                     {
-                        // moving average overlay (10-sample window)
-                        var ma = MovingAverage(_trafficYs, 10);
-                        var maX = _trafficXs.Skip(_trafficXs.Count - ma.Length).ToArray();
-                        var maPlot = wp.Plot.Add.Scatter(maX, ma);
-                        maPlot.MarkerSize = 0;
-                        maPlot.LineWidth = 2;
-                        maPlot.LinePattern = ScottPlot.LinePattern.Dashed; // fixed
-                        maPlot.Color = ScottPlot.Color.FromHex("#F59E0B"); // amber
-                        maPlot.LegendText = "10-s MA"; // fixed (Label -> LegendText)
-                        wp.Plot.Legend.IsVisible = true;
+                        var average = wp.Plot.Add.SignalXY(_trafficAverageXs, _trafficAverageYs);
+                        average.MarkerSize = 0;
+                        average.LineWidth = 2;
+                        average.LinePattern = ScottPlot.LinePattern.Dashed;
+                        average.Color = ScottPlot.Color.FromHex("#F4B860");
+                        average.LegendText = "10-sample average";
                     }
                 }
 
-                wp.Plot.Axes.Margins(bottom: 0);
+                wp.Plot.Axes.Margins(bottom: 0, top: .12);
+                wp.Plot.Axes.AutoScale();
                 wp.Refresh();
             }
 
-            Draw(TrafficPlot, withAverage: true);
-            Draw(TrafficPlot_Analytics, withAverage: true);
+            if (DashboardView.IsVisible)
+                Draw(TrafficPlot);
+            if (AnalyticsView.IsVisible)
+                Draw(TrafficPlot_Analytics);
         }
 
         private void RenderProtocol()
         {
-            var ordered = _protocolCounts.OrderByDescending(kv => kv.Value).ToArray();
+            if (!AnalyticsView.IsVisible)
+                return;
+
+            // Ascending values place the largest category at the top of a horizontal bar chart.
+            var ordered = _protocolCounts
+                .OrderBy(kv => kv.Value)
+                .ToArray();
             var labels = ordered.Select(kv => kv.Key).ToArray();
             var values = ordered.Select(kv => (double)kv.Value).ToArray();
             var positions = Enumerable.Range(0, values.Length).Select(i => (double)i).ToArray();
 
-            void Draw(WpfPlot wp)
+            var wp = ProtocolPlot_Analytics;
+            wp.Plot.Clear();
+            if (values.Length > 0)
             {
-                wp.Plot.Clear();
-                if (values.Length > 0)
+                var bars = wp.Plot.Add.Bars(values);
+                bars.Horizontal = true;
+                for (int i = 0; i < bars.Bars.Count; i++)
                 {
-                    var bars = wp.Plot.Add.Bars(values);
-                    for (int i = 0; i < bars.Bars.Count; i++)
-                    {
-                        bars.Bars[i].FillColor = ScottPlot.Color.FromHex(i < 3 ? "#34D399" : "#60A5FA");
-                        bars.Bars[i].LineColor = bars.Bars[i].FillColor.Darken(.4); // fixed (BorderColor -> LineColor)
-                        bars.Bars[i].Label = ((int)values[i]).ToString();
-                    }
-                    wp.Plot.Axes.Bottom.SetTicks(positions, labels);
-                    wp.Plot.Axes.Margins(bottom: 0, top: .25);
+                    bool topTier = i >= Math.Max(0, bars.Bars.Count - 3);
+                    bars.Bars[i].FillColor = ScottPlot.Color.FromHex(topTier ? "#2FCAD8" : "#1C7892");
+                    bars.Bars[i].LineColor = ScottPlot.Color.FromHex(topTier ? "#62E4EE" : "#2A9BB3");
+                    bars.Bars[i].Label = ((int)values[i]).ToString();
                 }
-                wp.Refresh();
+                wp.Plot.Axes.Left.SetTicks(positions, labels);
+                wp.Plot.Axes.Margins(left: 0, right: .18);
+                wp.Plot.Axes.AutoScale();
             }
-
-            Draw(ProtocolPlot);
-            Draw(ProtocolPlot_Analytics);
+            wp.Refresh();
         }
 
         private void RenderTopTalkers()
         {
+            if (!AnalyticsView.IsVisible)
+                return;
+
+            // Keep the existing Top 10 scope, but render horizontally so source addresses stay readable.
             var top = _talkerCounts
                 .OrderByDescending(kv => kv.Value)
                 .Take(10)
+                .OrderBy(kv => kv.Value)
                 .ToArray();
 
             var labels = top.Select(kv => kv.Key).ToArray();
             var values = top.Select(kv => (double)kv.Value).ToArray();
             var positions = Enumerable.Range(0, values.Length).Select(i => (double)i).ToArray();
 
-            void Draw(WpfPlot wp)
+            var wp = TopTalkersPlot_Analytics;
+            wp.Plot.Clear();
+            if (values.Length > 0)
             {
-                wp.Plot.Clear();
-                if (values.Length > 0)
+                var bars = wp.Plot.Add.Bars(values);
+                bars.Horizontal = true;
+                for (int i = 0; i < bars.Bars.Count; i++)
                 {
-                    var bars = wp.Plot.Add.Bars(values);
-                    for (int i = 0; i < bars.Bars.Count; i++)
-                    {
-                        bars.Bars[i].FillColor = ScottPlot.Color.FromHex("#93C5FD");
-                        bars.Bars[i].LineColor = ScottPlot.Color.FromHex("#3B82F6"); // fixed
-                        bars.Bars[i].Label = ((int)values[i]).ToString();
-                    }
-                    wp.Plot.Axes.Bottom.SetTicks(positions, labels);
-                    wp.Plot.Axes.Margins(bottom: 0, top: .25);
+                    bars.Bars[i].FillColor = ScottPlot.Color.FromHex("#2399AF");
+                    bars.Bars[i].LineColor = ScottPlot.Color.FromHex("#4BD7E4");
+                    bars.Bars[i].Label = ((int)values[i]).ToString();
                 }
-                wp.Refresh();
+                wp.Plot.Axes.Left.SetTicks(positions, labels);
+                wp.Plot.Axes.Margins(left: 0, right: .18);
+                wp.Plot.Axes.AutoScale();
             }
-
-            Draw(TopTalkersPlot);
-            Draw(TopTalkersPlot_Analytics);
+            wp.Refresh();
         }
 
         private void RenderSeverity()
         {
+            if (!AnalyticsView.IsVisible)
+                return;
+
             string[] sevOrder = new[] { "Critical", "High", "Medium", "Low", "Info" };
             var colors = new Dictionary<string, ScottPlot.Color>
             {
-                ["Critical"] = ScottPlot.Colors.Crimson,
-                ["High"] = ScottPlot.Colors.OrangeRed,
-                ["Medium"] = ScottPlot.Colors.Orange,
-                ["Low"] = ScottPlot.Color.FromHex("#DAA520"),
-                ["Info"] = ScottPlot.Colors.SteelBlue
+                ["Critical"] = ScottPlot.Color.FromHex("#F0525C"),
+                ["High"] = ScottPlot.Color.FromHex("#F28C45"),
+                ["Medium"] = ScottPlot.Color.FromHex("#E9B949"),
+                ["Low"] = ScottPlot.Color.FromHex("#55B77A"),
+                ["Info"] = ScottPlot.Color.FromHex("#3AA9C7")
             };
 
             List<ScottPlot.PieSlice> slices = new();
@@ -224,28 +235,23 @@ namespace Carthago
                 {
                     Value = v,
                     FillColor = colors[s],
-                    Label = $"{s} ({v})"
+                    Label = $"{s} ({v})",
+                    LabelFontColor = ScottPlot.Color.FromHex("#DDEAF3")
                 });
             }
 
-            void Draw(WpfPlot wp)
+            var wp = SeverityPlot_Analytics;
+            wp.Plot.Clear();
+            if (slices.Any(sl => sl.Value > 0))
             {
-                wp.Plot.Clear();
-                if (slices.Any(sl => sl.Value > 0))
-                {
-                    var pie = wp.Plot.Add.Pie(slices);
-                    pie.ExplodeFraction = .06;
-                    pie.SliceLabelDistance = 1.12;
-                    pie.DonutFraction = .45;
-                    slices.ForEach(x => x.LabelFontColor = x.FillColor.Darken(.45));
-                }
-                wp.Plot.Axes.Frameless();
-                wp.Plot.HideGrid();
-                wp.Refresh();
+                var pie = wp.Plot.Add.Pie(slices);
+                pie.ExplodeFraction = 0;
+                pie.SliceLabelDistance = 1.05;
+                pie.DonutFraction = .62;
             }
-
-            Draw(SeverityPlot);
-            Draw(SeverityPlot_Analytics);
+            wp.Plot.Axes.Frameless();
+            wp.Plot.HideGrid();
+            wp.Refresh();
         }
 
         // ===== KPI: Overview =====
@@ -264,12 +270,14 @@ namespace Carthago
             {
                 var sig = wp.Plot.Add.Signal(ys.ToArray());
                 sig.LineWidth = 2;
+                sig.Color = ScottPlot.Color.FromHex("#31D4E7");
 
                 // mean reference line
                 double mean = ys.Average();
                 var h = wp.Plot.Add.HorizontalLine(mean);
-                h.LinePattern = ScottPlot.LinePattern.Dotted; // fixed
+                h.LinePattern = ScottPlot.LinePattern.Dotted;
                 h.LineWidth = 1;
+                h.Color = ScottPlot.Color.FromHex("#5E8195");
 
                 double ymax = Math.Max(1, ys.Max() * 1.15);
                 wp.Plot.Axes.SetLimits(0, ys.Count - 1, 0, ymax);

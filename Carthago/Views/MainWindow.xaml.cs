@@ -209,6 +209,16 @@ namespace Carthago
             ShowView(AnalyticsView);
             SidebarPanel?.ActivateNav("Analytics");
 
+            // Analytics charts are intentionally not rebuilt while this workspace is hidden.
+            // Refresh once on entry so the analyst sees current locally accumulated evidence.
+            RenderTraffic();
+            RenderProtocol();
+            RenderTopTalkers();
+            RenderSeverity();
+            _protocolChartDirty = false;
+            _talkerChartDirty = false;
+            _severityChartDirty = false;
+
             if (WorldMap != null)
             {
                 var subtle = TryFindResource("TextSubtleBrush") as Brush ?? Brushes.White;

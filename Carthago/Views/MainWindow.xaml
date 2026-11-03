@@ -672,16 +672,16 @@
                       <!-- GA UI-82: source-accurate plot key, matching the existing ScottPlot series; no new telemetry. -->
                       <WrapPanel Margin="0,0,0,6"
                                  AutomationProperties.Name="Local PPS plot series key"
-                                 AutomationProperties.HelpText="Blue solid line shows local timer packets per second. Amber dashed line is the ten-sample moving average, drawn only after at least eleven timer samples. Neither line proves active capture or network-wide traffic.">
+                                 AutomationProperties.HelpText="Cyan solid line shows local timer packets per second. Amber dashed line is the ten-sample moving average, drawn once eleven timer samples provide a visible line segment. Neither line proves active capture or network-wide traffic.">
                         <StackPanel Orientation="Horizontal" Margin="0,0,16,4">
                           <Line X1="0" Y1="5" X2="24" Y2="5" Width="26" Height="10"
-                                Stroke="#60A5FA" StrokeThickness="2" VerticalAlignment="Center" IsHitTestVisible="False"/>
-                          <TextBlock Text="Local PPS · solid blue" FontSize="11"
+                                Stroke="#31D4E7" StrokeThickness="2" VerticalAlignment="Center" IsHitTestVisible="False"/>
+                          <TextBlock Text="Local PPS · solid cyan" FontSize="11"
                                      Foreground="{StaticResource TextMutedBrush}" Margin="6,0,0,0" VerticalAlignment="Center"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                           <Line X1="0" Y1="5" X2="24" Y2="5" Width="26" Height="10"
-                                Stroke="#F59E0B" StrokeThickness="2" StrokeDashArray="3,2"
+                                Stroke="#F4B860" StrokeThickness="2" StrokeDashArray="3,2"
                                 VerticalAlignment="Center" IsHitTestVisible="False"/>
                           <TextBlock Text="10-sample average · dashed amber (11+ samples)" FontSize="11"
                                      Foreground="{StaticResource TextMutedBrush}" Margin="6,0,0,0" VerticalAlignment="Center"/>
@@ -2111,71 +2111,128 @@
           </Border>
         </Grid>
 
-        <!-- ===== Analytics (Top Talkers on top, charts + map under) ===== -->
+        <!-- ===== Analytics: local evidence charts + map ===== -->
         <Grid x:Name="AnalyticsView"
               Visibility="Collapsed">
           <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
-            <!-- TopTalkers full width -->
             <RowDefinition Height="*"/>
-            <!-- Traffic + Protocol -->
             <RowDefinition Height="*"/>
-            <!-- Severity + Map -->
           </Grid.RowDefinitions>
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="*"/>
           </Grid.ColumnDefinitions>
 
-          <!-- Top Talkers as a single full-width row -->
-          <GroupBox Header="Top Talkers"
-                    Grid.Row="0"
-                    Grid.ColumnSpan="2"
-                    Margin="5">
-            <ScottPlot:WpfPlot x:Name="TopTalkersPlot_Analytics"/>
-          </GroupBox>
-
-          <!-- Charts under -->
-          <GroupBox Grid.Row="1"
-                    Grid.Column="0"
-                    Margin="5">
-            <GroupBox.Header>
-              <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Traffic Over Time"/>
-                <TextBlock x:Name="AnalyticsChartRefreshCountdownText"
-                           Text="Charts refresh in 3s"
-                           Foreground="{StaticResource TextMutedBrush}"
-                           FontSize="11"
-                           Margin="12,0,0,0"
-                           AutomationProperties.Name="Seconds until the next chart redraw"/>
+          <!-- UI-110: ranked horizontal bars keep long source labels readable. -->
+          <Border Grid.Row="0" Grid.ColumnSpan="2"
+                  Style="{StaticResource DashboardFocusPanel}"
+                  Margin="5" Padding="16">
+            <Grid>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+              </Grid.RowDefinitions>
+              <StackPanel Margin="0,0,0,8">
+                <TextBlock Text="Top Talkers" Style="{StaticResource DashboardSectionTitle}"/>
+                <TextBlock Text="Top 10 locally observed source addresses by packet count"
+                           Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
               </StackPanel>
-            </GroupBox.Header>
-            <ScottPlot:WpfPlot x:Name="TrafficPlot_Analytics"/>
-          </GroupBox>
+              <ScottPlot:WpfPlot x:Name="TopTalkersPlot_Analytics"
+                                Grid.Row="1" MinHeight="180"
+                                AutomationProperties.Name="Top local source addresses by packet count"/>
+            </Grid>
+          </Border>
 
-          <GroupBox Header="Protocol Distribution"
-                    Grid.Row="1"
-                    Grid.Column="1"
-                    Margin="5">
-            <ScottPlot:WpfPlot x:Name="ProtocolPlot_Analytics"/>
-          </GroupBox>
+          <Border Grid.Row="1" Grid.Column="0"
+                  Style="{StaticResource DashboardFocusPanel}"
+                  Margin="5" Padding="16">
+            <Grid>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+              </Grid.RowDefinitions>
+              <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                  <TextBlock Text="Network Traffic" Style="{StaticResource DashboardSectionTitle}"/>
+                  <TextBlock Text="Local PPS · rolling 120-second window"
+                             Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
+                </StackPanel>
+                <TextBlock x:Name="AnalyticsChartRefreshCountdownText"
+                           Grid.Column="1"
+                           Text="Charts refresh in 3s"
+                           Foreground="{StaticResource AccentAltBrush}"
+                           FontSize="11" FontWeight="SemiBold"
+                           Margin="12,2,0,0"
+                           AutomationProperties.Name="Seconds until the next chart redraw"/>
+              </Grid>
+              <ScottPlot:WpfPlot x:Name="TrafficPlot_Analytics"
+                                Grid.Row="1" MinHeight="180"
+                                AutomationProperties.Name="Local packets per second analytics history"/>
+            </Grid>
+          </Border>
 
-          <GroupBox Header="Severity"
-                    Grid.Row="2"
-                    Grid.Column="0"
-                    Margin="5">
-            <ScottPlot:WpfPlot x:Name="SeverityPlot_Analytics"/>
-          </GroupBox>
+          <Border Grid.Row="1" Grid.Column="1"
+                  Style="{StaticResource DashboardFocusPanel}"
+                  Margin="5" Padding="16">
+            <Grid>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+              </Grid.RowDefinitions>
+              <StackPanel Margin="0,0,0,8">
+                <TextBlock Text="Protocol Mix" Style="{StaticResource DashboardSectionTitle}"/>
+                <TextBlock Text="Locally observed protocol packet counts"
+                           Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
+              </StackPanel>
+              <ScottPlot:WpfPlot x:Name="ProtocolPlot_Analytics"
+                                Grid.Row="1" MinHeight="180"
+                                AutomationProperties.Name="Local protocol packet distribution"/>
+            </Grid>
+          </Border>
 
-          <!-- NEW: Geography Map -->
-          <GroupBox Header="Geography Map"
-                    Grid.Row="2"
-                    Grid.Column="1"
-                    Margin="5">
-            <controls:WorldMapControl x:Name="WorldMap"
-                                      Margin="6"
-                                      ShowGraticule="True"/>
-          </GroupBox>
+          <Border Grid.Row="2" Grid.Column="0"
+                  Style="{StaticResource DashboardFocusPanel}"
+                  Margin="5" Padding="16">
+            <Grid>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+              </Grid.RowDefinitions>
+              <StackPanel Margin="0,0,0,8">
+                <TextBlock Text="Alert Severity" Style="{StaticResource DashboardSectionTitle}"/>
+                <TextBlock Text="Current locally observed detection distribution"
+                           Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
+              </StackPanel>
+              <ScottPlot:WpfPlot x:Name="SeverityPlot_Analytics"
+                                Grid.Row="1" MinHeight="180"
+                                AutomationProperties.Name="Local alert severity distribution"/>
+            </Grid>
+          </Border>
+
+          <Border Grid.Row="2" Grid.Column="1"
+                  Style="{StaticResource DashboardFocusPanel}"
+                  Margin="5" Padding="16">
+            <Grid>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+              </Grid.RowDefinitions>
+              <StackPanel Margin="0,0,0,8">
+                <TextBlock Text="Geography Map" Style="{StaticResource DashboardSectionTitle}"/>
+                <TextBlock Text="Local geolocation projection for observed evidence"
+                           Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
+              </StackPanel>
+              <controls:WorldMapControl x:Name="WorldMap"
+                                        Grid.Row="1"
+                                        Margin="0"
+                                        ShowGraticule="True"/>
+            </Grid>
+          </Border>
         </Grid>
 
         <!-- ===== Integrations (EDR/XDR) - side view (no popup) ===== -->
