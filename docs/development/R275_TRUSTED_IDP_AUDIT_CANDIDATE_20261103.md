@@ -92,7 +92,7 @@ During owner-authorized test time:
 ```powershell
 dotnet test .\Carthago.Tests\Carthago.Tests.csproj `
   -c Release `
-  --filter "FullyQualifiedName~OAuthDeviceFlowAuditCandidateGateTests|FullyQualifiedName~R275AdvancedAccuracyBatchTests|FullyQualifiedName~R275R343R485PairedReplayTests"
+  --filter "FullyQualifiedName~MicrosoftEntraDeviceCodeAuditIntakeTests|FullyQualifiedName~OAuthDeviceFlowAuditCandidateGateTests|FullyQualifiedName~R275AdvancedAccuracyBatchTests|FullyQualifiedName~R275R343R485PairedReplayTests"
 ```
 
 Do not mark this increment GREEN until the focused tests complete successfully on CARTHAGE.
@@ -104,3 +104,38 @@ A real IdP producer remains separate work. It must authenticate to its provider 
 Raw provider JSON, query parameters such as `user_code` or `device_code`, HTTP request text, SNI, or a caller-supplied `trusted=true` field must never create a signed receipt.
 
 Only after that producer is independently reviewed and tested should a separate design decide how a verified R275 capability reaches rule evaluation. That future integration must preserve the current packet-only negatives and must not lower R275's confidence or policy safeguards.
+
+
+## Microsoft Entra SigninLogs projection
+
+A provider-facing parser is now also authored:
+
+- `Carthago/Services/TrustedAudit/MicrosoftEntraDeviceCodeAuditIntake.cs`
+- `Carthago.Tests/MicrosoftEntraDeviceCodeAuditIntakeTests.cs`
+
+It consumes a deliberately narrow Azure Monitor `SigninLogs` projection rather than a full raw row. The exact accepted fields are:
+
+`Type`, `Id`, `CreatedDateTime`, `AuthenticationProtocol`, `ResultType`,
+`RiskState`, `RiskDetail`, `IPAddress`, `UserId`, `AppId`, `ResourceId`,
+`HomeTenantId`, and `ResourceTenantId`.
+
+The parser recognizes a candidate only when:
+
+- `Type == "SigninLogs"`;
+- `AuthenticationProtocol == "deviceCode"`;
+- `ResultType == "0"` (successful sign-in);
+- `RiskState == "confirmedCompromised"`;
+- `RiskDetail == "adminConfirmedSigninCompromised"`;
+- the client IP is valid and non-loopback;
+- sign-in/user/app/resource/tenant identifiers are valid GUIDs;
+- `CreatedDateTime` carries an explicit UTC time.
+
+Raw user/app/resource identifiers are hashed before leaving the parser. The observation retains only UTC time, source IP, actor hash, resource hash, trace hash, and `FromTrustedProviderTransport=false`.
+
+Extra fields such as `UserPrincipalName`, `UserDisplayName`, token identifiers, raw authentication details, or OAuth/device-code material are rejected instead of being silently ignored.
+
+The parser is intentionally **unsigned and untrusted**. It does not call Microsoft APIs, hold tenant credentials, or assert that caller-supplied JSON came from Entra. A future authenticated collector must establish provider transport provenance before any R275 signing step.
+
+Microsoft schema references used for this contract:
+- https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/signinlogs
+- https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-authentication-flows
