@@ -1937,3 +1937,15 @@ SOURCE CANDIDATE fix authored directly on the existing feature branch in `e3c535
 2. The audit inventory now cross-checks exact default rule IDs and duplicates against the checked-out `RuleRegistry.cs` instead of rejecting every catalog larger than 544. R001-R695 preservation provides a minimum floor, not an upper cap. Additional evidence-only IDs are not silently equated with default registrations.
 
 **Verification status:** SOURCE CANDIDATE — UNVERIFIED for the PowerShell repair; no .NET/PowerShell tests executed in the assistant environment. **Detection-quality gate remains RED** because of the unresolved `ssrf-imds` confidence expectation until independently investigated and rerun. No production rule, rule confidence, suppression policy, replay classification or frozen holdout changed.
+
+#### 2026-11-03 — R163 SSRF replay confidence contract aligned to observable evidence
+
+Follow-up to the owner's detection-quality run that built/tests/benchmark executed successfully but whose end-to-end validation remained RED: the `ssrf-imds` fixture required raw confidence >=0.65 while the R163 rule intentionally produces only 0.62 from metadata-service target (0.34) + credential-path evidence (0.28). Ordinary IMDSv2 headers and time-adjacent inbound HTTP are not independently proven SSRF causality and must not add confidence.
+
+Source-only changes published on the existing `feature/carthago-reliability-hardening` branch:
+- `e764baf5fd207543f38ac6492f65e10676c0bc6f` — correct **only the fixture's raw-candidate `expectedMinimumConfidence`** from 0.65 to the existing 0.62. The fixture retains its malicious scenario label, `expectedMatches: ["R163"]`, and original traffic records.
+- `5cc62cb99a2d3d13c87b4f95d53466c9c71b5496` — add a fixture-specific replay xUnit contract requiring R163 raw recognition, 0.62 exact replay confidence, empty fixture expectation errors, the immutable 84% R163 precision floor, and **no R163 simulated alert in any of six profiles**.
+
+These assertions prevent silently inflating the detector score to make the fixture pass; they also prevent misinterpreting a legitimate metadata-credential probe as independently proven SSRF. No production rule confidence weighting, policy, alert mode, classification, expected negative labels, frozen holdouts, or producer trust path changed.
+
+The earlier `verify-local.ps1` PowerShell repair `e3c5357` also remains SOURCE CANDIDATE — UNVERIFIED. **Validation state: PENDING owner Windows rerun**. First run focused `FullyQualifiedName~R118R163PairedReplayQualityTests`, then `./verify-local.ps1 -Details`, and record the exact pass/fail numbers, benchmark errors, and rule-inventory equality checks. No tests were run from the assistant's environment. Previous RED and 42/42 raw recognition evidence remain historical; do not mark a new overall detection-quality GREEN until observed.
