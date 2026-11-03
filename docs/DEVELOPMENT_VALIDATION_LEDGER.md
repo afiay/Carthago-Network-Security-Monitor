@@ -1519,3 +1519,21 @@ Live source review confirmed the A16 fixture keeps the PCAP and serialized JSON 
 Commit `f8cfbb09d9ff106cce5c4e7360243337a9ea312a` changes only the verifier process-capture boundary: child output is captured as objects in memory, `ErrorRecord.Exception.Message` is extracted before PowerShell formatting can wrap/annotate it, then the normalized private log is written to the existing ephemeral file and passed through the same privacy assertions. The fixed reason allowlist and auditor behavior are unchanged.
 
 **Current cumulative Stage 6 status:** every synthetic scenario except `A16-distinct` is GREEN in this owner session. A16 remains pending one focused rerun after pulling the capture fix. V2 remains 0/4 external reviewed pairs and unfrozen; V1 remains immutable.
+
+
+#### 2026-11-03 — Stage 6 V2 synthetic auditor-enforcement matrix cumulatively GREEN
+
+The owner pulled live branch revision `303f31db32814887679958cf18a69135b693dee3` and ran the final remaining focused scenario:
+`verify-v2-auditor-enforcement.ps1 -AuthorizedTestTime -OnlyScenario A16-distinct`.
+
+Observed result:
+- `AUDITOR CONTRACT: A16-distinct observed expected exit category and reason; private output checked.`
+- `Focused auditor scenario completed: A16-distinct. No source approved or holdout frozen.`
+
+**A16-distinct is GREEN.** This closes the last unresolved Stage 6 synthetic auditor-enforcement case.
+
+Across this authorized owner session, the complete scenario set now has observed GREEN results: `BASELINE`, `A13`, `A01`, `A01-case`, `A02`, `A03`, `A04`, `A06`, `A08-qtype`, `A08-port`, `A09`, `A09-missing`, `A10`, `A10-origin`, `A10-session`, `A11`, `A11-review-type`, `A11-license`, `A12`, `A12-provenance`, `A14`, and `A16-distinct`.
+
+**Evidence boundary:** this is a cumulative GREEN record across successive exact branch revisions during one authorized test session, not a claim that all scenarios were rerun in one monolithic invocation at `303f31d`. Subsequent verifier-only fixes were used to resolve harness/error-formatting defects; the historical intermediate failures remain recorded above. No external source was approved, no V2 candidate was frozen, no real PCAP source/license/privacy review was completed, and no detector precision/recall claim follows from this synthetic contract closure.
+
+V2 remains `PENDING_EXTERNAL_CAPTURE_AND_REVIEW` with **0/4 reviewed external R102 source/provenance pairs**. Frozen V1 remains historically FAILED 4/6 and immutable. Confidence floors remain unchanged.
