@@ -688,6 +688,16 @@ namespace Carthago.Engine.Rules.Catalog
                 new R663_ExternalFtpStorAppeRequestPairRule(),
                 new R664_ScriptProcessLongEncodedHttpGetToIpLiteralRule(),
                 new R665_ExplorerWebDavThenExternalSmbSynSequenceRule(),
+                new R666_SpecificSqlInjectionGetUriRequestRule(),
+                new R667_ScriptProcessMqttControlTopicPublishRule(),
+                new R668_Rundll32CleartextApiPostPublicRule(),
+                new R669_SystemBinaryTlsClientOnCleartextPort80Rule(),
+                new R670_RegularFixedLengthIcmpEchoSequenceRule(),
+                new R671_ScriptProcessLargeRawTcpPayloadBurstRule(),
+                new R672_PowerShellBase64LikeHttpPostParameterRule(),
+                new R673_ScriptProcessRepeatedDoublePercentEncodedHttpGetRule(),
+                new R674_SameProcessInboundToOutboundPublicTcpSynSequenceRule(),
+                new R675_UnusualSystemUtilityTlsSniToWebCollaborationHostRule(),
             };
         }
 
