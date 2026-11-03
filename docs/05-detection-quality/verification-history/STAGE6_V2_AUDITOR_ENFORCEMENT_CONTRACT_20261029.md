@@ -328,3 +328,14 @@ A11 then rejected for a different reason than its contract expectation. The veri
 Commit `27f3fa8357ba81ec58bfb9466c13505951eea23e` adds a diagnostic-only harness capability: `-OnlyScenario` can run one already-defined synthetic case, and mismatch output now maps the private log only to a fixed allowlist of privacy-safe contract reason strings. Unknown output becomes `UNRECOGNIZED_SANITIZED_REASON`. Raw packet data, DNS names, addresses, paths and provenance values remain private.
 
 **Next observation:** run only `A11` using the new selector, then fix the exact live-branch cause only if the sanitized observed reason demonstrates a contract/implementation mismatch. Full Stage 6 GREEN still requires the complete matrix afterward.
+
+
+### 2026-11-03 A11-only diagnostic — verifier formatting mismatch identified
+
+The owner executed `verify-v2-auditor-enforcement.ps1 -AuthorizedTestTime -OnlyScenario A11`. The verifier reported the expected generic label-review reason but classified the actual child output as `UNRECOGNIZED_SANITIZED_REASON`, so A11 remained neither RED nor GREEN.
+
+Live source review proves the A11 auditor branch: the mutation sets `analystReviewedLabel=false`; the boolean-type guard passes, and the following external-attribution/review predicate rejects the false value with the contract's intended generic reason. No competing packet or source-independence check occurs before that branch.
+
+The fault was therefore isolated to the verifier's handling of Windows PowerShell-formatted child error text. Commit `551f3fd8d7d72ba232840f3d6bcc760ef0166d3e` normalizes whitespace only for reason matching, while preserving the untouched private log for existing privacy assertions. This does not relax the accepted reason allowlist or alter the auditor.
+
+**Gate remains pending:** rerun only A11 after pulling the verifier fix. A full matrix rerun is required only after the focused A11 diagnostic turns GREEN.
