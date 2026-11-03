@@ -260,6 +260,13 @@ namespace Carthago.Controls
             return EvalAsync(js);
         }
 
+        // GeoJSON retains Polygon interior rings and MultiPolygon grouping, unlike the legacy flat-ring API.
+        public Task SetGeoJson(string geoJson)
+        {
+            var payload = System.Text.Json.JsonSerializer.Serialize(geoJson);
+            return EvalAsync($"window.__carthago && __carthago.setGeoJson(JSON.parse({payload}));");
+        }
+
         public Task ClearPolygons()
             => EvalAsync("window.__carthago && __carthago.clearPolygons();");
 
@@ -286,8 +293,14 @@ namespace Carthago.Controls
                img-src     * data: blob:;"">
 <meta name=""viewport"" content=""width=device-width, initial-scale=1""/>
 <style>
-html, body, #map {{ height: 100%; margin: 0; padding: 0; }}
-.leaflet-tooltip {{ font: 12px/1.2 sans-serif; }}
+html, body, #map {{ height: 100%; margin: 0; padding: 0; background: #081724; }}
+.leaflet-container {{ background: #081724; font-family: Segoe UI, sans-serif; }}
+.leaflet-tile-pane {{ filter: grayscale(1) invert(1) hue-rotate(165deg) brightness(.47) contrast(1.3); opacity: .76; }}
+.leaflet-control-attribution {{ background: rgba(8,23,36,.88) !important; color: #a8c4d2 !important; font: 10px Segoe UI, sans-serif; }}
+.leaflet-control-attribution a {{ color: #53cde4 !important; }}
+.leaflet-control-zoom a {{ background: #102a3c !important; color: #6cdaef !important; border-color: #31546a !important; }}
+.leaflet-tooltip {{ background: #132c3e; border: 1px solid #3b7185; color: #e1f4fa; border-radius: 6px; font: 12px/1.35 Segoe UI, sans-serif; box-shadow: 0 5px 18px #07121e; }}
+.leaflet-tooltip:before {{ display: none; }}
 </style>
 <link id=""leaflet-css"" rel=""stylesheet"" href=""{leafletCss}""
       onerror=""this.href='https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css'"">
@@ -320,7 +333,7 @@ html, body, #map {{ height: 100%; margin: 0; padding: 0; }}
     var markers = [];
     var lines   = [];
     var polys   = [];
-    var polyStyle = {{ color:'#C8DCFF', weight:0.6, opacity:0.9, fillOpacity:0.4 }};
+    var polyStyle = {{ color:'#4A9BB1', weight:0.8, opacity:0.72, fillColor:'#174155', fillOpacity:0.12 }};
 
     function setPolygonStyle(color, opacity, fillOpacity, weight){{
       if (color) polyStyle.color = color;
@@ -332,7 +345,7 @@ html, body, #map {{ height: 100%; margin: 0; padding: 0; }}
 
     function addMarker(lat, lon, label, radius){{
       try{{
-        var m = L.circleMarker([lat, lon], {{ radius: radius||4, weight: 1, opacity: 0.9, fillOpacity: 0.8 }});
+        var m = L.circleMarker([lat, lon], {{ radius: Math.max(radius||4, 5), color:'#A8F3FF', fillColor:'#16C7D9', weight: 1.8, opacity: 0.96, fillOpacity: 0.82 }});
         if (label) m.bindTooltip(label, {{permanent:false, direction:'top', opacity:0.9}});
         m.addTo(map); markers.push(m);
       }}catch(e){{ post('ERR: addMarker ' + (e && e.message ? e.message : e)); }}
@@ -340,7 +353,7 @@ html, body, #map {{ height: 100%; margin: 0; padding: 0; }}
     function addConnection(lat1, lon1, lat2, lon2, label, color, weight, opacity){{
       try{{
         var line = L.polyline([[lat1, lon1], [lat2, lon2]], {{
-          color: color || '#ffcc00', weight: weight || 2, opacity: opacity || 0.8
+          color: color || '#48C9D9', weight: weight || 2, opacity: opacity || 0.65, dashArray:'6 5'
         }}).addTo(map);
         if (label) line.bindTooltip(label, {{sticky:true}});
         lines.push(line);
@@ -350,7 +363,15 @@ html, body, #map {{ height: 100%; margin: 0; padding: 0; }}
     function clearConnections() {{ for (var i=0;i<lines.length;i++)   map.removeLayer(lines[i]);   lines   = []; }}
     function clearPolygons()    {{ for (var i=0;i<polys.length;i++)   map.removeLayer(polys[i]);   polys   = []; }}
 
-    // rings: [ [ [lat,lon], ... ], [ ... ], ... ]
+    function setGeoJson(geojson){{
+      try{{
+        clearPolygons();
+        var layer = L.geoJSON(geojson, {{ style: function(){{ return polyStyle; }} }}).addTo(map);
+        polys.push(layer);
+      }}catch(e){{ post('ERR: setGeoJson ' + (e && e.message ? e.message : e)); }}
+    }}
+
+    // Legacy ring API retained for existing consumers.
     function setPolygons(rings, color, weight, opacity, fillOpacity){{
       try{{
         clearPolygons();
@@ -389,7 +410,7 @@ html, body, #map {{ height: 100%; margin: 0; padding: 0; }}
     window.__carthago = {{
       addMarker, addConnection, clearMarkers, clearConnections,
       setTileUrl: function(u){{ try{{ map.removeLayer(tiles); tiles = L.tileLayer(u, {{ maxZoom: 6 }}).addTo(map); }}catch(e){{ post('ERR: setTileUrl ' + (e && e.message ? e.message : e)); }} }},
-      setPolygons, clearPolygons, setPolygonStyle
+      setPolygons, setGeoJson, clearPolygons, setPolygonStyle
     }};
   }}
 

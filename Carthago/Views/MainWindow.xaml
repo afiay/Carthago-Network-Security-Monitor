@@ -2223,14 +2223,15 @@
                 <RowDefinition Height="*"/>
               </Grid.RowDefinitions>
               <StackPanel Margin="0,0,0,8">
-                <TextBlock Text="Geography Map" Style="{StaticResource DashboardSectionTitle}"/>
-                <TextBlock Text="Local geolocation projection for observed evidence"
+                <TextBlock Text="Geographic Context" Style="{StaticResource DashboardSectionTitle}"/>
+                <TextBlock Text="Contextual geography · locations are not precise host positions"
                            Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
               </StackPanel>
-              <controls:WorldMapControl x:Name="WorldMap"
-                                        Grid.Row="1"
-                                        Margin="0"
-                                        ShowGraticule="True"/>
+              <Border Grid.Row="1" CornerRadius="12" BorderThickness="1"
+                      BorderBrush="#274B60" Background="#081724" ClipToBounds="True">
+                <controls:WorldMapControl x:Name="WorldMap" Margin="0"
+                                          MinHeight="190" ShowGraticule="True"/>
+              </Border>
             </Grid>
           </Border>
         </Grid>

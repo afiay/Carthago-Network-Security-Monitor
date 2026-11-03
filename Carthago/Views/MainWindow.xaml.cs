@@ -258,56 +258,14 @@ namespace Carthago
             try
             {
                 string json = await File.ReadAllTextAsync(path).ConfigureAwait(true);
+                // Preserve GeoJSON polygon grouping and interior holes in Leaflet.
                 var root = JsonNode.Parse(json);
-                var features = root?["features"]?.AsArray();
-                if (features == null || features.Count == 0)
+                if (root?["features"] is not JsonArray features || features.Count == 0)
                     return false;
 
-                var polys = new List<IList<Point>>();
-
-                foreach (var f in features)
-                {
-                    var geom = f?["geometry"];
-                    var type = geom?["type"]?.ToString();
-                    if (type is "Polygon")
-                    {
-                        foreach (var ring in geom!["coordinates"]!.AsArray())
-                        {
-                            var list = new List<Point>();
-                            foreach (var pt in ring!.AsArray())
-                            {
-                                double lon = pt![0]!.GetValue<double>();
-                                double lat = pt![1]!.GetValue<double>();
-                                list.Add(new Point(lon, lat));
-                            }
-                            polys.Add(list);
-                        }
-                    }
-                    else if (type is "MultiPolygon")
-                    {
-                        foreach (var poly in geom!["coordinates"]!.AsArray())
-                        {
-                            foreach (var ring in poly!.AsArray())
-                            {
-                                var list = new List<Point>();
-                                foreach (var pt in ring!.AsArray())
-                                {
-                                    double lon = pt![0]!.GetValue<double>();
-                                    double lat = pt![1]!.GetValue<double>();
-                                    list.Add(new Point(lon, lat));
-                                }
-                                polys.Add(list);
-                            }
-                        }
-                    }
-                }
-
-                if (polys.Count > 0)
-                {
-                    await WorldMap.SetPolygons(polys).ConfigureAwait(true);
-                    WorldMap.Stroke = new SolidColorBrush(Color.FromRgb(200, 220, 255));
-                    return true;
-                }
+                await WorldMap.SetGeoJson(json).ConfigureAwait(true);
+                WorldMap.Stroke = new SolidColorBrush(Color.FromRgb(74, 155, 177));
+                return true;
             }
             catch
             {
