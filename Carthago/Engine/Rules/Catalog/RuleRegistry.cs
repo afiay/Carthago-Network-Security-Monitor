@@ -698,6 +698,16 @@ namespace Carthago.Engine.Rules.Catalog
                 new R673_ScriptProcessRepeatedDoublePercentEncodedHttpGetRule(),
                 new R674_SameProcessInboundToOutboundPublicTcpSynSequenceRule(),
                 new R675_UnusualSystemUtilityTlsSniToWebCollaborationHostRule(),
+                new R676_UnicastBroadcastNetworkAddressSynKnockRule(),
+                new R677_TlsClientHelloOnDnsOrAltHttpPortRule(),
+                new R678_SequentialInternalSubnetIcmpEchoWalkRule(),
+                new R679_IndustrialServicePortPublicClientSynAckRule(),
+                new R680_UnusualProcessInternalPrivateHostFanoutRule(),
+                new R681_UnusualProcessDualPublicProxyPortSynRule(),
+                new R682_SystemUtilityBrowserAgentHttpGetHeartbeatRule(),
+                new R683_HttpPostDetectedOnModbusServicePortRule(),
+                new R684_OpcUaPublicClientSynSynAckExchangeRule(),
+                new R685_MultiDeviceLargeS7CommResponseFanInRule(),
             };
         }
 
