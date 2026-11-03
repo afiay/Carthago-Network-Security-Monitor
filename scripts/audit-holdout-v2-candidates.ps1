@@ -22,6 +22,16 @@ if ($entries.Count -ne 4) { throw 'Exactly four external R102 slots must be decl
 # Prevent laundering the same original frames into multiple "independent" cases.
 $globalFrameKeys=[System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
 $maliciousSources=[System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+$maliciousSessions=[System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+$maliciousOrigins=[System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+$maliciousEvidenceSets=[System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+$allowedProvenanceFields=@(
+    'sample','classification','sourceKind','analystReviewedLabel',
+    'capturedTransportEvidence','independentLabelBasis','sourceUri',
+    'sourceLicenseEvidenceUri','sourceLicense','captureFileName','captureSha256',
+    'sourceAddress','queryRoot','frameNumbers','selectedRecordCount',
+    'originatingClientLabel','collectionSessionId','collectionVantage'
+)
 $maliciousCount=0
 $benignCount=0
 $types=@{'1'='A';'28'='AAAA';'16'='TXT';'5'='CNAME';'15'='MX';'12'='PTR';'2'='NS';'33'='SRV';'6'='SOA';'10'='NULL'}
@@ -37,6 +47,24 @@ foreach ($entry in $entries) {
     }
     $sample=Get-Content -LiteralPath $samplePath -Raw | ConvertFrom-Json
     $p=Get-Content -LiteralPath $provenancePath -Raw | ConvertFrom-Json
+    $provenanceFields=@($p.PSObject.Properties.Name)
+    if ($provenanceFields.Count -ne $allowedProvenanceFields.Count -or
+        @(Compare-Object -ReferenceObject ($allowedProvenanceFields | Sort-Object) -DifferenceObject ($provenanceFields | Sort-Object)).Count -gt 0) {
+        throw 'Source audit: SOURCE_PROVENANCE_SCHEMA_REJECTED'
+    }
+    if ($p.analystReviewedLabel -isnot [bool] -or
+        $p.capturedTransportEvidence -isnot [bool]) {
+        throw 'Source audit: SOURCE_REVIEW_FIELD_INVALID'
+    }
+    if ([string]::IsNullOrWhiteSpace([string]$p.originatingClientLabel)) {
+        throw 'Source audit: SOURCE_ORIGIN_MISSING'
+    }
+    if ([string]::IsNullOrWhiteSpace([string]$p.collectionSessionId)) {
+        throw 'Source audit: SOURCE_SESSION_MISSING'
+    }
+    if ([string]$p.collectionVantage -notin @('client','endpoint','sensor')) {
+        throw 'Source audit: SOURCE_VANTAGE_UNREVIEWED'
+    }
     if ($sample.name -ne $name -or $sample.classification -ne $entry.classification -or
         $p.sample -ne $name -or $p.classification -ne $entry.classification -or
         $p.sourceKind -ne 'external-pcap-reviewed' -or -not $p.analystReviewedLabel -or
@@ -114,6 +142,18 @@ foreach ($entry in $entries) {
         $maliciousCount++
         if (-not $maliciousSources.Add([string]$p.sourceAddress)) {
             throw "Source audit: v2 malicious cases must use distinct captured client IPs: $name."
+        }
+        if (-not $maliciousSessions.Add([string]$p.collectionSessionId)) {
+            throw 'Source audit: SOURCE_SESSION_COLLISION'
+        }
+        if (-not $maliciousOrigins.Add([string]$p.originatingClientLabel)) {
+            throw 'Source audit: SOURCE_ORIGIN_COLLISION'
+        }
+        $evidenceSet=(@($records | ForEach-Object {
+            ([string]$_.dnsQtype).ToUpperInvariant()+':'+([string]$_.dnsQname).TrimEnd('.').ToLowerInvariant()
+        } | Sort-Object -Unique) -join '|')
+        if (-not $maliciousEvidenceSets.Add($evidenceSet)) {
+            throw 'Source audit: SOURCE_INDEPENDENCE_MIRROR'
         }
         $distinctLongTxt=@($records | Where-Object {
             $_.dnsQtype -eq 'TXT' -and
