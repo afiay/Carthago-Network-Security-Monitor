@@ -25,7 +25,7 @@ using Microsoft.Win32;
 
 namespace Carthago.Views
 {
-    public partial class CiscoToolsPanel : UserControl, INotifyPropertyChanged
+    public partial class CiscoToolsPanel : UserControl, INotifyPropertyChanged, IResponsiveLayoutAware
     {
         private const string StateFileName = "cisco-state.json";
 
@@ -119,6 +119,7 @@ namespace Carthago.Views
             Application.LoadComponent(this, resourceUri);
 
             DataContext = this;
+            ResponsiveLayout.ApplyWhenLoaded(this, ApplyResponsiveLayout);
 
             var devicesView = CollectionViewSource.GetDefaultView(_devices);
             if (devicesView != null)
@@ -132,6 +133,42 @@ namespace Carthago.Views
             UpdateDevicesSummary();
             UpdateSyslogSummary();
             UpdateRulesCounter();
+        }
+
+
+        // GA UI-103: UI-only reflow of existing Cisco evidence surfaces.
+        public void ApplyResponsiveLayout(ResponsiveLayoutMode mode)
+        {
+            bool wide = mode == ResponsiveLayoutMode.Wide;
+            bool standard = mode == ResponsiveLayoutMode.Standard;
+            CiscoWorkspaceGrid.MinHeight = wide ? 680 : 0;
+            CiscoColumnDevices.Width = new GridLength(wide ? 2.2 : 1, GridUnitType.Star);
+            CiscoColumnTopology.Width = wide ? new GridLength(2.2, GridUnitType.Star)
+                : standard ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
+            CiscoColumnInsight.Width = wide ? new GridLength(2, GridUnitType.Star) : new GridLength(0);
+            CiscoRowDevices.Height = wide ? new GridLength(2.2, GridUnitType.Star) : GridLength.Auto;
+            CiscoRowSyslog.Height = wide ? new GridLength(2.8, GridUnitType.Star) : GridLength.Auto;
+            CiscoRowInsight.Height = wide ? new GridLength(0) : GridLength.Auto;
+            CiscoRowIncidents.Height = wide ? new GridLength(0) : GridLength.Auto;
+            CiscoRowExtra.Height = wide ? new GridLength(0) : GridLength.Auto;
+            PlaceCiscoPanel(CiscoDevicesPanel, 0, 0, 1, new Thickness(0, 0, wide || standard ? 10 : 0, 12));
+            PlaceCiscoPanel(CiscoTopologyPanel, wide || standard ? 0 : 1, wide || standard ? 1 : 0, 1,
+                new Thickness(0, 0, wide || standard ? 10 : 0, 12));
+            PlaceCiscoPanel(CiscoInsightPanel, wide ? 0 : standard ? 1 : 2, wide ? 2 : 0, 1,
+                new Thickness(0, 0, 0, 12));
+            PlaceCiscoPanel(CiscoSyslogPanel, wide ? 1 : standard ? 2 : 3, 0, wide || standard ? 2 : 1,
+                new Thickness(0, 0, 0, 12));
+            PlaceCiscoPanel(CiscoIncidentsPanel, wide ? 1 : standard ? 1 : 4, wide ? 2 : standard ? 1 : 0, 1,
+                new Thickness(0));
+        }
+
+        private static void PlaceCiscoPanel(FrameworkElement panel, int row, int column,
+            int span, Thickness margin)
+        {
+            Grid.SetRow(panel, row);
+            Grid.SetColumn(panel, column);
+            Grid.SetColumnSpan(panel, span);
+            panel.Margin = margin;
         }
 
         protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)

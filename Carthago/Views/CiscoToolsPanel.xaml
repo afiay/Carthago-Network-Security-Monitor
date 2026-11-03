@@ -84,18 +84,22 @@
             </DockPanel>
             </Border>
 
-            <Grid>
+            <ScrollViewer x:Name="CiscoWorkspaceScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+            <Grid x:Name="CiscoWorkspaceGrid" MinHeight="680">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="2.2*"/>
-                    <RowDefinition Height="2.8*"/>
+                    <RowDefinition x:Name="CiscoRowDevices" Height="2.2*"/>
+                    <RowDefinition x:Name="CiscoRowSyslog" Height="2.8*"/>
+                    <RowDefinition x:Name="CiscoRowInsight" Height="0"/>
+                    <RowDefinition x:Name="CiscoRowIncidents" Height="0"/>
+                    <RowDefinition x:Name="CiscoRowExtra" Height="0"/>
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="2.2*"/>
-                    <ColumnDefinition Width="2.2*"/>
-                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition x:Name="CiscoColumnDevices" Width="2.2*"/>
+                    <ColumnDefinition x:Name="CiscoColumnTopology" Width="2.2*"/>
+                    <ColumnDefinition x:Name="CiscoColumnInsight" Width="2*"/>
                 </Grid.ColumnDefinitions>
 
-                <GroupBox Header="Devices" Style="{StaticResource CiscoWorkspaceSection}"
+                <GroupBox x:Name="CiscoDevicesPanel" Header="Devices" Style="{StaticResource CiscoWorkspaceSection}"
                           Grid.Row="0"
                           Grid.Column="0"
                           Margin="0,0,8,8">
@@ -382,7 +386,7 @@
                     </DockPanel>
                 </GroupBox>
 
-                <GroupBox Header="Topology overview" Style="{StaticResource CiscoWorkspaceSection}"
+                <GroupBox x:Name="CiscoTopologyPanel" Header="Topology overview" Style="{StaticResource CiscoWorkspaceSection}"
                           Grid.Row="0"
                           Grid.Column="1"
                           Margin="0,0,8,8">
@@ -545,7 +549,7 @@
                     </DockPanel>
                 </GroupBox>
 
-                <GroupBox Header="Device insight" Style="{StaticResource CiscoWorkspaceSection}"
+                <GroupBox x:Name="CiscoInsightPanel" Header="Device insight" Style="{StaticResource CiscoWorkspaceSection}"
                           Grid.Row="0"
                           Grid.Column="2"
                           Margin="0,0,0,8">
@@ -648,7 +652,7 @@
                     </DockPanel>
                 </GroupBox>
 
-                <GroupBox Header="Live Cisco syslog" Style="{StaticResource CiscoWorkspaceSection}"
+                <GroupBox x:Name="CiscoSyslogPanel" Header="Live Cisco syslog" Style="{StaticResource CiscoWorkspaceSection}"
                           Grid.Row="1"
                           Grid.Column="0"
                           Grid.ColumnSpan="2"
@@ -832,7 +836,7 @@
                     </DockPanel>
                 </GroupBox>
 
-                <GroupBox Header="Incidents &#x2022; Rules and Export" Style="{StaticResource CiscoWorkspaceSection}"
+                <GroupBox x:Name="CiscoIncidentsPanel" Header="Incidents &#x2022; Rules and Export" Style="{StaticResource CiscoWorkspaceSection}"
                           Grid.Row="1"
                           Grid.Column="2">
                     <DockPanel Margin="4">
@@ -958,6 +962,7 @@
                 </GroupBox>
 
             </Grid>
+            </ScrollViewer>
         </DockPanel>
     </Border>
 </UserControl>
