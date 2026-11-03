@@ -4794,3 +4794,35 @@ Static end review preserved all eight connector tabs, all 17 named button handle
 10. Confirm only three authorized paths, direct-parent source/docs ancestry, one non-forced expected-SHA branch update, and **zero** builds/tests/replays/holdouts/CI/Actions/runners/benchmarks/production capture.
 
 **Next UI GA UI-99:** fresh live-ledger/reference audit followed by another substantial, visible screen-scale improvement, not tooltip-only work. All runtime acceptance remains deferred until owner says “now it is test time.”
+
+
+## GA UI-99 — External Delivery Monitor: local delivery evidence workspace redesign
+
+**2026-11-03 · SOURCE CANDIDATE — UNVERIFIED.** Approved ChatGPT Library image `libfile_b0a34361560c8191b641e432b3e6b15c` was retrieved and visually inspected before GitHub inspection. Live initial branch HEAD `6294cafd67f2815440c7b0f660a15f8ee2fa30e6`; previous completed UI milestone GA UI-98 (`b2b2b60644a1ed87f01344d48a2f937ebcda2609`). Concurrent independent R577–R585 rule and verification candidate commits were already present and must be preserved. Prepared source commit `bd43aff057dbd731843a7311cf980cae5f3a70d3`, tree `d0ce2cd4d9c74a108487200febc7c11b6bb333c0`.
+
+### Before → after, visible reference mapping, responsive layout
+
+Previously External Delivery was a narrow max-1280 vertical form with a basic title, isolated Pause/Clear controls and two plain GroupBox/DataGrid sections. Now it has a full-width navy/teal gradient operational hero with 28px title and truthful local-view provenance; a distinct dark action panel for the existing Pause/Clear actions; three prominent operational metric cards bound to the existing `Emitted.Count`, `Failures.Count` and `Paused` state; and two large bordered evidence surfaces with cyan/amber rails, readable headings, 38px table rows, 42px headers, and independently scrollable tables. The original nine columns and all bindings in each DataGrid remain byte-for-byte unchanged. Fixed grid heights (380px emitted, 310px failures) maintain vertical virtualization inside the page's scroll container. The reference informs dark SOC composition, typography, card rhythm and restrained status accents; screenshot metrics, IPs, timestamps, rule IDs, confidence, Mbps and health statuses are DEMO ONLY and were not copied.
+
+At Wide >=1440, hero and display actions sit side by side; three operational metric cards align horizontally. At Standard 1100–1439, hero and actions stack while the three metric cards remain in a row. At Compact 1024–1099 and below 1024, hero/actions stack and all three metric cards stack vertically using the existing `ResponsiveLayout.ApplyAdaptiveColumns` and `IResponsiveLayoutAware` contract. Both full-width evidence tables retain their horizontal scrolling for narrow widths; no columns or action buttons are hidden. No new services, telemetry, transport or network calls were introduced. The display-state card is explicitly local-only, not a transport-health assertion.
+
+### Static start/end consumer, ownership and divergence review
+
+Inspected live branch HEAD/recent commits and full ledger through GA UI-98; `SinkEventsPage.xaml`, `SinkEventsPage.xaml.cs`, `Theme.xaml` page/card/button/DataGrid styles, `MainWindow.xaml` frame host, `MainWindow.xaml.cs` page creation and navigation, `MainWindow.Responsive.cs` existing `ApplyResponsiveLayoutTo(SinkEventsFrame.Content)`, `Sidebar.xaml` and code-behind, `ResponsiveLayout.cs` existing breakpoint and interface contract. Existing sink subscriptions, pause display, clear display, 5,000 emitted and 2,000 failure in-memory retention, DataGrid virtualization, all 18 DataGrid columns/bindings and read-only semantics are unchanged. Existing UI responsive interface already consumed by shell, so no shared API change required. Source is limited to `Carthago/Views/SinkEventsPage.xaml` (blob `741b824905d879df26e9db7eefe25491397c7f6f` → `44c8fc085b547daee5ee7650928e9330efc29e94`) and `Carthago/Views/SinkEventsPage.xaml.cs` (blob `03d46270b0a14c62c888be6fda4a8a539ad75c6b` → `b0d53a6fece04709e8ae64677b132eaca8589f00`), plus this `docs/design/**` ledger. No Engine, Models, Services, rules/protocol docs or implementation, telemetry/capture/trust/privacy, tests, benchmarks, workflows, runners, project file, shared APIs or automations touched. Dashboard local PPS ScottPlot 10-sample average/120-point history, prioritized incidents/investigation, read-only Live Events 80/500, explicitly unavailable visual-only CLI, Cisco/WebView2 untouched.
+
+**Static visual-impact assessment:** cohesive screen-scale redesign of the entire External Delivery page, including responsive hero/action architecture, three evidence-grounded metric cards, and two visually distinct evidence tables. Static source inspection only; actual WPF rendering, DPI, accessibility and runtime behavior are **UNVERIFIED**. Existing error text remains displayed as before and could include operationally sensitive details; no additional logging, persistence or export is introduced. Binding `ObservableCollection.Count` and `Paused` to the new cards is intended to reflect existing local page state; actual UI notification and XAML parsing require later verification. Fixed table heights and compact stacking increase vertical scrolling.
+
+### Planned acceptance scenarios — ALL UNEXECUTED
+
+1. Wide >=1440 reference comparison: hero, action panel, metric cards, evidence tables, demo data excluded.
+2. Standard 1100–1439: hero/action stacking, three-card width and table readability.
+3. Compact 1024–1099: stacked hero/actions/metric cards, all table columns accessible by horizontal scroll.
+4. Below 1024 at 1023/800/640: no clipped controls, visible buttons and horizontal table navigation.
+5. 125%, 150%, 200% DPI: text wrapping, card heights, fixed table scroll, keyboard focus and high contrast.
+6. Local `Emitted.Count`/`Failures.Count` bindings and display `Paused` state match existing collections, not sink health.
+7. Pause toggles local page additions only, and Clear empties both displayed collections without changing sink transport.
+8. Both original nine-column DataGrids remain read-only, virtualized, sortable/scrollable as before and preserve all bindings.
+9. Verify unaffected dashboard PPS, Live Events 80/500, incidents/investigation, unavailable CLI, Cisco/WebView2 and security/privacy boundaries.
+10. Confirm three authorized paths, direct-parent source/docs commits, single non-forced expected-SHA publication and **zero** builds/tests/replays/holdouts/CI/Actions/runners/benchmarks/production capture.
+
+**Next UI GA UI-100:** fresh live reference/ledger/consumer audit, then a new substantial screen-visible redesign rather than tooltip-only work. All acceptance remains **UNEXECUTED** until owner explicitly authorizes “now it is test time.”
