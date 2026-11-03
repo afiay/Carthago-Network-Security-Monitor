@@ -1495,3 +1495,27 @@ Observed result:
 **Classification:** A11 is now **GREEN** for the synthetic auditor-enforcement contract. The prior `UNRECOGNIZED_SANITIZED_REASON` was confirmed as a verifier formatting issue, not an auditor-policy defect. No V1/V2 fixture, source approval, freeze state, detector confidence floor or production alert policy changed.
 
 **Cumulative Stage 6 progress:** GREEN now includes `BASELINE`, `A13`, `A01`, `A01-case`, `A02`, `A03`, `A04`, `A06`, `A08-qtype`, `A08-port`, `A09`, `A09-missing`, `A10`, `A10-origin`, `A10-session`, and `A11`. Remaining synthetic cases have not yet been re-observed in this owner session and must not be inferred GREEN.
+
+
+#### 2026-11-03 — Five remaining auditor cases GREEN; A16-distinct diagnostic still blocked by child-output formatting
+
+After pulling the latest focused verifier, the owner executed the remaining scenarios individually with fail-fast control.
+
+Observed GREEN:
+- `A11-review-type`
+- `A11-license`
+- `A12`
+- `A12-provenance`
+- `A14`
+
+Each printed `observed expected exit category and reason; private output checked` followed by the focused-completion statement.
+
+`A16-distinct` rejected, but the verifier reported:
+`expected=R102 malicious encoded-TXT requires three distinct captured TXT actual=UNRECOGNIZED_SANITIZED_REASON`
+and correctly stopped without counting the case RED or GREEN.
+
+Live source review confirmed the A16 fixture keeps the PCAP and serialized JSON aligned while deliberately repeating the third long TXT name in malicious slot 2. It therefore remains a semantic distinct-name control rather than a serialized/PCAP mismatch. The auditor also performs selected-frame binding before the long-TXT cardinality check. Because the actual child reason was still not recoverable from the PowerShell-formatted combined stream, no auditor policy was changed by inference.
+
+Commit `f8cfbb09d9ff106cce5c4e7360243337a9ea312a` changes only the verifier process-capture boundary: child output is captured as objects in memory, `ErrorRecord.Exception.Message` is extracted before PowerShell formatting can wrap/annotate it, then the normalized private log is written to the existing ephemeral file and passed through the same privacy assertions. The fixed reason allowlist and auditor behavior are unchanged.
+
+**Current cumulative Stage 6 status:** every synthetic scenario except `A16-distinct` is GREEN in this owner session. A16 remains pending one focused rerun after pulling the capture fix. V2 remains 0/4 external reviewed pairs and unfrozen; V1 remains immutable.
