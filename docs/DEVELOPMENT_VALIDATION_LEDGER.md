@@ -1537,3 +1537,25 @@ Across this authorized owner session, the complete scenario set now has observed
 **Evidence boundary:** this is a cumulative GREEN record across successive exact branch revisions during one authorized test session, not a claim that all scenarios were rerun in one monolithic invocation at `303f31d`. Subsequent verifier-only fixes were used to resolve harness/error-formatting defects; the historical intermediate failures remain recorded above. No external source was approved, no V2 candidate was frozen, no real PCAP source/license/privacy review was completed, and no detector precision/recall claim follows from this synthetic contract closure.
 
 V2 remains `PENDING_EXTERNAL_CAPTURE_AND_REVIEW` with **0/4 reviewed external R102 source/provenance pairs**. Frozen V1 remains historically FAILED 4/6 and immutable. Confidence floors remain unchanged.
+
+
+#### 2026-11-03 — DNS wire-source + V2 provenance + Stage 8 replay bridge GREEN at `2642ea3`
+
+The owner fast-forwarded the existing `feature/carthago-reliability-hardening` branch to `2642ea3b6fa214e3227e8998ea8809f18891cdc8` and executed:
+
+`verify-dns-wire-source-contract.ps1 -TsharkPath 'C:\Program Files\Wireshark\tshark.exe' -IncludeV2Provenance -IncludeReplayCompatibility -AuthorizedTestTime`
+
+Observed output was fully GREEN across all enabled synthetic contract layers:
+
+- DNS TCP framing: unmodified UDP and exact TCP payload preserved; **5 invalid length prefixes rejected**.
+- TShark `jsonraw` descriptor compatibility: valid 5/6-member formats preserved; **10 ambiguous/invalid descriptors rejected**.
+- Core DNS wire-source binding: **4 source-bound questions corroborated; 5 invalid/ambiguous selections rejected**.
+- V2 record schema: **1 exact layout accepted; 4 malformed layouts rejected**.
+- V2 frame/question binding: **2 source-bound records verified; 19 tampering/missing-original cases rejected**.
+- V2 logical-source contract: **7 mirror/overlap/session/origin/frame-reuse/non-ASCII review scenarios completed; no source auto-approved**.
+- Stage 8 replay bridge unit compatibility: **2 exact printable names accepted; 10 non-lossless names rejected**.
+- Stage 8 replay bridge original-source binding: **3 original frame/question records bound; 11 source/schema/binary/review-state negatives rejected**; no projected samples or approvals.
+
+**Classification:** GREEN for the synthetic DNS wire-source, V2 provenance/source-independence and replay-compatibility contracts at the owner-reported checkout. This verifies bounded source/frame/question binding, wire-name losslessness checks, strict pending-only replay compatibility and negative-control sensitivity. It does **not** approve a real external source, establish source rights or label truth, evaluate R102 precision/recall, freeze V2, or modify frozen V1.
+
+V2 remains `PENDING_EXTERNAL_CAPTURE_AND_REVIEW` with **0/4 reviewed external pairs**. Frozen V1 remains immutable. R102/R118/R163 confidence floors remain 80%/86%/84%.
