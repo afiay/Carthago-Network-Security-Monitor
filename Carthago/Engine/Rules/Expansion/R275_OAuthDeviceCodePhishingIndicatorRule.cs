@@ -102,7 +102,7 @@ namespace Carthago.Engine.Rules.Expansion
                 {
                     SuppressForCooldown(
                         evt,
-                        $"R275 trusted-evidence cooldown active for {remaining.TotalSeconds:F0}s.");
+                        $"R275 trusted-evidence cooldown or bounded-state gate active for {remaining.TotalSeconds:F0}s.");
                     EvidenceBuilder.AppendEvidence(
                         evt,
                         "suppression.remainingSeconds",
@@ -153,16 +153,22 @@ namespace Carthago.Engine.Rules.Expansion
                 }
             }
 
-            PromotionCooldowns[traceHash] = now;
-
-            if (PromotionCooldowns.Count > MaxPromotionCooldownKeys)
+            if (PromotionCooldowns.Count >= MaxPromotionCooldownKeys
+                && !PromotionCooldowns.ContainsKey(traceHash))
             {
                 var staleBefore = now - cooldown - cooldown;
                 foreach (var entry in PromotionCooldowns)
                     if (entry.Value < staleBefore)
                         PromotionCooldowns.TryRemove(entry.Key, out _);
+
+                if (PromotionCooldowns.Count >= MaxPromotionCooldownKeys)
+                {
+                    remaining = cooldown;
+                    return true;
+                }
             }
 
+            PromotionCooldowns[traceHash] = now;
             return false;
         }
     }
