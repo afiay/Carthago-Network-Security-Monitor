@@ -155,14 +155,6 @@ foreach ($entry in $entries) {
         if (-not $maliciousEvidenceSets.Add($evidenceSet)) {
             throw 'Source audit: SOURCE_INDEPENDENCE_MIRROR'
         }
-        $distinctLongTxt=@($records | Where-Object {
-            $_.dnsQtype -eq 'TXT' -and
-            (@(([string]$_.dnsQname).Split('.') | Where-Object { $_.Length -ge 50 }).Count -gt 0)
-        } | Select-Object -ExpandProperty dnsQname -Unique)
-        if ($distinctLongTxt.Count -lt 3 -or
-            @($records | Where-Object { $_.dnsQtype -ne 'TXT' }).Count -gt 0) {
-            throw "Source audit: R102 malicious encoded-TXT requires three distinct captured TXT QNAMEs with a label >=50: $name."
-        }
     } else { $benignCount++ }
     if ($records.Count -lt 3 -or $records.Count -ne $frames.Count -or
         $records.Count -ne [int]$p.selectedRecordCount -or
@@ -237,6 +229,20 @@ foreach ($entry in $entries) {
     }
     if ($matched.Count -ne $records.Count) {
         throw "Source audit: $name references missing capture frames ($($matched.Count)/$($records.Count))."
+    }
+    # Only evaluate malicious encoded-TXT eligibility after every serialized
+    # record has been bound back to its selected original PCAP frame. This
+    # keeps A06/A08 provenance-tamper controls on the packet-binding path
+    # instead of allowing untrusted JSON to fail an earlier semantic gate.
+    if ($entry.classification -eq 'Malicious') {
+        $distinctLongTxt=@($records | Where-Object {
+            $_.dnsQtype -eq 'TXT' -and
+            (@(([string]$_.dnsQname).Split('.') | Where-Object { $_.Length -ge 50 }).Count -gt 0)
+        } | Select-Object -ExpandProperty dnsQname -Unique)
+        if ($distinctLongTxt.Count -lt 3 -or
+            @($records | Where-Object { $_.dnsQtype -ne 'TXT' }).Count -gt 0) {
+            throw "Source audit: R102 malicious encoded-TXT requires three distinct captured TXT QNAMEs with a label >=50: $name."
+        }
     }
     Write-Host "SOURCE AUDIT PASS: $name; $($matched.Count) packet frames verified against original PCAP SHA-256."
 }
