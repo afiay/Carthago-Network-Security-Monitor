@@ -238,3 +238,51 @@ A future helper must not use observed IP inequality as its sole evidence of inde
 - Record exact Git commit, Windows hostname, TShark version, SHA-256, permitted aggregate counts, exit codes and sanitized error identifiers. Preserve failed V1 and V2 `PENDING_EXTERNAL_CAPTURE_AND_REVIEW` with **0/4** approved R102 candidates.
 
 **Completion status: authored only.** The next highest-value non-executing preparation is to specify the exact versioned V2 provenance allowlist and the importer/auditor rollback guarantees without editing the production path before RED.
+
+
+## 2026-11-03 owner-authorized execution update
+
+The previously parked Stage 6 auditor-enforcement contract was executed by the owner on Windows during an explicit test-time window. This section records observed runtime evidence and subsequent same-branch fixes without rewriting the original authoring history.
+
+### Observed prerequisite/companion results
+
+The wider V2 synthetic contract layer was exercised successfully before the auditor gate:
+- SyntheticHoldoutV2ContractTests: **9/9 PASS**.
+- V2 readiness: **PENDING_EXTERNAL_CAPTURE_AND_REVIEW, 0/4 external candidate/provenance pairs**.
+- Two-writer plus reader visibility: **6/6 rounds**, exactly one `WIN` and one `TARGET_EXISTS` per round; reader saw absent/complete states only.
+- Private provenance schema: **2 structurally valid pending-review controls and 24 negative cases PASS**.
+- Atomic publication fault contract: PASS.
+- Recovery planner: **15/15 scenarios PASS**.
+
+These results do not approve any external source, malicious label, license, privacy review or freeze. Frozen V1 remains untouched.
+
+### First auditor-enforcement attempt: harness/tooling defect, not security RED
+
+The first authorized run of `verify-v2-auditor-enforcement.ps1 -AuthorizedTestTime` failed inside TShark before the negative-control matrix could be interpreted. The live `audit-holdout-v2-candidates.ps1` constructed `frame.number in { 1 2 3 }`; TShark rejected the second set element. Live-branch inspection confirmed the source used space-separated frame numbers. The auditor was corrected on the same branch to emit comma-separated membership, `frame.number in { 1, 2, 3 }`. This failure is classified as a verifier/auditor syntax defect, not an observed security RED.
+
+### Second auditor-enforcement attempt after pull: valid A01 RED
+
+After the owner fast-forwarded to the branch containing the TShark filter correction, `BASELINE` and `A13` both completed with their expected exit category and privacy checks. The next case, **A01**, failed the harness with `AUDITOR CONTRACT FAIL: A01 wrong exit category`: the legacy auditor accepted two malicious slots carrying the same logical TXT evidence despite distinct source IP/session metadata.
+
+This is the expected missing safeguard described by this document's test-first plan. The V2 protocol requires independently captured clients and independent source provenance; distinct IP addresses alone are insufficient. Therefore A01 is a valid observed RED for the missing `SOURCE_INDEPENDENCE_MIRROR` enforcement, not a fixture/parser failure.
+
+### Same-branch source correction after observed RED
+
+The live branch was reviewed before editing. At commit `9c10a8b2cccef116bb67a65229bae8a13b23ae8f`, the auditor gained narrow privacy-safe checks matching the already-authored contract:
+- `SOURCE_INDEPENDENCE_MIRROR` for identical normalized malicious evidence sets independent of ordering/case.
+- `SOURCE_SESSION_COLLISION` for repeated malicious collection-session IDs.
+- `SOURCE_ORIGIN_COLLISION` for repeated malicious originating-client labels.
+- `SOURCE_ORIGIN_MISSING` and `SOURCE_SESSION_MISSING` for absent required provenance identifiers.
+- `SOURCE_VANTAGE_UNREVIEWED` for unsupported vantage values.
+- `SOURCE_REVIEW_FIELD_INVALID` when review/transport declarations are not booleans.
+- `SOURCE_PROVENANCE_SCHEMA_REJECTED` for unexpected provenance properties.
+
+Existing hash/frame/transport/QTYPE/record comparisons and human-review boundaries remain intact. These checks establish only structural/attribution rejection behavior; they do not prove human review, independent malicious truth or source rights.
+
+### Current gate state
+
+**RED observed, implementation updated, GREEN not yet observed at `9c10a8b2...`.** The owner must fast-forward to that exact or later live branch revision and rerun only:
+
+`./scripts/verify-v2-auditor-enforcement.ps1 -AuthorizedTestTime`
+
+Do not count the implementation commit itself as a passing test. Do not freeze or evaluate V2 while readiness remains 0/4. V1 remains historically FAILED 4/6 and immutable.
