@@ -1710,3 +1710,24 @@ The builder accepts only `MicrosoftEntraDeviceCodeAuditObservation` values alrea
 The output is privacy-minimized `MicrosoftEntraDeviceFlowClaimMaterial` only. It contains no signing key and cannot create `SignedAuditEnvelope`, `VerifiedAuditReceipt` or an R275 alert.
 
 **Verification status:** SOURCE CANDIDATE — UNVERIFIED. The previously observed 66/66 authenticated-source GREEN remains valid; this new claim-material increment requires a focused rerun before it can be classified GREEN.
+
+#### 2026-11-03 — R275 Entra-to-packet claim-material verification GREEN (83/83)
+
+The owner fast-forwarded `feature/carthago-reliability-hardening` to `1d7111398bdff3a72926b7b3b181e97d2adef0e2` and executed:
+
+`dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~MicrosoftEntraDeviceFlowClaimMaterialBuilderTests|FullyQualifiedName~MicrosoftEntraLogAnalyticsDeviceCodeSourceTests|FullyQualifiedName~MicrosoftEntraDeviceCodeAuditIntakeTests|FullyQualifiedName~OAuthDeviceFlowAuditCandidateGateTests|FullyQualifiedName~R275AdvancedAccuracyBatchTests|FullyQualifiedName~R275R343R485PairedReplayTests"`
+
+Observed result:
+- `Carthago` build succeeded.
+- `Carthago.Tests` build succeeded.
+- **83 total; 83 succeeded; 0 failed; 0 skipped**.
+- Focused test duration: **13.7 seconds**.
+- Overall command completed with **Build succeeded** in **43.2 seconds**.
+
+**Classification:** GREEN for the authenticated Entra-to-packet claim-material boundary plus the previously GREEN authenticated source/parser/candidate layers.
+
+This verifies that only an authenticated Entra observation can enter the claim-material path; the provider source IP must match the captured client; the destination IP is derived only from captured traffic; the flow must be TCP/443 with HTTP/HTTPS/TLS context; the identity host must satisfy explicit operator policy without lookalike suffix bypass; and UTC time correlation is bounded to two minutes.
+
+**Scope boundary:** the output is still unsigned claim material only. No private signer key, signed envelope, verified receipt, live tenant event, rule-engine trust capability or R275 alert promotion is represented by this run.
+
+No confidence floor, runtime mode, replay classification, holdout fixture, V1/V2 state or alert policy changed.
