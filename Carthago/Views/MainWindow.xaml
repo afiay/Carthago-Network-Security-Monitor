@@ -184,9 +184,13 @@
 
       <!-- Native session files and analytical workbook export; deliberately outside the capture hot path. -->
       <Menu Grid.Row="0"
-            Margin="0,5,0,9"
-            Background="#101E32"
+            Margin="0,8,0,12"
+            Padding="8,4"
+            Background="#0B2034"
             Foreground="#E6EEF8"
+            BorderBrush="#274D62"
+            BorderThickness="1"
+            FontSize="12"
             AutomationProperties.Name="Carthago application menu">
         <MenuItem Header="_File">
           <MenuItem Header="_Open Session..." InputGestureText="Ctrl+O" Click="FileOpen_Click"/>
@@ -202,9 +206,19 @@
       <Border x:Name="CommandHeader"
               Grid.Row="1"
               Style="{StaticResource TopCommandSurface}"
-              Margin="0,0,0,14"
-              Padding="12,12,12,10"
-              MinHeight="92">
+              Margin="0,0,0,18"
+              Padding="18,16,18,16"
+              BorderBrush="#285269"
+              BorderThickness="1"
+              CornerRadius="14"
+              MinHeight="110">
+        <Border.Background>
+          <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#112D44" Offset="0"/>
+            <GradientStop Color="#0A1B2B" Offset="0.57"/>
+            <GradientStop Color="#12383F" Offset="1"/>
+          </LinearGradientBrush>
+        </Border.Background>
         <Grid x:Name="CommandHeaderGrid">
           <Grid.RowDefinitions>
             <RowDefinition x:Name="CommandHeaderPrimaryRow" Height="Auto"/>
@@ -221,9 +235,11 @@
 
           <Border x:Name="CommandHeaderStatusGroup"
                   Grid.Column="0"
-                  BorderBrush="{StaticResource SoftDividerBrush}"
-                  BorderThickness="0,0,1,0"
-                  Padding="0,0,14,0"
+                  Background="#10273B"
+                  CornerRadius="10"
+                  BorderBrush="#2B5267"
+                  BorderThickness="1"
+                  Padding="12,10"
                   Margin="0,0,12,0">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
               <Border x:Name="MonitoringStatusBadge"
@@ -256,9 +272,11 @@
 
           <Border x:Name="CommandHeaderSourceGroup"
                   Grid.Column="1"
-                  BorderBrush="{StaticResource SoftDividerBrush}"
-                  BorderThickness="0,0,1,0"
-                  Padding="0,0,14,0"
+                  Background="#10273B"
+                  CornerRadius="10"
+                  BorderBrush="#2B5267"
+                  BorderThickness="1"
+                  Padding="12,10"
                   Margin="0,0,12,0">
             <Grid VerticalAlignment="Center">
               <Grid.RowDefinitions>
@@ -295,9 +313,11 @@
 
           <Border x:Name="CommandHeaderAnalysisGroup"
                   Grid.Column="2"
-                  BorderBrush="{StaticResource SoftDividerBrush}"
-                  BorderThickness="0,0,1,0"
-                  Padding="0,0,14,0"
+                  Background="#10273B"
+                  CornerRadius="10"
+                  BorderBrush="#2B5267"
+                  BorderThickness="1"
+                  Padding="12,10"
                   Margin="0,0,12,0">
             <Grid VerticalAlignment="Center">
               <Grid.RowDefinitions>
@@ -318,14 +338,14 @@
             </Grid>
           </Border>
 
-          <StackPanel x:Name="CommandHeaderActionsGroup" Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Right">
+          <StackPanel x:Name="CommandHeaderActionsGroup" Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="8,0,0,0">
             <WrapPanel HorizontalAlignment="Right">
-              <Button x:Name="StartButton" Content="&#x25B6;  Start Monitoring" Width="164" Height="36" Style="{StaticResource PrimaryButton}" Click="StartButton_Click"/>
-              <Button x:Name="StopButton" Content="&#x23F8;  Pause Monitoring" Width="148" Height="36" Style="{StaticResource SecondaryButton}" Click="StopButton_Click" IsEnabled="False" Visibility="Collapsed"/>
-              <Button x:Name="TestRepButton" Content="Test Reputation" Width="132" Height="36" Style="{StaticResource SecondaryButton}" Click="TestReputation_Click" Margin="8,0,0,0"/>
+              <Button x:Name="StartButton" Content="&#x25B6;  Start Monitoring" Width="164" Height="42" Style="{StaticResource PrimaryButton}" Click="StartButton_Click"/>
+              <Button x:Name="StopButton" Content="&#x23F8;  Pause Monitoring" Width="148" Height="42" Style="{StaticResource SecondaryButton}" Click="StopButton_Click" IsEnabled="False" Visibility="Collapsed"/>
+              <Button x:Name="TestRepButton" Content="Test Reputation" Width="132" Height="42" Style="{StaticResource SecondaryButton}" Click="TestReputation_Click" Margin="8,0,0,0"/>
               <!-- GA UI-28: the ellipsis has no connected menu, command or click handler. -->
               <Button Content="&#x22EE;"
-                      Width="40" Height="36"
+                      Width="40" Height="42"
                       Style="{StaticResource SecondaryButton}"
                       IsEnabled="False"
                       ToolTipService.ShowOnDisabled="True"
