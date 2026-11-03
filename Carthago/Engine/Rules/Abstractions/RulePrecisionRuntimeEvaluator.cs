@@ -56,7 +56,10 @@ namespace Carthago.Engine.Rules
             string? runtimeProfileName,
             ApprovedAssetRegistry? approvedAssets = null)
         {
-            if (!string.Equals(descriptor?.RuleId, "R275", StringComparison.Ordinal))
+            if (descriptor is null)
+                throw new ArgumentNullException(nameof(descriptor));
+
+            if (!string.Equals(descriptor.RuleId, "R275", StringComparison.Ordinal))
                 throw new ArgumentException(
                     "Trusted telemetry override is restricted to R275.",
                     nameof(descriptor));
