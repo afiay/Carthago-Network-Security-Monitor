@@ -31,10 +31,18 @@ namespace Carthago.Engine.Rules.Expansion
    internal static bool Pair(TrafficRecord r,bool publicToPrivate,out IPAddress src,out IPAddress dst)
    {
       src=IPAddress.None;dst=IPAddress.None;
-      return r!=null && r.Id!=Guid.Empty && r.IpVersion==4
-        && IPAddress.TryParse(r.Source,out src) && IPAddress.TryParse(r.Destination,out dst)
-        && src.AddressFamily==AddressFamily.InterNetwork && dst.AddressFamily==AddressFamily.InterNetwork
-        && (publicToPrivate?Public(src)&&Private(dst):Private(src)&&Public(dst));
+      if(r==null || r.Id==Guid.Empty || r.IpVersion!=4
+        || !IPAddress.TryParse(r.Source,out var parsedSrc) || parsedSrc is null
+        || !IPAddress.TryParse(r.Destination,out var parsedDst) || parsedDst is null
+        || parsedSrc.AddressFamily!=AddressFamily.InterNetwork
+        || parsedDst.AddressFamily!=AddressFamily.InterNetwork)
+        return false;
+
+      src=parsedSrc;
+      dst=parsedDst;
+      return publicToPrivate
+        ? Public(src)&&Private(dst)
+        : Private(src)&&Public(dst);
    }
    internal static bool Tcp(TrafficRecord r,bool publicToPrivate,bool payloadRequired=true)
    {
