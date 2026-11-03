@@ -2019,3 +2019,26 @@ The owner supplied Windows PowerShell execution evidence after a **fast-forward 
 **Classification: GA-03 FOCUSED GREEN (1/1); 153-SAMPLE DEVELOPMENT DETECTION-QUALITY REPLAY GREEN.** The covered rules R001, R004, R017, R030 now have observed passing positive and benign nonmatch evidence, with the R030 negative scenario reused rather than duplicated. The development gate is closed for the owner-reported tested branch revision; original synthetic-data and corpus-label limitations remain.
 
 **Open work:** the majority of registered rules still lack paired controls, policy-constrained simulated alert recall remains low, trusted-producer end-to-end validation and the independent R102 Holdout V2 external capture/provenance review remain pending. Frozen V1 (historical 4/6) remains immutable. Confidence floors, detection predicates, profile policy, promotion authorization and production alert mode were not changed by this GA-03 increment. The owner did not provide a separate `git rev-parse HEAD` at test invocation; no independent exact-SHA runner attestation is claimed.
+
+#### 2026-11-03 — GA-04 R014/R026/R027/R031 paired credential/service/DNS replay authored
+
+Following owner-confirmed GA-03 GREEN (153 replay samples; 46/46 supported malicious raw recognitions; 11 paired controls; 0 benign alert false positives; default registry 695 entries with zero contract issues), a new **source-only GA-04 candidate** was published directly to the existing `feature/carthago-reliability-hardening` branch as **`281ed02719394c9718279b5b8ee118849d009c0c`**. No new detection rule IDs, alternate engines, thresholds, runtime modes or production detector changes were authored.
+
+Added **8** offline developer-labeled JSON fixtures and **1** benchmark-level xUnit class `Carthago.Tests/Ga04ExistingRulePairedReplayTests.cs`:
+
+| Existing rule | New synthetic positive candidate | New explicit benign counterexample |
+| --- | --- | --- |
+| **R014** cleartext credentials | `ga04-r014-cleartext-ftp-pass-observed`: attributed TCP/21 FTP `PASS` command with synthetic placeholder value | `ga04-r014-encrypted-pass-and-auth-negotiation`: TLS-protected FTP command, SMTP `AUTH LOGIN` negotiation without value, and FTP `USER` alone |
+| **R026** external SMB/NetBIOS | `ga04-r026-private-to-public-smb-syn`: private-source/public-destination TCP/445 initial SYN, not evidence of completed compromise | `ga04-r026-internal-smb-and-public-synack`: internally scoped SMB and an unclassified public SYN/ACK response |
+| **R027** public admin-service egress | `ga04-r027-private-to-public-rdp-syn`: private-source/public-destination TCP/3389 initial SYN candidate, not proof of unauthorized administration | `ga04-r027-internal-ssh-and-mismatched-service`: internal SSH, public TCP/22 with contradictory RDP service classification, and unrelated IMAP port |
+| **R031** DNS TXT spike | `ga04-r031-fifteen-valid-txt-queries`: 15 synthetic client-to-resolver TXT queries at the existing 15-in-60-seconds threshold | `ga04-r031-txt-responses-and-nontxt-queries`: 18 TXT responses plus 18 A queries cannot be miscounted as TXT query requests |
+
+The new test class loads the entire development replay through the existing `TuningBenchmarkRunner` and checks all four expected positive and negative rule IDs, explicit labels, empty assertion errors, per-rule positive/negative coverage accounting, non-alert behavior for explicitly benign rule controls under all six profiles, and no serialised synthetic credential placeholder in matched benchmark sample observations.
+
+The previous benign fixtures for these rules (`r014-smtp-envelope-not-credentials`, `r026-udp445-not-smb-egress`, `r027-mail-auth-not-admin-egress`, `r031-dns-response-not-query`) remain intact; the new negatives add distinct boundaries instead of replacing them.
+
+**Expected, NOT verified:** replay sample count could rise from **153 to 161**, supported malicious sample count from **46 to 50**, paired default-rule controls from **11 to 15**, if all new assertions pass. This does not imply a measured improvement in field precision or alert recall, and pre-existing rules with only negative controls may remain unpaired if the replay is not executable.
+
+**Owner validation required:** After fast-forward pull, run `dotnet test .\\Carthago.Tests\\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~Ga04ExistingRulePairedReplayTests"`; only if GREEN, run `.\\verify-local.ps1 -Details` followed by `.\\scripts\\inspect-rule-evidence.ps1 -RuleId R014,R026,R027,R031`. Record exact focused and aggregate test counts, benchmark classification/match errors, alert-level FP, raw recognition, rule-pair totals and actual branch revision. **GA-04 classification: SOURCE CANDIDATE — UNVERIFIED**. No tests executed by the assistant.
+
+Safeguards: R102 80%, R118 86%, R163 84%, R275 80% confidence floors untouched; all rule predicates, suppressions, tuning policies and runtime telemetry semantics untouched; frozen V1 holdout historical 4/6 and V2 external-source review gates untouched. Existing hourly rule/UI automations remain independent.
