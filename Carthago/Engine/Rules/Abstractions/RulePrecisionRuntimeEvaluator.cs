@@ -39,6 +39,46 @@ namespace Carthago.Engine.Rules
             RuleMode configuredMode,
             string? runtimeProfileName,
             ApprovedAssetRegistry? approvedAssets = null)
+            => EvaluateCore(
+                descriptor,
+                evt,
+                record,
+                configuredMode,
+                runtimeProfileName,
+                approvedAssets,
+                trustedR275Telemetry: false);
+
+        internal static RulePrecisionRuntimeDecision EvaluateTrustedR275(
+            RuleDescriptor descriptor,
+            DetectionEvent evt,
+            TrafficRecord record,
+            RuleMode configuredMode,
+            string? runtimeProfileName,
+            ApprovedAssetRegistry? approvedAssets = null)
+        {
+            if (!string.Equals(descriptor?.RuleId, "R275", StringComparison.Ordinal))
+                throw new ArgumentException(
+                    "Trusted telemetry override is restricted to R275.",
+                    nameof(descriptor));
+
+            return EvaluateCore(
+                descriptor,
+                evt,
+                record,
+                configuredMode,
+                runtimeProfileName,
+                approvedAssets,
+                trustedR275Telemetry: true);
+        }
+
+        private static RulePrecisionRuntimeDecision EvaluateCore(
+            RuleDescriptor descriptor,
+            DetectionEvent evt,
+            TrafficRecord record,
+            RuleMode configuredMode,
+            string? runtimeProfileName,
+            ApprovedAssetRegistry? approvedAssets,
+            bool trustedR275Telemetry)
         {
             if (descriptor == null) throw new ArgumentNullException(nameof(descriptor));
             if (evt == null) throw new ArgumentNullException(nameof(evt));
@@ -47,6 +87,9 @@ namespace Carthago.Engine.Rules
             var profileMode = RulePrecisionCatalog.ToRuleMode(profile.DefaultMode);
             var effectiveMode = RulePrecisionCatalog.MostRestrictive(configuredMode, profileMode);
             var telemetry = RulePrecisionCatalog.Validate(descriptor.RuleId, record);
+            var trustedTelemetrySatisfied = trustedR275Telemetry
+                && string.Equals(descriptor.RuleId, "R275", StringComparison.Ordinal);
+            var telemetrySatisfied = trustedTelemetrySatisfied || telemetry.CanEvaluate;
             var observedKinds = new HashSet<string>(ClassifyObservedEvidence(evt, record), StringComparer.OrdinalIgnoreCase);
             var reasons = new List<string>
             {
@@ -73,11 +116,22 @@ namespace Carthago.Engine.Rules
                 reasons.Add("engine-health rule requires an attributable internal health event, not network telemetry");
             }
 
-            if (!telemetry.CanEvaluate)
+            if (!telemetrySatisfied)
             {
-                effectiveMode = RulePrecisionCatalog.MostRestrictive(effectiveMode, profile.DefaultMode == RuleRuntimeMode.Disabled ? RuleMode.Disabled : RuleMode.Shadow);
-                if (telemetry.MissingTelemetry.Count > 0) reasons.Add("missing telemetry: " + string.Join(", ", telemetry.MissingTelemetry));
-                if (telemetry.MissingFields.Count > 0) reasons.Add("missing fields: " + string.Join(", ", telemetry.MissingFields));
+                effectiveMode = RulePrecisionCatalog.MostRestrictive(
+                    effectiveMode,
+                    profile.DefaultMode == RuleRuntimeMode.Disabled
+                        ? RuleMode.Disabled
+                        : RuleMode.Shadow);
+                if (telemetry.MissingTelemetry.Count > 0)
+                    reasons.Add("missing telemetry: " + string.Join(", ", telemetry.MissingTelemetry));
+                if (telemetry.MissingFields.Count > 0)
+                    reasons.Add("missing fields: " + string.Join(", ", telemetry.MissingFields));
+            }
+            else if (trustedTelemetrySatisfied)
+            {
+                reasons.Add(
+                    "R275 trusted runtime capability satisfied the encrypted-flow telemetry boundary; raw HTTP fields were not required.");
             }
 
             // A rounded display percentage must never authorize an alert
@@ -123,13 +177,13 @@ namespace Carthago.Engine.Rules
                 profileMode,
                 configuredMode,
                 effectiveMode,
-                telemetry.CanEvaluate,
+                telemetrySatisfied,
                 evidenceSatisfied,
                 confidenceSatisfied,
                 confidencePercent,
                 observedKinds.OrderBy(static kind => kind, StringComparer.OrdinalIgnoreCase).ToArray(),
-                telemetry.MissingTelemetry,
-                telemetry.MissingFields,
+                trustedTelemetrySatisfied ? Array.Empty<string>() : telemetry.MissingTelemetry,
+                trustedTelemetrySatisfied ? Array.Empty<string>() : telemetry.MissingFields,
                 reasons.Distinct(StringComparer.OrdinalIgnoreCase).ToArray());
         }
 
