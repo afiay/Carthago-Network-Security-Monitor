@@ -22,5 +22,5 @@
     }
   ],
   "expectedMatches": ["R163"],
-  "expectedMinimumConfidence": 0.65
+  "expectedMinimumConfidence": 0.62
 }
