@@ -1949,3 +1949,24 @@ Source-only changes published on the existing `feature/carthago-reliability-hard
 These assertions prevent silently inflating the detector score to make the fixture pass; they also prevent misinterpreting a legitimate metadata-credential probe as independently proven SSRF. No production rule confidence weighting, policy, alert mode, classification, expected negative labels, frozen holdouts, or producer trust path changed.
 
 The earlier `verify-local.ps1` PowerShell repair `e3c5357` also remains SOURCE CANDIDATE — UNVERIFIED. **Validation state: PENDING owner Windows rerun**. First run focused `FullyQualifiedName~R118R163PairedReplayQualityTests`, then `./verify-local.ps1 -Details`, and record the exact pass/fail numbers, benchmark errors, and rule-inventory equality checks. No tests were run from the assistant's environment. Previous RED and 42/42 raw recognition evidence remain historical; do not mark a new overall detection-quality GREEN until observed.
+
+#### 2026-11-03 — Owner Windows R163 and development detection-quality replay GREEN at `bf7e889`
+
+The owner fast-forwarded the existing branch from `3859d31` to `bf7e889b107a6cf334e3bbefa990b7718818d53b` (confirmed `git pull --ff-only`) and executed the validation steps below. This report **closes the preceding source-candidate tests and development replay RED** for this checked-out revision; it does not erase their historical entries.
+
+**Focused regression:** `dotnet test .\\Carthago.Tests\\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~R118R163PairedReplayQualityTests"`
+- `5 total, 5 succeeded, 0 failed, 0 skipped`; focused test duration **21.4 seconds**, overall build succeeded in **65.7 seconds**.
+
+**Full local development verification:** `.\\verify-local.ps1 -Details`
+- Restore tests **PASS** (1.6s), restore benchmarks **PASS** (1.3s), build tests **PASS** (2.5s), build benchmarks **PASS** (2.8s), full xUnit stage **PASS** (91.9s), replay benchmark stage **PASS** (8.9s), command exited without triggering the owner's nonzero-exit guard.
+- No exact test count was printed by this `verify-local.ps1` transcript; do not misattribute the older `10,669/10,669` result to the current full xUnit stage.
+- **146 replay samples**: 42 supported malicious, 98 benign, 6 unsupported malicious (producer-limited; excluded from supported malicious recall).
+- **Supported raw detector recognition: 42/42 (100%)** across Enterprise, HomeLab, IoTHeavy, OTSegment, Research and SmallBusiness; **benign critical alerts: 0**, alert-level false positives: **0** on the development corpus.
+- **Simulated alert-level recall:** Enterprise/HomeLab/OTSegment/Research/SmallBusiness: `1/42 = 2.4%`, with precision `1/1` (not a field precision estimate); IoTHeavy: `0/42 = 0%`, precision undefined. Most recognized events remain Shadow/Disabled, not emitted alerts.
+- R118: `0/15` alerted; R163: `0/20` alerted; R102: `0/2` alerted in all six profiles, consistent with separately preserved evidence and policy gates.
+- **Rule catalog audit:** `695` default rules; `7` paired synthetic controls; `640` without explicit replay controls; `0` contract issues. **PASS: registered default rule inventory agrees with benchmark (695 entries)**. The broader `705`-ID evidence report previously seen is a different denominator.
+- The previous `ssrf-imds` confidence mismatch and `UnsupportedMalicious` verifier error did **not** recur. The R163 fixture's raw observed 0.62 score and 84% production floor are distinct; no confidence or policy tuning was performed.
+
+**Classification:** **DEVELOPMENT DETECTION-QUALITY REPLAY GREEN** at the owner-reported checked-out branch `bf7e889`; focused R163 regression **5/5 GREEN**. This establishes that the replay scorer and safety guardrails succeeded on the current development corpus, **not** per-rule field accuracy or production alert recall, complete producer integration, independent holdout success, or live detection delivery.
+
+**Open quality gaps:** explicit paired evidence for most registered rules; low policy-constrained alert recall; missing external independent R102 V2 source/provenance pairs (0/4); trusted runtime producer reachability and live performance are separate gates. Frozen V1 remains historical 4/6, unchanged. R102/R118/R163 floors (80%/86%/84%), R275's 80% floor, default modes, and all holdout states remain unchanged. The owner did not provide a contemporaneous `git rev-parse HEAD` output; this classification uses the fast-forward + command transcript without claiming independent exact-SHA runner attestation.
