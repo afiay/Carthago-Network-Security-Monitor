@@ -7,6 +7,7 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using Carthago.Engine.Rules;
 using Carthago.Engine.Rules.Health;
+using Carthago.Engine.Rules.Expansion;
 using Carthago.Models;
 using Carthago.Services;
 using Carthago.Services.TrustedAudit;
