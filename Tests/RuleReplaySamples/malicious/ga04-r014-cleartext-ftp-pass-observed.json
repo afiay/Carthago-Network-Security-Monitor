@@ -1,0 +1,19 @@
+{
+  "name": "ga04-r014-cleartext-ftp-pass-observed",
+  "records": [
+    {
+      "source": "10.214.1.20",
+      "destination": "10.214.1.21",
+      "protocol": "TCP",
+      "destinationPort": 21,
+      "length": 100,
+      "sourcePort": 50521,
+      "info": "PASS synthetic-test-only-value",
+      "applicationService": "FTP"
+    }
+  ],
+  "expectedMatches": [
+    "R014"
+  ],
+  "expectedNonMatches": []
+}

@@ -1,0 +1,369 @@
+{
+  "name": "ga04-r031-txt-responses-and-nontxt-queries",
+  "records": [
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "TXT",
+      "dnsQname": "answer0.synthetic.invalid",
+      "dnsIsResponse": true
+    },
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "TXT",
+      "dnsQname": "answer1.synthetic.invalid",
+      "dnsIsResponse": true
+    },
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "TXT",
+      "dnsQname": "answer2.synthetic.invalid",
+      "dnsIsResponse": true
+    },
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "TXT",
+      "dnsQname": "answer3.synthetic.invalid",
+      "dnsIsResponse": true
+    },
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "TXT",
+      "dnsQname": "answer4.synthetic.invalid",
+      "dnsIsResponse": true
+    },
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "TXT",
+      "dnsQname": "answer5.synthetic.invalid",
+      "dnsIsResponse": true
+    },
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "TXT",
+      "dnsQname": "answer6.synthetic.invalid",
+      "dnsIsResponse": true
+    },
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "TXT",
+      "dnsQname": "answer7.synthetic.invalid",
+      "dnsIsResponse": true
+    },
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "TXT",
+      "dnsQname": "answer8.synthetic.invalid",
+      "dnsIsResponse": true
+    },
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "TXT",
+      "dnsQname": "answer9.synthetic.invalid",
+      "dnsIsResponse": true
+    },
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "TXT",
+      "dnsQname": "answer10.synthetic.invalid",
+      "dnsIsResponse": true
+    },
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "TXT",
+      "dnsQname": "answer11.synthetic.invalid",
+      "dnsIsResponse": true
+    },
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "TXT",
+      "dnsQname": "answer12.synthetic.invalid",
+      "dnsIsResponse": true
+    },
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "TXT",
+      "dnsQname": "answer13.synthetic.invalid",
+      "dnsIsResponse": true
+    },
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "TXT",
+      "dnsQname": "answer14.synthetic.invalid",
+      "dnsIsResponse": true
+    },
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "TXT",
+      "dnsQname": "answer15.synthetic.invalid",
+      "dnsIsResponse": true
+    },
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "TXT",
+      "dnsQname": "answer16.synthetic.invalid",
+      "dnsIsResponse": true
+    },
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "TXT",
+      "dnsQname": "answer17.synthetic.invalid",
+      "dnsIsResponse": true
+    },
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "A",
+      "dnsQname": "lookup0.synthetic.invalid",
+      "dnsIsResponse": false
+    },
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "A",
+      "dnsQname": "lookup1.synthetic.invalid",
+      "dnsIsResponse": false
+    },
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "A",
+      "dnsQname": "lookup2.synthetic.invalid",
+      "dnsIsResponse": false
+    },
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "A",
+      "dnsQname": "lookup3.synthetic.invalid",
+      "dnsIsResponse": false
+    },
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "A",
+      "dnsQname": "lookup4.synthetic.invalid",
+      "dnsIsResponse": false
+    },
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "A",
+      "dnsQname": "lookup5.synthetic.invalid",
+      "dnsIsResponse": false
+    },
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "A",
+      "dnsQname": "lookup6.synthetic.invalid",
+      "dnsIsResponse": false
+    },
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "A",
+      "dnsQname": "lookup7.synthetic.invalid",
+      "dnsIsResponse": false
+    },
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "A",
+      "dnsQname": "lookup8.synthetic.invalid",
+      "dnsIsResponse": false
+    },
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "A",
+      "dnsQname": "lookup9.synthetic.invalid",
+      "dnsIsResponse": false
+    },
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "A",
+      "dnsQname": "lookup10.synthetic.invalid",
+      "dnsIsResponse": false
+    },
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "A",
+      "dnsQname": "lookup11.synthetic.invalid",
+      "dnsIsResponse": false
+    },
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "A",
+      "dnsQname": "lookup12.synthetic.invalid",
+      "dnsIsResponse": false
+    },
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "A",
+      "dnsQname": "lookup13.synthetic.invalid",
+      "dnsIsResponse": false
+    },
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "A",
+      "dnsQname": "lookup14.synthetic.invalid",
+      "dnsIsResponse": false
+    },
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "A",
+      "dnsQname": "lookup15.synthetic.invalid",
+      "dnsIsResponse": false
+    },
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "A",
+      "dnsQname": "lookup16.synthetic.invalid",
+      "dnsIsResponse": false
+    },
+    {
+      "source": "10.231.2.20",
+      "destination": "10.231.2.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "A",
+      "dnsQname": "lookup17.synthetic.invalid",
+      "dnsIsResponse": false
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R031"
+  ]
+}

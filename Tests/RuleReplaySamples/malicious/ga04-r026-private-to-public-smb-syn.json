@@ -1,0 +1,20 @@
+{
+  "name": "ga04-r026-private-to-public-smb-syn",
+  "records": [
+    {
+      "source": "10.226.1.20",
+      "destination": "8.8.8.8",
+      "protocol": "TCP",
+      "destinationPort": 445,
+      "length": 100,
+      "sourcePort": 50445,
+      "flags": "SYN"
+    }
+  ],
+  "expectedMatches": [
+    "R026"
+  ],
+  "expectedNonMatches": [
+    "R027"
+  ]
+}

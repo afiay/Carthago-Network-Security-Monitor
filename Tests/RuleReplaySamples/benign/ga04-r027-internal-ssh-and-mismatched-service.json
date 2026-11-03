@@ -1,0 +1,39 @@
+{
+  "name": "ga04-r027-internal-ssh-and-mismatched-service",
+  "records": [
+    {
+      "source": "10.227.2.20",
+      "destination": "10.227.2.21",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "length": 100,
+      "sourcePort": 50222,
+      "flags": "SYN",
+      "applicationService": "SSH"
+    },
+    {
+      "source": "10.227.2.20",
+      "destination": "8.8.4.4",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "length": 100,
+      "sourcePort": 50223,
+      "flags": "SYN",
+      "applicationService": "RDP"
+    },
+    {
+      "source": "10.227.2.20",
+      "destination": "8.8.4.4",
+      "protocol": "TCP",
+      "destinationPort": 993,
+      "length": 100,
+      "sourcePort": 50993,
+      "flags": "SYN",
+      "applicationService": "IMAP"
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R027"
+  ]
+}

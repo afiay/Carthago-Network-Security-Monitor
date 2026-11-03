@@ -1,0 +1,28 @@
+{
+  "name": "ga04-r026-internal-smb-and-public-synack",
+  "records": [
+    {
+      "source": "10.226.2.20",
+      "destination": "10.226.2.21",
+      "protocol": "TCP",
+      "destinationPort": 445,
+      "length": 100,
+      "sourcePort": 50445,
+      "flags": "SYN",
+      "applicationService": "SMB"
+    },
+    {
+      "source": "10.226.2.20",
+      "destination": "8.8.8.8",
+      "protocol": "TCP",
+      "destinationPort": 445,
+      "length": 100,
+      "sourcePort": 50446,
+      "flags": "SYN,ACK"
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R026"
+  ]
+}

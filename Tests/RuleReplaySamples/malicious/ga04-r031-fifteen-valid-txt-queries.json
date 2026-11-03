@@ -1,0 +1,159 @@
+{
+  "name": "ga04-r031-fifteen-valid-txt-queries",
+  "records": [
+    {
+      "source": "10.231.1.20",
+      "destination": "10.231.1.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "TXT",
+      "dnsQname": "query0.synthetic.invalid",
+      "dnsIsResponse": false
+    },
+    {
+      "source": "10.231.1.20",
+      "destination": "10.231.1.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "TXT",
+      "dnsQname": "query1.synthetic.invalid",
+      "dnsIsResponse": false
+    },
+    {
+      "source": "10.231.1.20",
+      "destination": "10.231.1.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "TXT",
+      "dnsQname": "query2.synthetic.invalid",
+      "dnsIsResponse": false
+    },
+    {
+      "source": "10.231.1.20",
+      "destination": "10.231.1.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "TXT",
+      "dnsQname": "query3.synthetic.invalid",
+      "dnsIsResponse": false
+    },
+    {
+      "source": "10.231.1.20",
+      "destination": "10.231.1.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "TXT",
+      "dnsQname": "query4.synthetic.invalid",
+      "dnsIsResponse": false
+    },
+    {
+      "source": "10.231.1.20",
+      "destination": "10.231.1.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "TXT",
+      "dnsQname": "query5.synthetic.invalid",
+      "dnsIsResponse": false
+    },
+    {
+      "source": "10.231.1.20",
+      "destination": "10.231.1.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "TXT",
+      "dnsQname": "query6.synthetic.invalid",
+      "dnsIsResponse": false
+    },
+    {
+      "source": "10.231.1.20",
+      "destination": "10.231.1.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "TXT",
+      "dnsQname": "query7.synthetic.invalid",
+      "dnsIsResponse": false
+    },
+    {
+      "source": "10.231.1.20",
+      "destination": "10.231.1.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "TXT",
+      "dnsQname": "query8.synthetic.invalid",
+      "dnsIsResponse": false
+    },
+    {
+      "source": "10.231.1.20",
+      "destination": "10.231.1.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "TXT",
+      "dnsQname": "query9.synthetic.invalid",
+      "dnsIsResponse": false
+    },
+    {
+      "source": "10.231.1.20",
+      "destination": "10.231.1.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "TXT",
+      "dnsQname": "query10.synthetic.invalid",
+      "dnsIsResponse": false
+    },
+    {
+      "source": "10.231.1.20",
+      "destination": "10.231.1.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "TXT",
+      "dnsQname": "query11.synthetic.invalid",
+      "dnsIsResponse": false
+    },
+    {
+      "source": "10.231.1.20",
+      "destination": "10.231.1.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "TXT",
+      "dnsQname": "query12.synthetic.invalid",
+      "dnsIsResponse": false
+    },
+    {
+      "source": "10.231.1.20",
+      "destination": "10.231.1.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "TXT",
+      "dnsQname": "query13.synthetic.invalid",
+      "dnsIsResponse": false
+    },
+    {
+      "source": "10.231.1.20",
+      "destination": "10.231.1.53",
+      "protocol": "DNS",
+      "destinationPort": 53,
+      "length": 90,
+      "dnsQtype": "TXT",
+      "dnsQname": "query14.synthetic.invalid",
+      "dnsIsResponse": false
+    }
+  ],
+  "expectedMatches": [
+    "R031"
+  ],
+  "expectedNonMatches": []
+}

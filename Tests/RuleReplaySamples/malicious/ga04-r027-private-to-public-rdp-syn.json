@@ -1,0 +1,20 @@
+{
+  "name": "ga04-r027-private-to-public-rdp-syn",
+  "records": [
+    {
+      "source": "10.227.1.20",
+      "destination": "8.8.4.4",
+      "protocol": "TCP",
+      "destinationPort": 3389,
+      "length": 100,
+      "sourcePort": 53389,
+      "flags": "SYN"
+    }
+  ],
+  "expectedMatches": [
+    "R027"
+  ],
+  "expectedNonMatches": [
+    "R026"
+  ]
+}
