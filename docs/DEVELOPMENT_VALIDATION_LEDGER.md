@@ -1745,3 +1745,22 @@ The request is created only from validated R275 claim material and fixes rule ID
 The focused synthetic end-to-end test uses two different RSA keys and two independently configured issuers, verifies both claims through the existing trusted-audit verifier, correlates them through the existing independent-issuer contract, and proves the result still terminates at `R275_SIGNED_IDP_AUDIT_CANDIDATE_NOT_INTEGRATED` with `AlertPermitted=false`.
 
 **Verification status:** SOURCE CANDIDATE — UNVERIFIED. The previously observed 83/83 claim-material GREEN remains valid; only this new external-signer handoff requires focused execution.
+
+#### 2026-11-03 — R275 keyless external-signer verification GREEN (92/92)
+
+The owner fast-forwarded `feature/carthago-reliability-hardening` to `2686157e96a0cbc1835eb6adaef31393c7cf0a3d` and executed the expanded focused R275 suite including `OAuthDeviceFlowExternalSigningRequestTests`.
+
+Observed result:
+- `Carthago` build succeeded.
+- `Carthago.Tests` build succeeded.
+- **92 total; 92 succeeded; 0 failed; 0 skipped**.
+- Focused test duration: **14.1 seconds**.
+- Overall command completed with **Build succeeded** in **45.1 seconds**.
+
+**Classification:** GREEN for the keyless external-signer handoff plus all previously verified R275 Entra source/parser/correlation layers.
+
+This verifies that CARTHAGO can create a fixed unsigned R275 claim request without holding a private key; two independently keyed external signers can produce separately verified receipts; independent-receipt correlation succeeds; and the correlated pair still terminates at `R275_SIGNED_IDP_AUDIT_CANDIDATE_NOT_INTEGRATED` with `AlertPermitted=false`.
+
+**Scope boundary:** this remains synthetic signing evidence. No production key custody, live signer service, live Entra event, ambient rule-engine trust, or R275 alert promotion is claimed.
+
+No confidence floor, runtime mode, replay classification, holdout fixture, V1/V2 state or alert policy changed.
