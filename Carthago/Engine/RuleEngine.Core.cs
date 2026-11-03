@@ -417,7 +417,7 @@ namespace Carthago.Services
                     _ => tuningDecision.EffectiveMode
                 };
 
-                var writeResult = DetectionJournal.Current.AppendAsync(evt).GetAwaiter().GetResult();
+                var writeResult = ActiveDetectionJournal.AppendAsync(evt).GetAwaiter().GetResult();
                 if (!writeResult.Succeeded)
                 {
                     trace.FailedToPersistEventIds.Add(evt.EventId);
