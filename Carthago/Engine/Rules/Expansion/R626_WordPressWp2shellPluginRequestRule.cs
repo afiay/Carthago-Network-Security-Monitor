@@ -14,7 +14,7 @@ namespace Carthago.Engine.Rules.Expansion
       ConfigKey:"Rules.R626.Enabled",EnabledByDefault:true);
     private static readonly RulePrecisionProfile Profile=CreateEvidenceDrivenProfile(new PrecisionRuleSpec
     {
-      RuleId="R626",Name="WordPress wp2shell plugin HTTP access",Category:"HttpApi",
+      RuleId="R626",Name="WordPress wp2shell plugin HTTP access",Category="HttpApi",
       Description="Narrowed source candidate from R2094. R087 generic webshell upload; here a particular wp2shell plugin access request, not a proved webshell installation",
       Severity=SeverityLevel.High,Maturity=RulePrecisionMaturity.Candidate,
       RuntimeMode=RuleRuntimeMode.Shadow,

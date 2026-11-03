@@ -14,7 +14,7 @@ namespace Carthago.Engine.Rules.Expansion
       ConfigKey:"Rules.R631.Enabled",EnabledByDefault:true);
     private static readonly RulePrecisionProfile Profile=CreateEvidenceDrivenProfile(new PrecisionRuleSpec
     {
-      RuleId="R631",Name="Unusual command interpreter outbound RDP",Category:"EvasionInfra",
+      RuleId="R631",Name="Unusual command interpreter outbound RDP",Category="EvasionInfra",
       Description="Narrowed source candidate from R2221. R073 RDP lateral burst and R124 ingress exposure; this is specific unusual local process to a public RDP endpoint",
       Severity=SeverityLevel.Medium,Maturity=RulePrecisionMaturity.Candidate,
       RuntimeMode=RuleRuntimeMode.Shadow,

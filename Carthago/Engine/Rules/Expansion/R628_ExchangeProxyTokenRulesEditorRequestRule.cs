@@ -14,7 +14,7 @@ namespace Carthago.Engine.Rules.Expansion
       ConfigKey:"Rules.R628.Enabled",EnabledByDefault:true);
     private static readonly RulePrecisionProfile Profile=CreateEvidenceDrivenProfile(new PrecisionRuleSpec
     {
-      RuleId="R628",Name="Exchange ProxyToken RulesEditor NewObject request",Category:"HttpApi",
+      RuleId="R628",Name="Exchange ProxyToken RulesEditor NewObject request",Category="HttpApi",
       Description="Narrowed source candidate from R3031. R319 generic ECP probe, R616 ECP SetObject Reset; this matches a separate RulesEditor NewObject request",
       Severity=SeverityLevel.High,Maturity=RulePrecisionMaturity.Candidate,
       RuntimeMode=RuleRuntimeMode.Shadow,

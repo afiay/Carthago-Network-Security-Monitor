@@ -14,7 +14,7 @@ namespace Carthago.Engine.Rules.Expansion
       ConfigKey:"Rules.R632.Enabled",EnabledByDefault:true);
     private static readonly RulePrecisionProfile Profile=CreateEvidenceDrivenProfile(new PrecisionRuleSpec
     {
-      RuleId="R632",Name="Svchost RDP loopback flow candidate",Category:"EvasionInfra",
+      RuleId="R632",Name="Svchost RDP loopback flow candidate",Category="EvasionInfra",
       Description="Narrowed source candidate from R2238. R518 generic reverse SSH tunnel; this only observes the characteristic local loopback 3389 source-flow shape",
       Severity=SeverityLevel.Low,Maturity=RulePrecisionMaturity.Candidate,
       RuntimeMode=RuleRuntimeMode.Shadow,

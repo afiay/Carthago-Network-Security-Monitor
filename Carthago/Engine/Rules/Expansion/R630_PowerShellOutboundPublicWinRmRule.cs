@@ -14,7 +14,7 @@ namespace Carthago.Engine.Rules.Expansion
       ConfigKey:"Rules.R630.Enabled",EnabledByDefault:true);
     private static readonly RulePrecisionProfile Profile=CreateEvidenceDrivenProfile(new PrecisionRuleSpec
     {
-      RuleId="R630",Name="PowerShell client outbound WinRM to public IP",Category:"EvasionInfra",
+      RuleId="R630",Name="PowerShell client outbound WinRM to public IP",Category="EvasionInfra",
       Description="Narrowed source candidate from R2215. R074 WinRM sweep and R027 generic admin egress; here attributed PowerShell client on WinRM port to public IP",
       Severity=SeverityLevel.Medium,Maturity=RulePrecisionMaturity.Candidate,
       RuntimeMode=RuleRuntimeMode.Shadow,

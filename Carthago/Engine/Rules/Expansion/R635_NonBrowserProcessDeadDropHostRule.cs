@@ -14,7 +14,7 @@ namespace Carthago.Engine.Rules.Expansion
       ConfigKey:"Rules.R635.Enabled",EnabledByDefault:true);
     private static readonly RulePrecisionProfile Profile=CreateEvidenceDrivenProfile(new PrecisionRuleSpec
     {
-      RuleId="R635",Name="Nonbrowser Windows system host to public dead-drop service",Category:"EvasionInfra",
+      RuleId="R635",Name="Nonbrowser Windows system host to public dead-drop service",Category="EvasionInfra",
       Description="Narrowed source candidate from R2350. R104 first-time cloud uploads, R110 service API egress; this requires a local nonbrowser process plus TLS SNI to a particular public service, no dead-drop attribution",
       Severity=SeverityLevel.Low,Maturity=RulePrecisionMaturity.Candidate,
       RuntimeMode=RuleRuntimeMode.Shadow,

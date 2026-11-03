@@ -14,7 +14,7 @@ namespace Carthago.Engine.Rules.Expansion
       ConfigKey:"Rules.R634.Enabled",EnabledByDefault:true);
     private static readonly RulePrecisionProfile Profile=CreateEvidenceDrivenProfile(new PrecisionRuleSpec
     {
-      RuleId="R634",Name="Windows script host external TCP other than HTTP/DNS",Category:"EvasionInfra",
+      RuleId="R634",Name="Windows script host external TCP other than HTTP/DNS",Category="EvasionInfra",
       Description="Narrowed source candidate from R2963. R268 already matches script interpreter HTTP/DNS; this only matches non-HTTP/non-DNS external TCP",
       Severity=SeverityLevel.Medium,Maturity=RulePrecisionMaturity.Candidate,
       RuntimeMode=RuleRuntimeMode.Shadow,

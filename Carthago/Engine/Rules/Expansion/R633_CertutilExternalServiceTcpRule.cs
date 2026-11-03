@@ -14,7 +14,7 @@ namespace Carthago.Engine.Rules.Expansion
       ConfigKey:"Rules.R633.Enabled",EnabledByDefault:true);
     private static readonly RulePrecisionProfile Profile=CreateEvidenceDrivenProfile(new PrecisionRuleSpec
     {
-      RuleId="R633",Name="Certutil external TCP request to unusual service",Category:"EvasionInfra",
+      RuleId="R633",Name="Certutil external TCP request to unusual service",Category="EvasionInfra",
       Description="Narrowed source candidate from R2958. R266 first-seen process egress; this matches exact certutil basename and specific four ports regardless of first seen",
       Severity=SeverityLevel.Medium,Maturity=RulePrecisionMaturity.Candidate,
       RuntimeMode=RuleRuntimeMode.Shadow,

@@ -14,7 +14,7 @@ namespace Carthago.Engine.Rules.Expansion
       ConfigKey:"Rules.R627.Enabled",EnabledByDefault:true);
     private static readonly RulePrecisionProfile Profile=CreateEvidenceDrivenProfile(new PrecisionRuleSpec
     {
-      RuleId="R627",Name="WebLogic keystore webshell-like URI request",Category:"HttpApi",
+      RuleId="R627",Name="WebLogic keystore webshell-like URI request",Category="HttpApi",
       Description="Narrowed source candidate from R2286. R087 webshell upload; here direct WebLogic keystore path request without upload inference",
       Severity=SeverityLevel.High,Maturity=RulePrecisionMaturity.Candidate,
       RuntimeMode=RuleRuntimeMode.Shadow,

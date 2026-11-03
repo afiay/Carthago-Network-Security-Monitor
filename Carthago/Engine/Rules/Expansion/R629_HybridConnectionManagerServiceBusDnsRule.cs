@@ -14,7 +14,7 @@ namespace Carthago.Engine.Rules.Expansion
       ConfigKey:"Rules.R629.Enabled",EnabledByDefault:true);
     private static readonly RulePrecisionProfile Profile=CreateEvidenceDrivenProfile(new PrecisionRuleSpec
     {
-      RuleId="R629",Name="Hybrid Connection Manager DNS lookup to Azure Service Bus",Category:"DnsAdvanced",
+      RuleId="R629",Name="Hybrid Connection Manager DNS lookup to Azure Service Bus",Category="DnsAdvanced",
       Description="Narrowed source candidate from R2475. R620 LocaltoNet domain alone; here an exact local process + DNS query conjunction, benign Azure connector likely",
       Severity=SeverityLevel.Low,Maturity=RulePrecisionMaturity.Candidate,
       RuntimeMode=RuleRuntimeMode.Shadow,
