@@ -93,8 +93,23 @@ try {
                         }
                     } elseif ($sample.classification -eq 'Benign') {
                         $fp += $alertIds.Count
+                    } elseif ($sample.classification -eq 'UnsupportedMalicious') {
+                        # Producer-limited attacks are neither benign negatives nor
+                        # supported malicious positives. Their required fail-closed
+                        # reasons are checked by the replay report's sample errors.
+                        $unsupportedIds = @($sample.unsupportedRuleIds |
+                            Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) })
+                        if ($unsupportedIds.Count -eq 0) {
+                            throw "UnsupportedMalicious sample $($sample.name) has no unsupported rule IDs."
+                        }
+                        $promoted = @($profileEntry.Value.alertRuleIds |
+                            Where-Object { $unsupportedIds -contains $_ })
+                        if ($promoted.Count -gt 0) {
+                            throw ("UnsupportedMalicious sample {0} promoted unsupported rule(s) in {1}: {2}" -f
+                                $sample.name, $profileName, ($promoted -join ', '))
+                        }
                     } else {
-                        throw "Unrecognized replay classification on sample $($sample.name)"
+                        throw "Unrecognized replay classification '$($sample.classification)' on sample $($sample.name)"
                     }
                 }
                 $precision = 'N/A'; $recall = 'N/A'; $f1 = 'N/A'
@@ -193,9 +208,33 @@ try {
             $noControls = @($audit | Where-Object { $_.evidenceStatus -eq 'NoExplicitReplayControls' }).Count
             Write-Host ("Rule catalog audit: {0} rules; paired synthetic controls={1}; no explicit controls={2}; contract issues={3}" -f
                 $audit.Count, $paired, $noControls, $auditIssues.Count)
-            if ($audit.Count -ne 544) {
-                $failures.Add('rule-catalog-count')
-                Write-Host "FAIL: expected 544 registered rules, report contains $($audit.Count)."
+            # Compare the report against the checked-out default-rule registry,
+            # rather than a stale exact count. Content-pack and other available
+            # rules may appear in broader evidence coverage; they are not default
+            # rule registrations and must not inflate this audit's denominator.
+            $registryPath = Join-Path $root 'Carthago/Engine/Rules/Catalog/RuleRegistry.cs'
+            $registrySource = Get-Content -LiteralPath $registryPath -Raw
+            $registryIds = @([regex]::Matches($registrySource,
+                '\bnew\s+(R\d{3})_[A-Za-z0-9_]+\s*\(') |
+                ForEach-Object { $_.Groups[1].Value })
+            $auditIds = @($audit | ForEach-Object { [string]$_.ruleId })
+            $duplicateRegistry = @($registryIds | Group-Object | Where-Object Count -gt 1)
+            $duplicateAudit = @($auditIds | Group-Object | Where-Object Count -gt 1)
+            $missingAuditIds = @($registryIds | Where-Object { $auditIds -notcontains $_ })
+            $unexpectedAuditIds = @($auditIds | Where-Object { $registryIds -notcontains $_ })
+            # R001-R695 were already registered when this gate was introduced.
+            # Treat this as a minimum-preservation floor, not an exact upper limit.
+            if ($registryIds.Count -lt 695 -or $registryIds -notcontains 'R695' -or
+                $duplicateRegistry.Count -gt 0 -or $duplicateAudit.Count -gt 0 -or
+                $missingAuditIds.Count -gt 0 -or $unexpectedAuditIds.Count -gt 0) {
+                $failures.Add('rule-catalog-inventory')
+                Write-Host ("FAIL: registry={0}, benchmark audit={1}, duplicate registry={2}, duplicate audit={3}, missing={4}, unexpected={5}" -f
+                    $registryIds.Count, $auditIds.Count, $duplicateRegistry.Count,
+                    $duplicateAudit.Count, $missingAuditIds.Count, $unexpectedAuditIds.Count)
+                foreach ($id in @($missingAuditIds | Select-Object -First 12)) { Write-Host "  Missing benchmark entry: $id" }
+                foreach ($id in @($unexpectedAuditIds | Select-Object -First 12)) { Write-Host "  Unexpected benchmark entry: $id" }
+            } else {
+                Write-Host "PASS: registered default rule inventory agrees with benchmark ($($registryIds.Count) entries)."
             }
             if ($auditIssues.Count -gt 0) {
                 $failures.Add('rule-catalog-contracts')
