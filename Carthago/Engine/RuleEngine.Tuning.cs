@@ -15,7 +15,12 @@ namespace Carthago.Services
 {
     public static partial class RuleEngine
     {
-        private static RuleTuningDecision ResolveRuntimeTuningDecision(IDetectionRule rule, DetectionEvent evt, TrafficRecord record, RuleMode configuredMode)
+        private static RuleTuningDecision ResolveRuntimeTuningDecision(
+            IDetectionRule rule,
+            DetectionEvent evt,
+            TrafficRecord record,
+            RuleMode configuredMode,
+            bool trustedR275Runtime)
         {
             if (rule is IContentPackRule contentPackRule)
                 return ResolveContentPackTuningDecision(contentPackRule, evt, record, configuredMode);
@@ -45,13 +50,22 @@ namespace Carthago.Services
                 _ => decision.EffectiveMode
             };
 
-            var precisionDecision = RulePrecisionRuntimeEvaluator.Evaluate(
-                descriptor,
-                evt,
-                record,
-                precisionConfiguredMode,
-                _cfg.Profile,
-                approvedAssets);
+            var precisionDecision = trustedR275Runtime
+                && string.Equals(descriptor.RuleId, "R275", StringComparison.Ordinal)
+                ? RulePrecisionRuntimeEvaluator.EvaluateTrustedR275(
+                    descriptor,
+                    evt,
+                    record,
+                    precisionConfiguredMode,
+                    _cfg.Profile,
+                    approvedAssets)
+                : RulePrecisionRuntimeEvaluator.Evaluate(
+                    descriptor,
+                    evt,
+                    record,
+                    precisionConfiguredMode,
+                    _cfg.Profile,
+                    approvedAssets);
 
             effectiveMode = RulePrecisionCatalog.MostRestrictive(effectiveMode, precisionDecision.EffectiveMode);
 
