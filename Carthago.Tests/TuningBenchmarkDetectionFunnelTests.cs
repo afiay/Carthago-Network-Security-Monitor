@@ -211,7 +211,7 @@ public sealed class TuningBenchmarkDetectionFunnelTests
             Assert.Contains("N/A", markdown);
             Assert.Contains("not live notification delivery", markdown);
             Assert.Contains("- Supported-detector true-positive pass rate: 50.0%", markdown);
-            Assert.Contains("- Malicious pass rate: 25.0%", markdown);
+            Assert.Contains("- Supported malicious alert pass rate: 25.0%", markdown);
             Assert.Contains("0.85 / 0.90", markdown);
             Assert.DoesNotContain("100,0", markdown);
             Assert.DoesNotContain("0,85", markdown);
