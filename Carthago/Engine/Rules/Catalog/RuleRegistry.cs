@@ -628,6 +628,16 @@ namespace Carthago.Engine.Rules.Catalog
                 new R603_WebLogicJndiBindingLdapRequestRule(),
                 new R604_ExchangeViewStateQueryRequestRule(),
                 new R605_ConfluenceUploadFilenameTraversalRequestRule(),
+                new R606_PulseGuacamoleQueryRequestRule(),
+                new R607_KempLoadMasterApiEnableGetRule(),
+                new R608_ExchangeMastermailboxPowerShellRequestRule(),
+                new R609_ExchangeEncodedAtPowerShellRequestRule(),
+                new R610_ExchangeOwaCalendarEndpointPostRule(),
+                new R611_FortinetSamlRemoteserverPostRule(),
+                new R612_ExternalOastCallbackDnsQueryRule(),
+                new R613_CobaltStrikeLikeDnsStagingLabelRule(),
+                new R614_HistoricalDprkDomainDnsQueryRule(),
+                new R615_AnonfilesDomainDnsQueryRule(),
             };
         }
 
