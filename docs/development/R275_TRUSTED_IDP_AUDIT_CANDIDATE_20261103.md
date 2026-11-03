@@ -92,7 +92,7 @@ During owner-authorized test time:
 ```powershell
 dotnet test .\Carthago.Tests\Carthago.Tests.csproj `
   -c Release `
-  --filter "FullyQualifiedName~OAuthDeviceFlowExternalSigningRequestTests|FullyQualifiedName~MicrosoftEntraDeviceFlowClaimMaterialBuilderTests|FullyQualifiedName~MicrosoftEntraLogAnalyticsDeviceCodeSourceTests|FullyQualifiedName~MicrosoftEntraDeviceCodeAuditIntakeTests|FullyQualifiedName~OAuthDeviceFlowAuditCandidateGateTests|FullyQualifiedName~R275AdvancedAccuracyBatchTests|FullyQualifiedName~R275R343R485PairedReplayTests"
+  --filter "FullyQualifiedName~R275TrustedCapabilityContextTests|FullyQualifiedName~OAuthDeviceFlowExternalSigningRequestTests|FullyQualifiedName~MicrosoftEntraDeviceFlowClaimMaterialBuilderTests|FullyQualifiedName~MicrosoftEntraLogAnalyticsDeviceCodeSourceTests|FullyQualifiedName~MicrosoftEntraDeviceCodeAuditIntakeTests|FullyQualifiedName~OAuthDeviceFlowAuditCandidateGateTests|FullyQualifiedName~R275AdvancedAccuracyBatchTests|FullyQualifiedName~R275R343R485PairedReplayTests"
 ```
 
 Do not mark this increment GREEN until the focused tests complete successfully on CARTHAGE.
@@ -275,3 +275,36 @@ Observed:
 The keyless signer handoff is GREEN at the contract-test level. Synthetic independent signers can sign the fixed claim payload, pass the existing verifier and independent correlation boundary, and still cannot promote R275.
 
 The next engineering boundary is controlled capability delivery into rule evaluation without adding ambient trust to `TrafficRecord` or exposing a public constructor that can mint trusted evidence.
+
+
+## Internal non-ambient rule capability
+
+A controlled rule-evaluation capability path is now authored:
+
+- `Carthago/Services/TrustedAudit/OAuthDeviceFlowRuleCapability.cs`
+- `Carthago/Engine/Rules/Abstractions/RuleEvaluationContext.cs`
+- `Carthago/Engine/Rules/Expansion/R275_OAuthDeviceCodePhishingIndicatorRule.cs`
+- `Carthago.Tests/R275TrustedCapabilityContextTests.cs`
+
+The capability type is `internal` and has a private constructor. It can be minted only after the existing signed R275 candidate gate accepts a correlated independent receipt pair for one exact packet and UTC timestamp.
+
+The capability snapshots the bound `TrafficRecord` source/destination, ports, TCP state, application protocol and identity-host fields. `RuleEvaluationContext` retains its existing public packet-only constructor. A separate internal-only constructor accepts the opaque capability and rejects it unless it is bound to the exact same `TrafficRecord` instance, unchanged snapshot fields and exact normalized UTC timestamp.
+
+No trusted flag is added to `TrafficRecord`, and the trusted capability property on `RuleEvaluationContext` is internal rather than public.
+
+R275 can now distinguish two states:
+- ordinary public packet-only evaluation: `TRUSTED_DEVICE_CODE_ABUSE_EVENT_UNAVAILABLE`;
+- internally delivered verified capability: `TRUSTED_DEVICE_CODE_CAPABILITY_PRESENT_NOT_PROMOTED`.
+
+Both states remain `Matched=false` with no emitted detection event. The capability-present state uses `RuntimePrecisionGate` to make the non-promotion decision explicit.
+
+Focused tests cover:
+- unchanged public packet-only behavior;
+- successful capability delivery into R275 with no alert;
+- rejection on a different packet object;
+- rejection after mutation of the bound packet;
+- rejection at a different context timestamp;
+- inability to mint capability without correlated verified receipts;
+- reflection proof that the capability is not exposed through the public context API.
+
+**Status:** SOURCE CANDIDATE — UNVERIFIED until the expanded focused R275 suite is executed.
