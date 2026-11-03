@@ -1611,6 +1611,7 @@ Source commits in this increment:
 - `33da7bbc926f94bd8bcc15fbc6512220490e2566` — focused synthetic R275 trust-boundary tests.
 - `53ac27caf6d53d09b614bdfe573f8f939059cbec` — require identity-web packet context in addition to endpoint/time binding.
 - `2f78eaeea3cf50df1ec957c1a9a0e484945c02db` — cover arbitrary TCP/443 rejection.
+- `80fb9384568ab673926c65dd846da6b3357327eb` — handle observed SNI/TLS-SNI/HTTP-host fields without null-coalescing ambiguity.
 - `d9ea26e03f45a46c4fd575d02d2db5fbafa4dc15` — trusted IdP candidate boundary documentation.
 
 The implementation reuses the existing `TrustedAuditReceiptVerifier` and `TrustedAuditReceiptCorrelation` contracts. Two independently pinned RSA-PSS issuers must attest the exact R275 operation `OAuthDeviceFlowAbuseConfirmed`, with matching privacy-minimized actor/resource/trace hashes and endpoints. The candidate gate additionally requires a captured TCP/443 HTTP/HTTPS/TLS flow with an observed host/SNI, exact endpoint agreement and a two-minute UTC clock bound.
