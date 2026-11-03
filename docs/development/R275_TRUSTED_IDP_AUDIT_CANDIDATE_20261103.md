@@ -92,7 +92,7 @@ During owner-authorized test time:
 ```powershell
 dotnet test .\Carthago.Tests\Carthago.Tests.csproj `
   -c Release `
-  --filter "FullyQualifiedName~MicrosoftEntraDeviceCodeAuditIntakeTests|FullyQualifiedName~OAuthDeviceFlowAuditCandidateGateTests|FullyQualifiedName~R275AdvancedAccuracyBatchTests|FullyQualifiedName~R275R343R485PairedReplayTests"
+  --filter "FullyQualifiedName~MicrosoftEntraLogAnalyticsDeviceCodeSourceTests|FullyQualifiedName~MicrosoftEntraDeviceCodeAuditIntakeTests|FullyQualifiedName~OAuthDeviceFlowAuditCandidateGateTests|FullyQualifiedName~R275AdvancedAccuracyBatchTests|FullyQualifiedName~R275R343R485PairedReplayTests"
 ```
 
 Do not mark this increment GREEN until the focused tests complete successfully on CARTHAGE.
@@ -159,3 +159,35 @@ The GREEN scope covers:
 This closes the synthetic source-candidate verification for the current R275 increment. The parser/candidate boundary is now test-verified but remains non-alerting and not connected to the live rule engine.
 
 R275 still intentionally returns `TRUSTED_DEVICE_CODE_ABUSE_EVENT_UNAVAILABLE` through ordinary packet evaluation. A future live Entra producer must authenticate its source independently and must not convert raw provider JSON, OAuth codes, SNI or packet text directly into trusted rule evidence.
+
+
+## Authenticated Azure Monitor Logs source
+
+The next source layer is now authored:
+
+- `Carthago/Services/TrustedAudit/MicrosoftEntraLogAnalyticsDeviceCodeSource.cs`
+- `Carthago.Tests/MicrosoftEntraLogAnalyticsDeviceCodeSourceTests.cs`
+
+This adapter queries one operator-configured Log Analytics workspace through the Microsoft Entra-authenticated Azure Monitor Logs data-plane endpoint:
+
+`POST https://api.loganalytics.azure.com/v1/workspaces/{workspaceId}/query`
+
+It requests the Log Analytics OAuth scope:
+
+`https://api.loganalytics.io/.default`
+
+No tenant ID, client ID, client secret, certificate, managed-identity identifier, access token, or workspace ID is committed to the repository. The adapter receives a `TokenCredential`, `HttpClient`, and workspace GUID from the host application.
+
+The KQL is fixed inside CARTHAGO and cannot be supplied by a caller. It selects only successful `deviceCode` sign-ins whose Entra risk state is `confirmedCompromised` with `adminConfirmedSigninCompromised`, projects only the already-reviewed R275 fields, orders by newest `CreatedDateTime`, and caps the result at 100 rows.
+
+The query lookback is bounded to 1–60 minutes. HTTP failures are converted to stable sanitized reason codes; response payloads are capped at 1 MiB; the returned table schema must exactly match the expected projection; more than 100 rows, malformed cells, schema drift, and rows that fail the strict Entra parser are rejected fail-closed.
+
+A row accepted from this authenticated source is re-created as a `MicrosoftEntraDeviceCodeAuditObservation` with `FromTrustedProviderTransport=true`. This proves only that CARTHAGO obtained the row through an authenticated Azure Monitor Logs API call using the configured credential. It still does not sign an R275 audit receipt, prove the human phishing label, or authorize an alert.
+
+Microsoft references used:
+- https://learn.microsoft.com/en-us/azure/azure-monitor/logs/api/request-format
+- https://learn.microsoft.com/en-us/azure/azure-monitor/logs/api/access-api
+- https://learn.microsoft.com/en-us/azure/azure-monitor/logs/api/overview
+- https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/signinlogs
+
+**Status:** SOURCE CANDIDATE — UNVERIFIED until the updated focused R275 test command is executed.
