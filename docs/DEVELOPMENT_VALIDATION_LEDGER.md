@@ -1764,3 +1764,21 @@ This verifies that CARTHAGO can create a fixed unsigned R275 claim request witho
 **Scope boundary:** this remains synthetic signing evidence. No production key custody, live signer service, live Entra event, ambient rule-engine trust, or R275 alert promotion is claimed.
 
 No confidence floor, runtime mode, replay classification, holdout fixture, V1/V2 state or alert policy changed.
+
+#### 2026-11-03 — R275 internal non-ambient rule capability authored
+
+After the keyless external-signer handoff reached 92/92 GREEN, an internal-only rule-evaluation capability boundary was authored.
+
+Source commits:
+- `798d5bcb997db37be28def5bf1a75162c3bdeab8` — opaque R275 rule capability bound to one packet snapshot and UTC timestamp.
+- `f6df06450d3a50147cf8afcbadcf0f66c2420a1f` — internal-only `RuleEvaluationContext` overload; public constructor remains packet-only.
+- `e5b5f77ae71fb14d1682893ea4d8b4018a07d57f` — R275 recognizes the trusted capability but still returns NoMatch.
+- `6c82e65c8b540563fd07fc6694803a05422c061b` — focused capability-delivery tests.
+
+The capability can be minted only from a correlated independently verified R275 receipt pair that already passes the existing packet gate. It is bound by object identity plus a snapshot of endpoints, ports, protocol/identity-host fields and the exact UTC timestamp. A different packet object, modified packet or different timestamp cannot reuse it.
+
+`TrafficRecord` was not modified. The existing public `RuleEvaluationContext` constructor remains available unchanged and cannot attach trusted evidence. The capability property and overload are internal to the Carthago assembly.
+
+R275 remains non-alerting. Public packet-only evaluation continues to return `TRUSTED_DEVICE_CODE_ABUSE_EVENT_UNAVAILABLE`; the trusted internal path returns `TRUSTED_DEVICE_CODE_CAPABILITY_PRESENT_NOT_PROMOTED` with `RuntimePrecisionGate`, `Matched=false` and no events.
+
+**Verification status:** SOURCE CANDIDATE — UNVERIFIED. The previously observed 92/92 keyless-signer GREEN remains valid; this new internal-capability increment requires focused execution.
