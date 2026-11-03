@@ -708,6 +708,16 @@ namespace Carthago.Engine.Rules.Catalog
                 new R683_HttpPostDetectedOnModbusServicePortRule(),
                 new R684_OpcUaPublicClientSynSynAckExchangeRule(),
                 new R685_MultiDeviceLargeS7CommResponseFanInRule(),
+                new R686_BitsadminDirectIpCleartextHttpGetRule(),
+                new R687_CertutilDirectIpCleartextHttpGetRule(),
+                new R688_WgetDirectIpCleartextHttpGetRule(),
+                new R689_CurlFileSharingServiceHostEgressRule(),
+                new R690_CurlSuspiciousExtensionCleartextHttpGetRule(),
+                new R691_SmbListenerPublicClientSynAckEvidenceRule(),
+                new R692_OutlookExternalWebDavOrSmbAttemptRule(),
+                new R693_SnippingToolExternalRemoteResourceAttemptRule(),
+                new R694_NpsNpcProcessExternalTcpEgressRule(),
+                new R695_IoxProcessExternalTcpEgressRule(),
             };
         }
 
