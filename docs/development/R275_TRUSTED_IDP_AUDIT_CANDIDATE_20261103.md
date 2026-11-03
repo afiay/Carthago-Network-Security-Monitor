@@ -92,7 +92,7 @@ During owner-authorized test time:
 ```powershell
 dotnet test .\Carthago.Tests\Carthago.Tests.csproj `
   -c Release `
-  --filter "FullyQualifiedName~MicrosoftEntraLogAnalyticsDeviceCodeSourceTests|FullyQualifiedName~MicrosoftEntraDeviceCodeAuditIntakeTests|FullyQualifiedName~OAuthDeviceFlowAuditCandidateGateTests|FullyQualifiedName~R275AdvancedAccuracyBatchTests|FullyQualifiedName~R275R343R485PairedReplayTests"
+  --filter "FullyQualifiedName~MicrosoftEntraDeviceFlowClaimMaterialBuilderTests|FullyQualifiedName~MicrosoftEntraLogAnalyticsDeviceCodeSourceTests|FullyQualifiedName~MicrosoftEntraDeviceCodeAuditIntakeTests|FullyQualifiedName~OAuthDeviceFlowAuditCandidateGateTests|FullyQualifiedName~R275AdvancedAccuracyBatchTests|FullyQualifiedName~R275R343R485PairedReplayTests"
 ```
 
 Do not mark this increment GREEN until the focused tests complete successfully on CARTHAGE.
@@ -207,3 +207,21 @@ Observed:
 The authenticated source increment is therefore **GREEN at the contract-test level**. The current source adapter correctly remains configuration-injected and non-alerting; it has not been exercised against a live tenant or workspace in this evidence record.
 
 The next engineering boundary is no longer HTTP/query parsing. It is the trusted producer handoff: converting an authenticated, privacy-minimized Entra observation into a separately signed R275 audit claim without placing signing keys or ambient trust inside the packet/rule process. That handoff must preserve replay protection, independent signer requirements and the current `TRUSTED_DEVICE_CODE_ABUSE_EVENT_UNAVAILABLE` behavior until explicitly wired and tested.
+
+
+## Authenticated Entra-to-packet claim material boundary
+
+A further non-signing boundary is now authored:
+
+- `Carthago/Services/TrustedAudit/MicrosoftEntraDeviceFlowClaimMaterialBuilder.cs`
+- `Carthago.Tests/MicrosoftEntraDeviceFlowClaimMaterialBuilderTests.cs`
+
+This layer exists because Microsoft Entra `SigninLogs` identifies the client/source IP but does not supply a trustworthy IdP destination IP suitable for CARTHAGO's generic signed `AuditClaim`. The implementation does **not** invent or infer that destination.
+
+Instead, one observation that already has `FromTrustedProviderTransport=true` must be correlated with one independently captured identity web flow. The captured flow must be TCP/443 with HTTP/HTTPS/TLS application context, a valid client and destination IP, exact client/source IP equality with the Entra observation, a maximum two-minute UTC time difference, and an identity host that matches an explicit operator-approved host policy.
+
+The IdP destination IP is taken only from the captured packet record. The resulting `MicrosoftEntraDeviceFlowClaimMaterial` carries privacy-minimized source/destination IPs, actor/resource/trace hashes, UTC time and the reviewed identity host. It is deliberately unsigned and cannot become a `VerifiedAuditReceipt`.
+
+Host matching uses exact names or proper subdomains of configured hosts; lookalikes such as `login.microsoftonline.com.attacker.test` fail closed. Arbitrary TCP/443 application contexts also fail closed.
+
+**Status:** SOURCE CANDIDATE — UNVERIFIED. This boundary has not yet been executed in the owner test environment.
