@@ -51,6 +51,7 @@ namespace Carthago.Services.TrustedAudit
           ResourceId=tostring(ResourceId),
           HomeTenantId=tostring(HomeTenantId),
           ResourceTenantId=tostring(ResourceTenantId)
+| order by CreatedDateTime desc
 | take 100";
 
         private static readonly string[] ProjectionColumns =
