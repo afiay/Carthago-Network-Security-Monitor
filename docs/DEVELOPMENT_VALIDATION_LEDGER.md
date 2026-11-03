@@ -1782,3 +1782,22 @@ The capability can be minted only from a correlated independently verified R275 
 R275 remains non-alerting. Public packet-only evaluation continues to return `TRUSTED_DEVICE_CODE_ABUSE_EVENT_UNAVAILABLE`; the trusted internal path returns `TRUSTED_DEVICE_CODE_CAPABILITY_PRESENT_NOT_PROMOTED` with `RuntimePrecisionGate`, `Matched=false` and no events.
 
 **Verification status:** SOURCE CANDIDATE — UNVERIFIED. The previously observed 92/92 keyless-signer GREEN remains valid; this new internal-capability increment requires focused execution.
+
+#### 2026-11-03 — R275 internal capability delivery verification GREEN (99/99)
+
+The owner fast-forwarded `feature/carthago-reliability-hardening` to `1851539ffbd71c27579dc135000a8678711adb36` and executed the expanded focused R275 suite including `R275TrustedCapabilityContextTests`.
+
+Observed result:
+- `Carthago` build succeeded.
+- `Carthago.Tests` build succeeded.
+- **99 total; 99 succeeded; 0 failed; 0 skipped**.
+- Focused test duration: **14.6 seconds**.
+- Overall command completed with **Build succeeded** in **40.9 seconds**.
+
+**Classification:** GREEN for the internal non-ambient capability-delivery boundary plus all previously verified R275 source/parser/signer layers.
+
+This verifies that the public `RuleEvaluationContext` remains packet-only; only an internal capability path can carry trusted R275 evidence; the capability is bound to the exact packet instance, relevant packet snapshot and exact UTC timestamp; reuse on a different packet, mutated packet or different timestamp is rejected; and a valid capability reaches R275 only as `TRUSTED_DEVICE_CODE_CAPABILITY_PRESENT_NOT_PROMOTED` with `Matched=false` and no events.
+
+**Scope boundary:** no promotion policy is yet authorized by this evidence. A valid capability reaching rule evaluation is intentionally insufficient to emit an R275 detection event.
+
+No confidence floor, runtime mode, replay classification, holdout fixture, V1/V2 state or alert policy changed.
