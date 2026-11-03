@@ -133,7 +133,7 @@ public sealed class R656R665AdvancedAccuracyBatchTests
   }
   [Fact] public async Task EncodedGet_RequiresScriptPidIpHostAndLongUrlSafeData()
   {
-    var data=new string('A',55)+new string('8',14)+"AbcdEF";
+    var data=new string('A',65)+new string('8',14)+"AbcdEF";
     var yes=Http("GET","/api?data="+data,"8.8.8.8","powershell.exe");
     Assert.True((await New("R664").EvaluateAsync(At(yes))).Matched);
     Assert.False((await New("R664").EvaluateAsync(At(Http("GET","/api?data="+data,"github.com","powershell.exe")))).Matched);
@@ -170,7 +170,7 @@ public sealed class R656R665AdvancedAccuracyBatchTests
   }
   [Fact] public async Task EvidenceRemainsOutcomeScopedAndDoesNotIncludeRawEncodedUri()
   {
-    var data=new string('A',55)+new string('8',14)+"AbcdEF";
+    var data=new string('A',65)+new string('8',14)+"AbcdEF";
     var r=Http("GET","/api?data="+data,"8.8.8.8","powershell.exe");
     var evt=Assert.Single((await New("R664").EvaluateAsync(At(r))).Events);
     var json=JsonSerializer.Serialize(evt);

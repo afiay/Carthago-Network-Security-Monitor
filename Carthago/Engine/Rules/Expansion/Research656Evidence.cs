@@ -63,7 +63,7 @@ namespace Carthago.Engine.Rules.Expansion
           slot.First=at;slot.Seen.Clear();slot.Signals.Clear();
        }
        if(slot.Seen.Count>=96)return false;
-       slot.Seen.Add(id);slot.Last=at;slot.Signals.Add(signal);
+       slot.Seen.Add(id);slot.Latest=at;slot.Signals.Add(signal);
        if(slot.Signals.Count<threshold)return false;
        slot.First=at;slot.Seen.Clear();slot.Signals.Clear();
        return true;
