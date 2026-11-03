@@ -23,7 +23,7 @@ public sealed class ContentPackDocumentationTests
 
         foreach (var doc in docs)
         {
-            var path = ContentPackTestHarness.RepoPath("Docs", "ContentPacks", doc);
+            var path = ContentPackTestHarness.RepoPath("docs", "03-detection-rules", "content-packs", doc);
             Assert.True(File.Exists(path), $"Expected content-pack doc {path} to exist.");
             var text = File.ReadAllText(path);
             if (!string.Equals(doc, "README.md", StringComparison.OrdinalIgnoreCase))

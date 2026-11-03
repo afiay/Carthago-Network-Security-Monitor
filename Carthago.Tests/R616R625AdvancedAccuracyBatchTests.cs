@@ -81,6 +81,7 @@ public sealed class R616R625AdvancedAccuracyBatchTests
   public async Task Http_Wrong_Producer_And_Info_Only_Negative(string id,string method,string hit,string benign)
   {
     var rule=New(id);
+    Assert.False((await rule.EvaluateAsync(At(Http(method,benign),-1))).Matched);
     var wrong=Http(method,hit);wrong.ApplicationProtocol="TLS";
     var info=Http(method,"/safe");info.Info=hit;
     var tls=Http(method,hit);tls.TlsVersion="TLS1.3";
@@ -91,7 +92,9 @@ public sealed class R616R625AdvancedAccuracyBatchTests
   [Theory,MemberData(nameof(HttpCases))]
   public async Task Http_Url_Redaction_Duplicate_And_Cooldown(string id,string method,string hit,string benign)
   {
-    var rule=New(id);var r=Http(method,hit);
+    var rule=New(id);
+    Assert.False((await rule.EvaluateAsync(At(Http(method,benign),8))).Matched);
+    var r=Http(method,hit);
     var ev=Assert.Single((await rule.EvaluateAsync(At(r,10))).Events);
     var body=JsonSerializer.Serialize(ev);
     Assert.DoesNotContain(hit,body);Assert.Contains("request_only_unknown",body);
@@ -112,6 +115,7 @@ public sealed class R616R625AdvancedAccuracyBatchTests
   public async Task Dns_Response_Wrong_Port_Missing_Service_And_Malformed_Negative(string id,string hit,string benign)
   {
     var rule=New(id);
+    Assert.False((await rule.EvaluateAsync(At(Dns(benign),-1))).Matched);
     var answer=Dns(hit);answer.DnsIsResponse=true;
     var port=Dns(hit);port.DestinationPort=5353;
     var spoof=Dns(hit);spoof.ApplicationService=null;spoof.Info=hit;
@@ -124,7 +128,9 @@ public sealed class R616R625AdvancedAccuracyBatchTests
   [Theory,MemberData(nameof(DnsCases))]
   public async Task Dns_Redaction_Cooldown_And_Replay_Guard(string id,string hit,string benign)
   {
-    var rule=New(id);var r=Dns(hit);
+    var rule=New(id);
+    Assert.False((await rule.EvaluateAsync(At(Dns(benign),8))).Matched);
+    var r=Dns(hit);
     var evt=Assert.Single((await rule.EvaluateAsync(At(r,10))).Events);
     var body=JsonSerializer.Serialize(evt);
     Assert.DoesNotContain(hit,body);Assert.Contains("dns_query_only_unknown",body);
@@ -145,6 +151,7 @@ public sealed class R616R625AdvancedAccuracyBatchTests
   public async Task Process_Missing_Pid_Internal_Target_And_Contradictions_Reject(string id,string process,string benign)
   {
     var rule=New(id);
+    Assert.False((await rule.EvaluateAsync(At(Process(benign),-1))).Matched);
     var missing=Process(process);missing.ProcessId=0;
     var inside=Process(process);inside.Destination="10.3.1.10";
     var noName=Process(process);noName.ProcessName=null;
@@ -157,7 +164,9 @@ public sealed class R616R625AdvancedAccuracyBatchTests
   [Theory,MemberData(nameof(ProcessCases))]
   public async Task Process_Redacted_Path_Cooldown_And_Duplicate(string id,string process,string benign)
   {
-    var rule=New(id);var r=Process(process);
+    var rule=New(id);
+    Assert.False((await rule.EvaluateAsync(At(Process(benign),8))).Matched);
+    var r=Process(process);
     var evt=Assert.Single((await rule.EvaluateAsync(At(r,10))).Events);
     var serialized=JsonSerializer.Serialize(evt);
     Assert.Contains("process_flow_identity_unverified",serialized);

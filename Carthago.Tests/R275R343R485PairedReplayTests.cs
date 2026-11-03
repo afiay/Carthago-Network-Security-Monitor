@@ -72,9 +72,9 @@ public sealed class R275R343R485PairedReplayTests
                 if (scenario.Rule == "R485")
                     Assert.Contains(positive.ExpectedRuleDiagnostics,
                         item => item.RuleId == "R485"
-                            && item.NoMatchReasons.Any(reason =>
-                                reason.Contains("BACNET_WRITEPROPERTY_CONFIRMED_REQUEST_UNAVAILABLE",
-                                    StringComparison.Ordinal)));
+                            && item.MissingRequiredTelemetry.Contains(
+                                "field.capture_only_bacnet_writeproperty",
+                                StringComparer.OrdinalIgnoreCase));
             }
             else
             {

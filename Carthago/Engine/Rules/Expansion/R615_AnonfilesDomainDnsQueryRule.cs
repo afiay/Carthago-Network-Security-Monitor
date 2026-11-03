@@ -56,6 +56,7 @@ namespace Carthago.Engine.Rules.Expansion
       confidence.AddEvidence(0.34,"workbook-specific-signature");
       confidence.AddCorrelation(0.12,"coherent-source-destination");
     },count:1,windowSeconds:300);
+   DnsSignatureRequestEvidence.RedactQuery(evt,qname);
    return RuleEvaluationResult.Match(Descriptor.RuleId,evt);
   }
   private static bool EndsIn(string name,string domain)

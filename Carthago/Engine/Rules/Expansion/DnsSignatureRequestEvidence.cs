@@ -2,6 +2,7 @@
 // SOURCE CANDIDATE — UNVERIFIED. Shared evidence hygiene, not predicate convergence.
 using System;
 using System.Net;
+using System.Linq;
 using System.Net.Sockets;
 using Carthago.Models;
 namespace Carthago.Engine.Rules.Expansion
@@ -38,6 +39,24 @@ namespace Carthago.Engine.Rules.Expansion
    }
    if(len is <1 or >63)return false;
    name=q.ToLowerInvariant();return true;
+  }
+  internal static DetectionEvent RedactQuery(DetectionEvent evt,string query)
+  {
+   if(evt==null||string.IsNullOrWhiteSpace(query))return evt;
+   static string? Redact(string? value,string q)
+    =>value?.Replace(q,"[REDACTED]",StringComparison.OrdinalIgnoreCase);
+   evt.DestinationHost=Redact(evt.DestinationHost,query);
+   evt.Description=Redact(evt.Description,query)??string.Empty;
+   evt.Evidence=Redact(evt.Evidence,query);
+   if(evt.StructuredEvidence is { } structured)
+   {
+    var items=structured.Items
+      .Select(item=>item with { Value=Redact(item.Value,query)??string.Empty })
+      .ToArray();
+    evt.StructuredEvidence=new DetectionEvidenceSet(
+      items,Redact(structured.Summary,query)??string.Empty);
+   }
+   return evt;
   }
  }
 }

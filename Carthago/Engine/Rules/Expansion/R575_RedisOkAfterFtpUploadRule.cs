@@ -163,7 +163,7 @@ namespace Carthago.Engine.Rules.Expansion
                 && string.Equals(r.ApplicationProtocol, "redis.resp2", StringComparison.Ordinal)
                 && r.SourcePort == 6379
                 && r.DestinationPort is >= 1024 and <= 65535 and not 6379
-                && r.L4Len is >= 6 and <= 256
+                && r.L4Len == 5
                 && r.HttpMethod == null && r.HttpUri == null
                 && r.HttpHost == null && r.HttpRequestHeaders == null
                 && TryPrivate(r.Source, out server)

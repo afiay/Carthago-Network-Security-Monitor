@@ -67,7 +67,8 @@ namespace Carthago.Engine.Rules.Expansion
           confidence.AddEvidence(0.35,"independent-workbook-signature");
           confidence.AddCorrelation(0.12,"coherent-source-destination");
         },count:1,windowSeconds:300);
-      return RuleEvaluationResult.Match(Descriptor.RuleId,evt);
+      DnsSignatureRequestEvidence.RedactQuery(evt,name);
+   return RuleEvaluationResult.Match(Descriptor.RuleId,evt);
     }
     private static bool EndsIn(string name,string suffix)=>name==suffix||name.EndsWith("."+suffix,StringComparison.Ordinal);private static bool SignatureMatches(string name){return EndsIn(name,"localto.net")||EndsIn(name,"localtonet.com");}
   }

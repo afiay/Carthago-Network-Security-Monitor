@@ -57,6 +57,7 @@ public sealed class RedisAuditMutualTlsRelayReceiverTests
         {
             TargetHost = "localhost",
             ClientCertificates = new X509CertificateCollection { client },
+            LocalCertificateSelectionCallback = (_, _, _, _, _) => client,
             EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13,
             CertificateRevocationCheckMode = X509RevocationMode.NoCheck,
             RemoteCertificateValidationCallback = (_, remote, _, _) =>

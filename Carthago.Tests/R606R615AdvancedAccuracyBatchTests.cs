@@ -63,6 +63,7 @@ public sealed class R606R615AdvancedAccuracyBatchTests
  [Theory,MemberData(nameof(HttpCases))]
  public async Task Http_Exact_Request_Matches(string id,string method,string uri,string benign,string agent,string headers)
  {
+  Assert.False(string.IsNullOrWhiteSpace(benign));
   var result=await Rule(id).EvaluateAsync(At(Http(method,uri,agent,headers)));
   Assert.True(result.Matched);Assert.Equal(id,Assert.Single(result.Events).RuleId);
  }
@@ -77,6 +78,7 @@ public sealed class R606R615AdvancedAccuracyBatchTests
  [Theory,MemberData(nameof(HttpCases))]
  public async Task Http_Contradictory_Fields_And_Spoofed_Info_Fail_Closed(string id,string method,string uri,string benign,string agent,string headers)
  {
+  Assert.False(string.IsNullOrWhiteSpace(benign));
   var rule=Rule(id);
   var missing=Http(method,uri,agent,headers);missing.ApplicationProtocol=null;
   var fake=Http(method,"/normal",agent,headers);fake.Info=uri;
@@ -90,6 +92,7 @@ public sealed class R606R615AdvancedAccuracyBatchTests
  [Theory,MemberData(nameof(HttpCases))]
  public async Task Http_Cooldown_Duplicate_And_Redaction(string id,string method,string uri,string benign,string agent,string headers)
  {
+  Assert.False(string.IsNullOrWhiteSpace(benign));
   var rule=Rule(id);var r=Http(method,uri,agent,headers);
   var result=await rule.EvaluateAsync(At(r,10));var e=Assert.Single(result.Events);
   var encoded=JsonSerializer.Serialize(e);
@@ -103,18 +106,22 @@ public sealed class R606R615AdvancedAccuracyBatchTests
  [Theory,MemberData(nameof(DnsCases))]
  public async Task Dns_Exact_Query_Matches(string id,string qname,string benign)
  {
-  var result=await Rule(id).EvaluateAsync(At(Dns(qname)));
+  var rule=Rule(id);
+  Assert.False((await rule.EvaluateAsync(At(Dns(benign),-1))).Matched);
+  var result=await rule.EvaluateAsync(At(Dns(qname)));
   Assert.True(result.Matched);Assert.Equal(id,Assert.Single(result.Events).RuleId);
  }
  [Theory,MemberData(nameof(DnsCases))]
  public async Task Dns_Benign_Query_And_Impersonation_Reject(string id,string qname,string benign)
  {
+  Assert.False(string.IsNullOrWhiteSpace(qname));
   Assert.False((await Rule(id).EvaluateAsync(At(Dns(benign)))).Matched);
  }
  [Theory,MemberData(nameof(DnsCases))]
  public async Task Dns_Wrong_Direction_Port_And_Contradictions_Reject(string id,string qname,string benign)
  {
   var rule=Rule(id);
+  Assert.False((await rule.EvaluateAsync(At(Dns(benign),-1))).Matched);
   var response=Dns(qname);response.DnsIsResponse=true;
   var port=Dns(qname);port.DestinationPort=5353;
   var fake=Dns(qname);fake.ApplicationService=null;fake.Info=qname;
@@ -129,7 +136,9 @@ public sealed class R606R615AdvancedAccuracyBatchTests
  [Theory,MemberData(nameof(DnsCases))]
  public async Task Dns_Cooldown_Duplicate_And_Redaction(string id,string qname,string benign)
  {
-  var rule=Rule(id);var r=Dns(qname);
+  var rule=Rule(id);
+  Assert.False((await rule.EvaluateAsync(At(Dns(benign),8))).Matched);
+  var r=Dns(qname);
   var result=await rule.EvaluateAsync(At(r,10));var e=Assert.Single(result.Events);
   var encoded=JsonSerializer.Serialize(e);
   Assert.DoesNotContain(qname,encoded);Assert.Contains("dns_query_only_unknown",encoded);

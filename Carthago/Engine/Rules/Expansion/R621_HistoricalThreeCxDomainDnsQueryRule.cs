@@ -67,6 +67,7 @@ namespace Carthago.Engine.Rules.Expansion
           confidence.AddEvidence(0.35,"independent-workbook-signature");
           confidence.AddCorrelation(0.12,"coherent-source-destination");
         },count:1,windowSeconds:300);
+      DnsSignatureRequestEvidence.RedactQuery(evt,name);
       return RuleEvaluationResult.Match(Descriptor.RuleId,evt);
     }
     private static bool EndsIn(string name,string suffix)=>name==suffix||name.EndsWith("."+suffix,StringComparison.Ordinal);private static bool SignatureMatches(string name){return EndsIn(name,"akamaicontainer.com")||EndsIn(name,"akamaitechcloudservices.com")||EndsIn(name,"azuredeploystore.com")||EndsIn(name,"azureonlinecloud.com")||EndsIn(name,"azureonlinestorage.com")||EndsIn(name,"dunamistrd.com")||EndsIn(name,"glcloudservice.com")||EndsIn(name,"journalide.org")||EndsIn(name,"msedgepackageinfo.com")||EndsIn(name,"msstorageazure.com")||EndsIn(name,"msstorageboxes.com")||EndsIn(name,"officeaddons.com")||EndsIn(name,"officestoragebox.com")||EndsIn(name,"pbxcloudeservices.com")||EndsIn(name,"pbxphonenetwork.com")||EndsIn(name,"pbxsources.com")||EndsIn(name,"qwepoi123098.com")||EndsIn(name,"sbmsa.wiki")||EndsIn(name,"sourceslabs.com")||EndsIn(name,"visualstudiofactory.com")||EndsIn(name,"zacharryblogs.com");}

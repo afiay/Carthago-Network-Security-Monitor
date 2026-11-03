@@ -408,9 +408,9 @@ namespace Carthago.Tests
                 if (unavailable.Item2 == "R485")
                     Assert.Contains(sample.ExpectedRuleDiagnostics,
                         diagnostic => diagnostic.RuleId == "R485"
-                            && diagnostic.NoMatchReasons.Any(reason =>
-                                reason.Contains("BACNET_WRITEPROPERTY_CONFIRMED_REQUEST_UNAVAILABLE",
-                                    StringComparison.Ordinal)));
+                            && diagnostic.MissingRequiredTelemetry.Contains(
+                                "field.capture_only_bacnet_writeproperty",
+                                StringComparer.OrdinalIgnoreCase));
                 if (unavailable.Item2 == "R516")
                     Assert.Contains(sample.ExpectedRuleDiagnostics,
                         diagnostic => diagnostic.RuleId == "R516"
