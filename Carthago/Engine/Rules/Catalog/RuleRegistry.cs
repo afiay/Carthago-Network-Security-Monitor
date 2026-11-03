@@ -668,6 +668,16 @@ namespace Carthago.Engine.Rules.Catalog
                 new R643_SequentialEtherNetIpListIdentitySubnetWalkRule(),
                 new R644_RdpPublicClientSynAckExposureEvidenceRule(),
                 new R645_PunycodeLoginFormPostExposureRule(),
+                new R646_DeviceFirmwareHttpUploadAttemptRule(),
+                new R647_MinerProcessPublicPoolPortEgressRule(),
+                new R648_VncListenerPublicSynAckResponseRule(),
+                new R649_WinRmListenerPublicSynAckResponseRule(),
+                new R650_CurlWgetProcessPublicSubnetFanoutRule(),
+                new R651_ExternalCmsContentSavePostAttemptRule(),
+                new R652_ScriptHostFtpExternalUploadRequestRule(),
+                new R653_PublicModbusNonWriteHostSweepRule(),
+                new R654_PublicS7CommHostSweepRule(),
+                new R655_PublicEtherNetIpListIdentityHostSweepRule(),
             };
         }
 

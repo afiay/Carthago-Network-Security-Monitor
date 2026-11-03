@@ -29,3 +29,8 @@ Ten independent detectors, original IDs R2094, R2286, R3031, R2475, R2215, R2221
 ## R636–R645 — independent source candidates
 
 Ten source-only candidate rules from original workbook research IDs R3013, R2385, R2190, R2146, R2267, R2012, R2769, R2707, R2472, R1342. [Full batch evidence](../03-detection-rules/batches/RULE_BATCH_636-645.md). **CANDIDATE — UNVERIFIED**; xUnit authored, **0 executed**. No convergence. Next unallocated ID: R646.
+
+
+## R646–R655 — distinct workbook-based SOURCE CANDIDATES
+
+Ten independent rules based on original research R1358, R1490, R1352, R1372, R1417, R1284, R1385, R2790, R2782, R2706. [Batch evidence](../03-detection-rules/batches/RULE_BATCH_646-655.md). xUnit authored, **0 executed**; no convergence. Next unallocated R656.
