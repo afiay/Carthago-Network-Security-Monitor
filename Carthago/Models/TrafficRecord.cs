@@ -135,6 +135,13 @@ namespace Carthago.Models
         public bool RedisRespConfigSetReplyOkObserved { get; internal set; }
         public bool RedisRespConfigSetReplyErrorObserved { get; internal set; }
 
+        // Parser-only protocol request observations. Imported records and
+        // descriptive Info strings cannot set these capture-derived flags.
+        // They never retain LDAP credentials/DNs or BACnet property values.
+        // Neither flag proves server acceptance or successful modification.
+        public bool LdapCleartextSimpleBindObserved { get; internal set; }
+        public bool BacnetWritePropertyRequestObserved { get; internal set; }
+
         // ===== HTTP =====
         public string? HttpMethod { get; set; }
         public string? HttpHost { get; set; }

@@ -24,6 +24,50 @@ namespace Carthago.Tests.ProtocolIntelligence
         private static readonly byte[] BindRequest =
             { 0x60, 0x07, 0x02, 0x01, 0x03, 0x04, 0x00, 0x80, 0x00 };
 
+        private static byte[] SimpleBind(byte[] name, byte[] secret, byte version = 3,
+            byte authenticationTag = 0x80)
+        {
+            var value = new byte[] { 0x02, 0x01, version, 0x04, (byte)name.Length }
+                .Concat(name)
+                .Concat(new byte[] { authenticationTag, (byte)secret.Length })
+                .Concat(secret).ToArray();
+            return Message(7, new byte[] { 0x60, (byte)value.Length }.Concat(value).ToArray());
+        }
+
+        [Fact]
+        public void NonemptySimpleBindReportsOnlyMessageShapeNotCredentials()
+        {
+            var raw = SimpleBind(Encoding.ASCII.GetBytes("cn=user"), Encoding.ASCII.GetBytes("private123"));
+            Assert.True(LdapMessageInspector.TryInspectSimpleBind(raw, true, out var found));
+            Assert.Equal(7, found.MessageId);
+            Assert.Equal(raw.Length, found.BytesConsumed);
+            Assert.True(found.HasNonEmptyCredential);
+            Assert.DoesNotContain("private123", found.ToString());
+            Assert.DoesNotContain("cn=user", found.ToString());
+        }
+
+        [Fact]
+        public void AnonymousSaslAndUnsupportedVersionDoNotAssertCleartextSimpleBind()
+        {
+            Assert.False(LdapMessageInspector.TryInspectSimpleBind(SimpleBind(Array.Empty<byte>(), Array.Empty<byte>()), true, out _));
+            Assert.False(LdapMessageInspector.TryInspectSimpleBind(SimpleBind(Array.Empty<byte>(), new byte[] { 0x31 }), true, out _));
+            Assert.False(LdapMessageInspector.TryInspectSimpleBind(SimpleBind(new byte[] { 0x61 }, Array.Empty<byte>()), true, out _));
+            Assert.False(LdapMessageInspector.TryInspectSimpleBind(SimpleBind(new byte[] { 0x61 }, new byte[] { 0x31 }, 2), true, out _));
+            Assert.False(LdapMessageInspector.TryInspectSimpleBind(SimpleBind(new byte[] { 0x61 }, new byte[] { 0x31 }, 3, 0xA3), true, out _));
+        }
+
+        [Fact]
+        public void AmbiguousCoalescedTruncatedControlAndUnauthenticatedBindFailClosed()
+        {
+            var raw = SimpleBind(new byte[] { 0x61 }, new byte[] { 0x31 });
+            Assert.False(LdapMessageInspector.TryInspectSimpleBind(raw, false, out _));
+            Assert.False(LdapMessageInspector.TryInspectSimpleBind(raw.AsSpan(0, raw.Length - 1), true, out _));
+            Assert.False(LdapMessageInspector.TryInspectSimpleBind(raw.Concat(raw).ToArray(), true, out _));
+            Assert.False(LdapMessageInspector.TryInspectSimpleBind(
+                Envelope(new byte[] { 0x02, 0x01, 0x07 }, raw.AsSpan(5, raw.Length - 5).ToArray(), new byte[] { 0xA0, 0x00 }),
+                true, out _));
+        }
+
         [Fact]
         public void VerifiedPlaintextBindEnvelopeReportsOnlyNonSecretShape()
         {

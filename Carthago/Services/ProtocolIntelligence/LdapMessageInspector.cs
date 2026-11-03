@@ -7,7 +7,8 @@ namespace Carthago.Services.ProtocolIntelligence
     /// Strict, bounded LDAPv3 BER envelope inspection at a caller-attested
     /// plaintext LDAPMessage boundary. Never decodes credentials, DNs,
     /// attributes, SASL, StartTLS, or authentication outcomes.
-    /// ISOLATED: not connected to PacketHandler or a trusted stream producer.
+    /// The envelope inspector is also reused for first-payload simple-bind
+    /// classification by PacketHandler; it never asserts authentication success.
     /// </summary>
     public static class LdapMessageInspector
     {
@@ -67,6 +68,55 @@ namespace Carthago.Services.ProtocolIntelligence
 
             observation = new LdapMessageObservation(
                 messageId, operationTag, cursor, hasControls);
+            return true;
+        }
+
+        /// <summary>
+        /// Observes only a complete, unambiguous LDAPv3 simple BindRequest with
+        /// nonempty name and credential. The credential/DN spans are never
+        /// decoded, copied, returned or retained. RFC 4511 [APPLICATION 0].
+        /// A caller must independently attest plaintext, direction and the
+        /// beginning of the LDAP message (not just a TCP port label).
+        /// </summary>
+        public static bool TryInspectSimpleBind(
+            ReadOnlySpan<byte> bytes,
+            bool verifiedPlaintextMessageBoundary,
+            out LdapSimpleBindObservation observation)
+        {
+            observation = default;
+            if (!TryInspect(bytes, verifiedPlaintextMessageBoundary, out var envelope)
+                || envelope.OperationTag != 0x60 || envelope.HasControls
+                || envelope.MessageId <= 0 || envelope.BytesConsumed != bytes.Length)
+                return false;
+
+            int cursor = 0;
+            if (!TryReadTlv(bytes, ref cursor, bytes.Length, out byte outerTag,
+                    out int bodyStart, out int bodyLength) || outerTag != 0x30)
+                return false;
+
+            int inner = bodyStart;
+            int innerEnd = bodyStart + bodyLength;
+            if (!TryReadTlv(bytes, ref inner, innerEnd, out byte messageIdTag,
+                    out _, out _) || messageIdTag != 0x02
+                || !TryReadTlv(bytes, ref inner, innerEnd, out byte bindTag,
+                    out int bindStart, out int bindLength) || bindTag != 0x60
+                || inner != innerEnd)
+                return false;
+
+            int bindCursor = bindStart;
+            int bindEnd = bindStart + bindLength;
+            if (!TryReadTlv(bytes, ref bindCursor, bindEnd, out byte versionTag,
+                    out int versionStart, out int versionLength)
+                || versionTag != 0x02 || versionLength != 1 || bytes[versionStart] != 3
+                || !TryReadTlv(bytes, ref bindCursor, bindEnd, out byte nameTag,
+                    out _, out int nameLength) || nameTag != 0x04 || nameLength == 0
+                || !TryReadTlv(bytes, ref bindCursor, bindEnd, out byte authTag,
+                    out _, out int passwordLength) || authTag != 0x80 || passwordLength == 0
+                || bindCursor != bindEnd)
+                return false;
+
+            observation = new LdapSimpleBindObservation(
+                envelope.MessageId, envelope.BytesConsumed, HasNonEmptyCredential: true);
             return true;
         }
 
@@ -135,4 +185,8 @@ namespace Carthago.Services.ProtocolIntelligence
         byte OperationTag,
         int BytesConsumed,
         bool HasControls);
+
+    /// <summary>Privacy-minimized nonempty simple BindRequest shape; not a result.</summary>
+    public readonly record struct LdapSimpleBindObservation(
+        int MessageId, int BytesConsumed, bool HasNonEmptyCredential);
 }

@@ -61,8 +61,8 @@ public sealed class NetworkBatch481490AccuracyTests
             SourcePort = 50321,
             DestinationPort = port,
             ApplicationProtocol = application,
-            // R485 has a pre-existing, untrusted Info-string prefilter.
-            // Keep it satisfied to reach the new fail-closed evidence gate.
+            // Descriptive text is deliberately untrusted for R485; retaining
+            // it confirms that only capture-backed evidence can pass.
             Info = id + " claimed operation" + (id == "R485" ? " BACnet WriteProperty" : ""),
             Length = 512,
             L4Len = 128
@@ -196,8 +196,8 @@ public sealed class NetworkBatch481490AccuracyTests
         {
             Assert.False(result.Matched);
             Assert.Empty(result.Events);
-            // R485 has a pre-existing Info prefilter that runs before the
-            // shared core-telemetry gate when Info is absent.
+            // R485 keeps its historical destination-required no-match reason;
+            // missing source is rejected by the core-telemetry boundary.
             var expected = id == "R485" && variation == "missing-destination"
                 ? "BACNET_WRITE_PROPERTY_NOT_OBSERVED" : "MISSING_CORE_TELEMETRY";
             Assert.Contains(result.NoMatchReasons, item => item.Code == expected);

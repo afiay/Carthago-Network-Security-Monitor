@@ -723,6 +723,15 @@ namespace Carthago.Engine.Rules
             {
                 "source" => HasAny(record.Source),
                 "destination" => HasAny(record.Destination),
+                // These provenance fields are set only by PacketHandler after
+                // bounded wire decoding. Importable labels/Info cannot satisfy
+                // a live capture requirement.
+                "capture_only_ldap_simple_bind" => record.LdapCleartextSimpleBindObserved
+                    && record.IsTcp && !record.IsUdp && record.DestinationPort == 389
+                    && string.Equals(record.ApplicationProtocol, "ldap.bind.simple", StringComparison.Ordinal),
+                "capture_only_bacnet_writeproperty" => record.BacnetWritePropertyRequestObserved
+                    && record.IsUdp && !record.IsTcp && record.DestinationPort == 47808
+                    && string.Equals(record.ApplicationProtocol, "bacnet.writeproperty.request", StringComparison.Ordinal),
                 "destination_or_host" => HasAny(record.Destination, record.HttpHost, record.Sni, record.DnsQname),
                 "process.name" => HasAny(record.ProcessName),
                 "device_authentication_attempt" => SensitiveTelemetryContracts.HasDefaultCredentialAuthenticationAttempt(record),

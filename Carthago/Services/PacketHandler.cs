@@ -157,6 +157,7 @@ namespace Carthago.Services
                 int l4Offset;
                 int ipPacketLength;
                 int ipEnd;
+                bool completeIpPacket;
 
                 if (isIPv4)
                 {
@@ -176,6 +177,7 @@ namespace Carthago.Services
                     l4Proto = frame[off + 9];
                     ipPacketLength = totalLen;
                     ipEnd = Math.Min(frame.Length, off + totalLen);
+                    completeIpPacket = frame.Length - off >= totalLen;
 
                     srcIp = new IPAddress(frame.Slice(off + 12, 4).ToArray()).ToString();
                     dstIp = new IPAddress(frame.Slice(off + 16, 4).ToArray()).ToString();
@@ -204,6 +206,7 @@ namespace Carthago.Services
                     int cursor = off + 40;
                     ipPacketLength = 40 + payloadLen;
                     ipEnd = Math.Min(frame.Length, cursor + payloadLen);
+                    completeIpPacket = frame.Length - off >= ipPacketLength;
                     int remaining = ipEnd - cursor;
                     // IPv6 extension length rules differ for AH (RFC 4302).
                     for (int i = 0; i < 16; i++)
@@ -408,6 +411,23 @@ namespace Carthago.Services
                             if (OtProtocolLight.TryIdentifyTcp(normPayload, sport, dport, out var otProtocol))
                                 rec.ApplicationProtocol = otProtocol;
 
+                            // -------- Plaintext LDAP simple BindRequest --------
+                            // Strictly complete first client payload on an
+                            // observed SYN-anchored TCP/389 flow, not a port,
+                            // LDAP label or a truncated/reassembled guess.
+                            // DN and password bytes stay within the span.
+                            if (c2s && tcpAck && !tcpSyn && synAnchoredFirstPayload
+                                && dport == 389 && sport is > 0 and <= 65535
+                                && sport != 389 && !IsTlsActive(tcpFlow, c2s)
+                                && completeIpPacket && normPayload.Length == l4Payload.Length
+                                && (tcpFlagsField.GetValueOrDefault() & 0x05) == 0
+                                && LdapMessageInspector.TryInspectSimpleBind(normPayload,
+                                    verifiedPlaintextMessageBoundary: true, out _))
+                            {
+                                rec.ApplicationProtocol = "ldap.bind.simple";
+                                rec.LdapCleartextSimpleBindObserved = true;
+                            }
+
                             // -------- Bounded Redis RESP2 correlation --------
                             // Only a complete first client request immediately
                             // after the observed SYN is admitted. The first server
@@ -512,6 +532,7 @@ namespace Carthago.Services
                             // continues through the existing HTTP parser unchanged.
                             if (!string.Equals(rec.ApplicationProtocol, "redis.resp2",
                                     StringComparison.Ordinal)
+                                && !rec.LdapCleartextSimpleBindObserved
                                 && normPayload.Length >= 4
                                 && HttpLight.TryParseHttp(normPayload, out var http))
                             {
@@ -636,6 +657,19 @@ namespace Carthago.Services
                         // -------- Bounded OT framing --------
                         if (OtProtocolLight.TryIdentifyUdp(l4Payload, sport, dport, out var otProtocol))
                             rec.ApplicationProtocol = otProtocol;
+
+                        // -------- BACnet WriteProperty confirmed request --------
+                        // One complete BACnet/IP UDP request, destination 47808.
+                        // Never claim an accepted/authorized property change.
+                        if (dport == 47808 && sport is > 0 and <= 65535
+                            && completeIpPacket
+                            && l4PayloadLen == ipPayloadLen - 8
+                            && BacnetWritePropertyInspector.TryInspect(l4Payload,
+                                verifiedCompletePlaintextUdpDatagram: true, out _))
+                        {
+                            rec.ApplicationProtocol = "bacnet.writeproperty.request";
+                            rec.BacnetWritePropertyRequestObserved = true;
+                        }
 
                         // -------- Bounded CoAP and WS-Discovery requests --------
                         if (NetworkBatch231235Wire.CoapDiscovery(l4Payload, sport, dport))
