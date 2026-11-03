@@ -176,4 +176,10 @@ Assert-Contract ($inlineR3000.Count -eq 1 -and $inlineR3000[0].containingTestMet
 Assert-Contract ($null -eq @($inlineInventory.rules | Where-Object ruleId -eq 'R999')[0].authoredMethodCount -and
     -not $inlineInventory.readyForExecutionSelection) 'inline-association-still-unverified'
 
+# VC-002E: declaration candidates do not imply resolved rows or runnable tests.
+$bindings = @($a.memberDataBindings | Where-Object { $_.theory -eq 'SharedTests.Case' })
+Assert-Contract ($bindings.Count -eq 1 -and $bindings[0].providerName -eq 'Cases') 'memberdata-binding-recorded'
+Assert-Contract ($bindings[0].bindingStatus -eq 'NEEDS_REVIEW') 'missing-provider-remains-unresolved'
+Assert-Contract ($null -eq $bindings[0].authoredInvocationCount -and -not $bindings[0].readyForExecutionSelection) 'binding-never-certifies'
+
 Write-Host 'Source-inventory contract assertions completed; no rule accuracy or operational claim.'

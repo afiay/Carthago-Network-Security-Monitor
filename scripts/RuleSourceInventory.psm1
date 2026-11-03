@@ -83,6 +83,32 @@ function Get-TestSourceDeclarations($View) {
     [pscustomobject]@{ classes=@($classes.ToArray()); methods=@($methods.ToArray()); unresolved=$false }
 }
 
+function Get-ScopedMemberDataBindings($View, $Declarations) {
+    # A named provider is bound only when a unique direct class member is
+    # present. Provider rows and runtime case counts remain unverified.
+    $code = $View.Code
+    $bindings = [Collections.Generic.List[object]]::new()
+    foreach ($method in $Declarations.methods) {
+        if (-not $method.isTheory) { continue }
+        $owner = @($Declarations.classes | Where-Object { $_.identity -ceq $method.owningClass })
+        if ($owner.Count -ne 1) { continue }
+        foreach ($name in $method.memberDataNames) {
+            $escaped = [regex]::Escape($name)
+            $candidates = @([regex]::Matches($code, '(?m)\\b' + $escaped + '\\s*(?:\\(\\s*\\)|\\s*=>|\\s*\\{)') |
+                Where-Object { $_.Index -gt $owner[0].open -and $_.Index -lt $owner[0].end -and
+                    $_.Index -lt $method.start })
+            $bindings.Add([pscustomobject]@{
+                theory=$method.identity; providerName=$name
+                owningClass=$method.owningClass
+                bindingStatus=$(if ($candidates.Count -eq 1) { 'PROVIDER_DECLARATION_CANDIDATE' } else { 'NEEDS_REVIEW' })
+                authoredInvocationCount=$null
+                readyForExecutionSelection=$false
+            })
+        }
+    }
+    return @($bindings.ToArray())
+}
+
 function New-SourceAssociation([string]$Path, [string]$Kind, [int]$Index, $View, $Declarations) {
     $owners = @($Declarations.classes | Where-Object { $_.start -le $Index -and $_.end -gt $Index } | Sort-Object open -Descending)
     $owner = if ($owners.Count) { $owners[0].identity } else { $null }
@@ -135,6 +161,12 @@ function Get-RuleSourceInventory {
                 path=$path; identity=$method.identity; owningClass=$method.owningClass
                 memberDataNames=$method.memberDataNames; bindingStatus=$method.bindingStatus
             })
+        }
+    }
+    $memberDataBindings = [Collections.Generic.List[object]]::new()
+    foreach ($path in @($declarations.Keys | Sort-Object)) {
+        foreach ($binding in @(Get-ScopedMemberDataBindings $views[$path] $declarations[$path])) {
+            $memberDataBindings.Add($binding)
         }
     }
     $rules = [Collections.Generic.List[object]]::new()
@@ -216,7 +248,7 @@ function Get-RuleSourceInventory {
         schemaVersion=2; sourceSha=$SourceSha; generatedAtUtc=[DateTime]::UtcNow.ToString('o')
         status='SOURCE CANDIDATE — UNVERIFIED'; readyForExecutionSelection=$false
         testsExecutedByInventory=0; operationallyVerifiedCount=$null
-        rules=$ordered; testDeclarations=@($testDeclarations.ToArray()); diagnostics=@($diagnostics.ToArray())
+        rules=$ordered; testDeclarations=@($testDeclarations.ToArray()); memberDataBindings=@($memberDataBindings.ToArray()); diagnostics=@($diagnostics.ToArray())
         limitations=@('Textual candidate index, not semantic C# analysis.', 'No compiler/project guards, MemberData binding, test outcome or producer provenance established.', 'Simple interpolated strings are opaque; complex interpolation and raw strings remain unsupported.', 'Content packs and descriptors require separate consumer review.', 'All associations need review; absence does not prove absence of coverage.')
     }
 }
