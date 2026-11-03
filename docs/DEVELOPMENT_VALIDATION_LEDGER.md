@@ -1389,3 +1389,35 @@ V2 wire replay bridge: three original frame/question records bound; eleven sourc
 **Executed command (owner local):** `dotnet test DOTNET.sln -c Release --logger "trx;LogFileName=carthago-full.trx"`. Restore completed, and both Carthago and Carthago.Tests compiled successfully. xUnit reported **10,539 total; 10,539 passed; 0 failed; 0 skipped**, 87.2 s test duration, 87.3 s test-project execution and 120.1 s overall build/test duration. The TRX was saved to `Carthago.Tests\TestResults\carthago-full.trx` in the owner's Windows checkout, overwriting the previous local results file. This TRX was not independently inspected or committed. Console diagnostics noted a failing test sink and incident-feedback JSON fallback, but they did not fail the suite.
 
 **Interpretation:** This is a new, distinct reported GREEN Release regression result at `ca53c9f`; the earlier **10,443/10,443** result at `ceb13f9` remains unchanged and is not superseded as historical evidence. Neither run alone proves per-rule live producer reachability, detection accuracy, independent holdout outcomes, performance under capture load, or correctness of later branch revisions. Preserve all rule-specific **SOURCE CANDIDATE — UNVERIFIED** and frozen holdout boundaries until separately verified.
+
+
+### 2026-11-03 — Owner Windows verification session at pinned source `b546081`, followed by Holdout V2 contract hardening
+
+**Execution provenance:** The owner executed the commands locally on Windows from `C:\Users\afiay\Documents\Projects\Carthago-Network-Security-Monitor` on the existing `feature/carthago-reliability-hardening` branch. The principal pinned source checkpoint for the broad regression/accuracy work was `b54608185bdda4a8f34194450ecbff8b3055ec75`. Later source-only fixes were committed to the same branch as described below. No result is attributed to a later commit unless the owner explicitly reran that gate after pulling it.
+
+**Broad regression and accuracy gates at `b546081`:**
+- Release solution/xUnit regression: **10,569 / 10,569 PASS**, 0 failed, 0 skipped.
+- Targeted deployment-state/accuracy filter: **7,881 / 7,881 PASS**.
+- Deployment-policy isolation: **666 / 666 PASS**.
+- Noisy-rule isolation for R012/R032/R034/R095/R102/R113/R118/R163: **387 / 387 PASS**.
+- Evidence/replay-policy isolation: **38 / 38 PASS**.
+- Producer-gap isolation for R275/R295/R343/R437/R508/R516: **55 / 55 PASS**.
+- Replay benchmark: 146 samples; 42 supported malicious, 6 explicitly unsupported malicious; supported-detector TP recognition **100%** and benign false positives **0**. Alert-level recall remained policy/shadow/environment gated and is not an accuracy failure. Existing floors R102 80%, R118 86%, R163 84% were preserved.
+
+**Redis audit GA at `b546081`:** targeted Redis audit GA completed **142 / 142 PASS** and the script-internal full regression completed **10,569 / 10,569 PASS**. One earlier run had a single transient timeout in `RedisAuditMutualTlsRelayReceiverTests.Pinned_Mtls_Receives_Two_Length_Framed_Events_Without_Retaining_Json`; the exact test then passed **5 / 5** consecutive repetitions, and the subsequent complete Redis GA rerun was fully GREEN. No production-code change was made solely for the transient timeout.
+
+**Rule-source inventory:** `verify-rule-source-inventory-contract.ps1 -AuthorizedTestTime` passed. Manual execution of the inventory core at `b546081` reported **695 registered rules**, **5,877 test declarations**, **52 MemberData bindings**, **29 diagnostics**, with 22 `UNSUPPORTED_SOURCE_SYNTAX` and 7 `REGISTERED_CLASS_UNRESOLVED`. The seven unresolved IDs were R104/R180/R205/R211/R212/R214/R215. Git object inspection proved all seven registered classes exist at the pinned SHA; each was excluded only because the conservative parser intentionally refuses complex interpolated-string syntax. Targeted rule execution for those seven was **86 / 86 PASS**, hardening audit reported **0 contract issues**, and no replay fixtures existed for those seven IDs. The seven test files hidden by unsupported parser syntax were then executed directly: **133 / 133 PASS**.
+
+**Confirmed inventory wrapper defect and fix:** `inspect-rule-source-inventory.ps1` incorrectly used `-match '\.cs'` in its rejection fallback, causing `Carthago.Tests.csproj` to be misclassified as a C# source path. This was confirmed against the live branch and fixed on the same branch so only terminal `.cs` paths reach that fallback. The repaired live branch was re-read after publication; do not treat the earlier wrapper exception as a source-tree defect.
+
+**Holdout V2 synthetic/read-only contract results:** V1 remained untouched and historically FAILED 4/6. V2 readiness correctly remained `PENDING_EXTERNAL_CAPTURE_AND_REVIEW`, **0/4 external R102 source/provenance pairs present**.
+- `SyntheticHoldoutV2ContractTests`: **9 / 9 PASS**.
+- `inspect-holdout-v2-readiness.ps1`: read-only status **0/4**, pending as designed.
+- `verify-v2-two-writer-race-contract.ps1 -AuthorizedTestTime -IncludeReaderVisibility`: **6/6 rounds**; each round produced exactly one `WIN` and one `TARGET_EXISTS`; reader observed absent/complete only, no partial view.
+- `verify-v2-provenance-schema-contract.ps1 -AuthorizedTestTime`: **2 structurally valid pending-review controls + 24 negative cases PASS**.
+- `verify-v2-atomic-publication-contract.ps1 -AuthorizedTestTime`: PASS — 1 pending-only control, 8 precommit rollbacks, 1 uncertain commit, 1 existing target, 4 unsafe-name cases and 3 invalid batches.
+- `verify-v2-recovery-planner-contract.ps1 -AuthorizedTestTime`: **15 / 15 advisory recovery scenarios PASS**.
+
+**V2 auditor enforcement — observed RED/fix sequence:** The first authorized auditor-enforcement run stopped before scenario evaluation because the live auditor generated invalid TShark set syntax `frame.number in { 1 2 3 }`. The live branch was checked before editing and fixed to comma-separated membership `{ 1, 2, 3 }`. After owner pull, the rerun reached scenario logic: `BASELINE` and `A13` passed, then **A01 failed the contract because the legacy auditor accepted mirrored malicious evidence instead of rejecting with `SOURCE_INDEPENDENCE_MIRROR`**. The verification contract and V2 protocol explicitly require source/session/origin independence beyond distinct IP addresses, so the live auditor was updated at `9c10a8b2cccef116bb67a65229bae8a13b23ae8f` to add privacy-safe enforcement for mirrored malicious evidence, malicious session/origin collisions, missing origin/session, invalid vantage, invalid review-field type and unexpected provenance fields.
+
+**Current status after source fix:** the new auditor enforcement at `9c10a8b2cccef116bb67a65229bae8a13b23ae8f` is **SOURCE CANDIDATE — UNVERIFIED until the owner reruns `verify-v2-auditor-enforcement.ps1 -AuthorizedTestTime` after pulling that commit**. Do not retroactively mark the auditor gate GREEN. Do not run `evaluate-holdout-v2.ps1`, packet audit against real external captures, or freeze V2 while readiness remains 0/4. Frozen V1, rule confidence floors and prior historical outcomes remain unchanged.
