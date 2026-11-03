@@ -363,3 +363,20 @@ Production runtime remains unwired: no normal packet path constructs `OAuthDevic
 Focused tests cover default-deny policy, missing issuer approval, lookalike-host rejection, authorization binding, actual privacy-minimized high-confidence event creation, capability-without-authorization NoMatch behavior, duplicate-trace cooldown suppression and reflection checks proving the authorization is absent from the public context surface.
 
 **Status:** SOURCE CANDIDATE — UNVERIFIED until the expanded focused R275 suite is executed.
+
+## 2026-11-03 explicit promotion-policy verification — GREEN
+
+The owner ran the expanded focused R275 suite at revision `5d142366a75b6797e7906cce50e0ba49952ea6e7`.
+
+Observed:
+- `Carthago` build succeeded;
+- `Carthago.Tests` build succeeded;
+- **107 tests passed**;
+- **0 failed**;
+- **0 skipped**;
+- focused xUnit duration **19.8 seconds**;
+- total command/build duration **55.2 seconds**.
+
+The explicit R275 promotion policy is therefore GREEN at the contract-test level. A verified capability alone remains insufficient; only a separately authorized, exact-bound promotion capability can produce the privacy-minimized High-severity R275 event.
+
+Production runtime remains intentionally unwired. No normal packet-processing or public-context path constructs the promotion authorization, so the default application behavior has not changed. The next engineering boundary is operator-controlled runtime integration that is disabled by default and cannot derive trust from packet fields alone.
