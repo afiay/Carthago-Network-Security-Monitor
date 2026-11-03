@@ -24,3 +24,8 @@ Ten independent rules drawn from original workbook rows R2269, R2280, R2283, R29
 ## R626–R635 workbook-derived candidate batch
 
 Ten independent detectors, original IDs R2094, R2286, R3031, R2475, R2215, R2221, R2238, R2958, R2963, R2350. See [R626–R635](../RULE_BATCH_626-635.md). All SOURCE CANDIDATE — UNVERIFIED, tests authored (0 executed). New rule IDs R636–R645 are unallocated. No convergence; no extra producers implied.
+
+
+## R636–R645 — independent source candidates
+
+Ten source-only candidate rules from original workbook research IDs R3013, R2385, R2190, R2146, R2267, R2012, R2769, R2707, R2472, R1342. [Full batch evidence](../../RULE_BATCH_636-645.md). **CANDIDATE — UNVERIFIED**; xUnit authored, **0 executed**. No convergence. Next unallocated ID: R646.

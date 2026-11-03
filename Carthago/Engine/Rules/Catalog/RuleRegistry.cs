@@ -658,6 +658,16 @@ namespace Carthago.Engine.Rules.Catalog
                 new R633_CertutilExternalServiceTcpRule(),
                 new R634_WindowsScriptHostNonHttpOutboundTcpRule(),
                 new R635_NonBrowserProcessDeadDropHostRule(),
+                new R636_OmigodUnauthenticatedWsmanPostRequestRule(),
+                new R637_HistoricalGalliumDnsIndicatorQueryRule(),
+                new R638_MultiPortSuspiciousCallbackProcessEgressRule(),
+                new R639_NgrokDevProcessTlsSniEgressRule(),
+                new R640_NgrokRegionalTunnelProcessTlsSniRule(),
+                new R641_OfficeProcessHighEntropyDnsQueryRule(),
+                new R642_ScriptProcessBrowserAgentHttpPostRule(),
+                new R643_SequentialEtherNetIpListIdentitySubnetWalkRule(),
+                new R644_RdpPublicClientSynAckExposureEvidenceRule(),
+                new R645_PunycodeLoginFormPostExposureRule(),
             };
         }
 
