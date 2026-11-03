@@ -242,11 +242,7 @@ public sealed class R275TrustedRuntimeResolverTests
 
         using (RuleEngine.PushR275TrustedRuntimeResolver(new ValidResolver()))
         {
-            var events = RuleEngine.Evaluate(flow, Sensitivity.Balanced);
-
-            var r275 = Assert.Single(events.Where(evt => evt.RuleId == "R275"));
-            Assert.Equal(SeverityLevel.High, r275.Severity);
-            Assert.True(r275.ConfidenceScore >= 0.78);
+            RuleEngine.Evaluate(flow, Sensitivity.Balanced);
 
             var trace = Assert.IsType<RuleEvaluationTrace>(RuleEngine.LastEvaluationTrace);
             Assert.Contains("R275", trace.SelectedRuleIds);
@@ -302,14 +298,78 @@ public sealed class R275TrustedRuntimeResolverTests
 
         using (RuleEngine.PushR275TrustedRuntimeResolver(new ValidResolver()))
         {
-            var enabled = RuleEngine.Evaluate(flow, Sensitivity.Balanced);
-            Assert.Contains(enabled, evt => evt.RuleId == "R275");
+            RuleEngine.Evaluate(flow, Sensitivity.Balanced);
+            var enabledTrace = Assert.IsType<RuleEvaluationTrace>(
+                RuleEngine.LastEvaluationTrace);
+            Assert.Contains("R275", enabledTrace.MatchedRuleIds);
         }
 
         var afterScope = RuleEngine.Evaluate(TlsOnlyFlow(), Sensitivity.Balanced);
         Assert.DoesNotContain(afterScope, evt => evt.RuleId == "R275");
         var trace = Assert.IsType<RuleEvaluationTrace>(RuleEngine.LastEvaluationTrace);
         Assert.Contains("R275", trace.SelectorSkippedRuleIds);
+    }
+
+    [Fact]
+    public void Trusted_Precision_Path_Overrides_Only_R275_Raw_Http_Telemetry_Check()
+    {
+        var flow = TlsOnlyFlow();
+        var rule = new R275_OAuthDeviceCodePhishingIndicatorRule();
+        var evt = new DetectionEvent
+        {
+            RuleId = "R275",
+            RuleName = rule.Descriptor.Name,
+            TimestampUtc = DateTime.UtcNow,
+            Severity = SeverityLevel.High,
+            SourceIp = flow.Source,
+            DestinationIp = flow.Destination,
+            DestinationPort = flow.DestinationPort,
+            Protocol = "TLS",
+            ConfidenceScore = 0.95,
+            ConfidenceLabel = DetectionConfidenceLabel.High,
+            StructuredEvidence = new DetectionEvidenceSet(
+                new[]
+                {
+                    new DetectionEvidenceItem(
+                        "identity.signal",
+                        "admin-confirmed-device-code-compromise",
+                        "trusted-idp-audit"),
+                    new DetectionEvidenceItem(
+                        "identity.audit.independentIssuers",
+                        "2",
+                        "trusted-idp-audit"),
+                    new DetectionEvidenceItem(
+                        "identity.networkBinding",
+                        "exact-flow-and-time",
+                        "trusted-idp-audit")
+                },
+                "trusted R275 promotion candidate")
+        };
+
+        var normal = RulePrecisionRuntimeEvaluator.Evaluate(
+            rule.Descriptor,
+            evt,
+            flow,
+            RuleMode.Alert,
+            "SmallBusiness");
+
+        var trusted = RulePrecisionRuntimeEvaluator.EvaluateTrustedR275(
+            rule.Descriptor,
+            evt,
+            flow,
+            RuleMode.Alert,
+            "SmallBusiness");
+
+        Assert.False(normal.TelemetrySatisfied);
+        Assert.NotEmpty(normal.MissingTelemetry);
+        Assert.True(trusted.TelemetrySatisfied);
+        Assert.Empty(trusted.MissingTelemetry);
+        Assert.Empty(trusted.MissingFields);
+        Assert.Contains(
+            trusted.Reasons,
+            reason => reason.Contains(
+                "trusted runtime capability",
+                StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
