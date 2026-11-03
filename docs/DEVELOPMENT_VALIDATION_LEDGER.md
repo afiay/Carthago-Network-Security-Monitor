@@ -1600,3 +1600,21 @@ Observed sanitized result:
 Historical Stage 1 remains closed and valid: CARTHAGE previously enabled Process Creation auditing in a controlled lab, correlated a harmless local process to a 4688 event by PID/image path, and restored the setting to `No Auditing`. No reason exists to repeat that already-closed lab gate unless a new explicitly authorized producer experiment requires it.
 
 No Windows policy, command-line logging, ACL, registry setting, detector behavior, confidence floor, holdout fixture or alert mode was changed by this read-only check.
+
+#### 2026-11-03 — R275 trusted IdP audit candidate boundary authored
+
+A new R275 producer-side candidate boundary was authored directly on `feature/carthago-reliability-hardening` after the current producer-gap review.
+
+Source commits in this increment:
+- `7f6b2084737394ee08d928bc12fe6307f6f1e18c` — non-alerting R275 IdP audit candidate gate.
+- `760023b8c8040405674a8b9801c6fdaa18c6899f` — signed R275 IdP audit intake.
+- `33da7bbc926f94bd8bcc15fbc6512220490e2566` — focused synthetic R275 trust-boundary tests.
+- `53ac27caf6d53d09b614bdfe573f8f939059cbec` — require identity-web packet context in addition to endpoint/time binding.
+- `2f78eaeea3cf50df1ec957c1a9a0e484945c02db` — cover arbitrary TCP/443 rejection.
+- `d9ea26e03f45a46c4fd575d02d2db5fbafa4dc15` — trusted IdP candidate boundary documentation.
+
+The implementation reuses the existing `TrustedAuditReceiptVerifier` and `TrustedAuditReceiptCorrelation` contracts. Two independently pinned RSA-PSS issuers must attest the exact R275 operation `OAuthDeviceFlowAbuseConfirmed`, with matching privacy-minimized actor/resource/trace hashes and endpoints. The candidate gate additionally requires a captured TCP/443 HTTP/HTTPS/TLS flow with an observed host/SNI, exact endpoint agreement and a two-minute UTC clock bound.
+
+**Fail-closed boundary:** every assessment remains non-alerting (`AlertPermitted=false`). A fully correlated candidate returns `R275_SIGNED_IDP_AUDIT_CANDIDATE_NOT_INTEGRATED`. No trusted field was added to `TrafficRecord`, `RuleEvaluationContext` remains packet-only, and R275 itself still fails closed with `TRUSTED_DEVICE_CODE_ABUSE_EVENT_UNAVAILABLE`.
+
+**Verification status:** SOURCE CANDIDATE — UNVERIFIED. Focused tests are authored but have not yet been executed in this increment. No confidence floor, runtime mode, holdout fixture, replay classification, V1/V2 state or alert policy was changed.
