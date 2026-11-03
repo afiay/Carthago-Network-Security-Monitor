@@ -60,6 +60,7 @@ namespace Carthago.Services.Benchmarking
         public TimeSpan Duration { get; set; }
         public List<DetectionEvent> Detections { get; set; } = new();
         public List<string> ExpectedMatchRuleIds { get; set; } = new();
+        public List<string> UnsupportedRuleIds { get; set; } = new();
         public List<string> ExpectedNonMatchRuleIds { get; set; } = new();
         public List<string> MatchedRuleIds { get; set; } = new();
         public List<string> EmittedRuleIds { get; set; } = new();
@@ -82,6 +83,7 @@ namespace Carthago.Services.Benchmarking
         public int FailedSampleCount { get; set; }
         public int BenignSampleCount { get; set; }
         public int MaliciousSampleCount { get; set; }
+        public int UnsupportedMaliciousSampleCount { get; set; }
         public int TotalDetections { get; set; }
         public int TotalUnexpectedMatches { get; set; }
         public int TotalMissingExpectedMatches { get; set; }

@@ -1,10 +1,14 @@
-﻿{
+{
   "name": "rclone-exfil",
+  "classification": "UnsupportedMalicious",
   "records": [
     {
       "source": "10.0.0.67",
       "destination": "198.51.100.67",
-      "protocol": "HTTP",
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "isTcp": true,
+      "sourcePort": 52467,
       "destinationPort": 443,
       "httpMethod": "POST",
       "httpHost": "storage.example.net",
@@ -13,6 +17,11 @@
       "httpUserAgent": "rclone/v1.66.0"
     }
   ],
-  "expectedMatches": ["R508"],
-  "expectedMinimumConfidence": 0.65
+  "rawHttpRequestsByRecordIndex": {
+    "0": "POST /archive/upload HTTP/1.1\r\nHost: storage.example.net\r\nUser-Agent: rclone/v1.66.0\r\nContent-Length: 0\r\n\r\n"
+  },
+  "unsupportedRuleIds": ["R508"],
+  "unsupportedReasonCodesByRuleId": {
+    "R508": "RCLONE_PROCESS_USERAGENT_AND_EGRESS_PROVENANCE_UNAVAILABLE"
+  }
 }

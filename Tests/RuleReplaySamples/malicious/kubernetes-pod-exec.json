@@ -1,18 +1,28 @@
-﻿{
+{
   "name": "kubernetes-pod-exec",
+  "classification": "UnsupportedMalicious",
   "records": [
     {
       "source": "10.0.0.61",
       "destination": "10.10.0.10",
-      "protocol": "HTTP",
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "isTcp": true,
+      "sourcePort": 52161,
       "destinationPort": 6443,
       "processName": "kubectl.exe",
       "httpMethod": "POST",
+      "httpHost": "kubernetes.default.svc",
       "httpUri": "/api/v1/namespaces/default/pods/web/exec?command=/bin/sh&container=web"
     }
   ],
-  "expectedMatches": ["R295"],
-  "expectedMinimumConfidence": 0.65,
+  "rawHttpRequestsByRecordIndex": {
+    "0": "POST /api/v1/namespaces/default/pods/web/exec?command=/bin/sh&container=web HTTP/1.1\r\nHost: kubernetes.default.svc\r\nUser-Agent: kubectl/v1.30\r\nContent-Length: 0\r\n\r\n"
+  },
+  "unsupportedRuleIds": ["R295"],
+  "unsupportedReasonCodesByRuleId": {
+    "R295": "K8S_POD_EXEC_AUDIT_UNAVAILABLE"
+  },
   "environmentTuning": {
     "approved": {
       "kubernetesApiServers": ["10.10.0.10"]

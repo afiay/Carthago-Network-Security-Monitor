@@ -21,6 +21,7 @@ namespace Carthago.Services.Benchmarking
             var allRuleIds = report.RuleCoverage.Select(static item => item.RuleId)
                 .Concat(report.SampleResults.SelectMany(static sample => sample.ExpectedMatches))
                 .Concat(report.SampleResults.SelectMany(static sample => sample.ExpectedNonMatches))
+                .Concat(report.SampleResults.SelectMany(static sample => sample.UnsupportedRuleIds))
                 .Concat(report.SampleResults
                     .Where(static sample => sample.Classification == ReplaySampleClassification.Benign)
                     .SelectMany(static sample => sample.ActualMatches))
@@ -51,7 +52,7 @@ namespace Carthago.Services.Benchmarking
                             item.PositiveMissed++;
                     }
                 }
-                else
+                else if (sample.Classification == ReplaySampleClassification.Benign)
                 {
                     // Raw benign matches may be purposeful Shadow findings and
                     // must not be relabeled as incorrect detector predictions.
@@ -59,6 +60,16 @@ namespace Carthago.Services.Benchmarking
                     {
                         if (entries.TryGetValue(ruleId, out var item))
                             item.BenignRawMatches++;
+                    }
+                }
+
+                if (sample.Classification == ReplaySampleClassification.UnsupportedMalicious)
+                {
+                    foreach (var ruleId in sample.UnsupportedRuleIds
+                        .Where(static id => !string.IsNullOrWhiteSpace(id))
+                        .Distinct(StringComparer.OrdinalIgnoreCase))
+                    {
+                        entries[ruleId].UnsupportedProducerCases++;
                     }
                 }
 

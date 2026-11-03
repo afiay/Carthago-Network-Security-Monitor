@@ -1,16 +1,23 @@
 {
   "name": "devops-jenkins-crumb",
+  "classification": "Malicious",
   "records": [
     {
       "source": "10.0.0.71",
       "destination": "10.10.0.20",
-      "protocol": "HTTP",
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "isTcp": true,
+      "sourcePort": 52371,
       "destinationPort": 8080,
       "httpMethod": "GET",
       "httpUri": "/crumbIssuer/api/json",
       "httpHost": "jenkins.local"
     }
   ],
+  "rawHttpRequestsByRecordIndex": {
+    "0": "GET /crumbIssuer/api/json HTTP/1.1\r\nHost: jenkins.local\r\nUser-Agent: carthago-replay\r\n\r\n"
+  },
   "expectedMatches": ["R356"],
   "expectedMinimumConfidence": 0.60,
   "environmentTuning": {

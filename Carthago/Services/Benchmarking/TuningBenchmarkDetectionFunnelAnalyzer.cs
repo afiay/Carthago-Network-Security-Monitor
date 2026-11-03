@@ -45,6 +45,9 @@ namespace Carthago.Services.Benchmarking
                         continue;
                     }
 
+                    if (sample.Classification == ReplaySampleClassification.UnsupportedMalicious)
+                        continue;
+
                     var matched = new HashSet<string>(
                         sample.ActualMatches, StringComparer.OrdinalIgnoreCase);
                     var alerts = new HashSet<string>(

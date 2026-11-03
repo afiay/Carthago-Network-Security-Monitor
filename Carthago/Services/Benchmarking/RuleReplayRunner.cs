@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
@@ -12,6 +13,8 @@ using System.Threading.Tasks;
 using Carthago.Engine.Rules;
 using Carthago.Engine.Rules.Catalog;
 using Carthago.Models;
+using Carthago.Services;
+using Carthago.Services.ProtocolIntelligence;
 
 namespace Carthago.Services.Benchmarking
 {
@@ -86,6 +89,7 @@ namespace Carthago.Services.Benchmarking
             sw.Stop();
 
             var expectedMatches = NormalizeRuleIds(sample.ExpectedMatches);
+            var unsupportedRuleIds = NormalizeRuleIds(sample.UnsupportedRuleIds);
             var expectedEmitted = NormalizeRuleIds(sample.ExpectedEmittedMatches);
             var expectedNonMatches = NormalizeRuleIds(sample.ExpectedNonMatches);
             var expectedSuppressed = NormalizeRuleIds(sample.ExpectedSuppressedMatches);
@@ -117,6 +121,7 @@ namespace Carthago.Services.Benchmarking
                 Duration = sw.Elapsed,
                 Detections = detections,
                 ExpectedMatchRuleIds = expectedMatches,
+                UnsupportedRuleIds = unsupportedRuleIds,
                 ExpectedNonMatchRuleIds = expectedNonMatches,
                 MatchedRuleIds = actualMatched,
                 EmittedRuleIds = actualEmitted,
@@ -136,6 +141,30 @@ namespace Carthago.Services.Benchmarking
                 {
                     result.MissingExpectedRuleIds.Add(expected);
                     result.Errors.Add($"{result.Name}: expected {expected} to match, but it did not match in any trace.");
+                }
+            }
+
+            foreach (var unsupported in unsupportedRuleIds)
+            {
+                if (matched.Contains(unsupported))
+                {
+                    result.UnexpectedRuleIds.Add(unsupported);
+                    result.Errors.Add($"{result.Name}: producer-limited rule {unsupported} unexpectedly matched.");
+                    continue;
+                }
+
+                var reasonPair = (sample.UnsupportedReasonCodesByRuleId ?? new Dictionary<string, string>())
+                    .FirstOrDefault(pair => string.Equals(pair.Key, unsupported, StringComparison.OrdinalIgnoreCase));
+                if (string.IsNullOrWhiteSpace(reasonPair.Value))
+                {
+                    result.Errors.Add($"{result.Name}: unsupported rule {unsupported} has no required fail-closed reason code.");
+                    continue;
+                }
+
+                if (!noMatchCodesByRule.TryGetValue(unsupported, out var codes)
+                    || !codes.Contains(reasonPair.Value, StringComparer.OrdinalIgnoreCase))
+                {
+                    result.Errors.Add($"{result.Name}: unsupported rule {unsupported} did not fail closed with required reason {reasonPair.Value}.");
                 }
             }
 
@@ -240,6 +269,7 @@ namespace Carthago.Services.Benchmarking
                 AddRange(covered, sample.SuppressedRuleIds);
                 AddRange(covered, sample.ShadowedRuleIds);
                 AddRange(covered, sample.ExpectedMatchRuleIds);
+                AddRange(covered, sample.UnsupportedRuleIds);
                 AddRange(covered, sample.ExpectedNonMatchRuleIds);
                 AddRange(covered, sample.MissingExpectedRuleIds);
                 AddRange(covered, sample.UnexpectedRuleIds);
@@ -251,6 +281,7 @@ namespace Carthago.Services.Benchmarking
             result.Summary.FailedSampleCount = result.Samples.Count - result.Summary.PassedSampleCount;
             result.Summary.BenignSampleCount = result.Samples.Count(static sample => sample.Classification == ReplaySampleClassification.Benign);
             result.Summary.MaliciousSampleCount = result.Samples.Count(static sample => sample.Classification == ReplaySampleClassification.Malicious);
+            result.Summary.UnsupportedMaliciousSampleCount = result.Samples.Count(static sample => sample.Classification == ReplaySampleClassification.UnsupportedMalicious);
             result.Summary.TotalDetections = result.Samples.Sum(static sample => sample.DetectionCount);
             result.Summary.TotalUnexpectedMatches = result.Samples.Sum(static sample => sample.UnexpectedRuleIds.Count);
             result.Summary.TotalMissingExpectedMatches = result.Samples.Sum(static sample => sample.MissingExpectedRuleIds.Count);
@@ -279,6 +310,92 @@ namespace Carthago.Services.Benchmarking
             if (string.IsNullOrWhiteSpace(sample.Name))
                 sample.Name = Path.GetFileNameWithoutExtension(file);
             sample.Classification ??= InferClassification(file);
+
+            foreach (var (recordIndex, request) in sample.RawHttpRequestsByRecordIndex)
+            {
+                if (recordIndex < 0 || recordIndex >= sample.Records.Count
+                    || string.IsNullOrWhiteSpace(request) || request.Length > 16_384
+                    || request.Any(static ch => ch > 127))
+                    throw new InvalidDataException($"Replay '{sample.Name}' has an invalid synthetic HTTP request at record {recordIndex}.");
+                if (!HttpLight.TryParseHttp(Encoding.ASCII.GetBytes(request), out var parsed)
+                    || string.IsNullOrWhiteSpace(parsed.Method)
+                    || string.IsNullOrWhiteSpace(parsed.Host)
+                    || string.IsNullOrWhiteSpace(parsed.Path))
+                    throw new InvalidDataException($"Replay '{sample.Name}' contains an incomplete or invalid HTTP request at record {recordIndex}.");
+
+                var record = sample.Records[recordIndex];
+                if (!string.Equals(record.HttpMethod, parsed.Method, StringComparison.OrdinalIgnoreCase)
+                    || !string.Equals(record.HttpHost, parsed.Host, StringComparison.OrdinalIgnoreCase)
+                    || !string.Equals(record.HttpUri, parsed.Path, StringComparison.Ordinal))
+                    throw new InvalidDataException($"Replay '{sample.Name}' HTTP parser disagrees with the declared method/host/path at record {recordIndex}.");
+
+                record.HttpRequestHeaders = parsed.JoinedHeaderLines;
+                record.HttpUserAgent = parsed.UserAgent ?? record.HttpUserAgent;
+                record.HttpBasicDefaultCredentialObserved = parsed.ObservedDefaultBasicCredential;
+            }
+
+            foreach (var (index, hex) in sample.RawOtTcpPayloadsByRecordIndex)
+            {
+                if (index < 0 || index >= sample.Records.Count || string.IsNullOrEmpty(hex)
+                    || hex.Length < 16 || hex.Length > 1024 || (hex.Length % 2) != 0
+                    || hex.Any(static ch => !Uri.IsHexDigit(ch)))
+                    throw new InvalidDataException("Invalid OT replay payload at index " + index);
+                var record = sample.Records[index];
+                if (!record.IsTcp || record.IsUdp || record.IsQuic || !string.Equals(record.Protocol, "TCP", StringComparison.OrdinalIgnoreCase)
+                    || record.SourcePort is null || record.DestinationPort is null
+                    || record.HttpMethod != null || record.HttpUri != null || record.TlsVersion != null
+                    || sample.RawHttpRequestsByRecordIndex.ContainsKey(index))
+                    throw new InvalidDataException("Contradictory OT replay metadata at index " + index);
+                if (!OtProtocolLight.TryIdentifyTcp(Convert.FromHexString(hex), record.SourcePort,
+                        record.DestinationPort, out var parsed))
+                    throw new InvalidDataException("OT parser rejected replay payload at index " + index);
+                if (record.ApplicationProtocol != null &&
+                    !string.Equals(record.ApplicationProtocol, parsed, StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidDataException("OT replay protocol conflict at index " + index);
+                record.ApplicationProtocol = parsed;
+            }
+
+            foreach (var (index, hex) in sample.RawBacnetUdpPayloadsByRecordIndex)
+            {
+                if (index < 0 || index >= sample.Records.Count || string.IsNullOrEmpty(hex)
+                    || hex.Length < 16 || hex.Length > 2048 || (hex.Length % 2) != 0
+                    || hex.Any(static ch => !Uri.IsHexDigit(ch)))
+                    throw new InvalidDataException("Invalid BACnet replay payload at index " + index);
+                var record = sample.Records[index];
+                if (!record.IsUdp || record.IsTcp || record.IsQuic
+                    || !string.Equals(record.Protocol, "UDP", StringComparison.OrdinalIgnoreCase)
+                    || (record.SourcePort ?? 0) <= 0
+                    || record.DestinationPort != 47808
+                    || record.HttpMethod != null || record.HttpUri != null || record.TlsVersion != null)
+                    throw new InvalidDataException("Contradictory BACnet replay metadata at index " + index);
+                var payload = Convert.FromHexString(hex);
+                if (!BacnetWritePropertyInspector.TryInspect(payload, true, out _))
+                    throw new InvalidDataException("BACnet WriteProperty parser rejected replay payload at index " + index);
+                record.ApplicationProtocol = "bacnet.writeproperty.request";
+                record.BacnetWritePropertyRequestObserved = true;
+            }
+
+            foreach (var (index, hex) in sample.RawRedisResp2RequestsByRecordIndex)
+            {
+                if (index < 0 || index >= sample.Records.Count || string.IsNullOrEmpty(hex)
+                    || hex.Length < 16 || hex.Length > 16_384 || (hex.Length % 2) != 0
+                    || hex.Any(static ch => !Uri.IsHexDigit(ch)))
+                    throw new InvalidDataException("Invalid Redis RESP2 replay payload at index " + index);
+                var record = sample.Records[index];
+                if (!record.IsTcp || record.IsUdp || record.IsQuic
+                    || !string.Equals(record.Protocol, "TCP", StringComparison.OrdinalIgnoreCase)
+                    || (record.SourcePort ?? 0) <= 0 || record.SourcePort == 6379
+                    || record.DestinationPort != 6379
+                    || record.HttpMethod != null || record.HttpUri != null || record.TlsVersion != null)
+                    throw new InvalidDataException("Contradictory Redis replay metadata at index " + index);
+                var payload = Convert.FromHexString(hex);
+                if (!Resp2CommandInspector.TryInspect(payload, true, out var parsed)
+                    || !parsed.IsConfigSetRequest || parsed.BytesConsumed != payload.Length)
+                    throw new InvalidDataException("Redis CONFIG SET parser rejected replay payload at index " + index);
+                record.ApplicationProtocol = "redis.resp2";
+                record.RedisRespConfigSetRequestObserved = true;
+            }
+
             return sample;
         }
 

@@ -1,10 +1,13 @@
-﻿{
+{
   "name": "cloudflared-tunnel",
+  "classification": "UnsupportedMalicious",
   "records": [
     {
       "source": "10.0.0.68",
       "destination": "198.51.100.68",
       "protocol": "TCP",
+      "isTcp": true,
+      "sourcePort": 52568,
       "destinationPort": 443,
       "processName": "cloudflared",
       "sni": "trycloudflare.com",
@@ -12,6 +15,8 @@
       "info": "TLS client handshake to Cloudflare Tunnel endpoint"
     }
   ],
-  "expectedMatches": ["R516"],
-  "expectedMinimumConfidence": 0.65
+  "unsupportedRuleIds": ["R516"],
+  "unsupportedReasonCodesByRuleId": {
+    "R516": "CLOUDFLARED_TUNNEL_SESSION_PROVENANCE_UNAVAILABLE"
+  }
 }

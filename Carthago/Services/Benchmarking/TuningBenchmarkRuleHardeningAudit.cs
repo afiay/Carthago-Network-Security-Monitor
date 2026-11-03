@@ -30,6 +30,7 @@ namespace Carthago.Services.Benchmarking
         public int PositiveRecognized { get; set; }
         public int ExplicitNegativeCases { get; set; }
         public int ExplicitNegativePassed { get; set; }
+        public int UnsupportedProducerCases { get; set; }
         public int BenignRawMatches { get; set; }
         public bool PairedSyntheticControls { get; set; }
         public bool BaselineRequired { get; set; }
@@ -71,9 +72,11 @@ namespace Carthago.Services.Benchmarking
 
                 var positives = cases?.PositiveCases ?? 0;
                 var negatives = cases?.ExplicitNegativeCases ?? 0;
+                var unsupported = cases?.UnsupportedProducerCases ?? 0;
                 var evidenceStatus = positives > 0 && negatives > 0 ? "PairedSyntheticControls"
                     : positives > 0 ? "PositiveOnly"
                     : negatives > 0 ? "NegativeOnly"
+                    : unsupported > 0 ? "UnsupportedProducerOnly"
                     : "NoExplicitReplayControls";
 
                 entries.Add(new TuningBenchmarkRuleHardeningEntry
@@ -93,6 +96,7 @@ namespace Carthago.Services.Benchmarking
                     PositiveRecognized = cases?.PositiveRecognized ?? 0,
                     ExplicitNegativeCases = negatives,
                     ExplicitNegativePassed = cases?.ExplicitNegativePassed ?? 0,
+                    UnsupportedProducerCases = unsupported,
                     BenignRawMatches = cases?.BenignRawMatches ?? 0,
                     PairedSyntheticControls = positives > 0 && negatives > 0,
                     BaselineRequired = tuning.RequiresBaseline,

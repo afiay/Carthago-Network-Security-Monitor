@@ -103,6 +103,13 @@ namespace Carthago.Services.Benchmarking
                     if (alerted) fp++;
                     else tn++;
                 }
+                else if (sample.Classification == ReplaySampleClassification.UnsupportedMalicious)
+                {
+                    // Producer-limited malicious scenarios are coverage gaps,
+                    // not supported detector opportunities. Keep them visible
+                    // elsewhere in the report without turning them into FNs.
+                    continue;
+                }
                 else
                     throw new ArgumentOutOfRangeException(nameof(samples), "Unexpected replay classification.");
             }

@@ -31,6 +31,24 @@ public sealed class DetectionQualityMetricsTests
     }
 
     [Fact]
+    public void UnsupportedMalicious_Samples_Are_Excluded_From_Recall_Denominators()
+    {
+        var metrics = DetectionQualityMetrics.FromReplaySamples(new[]
+        {
+            Sample("supported-hit", ReplaySampleClassification.Malicious, true),
+            Sample("supported-miss", ReplaySampleClassification.Malicious, false),
+            Sample("producer-gap", ReplaySampleClassification.UnsupportedMalicious, false),
+            Sample("benign", ReplaySampleClassification.Benign, false)
+        }, "SmallBusiness");
+
+        Assert.Equal(1, metrics.TruePositives);
+        Assert.Equal(1, metrics.FalseNegatives);
+        Assert.Equal(1, metrics.TrueNegatives);
+        Assert.Equal(0, metrics.FalsePositives);
+        Assert.Equal(0.5, metrics.Recall);
+    }
+
+    [Fact]
     public void UndefinedDenominatorsAreNullRatherThanPretendingZeroPercent()
     {
         var metrics = DetectionQualityMetrics.FromReplaySamples(new[]

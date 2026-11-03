@@ -16,6 +16,7 @@ using Carthago.Engine.Rules.Tuning;
 using Carthago.Models;
 using Carthago.Services.EnvironmentTuning;
 using Carthago.Services.Baseline;
+using Carthago.Services.ProtocolIntelligence;
 
 namespace Carthago.Services.Benchmarking
 {
@@ -100,7 +101,12 @@ namespace Carthago.Services.Benchmarking
 
                 var matches = new List<ReplayMatch>();
                 var expectedMatchIds = NormalizeRuleIds(sample.ExpectedMatches);
-                var expectedDiagnostics = expectedMatchIds.ToDictionary(
+                var unsupportedRuleIds = NormalizeRuleIds(sample.UnsupportedRuleIds);
+                var diagnosticRuleIds = expectedMatchIds.Concat(unsupportedRuleIds)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(static id => id, StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+                var expectedDiagnostics = diagnosticRuleIds.ToDictionary(
                     static id => id,
                     static id => new TuningBenchmarkExpectedRuleDiagnostic { RuleId = id, Outcome = "RuleUnavailable" },
                     StringComparer.OrdinalIgnoreCase);
@@ -194,6 +200,10 @@ namespace Carthago.Services.Benchmarking
                     FilePath = file,
                     Classification = classification,
                     ExpectedMatches = expectedMatchIds,
+                    UnsupportedRuleIds = unsupportedRuleIds,
+                    UnsupportedReasonCodesByRuleId = (sample.UnsupportedReasonCodesByRuleId ?? new Dictionary<string, string>())
+                        .Where(static pair => !string.IsNullOrWhiteSpace(pair.Key) && !string.IsNullOrWhiteSpace(pair.Value))
+                        .ToDictionary(static pair => pair.Key.Trim().ToUpperInvariant(), static pair => pair.Value.Trim(), StringComparer.OrdinalIgnoreCase),
                     ExpectedNonMatches = expectedNonMatchIds,
                     ActualMatches = actualMatchIds,
                     ExpectedRuleDiagnostics = expectedDiagnostics.Values.OrderBy(static item => item.RuleId, StringComparer.OrdinalIgnoreCase).ToList(),
@@ -205,8 +215,47 @@ namespace Carthago.Services.Benchmarking
 
                 if (classification == ReplaySampleClassification.Benign)
                     report.Summary.BenignSampleCount++;
-                else
+                else if (classification == ReplaySampleClassification.Malicious)
                     report.Summary.MaliciousSampleCount++;
+                else if (classification == ReplaySampleClassification.UnsupportedMalicious)
+                    report.Summary.UnsupportedMaliciousSampleCount++;
+
+                if (classification == ReplaySampleClassification.UnsupportedMalicious)
+                {
+                    if (expectedMatchIds.Count > 0)
+                        sampleResult.Errors.Add("UnsupportedMalicious samples must use UnsupportedRuleIds, not ExpectedMatches.");
+                    if (unsupportedRuleIds.Count == 0)
+                        sampleResult.Errors.Add("UnsupportedMalicious sample has no UnsupportedRuleIds.");
+
+                    foreach (var ruleId in unsupportedRuleIds)
+                    {
+                        if (actualMatchIds.Contains(ruleId, StringComparer.OrdinalIgnoreCase))
+                        {
+                            sampleResult.Errors.Add($"Unsupported producer-limited rule {ruleId} unexpectedly matched.");
+                            continue;
+                        }
+
+                        if (!sampleResult.UnsupportedReasonCodesByRuleId.TryGetValue(ruleId, out var requiredCode)
+                            || string.IsNullOrWhiteSpace(requiredCode))
+                        {
+                            sampleResult.Errors.Add($"Unsupported rule {ruleId} has no required fail-closed reason code.");
+                            continue;
+                        }
+
+                        var diagnostic = sampleResult.ExpectedRuleDiagnostics.FirstOrDefault(item =>
+                            string.Equals(item.RuleId, ruleId, StringComparison.OrdinalIgnoreCase));
+                        if (diagnostic == null || !diagnostic.NoMatchReasons.Any(reason =>
+                            reason.Contains("/" + requiredCode + ":", StringComparison.OrdinalIgnoreCase)))
+                        {
+                            sampleResult.Errors.Add(
+                                $"Unsupported rule {ruleId} did not fail closed with required reason {requiredCode}.");
+                        }
+                    }
+                }
+                else if (unsupportedRuleIds.Count > 0)
+                {
+                    sampleResult.Errors.Add("UnsupportedRuleIds are only valid for UnsupportedMalicious samples.");
+                }
 
                 if (missingExpected.Count > 0)
                     sampleResult.Errors.AddRange(missingExpected.Select(static id => $"Expected match {id} was not triggered."));
@@ -242,7 +291,7 @@ namespace Carthago.Services.Benchmarking
                         noisyRules.Add(ruleId);
                         recommendShadow.Add(ruleId);
                     }
-                    else
+                    else if (classification == ReplaySampleClassification.Malicious)
                     {
                         coverage.ReplayCoverageCount++;
                     }
@@ -347,7 +396,7 @@ namespace Carthago.Services.Benchmarking
                         profile.BenignAlertCount += profileSample.AlertRuleIds.Count;
                         profile.BenignCriticalAlertCount += profileSample.CriticalAlertCount;
                     }
-                    else
+                    else if (classification == ReplaySampleClassification.Malicious)
                     {
                         profile.MaliciousExpectedMatchCount += expectedMatchIds.Count;
                         profile.MaliciousAlertMatchCount += expectedMatchIds.Count(id => profileSample.AlertRuleIds.Contains(id, StringComparer.OrdinalIgnoreCase));
@@ -366,7 +415,7 @@ namespace Carthago.Services.Benchmarking
                         recommendShadow.Add(ruleId);
                     }
                 }
-                else
+                else if (classification == ReplaySampleClassification.Malicious)
                 {
                     foreach (var ruleId in defaultProfileSample.AlertRuleIds)
                         ruleCoverage[ruleId].DefaultProfileMaliciousAlertCount++;
@@ -418,6 +467,11 @@ namespace Carthago.Services.Benchmarking
                 .ToList();
 
             report.Summary.ReplaySampleCount = report.SampleResults.Count;
+            report.Summary.UnsupportedRuleCount = report.SampleResults
+                .Where(static sample => sample.Classification == ReplaySampleClassification.UnsupportedMalicious)
+                .SelectMany(static sample => sample.UnsupportedRuleIds)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Count();
             report.Summary.SampleLevelQuality = DetectionQualityMetrics.FromReplaySamples(report.SampleResults, defaultProfileName);
             foreach (var profileName in profileAccumulators.Keys)
                 report.Summary.SampleLevelQualityByProfile[profileName] =
@@ -509,6 +563,49 @@ namespace Carthago.Services.Benchmarking
                     !string.Equals(record.ApplicationProtocol, parsed, StringComparison.OrdinalIgnoreCase))
                     throw new InvalidDataException("OT replay protocol conflict at index " + index);
                 record.ApplicationProtocol = parsed;
+            }
+
+            foreach (var (index, hex) in sample.RawBacnetUdpPayloadsByRecordIndex)
+            {
+                if (index < 0 || index >= sample.Records.Count || string.IsNullOrEmpty(hex)
+                    || hex.Length < 16 || hex.Length > 2048 || (hex.Length % 2) != 0
+                    || hex.Any(static ch => !Uri.IsHexDigit(ch)))
+                    throw new InvalidDataException("Invalid BACnet replay payload at index " + index);
+                var record = sample.Records[index];
+                if (!record.IsUdp || record.IsTcp || record.IsQuic
+                    || !string.Equals(record.Protocol, "UDP", StringComparison.OrdinalIgnoreCase)
+                    || (record.SourcePort ?? 0) <= 0
+                    || record.DestinationPort != 47808
+                    || record.HttpMethod != null || record.HttpUri != null || record.TlsVersion != null)
+                    throw new InvalidDataException("Contradictory BACnet replay metadata at index " + index);
+                var payload = Convert.FromHexString(hex);
+                if (!BacnetWritePropertyInspector.TryInspect(
+                        payload, verifiedCompletePlaintextUdpDatagram: true, out _))
+                    throw new InvalidDataException("BACnet WriteProperty parser rejected replay payload at index " + index);
+                record.ApplicationProtocol = "bacnet.writeproperty.request";
+                record.BacnetWritePropertyRequestObserved = true;
+            }
+
+            foreach (var (index, hex) in sample.RawRedisResp2RequestsByRecordIndex)
+            {
+                if (index < 0 || index >= sample.Records.Count || string.IsNullOrEmpty(hex)
+                    || hex.Length < 16 || hex.Length > 16_384 || (hex.Length % 2) != 0
+                    || hex.Any(static ch => !Uri.IsHexDigit(ch)))
+                    throw new InvalidDataException("Invalid Redis RESP2 replay payload at index " + index);
+                var record = sample.Records[index];
+                if (!record.IsTcp || record.IsUdp || record.IsQuic
+                    || !string.Equals(record.Protocol, "TCP", StringComparison.OrdinalIgnoreCase)
+                    || (record.SourcePort ?? 0) <= 0 || record.SourcePort == 6379
+                    || record.DestinationPort != 6379
+                    || record.HttpMethod != null || record.HttpUri != null || record.TlsVersion != null)
+                    throw new InvalidDataException("Contradictory Redis replay metadata at index " + index);
+                var payload = Convert.FromHexString(hex);
+                if (!Resp2CommandInspector.TryInspect(
+                        payload, verifiedPlaintextClientCommandBoundary: true, out var parsed)
+                    || !parsed.IsConfigSetRequest || parsed.BytesConsumed != payload.Length)
+                    throw new InvalidDataException("Redis CONFIG SET parser rejected replay payload at index " + index);
+                record.ApplicationProtocol = "redis.resp2";
+                record.RedisRespConfigSetRequestObserved = true;
             }
             return sample;
         }

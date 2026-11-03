@@ -87,6 +87,33 @@ public sealed class TuningBenchmarkRuleEvidenceAnalyzerTests
     }
 
     [Fact]
+    public void Analyzer_Tracks_Unsupported_Rules_Without_Converting_Them_To_Positive_Or_Benign_Cases()
+    {
+        var report = new TuningBenchmarkReport
+        {
+            SampleResults = new List<TuningBenchmarkSampleResult>
+            {
+                new()
+                {
+                    Name = "producer-gap",
+                    Classification = ReplaySampleClassification.UnsupportedMalicious,
+                    UnsupportedRuleIds = new List<string> { "R437" },
+                    ActualMatches = new List<string>()
+                }
+            }
+        };
+
+        var item = Assert.Single(TuningBenchmarkRuleEvidenceAnalyzer.Analyze(report));
+        Assert.Equal("R437", item.RuleId);
+        Assert.Equal(0, item.PositiveCases);
+        Assert.Equal(0, item.ExplicitNegativeCases);
+        Assert.Equal(1, item.UnsupportedProducerCases);
+        Assert.Equal(0, item.BenignRawMatches);
+        Assert.Null(item.PositiveRecognitionRate);
+        Assert.Null(item.ExplicitNegativePassRate);
+    }
+
+    [Fact]
     public void Analyzer_Does_Not_Assume_Every_Benign_Record_Is_An_Explicit_Negative()
     {
         var report = new TuningBenchmarkReport

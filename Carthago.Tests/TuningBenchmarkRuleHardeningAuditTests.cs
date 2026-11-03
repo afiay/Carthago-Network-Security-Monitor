@@ -29,6 +29,10 @@ public sealed class TuningBenchmarkRuleHardeningAuditTests
                 new()
                 {
                     RuleId = "R118", PositiveCases = 8, PositiveRecognized = 8
+                },
+                new()
+                {
+                    RuleId = "R437", UnsupportedProducerCases = 1
                 }
             }
         };
@@ -58,6 +62,11 @@ public sealed class TuningBenchmarkRuleHardeningAuditTests
         var r118 = Assert.Single(audit, item => item.RuleId == "R118");
         Assert.Equal("PositiveOnly", r118.EvidenceStatus);
         Assert.False(r118.PairedSyntheticControls);
+
+        var unsupported = Assert.Single(audit, item => item.RuleId == "R437");
+        Assert.Equal("UnsupportedProducerOnly", unsupported.EvidenceStatus);
+        Assert.Equal(1, unsupported.UnsupportedProducerCases);
+        Assert.False(unsupported.PairedSyntheticControls);
 
         var untested = Assert.Single(audit, item => item.RuleId == "R544");
         Assert.Equal("NoExplicitReplayControls", untested.EvidenceStatus);

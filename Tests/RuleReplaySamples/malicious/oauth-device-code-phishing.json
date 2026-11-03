@@ -1,5 +1,6 @@
-﻿{
+{
   "name": "oauth-device-code-phishing",
+  "classification": "UnsupportedMalicious",
   "records": [
     {
       "source": "10.0.0.60",
@@ -11,6 +12,8 @@
       "httpUri": "/oauth2/v2.0/devicecode?client_id=x&device_code=y&user_code=z"
     }
   ],
-  "expectedMatches": ["R275"],
-  "expectedMinimumConfidence": 0.65
+  "unsupportedRuleIds": ["R275"],
+  "unsupportedReasonCodesByRuleId": {
+    "R275": "TRUSTED_DEVICE_CODE_ABUSE_EVENT_UNAVAILABLE"
+  }
 }

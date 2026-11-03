@@ -59,7 +59,10 @@ namespace Carthago.Services.Benchmarking
             sb.AppendLine();
             sb.AppendLine("## Summary");
             sb.AppendLine($"- Replay samples: {summary.ReplaySampleCount}");
-            sb.AppendLine($"- True-positive pass rate: {FormatRatio(summary.TruePositivePassRate)}");
+            sb.AppendLine($"- Supported malicious samples: {summary.MaliciousSampleCount}");
+            sb.AppendLine($"- Unsupported malicious samples: {summary.UnsupportedMaliciousSampleCount}");
+            sb.AppendLine($"- Unsupported producer-limited rule contracts: {summary.UnsupportedRuleCount}");
+            sb.AppendLine($"- Supported-detector true-positive pass rate: {FormatRatio(summary.TruePositivePassRate)}");
             sb.AppendLine($"- Benign false positives: {summary.BenignFalsePositiveCount}");
             sb.AppendLine($"- Benign critical alerts: {summary.BenignCriticalAlertCount}");
             if (summary.SampleLevelQuality is { } quality)
@@ -80,10 +83,40 @@ namespace Carthago.Services.Benchmarking
                 sb.AppendLine($"- Precision Wilson 95% interval: {FormatInterval(quality.Precision95)}");
                 sb.AppendLine($"- Recall Wilson 95% interval: {FormatInterval(quality.Recall95)}");
                 sb.AppendLine($"- Benign false-positive-rate Wilson 95% interval: {FormatInterval(quality.FalsePositiveRate95)}");
-                sb.AppendLine("- Scope: labeled offline replay samples, not field prevalence or detection accuracy in production.");
+                sb.AppendLine("- Scope: supported malicious and benign labeled offline replay samples, not field prevalence or detection accuracy in production.");
+                sb.AppendLine("- UnsupportedMalicious fixtures are excluded from confusion-matrix and recall denominators; they verify explicit fail-closed producer gaps separately.");
                 sb.AppendLine("- Related synthetic variants are NOT independent trials. Wilson intervals illustrate sampling uncertainty and can understate it when fixtures are correlated.");
                 sb.AppendLine("- A measured 100% precision with few emitted alerts is not proof of 100% field precision.");
             }
+            sb.AppendLine();
+            sb.AppendLine("## Unsupported Trusted-Producer Coverage");
+            sb.AppendLine("- These scenarios represent malicious behavior that the current detector intentionally cannot authenticate with available trusted producers.");
+            sb.AppendLine("- They are excluded from supported detector/alert recall denominators, but each fixture must fail closed with its declared stable reason code.");
+            sb.AppendLine("- An unexpected raw match or a different no-match reason is a benchmark failure; unsupported does not mean ignored.");
+            var unsupported = report.SampleResults
+                .Where(static sample => sample.Classification == ReplaySampleClassification.UnsupportedMalicious)
+                .ToArray();
+            if (unsupported.Length == 0)
+            {
+                sb.AppendLine("- None.");
+            }
+            else
+            {
+                sb.AppendLine();
+                sb.AppendLine("| Sample | Rule | Required fail-closed reason | Observed outcome |");
+                sb.AppendLine("| --- | --- | --- | --- |");
+                foreach (var sample in unsupported)
+                {
+                    foreach (var ruleId in sample.UnsupportedRuleIds)
+                    {
+                        sample.UnsupportedReasonCodesByRuleId.TryGetValue(ruleId, out var requiredCode);
+                        var diagnostic = sample.ExpectedRuleDiagnostics.FirstOrDefault(item =>
+                            string.Equals(item.RuleId, ruleId, StringComparison.OrdinalIgnoreCase));
+                        sb.AppendLine($"| {EscapeCell(sample.Name)} | {EscapeCell(ruleId)} | {EscapeCell(requiredCode)} | {EscapeCell(diagnostic?.Outcome ?? "NoDiagnostic")} |");
+                    }
+                }
+            }
+
             sb.AppendLine();
             sb.AppendLine("## Profile Comparison — Alert-level Quality and Uncertainty");
             sb.AppendLine("| Profile | TP | FP | FN | TN | Precision | Precision 95% | Recall | Balanced accuracy | MCC | Benign FPR | Benign FPR 95% |");
@@ -96,7 +129,7 @@ namespace Carthago.Services.Benchmarking
             }
             sb.AppendLine();
             sb.AppendLine("## Detection, Policy, and Alert Funnel");
-            sb.AppendLine("- Unit: one labeled malicious (sample, expected rule) per replay profile; the same expected rule may appear in multiple samples.");
+            sb.AppendLine("- Unit: one supported labeled malicious (sample, expected rule) per replay profile; UnsupportedMalicious producer gaps are reported separately.");
             sb.AppendLine("- Recognized: the detector matched, regardless of policy. Shadow/Suppressed are not alerts.");
             sb.AppendLine("- Policy-blocked: recognized matches held in Shadow or Disabled, not missing detections.");
             sb.AppendLine("- Eligible emission: among recognized expected rules with an effective Alert policy decision, the fraction actually recorded as simulated alerts.");
@@ -113,27 +146,28 @@ namespace Carthago.Services.Benchmarking
 
             sb.AppendLine();
             sb.AppendLine("## Explicit Rule Evidence Coverage");
-            sb.AppendLine("- Unit: (replay sample, rule) pairs; positives are expected matches from malicious samples; negatives are explicitly labeled ExpectedNonMatches in either class.");
+            sb.AppendLine("- Unit: (replay sample, rule) pairs; positives are expected matches from supported malicious samples; UnsupportedMalicious rules are tracked separately and do not count as positives or negatives.");
             sb.AppendLine("- Do not infer rule-level specificity or precision from unlabeled benign traffic. A benign raw detector match can be intentionally Shadowed.");
             sb.AppendLine("- N/A means no explicit positive or negative test exists for the denominator. Both control types are needed for paired evidence.");
             var coverage = report.RuleEvidenceCoverage;
             sb.AppendLine($"- Rules in inventory: {coverage.Count}");
             sb.AppendLine($"- With positive controls: {coverage.Count(static entry => entry.PositiveCases > 0)}");
             sb.AppendLine($"- With explicit negative controls: {coverage.Count(static entry => entry.ExplicitNegativeCases > 0)}");
+            sb.AppendLine($"- With unsupported-producer controls: {coverage.Count(static entry => entry.UnsupportedProducerCases > 0)}");
             sb.AppendLine($"- With paired controls: {coverage.Count(static entry => entry.HasPairedControls)}");
             sb.AppendLine();
-            sb.AppendLine("| Rule | Positive matched / cases | Recognition | Explicit negatives passed / cases | Negative pass rate | Benign raw matches | Paired |");
-            sb.AppendLine("| --- | ---: | ---: | ---: | ---: | ---: | --- |");
+            sb.AppendLine("| Rule | Positive matched / cases | Recognition | Explicit negatives passed / cases | Negative pass rate | Unsupported producer | Benign raw matches | Paired |");
+            sb.AppendLine("| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |");
             foreach (var entry in coverage.Where(static item =>
-                    item.PositiveCases > 0 || item.ExplicitNegativeCases > 0)
+                    item.PositiveCases > 0 || item.ExplicitNegativeCases > 0 || item.UnsupportedProducerCases > 0)
                 .OrderByDescending(static item => item.PositiveCases)
                 .ThenByDescending(static item => item.ExplicitNegativeCases)
                 .ThenBy(static item => item.RuleId, StringComparer.OrdinalIgnoreCase)
                 .Take(40))
             {
-                sb.AppendLine($"| {EscapeCell(entry.RuleId)} | {entry.PositiveRecognized}/{entry.PositiveCases} | {FormatRatio(entry.PositiveRecognitionRate)} | {entry.ExplicitNegativePassed}/{entry.ExplicitNegativeCases} | {FormatRatio(entry.ExplicitNegativePassRate)} | {entry.BenignRawMatches} | {(entry.HasPairedControls ? "Yes" : "No")} |");
+                sb.AppendLine($"| {EscapeCell(entry.RuleId)} | {entry.PositiveRecognized}/{entry.PositiveCases} | {FormatRatio(entry.PositiveRecognitionRate)} | {entry.ExplicitNegativePassed}/{entry.ExplicitNegativeCases} | {FormatRatio(entry.ExplicitNegativePassRate)} | {entry.UnsupportedProducerCases} | {entry.BenignRawMatches} | {(entry.HasPairedControls ? "Yes" : "No")} |");
             }
-            if (coverage.Count(static item => item.PositiveCases > 0 || item.ExplicitNegativeCases > 0) > 40)
+            if (coverage.Count(static item => item.PositiveCases > 0 || item.ExplicitNegativeCases > 0 || item.UnsupportedProducerCases > 0) > 40)
                 sb.AppendLine("- Showing 40 tested rules. Full per-rule inventory and zero-coverage rules are available in the JSON report.");
 
             sb.AppendLine();
@@ -166,7 +200,7 @@ namespace Carthago.Services.Benchmarking
 
             sb.AppendLine();
             sb.AppendLine("## Alert-Level Recall Gaps");
-            sb.AppendLine("- Unit: one expected malicious (sample, rule, profile) without an alert.");
+            sb.AppendLine("- Unit: one expected supported-malicious (sample, rule, profile) without an alert; UnsupportedMalicious producer gaps are excluded.");
             sb.AppendLine("- A raw detector match in Shadow mode remains a missed alert for this report.");
             sb.AppendLine("- The primary cause is prioritized for triage; additional factors may independently block the same alert.");
             sb.AppendLine("- Causes identify evidence and policy bottlenecks; they do not authorize automatic rule promotion.");
@@ -210,7 +244,7 @@ namespace Carthago.Services.Benchmarking
                 sb.AppendLine($"- Shadows: {profile.ShadowCount}");
                 sb.AppendLine($"- Suppressed: {profile.SuppressedCount}");
                 sb.AppendLine($"- Benign alerts: {profile.BenignAlertCount}");
-                sb.AppendLine($"- Malicious pass rate: {FormatRatio(profile.TruePositivePassRate)}");
+                sb.AppendLine($"- Supported malicious alert pass rate: {FormatRatio(profile.TruePositivePassRate)}");
                 if (profile.AlertRuleIds.Count > 0)
                     sb.AppendLine($"- Alerting rules: {string.Join(", ", profile.AlertRuleIds.Take(20))}");
                 sb.AppendLine();
@@ -257,26 +291,27 @@ namespace Carthago.Services.Benchmarking
             sb.AppendLine($"- Paired synthetic controls: {audit.Count(static entry => entry.PairedSyntheticControls)}");
             sb.AppendLine($"- Positive only: {audit.Count(static entry => entry.EvidenceStatus == "PositiveOnly")}");
             sb.AppendLine($"- Negative only: {audit.Count(static entry => entry.EvidenceStatus == "NegativeOnly")}");
+            sb.AppendLine($"- Unsupported producer only: {audit.Count(static entry => entry.EvidenceStatus == "UnsupportedProducerOnly")}");
             sb.AppendLine($"- No explicit controls: {audit.Count(static entry => entry.EvidenceStatus == "NoExplicitReplayControls")}");
             sb.AppendLine();
             sb.AppendLine("## Coverage by detection family");
-            sb.AppendLine("| Category | Rules | Paired | Positive-only | Negative-only | No controls | Contract issues |");
-            sb.AppendLine("| --- | ---: | ---: | ---: | ---: | ---: | ---: |");
+            sb.AppendLine("| Category | Rules | Paired | Positive-only | Negative-only | Unsupported-producer | No controls | Contract issues |");
+            sb.AppendLine("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |");
             foreach (var family in audit.GroupBy(static entry => entry.Category)
                 .OrderByDescending(static group => group.Count())
                 .ThenBy(static group => group.Key, StringComparer.OrdinalIgnoreCase))
             {
-                sb.AppendLine($"| {EscapeCell(family.Key)} | {family.Count()} | {family.Count(static entry => entry.PairedSyntheticControls)} | {family.Count(static entry => entry.EvidenceStatus == "PositiveOnly")} | {family.Count(static entry => entry.EvidenceStatus == "NegativeOnly")} | {family.Count(static entry => entry.EvidenceStatus == "NoExplicitReplayControls")} | {family.Count(static entry => entry.ContractIssues.Count > 0)} |");
+                sb.AppendLine($"| {EscapeCell(family.Key)} | {family.Count()} | {family.Count(static entry => entry.PairedSyntheticControls)} | {family.Count(static entry => entry.EvidenceStatus == "PositiveOnly")} | {family.Count(static entry => entry.EvidenceStatus == "NegativeOnly")} | {family.Count(static entry => entry.EvidenceStatus == "UnsupportedProducerOnly")} | {family.Count(static entry => entry.EvidenceStatus == "NoExplicitReplayControls")} | {family.Count(static entry => entry.ContractIssues.Count > 0)} |");
             }
             sb.AppendLine();
             sb.AppendLine("## All registered rules");
-            sb.AppendLine("| Rule | Category | Maturity | Mode | Floor | + controls | - controls | Evidence status | Contract issues |");
-            sb.AppendLine("| --- | --- | --- | --- | ---: | ---: | ---: | --- | --- |");
+            sb.AppendLine("| Rule | Category | Maturity | Mode | Floor | + controls | - controls | Unsupported producer | Evidence status | Contract issues |");
+            sb.AppendLine("| --- | --- | --- | --- | ---: | ---: | ---: | ---: | --- | --- |");
             foreach (var entry in audit.OrderByDescending(static item => item.ContractIssues.Count)
                 .ThenBy(static item => item.PairedSyntheticControls)
                 .ThenBy(static item => item.RuleId, StringComparer.OrdinalIgnoreCase))
             {
-                sb.AppendLine($"| {EscapeCell(entry.RuleId)} | {EscapeCell(entry.Category)} | {EscapeCell(entry.Maturity)} | {EscapeCell(entry.PrecisionDefaultMode)} | {entry.MinimumConfidence}% | {entry.PositiveRecognized}/{entry.PositiveCases} | {entry.ExplicitNegativePassed}/{entry.ExplicitNegativeCases} | {EscapeCell(entry.EvidenceStatus)} | {EscapeCell(string.Join(", ", entry.ContractIssues))} |");
+                sb.AppendLine($"| {EscapeCell(entry.RuleId)} | {EscapeCell(entry.Category)} | {EscapeCell(entry.Maturity)} | {EscapeCell(entry.PrecisionDefaultMode)} | {entry.MinimumConfidence}% | {entry.PositiveRecognized}/{entry.PositiveCases} | {entry.ExplicitNegativePassed}/{entry.ExplicitNegativeCases} | {entry.UnsupportedProducerCases} | {EscapeCell(entry.EvidenceStatus)} | {EscapeCell(string.Join(", ", entry.ContractIssues))} |");
             }
             return sb.ToString();
         }

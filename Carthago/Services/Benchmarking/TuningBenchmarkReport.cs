@@ -10,6 +10,8 @@ namespace Carthago.Services.Benchmarking
         public int ReplaySampleCount { get; set; }
         public int BenignSampleCount { get; set; }
         public int MaliciousSampleCount { get; set; }
+        public int UnsupportedMaliciousSampleCount { get; set; }
+        public int UnsupportedRuleCount { get; set; }
         public int ExpectedMatchCount { get; set; }
         public int MatchedExpectedCount { get; set; }
         public double TruePositivePassRate { get; set; }
@@ -69,6 +71,8 @@ namespace Carthago.Services.Benchmarking
         public string FilePath { get; set; } = string.Empty;
         public ReplaySampleClassification Classification { get; set; }
         public List<string> ExpectedMatches { get; set; } = new();
+        public List<string> UnsupportedRuleIds { get; set; } = new();
+        public Dictionary<string, string> UnsupportedReasonCodesByRuleId { get; set; } = new(StringComparer.OrdinalIgnoreCase);
         public List<string> ExpectedNonMatches { get; set; } = new();
         public List<string> ActualMatches { get; set; } = new();
         public List<string> MissingExpectedMatches { get; set; } = new();
@@ -156,6 +160,9 @@ namespace Carthago.Services.Benchmarking
         public int ExplicitNegativeCases { get; set; }
         public int ExplicitNegativePassed { get; set; }
         public int ExplicitNegativeFailed { get; set; }
+        // Explicit producer-limited malicious controls verify fail-closed
+        // architecture and are not positive/negative detector cases.
+        public int UnsupportedProducerCases { get; set; }
         // Benign raw matches are not necessarily alert-level false positives.
         public int BenignRawMatches { get; set; }
         public double? PositiveRecognitionRate { get; set; }

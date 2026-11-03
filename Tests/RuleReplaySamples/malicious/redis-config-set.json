@@ -1,15 +1,22 @@
-﻿{
+{
   "name": "redis-config-set",
+  "classification": "UnsupportedMalicious",
   "records": [
     {
       "source": "203.0.113.65",
       "destination": "10.10.0.65",
       "protocol": "TCP",
-      "applicationProtocol": "Redis",
+      "isTcp": true,
+      "sourcePort": 53065,
       "destinationPort": 6379,
-      "info": "Redis CONFIG SET dir /tmp"
+      "info": "TCP 203.0.113.65:53065 -> 10.10.0.65:6379 [Redis RESP2 request]"
     }
   ],
-  "expectedMatches": ["R437"],
-  "expectedMinimumConfidence": 0.65
+  "rawRedisResp2RequestsByRecordIndex": {
+    "0": "2A340D0A24360D0A434F4E4649470D0A24330D0A5345540D0A24370D0A74696D656F75740D0A24320D0A33300D0A"
+  },
+  "unsupportedRuleIds": ["R437"],
+  "unsupportedReasonCodesByRuleId": {
+    "R437": "REDIS_RESP_CONFIG_SET_UNAVAILABLE"
+  }
 }

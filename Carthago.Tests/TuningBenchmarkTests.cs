@@ -28,7 +28,11 @@ namespace Carthago.Tests
             Assert.NotNull(report);
             Assert.True(report.SampleResults.Count >= 16);
             var quality = Assert.IsType<DetectionQualityMetrics>(report.Summary.SampleLevelQuality);
-            Assert.Equal(report.SampleResults.Count, quality.TruePositives + quality.FalsePositives + quality.FalseNegatives + quality.TrueNegatives);
+            Assert.Equal(report.SampleResults.Count(sample =>
+                    sample.Classification != ReplaySampleClassification.UnsupportedMalicious),
+                quality.TruePositives + quality.FalsePositives + quality.FalseNegatives + quality.TrueNegatives);
+            Assert.Equal(6, report.Summary.UnsupportedMaliciousSampleCount);
+            Assert.Equal(6, report.Summary.UnsupportedRuleCount);
             Assert.True(File.Exists(store.GetJsonPath(tempOutput)));
             Assert.True(File.Exists(store.GetMarkdownPath(tempOutput)));
             Assert.True(File.Exists(store.GetHardeningAuditPath(tempOutput)));
@@ -43,6 +47,7 @@ namespace Carthago.Tests
             Assert.Contains("F1:", markdown);
             Assert.Contains("## Alert-Level Recall Gaps", markdown);
             Assert.Contains("## Explicit Rule Evidence Coverage", markdown);
+            Assert.Contains("## Unsupported Trusted-Producer Coverage", markdown);
             var loaded = await store.LoadAsync(tempOutput);
             Assert.NotNull(loaded);
             Assert.Equal(report.RuleEvidenceCoverage.Count, loaded!.RuleEvidenceCoverage.Count);
@@ -224,9 +229,15 @@ namespace Carthago.Tests
 
             Assert.Contains("R102", dnsTunnel.ActualMatches);
             Assert.True(dnsTunnel.MaximumConfidence >= 0.75, $"Expected high confidence for dns-tunnel-high-confidence, got {dnsTunnel.MaximumConfidence:F2}.");
-            // A device-code initiation alone does not establish phishing.
+            // A device-code initiation alone does not establish phishing and
+            // the required trusted IdP producer is not connected. Keep the
+            // coverage gap explicit without counting it as supported recall.
+            Assert.Equal(ReplaySampleClassification.UnsupportedMalicious, oauth.Classification);
             Assert.DoesNotContain("R275", oauth.ActualMatches);
-            Assert.Contains("R275", oauth.MissingExpectedMatches);
+            Assert.Contains("R275", oauth.UnsupportedRuleIds);
+            Assert.Empty(oauth.MissingExpectedMatches);
+            Assert.Equal("TRUSTED_DEVICE_CODE_ABUSE_EVENT_UNAVAILABLE",
+                oauth.UnsupportedReasonCodesByRuleId["R275"]);
             Assert.True(report.ProfileResults["Enterprise"].AlertCount >= report.ProfileResults["HomeLab"].AlertCount);
             // MBAP/PDU bytes are now decoded by the same OT parser used by
             // capture. Raw R240 recognition must succeed; environment profile
@@ -235,6 +246,41 @@ namespace Carthago.Tests
             Assert.DoesNotContain("R240", modbus.MissingExpectedMatches);
             Assert.True(modbus.MaximumConfidence >= 0.65);
             Assert.DoesNotContain("R240", modbus.Profiles["HomeLab"].AlertRuleIds);
+        }
+
+        [Fact]
+        public async Task Unsupported_Producer_Gaps_Are_Separated_From_Supported_Detector_Recall()
+        {
+            var report = await new TuningBenchmarkRunner().RunAsync(new TuningBenchmarkOptions
+            {
+                ReplayDirectory = GetReplayDirectory()
+            });
+
+            var unsupported = report.SampleResults
+                .Where(sample => sample.Classification == ReplaySampleClassification.UnsupportedMalicious)
+                .ToArray();
+            Assert.Equal(6, unsupported.Length);
+            Assert.Equal(new[] { "R275", "R295", "R343", "R437", "R508", "R516" },
+                unsupported.SelectMany(sample => sample.UnsupportedRuleIds)
+                    .OrderBy(id => id, StringComparer.OrdinalIgnoreCase).ToArray());
+            Assert.All(unsupported, sample =>
+            {
+                Assert.Empty(sample.ExpectedMatches);
+                Assert.Empty(sample.MissingExpectedMatches);
+                Assert.Empty(sample.Errors);
+                Assert.All(sample.UnsupportedRuleIds, ruleId =>
+                    Assert.DoesNotContain(sample.ActualMatches,
+                        actual => string.Equals(actual, ruleId, StringComparison.OrdinalIgnoreCase)));
+            });
+
+            var jenkins = report.SampleResults.Single(sample => sample.Name == "devops-jenkins-crumb");
+            var bacnet = report.SampleResults.Single(sample => sample.Name == "bacnet-write-property");
+            Assert.Equal(ReplaySampleClassification.Malicious, jenkins.Classification);
+            Assert.Equal(ReplaySampleClassification.Malicious, bacnet.Classification);
+            Assert.Contains("R356", jenkins.ActualMatches);
+            Assert.Contains("R485", bacnet.ActualMatches);
+            Assert.Empty(jenkins.MissingExpectedMatches);
+            Assert.Empty(bacnet.MissingExpectedMatches);
         }
 
         [Fact]

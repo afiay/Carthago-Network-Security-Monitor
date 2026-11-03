@@ -50,7 +50,9 @@ await store.SaveAsync(report, options.OutputDirectory);
 
 Console.WriteLine($"Benchmark: {report.Name}");
 Console.WriteLine($"Samples: {report.Summary.ReplaySampleCount}");
-Console.WriteLine($"True-positive pass rate: {report.Summary.TruePositivePassRate:P1}");
+Console.WriteLine($"Supported malicious samples: {report.Summary.MaliciousSampleCount}");
+Console.WriteLine($"Unsupported malicious samples: {report.Summary.UnsupportedMaliciousSampleCount} ({report.Summary.UnsupportedRuleCount} rule contracts)");
+Console.WriteLine($"Supported-detector true-positive pass rate: {report.Summary.TruePositivePassRate:P1}");
 Console.WriteLine($"Benign false positives: {report.Summary.BenignFalsePositiveCount}");
 Console.WriteLine($"Noisy rules: {string.Join(", ", report.Summary.NoisyRules.Take(10))}");
 Console.WriteLine($"Output: {store.GetJsonPath(options.OutputDirectory)}");
@@ -60,6 +62,7 @@ if (report.Summary.SampleLevelQuality is { } quality)
     var total = correct + quality.FalsePositives + quality.FalseNegatives;
     Console.WriteLine($"Sample-level accuracy ({Carthago.Engine.Rules.Tuning.RuleTuningCatalog.DefaultProfileName}): {(total == 0 ? "N/A" : ((double)correct / total).ToString("P1"))}");
     Console.WriteLine($"Precision: {FormatMetric(quality.Precision)}  Recall: {FormatMetric(quality.Recall)}  F1: {FormatMetric(quality.F1Score)}");
+    Console.WriteLine("Scope: supported malicious + benign labeled replays; UnsupportedMalicious producer gaps are reported separately.");
 }
 if (verbose)
 {
@@ -95,7 +98,21 @@ if (compareProfiles)
 }
 if (explainShadow)
 {
-    Console.WriteLine("\nExpected malicious rules not alerting (profile policy diagnostics):");
+    Console.WriteLine("\nUnsupported malicious scenarios (trusted producer unavailable; excluded from recall denominators):");
+    foreach (var sample in report.SampleResults.Where(static item =>
+        item.Classification == ReplaySampleClassification.UnsupportedMalicious))
+    {
+        foreach (var ruleId in sample.UnsupportedRuleIds)
+        {
+            var requiredCode = sample.UnsupportedReasonCodesByRuleId.TryGetValue(ruleId, out var code)
+                ? code : "UNSPECIFIED";
+            var diagnostic = sample.ExpectedRuleDiagnostics.FirstOrDefault(item =>
+                string.Equals(item.RuleId, ruleId, StringComparison.OrdinalIgnoreCase));
+            Console.WriteLine($"  {sample.Name} / {ruleId}: required fail-closed reason={requiredCode}; outcome={diagnostic?.Outcome ?? "NoDiagnostic"}");
+        }
+    }
+
+    Console.WriteLine("\nExpected supported malicious rules not alerting (profile policy diagnostics):");
     foreach (var sample in report.SampleResults.Where(static item => item.Classification == ReplaySampleClassification.Malicious))
     {
         foreach (var profile in sample.Profiles.OrderBy(static pair => pair.Key, StringComparer.OrdinalIgnoreCase))
