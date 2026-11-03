@@ -4826,3 +4826,30 @@ Inspected live branch HEAD/recent commits and full ledger through GA UI-98; `Sin
 10. Confirm three authorized paths, direct-parent source/docs commits, single non-forced expected-SHA publication and **zero** builds/tests/replays/holdouts/CI/Actions/runners/benchmarks/production capture.
 
 **Next UI GA UI-100:** fresh live reference/ledger/consumer audit, then a new substantial screen-visible redesign rather than tooltip-only work. All acceptance remains **UNEXECUTED** until owner explicitly authorizes “now it is test time.”
+
+## GA UI-100 — Global operational command shell: visual redesign
+
+**2026-11-03 · SOURCE CANDIDATE — UNVERIFIED.** Approved image `libfile_b0a34361560c8191b641e432b3e6b15c` retrieved and visually inspected before GitHub. Live initial branch HEAD `3481d48e60a7b9c441092987e61f5f221b64584c`, latest completed design milestone UI-99 `3481d48e60a7b9c441092987e61f5f221b64584c`. UI source commit `2e6f34e3e8cc8800ac97573909c62d27957bb3a3`; MainWindow XAML blob `ef76f962ed0893a8461f25e9640b3035948861f0` → `a27097a812ddfd27ff0efd2a7d48ed323ae4a211`.
+
+**Reference mapping, visible before → after:** Previous cross-workspace command header was a compact, flat surface with unframed status, source and analysis sections separated by thin lines; the File menu was a flat strip. The new command shell has a navy/teal gradient, 14px rounded outer panel, stronger cyan-toned border, three distinct 10px rounded status/source/analysis cards, more generous padding and vertical rhythm, larger 42px operational buttons, and a dark bordered File menu. This changes the visible global application shell across Dashboard, Incidents, Investigation, Anomalies, Live Events, Settings and other workspaces. Approved screenshot informs navy/graphite/cyan layered header and grouped operational controls; its sensor metrics, Mbps, IPs, incident rule IDs and statuses are DEMO ONLY. Existing `CaptureStatusText`, `DeviceComboBox`, `HeaderLastAnalysisText` and actions remain bound to their real existing local sources; no fake capture status or new command.
+
+**Responsive:** Existing `MainWindow.Responsive.cs` continues to reposition the four named groups at Wide >=1440, Standard 1100–1439 and Compact 1024–1099, with existing behavior below 1024. The new cards have slightly larger fixed padding; compact clipping/scrolling risk is explicit. Existing code-behind overrides CommandHeader.Padding and MinHeight at each breakpoint, so the XAML padding and height are initial visual defaults, not guaranteed runtime values. No responsive method, shared interface or consumer was modified.
+
+**Start/end static divergence and ownership:** Inspected live HEAD, recent independent rule/verification commits, design ledger through UI-99, MainWindow.xaml, Theme.xaml, MainWindow.Responsive.cs, MainWindow.Navigation.cs, and existing named header group controls and handlers. All named command groups, four adaptive grid rows/columns, status badge, capture-source selector, last-analysis text, start/stop/reputation, disabled ellipsis, preference toggle, Customize navigation, File session/export menu and handlers are retained. Exactly `Carthago/Views/MainWindow.xaml` and this `docs/design/**` ledger are intended paths. No Engine/Models/Services, rules/protocols, capture/trust/privacy, tests, workflows, runners, project, shared APIs or independent automation modifications. Existing local PPS ScottPlot 10-sample moving average/120-point history, incident prioritization, Live Events 80 shown/500 retained, explicitly unavailable visual-only CLI, Cisco/WebView2 remain untouched.
+
+**Static visual-impact assessment:** cohesive cross-screen command-shell surface redesign, not tooltip-only. Actual WPF rendering and behavior remain UNVERIFIED. Risks: runtime responsive code overwrites header border thickness of three groups to separator-style values (so card borders may be asymmetric), narrow viewport wrapping, Wide action buttons competing for space, 125–200% DPI, theme precedence and keyboard/high-contrast focus. The 42px action buttons may increase header height and reduce evidence viewport.
+
+### Planned acceptance scenarios — ALL UNEXECUTED
+
+1. Compare Wide shell gradient, cards and control hierarchy to approved screenshot, excluding DEMO data.
+2. Inspect Standard 1100–1439 group placement and action wrapping.
+3. Inspect Compact 1024–1099 stacking and command access.
+4. Inspect 1023/800/640 widths for clipping and keyboard reachability.
+5. Inspect 125/150/200% DPI for card borders, text and controls.
+6. Confirm real capture state and source selector remain accurate and never claim health from selection.
+7. Confirm start/stop, reputation and settings preference actions preserve original handlers.
+8. Confirm File Open/Save/Save As/Excel menu remains accessible and functional.
+9. Confirm unchanged PPS, incidents, Live Events, visual-only CLI, Cisco/WebView2 and privacy.
+10. Confirm two authorized paths, expected-SHA atomic update, and zero builds/tests/replays/holdouts/CI/runners/benchmarks/production capture.
+
+**Next GA UI-101:** improve the shell's responsive card-border and action-density behavior after a fresh reference/consumer audit; only deliver a cohesive visible milestone. Testing remains prohibited until explicit “now it is test time.”
