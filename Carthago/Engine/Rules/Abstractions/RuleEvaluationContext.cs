@@ -15,7 +15,7 @@ namespace Carthago.Engine.Rules
             Sensitivity sensitivity,
             DateTime timestampUtc,
             RuleEngineHealthSnapshot? healthSnapshot = null)
-            : this(record, sensitivity, timestampUtc, healthSnapshot, null, false)
+            : this(record, sensitivity, timestampUtc, healthSnapshot, null, null, false)
         {
         }
 
@@ -27,7 +27,22 @@ namespace Carthago.Engine.Rules
             OAuthDeviceFlowRuleCapability trustedR275Capability)
             : this(record, sensitivity, timestampUtc, healthSnapshot,
                 trustedR275Capability ?? throw new ArgumentNullException(
-                    nameof(trustedR275Capability)), true)
+                    nameof(trustedR275Capability)), null, true)
+        {
+        }
+
+        internal RuleEvaluationContext(
+            TrafficRecord record,
+            Sensitivity sensitivity,
+            DateTime timestampUtc,
+            RuleEngineHealthSnapshot? healthSnapshot,
+            OAuthDeviceFlowRuleCapability trustedR275Capability,
+            OAuthDeviceFlowPromotionAuthorization trustedR275PromotionAuthorization)
+            : this(record, sensitivity, timestampUtc, healthSnapshot,
+                trustedR275Capability ?? throw new ArgumentNullException(
+                    nameof(trustedR275Capability)),
+                trustedR275PromotionAuthorization ?? throw new ArgumentNullException(
+                    nameof(trustedR275PromotionAuthorization)), true)
         {
         }
 
@@ -37,6 +52,7 @@ namespace Carthago.Engine.Rules
             DateTime timestampUtc,
             RuleEngineHealthSnapshot? healthSnapshot,
             OAuthDeviceFlowRuleCapability? trustedR275Capability,
+            OAuthDeviceFlowPromotionAuthorization? trustedR275PromotionAuthorization,
             bool requireCapabilityBinding)
         {
             Record = record ?? throw new ArgumentNullException(nameof(record));
@@ -54,7 +70,16 @@ namespace Carthago.Engine.Rules
                     "Trusted R275 capability is not bound to this exact record and timestamp.",
                     nameof(trustedR275Capability));
 
+            if (trustedR275PromotionAuthorization != null
+                && (trustedR275Capability == null
+                    || !trustedR275PromotionAuthorization.IsBoundTo(
+                        trustedR275Capability, Record, TimestampUtc)))
+                throw new ArgumentException(
+                    "Trusted R275 promotion authorization is not bound to this capability, record and timestamp.",
+                    nameof(trustedR275PromotionAuthorization));
+
             TrustedR275Capability = trustedR275Capability;
+            TrustedR275PromotionAuthorization = trustedR275PromotionAuthorization;
         }
 
         public TrafficRecord Record { get; }
@@ -65,5 +90,6 @@ namespace Carthago.Engine.Rules
         // Deliberately internal. Public RuleEvaluationContext construction stays
         // packet-only and cannot attach or fabricate trusted R275 evidence.
         internal OAuthDeviceFlowRuleCapability? TrustedR275Capability { get; }
+        internal OAuthDeviceFlowPromotionAuthorization? TrustedR275PromotionAuthorization { get; }
     }
 }
