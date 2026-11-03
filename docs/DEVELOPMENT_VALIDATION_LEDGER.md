@@ -1694,3 +1694,19 @@ This verifies the injected `TokenCredential` contract, fixed Azure Monitor Logs 
 **Scope boundary:** no live Microsoft Entra tenant, Log Analytics workspace, production credential, signer private key or real phishing event was used in this run. The adapter's authenticated transport path is contract-tested with injected doubles. R275 remains fail-closed in ordinary rule evaluation until a separately reviewed producer-to-signed-receipt capability is integrated.
 
 No confidence floor, runtime mode, replay fixture classification, holdout V1/V2 state or alert policy changed.
+
+#### 2026-11-03 — R275 authenticated Entra-to-packet claim material authored
+
+After the authenticated Azure Monitor Logs source reached 66/66 GREEN, a separate non-signing handoff was authored to solve the provider/capture endpoint gap without fabricating data.
+
+Source commits:
+- `4a137bda4919a4120c771b4f1b741e74e51e727a` — authenticated Entra + packet claim-material builder.
+- `99393288c2a1d42bbd225f5912a2987bdb5851ce` — focused claim-material tests.
+- `ae75bf3401299daf201e7bdc841e03e92e6fac5f` — require HTTP/HTTPS/TLS application context in addition to TCP/443.
+- `a9763e632b3e0f64dab6798e9a02c3b8ca9d4a09` — cover arbitrary 443 application-context rejection.
+
+The builder accepts only `MicrosoftEntraDeviceCodeAuditObservation` values already marked `FromTrustedProviderTransport=true`. It binds them to independently captured identity-web traffic by exact source/client IP, explicit UTC time within two minutes, TCP/443, HTTP/HTTPS/TLS context, and an operator-supplied approved identity-host policy. The IdP destination IP is taken exclusively from the capture record because the Entra source row does not provide a trustworthy destination-IP field for this contract.
+
+The output is privacy-minimized `MicrosoftEntraDeviceFlowClaimMaterial` only. It contains no signing key and cannot create `SignedAuditEnvelope`, `VerifiedAuditReceipt` or an R275 alert.
+
+**Verification status:** SOURCE CANDIDATE — UNVERIFIED. The previously observed 66/66 authenticated-source GREEN remains valid; this new claim-material increment requires a focused rerun before it can be classified GREEN.
