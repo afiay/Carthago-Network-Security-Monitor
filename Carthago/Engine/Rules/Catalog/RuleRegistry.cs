@@ -607,6 +607,7 @@ namespace Carthago.Engine.Rules.Catalog
                 new R582_OutboundDefaultBasicAdminSubnetFanoutRule(),
                 new R583_OutboundBacnetWhoIsSubnetFanoutRule(),
                 new R584_OutboundSmb2WriteSubnetFanoutRule(),
+                new R585_ExternalThreeServiceAdministrativeProbeRule(),
             };
         }
 
