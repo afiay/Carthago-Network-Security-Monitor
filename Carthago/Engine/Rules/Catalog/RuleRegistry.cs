@@ -602,6 +602,11 @@ namespace Carthago.Engine.Rules.Catalog
                 new R577_FtpUploadThenRedisConfigAttemptRule(),
                 new R578_RedisConfigAttemptThenDefaultBasicAdminRule(),
                 new R579_DefaultBasicAdminThenRedisConfigAttemptRule(),
+                new R580_ExternalRedisConfigRequestSubnetFanoutRule(),
+                new R581_OutboundRedisConfigRequestSubnetFanoutRule(),
+                new R582_OutboundDefaultBasicAdminSubnetFanoutRule(),
+                new R583_OutboundBacnetWhoIsSubnetFanoutRule(),
+                new R584_OutboundSmb2WriteSubnetFanoutRule(),
             };
         }
 
