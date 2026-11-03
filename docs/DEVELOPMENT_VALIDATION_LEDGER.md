@@ -1993,3 +1993,29 @@ Owner test-time instructions (after pulling new source):
 2. If focused gate GREEN, `.\\verify-local.ps1 -Details` then `.\\scripts\\inspect-rule-evidence.ps1 -MissingPaired -Top 25` and record test counts, replay counts, rule audit counts, any failed assertion, total paired rules, benign alert outcomes and policy decisions.
 
 No existing predicate, thresholds, confidence floors, tuning profiles, event semantics, registry, Holdout V1 (frozen historical 4/6), Holdout V2 (0/4 reviewed external R102 pairs), production alert mode or unrelated automation were modified. This is offline developer synthetic evidence, not an independent field-quality claim.
+
+#### 2026-11-03 — GA-03 four-rule paired replay owner verification GREEN (153 samples)
+
+The owner supplied Windows PowerShell execution evidence after a **fast-forward pull** from `bf7e889` to `19bf1aabac187cf53964d44c46d55887212e70f9` on the existing `feature/carthago-reliability-hardening` branch. This closes the preceding GA-03 SOURCE CANDIDATE — UNVERIFIED **for that checked-out revision**, without retroactively reclassifying other, unexecuted candidate rule batches.
+
+**Focused test gate**:
+- `dotnet test .\\Carthago.Tests\\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~Ga03ExistingRulePairedReplayTests"`
+- Release builds of `Carthago` and `Carthago.Tests` **succeeded**.
+- **1 total, 1 passed, 0 failed, 0 skipped**, test duration **13.4 seconds**, overall build/test **60.6 seconds**.
+- This one test runs the development replay harness and verifies four different positive/negative rule pairs; it is **one xUnit test case**, not four separately reported xUnit passes.
+
+**End-to-end development validation**:
+- `.\\verify-local.ps1 -Details` — restore-tests **PASS** (1.7s), restore-benchmarks **PASS** (1.4s), build-tests **PASS** (2.5s), build-benchmarks **PASS** (3.3s), full test stage **PASS** (131.5s), replay benchmark **PASS** (9.1s), final **`PASS: local build, tests and replay validation.`**
+- The complete xUnit test count was **not printed** in this transcript, so only successful stage completion is claimed for this invocation.
+- **153 offline labeled replay samples**: **46** supported malicious, **101** benign, **6** producer-limited `UnsupportedMalicious`; these are separate categories.
+- **46/46 supported expected raw detector matches recognized** in each of the six profiles (100% on this synthetic development corpus, not field recall).
+- Benign critical alerts **0**; simulated alert-level false positives **0** on the reported labeled replay corpus.
+- **Alert-level recall** in Enterprise, HomeLab, OTSegment, Research and SmallBusiness = **1/46 (2.2%)**; IoTHeavy = **0/46 (0.0%)**. An empirical precision of 100% on a single emitted true-positive alert in five profiles is statistically weak and must not be represented as production precision.
+- All R118 (`0/15`), R163 (`0/20`), and R102 (`0/2`) observed expected matches remain non-alerting across all six tested profiles.
+- **695 default rule registrations**, **0 rule contract issues** and **PASS: registered default rule inventory agrees with benchmark (695 entries)**.
+- **11** default rules with paired positive/explicit-negative synthetic controls (up from **7**), **638** without any explicit replay controls (down from **640**).
+- `.\\scripts\\inspect-rule-evidence.ps1 -MissingPaired -Top 25` confirmed a separate **705-ID evidence inventory**, with **12** having at least one positive control, **63** at least one explicitly labeled negative control, and **11** paired. The 705 IDs **must not be mistaken for 705 default registered rules**.
+
+**Classification: GA-03 FOCUSED GREEN (1/1); 153-SAMPLE DEVELOPMENT DETECTION-QUALITY REPLAY GREEN.** The covered rules R001, R004, R017, R030 now have observed passing positive and benign nonmatch evidence, with the R030 negative scenario reused rather than duplicated. The development gate is closed for the owner-reported tested branch revision; original synthetic-data and corpus-label limitations remain.
+
+**Open work:** the majority of registered rules still lack paired controls, policy-constrained simulated alert recall remains low, trusted-producer end-to-end validation and the independent R102 Holdout V2 external capture/provenance review remain pending. Frozen V1 (historical 4/6) remains immutable. Confidence floors, detection predicates, profile policy, promotion authorization and production alert mode were not changed by this GA-03 increment. The owner did not provide a separate `git rev-parse HEAD` at test invocation; no independent exact-SHA runner attestation is claimed.
