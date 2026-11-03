@@ -72,7 +72,7 @@ public sealed class R568AdvancedAccuracyBatchTests
     [Fact] public async Task HandshakeAndPeerIdentityAreRequired()
     {
         var rule = new R568_RedisConfigDeniedThenDefaultBasicAdminRule();
-        Assert.False((await rule.EvaluateAsync(At(Redis(handshake: false))).Matched);
+        Assert.False((await rule.EvaluateAsync(At(Redis(handshake: false)))).Matched);
         Assert.False((await rule.EvaluateAsync(At(Http(), 1))).Matched);
         Assert.False((await rule.EvaluateAsync(At(Redis(client: "1.1.1.1"), 2))).Matched);
         Assert.False((await rule.EvaluateAsync(At(Http(), 3))).Matched);
