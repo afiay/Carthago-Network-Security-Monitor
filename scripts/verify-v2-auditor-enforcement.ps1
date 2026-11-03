@@ -4,6 +4,8 @@
 [CmdletBinding()]
 param(
     [string]$TsharkPath = 'C:\Program Files\Wireshark\tshark.exe',
+    [ValidateSet('BASELINE','A13','A01','A01-case','A02','A03','A04','A06','A08-qtype','A08-port','A09','A09-missing','A10','A10-origin','A10-session','A11','A11-review-type','A11-license','A12','A12-provenance','A14','A16-distinct')]
+    [string]$OnlyScenario = '',
     [switch]$AuthorizedTestTime
 )
 Set-StrictMode -Version Latest
@@ -205,6 +207,32 @@ function Get-ExpectedReason([string]$scenario) {
         default        { throw 'Unexpected auditor regression scenario.' }
     }
 }
+function Get-SanitizedObservedReason([string]$log) {
+    $known=@(
+        'SOURCE_INDEPENDENCE_MIRROR',
+        'SOURCE_SESSION_COLLISION',
+        'SOURCE_ORIGIN_COLLISION',
+        'same original PCAP packet frame reused',
+        'serialized record differs from decoded PCAP',
+        'original PCAP SHA-256 mismatch',
+        'original capture missing',
+        'SOURCE_VANTAGE_UNREVIEWED',
+        'SOURCE_ORIGIN_MISSING',
+        'SOURCE_SESSION_MISSING',
+        'SOURCE_REVIEW_FIELD_INVALID',
+        'incomplete external attribution or label review',
+        'DNS packet record has missing, extra or invalid typed fields',
+        'SOURCE_PROVENANCE_SCHEMA_REJECTED',
+        'R102 malicious expected rule/confidence was altered',
+        'R102 malicious encoded-TXT requires three distinct captured TXT'
+    )
+    foreach($reason in $known) {
+        if($log.IndexOf($reason,[StringComparison]::OrdinalIgnoreCase) -ge 0) {
+            return $reason
+        }
+    }
+    return 'UNRECOGNIZED_SANITIZED_REASON'
+}
 function Assert-PrivateAuditOutput([string]$log) {
     # Never publish captured records; scan only the temporary private output.
     foreach($entry in $entries) {
@@ -251,7 +279,8 @@ function InvokeAudit([string]$scenario,[bool]$expectReject) {
     if($expectReject) {
         $expectedReason=Get-ExpectedReason $scenario
         if($log.IndexOf($expectedReason,[StringComparison]::OrdinalIgnoreCase) -lt 0) {
-            throw ('AUDITOR CONTRACT FAIL: '+$scenario+' rejected for an unexpected reason; do not count as RED or GREEN.')
+            $actualReason=Get-SanitizedObservedReason $log
+            throw ('AUDITOR CONTRACT FAIL: '+$scenario+' expected='+$expectedReason+' actual='+$actualReason+'; do not count as RED or GREEN.')
         }
     } else {
         if($log.IndexOf('SOURCE AUDIT COMPLETE:',[StringComparison]::OrdinalIgnoreCase) -lt 0) {
@@ -269,12 +298,16 @@ function InvokeAudit([string]$scenario,[bool]$expectReject) {
 try {
     if(-not (Test-Path -LiteralPath $auditor)) { throw 'Auditor entry point unavailable.' }
     if(-not (Test-Path -LiteralPath $TsharkPath)) { throw 'TShark unavailable; cannot claim expected RED.' }
+    if(-not [string]::IsNullOrWhiteSpace($OnlyScenario)) {
+        $focusedReject=$OnlyScenario -notin @('BASELINE','A13')
+        InvokeAudit $OnlyScenario $focusedReject
+        Write-Host ('Focused auditor scenario completed: '+$OnlyScenario+'. No source approved or holdout frozen.')
+        return
+    }
     # Baseline is an attribution-only control, not a source-label approval.
     InvokeAudit 'BASELINE' $false
     # Disjoint sources remain review-only: success is *not* approval.
     InvokeAudit 'A13' $false
-    # A01/A02/A03/A10 expect new stable privacy-safe reason codes and will
-    # fail under the legacy auditor until its enforcement is implemented.
     foreach($scenario in @(
         'A01','A01-case','A02','A03','A04','A06','A08-qtype','A08-port',
         'A09','A09-missing','A10','A10-origin','A10-session',
