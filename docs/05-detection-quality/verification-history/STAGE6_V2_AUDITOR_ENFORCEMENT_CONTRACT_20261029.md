@@ -317,3 +317,14 @@ This is not evidence that packet binding is broken. It is an ordering defect in 
 Commit `d637df90e904d8386d995253bced9ca991e0510d` moves the malicious long-TXT eligibility predicate to after complete selected-frame binding. The earlier source-independence, schema, expected-rule, source/session/origin and frame-reuse checks remain unchanged. This ensures A06/A08 exercise provenance binding while A16 still exercises semantic eligibility after authentic packet attribution.
 
 **Gate status:** partial GREEN through A04; A06 invalid for RED/GREEN; full matrix pending rerun after the ordering fix. No holdout approval, freeze, label review or detector accuracy claim follows from this change.
+
+
+### 2026-11-03 rerun after packet-binding reorder — GREEN through A10-session; A11 diagnostic pending
+
+The owner reran the focused auditor contract after the A06/A08 packet-binding ordering fix. The following scenarios matched their exact expected rejection/acceptance category: `BASELINE`, `A13`, `A01`, `A01-case`, `A02`, `A03`, `A04`, `A06`, `A08-qtype`, `A08-port`, `A09`, `A09-missing`, `A10`, `A10-origin`, and `A10-session`.
+
+A11 then rejected for a different reason than its contract expectation. The verifier correctly refused to count the result as RED or GREEN. Because its private child log was intentionally not surfaced, the actual stable reason was not available from the owner transcript. No source-auditor change was made on a guess.
+
+Commit `27f3fa8357ba81ec58bfb9466c13505951eea23e` adds a diagnostic-only harness capability: `-OnlyScenario` can run one already-defined synthetic case, and mismatch output now maps the private log only to a fixed allowlist of privacy-safe contract reason strings. Unknown output becomes `UNRECOGNIZED_SANITIZED_REASON`. Raw packet data, DNS names, addresses, paths and provenance values remain private.
+
+**Next observation:** run only `A11` using the new selector, then fix the exact live-branch cause only if the sanitized observed reason demonstrates a contract/implementation mismatch. Full Stage 6 GREEN still requires the complete matrix afterward.
