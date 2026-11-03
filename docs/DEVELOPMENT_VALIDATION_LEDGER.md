@@ -1920,3 +1920,20 @@ Observed console evidence:
 **Classification:** BOTH REQUIRED R275 VALIDATION GATES COMPLETE — focused **114/114 GREEN** and unfiltered `Carthago.Tests` Release regression **10,669/10,669 GREEN**, per owner local console evidence. The transcript does not independently print `git rev-parse HEAD` at test time, so the result is attributed to the owner's checked-out existing branch, **without claiming exact-SHA attestation**.
 
 **Scope boundary:** test success does not enable production trusted receipt intake or authorize an R275 promotion. R275 80% confidence floor, raw HTTP telemetry profile, explicit promotion authorization, policy gates and frozen holdouts are unchanged. No frozen-holdout, benchmark, live capture or product-wide production acceptance is claimed by this unit-test gate.
+
+#### 2026-11-03 — Detection-quality replay gate RED; report verifier repair authored
+
+Owner-authorized Windows `./verify-local.ps1 -Details` finished restore, benchmark/test builds, xUnit stage, and benchmark process successfully. The **validation result remains RED**, not GREEN.
+
+Observed owner console:
+- `146` replay samples: `42` supported malicious, `98` benign, and `6` unsupported malicious according to the separate read-only accuracy inspector.
+- Supported malicious raw recognition: `42/42` across all six profiles; alert-level recognition: `1/42` in five profiles and `0/42` in IoTHeavy, with policy Shadow decisions. These are distinct metrics: raw matches are NOT alerts.
+- Benign alert false-positive count: `0` on the labeled replay corpus only. The sample size does not certify field false-positive rates.
+- `ssrf-imds`: `Maximum confidence 0.62 was below the expected floor 0.65`. R163's actual source assigns 0.34 (metadata-service target) + 0.28 (credential-path) and explicitly refuses to award confidence for ordinary IMDSv2 token headers. Its **84% runtime confidence floor remains unchanged**. This fixture expectation is **unresolved**; it was not silently lowered and confidence was not boosted.
+- `verify-local.ps1` aborted the remaining report audit on `Unrecognized replay classification on sample ad-psremoting-encoded-command`; benchmark code uses an explicit `UnsupportedMalicious` class. The validator also contained a hardcoded `544` default-rule count although the checked-out RuleRegistry source contains `695` default rule constructor registrations. `inspect-rule-evidence.ps1` reported a broader `705`-ID evidence inventory, 8 IDs with positive controls, 61 with explicit negative controls, 7 with paired controls. Default registry and evidence inventory are **different denominators**.
+
+SOURCE CANDIDATE fix authored directly on the existing feature branch in `e3c5357f06bb2c2b4acc6b92a2498ac2794e71ab`:
+1. The PowerShell alert-quality report explicitly accepts `UnsupportedMalicious` without counting it as supported attack or benign; it fails if a supposedly unavailable producer rule emits an alert. The benchmark's independent reason-code checks remain required.
+2. The audit inventory now cross-checks exact default rule IDs and duplicates against the checked-out `RuleRegistry.cs` instead of rejecting every catalog larger than 544. R001-R695 preservation provides a minimum floor, not an upper cap. Additional evidence-only IDs are not silently equated with default registrations.
+
+**Verification status:** SOURCE CANDIDATE — UNVERIFIED for the PowerShell repair; no .NET/PowerShell tests executed in the assistant environment. **Detection-quality gate remains RED** because of the unresolved `ssrf-imds` confidence expectation until independently investigated and rerun. No production rule, rule confidence, suppression policy, replay classification or frozen holdout changed.
