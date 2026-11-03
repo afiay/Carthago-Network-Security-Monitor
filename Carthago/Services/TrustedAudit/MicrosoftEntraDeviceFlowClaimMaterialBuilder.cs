@@ -95,6 +95,7 @@ namespace Carthago.Services.TrustedAudit
                 || !observedFlow.IsTcp
                 || observedFlow.DestinationPort != 443
                 || observedFlow.SourcePort is not (> 0 and <= 65535)
+                || !HasIdentityWebContext(observedFlow)
                 || !IPAddress.TryParse(observedFlow.Source, out var client)
                 || !IPAddress.TryParse(observedFlow.Destination, out var idp)
                 || IPAddress.IsLoopback(client)
@@ -138,6 +139,14 @@ namespace Carthago.Services.TrustedAudit
                 host);
             reason = "R275_UNSIGNED_CLAIM_MATERIAL_READY_FOR_EXTERNAL_SIGNER";
             return true;
+        }
+
+        private static bool HasIdentityWebContext(TrafficRecord record)
+        {
+            var application = record.ApplicationProtocol ?? string.Empty;
+            return application.Equals("TLS", StringComparison.OrdinalIgnoreCase)
+                || application.Equals("HTTPS", StringComparison.OrdinalIgnoreCase)
+                || application.Equals("HTTP", StringComparison.OrdinalIgnoreCase);
         }
 
         private bool IsApprovedHost(string host)
