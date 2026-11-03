@@ -42,28 +42,63 @@
         <RowDefinition Height="Auto"/>
       </Grid.RowDefinitions>
 
-      <Border Grid.Row="0" Style="{StaticResource IncidentOpsHeroCard}" Margin="0,0,0,16">
-        <StackPanel>
-          <TextBlock Text="INCIDENT OPERATIONS / TRIAGE" Style="{StaticResource IncidentOpsEyebrow}"/>
-          <TextBlock Text="Incident Queue" FontSize="29" FontWeight="Bold"
-                     Foreground="{StaticResource TextBrush}" Margin="0,6,0,4" TextWrapping="Wrap"/>
-          <TextBlock Text="Review case priority, filter the local queue and open investigation details." Foreground="{StaticResource TextSubtleBrush}"
-                     FontSize="12.5" TextWrapping="Wrap"/>
-          <Border Background="#112F43" BorderBrush="#37657A" BorderThickness="1"
-                  CornerRadius="11" Padding="14,9" HorizontalAlignment="Left" Margin="0,12,0,0">
-            <StackPanel Orientation="Horizontal">
-              <TextBlock Text="QUEUE STATUS" Style="{StaticResource IncidentOpsEyebrow}"
-                         VerticalAlignment="Center" Margin="0,0,14,0"/>
-              <TextBlock Text="{Binding QueueCountLabel}" FontSize="16"
-                         FontWeight="Bold" Foreground="{StaticResource TextBrush}"/>
+      <!-- GA UI-108: a two-zone command surface separates queue identity from real case volume. -->
+      <Border Grid.Row="0" Style="{StaticResource IncidentOpsHeroCard}" Margin="0,0,0,18">
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="Auto"/>
+          </Grid.ColumnDefinitions>
+          <StackPanel Grid.Column="0" Margin="0,0,20,0">
+            <TextBlock Text="INCIDENT OPERATIONS  /  LOCAL CASEWORK"
+                       Style="{StaticResource IncidentOpsEyebrow}"/>
+            <TextBlock Text="Incident Command"
+                       FontSize="32" FontWeight="Bold"
+                       Foreground="{StaticResource TextBrush}"
+                       Margin="0,9,0,7" TextWrapping="Wrap"/>
+            <TextBlock Text="Prioritize recorded cases, review supporting evidence and coordinate investigation."
+                       Foreground="{StaticResource TextSubtleBrush}"
+                       FontSize="13" TextWrapping="Wrap" MaxWidth="630"
+                       HorizontalAlignment="Left"/>
+            <WrapPanel Margin="0,19,0,0">
+              <Border Background="#103246" BorderBrush="#356D80" BorderThickness="1"
+                      CornerRadius="8" Padding="11,6" Margin="0,0,9,8">
+                <TextBlock Text="01  TRIAGE" Foreground="{StaticResource AccentAltBrush}"
+                           FontSize="11" FontWeight="SemiBold"/>
+              </Border>
+              <Border Background="#0D2636" BorderBrush="#29485C" BorderThickness="1"
+                      CornerRadius="8" Padding="11,6" Margin="0,0,9,8">
+                <TextBlock Text="02  INVESTIGATE" Foreground="{StaticResource TextSubtleBrush}"
+                           FontSize="11" FontWeight="SemiBold"/>
+              </Border>
+              <Border Background="#0D2636" BorderBrush="#29485C" BorderThickness="1"
+                      CornerRadius="8" Padding="11,6" Margin="0,0,0,8">
+                <TextBlock Text="03  REVIEW" Foreground="{StaticResource TextSubtleBrush}"
+                           FontSize="11" FontWeight="SemiBold"/>
+              </Border>
+            </WrapPanel>
+          </StackPanel>
+          <Border Grid.Column="1" Background="#091C2C" BorderBrush="#39798A"
+                  BorderThickness="1" CornerRadius="14" Padding="22,16"
+                  MinWidth="190" VerticalAlignment="Stretch">
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="LOCAL QUEUE" Style="{StaticResource IncidentOpsEyebrow}"
+                         Foreground="{StaticResource AccentAltBrush}"/>
+              <TextBlock Text="{Binding QueueCountLabel}" FontSize="22"
+                         FontWeight="Bold" Foreground="{StaticResource TextBrush}"
+                         Margin="0,12,0,8" TextWrapping="Wrap"/>
+              <Border Height="3" Background="{StaticResource AccentBrush}"
+                      CornerRadius="2" Margin="0,5,0,10"/>
+              <TextBlock Text="Recorded incidents" FontSize="11"
+                         Foreground="{StaticResource TextMutedBrush}"/>
             </StackPanel>
           </Border>
-        </StackPanel>
+        </Grid>
       </Border>
 
       <ItemsControl Grid.Row="1"
                     ItemsSource="{Binding Kpis}"
-                    Margin="0,0,0,16">
+                    Margin="0,0,0,20">
         <ItemsControl.ItemsPanel>
           <ItemsPanelTemplate>
             <WrapPanel/>
@@ -72,8 +107,9 @@
         <ItemsControl.ItemTemplate>
           <DataTemplate>
             <Border Style="{StaticResource IncidentOpsKpiCard}"
-                    Width="251"
-                    Margin="0,0,12,12"
+                    Width="268"
+                    MinHeight="172"
+                    Margin="0,0,14,14"
                     BorderBrush="{Binding AccentBrush}">
               <Grid>
                 <Grid.RowDefinitions>
@@ -93,9 +129,9 @@
                 </DockPanel>
                 <TextBlock Grid.Row="1"
                            Text="{Binding Value}"
-                           FontSize="28"
+                           FontSize="32"
                            FontWeight="Bold"
-                           Margin="0,8,0,0"/>
+                           Margin="0,12,0,0"/>
                 <TextBlock Grid.Row="2"
                            Text="{Binding Delta}"
                            Foreground="{Binding AccentBrush}"
