@@ -1559,3 +1559,22 @@ Observed output was fully GREEN across all enabled synthetic contract layers:
 **Classification:** GREEN for the synthetic DNS wire-source, V2 provenance/source-independence and replay-compatibility contracts at the owner-reported checkout. This verifies bounded source/frame/question binding, wire-name losslessness checks, strict pending-only replay compatibility and negative-control sensitivity. It does **not** approve a real external source, establish source rights or label truth, evaluate R102 precision/recall, freeze V2, or modify frozen V1.
 
 V2 remains `PENDING_EXTERNAL_CAPTURE_AND_REVIEW` with **0/4 reviewed external pairs**. Frozen V1 remains immutable. R102/R118/R163 confidence floors remain 80%/86%/84%.
+
+
+#### 2026-11-03 — R343 Windows audit readiness: non-elevated access remains unverified
+
+The owner pulled live branch revision `2a472f16ae317716127de03a78199eeddd3c145f` and ran the read-only command:
+`inspect-winrm-audit-readiness.ps1 -InspectAuditPolicy -InspectRecentEvents -LookbackMinutes 30`.
+
+Observed sanitized result:
+- Elevated administrator token: **False**.
+- Windows Event Log service: **Running**.
+- 4688 include-command-line local policy value: **NOT SET**.
+- Process Creation success-audit policy: **UNKNOWN (OTHER_ERROR (RemoteException; 0x80131501))**.
+- Security channel metadata: **ACCESS_DENIED**.
+- Security 4624/4688 queries: **NO MATCHES REPORTED (log access unverified)**.
+- Final status: **ACCESS UNVERIFIED**.
+
+**Interpretation:** this run does not establish that Security auditing is disabled, that 4624/4688 are absent, or that R343 source code is defective. The current PowerShell token lacks enough access to verify the Security channel/audit-policy state. No Windows setting, ACL, event, registry value, detector policy or confidence floor was changed.
+
+Historical Stage 1 remains valid and separate: an earlier authorized elevated CARTHAGE lab proved 4688 PID/image-path correlation and then restored Process Creation auditing to `No Auditing`. Do not re-enable auditing merely to repeat that already-closed lab gate. The next current-state check is an already-authorized elevated **read-only** rerun of the same readiness script.
