@@ -648,6 +648,16 @@ namespace Carthago.Engine.Rules.Catalog
                 new R623_DialerExternalTcpEgressRule(),
                 new R624_AddInUtilExternalTcpEgressRule(),
                 new R625_EquationEditorExternalTcpEgressRule(),
+                new R626_WordPressWp2shellPluginRequestRule(),
+                new R627_WebLogicKeystoreJspRequestRule(),
+                new R628_ExchangeProxyTokenRulesEditorRequestRule(),
+                new R629_HybridConnectionManagerServiceBusDnsRule(),
+                new R630_PowerShellOutboundPublicWinRmRule(),
+                new R631_CommandInterpreterOutboundRdpRule(),
+                new R632_SvchostRdpLoopbackFlowRule(),
+                new R633_CertutilExternalServiceTcpRule(),
+                new R634_WindowsScriptHostNonHttpOutboundTcpRule(),
+                new R635_NonBrowserProcessDeadDropHostRule(),
             };
         }
 
