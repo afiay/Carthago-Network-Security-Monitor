@@ -1,0 +1,185 @@
+{
+  "name": "ga03-r017-retransmissions-and-ack-only",
+  "records": [
+    {
+      "source": "10.243.1.9",
+      "destination": "10.243.20.10",
+      "protocol": "TCP",
+      "destinationPort": 8080,
+      "flags": "SYN",
+      "length": 72
+    },
+    {
+      "source": "10.243.1.9",
+      "destination": "10.243.20.10",
+      "protocol": "TCP",
+      "destinationPort": 8080,
+      "flags": "SYN",
+      "length": 72
+    },
+    {
+      "source": "10.243.1.9",
+      "destination": "10.243.20.10",
+      "protocol": "TCP",
+      "destinationPort": 8080,
+      "flags": "SYN",
+      "length": 72
+    },
+    {
+      "source": "10.243.1.9",
+      "destination": "10.243.20.10",
+      "protocol": "TCP",
+      "destinationPort": 8080,
+      "flags": "SYN",
+      "length": 72
+    },
+    {
+      "source": "10.243.1.9",
+      "destination": "10.243.20.10",
+      "protocol": "TCP",
+      "destinationPort": 8080,
+      "flags": "SYN",
+      "length": 72
+    },
+    {
+      "source": "10.243.1.9",
+      "destination": "10.243.20.10",
+      "protocol": "TCP",
+      "destinationPort": 8080,
+      "flags": "SYN",
+      "length": 72
+    },
+    {
+      "source": "10.243.1.9",
+      "destination": "10.243.20.10",
+      "protocol": "TCP",
+      "destinationPort": 8080,
+      "flags": "SYN",
+      "length": 72
+    },
+    {
+      "source": "10.243.1.9",
+      "destination": "10.243.20.10",
+      "protocol": "TCP",
+      "destinationPort": 8080,
+      "flags": "SYN",
+      "length": 72
+    },
+    {
+      "source": "10.243.1.9",
+      "destination": "10.243.20.10",
+      "protocol": "TCP",
+      "destinationPort": 8080,
+      "flags": "SYN",
+      "length": 72
+    },
+    {
+      "source": "10.243.1.9",
+      "destination": "10.243.20.10",
+      "protocol": "TCP",
+      "destinationPort": 8080,
+      "flags": "SYN",
+      "length": 72
+    },
+    {
+      "source": "10.243.1.9",
+      "destination": "10.243.20.10",
+      "protocol": "TCP",
+      "destinationPort": 8080,
+      "flags": "SYN",
+      "length": 72
+    },
+    {
+      "source": "10.243.1.9",
+      "destination": "10.243.20.10",
+      "protocol": "TCP",
+      "destinationPort": 8080,
+      "flags": "SYN",
+      "length": 72
+    },
+    {
+      "source": "10.243.1.9",
+      "destination": "10.243.20.20",
+      "protocol": "TCP",
+      "destinationPort": 8080,
+      "flags": "ACK",
+      "length": 72
+    },
+    {
+      "source": "10.243.1.9",
+      "destination": "10.243.20.21",
+      "protocol": "TCP",
+      "destinationPort": 8080,
+      "flags": "ACK",
+      "length": 72
+    },
+    {
+      "source": "10.243.1.9",
+      "destination": "10.243.20.22",
+      "protocol": "TCP",
+      "destinationPort": 8080,
+      "flags": "ACK",
+      "length": 72
+    },
+    {
+      "source": "10.243.1.9",
+      "destination": "10.243.20.23",
+      "protocol": "TCP",
+      "destinationPort": 8080,
+      "flags": "ACK",
+      "length": 72
+    },
+    {
+      "source": "10.243.1.9",
+      "destination": "10.243.20.24",
+      "protocol": "TCP",
+      "destinationPort": 8080,
+      "flags": "ACK",
+      "length": 72
+    },
+    {
+      "source": "10.243.1.9",
+      "destination": "10.243.20.25",
+      "protocol": "TCP",
+      "destinationPort": 8080,
+      "flags": "ACK",
+      "length": 72
+    },
+    {
+      "source": "10.243.1.9",
+      "destination": "10.243.20.26",
+      "protocol": "TCP",
+      "destinationPort": 8080,
+      "flags": "ACK",
+      "length": 72
+    },
+    {
+      "source": "10.243.1.9",
+      "destination": "10.243.20.27",
+      "protocol": "TCP",
+      "destinationPort": 8080,
+      "flags": "ACK",
+      "length": 72
+    },
+    {
+      "source": "10.243.1.9",
+      "destination": "10.243.20.28",
+      "protocol": "TCP",
+      "destinationPort": 8080,
+      "flags": "ACK",
+      "length": 72
+    },
+    {
+      "source": "10.243.1.9",
+      "destination": "10.243.20.29",
+      "protocol": "TCP",
+      "destinationPort": 8080,
+      "flags": "ACK",
+      "length": 72
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R017"
+  ]
+}

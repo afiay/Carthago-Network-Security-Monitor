@@ -1,0 +1,91 @@
+{
+  "name": "ga03-r017-ten-private-host-syn-sweep",
+  "records": [
+    {
+      "source": "10.243.1.9",
+      "destination": "10.243.20.10",
+      "protocol": "TCP",
+      "destinationPort": 8080,
+      "flags": "SYN",
+      "length": 72
+    },
+    {
+      "source": "10.243.1.9",
+      "destination": "10.243.20.11",
+      "protocol": "TCP",
+      "destinationPort": 8080,
+      "flags": "SYN",
+      "length": 72
+    },
+    {
+      "source": "10.243.1.9",
+      "destination": "10.243.20.12",
+      "protocol": "TCP",
+      "destinationPort": 8080,
+      "flags": "SYN",
+      "length": 72
+    },
+    {
+      "source": "10.243.1.9",
+      "destination": "10.243.20.13",
+      "protocol": "TCP",
+      "destinationPort": 8080,
+      "flags": "SYN",
+      "length": 72
+    },
+    {
+      "source": "10.243.1.9",
+      "destination": "10.243.20.14",
+      "protocol": "TCP",
+      "destinationPort": 8080,
+      "flags": "SYN",
+      "length": 72
+    },
+    {
+      "source": "10.243.1.9",
+      "destination": "10.243.20.15",
+      "protocol": "TCP",
+      "destinationPort": 8080,
+      "flags": "SYN",
+      "length": 72
+    },
+    {
+      "source": "10.243.1.9",
+      "destination": "10.243.20.16",
+      "protocol": "TCP",
+      "destinationPort": 8080,
+      "flags": "SYN",
+      "length": 72
+    },
+    {
+      "source": "10.243.1.9",
+      "destination": "10.243.20.17",
+      "protocol": "TCP",
+      "destinationPort": 8080,
+      "flags": "SYN",
+      "length": 72
+    },
+    {
+      "source": "10.243.1.9",
+      "destination": "10.243.20.18",
+      "protocol": "TCP",
+      "destinationPort": 8080,
+      "flags": "SYN",
+      "length": 72
+    },
+    {
+      "source": "10.243.1.9",
+      "destination": "10.243.20.19",
+      "protocol": "TCP",
+      "destinationPort": 8080,
+      "flags": "SYN",
+      "length": 72
+    }
+  ],
+  "expectedMatches": [
+    "R017"
+  ],
+  "expectedNonMatches": [
+    "R030"
+  ]
+}

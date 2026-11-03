@@ -1,0 +1,143 @@
+{
+  "name": "ga03-r004-twelve-attributed-ssh-failures",
+  "records": [
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "Failed password for invalid user guest"
+    },
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "Authentication failed for user guest"
+    },
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "Login failed for user guest"
+    },
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "Invalid credentials for user guest"
+    },
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "Failed password for invalid user guest"
+    },
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "Authentication failed for user guest"
+    },
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "Login failed for user guest"
+    },
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "Invalid credentials for user guest"
+    },
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "Failed password for invalid user guest"
+    },
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "Authentication failed for user guest"
+    },
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "Login failed for user guest"
+    },
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "Invalid credentials for user guest"
+    }
+  ],
+  "expectedMatches": [
+    "R004"
+  ],
+  "expectedNonMatches": [
+    "R030"
+  ]
+}

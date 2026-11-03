@@ -1,0 +1,169 @@
+{
+  "name": "ga03-r001-retransmissions-and-synack",
+  "records": [
+    {
+      "source": "10.241.1.9",
+      "destination": "10.241.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22000,
+      "flags": "SYN",
+      "length": 72
+    },
+    {
+      "source": "10.241.1.9",
+      "destination": "10.241.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22000,
+      "flags": "SYN",
+      "length": 72
+    },
+    {
+      "source": "10.241.1.9",
+      "destination": "10.241.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22000,
+      "flags": "SYN",
+      "length": 72
+    },
+    {
+      "source": "10.241.1.9",
+      "destination": "10.241.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22000,
+      "flags": "SYN",
+      "length": 72
+    },
+    {
+      "source": "10.241.1.9",
+      "destination": "10.241.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22000,
+      "flags": "SYN",
+      "length": 72
+    },
+    {
+      "source": "10.241.1.9",
+      "destination": "10.241.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22000,
+      "flags": "SYN",
+      "length": 72
+    },
+    {
+      "source": "10.241.1.9",
+      "destination": "10.241.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22000,
+      "flags": "SYN",
+      "length": 72
+    },
+    {
+      "source": "10.241.1.9",
+      "destination": "10.241.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22000,
+      "flags": "SYN",
+      "length": 72
+    },
+    {
+      "source": "10.241.1.9",
+      "destination": "10.241.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22000,
+      "flags": "SYN",
+      "length": 72
+    },
+    {
+      "source": "10.241.1.9",
+      "destination": "10.241.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22000,
+      "flags": "SYN",
+      "length": 72
+    },
+    {
+      "source": "10.241.1.9",
+      "destination": "10.241.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22000,
+      "flags": "SYN",
+      "length": 72
+    },
+    {
+      "source": "10.241.1.9",
+      "destination": "10.241.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22000,
+      "flags": "SYN",
+      "length": 72
+    },
+    {
+      "source": "10.241.1.9",
+      "destination": "10.241.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22100,
+      "flags": "SYN,ACK",
+      "length": 72
+    },
+    {
+      "source": "10.241.1.9",
+      "destination": "10.241.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22101,
+      "flags": "SYN,ACK",
+      "length": 72
+    },
+    {
+      "source": "10.241.1.9",
+      "destination": "10.241.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22102,
+      "flags": "SYN,ACK",
+      "length": 72
+    },
+    {
+      "source": "10.241.1.9",
+      "destination": "10.241.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22103,
+      "flags": "SYN,ACK",
+      "length": 72
+    },
+    {
+      "source": "10.241.1.9",
+      "destination": "10.241.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22104,
+      "flags": "SYN,ACK",
+      "length": 72
+    },
+    {
+      "source": "10.241.1.9",
+      "destination": "10.241.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22105,
+      "flags": "SYN,ACK",
+      "length": 72
+    },
+    {
+      "source": "10.241.1.9",
+      "destination": "10.241.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22106,
+      "flags": "SYN,ACK",
+      "length": 72
+    },
+    {
+      "source": "10.241.1.9",
+      "destination": "10.241.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22107,
+      "flags": "SYN,ACK",
+      "length": 72
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R001"
+  ]
+}

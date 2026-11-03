@@ -1,0 +1,273 @@
+{
+  "name": "ga03-r004-successful-ssh-and-banners",
+  "records": [
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "Accepted publickey for service account"
+    },
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "SSH-2.0-OpenSSH_9.6"
+    },
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "Accepted publickey for service account"
+    },
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "SSH-2.0-OpenSSH_9.6"
+    },
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "Accepted publickey for service account"
+    },
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "SSH-2.0-OpenSSH_9.6"
+    },
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "Accepted publickey for service account"
+    },
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "SSH-2.0-OpenSSH_9.6"
+    },
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "Accepted publickey for service account"
+    },
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "SSH-2.0-OpenSSH_9.6"
+    },
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "Accepted publickey for service account"
+    },
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "SSH-2.0-OpenSSH_9.6"
+    },
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "Accepted publickey for service account"
+    },
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "SSH-2.0-OpenSSH_9.6"
+    },
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "Accepted publickey for service account"
+    },
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "SSH-2.0-OpenSSH_9.6"
+    },
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "Accepted publickey for service account"
+    },
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "SSH-2.0-OpenSSH_9.6"
+    },
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "Accepted publickey for service account"
+    },
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "SSH-2.0-OpenSSH_9.6"
+    },
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "Accepted publickey for service account"
+    },
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "SSH-2.0-OpenSSH_9.6"
+    },
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "Accepted publickey for service account"
+    },
+    {
+      "source": "10.242.1.9",
+      "destination": "10.242.1.40",
+      "protocol": "TCP",
+      "destinationPort": 22,
+      "flags": "PSH,ACK",
+      "length": 200,
+      "sourcePort": 50320,
+      "applicationService": "SSH",
+      "info": "SSH-2.0-OpenSSH_9.6"
+    }
+  ],
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R004"
+  ]
+}
