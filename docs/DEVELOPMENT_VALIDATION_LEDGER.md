@@ -1656,3 +1656,20 @@ This verifies the strict Microsoft Entra projected `SigninLogs` parser, RSA-PSS 
 **Scope boundary:** this does not prove a live Microsoft Entra collector, tenant authentication, provider transport provenance, signing-key custody, real phishing-label truth, production alert quality or rule-engine integration. R275 remains fail-closed in normal rule evaluation until a separately reviewed trusted producer is wired through an authenticated capability path.
 
 No confidence floor, runtime mode, holdout fixture, V1/V2 state or alert policy changed.
+
+#### 2026-11-03 — Authenticated Azure Monitor Logs source authored for R275
+
+After the 56/56 GREEN synthetic R275 boundary verification, the next producer increment was authored without changing R275 alert behavior.
+
+Source commits:
+- `0f40e44e9e6b5853dd012ca6317db8800c1340eb` — authenticated Azure Monitor Logs source adapter.
+- `058e3219686441a2ca6ca97ba1c0dc45eba7f05b` — source-adapter contract tests.
+- `1676e9726f4830dce57df2c08e1c499978cfcd44` — deterministic newest-first Entra query ordering.
+
+The source uses the current Azure Monitor Logs data-plane endpoint `https://api.loganalytics.azure.com/v1/workspaces/{workspaceId}/query`, obtains a Microsoft Entra bearer token through an injected `Azure.Core.TokenCredential`, and requests the documented Log Analytics `.default` scope. It accepts only an operator-supplied workspace GUID and injected `HttpClient`; no credential, tenant identifier, workspace identifier or secret is committed.
+
+The KQL is fixed and privacy-minimized, result count is capped at 100, lookback is restricted to 1–60 minutes, response size is capped at 1 MiB, the Azure Monitor table schema must exactly equal the reviewed R275 projection, and each row must still pass `MicrosoftEntraDeviceCodeAuditIntake` before it can be marked `FromTrustedProviderTransport=true`.
+
+**Security boundary:** authenticated provider transport is not a signed R275 receipt and does not authorize a rule match. The existing non-alerting signed-candidate boundary and normal R275 fail-closed behavior remain unchanged.
+
+**Verification status:** SOURCE CANDIDATE — UNVERIFIED. The new `MicrosoftEntraLogAnalyticsDeviceCodeSourceTests` must be executed together with the already-GREEN R275 focused suites before this increment is marked GREEN.
