@@ -5,6 +5,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Carthago.Services.SessionFiles;
 using DocumentFormat.OpenXml.Packaging;
@@ -89,7 +90,7 @@ public sealed class CarthagoSessionFileTests
             using var document = SpreadsheetDocument.Open(path, false);
             var workbook = document.WorkbookPart!;
             string[] names = workbook.Workbook.Descendants<Sheet>().Select(s => s.Name!.Value!).ToArray();
-            Assert.Equal(CarthagoSessionSnapshot.CategoryOrder, names);
+            Assert.Equal(CarthagoSessionSnapshot.CategoryOrder.Concat(new[] { "DataQuality" }), names);
 
             Sheet trafficSheet = workbook.Workbook.Descendants<Sheet>().Single(s => s.Name == "Traffic");
             var part = (WorksheetPart)workbook.GetPartById(trafficSheet.Id!.Value!);
@@ -122,6 +123,53 @@ public sealed class CarthagoSessionFileTests
             Assert.Equal("A1:C2", filter.Reference!.Value);
         }
         finally { Directory.Delete(directory, recursive: true); }
+    }
+
+    [Fact]
+    public void RuleCatalogExportIncludesAllRegisteredRulesEvenWhenNoRuleAlerted()
+    {
+        var rows = CarthagoRuleCatalogExport.Build(Array.Empty<Carthago.Models.DetectionEvent>());
+        int expected = Carthago.Engine.Rules.Catalog.RuleRegistry.CreateDefaultRules()
+            .Select(rule => rule.Descriptor.RuleId)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Count();
+
+        Assert.Equal(expected, rows.Count);
+        Assert.Contains(rows, row => row.RuleId == "R001");
+        Assert.All(rows, row =>
+        {
+            Assert.Equal(0, row.ObservedEvents);
+            Assert.Null(row.MostRecentUtc);
+        });
+    }
+
+    [Fact]
+    public void DataQualityDistinguishesNullUnknownAndRedactedValues()
+    {
+        var snapshot = CarthagoSessionSnapshot.CreateEmpty();
+        snapshot.AddRows("Traffic", new[]
+        {
+            new
+            {
+                Source = "192.0.2.10",
+                ProcessName = "Unknown",
+                ProcessId = 0,
+                TlsVersion = (string?)null,
+                Authorization = "Bearer secret"
+            }
+        });
+
+        var rows = CarthagoExcelExportService.BuildDataQualityRows(snapshot);
+        JsonElement tls = rows.Single(row => row.GetProperty("Category").GetString() == "Traffic"
+            && row.GetProperty("Field").GetString() == "TlsVersion");
+        JsonElement processName = rows.Single(row => row.GetProperty("Category").GetString() == "Traffic"
+            && row.GetProperty("Field").GetString() == "ProcessName");
+        JsonElement authorization = rows.Single(row => row.GetProperty("Category").GetString() == "Traffic"
+            && row.GetProperty("Field").GetString() == "Authorization");
+
+        Assert.Equal(1, tls.GetProperty("NullOrAbsentValues").GetInt32());
+        Assert.Equal(1, processName.GetProperty("UnknownSentinelValues").GetInt32());
+        Assert.Equal(1, authorization.GetProperty("RedactedValues").GetInt32());
     }
 
     private static string NewTestDirectory()

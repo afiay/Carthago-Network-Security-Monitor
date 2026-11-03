@@ -171,9 +171,11 @@ public partial class MainWindow
             snapshot.Limitations.Add("Alerts come from the 500-row live UI window; older journal entries are not included.");
             snapshot.Limitations.Add("Incidents and anomalies are limited to up to 1,000 cached records each.");
             snapshot.Limitations.Add("Baselines include current aggregate status, not the complete historical per-host baseline database.");
-            snapshot.Limitations.Add("Rules lists only rules present in recent alerts, not the full registered detection catalog.");
+            snapshot.Limitations.Add("Rules contains the full registered detection catalog; ObservedEvents/MostRecentUtc are limited to the retained recent-alert window.");
+            snapshot.Limitations.Add("Blank Excel cells mean the source value was null, empty or absent. Protocol-specific blanks are often not applicable; Unknown/0 process attribution means unavailable; [REDACTED] means intentionally removed.");
             snapshot.Limitations.Add("The exported analysis is a point-in-time snapshot; in-flight queues may not yet be reflected.");
             snapshot.Limitations.Add("Known sensitive fields and explicitly marked sensitive evidence values are redacted; inspect free-text fields before sharing.");
+            CarthagoRuleCatalogRow[] ruleRows = CarthagoRuleCatalogExport.Build(alerts).ToArray();
             snapshot.AddRows("Overview", new[]
             {
                 new
@@ -185,6 +187,7 @@ public partial class MainWindow
                     AlertRows = alerts.Length,
                     IncidentRows = incidents.Length,
                     AnomalyRows = anomalies.Length,
+                    RegisteredRuleRows = ruleRows.Length,
                     stats.PacketsCaptured,
                     stats.PacketsParsedOk,
                     stats.PacketsParseErrors,
@@ -213,15 +216,7 @@ public partial class MainWindow
                 t.RiskScoreAfter, t.SourceIp, t.DestinationIp, t.DestinationHost,
                 t.Category, t.Tags, t.Details
             })));
-            snapshot.AddRows("Rules", alerts.GroupBy(a => a.RuleId, StringComparer.OrdinalIgnoreCase)
-                .Select(group => new
-                {
-                    RuleId = group.Key,
-                    RuleName = group.First().RuleName,
-                    ObservedEvents = group.Count(),
-                    MostRecentUtc = group.Max(a => a.TimestampUtc),
-                    AlertEmissionsNotIndependentlyVerified = true
-                }));
+            snapshot.AddRows("Rules", ruleRows);
             snapshot.AddRows("Enrichment", traffic.Where(t =>
                 !string.IsNullOrWhiteSpace(t.WhoisOrganization) || t.ReputationScore != null)
                 .Select(t => new

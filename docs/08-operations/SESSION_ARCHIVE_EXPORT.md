@@ -9,7 +9,7 @@
 | File → Open Session | Ctrl+O | Opens `.csa` in an offline, read-only viewer. |
 | File → Save Session | Ctrl+S | Saves the available current analysis; subsequent saves reuse the selected path. |
 | File → Save Session As | Ctrl+Shift+S | Selects a new `.csa` path. |
-| File → Export to Excel | Menu | Writes `.xlsx` with separate category worksheets. |
+| File → Export to Excel | Menu | Writes `.xlsx` with separate category worksheets plus a `DataQuality` completeness sheet. |
 
 The session viewer can also export the opened archive to `.xlsx` without restoring
 it into active capture. Opening a file does not create detection evidence, restart
@@ -42,11 +42,17 @@ use the same three-letter extension. This format is **not** a `.pcap` file.
 ## Excel category sheets
 
 `Overview`, `Traffic`, `Alerts`, `Incidents`, `Anomalies`, `Hosts`,
-`Baselines`, `Evidence`, `Timeline`, `Rules`, `Enrichment`.
+`Baselines`, `Evidence`, `Timeline`, `Rules`, `Enrichment`, plus an Excel-only
+`DataQuality` sheet that reports field population, null/absent values, explicit
+unknown sentinels, redactions and usable coverage.
 
 Each available JSON field becomes a column. Nested fields and arrays are
-retained as JSON text within cells. Values are written as text cells, never
-formula cells. Categories exceeding Excel's 1,048,575 data rows per worksheet
+retained as JSON text within cells. JSON numbers and booleans are written as
+native Excel values; strings remain literal text cells and are never formula
+cells. Blank cells preserve source null/empty/absent values rather than inventing
+data. `Unknown`/`0` producer sentinels and `[REDACTED]` are reported separately
+in `DataQuality` so missing, unavailable and intentionally removed data are not
+silently conflated. Categories exceeding Excel's 1,048,575 data rows per worksheet
 receive consecutively numbered sheets. Excel's 32,767-character cell limit
 requires truncation of longer individual values; this does not alter the `.csa`
 archive source record. A new workbook is assembled in a temporary file before
@@ -65,8 +71,10 @@ complete historical record of every packet or every rule. Specifically:
 - Hosts reflect last-seen data retained in the current UI.
 - Baselines contain aggregate current status, not every persisted per-host
   baseline snapshot.
-- Rules lists observed rule IDs in the currently retained alerts, not the full
-  registry or an operational certification claim.
+- Rules contains the full registered detection catalog with descriptor,
+  intelligence and precision-profile metadata. `ObservedEvents` and
+  `MostRecentUtc` still refer only to the currently retained recent-alert window
+  and are not an operational certification claim.
 - Evidence and timelines originate from these retained alert/incident records.
 - Save is a non-atomic view across active processing queues: in-flight messages
   may not yet have reached the relevant UI or analytics cache.
