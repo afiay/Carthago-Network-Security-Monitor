@@ -229,8 +229,18 @@ function Assert-PrivateAuditOutput([string]$log) {
 function InvokeAudit([string]$scenario,[bool]$expectReject) {
     BuildFixture $scenario
     $output=Join-Path $work 'private-auditor.log'
-    & powershell.exe -NoProfile -NonInteractive -File $auditor -CaptureDirectory $captureDir -CandidateDirectory $candidateDir -TsharkPath $TsharkPath *> $output
-    $exit=$LASTEXITCODE
+    # Expected negative controls intentionally make the child auditor exit
+    # nonzero. Under Windows PowerShell, native stderr is surfaced as a
+    # NativeCommandError and global ErrorActionPreference=Stop would terminate
+    # this parent before it can inspect the child's exit code and sanitized log.
+    $previousErrorActionPreference=$ErrorActionPreference
+    try {
+        $ErrorActionPreference='Continue'
+        & powershell.exe -NoProfile -NonInteractive -File $auditor -CaptureDirectory $captureDir -CandidateDirectory $candidateDir -TsharkPath $TsharkPath *> $output
+        $exit=$LASTEXITCODE
+    } finally {
+        $ErrorActionPreference=$previousErrorActionPreference
+    }
     $log=Get-Content -LiteralPath $output -Raw
     Assert-PrivateAuditOutput $log
     $rejected=$exit -ne 0
