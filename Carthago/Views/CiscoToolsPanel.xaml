@@ -19,21 +19,54 @@
         <conv:HealthHistoryToPointsConverter x:Key="HealthHistoryToPointsConverter"
                                              Width="70"
                                              Height="16"/>
+        <!-- UI-102 local visual system; existing controls and bindings are unchanged. -->
+        <Style x:Key="CiscoWorkspaceSection" TargetType="GroupBox">
+            <Setter Property="Background" Value="#0B1B2B"/>
+            <Setter Property="BorderBrush" Value="#28516A"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="12"/>
+            <Setter Property="Foreground" Value="#E8F5FF"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="15"/>
+        </Style>
+        <Style x:Key="CiscoEvidenceTable" TargetType="DataGrid"
+               BasedOn="{StaticResource {x:Type DataGrid}}">
+            <Setter Property="RowHeight" Value="35"/>
+            <Setter Property="ColumnHeaderHeight" Value="40"/>
+            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="#233B50"/>
+            <Setter Property="Background" Value="#081725"/>
+            <Setter Property="BorderBrush" Value="#25445A"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
     </UserControl.Resources>
 
-    <Border Background="{StaticResource CardBgBrush}"
-            BorderBrush="{StaticResource CardBorderBrush}"
-            BorderThickness="0"
-            Padding="12">
+    <Border Background="#081421"
+            BorderBrush="#24465B"
+            BorderThickness="1"
+            CornerRadius="14"
+            Padding="18">
         <DockPanel>
 
-            <DockPanel DockPanel.Dock="Top"
-                       Margin="0,0,0,8">
+            <Border DockPanel.Dock="Top" Margin="0,0,0,18"
+                    BorderBrush="#2C6675" BorderThickness="1"
+                    CornerRadius="13" Padding="22,18">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop Color="#102E47" Offset="0"/>
+                        <GradientStop Color="#0B2034" Offset="0.65"/>
+                        <GradientStop Color="#123C42" Offset="1"/>
+                    </LinearGradientBrush>
+                </Border.Background>
+            <DockPanel>
                 <StackPanel DockPanel.Dock="Left">
-                    <TextBlock Text="Cisco Tools"
-                               FontSize="16"
-                               FontWeight="SemiBold"
-                               Margin="0,0,0,4"/>
+                    <TextBlock Text="NETWORK OPERATIONS / CISCO"
+                               FontSize="11" FontWeight="Bold"
+                               Foreground="#53D2E6" Margin="0,0,0,8"/>
+                    <TextBlock Text="Cisco Operations Center"
+                               FontSize="27" FontWeight="Bold"
+                               Foreground="#F1F8FF"
+                               Margin="0,0,0,8"/>
                     <TextBlock Text="Rules-driven incidents, topology (CDP/SNMP), and live syslog in one console."
                                TextWrapping="Wrap"
                                Foreground="{StaticResource TextSubtleBrush}"
@@ -49,11 +82,12 @@
                             Click="OpenAnalyzer_Click"/>
                 </StackPanel>
             </DockPanel>
+            </Border>
 
             <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="2*"/>
-                    <RowDefinition Height="3*"/>
+                    <RowDefinition Height="2.2*"/>
+                    <RowDefinition Height="2.8*"/>
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="2.2*"/>
@@ -61,7 +95,7 @@
                     <ColumnDefinition Width="2*"/>
                 </Grid.ColumnDefinitions>
 
-                <GroupBox Header="Devices"
+                <GroupBox Header="Devices" Style="{StaticResource CiscoWorkspaceSection}"
                           Grid.Row="0"
                           Grid.Column="0"
                           Margin="0,0,8,8">
@@ -157,7 +191,7 @@
                         </StackPanel>
 
                         <!-- Devices grid -->
-                        <DataGrid x:Name="DevicesGrid"
+                        <DataGrid x:Name="DevicesGrid" Style="{StaticResource CiscoEvidenceTable}"
                                   ItemsSource="{Binding Devices}"
                                   SelectedItem="{Binding SelectedDevice, Mode=TwoWay}"
                                   AutoGenerateColumns="False"
@@ -348,7 +382,7 @@
                     </DockPanel>
                 </GroupBox>
 
-                <GroupBox Header="Topology overview"
+                <GroupBox Header="Topology overview" Style="{StaticResource CiscoWorkspaceSection}"
                           Grid.Row="0"
                           Grid.Column="1"
                           Margin="0,0,8,8">
@@ -511,7 +545,7 @@
                     </DockPanel>
                 </GroupBox>
 
-                <GroupBox Header="Device insight"
+                <GroupBox Header="Device insight" Style="{StaticResource CiscoWorkspaceSection}"
                           Grid.Row="0"
                           Grid.Column="2"
                           Margin="0,0,0,8">
@@ -614,7 +648,7 @@
                     </DockPanel>
                 </GroupBox>
 
-                <GroupBox Header="Live Cisco syslog"
+                <GroupBox Header="Live Cisco syslog" Style="{StaticResource CiscoWorkspaceSection}"
                           Grid.Row="1"
                           Grid.Column="0"
                           Grid.ColumnSpan="2"
@@ -739,7 +773,7 @@
                         </StackPanel>
 
                         <!-- Syslog grid -->
-                        <DataGrid x:Name="SyslogGrid"
+                        <DataGrid x:Name="SyslogGrid" Style="{StaticResource CiscoEvidenceTable}"
                                   ItemsSource="{Binding SyslogEvents}"
                                   AutoGenerateColumns="False"
                                   IsReadOnly="True"
@@ -798,7 +832,7 @@
                     </DockPanel>
                 </GroupBox>
 
-                <GroupBox Header="Incidents &#x2022; Rules and Export"
+                <GroupBox Header="Incidents &#x2022; Rules and Export" Style="{StaticResource CiscoWorkspaceSection}"
                           Grid.Row="1"
                           Grid.Column="2">
                     <DockPanel Margin="4">
@@ -839,7 +873,7 @@
                         </WrapPanel>
 
                         <!-- Incidents grid -->
-                        <DataGrid x:Name="IncidentsGrid"
+                        <DataGrid x:Name="IncidentsGrid" Style="{StaticResource CiscoEvidenceTable}"
                                   ItemsSource="{Binding Incidents}"
                                   AutoGenerateColumns="False"
                                   IsReadOnly="True"
