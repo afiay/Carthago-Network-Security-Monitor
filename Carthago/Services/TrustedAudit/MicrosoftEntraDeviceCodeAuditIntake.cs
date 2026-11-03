@@ -158,9 +158,11 @@ namespace Carthago.Services.TrustedAudit
             }
 
             if (!ReadString(fields, "CreatedDateTime", out var timestampText)
+                || !timestampText.Contains('T', StringComparison.Ordinal)
+                || !(timestampText.EndsWith("Z", StringComparison.Ordinal)
+                    || timestampText.EndsWith("+00:00", StringComparison.Ordinal))
                 || !DateTimeOffset.TryParse(timestampText, CultureInfo.InvariantCulture,
-                    DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
-                    out var occurredAtUtc)
+                    DateTimeStyles.None, out var occurredAtUtc)
                 || occurredAtUtc.Offset != TimeSpan.Zero)
             {
                 reason = "INVALID_ENTRA_TIMESTAMP";
