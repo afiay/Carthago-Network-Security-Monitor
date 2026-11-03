@@ -1432,3 +1432,22 @@ After owner pull to the branch containing the new auditor independence checks, `
 The live branch was checked before editing. Commit `ecc261d72649fd0b323c5a50712ce941476aca91` narrows the fix to the child-process invocation: it temporarily sets `$ErrorActionPreference='Continue'` only while invoking the expected-to-fail child auditor, captures `$LASTEXITCODE`, restores the prior preference in `finally`, and preserves the existing private-log inspection and exact-reason checks. No auditor policy, V1/V2 fixture, rule confidence floor or holdout approval state changed.
 
 **Required next observation:** owner must pull `ecc261d7` or later and rerun only `verify-v2-auditor-enforcement.ps1 -AuthorizedTestTime`. Do not mark Stage 6 auditor enforcement GREEN until the full synthetic matrix completes with the expected exit category and reason for every case.
+
+
+#### 2026-11-03 — V2 auditor rerun advanced through A04; A06 hit wrong rejection path
+
+After pulling the verifier harness fix, the owner reran `verify-v2-auditor-enforcement.ps1 -AuthorizedTestTime`. The focused harness advanced substantially:
+- `BASELINE`: expected category/reason PASS.
+- `A13`: expected category/reason PASS.
+- `A01`: expected `SOURCE_INDEPENDENCE_MIRROR` PASS.
+- `A01-case`: expected `SOURCE_INDEPENDENCE_MIRROR` PASS.
+- `A02`: expected `SOURCE_SESSION_COLLISION` PASS.
+- `A03`: expected `SOURCE_ORIGIN_COLLISION` PASS.
+- `A04`: expected same-original-frame reuse rejection PASS.
+- `A06`: **rejected, but for an unexpected reason; harness correctly refused to count it as RED or GREEN**.
+
+Live-branch inspection showed the A06 fixture changes one serialized QNAME to `tampered.example`. The auditor was performing the malicious three-distinct-long-TXT eligibility check **before** comparing serialized records to selected original PCAP frames. That caused the tampered record to lose the required long-label shape and hit the semantic eligibility rejection before the contract's intended `serialized record differs from decoded PCAP` provenance-binding path. The same ordering could also intercept A08-qtype.
+
+The Stage 6 contract explicitly defines A06 and A08-qtype as original-PCAP binding controls. Commit `d637df90e904d8386d995253bced9ca991e0510d` therefore reorders only the malicious long-TXT eligibility check so it runs **after every selected serialized record has been verified against its original PCAP frame**. Existing schema, hash, frame-reuse, transport, source-independence, expected-match and privacy checks remain fail-closed. This is a trust-ordering correction: untrusted serialized packet semantics are no longer used for the long-TXT eligibility decision before packet binding.
+
+**Current gate:** PARTIAL GREEN through A04; A06 prior run is INVALID FOR RED/GREEN due wrong rejection reason. Full auditor-enforcement matrix must be rerun after pulling `d637df90` or later. V2 remains PENDING_EXTERNAL_CAPTURE_AND_REVIEW with 0/4 real external pairs; V1 remains immutable.
