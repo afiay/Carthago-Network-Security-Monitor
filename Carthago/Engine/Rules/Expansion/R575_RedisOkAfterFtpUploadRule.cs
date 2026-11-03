@@ -248,7 +248,7 @@ namespace Carthago.Engine.Rules.Expansion
             if (string.IsNullOrWhiteSpace(host) || host.Length > 253)
                 return false;
             foreach (var ch in host)
-                if (char.IsWhiteSpace(ch) || ch is '@' or '/' or '?' or '#' or '\')
+                if (char.IsWhiteSpace(ch) || ch is '@' or '/' or '?' or '#' or '\\')
                     return false;
             return true;
         }
