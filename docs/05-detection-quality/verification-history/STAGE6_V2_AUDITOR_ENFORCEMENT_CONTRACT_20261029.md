@@ -364,3 +364,15 @@ Source inspection preserves the intended A16 semantics: the fixture writes the s
 Commit `f8cfbb09d9ff106cce5c4e7360243337a9ea312a` updates only the verifier to capture child output as objects and use `ErrorRecord.Exception.Message` before formatting. The resulting private log is still ephemeral, privacy-scanned, and never printed raw. A16 must be rerun alone before Stage 6 can be closed.
 
 **Cumulative status:** all Stage 6 synthetic cases except A16-distinct have observed GREEN outcomes in this owner-authorized session.
+
+
+### 2026-11-03 Stage 6 cumulative closure — A16 GREEN, full synthetic matrix observed GREEN
+
+The owner pulled revision `303f31db32814887679958cf18a69135b693dee3` and reran only `A16-distinct`. The harness matched the expected exit category and reason, completed the private-output checks and printed the focused-completion statement. A16-distinct is therefore **GREEN**.
+
+With this result, every Stage 6 synthetic auditor-enforcement scenario has now produced an observed GREEN result during this owner-authorized session:
+`BASELINE`, `A13`, `A01`, `A01-case`, `A02`, `A03`, `A04`, `A06`, `A08-qtype`, `A08-port`, `A09`, `A09-missing`, `A10`, `A10-origin`, `A10-session`, `A11`, `A11-review-type`, `A11-license`, `A12`, `A12-provenance`, `A14`, and `A16-distinct`.
+
+This is a **cumulative observed GREEN** closure across the successive exact revisions documented in this file; it does not retroactively claim a single exact-SHA full-matrix run. The intermediate TShark set-syntax issue, child NativeCommandError handling, A06 ordering issue, and PowerShell reason-formatting issues remain part of the evidence trail rather than being erased.
+
+**Scope boundary remains strict:** synthetic source-attribution enforcement is verified; human review, source rights, classification truth, independent-client proof, real external PCAP admission, V2 freeze/evaluation, and production detection quality are not. V2 remains pending with 0/4 external reviewed pairs. V1 remains immutable.
