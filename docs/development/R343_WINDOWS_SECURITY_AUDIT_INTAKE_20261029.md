@@ -121,3 +121,23 @@ After the successful 4688 PID/path smoke test and rollback on CARTHAGE, the exis
 Default PowerShell locations are documented by Microsoft: https://learn.microsoft.com/en-us/powershell/scripting/whats-new/migrating-from-windows-powershell-51-to-powershell-7 . WinRM process ancestry by itself is never grounds to create signed evidence.
 
 **Code status:** source changes published on `feature/carthago-reliability-hardening`; these new tests have **not been compiled or run on CARTHAGE**. Original host Process Creation auditing was already restored to `No Auditing` after Stage 1. The authenticated producer boundary is documented in `docs/development/R343_AUTHENTICATED_PRODUCER_BOUNDARY_20261029.md`; no service, installer, key or IPC has been deployed.
+
+
+## 2026-11-03 current-state read-only readiness check
+
+At live branch revision `2a472f16ae317716127de03a78199eeddd3c145f`, the owner ran:
+`inspect-winrm-audit-readiness.ps1 -InspectAuditPolicy -InspectRecentEvents -LookbackMinutes 30`
+from a non-elevated PowerShell session.
+
+Observed result:
+- administrator token false;
+- Event Log service running;
+- local include-command-line policy value absent;
+- auditpol status could not be established and returned sanitized `OTHER_ERROR (RemoteException; 0x80131501)`;
+- Security channel metadata access denied;
+- 4624 and 4688 searches returned no matches, but log access was not independently verified;
+- final status `ACCESS UNVERIFIED`.
+
+This is an **access-state observation**, not a regression in R343 and not proof that Process Creation auditing is currently disabled. It also does not supersede the earlier Stage 1 lab evidence: elevated CARTHAGE testing previously proved local 4688 PID/image-path correlation and then restored the audit setting to `No Auditing`.
+
+No policy should be re-enabled automatically. If current effective status must be refreshed, use an already-authorized elevated administrator PowerShell session and rerun the same read-only inspector only. Command-line logging remains a separate privacy-sensitive setting and is not authorized by this check.
