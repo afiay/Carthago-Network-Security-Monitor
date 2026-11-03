@@ -141,3 +141,23 @@ Observed result:
 This is an **access-state observation**, not a regression in R343 and not proof that Process Creation auditing is currently disabled. It also does not supersede the earlier Stage 1 lab evidence: elevated CARTHAGE testing previously proved local 4688 PID/image-path correlation and then restored the audit setting to `No Auditing`.
 
 No policy should be re-enabled automatically. If current effective status must be refreshed, use an already-authorized elevated administrator PowerShell session and rerun the same read-only inspector only. Command-line logging remains a separate privacy-sensitive setting and is not authorized by this check.
+
+
+## 2026-11-03 elevated current-state refresh
+
+The owner opened an already-authorized elevated Windows PowerShell session and reran:
+`inspect-winrm-audit-readiness.ps1 -InspectAuditPolicy -InspectRecentEvents -LookbackMinutes 30`.
+
+Current effective state is now directly established:
+- administrator token **True**;
+- Event Log service running;
+- local include-command-line policy value **NOT SET**;
+- Process Creation success auditing **NO AUDITING**;
+- Security channel metadata **READABLE**;
+- recent Security 4624 **OBSERVED**;
+- recent Security 4688 **NO MATCHING EVENTS**;
+- final status **BLOCKED** because fresh 4688 process-creation telemetry is not expected while the effective success-audit subcategory is disabled.
+
+This elevated result supersedes only the immediately preceding non-elevated `ACCESS UNVERIFIED` diagnostic for current-state visibility. It does **not** supersede or invalidate the completed Stage 1 lab evidence: the controlled lab previously proved harmless 4688 PID/image-path correlation and then intentionally restored Process Creation auditing to `No Auditing`.
+
+Therefore the current R343 limitation is an OS producer prerequisite, not evidence of a rule-engine defect. Do not re-enable Process Creation auditing or command-line inclusion merely to repeat Stage 1. Any future producer experiment requires a distinct explicit authorization and must preserve the documented privacy boundary.
