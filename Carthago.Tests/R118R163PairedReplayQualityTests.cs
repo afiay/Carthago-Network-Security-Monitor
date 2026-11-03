@@ -45,6 +45,34 @@ public sealed class R118R163PairedReplayQualityTests
     }
 
     [Fact]
+    public async Task Ssrf_Imds_Probe_Replay_Recognizes_Metadata_But_Does_Not_Claim_Proven_Ssrf()
+    {
+        var replayDirectory = Path.Combine(
+            AppContext.BaseDirectory, "..", "..", "..", "..", "Tests", "RuleReplaySamples");
+        var report = await new TuningBenchmarkRunner().RunAsync(
+            new TuningBenchmarkOptions { ReplayDirectory = replayDirectory });
+
+        var sample = Assert.Single(report.SampleResults, item => item.Name == "ssrf-imds");
+        Assert.Equal(ReplaySampleClassification.Malicious, sample.Classification);
+        Assert.Equal("R163", Assert.Single(sample.ExpectedMatches));
+        Assert.Contains("R163", sample.ActualMatches);
+        Assert.Empty(sample.Errors);
+
+        // The fixture supplies a metadata-service target and credential path.
+        // Its adjacent inbound request is not independently bound to that
+        // egress request, and an IMDSv2 token header is not SSRF causality.
+        Assert.Equal(0.62, sample.MaximumConfidence, 6);
+        Assert.Equal(84, new R163_SsrfMetadataServiceProbeRule().PrecisionProfile.MinimumConfidence);
+        foreach (var profile in report.ProfileResults.Keys)
+        {
+            var decision = Assert.Single(sample.Profiles[profile].RuleDecisions,
+                item => item.RuleId == "R163");
+            Assert.Equal(0.62, decision.Confidence, 6);
+            Assert.DoesNotContain("R163", sample.Profiles[profile].AlertRuleIds);
+        }
+    }
+
+    [Fact]
     public async Task Host_Authority_And_Iot_Target_Replays_Separate_Raw_Matches_From_Alerts()
     {
         var replayDirectory = Path.Combine(
