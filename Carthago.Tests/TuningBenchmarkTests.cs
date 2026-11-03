@@ -304,9 +304,11 @@ namespace Carthago.Tests
 
             Assert.Equal(report.ProfileResults.Keys.OrderBy(name => name),
                 report.Summary.SampleLevelQualityByProfile.Keys.OrderBy(name => name));
+            var scoredSampleCount = report.SampleResults.Count(sample =>
+                sample.Classification != ReplaySampleClassification.UnsupportedMalicious);
             foreach (var quality in report.Summary.SampleLevelQualityByProfile.Values)
             {
-                Assert.Equal(report.SampleResults.Count,
+                Assert.Equal(scoredSampleCount,
                     quality.TruePositives + quality.FalsePositives + quality.FalseNegatives + quality.TrueNegatives);
             }
             Assert.Equal(report.Summary.SampleLevelQuality,
@@ -420,61 +422,49 @@ namespace Carthago.Tests
             var runner = new TuningBenchmarkRunner();
             var report = await runner.RunAsync(new TuningBenchmarkOptions { ReplayDirectory = GetReplayDirectory() });
 
-            // Only evidence-supported scenarios qualify for positive recognition.
-            // Keep the unsupported malicious labels and their failed expectations
-            // in the replay report; the outer verification gate remains red.
-            var names = new[]
+            // Supported malicious replays must be recognized by their intended
+            // detector. R356 and R485 are parser-backed here; no free-text
+            // operation claim is allowed to substitute for parser provenance.
+            foreach (var name in new[]
             {
-                "modbus-write-function", "ssrf-imds"
-            };
-            foreach (var name in names)
+                "modbus-write-function",
+                "ssrf-imds",
+                "devops-jenkins-crumb",
+                "bacnet-write-property"
+            })
             {
                 var sample = report.SampleResults.Single(item => item.Name == name);
+                Assert.Equal(ReplaySampleClassification.Malicious, sample.Classification);
                 Assert.True(sample.ExpectedMatches.All(rule => sample.ActualMatches.Contains(rule)),
                     $"{name}: missing {string.Join(", ", sample.MissingExpectedMatches)}; " +
                     string.Join("; ", sample.ExpectedRuleDiagnostics.Select(item =>
                         $"{item.RuleId}={item.Outcome} ({string.Join(", ", item.MissingRequiredTelemetry)}; {string.Join(", ", item.NoMatchReasons)})")));
             }
 
+            // Producer-limited malicious replays are explicit architecture
+            // coverage gaps. They must fail closed with the stable reason code,
+            // and must not be counted as supported detector false negatives.
             foreach (var unavailable in new[] {
-                ("ad-psremoting-encoded-command", "R343"),
-                ("kubernetes-pod-exec", "R295"),
-                ("bacnet-write-property", "R485"),
-                ("cloudflared-tunnel", "R516"),
-                ("rclone-exfil", "R508"),
-                ("redis-config-set", "R437")
+                (Sample: "oauth-device-code-phishing", Rule: "R275", Reason: "TRUSTED_DEVICE_CODE_ABUSE_EVENT_UNAVAILABLE"),
+                (Sample: "kubernetes-pod-exec", Rule: "R295", Reason: "K8S_POD_EXEC_AUDIT_UNAVAILABLE"),
+                (Sample: "ad-psremoting-encoded-command", Rule: "R343", Reason: "WINRM_COMMAND_AUDIT_UNAVAILABLE"),
+                (Sample: "redis-config-set", Rule: "R437", Reason: "REDIS_RESP_CONFIG_SET_UNAVAILABLE"),
+                (Sample: "rclone-exfil", Rule: "R508", Reason: "RCLONE_PROCESS_USERAGENT_AND_EGRESS_PROVENANCE_UNAVAILABLE"),
+                (Sample: "cloudflared-tunnel", Rule: "R516", Reason: "CLOUDFLARED_TUNNEL_SESSION_PROVENANCE_UNAVAILABLE")
             })
             {
-                var sample = report.SampleResults.Single(item => item.Name == unavailable.Item1);
-                Assert.Contains(unavailable.Item2, sample.ExpectedMatches);
-                Assert.DoesNotContain(unavailable.Item2, sample.ActualMatches);
-                Assert.Contains(unavailable.Item2, sample.MissingExpectedMatches);
+                var sample = report.SampleResults.Single(item => item.Name == unavailable.Sample);
+                Assert.Equal(ReplaySampleClassification.UnsupportedMalicious, sample.Classification);
+                Assert.Empty(sample.ExpectedMatches);
+                Assert.Empty(sample.MissingExpectedMatches);
+                Assert.Contains(unavailable.Rule, sample.UnsupportedRuleIds);
+                Assert.DoesNotContain(unavailable.Rule, sample.ActualMatches);
+                Assert.Equal(unavailable.Reason, sample.UnsupportedReasonCodesByRuleId[unavailable.Rule]);
                 Assert.Contains(sample.ExpectedRuleDiagnostics,
-                    diagnostic => diagnostic.RuleId == unavailable.Item2 && diagnostic.Outcome != "Matched");
-                if (unavailable.Item2 == "R485")
-                    Assert.Contains(sample.ExpectedRuleDiagnostics,
-                        diagnostic => diagnostic.RuleId == "R485"
-                            && diagnostic.MissingRequiredTelemetry.Contains(
-                                "field.capture_only_bacnet_writeproperty",
-                                StringComparer.OrdinalIgnoreCase));
-                if (unavailable.Item2 == "R516")
-                    Assert.Contains(sample.ExpectedRuleDiagnostics,
-                        diagnostic => diagnostic.RuleId == "R516"
-                            && diagnostic.NoMatchReasons.Any(reason =>
-                                reason.Contains("CLOUDFLARED_TUNNEL_SESSION_PROVENANCE_UNAVAILABLE",
-                                    StringComparison.Ordinal)));
-                if (unavailable.Item2 == "R508")
-                    Assert.Contains(sample.ExpectedRuleDiagnostics,
-                        diagnostic => diagnostic.RuleId == "R508"
-                            && diagnostic.NoMatchReasons.Any(reason =>
-                                reason.Contains("RCLONE_PROCESS_USERAGENT_AND_EGRESS_PROVENANCE_UNAVAILABLE",
-                                    StringComparison.Ordinal)));
-                if (unavailable.Item2 == "R437")
-                    Assert.Contains(sample.ExpectedRuleDiagnostics,
-                        diagnostic => diagnostic.RuleId == "R437"
-                            && diagnostic.NoMatchReasons.Any(reason =>
-                                reason.Contains("REDIS_RESP_CONFIG_SET_UNAVAILABLE",
-                                    StringComparison.Ordinal)));
+                    diagnostic => diagnostic.RuleId == unavailable.Rule
+                        && diagnostic.Outcome != "Matched"
+                        && diagnostic.NoMatchReasons.Any(reason =>
+                            reason.Contains(unavailable.Reason, StringComparison.Ordinal)));
             }
         }
 

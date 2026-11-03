@@ -9,7 +9,8 @@
       "isUdp": true,
       "ipVersion": 4,
       "sourcePort": 48000,
-      "destinationPort": 47808
+      "destinationPort": 47808,
+      "info": "UDP 203.0.113.44:48000 -> 10.20.0.66:47808 [BACnet/IP]"
     }
   ],
   "rawBacnetUdpPayloadsByRecordIndex": {
