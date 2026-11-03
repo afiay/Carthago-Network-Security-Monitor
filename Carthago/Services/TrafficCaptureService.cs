@@ -15,6 +15,7 @@ using System.Windows.Threading;
 using Carthago.Capture;
 using Carthago.Models;
 using Carthago.Services.Benchmarking;
+using Carthago.Services.Geo;
 using Carthago.Telemetry; // OtelMetrics.CountRuleHit
 using SharpPcap;
 
@@ -103,6 +104,8 @@ namespace Carthago.Services
         private string? _currentFilter;
         private readonly Dispatcher _dispatcher;
         private readonly BlacklistService? _blacklistService;
+        private readonly GeoIpService _geoIpService = new();
+        private readonly object _geoIpLock = new();
 
         // ===== WHOIS + Reputation
         private const int WHOIS_CONCURRENCY = 4;
@@ -183,6 +186,7 @@ namespace Carthago.Services
                 }
                 _whoisLimiter.Dispose();
                 _reputationLimiter.Dispose();
+                try { _geoIpService.Dispose(); } catch (Exception ex) { Log(ex); }
                 _serviceCts.Dispose();
             }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
         }
@@ -558,9 +562,14 @@ namespace Carthago.Services
         {
             try
             {
+                // GeoIP is local database enrichment and belongs on the core record,
+                // not only on the map rendering path. This makes country/ISO/coords
+                // available to rules, UI snapshots and Excel/CSA export.
+                EnrichGeo(rec);
+
                 WindowsProcessResolver.ProcessInfo? process = null;
-                if (IpUtils.IsPrivateIp(rec.Source ?? string.Empty) ||
-                    IpUtils.IsPrivateIp(rec.Destination ?? string.Empty))
+                if ((rec.IsTcp || rec.IsUdp)
+                    && (rec.SourcePort is > 0 || rec.DestinationPort is > 0))
                 {
                     process = await Task.Run(
                         () => WindowsProcessResolver.ResolveProcess(
@@ -639,6 +648,28 @@ namespace Carthago.Services
             catch (Exception ex)
             {
                 Console.Error.WriteLine($"EnrichAsync error: {ex.Message}");
+            }
+        }
+
+        private void EnrichGeo(TrafficRecord rec)
+        {
+            lock (_geoIpLock)
+            {
+                if (!string.IsNullOrWhiteSpace(rec.Source)
+                    && IsEnrichablePublicIp(rec.Source))
+                {
+                    var sourceGeo = _geoIpService.Lookup(rec.Source);
+                    if (sourceGeo is not null)
+                        TrafficRecordGeoEnrichment.ApplySource(rec, sourceGeo);
+                }
+
+                if (!string.IsNullOrWhiteSpace(rec.Destination)
+                    && IsEnrichablePublicIp(rec.Destination))
+                {
+                    var destinationGeo = _geoIpService.Lookup(rec.Destination);
+                    if (destinationGeo is not null)
+                        TrafficRecordGeoEnrichment.ApplyDestination(rec, destinationGeo);
+                }
             }
         }
 

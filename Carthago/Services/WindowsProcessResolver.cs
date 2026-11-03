@@ -77,7 +77,8 @@ namespace Carthago.Services
                     if (!c.LocalPort.HasValue || c.LocalPort.Value <= 0) continue;
 
                     var key = c.MakeKey();
-                    if (TryGetFresh(key, out var pi)) return pi;
+                    if (TryGetFresh(key, out var pi) && pi is { ProcessId: > 0 })
+                        return pi;
 
                     int pid = c.Proto switch
                     {
@@ -86,9 +87,16 @@ namespace Carthago.Services
                         _ => 0
                     };
 
-                    var info = BuildProcessInfo(pid);
-                    SetCache(key, info);
-                    if (pid > 0) return info;
+                    // Never cache a miss as a normal 20-second result. The first
+                    // candidate may be the remote endpoint (especially inbound),
+                    // and caching PID 0 here would prevent the next packet from
+                    // reaching the actual local-endpoint candidate.
+                    if (pid > 0)
+                    {
+                        var info = BuildProcessInfo(pid);
+                        SetCache(key, info);
+                        return info;
+                    }
                 }
 
                 return null;
@@ -391,8 +399,18 @@ namespace Carthago.Services
             if (string.IsNullOrWhiteSpace(preferredLocalAddr)) return true;
             if (!TryParseIp(preferredLocalAddr, out var want)) return true; // ignore preference on parse failure
             if (want.AddressFamily != candidate.AddressFamily) return false;
+
+            // Windows commonly reports UDP listeners bound to wildcard addresses.
+            // A packet addressed to this host still belongs to that socket, so
+            // 0.0.0.0/:: must be accepted as a local-address match.
+            if (candidate.Equals(IPAddress.Any) || candidate.Equals(IPAddress.IPv6Any))
+                return true;
+
             return want.Equals(candidate);
         }
+
+        internal static bool AddressMatchesForTests(string? preferredLocalAddr, IPAddress candidate)
+            => AddrOk(preferredLocalAddr, candidate);
 
         private static bool TryParseIp(string s, out IPAddress ip) => IPAddress.TryParse(s, out ip!);
 
