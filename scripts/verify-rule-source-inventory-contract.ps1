@@ -142,4 +142,38 @@ $provider = @($a.testDeclarations | Where-Object { $_.identity -eq 'SharedTests.
 Assert-Contract (($provider.memberDataNames -join ',') -eq 'Cases') 'memberdata-nameof-reference-retained'
 Assert-Contract ($provider.bindingStatus -eq 'SOURCE_DECLARATION_ONLY' -and -not $l.readyForExecutionSelection) 'declaration-not-execution-eligibility'
 
+
+# VC-002D: literal InlineData belongs only to its declaring [Theory] method.
+# This remains source evidence, never test execution or coverage certification.
+$inline = @{} + $files
+$inline['Carthago.Tests/InlineDataScoped.cs'] = @'
+namespace Carthago.Tests;
+public sealed class GroupedInlineTests {
+ [Theory] [InlineData("R999")]
+ [InlineData("R1000", "negative")]
+ public void PerRule(string id, string? note = null) {}
+ [Fact] [InlineData("R2999")] public void InvalidFact() {}
+ [Theory] public void Unrelated(string id) {}
+ private string decoy = "[InlineData(\"R3000\")]";
+}
+public sealed class SiblingInlineTests {
+ [Theory] [InlineData("R3000")] public void Sibling(string id) {}
+}
+'@
+$inlineInventory = Get-RuleSourceInventory -RegistrySource $registry -Sources $inline -SourceSha ('a' * 40)
+$inlineR999 = @(@($inlineInventory.rules | Where-Object ruleId -eq 'R999')[0].associations |
+    Where-Object { $_.path -eq 'Carthago.Tests/InlineDataScoped.cs' -and $_.kind -eq 'inline-data-attribute-candidate' })
+Assert-Contract ($inlineR999.Count -eq 1 -and $inlineR999[0].containingTestMethod -eq 'Carthago.Tests.GroupedInlineTests.PerRule') 'single-argument-inline-theory-bound'
+$inlineR1000 = @(@($inlineInventory.rules | Where-Object ruleId -eq 'R1000')[0].associations |
+    Where-Object { $_.path -eq 'Carthago.Tests/InlineDataScoped.cs' -and $_.kind -eq 'inline-data-attribute-candidate' })
+Assert-Contract ($inlineR1000.Count -eq 1 -and $inlineR1000[0].containingTestMethod -eq 'Carthago.Tests.GroupedInlineTests.PerRule') 'multi-argument-inline-theory-bound'
+$inlineR2999 = @(@($inlineInventory.rules | Where-Object ruleId -eq 'R2999')[0].associations |
+    Where-Object { $_.path -eq 'Carthago.Tests/InlineDataScoped.cs' -and $_.kind -eq 'inline-data-attribute-candidate' })
+Assert-Contract ($inlineR2999.Count -eq 0) 'fact-with-inline-is-not-theory-coverage'
+$inlineR3000 = @(@($inlineInventory.rules | Where-Object ruleId -eq 'R3000')[0].associations |
+    Where-Object { $_.path -eq 'Carthago.Tests/InlineDataScoped.cs' -and $_.kind -eq 'inline-data-attribute-candidate' })
+Assert-Contract ($inlineR3000.Count -eq 1 -and $inlineR3000[0].containingTestMethod -eq 'Carthago.Tests.SiblingInlineTests.Sibling') 'string-decoy-not-inline-and-sibling-not-borrowed'
+Assert-Contract ($null -eq @($inlineInventory.rules | Where-Object ruleId -eq 'R999')[0].authoredMethodCount -and
+    -not $inlineInventory.readyForExecutionSelection) 'inline-association-still-unverified'
+
 Write-Host 'Source-inventory contract assertions completed; no rule accuracy or operational claim.'

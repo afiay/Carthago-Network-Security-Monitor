@@ -77,6 +77,7 @@ function Get-TestSourceDeclarations($View) {
             identity=$owner.identity + '.' + $m.Groups['name'].Value; owningClass=$owner.identity
             start=$m.Index; open=$open; end=$end; memberDataNames=$providers
             bindingStatus='SOURCE_DECLARATION_ONLY'
+            isTheory=($attrs -match '\[\s*(?:Xunit\.)?Theory(?:Attribute)?\b')
         })
     }
     [pscustomobject]@{ classes=@($classes.ToArray()); methods=@($methods.ToArray()); unresolved=$false }
@@ -177,9 +178,20 @@ function Get-RuleSourceInventory {
                     $associations.Add((New-SourceAssociation $path $kind $m.Index $v $declarations[$path]))
                 }
             }
-            # Evidence of explicit tuple/InlineData/switch syntax, not proof
-            # of a MemberData binding or actual parameterized test invocation.
-            $dataPattern = '(?:\(|\[\s*InlineData\s*\()\s*"' + [regex]::Escape($id) + '"\s*,|"' + [regex]::Escape($id) + '"\s*=>'
+            # A literal InlineData ID is a candidate for its declaring [Theory]
+            # only. A Fact, helper, sibling or string decoy cannot borrow it.
+            $inlinePattern = '\[\s*(?:Xunit\.)?InlineData(?:Attribute)?\s*\(\s*"' +
+                [regex]::Escape($id) + '"\s*(?=[,)])'
+            foreach ($m in [regex]::Matches($v.Data, $inlinePattern)) {
+                $bound = @($declarations[$path].methods | Where-Object {
+                    $_.isTheory -and $_.start -le $m.Index -and $m.Index -lt $_.open
+                })
+                if ($bound.Count -eq 1) {
+                    $associations.Add((New-SourceAssociation $path 'inline-data-attribute-candidate' $m.Index $v $declarations[$path]))
+                }
+            }
+            # Tuple/switch literals remain unbound MemberData candidates.
+            $dataPattern = '\(\s*"' + [regex]::Escape($id) + '"\s*,|"' + [regex]::Escape($id) + '"\s*=>'
             foreach ($m in [regex]::Matches($v.Data, $dataPattern)) {
                 $associations.Add((New-SourceAssociation $path 'data-row-candidate' $m.Index $v $declarations[$path]))
             }
