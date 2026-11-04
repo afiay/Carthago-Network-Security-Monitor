@@ -768,6 +768,16 @@ namespace Carthago.Engine.Rules.Catalog
                 new R743_EsxiManagementProcessFixedSizeEgressCadenceRule(),
                 new R744_EsxiManagementProcessProxyPortFanoutRule(),
                 new R745_HpingNpingPublicTargetFanoutRule(),
+                new R746_EsxiManagementProcessNonstandardTlsBurstRule(),
+                new R747_WindowsArchiveToolExternalTlsBurstRule(),
+                new R748_LinuxCryptoToolUncommonPortPayloadBurstRule(),
+                new R749_EsxiShellToolExternalFtpUploadRequestRule(),
+                new R750_MacProcessCloudStorageTlsPayloadBurstRule(),
+                new R751_MacProcessCodeRepositoryTlsPayloadBurstRule(),
+                new R752_MsiexecRemoteMsiHttpGetRule(),
+                new R753_OsascriptExternalTlsRecurrentCadenceRule(),
+                new R754_MacTransferToolPrivatePeerPayloadBurstRule(),
+                new R755_PublicVncAttemptThenMacScriptEgressRule(),
             };
         }
 

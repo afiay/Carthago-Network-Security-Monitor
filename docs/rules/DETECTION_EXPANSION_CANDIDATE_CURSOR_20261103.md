@@ -79,3 +79,8 @@ Original research IDs R1159, R2663, R2665, R2666, R2680, R1274, R1501, R1816, R1
 ## R736–R745 — Linux/macOS transfer, ESXi relay/cadence and stress-tool fanout candidates
 
 Original research IDs R1510, R1436, R1548, R1425, R1963, R1739, R1750, R1647, R1632 and R2591. See [R736–R745](../03-detection-rules/batches/RULE_BATCH_736-745.md). **SOURCE CANDIDATE — UNVERIFIED; xUnit authored, 0 executed.** No convergence: Linux TLS burst, cleartext POST burst, recurrent transfer cadence, HTTP request flood, macOS HTTP upload shape, hypervisor dead-drop TLS, BusyBox web cadence, ESXi fixed-size uncommon-port cadence, ESXi proxy-port fanout and hping/nping target fanout retain independent rule IDs/classes/predicates/state. Next unallocated ID: R746.
+
+
+## R746–R755 — encrypted transfer, service-specific macOS egress and VNC-follow-on candidates
+
+Original research IDs R1149, R1361, R1477, R1215, R1765, R1768, R1724, R1982, R1850 and R1775. See [R746–R755](../03-detection-rules/batches/RULE_BATCH_746-755.md). **SOURCE CANDIDATE — UNVERIFIED; xUnit authored, 0 executed.** No convergence: ESXi nonstandard TLS, Windows archive-tool TLS, Linux crypto-tool uncommon-port burst, ESXi-style FTP upload, macOS cloud-storage TLS, macOS repository TLS, msiexec installer retrieval, osascript recurrent cadence, private-peer transfer-tool burst and VNC-attempt→script-egress correlation retain independent rule IDs/classes/predicates/state. Next unallocated ID: R756.
