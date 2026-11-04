@@ -1719,4 +1719,11 @@
       </Setter.Value>
     </Setter>
   </Style>
+  <!-- GA UI-117: Settings capture/enrichment operational zones. Decorative only; no interaction. -->
+  <Style x:Key="SettingsCaptureZone" TargetType="Border">
+    <Setter Property="Background" Value="#10283A"/>
+    <Setter Property="BorderThickness" Value="4,1,1,1"/>
+    <Setter Property="CornerRadius" Value="11"/>
+    <Setter Property="SnapsToDevicePixels" Value="True"/>
+  </Style>
 </ResourceDictionary>

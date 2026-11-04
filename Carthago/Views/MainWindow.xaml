@@ -2478,15 +2478,16 @@
 
               <!-- Enrichment & Capture -->
                <GroupBox x:Name="SettingsCaptureGroup" Grid.Row="1" Grid.Column="0"
-                         Header="Enrichment &amp; Capture" Style="{StaticResource SettingsOpsGroup}"
+                         Header="Capture &amp; Enrichment Configuration" Style="{StaticResource SettingsOpsGroup}"
                          Margin="0,0,0,14">
-                <Grid Margin="10">
+                <Grid Margin="5,12,5,4">
+                  <!-- GA UI-117: three visibly distinct operational zones; existing named inputs and handlers stay in place. -->
                   <Grid.ColumnDefinitions>
                     <ColumnDefinition x:Name="SettingsCaptureLabelColumn" Width="160"/>
                     <ColumnDefinition Width="*"/>
                   </Grid.ColumnDefinitions>
                   <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="58"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
@@ -2497,8 +2498,21 @@
                     <RowDefinition Height="Auto"/>
                   </Grid.RowDefinitions>
 
+                  <!-- Section-scale card surfaces are behind all controls and remain presentation-only. -->
+                  <Border Grid.Row="0" Grid.RowSpan="2" Grid.ColumnSpan="2"
+                          Style="{StaticResource SettingsCaptureZone}"
+                          BorderBrush="#28728B" Margin="-9,-9,-9,9"
+                          IsHitTestVisible="False"/>
+                  <Border Grid.Row="2" Grid.RowSpan="3" Grid.ColumnSpan="2"
+                          Style="{StaticResource SettingsCaptureZone}"
+                          BorderBrush="#2B566B" Margin="-9,-5,-9,9"
+                          IsHitTestVisible="False"/>
+                  <Border Grid.Row="5" Grid.RowSpan="4" Grid.ColumnSpan="2"
+                          Style="{StaticResource SettingsCaptureZone}"
+                          BorderBrush="#28728B" Margin="-9,-5,-9,-7"
+                          IsHitTestVisible="False"/>
                   <!-- Auto-start -->
-                  <TextBlock Text="Auto-Start Capture"
+                  <TextBlock Text="Auto-Start Capture"\n                             FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="12,0,6,0"
                              VerticalAlignment="Center"/>
                   <StackPanel Grid.Column="1"
                               Orientation="Horizontal">
@@ -2512,11 +2526,12 @@
                              Grid.ColumnSpan="2"
                              Margin="0,4,0,8"
                              Foreground="{StaticResource TextSubtleBrush}"
-                             Text="Tip: Useful for appliances or headless deployments."/>
+                             Text="Tip: Useful for appliances or headless deployments."\n                             Margin="12,4,0,8"/>
 
+                  <!-- External enrichment settings: distinct operational zone. -->
                   <!-- WHOIS -->
                   <TextBlock Grid.Row="2"
-                             Text="Enable WHOIS"
+                             Text="Enable WHOIS"\n                             FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="12,0,6,0"
                              VerticalAlignment="Center"/>
                   <StackPanel Grid.Row="2"
                               Grid.Column="1"
@@ -2530,7 +2545,7 @@
 
                   <!-- Reputation -->
                   <TextBlock Grid.Row="3"
-                             Text="Enable Reputation"
+                             Text="Enable Reputation"\n                             FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="12,0,6,0"
                              VerticalAlignment="Center"/>
                   <StackPanel Grid.Row="3"
                               Grid.Column="1"
@@ -2546,13 +2561,14 @@
                              Margin="0,4,0,8"
                              Foreground="{StaticResource TextWarningBrush}"
                              TextWrapping="Wrap"
-                             Text="Requires a valid AbuseIPDB API key. For best results, set ABUSEIPDB_API_KEY in a .env file or environment variable."/>
+                             Margin="12,4,0,8"\n                             Text="Requires a valid AbuseIPDB API key. For best results, set ABUSEIPDB_API_KEY in a .env file or environment variable."/>
 
+                  <!-- Local filter and session credential settings: distinct operational zone. -->
                   <!-- BPF filter -->
                   <!-- GA UI-66: label the existing BPF field and disclose Save's active-Npcap effect without changing capture logic. -->
                   <TextBlock x:Name="SettingsDefaultBpfLabel"
                              Grid.Row="5"
-                             Text="Default BPF Filter"
+                             Text="Default BPF Filter"\n                             FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="12,0,6,0"
                              VerticalAlignment="Center"/>
                   <StackPanel Grid.Row="5"
                               Grid.Column="1"
@@ -2569,7 +2585,7 @@
                   <!-- GA UI-68: make the existing session-only credential action discoverable without exposing the secret. -->
                   <TextBlock x:Name="SettingsAbuseApiKeyLabel"
                              Grid.Row="6"
-                             Text="AbuseIPDB API Key"
+                             Text="AbuseIPDB API Key"\n                             FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="12,0,6,0"
                              VerticalAlignment="Center"/>
                   <WrapPanel Grid.Row="6"
                              Grid.Column="1">
