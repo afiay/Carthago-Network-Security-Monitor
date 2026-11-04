@@ -1439,7 +1439,7 @@
                     </Grid.RowDefinitions>
                     <Border Grid.Row="0" Background="{StaticResource DashboardLiveEventsHeaderGradient}"
                             BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1"
-                            CornerRadius="10" Padding="14,12">
+                            CornerRadius="10" Padding="14,10">
                       <DockPanel LastChildFill="True">
                       <Button DockPanel.Dock="Right"
                               Content="All detections &#x2192;"
@@ -1452,10 +1452,10 @@
                               Style="{StaticResource SecondaryButton}"
                               Click="DashboardLiveEventsOpenDetections_Click"/>
                       <StackPanel>
-                        <TextBlock Text="LOCAL DETECTION STREAM" Foreground="{StaticResource AccentBrush}"
+                        <TextBlock Text="EVENT STREAM  /  LOCAL DETECTIONS" Foreground="{StaticResource AccentBrush}"
                                    FontSize="10" FontWeight="Bold" Margin="0,0,0,4"/>
                         <TextBlock Text="Live Events" Style="{StaticResource DashboardSectionTitle}" FontSize="20" FontWeight="Bold"/>
-                        <TextBlock Text="Recent local detection events, not incident-resolution or evidence-chain records."
+                        <TextBlock Text="Read-only local detection feed  &#x2022;  newest received first  &#x2022;  up to 80 displayed"
                                    Foreground="{StaticResource TextMutedBrush}"
                                    FontSize="11"
                                    TextWrapping="Wrap"
@@ -1464,13 +1464,15 @@
                       </DockPanel>
                     </Border>
                     <!-- GA UI-75: group the existing four local Live Events filters as one subdued visual toolbar. -->
-                    <Border Grid.Row="1" Margin="0,10,0,10" Style="{StaticResource DashboardLiveEventsToolbar}">
+                    <Border Grid.Row="1" Margin="0,8,0,8" Style="{StaticResource DashboardLiveEventsToolbar}">
                       <StackPanel>
-                        <TextBlock Text="FILTER LOCAL EVENTS" Foreground="{StaticResource TextMutedBrush}"
-                                   FontSize="10" FontWeight="SemiBold" Margin="0,0,0,9"/>
+                        <DockPanel Margin="0,0,0,9">
+                          <Border DockPanel.Dock="Left" Width="3" Background="{StaticResource AccentBrush}" CornerRadius="2" Margin="0,0,9,0"/>
+                          <TextBlock Text="REFINE EVENT STREAM" Foreground="{StaticResource TextSubtleBrush}" FontSize="11" FontWeight="Bold" VerticalAlignment="Center"/>
+                        </DockPanel>
                         <WrapPanel>
                       <!-- GA UI-26: visible captions for the two remaining dropdown filters. -->
-                      <StackPanel Orientation="Horizontal" Height="30" Margin="0,0,8,6">
+                      <StackPanel Orientation="Horizontal" Height="32" Margin="0,0,12,8">
                         <TextBlock x:Name="DashboardLiveSeverityFilterLabel"
                                    Text="Severity"
                                    Foreground="{StaticResource TextMutedBrush}"
@@ -1479,7 +1481,7 @@
                                    Margin="0,0,6,0"/>
                         <ComboBox x:Name="DashboardLiveSeverityFilter"
                                   FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
-                                  Width="142" Height="30"
+                                  Width="128" Height="32"
                                   SelectedIndex="0"
                                   ToolTip="Filter locally observed detection severity"
                                    ToolTipService.ShowsToolTipOnKeyboardFocus="True"
@@ -1495,7 +1497,7 @@
                           <ComboBoxItem Content="Info" Tag="Info"/>
                         </ComboBox>
                       </StackPanel>
-                      <StackPanel Orientation="Horizontal" Height="30" Margin="0,0,8,6">
+                      <StackPanel Orientation="Horizontal" Height="32" Margin="0,0,12,8">
                         <TextBlock x:Name="DashboardLiveProtocolFilterLabel"
                                    Text="Protocol"
                                    Foreground="{StaticResource TextMutedBrush}"
@@ -1504,7 +1506,7 @@
                                    Margin="0,0,6,0"/>
                         <ComboBox x:Name="DashboardLiveProtocolFilter"
                                   FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
-                                  Width="142" Height="30"
+                                  Width="128" Height="32"
                                   SelectedIndex="0"
                                   ToolTip="Filter by observed protocol; other protocols remain available under All"
                                    ToolTipService.ShowsToolTipOnKeyboardFocus="True"
@@ -1519,7 +1521,7 @@
                         </ComboBox>
                       </StackPanel>
                       <!-- GA UI-16: visible, non-interactive labels for the two free-text filters. -->
-                      <StackPanel Orientation="Horizontal" Height="30" Margin="0,0,8,6">
+                      <StackPanel Orientation="Horizontal" Height="32" Margin="0,0,12,8">
                         <TextBlock x:Name="DashboardLiveRuleFilterLabel"
                                    Text="Rule"
                                    Foreground="{StaticResource TextMutedBrush}"
@@ -1528,7 +1530,7 @@
                                    Margin="0,0,6,0"/>
                         <TextBox x:Name="DashboardLiveRuleFilter"
                                   FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
-                                 Width="90" Height="30"
+                                 Width="104" Height="32"
                                  VerticalContentAlignment="Center"
                                  ToolTip="Filter by exact rule ID or part of a rule ID"
                                   ToolTipService.ShowsToolTipOnKeyboardFocus="True"
@@ -1537,7 +1539,7 @@
                                  AutomationProperties.LabeledBy="{Binding ElementName=DashboardLiveRuleFilterLabel}"
                                  TextChanged="DashboardLiveEventsTextChanged"/>
                       </StackPanel>
-                      <StackPanel Orientation="Horizontal" Height="30" Margin="0,0,8,6">
+                      <StackPanel Orientation="Horizontal" Height="32" Margin="0,0,12,8">
                         <TextBlock x:Name="DashboardLiveSearchFilterLabel"
                                    Text="Search"
                                    Foreground="{StaticResource TextMutedBrush}"
@@ -1546,7 +1548,7 @@
                                    Margin="0,0,6,0"/>
                         <TextBox x:Name="DashboardLiveSearchFilter"
                                   FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
-                                 Width="182" Height="30"
+                                 Width="210" Height="32"
                                  VerticalContentAlignment="Center"
                                  ToolTip="Search visible event source, destination, rule or protocol; no evidence payload search"
                                   ToolTipService.ShowsToolTipOnKeyboardFocus="True"
@@ -1568,7 +1570,7 @@
                     </Border>
                     <Grid Grid.Row="2">
                       <DataGrid x:Name="DashboardLiveEventsGrid"
-                                Height="300"
+                                Height="348"
                                 AutoGenerateColumns="False"
                                 IsReadOnly="True"
                                 CanUserAddRows="False"
@@ -1577,8 +1579,8 @@
                                 HeadersVisibility="Column"
                                 GridLinesVisibility="Horizontal"
                                 HorizontalGridLinesBrush="{StaticResource SoftDividerBrush}"
-                                RowHeight="34"
-                                ColumnHeaderHeight="38"
+                                RowHeight="38"
+                                ColumnHeaderHeight="36"
                                 VirtualizingPanel.IsVirtualizing="True"
                                 VirtualizingPanel.VirtualizationMode="Recycling"
                                 EnableRowVirtualization="True"
@@ -1598,7 +1600,7 @@
                           </Style>
                         </DataGrid.CellStyle>
                         <DataGrid.Columns>
-                          <DataGridTextColumn Header="Event time" Binding="{Binding EventTime}" Width="144"
+                          <DataGridTextColumn Header="TIME" Binding="{Binding EventTime}" Width="144"
                                               ElementStyle="{StaticResource DashboardLiveMetadataCellText}">
                             <DataGridTextColumn.HeaderStyle>
                               <Style TargetType="{x:Type DataGridColumnHeader}"
@@ -1610,7 +1612,7 @@
                               </Style>
                             </DataGridTextColumn.HeaderStyle>
                           </DataGridTextColumn>
-                          <DataGridTextColumn Header="Source" Binding="{Binding Source}" Width="*"
+                          <DataGridTextColumn Header="SOURCE" Binding="{Binding Source}" Width="*"
                                               MinWidth="120" ElementStyle="{StaticResource DashboardLiveEndpointCellText}">
                             <DataGridTextColumn.HeaderStyle>
                               <Style TargetType="{x:Type DataGridColumnHeader}"
@@ -1622,7 +1624,7 @@
                               </Style>
                             </DataGridTextColumn.HeaderStyle>
                           </DataGridTextColumn>
-                          <DataGridTextColumn Header="Destination" Binding="{Binding Destination}" Width="*"
+                          <DataGridTextColumn Header="DESTINATION" Binding="{Binding Destination}" Width="*"
                                               MinWidth="120" ElementStyle="{StaticResource DashboardLiveEndpointCellText}">
                             <DataGridTextColumn.HeaderStyle>
                               <Style TargetType="{x:Type DataGridColumnHeader}"
@@ -1634,7 +1636,7 @@
                               </Style>
                             </DataGridTextColumn.HeaderStyle>
                           </DataGridTextColumn>
-                          <DataGridTextColumn Header="Rule" Binding="{Binding RuleId}" Width="76"
+                          <DataGridTextColumn Header="RULE" Binding="{Binding RuleId}" Width="76"
                                               ElementStyle="{StaticResource DashboardLiveMetadataCellText}">
                             <DataGridTextColumn.HeaderStyle>
                               <Style TargetType="{x:Type DataGridColumnHeader}"
@@ -1646,7 +1648,7 @@
                               </Style>
                             </DataGridTextColumn.HeaderStyle>
                           </DataGridTextColumn>
-                          <DataGridTemplateColumn Header="Severity" Width="104">
+                          <DataGridTemplateColumn Header="SEVERITY" Width="104">
                              <DataGridTemplateColumn.CellTemplate>
                                <DataTemplate>
                                  <Border Style="{StaticResource DashboardLiveEventsSeverityPill}">
@@ -1665,7 +1667,7 @@
                                </Style>
                              </DataGridTemplateColumn.HeaderStyle>
                            </DataGridTemplateColumn>
-                          <DataGridTextColumn Header="Protocol" Binding="{Binding Protocol}" Width="80"
+                          <DataGridTextColumn Header="PROTOCOL" Binding="{Binding Protocol}" Width="80"
                                               ElementStyle="{StaticResource DashboardLiveMetadataCellText}">
                             <DataGridTextColumn.HeaderStyle>
                               <Style TargetType="{x:Type DataGridColumnHeader}"
@@ -1677,7 +1679,7 @@
                               </Style>
                             </DataGridTextColumn.HeaderStyle>
                           </DataGridTextColumn>
-                          <DataGridTextColumn Header="Evidence" Binding="{Binding EvidenceSummary}" Width="128"
+                          <DataGridTextColumn Header="EVIDENCE" Binding="{Binding EvidenceSummary}" Width="128"
                                                ElementStyle="{StaticResource DashboardLiveEvidenceCellText}">
                             <DataGridTextColumn.HeaderStyle>
                               <Style TargetType="{x:Type DataGridColumnHeader}"
@@ -1689,7 +1691,7 @@
                               </Style>
                             </DataGridTextColumn.HeaderStyle>
                           </DataGridTextColumn>
-                          <DataGridTextColumn Header="Delivery" Binding="{Binding DeliveryStatus}" Width="105"
+                          <DataGridTextColumn Header="DELIVERY" Binding="{Binding DeliveryStatus}" Width="105"
                                                ElementStyle="{StaticResource DashboardLiveDeliveryCellText}">
                             <DataGridTextColumn.HeaderStyle>
                               <Style TargetType="{x:Type DataGridColumnHeader}"
@@ -1736,7 +1738,7 @@
                       </Border>
                     </Grid>
                     <!-- GA UI-79: keep local event status and provenance together in a subdued, non-interactive footer. -->
-                    <Border Grid.Row="3" Margin="0,10,0,0" Style="{StaticResource DashboardLiveEventsFooter}">
+                    <Border Grid.Row="3" Margin="0,8,0,0" Style="{StaticResource DashboardLiveEventsFooter}">
                       <StackPanel>
                         <TextBlock x:Name="DashboardLiveEventsStatusText"
                                    Text="Waiting for local detection events."
