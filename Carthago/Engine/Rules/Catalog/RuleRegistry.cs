@@ -748,6 +748,16 @@ namespace Carthago.Engine.Rules.Catalog
                 new R723_ScriptProcessDirectExternalHighEntropyDnsRule(),
                 new R724_NetworkUtilityPublicIpDiscoveryServiceRule(),
                 new R725_CurlWgetBrowserUserAgentHttpGetRule(),
+                new R726_EsxiManagementProcessExternalTlsBurstRule(),
+                new R727_LinuxScriptProcessDirectExternalDotRule(),
+                new R728_NodeRuntimePrivateOtServiceSynRule(),
+                new R729_PythonRuntimePrivateOtServiceSynRule(),
+                new R730_UnixShellPrivateOtServiceSynRule(),
+                new R731_WindowsNetworkToolOutboundFloodShapeRule(),
+                new R732_LinuxNetworkToolOutboundFloodShapeRule(),
+                new R733_MacProcessTextStorageTlsContactRule(),
+                new R734_MacNonBrowserExternalTlsPayloadBurstRule(),
+                new R735_EsxiProcessWebProtocolPortMismatchRule(),
             };
         }
 
