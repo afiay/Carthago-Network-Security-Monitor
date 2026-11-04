@@ -738,6 +738,16 @@ namespace Carthago.Engine.Rules.Catalog
                 new R713_NetcatExternalHighPortConnectPayloadRule(),
                 new R714_NetcatInternalMultiPortProbeRule(),
                 new R715_PrivateClientPublicTftpExchangeRule(),
+                new R716_SiprotecDiagnosticUdpFanoutRule(),
+                new R717_ScriptProcessCodeRepositoryApiPostRule(),
+                new R718_UnusualProcessCloudStorageTlsPayloadBurstRule(),
+                new R719_PowerShellExternalSmbPayloadBurstRule(),
+                new R720_WmicExternalXslHttpFetchRule(),
+                new R721_HybridConnectionManagerServiceBusTlsRule(),
+                new R722_BitsadminSuspiciousExtensionHttpGetRule(),
+                new R723_ScriptProcessDirectExternalHighEntropyDnsRule(),
+                new R724_NetworkUtilityPublicIpDiscoveryServiceRule(),
+                new R725_CurlWgetBrowserUserAgentHttpGetRule(),
             };
         }
 

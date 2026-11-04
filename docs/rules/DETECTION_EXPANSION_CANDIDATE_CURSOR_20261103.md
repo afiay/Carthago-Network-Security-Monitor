@@ -64,3 +64,8 @@ Original research IDs R2103, R2292, R2305, R2315, R2415, R2506, R2767, R2043, R1
 ## R706–R715 — independent observable workbook source candidates
 
 Original research IDs R1445, R2606, R2799, R2810, R1114, R1811, R2049, R2306, R1727 and R1246. See [R706–R715](../03-detection-rules/batches/RULE_BATCH_706-715.md). **SOURCE CANDIDATE — UNVERIFIED; xUnit authored, 0 executed.** No convergence: direct-host knock, competing DHCP responders, inbound/outbound TFTP, oversized management HTTP, Memcached UDP fanout, Plink/Socat two-leg flows and two separate Netcat shapes retain independent rule IDs/classes/state. Next unallocated ID: R716.
+
+
+## R716–R725 — independent observable workbook source candidates
+
+Original research IDs R2697, R1304, R1330, R1373, R2325, R2321, R2382, R2664, R2742 and R2783. See [R716–R725](../03-detection-rules/batches/RULE_BATCH_716-725.md). **SOURCE CANDIDATE — UNVERIFIED; xUnit authored, 0 executed.** No convergence: SIPROTEC-shaped UDP fanout, repository API POST, cloud-storage TLS burst, PowerShell external SMB payload burst, WMIC XSL fetch, HCM Service Bus TLS, Bitsadmin suspicious-extension GET, script-process direct high-entropy DNS, public-IP discovery service contact and curl/wget browser-UA GET retain independent rule IDs/classes/predicates/state. Next unallocated ID: R726.
