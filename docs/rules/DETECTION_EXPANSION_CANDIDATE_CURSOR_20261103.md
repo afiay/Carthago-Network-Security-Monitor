@@ -59,3 +59,8 @@ Original research IDs R2365, R2337, R2874, R2284, R3060, R2300, R3036, R2098, R2
 ## R696–R705 — independent workbook source candidates
 
 Original research IDs R2103, R2292, R2305, R2315, R2415, R2506, R2767, R2043, R1793, R1783. See [R696–R705](../03-detection-rules/batches/RULE_BATCH_696-705.md). **SOURCE CANDIDATE — UNVERIFIED; xUnit authored, 0 executed.** No convergence. Next unallocated R706.
+
+
+## R706–R715 — independent observable workbook source candidates
+
+Original research IDs R1445, R2606, R2799, R2810, R1114, R1811, R2049, R2306, R1727 and R1246. See [R706–R715](../03-detection-rules/batches/RULE_BATCH_706-715.md). **SOURCE CANDIDATE — UNVERIFIED; xUnit authored, 0 executed.** No convergence: direct-host knock, competing DHCP responders, inbound/outbound TFTP, oversized management HTTP, Memcached UDP fanout, Plink/Socat two-leg flows and two separate Netcat shapes retain independent rule IDs/classes/state. Next unallocated ID: R716.

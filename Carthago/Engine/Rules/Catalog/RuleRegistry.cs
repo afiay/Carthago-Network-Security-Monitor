@@ -728,6 +728,16 @@ namespace Carthago.Engine.Rules.Catalog
                 new R703_ScriptProcessRepeatedPublicUdpPayloadBurstRule(),
                 new R704_UnattributedInternalRelaySynSequenceRule(),
                 new R705_UnattributedPublicBridgeSynSequenceRule(),
+                new R706_DirectHostPortKnockThenAdminSynRule(),
+                new R707_CompetingDhcpResponderDatagramsRule(),
+                new R708_PublicClientTftpExchangeToPrivateHostRule(),
+                new R709_PublicOversizedManagementHttpRequestRule(),
+                new R710_PublicMemcachedUdpFanoutRule(),
+                new R711_PlinkSshThenInternalAdminLegRule(),
+                new R712_SocatPublicIngressThenInternalAdminLegRule(),
+                new R713_NetcatExternalHighPortConnectPayloadRule(),
+                new R714_NetcatInternalMultiPortProbeRule(),
+                new R715_PrivateClientPublicTftpExchangeRule(),
             };
         }
 
