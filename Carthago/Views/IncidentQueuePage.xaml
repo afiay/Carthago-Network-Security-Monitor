@@ -390,276 +390,95 @@
           </Grid>
         </Border>
 
+        <!-- GA UI-113: a responsive, severity-first case dossier; no evidence or action contract changes. -->
         <Border x:Name="InvestigationPanel" Grid.Column="1"
                 Style="{StaticResource IncidentOpsPanel}">
           <Grid>
-            <Grid.RowDefinitions>
-              <RowDefinition Height="Auto"/>
-              <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
-
-            <StackPanel Grid.Row="0"
-                       Margin="0,0,0,12">
+            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+            <DockPanel Grid.Row="0" Margin="0,0,0,14" LastChildFill="True">
+              <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="10,0,0,0">
+                <Button Content="Open Incident" MinWidth="104" Style="{StaticResource SecondaryButton}" Click="OpenIncidentWorkspace_Click"/>
+                <Button Content="..." Width="40" Margin="8,0,0,0" Style="{StaticResource SecondaryButton}" Click="MoreActions_Click"/>
+              </StackPanel>
               <StackPanel>
-                <TextBlock Text="SELECTED CASE / SNAPSHOT" Style="{StaticResource IncidentOpsEyebrow}" Margin="0,0,0,6"/>
-                  <TextBlock Text="Selected Incident Snapshot"
-                           Style="{StaticResource IncidentOpsPanelTitle}"/>
-                <TextBlock Text="Severity, evidence, ownership, and response guidance for the highlighted case."
-                           Style="{StaticResource AnomalySectionMeta}"/>
+                <TextBlock Text="INVESTIGATION  /  SELECTED CASE" Style="{StaticResource IncidentOpsEyebrow}"/>
+                <TextBlock Text="Case Dossier" Style="{StaticResource IncidentOpsPanelTitle}" Margin="0,5,0,0"/>
               </StackPanel>
-              <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                <Button Content="Open Incident"
-                        Width="108"
-                        Style="{StaticResource SecondaryButton}"
-                        Click="OpenIncidentWorkspace_Click"/>
-                <Button Content="..."
-                        Width="40"
-                        Margin="8,0,0,0"
-                        Style="{StaticResource SecondaryButton}"
-                        Click="MoreActions_Click"/>
-              </StackPanel>
-            </StackPanel>
+            </DockPanel>
+            <StackPanel x:Name="InvestigationBody" Grid.Row="1">
+              <!-- One coherent case identity card replaces the oversized title and floating risk ring. -->
+              <Border Background="#0A2233" BorderBrush="#315366" BorderThickness="1" CornerRadius="12" Padding="16">
+                <Grid>
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="5"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                  <Border Grid.Column="0" CornerRadius="3" Background="{Binding Selected.Severity, Converter={StaticResource SeverityBrush}}"/>
+                  <StackPanel Grid.Column="1" Margin="14,0,12,0">
+                    <TextBlock Text="{Binding Selected.IncidentIdLabel}" Style="{StaticResource IncidentOpsEyebrow}"/>
+                    <TextBlock Text="{Binding Selected.Title}" FontSize="21" FontWeight="Bold" Foreground="{StaticResource TextBrush}" TextWrapping="Wrap" Margin="0,7,0,6"/>
+                    <TextBlock Text="{Binding Selected.Summary}" Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap" FontSize="12.5"/>
+                  </StackPanel>
+                  <StackPanel Grid.Column="2" HorizontalAlignment="Right" MinWidth="74">
+                    <TextBlock Text="RISK" Style="{StaticResource TinyStatusText}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding Selected.RiskScoreNumber}" FontSize="27" FontWeight="Bold" Foreground="{Binding Selected.Severity, Converter={StaticResource SeverityBrush}}" HorizontalAlignment="Center" Margin="0,4,0,3"/>
+                    <Border Style="{StaticResource RiskBadge}" BorderBrush="{Binding Selected.Severity, Converter={StaticResource SeverityBrush}}">
+                      <TextBlock Text="{Binding Selected.Severity}" FontWeight="Bold" Foreground="{Binding Selected.Severity, Converter={StaticResource SeverityBrush}}"/>
+                    </Border>
+                  </StackPanel>
+                </Grid>
+              </Border>
 
-            <StackPanel x:Name="InvestigationBody"
-                        Grid.Row="1">
-              <Grid>
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="*"/>
-                  <ColumnDefinition Width="110"/>
-                </Grid.ColumnDefinitions>
+              <!-- Two-column facts stay readable inside the half-width investigation workspace. -->
+              <TextBlock Text="CASE CONTEXT" Style="{StaticResource IncidentOpsEyebrow}" Margin="0,17,0,9"/>
+              <UniformGrid Columns="2">
+                <Border Style="{StaticResource DetailGridCard}" Margin="0,0,5,8"><StackPanel><TextBlock Text="Source host" Style="{StaticResource AnomalyFieldLabel}"/><TextBlock Text="{Binding Selected.SourceLabel}" Style="{StaticResource AnomalyFieldValue}" ToolTip="{Binding Selected.SourceLabel}"/></StackPanel></Border>
+                <Border Style="{StaticResource DetailGridCard}" Margin="5,0,0,8"><StackPanel><TextBlock Text="Destination" Style="{StaticResource AnomalyFieldLabel}"/><TextBlock Text="{Binding Selected.DestinationLabel}" Style="{StaticResource AnomalyFieldValue}" ToolTip="{Binding Selected.DestinationLabel}"/></StackPanel></Border>
+                <Border Style="{StaticResource DetailGridCard}" Margin="0,0,5,8"><StackPanel><TextBlock Text="Category" Style="{StaticResource AnomalyFieldLabel}"/><TextBlock Text="{Binding Selected.Category}" Style="{StaticResource AnomalyFieldValue}" ToolTip="{Binding Selected.Category}"/></StackPanel></Border>
+                <Border Style="{StaticResource DetailGridCard}" Margin="5,0,0,8"><StackPanel><TextBlock Text="Detected" Style="{StaticResource AnomalyFieldLabel}"/><TextBlock Text="{Binding Selected.CreatedLabel}" Style="{StaticResource AnomalyFieldValue}" ToolTip="{Binding Selected.CreatedLabel}"/></StackPanel></Border>
+                <Border Style="{StaticResource DetailGridCard}" Margin="0,0,5,0"><StackPanel><TextBlock Text="Status" Style="{StaticResource AnomalyFieldLabel}"/><TextBlock Text="{Binding Selected.Status}" Style="{StaticResource AnomalyFieldValue}" ToolTip="{Binding Selected.Status}"/></StackPanel></Border>
+                <Border Style="{StaticResource DetailGridCard}" Margin="5,0,0,0"><StackPanel><TextBlock Text="Owner" Style="{StaticResource AnomalyFieldLabel}"/><TextBlock Text="{Binding SelectedOwnerLabel}" Style="{StaticResource AnomalyFieldValue}" ToolTip="{Binding SelectedOwnerLabel}"/></StackPanel></Border>
+              </UniformGrid>
 
-                <StackPanel Grid.Column="0"
-                            Margin="0,0,16,0">
-                  <Border Width="4"
-                          Height="68"
-                          CornerRadius="2"
-                          Background="{Binding Selected.Severity, Converter={StaticResource SeverityBrush}}"
-                          HorizontalAlignment="Left"/>
-                  <TextBlock Text="{Binding Selected.Title}"
-                             FontSize="30"
-                             FontWeight="Bold"
-                             Margin="14,-62,0,0"
-                             TextWrapping="Wrap"/>
-                  <TextBlock Text="{Binding Selected.Summary}"
-                             Foreground="{StaticResource TextSubtleBrush}"
-                             Margin="14,8,0,0"
-                             TextWrapping="Wrap"/>
-                  <TextBlock Text="{Binding Selected.IncidentIdLabel}"
-                             Foreground="{StaticResource TextMutedBrush}"
-                             FontSize="11"
-                             Margin="14,10,0,0"/>
+              <!-- Evidence is primary, with tags and rule provenance in distinct subordinate bands. -->
+              <Border Style="{StaticResource BaselineComparisonCard}" Margin="0,16,0,0">
+                <StackPanel>
+                  <TextBlock Text="EVIDENCE  /  DETECTION REASONS" Style="{StaticResource IncidentOpsEyebrow}" Margin="0,0,0,9"/>
+                  <ItemsControl ItemsSource="{Binding SelectedEvidenceAndReasons}">
+                    <ItemsControl.ItemTemplate><DataTemplate>
+                      <Border BorderBrush="#2C4A5D" BorderThickness="0,0,0,1" Padding="0,7">
+                        <DockPanel LastChildFill="True">
+                          <Border Width="5" Height="5" CornerRadius="3" Background="{StaticResource AccentBrush}" Margin="0,6,10,0" DockPanel.Dock="Left" VerticalAlignment="Top"/>
+                          <TextBlock Text="{Binding}" Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap"/>
+                        </DockPanel>
+                      </Border>
+                    </DataTemplate></ItemsControl.ItemTemplate>
+                  </ItemsControl>
                 </StackPanel>
-
-                <StackPanel Grid.Column="1"
-                            HorizontalAlignment="Center">
-                  <TextBlock Text="RISK SCORE"
-                             Style="{StaticResource TinyStatusText}"
-                             HorizontalAlignment="Center"/>
-                  <Grid Width="90"
-                        Height="90"
-                        Margin="0,8,0,0">
-                    <Ellipse Style="{StaticResource RiskScoreCircle}"
-                             Width="90"
-                             Height="90"
-                             Stroke="{Binding Selected.Severity, Converter={StaticResource SeverityBrush}}"/>
-                    <TextBlock Text="{Binding Selected.RiskScoreNumber}"
-                               FontSize="26"
-                               FontWeight="Bold"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center"/>
-                  </Grid>
-                  <Border Style="{StaticResource RiskBadge}"
-                          BorderBrush="{Binding Selected.Severity, Converter={StaticResource SeverityBrush}}"
-                          Margin="0,10,0,0">
-                    <TextBlock Text="{Binding Selected.Severity}"
-                               Foreground="{Binding Selected.Severity, Converter={StaticResource SeverityBrush}}"
-                               FontWeight="Bold"/>
-                  </Border>
+              </Border>
+              <Border Style="{StaticResource BaselineComparisonCard}" Margin="0,10,0,0">
+                <StackPanel>
+                  <TextBlock Text="RELATED RULE IDS" Style="{StaticResource IncidentOpsEyebrow}" Margin="0,0,0,8"/>
+                  <ItemsControl ItemsSource="{Binding SelectedRuleIds}">
+                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate><DataTemplate><Border Style="{StaticResource SmallPill}" Margin="0,0,6,6"><TextBlock Text="{Binding}" Foreground="{StaticResource TextSubtleBrush}"/></Border></DataTemplate></ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                  <TextBlock Text="CASE TAGS" Style="{StaticResource IncidentOpsEyebrow}" Margin="0,8,0,8"/>
+                  <ItemsControl ItemsSource="{Binding SelectedTags}">
+                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate><DataTemplate><Border Style="{StaticResource SmallPill}" Margin="0,0,6,6"><TextBlock Text="{Binding}" Foreground="{StaticResource TextSubtleBrush}"/></Border></DataTemplate></ItemsControl.ItemTemplate>
+                  </ItemsControl>
                 </StackPanel>
-              </Grid>
-
-              <Grid Margin="0,18,0,0">
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="*"/>
-                  <ColumnDefinition Width="*"/>
-                  <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                  <RowDefinition Height="Auto"/>
-                  <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-
-                <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource DetailGridCard}" Margin="0,0,8,8">
-                  <StackPanel>
-                    <TextBlock Text="Source host" Style="{StaticResource AnomalyFieldLabel}"/>
-                    <TextBlock Text="{Binding Selected.SourceLabel}"
-                               Style="{StaticResource AnomalyFieldValue}"
-                               ToolTip="{Binding Selected.SourceLabel}"/>
-                  </StackPanel>
-                </Border>
-                <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource DetailGridCard}" Margin="8,0,8,8">
-                  <StackPanel>
-                    <TextBlock Text="Destination" Style="{StaticResource AnomalyFieldLabel}"/>
-                    <TextBlock Text="{Binding Selected.DestinationLabel}"
-                               Style="{StaticResource AnomalyFieldValue}"
-                               ToolTip="{Binding Selected.DestinationLabel}"/>
-                  </StackPanel>
-                </Border>
-                <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource DetailGridCard}" Margin="8,0,0,8">
-                  <StackPanel>
-                    <TextBlock Text="Category" Style="{StaticResource AnomalyFieldLabel}"/>
-                    <TextBlock Text="{Binding Selected.Category}"
-                               Style="{StaticResource AnomalyFieldValue}"
-                               ToolTip="{Binding Selected.Category}"/>
-                  </StackPanel>
-                </Border>
-                <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource DetailGridCard}" Margin="0,0,8,0">
-                  <StackPanel>
-                    <TextBlock Text="Detected" Style="{StaticResource AnomalyFieldLabel}"/>
-                    <TextBlock Text="{Binding Selected.CreatedLabel}"
-                               Style="{StaticResource AnomalyFieldValue}"
-                               ToolTip="{Binding Selected.CreatedLabel}"/>
-                  </StackPanel>
-                </Border>
-                <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource DetailGridCard}" Margin="8,0,8,0">
-                  <StackPanel>
-                    <TextBlock Text="Status" Style="{StaticResource AnomalyFieldLabel}"/>
-                    <TextBlock Text="{Binding Selected.Status}"
-                               Style="{StaticResource AnomalyFieldValue}"
-                               ToolTip="{Binding Selected.Status}"/>
-                  </StackPanel>
-                </Border>
-                <Border Grid.Row="1" Grid.Column="2" Style="{StaticResource DetailGridCard}" Margin="8,0,0,0">
-                  <StackPanel>
-                    <TextBlock Text="Owner" Style="{StaticResource AnomalyFieldLabel}"/>
-                    <TextBlock Text="{Binding SelectedOwnerLabel}"
-                               Style="{StaticResource AnomalyFieldValue}"
-                               ToolTip="{Binding SelectedOwnerLabel}"/>
-                  </StackPanel>
-                </Border>
-              </Grid>
-
-              <Grid Margin="0,18,0,0">
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="1.2*"/>
-                  <ColumnDefinition Width="0.8*"/>
-                </Grid.ColumnDefinitions>
-
-                <Border Grid.Column="0"
-                        Style="{StaticResource BaselineComparisonCard}"
-                        Margin="0,0,10,0">
-                  <StackPanel>
-                    <TextBlock Text="Evidence / Reasons"
-                               Style="{StaticResource AnomalySectionTitle}"/>
-                    <ItemsControl ItemsSource="{Binding SelectedEvidenceAndReasons}"
-                                  Margin="0,10,0,0">
-                      <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                          <TextBlock Text="{Binding}"
-                                     Foreground="{StaticResource TextSubtleBrush}"
-                                     Margin="0,0,0,6"
-                                     TextWrapping="Wrap"/>
-                        </DataTemplate>
-                      </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                  </StackPanel>
-                </Border>
-
-                <StackPanel Grid.Column="1">
-                  <Border Style="{StaticResource BaselineComparisonCard}">
-                    <StackPanel>
-                      <TextBlock Text="Tags"
-                                 Style="{StaticResource AnomalySectionTitle}"/>
-                      <ItemsControl ItemsSource="{Binding SelectedTags}"
-                                    Margin="0,10,0,0">
-                        <ItemsControl.ItemsPanel>
-                          <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                          <DataTemplate>
-                            <Border Style="{StaticResource SmallPill}"
-                                    Margin="0,0,6,6">
-                              <TextBlock Text="{Binding}"
-                                         Foreground="{StaticResource TextSubtleBrush}"/>
-                            </Border>
-                          </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                      </ItemsControl>
-                    </StackPanel>
-                  </Border>
-
-                  <Border Style="{StaticResource BaselineComparisonCard}"
-                          Margin="0,10,0,0">
-                    <StackPanel>
-                      <TextBlock Text="Related rule IDs"
-                                 Style="{StaticResource AnomalySectionTitle}"/>
-                      <ItemsControl ItemsSource="{Binding SelectedRuleIds}"
-                                    Margin="0,10,0,0">
-                        <ItemsControl.ItemsPanel>
-                          <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                          <DataTemplate>
-                            <Border Style="{StaticResource SmallPill}"
-                                    Margin="0,0,6,6">
-                              <TextBlock Text="{Binding}"
-                                         Foreground="{StaticResource TextSubtleBrush}"/>
-                            </Border>
-                          </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                      </ItemsControl>
-                    </StackPanel>
-                  </Border>
-                </StackPanel>
-              </Grid>
-
-              <TextBlock Text="Recommended Actions"
-                         Style="{StaticResource AnomalySectionTitle}"
-                         Margin="0,18,0,10"/>
+              </Border>
+              <TextBlock Text="ANALYST ACTIONS" Style="{StaticResource IncidentOpsEyebrow}" Margin="0,17,0,10"/>
               <WrapPanel>
-                <Button Content="Investigate Host"
-                        Width="150"
-                        Style="{StaticResource PrimaryButton}"
-                        Margin="0,0,8,8"
-                        Click="InvestigateHost_Click"/>
-                <Button Content="View Incident Workspace"
-                        Width="172"
-                        Style="{StaticResource SecondaryButton}"
-                        Margin="0,0,8,8"
-                        Click="OpenIncidentWorkspace_Click"/>
-                <Button Content="Query Detections"
-                        Width="144"
-                        Style="{StaticResource SecondaryButton}"
-                        Margin="0,0,8,8"
-                        Click="OpenRawDetections_Click"/>
-                <Button Content="Open Raw Traffic"
-                        Width="144"
-                        Style="{StaticResource SecondaryButton}"
-                        Margin="0,0,8,8"
-                        Click="OpenRawTraffic_Click"/>
-                <Button Content="..."
-                        Width="44"
-                        Style="{StaticResource SecondaryButton}"
-                        Margin="0,0,8,8"
-                        Click="MoreActions_Click"/>
+                <Button Content="Investigate Host" MinWidth="140" Style="{StaticResource PrimaryButton}" Margin="0,0,8,8" Click="InvestigateHost_Click"/>
+                <Button Content="View Incident Workspace" MinWidth="168" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Click="OpenIncidentWorkspace_Click"/>
+                <Button Content="Query Detections" MinWidth="132" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Click="OpenRawDetections_Click"/>
+                <Button Content="Open Raw Traffic" MinWidth="132" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Click="OpenRawTraffic_Click"/>
               </WrapPanel>
             </StackPanel>
-
-            <Border x:Name="DetailsEmptyState"
-                    Grid.Row="1"
-                    Style="{StaticResource EmptyStateCard}">
-              <StackPanel HorizontalAlignment="Center"
-                          VerticalAlignment="Center"
-                          MaxWidth="360">
-                <TextBlock Text="Select an incident from the triage queue"
-                           FontSize="18"
-                           FontWeight="SemiBold"
-                           HorizontalAlignment="Center"/>
-                <TextBlock Text="The right-side workspace will show the case snapshot, ownership, evidence, rule IDs, and next actions."
-                           Foreground="{StaticResource TextSubtleBrush}"
-                           Margin="0,10,0,0"
-                           TextAlignment="Center"
-                           TextWrapping="Wrap"/>
+            <Border x:Name="DetailsEmptyState" Grid.Row="1" Style="{StaticResource EmptyStateCard}">
+              <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="360">
+                <TextBlock Text="Select an incident from the triage queue" FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center"/>
+                <TextBlock Text="The selected case will show its context, evidence, rule IDs and investigation actions." Foreground="{StaticResource TextSubtleBrush}" Margin="0,10,0,0" TextAlignment="Center" TextWrapping="Wrap"/>
               </StackPanel>
             </Border>
           </Grid>
