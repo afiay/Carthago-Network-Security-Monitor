@@ -2320,18 +2320,42 @@
                           HorizontalContentAlignment="Stretch">
               <StackPanel>
                 <!-- GA UI-94: screen-visible Settings visual architecture, source candidate. -->
-                <Border Style="{StaticResource SettingsOpsHero}" Margin="0,0,0,18">
+                <Border Style="{StaticResource SettingsOpsHero}" Margin="0,0,0,14">
                   <StackPanel>
                     <TextBlock Text="APPLICATION PREFERENCES  /  LOCAL CONFIGURATION"
                                FontSize="11" FontWeight="Bold"
                                Foreground="{StaticResource AccentBrush}"/>
-                    <TextBlock Text="Settings" FontSize="29" FontWeight="Bold"
+                    <TextBlock Text="Settings" FontSize="34" FontWeight="Bold"
                                Foreground="{StaticResource TextBrush}" Margin="0,7,0,5"/>
                     <TextBlock Text="Tune detection sensitivity, optional enrichment and your operational workspace. Dashboard section toggles apply immediately; Save persists the main preferences."
                                Foreground="{StaticResource TextSubtleBrush}"
                                TextWrapping="Wrap" MaxWidth="950" HorizontalAlignment="Left"/>
                   </StackPanel>
                 </Border>
+                <!-- GA UI-116: persistent operational configuration map; labels are navigation context, not health telemetry. -->
+                <UniformGrid x:Name="SettingsWorkspaceMap" Columns="3" Margin="0,0,0,18">
+                  <Border Style="{StaticResource SettingsWorkspaceTile}" Margin="0,0,10,0">
+                    <StackPanel>
+                      <TextBlock Text="01  /  DETECTION" Style="{StaticResource SettingsWorkspaceEyebrow}"/>
+                      <TextBlock Text="Signal policy" Style="{StaticResource SettingsWorkspaceTitle}"/>
+                      <TextBlock Text="Sensitivity and threshold selection" Style="{StaticResource SettingsWorkspaceDescription}"/>
+                    </StackPanel>
+                  </Border>
+                  <Border Style="{StaticResource SettingsWorkspaceTile}" Margin="0,0,10,0">
+                    <StackPanel>
+                      <TextBlock Text="02  /  DATA SOURCES" Style="{StaticResource SettingsWorkspaceEyebrow}"/>
+                      <TextBlock Text="Capture &amp; enrichment" Style="{StaticResource SettingsWorkspaceTitle}"/>
+                      <TextBlock Text="Local capture defaults and optional external lookups" Style="{StaticResource SettingsWorkspaceDescription}"/>
+                    </StackPanel>
+                  </Border>
+                  <Border Style="{StaticResource SettingsWorkspaceTile}">
+                    <StackPanel>
+                      <TextBlock Text="03  /  WORKSPACE" Style="{StaticResource SettingsWorkspaceEyebrow}"/>
+                      <TextBlock Text="Dashboard composition" Style="{StaticResource SettingsWorkspaceTitle}"/>
+                      <TextBlock Text="Choose visible operational sections and layouts" Style="{StaticResource SettingsWorkspaceDescription}"/>
+                    </StackPanel>
+                  </Border>
+                </UniformGrid>
                 <Grid x:Name="SettingsOpsLayout">
                   <Grid.ColumnDefinitions>
                     <ColumnDefinition x:Name="SettingsOpsLeftColumn" Width="*"/>
@@ -2608,6 +2632,9 @@
                   <!-- GA UI-63: existing dashboard-section guidance on keyboard focus and via UI Automation; original preference handlers unchanged. -->
                   <UniformGrid x:Name="SettingsDashboardSectionsGrid"
                                Grid.Row="1" Columns="2" Margin="0,14,0,0">
+                    <UniformGrid.Resources>
+                      <Style TargetType="{x:Type CheckBox}" BasedOn="{StaticResource SettingsSectionChoice}"/>
+                    </UniformGrid.Resources>
                     <CheckBox x:Name="DashboardShowIncidentsCheck"
                               Content="Show Incidents"
                               ToolTip="Display correlated security incidents on the dashboard."

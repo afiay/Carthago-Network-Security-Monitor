@@ -31,6 +31,12 @@ namespace Carthago
             SettingsCaptureGroup.Margin = wide
                 ? new Thickness(12, 0, 0, 14) : new Thickness(0, 0, 0, 14);
             SettingsDashboardSectionsGrid.Columns = narrowKpis ? 1 : wide ? 3 : 2;
+            SettingsWorkspaceMap.Columns = wide ? 3 : 1;
+            foreach (var tile in SettingsWorkspaceMap.Children)
+            {
+                if (tile is Border border)
+                    border.Margin = wide ? new Thickness(0, 0, 10, 0) : new Thickness(0, 0, 0, 10);
+            }
             SettingsSensitivityLabelColumn.Width = new GridLength(narrowKpis ? 130 : 160);
             SettingsCaptureLabelColumn.Width = new GridLength(narrowKpis ? 130 : 160);
         }
