@@ -2402,46 +2402,42 @@
                     <ComboBoxItem Content="Aggressive"/>
                   </ComboBox>
 
-                  <Border Grid.Row="1"
-                          Grid.ColumnSpan="2"
-                          Margin="0,8,0,0"
-                          Background="#0E1526"
-                          BorderBrush="{StaticResource CardBorderBrush}"
-                          BorderThickness="1"
-                          CornerRadius="8"
-                          Padding="10">
-                    <Grid>
-                      <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                      </Grid.ColumnDefinitions>
-
-                      <StackPanel Grid.Column="0">
-                        <TextBlock Text="Relaxed"
-                                   FontWeight="SemiBold"/>
-                        <TextBlock Foreground="{StaticResource TextSubtleBrush}"
-                                   Margin="0,4,0,0"
-                                   Text="Factor: 0.50&#x0a;AbuseIPDB cutoff: &#x2265; 90"/>
+                  <!-- GA UI-118: substantial three-profile visual comparison, no new preference or detection behavior. -->
+                  <UniformGrid x:Name="SettingsSensitivityProfiles" Grid.Row="1" Grid.ColumnSpan="2" Columns="3" Margin="0,16,0,8">
+                    <Border Background="#101D2D" BorderBrush="#49A9CC" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,0,10,0" MinHeight="130">
+                      <StackPanel>
+                        <TextBlock Text="RELAXED" Foreground="#49A9CC" FontWeight="Bold" FontSize="12"/>
+                        <TextBlock Text="0.50" FontSize="26" FontWeight="Bold" Foreground="{StaticResource TextBrush}" Margin="0,8,0,0"/>
+                        <TextBlock Text="Threshold factor" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
+                        <Border Background="#17283A" CornerRadius="5" Padding="8,5" Margin="0,10,0,0">
+                          <TextBlock Text="AbuseIPDB cutoff: ≥ 90" Foreground="{StaticResource TextSubtleBrush}" FontSize="12"/>
+                        </Border>
+                        <TextBlock Text="Higher reputation cutoff; less sensitive thresholds." Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap" FontSize="11" Margin="0,9,0,0"/>
                       </StackPanel>
-
-                      <StackPanel Grid.Column="1">
-                        <TextBlock Text="Balanced"
-                                   FontWeight="SemiBold"/>
-                        <TextBlock Foreground="{StaticResource TextSubtleBrush}"
-                                   Margin="0,4,0,0"
-                                   Text="Factor: 1.00&#x0a;AbuseIPDB cutoff: &#x2265; 75"/>
+                    </Border>
+                    <Border Background="#101D2D" BorderBrush="#34C9C0" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,0,10,0" MinHeight="130">
+                      <StackPanel>
+                        <TextBlock Text="BALANCED" Foreground="#34C9C0" FontWeight="Bold" FontSize="12"/>
+                        <TextBlock Text="1.00" FontSize="26" FontWeight="Bold" Foreground="{StaticResource TextBrush}" Margin="0,8,0,0"/>
+                        <TextBlock Text="Threshold factor" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
+                        <Border Background="#17283A" CornerRadius="5" Padding="8,5" Margin="0,10,0,0">
+                          <TextBlock Text="AbuseIPDB cutoff: ≥ 75" Foreground="{StaticResource TextSubtleBrush}" FontSize="12"/>
+                        </Border>
+                        <TextBlock Text="Default reference threshold profile." Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap" FontSize="11" Margin="0,9,0,0"/>
                       </StackPanel>
-
-                      <StackPanel Grid.Column="2">
-                        <TextBlock Text="Aggressive"
-                                   FontWeight="SemiBold"/>
-                        <TextBlock Foreground="{StaticResource TextSubtleBrush}"
-                                   Margin="0,4,0,0"
-                                   Text="Factor: 1.50&#x0a;AbuseIPDB cutoff: &#x2265; 50"/>
+                    </Border>
+                    <Border Background="#101D2D" BorderBrush="#E8AC55" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,0,0,0" MinHeight="130">
+                      <StackPanel>
+                        <TextBlock Text="AGGRESSIVE" Foreground="#E8AC55" FontWeight="Bold" FontSize="12"/>
+                        <TextBlock Text="1.50" FontSize="26" FontWeight="Bold" Foreground="{StaticResource TextBrush}" Margin="0,8,0,0"/>
+                        <TextBlock Text="Threshold factor" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
+                        <Border Background="#17283A" CornerRadius="5" Padding="8,5" Margin="0,10,0,0">
+                          <TextBlock Text="AbuseIPDB cutoff: ≥ 50" Foreground="{StaticResource TextSubtleBrush}" FontSize="12"/>
+                        </Border>
+                        <TextBlock Text="Lower trigger thresholds; more sensitive alerts." Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap" FontSize="11" Margin="0,9,0,0"/>
                       </StackPanel>
-                    </Grid>
-                  </Border>
+                    </Border>
+                  </UniformGrid>
 
                   <TextBlock Grid.Row="2"
                              Grid.ColumnSpan="2"

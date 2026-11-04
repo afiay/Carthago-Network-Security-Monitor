@@ -32,6 +32,12 @@ namespace Carthago
                 ? new Thickness(12, 0, 0, 14) : new Thickness(0, 0, 0, 14);
             SettingsDashboardSectionsGrid.Columns = narrowKpis ? 1 : wide ? 3 : 2;
             SettingsWorkspaceMap.Columns = wide ? 3 : 1;
+            SettingsSensitivityProfiles.Columns = wide ? 3 : 1;
+            foreach (var profile in SettingsSensitivityProfiles.Children)
+            {
+                if (profile is Border card)
+                    card.Margin = wide ? new Thickness(0, 0, 10, 0) : new Thickness(0, 0, 0, 10);
+            }
             foreach (var tile in SettingsWorkspaceMap.Children)
             {
                 if (tile is Border border)
