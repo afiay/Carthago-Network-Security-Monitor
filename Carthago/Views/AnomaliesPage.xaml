@@ -217,48 +217,8 @@
               </StackPanel>
             </Border>
 
-            <ScrollViewer Grid.Row="2"
-                          Grid.RowSpan="2"
-                          HorizontalScrollBarVisibility="Auto"
-                          VerticalScrollBarVisibility="Disabled">
-              <Grid MinWidth="900">
-                <Grid.RowDefinitions>
-                  <RowDefinition Height="Auto"/>
-                  <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-            <Border Grid.Row="0"
-                    Background="#081321"
-                    BorderBrush="{StaticResource InputBorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="10"
-                    Padding="10,8"
-                    Margin="0,0,0,8">
-              <Grid>
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="66"/>
-                  <ColumnDefinition Width="1.65*"/>
-                  <ColumnDefinition Width="1.18*"/>
-                  <ColumnDefinition Width="1.00*"/>
-                  <ColumnDefinition Width="1.36*"/>
-                  <ColumnDefinition Width="0.74*"/>
-                  <ColumnDefinition Width="0.96*"/>
-                  <ColumnDefinition Width="0.74*"/>
-                  <ColumnDefinition Width="32"/>
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Grid.Column="0" Text="Score" Style="{StaticResource AnomalyQueueHeader}"/>
-                <TextBlock Grid.Column="1" Text="Anomaly" Style="{StaticResource AnomalyQueueHeader}"/>
-                <TextBlock Grid.Column="2" Text="Entity / Host" Style="{StaticResource AnomalyQueueHeader}"/>
-                <TextBlock Grid.Column="3" Text="Category" Style="{StaticResource AnomalyQueueHeader}"/>
-                <TextBlock Grid.Column="4" Text="Deviation / Reason" Style="{StaticResource AnomalyQueueHeader}"/>
-                <TextBlock Grid.Column="5" Text="Severity" Style="{StaticResource AnomalyQueueHeader}"/>
-                <TextBlock Grid.Column="6" Text="First / Last Seen" Style="{StaticResource AnomalyQueueHeader}"/>
-                <TextBlock Grid.Column="7" Text="Status" Style="{StaticResource AnomalyQueueHeader}"/>
-                <TextBlock Grid.Column="8" Text="" Style="{StaticResource AnomalyQueueHeader}"/>
-              </Grid>
-            </Border>
-
-            <Grid Grid.Row="1">
+            <!-- GA UI-114: severity-first triage cards replace the 900px-wide queue table. -->
+            <Grid Grid.Row="2" Grid.RowSpan="2">
               <ListBox x:Name="AnomaliesList"
                        ItemsSource="{Binding Visible}"
                        ItemContainerStyle="{StaticResource AnomalyQueueItemContainerStyle}"
@@ -267,138 +227,91 @@
                        SelectionMode="Single">
                 <ListBox.ItemTemplate>
                   <DataTemplate>
-                    <Grid>
-                      <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="66"/>
-                        <ColumnDefinition Width="1.65*"/>
-                        <ColumnDefinition Width="1.18*"/>
-                        <ColumnDefinition Width="1.00*"/>
-                        <ColumnDefinition Width="1.36*"/>
-                        <ColumnDefinition Width="0.74*"/>
-                        <ColumnDefinition Width="0.96*"/>
-                        <ColumnDefinition Width="0.74*"/>
-                        <ColumnDefinition Width="32"/>
-                      </Grid.ColumnDefinitions>
-
-                      <Grid Grid.Column="0" Width="42" Height="42" VerticalAlignment="Center">
-                        <Ellipse Style="{StaticResource RiskScoreCircle}"
-                                 Width="42"
-                                 Height="42"
-                                 Stroke="{Binding Severity, Converter={StaticResource SeverityBrush}}"
-                                 StrokeThickness="3"/>
-                        <TextBlock Text="{Binding ScoreNumber}"
-                                   FontWeight="Bold"
-                                   FontSize="12"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"/>
+                    <Border Background="#0B1B2B" BorderBrush="{StaticResource InputBorderBrush}"
+                            BorderThickness="1" CornerRadius="10" Margin="0,0,0,9" Padding="0">
+                      <Grid>
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="4"/>
+                          <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Background="{Binding Severity, Converter={StaticResource SeverityBrush}}"
+                                CornerRadius="10,0,0,10"/>
+                        <StackPanel Grid.Column="1" Margin="13,11,12,12">
+                          <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                              <Border Style="{StaticResource SmallPill}" Background="#101F30"
+                                      BorderBrush="{Binding Severity, Converter={StaticResource SeverityBrush}}">
+                                <TextBlock Text="{Binding SeverityUpper}" FontSize="10" FontWeight="Bold"
+                                           Foreground="{Binding Severity, Converter={StaticResource SeverityBrush}}"/>
+                              </Border>
+                              <TextBlock Text="{Binding CategoryLabel}" Margin="9,0,0,0"
+                                         Style="{StaticResource AnomalyQueueCellSubtleText}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <Button Grid.Column="1" Content="&#x22EF;" Width="30" Height="28" Padding="0"
+                                    Style="{StaticResource SecondaryButton}" Click="QueueRowMenu_Click"
+                                    Tag="{Binding}" HorizontalAlignment="Right"/>
+                          </Grid>
+                          <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding DisplayTitle}" FontSize="14" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextBrush}" TextWrapping="Wrap"
+                                       ToolTip="{Binding DisplayTitle}" Margin="0,0,10,0"/>
+                            <Border Grid.Column="1" Background="#123044" BorderBrush="#356A80"
+                                    BorderThickness="1" CornerRadius="8" Padding="9,5" VerticalAlignment="Top">
+                              <StackPanel>
+                                <TextBlock Text="{Binding ScoreNumber}" FontSize="17" FontWeight="Bold"
+                                           Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center"/>
+                                <TextBlock Text="RISK" Style="{StaticResource AnomalyOpsEyebrow}" FontSize="9"
+                                           HorizontalAlignment="Center"/>
+                              </StackPanel>
+                            </Border>
+                          </Grid>
+                          <TextBlock Text="{Binding PrimaryReason}" Margin="0,5,0,10"
+                                     Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap"
+                                     ToolTip="{Binding PrimaryReason}"/>
+                          <Border Background="#0E2435" CornerRadius="7" Padding="10,8" Margin="0,0,0,8">
+                            <StackPanel>
+                              <TextBlock Text="ENTITY / HOST" Style="{StaticResource AnomalyOpsEyebrow}"/>
+                              <TextBlock Text="{Binding SourceLabel}" FontWeight="SemiBold"
+                                         Foreground="{StaticResource TextBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                              <TextBlock Text="{Binding DestinationLabel}" Style="{StaticResource AnomalyQueueCellSubtleText}"
+                                         TextWrapping="Wrap" Margin="0,3,0,0"/>
+                            </StackPanel>
+                          </Border>
+                          <TextBlock Text="{Binding DeviationSummary}" Foreground="{StaticResource TextSubtleBrush}"
+                                     TextWrapping="Wrap" Margin="0,0,0,9"/>
+                          <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <StackPanel>
+                              <TextBlock Text="{Binding OccurrenceLabel}" Style="{StaticResource AnomalyQueueCellSubtleText}"/>
+                              <TextBlock Text="{Binding FirstSeenLabel}" Style="{StaticResource AnomalyQueueCellSubtleText}"
+                                         Margin="0,3,0,0"/>
+                              <TextBlock Text="{Binding LastSeenLabel}" Style="{StaticResource AnomalyQueueCellSubtleText}"
+                                         Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <Border Grid.Column="1" Style="{StaticResource SmallPill}" Background="#10233B"
+                                    BorderBrush="#1D4ED8" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                              <TextBlock Text="{Binding QueueStatusLabel}" Foreground="{StaticResource AccentAltBrush}"
+                                         FontSize="10.5" FontWeight="SemiBold"/>
+                            </Border>
+                          </Grid>
+                        </StackPanel>
                       </Grid>
-
-                      <StackPanel Grid.Column="1" Margin="0,0,10,0" VerticalAlignment="Center">
-                        <TextBlock Text="{Binding DisplayTitle}"
-                                   Style="{StaticResource AnomalyQueueCellText}"
-                                   FontWeight="SemiBold"
-                                   ToolTip="{Binding DisplayTitle}"/>
-                        <TextBlock Text="{Binding DestinationLabel}"
-                                   Style="{StaticResource AnomalyQueueCellSubtleText}"
-                                   Margin="0,3,0,0"
-                                   ToolTip="{Binding DestinationLabel}"/>
-                      </StackPanel>
-
-                      <StackPanel Grid.Column="2" Margin="0,0,10,0" VerticalAlignment="Center">
-                        <TextBlock Text="{Binding SourceLabel}"
-                                   Style="{StaticResource AnomalyQueueCellText}"
-                                   ToolTip="{Binding SourceLabel}"/>
-                        <TextBlock Text="{Binding OccurrenceLabel}"
-                                   Style="{StaticResource AnomalyQueueCellSubtleText}"
-                                   Margin="0,3,0,0"
-                                   ToolTip="{Binding OccurrenceLabel}"/>
-                      </StackPanel>
-
-                      <TextBlock Grid.Column="3"
-                                 Text="{Binding CategoryLabel}"
-                                 Style="{StaticResource AnomalyQueueCellText}"
-                                 Margin="0,0,10,0"
-                                 ToolTip="{Binding CategoryLabel}"/>
-
-                      <StackPanel Grid.Column="4" Margin="0,0,10,0" VerticalAlignment="Center">
-                        <TextBlock Text="{Binding PrimaryReason}"
-                                   Style="{StaticResource AnomalyQueueCellText}"
-                                   ToolTip="{Binding PrimaryReason}"/>
-                        <TextBlock Text="{Binding DeviationSummary}"
-                                   Style="{StaticResource AnomalyQueueCellSubtleText}"
-                                   Margin="0,3,0,0"
-                                   ToolTip="{Binding DeviationSummary}"/>
-                      </StackPanel>
-
-                      <Border Grid.Column="5"
-                              Style="{StaticResource SmallPill}"
-                              Background="#0B1626"
-                              BorderBrush="{Binding Severity, Converter={StaticResource SeverityBrush}}"
-                              HorizontalAlignment="Left"
-                              VerticalAlignment="Center"
-                              Margin="0,0,10,0">
-                        <TextBlock Text="{Binding SeverityUpper}"
-                                   Foreground="{Binding Severity, Converter={StaticResource SeverityBrush}}"
-                                   FontSize="10.5"
-                                   FontWeight="Bold"/>
-                      </Border>
-
-                      <StackPanel Grid.Column="6" Margin="0,0,10,0" VerticalAlignment="Center">
-                        <TextBlock Text="{Binding FirstSeenLabel}"
-                                   Style="{StaticResource AnomalyQueueCellText}"
-                                   ToolTip="{Binding FirstSeenLabel}"/>
-                        <TextBlock Text="{Binding LastSeenLabel}"
-                                   Style="{StaticResource AnomalyQueueCellSubtleText}"
-                                   Margin="0,3,0,0"
-                                   ToolTip="{Binding LastSeenLabel}"/>
-                      </StackPanel>
-
-                      <Border Grid.Column="7"
-                              Style="{StaticResource SmallPill}"
-                              Background="#10233B"
-                              BorderBrush="#1D4ED8"
-                              HorizontalAlignment="Left"
-                              VerticalAlignment="Center">
-                        <TextBlock Text="{Binding QueueStatusLabel}"
-                                   Foreground="{StaticResource AccentAltBrush}"
-                                   FontSize="10.5"
-                                   FontWeight="SemiBold"
-                                   ToolTip="{Binding QueueStatusLabel}"/>
-                      </Border>
-
-                      <Button Grid.Column="8"
-                              Content="&#x22EF;"
-                              Width="28"
-                              Height="28"
-                              Padding="0"
-                              Style="{StaticResource SecondaryButton}"
-                              Click="QueueRowMenu_Click"
-                              Tag="{Binding}"
-                              HorizontalAlignment="Right"
-                              VerticalAlignment="Center"/>
-                    </Grid>
+                    </Border>
                   </DataTemplate>
                 </ListBox.ItemTemplate>
               </ListBox>
-
-              <Border x:Name="AnomaliesEmptyState"
-                      Style="{StaticResource EmptyStateCard}"
-                      Visibility="Collapsed">
+              <Border x:Name="AnomaliesEmptyState" Style="{StaticResource EmptyStateCard}" Visibility="Collapsed">
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="360">
-                  <TextBlock Text="No anomaly signals yet"
-                             FontSize="18"
-                             FontWeight="SemiBold"
+                  <TextBlock Text="No anomaly signals yet" FontSize="18" FontWeight="SemiBold"
                              HorizontalAlignment="Center"/>
                   <TextBlock Text="Start monitoring or run demo mode to populate behavior signals."
-                             Margin="0,8,0,0"
-                             Foreground="{StaticResource TextSubtleBrush}"
-                             TextAlignment="Center"
-                             TextWrapping="Wrap"/>
+                             Margin="0,8,0,0" Foreground="{StaticResource TextSubtleBrush}"
+                             TextAlignment="Center" TextWrapping="Wrap"/>
                 </StackPanel>
               </Border>
             </Grid>
-              </Grid>
-            </ScrollViewer>
 
             <DockPanel Grid.Row="4" Margin="0,12,0,0" LastChildFill="False">
               <TextBlock Text="{Binding QueueCountText}"
