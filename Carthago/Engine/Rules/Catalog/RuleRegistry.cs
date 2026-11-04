@@ -758,6 +758,16 @@ namespace Carthago.Engine.Rules.Catalog
                 new R733_MacProcessTextStorageTlsContactRule(),
                 new R734_MacNonBrowserExternalTlsPayloadBurstRule(),
                 new R735_EsxiProcessWebProtocolPortMismatchRule(),
+                new R736_LinuxNonBrowserTlsPayloadBurstRule(),
+                new R737_LinuxCliLargeHttpPostBurstRule(),
+                new R738_LinuxRecurrentTransferCadenceRule(),
+                new R739_LinuxScriptHttpRequestFloodRule(),
+                new R740_MacOsUtilityLargeHttpPostBurstRule(),
+                new R741_HypervisorProcessDeadDropTlsContactRule(),
+                new R742_BusyBoxCliWebHeartbeatCadenceRule(),
+                new R743_EsxiManagementProcessFixedSizeEgressCadenceRule(),
+                new R744_EsxiManagementProcessProxyPortFanoutRule(),
+                new R745_HpingNpingPublicTargetFanoutRule(),
             };
         }
 
