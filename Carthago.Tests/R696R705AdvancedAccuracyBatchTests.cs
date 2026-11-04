@@ -140,7 +140,7 @@ public sealed class R696R705AdvancedAccuracyBatchTests
     {
         var rule=Rule("R704");
         var inbound=Syn("10.1.2.10","10.1.2.20",9000);
-        var outbound=Syn("10.1.2.20","10.1.2.30",445);
+        var outbound=Syn("10.1.2.20","10.1.2.30",3389);
         Assert.False((await rule.EvaluateAsync(At(inbound,0))).Matched);
         Assert.True((await rule.EvaluateAsync(At(outbound,1))).Matched);
 

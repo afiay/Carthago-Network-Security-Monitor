@@ -63,8 +63,8 @@ namespace Carthago.Engine.Rules.Expansion
             || !Research676Evidence.PrivatePair(r, out var src, out var dst))
             return NoMatch();
 
-        var first = r.DestinationPort is > 1024 and <= 65535;
         var second = r.DestinationPort is 22 or 445 or 3389 or 5985 or 5986 or 3306 or 5432 or 6379;
+        var first = r.DestinationPort is > 1024 and <= 65535 && !second;
         if (!first && !second) return NoMatch();
 
         var relay = first ? r.Destination! : r.Source!;
