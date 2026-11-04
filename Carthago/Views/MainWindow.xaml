@@ -2512,7 +2512,8 @@
                           BorderBrush="#28728B" Margin="-9,-5,-9,-7"
                           IsHitTestVisible="False"/>
                   <!-- Auto-start -->
-                  <TextBlock Text="Auto-Start Capture"\n                             FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="12,0,6,0"
+                  <TextBlock Text="Auto-Start Capture"
+                             FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="12,0,6,0"
                              VerticalAlignment="Center"/>
                   <StackPanel Grid.Column="1"
                               Orientation="Horizontal">
@@ -2524,14 +2525,15 @@
                   </StackPanel>
                   <TextBlock Grid.Row="1"
                              Grid.ColumnSpan="2"
-                             Margin="0,4,0,8"
+                             Margin="12,4,0,8"
                              Foreground="{StaticResource TextSubtleBrush}"
-                             Text="Tip: Useful for appliances or headless deployments."\n                             Margin="12,4,0,8"/>
+                             Text="Tip: Useful for appliances or headless deployments."/>
 
                   <!-- External enrichment settings: distinct operational zone. -->
                   <!-- WHOIS -->
                   <TextBlock Grid.Row="2"
-                             Text="Enable WHOIS"\n                             FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="12,0,6,0"
+                             Text="Enable WHOIS"
+                             FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="12,0,6,0"
                              VerticalAlignment="Center"/>
                   <StackPanel Grid.Row="2"
                               Grid.Column="1"
@@ -2545,7 +2547,8 @@
 
                   <!-- Reputation -->
                   <TextBlock Grid.Row="3"
-                             Text="Enable Reputation"\n                             FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="12,0,6,0"
+                             Text="Enable Reputation"
+                             FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="12,0,6,0"
                              VerticalAlignment="Center"/>
                   <StackPanel Grid.Row="3"
                               Grid.Column="1"
@@ -2558,17 +2561,18 @@
                   </StackPanel>
                   <TextBlock Grid.Row="4"
                              Grid.ColumnSpan="2"
-                             Margin="0,4,0,8"
+                             Margin="12,4,0,8"
                              Foreground="{StaticResource TextWarningBrush}"
                              TextWrapping="Wrap"
-                             Margin="12,4,0,8"\n                             Text="Requires a valid AbuseIPDB API key. For best results, set ABUSEIPDB_API_KEY in a .env file or environment variable."/>
+                             Text="Requires a valid AbuseIPDB API key. For best results, set ABUSEIPDB_API_KEY in a .env file or environment variable."/>
 
                   <!-- Local filter and session credential settings: distinct operational zone. -->
                   <!-- BPF filter -->
                   <!-- GA UI-66: label the existing BPF field and disclose Save's active-Npcap effect without changing capture logic. -->
                   <TextBlock x:Name="SettingsDefaultBpfLabel"
                              Grid.Row="5"
-                             Text="Default BPF Filter"\n                             FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="12,0,6,0"
+                             Text="Default BPF Filter"
+                             FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="12,0,6,0"
                              VerticalAlignment="Center"/>
                   <StackPanel Grid.Row="5"
                               Grid.Column="1"
@@ -2585,7 +2589,8 @@
                   <!-- GA UI-68: make the existing session-only credential action discoverable without exposing the secret. -->
                   <TextBlock x:Name="SettingsAbuseApiKeyLabel"
                              Grid.Row="6"
-                             Text="AbuseIPDB API Key"\n                             FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="12,0,6,0"
+                             Text="AbuseIPDB API Key"
+                             FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="12,0,6,0"
                              VerticalAlignment="Center"/>
                   <WrapPanel Grid.Row="6"
                              Grid.Column="1">
