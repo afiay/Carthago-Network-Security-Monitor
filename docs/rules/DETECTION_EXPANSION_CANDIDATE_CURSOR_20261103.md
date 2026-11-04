@@ -54,3 +54,8 @@ Original research IDs R1137, R1716, R2789, R2782, R2040, R2019, R1983, R2777, R2
 ## R686–R695 — independent workbook source candidates
 
 Original research IDs R2365, R2337, R2874, R2284, R3060, R2300, R3036, R2098, R2543, R2867. See [R686–R695](../03-detection-rules/batches/RULE_BATCH_686-695.md). **SOURCE CANDIDATE — UNVERIFIED; xUnit authored, 0 executed.** No convergence. Next unallocated R696.
+
+
+## R696–R705 — independent workbook source candidates
+
+Original research IDs R2103, R2292, R2305, R2315, R2415, R2506, R2767, R2043, R1793, R1783. See [R696–R705](../03-detection-rules/batches/RULE_BATCH_696-705.md). **SOURCE CANDIDATE — UNVERIFIED; xUnit authored, 0 executed.** No convergence. Next unallocated R706.

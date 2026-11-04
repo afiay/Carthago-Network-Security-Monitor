@@ -718,6 +718,16 @@ namespace Carthago.Engine.Rules.Catalog
                 new R693_SnippingToolExternalRemoteResourceAttemptRule(),
                 new R694_NpsNpcProcessExternalTcpEgressRule(),
                 new R695_IoxProcessExternalTcpEgressRule(),
+                new R696_BitsadminFileSharingServiceContactRule(),
+                new R697_CertutilFileSharingServiceContactRule(),
+                new R698_PowerShellFileSharingServiceContactRule(),
+                new R699_OfficeProcessSuspiciousExtensionHttpGetRule(),
+                new R700_Rundll32ExternalWebDavRequestRule(),
+                new R701_NetExeExternalWebDavRequestRule(),
+                new R702_OtServiceProtocolClassificationMismatchRule(),
+                new R703_ScriptProcessRepeatedPublicUdpPayloadBurstRule(),
+                new R704_UnattributedInternalRelaySynSequenceRule(),
+                new R705_UnattributedPublicBridgeSynSequenceRule(),
             };
         }
 
