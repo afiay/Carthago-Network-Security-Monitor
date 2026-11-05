@@ -2806,73 +2806,76 @@
                 </Grid>
               </GroupBox>
 
+              <!-- GA UI-121: dedicated, provenance-first developer simulation workspace. -->
               <GroupBox x:Name="DemoModeGroup" Grid.Row="3" Grid.Column="0"
                         Header="Developer Demo Mode" Style="{StaticResource SettingsOpsGroup}"
                         Margin="0,0,0,14" Visibility="Collapsed">
-                <Grid Margin="10">
-                  <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                  </Grid.RowDefinitions>
-
-                  <!-- GA UI-70: visually separate simulated analytics from live capture without changing demo actions. -->
-                  <Border Background="{StaticResource PillAccentBgBrush}"
-                          BorderBrush="{StaticResource CardBorderBrush}"
-                          BorderThickness="1"
-                          CornerRadius="8"
-                          Padding="12,10">
+                <StackPanel Margin="10">
+                  <Border Background="#112C3E" BorderBrush="{StaticResource CardBorderBrush}"
+                          BorderThickness="1" CornerRadius="10" Padding="20,18" Margin="0,0,0,14">
                     <StackPanel>
-                      <TextBlock Text="SIMULATED ANALYTICS · NOT LIVE CAPTURE"
-                                 FontWeight="SemiBold"
-                                 FontSize="12"
-                                 Foreground="{StaticResource AccentBrush}"
-                                 TextWrapping="Wrap"/>
-                      <TextBlock Text="Developer-only scenario controls. Visible in debug builds or when launched with --demo-mode; this panel is not evidence of capture health."
-                                 Foreground="{StaticResource TextSubtleBrush}"
-                                 Margin="0,4,0,0"
-                                 TextWrapping="Wrap"/>
+                      <Border Background="#173C4E" BorderBrush="{StaticResource CardBorderBrush}"
+                              BorderThickness="1" CornerRadius="5" Padding="10,5"
+                              HorizontalAlignment="Left" Margin="0,0,0,12">
+                        <TextBlock Text="DEVELOPER SIMULATION · NOT LIVE CAPTURE"
+                                   FontSize="11" FontWeight="Bold"
+                                   Foreground="{StaticResource AccentBrush}" TextWrapping="Wrap"/>
+                      </Border>
+                      <TextBlock Text="Explore simulated detection scenarios"
+                                 FontSize="22" FontWeight="SemiBold"
+                                 Foreground="{StaticResource TextBrush}" TextWrapping="Wrap"/>
+                      <TextBlock Text="Available only in debug builds or when launched with --demo-mode. Scenario output is labeled demonstration analytics, never proof of capture health or real network activity."
+                                 Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap"
+                                 Margin="0,8,0,0"/>
                     </StackPanel>
                   </Border>
 
-                  <TextBlock Grid.Row="1"
-                             Margin="0,8,0,0"
-                             Text="This injects labeled anomaly and detection data into the analytics pipeline only. Raw packet, sink, and forensic views continue to show real capture data."
-                             Foreground="{StaticResource TextMutedBrush}"
-                             TextWrapping="Wrap"/>
-
-                  <WrapPanel Grid.Row="2"
-                             Margin="0,8,0,0">
-                    <Button Content="Simulate compromised laptop"
-                            Width="220"
-                            Style="{StaticResource PrimaryButton}"
-                            Click="RunDemoIncident_Click"/>
-                    <Button Content="Clear demo data"
-                            Width="140"
-                            Margin="8,0,0,0"
-                            Style="{StaticResource SecondaryButton}"
-                            Click="ClearDemoData_Click"/>
-                    <Button Content="Open incident queue"
-                            Width="150"
-                            Margin="8,0,0,0"
-                            Style="{StaticResource SecondaryButton}"
-                            Click="OpenDemoIncidentQueue_Click"/>
-                  </WrapPanel>
-
-                  <Border Grid.Row="3"
-                          Margin="0,8,0,0"
-                          Background="{StaticResource PillBgBrush}"
+                  <Border Background="{StaticResource PillBgBrush}"
                           BorderBrush="{StaticResource CardBorderBrush}"
-                          BorderThickness="1"
-                          CornerRadius="8"
-                          Padding="10">
-                    <TextBlock x:Name="DemoModeStatusText"
-                               Text="Demo mode is enabled. No demo data has been generated yet."
-                               Foreground="{StaticResource TextSubtleBrush}"
-                               TextWrapping="Wrap"/>
+                          BorderThickness="1" CornerRadius="10" Padding="20,18" Margin="0,0,0,14">
+                    <StackPanel>
+                      <TextBlock Text="01  SCENARIO CONTROLS" FontSize="11" FontWeight="Bold"
+                                 Foreground="{StaticResource AccentBrush}" Margin="0,0,0,8"/>
+                      <TextBlock Text="Generate or clear demo analytics" FontSize="18" FontWeight="SemiBold"
+                                 Foreground="{StaticResource TextBrush}" TextWrapping="Wrap"/>
+                      <TextBlock Text="The scenario injects labeled anomaly and detection data into analytics only. Raw packets, sink delivery and forensic views continue to reflect real capture data."
+                                 Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap"
+                                 Margin="0,7,0,16"/>
+                      <WrapPanel>
+                        <Button Content="Simulate compromised laptop"
+                                MinWidth="220" Margin="0,0,10,10"
+                                Style="{StaticResource PrimaryButton}"
+                                Click="RunDemoIncident_Click"/>
+                        <Button Content="Clear demo data"
+                                MinWidth="145" Margin="0,0,10,10"
+                                Style="{StaticResource SecondaryButton}"
+                                Click="ClearDemoData_Click"/>
+                        <Button Content="Open incident queue"
+                                MinWidth="165" Margin="0,0,0,10"
+                                Style="{StaticResource SecondaryButton}"
+                                Click="OpenDemoIncidentQueue_Click"/>
+                      </WrapPanel>
+                    </StackPanel>
                   </Border>
-                </Grid>
+
+                  <Border Background="#102634" BorderBrush="{StaticResource CardBorderBrush}"
+                          BorderThickness="1" CornerRadius="10" Padding="20,18">
+                    <StackPanel>
+                      <TextBlock Text="02  DEMONSTRATION STATUS" FontSize="11" FontWeight="Bold"
+                                 Foreground="{StaticResource AccentBrush}" Margin="0,0,0,8"/>
+                      <TextBlock Text="Scenario feedback" FontSize="18" FontWeight="SemiBold"
+                                 Foreground="{StaticResource TextBrush}" Margin="0,0,0,10"/>
+                      <Border Background="{StaticResource PillBgBrush}"
+                              BorderBrush="{StaticResource CardBorderBrush}"
+                              BorderThickness="1" CornerRadius="6" Padding="12,10">
+                        <TextBlock x:Name="DemoModeStatusText"
+                                   Text="Demo mode is enabled. No demo data has been generated yet."
+                                   Foreground="{StaticResource TextSubtleBrush}"
+                                   TextWrapping="Wrap"/>
+                      </Border>
+                    </StackPanel>
+                  </Border>
+                </StackPanel>
               </GroupBox>
                 </Grid>
                 <!-- GA UI-120: application-wide actions live outside the sensitivity card. -->
