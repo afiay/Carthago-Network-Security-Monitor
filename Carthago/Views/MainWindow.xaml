@@ -2642,13 +2642,20 @@
                     <RowDefinition Height="Auto"/>
                   </Grid.RowDefinitions>
 
-                  <TextBlock Text="Keep the main dashboard empty unless you explicitly activate sections or add widgets."
-                             Foreground="{StaticResource TextSubtleBrush}"
-                             TextWrapping="Wrap"/>
+                  <StackPanel Margin="0,0,0,10">
+                    <TextBlock Text="DASHBOARD COMPOSITION" Foreground="{StaticResource TextMutedBrush}" FontSize="11" FontWeight="Bold"/>
+                    <TextBlock Text="Shape your operational workspace" FontSize="24" FontWeight="SemiBold" Margin="0,5,0,4"/>
+                    <TextBlock Text="Section visibility, workspace defaults and layout presets are separate controls." Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap"/>
+                  </StackPanel>
 
+                  <!-- GA UI-119: section selection becomes a visually distinct composition card. -->
+                  <Border Grid.Row="1" Style="{StaticResource PresetCard}" Margin="0,14,0,0" Padding="14">
+                    <StackPanel>
+                      <TextBlock Text="01  VISIBLE SECTIONS" FontWeight="Bold" FontSize="14"/>
+                      <TextBlock Text="Choose which operational modules appear on the dashboard." Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,8" TextWrapping="Wrap"/>
                   <!-- GA UI-63: existing dashboard-section guidance on keyboard focus and via UI Automation; original preference handlers unchanged. -->
                   <UniformGrid x:Name="SettingsDashboardSectionsGrid"
-                               Grid.Row="1" Columns="2" Margin="0,14,0,0">
+                               Columns="2" Margin="0,8,0,0">
                     <UniformGrid.Resources>
                       <Style TargetType="{x:Type CheckBox}" BasedOn="{StaticResource SettingsSectionChoice}"/>
                     </UniformGrid.Resources>
@@ -2737,10 +2744,15 @@
                               Checked="DashboardSectionToggle_Changed"
                               Unchecked="DashboardSectionToggle_Changed"/>
                   </UniformGrid>
+                    </StackPanel>
+                  </Border>
 
                   <!-- GA UI-69: clarify the two saved dashboard flags without claiming they clear configured widgets. -->
-                  <WrapPanel Grid.Row="2"
-                             Margin="0,14,0,0">
+                  <Border Grid.Row="2" Style="{StaticResource PresetCard}" Margin="0,14,0,0" Padding="14">
+                    <StackPanel>
+                      <TextBlock Text="02  WORKSPACE DEFAULTS" FontWeight="Bold" FontSize="14"/>
+                      <TextBlock Text="These preferences do not clear configured widgets or retained evidence." Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,10" TextWrapping="Wrap"/>
+                  <WrapPanel>
                     <CheckBox x:Name="DashboardMinimalModeCheck"
                               Content="Use minimal dashboard"
                               ToolTip="Saves the minimal-dashboard preference immediately. The visible workspace is populated from enabled configured widgets; toggling this flag alone does not remove widgets, reset the layout, or control capture."
@@ -2757,16 +2769,19 @@
                               Checked="DashboardSectionToggle_Changed"
                               Unchecked="DashboardSectionToggle_Changed"/>
                   </WrapPanel>
+                    </StackPanel>
+                  </Border>
 
                   <Border Grid.Row="3"
                           Style="{StaticResource PresetCard}"
-                          Margin="0,14,0,0">
+                          Margin="0,14,0,0" Padding="14">
                     <Grid>
                       <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                       </Grid.RowDefinitions>
                       <StackPanel>
+                        <TextBlock Text="03  LAYOUT PRESETS" FontSize="14" FontWeight="Bold" Margin="0,0,0,7"/>
                         <TextBlock x:Name="DashboardPresetsLabel" Text="Recommended layouts"
                                    FontWeight="SemiBold"/>
                         <TextBlock Text="Apply a preset, then customize or reorder widgets."
