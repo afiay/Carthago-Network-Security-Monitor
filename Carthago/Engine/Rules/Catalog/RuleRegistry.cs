@@ -778,6 +778,16 @@ namespace Carthago.Engine.Rules.Catalog
                 new R753_OsascriptExternalTlsRecurrentCadenceRule(),
                 new R754_MacTransferToolPrivatePeerPayloadBurstRule(),
                 new R755_PublicVncAttemptThenMacScriptEgressRule(),
+                new R756_EsxiManagementProcessCodeRepositoryTlsBurstRule(),
+                new R757_LlmnrNbnsConflictThenSmbRelayShapeRule(),
+                new R758_PublicUncommonTriggerThenReverseSynRule(),
+                new R759_LinuxVncProcessPublicSynAckRule(),
+                new R760_MacScriptBrowserUserAgentHttpRequestRule(),
+                new R761_RmmProcessExternalTlsCadenceRule(),
+                new R762_MsbuildExternalTlsPayloadBurstRule(),
+                new R763_EsxiStyleDnsTunnelShapeRule(),
+                new R764_LinuxDnsTunnelToolQueryBurstRule(),
+                new R765_LinuxRemoteServiceAttemptThenShellEgressRule(),
             };
         }
 
