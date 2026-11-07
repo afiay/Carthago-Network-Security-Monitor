@@ -351,6 +351,7 @@
             <StackPanel x:Name="DetailsScrollViewer"
                         Grid.Row="1"
                         Visibility="Collapsed">
+              <Border Background="#10283A" BorderBrush="#31536A" BorderThickness="1" CornerRadius="12" Padding="18" Margin="0,0,0,6">
               <Grid>
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="*"/>
@@ -407,13 +408,16 @@
                 </StackPanel>
               </Grid>
 
-              <Grid Margin="0,18,0,0">
+              </Border>
+
+              <TextBlock Text="CASE CONTEXT / OBSERVED FACTS" Style="{StaticResource IncidentOpsEyebrow}" Margin="0,20,0,10"/>
+              <Grid Margin="0,0,0,0">
                 <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="*"/>
                   <ColumnDefinition Width="*"/>
                   <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto"/>
                   <RowDefinition Height="Auto"/>
                   <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
@@ -434,7 +438,7 @@
                                ToolTip="{Binding Selected.DestinationLabel}"/>
                   </StackPanel>
                 </Border>
-                <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource DetailGridCard}" Margin="8,0,0,8">
+                <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource DetailGridCard}" Margin="0,0,8,8">
                   <StackPanel>
                     <TextBlock Text="Category" Style="{StaticResource AnomalyFieldLabel}"/>
                     <TextBlock Text="{Binding Selected.Category}"
@@ -442,7 +446,7 @@
                                ToolTip="{Binding Selected.Category}"/>
                   </StackPanel>
                 </Border>
-                <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource DetailGridCard}" Margin="0,0,8,0">
+                <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource DetailGridCard}" Margin="8,0,0,8">
                   <StackPanel>
                     <TextBlock Text="Detected" Style="{StaticResource AnomalyFieldLabel}"/>
                     <TextBlock Text="{Binding Selected.CreatedLabel}"
@@ -450,7 +454,7 @@
                                ToolTip="{Binding Selected.CreatedLabel}"/>
                   </StackPanel>
                 </Border>
-                <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource DetailGridCard}" Margin="8,0,8,0">
+                <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource DetailGridCard}" Margin="0,0,8,0">
                   <StackPanel>
                     <TextBlock Text="Status" Style="{StaticResource AnomalyFieldLabel}"/>
                     <TextBlock Text="{Binding Selected.Status}"
@@ -458,7 +462,7 @@
                                ToolTip="{Binding Selected.Status}"/>
                   </StackPanel>
                 </Border>
-                <Border Grid.Row="1" Grid.Column="2" Style="{StaticResource DetailGridCard}" Margin="8,0,0,0">
+                <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource DetailGridCard}" Margin="8,0,0,0">
                   <StackPanel>
                     <TextBlock Text="Related anomalies" Style="{StaticResource AnomalyFieldLabel}"/>
                     <TextBlock Text="{Binding Selected.RelatedAnomalyCountLabel}"
@@ -467,15 +471,19 @@
                 </Border>
               </Grid>
 
-              <Grid Margin="0,18,0,0">
+              <TextBlock Text="EVIDENCE / ATTRIBUTION / ANALYST REVIEW" Style="{StaticResource IncidentOpsEyebrow}" Margin="0,22,0,10"/>
+              <Grid Margin="0">
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto"/>
+                  <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="1.15*"/>
-                  <ColumnDefinition Width="0.85*"/>
+                  <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <Border Grid.Column="0"
+                <Border Grid.Row="0" Grid.Column="0"
                         Style="{StaticResource BaselineComparisonCard}"
-                        Margin="0,0,10,0">
+                        Margin="0,0,0,12" Padding="18" BorderBrush="#31536A">
                   <StackPanel>
                     <TextBlock Text="Evidence / Reasons"
                                Style="{StaticResource AnomalySectionTitle}"/>
@@ -507,8 +515,12 @@
                   </StackPanel>
                 </Border>
 
-                <StackPanel Grid.Column="1">
-                  <Border Style="{StaticResource BaselineComparisonCard}">
+                <Grid Grid.Row="1" Grid.Column="0">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                  </Grid.ColumnDefinitions>
+                  <Border Grid.Column="0" Style="{StaticResource BaselineComparisonCard}" Margin="0,0,8,0" Padding="16">
                     <StackPanel>
                       <TextBlock Text="MITRE / Tags / Rules"
                                  Style="{StaticResource AnomalySectionTitle}"/>
@@ -560,8 +572,8 @@
                     </StackPanel>
                   </Border>
 
-                  <Border Style="{StaticResource BaselineComparisonCard}"
-                          Margin="0,10,0,0">
+                  <Border Grid.Column="1" Style="{StaticResource BaselineComparisonCard}"
+                          Margin="8,0,0,0" Padding="16">
                     <StackPanel>
                       <TextBlock Text="Analyst Note"
                                  Style="{StaticResource AnomalySectionTitle}"/>
@@ -583,10 +595,10 @@
                       </DockPanel>
                     </StackPanel>
                   </Border>
-                </StackPanel>
+                </Grid>
               </Grid>
 
-              <TextBlock Text="Response Decisions"
+              <TextBlock Text="04 / RESPONSE DECISIONS"
                          Style="{StaticResource AnomalySectionTitle}"
                          Margin="0,18,0,10"/>
               <WrapPanel>
