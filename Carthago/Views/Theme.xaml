@@ -1485,19 +1485,19 @@
     <GradientStop Color="#0A1727" Offset="1"/>
   </LinearGradientBrush>
   <Style x:Key="DashboardLiveEventsSurface" TargetType="Border" BasedOn="{StaticResource PageSurface}">
-    <Setter Property="Padding" Value="12"/>
-    <Setter Property="BorderBrush" Value="#27516A"/>
-    <Setter Property="CornerRadius" Value="14"/>
+    <Setter Property="Padding" Value="18"/>
+    <Setter Property="BorderBrush" Value="#2A5870"/>
+    <Setter Property="CornerRadius" Value="16"/>
   </Style>
   <Style x:Key="DashboardLiveEventsToolbar" TargetType="Border">
-    <Setter Property="Padding" Value="14,12,14,6"/>
-    <Setter Property="Background" Value="{StaticResource InputBgBrush}"/>
-    <Setter Property="BorderBrush" Value="{StaticResource SoftDividerBrush}"/>
+    <Setter Property="Padding" Value="20,18,20,12"/>
+    <Setter Property="Background" Value="#10283A"/>
+    <Setter Property="BorderBrush" Value="#2A5067"/>
     <Setter Property="BorderThickness" Value="1"/>
-    <Setter Property="CornerRadius" Value="10"/>
+    <Setter Property="CornerRadius" Value="12"/>
   </Style>
   <Style x:Key="DashboardLiveEventsFooter" TargetType="Border">
-    <Setter Property="Padding" Value="12,10"/>
+    <Setter Property="Padding" Value="18,14"/>
     <Setter Property="Background" Value="#0D2636"/>
     <Setter Property="BorderBrush" Value="#22506A"/>
     <Setter Property="BorderThickness" Value="1"/>

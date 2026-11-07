@@ -1432,7 +1432,7 @@
                 <Border x:Name="DashboardLiveEventsPanel"
                         Style="{StaticResource DashboardLiveEventsSurface}"
                         Grid.Row="0" Grid.Column="0"
-                        Margin="0,0,12,0">
+                        Margin="0,0,16,0">
                   <Grid>
                     <Grid.RowDefinitions>
                       <RowDefinition Height="Auto"/>
@@ -1442,7 +1442,7 @@
                     </Grid.RowDefinitions>
                     <Border Grid.Row="0" Background="{StaticResource DashboardLiveEventsHeaderGradient}"
                             BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1"
-                            CornerRadius="10" Padding="14,10">
+                            CornerRadius="12" Padding="22,20">
                       <DockPanel LastChildFill="True">
                       <Button DockPanel.Dock="Right"
                               Content="All detections &#x2192;"
@@ -1456,22 +1456,22 @@
                               Click="DashboardLiveEventsOpenDetections_Click"/>
                       <StackPanel>
                         <TextBlock Text="EVENT STREAM  /  LOCAL DETECTIONS" Foreground="{StaticResource AccentBrush}"
-                                   FontSize="10" FontWeight="Bold" Margin="0,0,0,4"/>
-                        <TextBlock Text="Live Events" Style="{StaticResource DashboardSectionTitle}" FontSize="20" FontWeight="Bold"/>
+                                   FontSize="11" FontWeight="Bold" Margin="0,0,0,8"/>
+                        <TextBlock Text="Live Events" Style="{StaticResource DashboardSectionTitle}" FontSize="26" FontWeight="Bold"/>
                         <TextBlock Text="Read-only local detection feed  &#x2022;  newest received first  &#x2022;  up to 80 displayed"
                                    Foreground="{StaticResource TextMutedBrush}"
-                                   FontSize="11"
+                                   FontSize="12"
                                    TextWrapping="Wrap"
-                                   Margin="0,3,8,0"/>
+                                   Margin="0,8,12,0"/>
                       </StackPanel>
                       </DockPanel>
                     </Border>
                     <!-- GA UI-75: group the existing four local Live Events filters as one subdued visual toolbar. -->
-                    <Border Grid.Row="1" Margin="0,8,0,8" Style="{StaticResource DashboardLiveEventsToolbar}">
+                    <Border Grid.Row="1" Margin="0,14,0,14" Style="{StaticResource DashboardLiveEventsToolbar}">
                       <StackPanel>
-                        <DockPanel Margin="0,0,0,9">
-                          <Border DockPanel.Dock="Left" Width="3" Background="{StaticResource AccentBrush}" CornerRadius="2" Margin="0,0,9,0"/>
-                          <TextBlock Text="REFINE EVENT STREAM" Foreground="{StaticResource TextSubtleBrush}" FontSize="11" FontWeight="Bold" VerticalAlignment="Center"/>
+                        <DockPanel Margin="0,0,0,14">
+                          <Border DockPanel.Dock="Left" Width="4" Background="{StaticResource AccentBrush}" CornerRadius="2" Margin="0,0,12,0"/>
+                          <TextBlock Text="REFINE EVENT STREAM" Foreground="{StaticResource TextSubtleBrush}" FontSize="13" FontWeight="Bold" VerticalAlignment="Center"/>
                         </DockPanel>
                         <WrapPanel>
                       <!-- GA UI-26: visible captions for the two remaining dropdown filters. -->
@@ -1573,7 +1573,7 @@
                     </Border>
                     <Grid Grid.Row="2">
                       <DataGrid x:Name="DashboardLiveEventsGrid"
-                                Height="348"
+                                Height="440"
                                 AutoGenerateColumns="False"
                                 IsReadOnly="True"
                                 CanUserAddRows="False"
@@ -1582,8 +1582,8 @@
                                 HeadersVisibility="Column"
                                 GridLinesVisibility="Horizontal"
                                 HorizontalGridLinesBrush="{StaticResource SoftDividerBrush}"
-                                RowHeight="38"
-                                ColumnHeaderHeight="36"
+                                RowHeight="46"
+                                ColumnHeaderHeight="44"
                                 VirtualizingPanel.IsVirtualizing="True"
                                 VirtualizingPanel.VirtualizationMode="Recycling"
                                 EnableRowVirtualization="True"
@@ -1741,7 +1741,7 @@
                       </Border>
                     </Grid>
                     <!-- GA UI-79: keep local event status and provenance together in a subdued, non-interactive footer. -->
-                    <Border Grid.Row="3" Margin="0,8,0,0" Style="{StaticResource DashboardLiveEventsFooter}">
+                    <Border Grid.Row="3" Margin="0,14,0,0" Style="{StaticResource DashboardLiveEventsFooter}">
                       <StackPanel>
                         <TextBlock x:Name="DashboardLiveEventsStatusText"
                                    Text="Waiting for local detection events."
