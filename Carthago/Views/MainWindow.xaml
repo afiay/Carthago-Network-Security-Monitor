@@ -1466,16 +1466,27 @@
                       </StackPanel>
                       </DockPanel>
                     </Border>
-                    <!-- GA UI-75: group the existing four local Live Events filters as one subdued visual toolbar. -->
+                    <!-- GA UI-130: two responsive operational filter zones; original controls/handlers retained. -->
                     <Border Grid.Row="1" Margin="0,14,0,14" Style="{StaticResource DashboardLiveEventsToolbar}">
                       <StackPanel>
                         <DockPanel Margin="0,0,0,14">
                           <Border DockPanel.Dock="Left" Width="4" Background="{StaticResource AccentBrush}" CornerRadius="2" Margin="0,0,12,0"/>
-                          <TextBlock Text="REFINE EVENT STREAM" Foreground="{StaticResource TextSubtleBrush}" FontSize="13" FontWeight="Bold" VerticalAlignment="Center"/>
+                          <StackPanel>
+                            <TextBlock Text="REFINE EVENT STREAM" Foreground="{StaticResource TextSubtleBrush}" FontSize="13" FontWeight="Bold"/>
+                            <TextBlock Text="Classify signals or narrow reported event metadata" Foreground="{StaticResource TextMutedBrush}" FontSize="11" Margin="0,5,0,0"/>
+                          </StackPanel>
                         </DockPanel>
                         <WrapPanel>
-                      <!-- GA UI-26: visible captions for the two remaining dropdown filters. -->
-                      <StackPanel Orientation="Horizontal" Height="32" Margin="0,0,12,8">
+                          <Border Width="330" MinHeight="148" Margin="0,0,14,12" Padding="18,16"
+                                  Background="{StaticResource HeaderBgBrush}" BorderBrush="{StaticResource CardBorderBrush}"
+                                  BorderThickness="1" CornerRadius="12">
+                            <StackPanel>
+                              <TextBlock Text="01  EVENT CLASSIFICATION" FontSize="13" FontWeight="Bold"
+                                         Foreground="{StaticResource AccentBrush}" Margin="0,0,0,6"/>
+                              <TextBlock Text="Severity and reported protocol" FontSize="11"
+                                         Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,14"/>
+                              <WrapPanel>
+                                <StackPanel Orientation="Horizontal" Height="32" Margin="0,0,12,8">
                         <TextBlock x:Name="DashboardLiveSeverityFilterLabel"
                                    Text="Severity"
                                    Foreground="{StaticResource TextMutedBrush}"
@@ -1500,7 +1511,7 @@
                           <ComboBoxItem Content="Info" Tag="Info"/>
                         </ComboBox>
                       </StackPanel>
-                      <StackPanel Orientation="Horizontal" Height="32" Margin="0,0,12,8">
+                                <StackPanel Orientation="Horizontal" Height="32" Margin="0,0,12,8">
                         <TextBlock x:Name="DashboardLiveProtocolFilterLabel"
                                    Text="Protocol"
                                    Foreground="{StaticResource TextMutedBrush}"
@@ -1523,8 +1534,20 @@
                           <ComboBoxItem Content="ICMP" Tag="ICMP"/>
                         </ComboBox>
                       </StackPanel>
-                      <!-- GA UI-16: visible, non-interactive labels for the two free-text filters. -->
-                      <StackPanel Orientation="Horizontal" Height="32" Margin="0,0,12,8">
+                              </WrapPanel>
+                            </StackPanel>
+                          </Border>
+                          <Border Width="480" MinHeight="148" Margin="0,0,0,12" Padding="18,16"
+                                  Background="{StaticResource HeaderBgBrush}" BorderBrush="{StaticResource CardBorderBrush}"
+                                  BorderThickness="1" CornerRadius="12">
+                            <StackPanel>
+                              <TextBlock Text="02  INVESTIGATE METADATA" FontSize="13" FontWeight="Bold"
+                                         Foreground="{StaticResource AccentBrush}" Margin="0,0,0,6"/>
+                              <TextBlock Text="Rule ID and reported endpoints; no evidence payload search"
+                                         FontSize="11" TextWrapping="Wrap"
+                                         Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,14"/>
+                              <WrapPanel>
+                                <StackPanel Orientation="Horizontal" Height="32" Margin="0,0,12,8">
                         <TextBlock x:Name="DashboardLiveRuleFilterLabel"
                                    Text="Rule"
                                    Foreground="{StaticResource TextMutedBrush}"
@@ -1542,7 +1565,7 @@
                                  AutomationProperties.LabeledBy="{Binding ElementName=DashboardLiveRuleFilterLabel}"
                                  TextChanged="DashboardLiveEventsTextChanged"/>
                       </StackPanel>
-                      <StackPanel Orientation="Horizontal" Height="32" Margin="0,0,12,8">
+                                <StackPanel Orientation="Horizontal" Height="32" Margin="0,0,12,8">
                         <TextBlock x:Name="DashboardLiveSearchFilterLabel"
                                    Text="Search"
                                    Foreground="{StaticResource TextMutedBrush}"
@@ -1560,7 +1583,7 @@
                                  AutomationProperties.LabeledBy="{Binding ElementName=DashboardLiveSearchFilterLabel}"
                                  TextChanged="DashboardLiveEventsTextChanged"/>
                       </StackPanel>
-                      <Button Content="Clear filters"
+                                <Button Content="Clear filters"
                       ToolTip="Reset only the four dashboard Live Events filters. Retained local detection events and filters in other views are not cleared."
                       ToolTipService.ShowsToolTipOnKeyboardFocus="True"
                       AutomationProperties.HelpText="Reset only the four dashboard Live Events filters. Retained detection events and other views are not cleared."
@@ -1568,6 +1591,9 @@
                               Margin="0,0,0,6"
                               Style="{StaticResource SecondaryButton}"
                               Click="DashboardLiveEventsClearFilters_Click"/>
+                              </WrapPanel>
+                            </StackPanel>
+                          </Border>
                         </WrapPanel>
                       </StackPanel>
                     </Border>
