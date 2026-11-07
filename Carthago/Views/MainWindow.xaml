@@ -2349,18 +2349,50 @@
                           HorizontalContentAlignment="Stretch">
               <StackPanel>
                 <!-- GA UI-94: screen-visible Settings visual architecture, source candidate. -->
-                <Border Style="{StaticResource SettingsOpsHero}" Margin="0,0,0,14">
-                  <StackPanel>
-                    <TextBlock Text="APPLICATION PREFERENCES  /  LOCAL CONFIGURATION"
-                               FontSize="11" FontWeight="Bold"
-                               Foreground="{StaticResource AccentBrush}"/>
-                    <TextBlock Text="Settings" FontSize="34" FontWeight="Bold"
-                               Foreground="{StaticResource TextBrush}" Margin="0,7,0,5"/>
-                    <TextBlock Text="Tune detection sensitivity, optional enrichment and your operational workspace. Dashboard section toggles apply immediately; Save persists the main preferences."
-                               Foreground="{StaticResource TextSubtleBrush}"
-                               TextWrapping="Wrap" MaxWidth="950" HorizontalAlignment="Left"/>
-                  </StackPanel>
-                </Border>
+                <!-- GA UI-131: a responsive configuration command header, not an operational health indicator. -->
+                <Grid x:Name="SettingsHeroLayout" Margin="0,0,0,20">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition x:Name="SettingsHeroPrimaryColumn" Width="1.65*"/>
+                    <ColumnDefinition x:Name="SettingsHeroSecondaryColumn" Width="1*"/>
+                  </Grid.ColumnDefinitions>
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                  </Grid.RowDefinitions>
+                  <Border x:Name="SettingsHeroIntro" Grid.Row="0" Grid.Column="0"
+                          Style="{StaticResource SettingsOpsHero}" Margin="0,0,16,0"
+                          BorderBrush="#27718B" BorderThickness="1,1,1,1">
+                    <StackPanel>
+                      <TextBlock Text="CONFIGURATION  /  LOCAL WORKSPACE"
+                                 FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentBrush}"/>
+                      <TextBlock Text="Settings" FontSize="38" FontWeight="Bold"
+                                 Foreground="{StaticResource TextBrush}" Margin="0,10,0,9"/>
+                      <TextBlock Text="Control how Carthago presents findings, enriches eligible traffic and organizes the analyst workspace."
+                                 FontSize="14" Foreground="{StaticResource TextSubtleBrush}"
+                                 TextWrapping="Wrap" Margin="0,0,0,16"/>
+                      <Border Height="1" Background="#28506B" Margin="0,0,0,13"/>
+                      <TextBlock Text="Changes to Dashboard section visibility apply immediately. Save persists the main application preferences."
+                                 FontSize="12" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"/>
+                    </StackPanel>
+                  </Border>
+                  <Border x:Name="SettingsHeroGuidance" Grid.Row="0" Grid.Column="1"
+                          Background="#101F31" BorderBrush="#2C5871" BorderThickness="1"
+                          CornerRadius="14" Padding="22,20">
+                    <StackPanel>
+                      <TextBlock Text="CONFIGURATION WORKFLOW" FontSize="11" FontWeight="Bold"
+                                 Foreground="{StaticResource AccentBrush}" Margin="0,0,0,13"/>
+                      <TextBlock Text="01   Review detection sensitivity" FontSize="14" FontWeight="SemiBold"
+                                 Foreground="{StaticResource TextBrush}" Margin="0,0,0,10" TextWrapping="Wrap"/>
+                      <TextBlock Text="02   Choose capture and enrichment defaults" FontSize="14"
+                                 Foreground="{StaticResource TextBrush}" Margin="0,0,0,10" TextWrapping="Wrap"/>
+                      <TextBlock Text="03   Arrange visible Dashboard sections" FontSize="14"
+                                 Foreground="{StaticResource TextBrush}" Margin="0,0,0,14" TextWrapping="Wrap"/>
+                      <Border Height="1" Background="#28506B" Margin="0,0,0,12"/>
+                      <TextBlock Text="This guide describes configuration steps; it does not report capture or detection health."
+                                 FontSize="11" Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap"/>
+                    </StackPanel>
+                  </Border>
+                </Grid>
                 <!-- GA UI-116: persistent operational configuration map; labels are navigation context, not health telemetry. -->
                 <UniformGrid x:Name="SettingsWorkspaceMap" Columns="3" Margin="0,0,0,18">
                   <Border Style="{StaticResource SettingsWorkspaceTile}" Margin="0,0,10,0">

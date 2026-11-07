@@ -31,6 +31,12 @@ namespace Carthago
             SettingsCaptureGroup.Margin = wide
                 ? new Thickness(12, 0, 0, 14) : new Thickness(0, 0, 0, 14);
             SettingsDashboardSectionsGrid.Columns = narrowKpis ? 1 : wide ? 3 : 2;
+            // GA UI-131: preserve the two-panel command header on Wide and stack it at smaller widths.
+            SettingsHeroPrimaryColumn.Width = wide ? new GridLength(1.65, GridUnitType.Star) : new GridLength(1, GridUnitType.Star);
+            SettingsHeroSecondaryColumn.Width = wide ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
+            Grid.SetRow(SettingsHeroGuidance, wide ? 0 : 1);
+            Grid.SetColumn(SettingsHeroGuidance, wide ? 1 : 0);
+            SettingsHeroIntro.Margin = wide ? new Thickness(0, 0, 16, 0) : new Thickness(0, 0, 0, 12);
             SettingsWorkspaceMap.Columns = wide ? 3 : 1;
             SettingsSensitivityProfiles.Columns = wide ? 3 : 1;
             foreach (var profile in SettingsSensitivityProfiles.Children)
