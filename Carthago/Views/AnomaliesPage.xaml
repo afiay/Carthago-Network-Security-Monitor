@@ -488,30 +488,30 @@
                 </Grid>
 
                 <Grid Margin="0,0,0,14">
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="0.36*"/>
-                    <ColumnDefinition Width="0.34*"/>
-                    <ColumnDefinition Width="0.30*"/>
-                  </Grid.ColumnDefinitions>
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                  </Grid.RowDefinitions>
 
-                  <Border Grid.Column="0" Style="{StaticResource BaselineComparisonCard}" Margin="0,0,8,0">
+                  <Border Grid.Row="0" Style="{StaticResource BaselineComparisonCard}" Margin="0,0,0,12">
                     <StackPanel>
-                      <TextBlock Text="Baseline Comparison" Style="{StaticResource AnomalySectionTitle}" FontSize="13.5"/>
+                      <TextBlock Text="01 / BASELINE COMPARISON" Style="{StaticResource AnomalySectionTitle}" FontSize="18" FontWeight="Bold" Margin="0,0,0,8"/>
                       <TextBlock Text="{Binding BaselineStatusText}" Style="{StaticResource AnomalySectionMeta}" Margin="0,0,0,10"/>
                       <TextBlock Text="Normal behavior / baseline" Style="{StaticResource AnomalyFieldLabel}"/>
                       <TextBlock Text="{Binding BaselineNormalLabel}" Style="{StaticResource AnomalyFieldValue}" ToolTip="{Binding BaselineNormalLabel}" Margin="0,0,0,8"/>
                       <TextBlock Text="Current behavior" Style="{StaticResource AnomalyFieldLabel}"/>
                       <TextBlock Text="{Binding BaselineCurrentLabel}" Style="{StaticResource AnomalyFieldValue}" ToolTip="{Binding BaselineCurrentLabel}" Margin="0,0,0,8"/>
                       <TextBlock Text="Deviation" Style="{StaticResource AnomalyFieldLabel}"/>
-                      <TextBlock Text="{Binding BaselineDeviationLabel}" Style="{StaticResource AnomalyFieldValue}" Foreground="{StaticResource WarnBrush}" Margin="0,0,0,8"/>
+                      <TextBlock Text="{Binding BaselineDeviationLabel}" FontSize="25" FontWeight="Bold" Style="{StaticResource AnomalyFieldValue}" Foreground="{StaticResource WarnBrush}" Margin="0,0,0,8"/>
                       <TextBlock Text="Peer group position" Style="{StaticResource AnomalyFieldLabel}"/>
                       <TextBlock Text="{Binding PeerGroupLabel}" Style="{StaticResource AnomalyFieldValue}" ToolTip="{Binding PeerGroupLabel}"/>
                     </StackPanel>
                   </Border>
 
-                  <Border Grid.Column="1" Style="{StaticResource AnomalyOpsEvidenceCard}" Margin="4,0,4,0">
+                  <Border Grid.Row="1" Style="{StaticResource AnomalyOpsEvidenceCard}" Margin="0,0,0,12">
                     <StackPanel>
-                      <TextBlock Text="Model Explanation" Style="{StaticResource AnomalySectionTitle}" FontSize="13.5"/>
+                      <TextBlock Text="02 / MODEL EXPLANATION" Style="{StaticResource AnomalySectionTitle}" FontSize="18" FontWeight="Bold" Margin="0,0,0,8"/>
                       <TextBlock Text="{Binding ModelSummary}" Style="{StaticResource AnomalySectionMeta}" Margin="0,0,0,10"/>
                       <ItemsControl x:Name="ExplanationItems" ItemsSource="{Binding ModelExplanationPoints}">
                         <ItemsControl.ItemTemplate>
@@ -540,9 +540,9 @@
                     </StackPanel>
                   </Border>
 
-                  <Border Grid.Column="2" Style="{StaticResource AnomalyOpsEvidenceCard}" Margin="8,0,0,0">
+                  <Border Grid.Row="2" Style="{StaticResource AnomalyOpsEvidenceCard}" Margin="0">
                     <StackPanel>
-                      <TextBlock Text="Top ML Signals" Style="{StaticResource AnomalySectionTitle}" FontSize="13.5"/>
+                      <TextBlock Text="03 / RECORDED FEATURE SIGNALS" Style="{StaticResource AnomalySectionTitle}" FontSize="18" FontWeight="Bold" Margin="0,0,0,8"/>
                       <TextBlock Text="Only the strongest recorded feature contributors are shown here." Style="{StaticResource AnomalySectionMeta}" Margin="0,0,0,10"/>
                       <ItemsControl x:Name="TopSignalsItems" ItemsSource="{Binding TopMlSignals}">
                         <ItemsControl.ItemTemplate>
