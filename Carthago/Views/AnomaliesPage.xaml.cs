@@ -48,8 +48,8 @@ namespace Carthago.Views
                 new[] { PrimaryWorkspaceQueueColumn, PrimaryWorkspaceDetailColumn },
                 new[] { PrimaryWorkspaceTopRow, PrimaryWorkspaceBottomRow },
                 new FrameworkElement[] { QueuePanel, InvestigationPanel },
-                new[] { 0.45, 0.55 },
-                12);
+                new[] { 0.49, 0.51 },
+                18);
 
             ResponsiveLayout.ApplyAdaptiveColumns(
                 mode,
