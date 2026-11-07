@@ -36,7 +36,10 @@ namespace Carthago
             Grid.SetColumnSpan(DemoModeGroup, wide ? 2 : 1);
 
             SettingsCaptureGroup.Margin = new Thickness(0, 0, wide ? 16 : 0, 14);
-            SettingsDashboardSectionsGrid.Columns = narrowKpis ? 1 : 2;
+            // GA UI-135: independent module zones retain two-column density except in narrow layouts.
+            SettingsDashboardCoreSectionsGrid.Columns = narrowKpis ? 1 : 2;
+            SettingsDashboardAnalysisSectionsGrid.Columns = narrowKpis ? 1 : 2;
+            SettingsDashboardAdvancedSectionsGrid.Columns = narrowKpis ? 1 : 2;
             // GA UI-131: preserve the two-panel command header on Wide and stack it at smaller widths.
             SettingsHeroPrimaryColumn.Width = wide ? new GridLength(1.65, GridUnitType.Star) : new GridLength(1, GridUnitType.Star);
             SettingsHeroSecondaryColumn.Width = wide ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
