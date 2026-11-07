@@ -2417,6 +2417,7 @@
                     </StackPanel>
                   </Border>
                 </UniformGrid>
+                <!-- GA UI-132: numbered, full-height operational configuration architecture. -->
                 <Grid x:Name="SettingsOpsLayout">
                   <Grid.ColumnDefinitions>
                     <ColumnDefinition x:Name="SettingsOpsLeftColumn" Width="*"/>
@@ -2431,9 +2432,9 @@
 
               <!-- Sensitivity -->
               <GroupBox x:Name="SettingsDetectionGroup" Grid.Row="0" Grid.Column="0"
-                        Header="Detection Sensitivity" Style="{StaticResource SettingsOpsGroup}"
+                        Header="Detection Sensitivity" Tag="01  /  SIGNAL POLICY" Style="{StaticResource SettingsOpsGroup}"
                         Margin="0,0,0,14">
-                <Grid Margin="10">
+                <Grid Margin="14,16,14,12">
                   <Grid.ColumnDefinitions>
                     <ColumnDefinition x:Name="SettingsSensitivityLabelColumn" Width="160"/>
                     <ColumnDefinition Width="*"/>
@@ -2513,9 +2514,9 @@
 
               <!-- Enrichment & Capture -->
                <GroupBox x:Name="SettingsCaptureGroup" Grid.Row="1" Grid.Column="0"
-                         Header="Capture &amp; Enrichment Configuration" Style="{StaticResource SettingsOpsGroup}"
+                         Header="Capture &amp; Enrichment Configuration" Tag="02  /  DATA SOURCES" Style="{StaticResource SettingsOpsGroup}"
                          Margin="0,0,0,14">
-                <Grid Margin="5,12,5,4">
+                <Grid Margin="14,16,14,12">
                   <!-- GA UI-117: three visibly distinct operational zones; existing named inputs and handlers stay in place. -->
                   <Grid.ColumnDefinitions>
                     <ColumnDefinition x:Name="SettingsCaptureLabelColumn" Width="160"/>
@@ -2669,9 +2670,9 @@
 
 
               <GroupBox x:Name="SettingsDashboardGroup" Grid.Row="2" Grid.Column="0"
-                        Header="Dashboard &amp; Sections" Style="{StaticResource SettingsOpsGroup}"
+                        Header="Dashboard &amp; Sections" Tag="03  /  WORKSPACE" Style="{StaticResource SettingsOpsGroup}"
                         Margin="0,0,0,14">
-                <Grid Margin="10">
+                <Grid Margin="14,16,14,12">
                   <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
