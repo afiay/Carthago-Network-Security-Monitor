@@ -35,10 +35,10 @@ public partial class MainWindow
         // Wide: chart | prioritized queue | investigation.
         // Standard/Compact: chart above the existing responsive triage grid.
         var wideFocus = mode == ResponsiveLayoutMode.Wide;
-        DashboardFocusGrid.Height = wideFocus ? 480 : double.NaN;
-        DashboardFocusTrafficColumn.Width = new GridLength(wideFocus ? 1.85 : 1, GridUnitType.Star);
+        DashboardFocusGrid.Height = wideFocus ? 540 : double.NaN;
+        DashboardFocusTrafficColumn.Width = new GridLength(wideFocus ? 2.35 : 1, GridUnitType.Star);
         DashboardFocusTriageColumn.Width = wideFocus
-            ? new GridLength(2.15, GridUnitType.Star) : new GridLength(0);
+            ? new GridLength(2.05, GridUnitType.Star) : new GridLength(0);
         DashboardFocusPrimaryRow.Height = wideFocus
             ? new GridLength(1, GridUnitType.Star) : GridLength.Auto;
         DashboardFocusSecondaryRow.Height = wideFocus
@@ -48,7 +48,7 @@ public partial class MainWindow
         Grid.SetRow(DashboardTriageGrid, wideFocus ? 0 : 1);
         Grid.SetColumn(DashboardTriageGrid, wideFocus ? 1 : 0);
         DashboardTrafficChartPanel.Margin = wideFocus
-            ? new Thickness(0, 0, 12, 0) : new Thickness(0, 0, 0, 12);
+            ? new Thickness(0, 0, 16, 0) : new Thickness(0, 0, 0, 16);
         DashboardTriageGrid.Margin = new Thickness(0);
 
         var overviewPanelKey = narrowKpis ? "DashboardOverviewKpiNarrowPanel" : mode switch
@@ -95,10 +95,10 @@ public partial class MainWindow
 
         if (mode == ResponsiveLayoutMode.Compact)
         {
-            DashboardTriageGrid.Height = 840;
+            DashboardTriageGrid.Height = 900;
             DashboardTriageTimelineColumn.Width = new GridLength(1, GridUnitType.Star);
             DashboardTriageDetailColumn.Width = new GridLength(0);
-            DashboardTriagePrimaryRow.Height = new GridLength(350);
+            DashboardTriagePrimaryRow.Height = new GridLength(390);
             DashboardTriageSecondaryRow.Height = new GridLength(1, GridUnitType.Star);
             PositionPanel(DashboardTimelinePanel, 0, 0);
             PositionPanel(DashboardSignalPanel, 1, 0);
@@ -126,14 +126,14 @@ public partial class MainWindow
 
         if (mode == ResponsiveLayoutMode.Standard)
         {
-            DashboardTriageGrid.Height = 440;
-            DashboardTriageTimelineColumn.Width = new GridLength(1.05, GridUnitType.Star);
-            DashboardTriageDetailColumn.Width = new GridLength(1.65, GridUnitType.Star);
+            DashboardTriageGrid.Height = 500;
+            DashboardTriageTimelineColumn.Width = new GridLength(1.1, GridUnitType.Star);
+            DashboardTriageDetailColumn.Width = new GridLength(1.3, GridUnitType.Star);
             DashboardTriagePrimaryRow.Height = new GridLength(1, GridUnitType.Star);
             DashboardTriageSecondaryRow.Height = new GridLength(0);
             PositionPanel(DashboardTimelinePanel, 0, 0);
             PositionPanel(DashboardSignalPanel, 0, 1);
-            DashboardTimelinePanel.Margin = new Thickness(0, 0, 12, 0);
+            DashboardTimelinePanel.Margin = new Thickness(0, 0, 16, 0);
             DashboardSignalPanel.Margin = new Thickness(0);
 
             DashboardSummaryGrid.Height = 450;
@@ -155,14 +155,14 @@ public partial class MainWindow
             return;
         }
 
-        DashboardTriageGrid.Height = 480;
-        DashboardTriageTimelineColumn.Width = new GridLength(1.05, GridUnitType.Star);
-        DashboardTriageDetailColumn.Width = new GridLength(1.65, GridUnitType.Star);
+        DashboardTriageGrid.Height = 540;
+        DashboardTriageTimelineColumn.Width = new GridLength(1.1, GridUnitType.Star);
+        DashboardTriageDetailColumn.Width = new GridLength(1.3, GridUnitType.Star);
         DashboardTriagePrimaryRow.Height = new GridLength(1, GridUnitType.Star);
         DashboardTriageSecondaryRow.Height = new GridLength(0);
         PositionPanel(DashboardTimelinePanel, 0, 0);
         PositionPanel(DashboardSignalPanel, 0, 1);
-        DashboardTimelinePanel.Margin = new Thickness(0, 0, 12, 0);
+        DashboardTimelinePanel.Margin = new Thickness(0, 0, 16, 0);
         DashboardSignalPanel.Margin = new Thickness(0);
 
         DashboardSummaryGrid.Height = 202;
