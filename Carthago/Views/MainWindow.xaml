@@ -2417,6 +2417,7 @@
                     </StackPanel>
                   </Border>
                 </UniformGrid>
+                <!-- GA UI-134: full-width signal policy above balanced Data Sources / Workspace panels on Wide; stacked below. -->
                 <!-- GA UI-132: numbered, full-height operational configuration architecture. -->
                 <Grid x:Name="SettingsOpsLayout">
                   <Grid.ColumnDefinitions>
@@ -2431,7 +2432,7 @@
                   </Grid.RowDefinitions>
 
               <!-- Sensitivity -->
-              <GroupBox x:Name="SettingsDetectionGroup" Grid.Row="0" Grid.Column="0"
+              <GroupBox x:Name="SettingsDetectionGroup" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
                         Header="Detection Sensitivity" Tag="01  /  SIGNAL POLICY" Style="{StaticResource SettingsOpsGroup}"
                         Margin="0,0,0,14">
                 <Grid Margin="14,16,14,12">
@@ -2672,7 +2673,7 @@
               </GroupBox>
 
 
-              <GroupBox x:Name="SettingsDashboardGroup" Grid.Row="2" Grid.Column="0"
+              <GroupBox x:Name="SettingsDashboardGroup" Grid.Row="1" Grid.Column="1"
                         Header="Dashboard &amp; Sections" Tag="03  /  WORKSPACE" Style="{StaticResource SettingsOpsGroup}"
                         Margin="0,0,0,14">
                 <Grid Margin="14,16,14,12">
@@ -2872,7 +2873,7 @@
               </GroupBox>
 
               <!-- GA UI-121: dedicated, provenance-first developer simulation workspace. -->
-              <GroupBox x:Name="DemoModeGroup" Grid.Row="3" Grid.Column="0"
+              <GroupBox x:Name="DemoModeGroup" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
                         Header="Developer Demo Mode" Style="{StaticResource SettingsOpsGroup}"
                         Margin="0,0,0,14" Visibility="Collapsed">
                 <StackPanel Margin="10">

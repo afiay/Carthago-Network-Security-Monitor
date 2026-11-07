@@ -17,20 +17,26 @@ namespace Carthago
         private void ApplySettingsResponsiveLayout(ResponsiveLayoutMode mode, bool narrowKpis)
         {
             var wide = mode == ResponsiveLayoutMode.Wide;
-            SettingsOpsLeftColumn.Width = new GridLength(wide ? 0.95 : 1, GridUnitType.Star);
+            // GA UI-134: full-width signal policy above two balanced configuration workspaces.
+            // Preserve existing controls, bindings and all preference/capture handlers.
+            SettingsOpsLeftColumn.Width = new GridLength(wide ? 1.2 : 1, GridUnitType.Star);
             SettingsOpsRightColumn.Width = wide
-                ? new GridLength(1.45, GridUnitType.Star) : new GridLength(0);
+                ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
 
-            Grid.SetRow(SettingsCaptureGroup, wide ? 0 : 1);
-            Grid.SetColumn(SettingsCaptureGroup, wide ? 1 : 0);
+            Grid.SetRow(SettingsDetectionGroup, 0);
+            Grid.SetColumn(SettingsDetectionGroup, 0);
+            Grid.SetColumnSpan(SettingsDetectionGroup, wide ? 2 : 1);
+            Grid.SetRow(SettingsCaptureGroup, 1);
+            Grid.SetColumn(SettingsCaptureGroup, 0);
             Grid.SetRow(SettingsDashboardGroup, wide ? 1 : 2);
-            Grid.SetColumnSpan(SettingsDashboardGroup, wide ? 2 : 1);
+            Grid.SetColumn(SettingsDashboardGroup, wide ? 1 : 0);
+            Grid.SetColumnSpan(SettingsDashboardGroup, 1);
             Grid.SetRow(DemoModeGroup, wide ? 2 : 3);
+            Grid.SetColumn(DemoModeGroup, 0);
             Grid.SetColumnSpan(DemoModeGroup, wide ? 2 : 1);
 
-            SettingsCaptureGroup.Margin = wide
-                ? new Thickness(12, 0, 0, 14) : new Thickness(0, 0, 0, 14);
-            SettingsDashboardSectionsGrid.Columns = narrowKpis ? 1 : wide ? 3 : 2;
+            SettingsCaptureGroup.Margin = new Thickness(0, 0, wide ? 16 : 0, 14);
+            SettingsDashboardSectionsGrid.Columns = narrowKpis ? 1 : 2;
             // GA UI-131: preserve the two-panel command header on Wide and stack it at smaller widths.
             SettingsHeroPrimaryColumn.Width = wide ? new GridLength(1.65, GridUnitType.Star) : new GridLength(1, GridUnitType.Star);
             SettingsHeroSecondaryColumn.Width = wide ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
