@@ -40,6 +40,14 @@ namespace Carthago
             SettingsDashboardCoreSectionsGrid.Columns = narrowKpis ? 1 : 2;
             SettingsDashboardAnalysisSectionsGrid.Columns = narrowKpis ? 1 : 2;
             SettingsDashboardAdvancedSectionsGrid.Columns = narrowKpis ? 1 : 2;
+            // GA UI-136: defaults cards reflow vertically when the workspace is narrow.
+            SettingsWorkspaceDefaultsGrid.Columns = narrowKpis ? 1 : 2;
+            foreach (var item in SettingsWorkspaceDefaultsGrid.Children)
+            {
+                if (item is Border card)
+                    card.Margin = narrowKpis ? new Thickness(0, 0, 0, 10) :
+                        ReferenceEquals(item, SettingsWorkspaceDefaultsGrid.Children[0]) ? new Thickness(0, 0, 10, 0) : new Thickness(0);
+            }
             // GA UI-131: preserve the two-panel command header on Wide and stack it at smaller widths.
             SettingsHeroPrimaryColumn.Width = wide ? new GridLength(1.65, GridUnitType.Star) : new GridLength(1, GridUnitType.Star);
             SettingsHeroSecondaryColumn.Width = wide ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
