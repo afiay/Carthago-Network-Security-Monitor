@@ -788,6 +788,16 @@ namespace Carthago.Engine.Rules.Catalog
                 new R763_EsxiStyleDnsTunnelShapeRule(),
                 new R764_LinuxDnsTunnelToolQueryBurstRule(),
                 new R765_LinuxRemoteServiceAttemptThenShellEgressRule(),
+                new R766_OsascriptHighEntropyDnsQueryBurstRule(),
+                new R767_WindowsScriptHighEntropyDnsQueryBurstRule(),
+                new R768_OsascriptOutboundFloodShapeRule(),
+                new R769_LinuxPerlRubyHttpRequestBurstRule(),
+                new R770_WindowsLolbinWebTrafficBurstRule(),
+                new R771_PublicSnmpQueryBurstToPrivateHostRule(),
+                new R772_PrivateOtServicePayloadFloodShapeRule(),
+                new R773_PrivateSnmpTargetFanoutDiscoveryRule(),
+                new R774_MacScreensharingdPublicVncSynAckRule(),
+                new R775_MacSshdPublicSynAckThenUserToolEgressRule(),
             };
         }
 

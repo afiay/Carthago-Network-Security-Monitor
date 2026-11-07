@@ -89,3 +89,8 @@ Original research IDs R1149, R1361, R1477, R1215, R1765, R1768, R1724, R1982, R1
 ## R756–R765 — repository egress, relay/trigger sequences, RMM, DNS-tool and Linux-service candidates
 
 Original research IDs R1158, R1258, R1335, R1433, R2844, R2751, R1837, R2669, R2743 and R1464. See [R756–R765](../03-detection-rules/batches/RULE_BATCH_756-765.md). **SOURCE CANDIDATE — UNVERIFIED; xUnit authored, 0 executed.** No convergence: ESXi repository TLS, LLMNR/NBNS→SMB sequence, uncommon-trigger→reverse-SYN sequence, process-attributed VNC exposure, macOS scripted browser-UA mismatch, RMM TLS cadence, MSBuild TLS burst, two disjoint DNS-tool families, and Linux service-attempt→shell/tool egress retain independent rule IDs/classes/predicates/state. Next unallocated ID: R766.
+
+
+## R766–R775 — DNS-process, web-burst, SNMP, OT-flood and macOS remote-access candidates
+
+Original research IDs R2855, R2774, R1968, R2811, R2817, R2744, R2699, R2771, R1917 and R2039. See [R766–R775](../03-detection-rules/batches/RULE_BATCH_766-775.md). **SOURCE CANDIDATE — UNVERIFIED; xUnit authored, 0 executed.** No convergence: osascript DNS, Windows script DNS, osascript flood, Perl/Ruby HTTP burst, Windows LOLBIN web burst, public SNMP burst, OT service payload flood, private SNMP fanout, macOS screensharingd VNC exposure and sshd-response→user-tool egress retain independent rule IDs/classes/predicates/state. Next unallocated ID: R776.
