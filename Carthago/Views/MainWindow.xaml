@@ -612,8 +612,9 @@
                         <ColumnDefinition Width="Auto"/>
                       </Grid.ColumnDefinitions>
                       <StackPanel>
+                        <TextBlock Text="01  /  LIVE TRAFFIC" Style="{StaticResource MicroLabel}" Foreground="{StaticResource AccentBrush}" Margin="0,0,0,7"/>
                         <TextBlock Text="Network Traffic (Local PPS)"
-                                   Style="{StaticResource DashboardSectionTitle}"
+                                   FontSize="20" FontWeight="Bold"
                                    TextWrapping="Wrap"/>
                         <TextBlock Text="Local capture samples, rolling 120-second window"
                                    Foreground="{StaticResource TextMutedBrush}"
@@ -668,7 +669,7 @@
                                  TextAlignment="Center"
                                  MaxWidth="340"/>
                     </Border>
-                    <StackPanel Grid.Row="2" Margin="0,8,0,0">
+                    <StackPanel Grid.Row="2" Margin="0,12,0,0">
                       <!-- GA UI-82: source-accurate plot key, matching the existing ScottPlot series; no new telemetry. -->
                       <WrapPanel Margin="0,0,0,6"
                                  AutomationProperties.Name="Local PPS plot series key"
@@ -748,6 +749,7 @@
                         <RowDefinition Height="Auto"/>
                       </Grid.RowDefinitions>
                       <StackPanel>
+                        <TextBlock Text="02  /  PRIORITY QUEUE" Style="{StaticResource MicroLabel}" Foreground="{StaticResource AccentBrush}" Margin="0,0,0,7"/>
                         <StackPanel Orientation="Horizontal">
                           <TextBlock Text="Recent High-Priority Incidents" Style="{StaticResource DashboardSectionTitle}"/>
                           <TextBlock Text="  &#x24D8;" Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"
@@ -824,16 +826,16 @@
                           <DataTemplate>
                             <Border x:Name="TriageRowCard" Style="{StaticResource SocTimelineItem}"
                                     BorderBrush="{Binding AccentBrush}"
-                                    Height="64"
-                                    Margin="0,0,0,3"
+                                    Height="82"
+                                    Margin="0,0,0,8"
                                     ClipToBounds="True">
                               <Grid>
                                 <Grid.ColumnDefinitions>
-                                  <ColumnDefinition Width="38"/>
+                                  <ColumnDefinition Width="48"/>
                                   <ColumnDefinition Width="*"/>
-                                  <ColumnDefinition Width="76"/>
+                                  <ColumnDefinition Width="86"/>
                                 </Grid.ColumnDefinitions>
-                                <Border Width="30" Height="30" CornerRadius="15"
+                                <Border Width="38" Height="38" CornerRadius="19"
                                         BorderThickness="2"
                                         BorderBrush="{Binding AccentBrush}"
                                         VerticalAlignment="Center">
@@ -841,13 +843,13 @@
                                              ToolTip="Local risk score (0–100); not a confidence percentage"
                                              HorizontalAlignment="Center"
                                              VerticalAlignment="Center"
-                                             FontSize="12"
+                                             FontSize="14"
                                              FontWeight="Bold"
                                              Foreground="{Binding AccentBrush}"/>
                                 </Border>
                                 <StackPanel Grid.Column="1" Margin="8,0,8,0" VerticalAlignment="Center" ClipToBounds="True">
                                   <TextBlock Text="{Binding Kind}" FontSize="9" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" Margin="0,0,0,2"/>
-                                  <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="12.5" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Title}"/>
+                                  <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="14" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Title}"/>
                                   <TextBlock Text="{Binding Subtitle}" Foreground="{StaticResource TextMutedBrush}" FontSize="11" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" ToolTip="{Binding Subtitle}"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center">
@@ -900,6 +902,7 @@
                           <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel>
+                          <TextBlock Text="03  /  SELECTED FINDING" Style="{StaticResource MicroLabel}" Foreground="{StaticResource AccentBrush}" Margin="0,0,0,7"/>
                           <StackPanel Orientation="Horizontal">
                             <TextBlock Text="Incident Investigation" Style="{StaticResource DashboardSectionTitle}"/>
                             <TextBlock Text="  &#x24D8;" Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"
@@ -943,9 +946,9 @@
                         </StackPanel>
                       </Grid>
 
-                      <Border x:Name="DashboardDetailSeverityStripe" Grid.Row="1" Margin="0,12,0,12" BorderBrush="{StaticResource WarnBrush}" BorderThickness="3,0,0,0" Padding="12,0,0,0">
+                      <Border x:Name="DashboardDetailSeverityStripe" Grid.Row="1" Margin="0,16,0,16" BorderBrush="{StaticResource WarnBrush}" BorderThickness="4,0,0,0" Padding="16,4,0,4">
                         <StackPanel>
-                          <TextBlock x:Name="DashboardDetailTitleText" Text="No selected signal" FontSize="20" FontWeight="SemiBold" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="54" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                          <TextBlock x:Name="DashboardDetailTitleText" Text="No selected signal" FontSize="22" FontWeight="SemiBold" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="54" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                           <TextBlock x:Name="DashboardDetailSubtitleText" Text="Start monitoring or run demo mode to populate the workspace." Foreground="{StaticResource TextSubtleBrush}" FontSize="12" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="36" Margin="0,4,0,0" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                         </StackPanel>
                       </Border>
