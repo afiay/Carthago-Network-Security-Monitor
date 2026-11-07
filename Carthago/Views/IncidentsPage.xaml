@@ -515,15 +515,23 @@
                   </StackPanel>
                 </Border>
 
-                <Grid Grid.Row="1" Grid.Column="0">
+                <Grid x:Name="InvestigationReviewGrid" Grid.Row="1" Grid.Column="0">
+                  <Grid.RowDefinitions>
+                    <RowDefinition x:Name="InvestigationReviewTopRow" Height="Auto"/>
+                    <RowDefinition x:Name="InvestigationReviewBottomRow" Height="0"/>
+                  </Grid.RowDefinitions>
                   <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition x:Name="InvestigationReviewAttributionColumn" Width="*"/>
+                    <ColumnDefinition x:Name="InvestigationReviewNotesColumn" Width="*"/>
                   </Grid.ColumnDefinitions>
-                  <Border Grid.Column="0" Style="{StaticResource BaselineComparisonCard}" Margin="0,0,8,0" Padding="16">
+                  <Border x:Name="InvestigationAttributionCard" Grid.Row="0" Grid.Column="0"
+                          Style="{StaticResource BaselineComparisonCard}" Margin="0,0,10,0"
+                          Padding="20" BorderBrush="#31536A">
                     <StackPanel>
+                      <TextBlock Text="03A / CORRELATION CONTEXT" Style="{StaticResource IncidentOpsEyebrow}" Margin="0,0,0,8"/>
                       <TextBlock Text="MITRE / Tags / Rules"
-                                 Style="{StaticResource AnomalySectionTitle}"/>
+                                 FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}"/>
+                      <Border Height="1" Background="#31536A" Margin="0,12,0,2"/>
                       <ItemsControl ItemsSource="{Binding Selected.MitreTechniques}"
                                     Margin="0,10,0,0">
                         <ItemsControl.ItemsPanel>
@@ -572,14 +580,17 @@
                     </StackPanel>
                   </Border>
 
-                  <Border Grid.Column="1" Style="{StaticResource BaselineComparisonCard}"
-                          Margin="8,0,0,0" Padding="16">
+                  <Border x:Name="InvestigationNotesCard" Grid.Row="0" Grid.Column="1"
+                          Style="{StaticResource BaselineComparisonCard}"
+                          Margin="10,0,0,0" Padding="20" BorderBrush="#31536A">
                     <StackPanel>
-                      <TextBlock Text="Analyst Note"
-                                 Style="{StaticResource AnomalySectionTitle}"/>
+                      <TextBlock Text="03B / ANALYST WORKSPACE" Style="{StaticResource IncidentOpsEyebrow}" Margin="0,0,0,8"/>
+                      <TextBlock Text="Analyst Note" FontSize="18" FontWeight="SemiBold"
+                                 Foreground="{StaticResource TextBrush}"/>
+                      <Border Height="1" Background="#31536A" Margin="0,12,0,2"/>
                       <TextBox Text="{Binding Selected.AnalystNoteDraft, UpdateSourceTrigger=PropertyChanged}"
                                AcceptsReturn="True"
-                               MinHeight="82"
+                               MinHeight="124"
                                Margin="0,10,0,0"
                                VerticalScrollBarVisibility="Auto"
                                TextWrapping="Wrap"/>

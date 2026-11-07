@@ -43,6 +43,27 @@ namespace Carthago.Views
                 new[] { 0.44, 0.56 },
                 18);
 
+            // The evidence-review cards must reflow independently of the outer
+            // queue/detail workspace; Compact and sub-1024 use full-width rows.
+            bool stackReview = mode == ResponsiveLayoutMode.Compact;
+            InvestigationReviewAttributionColumn.Width = new GridLength(1, GridUnitType.Star);
+            InvestigationReviewNotesColumn.Width = stackReview
+                ? new GridLength(0)
+                : new GridLength(1, GridUnitType.Star);
+            InvestigationReviewBottomRow.Height = stackReview
+                ? GridLength.Auto
+                : new GridLength(0);
+            Grid.SetRow(InvestigationAttributionCard, 0);
+            Grid.SetColumn(InvestigationAttributionCard, 0);
+            Grid.SetRow(InvestigationNotesCard, stackReview ? 1 : 0);
+            Grid.SetColumn(InvestigationNotesCard, stackReview ? 0 : 1);
+            InvestigationAttributionCard.Margin = stackReview
+                ? new Thickness(0, 0, 0, 12)
+                : new Thickness(0, 0, 10, 0);
+            InvestigationNotesCard.Margin = stackReview
+                ? new Thickness(0)
+                : new Thickness(10, 0, 0, 0);
+
             ResponsiveLayout.ApplyAdaptiveColumns(
                 mode,
                 new[] { SupportingWorkspaceFirstColumn, SupportingWorkspaceSecondColumn, SupportingWorkspaceThirdColumn, SupportingWorkspaceFourthColumn },
