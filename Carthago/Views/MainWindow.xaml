@@ -2516,7 +2516,7 @@
                <GroupBox x:Name="SettingsCaptureGroup" Grid.Row="1" Grid.Column="0"
                          Header="Capture &amp; Enrichment Configuration" Tag="02  /  DATA SOURCES" Style="{StaticResource SettingsOpsGroup}"
                          Margin="0,0,0,14">
-                <Grid Margin="14,16,14,12">
+                <Grid Margin="18,20,18,18">
                   <!-- GA UI-117: three visibly distinct operational zones; existing named inputs and handlers stay in place. -->
                   <Grid.ColumnDefinitions>
                     <ColumnDefinition x:Name="SettingsCaptureLabelColumn" Width="160"/>
@@ -2602,6 +2602,7 @@
                              TextWrapping="Wrap"
                              Text="Requires a valid AbuseIPDB API key. For best results, set ABUSEIPDB_API_KEY in a .env file or environment variable."/>
 
+                  <!-- GA UI-133: full-width local filter and stacked session credential actions, preventing narrow-width collisions. -->
                   <!-- Local filter and session credential settings: distinct operational zone. -->
                   <!-- BPF filter -->
                   <!-- GA UI-66: label the existing BPF field and disclose Save's active-Npcap effect without changing capture logic. -->
@@ -2610,16 +2611,15 @@
                              Text="Default BPF Filter"
                              FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="12,0,6,0"
                              VerticalAlignment="Center"/>
-                  <StackPanel Grid.Row="5"
-                              Grid.Column="1"
-                              Orientation="Horizontal">
+                  <Grid Grid.Row="5" Grid.Column="1" Margin="0,6,0,6">
                     <TextBox x:Name="DefaultFilterText"
-                             Width="300"
+                             HorizontalAlignment="Stretch"
+                             MinWidth="0"
                              ToolTip="Default BPF expression for Npcap capture (for example, tcp or port 443). Editing alone does not apply it. Save stores the default; when Npcap capture is active, Save also reapplies the filter and may briefly restart capture. Blank clears the saved default. This is not an ETW filter."
                              ToolTipService.ShowsToolTipOnKeyboardFocus="True"
                              AutomationProperties.LabeledBy="{Binding ElementName=SettingsDefaultBpfLabel}"
                              AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
-                  </StackPanel>
+                  </Grid>
 
                   <!-- API key -->
                   <!-- GA UI-68: make the existing session-only credential action discoverable without exposing the secret. -->
@@ -2628,16 +2628,19 @@
                              Text="AbuseIPDB API Key"
                              FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="12,0,6,0"
                              VerticalAlignment="Center"/>
-                  <WrapPanel Grid.Row="6"
-                             Grid.Column="1">
+                  <Grid Grid.Row="6" Grid.Column="1" Margin="0,8,0,8">
+                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                     <PasswordBox x:Name="AbuseApiKeyBox"
-                                 Width="300"
+                                 HorizontalAlignment="Stretch"
+                                 MinWidth="0"
                                  ToolTip="Enter an AbuseIPDB API key. This masked field and Save settings do not persist the key. Use the adjacent session button to apply an in-memory override; it does not validate credentials or initiate a lookup. For persistence, use the existing environment or .env configuration."
                                  ToolTipService.ShowsToolTipOnKeyboardFocus="True"
                                  AutomationProperties.LabeledBy="{Binding ElementName=SettingsAbuseApiKeyLabel}"
                                  AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
-                                 Margin="0,0,8,0"/>
-                    <Button Content="Use for this session"
+                                 Margin="0,0,0,10"/>
+                    <Button Grid.Row="1"
+                            HorizontalAlignment="Left"
+                            Content="Use for this session"
                             ToolTip="Applies a nonempty key for this running session only and refreshes the displayed key status. Does not save preferences, validate credentials, enable reputation lookups, or initiate a request. Empty input shows a warning."
                             ToolTipService.ShowsToolTipOnKeyboardFocus="True"
                             AutomationProperties.Name="Use AbuseIPDB API key for this session"
@@ -2645,7 +2648,7 @@
                             Click="ApplyApiKey_Click"
                             MinWidth="160"
             Style="{StaticResource SecondaryButton}"/>
-                  </WrapPanel>
+                  </Grid>
 
                   <!-- Status line -->
                   <!-- GA UI-84: key configuration status is not credential validation or lookup success. -->

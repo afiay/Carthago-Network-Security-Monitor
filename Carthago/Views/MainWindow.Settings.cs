@@ -50,7 +50,9 @@ namespace Carthago
                     border.Margin = wide ? new Thickness(0, 0, 10, 0) : new Thickness(0, 0, 0, 10);
             }
             SettingsSensitivityLabelColumn.Width = new GridLength(narrowKpis ? 130 : 160);
-            SettingsCaptureLabelColumn.Width = new GridLength(narrowKpis ? 130 : 160);
+            SettingsCaptureLabelColumn.Width = new GridLength(narrowKpis ? 104 : wide ? 160 : 136);
+            // GA UI-133: credential actions stack vertically, while filter and masked input fill their column.
+            // The existing settings values and session-only credential handler are unchanged.
         }
 
 
