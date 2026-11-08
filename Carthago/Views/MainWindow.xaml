@@ -904,7 +904,7 @@
                   <Border x:Name="DashboardSignalPanel"
                           Grid.Column="1"
                           Style="{StaticResource DashboardFocusPanel}"
-                          Padding="18">
+                          Padding="20">
                     <Grid>
                       <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -963,14 +963,14 @@
                         </StackPanel>
                       </Grid>
 
-                      <Border x:Name="DashboardDetailSeverityStripe" Grid.Row="1" Margin="0,16,0,16" BorderBrush="{StaticResource WarnBrush}" BorderThickness="4,0,0,0" Padding="16,4,0,4">
+                      <Border x:Name="DashboardDetailSeverityStripe" Grid.Row="1" Margin="0,14,0,14" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource WarnBrush}" BorderThickness="4,1,1,1" CornerRadius="7" Padding="16,12,14,12">
                         <StackPanel>
                           <TextBlock x:Name="DashboardDetailTitleText" Text="No selected signal" FontSize="22" FontWeight="SemiBold" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="54" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                           <TextBlock x:Name="DashboardDetailSubtitleText" Text="Start monitoring or run demo mode to populate the workspace." Foreground="{StaticResource TextSubtleBrush}" FontSize="12" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="36" Margin="0,4,0,0" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                         </StackPanel>
                       </Border>
 
-                      <UniformGrid x:Name="DashboardDetailFactsGrid" Grid.Row="2" Columns="3" Margin="0,0,0,10">
+                      <UniformGrid x:Name="DashboardDetailFactsGrid" Grid.Row="2" Columns="3" Margin="0,0,0,14">
                         <Border Style="{StaticResource DetailGridCard}" Margin="0,0,8,6">
                           <StackPanel>
                             <TextBlock x:Name="DashboardDetailSourceLabel" Text="Source host" Style="{StaticResource MicroLabel}"/>
@@ -1015,16 +1015,17 @@
                                     Padding="0,0,4,0">
                         <Grid>
                             <Grid.ColumnDefinitions>
-                              <ColumnDefinition Width="1.2*"/>
-                              <ColumnDefinition Width="0.9*"/>
+                              <ColumnDefinition Width="1*"/>
+                              <ColumnDefinition Width="1*"/>
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                               <RowDefinition Height="Auto"/>
                               <RowDefinition Height="Auto"/>
                               <RowDefinition Height="Auto"/>
+                              <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <Border Style="{StaticResource DetailGridCard}" Margin="0,0,8,6">
+                            <Border Grid.ColumnSpan="2" Style="{StaticResource DetailGridCard}" Margin="0,0,0,8" Padding="14">
                               <StackPanel>
                                 <TextBlock x:Name="DashboardDetailReasonsLabel" Text="Reasons" Style="{StaticResource SocSubHeader}"/>
                                 <ItemsControl x:Name="DashboardDetailReasonsItems"
@@ -1039,7 +1040,7 @@
                               </StackPanel>
                             </Border>
 
-                            <Border Grid.Column="1" Style="{StaticResource DetailGridCard}" Margin="0,0,0,6">
+                            <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource DetailGridCard}" Margin="0,0,6,8" Padding="14">
                               <StackPanel>
                                 <TextBlock x:Name="DashboardDetailTagsLabel" Text="Tags" Style="{StaticResource SocSubHeader}"/>
                                 <!-- GA UI-83: bound long local tag/rule chips; preserve full source text and hover access. -->
@@ -1060,7 +1061,7 @@
                               </StackPanel>
                             </Border>
 
-                            <Border Grid.Row="1" Style="{StaticResource DetailGridCard}" Margin="0,0,8,0">
+                            <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource DetailGridCard}" Margin="6,0,0,8" Padding="14">
                               <StackPanel>
                                 <TextBlock x:Name="DashboardDetailRulesLabel" Text="Related rule IDs" Style="{StaticResource SocSubHeader}"/>
                                 <ItemsControl x:Name="DashboardDetailRulesItems"
@@ -1080,7 +1081,7 @@
                               </StackPanel>
                             </Border>
 
-                            <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource DetailGridCard}">
+                            <Border Grid.Row="2" Grid.ColumnSpan="2" Style="{StaticResource DetailGridCard}" Margin="0,0,0,8" Padding="14">
                               <StackPanel>
                                 <TextBlock Text="Recommended actions" Style="{StaticResource SocSubHeader}"/>
                                 <WrapPanel>
@@ -1114,7 +1115,7 @@
                               </StackPanel>
                             </Border>
 
-                            <Border Grid.Row="2" Grid.ColumnSpan="2" Style="{StaticResource DetailGridCard}" Margin="0,6,0,0">
+                            <Border Grid.Row="3" Grid.ColumnSpan="2" Style="{StaticResource DetailGridCard}" Margin="0,0,0,0" Padding="14">
                               <!-- GA UI-73: decorative provenance keyline distinguishes reported context from incident facts. -->
                               <Grid>
                                 <Grid.ColumnDefinitions>
