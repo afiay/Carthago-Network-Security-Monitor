@@ -825,56 +825,68 @@
                         <ListBox.ItemTemplate>
                           <DataTemplate>
                             <!-- GA UI-138: two-tier triage cards keep priority, title and context legible at narrow queue widths. -->
+                            <!-- GA UI-142: severity-rail triage cards with a stable three-tier reading order. -->
                             <Border x:Name="TriageRowCard" Style="{StaticResource SocTimelineItem}"
-                                    BorderBrush="{Binding AccentBrush}"
-                                    MinHeight="104"
-                                    Margin="0,0,0,9"
-                                    Padding="11,9"
+                                    BorderBrush="{StaticResource PanelBorderBrush}"
+                                    MinHeight="116"
+                                    Margin="0,0,0,12"
+                                    Padding="0"
                                     ClipToBounds="True">
                               <Grid>
-                                <Grid.RowDefinitions>
-                                  <RowDefinition Height="Auto"/>
-                                  <RowDefinition Height="Auto"/>
-                                  <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
                                 <Grid.ColumnDefinitions>
+                                  <ColumnDefinition Width="4"/>
                                   <ColumnDefinition Width="*"/>
-                                  <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                  <Border Style="{StaticResource RiskBadge}" BorderBrush="{Binding AccentBrush}"
-                                          Background="#0B1728" Margin="0,0,8,0">
-                                    <TextBlock Text="{Binding Severity}" FontSize="9" FontWeight="Bold"
-                                               Foreground="{Binding AccentBrush}"/>
-                                  </Border>
-                                  <TextBlock Text="{Binding Kind}" FontSize="10" FontWeight="SemiBold"
-                                             Foreground="{StaticResource TextSubtleBrush}"
-                                             VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                                </StackPanel>
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
-                                            Margin="8,0,0,0">
-                                  <TextBlock Text="{Binding RiskScore}" FontSize="16" FontWeight="Bold"
-                                             Foreground="{Binding AccentBrush}"
-                                             ToolTip="Local risk score (0–100); not detection confidence"/>
-                                  <TextBlock Text=" / 100" FontSize="9" Foreground="{StaticResource TextMutedBrush}"
-                                             VerticalAlignment="Bottom" Margin="2,0,0,2"/>
-                                </StackPanel>
-                                <TextBlock Grid.Row="1" Grid.ColumnSpan="2"
-                                           Text="{Binding Title}" FontWeight="SemiBold" FontSize="14"
-                                           TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
-                                           Margin="0,8,0,3" ToolTip="{Binding Title}"/>
-                                <Grid Grid.Row="2" Grid.ColumnSpan="2">
+                                <Border Background="{Binding AccentBrush}" CornerRadius="3,0,0,3"/>
+                                <Grid Grid.Column="1" Margin="14,12,13,12">
+                                  <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                  </Grid.RowDefinitions>
                                   <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                   </Grid.ColumnDefinitions>
-                                  <TextBlock Text="{Binding Subtitle}" FontSize="11"
-                                             Foreground="{StaticResource TextMutedBrush}"
-                                             TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"
-                                             ToolTip="{Binding Subtitle}" Margin="0,0,8,0"/>
-                                  <TextBlock Grid.Column="1" Text="{Binding TimeText}" FontSize="10"
-                                             Foreground="{StaticResource TextMutedBrush}"
-                                             ToolTip="Local HH:mm:ss. Incidents: last update; signals: creation. Not a capture timestamp."/>
+                                  <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Border Style="{StaticResource RiskBadge}" BorderBrush="{Binding AccentBrush}"
+                                            Background="#0B1728" Margin="0,0,9,0">
+                                      <TextBlock Text="{Binding Severity}" FontSize="10" FontWeight="Bold"
+                                                 Foreground="{Binding AccentBrush}"/>
+                                    </Border>
+                                    <TextBlock Text="{Binding Kind}" FontSize="10" FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextSubtleBrush}"
+                                               VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                  </StackPanel>
+                                  <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
+                                              Margin="10,0,0,0">
+                                    <TextBlock Text="{Binding RiskScore}" FontSize="20" FontWeight="Bold"
+                                               Foreground="{Binding AccentBrush}"
+                                               ToolTip="Local risk score (0–100); not detection confidence"/>
+                                    <TextBlock Text="/100" FontSize="10" Foreground="{StaticResource TextMutedBrush}"
+                                               VerticalAlignment="Bottom" Margin="3,0,0,3"/>
+                                  </StackPanel>
+                                  <TextBlock Grid.Row="1" Grid.ColumnSpan="2"
+                                             Text="{Binding Title}" FontWeight="SemiBold" FontSize="15"
+                                             TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                                             Margin="0,10,0,8" ToolTip="{Binding Title}"/>
+                                  <Border Grid.Row="2" Grid.ColumnSpan="2"
+                                          BorderBrush="{StaticResource PanelBorderBrush}"
+                                          BorderThickness="0,1,0,0" Padding="0,8,0,0">
+                                    <Grid>
+                                      <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                      </Grid.ColumnDefinitions>
+                                      <TextBlock Text="{Binding Subtitle}" FontSize="12"
+                                                 Foreground="{StaticResource TextMutedBrush}"
+                                                 TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"
+                                                 ToolTip="{Binding Subtitle}" Margin="0,0,10,0"/>
+                                      <TextBlock Grid.Column="1" Text="{Binding TimeText}" FontSize="10"
+                                                 Foreground="{StaticResource TextMutedBrush}"
+                                                 ToolTip="Local HH:mm:ss. Incidents: last update; signals: creation. Not a capture timestamp."/>
+                                    </Grid>
+                                  </Border>
                                 </Grid>
                               </Grid>
                             </Border>

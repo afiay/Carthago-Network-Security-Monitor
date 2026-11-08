@@ -95,10 +95,10 @@ public partial class MainWindow
 
         if (mode == ResponsiveLayoutMode.Compact)
         {
-            DashboardTriageGrid.Height = 950;
+            DashboardTriageGrid.Height = 1080;
             DashboardTriageTimelineColumn.Width = new GridLength(1, GridUnitType.Star);
             DashboardTriageDetailColumn.Width = new GridLength(0);
-            DashboardTriagePrimaryRow.Height = new GridLength(440);
+            DashboardTriagePrimaryRow.Height = new GridLength(510);
             DashboardTriageSecondaryRow.Height = new GridLength(1, GridUnitType.Star);
             PositionPanel(DashboardTimelinePanel, 0, 0);
             PositionPanel(DashboardSignalPanel, 1, 0);
