@@ -516,38 +516,70 @@
                     <RowDefinition Height="Auto"/>
                   </Grid.RowDefinitions>
 
-                  <Border Grid.Row="0" Style="{StaticResource BaselineComparisonCard}" Margin="0,0,0,12">
+                  <Border Grid.Row="0" Style="{StaticResource BaselineComparisonCard}" Margin="0,0,0,16" Padding="20">
                     <StackPanel>
-                      <TextBlock Text="01 / BASELINE COMPARISON" Style="{StaticResource AnomalySectionTitle}" FontSize="18" FontWeight="Bold" Margin="0,0,0,8"/>
-                      <TextBlock Text="{Binding BaselineStatusText}" Style="{StaticResource AnomalySectionMeta}" Margin="0,0,0,10"/>
-                      <TextBlock Text="Normal behavior / baseline" Style="{StaticResource AnomalyFieldLabel}"/>
-                      <TextBlock Text="{Binding BaselineNormalLabel}" Style="{StaticResource AnomalyFieldValue}" ToolTip="{Binding BaselineNormalLabel}" Margin="0,0,0,8"/>
-                      <TextBlock Text="Current behavior" Style="{StaticResource AnomalyFieldLabel}"/>
-                      <TextBlock Text="{Binding BaselineCurrentLabel}" Style="{StaticResource AnomalyFieldValue}" ToolTip="{Binding BaselineCurrentLabel}" Margin="0,0,0,8"/>
-                      <TextBlock Text="Deviation" Style="{StaticResource AnomalyFieldLabel}"/>
-                      <TextBlock Text="{Binding BaselineDeviationLabel}" FontSize="25" FontWeight="Bold" Style="{StaticResource AnomalyFieldValue}" Foreground="{StaticResource WarnBrush}" Margin="0,0,0,8"/>
-                      <TextBlock Text="Peer group position" Style="{StaticResource AnomalyFieldLabel}"/>
-                      <TextBlock Text="{Binding PeerGroupLabel}" Style="{StaticResource AnomalyFieldValue}" ToolTip="{Binding PeerGroupLabel}"/>
+                      <TextBlock Text="01 / LOCAL BASELINE COMPARISON" Style="{StaticResource AnomalySectionTitle}" FontSize="19" FontWeight="Bold" Margin="0,0,0,8"/>
+                      <TextBlock Text="{Binding BaselineStatusText}" Style="{StaticResource AnomalySectionMeta}" TextWrapping="Wrap" Margin="0,0,0,16"/>
+                      <Border Height="1" Background="{StaticResource SoftDividerBrush}" Margin="0,0,0,16"/>
+                      <UniformGrid Columns="2">
+                        <StackPanel Margin="0,0,8,0">
+                          <Border Background="#142A3A" BorderBrush="#284252" BorderThickness="1" CornerRadius="9" Padding="15" Margin="0,0,0,10">
+                            <StackPanel>
+                              <TextBlock Text="NORMAL / BASELINE" Foreground="{StaticResource TextMutedBrush}" FontSize="11" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                              <TextBlock Text="{Binding BaselineNormalLabel}" Foreground="{StaticResource TextBrush}" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                            </StackPanel>
+                          </Border>
+                          <Border Background="#142A3A" BorderBrush="#284252" BorderThickness="1" CornerRadius="9" Padding="15" Margin="0,0,0,10">
+                            <StackPanel>
+                              <TextBlock Text="DEVIATION" Foreground="{StaticResource TextMutedBrush}" FontSize="11" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                              <TextBlock Text="{Binding BaselineDeviationLabel}" Foreground="{StaticResource WarnBrush}" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                            </StackPanel>
+                          </Border>
+                        </StackPanel>
+                        <StackPanel Margin="8,0,0,0">
+                          <Border Background="#142A3A" BorderBrush="#284252" BorderThickness="1" CornerRadius="9" Padding="15" Margin="0,0,0,10">
+                            <StackPanel>
+                              <TextBlock Text="CURRENT OBSERVATION" Foreground="{StaticResource TextMutedBrush}" FontSize="11" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                              <TextBlock Text="{Binding BaselineCurrentLabel}" Foreground="{StaticResource AccentBrush}" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                            </StackPanel>
+                          </Border>
+                          <Border Background="#142A3A" BorderBrush="#284252" BorderThickness="1" CornerRadius="9" Padding="15" Margin="0,0,0,10">
+                            <StackPanel>
+                              <TextBlock Text="PEER GROUP POSITION" Foreground="{StaticResource TextMutedBrush}" FontSize="11" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                              <TextBlock Text="{Binding PeerGroupLabel}" Foreground="{StaticResource TextBrush}" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                            </StackPanel>
+                          </Border>
+                        </StackPanel>
+                      </UniformGrid>
+                      <TextBlock Text="Comparison reflects available local observations; it is not a network-wide health assessment."
+                                 Foreground="{StaticResource TextMutedBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"/>
                     </StackPanel>
                   </Border>
 
-                  <Border Grid.Row="1" Style="{StaticResource AnomalyOpsEvidenceCard}" Margin="0,0,0,12">
+                  <Border Grid.Row="1" Style="{StaticResource AnomalyOpsEvidenceCard}" Margin="0,0,0,16" Padding="20">
                     <StackPanel>
-                      <TextBlock Text="02 / MODEL EXPLANATION" Style="{StaticResource AnomalySectionTitle}" FontSize="18" FontWeight="Bold" Margin="0,0,0,8"/>
-                      <TextBlock Text="{Binding ModelSummary}" Style="{StaticResource AnomalySectionMeta}" Margin="0,0,0,10"/>
+                      <TextBlock Text="02 / EXPLAINABLE MODEL CONTEXT" Style="{StaticResource AnomalySectionTitle}" FontSize="19" FontWeight="Bold" Margin="0,0,0,9"/>
+                      <TextBlock Text="{Binding ModelSummary}" Style="{StaticResource AnomalySectionMeta}" TextWrapping="Wrap" Margin="0,0,0,15"/>
+                      <Border Height="1" Background="{StaticResource SoftDividerBrush}" Margin="0,0,0,14"/>
                       <ItemsControl x:Name="ExplanationItems" ItemsSource="{Binding ModelExplanationPoints}">
                         <ItemsControl.ItemTemplate>
                           <DataTemplate>
-                            <DockPanel Margin="0,0,0,8">
-                              <Ellipse Width="5" Height="5" Fill="{StaticResource AccentAltBrush}" Margin="0,6,8,0" DockPanel.Dock="Left"/>
-                              <TextBlock Text="{Binding}" Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap" ToolTip="{Binding}"/>
-                            </DockPanel>
+                            <Border Background="#142A3A" BorderBrush="#284252" BorderThickness="1" CornerRadius="8" Padding="13" Margin="0,0,0,10">
+                              <Grid>
+                                <Grid.ColumnDefinitions>
+                                  <ColumnDefinition Width="4"/>
+                                  <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Background="{StaticResource AccentAltBrush}" CornerRadius="2"/>
+                                <TextBlock Grid.Column="1" Text="{Binding}" Foreground="{StaticResource TextSubtleBrush}"
+                                           Margin="12,0,0,0" TextWrapping="Wrap"/>
+                              </Grid>
+                            </Border>
                           </DataTemplate>
                         </ItemsControl.ItemTemplate>
                       </ItemsControl>
                       <TextBlock Text="No explainable evidence beyond the base anomaly metadata was recorded for this signal."
-                                 Foreground="{StaticResource TextMutedBrush}"
-                                 TextWrapping="Wrap">
+                                 Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap">
                         <TextBlock.Style>
                           <Style TargetType="TextBlock">
                             <Setter Property="Visibility" Value="Collapsed"/>
