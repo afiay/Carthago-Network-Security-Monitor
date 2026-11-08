@@ -963,7 +963,7 @@
                         </StackPanel>
                       </Grid>
 
-                      <Border x:Name="DashboardDetailSeverityStripe" Grid.Row="1" Margin="0,14,0,14" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource WarnBrush}" BorderThickness="4,1,1,1" CornerRadius="7" Padding="16,12,14,12">
+                      <Border x:Name="DashboardDetailSeverityStripe" Grid.Row="1" Margin="0,14,0,14" Background="{StaticResource CardBgBrush}" BorderBrush="{StaticResource WarnBrush}" BorderThickness="4,1,1,1" CornerRadius="7" Padding="16,12,14,12">
                         <StackPanel>
                           <TextBlock x:Name="DashboardDetailTitleText" Text="No selected signal" FontSize="22" FontWeight="SemiBold" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="54" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                           <TextBlock x:Name="DashboardDetailSubtitleText" Text="Start monitoring or run demo mode to populate the workspace." Foreground="{StaticResource TextSubtleBrush}" FontSize="12" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="36" Margin="0,4,0,0" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
