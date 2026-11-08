@@ -827,7 +827,7 @@
                             <!-- GA UI-138: two-tier triage cards keep priority, title and context legible at narrow queue widths. -->
                             <!-- GA UI-142: severity-rail triage cards with a stable three-tier reading order. -->
                             <Border x:Name="TriageRowCard" Style="{StaticResource SocTimelineItem}"
-                                    BorderBrush="{StaticResource PanelBorderBrush}"
+                                    BorderBrush="{StaticResource CardBorderBrush}"
                                     MinHeight="116"
                                     Margin="0,0,0,12"
                                     Padding="0"
@@ -871,7 +871,7 @@
                                              TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
                                              Margin="0,10,0,8" ToolTip="{Binding Title}"/>
                                   <Border Grid.Row="2" Grid.ColumnSpan="2"
-                                          BorderBrush="{StaticResource PanelBorderBrush}"
+                                          BorderBrush="{StaticResource SoftDividerBrush}"
                                           BorderThickness="0,1,0,0" Padding="0,8,0,0">
                                     <Grid>
                                       <Grid.ColumnDefinitions>
