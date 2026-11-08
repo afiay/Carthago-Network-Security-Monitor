@@ -1015,17 +1015,17 @@
                                     Padding="0,0,4,0">
                         <Grid>
                             <Grid.ColumnDefinitions>
-                              <ColumnDefinition Width="1*"/>
-                              <ColumnDefinition Width="1*"/>
+                              <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                               <RowDefinition Height="Auto"/>
                               <RowDefinition Height="Auto"/>
                               <RowDefinition Height="Auto"/>
                               <RowDefinition Height="Auto"/>
+                              <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <Border Grid.ColumnSpan="2" Style="{StaticResource DetailGridCard}" Margin="0,0,0,8" Padding="14">
+                            <Border Grid.Row="0" Style="{StaticResource DetailGridCard}" Background="{StaticResource CardElevatedBg}" BorderBrush="{StaticResource AccentBrush}" BorderThickness="3,1,1,1" CornerRadius="9" Margin="0,0,0,12" Padding="18,16">
                               <StackPanel>
                                 <TextBlock x:Name="DashboardDetailReasonsLabel" Text="Reasons" Style="{StaticResource SocSubHeader}"/>
                                 <ItemsControl x:Name="DashboardDetailReasonsItems"
@@ -1040,7 +1040,7 @@
                               </StackPanel>
                             </Border>
 
-                            <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource DetailGridCard}" Margin="0,0,6,8" Padding="14">
+                            <Border Grid.Row="1" Style="{StaticResource DetailGridCard}" Margin="0,0,0,12" Padding="18,16">
                               <StackPanel>
                                 <TextBlock x:Name="DashboardDetailTagsLabel" Text="Tags" Style="{StaticResource SocSubHeader}"/>
                                 <!-- GA UI-83: bound long local tag/rule chips; preserve full source text and hover access. -->
@@ -1061,7 +1061,7 @@
                               </StackPanel>
                             </Border>
 
-                            <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource DetailGridCard}" Margin="6,0,0,8" Padding="14">
+                            <Border Grid.Row="2" Style="{StaticResource DetailGridCard}" Margin="0,0,0,12" Padding="18,16">
                               <StackPanel>
                                 <TextBlock x:Name="DashboardDetailRulesLabel" Text="Related rule IDs" Style="{StaticResource SocSubHeader}"/>
                                 <ItemsControl x:Name="DashboardDetailRulesItems"
@@ -1081,7 +1081,7 @@
                               </StackPanel>
                             </Border>
 
-                            <Border Grid.Row="2" Grid.ColumnSpan="2" Style="{StaticResource DetailGridCard}" Margin="0,0,0,8" Padding="14">
+                            <Border Grid.Row="3" Style="{StaticResource DetailGridCard}" Background="{StaticResource CardElevatedBg}" BorderBrush="{StaticResource AccentBrush}" BorderThickness="2,1,1,1" CornerRadius="9" Margin="0,0,0,12" Padding="18,16">
                               <StackPanel>
                                 <TextBlock Text="Recommended actions" Style="{StaticResource SocSubHeader}"/>
                                 <WrapPanel>
@@ -1115,7 +1115,7 @@
                               </StackPanel>
                             </Border>
 
-                            <Border Grid.Row="3" Grid.ColumnSpan="2" Style="{StaticResource DetailGridCard}" Margin="0,0,0,0" Padding="14">
+                            <Border Grid.Row="4" Style="{StaticResource DetailGridCard}" Margin="0,0,0,0" Padding="18,16">
                               <!-- GA UI-73: decorative provenance keyline distinguishes reported context from incident facts. -->
                               <Grid>
                                 <Grid.ColumnDefinitions>
