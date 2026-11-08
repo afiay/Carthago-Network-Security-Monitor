@@ -494,51 +494,60 @@
                 </Border>
               </Grid>
 
-              <TextBlock Text="EVIDENCE / ATTRIBUTION / ANALYST REVIEW" Style="{StaticResource IncidentOpsEyebrow}" Margin="0,22,0,10"/>
+              <!-- GA UI-145: evidence is a readable two-stage analysis stream, not one mixed list. -->
+              <TextBlock Text="03 / EVIDENCE REVIEW" Style="{StaticResource IncidentOpsEyebrow}" Margin="0,24,0,12"/>
+              <Border Background="#0C2132" BorderBrush="#31536A" BorderThickness="1"
+                      CornerRadius="12" Padding="18,20" Margin="0,0,0,16">
+                <StackPanel>
+                  <TextBlock Text="WHY THIS CASE WAS PRIORITIZED" Style="{StaticResource IncidentOpsEyebrow}"/>
+                  <TextBlock Text="Risk evidence" FontSize="20" FontWeight="SemiBold"
+                             Foreground="{StaticResource TextBrush}" Margin="0,6,0,14"/>
+                  <ItemsControl ItemsSource="{Binding Selected.RiskReasons}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Border Background="#122E40" BorderBrush="#31536A" BorderThickness="1"
+                                CornerRadius="8" Padding="14,12" Margin="0,0,0,9">
+                          <Grid>
+                            <Grid.ColumnDefinitions>
+                              <ColumnDefinition Width="4"/>
+                              <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Background="#36CBE6" CornerRadius="2"/>
+                            <TextBlock Grid.Column="1" Text="{Binding}" Margin="14,0,0,0"
+                                       TextWrapping="Wrap" FontSize="13"
+                                       Foreground="{StaticResource TextSubtleBrush}"/>
+                          </Grid>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                  <Border Height="1" Background="#31536A" Margin="0,12,0,16"/>
+                  <TextBlock Text="CORRELATED SIGNALS" Style="{StaticResource IncidentOpsEyebrow}"/>
+                  <TextBlock Text="Related detections" FontSize="18" FontWeight="SemiBold"
+                             Foreground="{StaticResource TextBrush}" Margin="0,6,0,12"/>
+                  <ItemsControl ItemsSource="{Binding Selected.RelatedEventDescriptions}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Border Background="#10293B" BorderBrush="#28495E" BorderThickness="1"
+                                CornerRadius="8" Padding="14,11" Margin="0,0,0,8">
+                          <TextBlock Text="{Binding}" TextWrapping="Wrap"
+                                     Foreground="{StaticResource TextMutedBrush}" FontSize="12.5"/>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </Border>
+              <TextBlock Text="04 / ATTRIBUTION AND ANALYST NOTES"
+                         Style="{StaticResource IncidentOpsEyebrow}" Margin="0,6,0,12"/>
               <Grid Margin="0">
                 <Grid.RowDefinitions>
-                  <RowDefinition Height="Auto"/>
                   <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-
-                <Border Grid.Row="0" Grid.Column="0"
-                        Style="{StaticResource BaselineComparisonCard}"
-                        Margin="0,0,0,16" Padding="22,20" BorderBrush="#31536A">
-                  <StackPanel>
-                    <TextBlock Text="Evidence / Reasons"
-                               Style="{StaticResource AnomalySectionTitle}"/>
-                    <ItemsControl ItemsSource="{Binding Selected.RiskReasons}"
-                                  Margin="0,10,0,0">
-                      <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                          <TextBlock Text="{Binding}"
-                                     Foreground="{StaticResource TextSubtleBrush}"
-                                     TextWrapping="Wrap"
-                                     Margin="0,0,0,6"/>
-                        </DataTemplate>
-                      </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                    <TextBlock Text="Related detections"
-                               Style="{StaticResource AnomalySectionTitle}"
-                               Margin="0,14,0,0"/>
-                    <ItemsControl ItemsSource="{Binding Selected.RelatedEventDescriptions}"
-                                  Margin="0,10,0,0">
-                      <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                          <TextBlock Text="{Binding}"
-                                     Foreground="{StaticResource TextMutedBrush}"
-                                     TextWrapping="Wrap"
-                                     Margin="0,0,0,6"/>
-                        </DataTemplate>
-                      </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                  </StackPanel>
-                </Border>
-
-                <Grid x:Name="InvestigationReviewGrid" Grid.Row="1" Grid.Column="0">
+                <Grid x:Name="InvestigationReviewGrid" Grid.Row="0" Grid.Column="0">
                   <Grid.RowDefinitions>
                     <RowDefinition x:Name="InvestigationReviewTopRow" Height="Auto"/>
                     <RowDefinition x:Name="InvestigationReviewBottomRow" Height="0"/>
@@ -549,7 +558,7 @@
                   </Grid.ColumnDefinitions>
                   <Border x:Name="InvestigationAttributionCard" Grid.Row="0" Grid.Column="0"
                           Style="{StaticResource BaselineComparisonCard}" Margin="0,0,10,0"
-                          Padding="20" BorderBrush="#31536A">
+                          Padding="22,20" BorderBrush="#31536A">
                     <StackPanel>
                       <TextBlock Text="03A / CORRELATION CONTEXT" Style="{StaticResource IncidentOpsEyebrow}" Margin="0,0,0,8"/>
                       <TextBlock Text="MITRE / Tags / Rules"
@@ -605,7 +614,7 @@
 
                   <Border x:Name="InvestigationNotesCard" Grid.Row="0" Grid.Column="1"
                           Style="{StaticResource BaselineComparisonCard}"
-                          Margin="10,0,0,0" Padding="20" BorderBrush="#31536A">
+                          Margin="10,0,0,0" Padding="22,20" BorderBrush="#31536A">
                     <StackPanel>
                       <TextBlock Text="03B / ANALYST WORKSPACE" Style="{StaticResource IncidentOpsEyebrow}" Margin="0,0,0,8"/>
                       <TextBlock Text="Analyst Note" FontSize="18" FontWeight="SemiBold"
@@ -613,7 +622,7 @@
                       <Border Height="1" Background="#31536A" Margin="0,12,0,2"/>
                       <TextBox Text="{Binding Selected.AnalystNoteDraft, UpdateSourceTrigger=PropertyChanged}"
                                AcceptsReturn="True"
-                               MinHeight="124"
+                               MinHeight="170"
                                Margin="0,10,0,0"
                                VerticalScrollBarVisibility="Auto"
                                TextWrapping="Wrap"/>
@@ -632,10 +641,19 @@
                 </Grid>
               </Grid>
 
-              <TextBlock Text="04 / RESPONSE DECISIONS"
-                         Style="{StaticResource AnomalySectionTitle}"
-                         Margin="0,18,0,10"/>
-              <WrapPanel>
+              <!-- GA UI-145: response decisions have a distinct, deliberate command surface. -->
+              <Border Background="#10283A" BorderBrush="#31536A" BorderThickness="1"
+                      CornerRadius="12" Padding="20,22" Margin="0,22,0,0">
+                <StackPanel>
+                  <TextBlock Text="05 / ANALYST RESPONSE" Style="{StaticResource IncidentOpsEyebrow}"/>
+                  <TextBlock Text="Decision and follow-up" FontSize="20" FontWeight="SemiBold"
+                             Foreground="{StaticResource TextBrush}" Margin="0,6,0,8"/>
+                  <TextBlock Text="Classify the selected incident or apply an explicitly chosen local trust action."
+                             TextWrapping="Wrap" Foreground="{StaticResource TextSubtleBrush}"
+                             Margin="0,0,0,18"/>
+                  <Border Height="1" Background="#31536A" Margin="0,0,0,16"/>
+                  <WrapPanel>
+
                 <Button Content="Confirm Suspicious"
                         Width="154"
                         Style="{StaticResource PrimaryButton}"
@@ -679,7 +697,10 @@
                         Style="{StaticResource SecondaryButton}"
                         Margin="0,0,8,8"
                         Click="CopyMarkdown_Click"/>
-              </WrapPanel>
+
+                  </WrapPanel>
+                </StackPanel>
+              </Border>
             </StackPanel>
 
             <Border x:Name="DetailsEmptyState"
