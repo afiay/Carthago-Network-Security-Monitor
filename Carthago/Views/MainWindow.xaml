@@ -2976,24 +2976,28 @@
                 </StackPanel>
               </GroupBox>
                 </Grid>
-                <!-- GA UI-120: application-wide actions live outside the sensitivity card. -->
-                <Border Style="{StaticResource SettingsOpsHero}" Margin="0,10,0,16" Padding="22,18">
+                <!-- GA UI-137: separated operational action cards; original action handlers preserved. -->
+                <Border Style="{StaticResource SettingsOpsHero}" Margin="0,12,0,16" Padding="24,22">
                   <StackPanel>
-                    <Border Background="#143347" BorderBrush="{StaticResource CardBorderBrush}"
-                            BorderThickness="1" CornerRadius="5" Padding="9,5"
-                            HorizontalAlignment="Left" Margin="0,0,0,12">
-                      <TextBlock Text="APPLICATION-WIDE PREFERENCES" FontSize="11"
-                                 FontWeight="Bold" Foreground="{StaticResource AccentBrush}"/>
-                    </Border>
-                    <TextBlock Text="Review and apply your configuration" FontSize="23"
-                               FontWeight="SemiBold" Foreground="{StaticResource TextBrush}"
-                               TextWrapping="Wrap" Margin="0,0,0,7"/>
-                    <TextBlock Text="Save applies detection, capture, enrichment and workspace preferences. Reset restores all application preferences to defaults; it is not limited to detection sensitivity."
-                               Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap"
-                               Margin="0,0,0,16"/>
-                    <Border Height="1" Background="{StaticResource CardBorderBrush}" Margin="0,0,0,15"/>
-                    <WrapPanel HorizontalAlignment="Right">
-                      <Button Content="Save all settings"
+                    <TextBlock Text="04  /  APPLICATION PREFERENCES" FontSize="11" FontWeight="Bold"
+                               Foreground="{StaticResource AccentBrush}" Margin="0,0,0,10"/>
+                    <TextBlock Text="Apply or restore your workspace" FontSize="26" FontWeight="Bold"
+                               Foreground="{StaticResource TextBrush}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                    <TextBlock Text="Choose the scope of the operation below. Changes to live capture configuration may take effect when preferences are applied."
+                               Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap" Margin="0,0,0,18"/>
+                    <UniformGrid x:Name="SettingsFooterActionsGrid" Columns="2">
+                      <Border Background="#102C3C" BorderBrush="{StaticResource CardBorderBrush}"
+                              BorderThickness="1" CornerRadius="10" Padding="20,18" Margin="0,0,12,0">
+                        <StackPanel>
+                          <Border Width="4" Height="24" Background="{StaticResource AccentBrush}"
+                                  HorizontalAlignment="Left" CornerRadius="2" Margin="0,0,0,12"/>
+                          <TextBlock Text="SAVE CONFIGURATION" FontSize="11" FontWeight="Bold"
+                                     Foreground="{StaticResource AccentBrush}" Margin="0,0,0,7"/>
+                          <TextBlock Text="Keep current preferences" FontSize="19" FontWeight="SemiBold"
+                                     Foreground="{StaticResource TextBrush}" TextWrapping="Wrap"/>
+                          <TextBlock Text="Applies sensitivity, capture, enrichment and dashboard preferences."
+                                     Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap" Margin="0,8,0,18"/>
+                          <Button Content="Save all settings"
                                                   MinWidth="170"
                                                   Style="{StaticResource PrimaryButton}"
                                                   ToolTip="Save sensitivity, capture auto-start, default BPF filter, WHOIS, reputation, anomaly presentation and dashboard section preferences. Runtime preferences are reapplied, including the active Npcap filter when applicable."
@@ -3001,7 +3005,20 @@
                                                   AutomationProperties.Name="Save settings"
                                                   AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                                                   Click="SaveSettings_Click"/>
-                                          <Button Content="Reset all preferences"
+                        </StackPanel>
+                      </Border>
+                      <Border Background="#142735" BorderBrush="{StaticResource CardBorderBrush}"
+                              BorderThickness="1" CornerRadius="10" Padding="20,18">
+                        <StackPanel>
+                          <Border Width="4" Height="24" Background="{StaticResource TextMutedBrush}"
+                                  HorizontalAlignment="Left" CornerRadius="2" Margin="0,0,0,12"/>
+                          <TextBlock Text="RESTORE DEFAULTS" FontSize="11" FontWeight="Bold"
+                                     Foreground="{StaticResource TextSubtleBrush}" Margin="0,0,0,7"/>
+                          <TextBlock Text="Reset application preferences" FontSize="19" FontWeight="SemiBold"
+                                     Foreground="{StaticResource TextBrush}" TextWrapping="Wrap"/>
+                          <TextBlock Text="Restores all application defaults, not just dashboard layout or sensitivity."
+                                     Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap" Margin="0,8,0,18"/>
+                          <Button Content="Reset all preferences"
                                                   MinWidth="170"
                                                   Margin="10,0,0,8"
                                                   ToolTip="Reset all application preferences to defaults, not only sensitivity. Applies without a confirmation prompt and reapplies runtime preferences, including the active Npcap filter when applicable."
@@ -3010,7 +3027,9 @@
                                                   AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                                                   Click="ResetSettings_Click"
                                                   Style="{StaticResource SecondaryButton}"/>
-                    </WrapPanel>
+                        </StackPanel>
+                      </Border>
+                    </UniformGrid>
                   </StackPanel>
                 </Border>
               </StackPanel>

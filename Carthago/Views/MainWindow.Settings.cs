@@ -42,6 +42,10 @@ namespace Carthago
             SettingsDashboardAdvancedSectionsGrid.Columns = narrowKpis ? 1 : 2;
             // GA UI-136: defaults cards reflow vertically when the workspace is narrow.
             SettingsWorkspaceDefaultsGrid.Columns = narrowKpis ? 1 : 2;
+            // GA UI-137: action surfaces reflow independently of workspace defaults.
+            SettingsFooterActionsGrid.Columns = narrowKpis ? 1 : 2;
+            if (SettingsFooterActionsGrid.Children.Count == 2 && SettingsFooterActionsGrid.Children[0] is Border actionCard)
+                actionCard.Margin = narrowKpis ? new Thickness(0, 0, 0, 12) : new Thickness(0, 0, 12, 0);
             foreach (var item in SettingsWorkspaceDefaultsGrid.Children)
             {
                 if (item is Border card)
