@@ -739,136 +739,43 @@
           <ColumnDefinition x:Name="SupportingWorkspaceFourthColumn" Width="0.95*"/>
         </Grid.ColumnDefinitions>
 
-        <Border x:Name="TimelinePanel" Style="{StaticResource IncidentOpsPanel}" Margin="0,0,10,0">
+        <Border x:Name="TimelinePanel" Style="{StaticResource IncidentOpsPanel}" Margin="0,0,10,0" Padding="18,18" BorderBrush="#31536A">
           <StackPanel>
-            <TextBlock Text="03 / INCIDENT TIMELINE"
-                       Style="{StaticResource AnomalySectionTitle}"/>
-            <ItemsControl ItemsSource="{Binding Selected.TimelineItems}"
-                          Margin="0,10,0,0">
-              <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                  <Border Style="{StaticResource DetailGridCard}"
-                          Margin="0,0,0,8"
-                          BorderBrush="{Binding Severity, Converter={StaticResource SeverityBrush}}">
-                    <Grid>
-                      <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="96"/>
-                        <ColumnDefinition Width="*"/>
-                      </Grid.ColumnDefinitions>
-                      <TextBlock Text="{Binding TimeLabel}"
-                                 Foreground="{StaticResource TextMutedBrush}"
-                                 FontSize="11.5"
-                                 Margin="0,2,12,0"
-                                 TextWrapping="Wrap"/>
-                      <StackPanel Grid.Column="1">
-                        <TextBlock Text="{Binding Title}"
-                                   FontWeight="SemiBold"
-                                   TextWrapping="Wrap"/>
-                        <TextBlock Text="{Binding Description}"
-                                   Foreground="{StaticResource TextSubtleBrush}"
-                                   Margin="0,4,0,0"
-                                   TextWrapping="Wrap"/>
-                      </StackPanel>
-                    </Grid>
-                  </Border>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
+            <TextBlock Text="06 / INCIDENT TIMELINE" Style="{StaticResource IncidentOpsEyebrow}"/>
+            <TextBlock Text="Event chronology" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,6,0,5" TextWrapping="Wrap"/>
+            <TextBlock Text="Selected case activity" FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"/>
+            <Border Height="1" Background="#31536A" Margin="0,15,0,15"/>
+            <ItemsControl ItemsSource="{Binding Selected.TimelineItems}"><ItemsControl.ItemTemplate><DataTemplate><Border Background="#102A3B" BorderBrush="#31536A" BorderThickness="1" CornerRadius="9" Padding="14,14" Margin="0,0,0,10"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="5"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><Border Background="{Binding Severity, Converter={StaticResource SeverityBrush}}" CornerRadius="2"/><StackPanel Grid.Column="1" Margin="13,0,0,0"><TextBlock Text="{Binding TimeLabel}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"/><TextBlock Text="{Binding Title}" Margin="0,5,0,0" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" TextWrapping="Wrap"/><TextBlock Text="{Binding Description}" Margin="0,6,0,0" Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap"/></StackPanel></Grid></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
           </StackPanel>
         </Border>
 
-        <Border x:Name="RelatedAnomaliesPanel" Grid.Column="1" Style="{StaticResource IncidentOpsPanel}" Margin="0,0,10,0">
+        <Border x:Name="RelatedAnomaliesPanel" Grid.Column="1" Style="{StaticResource IncidentOpsPanel}" Margin="0,0,10,0" Padding="18,18" BorderBrush="#31536A">
           <StackPanel>
-            <TextBlock Text="04 / RELATED ANOMALIES"
-                       Style="{StaticResource AnomalySectionTitle}"/>
-            <ItemsControl ItemsSource="{Binding Selected.RelatedAnomalyDescriptions}"
-                          Margin="0,10,0,0">
-              <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                  <Border Style="{StaticResource DetailGridCard}"
-                          Margin="0,0,0,8">
-                    <TextBlock Text="{Binding}"
-                               Foreground="{StaticResource TextSubtleBrush}"
-                               TextWrapping="Wrap"/>
-                  </Border>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
+            <TextBlock Text="07 / RELATED ANOMALIES" Style="{StaticResource IncidentOpsEyebrow}"/>
+            <TextBlock Text="Correlated observations" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,6,0,5" TextWrapping="Wrap"/>
+            <TextBlock Text="Signals associated with this case" FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"/>
+            <Border Height="1" Background="#31536A" Margin="0,15,0,15"/>
+            <ItemsControl ItemsSource="{Binding Selected.RelatedAnomalyDescriptions}"><ItemsControl.ItemTemplate><DataTemplate><Border Background="#102A3B" BorderBrush="#31536A" BorderThickness="1" CornerRadius="9" Padding="14,14" Margin="0,0,0,10"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="4"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><Border Background="#36CBE6" CornerRadius="2"/><TextBlock Grid.Column="1" Text="{Binding}" Margin="13,0,0,0" Foreground="{StaticResource TextSubtleBrush}" FontSize="13" TextWrapping="Wrap"/></Grid></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
           </StackPanel>
         </Border>
 
-        <Border x:Name="AffectedHostsPanel" Grid.Column="2" Style="{StaticResource IncidentOpsPanel}" Margin="0,0,10,0">
+        <Border x:Name="AffectedHostsPanel" Grid.Column="2" Style="{StaticResource IncidentOpsPanel}" Margin="0,0,10,0" Padding="18,18" BorderBrush="#31536A">
           <StackPanel>
-            <TextBlock Text="05 / AFFECTED HOSTS"
-                       Style="{StaticResource AnomalySectionTitle}"/>
-            <ItemsControl ItemsSource="{Binding Selected.AffectedHosts}"
-                          Margin="0,10,0,0">
-              <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                  <Border Style="{StaticResource DetailGridCard}"
-                          Margin="0,0,0,8">
-                    <Grid>
-                      <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="84"/>
-                        <ColumnDefinition Width="70"/>
-                      </Grid.ColumnDefinitions>
-                      <TextBlock Text="{Binding HostDisplay}"
-                                 Foreground="{StaticResource TextSubtleBrush}"
-                                 TextWrapping="NoWrap"
-                                 TextTrimming="CharacterEllipsis"
-                                 ToolTip="{Binding Host}"/>
-                      <TextBlock Grid.Column="1"
-                                 Text="{Binding Role}"
-                                 Foreground="{StaticResource TextMutedBrush}"
-                                 FontSize="11.5"/>
-                      <TextBlock Grid.Column="2"
-                                 Text="{Binding RiskScoreLabel}"
-                                 FontWeight="SemiBold"
-                                 Foreground="{StaticResource TextWarningBrush}"/>
-                    </Grid>
-                  </Border>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
+            <TextBlock Text="08 / AFFECTED HOSTS" Style="{StaticResource IncidentOpsEyebrow}"/>
+            <TextBlock Text="Host impact context" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,6,0,5" TextWrapping="Wrap"/>
+            <TextBlock Text="Hosts associated with the selected case" FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"/>
+            <Border Height="1" Background="#31536A" Margin="0,15,0,15"/>
+            <ItemsControl ItemsSource="{Binding Selected.AffectedHosts}"><ItemsControl.ItemTemplate><DataTemplate><Border Background="#102A3B" BorderBrush="#31536A" BorderThickness="1" CornerRadius="9" Padding="14,14" Margin="0,0,0,10"><StackPanel><TextBlock Text="{Binding HostDisplay}" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" TextWrapping="Wrap" ToolTip="{Binding Host}"/><Border Height="1" Background="#31536A" Margin="0,11,0,10"/><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="{Binding Role}" FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"/><Border Grid.Column="1" Background="#193648" BorderBrush="#31536A" BorderThickness="1" CornerRadius="5" Padding="9,4" Margin="10,0,0,0"><TextBlock Text="{Binding RiskScoreLabel}" FontWeight="SemiBold" Foreground="{StaticResource TextWarningBrush}"/></Border></Grid></StackPanel></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
           </StackPanel>
         </Border>
 
-        <Border x:Name="ResponseChecklistPanel" Grid.Column="3" Style="{StaticResource IncidentOpsPanel}">
+        <Border x:Name="ResponseChecklistPanel" Grid.Column="3" Style="{StaticResource IncidentOpsPanel}" Padding="18,18" BorderBrush="#31536A">
           <StackPanel>
-            <TextBlock Text="06 / RESPONSE CHECKLIST"
-                       Style="{StaticResource AnomalySectionTitle}"/>
-            <ItemsControl ItemsSource="{Binding Selected.ChecklistItems}"
-                          Margin="0,10,0,0">
-              <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                  <Border Style="{StaticResource DetailGridCard}"
-                          Margin="0,0,0,8">
-                    <Grid>
-                      <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="26"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="88"/>
-                      </Grid.ColumnDefinitions>
-                      <TextBlock Text="{Binding Marker}"
-                                 Foreground="{StaticResource OkBrush}"
-                                 FontWeight="Bold"/>
-                      <TextBlock Grid.Column="1"
-                                 Text="{Binding Title}"
-                                 Foreground="{StaticResource TextSubtleBrush}"
-                                 TextWrapping="Wrap"/>
-                      <Border Grid.Column="2"
-                              Style="{StaticResource RiskBadge}"
-                              HorizontalAlignment="Right">
-                        <TextBlock Text="{Binding Status}"
-                                   Foreground="{StaticResource TextMutedBrush}"
-                                   FontSize="10.5"/>
-                      </Border>
-                    </Grid>
-                  </Border>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
+            <TextBlock Text="09 / RESPONSE CHECKLIST" Style="{StaticResource IncidentOpsEyebrow}"/>
+            <TextBlock Text="Response readiness" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,6,0,5" TextWrapping="Wrap"/>
+            <TextBlock Text="Existing case checklist and status" FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"/>
+            <Border Height="1" Background="#31536A" Margin="0,15,0,15"/>
+            <ItemsControl ItemsSource="{Binding Selected.ChecklistItems}"><ItemsControl.ItemTemplate><DataTemplate><Border Background="#102A3B" BorderBrush="#31536A" BorderThickness="1" CornerRadius="9" Padding="14,14" Margin="0,0,0,10"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="26"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="{Binding Marker}" Foreground="{StaticResource OkBrush}" FontSize="16" FontWeight="Bold"/><StackPanel Grid.Column="1"><TextBlock Text="{Binding Title}" Foreground="{StaticResource TextBrush}" FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap"/><Border HorizontalAlignment="Left" Background="#193648" BorderBrush="#31536A" BorderThickness="1" CornerRadius="5" Padding="9,4" Margin="0,9,0,0"><TextBlock Text="{Binding Status}" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/></Border></StackPanel></Grid></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
           </StackPanel>
         </Border>
       </Grid>
