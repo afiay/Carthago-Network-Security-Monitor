@@ -28,7 +28,7 @@ namespace Carthago.Views
 
         public void ApplyResponsiveLayout(ResponsiveLayoutMode mode)
         {
-            KpiGrid.Columns = mode switch
+            // GA UI-143: the case-volume card drops beneath the masthead on compact screens.\n            bool stackHero = mode == ResponsiveLayoutMode.Compact;\n            IncidentHeroCountColumn.Width = stackHero ? new GridLength(0) : GridLength.Auto;\n            IncidentHeroSecondRow.Height = stackHero ? GridLength.Auto : new GridLength(0);\n            Grid.SetRow(IncidentHeroCountCard, stackHero ? 1 : 0);\n            Grid.SetColumn(IncidentHeroCountCard, stackHero ? 0 : 1);\n            IncidentHeroNarrative.Margin = stackHero ? new Thickness(0, 0, 0, 16) : new Thickness(0, 0, 24, 0);\n            IncidentHeroCountCard.HorizontalAlignment = stackHero ? HorizontalAlignment.Stretch : HorizontalAlignment.Right;\n\n            KpiGrid.Columns = mode switch
             {
                 ResponsiveLayoutMode.Compact => 2,
                 ResponsiveLayoutMode.Standard => 3,
