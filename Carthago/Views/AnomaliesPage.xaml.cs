@@ -36,6 +36,16 @@ namespace Carthago.Views
 
         public void ApplyResponsiveLayout(ResponsiveLayoutMode mode)
         {
+            // Keep the local-snapshot hero alongside the narrative at wide/standard widths.
+            // Compact widths move the existing bound snapshot beneath it without new data.
+            bool compactHero = mode == ResponsiveLayoutMode.Compact;
+            AnomalyHeroNarrativeColumn.Width = compactHero ? new GridLength(1, GridUnitType.Star) : new GridLength(1.55, GridUnitType.Star);
+            AnomalyHeroSnapshotColumn.Width = compactHero ? new GridLength(0) : new GridLength(0.85, GridUnitType.Star);
+            AnomalyHeroCompactRow.Height = compactHero ? GridLength.Auto : new GridLength(0);
+            Grid.SetColumn(AnomalyHeroSnapshotCard, compactHero ? 0 : 1);
+            Grid.SetRow(AnomalyHeroSnapshotCard, compactHero ? 1 : 0);
+            AnomalyHeroSnapshotCard.Margin = compactHero ? new Thickness(0, 20, 0, 0) : new Thickness(18, 0, 0, 0);
+
             KpiGrid.Columns = mode switch
             {
                 ResponsiveLayoutMode.Compact => 2,

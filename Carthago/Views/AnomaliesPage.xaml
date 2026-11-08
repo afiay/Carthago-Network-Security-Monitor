@@ -44,22 +44,47 @@
       </Grid.RowDefinitions>
 
       <Border Grid.Row="0" Style="{StaticResource AnomalyOpsHeroCard}" Margin="0,0,0,20" Padding="24">
-        <StackPanel>
-          <TextBlock Text="01 / BEHAVIOR ANALYTICS / LOCAL OBSERVATIONS" Style="{StaticResource AnomalyOpsEyebrow}"/>
-          <TextBlock Text="Anomaly Intelligence" FontSize="34" FontWeight="Bold"
-                     Foreground="{StaticResource TextBrush}" Margin="0,7,0,5" TextWrapping="Wrap"/>
-          <TextBlock Text="Triage observed signals, compare local baselines and investigate recorded evidence."
-                     FontSize="12.5" Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap"/>
-          <Border Background="#103247" BorderBrush="#356A80" BorderThickness="1"
-                  CornerRadius="12" Padding="20,16" HorizontalAlignment="Stretch" Margin="0,18,0,0">
-            <StackPanel Orientation="Horizontal">
+        <!-- GA UI-147: two-zone operational masthead, stacked by the existing responsive controller. -->
+        <Grid x:Name="AnomalyHeroGrid">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition x:Name="AnomalyHeroNarrativeColumn" Width="1.55*"/>
+            <ColumnDefinition x:Name="AnomalyHeroSnapshotColumn" Width="0.85*"/>
+          </Grid.ColumnDefinitions>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition x:Name="AnomalyHeroCompactRow" Height="0"/>
+          </Grid.RowDefinitions>
+          <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,14,0">
+            <TextBlock Text="01 / BEHAVIOR ANALYTICS / LOCAL OBSERVATIONS"
+                       Style="{StaticResource AnomalyOpsEyebrow}" TextWrapping="Wrap"/>
+            <TextBlock Text="Anomaly Intelligence" FontSize="34" FontWeight="Bold"
+                       Foreground="{StaticResource TextBrush}" Margin="0,9,0,8" TextWrapping="Wrap"/>
+            <TextBlock Text="Triage observed signals, compare local baselines and investigate recorded evidence."
+                       FontSize="13" Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap"
+                       MaxWidth="660" HorizontalAlignment="Left"/>
+            <Border Height="3" Width="76" HorizontalAlignment="Left" Background="{StaticResource AccentBrush}"
+                    CornerRadius="2" Margin="0,20,0,0"/>
+          </StackPanel>
+          <Border x:Name="AnomalyHeroSnapshotCard" Grid.Column="1"
+                  Background="#103247" BorderBrush="#356A80" BorderThickness="1"
+                  CornerRadius="12" Padding="22,20" Margin="18,0,0,0"
+                  HorizontalAlignment="Stretch" VerticalAlignment="Stretch" MinHeight="130">
+            <Grid>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+              </Grid.RowDefinitions>
               <TextBlock Text="RECENT LOCAL SNAPSHOT" Style="{StaticResource AnomalyOpsEyebrow}"
-                         VerticalAlignment="Center" Margin="0,0,12,0"/>
-              <TextBlock Text="{Binding RawSignalCount}" FontSize="32" FontWeight="Bold"
-                         Foreground="{StaticResource TextBrush}" VerticalAlignment="Center"/>
-            </StackPanel>
+                         TextWrapping="Wrap"/>
+              <TextBlock Grid.Row="1" Text="{Binding RawSignalCount}" FontSize="42" FontWeight="Bold"
+                         Foreground="{StaticResource TextBrush}" Margin="0,8,0,5"
+                         VerticalAlignment="Center"/>
+              <TextBlock Grid.Row="2" Text="Locally observed signals" FontSize="11.5"
+                         Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap"/>
+            </Grid>
           </Border>
-        </StackPanel>
+        </Grid>
       </Border>
 
       <UniformGrid x:Name="KpiGrid"
