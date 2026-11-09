@@ -99,3 +99,8 @@ Original research IDs R2855, R2774, R1968, R2811, R2817, R2744, R2699, R2771, R1
 ## R776–R785 — independent process/peer network shapes
 
 Original workbook IDs R1296, R1304, R1330, R1361, R1373, R1166, R1436, R1541, R1816, R1987. See [R776–R785](../03-detection-rules/batches/RULE_BATCH_776-785.md). Ten independent Candidate/Shadow source rules and authored xUnit tests. **SOURCE CANDIDATE — UNVERIFIED; 0 tests executed.** Next unallocated ID: R786.
+
+
+## R786–R795 — typed DNS/TLS/FTP/SMB/HTTP and network-relay candidates
+
+Workbook IDs R1025, R2021, R998, R2063, R1020, R1238, R1734, R1873, R1884, R1847. Independent packet-shape and bounded correlation candidates; none assert credential authentication, endpoint changes, C2, upload completion or proxy configuration. See [R786–R795](../03-detection-rules/batches/RULE_BATCH_786-795.md). **SOURCE CANDIDATE — UNVERIFIED; xUnit authored, 0 executed.** Next unallocated ID: R796.

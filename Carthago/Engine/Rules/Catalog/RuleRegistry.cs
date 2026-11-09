@@ -808,6 +808,16 @@ namespace Carthago.Engine.Rules.Catalog
                 new R783_LinuxRsyncFtpPortPayloadBurstRule(),
                 new R784_MacOsascriptTextStorageHttpPostBurstRule(),
                 new R785_MacLaunchdFixedSizeTlsCadenceRule(),
+                new R786_TcpDnsTxtLargeQueryBurstRule(),
+                new R787_DnsThenUnusualPublicConnectRule(),
+                new R788_DnsResolverMultiUpstreamTxtQueryRule(),
+                new R789_NetProcessSmbWriteThenFinRule(),
+                new R790_RemoteTlsIssuerShiftRule(),
+                new R791_PublicAdminPostThenCurlEgressRule(),
+                new R792_EsxiFtpThenTftpEgressRule(),
+                new R793_PublicProxyIngressThenNginxEgressRule(),
+                new R794_InterSubnetRelayToAdminPortRule(),
+                new R795_PublicManagementUploadPostBurstRule(),
             };
         }
 
