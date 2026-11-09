@@ -828,6 +828,16 @@ namespace Carthago.Engine.Rules.Catalog
                 new R803_CoapDiscoveryThenPublicDnsTxtRule(),
                 new R804_SnmpProbeThenSshSynRule(),
                 new R805_EncodedDnsTxtDistinctQueryBurstRule(),
+                new R806_DockerManifestThenMinerPoolPayloadRule(),
+                new R807_PublicSshServiceThenEastWestSshRule(),
+                new R808_LdapmodifyKerberosThenLdapSynRule(),
+                new R809_PublicLoginThenPortalAdminPostRule(),
+                new R810_FrpcQuicPublicPeerFanoutRule(),
+                new R811_ExpiredCertificateUnusualTlsPortRule(),
+                new R812_OpensslPublicUdpPayloadBurstRule(),
+                new R813_PowershellPublicApiPathEnumerationRule(),
+                new R814_PowershellMediaGetThenUnusualTlsEgressRule(),
+                new R815_OsascriptAlternatingTlsPayloadSizesRule(),
             };
         }
 

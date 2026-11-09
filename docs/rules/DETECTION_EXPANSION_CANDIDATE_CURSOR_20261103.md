@@ -109,3 +109,7 @@ Workbook IDs R1025, R2021, R998, R2063, R1020, R1238, R1734, R1873, R1884, R1847
 ## R796–R805 — independent proxy, discovery, OT and DNS sequence candidates
 
 Original workbook IDs R2634, R2002, R1011, R1016, R2700, R2690, R2667, R2765, R2791, R2816. Distinct process-linked network legs, typed DNS-to-web chains, OT protocol probes and DNS subdomain bursts. See [R796–R805](../03-detection-rules/batches/RULE_BATCH_796-805.md). Candidate/Shadow, **SOURCE CANDIDATE — UNVERIFIED; xUnit authored, 0 executed.** Next unallocated ID: R806.
+
+## R806–R815 — process-directed network bursts, sequences and TLS metadata
+
+Original workbook IDs R1175, R1391, R1426, R1473, R1599, R1700, R1759, R1877, R1972 and R2833. Separate candidates for mining-port egress, inbound→east-west SSH, Kerberos→LDAP, portal POST sequence, QUIC peer fanout, expired TLS certificate on unusual service port, UDP openssl burst, PowerShell API-path enumeration, media GET→different TLS peer and macOS alternating TLS sizes. See [R806–R815](../03-detection-rules/batches/RULE_BATCH_806-815.md). Candidate/Shadow, **SOURCE CANDIDATE — UNVERIFIED; xUnit authored, 0 executed**. Next unallocated ID: R816.
