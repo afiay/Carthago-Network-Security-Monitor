@@ -144,6 +144,8 @@ namespace Carthago
             SidebarPanel?.ActivateNav("Incidents");
             if (IncidentsFrame.Content is not IncidentsPage)
                 IncidentsFrame.Content = new IncidentsPage(_sinkHost!, "Incidents");
+            if (IncidentsFrame.Content is IncidentsPage incidentPage)
+                AttachIncidentInvestigation(incidentPage);
             ApplyResponsiveLayoutTo(IncidentsFrame.Content);
         }
 

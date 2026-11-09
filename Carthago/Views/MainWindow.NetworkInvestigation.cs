@@ -10,6 +10,12 @@ namespace Carthago
 {
     public partial class MainWindow
     {
+        private void AttachIncidentInvestigation(IncidentsPage page)
+        {
+            page.NetworkInvestigationRequested -= OpenNetworkInvestigation;
+            page.NetworkInvestigationRequested += OpenNetworkInvestigation;
+        }
+
         private void Nav_NetworkInvestigation_Click(object? sender, RoutedEventArgs e)
             => OpenNetworkInvestigation(string.Empty);
 

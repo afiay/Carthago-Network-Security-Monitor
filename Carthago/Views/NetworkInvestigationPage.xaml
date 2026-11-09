@@ -15,7 +15,7 @@
           <WrapPanel Margin="0,16,0,0">
             <TextBox x:Name="InvestigationSearchText" Width="270" MinHeight="36" MaxLength="256" Margin="0,0,8,8"
                      Style="{StaticResource SearchBox}" KeyDown="InvestigationSearchText_KeyDown"
-                     ToolTip="Exact source/destination IP, or text from retained traffic and detection metadata"
+                     ToolTip="Exact IP, port:443, or text from retained rule IDs, domains, event/flow IDs and traffic/detection metadata"
                      AutomationProperties.Name="Network investigation search"/>
             <Button Content="Investigate" MinWidth="116" Height="36" Margin="0,0,8,8"
                     Style="{StaticResource PrimaryButton}" Click="Investigate_Click"/>
@@ -80,6 +80,10 @@
               <DataGridTextColumn Header="Severity" Binding="{Binding Severity}" Width="90"/>
               <DataGridTextColumn Header="Source" Binding="{Binding SourceIp}" Width="155"/>
               <DataGridTextColumn Header="Destination" Binding="{Binding DestinationIp}" Width="155"/>
+              <DataGridTextColumn Header="Src port" Binding="{Binding SourcePort}" Width="80"/>
+              <DataGridTextColumn Header="Dst port" Binding="{Binding DestinationPort}" Width="80"/>
+              <DataGridTextColumn Header="Event ID" Binding="{Binding EventId}" Width="150"/>
+              <DataGridTextColumn Header="Flow ID" Binding="{Binding FlowId}" Width="150"/>
               <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="370"/>
             </DataGrid.Columns>
           </DataGrid>

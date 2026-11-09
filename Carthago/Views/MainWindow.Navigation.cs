@@ -173,6 +173,7 @@ namespace Carthago
                 IncidentsFrame.Content = page;
             }
 
+            AttachIncidentInvestigation(page);
             ApplyResponsiveLayoutTo(page);
             page.SelectIncident(incidentId);
         }

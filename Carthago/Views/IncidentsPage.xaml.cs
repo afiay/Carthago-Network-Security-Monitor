@@ -6,6 +6,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
+using System.Net;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Windows;
@@ -25,6 +26,27 @@ namespace Carthago.Views
         private readonly SinkHost _host;
         private readonly Dispatcher _ui;
         private readonly IncidentsVm _vm;
+
+        public event Action<string>? NetworkInvestigationRequested;
+
+        private void InvestigateSource_Click(object sender, RoutedEventArgs e)
+        {
+            // The selected case holds the actual incident source. Do not parse
+            // display labels that may say "Unknown host" as evidence.
+            if (_vm.Selected is { } selected && IPAddress.TryParse(selected.SourceLabel, out var ip))
+                NetworkInvestigationRequested?.Invoke(ip.ToString());
+        }
+
+        private void InvestigateDestination_Click(object sender, RoutedEventArgs e)
+        {
+            if (_vm.Selected is not { } selected)
+                return;
+
+            var destination = selected.DestinationLabel?.Trim();
+            if (!string.IsNullOrEmpty(destination) &&
+                !string.Equals(destination, "Unknown destination", StringComparison.OrdinalIgnoreCase))
+                NetworkInvestigationRequested?.Invoke(destination);
+        }
 
         public void ApplyResponsiveLayout(ResponsiveLayoutMode mode)
         {

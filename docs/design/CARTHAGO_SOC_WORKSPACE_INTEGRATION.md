@@ -44,6 +44,8 @@ The first milestone intentionally changes only monitoring-health presentation an
 
 **SOC-03 — SOURCE CANDIDATE / UNVERIFIED.** The Detection Rules navigation now opens a dedicated Detection Coverage Center backed by `RuleCatalog.HealthSnapshots()` and the existing rule catalog validator and runtime/telemetry stores. The Overview hero, Settings sensitivity section and Network Investigation Explorer provide contextual routes to it. It distinguishes current runtime alert mode, process-local evaluation counters, structural catalog findings and telemetry kinds observed since process start. Explicitly **not** reported as proof of replay-test success or detection accuracy. Rule snapshots run on a background task on first open or manual refresh; capture and detection behavior are unchanged. WPF build and runtime verification remain owner-gated.
 
+**SOC-04 — SOURCE CANDIDATE / UNVERIFIED.** The existing Incidents chronology and analyst feedback remain authoritative. Selected-case source IP and destination host actions now open the local Network Investigation Explorer inside MainWindow, without asserting that matching retained traffic belongs to that incident. The explorer's global search accepts `port:443`-style exact source/destination port queries and additional recorded detection event, flow, correlation and destination-host identifiers. The source-only checkpoint does not change incident matching or persistence.
+
 No WPF build, test, runner job, live capture or rendered screenshot was performed for SOC-01; all runtime and accessibility acceptance checks remain unexecuted under the owner's standing instruction.
 
 ## Alternatives considered

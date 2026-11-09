@@ -37,10 +37,13 @@ namespace Carthago.Views
             var trafficSnapshot = traffic.Take(200).ToArray();
             var detectionSnapshot = detections.Take(500).ToArray();
             var isAddress = IPAddress.TryParse(term, out var searchedAddress);
+            var isPortQuery = !isAddress && TryParsePortQuery(term, out var searchedPort);
 
             var trafficMatches = trafficSnapshot.Where(r =>
                 term.Length == 0 || (isAddress
                     ? MatchesAddress(r.Source, searchedAddress!) || MatchesAddress(r.Destination, searchedAddress!)
+                    : isPortQuery
+                        ? r.SourcePort == searchedPort || r.DestinationPort == searchedPort
                     : Contains(r.Source, term) || Contains(r.Destination, term) || Contains(r.Protocol, term)
                       || Contains(r.ApplicationService, term) || Contains(r.ProcessName, term)
                       || Contains(r.WhoisCountry, term) || Contains(r.Sni, term) || Contains(r.HttpHost, term)))
@@ -48,8 +51,13 @@ namespace Carthago.Views
             var detectionMatches = detectionSnapshot.Where(d =>
                 term.Length == 0 || (isAddress
                     ? MatchesAddress(d.SourceIp, searchedAddress!) || MatchesAddress(d.DestinationIp, searchedAddress!)
+                    : isPortQuery
+                        ? d.SourcePort == searchedPort || d.DestinationPort == searchedPort
                     : Contains(d.SourceIp, term) || Contains(d.DestinationIp, term) || Contains(d.RuleId, term)
-                      || Contains(d.RuleName, term) || Contains(d.Description, term) || Contains(d.Country, term)))
+                      || Contains(d.RuleName, term) || Contains(d.Description, term) || Contains(d.Country, term)
+                      || Contains(d.DestinationHost, term) || Contains(d.ProcessName, term)
+                      || Contains(d.EventId, term) || Contains(d.FlowId, term) || Contains(d.CorrelationId, term)
+                      || Contains(d.Protocol, term)))
                 .ToArray();
 
             InvestigationTrafficGrid.ItemsSource = trafficMatches;
@@ -58,7 +66,15 @@ namespace Carthago.Views
             DetectionCountText.Text = $"{detectionMatches.Length:N0} matching retained detections";
             ScopeText.Text = term.Length == 0
                 ? $"Local snapshot: {trafficSnapshot.Length:N0} traffic rows and {detectionSnapshot.Length:N0} detection events · showing all retained items"
-                : $"Local snapshot: {trafficSnapshot.Length:N0} traffic rows and {detectionSnapshot.Length:N0} detection events · {(isAddress ? "exact IP" : "recorded text")} match for '{term}'";
+                : $"Local snapshot: {trafficSnapshot.Length:N0} traffic rows and {detectionSnapshot.Length:N0} detection events · {(isAddress ? "exact IP" : isPortQuery ? "exact source/destination port" : "recorded text")} match for '{term}'";
+        }
+
+        private static bool TryParsePortQuery(string term, out int port)
+        {
+            port = 0;
+            return term.StartsWith("port:", StringComparison.OrdinalIgnoreCase)
+                && int.TryParse(term.AsSpan(5).Trim(), out port)
+                && port is >= 1 and <= 65535;
         }
 
         private static bool MatchesAddress(string? value, IPAddress searchedAddress)

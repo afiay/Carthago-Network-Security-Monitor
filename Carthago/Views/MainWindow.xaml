@@ -206,7 +206,7 @@
                    Margin="0,0,8,0" FontSize="11"/>
         <TextBox x:Name="GlobalInvestigationSearchText" Width="180" Height="32" MaxLength="256"
                  Style="{StaticResource SearchBox}" KeyDown="GlobalInvestigationSearch_KeyDown"
-                 ToolTip="Search retained traffic and detection evidence by IP, rule, domain or recorded text"
+                 ToolTip="Search retained metadata by exact IP, port:443, domain, rule ID, event/flow ID or recorded text"
                  AutomationProperties.Name="Global retained-evidence search"/>
         <Button Content="Find" MinWidth="66" Height="32" Margin="7,0,0,0"
                 Style="{StaticResource SecondaryButton}" Click="GlobalInvestigationSearch_Click"
