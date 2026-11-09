@@ -40,6 +40,8 @@
 
 The first milestone intentionally changes only monitoring-health presentation and navigation. It does **not** establish multi-sensor inventory, network-wide traffic visibility, complete PCAP reconstruction, or verified detection accuracy. Later milestones remain pending until implemented and verified separately.
 
+**SOC-02 — SOURCE CANDIDATE / UNVERIFIED.** A Network Investigation Explorer now connects retained in-memory traffic and detections through a bounded search, a sidebar entry, selected-source/destination actions in Live Traffic and Raw Detections, and a global header search. A matched address means matching source/destination fields only; it does not establish incident correlation or prove complete flow history. The page also links directly to Analytics/Geographic Context, Live Traffic and Raw Detections. Exact IP matching, text matching and all navigation are currently source-only and require owner-authorized WPF runtime verification.
+
 No WPF build, test, runner job, live capture or rendered screenshot was performed for SOC-01; all runtime and accessibility acceptance checks remain unexecuted under the owner's standing instruction.
 
 ## Alternatives considered

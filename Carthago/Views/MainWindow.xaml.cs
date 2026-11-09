@@ -64,6 +64,9 @@ namespace Carthago
             SidebarPanel.MonitoringHealthRequested -= Nav_MonitoringHealth_Click;
             SidebarPanel.MonitoringHealthRequested += Nav_MonitoringHealth_Click;
 
+            SidebarPanel.NetworkInvestigationRequested -= Nav_NetworkInvestigation_Click;
+            SidebarPanel.NetworkInvestigationRequested += Nav_NetworkInvestigation_Click;
+
             SidebarPanel.AnomaliesRequested -= Nav_Anomalies_Click;
             SidebarPanel.AnomaliesRequested += Nav_Anomalies_Click;
 

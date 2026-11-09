@@ -215,6 +215,21 @@
             </StackPanel>
           </Expander>
 
+          <Button x:Name="NetworkInvestigationNavButton" Style="{StaticResource NavButton}"
+                  Click="Nav_NetworkInvestigation_Click" ToolTip="Explore retained local traffic and detection records"
+                  AutomationProperties.Name="Network Investigation Explorer">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="28"/>
+                <ColumnDefinition Width="*"/>
+              </Grid.ColumnDefinitions>
+              <Border Style="{StaticResource SidebarNavIconFrame}">
+                <TextBlock Text="⌕" Style="{StaticResource SidebarNavGlyph}"/>
+              </Border>
+              <TextBlock Grid.Column="1" Text="Network Explorer" Style="{StaticResource SidebarNavTitle}" Margin="9,0,0,0"/>
+            </Grid>
+          </Button>
+
           <Button x:Name="IncidentsNavButton" Style="{StaticResource NavButton}" Click="Nav_Incidents_Click" ToolTip="Incidents" AutomationProperties.Name="Incidents">
             <Grid>
               <Grid.ColumnDefinitions>

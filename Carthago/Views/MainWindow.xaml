@@ -183,8 +183,8 @@
       </Grid.RowDefinitions>
 
       <!-- Native session files and analytical workbook export; deliberately outside the capture hot path. -->
-      <Menu Grid.Row="0"
-            Margin="0,8,0,12"
+      <DockPanel Grid.Row="0" Margin="0,8,0,12" LastChildFill="True">
+      <Menu DockPanel.Dock="Left"
             Padding="8,4"
             Background="#0B2034"
             Foreground="#E6EEF8"
@@ -201,6 +201,18 @@
           <MenuItem Header="Export to _Excel..." Click="FileExportExcel_Click"/>
         </MenuItem>
       </Menu>
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+        <TextBlock Text="Investigate" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center"
+                   Margin="0,0,8,0" FontSize="11"/>
+        <TextBox x:Name="GlobalInvestigationSearchText" Width="180" Height="32" MaxLength="256"
+                 Style="{StaticResource SearchBox}" KeyDown="GlobalInvestigationSearch_KeyDown"
+                 ToolTip="Search retained traffic and detection evidence by IP, rule, domain or recorded text"
+                 AutomationProperties.Name="Global retained-evidence search"/>
+        <Button Content="Find" MinWidth="66" Height="32" Margin="7,0,0,0"
+                Style="{StaticResource SecondaryButton}" Click="GlobalInvestigationSearch_Click"
+                AutomationProperties.Name="Investigate retained evidence"/>
+      </StackPanel>
+      </DockPanel>
 
       <!-- ===== Header bar ===== -->
       <Border x:Name="CommandHeader"
@@ -2051,6 +2063,11 @@
                   <Separator/>
                   <MenuItem Header="Check Reputation Now"
                             Click="LookupReputation_Click"/>
+                  <Separator/>
+                  <MenuItem Header="Investigate selected source IP"
+                            Click="TrafficInvestigateSource_Click"/>
+                  <MenuItem Header="Investigate selected destination IP"
+                            Click="TrafficInvestigateDestination_Click"/>
                 </ContextMenu>
               </DataGrid.ContextMenu>
 
@@ -2176,6 +2193,11 @@
                   <Separator/>
                   <MenuItem Header="Copy Alert"
                             Click="CopyAlert_Click"/>
+                  <Separator/>
+                  <MenuItem Header="Investigate selected source IP"
+                            Click="DetectionInvestigateSource_Click"/>
+                  <MenuItem Header="Investigate selected destination IP"
+                            Click="DetectionInvestigateDestination_Click"/>
                 </ContextMenu>
               </DataGrid.ContextMenu>
               <DataGrid.Columns>
@@ -2241,6 +2263,14 @@
           <Border Background="{StaticResource CardBgBrush}" CornerRadius="18"
                   BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" Margin="5">
             <Frame x:Name="MonitoringHealthFrame" NavigationUIVisibility="Hidden"/>
+          </Border>
+        </Grid>
+
+        <!-- ===== Network Investigation: bounded local traffic and detections ===== -->
+        <Grid x:Name="NetworkInvestigationView" Visibility="Collapsed">
+          <Border Background="{StaticResource CardBgBrush}" CornerRadius="18"
+                  BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" Margin="5">
+            <Frame x:Name="NetworkInvestigationFrame" NavigationUIVisibility="Hidden"/>
           </Border>
         </Grid>
 

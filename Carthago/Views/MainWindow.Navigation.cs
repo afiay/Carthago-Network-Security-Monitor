@@ -17,6 +17,7 @@ namespace Carthago
             // Collapse everything
             DashboardView.Visibility = Visibility.Collapsed;
             MonitoringHealthView.Visibility = Visibility.Collapsed;
+            NetworkInvestigationView.Visibility = Visibility.Collapsed;
             AnomaliesView.Visibility = Visibility.Collapsed;
             LiveTrafficView.Visibility = Visibility.Collapsed;
             AlertsView.Visibility = Visibility.Collapsed;
