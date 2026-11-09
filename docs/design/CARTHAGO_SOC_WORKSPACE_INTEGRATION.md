@@ -46,6 +46,8 @@ The first milestone intentionally changes only monitoring-health presentation an
 
 **SOC-04 — SOURCE CANDIDATE / UNVERIFIED.** The existing Incidents chronology and analyst feedback remain authoritative. Selected-case source IP and destination host actions now open the local Network Investigation Explorer inside MainWindow, without asserting that matching retained traffic belongs to that incident. The explorer's global search accepts `port:443`-style exact source/destination port queries and additional recorded detection event, flow, correlation and destination-host identifiers. The source-only checkpoint does not change incident matching or persistence.
 
+**SOC-05 — SOURCE CANDIDATE / UNVERIFIED.** Analytics provides immediate 30/60/120-second time-window controls over the already retained local PPS samples, changing chart axes only and preserving the original one-second sample and three-second redraw cadence. The existing geographic map now supports clicking a plotted IP marker to open that address in Network Investigation. Display labels explicitly say IP geography is approximate; invalid coordinates, local, shared and representative reserved addresses are rejected rather than plotted as real world positions. No new geolocation source or host-precise guarantee is introduced.
+
 No WPF build, test, runner job, live capture or rendered screenshot was performed for SOC-01; all runtime and accessibility acceptance checks remain unexecuted under the owner's standing instruction.
 
 ## Alternatives considered

@@ -2348,8 +2348,19 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel>
                   <TextBlock Text="Network Traffic" Style="{StaticResource DashboardSectionTitle}"/>
-                  <TextBlock Text="Local PPS · rolling 120-second window"
+                  <TextBlock x:Name="AnalyticsTrafficWindowLabel" Text="Local PPS · last 120 seconds of retained timer samples"
                              Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
+                  <WrapPanel Margin="0,6,0,0">
+                    <Button x:Name="AnalyticsRange30Button" Content="30s" Tag="30" Width="51" Height="26"
+                            Margin="0,0,5,0" Style="{StaticResource SecondaryButton}" Opacity="0.68"
+                            Click="AnalyticsTrafficRange_Click"/>
+                    <Button x:Name="AnalyticsRange60Button" Content="60s" Tag="60" Width="51" Height="26"
+                            Margin="0,0,5,0" Style="{StaticResource SecondaryButton}" Opacity="0.68"
+                            Click="AnalyticsTrafficRange_Click"/>
+                    <Button x:Name="AnalyticsRange120Button" Content="120s" Tag="120" Width="58" Height="26"
+                            Style="{StaticResource SecondaryButton}" Click="AnalyticsTrafficRange_Click"
+                            FontWeight="Bold"/>
+                  </WrapPanel>
                 </StackPanel>
                 <TextBlock x:Name="AnalyticsChartRefreshCountdownText"
                            Grid.Column="1"
@@ -2415,6 +2426,8 @@
                 <TextBlock Text="Geographic Context" Style="{StaticResource DashboardSectionTitle}"/>
                 <TextBlock Text="Contextual geography · locations are not precise host positions"
                            Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
+                <TextBlock Text="Click a public-IP marker to investigate it · local, shared and reserved addresses are excluded"
+                           Foreground="{StaticResource AccentAltBrush}" FontSize="11" TextWrapping="Wrap"/>
               </StackPanel>
               <Border Grid.Row="1" CornerRadius="12" BorderThickness="1"
                       BorderBrush="#274B60" Background="#081724" ClipToBounds="True">

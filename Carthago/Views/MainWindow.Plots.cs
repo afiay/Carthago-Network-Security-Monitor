@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Windows;
+using System.Windows.Controls;
 using ScottPlot.WPF;
 
 namespace Carthago
@@ -9,6 +11,27 @@ namespace Carthago
     public partial class MainWindow
     {
         private const int TrafficAverageWindow = 10;
+        private int _analyticsTrafficRangeSeconds = 120;
+
+        private void AnalyticsTrafficRange_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not Button selected || !int.TryParse(selected.Tag?.ToString(), out var seconds)
+                || seconds is not (30 or 60 or 120))
+                return;
+
+            _analyticsTrafficRangeSeconds = seconds;
+            AnalyticsTrafficWindowLabel.Text = $"Local PPS · last {seconds} seconds of retained timer samples";
+            foreach (var button in new[] { AnalyticsRange30Button, AnalyticsRange60Button, AnalyticsRange120Button })
+            {
+                bool active = ReferenceEquals(button, selected);
+                button.FontWeight = active ? FontWeights.Bold : FontWeights.Normal;
+                button.Opacity = active ? 1 : 0.68;
+            }
+
+            // Axis navigation only: capture, sampling, and the three-second redraw
+            // cadence stay unchanged. No extra timer or series allocations.
+            RenderTraffic();
+        }
 
         // ======= Init Charts (ScottPlot v5 API) =======
         private void InitAllPlots()
@@ -135,6 +158,17 @@ namespace Carthago
 
                 wp.Plot.Axes.Margins(bottom: 0, top: .12);
                 wp.Plot.Axes.AutoScale();
+
+                if (ReferenceEquals(wp, TrafficPlot_Analytics) && _trafficXs.Count > 1)
+                {
+                    int first = Math.Max(0, _trafficXs.Count - _analyticsTrafficRangeSeconds);
+                    double xLeft = _trafficXs[first];
+                    double xRight = _trafficXs[^1] + 1.0 / 86400.0; // OADate, add one second
+                    double peak = 0;
+                    for (int i = first; i < _trafficYs.Count; i++)
+                        peak = Math.Max(peak, _trafficYs[i]);
+                    wp.Plot.Axes.SetLimits(xLeft, xRight, 0, Math.Max(1, peak * 1.12));
+                }
                 wp.Refresh();
             }
 

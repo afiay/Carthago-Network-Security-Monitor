@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
@@ -19,6 +20,7 @@ namespace Carthago.Controls
 {
     public partial class WorldMapControl : UserControl
     {
+        public event Action<string>? MarkerIpSelected;
         private bool _initialized;
         private bool _useLocalLeaflet;                 // true when Data/leaflet/* is present
         private string _localLeafletDir = string.Empty;
@@ -136,6 +138,9 @@ namespace Carthago.Controls
                             ShowStatus(s.Substring(4).Trim());
                         else if (s.StartsWith("WARN:", StringComparison.OrdinalIgnoreCase))
                             ShowStatus(s.Substring(5).Trim());
+                        else if (s.StartsWith("PIVOT:", StringComparison.Ordinal) &&
+                                 IPAddress.TryParse(s.Substring(6), out var markerAddress))
+                            MarkerIpSelected?.Invoke(markerAddress.ToString());
                     }
                     catch { /* ignore */ }
                 };
@@ -215,8 +220,8 @@ namespace Carthago.Controls
 
         public Task AddMarker(GeoMarker g) => AddMarker(g.Lat, g.Lon, g.Label, g.Radius);
 
-        public Task AddMarker(double lat, double lon, string? label = null, int radius = 4)
-            => EvalAsync($"window.__carthago && __carthago.addMarker({D(lat)},{D(lon)},\"{Escape(label)}\",{radius});");
+        public Task AddMarker(double lat, double lon, string? label = null, int radius = 4, string? pivotIp = null)
+            => EvalAsync($"window.__carthago && __carthago.addMarker({D(lat)},{D(lon)},\"{Escape(label)}\",{radius},\"{Escape(pivotIp)}\");");
 
         public Task AddConnection(double lat1, double lon1, double lat2, double lon2, string? label = null, string? color = null, double weight = 1.8, double opacity = 0.85)
             => EvalAsync($"window.__carthago && __carthago.addConnection({D(lat1)},{D(lon1)},{D(lat2)},{D(lon2)},\"{Escape(label)}\",\"{Escape(color)}\",{D(weight)},{D(opacity)});");
@@ -343,10 +348,11 @@ html, body, #map {{ height: 100%; margin: 0; padding: 0; background: #081724; }}
       for (var i=0;i<polys.length;i++) polys[i].setStyle(polyStyle);
     }}
 
-    function addMarker(lat, lon, label, radius){{
+    function addMarker(lat, lon, label, radius, pivotIp){{
       try{{
         var m = L.circleMarker([lat, lon], {{ radius: Math.max(radius||4, 5), color:'#A8F3FF', fillColor:'#16C7D9', weight: 1.8, opacity: 0.96, fillOpacity: 0.82 }});
         if (label) m.bindTooltip(label, {{permanent:false, direction:'top', opacity:0.9}});
+        if (pivotIp) m.on('click', function(){{ post('PIVOT:' + pivotIp); }});
         m.addTo(map); markers.push(m);
       }}catch(e){{ post('ERR: addMarker ' + (e && e.message ? e.message : e)); }}
     }}

@@ -32,6 +32,11 @@ namespace Carthago
                 maxMarkers: 2500);
 
             WorldMap.ShowGraticule = true;
+            WorldMap.MarkerIpSelected -= OnMapMarkerIpSelected;
+            WorldMap.MarkerIpSelected += OnMapMarkerIpSelected;
         }
+
+        private void OnMapMarkerIpSelected(string ipAddress)
+            => OpenNetworkInvestigation(ipAddress);
     }
 }
