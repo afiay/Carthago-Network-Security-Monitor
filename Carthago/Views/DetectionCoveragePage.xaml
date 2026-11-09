@@ -1,0 +1,132 @@
+<!-- SPDX-License-Identifier: MIT -->
+<UserControl x:Class="Carthago.Views.DetectionCoveragePage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             SnapsToDevicePixels="True" UseLayoutRounding="True">
+  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+    <StackPanel Margin="16,16,16,24" MinWidth="350">
+      <Border Background="#102D42" BorderBrush="#2B5870" BorderThickness="1"
+              CornerRadius="16" Padding="22" Margin="0,0,0,16">
+        <StackPanel>
+          <TextBlock Text="DETECTION ENGINE  /  OBSERVABILITY" FontSize="11" FontWeight="Bold"
+                     Foreground="{StaticResource AccentAltBrush}"/>
+          <TextBlock Text="Detection Coverage Center" FontSize="27" FontWeight="Bold"
+                     Foreground="{StaticResource TextBrush}" Margin="0,7,0,0" TextWrapping="Wrap"/>
+          <TextBlock Text="Inspect the registered rule catalog, live process counters and observed telemetry requirements. This is not an accuracy certification or a test-result dashboard."
+                     Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,8,0,0"/>
+          <WrapPanel Margin="0,16,0,0">
+            <Button x:Name="RefreshCoverageButton" Content="Refresh actual status" MinWidth="165"
+                    Height="36" Margin="0,0,8,8" Style="{StaticResource PrimaryButton}"
+                    Click="RefreshCoverage_Click"/>
+            <Button Content="Detection events" MinWidth="135" Height="36" Margin="0,0,8,8"
+                    Style="{StaticResource SecondaryButton}" Click="OpenDetections_Click"/>
+            <Button Content="Sensitivity settings" MinWidth="152" Height="36" Margin="0,0,8,8"
+                    Style="{StaticResource SecondaryButton}" Click="OpenSettings_Click"/>
+          </WrapPanel>
+          <TextBlock x:Name="SnapshotStatusText" Text="No catalog snapshot loaded"
+                     Foreground="{StaticResource TextMutedBrush}" Margin="0,5,0,0"
+                     TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/>
+        </StackPanel>
+      </Border>
+
+      <UniformGrid Columns="4" Margin="0,0,0,16">
+        <Border Background="#11263B" BorderBrush="#28536B" BorderThickness="1"
+                CornerRadius="12" Padding="14" Margin="0,0,8,0">
+          <StackPanel>
+            <TextBlock Text="REGISTERED" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
+            <TextBlock x:Name="RegisteredCount" Text="—" FontWeight="Bold" FontSize="27" Foreground="{StaticResource TextBrush}"/>
+            <TextBlock Text="Current catalog" FontSize="11" Foreground="{StaticResource TextSubtleBrush}"/>
+          </StackPanel>
+        </Border>
+        <Border Background="#11263B" BorderBrush="#28536B" BorderThickness="1"
+                CornerRadius="12" Padding="14" Margin="0,0,8,0">
+          <StackPanel>
+            <TextBlock Text="ALERT MODE" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
+            <TextBlock x:Name="AlertModeCount" Text="—" FontWeight="Bold" FontSize="27" Foreground="{StaticResource TextBrush}"/>
+            <TextBlock Text="Current rule policy" FontSize="11" Foreground="{StaticResource TextSubtleBrush}"/>
+          </StackPanel>
+        </Border>
+        <Border Background="#11263B" BorderBrush="#28536B" BorderThickness="1"
+                CornerRadius="12" Padding="14" Margin="0,0,8,0">
+          <StackPanel>
+            <TextBlock Text="EVALUATED" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
+            <TextBlock x:Name="EvaluatedCount" Text="—" FontWeight="Bold" FontSize="27" Foreground="{StaticResource TextBrush}"/>
+            <TextBlock Text="At least once in process" FontSize="11" Foreground="{StaticResource TextSubtleBrush}"/>
+          </StackPanel>
+        </Border>
+        <Border Background="#11263B" BorderBrush="#28536B" BorderThickness="1"
+                CornerRadius="12" Padding="14">
+          <StackPanel>
+            <TextBlock Text="CATALOG ERRORS" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
+            <TextBlock x:Name="ValidationErrorCount" Text="—" FontWeight="Bold" FontSize="27" Foreground="{StaticResource TextBrush}"/>
+            <TextBlock Text="Rules with error findings" FontSize="11" Foreground="{StaticResource TextSubtleBrush}"/>
+          </StackPanel>
+        </Border>
+      </UniformGrid>
+
+      <Border Background="{StaticResource CardBgBrush}" BorderBrush="{StaticResource CardBorderBrush}"
+              BorderThickness="1" CornerRadius="14" Padding="16" Margin="0,0,0,16">
+        <StackPanel>
+          <TextBlock Text="Rule inventory and telemetry visibility" Style="{StaticResource DashboardSectionTitle}"/>
+          <WrapPanel Margin="0,12,0,8">
+            <TextBox x:Name="RuleSearchText" Width="240" MinHeight="36" MaxLength="100" Margin="0,0,8,8"
+                     Style="{StaticResource SearchBox}" KeyDown="RuleSearch_KeyDown"
+                     AutomationProperties.Name="Filter rule inventory by ID, name or category"/>
+            <ComboBox x:Name="RuleStatusFilter" Width="205" Height="36" Margin="0,0,8,8"
+                      SelectedIndex="0" SelectionChanged="RuleStatusFilter_SelectionChanged"
+                      AutomationProperties.Name="Rule inventory status filter">
+              <ComboBoxItem Content="All registered"/>
+              <ComboBoxItem Content="Never evaluated"/>
+              <ComboBoxItem Content="Catalog errors"/>
+              <ComboBoxItem Content="Telemetry not observed"/>
+              <ComboBoxItem Content="Disabled or shadow"/>
+            </ComboBox>
+            <Button Content="Apply filter" MinWidth="112" Height="36" Margin="0,0,8,8"
+                    Style="{StaticResource SecondaryButton}" Click="ApplyRuleSearch_Click"/>
+          </WrapPanel>
+          <TextBlock x:Name="FilteredRuleCountText" Text="Load a snapshot to inspect rules"
+                     Foreground="{StaticResource TextMutedBrush}" FontSize="11" Margin="0,0,0,9"/>
+          <DataGrid x:Name="RuleCoverageGrid" AutoGenerateColumns="False" IsReadOnly="True"
+                    Height="340" FrozenColumnCount="1" EnableRowVirtualization="True"
+                    VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
+                    SelectionChanged="RuleCoverageGrid_SelectionChanged"
+                    AutomationProperties.Name="Registered detection rule coverage">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Rule" Binding="{Binding RuleId}" Width="90"/>
+              <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="250"/>
+              <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="155"/>
+              <DataGridTextColumn Header="Mode" Binding="{Binding Mode}" Width="90"/>
+              <DataGridTextColumn Header="Evaluations" Binding="{Binding Evaluations}" Width="100"/>
+              <DataGridTextColumn Header="Matches" Binding="{Binding Matches}" Width="85"/>
+              <DataGridTextColumn Header="Telemetry seen" Binding="{Binding TelemetryStatus}" Width="155"/>
+              <DataGridTextColumn Header="Catalog findings" Binding="{Binding FindingStatus}" Width="155"/>
+            </DataGrid.Columns>
+          </DataGrid>
+        </StackPanel>
+      </Border>
+
+      <Border Background="#0E2337" BorderBrush="#2B5870" BorderThickness="1"
+              CornerRadius="14" Padding="16" Margin="0,0,0,16">
+        <StackPanel>
+          <TextBlock Text="SELECTED RULE  /  EVIDENCE AND LIMITS" FontSize="11" FontWeight="Bold"
+                     Foreground="{StaticResource AccentAltBrush}"/>
+          <TextBlock x:Name="RuleDetailHeading" Text="Select a rule to inspect its actual status"
+                     FontSize="19" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}"
+                     TextWrapping="Wrap" Margin="0,9,0,5"/>
+          <TextBlock x:Name="RuleDetailText" Text="Runtime counters and telemetry status are available after loading the catalog."
+                     TextWrapping="Wrap" Foreground="{StaticResource TextSubtleBrush}"/>
+        </StackPanel>
+      </Border>
+
+      <Border Background="#0B2034" BorderBrush="{StaticResource CardBorderBrush}"
+              BorderThickness="1" CornerRadius="12" Padding="16">
+        <StackPanel>
+          <TextBlock Text="INTERPRETATION BOUNDARY" Foreground="{StaticResource AccentAltBrush}"
+                     FontSize="11" FontWeight="Bold"/>
+          <TextBlock Text="Registered means present in the current runtime catalog. Alert mode means configured to alert, not that the rule has executed. Evaluation and observed telemetry counters are local to this process and may reset on restart. Catalog findings validate structural metadata and prerequisites, not detection accuracy, benign controls, test-suite success, or production readiness. Missing observations never prove the source is unsupported."
+                     Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,7,0,0"/>
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

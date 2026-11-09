@@ -67,6 +67,9 @@ namespace Carthago
             SidebarPanel.NetworkInvestigationRequested -= Nav_NetworkInvestigation_Click;
             SidebarPanel.NetworkInvestigationRequested += Nav_NetworkInvestigation_Click;
 
+            SidebarPanel.DetectionCoverageRequested -= Nav_DetectionCoverage_Click;
+            SidebarPanel.DetectionCoverageRequested += Nav_DetectionCoverage_Click;
+
             SidebarPanel.AnomaliesRequested -= Nav_Anomalies_Click;
             SidebarPanel.AnomaliesRequested += Nav_Anomalies_Click;
 

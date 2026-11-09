@@ -576,6 +576,10 @@
                                 HorizontalAlignment="Left" Height="29" MinWidth="116" Margin="0,9,0,0"
                                 Click="DashboardOpenMonitoringHealth_Click"
                                 AutomationProperties.Name="Open Monitoring Health details"/>
+                        <Button Content="Rule coverage" Style="{StaticResource SecondaryButton}"
+                                HorizontalAlignment="Left" Height="29" MinWidth="116" Margin="0,7,0,0"
+                                Click="DashboardOpenDetectionCoverage_Click"
+                                AutomationProperties.Name="Open Detection Coverage Center"/>
                       </StackPanel>
                     </Border>
                   </Grid>
@@ -2274,6 +2278,14 @@
           </Border>
         </Grid>
 
+        <!-- ===== Detection Coverage: registered rule health and observed telemetry ===== -->
+        <Grid x:Name="DetectionCoverageView" Visibility="Collapsed">
+          <Border Background="{StaticResource CardBgBrush}" CornerRadius="18"
+                  BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" Margin="5">
+            <Frame x:Name="DetectionCoverageFrame" NavigationUIVisibility="Hidden"/>
+          </Border>
+        </Grid>
+
         <!-- ===== Host Integrity (rootkit + versions) ===== -->
         <Grid x:Name="HostIntegrityView"
               Visibility="Collapsed">
@@ -2654,6 +2666,15 @@
                              Margin="0,8,0,0"
                              Text="Higher sensitivity lowers rule thresholds (e.g., fewer packets/bytes needed to trigger) and flags lower reputation scores."
                              TextWrapping="Wrap"/>
+
+                  <WrapPanel Grid.Row="3" Grid.ColumnSpan="2" Margin="0,12,0,0">
+                    <Button Content="Open Detection Coverage Center" MinWidth="220" Height="36"
+                            Style="{StaticResource SecondaryButton}" Click="SettingsOpenDetectionCoverage_Click"
+                            AutomationProperties.Name="Inspect registered rules, evaluations and telemetry coverage"/>
+                    <TextBlock Text="Read-only rule status and catalog diagnostics; does not change sensitivity."
+                               Foreground="{StaticResource TextMutedBrush}" FontSize="11"
+                               VerticalAlignment="Center" TextWrapping="Wrap" Margin="12,5,0,0"/>
+                  </WrapPanel>
 
 
                 </Grid>

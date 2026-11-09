@@ -649,7 +649,7 @@
               
             </Grid>
           </Button>
-          <Button x:Name="DetectionRulesNavButton" Style="{StaticResource NavButton}" Click="Nav_Settings_Click" ToolTip="Detection rules" AutomationProperties.Name="Detection Rules">
+          <Button x:Name="DetectionRulesNavButton" Style="{StaticResource NavButton}" Click="Nav_DetectionCoverage_Click" ToolTip="Detection coverage and rule status" AutomationProperties.Name="Detection Rules and Coverage">
             <Grid>
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="28"/>

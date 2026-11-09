@@ -18,6 +18,7 @@ namespace Carthago
             DashboardView.Visibility = Visibility.Collapsed;
             MonitoringHealthView.Visibility = Visibility.Collapsed;
             NetworkInvestigationView.Visibility = Visibility.Collapsed;
+            DetectionCoverageView.Visibility = Visibility.Collapsed;
             AnomaliesView.Visibility = Visibility.Collapsed;
             LiveTrafficView.Visibility = Visibility.Collapsed;
             AlertsView.Visibility = Visibility.Collapsed;
@@ -48,6 +49,9 @@ namespace Carthago
 
         private void DashboardOpenMonitoringHealth_Click(object sender, RoutedEventArgs e)
             => Nav_MonitoringHealth_Click(sender, e);
+
+        private void DashboardOpenDetectionCoverage_Click(object sender, RoutedEventArgs e)
+            => OpenDetectionRulesWorkspace();
 
         private void Nav_MonitoringHealth_Click(object? sender, RoutedEventArgs e)
         {
@@ -126,10 +130,24 @@ namespace Carthago
 
         internal void OpenDetectionRulesWorkspace()
         {
-            ShowView(SettingsView);
+            if (DetectionCoverageFrame.Content is not DetectionCoveragePage page)
+            {
+                page = new DetectionCoveragePage();
+                page.DetectionsRequested += (_, _) => Nav_Alerts_Click(this, new RoutedEventArgs());
+                page.SettingsRequested += (_, _) => Nav_Settings_Click(this, new RoutedEventArgs());
+                DetectionCoverageFrame.Content = page;
+            }
+
+            ShowView(DetectionCoverageView);
             SidebarPanel?.ActivateNav("DetectionRules");
             SidebarPanel?.HideAllFilters();
         }
+
+        private void Nav_DetectionCoverage_Click(object? sender, RoutedEventArgs e)
+            => OpenDetectionRulesWorkspace();
+
+        private void SettingsOpenDetectionCoverage_Click(object sender, RoutedEventArgs e)
+            => OpenDetectionRulesWorkspace();
 
         internal void OpenRawTrafficWorkspace()
             => Nav_LiveTraffic_Click(this, new RoutedEventArgs());

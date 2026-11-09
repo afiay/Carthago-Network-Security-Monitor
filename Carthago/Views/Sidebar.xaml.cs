@@ -50,6 +50,7 @@ namespace Carthago.Views
         public event RoutedEventHandler? DashboardRequested;
         public event RoutedEventHandler? MonitoringHealthRequested;
         public event RoutedEventHandler? NetworkInvestigationRequested;
+        public event RoutedEventHandler? DetectionCoverageRequested;
         public event RoutedEventHandler? AnomaliesRequested;
         public event RoutedEventHandler? LiveTrafficRequested;
         public event RoutedEventHandler? AlertsRequested;
@@ -143,6 +144,13 @@ namespace Carthago.Views
         {
             SetActiveNavButton(s as Button);
             NetworkInvestigationRequested?.Invoke(s, e);
+            HideAllFilters();
+        }
+
+        private void Nav_DetectionCoverage_Click(object s, RoutedEventArgs e)
+        {
+            SetActiveNavButton(s as Button);
+            DetectionCoverageRequested?.Invoke(s, e);
             HideAllFilters();
         }
 
