@@ -798,6 +798,16 @@ namespace Carthago.Engine.Rules.Catalog
                 new R773_PrivateSnmpTargetFanoutDiscoveryRule(),
                 new R774_MacScreensharingdPublicVncSynAckRule(),
                 new R775_MacSshdPublicSynAckThenUserToolEgressRule(),
+                new R776_WindowsPowerShellPasteHttpPostBurstRule(),
+                new R777_WindowsGitRepositoryHttpPostBurstRule(),
+                new R778_WindowsExcelCloudStorageTlsBurstRule(),
+                new R779_Windows7ZipUncommonPortTlsBurstRule(),
+                new R780_WindowsPowerShellFtpPortPayloadBurstRule(),
+                new R781_EsxiHostdTextStorageTlsBurstRule(),
+                new R782_LinuxTarCloudStorageTlsBurstRule(),
+                new R783_LinuxRsyncFtpPortPayloadBurstRule(),
+                new R784_MacOsascriptTextStorageHttpPostBurstRule(),
+                new R785_MacLaunchdFixedSizeTlsCadenceRule(),
             };
         }
 

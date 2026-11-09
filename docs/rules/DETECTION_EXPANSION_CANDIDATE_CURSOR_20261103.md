@@ -94,3 +94,8 @@ Original research IDs R1158, R1258, R1335, R1433, R2844, R2751, R1837, R2669, R2
 ## R766–R775 — DNS-process, web-burst, SNMP, OT-flood and macOS remote-access candidates
 
 Original research IDs R2855, R2774, R1968, R2811, R2817, R2744, R2699, R2771, R1917 and R2039. See [R766–R775](../03-detection-rules/batches/RULE_BATCH_766-775.md). **SOURCE CANDIDATE — UNVERIFIED; xUnit authored, 0 executed.** No convergence: osascript DNS, Windows script DNS, osascript flood, Perl/Ruby HTTP burst, Windows LOLBIN web burst, public SNMP burst, OT service payload flood, private SNMP fanout, macOS screensharingd VNC exposure and sshd-response→user-tool egress retain independent rule IDs/classes/predicates/state. Next unallocated ID: R776.
+
+
+## R776–R785 — independent process/peer network shapes
+
+Original workbook IDs R1296, R1304, R1330, R1361, R1373, R1166, R1436, R1541, R1816, R1987. See [R776–R785](../03-detection-rules/batches/RULE_BATCH_776-785.md). Ten independent Candidate/Shadow source rules and authored xUnit tests. **SOURCE CANDIDATE — UNVERIFIED; 0 tests executed.** Next unallocated ID: R786.
