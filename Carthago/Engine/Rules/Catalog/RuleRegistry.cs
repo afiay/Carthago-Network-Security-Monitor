@@ -818,6 +818,16 @@ namespace Carthago.Engine.Rules.Catalog
                 new R793_PublicProxyIngressThenNginxEgressRule(),
                 new R794_InterSubnetRelayToAdminPortRule(),
                 new R795_PublicManagementUploadPostBurstRule(),
+                new R796_FrpcInternalThenExternalSynRule(),
+                new R797_WmicRpcPrivateTargetFanoutRule(),
+                new R798_DnsThenRecurringTlsSniRule(),
+                new R799_DnsTxtThenSameHostHttpPostRule(),
+                new R800_ScadaDeviceSynThenPublicHttpRule(),
+                new R801_CipIdentityThenModbusSynRule(),
+                new R802_PythonOtServiceMultiPortProbeRule(),
+                new R803_CoapDiscoveryThenPublicDnsTxtRule(),
+                new R804_SnmpProbeThenSshSynRule(),
+                new R805_EncodedDnsTxtDistinctQueryBurstRule(),
             };
         }
 

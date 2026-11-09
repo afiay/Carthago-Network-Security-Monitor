@@ -104,3 +104,8 @@ Original workbook IDs R1296, R1304, R1330, R1361, R1373, R1166, R1436, R1541, R1
 ## R786–R795 — typed DNS/TLS/FTP/SMB/HTTP and network-relay candidates
 
 Workbook IDs R1025, R2021, R998, R2063, R1020, R1238, R1734, R1873, R1884, R1847. Independent packet-shape and bounded correlation candidates; none assert credential authentication, endpoint changes, C2, upload completion or proxy configuration. See [R786–R795](../03-detection-rules/batches/RULE_BATCH_786-795.md). **SOURCE CANDIDATE — UNVERIFIED; xUnit authored, 0 executed.** Next unallocated ID: R796.
+
+
+## R796–R805 — independent proxy, discovery, OT and DNS sequence candidates
+
+Original workbook IDs R2634, R2002, R1011, R1016, R2700, R2690, R2667, R2765, R2791, R2816. Distinct process-linked network legs, typed DNS-to-web chains, OT protocol probes and DNS subdomain bursts. See [R796–R805](../03-detection-rules/batches/RULE_BATCH_796-805.md). Candidate/Shadow, **SOURCE CANDIDATE — UNVERIFIED; xUnit authored, 0 executed.** Next unallocated ID: R806.
