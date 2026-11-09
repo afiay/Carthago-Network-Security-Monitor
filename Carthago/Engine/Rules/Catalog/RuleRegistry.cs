@@ -838,6 +838,16 @@ namespace Carthago.Engine.Rules.Catalog
                 new R813_PowershellPublicApiPathEnumerationRule(),
                 new R814_PowershellMediaGetThenUnusualTlsEgressRule(),
                 new R815_OsascriptAlternatingTlsPayloadSizesRule(),
+                new R816_ConfluenceApiDistinctPageGetRule(),
+                new R817_ScriptHttpGetThenShellPublicEgressRule(),
+                new R818_IdeMarketplaceThenUnusualTlsPortRule(),
+                new R819_PublicConfigExportGetThenTftpEgressRule(),
+                new R820_SafariJavascriptThenOsascriptTlsRule(),
+                new R821_DockerContainerThenImageApiEnumerationRule(),
+                new R822_DockerBuildPostThenExternalSynRule(),
+                new R823_DsclLdapThenLdapsSynRule(),
+                new R824_PingProcessPublicIcmpTargetFanoutRule(),
+                new R825_PublicWebUploadThenServedGetRule(),
             };
         }
 

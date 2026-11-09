@@ -113,3 +113,7 @@ Original workbook IDs R2634, R2002, R1011, R1016, R2700, R2690, R2667, R2765, R2
 ## R806–R815 — process-directed network bursts, sequences and TLS metadata
 
 Original workbook IDs R1175, R1391, R1426, R1473, R1599, R1700, R1759, R1877, R1972 and R2833. Separate candidates for mining-port egress, inbound→east-west SSH, Kerberos→LDAP, portal POST sequence, QUIC peer fanout, expired TLS certificate on unusual service port, UDP openssl burst, PowerShell API-path enumeration, media GET→different TLS peer and macOS alternating TLS sizes. See [R806–R815](../03-detection-rules/batches/RULE_BATCH_806-815.md). Candidate/Shadow, **SOURCE CANDIDATE — UNVERIFIED; xUnit authored, 0 executed**. Next unallocated ID: R816.
+
+## R816–R825 — SaaS API shapes, Docker sequence and process-attributed network candidates
+
+Original owner-workbook IDs R2838, R1475, R1355, R1676, R1619, R2836, R2841, R2849, R2857 and R1553. Ten separate process/network predicates for Confluence page-GET fanout, script-fetch→shell egress, IDE marketplace→unusual-port contact, config-export GET→TFTP-port UDP, Safari JS→osascript TLS, Docker container→image API enumeration, Docker build POST→public SYN, dscl LDAP→LDAPS SYN, ICMP public-target fanout and public image-upload POST→matching GET. See [R816–R825](../03-detection-rules/batches/RULE_BATCH_816-825.md). Candidate/Shadow, **SOURCE CANDIDATE — UNVERIFIED; xUnit authored, 0 tests executed.** Next unallocated ID: R826.
