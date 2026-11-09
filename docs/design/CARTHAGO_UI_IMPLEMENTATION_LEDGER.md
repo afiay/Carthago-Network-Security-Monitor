@@ -5664,3 +5664,18 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Ownership / consumers:** Only `Carthago/Views/MainWindow.xaml` and this path-stable ledger. Original `DashboardLiveEventsGrid`, its bindings, virtualization, frozen column, empty overlay, filter handlers, status/provenance text, and `DashboardLowerGrid` responsive names remain intact. No Engine/Models/Services, shared APIs, detection/protocol, capture, privacy/security, ScottPlot PPS 10/120, Live Events 80/500, Cisco/WebView2, CLI, workflows or automation changes.
 
 **Risks / PLANNED BUT UNEXECUTED acceptance:** Windows WPF XAML parsing and resource resolution; overlay placement in nested table well; read-only selection; horizontal and vertical scrolling; frozen time column; long endpoint metadata; empty and filtered states; 1920/1440/1100/1099/1024/1023/640px and 100/125/150/200% DPI. **Builds 0; tests 0; CI 0; capture 0; WPF renders 0.** Next GA UI-154: improve Live Events filtering and stream density with responsive composition after fresh branch/ledger/reference review.
+
+
+## GA UI-154 — Full-width responsive Live Events filter architecture
+
+**2026-11-09 · SOURCE CANDIDATE — UNVERIFIED.** Approved Library reference `libfile_b0a34361560c8191b641e432b3e6b15c` retrieved and visually inspected. Starting live HEAD `6ffbe68db167565afbf7c502301649cffc0f0455`; previous GA UI-153. Screenshot telemetry and CLI are DEMO ONLY.
+
+**Before → after / static visual impact:** Fixed 330px and 480px side-by-side filter cards become two full-width vertically stacked graphite filter command surfaces. Classification and metadata investigation gain 18px bold section titles, 22px internal padding, differentiated navy-graphite surfaces and wider 38px selection/search controls (160px severity/protocol, 150px rule, 290px endpoint search). Original filter controls still wrap inside each surface. This is a cohesive section-scale composition change, not a tooltip edit. Static visual impact is high within the Live Events filter workspace; no rendered visual validation claimed.
+
+**Reference mapping:** Approved dark dashboard's navy/graphite layered panels, cyan operational accents and distinct command/evidence hierarchy. No fabricated events, capture state, health or CLI behavior.
+
+**Responsive expectations:** Full-width stacked surfaces remove the fixed card widths across Wide >=1440, Standard 1100–1439, Compact 1024–1099 and graceful below 1024. Inner control rows wrap; very narrow content panes and high DPI may still require horizontal scrolling or further adaptation after real rendering.
+
+**Ownership / static consumers:** Only `Carthago/Views/MainWindow.xaml` and this existing ledger changed. Four named filters, their handlers, clear action, read-only eight-column event grid, virtualization, frozen time, 80 displayed / 500 retained, ScottPlot 10/120, unavailable visual-only CLI and security/privacy controls remain unchanged. Theme and WPF view partial inspected; no shared APIs, Engine/Models/Services, tests, workflows or automation changes.
+
+**Risks / PLANNED BUT UNEXECUTED acceptance:** XAML parsing, resource resolution, control widths/wrapping, filter and clear behavior, keyboard focus, empty stream, grid scroll, 1920/1440/1100/1099/1024/1023/640px and 100/125/150/200% DPI. **Builds 0; tests 0; CI 0; capture 0; WPF renders 0.** Next GA UI-155: Live Events severity/row density architecture after fresh branch and consumer audit.
