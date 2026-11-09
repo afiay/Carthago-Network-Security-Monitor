@@ -1695,7 +1695,7 @@
                                 HeadersVisibility="Column"
                                 GridLinesVisibility="Horizontal"
                                 HorizontalGridLinesBrush="{StaticResource SoftDividerBrush}"
-                                RowHeight="52"
+                                RowHeight="56"
                                 AlternationCount="2"
                                 ColumnHeaderHeight="48"
                                 VirtualizingPanel.IsVirtualizing="True"
@@ -1739,7 +1739,7 @@
                           </Style>
                         </DataGrid.CellStyle>
                         <DataGrid.Columns>
-                          <DataGridTextColumn Header="TIME" Binding="{Binding EventTime}" Width="144"
+                          <DataGridTextColumn Header="TIME" Binding="{Binding EventTime}" Width="138"
                                               ElementStyle="{StaticResource DashboardLiveMetadataCellText}">
                             <DataGridTextColumn.HeaderStyle>
                               <Style TargetType="{x:Type DataGridColumnHeader}"
@@ -1751,9 +1751,32 @@
                               </Style>
                             </DataGridTextColumn.HeaderStyle>
                           </DataGridTextColumn>
-                          <DataGridTextColumn Header="SOURCE" Binding="{Binding Source}" Width="*"
-                                              MinWidth="120" ElementStyle="{StaticResource DashboardLiveEndpointCellText}">
-                            <DataGridTextColumn.HeaderStyle>
+                          <DataGridTemplateColumn Header="SOURCE" Width="2*" MinWidth="178">
+                            <DataGridTemplateColumn.CellTemplate>
+                              <DataTemplate>
+                                <Border Background="#112D3E" BorderBrush="#315269" BorderThickness="1"
+                                        CornerRadius="7" Padding="10,5" Margin="2,2,6,2">
+                                  <Grid>
+                                    <Grid.ColumnDefinitions>
+                                      <ColumnDefinition Width="3"/>
+                                      <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Background="#39B6D6" CornerRadius="2"/>
+                                    <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                                      <TextBlock Text="REPORTED ORIGIN"
+                                                 Foreground="#73D4EC"
+                                                 FontSize="9" FontWeight="Bold"/>
+                                      <TextBlock Text="{Binding Source}"
+                                                 FontFamily="Consolas" FontSize="12" FontWeight="SemiBold"
+                                                 Foreground="{StaticResource TextBrush}"
+                                                 TextTrimming="CharacterEllipsis"
+                                                 ToolTip="{Binding Source}"/>
+                                    </StackPanel>
+                                  </Grid>
+                                </Border>
+                              </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                            <DataGridTemplateColumn.HeaderStyle>
                               <Style TargetType="{x:Type DataGridColumnHeader}"
                                      BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
                                 <Setter Property="ToolTip"
@@ -1761,11 +1784,34 @@
                                 <Setter Property="AutomationProperties.HelpText"
                                         Value="Reported detection-event source endpoint metadata; host identity and packet attribution are not independently verified here."/>
                               </Style>
-                            </DataGridTextColumn.HeaderStyle>
-                          </DataGridTextColumn>
-                          <DataGridTextColumn Header="DESTINATION" Binding="{Binding Destination}" Width="*"
-                                              MinWidth="120" ElementStyle="{StaticResource DashboardLiveEndpointCellText}">
-                            <DataGridTextColumn.HeaderStyle>
+                            </DataGridTemplateColumn.HeaderStyle>
+                          </DataGridTemplateColumn>
+                          <DataGridTemplateColumn Header="DESTINATION" Width="2*" MinWidth="178">
+                            <DataGridTemplateColumn.CellTemplate>
+                              <DataTemplate>
+                                <Border Background="#112D3E" BorderBrush="#315269" BorderThickness="1"
+                                        CornerRadius="7" Padding="10,5" Margin="2,2,6,2">
+                                  <Grid>
+                                    <Grid.ColumnDefinitions>
+                                      <ColumnDefinition Width="3"/>
+                                      <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Background="#2E998F" CornerRadius="2"/>
+                                    <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                                      <TextBlock Text="REPORTED TARGET"
+                                                 Foreground="#75CFC4"
+                                                 FontSize="9" FontWeight="Bold"/>
+                                      <TextBlock Text="{Binding Destination}"
+                                                 FontFamily="Consolas" FontSize="12" FontWeight="SemiBold"
+                                                 Foreground="{StaticResource TextBrush}"
+                                                 TextTrimming="CharacterEllipsis"
+                                                 ToolTip="{Binding Destination}"/>
+                                    </StackPanel>
+                                  </Grid>
+                                </Border>
+                              </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                            <DataGridTemplateColumn.HeaderStyle>
                               <Style TargetType="{x:Type DataGridColumnHeader}"
                                      BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
                                 <Setter Property="ToolTip"
@@ -1773,9 +1819,9 @@
                                 <Setter Property="AutomationProperties.HelpText"
                                         Value="Reported detection-event destination endpoint metadata; endpoint reachability and successful connection are not established by this column."/>
                               </Style>
-                            </DataGridTextColumn.HeaderStyle>
-                          </DataGridTextColumn>
-                          <DataGridTextColumn Header="RULE" Binding="{Binding RuleId}" Width="76"
+                            </DataGridTemplateColumn.HeaderStyle>
+                          </DataGridTemplateColumn>
+                          <DataGridTextColumn Header="RULE" Binding="{Binding RuleId}" Width="88"
                                               ElementStyle="{StaticResource DashboardLiveMetadataCellText}">
                             <DataGridTextColumn.HeaderStyle>
                               <Style TargetType="{x:Type DataGridColumnHeader}"
@@ -1810,7 +1856,7 @@
                                </Style>
                              </DataGridTemplateColumn.HeaderStyle>
                            </DataGridTemplateColumn>
-                          <DataGridTextColumn Header="PROTOCOL" Binding="{Binding Protocol}" Width="80"
+                          <DataGridTextColumn Header="PROTOCOL" Binding="{Binding Protocol}" Width="92"
                                               ElementStyle="{StaticResource DashboardLiveMetadataCellText}">
                             <DataGridTextColumn.HeaderStyle>
                               <Style TargetType="{x:Type DataGridColumnHeader}"
@@ -1822,7 +1868,7 @@
                               </Style>
                             </DataGridTextColumn.HeaderStyle>
                           </DataGridTextColumn>
-                          <DataGridTextColumn Header="EVIDENCE" Binding="{Binding EvidenceSummary}" Width="128"
+                          <DataGridTextColumn Header="EVIDENCE" Binding="{Binding EvidenceSummary}" Width="144"
                                                ElementStyle="{StaticResource DashboardLiveEvidenceCellText}">
                             <DataGridTextColumn.HeaderStyle>
                               <Style TargetType="{x:Type DataGridColumnHeader}"
@@ -1834,7 +1880,7 @@
                               </Style>
                             </DataGridTextColumn.HeaderStyle>
                           </DataGridTextColumn>
-                          <DataGridTextColumn Header="DELIVERY" Binding="{Binding DeliveryStatus}" Width="105"
+                          <DataGridTextColumn Header="DELIVERY" Binding="{Binding DeliveryStatus}" Width="116"
                                                ElementStyle="{StaticResource DashboardLiveDeliveryCellText}">
                             <DataGridTextColumn.HeaderStyle>
                               <Style TargetType="{x:Type DataGridColumnHeader}"
