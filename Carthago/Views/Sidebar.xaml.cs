@@ -48,6 +48,7 @@ namespace Carthago.Views
 
         // ======= Navigation events MainWindow subscribes to =======
         public event RoutedEventHandler? DashboardRequested;
+        public event RoutedEventHandler? MonitoringHealthRequested;
         public event RoutedEventHandler? AnomaliesRequested;
         public event RoutedEventHandler? LiveTrafficRequested;
         public event RoutedEventHandler? AlertsRequested;
@@ -74,7 +75,7 @@ namespace Carthago.Views
         {
             var buttons = new[]
             {
-                DashboardNavButton, IncidentsNavButton, AnomaliesNavButton, IncidentQueueNavButton, ThreatFeedNavButton,
+                DashboardNavButton, MonitoringHealthNavButton, IncidentsNavButton, AnomaliesNavButton, IncidentQueueNavButton, ThreatFeedNavButton,
                 RawTrafficNavButton, RawDetectionsNavButton, SinkDeliveryNavButton, PcapExplorerNavButton, ForensicsNavButton,
                 AnalyticsNavButton, IntegrationsNavButton, HostIntegrityNavButton, CiscoToolsNavButton,
                 CaptureSourcesNavButton, DetectionRulesNavButton, ReputationNavButton, UsersRolesNavButton, SystemSettingsNavButton
@@ -97,6 +98,7 @@ namespace Carthago.Views
             var active = navKey switch
             {
                 "Dashboard" => DashboardNavButton,
+                "MonitoringHealth" => MonitoringHealthNavButton,
                 "Anomalies" => AnomaliesNavButton,
                 "LiveTraffic" => RawTrafficNavButton,
                 "Alerts" => RawDetectionsNavButton,
@@ -125,6 +127,13 @@ namespace Carthago.Views
         {
             SetActiveNavButton(s as Button);
             DashboardRequested?.Invoke(s, e);
+            HideAllFilters();
+        }
+
+        private void Nav_MonitoringHealth_Click(object s, RoutedEventArgs e)
+        {
+            SetActiveNavButton(s as Button);
+            MonitoringHealthRequested?.Invoke(s, e);
             HideAllFilters();
         }
 

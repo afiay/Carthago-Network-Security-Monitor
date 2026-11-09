@@ -16,6 +16,7 @@ namespace Carthago
         {
             // Collapse everything
             DashboardView.Visibility = Visibility.Collapsed;
+            MonitoringHealthView.Visibility = Visibility.Collapsed;
             AnomaliesView.Visibility = Visibility.Collapsed;
             LiveTrafficView.Visibility = Visibility.Collapsed;
             AlertsView.Visibility = Visibility.Collapsed;
@@ -42,6 +43,24 @@ namespace Carthago
 
             // No filters in sidebar for dashboard
             SidebarPanel?.HideAllFilters();
+        }
+
+        private void DashboardOpenMonitoringHealth_Click(object sender, RoutedEventArgs e)
+            => Nav_MonitoringHealth_Click(sender, e);
+
+        private void Nav_MonitoringHealth_Click(object? sender, RoutedEventArgs e)
+        {
+            if (MonitoringHealthFrame.Content is not MonitoringHealthPage page)
+            {
+                page = new MonitoringHealthPage();
+                page.RawTrafficRequested += (_, _) => Nav_LiveTraffic_Click(this, new RoutedEventArgs());
+                MonitoringHealthFrame.Content = page;
+            }
+
+            ShowView(MonitoringHealthView);
+            SidebarPanel?.ActivateNav("MonitoringHealth");
+            SidebarPanel?.HideAllFilters();
+            UpdateMonitoringHeader();
         }
 
         // ======================= NAV: LIVE TRAFFIC ========================

@@ -1,0 +1,101 @@
+<!-- SPDX-License-Identifier: MIT -->
+<UserControl x:Class="Carthago.Views.MonitoringHealthPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             SnapsToDevicePixels="True" UseLayoutRounding="True">
+  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+    <StackPanel Margin="16,16,16,24">
+      <Border Background="#102D42" BorderBrush="#2B5870" BorderThickness="1" CornerRadius="16" Padding="22" Margin="0,0,0,16">
+        <DockPanel LastChildFill="True">
+          <Button DockPanel.Dock="Right" Content="Open Live Traffic" Margin="12,0,0,0"
+                  Style="{StaticResource SecondaryButton}" MinWidth="145" Height="38"
+                  Click="OpenRawTraffic_Click" AutomationProperties.Name="Open Live Traffic workspace"/>
+          <StackPanel>
+            <TextBlock Text="OPERATIONS  /  CAPTURE DIAGNOSTICS" Foreground="{StaticResource AccentAltBrush}"
+                       FontSize="11" FontWeight="SemiBold"/>
+            <TextBlock Text="Monitoring Health" Foreground="{StaticResource TextBrush}"
+                       FontSize="28" FontWeight="Bold" Margin="0,7,0,0"/>
+            <TextBlock Text="Local capture source and user-interface delivery · session counters, not network-wide coverage"
+                       Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,8,0,0"/>
+          </StackPanel>
+        </DockPanel>
+      </Border>
+
+      <Border Background="{StaticResource CardBgBrush}" BorderBrush="{StaticResource CardBorderBrush}"
+              BorderThickness="1" CornerRadius="14" Padding="18" Margin="0,0,0,16">
+        <StackPanel>
+          <TextBlock Text="CURRENT CAPTURE STATE" Foreground="{StaticResource AccentAltBrush}" FontSize="11" FontWeight="Bold"/>
+          <TextBlock x:Name="CaptureStateText" Text="UNAVAILABLE" FontSize="25" FontWeight="Bold"
+                     Foreground="{StaticResource TextBrush}" Margin="0,8,0,0" AutomationProperties.Name="Capture state"/>
+          <TextBlock x:Name="SourceNameText" Text="Capture source: unavailable" TextWrapping="Wrap"
+                     Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
+          <TextBlock x:Name="CaptureExplanationText" Text="Waiting for a local capture source"
+                     Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,8,0,0"/>
+        </StackPanel>
+      </Border>
+
+      <TextBlock Text="Capture source counters" Style="{StaticResource DashboardSectionTitle}" Margin="0,0,0,4"/>
+      <TextBlock Text="Since this source was started; meanings differ for Npcap and ETW"
+                 Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,0,0,10"/>
+      <WrapPanel Margin="0,0,0,12">
+        <Border Style="{StaticResource DashboardFocusPanel}" Width="235" Padding="16" Margin="0,0,12,12">
+          <StackPanel>
+            <TextBlock Text="SOURCE OBSERVED" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
+            <TextBlock x:Name="SourceObservedText" Text="—" FontSize="26" FontWeight="SemiBold" Margin="0,7,0,0"/>
+          </StackPanel>
+        </Border>
+        <Border Style="{StaticResource DashboardFocusPanel}" Width="235" Padding="16" Margin="0,0,12,12">
+          <StackPanel>
+            <TextBlock x:Name="SourceForwardedLabel" Text="SOURCE FORWARDED" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
+            <TextBlock x:Name="SourceForwardedText" Text="—" FontSize="26" FontWeight="SemiBold" Margin="0,7,0,0"/>
+          </StackPanel>
+        </Border>
+        <Border Style="{StaticResource DashboardFocusPanel}" Width="235" Padding="16" Margin="0,0,12,12">
+          <StackPanel>
+            <TextBlock x:Name="SourceDroppedLabel" Text="SOURCE ERRORS / DROPS" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
+            <TextBlock x:Name="SourceDroppedText" Text="—" FontSize="26" FontWeight="SemiBold" Margin="0,7,0,0"/>
+          </StackPanel>
+        </Border>
+      </WrapPanel>
+
+      <TextBlock Text="UI delivery pipeline" Style="{StaticResource DashboardSectionTitle}" Margin="0,0,0,4"/>
+      <TextBlock Text="Captured, delivered and dropped records reported by the local UI queue, not total network packets"
+                 Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,0,0,10"/>
+      <WrapPanel Margin="0,0,0,12">
+        <Border Style="{StaticResource DashboardFocusPanel}" Width="235" Padding="16" Margin="0,0,12,12">
+          <StackPanel>
+            <TextBlock Text="CAPTURED" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
+            <TextBlock x:Name="FlowCapturedText" Text="—" FontSize="26" FontWeight="SemiBold" Margin="0,7,0,0"/>
+          </StackPanel>
+        </Border>
+        <Border Style="{StaticResource DashboardFocusPanel}" Width="235" Padding="16" Margin="0,0,12,12">
+          <StackPanel>
+            <TextBlock Text="UI DELIVERED" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
+            <TextBlock x:Name="FlowDisplayedText" Text="—" FontSize="26" FontWeight="SemiBold" Margin="0,7,0,0"/>
+          </StackPanel>
+        </Border>
+        <Border Style="{StaticResource DashboardFocusPanel}" Width="235" Padding="16" Margin="0,0,12,12">
+          <StackPanel>
+            <TextBlock Text="UI QUEUE DROPS" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
+            <TextBlock x:Name="FlowDroppedText" Text="—" FontSize="26" FontWeight="SemiBold" Margin="0,7,0,0"/>
+          </StackPanel>
+        </Border>
+      </WrapPanel>
+
+      <Border Background="{StaticResource CardBgBrush}" BorderBrush="{StaticResource CardBorderBrush}"
+              BorderThickness="1" CornerRadius="14" Padding="18">
+        <StackPanel>
+          <TextBlock Text="EVIDENCE / DIAGNOSTICS" Foreground="{StaticResource AccentAltBrush}" FontSize="11" FontWeight="Bold"/>
+          <TextBlock x:Name="LastAnalysisText" Text="Last recorded analysis: unavailable"
+                     Foreground="{StaticResource TextBrush}" TextWrapping="Wrap" Margin="0,10,0,0"/>
+          <TextBlock x:Name="FlowReasonText" Text="Capture flow assessment is unavailable"
+                     Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,7,0,0"/>
+          <TextBlock x:Name="CaptureErrorText" Text="" Foreground="IndianRed"
+                     TextWrapping="Wrap" Margin="0,7,0,0"/>
+          <TextBlock x:Name="SnapshotTimeText" Text="Snapshot not yet available"
+                     Foreground="{StaticResource TextMutedBrush}" Margin="0,10,0,0"/>
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

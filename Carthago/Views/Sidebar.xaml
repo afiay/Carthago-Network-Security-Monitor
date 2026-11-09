@@ -60,6 +60,19 @@
               
             </Grid>
           </Button>
+          <Button x:Name="MonitoringHealthNavButton" Style="{StaticResource NavButton}" Click="Nav_MonitoringHealth_Click"
+                  ToolTip="Capture source and UI delivery health" AutomationProperties.Name="Monitoring Health">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="28"/>
+                <ColumnDefinition Width="*"/>
+              </Grid.ColumnDefinitions>
+              <Border Style="{StaticResource SidebarNavIconFrame}">
+                <TextBlock Text="◉" Style="{StaticResource SidebarNavGlyph}"/>
+              </Border>
+              <TextBlock Grid.Column="1" Text="Monitoring Health" Style="{StaticResource SidebarNavTitle}" Margin="9,0,0,0"/>
+            </Grid>
+          </Button>
           <Button x:Name="RawTrafficNavButton" Style="{StaticResource NavButton}" Click="Nav_LiveTraffic_Click" ToolTip="Live traffic" AutomationProperties.Name="Live Traffic">
             <Grid>
               <Grid.ColumnDefinitions>

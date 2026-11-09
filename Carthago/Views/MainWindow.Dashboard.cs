@@ -579,6 +579,10 @@ namespace Carthago
                 ? "Source: waiting for selection"
                 : $"Source: {selectedSource}";
 
+            if (MonitoringHealthFrame.Content is Carthago.Views.MonitoringHealthPage healthPage)
+                healthPage.UpdateSnapshot(status, selectedSource ?? string.Empty, sourceHealth, flow,
+                    captureError, _sinkHost?.Analytics.LastAnalysisUtc);
+
             // LastAnalysisUtc is a historical observation, not a live capture-health guarantee.
             var lastAnalysis = _sinkHost?.Analytics.LastAnalysisUtc;
             HeaderLastAnalysisText.Text = status == "Error"
