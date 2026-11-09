@@ -5604,3 +5604,18 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Ownership / consumer review:** Changed only `Carthago/Views/AnomaliesPage.xaml` and this ledger. Preserved `ExplanationItems`, `ModelExplanationPoints`, `BaselineStatusText`, `BaselineNormalLabel`, `BaselineCurrentLabel`, `BaselineDeviationLabel`, `PeerGroupLabel`, `ModelSummary`, `TopSignalsItems`, existing selection/filter handlers and the responsive controller. No viewmodel, Engine, Models, Services, shared API, telemetry, privacy/security, ScottPlot 10/120, Live Events 80/500, Cisco/WebView2, CLI, workflows, tests or automation changes.
 
 **Risks / PLANNED BUT UNEXECUTED acceptance:** WPF resource/style precedence, baseline two-column tile width, long values, empty explanation state, selected-signal changes, keyboard focus, scrolling, 1920/1440/1100/1099/1024/1023/640px and 100/125/150/200% DPI. **Builds 0; tests 0; CI 0; capture 0; WPF renders 0.** Next GA UI-150: recorded feature contributor and supporting anomaly evidence composition after fresh live branch/ledger/reference review.
+
+
+## GA UI-150 — Recorded feature contributor evidence cards
+
+**2026-11-09 · SOURCE CANDIDATE — UNVERIFIED.** Exact approved Library image `libfile_b0a34361560c8191b641e432b3e6b15c` retrieved and visually inspected; source baseline `78040b6e4a6911b5e86df9ef9ae63ec2e0dcbf43`, root tree `b124b83f419be1371b53b1ddb6048822a49291d7`; prior GA UI-149. Demo screenshot metrics, IPs, timestamps, rule IDs and CLI are not live data.
+
+**Before → after / static visual impact:** Replaced the plain narrow feature-contributor rows with individual elevated graphite evidence cards, a 5px contributor-color rail, stronger 14px wrapped feature names, larger 8px contribution bars, and 17px value capsules. Section masthead now has a cyan accent rail and explicit recorded-evidence provenance. This is a cohesive, screen-visible redesign of the feature-contribution section, not a tooltip or copy-only update. Expected visual impact is high within the selected anomaly evidence region; actual Windows rendering not performed.
+
+**Reference mapping:** Navy/graphite operational cards, cyan hierarchy, separated evidence values, restrained colored indicators. All bars, values and names retain existing `TopMlSignals` / `AnomalySignalBarVm` bindings and recorded-only empty state; no fabricated telemetry.
+
+**Responsive expectations:** Existing Wide >=1440, Standard 1100–1439, Compact 1024–1099 and below-1024 controller remains untouched. Flexible name column wraps, value capsule remains auto-width and bar retains existing bounded width. Long names, narrow detail panes and 100–200% DPI need actual WPF rendering.
+
+**Ownership / consumers:** Changed only `Carthago/Views/AnomaliesPage.xaml` and this ledger. Preserved `TopSignalsItems`, `TopMlSignals`, `Name`, `BarWidth`, `BarBrush`, `ValueLabel`, `ModelSignalBar`, existing selection/filter/incident navigation, named WPF controls and responsive code-behind. No Engine, Models, Services, capture, detection, privacy/security, shared APIs, ScottPlot 10/120, Live Events 80/500, Cisco/WebView2, CLI, workflows or automation changes.
+
+**Risks / PLANNED BUT UNEXECUTED acceptance:** WPF XAML parsing, resource precedence, contributor card proportions, bar/value overflow, empty state, selected-signal refresh, scroll, keyboard navigation, 1920/1440/1100/1099/1024/1023/640px and 100/125/150/200% DPI. **Builds 0; tests 0; CI 0; capture 0; WPF renders 0.** Next GA UI-151: supporting anomaly evidence and related-rule context after fresh live review.
