@@ -5679,3 +5679,18 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Ownership / static consumers:** Only `Carthago/Views/MainWindow.xaml` and this existing ledger changed. Four named filters, their handlers, clear action, read-only eight-column event grid, virtualization, frozen time, 80 displayed / 500 retained, ScottPlot 10/120, unavailable visual-only CLI and security/privacy controls remain unchanged. Theme and WPF view partial inspected; no shared APIs, Engine/Models/Services, tests, workflows or automation changes.
 
 **Risks / PLANNED BUT UNEXECUTED acceptance:** XAML parsing, resource resolution, control widths/wrapping, filter and clear behavior, keyboard focus, empty stream, grid scroll, 1920/1440/1100/1099/1024/1023/640px and 100/125/150/200% DPI. **Builds 0; tests 0; CI 0; capture 0; WPF renders 0.** Next GA UI-155: Live Events severity/row density architecture after fresh branch and consumer audit.
+
+
+## GA UI-155 — Live Events evidence-row hierarchy and severity scanline
+
+**2026-11-09 · SOURCE CANDIDATE — UNVERIFIED.** Approved Library image libfile_b0a34361560c8191b641e432b3e6b15c retrieved and visually inspected. Source baseline 22d19dc6e3c6de1bbf5f4787703d70c29dd9e6e5, tree 469780d975115478824ff7fb22d35ccada43fbb2. Prior ledger GA UI-154. Reference metrics, IPs, rules, CLI and timestamps are DEMO ONLY.
+
+**Before → after / static visual impact:** Existing flat 46px event rows and 44px headers become a 52px alternating graphite evidence stream with 48px headers, inset 8px cell spacing, clear row separators, hover and selection emphasis, and wider 128px severity presentation with a cyan scanline and larger pill. The cyan scanline indicates a visual evidence-row affordance, not severity classification; severity remains exclusively the existing bound pill. This is a visible table-wide hierarchy/density change, not a tooltip-only edit. Static impact moderate-to-high for the entire Live Events table; actual WPF rendering NOT performed.
+
+**Reference mapping:** Navy/graphite zebra rhythm, restrained cyan separators, prominent colored severity capsules and high-density event grid. No demo telemetry copied; no capture-health or verified-delivery assertion.
+
+**Responsive expectations:** Wide >=1440 retains columns with increased severity width; Standard 1100–1439 and Compact 1024–1099 may require horizontal scrolling. Below 1024 preserves frozen timestamp and existing horizontal scrolling; no responsive controller changes. 52px rows reduce visible row count at fixed 440px grid height; 80 displayed/500 retained source limits remain unchanged.
+
+**Ownership / static consumers:** Only Carthago/Views/MainWindow.xaml and this ledger. Existing DashboardLiveEventsGrid, named controls, read-only bindings, virtualization, frozen timestamp, filters, 80/500 limits, ScottPlot 10/120, unavailable CLI, Cisco/WebView2, security/privacy, Engine/Models/Services, shared APIs, tests and automation settings untouched. New RowStyle uses existing WPF DataGridRow target; no code-behind or viewmodel changes.
+
+**Risks / PLANNED BUT UNEXECUTED acceptance:** Verify theme base row style resource, row trigger precedence, severity pill Padding support, keyboard focus, selected row, high contrast, 1920/1440/1100/1099/1024/1023/640px, 100/125/150/200% DPI, scrolling and empty states. **Builds 0; tests 0; CI 0; capture 0; WPF renders 0.** Next GA UI-156: Live Events compact responsive columns and metadata hierarchy after new live-HEAD audit.

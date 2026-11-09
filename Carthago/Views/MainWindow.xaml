@@ -1675,8 +1675,9 @@
                                 HeadersVisibility="Column"
                                 GridLinesVisibility="Horizontal"
                                 HorizontalGridLinesBrush="{StaticResource SoftDividerBrush}"
-                                RowHeight="46"
-                                ColumnHeaderHeight="44"
+                                RowHeight="52"
+                                AlternationCount="2"
+                                ColumnHeaderHeight="48"
                                 VirtualizingPanel.IsVirtualizing="True"
                                 VirtualizingPanel.VirtualizationMode="Recycling"
                                 EnableRowVirtualization="True"
@@ -1688,9 +1689,31 @@
                                 AutomationProperties.HelpText="Read-only local detections, up to 80 rows. The first Event time column remains visible during horizontal scrolling; navigate remaining columns with the grid keyboard controls or horizontal scroll. Event time is recorded as supplied; timezone is unverified. Evidence is reported presence or count only, not a verified chain. Delivery is transport status, not incident resolution."
                                 AutomationProperties.ItemStatus="{Binding Text, ElementName=DashboardLiveEventsStatusText}">
                         <!-- GA UI-15: reuse the theme's keyboard-only focus outline for the read-only event cells. -->
+                        <!-- GA UI-155: layered, scannable operational evidence rows; no new event state. -->
+                        <DataGrid.RowStyle>
+                          <Style TargetType="{x:Type DataGridRow}" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                            <Setter Property="Background" Value="#102537"/>
+                            <Setter Property="BorderBrush" Value="#29455A"/>
+                            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                            <Style.Triggers>
+                              <Trigger Property="ItemsControl.AlternationIndex" Value="1">
+                                <Setter Property="Background" Value="#152D40"/>
+                              </Trigger>
+                              <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#204258"/>
+                              </Trigger>
+                              <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#1B4B5D"/>
+                              </Trigger>
+                            </Style.Triggers>
+                          </Style>
+                        </DataGrid.RowStyle>
                         <DataGrid.CellStyle>
                           <Style TargetType="{x:Type DataGridCell}"
                                  BasedOn="{StaticResource {x:Type DataGridCell}}">
+                            <Setter Property="Padding" Value="8,5"/>
+                            <Setter Property="BorderThickness" Value="0"/>
+                            <Setter Property="VerticalContentAlignment" Value="Center"/>
                             <Setter Property="FocusVisualStyle"
                                     Value="{StaticResource KeyboardFocusVisual}"/>
                           </Style>
@@ -1744,13 +1767,17 @@
                               </Style>
                             </DataGridTextColumn.HeaderStyle>
                           </DataGridTextColumn>
-                          <DataGridTemplateColumn Header="SEVERITY" Width="104">
+                          <DataGridTemplateColumn Header="SEVERITY" Width="128">
                              <DataGridTemplateColumn.CellTemplate>
                                <DataTemplate>
-                                 <Border Style="{StaticResource DashboardLiveEventsSeverityPill}">
-                                   <TextBlock Text="{Binding Severity}" FontSize="10" FontWeight="Bold"
-                                              Foreground="{StaticResource TextBrush}" HorizontalAlignment="Center"/>
-                                 </Border>
+                                 <Grid Margin="2,2,10,2">
+                                   <Grid.ColumnDefinitions><ColumnDefinition Width="4"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                   <Border Grid.Column="0" Background="#47CFE4" CornerRadius="2" Margin="0,3,0,3"/>
+                                   <Border Grid.Column="1" Style="{StaticResource DashboardLiveEventsSeverityPill}" Margin="7,0,0,0" Padding="8,5">
+                                     <TextBlock Text="{Binding Severity}" FontSize="11" FontWeight="Bold"
+                                                Foreground="{StaticResource TextBrush}" HorizontalAlignment="Center"/>
+                                   </Border>
+                                 </Grid>
                                </DataTemplate>
                              </DataGridTemplateColumn.CellTemplate>
                              <DataGridTemplateColumn.HeaderStyle>
