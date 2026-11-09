@@ -470,9 +470,13 @@
               <TextBlock Text="ANALYST ACTIONS" Style="{StaticResource IncidentOpsEyebrow}" Margin="0,17,0,10"/>
               <WrapPanel>
                 <Button Content="Investigate Host" MinWidth="140" Style="{StaticResource PrimaryButton}" Margin="0,0,8,8" Click="InvestigateHost_Click"/>
+                <Button Content="Network Explorer" MinWidth="140" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8"
+                        Click="OpenNetworkExplorer_Click" ToolTip="Search the selected source IP in retained local evidence. Address matches do not establish incident correlation."/>
                 <Button Content="View Incident Workspace" MinWidth="168" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Click="OpenIncidentWorkspace_Click"/>
                 <Button Content="Query Detections" MinWidth="132" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Click="OpenRawDetections_Click"/>
                 <Button Content="Open Raw Traffic" MinWidth="132" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Click="OpenRawTraffic_Click"/>
+                <Button Content="Export Analysis Excel" MinWidth="160" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8"
+                        Click="ExportAvailableAnalysis_Click" ToolTip="Export the entire available local-analysis snapshot, not just this incident."/>
               </WrapPanel>
             </StackPanel>
             <Border x:Name="DetailsEmptyState" Grid.Row="1" Style="{StaticResource EmptyStateCard}">

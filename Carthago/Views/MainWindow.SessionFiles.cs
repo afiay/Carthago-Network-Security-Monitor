@@ -78,6 +78,16 @@ public partial class MainWindow
 
     private async void FileExportExcel_Click(object sender, RoutedEventArgs e)
     {
+        var consent = MessageBox.Show(this,
+            "Export the available local analysis snapshot to Excel?\n\n" +
+            "The workbook can include IP addresses, detection descriptions, incident notes and other sensitive free text. " +
+            "Known marked-sensitive evidence is redacted, but automatic redaction cannot guarantee that all free text is safe to share. " +
+            "Traffic and detections are limited to retained UI rows; this is not a complete capture or incident archive.\n\n" +
+            "Review the workbook before distributing it.",
+            "Review local analysis export scope", MessageBoxButton.YesNo, MessageBoxImage.Warning,
+            MessageBoxResult.No);
+        if (consent != MessageBoxResult.Yes) return;
+
         var dialog = new SaveFileDialog
         {
             Title = "Export Carthago analysis to Excel",
@@ -98,6 +108,9 @@ public partial class MainWindow
                 "Carthago export", MessageBoxButton.OK, MessageBoxImage.Information);
         });
     }
+
+    internal void OpenAvailableAnalysisExport()
+        => FileExportExcel_Click(this, new RoutedEventArgs());
 
     private string? AskSessionSavePath()
     {

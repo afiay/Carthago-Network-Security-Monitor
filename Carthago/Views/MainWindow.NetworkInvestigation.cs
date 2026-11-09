@@ -14,6 +14,8 @@ namespace Carthago
         {
             page.NetworkInvestigationRequested -= OpenNetworkInvestigation;
             page.NetworkInvestigationRequested += OpenNetworkInvestigation;
+            page.ExportAnalysisRequested -= OpenAvailableAnalysisExport;
+            page.ExportAnalysisRequested += OpenAvailableAnalysisExport;
         }
 
         private void Nav_NetworkInvestigation_Click(object? sender, RoutedEventArgs e)

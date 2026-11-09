@@ -388,6 +388,12 @@
                         Click="InvestigateDestination_Click"
                         ToolTip="Searches retained traffic and detections using the incident's recorded destination host or address."
                         AutomationProperties.Name="Investigate selected incident destination"/>
+                <Button Content="Export available analysis"
+                        MinWidth="164" Margin="8,0,0,7"
+                        Style="{StaticResource SecondaryButton}"
+                        Click="ExportAnalysis_Click"
+                        ToolTip="Uses the existing local Excel exporter for the available multi-category snapshot. This is not a single-incident or complete-history export."
+                        AutomationProperties.Name="Export local multi-sheet analysis workbook"/>
               </WrapPanel>
             </StackPanel>
 

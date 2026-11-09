@@ -28,6 +28,10 @@ namespace Carthago.Views
         private readonly IncidentsVm _vm;
 
         public event Action<string>? NetworkInvestigationRequested;
+        public event Action? ExportAnalysisRequested;
+
+        private void ExportAnalysis_Click(object sender, RoutedEventArgs e)
+            => ExportAnalysisRequested?.Invoke();
 
         private void InvestigateSource_Click(object sender, RoutedEventArgs e)
         {

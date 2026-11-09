@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using System.Net;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Windows;
@@ -375,6 +376,22 @@ namespace Carthago.Views
                 window.OpenHostIntegrityWorkspace();
                 Clipboard.SetText(_vm.Selected.SourceLabel);
             }
+        }
+
+        private void OpenNetworkExplorer_Click(object sender, RoutedEventArgs e)
+        {
+            if (_vm.Selected is not { } selected ||
+                !IPAddress.TryParse(selected.SourceLabel, out var sourceIp))
+                return;
+
+            if (Window.GetWindow(this) is MainWindow window)
+                window.OpenNetworkInvestigation(sourceIp.ToString());
+        }
+
+        private void ExportAvailableAnalysis_Click(object sender, RoutedEventArgs e)
+        {
+            if (Window.GetWindow(this) is MainWindow window)
+                window.OpenAvailableAnalysisExport();
         }
 
         private void OpenIncidentWorkspace_Click(object sender, RoutedEventArgs e)

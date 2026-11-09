@@ -48,6 +48,8 @@ The first milestone intentionally changes only monitoring-health presentation an
 
 **SOC-05 — SOURCE CANDIDATE / UNVERIFIED.** Analytics provides immediate 30/60/120-second time-window controls over the already retained local PPS samples, changing chart axes only and preserving the original one-second sample and three-second redraw cadence. The existing geographic map now supports clicking a plotted IP marker to open that address in Network Investigation. Display labels explicitly say IP geography is approximate; invalid coordinates, local, shared and representative reserved addresses are rejected rather than plotted as real world positions. No new geolocation source or host-precise guarantee is introduced.
 
+**SOC-06 — SOURCE CANDIDATE / UNVERIFIED.** Incident Queue's existing triage, status and selected-case timeline stay in place; a new source-IP pivot routes to the Network Explorer without conflating case membership and address matches. Analytics, the full Incidents workspace and Incident Queue now offer the existing multi-sheet Excel export from their task context. A deliberate confirmation names retained-data coverage and sensitive free-text limitations before the native file dialog. All routes invoke the existing local exporter and scope/redaction implementation; there is no new report backend or unverified RBAC claim.
+
 No WPF build, test, runner job, live capture or rendered screenshot was performed for SOC-01; all runtime and accessibility acceptance checks remain unexecuted under the owner's standing instruction.
 
 ## Alternatives considered

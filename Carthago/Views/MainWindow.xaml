@@ -2322,11 +2322,16 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
               </Grid.RowDefinitions>
-              <StackPanel Margin="0,0,0,8">
-                <TextBlock Text="Top Talkers" Style="{StaticResource DashboardSectionTitle}"/>
-                <TextBlock Text="Top 10 locally observed source addresses by packet count"
-                           Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
-              </StackPanel>
+              <DockPanel Margin="0,0,0,8" LastChildFill="True">
+                <Button DockPanel.Dock="Right" Content="Export analysis Excel…" MinWidth="166" Height="32"
+                        Style="{StaticResource SecondaryButton}" Click="FileExportExcel_Click"
+                        ToolTip="Export the available local-analysis snapshot across worksheets, not only this chart"/>
+                <StackPanel>
+                  <TextBlock Text="Top Talkers" Style="{StaticResource DashboardSectionTitle}"/>
+                  <TextBlock Text="Top 10 locally observed source addresses by packet count"
+                             Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
+                </StackPanel>
+              </DockPanel>
               <ScottPlot:WpfPlot x:Name="TopTalkersPlot_Analytics"
                                 Grid.Row="1" MinHeight="180"
                                 AutomationProperties.Name="Top local source addresses by packet count"/>
