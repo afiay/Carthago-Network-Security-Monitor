@@ -24,6 +24,13 @@ public partial class MainWindow
             ? new Thickness(0, 0, 0, 6)
             : new Thickness(0, 0, 8, 0);
 
+        // GA UI-159: wide side-by-side filter lanes, stacked at narrower widths.
+        DashboardLiveFilterCardsGrid.Columns = mode == ResponsiveLayoutMode.Wide ? 2 : 1;
+        DashboardLiveClassificationCard.Margin = mode == ResponsiveLayoutMode.Wide
+            ? new Thickness(0, 0, 8, 0) : new Thickness(0, 0, 0, 8);
+        DashboardLiveMetadataCard.Margin = mode == ResponsiveLayoutMode.Wide
+            ? new Thickness(8, 0, 0, 0) : new Thickness(0);
+
         // GA UI-90: hero status flows below the title only when the shell is below 1024px.
         Grid.SetRow(DashboardHeroStatusCard, narrowKpis ? 1 : 0);
         Grid.SetColumn(DashboardHeroStatusCard, narrowKpis ? 0 : 1);

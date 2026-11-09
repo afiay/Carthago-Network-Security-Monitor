@@ -1516,27 +1516,27 @@
                       </StackPanel>
                       </DockPanel>
                     </Border>
-                    <!-- GA UI-154: full-width vertically stacked operational filter surfaces; controls and handlers retained. -->
-                    <Border Grid.Row="1" Margin="0,14,0,14" Style="{StaticResource DashboardLiveEventsToolbar}">
+                    <!-- GA UI-159: responsive two-lane filter workspace; original controls and handlers preserved. -->
+                    <Border Grid.Row="1" Margin="0,8,0,10" Style="{StaticResource DashboardLiveEventsToolbar}">
                       <StackPanel>
-                        <DockPanel Margin="0,0,0,14">
+                        <DockPanel Margin="0,0,0,10">
                           <Border DockPanel.Dock="Left" Width="4" Background="{StaticResource AccentBrush}" CornerRadius="2" Margin="0,0,12,0"/>
                           <StackPanel>
                             <TextBlock Text="REFINE EVENT STREAM" Foreground="{StaticResource TextSubtleBrush}" FontSize="13" FontWeight="Bold"/>
                             <TextBlock Text="Classify signals or narrow reported event metadata" Foreground="{StaticResource TextMutedBrush}" FontSize="11" Margin="0,5,0,0"/>
                           </StackPanel>
                         </DockPanel>
-                        <StackPanel>
-                          <Border MinHeight="148" Margin="0,0,0,14" Padding="22,20"
+                        <UniformGrid x:Name="DashboardLiveFilterCardsGrid" Columns="2">
+                          <Border x:Name="DashboardLiveClassificationCard" MinHeight="128" Margin="0,0,8,0" Padding="16,14"
                                   Background="#102A3B" BorderBrush="{StaticResource CardBorderBrush}"
                                   BorderThickness="1" CornerRadius="12">
                             <StackPanel>
-                              <TextBlock Text="01  EVENT CLASSIFICATION" FontSize="18" FontWeight="Bold"
+                              <TextBlock Text="01  EVENT CLASSIFICATION" FontSize="14" FontWeight="Bold"
                                          Foreground="{StaticResource AccentBrush}" Margin="0,0,0,6"/>
                               <TextBlock Text="Severity and reported protocol" FontSize="11"
                                          Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,14"/>
                               <WrapPanel>
-                                <StackPanel Orientation="Horizontal" Height="32" Margin="0,0,12,8">
+                                <StackPanel Orientation="Horizontal" Height="38" Margin="0,0,10,6">
                         <TextBlock x:Name="DashboardLiveSeverityFilterLabel"
                                    Text="Severity"
                                    Foreground="{StaticResource TextMutedBrush}"
@@ -1545,7 +1545,7 @@
                                    Margin="0,0,6,0"/>
                         <ComboBox x:Name="DashboardLiveSeverityFilter"
                                   FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
-                                  Width="160" Height="38"
+                                  Width="142" Height="36"
                                   SelectedIndex="0"
                                   ToolTip="Filter locally observed detection severity"
                                    ToolTipService.ShowsToolTipOnKeyboardFocus="True"
@@ -1561,7 +1561,7 @@
                           <ComboBoxItem Content="Info" Tag="Info"/>
                         </ComboBox>
                       </StackPanel>
-                                <StackPanel Orientation="Horizontal" Height="32" Margin="0,0,12,8">
+                                <StackPanel Orientation="Horizontal" Height="38" Margin="0,0,10,6">
                         <TextBlock x:Name="DashboardLiveProtocolFilterLabel"
                                    Text="Protocol"
                                    Foreground="{StaticResource TextMutedBrush}"
@@ -1570,7 +1570,7 @@
                                    Margin="0,0,6,0"/>
                         <ComboBox x:Name="DashboardLiveProtocolFilter"
                                   FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
-                                  Width="160" Height="38"
+                                  Width="142" Height="36"
                                   SelectedIndex="0"
                                   ToolTip="Filter by observed protocol; other protocols remain available under All"
                                    ToolTipService.ShowsToolTipOnKeyboardFocus="True"
@@ -1587,17 +1587,17 @@
                               </WrapPanel>
                             </StackPanel>
                           </Border>
-                          <Border MinHeight="148" Margin="0,0,0,4" Padding="22,20"
+                          <Border x:Name="DashboardLiveMetadataCard" MinHeight="128" Margin="8,0,0,0" Padding="16,14"
                                   Background="#0E2534" BorderBrush="{StaticResource CardBorderBrush}"
                                   BorderThickness="1" CornerRadius="12">
                             <StackPanel>
-                              <TextBlock Text="02  INVESTIGATE METADATA" FontSize="18" FontWeight="Bold"
+                              <TextBlock Text="02  INVESTIGATE METADATA" FontSize="14" FontWeight="Bold"
                                          Foreground="{StaticResource AccentBrush}" Margin="0,0,0,6"/>
                               <TextBlock Text="Rule ID and reported endpoints; no evidence payload search"
                                          FontSize="11" TextWrapping="Wrap"
                                          Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,14"/>
                               <WrapPanel>
-                                <StackPanel Orientation="Horizontal" Height="32" Margin="0,0,12,8">
+                                <StackPanel Orientation="Horizontal" Height="38" Margin="0,0,10,6">
                         <TextBlock x:Name="DashboardLiveRuleFilterLabel"
                                    Text="Rule"
                                    Foreground="{StaticResource TextMutedBrush}"
@@ -1606,7 +1606,7 @@
                                    Margin="0,0,6,0"/>
                         <TextBox x:Name="DashboardLiveRuleFilter"
                                   FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
-                                 Width="150" Height="38"
+                                 Width="116" Height="36"
                                  VerticalContentAlignment="Center"
                                  ToolTip="Filter by exact rule ID or part of a rule ID"
                                   ToolTipService.ShowsToolTipOnKeyboardFocus="True"
@@ -1615,7 +1615,7 @@
                                  AutomationProperties.LabeledBy="{Binding ElementName=DashboardLiveRuleFilterLabel}"
                                  TextChanged="DashboardLiveEventsTextChanged"/>
                       </StackPanel>
-                                <StackPanel Orientation="Horizontal" Height="32" Margin="0,0,12,8">
+                                <StackPanel Orientation="Horizontal" Height="38" Margin="0,0,10,6">
                         <TextBlock x:Name="DashboardLiveSearchFilterLabel"
                                    Text="Search"
                                    Foreground="{StaticResource TextMutedBrush}"
@@ -1624,7 +1624,7 @@
                                    Margin="0,0,6,0"/>
                         <TextBox x:Name="DashboardLiveSearchFilter"
                                   FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
-                                 Width="290" Height="38"
+                                 Width="200" Height="36"
                                  VerticalContentAlignment="Center"
                                  ToolTip="Search visible event source, destination, rule or protocol; no evidence payload search"
                                   ToolTipService.ShowsToolTipOnKeyboardFocus="True"
@@ -1644,10 +1644,10 @@
                               </WrapPanel>
                             </StackPanel>
                           </Border>
-                        </StackPanel>
+                        </UniformGrid>
                       </StackPanel>
                     </Border>
-                    <!-- GA UI-153: cohesive local evidence-stream surface; original read-only grid, columns and consumers retained. -->
+<!-- GA UI-153: cohesive local evidence-stream surface; original read-only grid, columns and consumers retained. -->
                     <Border Grid.Row="2" Background="#081827" BorderBrush="#2B4B60"
                             BorderThickness="1" CornerRadius="14" Padding="14,14,14,12">
                       <Grid>
