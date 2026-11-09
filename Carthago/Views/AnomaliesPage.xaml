@@ -639,90 +639,99 @@
                   </Border>
                 </Grid>
 
-                <Grid Margin="0,0,0,12">
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="0.56*"/>
-                    <ColumnDefinition Width="0.44*"/>
-                  </Grid.ColumnDefinitions>
-
-                  <Border Grid.Column="0" Style="{StaticResource AnomalyOpsEvidenceCard}" Margin="0,0,8,0">
-                    <StackPanel>
-                      <TextBlock Text="Tags" Style="{StaticResource AnomalyFieldLabel}"/>
-                      <ItemsControl ItemsSource="{Binding Selected.Tags}">
-                        <ItemsControl.ItemsPanel>
-                          <ItemsPanelTemplate>
-                            <WrapPanel/>
-                          </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                          <DataTemplate>
-                            <Border Style="{StaticResource SmallPill}" Margin="0,0,8,8">
-                              <TextBlock Text="{Binding}" Foreground="{StaticResource TextSubtleBrush}" FontSize="11" ToolTip="{Binding}"/>
-                            </Border>
-                          </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                      </ItemsControl>
-                    </StackPanel>
-                  </Border>
-
-                  <Border Grid.Column="1" Style="{StaticResource AnomalyOpsEvidenceCard}" Margin="8,0,0,0">
-                    <StackPanel>
-                      <TextBlock Text="Related rule IDs" Style="{StaticResource AnomalyFieldLabel}"/>
-                      <ItemsControl x:Name="RelatedRulesItems" ItemsSource="{Binding Selected.RelatedRuleIds}">
-                        <ItemsControl.ItemsPanel>
-                          <ItemsPanelTemplate>
-                            <WrapPanel/>
-                          </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                          <DataTemplate>
-                            <Border Style="{StaticResource SmallPill}" Margin="0,0,8,8">
-                              <TextBlock Text="{Binding}" Foreground="{StaticResource TextBrush}" FontSize="11" ToolTip="{Binding}"/>
-                            </Border>
-                          </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                      </ItemsControl>
-                      <TextBlock Text="No related rules were recorded for this anomaly."
-                                 Foreground="{StaticResource TextMutedBrush}">
-                        <TextBlock.Style>
-                          <Style TargetType="TextBlock">
-                            <Setter Property="Visibility" Value="Collapsed"/>
-                            <Style.Triggers>
-                              <DataTrigger Binding="{Binding ElementName=RelatedRulesItems, Path=HasItems}" Value="False">
-                                <Setter Property="Visibility" Value="Visible"/>
-                              </DataTrigger>
-                            </Style.Triggers>
-                          </Style>
-                        </TextBlock.Style>
-                      </TextBlock>
-                    </StackPanel>
-                  </Border>
-                </Grid>
-
-                <Border Style="{StaticResource AnomalyOpsEvidenceCard}">
+                <!-- GA UI-151: cohesive context and response workspace, recorded data only. -->
+                <Border Background="#0D2232" BorderBrush="#27485B" BorderThickness="1"
+                        CornerRadius="12" Padding="18" Margin="0,0,0,16">
                   <StackPanel>
-                    <TextBlock Text="Recommended actions" Style="{StaticResource AnomalyFieldLabel}"/>
+                    <Border BorderBrush="{StaticResource AccentBrush}" BorderThickness="4,0,0,0"
+                            Padding="12,2,0,2" Margin="0,0,0,16">
+                      <StackPanel>
+                        <TextBlock Text="EVIDENCE CONTEXT / RECORDED LINKS" Style="{StaticResource AnomalyOpsEyebrow}"/>
+                        <TextBlock Text="Classification &amp; related detections" FontSize="19"
+                                   FontWeight="SemiBold" Foreground="{StaticResource TextBrush}"
+                                   TextWrapping="Wrap" Margin="0,5,0,3"/>
+                        <TextBlock Text="Tags and rule identifiers are shown only when present in the selected local record."
+                                   Foreground="{StaticResource TextSubtleBrush}" FontSize="12" TextWrapping="Wrap"/>
+                      </StackPanel>
+                    </Border>
+                    <Border Background="#142C3D" BorderBrush="#2B4859" BorderThickness="1"
+                            CornerRadius="9" Padding="16" Margin="0,0,0,12">
+                      <StackPanel>
+                        <TextBlock Text="CLASSIFICATION TAGS" Style="{StaticResource AnomalyFieldLabel}"/>
+                        <ItemsControl ItemsSource="{Binding Selected.Tags}">
+                          <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                              <Border Background="#183649" BorderBrush="#31566A" BorderThickness="1"
+                                      CornerRadius="6" Padding="11,7" Margin="0,4,8,4">
+                                <TextBlock Text="{Binding}" Foreground="{StaticResource TextBrush}"
+                                           FontSize="12" TextWrapping="Wrap"/>
+                              </Border>
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                      </StackPanel>
+                    </Border>
+                    <Border Background="#142C3D" BorderBrush="#2B4859" BorderThickness="1"
+                            CornerRadius="9" Padding="16">
+                      <StackPanel>
+                        <TextBlock Text="RELATED DETECTION RULES" Style="{StaticResource AnomalyFieldLabel}"/>
+                        <ItemsControl x:Name="RelatedRulesItems" ItemsSource="{Binding Selected.RelatedRuleIds}">
+                          <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                              <Border Background="#103247" BorderBrush="#39758A" BorderThickness="1"
+                                      CornerRadius="7" Padding="12,8" Margin="0,4,8,4">
+                                <TextBlock Text="{Binding}" Foreground="{StaticResource AccentBrush}"
+                                           FontFamily="Consolas" FontSize="13" FontWeight="SemiBold"/>
+                              </Border>
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Text="No related rules were recorded for this anomaly."
+                                   Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,8,0,0">
+                          <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                              <Setter Property="Visibility" Value="Collapsed"/>
+                              <Style.Triggers>
+                                <DataTrigger Binding="{Binding ElementName=RelatedRulesItems, Path=HasItems}" Value="False">
+                                  <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                              </Style.Triggers>
+                            </Style>
+                          </TextBlock.Style>
+                        </TextBlock>
+                      </StackPanel>
+                    </Border>
+                  </StackPanel>
+                </Border>
+
+                <Border Background="#102B3B" BorderBrush="#376477" BorderThickness="1"
+                        CornerRadius="12" Padding="20">
+                  <StackPanel>
+                    <Border BorderBrush="{StaticResource AccentBrush}" BorderThickness="4,0,0,0"
+                            Padding="12,2,0,2" Margin="0,0,0,16">
+                      <StackPanel>
+                        <TextBlock Text="ANALYST RESPONSE / EXISTING WORKFLOWS" Style="{StaticResource AnomalyOpsEyebrow}"/>
+                        <TextBlock Text="Review &amp; respond" FontSize="19" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextBrush}" Margin="0,5,0,3"/>
+                        <TextBlock Text="Actions remain subject to existing permissions and selection state."
+                                   Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap" FontSize="12"/>
+                      </StackPanel>
+                    </Border>
                     <WrapPanel>
-                      <Button Content="Mark Expected"
-                              Style="{StaticResource SecondaryButton}"
-                              Click="MarkExpected_Click"
-                              IsEnabled="{Binding CanMarkExpected}"
-                              Margin="0,0,8,0"/>
-                      <Button Content="{Binding IncidentActionLabel}"
-                              Style="{StaticResource SecondaryButton}"
-                              Click="ViewIncident_Click"
-                              IsEnabled="{Binding CanOpenIncident}"
-                              Margin="0,0,8,0"/>
-                      <Button Content="Open Raw Traffic"
-                              Style="{StaticResource SecondaryButton}"
-                              Click="OpenRawTraffic_Click"
-                              IsEnabled="{Binding CanOpenRawTraffic}"
-                              Margin="0,0,8,0"/>
-                      <Button Content="⋯"
-                              Width="42"
-                              Style="{StaticResource SecondaryButton}"
-                              Click="MoreActions_Click"
-                              IsEnabled="{Binding CanOpenIncident}"/>
+                      <Button Content="Mark Expected" Style="{StaticResource SecondaryButton}"
+                              Click="MarkExpected_Click" IsEnabled="{Binding CanMarkExpected}"
+                              MinHeight="38" Margin="0,0,10,10"/>
+                      <Button Content="{Binding IncidentActionLabel}" Style="{StaticResource SecondaryButton}"
+                              Click="ViewIncident_Click" IsEnabled="{Binding CanOpenIncident}"
+                              MinHeight="38" Margin="0,0,10,10"/>
+                      <Button Content="Open Raw Traffic" Style="{StaticResource SecondaryButton}"
+                              Click="OpenRawTraffic_Click" IsEnabled="{Binding CanOpenRawTraffic}"
+                              MinHeight="38" Margin="0,0,10,10"/>
+                      <Button Content="⋯" Width="44" MinHeight="38" Style="{StaticResource SecondaryButton}"
+                              Click="MoreActions_Click" IsEnabled="{Binding CanOpenIncident}"
+                              Margin="0,0,0,10"/>
                     </WrapPanel>
                   </StackPanel>
                 </Border>
