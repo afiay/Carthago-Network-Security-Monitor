@@ -52,6 +52,8 @@ The first milestone intentionally changes only monitoring-health presentation an
 
 **SOC-07 — SOURCE CANDIDATE / UNVERIFIED.** The Network Investigation Explorer now supports explicit save/open/remove of up to 10 text pivots (IP, domain, rule ID, port query). This uses the existing atomic local preferences file, normalizes oversized/duplicate entries, and deep-copies bookmarks in `AppPreferences.Clone()`. Bookmarks never save evidence rows or capture packets; sensitive identifiers in the query itself persist only after the analyst chooses Save current. Workspace Settings provides a contextual link to manage saved searches. Existing Dashboard section visibility controls remain authoritative.
 
+**Source hygiene follow-up.** A pre-existing escaped-newline defect inside `IncidentsPage.ApplyResponsiveLayout` placed its initial responsive layout statements inside a `//` comment. The literal `\\n` sequences were replaced with actual source newlines; no capture, rule, case or export logic changed. The correction requires the same owner-authorized Windows build and runtime verification as the UI milestones.
+
 No WPF build, test, runner job, live capture or rendered screenshot was performed for SOC-01; all runtime and accessibility acceptance checks remain unexecuted under the owner's standing instruction.
 
 ## Alternatives considered
