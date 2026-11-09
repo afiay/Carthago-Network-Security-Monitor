@@ -1868,30 +1868,57 @@
                               </Style>
                             </DataGridTextColumn.HeaderStyle>
                           </DataGridTextColumn>
-                          <DataGridTextColumn Header="EVIDENCE" Binding="{Binding EvidenceSummary}" Width="144"
-                                               ElementStyle="{StaticResource DashboardLiveEvidenceCellText}">
-                            <DataGridTextColumn.HeaderStyle>
-                              <Style TargetType="{x:Type DataGridColumnHeader}"
-                                     BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
-                                <Setter Property="ToolTip"
-                                        Value="Reported evidence presence or structured-item count only. Raw evidence is not shown and chain of custody is not verified."/>
-                                <Setter Property="AutomationProperties.HelpText"
-                                        Value="Reported evidence presence or structured-item count only; not evidence payload or verified chain of custody."/>
+                          <!-- GA UI-157: read-only evidence and transport metadata lanes. -->
+                          <DataGridTemplateColumn Header="EVIDENCE" Width="205" MinWidth="178">
+                            <DataGridTemplateColumn.CellTemplate>
+                              <DataTemplate>
+                                <Border Background="#122C3D" BorderBrush="#345168" BorderThickness="1"
+                                        CornerRadius="7" Padding="9,5" Margin="2,2,5,2">
+                                  <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="3"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <Border Background="#93B9CB" CornerRadius="2" Margin="0,2,0,2"/>
+                                    <StackPanel Grid.Column="1" Margin="9,0,0,0">
+                                      <TextBlock Text="REPORTED EVIDENCE" FontSize="9" FontWeight="Bold" Foreground="#93B9CB"/>
+                                      <TextBlock Text="{Binding EvidenceSummary}" FontSize="12" FontWeight="SemiBold"
+                                                 Foreground="{StaticResource TextBrush}" TextTrimming="CharacterEllipsis"
+                                                 ToolTip="{Binding EvidenceSummary}"/>
+                                    </StackPanel>
+                                  </Grid>
+                                </Border>
+                              </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                            <DataGridTemplateColumn.HeaderStyle>
+                              <Style TargetType="{x:Type DataGridColumnHeader}" BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+                                <Setter Property="ToolTip" Value="Reported evidence presence or structured-item count only. Raw evidence is not shown and chain of custody is not verified."/>
+                                <Setter Property="AutomationProperties.HelpText" Value="Reported evidence presence or structured-item count only; not evidence payload or verified chain of custody."/>
                               </Style>
-                            </DataGridTextColumn.HeaderStyle>
-                          </DataGridTextColumn>
-                          <DataGridTextColumn Header="DELIVERY" Binding="{Binding DeliveryStatus}" Width="116"
-                                               ElementStyle="{StaticResource DashboardLiveDeliveryCellText}">
-                            <DataGridTextColumn.HeaderStyle>
-                              <Style TargetType="{x:Type DataGridColumnHeader}"
-                                     BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
-                                <Setter Property="ToolTip"
-                                        Value="Recorded detection-event delivery status, not investigation progress, remediation or incident resolution."/>
-                                <Setter Property="AutomationProperties.HelpText"
-                                        Value="Detection-event delivery transport status only; not investigation or incident resolution."/>
+                            </DataGridTemplateColumn.HeaderStyle>
+                          </DataGridTemplateColumn>
+                          <DataGridTemplateColumn Header="DELIVERY" Width="176" MinWidth="152">
+                            <DataGridTemplateColumn.CellTemplate>
+                              <DataTemplate>
+                                <Border Background="#102C34" BorderBrush="#2B5961" BorderThickness="1"
+                                        CornerRadius="7" Padding="9,5" Margin="2,2,5,2">
+                                  <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="3"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <Border Background="#73C9BD" CornerRadius="2" Margin="0,2,0,2"/>
+                                    <StackPanel Grid.Column="1" Margin="9,0,0,0">
+                                      <TextBlock Text="TRANSPORT STATUS" FontSize="9" FontWeight="Bold" Foreground="#73C9BD"/>
+                                      <TextBlock Text="{Binding DeliveryStatus}" FontSize="12" FontWeight="SemiBold"
+                                                 Foreground="{StaticResource TextBrush}" TextTrimming="CharacterEllipsis"
+                                                 ToolTip="{Binding DeliveryStatus}"/>
+                                    </StackPanel>
+                                  </Grid>
+                                </Border>
+                              </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                            <DataGridTemplateColumn.HeaderStyle>
+                              <Style TargetType="{x:Type DataGridColumnHeader}" BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+                                <Setter Property="ToolTip" Value="Recorded detection-event delivery status, not investigation progress, remediation or incident resolution."/>
+                                <Setter Property="AutomationProperties.HelpText" Value="Detection-event delivery transport status only; not investigation or incident resolution."/>
                               </Style>
-                            </DataGridTextColumn.HeaderStyle>
-                          </DataGridTextColumn>
+                            </DataGridTemplateColumn.HeaderStyle>
+                          </DataGridTemplateColumn>
                         </DataGrid.Columns>
                       </DataGrid>
                       <!-- GA UI-71: visually distinguish the existing source-driven empty/no-match message from event rows; no new data or state. -->

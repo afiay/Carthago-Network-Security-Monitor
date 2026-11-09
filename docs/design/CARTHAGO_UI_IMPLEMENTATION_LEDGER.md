@@ -5709,3 +5709,18 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Ownership / static review:** Only Carthago/Views/MainWindow.xaml and this ledger. Original DashboardLiveEventsGrid, EventTime, Source, Destination, RuleId, Severity, Protocol, EvidenceSummary, DeliveryStatus bindings, existing filter names, handlers, empty overlay, read-only/virtualization/frozen time, ScottPlot PPS 10/120, Cisco/WebView2, CLI UNAVAILABLE, privacy/security, detection, telemetry and automations unchanged. Original endpoint header styles retained inside new template columns. No shared contracts or code-behind changes.
 
 **Risks / PLANNED BUT UNEXECUTED acceptance:** WPF XAML parsing, template resource resolution, keyboard focus, event recycling, long IPv6/host strings, empty/no-match overlay, hover/selection contrast, 1920/1440/1100/1099/1024/1023/640px and 100/125/150/200% DPI, horizontal scrolling/frozen time, delivery/evidence correctness. **Builds 0; tests 0; CI 0; capture 0; WPF renders 0.** Next GA UI-157: coherent Live Events evidence metadata and status grouping, after fresh live-HEAD/reference/consumer review.
+
+
+## GA UI-157 — Live Events evidence and transport metadata lanes
+
+**2026-11-09 · SOURCE CANDIDATE — UNVERIFIED.** Approved Library reference libfile_b0a34361560c8191b641e432b3e6b15c retrieved and visually inspected. Baseline HEAD 8ff7ad32d4bd587217fda27958851da41607fdaf, tree ef912a7ee51a6fc95f6904c57c7ea87fbf7b7c78. Previous GA UI-156. Screenshot IPs, rule IDs, metrics, timestamps, confidence and CLI are DEMO ONLY.
+
+**Before → after / visual impact:** Plain evidence (144px) and delivery (116px) text columns become distinct two-level graphite metadata cards (205px/176px; minima 178px/152px), with slate evidence and muted teal transport rails, prominent bound values, compact labels and ellipsis. This completes a cohesive row-level evidence hierarchy alongside the source/destination cards from GA UI-156. Static impact moderate across the full event table; NO WPF render claimed. Delivery remains transport-only, not incident resolution. Evidence remains reported presence/count, not verified chain of custody.
+
+**Reference mapping:** Navy/graphite event grid, restrained teal/cyan accents and readable metadata hierarchy. No demonstration data or capture-health claims added.
+
+**Responsive:** Wide >=1440 presents expanded columns; Standard 1100–1439, Compact 1024–1099 and below 1024 retain frozen timestamp and horizontal scrolling. Existing 56px rows, 440px viewport, read-only 80 displayed/500 retained, virtualization and filters preserved.
+
+**Ownership / consumers:** Changed only Carthago/Views/MainWindow.xaml and this ledger. Inspected DashboardEvents.cs, DashboardResponsive.cs, Theme.xaml, docs/README.md, docs/07-design/README.md, docs/archive/README.md and legacy paths index. Original EvidenceSummary/DeliveryStatus bindings, header help text, named grid and handlers retained. No code-behind, APIs, Engine/Models/Services, capture, detection, privacy, Cisco/WebView2, ScottPlot, CLI, workflow or automation changes.
+
+**Risks / PLANNED BUT UNEXECUTED:** XAML parsing, style/resource resolution, 56px template fit, long metadata, recycling, keyboard/selection contrast, 1920/1440/1100/1099/1024/1023/640px, 100/125/150/200% DPI, frozen timestamp, horizontal scroll, empty/no-match states and semantic correctness. **Builds 0; tests 0; CI 0; capture 0; WPF renders 0.** Next GA UI-158: review overall table density and viewport balance after fresh branch/reference audit.
