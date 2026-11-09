@@ -149,6 +149,9 @@ namespace Carthago
         private void SettingsOpenDetectionCoverage_Click(object sender, RoutedEventArgs e)
             => OpenDetectionRulesWorkspace();
 
+        private void SettingsOpenNetworkInvestigation_Click(object sender, RoutedEventArgs e)
+            => OpenNetworkInvestigation(string.Empty);
+
         internal void OpenRawTrafficWorkspace()
             => Nav_LiveTraffic_Click(this, new RoutedEventArgs());
 

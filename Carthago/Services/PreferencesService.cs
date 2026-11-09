@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
@@ -444,6 +445,14 @@ namespace Carthago.Services
 
             prefs.Dashboard ??= new DashboardPreferences();
             prefs.Dashboard.Normalize();
+
+            prefs.SavedInvestigationQueries = (prefs.SavedInvestigationQueries ?? new List<string>())
+                .Where(static query => !string.IsNullOrWhiteSpace(query))
+                .Select(static query => query.Trim())
+                .Where(static query => query.Length <= 128)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Take(10)
+                .ToList();
         }
     }
 }

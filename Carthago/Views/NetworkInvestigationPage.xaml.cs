@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using Carthago.Models;
+using Carthago.Services;
 
 namespace Carthago.Views
 {
@@ -25,6 +26,75 @@ namespace Carthago.Views
         public NetworkInvestigationPage()
         {
             InitializeComponent();
+            RefreshSavedSearches();
+        }
+
+        private void RefreshSavedSearches(string? selectedTerm = null)
+        {
+            var queries = PreferencesService.Current.SavedInvestigationQueries;
+            var previouslySelected = selectedTerm ?? SavedSearches.SelectedItem as string;
+            SavedSearches.ItemsSource = queries.ToArray();
+            SavedSearches.SelectedItem = queries.FirstOrDefault(query =>
+                string.Equals(query, previouslySelected, StringComparison.OrdinalIgnoreCase));
+            SavedSearchStatusText.Text = $"{queries.Count} saved local queries (maximum 10). " +
+                "IP addresses, hostnames and other search text are stored in this computer's application preferences only when you click Save current. Remove individual queries here.";
+        }
+
+        private void SaveCurrentSearch_Click(object sender, RoutedEventArgs e)
+        {
+            var term = SearchTerm;
+            if (term.Length is < 1 or > 128)
+            {
+                SavedSearchStatusText.Text = "Enter a search between 1 and 128 characters before saving it.";
+                return;
+            }
+
+            try
+            {
+                PreferencesService.Update(preferences =>
+                {
+                    preferences.SavedInvestigationQueries.RemoveAll(query =>
+                        string.Equals(query, term, StringComparison.OrdinalIgnoreCase));
+                    preferences.SavedInvestigationQueries.Insert(0, term);
+                });
+                RefreshSavedSearches(term);
+            }
+            catch (Exception ex)
+            {
+                SavedSearchStatusText.Text = $"Could not save search locally: {ex.Message}";
+            }
+        }
+
+        private void OpenSavedSearch_Click(object sender, RoutedEventArgs e)
+        {
+            if (SavedSearches.SelectedItem is not string saved)
+                return;
+
+            InvestigationSearchText.Text = saved;
+            SearchRequested?.Invoke(this, new RoutedEventArgs());
+        }
+
+        private void RemoveSavedSearch_Click(object sender, RoutedEventArgs e)
+        {
+            if (SavedSearches.SelectedItem is not string saved)
+                return;
+
+            if (MessageBox.Show("Remove this locally saved investigation query?",
+                "Remove saved search", MessageBoxButton.YesNo, MessageBoxImage.Question,
+                MessageBoxResult.No) != MessageBoxResult.Yes)
+                return;
+
+            try
+            {
+                PreferencesService.Update(preferences =>
+                    preferences.SavedInvestigationQueries.RemoveAll(query =>
+                        string.Equals(query, saved, StringComparison.OrdinalIgnoreCase)));
+                RefreshSavedSearches();
+            }
+            catch (Exception ex)
+            {
+                SavedSearchStatusText.Text = $"Could not remove saved search: {ex.Message}";
+            }
         }
 
         public void UpdateSnapshot(

@@ -2875,6 +2875,10 @@
                     <TextBlock Text="DASHBOARD COMPOSITION" Foreground="{StaticResource TextMutedBrush}" FontSize="11" FontWeight="Bold"/>
                     <TextBlock Text="Shape your operational workspace" FontSize="24" FontWeight="SemiBold" Margin="0,5,0,4"/>
                     <TextBlock Text="Section visibility, workspace defaults and layout presets are separate controls." Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap"/>
+                    <Button Content="Manage saved investigation searches" Height="33" MinWidth="226"
+                            HorizontalAlignment="Left" Margin="0,11,0,0" Style="{StaticResource SecondaryButton}"
+                            Click="SettingsOpenNetworkInvestigation_Click"
+                            ToolTip="Opens the Network Explorer where explicitly saved search pivots can be reopened or removed"/>
                   </StackPanel>
 
                   <!-- GA UI-119: section selection becomes a visually distinct composition card. -->

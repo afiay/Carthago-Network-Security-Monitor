@@ -50,6 +50,8 @@ The first milestone intentionally changes only monitoring-health presentation an
 
 **SOC-06 — SOURCE CANDIDATE / UNVERIFIED.** Incident Queue's existing triage, status and selected-case timeline stay in place; a new source-IP pivot routes to the Network Explorer without conflating case membership and address matches. Analytics, the full Incidents workspace and Incident Queue now offer the existing multi-sheet Excel export from their task context. A deliberate confirmation names retained-data coverage and sensitive free-text limitations before the native file dialog. All routes invoke the existing local exporter and scope/redaction implementation; there is no new report backend or unverified RBAC claim.
 
+**SOC-07 — SOURCE CANDIDATE / UNVERIFIED.** The Network Investigation Explorer now supports explicit save/open/remove of up to 10 text pivots (IP, domain, rule ID, port query). This uses the existing atomic local preferences file, normalizes oversized/duplicate entries, and deep-copies bookmarks in `AppPreferences.Clone()`. Bookmarks never save evidence rows or capture packets; sensitive identifiers in the query itself persist only after the analyst chooses Save current. Workspace Settings provides a contextual link to manage saved searches. Existing Dashboard section visibility controls remain authoritative.
+
 No WPF build, test, runner job, live capture or rendered screenshot was performed for SOC-01; all runtime and accessibility acceptance checks remain unexecuted under the owner's standing instruction.
 
 ## Alternatives considered

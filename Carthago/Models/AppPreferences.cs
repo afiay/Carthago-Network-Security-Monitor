@@ -67,6 +67,9 @@ namespace Carthago.Models
             EnableCountryBlocking = other.EnableCountryBlocking;
             CountryBlockApplyTo = other.CountryBlockApplyTo;
             Dashboard = other.Dashboard?.Clone() ?? new DashboardPreferences();
+            SavedInvestigationQueries = other.SavedInvestigationQueries is null
+                ? new List<string>()
+                : new List<string>(other.SavedInvestigationQueries);
         }
 
         public AppPreferences Clone() => new(this);
@@ -105,6 +108,9 @@ namespace Carthago.Models
 
         // ==== Minimal Dashboard ====
         public DashboardPreferences Dashboard { get; set; } = new();
+
+        /// <summary>Opt-in local analyst search bookmarks; can contain sensitive IPs or hostnames.</summary>
+        public List<string> SavedInvestigationQueries { get; set; } = new();
 
         // ==== OTLP Logs ====
         public bool EnableOtlp { get; set; } = false;

@@ -22,6 +22,19 @@
             <Button Content="Refresh snapshot" MinWidth="132" Height="36" Margin="0,0,8,8"
                     Style="{StaticResource SecondaryButton}" Click="Refresh_Click"/>
           </WrapPanel>
+          <WrapPanel Margin="0,4,0,0">
+            <ComboBox x:Name="SavedSearches" Width="230" Height="34" Margin="0,0,8,8"
+                      AutomationProperties.Name="Saved local investigation searches"
+                      ToolTip="Only queries you intentionally bookmark are stored in local application preferences"/>
+            <Button Content="Open saved" MinWidth="98" Height="34" Margin="0,0,8,8"
+                    Style="{StaticResource SecondaryButton}" Click="OpenSavedSearch_Click"/>
+            <Button Content="Save current" MinWidth="106" Height="34" Margin="0,0,8,8"
+                    Style="{StaticResource SecondaryButton}" Click="SaveCurrentSearch_Click"/>
+            <Button Content="Remove saved" MinWidth="110" Height="34" Margin="0,0,8,8"
+                    Style="{StaticResource SecondaryButton}" Click="RemoveSavedSearch_Click"/>
+          </WrapPanel>
+          <TextBlock x:Name="SavedSearchStatusText" Text="Saved investigation queries remain on this computer until removed."
+                     Foreground="{StaticResource TextMutedBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,4"/>
           <TextBlock x:Name="ScopeText" Text="No local snapshot loaded" Foreground="{StaticResource TextMutedBrush}"
                      TextWrapping="Wrap" Margin="0,3,0,0"/>
         </StackPanel>
