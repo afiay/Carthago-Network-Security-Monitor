@@ -1627,8 +1627,45 @@
                         </WrapPanel>
                       </StackPanel>
                     </Border>
-                    <Grid Grid.Row="2">
-                      <DataGrid x:Name="DashboardLiveEventsGrid"
+                    <!-- GA UI-153: cohesive local evidence-stream surface; original read-only grid, columns and consumers retained. -->
+                    <Border Grid.Row="2" Background="#081827" BorderBrush="#2B4B60"
+                            BorderThickness="1" CornerRadius="14" Padding="14,14,14,12">
+                      <Grid>
+                        <Grid.RowDefinitions>
+                          <RowDefinition Height="Auto"/>
+                          <RowDefinition Height="Auto"/>
+                          <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid Grid.Row="0" Margin="4,0,4,14">
+                          <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                          </Grid.ColumnDefinitions>
+                          <StackPanel>
+                            <TextBlock Text="03  OBSERVED DETECTION RECORDS" FontSize="11"
+                                       FontWeight="Bold" Foreground="{StaticResource AccentBrush}"/>
+                            <TextBlock Text="Event evidence stream" FontSize="19" FontWeight="Bold"
+                                       Foreground="{StaticResource TextBrush}" Margin="0,5,0,0"/>
+                            <TextBlock Text="Local, read-only metadata · newest received first"
+                                       Foreground="{StaticResource TextMutedBrush}" FontSize="11"
+                                       TextWrapping="Wrap" Margin="0,5,0,0"/>
+                          </StackPanel>
+                          <Border Grid.Column="1" Background="#123343" BorderBrush="#2B6372"
+                                  BorderThickness="1" CornerRadius="8" Padding="12,8"
+                                  VerticalAlignment="Top" Margin="12,0,0,0">
+                            <StackPanel>
+                              <TextBlock Text="LOCAL VIEW" Foreground="#69DCEC" FontSize="11"
+                                         FontWeight="Bold" HorizontalAlignment="Center"/>
+                              <TextBlock Text="80 displayed / 500 retained max"
+                                         Foreground="{StaticResource TextSubtleBrush}" FontSize="10"
+                                         TextWrapping="Wrap" TextAlignment="Center" Margin="0,4,0,0"/>
+                            </StackPanel>
+                          </Border>
+                        </Grid>
+                        <Border Grid.Row="1" Background="#0C2031" BorderBrush="#25445B"
+                                BorderThickness="1" CornerRadius="10" Padding="1">
+                          <Grid>
+                            <DataGrid x:Name="DashboardLiveEventsGrid"
                                 Height="440"
                                 AutoGenerateColumns="False"
                                 IsReadOnly="True"
@@ -1795,7 +1832,17 @@
                                      IsHitTestVisible="False"/>
                         </StackPanel>
                       </Border>
-                    </Grid>
+                          </Grid>
+                        </Border>
+                        <Border Grid.Row="2" Margin="4,12,4,0" Padding="10,8"
+                                Background="#102A39" BorderBrush="#2B4E60"
+                                BorderThickness="1" CornerRadius="8">
+                          <TextBlock Text="RECORDED METADATA ONLY  ·  No raw payloads or verified capture-health claim"
+                                     Foreground="{StaticResource TextMutedBrush}" FontSize="11"
+                                     TextWrapping="Wrap"/>
+                        </Border>
+                      </Grid>
+                    </Border>
                     <!-- GA UI-79: keep local event status and provenance together in a subdued, non-interactive footer. -->
                     <Border Grid.Row="3" Margin="0,14,0,0" Style="{StaticResource DashboardLiveEventsFooter}">
                       <StackPanel>
