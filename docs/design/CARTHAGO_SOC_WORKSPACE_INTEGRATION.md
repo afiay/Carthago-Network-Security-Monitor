@@ -54,6 +54,8 @@ The first milestone intentionally changes only monitoring-health presentation an
 
 **Source hygiene follow-up.** A pre-existing escaped-newline defect inside `IncidentsPage.ApplyResponsiveLayout` placed its initial responsive layout statements inside a `//` comment. The literal `\\n` sequences were replaced with actual source newlines; no capture, rule, case or export logic changed. The correction requires the same owner-authorized Windows build and runtime verification as the UI milestones.
 
+**Review follow-up.** Fixed definite assignment for an IP search that bypasses port parsing, and wired the previously orphaned `OnAnalyticsShown()` map subscription into Analytics navigation. Without that event wiring, map markers would not receive traffic even though the geography control rendered. Map-only dispatcher requests are now capped at 64 pending, skipped requests are counted separately, and the service is deactivated while Analytics is hidden. Embedded Leaflet tooltips use DOM text nodes rather than treating traffic metadata as HTML. The global explorer also searches up to 250 existing incident-cache records by recorded case ID, title, destination host or exact source/destination IP, with a direct route into the selected incident workspace. These changes were driven by source review; no WPF execution or capture-load benchmark was performed.
+
 No WPF build, test, runner job, live capture or rendered screenshot was performed for SOC-01; all runtime and accessibility acceptance checks remain unexecuted under the owner's standing instruction.
 
 ## Alternatives considered

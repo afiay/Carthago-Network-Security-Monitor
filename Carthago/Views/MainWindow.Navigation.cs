@@ -14,6 +14,8 @@ namespace Carthago
         /// </summary>
         private void ShowView(Grid target)
         {
+            // Map overlay work is UI-only and should not continue while hidden.
+            _trafficMapSvc?.SetVisualizationActive(ReferenceEquals(target, AnalyticsView));
             // Collapse everything
             DashboardView.Visibility = Visibility.Collapsed;
             MonitoringHealthView.Visibility = Visibility.Collapsed;

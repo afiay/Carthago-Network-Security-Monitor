@@ -43,13 +43,16 @@ namespace Carthago
                 page.AnalyticsRequested += (_, _) => Nav_Analytics_Click2(this, new RoutedEventArgs());
                 page.IncidentQueueRequested += (_, _) => Nav_IncidentQueue_Click(this, new RoutedEventArgs());
                 page.DetectionRulesRequested += (_, _) => OpenDetectionRulesWorkspace();
+                page.IncidentRequested += id => OpenIncidentWorkspace(id);
                 NetworkInvestigationFrame.Content = page;
             }
 
             ShowView(NetworkInvestigationView);
             SidebarPanel?.ActivateNav("NetworkInvestigation");
             SidebarPanel?.HideAllFilters();
-            page.UpdateSnapshot(_traffic, _alerts, searchTerm);
+            var cachedIncidents = _sinkHost?.Analytics.GetRecentIncidents(250)
+                ?? Array.Empty<Carthago.Analytics.Models.Incident>();
+            page.UpdateSnapshot(_traffic, _alerts, cachedIncidents, searchTerm);
         }
 
         private void TrafficInvestigateSource_Click(object sender, RoutedEventArgs e)

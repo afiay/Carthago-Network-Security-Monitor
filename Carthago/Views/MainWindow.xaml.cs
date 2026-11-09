@@ -219,6 +219,9 @@ namespace Carthago
         {
             ShowView(AnalyticsView);
             SidebarPanel?.ActivateNav("Analytics");
+            // The map's capture-to-marker service is lazy and must be attached
+            // when the Analytics workspace first opens. Re-entry is idempotent.
+            OnAnalyticsShown();
 
             // Analytics charts are intentionally not rebuilt while this workspace is hidden.
             // Refresh once on entry so the analyst sees current locally accumulated evidence.

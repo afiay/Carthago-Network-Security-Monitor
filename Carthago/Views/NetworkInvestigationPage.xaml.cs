@@ -7,6 +7,7 @@ using System.Net;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using Carthago.Analytics.Models;
 using Carthago.Models;
 using Carthago.Services;
 
@@ -20,6 +21,7 @@ namespace Carthago.Views
         public event RoutedEventHandler? AnalyticsRequested;
         public event RoutedEventHandler? IncidentQueueRequested;
         public event RoutedEventHandler? DetectionRulesRequested;
+        public event Action<string>? IncidentRequested;
 
         public string SearchTerm => InvestigationSearchText.Text.Trim();
 
@@ -100,14 +102,17 @@ namespace Carthago.Views
         public void UpdateSnapshot(
             IEnumerable<TrafficRecord> traffic,
             IEnumerable<DetectionEvent> detections,
+            IEnumerable<Incident> incidents,
             string? searchTerm)
         {
             var term = (searchTerm ?? string.Empty).Trim();
             InvestigationSearchText.Text = term;
             var trafficSnapshot = traffic.Take(200).ToArray();
             var detectionSnapshot = detections.Take(500).ToArray();
+            var incidentSnapshot = incidents.Take(250).ToArray();
             var isAddress = IPAddress.TryParse(term, out var searchedAddress);
-            var isPortQuery = !isAddress && TryParsePortQuery(term, out var searchedPort);
+            int searchedPort = 0;
+            var isPortQuery = !isAddress && TryParsePortQuery(term, out searchedPort);
 
             var trafficMatches = trafficSnapshot.Where(r =>
                 term.Length == 0 || (isAddress
@@ -130,10 +135,26 @@ namespace Carthago.Views
                       || Contains(d.Protocol, term)))
                 .ToArray();
 
+            // These are actual incident-cache entries, not incidents inferred
+            // from a traffic IP match. Port-only queries do not match cases.
+            var incidentMatches = incidentSnapshot.Where(incident => term.Length > 0 &&
+                (isAddress
+                    ? MatchesAddress(incident.PrimarySourceIp, searchedAddress!)
+                      || MatchesAddress(incident.PrimaryDestinationIp, searchedAddress!)
+                    : !isPortQuery &&
+                      (string.Equals(incident.Id, term, StringComparison.OrdinalIgnoreCase)
+                       || Contains(incident.Title, term) || Contains(incident.Category, term)
+                       || Contains(incident.PrimaryDestinationHost, term))))
+                .ToArray();
+
             InvestigationTrafficGrid.ItemsSource = trafficMatches;
             InvestigationDetectionsGrid.ItemsSource = detectionMatches;
+            InvestigationIncidentsGrid.ItemsSource = incidentMatches;
             TrafficCountText.Text = $"{trafficMatches.Length:N0} matching retained records";
             DetectionCountText.Text = $"{detectionMatches.Length:N0} matching retained detections";
+            IncidentCountText.Text = term.Length == 0
+                ? $"Enter an incident ID, IP or case title to search up to {incidentSnapshot.Length:N0} cached cases"
+                : $"{incidentMatches.Length:N0} matching cached incidents (up to {incidentSnapshot.Length:N0} checked)";
             ScopeText.Text = term.Length == 0
                 ? $"Local snapshot: {trafficSnapshot.Length:N0} traffic rows and {detectionSnapshot.Length:N0} detection events · showing all retained items"
                 : $"Local snapshot: {trafficSnapshot.Length:N0} traffic rows and {detectionSnapshot.Length:N0} detection events · {(isAddress ? "exact IP" : isPortQuery ? "exact source/destination port" : "recorded text")} match for '{term}'";
@@ -181,5 +202,11 @@ namespace Carthago.Views
 
         private void OpenDetectionRules_Click(object sender, RoutedEventArgs e)
             => DetectionRulesRequested?.Invoke(this, e);
+
+        private void OpenSelectedIncident_Click(object sender, RoutedEventArgs e)
+        {
+            if (InvestigationIncidentsGrid.SelectedItem is Incident incident && !string.IsNullOrWhiteSpace(incident.Id))
+                IncidentRequested?.Invoke(incident.Id);
+        }
     }
 }

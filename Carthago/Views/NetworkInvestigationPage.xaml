@@ -103,11 +103,40 @@
         </StackPanel>
       </Border>
 
+      <Border Background="{StaticResource CardBgBrush}" BorderBrush="{StaticResource CardBorderBrush}"
+              BorderThickness="1" CornerRadius="14" Padding="16" Margin="0,0,0,16">
+        <StackPanel>
+          <DockPanel Margin="0,0,0,12">
+            <Button DockPanel.Dock="Right" Content="Open selected incident" Style="{StaticResource SecondaryButton}"
+                    MinWidth="165" Height="32" Click="OpenSelectedIncident_Click"
+                    ToolTip="Open the selected actual incident cache entry, without inferring correlation from a matching IP"/>
+            <StackPanel>
+              <TextBlock Text="Matching incident cases" Style="{StaticResource DashboardSectionTitle}"/>
+              <TextBlock x:Name="IncidentCountText" Text="Enter a query to search cached incidents"
+                         Foreground="{StaticResource TextMutedBrush}" FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap"/>
+            </StackPanel>
+          </DockPanel>
+          <DataGrid x:Name="InvestigationIncidentsGrid" AutoGenerateColumns="False" IsReadOnly="True"
+                    Height="185" FrozenColumnCount="1" EnableRowVirtualization="True"
+                    VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
+                    AutomationProperties.Name="Matching cached incident case records">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Case ID" Binding="{Binding Id}" Width="185"/>
+              <DataGridTextColumn Header="Created UTC" Binding="{Binding CreatedUtc, StringFormat={}{0:u}}" Width="160"/>
+              <DataGridTextColumn Header="Title" Binding="{Binding Title}" Width="270"/>
+              <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="105"/>
+              <DataGridTextColumn Header="Source" Binding="{Binding PrimarySourceIp}" Width="145"/>
+              <DataGridTextColumn Header="Destination" Binding="{Binding PrimaryDestinationIp}" Width="145"/>
+            </DataGrid.Columns>
+          </DataGrid>
+        </StackPanel>
+      </Border>
+
       <Border Background="#0B2034" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1"
               CornerRadius="12" Padding="16">
         <StackPanel>
           <TextBlock Text="EVIDENCE BOUNDARY" Foreground="{StaticResource AccentAltBrush}" FontWeight="Bold" FontSize="11"/>
-          <TextBlock Text="Only the last 200 traffic rows and last 500 detection events retained by this local application can be examined here. Missing process names, country fields, packet payloads or connections are unavailable, not evidence that activity did not occur."
+          <TextBlock Text="Traffic and detections are limited to the last 200 and 500 local UI rows; incident searches use up to 250 actual cached cases, not the complete journal. An IP match across these datasets is an investigation lead, not automatic incident correlation. Missing process, location or payload fields do not prove that activity did not occur."
                      TextWrapping="Wrap" Foreground="{StaticResource TextMutedBrush}" Margin="0,7,0,12"/>
           <WrapPanel>
             <Button Content="Analytics / Geographic Context" Style="{StaticResource SecondaryButton}"

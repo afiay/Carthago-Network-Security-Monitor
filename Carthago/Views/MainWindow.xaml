@@ -2433,6 +2433,9 @@
                            Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
                 <TextBlock Text="Click a public-IP marker to investigate it · local, shared and reserved addresses are excluded"
                            Foreground="{StaticResource AccentAltBrush}" FontSize="11" TextWrapping="Wrap"/>
+                <TextBlock x:Name="AnalyticsMapSamplingText"
+                           Text="The map shows sampled visual observations while Analytics is open. Capture and detections are unaffected."
+                           Foreground="{StaticResource TextMutedBrush}" FontSize="11" TextWrapping="Wrap"/>
               </StackPanel>
               <Border Grid.Row="1" CornerRadius="12" BorderThickness="1"
                       BorderBrush="#274B60" Background="#081724" ClipToBounds="True">

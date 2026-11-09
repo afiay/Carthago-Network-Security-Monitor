@@ -351,7 +351,11 @@ html, body, #map {{ height: 100%; margin: 0; padding: 0; background: #081724; }}
     function addMarker(lat, lon, label, radius, pivotIp){{
       try{{
         var m = L.circleMarker([lat, lon], {{ radius: Math.max(radius||4, 5), color:'#A8F3FF', fillColor:'#16C7D9', weight: 1.8, opacity: 0.96, fillOpacity: 0.82 }});
-        if (label) m.bindTooltip(label, {{permanent:false, direction:'top', opacity:0.9}});
+        if (label) {{
+          var markerTip = document.createElement('span');
+          markerTip.textContent = label;
+          m.bindTooltip(markerTip, {{permanent:false, direction:'top', opacity:0.9}});
+        }}
         if (pivotIp) m.on('click', function(){{ post('PIVOT:' + pivotIp); }});
         m.addTo(map); markers.push(m);
       }}catch(e){{ post('ERR: addMarker ' + (e && e.message ? e.message : e)); }}
@@ -361,7 +365,11 @@ html, body, #map {{ height: 100%; margin: 0; padding: 0; background: #081724; }}
         var line = L.polyline([[lat1, lon1], [lat2, lon2]], {{
           color: color || '#48C9D9', weight: weight || 2, opacity: opacity || 0.65, dashArray:'6 5'
         }}).addTo(map);
-        if (label) line.bindTooltip(label, {{sticky:true}});
+        if (label) {{
+          var flowTip = document.createElement('span');
+          flowTip.textContent = label;
+          line.bindTooltip(flowTip, {{sticky:true}});
+        }}
         lines.push(line);
       }}catch(e){{ post('ERR: addConnection ' + (e && e.message ? e.message : e)); }}
     }}

@@ -23,9 +23,20 @@ namespace Carthago.Services
         private readonly Dispatcher _ui;
         private readonly int _maxMarkers;
 
+        // The geographic overlay is best-effort visualization, never a capture
+        // queue. Bounds prevent a busy sensor from flooding the WPF dispatcher.
+        private const int MaxPendingOverlayDraws = 64;
+        private int _pendingOverlayDraws;
+        private int _visualizationActive = 1;
+        private long _skippedOverlayDraws;
+
         private int _drawn;
 
         public bool IgnorePrivateIp { get; set; } = true;
+        public long SkippedOverlayDraws => Interlocked.Read(ref _skippedOverlayDraws);
+
+        public void SetVisualizationActive(bool active)
+            => Volatile.Write(ref _visualizationActive, active ? 1 : 0);
 
         public TrafficMapService(WorldMapControl map,
                                  TrafficCaptureService capture,
@@ -44,16 +55,50 @@ namespace Carthago.Services
 
         public void Dispose()
         {
+            SetVisualizationActive(false);
             _capture.TrafficRecordReceived -= OnRecord;
         }
 
         private void OnRecord(TrafficRecord r)
         {
-            // Keep the CPU light: schedule on UI
-            _ = _ui.InvokeAsync(() => Draw(r), DispatcherPriority.Background);
+            if (Volatile.Read(ref _visualizationActive) == 0)
+                return;
+
+            if (Interlocked.Increment(ref _pendingOverlayDraws) > MaxPendingOverlayDraws)
+            {
+                Interlocked.Decrement(ref _pendingOverlayDraws);
+                Interlocked.Increment(ref _skippedOverlayDraws);
+                return;
+            }
+
+            try
+            {
+                Func<Task> render = async () =>
+                {
+                    if (Volatile.Read(ref _visualizationActive) != 0)
+                        await DrawAsync(r);
+                };
+                var request = _ui.InvokeAsync(render, DispatcherPriority.Background);
+
+                // Decrement also on dispatcher shutdown/cancellation, when the
+                // scheduled action might never run. Keep the queue slot until
+                // the underlying WebView2 render requests have completed.
+                _ = request.Task.Unwrap().ContinueWith(completed =>
+                {
+                    _ = completed.Exception; // observe any asynchronous failure
+                    Interlocked.Decrement(ref _pendingOverlayDraws);
+                }, TaskScheduler.Default);
+            }
+            catch (Exception)
+            {
+                // A disposed or shutting-down UI dispatcher must not throw back
+                // into the capture producer. Only this optional overlay is lost.
+                Interlocked.Decrement(ref _pendingOverlayDraws);
+                Interlocked.Increment(ref _skippedOverlayDraws);
+            }
         }
 
-        private void Draw(TrafficRecord r)
+        private async Task DrawAsync(TrafficRecord r)
         {
             bool srcOk = TryGetCoords(r.Source, r.SrcLat, r.SrcLon, out var sLat, out var sLon, out var sCity, out var sIso);
             bool dstOk = TryGetCoords(r.Destination, r.DstLat, r.DstLon, out var dLat, out var dLon, out var dCity, out var dIso);
@@ -70,24 +115,24 @@ namespace Carthago.Services
             if (srcOk)
             {
                 string lbl = $"Approximate IP geography • {r.Source} • {(sCity ?? r.SrcCountry ?? sIso ?? "")}".Trim();
-                _ = _map.AddMarker(sLat, sLon, lbl, 4, r.Source);
+                await _map.AddMarker(sLat, sLon, lbl, 4, r.Source);
             }
             if (dstOk)
             {
                 string lbl = $"Approximate IP geography • {r.Destination} • {(dCity ?? r.DstCountry ?? dIso ?? "")}".Trim();
-                _ = _map.AddMarker(dLat, dLon, lbl, 4, r.Destination);
+                await _map.AddMarker(dLat, dLon, lbl, 4, r.Destination);
             }
 
             if (srcOk && dstOk)
             {
                 string lbl = $"{r.Source} → {r.Destination} ({proto})";
-                _ = _map.AddConnection(sLat, sLon, dLat, dLon, lbl, color, 1.8, 0.85);
+                await _map.AddConnection(sLat, sLon, dLat, dLon, lbl, color, 1.8, 0.85);
             }
 
             if (++_drawn >= _maxMarkers)
             {
-                _ = _map.ClearMarkers();
-                _ = _map.ClearConnections();
+                await _map.ClearMarkers();
+                await _map.ClearConnections();
                 _drawn = 0;
             }
         }

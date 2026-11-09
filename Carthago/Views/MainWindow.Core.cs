@@ -144,6 +144,9 @@ namespace Carthago
 
                     if (AnalyticsView.IsVisible)
                     {
+                        if (_trafficMapSvc is { } mapService)
+                            AnalyticsMapSamplingText.Text =
+                                $"Map overlay: {mapService.SkippedOverlayDraws:N0} visual updates skipped because its UI queue was full; capture/detection data is unaffected.";
                         if (_protocolChartDirty)
                         {
                             RenderProtocol();
