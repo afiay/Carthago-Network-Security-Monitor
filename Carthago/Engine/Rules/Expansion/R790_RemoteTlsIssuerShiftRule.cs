@@ -51,7 +51,6 @@ namespace Carthago.Engine.Rules.Expansion
             if (!Research786NetworkEvidence.Coherent(r)) return NoMatch();
             if (!Research786NetworkEvidence.TcpData(r) || !Research786NetworkEvidence.PublicPrivate(r)
                 || r.SourcePort != 443 || r.DestinationPort is < 1024
-                || string.IsNullOrWhiteSpace(r.TlsVersion)
                 || string.IsNullOrWhiteSpace(r.CertIssuer)
                 || string.IsNullOrWhiteSpace(r.CertSubject)
                 || r.HttpUri != null || r.DnsQname != null) return NoMatch();

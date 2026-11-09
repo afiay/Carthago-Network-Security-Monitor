@@ -76,7 +76,7 @@ public sealed class R786R795ObservableNetworkBatchTests
                 r.Source = "8.8.8.8"; r.Destination = "10.1.1.10";
                 r.SourcePort = 443; r.DestinationPort = 51000;
                 r.CertIssuer = step == 0 ? "CN=Trusted Issuer A" : "CN=Trusted Issuer B";
-                r.CertSubject = "CN=remote.example.net"; r.TlsVersion = "TLS1.2";
+                r.CertSubject = "CN=remote.example.net"; r.TlsVersion = null;
                 break;
             case "R791":
                 if (step == 0)
@@ -89,7 +89,11 @@ public sealed class R786R795ObservableNetworkBatchTests
                 break;
             case "R792":
                 r.ProcessName = "hostd";
-                if (step == 0) { r.DestinationPort = 21; r.ApplicationProtocol = "ftp.stor.request"; }
+                if (step == 0)
+                {
+                    r.DestinationPort = 21; r.ApplicationProtocol = "ftp.stor";
+                    r.L4Len = 80; r.Length = 120;
+                }
                 else
                 {
                     r.IsTcp = false; r.IsUdp = true; r.Protocol = "UDP"; r.TcpFlags = null;

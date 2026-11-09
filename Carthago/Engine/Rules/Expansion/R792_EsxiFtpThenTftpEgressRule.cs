@@ -52,7 +52,7 @@ namespace Carthago.Engine.Rules.Expansion
             if (!Research786NetworkEvidence.PrivatePublic(r) || !Research676Evidence.Process(r, "hostd")) return NoMatch();
             var key = r.Source + "|" + r.Destination + "|" + r.ProcessId;
             if (Research786NetworkEvidence.TcpData(r) && r.DestinationPort == 21
-                && string.Equals(r.ApplicationProtocol, "ftp.stor.request", StringComparison.Ordinal))
+                && string.Equals(r.ApplicationProtocol, "ftp.stor", StringComparison.Ordinal))
             {
                 _sequence.Observe(key, r.Id, context.TimestampUtc, true, 60);
                 return NoMatch();
