@@ -30,6 +30,19 @@ namespace Carthago.Views
         public event Action<string>? NetworkInvestigationRequested;
         public event Action? ExportAnalysisRequested;
 
+        private void InvestigateLinkedDetection_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not Button { DataContext: IncidentDetectionLinkVm link } ||
+                !link.CanInvestigate ||
+                _vm.Selected is not { } selected ||
+                !selected.RelatedDetectionLinks.Any(item => ReferenceEquals(item, link)))
+                return;
+
+            // The case explicitly names this event. The explorer will still
+            // disclose if its retained 500-detection snapshot no longer has it.
+            NetworkInvestigationRequested?.Invoke($"event:{link.EventId}");
+        }
+
         private void ExportAnalysis_Click(object sender, RoutedEventArgs e)
             => ExportAnalysisRequested?.Invoke();
 
@@ -666,6 +679,10 @@ namespace Carthago.Views
         public ObservableCollection<TimelineItemVm> TimelineItems { get; } = new();
         public ObservableCollection<string> RelatedAnomalyDescriptions { get; } = new();
         public ObservableCollection<string> RelatedEventDescriptions { get; } = new();
+        public ObservableCollection<IncidentDetectionLinkVm> RelatedDetectionLinks { get; } = new();
+        public string RelatedDetectionLinkStatus => RelatedDetectionLinks.Count == 0
+            ? "No recorded detection references are attached to this case."
+            : "Up to 8 recorded case references · actions require exact IDs · the explorer checks its latest 500 retained detections.";
         public ObservableCollection<IncidentHostVm> AffectedHosts { get; } = new();
         public ObservableCollection<string> MitreTechniques { get; } = new();
         public ObservableCollection<string> Tags { get; } = new();
@@ -778,6 +795,8 @@ namespace Carthago.Views
                         .OrderByDescending(evt => evt.Timestamp)
                         .Take(8)
                         .Select(evt => $"{evt.Timestamp:HH:mm:ss} • {evt.RuleId} • {evt.Description}"));
+            ReplaceCollection(RelatedDetectionLinks, IncidentDetectionLinkVm.FromIncident(incident));
+            OnChanged(nameof(RelatedDetectionLinkStatus));
 
             ReplaceCollection(AffectedHosts, BuildAffectedHosts(incident));
             ReplaceCollection(MitreTechniques, BuildMitreTechniques(incident));
