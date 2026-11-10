@@ -1490,31 +1490,38 @@
                       <RowDefinition Height="Auto"/>
                       <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
+                    <!-- GA UI-160: compact integrated evidence heading, with real navigation only. -->
                     <Border Grid.Row="0" Background="{StaticResource DashboardLiveEventsHeaderGradient}"
                             BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1"
-                            CornerRadius="12" Padding="22,20">
-                      <DockPanel LastChildFill="True">
-                      <Button DockPanel.Dock="Right"
-                              Content="All detections &#x2192;"
-                              ToolTip="Open the existing Raw Detections view. Navigation only; no evidence export or capture starts here."
-                              ToolTipService.ShowsToolTipOnKeyboardFocus="True"
-                              AutomationProperties.Name="Open Raw Detections"
-                              AutomationProperties.HelpText="Opens the existing Raw Detections view and its sidebar filters. Dashboard Live Events filters are unchanged; this action does not export evidence, start capture or verify delivery."
-                              MinWidth="130"
-                              Height="30"
-                              Style="{StaticResource SecondaryButton}"
-                              Click="DashboardLiveEventsOpenDetections_Click"/>
-                      <StackPanel>
-                        <TextBlock Text="EVENT STREAM  /  LOCAL DETECTIONS" Foreground="{StaticResource AccentBrush}"
-                                   FontSize="11" FontWeight="Bold" Margin="0,0,0,8"/>
-                        <TextBlock Text="Live Events" Style="{StaticResource DashboardSectionTitle}" FontSize="26" FontWeight="Bold"/>
-                        <TextBlock Text="Read-only local detection feed  &#x2022;  newest received first  &#x2022;  up to 80 displayed"
-                                   Foreground="{StaticResource TextMutedBrush}"
-                                   FontSize="12"
-                                   TextWrapping="Wrap"
-                                   Margin="0,8,12,0"/>
-                      </StackPanel>
-                      </DockPanel>
+                            CornerRadius="12" Padding="16,12">
+                      <Grid>
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="Auto"/>
+                          <ColumnDefinition Width="*"/>
+                          <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Width="4" CornerRadius="2"
+                                Background="{StaticResource AccentBrush}" Margin="0,2,14,2"/>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                          <TextBlock Text="LOCAL DETECTION STREAM" FontSize="10" FontWeight="Bold"
+                                     Foreground="{StaticResource AccentBrush}" Margin="0,0,0,3"/>
+                          <WrapPanel>
+                            <TextBlock Text="Live Events" Style="{StaticResource DashboardSectionTitle}"
+                                       FontSize="21" FontWeight="Bold" Margin="0,0,14,0"/>
+                            <TextBlock Text="Read-only  ·  newest received first  ·  up to 80 displayed"
+                                       Foreground="{StaticResource TextMutedBrush}" FontSize="11"
+                                       VerticalAlignment="Center" Margin="0,4,8,0"/>
+                          </WrapPanel>
+                        </StackPanel>
+                        <Button Grid.Column="2" Content="All detections &#x2192;"
+                                VerticalAlignment="Center" Margin="12,0,0,0"
+                                ToolTip="Open the existing Raw Detections view. Navigation only; no evidence export or capture starts here."
+                                ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                                AutomationProperties.Name="Open Raw Detections"
+                                AutomationProperties.HelpText="Opens the existing Raw Detections view and its sidebar filters. Dashboard Live Events filters are unchanged; this action does not export evidence, start capture or verify delivery."
+                                MinWidth="130" Height="32" Style="{StaticResource SecondaryButton}"
+                                Click="DashboardLiveEventsOpenDetections_Click"/>
+                      </Grid>
                     </Border>
                     <!-- GA UI-159: responsive two-lane filter workspace; original controls and handlers preserved. -->
                     <Border Grid.Row="1" Margin="0,8,0,10" Style="{StaticResource DashboardLiveEventsToolbar}">
@@ -1656,29 +1663,31 @@
                           <RowDefinition Height="Auto"/>
                           <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
-                        <Grid Grid.Row="0" Margin="4,0,4,14">
+                        <!-- GA UI-160: evidence table and provenance occupy one compact scan line. -->
+                        <Grid Grid.Row="0" Margin="4,0,4,9">
                           <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                           </Grid.ColumnDefinitions>
-                          <StackPanel>
-                            <TextBlock Text="03  OBSERVED DETECTION RECORDS" FontSize="11"
-                                       FontWeight="Bold" Foreground="{StaticResource AccentBrush}"/>
-                            <TextBlock Text="Event evidence stream" FontSize="19" FontWeight="Bold"
-                                       Foreground="{StaticResource TextBrush}" Margin="0,5,0,0"/>
-                            <TextBlock Text="Local, read-only metadata · newest received first"
-                                       Foreground="{StaticResource TextMutedBrush}" FontSize="11"
-                                       TextWrapping="Wrap" Margin="0,5,0,0"/>
+                          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Width="3" Background="#4AC8DB" CornerRadius="2"
+                                    Margin="0,2,10,2"/>
+                            <StackPanel>
+                              <TextBlock Text="OBSERVED DETECTION RECORDS" FontSize="12"
+                                         FontWeight="Bold" Foreground="{StaticResource TextBrush}"/>
+                              <TextBlock Text="Local metadata · read-only · received order"
+                                         Foreground="{StaticResource TextMutedBrush}" FontSize="10"
+                                         Margin="0,3,0,0"/>
+                            </StackPanel>
                           </StackPanel>
                           <Border Grid.Column="1" Background="#123343" BorderBrush="#2B6372"
-                                  BorderThickness="1" CornerRadius="8" Padding="12,8"
-                                  VerticalAlignment="Top" Margin="12,0,0,0">
-                            <StackPanel>
-                              <TextBlock Text="LOCAL VIEW" Foreground="#69DCEC" FontSize="11"
-                                         FontWeight="Bold" HorizontalAlignment="Center"/>
+                                  BorderThickness="1" CornerRadius="8" Padding="10,6"
+                                  VerticalAlignment="Center" Margin="10,0,0,0">
+                            <StackPanel Orientation="Horizontal">
+                              <TextBlock Text="LOCAL VIEW" Foreground="#69DCEC" FontSize="10"
+                                         FontWeight="Bold" Margin="0,0,9,0"/>
                               <TextBlock Text="80 displayed / 500 retained max"
-                                         Foreground="{StaticResource TextSubtleBrush}" FontSize="10"
-                                         TextWrapping="Wrap" TextAlignment="Center" Margin="0,4,0,0"/>
+                                         Foreground="{StaticResource TextSubtleBrush}" FontSize="10"/>
                             </StackPanel>
                           </Border>
                         </Grid>
