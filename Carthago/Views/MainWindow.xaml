@@ -1994,70 +1994,116 @@
                 </Border>
 
                 
-                <!-- GA UI-06: reference-aligned terminal companion, visual only.
-                     No CLI command dispatcher, process, output stream or simulated telemetry is connected. -->
+                <!-- GA UI-161: a proportioned, visual-only terminal companion. No executable CLI. -->
                 <Border x:Name="DashboardCliCompanionPanel"
-                         Grid.Row="0" Grid.Column="1"
-                         Style="{StaticResource PageSurface}"
-                         HorizontalAlignment="Stretch" Padding="14" Margin="0"
+                        Grid.Row="0" Grid.Column="1"
+                        Style="{StaticResource PageSurface}"
+                        Background="#0A1928" BorderBrush="#2B4B60" BorderThickness="1"
+                        CornerRadius="14" Padding="16" Margin="0"
+                        MinHeight="560"
+                        HorizontalAlignment="Stretch"
                         AutomationProperties.Name="Carthago CLI companion, unavailable">
                   <Grid>
                     <Grid.RowDefinitions>
                       <RowDefinition Height="Auto"/>
                       <RowDefinition Height="Auto"/>
+                      <RowDefinition Height="*"/>
                       <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                    <DockPanel Margin="0,0,0,10" LastChildFill="True">
-                      <Border DockPanel.Dock="Right"
-                              Background="{StaticResource PillBgBrush}"
-                              BorderBrush="{StaticResource CardBorderBrush}"
-                              BorderThickness="1"
-                              CornerRadius="5"
-                              Padding="8,3">
-                        <TextBlock Text="UNAVAILABLE"
-                                   FontSize="10"
-                                   FontWeight="SemiBold"
-                                   Foreground="{StaticResource TextMutedBrush}"/>
-                      </Border>
-                      <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="&gt;_"
-                                   FontFamily="Consolas"
-                                   FontSize="14"
-                                   FontWeight="Bold"
-                                   Foreground="{StaticResource AccentBrush}"
-                                   Margin="0,0,9,0"/>
-                        <TextBlock Text="Carthago CLI"
-                                   Style="{StaticResource DashboardSectionTitle}"
-                                   VerticalAlignment="Center"/>
+                    <Grid Grid.Row="0" Margin="0,0,0,16">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                      </Grid.ColumnDefinitions>
+                      <StackPanel Grid.Column="0">
+                        <TextBlock Text="TERMINAL COMPANION" FontSize="10" FontWeight="Bold"
+                                   Foreground="{StaticResource AccentBrush}" Margin="0,0,0,5"/>
+                        <TextBlock Text="Carthago CLI" Style="{StaticResource DashboardSectionTitle}"
+                                   FontSize="19" FontWeight="Bold"/>
                       </StackPanel>
-                    </DockPanel>
-                    <Border Grid.Row="1"
-                            Background="{StaticResource AppBgBrush}"
-                            BorderBrush="{StaticResource SoftDividerBrush}"
-                            BorderThickness="1"
-                            CornerRadius="6"
-                            Padding="12"
-                            MinHeight="88">
-                      <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="No CLI session connected"
-                                   FontFamily="Consolas"
-                                   FontSize="12"
-                                   FontWeight="SemiBold"
+                      <Border Grid.Column="1" VerticalAlignment="Top" Margin="8,0,0,0"
+                              Background="#24303E" BorderBrush="#455568" BorderThickness="1"
+                              CornerRadius="6" Padding="9,5">
+                        <TextBlock Text="UNAVAILABLE" FontSize="10" FontWeight="Bold"
                                    Foreground="{StaticResource TextSubtleBrush}"/>
-                        <TextBlock Text="Command execution and terminal output are not implemented in this Windows GUI."
-                                   FontFamily="Consolas"
-                                   FontSize="11"
-                                   Foreground="{StaticResource TextMutedBrush}"
-                                   TextWrapping="Wrap"
-                                   Margin="0,6,0,0"/>
+                      </Border>
+                    </Grid>
+                    <Border Grid.Row="1" Background="#06111D" BorderBrush="#25445B"
+                            BorderThickness="1" CornerRadius="10" Margin="0,0,0,12">
+                      <Grid>
+                        <Grid.RowDefinitions>
+                          <RowDefinition Height="Auto"/>
+                          <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Border Grid.Row="0" Background="#102639" CornerRadius="9,9,0,0"
+                                Padding="11,9">
+                          <DockPanel LastChildFill="True">
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                              <Ellipse Width="7" Height="7" Fill="#526477" Margin="4,0"/>
+                              <Ellipse Width="7" Height="7" Fill="#526477" Margin="4,0"/>
+                              <Ellipse Width="7" Height="7" Fill="#526477" Margin="4,0"/>
+                            </StackPanel>
+                            <TextBlock Text="LOCAL CONSOLE / OFFLINE" FontSize="10"
+                                       FontFamily="Consolas" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextMutedBrush}"/>
+                          </DockPanel>
+                        </Border>
+                        <StackPanel Grid.Row="1" Padding="14,20,14,22">
+                          <TextBlock Text="&gt;_" FontFamily="Consolas" FontSize="26"
+                                     FontWeight="Bold" Foreground="{StaticResource AccentBrush}"
+                                     Margin="0,0,0,14"/>
+                          <TextBlock Text="No CLI session connected" FontFamily="Consolas"
+                                     FontSize="13" FontWeight="SemiBold"
+                                     Foreground="{StaticResource TextSubtleBrush}"
+                                     TextWrapping="Wrap"/>
+                          <TextBlock Text="Command execution and terminal output are not implemented in this Windows GUI."
+                                     FontFamily="Consolas" FontSize="11"
+                                     Foreground="{StaticResource TextMutedBrush}"
+                                     TextWrapping="Wrap" Margin="0,9,0,0"/>
+                        </StackPanel>
+                      </Grid>
+                    </Border>
+                    <Border Grid.Row="2" Background="#0F2535" BorderBrush="#25445B"
+                            BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,0,0,12">
+                      <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="PRESENTATION ONLY" FontSize="10" FontWeight="Bold"
+                                   Foreground="{StaticResource AccentBrush}" Margin="0,0,0,12"/>
+                        <Grid Margin="0,0,0,12">
+                          <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="4"/>
+                            <ColumnDefinition Width="*"/>
+                          </Grid.ColumnDefinitions>
+                          <Border Background="#47778A" CornerRadius="2"/>
+                          <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                            <TextBlock Text="No command input" FontSize="12" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextSubtleBrush}"/>
+                            <TextBlock Text="This panel cannot accept or run commands."
+                                       FontSize="11" Foreground="{StaticResource TextMutedBrush}"
+                                       TextWrapping="Wrap" Margin="0,4,0,0"/>
+                          </StackPanel>
+                        </Grid>
+                        <Grid>
+                          <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="4"/>
+                            <ColumnDefinition Width="*"/>
+                          </Grid.ColumnDefinitions>
+                          <Border Background="#47778A" CornerRadius="2"/>
+                          <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                            <TextBlock Text="No terminal output" FontSize="12" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextSubtleBrush}"/>
+                            <TextBlock Text="No session, process or simulated events are attached."
+                                       FontSize="11" Foreground="{StaticResource TextMutedBrush}"
+                                       TextWrapping="Wrap" Margin="0,4,0,0"/>
+                          </StackPanel>
+                        </Grid>
                       </StackPanel>
                     </Border>
-                    <TextBlock Grid.Row="2"
-                               Text="Visual companion only · no commands are accepted or executed."
-                               FontSize="10"
-                               Foreground="{StaticResource TextMutedBrush}"
-                               TextWrapping="Wrap"
-                               Margin="0,8,0,0"/>
+                    <Border Grid.Row="3" BorderBrush="{StaticResource SoftDividerBrush}"
+                            BorderThickness="0,1,0,0" Padding="0,12,0,0">
+                      <TextBlock Text="Visual companion only  ·  not a live telemetry source"
+                                 FontSize="10" Foreground="{StaticResource TextMutedBrush}"
+                                 TextWrapping="Wrap"/>
+                    </Border>
                   </Grid>
                 </Border>
                 </Grid>
