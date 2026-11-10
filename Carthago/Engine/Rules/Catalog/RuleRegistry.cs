@@ -888,6 +888,16 @@ namespace Carthago.Engine.Rules.Catalog
                 new R863_RsyncPublic873PayloadBurstRule(),
                 new R864_DockerProxyPublicSocksSynFanoutRule(),
                 new R865_CurlCmdGetThenCmdPublicSynRule(),
+                new R866_MultiSubdomainSamePublicAnswerRule(),
+                new R867_SrvReplyThenMatchingTlsSniRule(),
+                new R868_SplitScopeSameNameAReplyRule(),
+                new R869_PublicRpcEndpointThenDynamicPortRule(),
+                new R870_HostdPublicHttpPollBurstRule(),
+                new R871_ModbusMultiDevicePayloadWalkRule(),
+                new R872_EmbeddedSnapshotEndpointPairRule(),
+                new R873_SsdpMulticastThenDeviceHttpSynRule(),
+                new R874_PrivateOtTcpSynBurstRule(),
+                new R875_PublicDnp3SynThenPayloadRule(),
             };
         }
 
