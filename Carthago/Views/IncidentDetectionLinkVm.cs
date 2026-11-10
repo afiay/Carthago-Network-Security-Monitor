@@ -82,12 +82,16 @@ namespace Carthago.Views
 
         private static string NormalizeEventId(string? value)
         {
-            var id = value ?? string.Empty;
+            return IsExactEventId(value) ? value! : string.Empty;
+        }
+
+        internal static bool IsExactEventId(string? value)
+        {
             // The explorer trims the event: argument. An ID requiring trim
             // would navigate to a different record, so it cannot be exact.
-            return id.Length is >= 1 and <= 128 &&
-                   string.Equals(id, id.Trim(), StringComparison.Ordinal) &&
-                   !id.Any(char.IsControl) ? id : string.Empty;
+            return value is { Length: >= 1 and <= 128 } &&
+                   string.Equals(value, value.Trim(), StringComparison.Ordinal) &&
+                   !value.Any(char.IsControl);
         }
     }
 }

@@ -9,6 +9,7 @@
 
   <Page.Resources>
     <local:SeverityToBrushConverter x:Key="SeverityBrush"/>
+    <BooleanToVisibilityConverter x:Key="TimelineEventVisibility"/>
     <Style x:Key="AnomalySectionTitle" TargetType="TextBlock" BasedOn="{StaticResource SectionHeader}">
       <Setter Property="FontSize" Value="15.5"/>
       <Setter Property="Margin" Value="0,0,0,4"/>
@@ -765,7 +766,41 @@
             <TextBlock Text="Event chronology" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,6,0,5" TextWrapping="Wrap"/>
             <TextBlock Text="Selected case activity" FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"/>
             <Border Height="1" Background="#31536A" Margin="0,15,0,15"/>
-            <ItemsControl ItemsSource="{Binding Selected.TimelineItems}"><ItemsControl.ItemTemplate><DataTemplate><Border Background="#102A3B" BorderBrush="#31536A" BorderThickness="1" CornerRadius="9" Padding="14,14" Margin="0,0,0,10"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="5"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><Border Background="{Binding Severity, Converter={StaticResource SeverityBrush}}" CornerRadius="2"/><StackPanel Grid.Column="1" Margin="13,0,0,0"><TextBlock Text="{Binding TimeLabel}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"/><TextBlock Text="{Binding Title}" Margin="0,5,0,0" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" TextWrapping="Wrap"/><TextBlock Text="{Binding Description}" Margin="0,6,0,0" Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap"/></StackPanel></Grid></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+            <ItemsControl ItemsSource="{Binding Selected.TimelineItems}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Border Background="#102A3B" BorderBrush="#31536A" BorderThickness="1"
+                          CornerRadius="9" Padding="14,14" Margin="0,0,0,10">
+                    <Grid>
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="5"/>
+                        <ColumnDefinition Width="*"/>
+                      </Grid.ColumnDefinitions>
+                      <Border Background="{Binding Severity, Converter={StaticResource SeverityBrush}}" CornerRadius="2"/>
+                      <StackPanel Grid.Column="1" Margin="13,0,0,0">
+                        <TextBlock Text="{Binding TimeLabel}" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding Title}" Margin="0,5,0,0" FontSize="14"
+                                   FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding Description}" Margin="0,6,0,0"
+                                   Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap"/>
+                        <!-- Only an explicit, case-owned Detection EventId permits this action. -->
+                        <StackPanel Visibility="{Binding CanInvestigateExactEvent, Converter={StaticResource TimelineEventVisibility}}"
+                                    Margin="0,11,0,0">
+                          <TextBlock Text="{Binding ExactEventIdLabel}" FontSize="11" FontFamily="Consolas"
+                                     Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"/>
+                          <Button Content="Inspect timeline detection" HorizontalAlignment="Left"
+                                  Margin="0,7,0,0" Padding="12,6" FontSize="11.5"
+                                  Click="InvestigateTimelineDetection_Click"
+                                  AutomationProperties.Name="Inspect exact timeline detection"
+                                  ToolTip="Open this recorded detection event ID in Network Investigation"/>
+                        </StackPanel>
+                      </StackPanel>
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
             <Expander Header="Recorded detection references" IsExpanded="False"
                       Margin="0,9,0,0" Foreground="{StaticResource TextBrush}">
               <StackPanel Margin="0,12,0,0">

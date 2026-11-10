@@ -31,6 +31,9 @@ namespace Carthago.Analytics.Services
                 Category = CategorizeDetection(evt),
                 Tags = Array.Empty<string>(),
                 Details = CreateDetails(
+                    // SOC-12: persist the actual correlated detection identity so
+                    // its timeline entry can be inspected without a text/IP guess.
+                    ("EventId", evt.EventId),
                     ("RuleId", evt.RuleId),
                     ("Protocol", evt.Protocol),
                     ("DestinationPort", evt.DestinationPort?.ToString()),

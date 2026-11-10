@@ -43,6 +43,19 @@ namespace Carthago.Views
             NetworkInvestigationRequested?.Invoke($"event:{link.EventId}");
         }
 
+        private void InvestigateTimelineDetection_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not Button { DataContext: TimelineItemVm item } ||
+                !item.CanInvestigateExactEvent ||
+                _vm.Selected is not { } selected ||
+                !selected.TimelineItems.Any(current => ReferenceEquals(current, item)))
+                return;
+
+            // Timeline IDs have been independently checked against the
+            // selected case's recorded event membership, not its text or IPs.
+            NetworkInvestigationRequested?.Invoke($"event:{item.ExactEventId}");
+        }
+
         private void ExportAnalysis_Click(object sender, RoutedEventArgs e)
             => ExportAnalysisRequested?.Invoke();
 
@@ -774,12 +787,16 @@ namespace Carthago.Views
             ReplaceCollection(RiskReasons, incident.RiskReasons.DefaultIfEmpty("Risk score is based on the current correlated evidence set."));
             ReplaceCollection(FeedbackAppliedReasons, incident.FeedbackAppliedReasons.DefaultIfEmpty("No feedback-based risk adjustments have been applied."));
             ReplaceCollection(RecommendedActions, incident.RecommendedActions.DefaultIfEmpty("Review the supporting telemetry and validate whether the behavior is expected."));
+            var recordedEventIds = (incident.RelatedEventIds ?? new List<string>())
+                .Concat((incident.RelatedEvents ?? new List<Carthago.Models.DetectionEvent>()).Select(evt => evt.EventId))
+                .Where(IncidentDetectionLinkVm.IsExactEventId)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
             ReplaceCollection(TimelineItems,
                 incident.TimelineItems.Count == 0
                     ? new[] { TimelineItemVm.EmptyState("No incident story is available yet. Timeline items will appear here as detections, anomalies, risk changes, and analyst actions are recorded.") }
                     : incident.TimelineItems
                         .OrderBy(item => item.TimestampUtc)
-                        .Select(TimelineItemVm.From)
+                        .Select(item => TimelineItemVm.From(item, recordedEventIds))
                         .ToArray());
             ReplaceCollection(RelatedAnomalyDescriptions,
                 incident.RelatedAnomalies.Count == 0
@@ -1226,8 +1243,11 @@ namespace Carthago.Views
         public string RiskAfterLabel { get; init; } = "";
         public string EndpointLabel { get; init; } = "";
         public bool IsEmptyState { get; init; }
+        public string ExactEventId { get; init; } = string.Empty;
+        public bool CanInvestigateExactEvent => ExactEventId.Length > 0;
+        public string ExactEventIdLabel => CanInvestigateExactEvent ? $"Recorded event: {ExactEventId}" : string.Empty;
 
-        public static TimelineItemVm From(IncidentTimelineItem item)
+        public static TimelineItemVm From(IncidentTimelineItem item, IReadOnlySet<string> recordedEventIds)
         {
             var endpoint = item.DestinationHost ?? item.DestinationIp;
             var endpointLabel = string.IsNullOrWhiteSpace(endpoint)
@@ -1235,6 +1255,13 @@ namespace Carthago.Views
                 : string.IsNullOrWhiteSpace(item.SourceIp)
                     ? endpoint!
                     : $"{item.SourceIp} -> {endpoint}";
+
+            var exactEventId = string.Empty;
+            if (string.Equals(item.Type, "Detection", StringComparison.OrdinalIgnoreCase) &&
+                item.Details != null && item.Details.TryGetValue("EventId", out var eventId) &&
+                IncidentDetectionLinkVm.IsExactEventId(eventId) &&
+                recordedEventIds.Contains(eventId))
+                exactEventId = eventId;
 
             return new TimelineItemVm
             {
@@ -1245,6 +1272,7 @@ namespace Carthago.Views
                 Severity = string.IsNullOrWhiteSpace(item.Severity) ? "info" : item.Severity,
                 RiskAfterLabel = item.RiskScoreAfter.HasValue ? $"Risk after event: {item.RiskScoreAfter.Value}" : string.Empty,
                 EndpointLabel = endpointLabel,
+                ExactEventId = exactEventId,
                 IsEmptyState = false
             };
         }
