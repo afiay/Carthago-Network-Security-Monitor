@@ -848,6 +848,16 @@ namespace Carthago.Engine.Rules.Catalog
                 new R823_DsclLdapThenLdapsSynRule(),
                 new R824_PingProcessPublicIcmpTargetFanoutRule(),
                 new R825_PublicWebUploadThenServedGetRule(),
+                new R826_NotepadDistinctExternalSynRule(),
+                new R827_FingerPublicTargetFanoutRule(),
+                new R828_WgetDirectIpTarHttpGetRule(),
+                new R829_ZipTldExecutableHttpGetRule(),
+                new R830_DirectIpDistinctExecutableGetRule(),
+                new R831_MpCmdRunDirectIpArchiveGetRule(),
+                new R832_CertocPublicIpHttpGetRule(),
+                new R833_WordRemoteTemplateThenPowerShellTlsRule(),
+                new R834_DgaLikeDnsBurstThenScriptTlsRule(),
+                new R835_MshtaFetchThenRundll32TlsRule(),
             };
         }
 
