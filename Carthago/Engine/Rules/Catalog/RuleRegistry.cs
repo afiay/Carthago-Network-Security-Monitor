@@ -878,6 +878,16 @@ namespace Carthago.Engine.Rules.Catalog
                 new R853_ReportingPeerSourceMacChangeRule(),
                 new R854_PowershellAlternateNetworkTypeSynRule(),
                 new R855_HostdExternalHttpPostBurstRule(),
+                new R856_FrpcPublicTcp7000SynThenPayloadRule(),
+                new R857_AwkUnusualPublicTlsPayloadRule(),
+                new R858_HostdPublicTls9443BurstRule(),
+                new R859_PublicSshIngressThenEsxcliPublicTlsRule(),
+                new R860_Regsvr32PublicUdp1194FanoutRule(),
+                new R861_ThunderbirdZipGetThenBashTlsRule(),
+                new R862_Rundll32DnsTxtThenSameNameTlsRule(),
+                new R863_RsyncPublic873PayloadBurstRule(),
+                new R864_DockerProxyPublicSocksSynFanoutRule(),
+                new R865_CurlCmdGetThenCmdPublicSynRule(),
             };
         }
 
