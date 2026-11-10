@@ -75,7 +75,7 @@ namespace Carthago.Views
                 new[] { PrimaryWorkspaceQueueColumn, PrimaryWorkspaceDetailColumn },
                 new[] { PrimaryWorkspaceTopRow, PrimaryWorkspaceBottomRow },
                 new FrameworkElement[] { QueuePanel, InvestigationPanel },
-                new[] { 0.44, 0.56 },
+                new[] { 0.46, 0.54 },
                 18);
 
             // The evidence-review cards must reflow independently of the outer

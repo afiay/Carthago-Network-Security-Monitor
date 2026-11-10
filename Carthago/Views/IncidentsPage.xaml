@@ -139,8 +139,8 @@
           <RowDefinition x:Name="PrimaryWorkspaceBottomRow" Height="0"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-          <ColumnDefinition x:Name="PrimaryWorkspaceQueueColumn" Width="0.44*"/>
-          <ColumnDefinition x:Name="PrimaryWorkspaceDetailColumn" Width="0.56*"/>
+          <ColumnDefinition x:Name="PrimaryWorkspaceQueueColumn" Width="0.46*"/>
+          <ColumnDefinition x:Name="PrimaryWorkspaceDetailColumn" Width="0.54*"/>
         </Grid.ColumnDefinitions>
 
         <Border x:Name="QueuePanel" Grid.Column="0"
@@ -235,79 +235,65 @@
                 </ListBox.ItemContainerStyle>
                 <ListBox.ItemTemplate>
                   <DataTemplate>
-                    <Border Style="{StaticResource IncidentOpsQueueRow}" MinHeight="110" Padding="16,15" Margin="0,0,0,12" BorderThickness="1" BorderBrush="#2A4C62">
+                    <!-- GA UI-167: severity-first priority card; source-backed bindings only. -->
+                    <Border Style="{StaticResource IncidentOpsQueueRow}" MinHeight="148" Padding="0" Margin="0,0,0,12"
+                            BorderThickness="1" BorderBrush="#34566B" CornerRadius="12">
                       <Grid>
-                      <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="64"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="104"/>
-                      </Grid.ColumnDefinitions>
-                        <Border Grid.Column="0" Width="3" Margin="0,2,0,2" CornerRadius="2"
-                                Background="{Binding Severity, Converter={StaticResource SeverityBrush}}"
-                                HorizontalAlignment="Left" VerticalAlignment="Stretch"/>
-
-                      <Grid Grid.Column="0"
-                            Width="42"
-                            Height="42"
-                            VerticalAlignment="Top">
-                        <Ellipse Style="{StaticResource RiskScoreCircle}"
-                                 Width="42"
-                                 Height="42"
-                                 StrokeThickness="3"
-                                 Stroke="{Binding Severity, Converter={StaticResource SeverityBrush}}"/>
-                        <TextBlock Text="{Binding RiskScoreNumber}"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"
-                                   FontWeight="Bold"
-                                   FontSize="13"/>
-                      </Grid>
-
-                      <StackPanel Grid.Column="1"
-                                  Margin="8,0,10,0">
-                        <TextBlock Text="{Binding Title}"
-                                   FontWeight="SemiBold"
-                                   TextWrapping="Wrap"
-                                   ToolTip="{Binding Title}"/>
-                        <TextBlock Text="{Binding Summary}"
-                                   Foreground="{StaticResource TextSubtleBrush}"
-                                   Margin="0,4,0,0"
-                                   TextWrapping="Wrap"
-                                   ToolTip="{Binding Summary}"/>
-                        <TextBlock Text="{Binding SourceLabel}"
-                                   Foreground="{StaticResource TextMutedBrush}"
-                                   Margin="0,6,0,0"
-                                   TextWrapping="NoWrap"
-                                   TextTrimming="CharacterEllipsis"
-                                   ToolTip="{Binding SourceLabel}"/>
-                      </StackPanel>
-
-                      <StackPanel Grid.Column="2"
-                                  HorizontalAlignment="Right">
-                        <Border Style="{StaticResource RiskBadge}"
-                                BorderBrush="{Binding Severity, Converter={StaticResource SeverityBrush}}"
-                                Background="#0D1D31"
-                                HorizontalAlignment="Right">
-                          <TextBlock Text="{Binding SeverityUpper}"
-                                     Foreground="{Binding Severity, Converter={StaticResource SeverityBrush}}"
-                                     FontWeight="Bold"
-                                     FontSize="10.5"/>
-                        </Border>
-                        <Border Style="{StaticResource RiskBadge}"
-                                BorderBrush="#2A4560"
-                                Background="#091929"
-                                HorizontalAlignment="Right"
-                                Margin="0,8,0,0">
-                          <TextBlock Text="{Binding Status}"
-                                     Foreground="{StaticResource TextSubtleBrush}"
-                                     FontWeight="SemiBold"
-                                     FontSize="10.5"/>
-                        </Border>
-                        <TextBlock Text="{Binding UpdatedUtc, StringFormat={}{0:HH:mm:ss}}"
-                                   Foreground="{StaticResource TextMutedBrush}"
-                                   FontSize="11"
-                                   Margin="0,8,0,0"
-                                   HorizontalAlignment="Right"/>
-                      </StackPanel>
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="6"/>
+                          <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Background="{Binding Severity, Converter={StaticResource SeverityBrush}}"
+                                CornerRadius="5,0,0,5"/>
+                        <Grid Grid.Column="1" Margin="17,15,16,14">
+                          <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                          </Grid.RowDefinitions>
+                          <Grid Grid.Row="0">
+                            <Grid.ColumnDefinitions>
+                              <ColumnDefinition Width="*"/>
+                              <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                              <Border Style="{StaticResource RiskBadge}" BorderBrush="{Binding Severity, Converter={StaticResource SeverityBrush}}"
+                                      Background="#0D1D31" Margin="0,0,9,0">
+                                <TextBlock Text="{Binding SeverityUpper}" FontWeight="Bold" FontSize="10.5"
+                                           Foreground="{Binding Severity, Converter={StaticResource SeverityBrush}}"/>
+                              </Border>
+                              <TextBlock Text="{Binding Status}" FontSize="11" Foreground="{StaticResource TextSubtleBrush}"
+                                         VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <Border Grid.Column="1" Background="#0A2637" BorderBrush="#35566B" BorderThickness="1"
+                                    CornerRadius="8" Padding="9,5" Margin="8,0,0,0">
+                              <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="RISK " Foreground="{StaticResource TextMutedBrush}" FontSize="10"
+                                           VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                <TextBlock Text="{Binding RiskScoreNumber}" FontWeight="Bold" FontSize="17"
+                                           Foreground="{StaticResource TextBrush}"/>
+                              </StackPanel>
+                            </Border>
+                          </Grid>
+                          <StackPanel Grid.Row="1" Margin="0,11,0,11">
+                            <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="16"
+                                       Foreground="{StaticResource TextBrush}" TextWrapping="Wrap" ToolTip="{Binding Title}"/>
+                            <TextBlock Text="{Binding Summary}" Foreground="{StaticResource TextSubtleBrush}"
+                                       FontSize="12.5" Margin="0,6,0,0" TextWrapping="Wrap" ToolTip="{Binding Summary}"/>
+                          </StackPanel>
+                          <Border Grid.Row="2" BorderBrush="#28475C" BorderThickness="0,1,0,0" Padding="0,10,0,0">
+                            <Grid>
+                              <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                              </Grid.ColumnDefinitions>
+                              <TextBlock Text="{Binding SourceLabel}" FontSize="11.5" Foreground="{StaticResource AccentAltBrush}"
+                                         TextTrimming="CharacterEllipsis" ToolTip="{Binding SourceLabel}"/>
+                              <TextBlock Grid.Column="1" Text="{Binding UpdatedUtc, StringFormat={}{0:HH:mm:ss}}"
+                                         FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="10,0,0,0"/>
+                            </Grid>
+                          </Border>
+                        </Grid>
                       </Grid>
                     </Border>
                   </DataTemplate>
@@ -341,7 +327,7 @@
         </Border>
 
         <Border x:Name="InvestigationPanel" Grid.Column="1"
-                Style="{StaticResource IncidentOpsPanel}" Padding="22">
+                Style="{StaticResource IncidentOpsPanel}" Padding="24" BorderBrush="#39748A" BorderThickness="1.5">
           <Grid>
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto"/>
@@ -405,20 +391,20 @@
                       CornerRadius="12" Padding="0" Margin="0,0,0,8">
                 <Grid>
                   <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="5"/>
+                    <ColumnDefinition Width="7"/>
                     <ColumnDefinition Width="*"/>
                   </Grid.ColumnDefinitions>
                   <Border Grid.Column="0" Background="{Binding Selected.Severity, Converter={StaticResource SeverityBrush}}"
                           CornerRadius="3,0,0,3"/>
-                  <Grid Grid.Column="1" Margin="20,18,18,20">
+                  <Grid Grid.Column="1" Margin="22,21,20,23">
                     <Grid.ColumnDefinitions>
                       <ColumnDefinition Width="*"/>
-                      <ColumnDefinition Width="116"/>
+                      <ColumnDefinition Width="132"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0" Margin="0,0,18,0">
                       <TextBlock Text="SELECTED CASE / CORRELATED INCIDENT"
                                  Style="{StaticResource IncidentOpsEyebrow}" Margin="0,0,0,12"/>
-                      <TextBlock Text="{Binding Selected.Title}" FontSize="25" FontWeight="Bold"
+                      <TextBlock Text="{Binding Selected.Title}" FontSize="27" FontWeight="Bold"
                                  Foreground="{StaticResource TextBrush}" TextWrapping="Wrap"/>
                       <TextBlock Text="{Binding Selected.Summary}" FontSize="13"
                                  Foreground="{StaticResource TextSubtleBrush}"
@@ -433,10 +419,10 @@
                       <StackPanel HorizontalAlignment="Center">
                         <TextBlock Text="LOCAL RISK" Style="{StaticResource TinyStatusText}"
                                    HorizontalAlignment="Center"/>
-                        <Grid Width="86" Height="86" Margin="0,10,0,0">
-                          <Ellipse Style="{StaticResource RiskScoreCircle}" Width="86" Height="86"
+                        <Grid Width="98" Height="98" Margin="0,10,0,0">
+                          <Ellipse Style="{StaticResource RiskScoreCircle}" Width="98" Height="98"
                                    Stroke="{Binding Selected.Severity, Converter={StaticResource SeverityBrush}}"/>
-                          <TextBlock Text="{Binding Selected.RiskScoreNumber}" FontSize="26"
+                          <TextBlock Text="{Binding Selected.RiskScoreNumber}" FontSize="29"
                                      FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Grid>
                         <Border Style="{StaticResource RiskBadge}"
