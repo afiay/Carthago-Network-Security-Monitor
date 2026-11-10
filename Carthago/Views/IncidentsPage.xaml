@@ -765,22 +765,41 @@
             <TextBlock Text="06 / INCIDENT TIMELINE" Style="{StaticResource IncidentOpsEyebrow}"/>
             <TextBlock Text="Event chronology" FontSize="23" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,6,0,5" TextWrapping="Wrap"/>
             <TextBlock Text="Selected case activity" FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"/>
-            <!-- SOC-13: presentation filter only; underlying recorded story remains intact. -->
-            <ComboBox x:Name="TimelineFilterComboBox" Width="180" HorizontalAlignment="Left"
-                      Margin="0,12,0,5" Padding="8,5" FontSize="12"
-                      AutomationProperties.Name="Filter incident timeline by activity type">
-              <ComboBoxItem Content="All activity" IsSelected="True"/>
-              <ComboBoxItem Content="Detections"/>
-              <ComboBoxItem Content="Anomalies"/>
-              <ComboBoxItem Content="Risk changes"/>
-              <ComboBoxItem Content="Case actions"/>
-              <ComboBoxItem Content="Story updates"/>
-              <ComboBoxItem Content="Other activity"/>
-            </ComboBox>
+            <!-- SOC-14: intersect activity and case-relative time without changing the recorded chronology. -->
+            <WrapPanel Margin="0,12,0,6">
+              <StackPanel Margin="0,0,12,7">
+                <TextBlock Text="ACTIVITY TYPE" FontSize="10" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,5"/>
+                <ComboBox x:Name="TimelineFilterComboBox" Width="170" HorizontalAlignment="Left"
+                          Padding="8,5" FontSize="12"
+                          AutomationProperties.Name="Filter incident timeline by activity type">
+                  <ComboBoxItem Content="All activity" IsSelected="True"/>
+                  <ComboBoxItem Content="Detections"/>
+                  <ComboBoxItem Content="Anomalies"/>
+                  <ComboBoxItem Content="Risk changes"/>
+                  <ComboBoxItem Content="Case actions"/>
+                  <ComboBoxItem Content="Story updates"/>
+                  <ComboBoxItem Content="Other activity"/>
+                </ComboBox>
+              </StackPanel>
+              <StackPanel Margin="0,0,0,7">
+                <TextBlock Text="RECORDED TIME RANGE" FontSize="10" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,5"/>
+                <ComboBox x:Name="TimelineWindowComboBox" Width="170" HorizontalAlignment="Left"
+                          Padding="8,5" FontSize="12"
+                          AutomationProperties.Name="Filter incident timeline by recorded time window">
+                  <ComboBoxItem Content="Entire case" IsSelected="True"/>
+                  <ComboBoxItem Content="Last 15 minutes"/>
+                  <ComboBoxItem Content="Last hour"/>
+                  <ComboBoxItem Content="Last 24 hours"/>
+                  <ComboBoxItem Content="Last 7 days"/>
+                </ComboBox>
+              </StackPanel>
+            </WrapPanel>
             <TextBlock Text="{Binding Selected.TimelineFilterSummary}" FontSize="11"
                        Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"/>
+            <TextBlock Text="{Binding Selected.TimelineWindowContext}" FontSize="11" Margin="0,4,0,0"
+                       Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"/>
             <Border Height="1" Background="#31536A" Margin="0,15,0,15"/>
-            <TextBlock Text="No timeline entries match this activity filter. Choose All activity to see the full chronology."
+            <TextBlock Text="No timeline entries match these filters. Choose All activity and Entire case to see the complete recorded chronology."
                        Visibility="{Binding Selected.HasNoMatchingTimelineItems, Converter={StaticResource TimelineEventVisibility}}"
                        FontSize="12" Foreground="{StaticResource TextSubtleBrush}"
                        TextWrapping="Wrap" Margin="0,0,0,12"/>
