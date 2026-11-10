@@ -85,7 +85,7 @@ public partial class MainWindow
         // GA UI-91: dock the unavailable CLI beside the local event stream on Wide;
         // stack below the full-width, horizontally scrollable event table otherwise.
         var wideLower = mode == ResponsiveLayoutMode.Wide;
-        DashboardLowerEventsColumn.Width = new GridLength(wideLower ? 2.65 : 1, GridUnitType.Star);
+        DashboardLowerEventsColumn.Width = new GridLength(wideLower ? 2.25 : 1, GridUnitType.Star);
         DashboardLowerCliColumn.Width = wideLower
             ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
         DashboardLowerPrimaryRow.Height = GridLength.Auto;
@@ -99,6 +99,15 @@ public partial class MainWindow
         DashboardCliCompanionPanel.Margin = new Thickness(0);
         DashboardCliCompanionPanel.Width = double.NaN;
         DashboardCliCompanionPanel.HorizontalAlignment = HorizontalAlignment.Stretch;
+
+        // GA UI-162: keep the terminal as a full evidence companion on Wide, but
+        // avoid a second 560-unit visual-only slab beneath the live table when stacked.
+        // This is presentation-only: the CLI remains unavailable in every mode.
+        DashboardCliCompanionPanel.MinHeight = wideLower ? 560 : 300;
+        DashboardCliCapabilityRow.Height = wideLower
+            ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
+        DashboardCliCapabilityPanel.Visibility = wideLower
+            ? Visibility.Visible : Visibility.Collapsed;
 
         if (mode == ResponsiveLayoutMode.Compact)
         {
