@@ -18,6 +18,8 @@ namespace Carthago.Views
     public partial class NetworkInvestigationPage : UserControl
     {
         private static readonly NetworkBoundaryProfile LocalAddressDefaults = NetworkBoundaryProfile.DefaultLocal();
+        private Incident[] _cachedIncidentCases = Array.Empty<Incident>();
+        private DetectionEvent[] _cachedDetectionEvents = Array.Empty<DetectionEvent>();
 
         public event RoutedEventHandler? SearchRequested;
         public event RoutedEventHandler? TrafficRequested;
@@ -114,21 +116,28 @@ namespace Carthago.Views
             var trafficSnapshot = traffic.Take(200).ToArray();
             var detectionSnapshot = detections.Take(500).ToArray();
             var incidentSnapshot = incidents.Take(250).ToArray();
+            _cachedIncidentCases = incidentSnapshot;
+            _cachedDetectionEvents = detectionSnapshot;
             var isAddress = IPAddress.TryParse(term, out var searchedAddress);
             int searchedPort = 0;
             var isPortQuery = !isAddress && TryParsePortQuery(term, out searchedPort);
+            string searchedEventId = string.Empty;
+            var isEventQuery = term.StartsWith("event:", StringComparison.OrdinalIgnoreCase);
+            var isValidEventQuery = isEventQuery && TryParseEventQuery(term, out searchedEventId);
 
             var trafficMatches = trafficSnapshot.Where(r =>
-                term.Length == 0 || (isAddress
+                term.Length == 0 || (!isEventQuery && (isAddress
                     ? MatchesAddress(r.Source, searchedAddress!) || MatchesAddress(r.Destination, searchedAddress!)
                     : isPortQuery
                         ? r.SourcePort == searchedPort || r.DestinationPort == searchedPort
                     : Contains(r.Source, term) || Contains(r.Destination, term) || Contains(r.Protocol, term)
                       || Contains(r.ApplicationService, term) || Contains(r.ProcessName, term)
-                      || Contains(r.WhoisCountry, term) || Contains(r.Sni, term) || Contains(r.HttpHost, term)))
+                      || Contains(r.WhoisCountry, term) || Contains(r.Sni, term) || Contains(r.HttpHost, term))))
                 .ToArray();
             var detectionMatches = detectionSnapshot.Where(d =>
-                term.Length == 0 || (isAddress
+                term.Length == 0 || (isEventQuery
+                    ? isValidEventQuery && string.Equals(d.EventId, searchedEventId, StringComparison.OrdinalIgnoreCase)
+                    : isAddress
                     ? MatchesAddress(d.SourceIp, searchedAddress!) || MatchesAddress(d.DestinationIp, searchedAddress!)
                     : isPortQuery
                         ? d.SourcePort == searchedPort || d.DestinationPort == searchedPort
@@ -142,7 +151,9 @@ namespace Carthago.Views
             // These are actual incident-cache entries, not incidents inferred
             // from a traffic IP match. Port-only queries do not match cases.
             var incidentMatches = incidentSnapshot.Where(incident => term.Length > 0 &&
-                (isAddress
+                (isEventQuery
+                    ? isValidEventQuery && IncidentReferencesEvent(incident, searchedEventId)
+                    : isAddress
                     ? MatchesAddress(incident.PrimarySourceIp, searchedAddress!)
                       || MatchesAddress(incident.PrimaryDestinationIp, searchedAddress!)
                     : !isPortQuery &&
@@ -162,14 +173,37 @@ namespace Carthago.Views
             SetEvidenceInspector(TrafficEvidenceExpander, TrafficEvidenceFields, "Selected traffic evidence · choose a row above", null);
             SetEvidenceInspector(DetectionEvidenceExpander, DetectionEvidenceFields, "Selected detection evidence · choose a row above", null);
             SetEvidenceInspector(IncidentEvidenceExpander, IncidentEvidenceFields, "Selected incident case context · choose a row above", null);
+            ClearExactLinks();
+            if (isValidEventQuery && detectionMatches.Length > 0)
+            {
+                // Exact-ID pivots select the actual retained event, making its
+                // evidence and case references immediately accessible.
+                InvestigationDetectionsGrid.SelectedItem = detectionMatches[0];
+                InvestigationDetectionsGrid.ScrollIntoView(detectionMatches[0]);
+            }
             TrafficCountText.Text = $"{trafficMatches.Length:N0} matching retained records";
-            DetectionCountText.Text = $"{detectionMatches.Length:N0} matching retained detections";
-            IncidentCountText.Text = term.Length == 0
+            DetectionCountText.Text = isEventQuery && !isValidEventQuery
+                ? "Invalid event ID · no detection lookup performed"
+                : $"{detectionMatches.Length:N0} matching retained detections";
+            IncidentCountText.Text = isEventQuery && !isValidEventQuery
+                ? "Invalid event ID · no case lookup performed"
+                : term.Length == 0
                 ? $"Enter an incident ID, IP or case title to search up to {incidentSnapshot.Length:N0} cached cases"
-                : $"{incidentMatches.Length:N0} matching cached incidents (up to {incidentSnapshot.Length:N0} checked)";
-            ScopeText.Text = term.Length == 0
+                : $"{incidentMatches.Length:N0} matching cached incidents (up to {incidentSnapshot.Length:N0} checked{(isEventQuery ? "; explicit event-ID references only" : string.Empty)})";
+            ScopeText.Text = isEventQuery && !isValidEventQuery
+                ? "Invalid event: query. Supply an exact event ID between 1 and 128 characters after the colon."
+                : term.Length == 0
                 ? $"Local snapshot: {trafficSnapshot.Length:N0} traffic rows and {detectionSnapshot.Length:N0} detection events · showing all retained items"
-                : $"Local snapshot: {trafficSnapshot.Length:N0} traffic rows and {detectionSnapshot.Length:N0} detection events · {(isAddress ? "exact IP" : isPortQuery ? "exact source/destination port" : "recorded text")} match for '{term}'";
+                : $"Local snapshot: {trafficSnapshot.Length:N0} traffic rows and {detectionSnapshot.Length:N0} detection events · {(isEventQuery ? "exact event ID" : isAddress ? "exact IP" : isPortQuery ? "exact source/destination port" : "recorded text")} match for '{term}'";
+        }
+
+        private static bool TryParseEventQuery(string term, out string eventId)
+        {
+            eventId = string.Empty;
+            if (!term.StartsWith("event:", StringComparison.OrdinalIgnoreCase))
+                return false;
+            eventId = term[6..].Trim();
+            return eventId.Length is >= 1 and <= 128;
         }
 
         private static bool TryParsePortQuery(string term, out int port)
@@ -199,21 +233,139 @@ namespace Carthago.Views
         private void InvestigationDetectionsGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (InvestigationDetectionsGrid.SelectedItem is DetectionEvent row)
+            {
                 SetEvidenceInspector(DetectionEvidenceExpander, DetectionEvidenceFields,
                     "Selected detection evidence · event details", BuildDetectionEvidence(row));
+                ShowExactCaseLinks(row);
+            }
             else
+            {
                 SetEvidenceInspector(DetectionEvidenceExpander, DetectionEvidenceFields,
                     "Selected detection evidence · choose a row above", null);
+                ClearCaseLinks();
+            }
         }
 
         private void InvestigationIncidentsGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (InvestigationIncidentsGrid.SelectedItem is Incident row)
+            {
                 SetEvidenceInspector(IncidentEvidenceExpander, IncidentEvidenceFields,
                     "Selected incident case context · recorded case", BuildIncidentEvidence(row));
+                ShowExactDetectionLinks(row);
+            }
             else
+            {
                 SetEvidenceInspector(IncidentEvidenceExpander, IncidentEvidenceFields,
                     "Selected incident case context · choose a row above", null);
+                ClearDetectionLinks();
+            }
+        }
+
+        private static bool IncidentReferencesEvent(Incident incident, string? eventId)
+        {
+            if (string.IsNullOrWhiteSpace(eventId))
+                return false;
+            return incident.RelatedEventIds?.Any(id =>
+                       string.Equals(id, eventId, StringComparison.OrdinalIgnoreCase)) == true
+                   || incident.RelatedEvents?.Any(evt => evt is not null &&
+                       string.Equals(evt.EventId, eventId, StringComparison.OrdinalIgnoreCase)) == true;
+        }
+
+        private void ShowExactCaseLinks(DetectionEvent detection)
+        {
+            LinkedCasesPanel.Visibility = Visibility.Visible;
+            var matches = _cachedIncidentCases
+                .Where(incident => !string.IsNullOrWhiteSpace(incident.Id) &&
+                                   IncidentReferencesEvent(incident, detection.EventId))
+                .GroupBy(incident => incident.Id, StringComparer.OrdinalIgnoreCase)
+                .Select(group => group.First())
+                .Take(25)
+                .Select(incident => new KeyValuePair<string, Incident>(
+                    $"{Limit(incident.Id, 34)} · {Limit(incident.Title, 65)}", incident))
+                .ToArray();
+
+            LinkedCasesCombo.ItemsSource = matches;
+            LinkedCasesCombo.SelectedIndex = matches.Length == 0 ? -1 : 0;
+            LinkedCasesStatusText.Text = string.IsNullOrWhiteSpace(detection.EventId)
+                ? "This detection has no recorded event ID; exact case linkage is unavailable."
+                : matches.Length == 0
+                    ? $"No explicit event-ID reference found in {_cachedIncidentCases.Length:N0} cached cases. This does not rule out journal or older cases."
+                    : $"{matches.Length:N0} actual cached case(s) explicitly reference this event ID (up to 25 shown).";
+            OpenLinkedCaseButton.IsEnabled = LinkedCasesCombo.SelectedItem is KeyValuePair<string, Incident>;
+        }
+
+        private void ShowExactDetectionLinks(Incident incident)
+        {
+            LinkedDetectionsPanel.Visibility = Visibility.Visible;
+            var referencedIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            if (incident.RelatedEventIds is not null)
+                foreach (var id in incident.RelatedEventIds.Where(id => !string.IsNullOrWhiteSpace(id)))
+                    referencedIds.Add(id);
+            if (incident.RelatedEvents is not null)
+                foreach (var evt in incident.RelatedEvents.Where(evt => evt is not null && !string.IsNullOrWhiteSpace(evt.EventId)))
+                    referencedIds.Add(evt.EventId);
+
+            var matches = _cachedDetectionEvents
+                .Where(evt => !string.IsNullOrWhiteSpace(evt.EventId) && referencedIds.Contains(evt.EventId))
+                .GroupBy(evt => evt.EventId, StringComparer.OrdinalIgnoreCase)
+                .Select(group => group.First())
+                .Take(25)
+                .Select(evt => new KeyValuePair<string, DetectionEvent>(
+                    $"{Limit(evt.EventId, 42)} · {Limit(evt.RuleId, 22)}", evt))
+                .ToArray();
+
+            LinkedDetectionsCombo.ItemsSource = matches;
+            LinkedDetectionsCombo.SelectedIndex = matches.Length == 0 ? -1 : 0;
+            LinkedDetectionsStatusText.Text = referencedIds.Count == 0
+                ? "This cached case lists no related event IDs. No detection link is inferred from its IP addresses."
+                : matches.Length == 0
+                    ? $"Case references {referencedIds.Count:N0} event ID(s), but none are in the retained {_cachedDetectionEvents.Length:N0}-row detection snapshot."
+                    : $"{matches.Length:N0} explicitly related detection(s) are in the retained snapshot (up to 25 shown).";
+            InspectLinkedDetectionButton.IsEnabled = LinkedDetectionsCombo.SelectedItem is KeyValuePair<string, DetectionEvent>;
+        }
+
+        private void ClearExactLinks()
+        {
+            ClearCaseLinks();
+            ClearDetectionLinks();
+        }
+
+        private void ClearCaseLinks()
+        {
+            LinkedCasesCombo.ItemsSource = null;
+            LinkedCasesPanel.Visibility = Visibility.Collapsed;
+            OpenLinkedCaseButton.IsEnabled = false;
+        }
+
+        private void ClearDetectionLinks()
+        {
+            LinkedDetectionsCombo.ItemsSource = null;
+            LinkedDetectionsPanel.Visibility = Visibility.Collapsed;
+            InspectLinkedDetectionButton.IsEnabled = false;
+        }
+
+        private void LinkedCasesCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+            => OpenLinkedCaseButton.IsEnabled = LinkedCasesCombo.SelectedItem is KeyValuePair<string, Incident>;
+
+        private void LinkedDetectionsCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+            => InspectLinkedDetectionButton.IsEnabled = LinkedDetectionsCombo.SelectedItem is KeyValuePair<string, DetectionEvent>;
+
+        private void OpenLinkedCase_Click(object sender, RoutedEventArgs e)
+        {
+            if (LinkedCasesCombo.SelectedItem is KeyValuePair<string, Incident> link &&
+                !string.IsNullOrWhiteSpace(link.Value.Id))
+                IncidentRequested?.Invoke(link.Value.Id);
+        }
+
+        private void InspectLinkedDetection_Click(object sender, RoutedEventArgs e)
+        {
+            if (LinkedDetectionsCombo.SelectedItem is not KeyValuePair<string, DetectionEvent> link ||
+                string.IsNullOrWhiteSpace(link.Value.EventId) || link.Value.EventId.Length > 128)
+                return;
+
+            InvestigationSearchText.Text = "event:" + link.Value.EventId;
+            SearchRequested?.Invoke(this, new RoutedEventArgs());
         }
 
         private static void SetEvidenceInspector(Expander panel, ItemsControl fields, string title,

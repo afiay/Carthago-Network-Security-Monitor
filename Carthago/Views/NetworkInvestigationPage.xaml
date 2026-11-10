@@ -31,7 +31,7 @@
           <WrapPanel Margin="0,16,0,0">
             <TextBox x:Name="InvestigationSearchText" Width="270" MinHeight="36" MaxLength="256" Margin="0,0,8,8"
                      Style="{StaticResource SearchBox}" KeyDown="InvestigationSearchText_KeyDown"
-                     ToolTip="Exact IP, port:443, or text from retained rule IDs, domains, event/flow IDs and traffic/detection metadata"
+                     ToolTip="Exact IP, port:443, event:&lt;exact-event-id&gt;, or text from retained rule IDs, domains, flow IDs and traffic/detection metadata"
                      AutomationProperties.Name="Network investigation search"/>
             <Button Content="Investigate" MinWidth="116" Height="36" Margin="0,0,8,8"
                     Style="{StaticResource PrimaryButton}" Click="Investigate_Click"/>
@@ -145,6 +145,24 @@
                 </ScrollViewer>
                 <TextBlock Text="Confidence score is not a calibrated probability; flow and correlation identifiers do not prove membership in an incident. Free-form/raw evidence is intentionally excluded."
                            Foreground="{StaticResource TextMutedBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,12,0,0"/>
+                <Border x:Name="LinkedCasesPanel" Visibility="Collapsed" BorderBrush="#2B5870" BorderThickness="1,1,0,0"
+                        Margin="0,14,0,0" Padding="0,12,0,0">
+                  <StackPanel>
+                    <TextBlock Text="EXACT EVENT-TO-CASE REFERENCES" Foreground="{StaticResource AccentAltBrush}"
+                               FontSize="11" FontWeight="Bold"/>
+                    <TextBlock x:Name="LinkedCasesStatusText" Text="Select a detection to check actual cached case references."
+                               Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,5,0,10"/>
+                    <WrapPanel>
+                      <ComboBox x:Name="LinkedCasesCombo" Width="365" Height="34" Margin="0,0,8,8"
+                                DisplayMemberPath="Key" SelectionChanged="LinkedCasesCombo_SelectionChanged"
+                                AutomationProperties.Name="Cases explicitly referencing selected detection event"/>
+                      <Button x:Name="OpenLinkedCaseButton" Content="Open linked case" IsEnabled="False"
+                              Style="{StaticResource SecondaryButton}" MinWidth="140" Height="34" Margin="0,0,0,8"
+                              Click="OpenLinkedCase_Click"
+                              ToolTip="Opens only an actual cached incident whose related event IDs explicitly include this event"/>
+                    </WrapPanel>
+                  </StackPanel>
+                </Border>
               </StackPanel>
             </Border>
           </Expander>
@@ -188,6 +206,24 @@
                 <ScrollViewer MaxHeight="255" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                   <ItemsControl x:Name="IncidentEvidenceFields" ItemTemplate="{StaticResource EvidenceInspectorFieldTemplate}"/>
                 </ScrollViewer>
+                <Border x:Name="LinkedDetectionsPanel" Visibility="Collapsed" BorderBrush="#2B5870" BorderThickness="1,1,0,0"
+                        Margin="0,14,0,0" Padding="0,12,0,0">
+                  <StackPanel>
+                    <TextBlock Text="EXPLICITLY RELATED DETECTION EVENTS" Foreground="{StaticResource AccentAltBrush}"
+                               FontSize="11" FontWeight="Bold"/>
+                    <TextBlock x:Name="LinkedDetectionsStatusText" Text="Select a case to inspect event IDs recorded as related to it."
+                               Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,5,0,10"/>
+                    <WrapPanel>
+                      <ComboBox x:Name="LinkedDetectionsCombo" Width="365" Height="34" Margin="0,0,8,8"
+                                DisplayMemberPath="Key" SelectionChanged="LinkedDetectionsCombo_SelectionChanged"
+                                AutomationProperties.Name="Retained detections explicitly listed in selected case"/>
+                      <Button x:Name="InspectLinkedDetectionButton" Content="Inspect linked event" IsEnabled="False"
+                              Style="{StaticResource SecondaryButton}" MinWidth="152" Height="34" Margin="0,0,0,8"
+                              Click="InspectLinkedDetection_Click"
+                              ToolTip="Opens an exact event-ID search in this investigation workspace; does not infer links from IP addresses"/>
+                    </WrapPanel>
+                  </StackPanel>
+                </Border>
               </StackPanel>
             </Border>
           </Expander>
@@ -198,7 +234,7 @@
               CornerRadius="12" Padding="16">
         <StackPanel>
           <TextBlock Text="EVIDENCE BOUNDARY" Foreground="{StaticResource AccentAltBrush}" FontWeight="Bold" FontSize="11"/>
-          <TextBlock Text="Traffic and detections are limited to the last 200 and 500 local UI rows; incident searches use up to 250 actual cached cases, not the complete journal. An IP match across these datasets is an investigation lead, not automatic incident correlation. Missing process, location or payload fields do not prove that activity did not occur."
+          <TextBlock Text="Traffic and detections are limited to the last 200 and 500 local UI rows; incident searches use up to 250 actual cached cases, not the complete journal. Exact event-ID links require the case to explicitly list that event; no link can be inferred from an IP match. Missing process, location, event or payload fields do not prove that activity did not occur."
                      TextWrapping="Wrap" Foreground="{StaticResource TextMutedBrush}" Margin="0,7,0,12"/>
           <WrapPanel>
             <Button Content="Analytics / Geographic Context" Style="{StaticResource SecondaryButton}"
