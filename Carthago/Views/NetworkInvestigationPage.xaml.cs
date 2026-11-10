@@ -2,6 +2,7 @@
 // File: Views/NetworkInvestigationPage.xaml.cs
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Windows;
@@ -10,11 +11,14 @@ using System.Windows.Input;
 using Carthago.Analytics.Models;
 using Carthago.Models;
 using Carthago.Services;
+using Carthago.Services.EnvironmentTuning;
 
 namespace Carthago.Views
 {
     public partial class NetworkInvestigationPage : UserControl
     {
+        private static readonly NetworkBoundaryProfile LocalAddressDefaults = NetworkBoundaryProfile.DefaultLocal();
+
         public event RoutedEventHandler? SearchRequested;
         public event RoutedEventHandler? TrafficRequested;
         public event RoutedEventHandler? DetectionsRequested;
@@ -150,6 +154,14 @@ namespace Carthago.Views
             InvestigationTrafficGrid.ItemsSource = trafficMatches;
             InvestigationDetectionsGrid.ItemsSource = detectionMatches;
             InvestigationIncidentsGrid.ItemsSource = incidentMatches;
+            InvestigationTrafficGrid.SelectedItem = null;
+            InvestigationDetectionsGrid.SelectedItem = null;
+            InvestigationIncidentsGrid.SelectedItem = null;
+            // A refreshed bounded snapshot must not leave details from an older
+            // selection visible after the underlying grid has been replaced.
+            SetEvidenceInspector(TrafficEvidenceExpander, TrafficEvidenceFields, "Selected traffic evidence · choose a row above", null);
+            SetEvidenceInspector(DetectionEvidenceExpander, DetectionEvidenceFields, "Selected detection evidence · choose a row above", null);
+            SetEvidenceInspector(IncidentEvidenceExpander, IncidentEvidenceFields, "Selected incident case context · choose a row above", null);
             TrafficCountText.Text = $"{trafficMatches.Length:N0} matching retained records";
             DetectionCountText.Text = $"{detectionMatches.Length:N0} matching retained detections";
             IncidentCountText.Text = term.Length == 0
@@ -173,6 +185,259 @@ namespace Carthago.Views
 
         private static bool Contains(string? value, string text)
             => value?.Contains(text, StringComparison.OrdinalIgnoreCase) == true;
+
+        private void InvestigationTrafficGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (InvestigationTrafficGrid.SelectedItem is TrafficRecord row)
+                SetEvidenceInspector(TrafficEvidenceExpander, TrafficEvidenceFields,
+                    "Selected traffic evidence · recorded fields", BuildTrafficEvidence(row));
+            else
+                SetEvidenceInspector(TrafficEvidenceExpander, TrafficEvidenceFields,
+                    "Selected traffic evidence · choose a row above", null);
+        }
+
+        private void InvestigationDetectionsGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (InvestigationDetectionsGrid.SelectedItem is DetectionEvent row)
+                SetEvidenceInspector(DetectionEvidenceExpander, DetectionEvidenceFields,
+                    "Selected detection evidence · event details", BuildDetectionEvidence(row));
+            else
+                SetEvidenceInspector(DetectionEvidenceExpander, DetectionEvidenceFields,
+                    "Selected detection evidence · choose a row above", null);
+        }
+
+        private void InvestigationIncidentsGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (InvestigationIncidentsGrid.SelectedItem is Incident row)
+                SetEvidenceInspector(IncidentEvidenceExpander, IncidentEvidenceFields,
+                    "Selected incident case context · recorded case", BuildIncidentEvidence(row));
+            else
+                SetEvidenceInspector(IncidentEvidenceExpander, IncidentEvidenceFields,
+                    "Selected incident case context · choose a row above", null);
+        }
+
+        private static void SetEvidenceInspector(Expander panel, ItemsControl fields, string title,
+            IReadOnlyList<KeyValuePair<string, string>>? details)
+        {
+            panel.Header = title;
+            fields.ItemsSource = details;
+            panel.IsExpanded = details is { Count: > 0 };
+        }
+
+        private static IReadOnlyList<KeyValuePair<string, string>> BuildTrafficEvidence(TrafficRecord row)
+        {
+            var fields = new List<KeyValuePair<string, string>>();
+            Add(fields, "Record · local ID", row.Id.ToString("N"));
+            Add(fields, "Record · observed at", row.Timestamp);
+            Add(fields, "Endpoints · source", row.Source);
+            Add(fields, "Endpoints · source scope", DescribeScope(row.Source));
+            Add(fields, "Endpoints · source port", row.SourcePort?.ToString());
+            Add(fields, "Endpoints · destination", row.Destination);
+            Add(fields, "Endpoints · destination scope", DescribeScope(row.Destination));
+            Add(fields, "Endpoints · destination port", row.DestinationPort?.ToString());
+            Add(fields, "Endpoints · source MAC", row.MacSource);
+            Add(fields, "Endpoints · destination MAC", row.MacDestination);
+            Add(fields, "Packet · network protocol", row.Protocol);
+            Add(fields, "Packet · IP version", row.IpVersion?.ToString());
+            Add(fields, "Packet · captured length", row.Length > 0 ? $"{row.Length:N0} bytes" : null);
+            Add(fields, "Packet · transport length", row.L4Len?.ToString());
+            Add(fields, "Packet · flags", row.Flags);
+            Add(fields, "Packet · TTL", row.TTL);
+            Add(fields, "Application · protocol", row.ApplicationProtocol);
+            Add(fields, "Application · service", row.ApplicationService);
+            Add(fields, "Application · HTTP method", row.HttpMethod);
+            Add(fields, "Application · HTTP host", row.HttpHost);
+            Add(fields, "Application · DNS query", row.DnsQname);
+            Add(fields, "Application · DNS type", row.DnsQtype);
+            Add(fields, "Application · DNS result", row.DnsRcode);
+            Add(fields, "Application · TLS SNI", row.Sni);
+            Add(fields, "Application · TLS version", row.TlsVersion);
+            Add(fields, "Application · JA3", row.Ja3);
+            Add(fields, "Application · JA4", row.Ja4);
+            Add(fields, "Application · JA4S", row.Ja4S);
+            Add(fields, "Application · QUIC version", row.QuicVersion);
+            Add(fields, "Host · process name", row.ProcessName);
+            Add(fields, "Host · process ID", row.ProcessId > 0 ? row.ProcessId.ToString() : null);
+            Add(fields, "Host · network type", row.NetworkType);
+            Add(fields, "Host · VPN classified", FormatOptionalBoolean(row.IsVpn));
+            Add(fields, "Host · proxy classified", FormatOptionalBoolean(row.IsProxy));
+            Add(fields, "Enrichment · source country", row.SrcCountry);
+            Add(fields, "Enrichment · destination country", row.DstCountry);
+            Add(fields, "Enrichment · WHOIS country (endpoint unspecified)", row.WhoisCountry);
+            Add(fields, "Enrichment · WHOIS organization", row.WhoisOrganization);
+            Add(fields, "Enrichment · WHOIS ASN", row.WhoisASN);
+            return fields;
+        }
+
+        private static IReadOnlyList<KeyValuePair<string, string>> BuildDetectionEvidence(DetectionEvent row)
+        {
+            var fields = new List<KeyValuePair<string, string>>();
+            Add(fields, "Event · ID", row.EventId);
+            Add(fields, "Event · timestamp (UTC when known)", FormatUtc(row.TimestampUtc));
+            Add(fields, "Rule · ID", row.RuleId);
+            Add(fields, "Rule · name", row.RuleName);
+            Add(fields, "Rule · severity", row.Severity.ToString());
+            Add(fields, "Rule · description", row.Description);
+            Add(fields, "Rule · maturity at event", row.RuleMaturityAtDetection);
+            Add(fields, "Rule · revision at event", row.RuleRevisionAtDetection > 0 ? row.RuleRevisionAtDetection.ToString() : null);
+            Add(fields, "Evidence · confidence label", row.ConfidenceLabel.ToString());
+            Add(fields, "Evidence · confidence score",
+                row.ConfidenceLabel == DetectionConfidenceLabel.Unknown && row.ConfidenceScore == 0
+                    ? null : row.ConfidenceScore.ToString("0.###"));
+            Add(fields, "Event · occurrence count", row.Count > 0 ? row.Count.ToString() : null);
+            Add(fields, "Event · evaluation window", row.WindowSeconds > 0 ? $"{row.WindowSeconds} seconds" : null);
+            Add(fields, "Endpoints · source", row.SourceIp);
+            Add(fields, "Endpoints · source scope", DescribeScope(row.SourceIp));
+            Add(fields, "Endpoints · source port", row.SourcePort?.ToString());
+            Add(fields, "Endpoints · destination", row.DestinationIp);
+            Add(fields, "Endpoints · destination scope", DescribeScope(row.DestinationIp));
+            Add(fields, "Endpoints · destination port", row.DestinationPort?.ToString());
+            Add(fields, "Endpoints · destination host", row.DestinationHost);
+            Add(fields, "Event · protocol", row.Protocol);
+            Add(fields, "Host · process name", row.ProcessName);
+            Add(fields, "Enrichment · country (endpoint unspecified)", row.Country);
+            Add(fields, "Enrichment · ASN", row.Asn);
+            Add(fields, "Fingerprint · JA4", row.Ja4);
+            Add(fields, "Fingerprint · HASSH", row.Hassh);
+            Add(fields, "Correlation · packet ID", row.PacketId);
+            Add(fields, "Correlation · flow ID", row.FlowId);
+            Add(fields, "Correlation · correlation ID", row.CorrelationId);
+            Add(fields, "Delivery · local journal", row.DeliveryStatus.ToString());
+            Add(fields, "Delivery · persisted UTC", row.PersistedAtUtc.HasValue ? FormatUtc(row.PersistedAtUtc.Value) : null);
+            Add(fields, "Delivery · external sink", row.ExternalDeliveryStatus.ToString());
+            Add(fields, "Sensor · ID", row.SensorId);
+            Add(fields, "Sensor · site", row.SiteId);
+            Add(fields, "Sensor · capture interface", row.CaptureInterface);
+
+            var evidence = row.StructuredEvidence?.Items;
+            if (evidence is null)
+            {
+                Add(fields, "Structured evidence · approved metadata", null);
+            }
+            else
+            {
+                // IsSensitive defaults to false, including for arbitrary legacy
+                // Evidence strings. Only explicitly approved typed metadata may
+                // have its value shown here; the raw legacy field stays hidden.
+                var approved = evidence.Select(item =>
+                    (Item: item, Value: TryGetApprovedEvidenceValue(item)))
+                    .Where(entry => entry.Value is not null)
+                    .Take(12).ToArray();
+                Add(fields, "Structured evidence · approved metadata",
+                    $"Showing {approved.Length} approved typed entries of {evidence.Count} total (maximum 12 shown; all other values withheld)");
+                foreach (var entry in approved)
+                    Add(fields, $"Evidence · {entry.Item.Key.Trim().ToLowerInvariant()}", entry.Value);
+            }
+
+            return fields;
+        }
+
+        private static IReadOnlyList<KeyValuePair<string, string>> BuildIncidentEvidence(Incident row)
+        {
+            var fields = new List<KeyValuePair<string, string>>();
+            Add(fields, "Case · ID", row.Id);
+            Add(fields, "Case · title", row.Title);
+            Add(fields, "Case · category", row.Category);
+            Add(fields, "Case · severity", row.Severity);
+            Add(fields, "Case · status", row.Status);
+            Add(fields, "Case · risk score", row.RiskScore.ToString());
+            Add(fields, "Case · primary rule", row.PrimaryRuleId);
+            Add(fields, "Case · related rule IDs", row.RelatedRuleIds?.Count.ToString());
+            Add(fields, "Case · related event IDs", row.RelatedEventIds?.Count.ToString());
+            Add(fields, "Case · timeline entries", row.TimelineItems?.Count.ToString());
+            Add(fields, "Case · occurrence count", row.OccurrenceCount > 0 ? row.OccurrenceCount.ToString() : null);
+            Add(fields, "Case · first observed UTC", FormatUtc(row.FirstSeenUtc));
+            Add(fields, "Case · last observed UTC", FormatUtc(row.LastSeenUtc));
+            Add(fields, "Case · created UTC", FormatUtc(row.CreatedUtc));
+            Add(fields, "Case · updated UTC", FormatUtc(row.UpdatedUtc));
+            Add(fields, "Endpoints · source", row.PrimarySourceIp);
+            Add(fields, "Endpoints · source scope", DescribeScope(row.PrimarySourceIp));
+            Add(fields, "Endpoints · destination", row.PrimaryDestinationIp);
+            Add(fields, "Endpoints · destination scope", DescribeScope(row.PrimaryDestinationIp));
+            Add(fields, "Endpoints · destination host", row.PrimaryDestinationHost);
+            Add(fields, "Correlation · reason", row.CorrelationReason);
+            return fields;
+        }
+
+        private static string DescribeScope(string? address)
+        {
+            if (!IPAddress.TryParse(address, out var ip))
+                return string.IsNullOrWhiteSpace(address) ? "Not recorded" : "Unclassified (not an IP address)";
+
+            // This is an analyst display hint, not a sensor-network inventory
+            // or a claim that an address is reachable via the public Internet.
+            // Map IPv4-mapped IPv6 before matching private IPv4 ranges.
+            var normalized = ip.IsIPv4MappedToIPv6 ? ip.MapToIPv4().ToString() : ip.ToString();
+            var result = LocalAddressDefaults.ClassifyAddress(normalized);
+            return result.Zone switch
+            {
+                NetworkBoundaryZone.Internal => "Local/private · default private address range",
+                NetworkBoundaryZone.Loopback => "Local · loopback",
+                NetworkBoundaryZone.LinkLocal => "Local · link-local",
+                NetworkBoundaryZone.External => "Outside default local ranges · public reachability unverified",
+                NetworkBoundaryZone.Unknown => "Unclassified",
+                _ => $"{result.Zone} · boundary profile"
+            };
+        }
+
+        private static string? FormatOptionalBoolean(bool? value)
+            => value.HasValue ? value.Value ? "Yes" : "No" : null;
+
+        private static string? TryGetApprovedEvidenceValue(DetectionEvidenceItem? item)
+        {
+            if (item is null || item.IsSensitive || string.IsNullOrWhiteSpace(item.Key)
+                || string.IsNullOrWhiteSpace(item.Value)
+                || string.Equals(item.Source, "legacy-evidence", StringComparison.OrdinalIgnoreCase))
+                return null;
+
+            // These keys have verifiable scalar shapes. A generic "rule" or
+            // "traffic-record" source alone is NOT a safe display contract.
+            switch (item.Key.Trim().ToLowerInvariant())
+            {
+                case "count":
+                case "window_seconds":
+                case "flow.bytes":
+                case "network.destinationport":
+                case "dns.ttl":
+                case "reputation.score":
+                    return long.TryParse(item.Value, NumberStyles.None,
+                        CultureInfo.InvariantCulture, out var number) && number >= 0
+                        ? number.ToString(CultureInfo.InvariantCulture) : null;
+                case "telemetry.coverage_ratio":
+                    return double.TryParse(item.Value, NumberStyles.AllowDecimalPoint,
+                        CultureInfo.InvariantCulture, out var ratio) && ratio is >= 0 and <= 1
+                        ? ratio.ToString("0.###", CultureInfo.InvariantCulture) : null;
+                case "http.method":
+                    return item.Value.Trim().ToUpperInvariant() switch
+                    {
+                        "GET" or "POST" or "HEAD" or "PUT" or "PATCH" or "DELETE" or "OPTIONS" =>
+                            item.Value.Trim().ToUpperInvariant(),
+                        _ => null
+                    };
+                default:
+                    return null;
+            }
+        }
+
+        private static string? FormatUtc(DateTime value)
+        {
+            if (value == default)
+                return null;
+            if (value.Kind == DateTimeKind.Unspecified)
+                return value.ToString("yyyy-MM-dd HH:mm:ss") + " (timezone unspecified)";
+            return value.ToUniversalTime().ToString("u");
+        }
+
+        private static string Limit(string? value, int maxLength)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return "Not recorded";
+            var trimmed = value.Trim();
+            return trimmed.Length > maxLength ? trimmed[..maxLength] + "…" : trimmed;
+        }
+
+        private static void Add(ICollection<KeyValuePair<string, string>> fields, string key, string? value)
+            => fields.Add(new KeyValuePair<string, string>(key, Limit(value, 400)));
 
         private void Investigate_Click(object sender, RoutedEventArgs e)
             => SearchRequested?.Invoke(this, e);
