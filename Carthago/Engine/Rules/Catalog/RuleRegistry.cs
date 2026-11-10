@@ -868,6 +868,16 @@ namespace Carthago.Engine.Rules.Catalog
                 new R843_ProcessPeerTlsVersionRegressionRule(),
                 new R844_LowTtlDnsAnswerChurnRule(),
                 new R845_ScpDistinctInternalSshPeersRule(),
+                new R846_DialerExternalSynRule(),
+                new R847_AddinUtilExternalSynRule(),
+                new R848_Eqnedt32ExternalSynRule(),
+                new R849_PythonUniformOutboundPayloadCadenceRule(),
+                new R850_PublicOpenSlpThenInternalSshSynRule(),
+                new R851_PublicSshIngressThenShellPublicSynRule(),
+                new R852_PowershellCloudTlsPayloadBurstRule(),
+                new R853_ReportingPeerSourceMacChangeRule(),
+                new R854_PowershellAlternateNetworkTypeSynRule(),
+                new R855_HostdExternalHttpPostBurstRule(),
             };
         }
 
