@@ -126,13 +126,32 @@ namespace Carthago.Views
                 ? new Thickness(0)
                 : new Thickness(10, 0, 0, 0);
 
-            ResponsiveLayout.ApplyAdaptiveColumns(
-                mode,
-                new[] { SupportingWorkspaceFirstColumn, SupportingWorkspaceSecondColumn, SupportingWorkspaceThirdColumn, SupportingWorkspaceFourthColumn },
-                new[] { SupportingWorkspaceFirstRow, SupportingWorkspaceSecondRow, SupportingWorkspaceThirdRow, SupportingWorkspaceFourthRow },
-                new FrameworkElement[] { TimelinePanel, RelatedAnomaliesPanel, AffectedHostsPanel, ResponseChecklistPanel },
-                new[] { 1.05, 0.95, 0.95, 0.95 },
-                10);
+            // GA UI-168: a wide chronology lane beside a stacked evidence-review rail.
+            // Compact keeps the four source-backed panels in a single readable column.
+            bool stackEvidence = mode == ResponsiveLayoutMode.Compact;
+            SupportingWorkspaceFirstColumn.Width = new GridLength(1.35, GridUnitType.Star);
+            SupportingWorkspaceSecondColumn.Width = stackEvidence
+                ? new GridLength(0)
+                : new GridLength(1, GridUnitType.Star);
+            SupportingWorkspaceThirdColumn.Width = new GridLength(0);
+            SupportingWorkspaceFourthColumn.Width = new GridLength(0);
+            SupportingWorkspaceFirstRow.Height = GridLength.Auto;
+            SupportingWorkspaceSecondRow.Height = GridLength.Auto;
+            SupportingWorkspaceThirdRow.Height = GridLength.Auto;
+            SupportingWorkspaceFourthRow.Height = stackEvidence ? GridLength.Auto : new GridLength(0);
+            Grid.SetRow(TimelinePanel, 0);
+            Grid.SetColumn(TimelinePanel, 0);
+            Grid.SetRowSpan(TimelinePanel, stackEvidence ? 1 : 3);
+            Grid.SetRow(RelatedAnomaliesPanel, stackEvidence ? 1 : 0);
+            Grid.SetColumn(RelatedAnomaliesPanel, stackEvidence ? 0 : 1);
+            Grid.SetRow(AffectedHostsPanel, stackEvidence ? 2 : 1);
+            Grid.SetColumn(AffectedHostsPanel, stackEvidence ? 0 : 1);
+            Grid.SetRow(ResponseChecklistPanel, stackEvidence ? 3 : 2);
+            Grid.SetColumn(ResponseChecklistPanel, stackEvidence ? 0 : 1);
+            TimelinePanel.Margin = stackEvidence ? new Thickness(0, 0, 0, 12) : new Thickness(0, 0, 16, 0);
+            RelatedAnomaliesPanel.Margin = new Thickness(0, 0, 0, 12);
+            AffectedHostsPanel.Margin = new Thickness(0, 0, 0, 12);
+            ResponseChecklistPanel.Margin = new Thickness(0);
         }
 
         public IncidentsPage(SinkHost sinkHost, string workspaceTitle = "Incident Queue")

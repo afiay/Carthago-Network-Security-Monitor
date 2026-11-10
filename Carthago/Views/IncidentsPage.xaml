@@ -749,21 +749,21 @@
             Margin="0,20,0,0">
         <Grid.RowDefinitions>
           <RowDefinition x:Name="SupportingWorkspaceFirstRow" Height="Auto"/>
-          <RowDefinition x:Name="SupportingWorkspaceSecondRow" Height="0"/>
-          <RowDefinition x:Name="SupportingWorkspaceThirdRow" Height="0"/>
+          <RowDefinition x:Name="SupportingWorkspaceSecondRow" Height="Auto"/>
+          <RowDefinition x:Name="SupportingWorkspaceThirdRow" Height="Auto"/>
           <RowDefinition x:Name="SupportingWorkspaceFourthRow" Height="0"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-          <ColumnDefinition x:Name="SupportingWorkspaceFirstColumn" Width="1.05*"/>
-          <ColumnDefinition x:Name="SupportingWorkspaceSecondColumn" Width="0.95*"/>
-          <ColumnDefinition x:Name="SupportingWorkspaceThirdColumn" Width="0.95*"/>
-          <ColumnDefinition x:Name="SupportingWorkspaceFourthColumn" Width="0.95*"/>
+          <ColumnDefinition x:Name="SupportingWorkspaceFirstColumn" Width="1.35*"/>
+          <ColumnDefinition x:Name="SupportingWorkspaceSecondColumn" Width="1*"/>
+          <ColumnDefinition x:Name="SupportingWorkspaceThirdColumn" Width="0"/>
+          <ColumnDefinition x:Name="SupportingWorkspaceFourthColumn" Width="0"/>
         </Grid.ColumnDefinitions>
 
-        <Border x:Name="TimelinePanel" Style="{StaticResource IncidentOpsPanel}" Margin="0,0,10,0" Padding="18,18" BorderBrush="#31536A">
+        <Border x:Name="TimelinePanel" Grid.RowSpan="3" Style="{StaticResource IncidentOpsPanel}" Margin="0,0,16,0" Padding="24,22" BorderBrush="#39798A">
           <StackPanel>
             <TextBlock Text="06 / INCIDENT TIMELINE" Style="{StaticResource IncidentOpsEyebrow}"/>
-            <TextBlock Text="Event chronology" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,6,0,5" TextWrapping="Wrap"/>
+            <TextBlock Text="Event chronology" FontSize="23" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,6,0,5" TextWrapping="Wrap"/>
             <TextBlock Text="Selected case activity" FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"/>
             <!-- SOC-13: presentation filter only; underlying recorded story remains intact. -->
             <ComboBox x:Name="TimelineFilterComboBox" Width="180" HorizontalAlignment="Left"
@@ -835,7 +835,7 @@
           </StackPanel>
         </Border>
 
-        <Border x:Name="RelatedAnomaliesPanel" Grid.Column="1" Style="{StaticResource IncidentOpsPanel}" Margin="0,0,10,0" Padding="18,18" BorderBrush="#31536A">
+        <Border x:Name="RelatedAnomaliesPanel" Grid.Row="0" Grid.Column="1" Style="{StaticResource IncidentOpsPanel}" Margin="0,0,0,12" Padding="22,20" BorderBrush="#31536A">
           <StackPanel>
             <TextBlock Text="07 / RELATED ANOMALIES" Style="{StaticResource IncidentOpsEyebrow}"/>
             <TextBlock Text="Correlated observations" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,6,0,5" TextWrapping="Wrap"/>
@@ -845,7 +845,7 @@
           </StackPanel>
         </Border>
 
-        <Border x:Name="AffectedHostsPanel" Grid.Column="2" Style="{StaticResource IncidentOpsPanel}" Margin="0,0,10,0" Padding="18,18" BorderBrush="#31536A">
+        <Border x:Name="AffectedHostsPanel" Grid.Row="1" Grid.Column="1" Style="{StaticResource IncidentOpsPanel}" Margin="0,0,0,12" Padding="22,20" BorderBrush="#31536A">
           <StackPanel>
             <TextBlock Text="08 / AFFECTED HOSTS" Style="{StaticResource IncidentOpsEyebrow}"/>
             <TextBlock Text="Host impact context" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,6,0,5" TextWrapping="Wrap"/>
@@ -855,7 +855,7 @@
           </StackPanel>
         </Border>
 
-        <Border x:Name="ResponseChecklistPanel" Grid.Column="3" Style="{StaticResource IncidentOpsPanel}" Padding="18,18" BorderBrush="#31536A">
+        <Border x:Name="ResponseChecklistPanel" Grid.Row="2" Grid.Column="1" Style="{StaticResource IncidentOpsPanel}" Padding="22,20" BorderBrush="#31536A">
           <StackPanel>
             <TextBlock Text="09 / RESPONSE CHECKLIST" Style="{StaticResource IncidentOpsEyebrow}"/>
             <TextBlock Text="Response readiness" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,6,0,5" TextWrapping="Wrap"/>
