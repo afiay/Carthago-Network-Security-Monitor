@@ -5827,3 +5827,16 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Ownership/static review:** Only `Carthago/Views/MainWindow.xaml`, `Carthago/Views/MainWindow.DashboardResponsive.cs`, and this ledger. Existing named Reasons/Tags/Rules item controls, action buttons, evidence summary and handlers remain present; all new names are UI-local and consumed by the existing responsive partial. No Engine/Models/Services, tests, security/privacy, telemetry, ScottPlot 10/120, Live Events 80/500, Cisco/WebView2, CLI functionality, or automations changed.
 
 **Risks / PLANNED BUT UNEXECUTED:** Verify WPF named GridColumn resolution, action-button fit in the right evidence lane, text and chip wrapping, source evidence visibility, scrolling and focus, 1920/1440/1100/1099/1024/1023/640 widths and 100/125/150/200% DPI. **Builds 0; tests 0; CI 0; captures 0; WPF renders 0.** Next GA UI-166: incident selection and cross-screen investigation hierarchy after fresh ledger and reference inspection.
+
+
+## GA UI-166 — Incident selection and investigation hierarchy
+
+**2026-11-10 · SOURCE CANDIDATE — UNVERIFIED.** Approved image `libfile_b0a34361560c8191b641e432b3e6b15c` visually inspected. Base HEAD `601a12538507d963217b134eb8fdd0f10b6498e7`, prior GA UI-165. Reference telemetry, IPs, IDs, dates and confidence are DEMO ONLY.
+
+**Visible before → after:** Selected queue cards now have a thicker cyan selection outline, six-unit severity rail, larger risk numerals and titles, expanded inner spacing and rounder card shell. The selected investigation gains a 24-unit title, six-unit severity edge, larger 92-unit risk ring and roomier hero card. Triage band expands 620→660 WPF units at Wide/Standard with a balanced 1.4:1.6 queue/detail split; Compact stacks a 600-unit queue above detail in a 1260-unit band. This is a coordinated visible triage-to-detail redesign, not a tooltip-only edit. **Static visual impact moderate-to-high; no WPF rendering claimed.**
+
+**Reference mapping / responsive:** Navy/graphite layered panels, cyan selected state and restrained severity accents mirror the reference's visual hierarchy, without copying demo content. Wide ≥1440 retains chart/queue/detail, Standard 1100–1439 chart over side-by-side triage, Compact 1024–1099 stacked triage; below 1024 uses existing fallback. Selected item, source-backed risk, existing evidence lanes, scrolling and handlers remain unchanged.
+
+**Ownership/static review:** Only `Carthago/Views/MainWindow.xaml`, `Carthago/Views/MainWindow.DashboardResponsive.cs` and this ledger changed. Existing `DashboardAnomalyList`, `DashboardDetailSeverityStripe`, `DashboardDetailRiskRing`, `DashboardDetailTitleText`, `DashboardTriageGrid` and responsive names/selection event remain. No changes to Engine, Models, Services, security/privacy, capture, detection, telemetry, ScottPlot 10/120, Live Events 80/500, Cisco/WebView2, CLI, tests or automations. Static source inspection does not prove XAML parsing or runtime layout.
+
+**Risks / PLANNED UNEXECUTED acceptance:** Selected/hover/focus contrast, severity colors, title/risk clipping, incident selection, investigation scrolling, 1920/1440/1100/1099/1024/1023/640 widths and 100/125/150/200% DPI. **Builds 0; tests 0; CI 0; captures 0; WPF renders 0.** Next GA UI-167: Incidents/Investigation cross-screen visual hierarchy.
