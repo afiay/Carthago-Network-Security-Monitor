@@ -61,13 +61,26 @@ namespace Carthago.Views
                 new[] { 0.49, 0.51 },
                 18);
 
-            ResponsiveLayout.ApplyAdaptiveColumns(
-                mode,
-                new[] { SupportingWorkspaceFirstColumn, SupportingWorkspaceSecondColumn, SupportingWorkspaceThirdColumn },
-                new[] { SupportingWorkspaceFirstRow, SupportingWorkspaceSecondRow, SupportingWorkspaceThirdRow },
-                new FrameworkElement[] { EntityHistoryPanel, BaselineDriftPanel, ModelSummaryPanel },
-                new[] { 0.35, 0.37, 0.28 },
-                12);
+            // GA UI-169: evidence comparison occupies the upper two lanes;
+            // analyst actions span the full width below, without changing any handlers.
+            bool compactEvidence = mode == ResponsiveLayoutMode.Compact;
+            SupportingWorkspaceFirstColumn.Width = new GridLength(1.12, GridUnitType.Star);
+            SupportingWorkspaceSecondColumn.Width = compactEvidence ? new GridLength(0) : new GridLength(0.88, GridUnitType.Star);
+            SupportingWorkspaceThirdColumn.Width = new GridLength(0);
+            SupportingWorkspaceFirstRow.Height = GridLength.Auto;
+            SupportingWorkspaceSecondRow.Height = GridLength.Auto;
+            SupportingWorkspaceThirdRow.Height = compactEvidence ? GridLength.Auto : new GridLength(0);
+            Grid.SetRow(EntityHistoryPanel, 0);
+            Grid.SetColumn(EntityHistoryPanel, 0);
+            Grid.SetColumnSpan(EntityHistoryPanel, 1);
+            Grid.SetRow(BaselineDriftPanel, compactEvidence ? 1 : 0);
+            Grid.SetColumn(BaselineDriftPanel, compactEvidence ? 0 : 1);
+            Grid.SetColumnSpan(BaselineDriftPanel, 1);
+            Grid.SetRow(ModelSummaryPanel, compactEvidence ? 2 : 1);
+            Grid.SetColumn(ModelSummaryPanel, 0);
+            Grid.SetColumnSpan(ModelSummaryPanel, compactEvidence ? 1 : 2);
+            EntityHistoryPanel.Margin = compactEvidence ? new Thickness(0, 0, 0, 14) : new Thickness(0, 0, 14, 14);
+            BaselineDriftPanel.Margin = new Thickness(0, 0, 0, 14);
         }
 
         public AnomaliesPage(SinkHost sinkHost)
