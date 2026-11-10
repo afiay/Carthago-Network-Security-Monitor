@@ -181,7 +181,7 @@ public partial class MainWindow
         DashboardTimelinePanel.Margin = new Thickness(0, 0, 16, 0);
         DashboardSignalPanel.Margin = new Thickness(0);
 
-        DashboardSummaryGrid.Height = 202;
+        DashboardSummaryGrid.Height = 264;
         DashboardSummaryFirstColumn.Width = new GridLength(1.02, GridUnitType.Star);
         DashboardSummarySecondColumn.Width = new GridLength(1, GridUnitType.Star);
         DashboardSummaryThirdColumn.Width = new GridLength(1, GridUnitType.Star);
