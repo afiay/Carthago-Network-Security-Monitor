@@ -61,6 +61,16 @@ namespace Carthago.Views
                 new[] { 0.49, 0.51 },
                 18);
 
+            // GA UI-170: selected-signal narrative and risk reflow into full-width lanes in Compact.
+            bool compactSelectedSignal = mode == ResponsiveLayoutMode.Compact;
+            SelectedSignalNarrativeColumn.Width = compactSelectedSignal ? new GridLength(1, GridUnitType.Star) : new GridLength(1.5, GridUnitType.Star);
+            SelectedSignalRiskColumn.Width = compactSelectedSignal ? new GridLength(0) : new GridLength(0.65, GridUnitType.Star);
+            SelectedSignalHeroCompactRow.Height = compactSelectedSignal ? GridLength.Auto : new GridLength(0);
+            Grid.SetRow(SelectedSignalRiskCard, compactSelectedSignal ? 1 : 0);
+            Grid.SetColumn(SelectedSignalRiskCard, compactSelectedSignal ? 0 : 1);
+            SelectedSignalNarrativeCard.Margin = compactSelectedSignal ? new Thickness(0) : new Thickness(0, 0, 14, 0);
+            SelectedSignalRiskCard.Margin = compactSelectedSignal ? new Thickness(18, 0, 18, 18) : new Thickness(0, 14, 14, 14);
+
             // GA UI-169: evidence comparison occupies the upper two lanes;
             // analyst actions span the full width below, without changing any handlers.
             bool compactEvidence = mode == ResponsiveLayoutMode.Compact;

@@ -401,99 +401,98 @@
 
             <Grid Grid.Row="1">
               <StackPanel x:Name="InvestigationBody" Visibility="Collapsed">
-                <Grid Margin="0,0,0,20" Background="#102233">
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="5"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="128"/>
-                  </Grid.ColumnDefinitions>
-                  <Border Grid.Column="0" Background="{Binding Selected.Severity, Converter={StaticResource SeverityBrush}}" CornerRadius="3"/>
-
-                  <StackPanel Grid.Column="1" Margin="19,17,18,18">
-                    <TextBlock Text="SELECTED LOCAL SIGNAL" Style="{StaticResource AnomalyOpsEyebrow}" Margin="0,0,0,10"/>
-                    <TextBlock Text="{Binding Selected.DisplayTitle}"
-                               FontSize="23"
-                               FontWeight="Bold"
-                               TextWrapping="Wrap"
-                               ToolTip="{Binding Selected.DisplayTitle}"/>
-                    <TextBlock Text="{Binding Selected.Description}"
-                               Foreground="{StaticResource TextSubtleBrush}"
-                               Margin="0,6,0,0"
-                               TextWrapping="Wrap"/>
-                  </StackPanel>
-
-                  <StackPanel Grid.Column="2" HorizontalAlignment="Stretch" Margin="0,15,12,15" Background="#12384A">
-                    <TextBlock Text="RISK SCORE"
-                               Style="{StaticResource MicroLabel}"
-                               HorizontalAlignment="Center"/>
-                    <Grid Width="88" Height="88" Margin="0,8,0,0" HorizontalAlignment="Center">
-                      <Ellipse Style="{StaticResource RiskScoreCircle}"
-                               Stroke="{Binding Selected.Severity, Converter={StaticResource SeverityBrush}}"/>
-                      <TextBlock Text="{Binding Selected.ScoreNumber}"
-                                 FontSize="18"
-                                 FontWeight="Bold"
-                                 HorizontalAlignment="Center"
-                                 VerticalAlignment="Center"/>
-                    </Grid>
-                    <Border Style="{StaticResource SmallPill}"
-                            Background="#421D22"
-                            BorderBrush="{Binding Selected.Severity, Converter={StaticResource SeverityBrush}}"
-                            HorizontalAlignment="Center"
-                            Margin="0,8,0,0">
-                      <TextBlock Text="{Binding Selected.Severity}"
-                                 Foreground="{Binding Selected.Severity, Converter={StaticResource SeverityBrush}}"
-                                 FontWeight="Bold"/>
-                    </Border>
-                  </StackPanel>
-                </Grid>
-
-                <Grid Margin="0,0,0,14">
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                  </Grid.ColumnDefinitions>
+                <!-- GA UI-170: selected-signal command hero, responsive evidence and severity hierarchy. -->
+                <Grid x:Name="SelectedSignalHero" Margin="0,0,0,20">
                   <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
+                    <RowDefinition x:Name="SelectedSignalHeroCompactRow" Height="0"/>
                   </Grid.RowDefinitions>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition x:Name="SelectedSignalNarrativeColumn" Width="1.5*"/>
+                    <ColumnDefinition x:Name="SelectedSignalRiskColumn" Width="0.65*"/>
+                  </Grid.ColumnDefinitions>
+                  <Border Grid.RowSpan="2" Grid.ColumnSpan="2" Background="#102233" BorderBrush="#356A80"
+                          BorderThickness="1.5" CornerRadius="14"/>
+                  <Border x:Name="SelectedSignalNarrativeCard" Grid.Column="0" Margin="0,0,14,0"
+                          BorderBrush="{Binding Selected.Severity, Converter={StaticResource SeverityBrush}}"
+                          BorderThickness="6,0,0,0" Padding="22,22,16,22">
+                    <StackPanel>
+                      <TextBlock Text="SELECTED LOCAL SIGNAL / RECORDED EVIDENCE" Style="{StaticResource AnomalyOpsEyebrow}"
+                                 Margin="0,0,0,11" TextWrapping="Wrap"/>
+                      <TextBlock Text="{Binding Selected.DisplayTitle}" FontSize="27" FontWeight="Bold"
+                                 Foreground="{StaticResource TextBrush}" TextWrapping="Wrap"
+                                 ToolTip="{Binding Selected.DisplayTitle}"/>
+                      <TextBlock Text="{Binding Selected.Description}" Foreground="{StaticResource TextSubtleBrush}"
+                                 FontSize="13" Margin="0,12,0,0" TextWrapping="Wrap"/>
+                      <Border Background="{StaticResource AccentBrush}" Height="3" Width="76"
+                              HorizontalAlignment="Left" CornerRadius="2" Margin="0,19,0,0"/>
+                    </StackPanel>
+                  </Border>
+                  <Border x:Name="SelectedSignalRiskCard" Grid.Column="1" Margin="0,14,14,14"
+                          Background="#12384A" BorderBrush="#356A80" BorderThickness="1"
+                          CornerRadius="12" Padding="15">
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                      <TextBlock Text="RISK / RECORDED SCORE" Style="{StaticResource MicroLabel}"
+                                 TextAlignment="Center" TextWrapping="Wrap"/>
+                      <Grid Width="104" Height="104" Margin="0,12,0,9">
+                        <Ellipse Style="{StaticResource RiskScoreCircle}"
+                                 Stroke="{Binding Selected.Severity, Converter={StaticResource SeverityBrush}}"/>
+                        <TextBlock Text="{Binding Selected.ScoreNumber}" FontSize="23" FontWeight="Bold"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                      </Grid>
+                      <Border Style="{StaticResource SmallPill}" Background="#421D22"
+                              BorderBrush="{Binding Selected.Severity, Converter={StaticResource SeverityBrush}}"
+                              HorizontalAlignment="Center">
+                        <TextBlock Text="{Binding Selected.Severity}"
+                                   Foreground="{Binding Selected.Severity, Converter={StaticResource SeverityBrush}}"
+                                   FontWeight="Bold"/>
+                      </Border>
+                    </StackPanel>
+                  </Border>
+                </Grid>
 
-                  <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource AnomalyOpsEvidenceCard}" Margin="0,0,8,8">
+                <Grid x:Name="SelectedSignalEvidenceGrid" Margin="0,0,0,18">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+
+                  <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource AnomalyOpsEvidenceCard}" BorderBrush="#31576B" BorderThickness="1.5" Padding="18,16" Margin="0,0,7,12">
                     <StackPanel>
                       <TextBlock Text="Source host" Style="{StaticResource AnomalyFieldLabel}"/>
                       <TextBlock Text="{Binding Selected.SourceLabel}" Style="{StaticResource AnomalyFieldValue}" ToolTip="{Binding Selected.SourceLabel}"/>
                     </StackPanel>
                   </Border>
 
-                  <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource AnomalyOpsEvidenceCard}" Margin="4,0,4,8">
+                  <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource AnomalyOpsEvidenceCard}" BorderBrush="#31576B" BorderThickness="1.5" Padding="18,16" Margin="7,0,0,12">
                     <StackPanel>
                       <TextBlock Text="Destination" Style="{StaticResource AnomalyFieldLabel}"/>
                       <TextBlock Text="{Binding Selected.DestinationLabel}" Style="{StaticResource AnomalyFieldValue}" ToolTip="{Binding Selected.DestinationLabel}"/>
                     </StackPanel>
                   </Border>
 
-                  <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource AnomalyOpsEvidenceCard}" Margin="8,0,0,8">
+                  <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource AnomalyOpsEvidenceCard}" BorderBrush="#31576B" BorderThickness="1.5" Padding="18,16" Margin="0,0,7,12">
                     <StackPanel>
                       <TextBlock Text="Protocol / port" Style="{StaticResource AnomalyFieldLabel}"/>
                       <TextBlock Text="{Binding Selected.ProtocolPortLabel}" Style="{StaticResource AnomalyFieldValue}" ToolTip="{Binding Selected.ProtocolPortLabel}"/>
                     </StackPanel>
                   </Border>
 
-                  <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource AnomalyOpsEvidenceCard}" Margin="0,0,8,0">
+                  <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource AnomalyOpsEvidenceCard}" BorderBrush="#31576B" BorderThickness="1.5" Padding="18,16" Margin="7,0,0,12">
                     <StackPanel>
                       <TextBlock Text="Detected" Style="{StaticResource AnomalyFieldLabel}"/>
                       <TextBlock Text="{Binding Selected.CreatedLabelLong}" Style="{StaticResource AnomalyFieldValue}" ToolTip="{Binding Selected.CreatedLabelLong}"/>
                     </StackPanel>
                   </Border>
 
-                  <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource AnomalyOpsEvidenceCard}" Margin="4,0,4,0">
+                  <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource AnomalyOpsEvidenceCard}" BorderBrush="#31576B" BorderThickness="1.5" Padding="18,16" Margin="0,0,7,12">
                     <StackPanel>
                       <TextBlock Text="Category" Style="{StaticResource AnomalyFieldLabel}"/>
                       <TextBlock Text="{Binding Selected.CategoryLabel}" Style="{StaticResource AnomalyFieldValue}" ToolTip="{Binding Selected.CategoryLabel}"/>
                     </StackPanel>
                   </Border>
 
-                  <Border Grid.Row="1" Grid.Column="2" Style="{StaticResource AnomalyOpsEvidenceCard}" Margin="8,0,0,0">
+                  <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource AnomalyOpsEvidenceCard}" BorderBrush="#31576B" BorderThickness="1.5" Padding="18,16" Margin="7,0,0,12">
                     <StackPanel>
                       <TextBlock Text="Linked incident" Style="{StaticResource AnomalyFieldLabel}"/>
                       <TextBlock Text="{Binding Selected.RelatedIncidentTitle}" Style="{StaticResource AnomalyFieldValue}" ToolTip="{Binding Selected.RelatedIncidentTitle}"/>
