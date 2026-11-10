@@ -152,7 +152,7 @@ namespace Carthago
             => OpenDetectionRulesWorkspace();
 
         private void SettingsOpenNetworkInvestigation_Click(object sender, RoutedEventArgs e)
-            => OpenNetworkInvestigation(string.Empty);
+            => OpenNetworkInvestigation(null);
 
         internal void OpenRawTrafficWorkspace()
             => Nav_LiveTraffic_Click(this, new RoutedEventArgs());

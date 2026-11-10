@@ -38,6 +38,20 @@
             <Button Content="Refresh snapshot" MinWidth="132" Height="36" Margin="0,0,8,8"
                     Style="{StaticResource SecondaryButton}" Click="Refresh_Click"/>
           </WrapPanel>
+          <WrapPanel Margin="0,4,0,2" VerticalAlignment="Center">
+            <Button x:Name="InvestigationBackButton" Content="← Previous investigation" IsEnabled="False"
+                    MinWidth="165" Height="34" Margin="0,0,8,8" Style="{StaticResource SecondaryButton}"
+                    Click="InvestigationBack_Click" AutomationProperties.Name="Go to previous investigation"/>
+            <Button x:Name="InvestigationForwardButton" Content="Next investigation →" IsEnabled="False"
+                    MinWidth="155" Height="34" Margin="0,0,8,8" Style="{StaticResource SecondaryButton}"
+                    Click="InvestigationForward_Click" AutomationProperties.Name="Go to next investigation"/>
+            <Button x:Name="ClearInvestigationHistoryButton" Content="Clear history" IsEnabled="False"
+                    MinWidth="112" Height="34" Margin="0,0,8,8" Style="{StaticResource SecondaryButton}"
+                    Click="ClearInvestigationHistory_Click" AutomationProperties.Name="Clear session investigation history"/>
+          </WrapPanel>
+          <TextBlock x:Name="InvestigationHistoryStatusText" Text="Session history is empty · no searches saved automatically"
+                     Foreground="{StaticResource TextMutedBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,8"
+                     AutomationProperties.LiveSetting="Polite"/>
           <WrapPanel Margin="0,4,0,0">
             <ComboBox x:Name="SavedSearches" Width="230" Height="34" Margin="0,0,8,8"
                       AutomationProperties.Name="Saved local investigation searches"

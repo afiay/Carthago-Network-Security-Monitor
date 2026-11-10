@@ -17,9 +17,22 @@ namespace Carthago.Views
 {
     public partial class NetworkInvestigationPage : UserControl
     {
+        private const int MaximumSessionHistory = 20;
         private static readonly NetworkBoundaryProfile LocalAddressDefaults = NetworkBoundaryProfile.DefaultLocal();
         private Incident[] _cachedIncidentCases = Array.Empty<Incident>();
         private DetectionEvent[] _cachedDetectionEvents = Array.Empty<DetectionEvent>();
+        private readonly List<InvestigationHistoryEntry> _sessionHistory = new();
+        private int _sessionHistoryIndex = -1;
+        private int? _pendingHistoryIndex;
+
+        private sealed class InvestigationHistoryEntry
+        {
+            public InvestigationHistoryEntry(string term) => Term = term;
+            public string Term { get; }
+            public Guid? SelectedTrafficId { get; set; }
+            public string? SelectedDetectionId { get; set; }
+            public string? SelectedIncidentId { get; set; }
+        }
 
         public event RoutedEventHandler? SearchRequested;
         public event RoutedEventHandler? TrafficRequested;
@@ -30,6 +43,8 @@ namespace Carthago.Views
         public event Action<string>? IncidentRequested;
 
         public string SearchTerm => InvestigationSearchText.Text.Trim();
+        public string CurrentHistoryTerm => _sessionHistoryIndex >= 0
+            ? _sessionHistory[_sessionHistoryIndex].Term : SearchTerm;
 
         public NetworkInvestigationPage()
         {
@@ -112,6 +127,7 @@ namespace Carthago.Views
             string? searchTerm)
         {
             var term = (searchTerm ?? string.Empty).Trim();
+            var historyEntry = RecordSessionHistory(term);
             InvestigationSearchText.Text = term;
             var trafficSnapshot = traffic.Take(200).ToArray();
             var detectionSnapshot = detections.Take(500).ToArray();
@@ -174,7 +190,10 @@ namespace Carthago.Views
             SetEvidenceInspector(DetectionEvidenceExpander, DetectionEvidenceFields, "Selected detection evidence · choose a row above", null);
             SetEvidenceInspector(IncidentEvidenceExpander, IncidentEvidenceFields, "Selected incident case context · choose a row above", null);
             ClearExactLinks();
-            if (isValidEventQuery && detectionMatches.Length > 0)
+            RestoreSessionSelection(historyEntry,
+                trafficSnapshot, detectionSnapshot, incidentSnapshot,
+                trafficMatches, detectionMatches, incidentMatches);
+            if (isValidEventQuery && InvestigationDetectionsGrid.SelectedItem is null && detectionMatches.Length == 1)
             {
                 // Exact-ID pivots select the actual retained event, making its
                 // evidence and case references immediately accessible.
@@ -195,6 +214,133 @@ namespace Carthago.Views
                 : term.Length == 0
                 ? $"Local snapshot: {trafficSnapshot.Length:N0} traffic rows and {detectionSnapshot.Length:N0} detection events · showing all retained items"
                 : $"Local snapshot: {trafficSnapshot.Length:N0} traffic rows and {detectionSnapshot.Length:N0} detection events · {(isEventQuery ? "exact event ID" : isAddress ? "exact IP" : isPortQuery ? "exact source/destination port" : "recorded text")} match for '{term}'";
+        }
+
+        private InvestigationHistoryEntry RecordSessionHistory(string term)
+        {
+            RememberSelectedRecords();
+            if (_pendingHistoryIndex is int pending && pending >= 0 && pending < _sessionHistory.Count &&
+                string.Equals(_sessionHistory[pending].Term, term, StringComparison.Ordinal))
+            {
+                _sessionHistoryIndex = pending;
+            }
+            else if (_sessionHistoryIndex < 0 ||
+                     !string.Equals(_sessionHistory[_sessionHistoryIndex].Term, term, StringComparison.Ordinal))
+            {
+                if (_sessionHistoryIndex + 1 < _sessionHistory.Count)
+                    _sessionHistory.RemoveRange(_sessionHistoryIndex + 1, _sessionHistory.Count - _sessionHistoryIndex - 1);
+                _sessionHistory.Add(new InvestigationHistoryEntry(term));
+                if (_sessionHistory.Count > MaximumSessionHistory)
+                    _sessionHistory.RemoveAt(0);
+                _sessionHistoryIndex = _sessionHistory.Count - 1;
+            }
+
+            _pendingHistoryIndex = null;
+            UpdateSessionHistoryControls();
+            return _sessionHistory[_sessionHistoryIndex];
+        }
+
+        private void RememberSelectedRecords()
+        {
+            if (_sessionHistoryIndex < 0 || _sessionHistoryIndex >= _sessionHistory.Count)
+                return;
+
+            var entry = _sessionHistory[_sessionHistoryIndex];
+            var trafficId = (InvestigationTrafficGrid.SelectedItem as TrafficRecord)?.Id;
+            entry.SelectedTrafficId = trafficId is Guid id && id != Guid.Empty ? id : null;
+            entry.SelectedDetectionId = (InvestigationDetectionsGrid.SelectedItem as DetectionEvent)?.EventId;
+            entry.SelectedIncidentId = (InvestigationIncidentsGrid.SelectedItem as Incident)?.Id;
+        }
+
+        private void RestoreSessionSelection(InvestigationHistoryEntry entry,
+            IReadOnlyList<TrafficRecord> allTraffic, IReadOnlyList<DetectionEvent> allDetections,
+            IReadOnlyList<Incident> allIncidents,
+            IReadOnlyList<TrafficRecord> matchingTraffic, IReadOnlyList<DetectionEvent> matchingDetections,
+            IReadOnlyList<Incident> matchingIncidents)
+        {
+            bool missing = false;
+
+            if (entry.SelectedTrafficId is Guid trafficId)
+            {
+                var uniqueInSnapshot = allTraffic.Count(row => row.Id == trafficId) == 1;
+                var selected = matchingTraffic.FirstOrDefault(row => row.Id == trafficId);
+                if (!uniqueInSnapshot || selected is null) missing = true;
+                else
+                {
+                    InvestigationTrafficGrid.SelectedItem = selected;
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(entry.SelectedDetectionId))
+            {
+                var uniqueInSnapshot = allDetections.Count(row =>
+                    string.Equals(row.EventId, entry.SelectedDetectionId, StringComparison.OrdinalIgnoreCase)) == 1;
+                var selected = matchingDetections.FirstOrDefault(row =>
+                    string.Equals(row.EventId, entry.SelectedDetectionId, StringComparison.OrdinalIgnoreCase));
+                if (!uniqueInSnapshot || selected is null) missing = true;
+                else
+                {
+                    InvestigationDetectionsGrid.SelectedItem = selected;
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(entry.SelectedIncidentId))
+            {
+                var uniqueInSnapshot = allIncidents.Count(row =>
+                    string.Equals(row.Id, entry.SelectedIncidentId, StringComparison.OrdinalIgnoreCase)) == 1;
+                var selected = matchingIncidents.FirstOrDefault(row =>
+                    string.Equals(row.Id, entry.SelectedIncidentId, StringComparison.OrdinalIgnoreCase));
+                if (!uniqueInSnapshot || selected is null) missing = true;
+                else
+                {
+                    InvestigationIncidentsGrid.SelectedItem = selected;
+                }
+            }
+
+            if (missing)
+                InvestigationHistoryStatusText.Text += " · Some selected records are unavailable or have ambiguous IDs in this snapshot";
+        }
+
+        private void UpdateSessionHistoryControls()
+        {
+            InvestigationBackButton.IsEnabled = _sessionHistoryIndex > 0;
+            InvestigationForwardButton.IsEnabled = _sessionHistoryIndex >= 0 &&
+                                                  _sessionHistoryIndex < _sessionHistory.Count - 1;
+            ClearInvestigationHistoryButton.IsEnabled = _sessionHistory.Count > 1 ||
+                (_sessionHistory.Count == 1 && _sessionHistory[0].Term.Length > 0);
+            InvestigationHistoryStatusText.Text = _sessionHistoryIndex < 0
+                ? "Session history is empty · no searches saved automatically"
+                : _sessionHistory.Count == 1 && _sessionHistory[0].Term.Length == 0
+                ? "Fresh blank investigation · no previous session steps; nothing saved automatically"
+                : $"Investigation {_sessionHistoryIndex + 1:N0} of {_sessionHistory.Count:N0} · up to {MaximumSessionHistory} local session steps; nothing is saved to disk automatically";
+        }
+
+        private void MoveSessionHistory(int direction)
+        {
+            var next = _sessionHistoryIndex + direction;
+            if (next < 0 || next >= _sessionHistory.Count)
+                return;
+
+            _pendingHistoryIndex = next;
+            InvestigationSearchText.Text = _sessionHistory[next].Term;
+            SearchRequested?.Invoke(this, new RoutedEventArgs());
+        }
+
+        private void InvestigationBack_Click(object sender, RoutedEventArgs e) => MoveSessionHistory(-1);
+        private void InvestigationForward_Click(object sender, RoutedEventArgs e) => MoveSessionHistory(1);
+
+        private void ClearInvestigationHistory_Click(object sender, RoutedEventArgs e)
+        {
+            if (MessageBox.Show("Clear this session's investigation history and reset the explorer? Locally saved bookmarks will not be removed.",
+                "Clear investigation history", MessageBoxButton.YesNo, MessageBoxImage.Question,
+                MessageBoxResult.No) != MessageBoxResult.Yes)
+                return;
+
+            _sessionHistory.Clear();
+            _sessionHistoryIndex = -1;
+            _pendingHistoryIndex = null;
+            InvestigationSearchText.Text = string.Empty;
+            SearchRequested?.Invoke(this, new RoutedEventArgs());
         }
 
         private static bool TryParseEventQuery(string term, out string eventId)

@@ -19,7 +19,7 @@ namespace Carthago
         }
 
         private void Nav_NetworkInvestigation_Click(object? sender, RoutedEventArgs e)
-            => OpenNetworkInvestigation(string.Empty);
+            => OpenNetworkInvestigation(null);
 
         private void GlobalInvestigationSearch_Click(object sender, RoutedEventArgs e)
             => OpenNetworkInvestigation(GlobalInvestigationSearchText.Text);
@@ -52,7 +52,11 @@ namespace Carthago
             SidebarPanel?.HideAllFilters();
             var cachedIncidents = _sinkHost?.Analytics.GetRecentIncidents(250)
                 ?? Array.Empty<Carthago.Analytics.Models.Incident>();
-            page.UpdateSnapshot(_traffic, _alerts, cachedIncidents, searchTerm);
+            // Sidebar return resumes the active investigation instead of
+            // replacing it with a blank query. Explicit empty searches still
+            // create a fresh step through the existing search controls.
+            page.UpdateSnapshot(_traffic, _alerts, cachedIncidents,
+                searchTerm ?? page.CurrentHistoryTerm);
         }
 
         private void TrafficInvestigateSource_Click(object sender, RoutedEventArgs e)
