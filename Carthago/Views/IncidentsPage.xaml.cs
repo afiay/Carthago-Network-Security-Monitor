@@ -26,6 +26,7 @@ namespace Carthago.Views
         private readonly SinkHost _host;
         private readonly Dispatcher _ui;
         private readonly IncidentsVm _vm;
+        private string _timelineFilter = "All activity";
 
         public event Action<string>? NetworkInvestigationRequested;
         public event Action? ExportAnalysisRequested;
@@ -48,7 +49,7 @@ namespace Carthago.Views
             if (sender is not Button { DataContext: TimelineItemVm item } ||
                 !item.CanInvestigateExactEvent ||
                 _vm.Selected is not { } selected ||
-                !selected.TimelineItems.Any(current => ReferenceEquals(current, item)))
+                !selected.VisibleTimelineItems.Any(current => ReferenceEquals(current, item)))
                 return;
 
             // Timeline IDs have been independently checked against the
@@ -166,13 +167,21 @@ namespace Carthago.Views
                 ApplyFilter();
             };
 
+            TimelineFilterComboBox.SelectionChanged += (_, __) =>
+            {
+                _timelineFilter = (TimelineFilterComboBox.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "All activity";
+                _vm.Selected?.ApplyTimelineFilter(_timelineFilter);
+            };
+
             IncidentsList.SelectionChanged += (_, __) =>
             {
                 _vm.Selected = IncidentsList.SelectedItem as IncidentVm;
+                _vm.Selected?.ApplyTimelineFilter(_timelineFilter);
                 UpdateSelectionState();
             };
 
             LoadInitialIncidents();
+            _vm.Selected?.ApplyTimelineFilter(_timelineFilter);
             ApplyFilter();
             UpdateSelectionState();
         }
@@ -284,6 +293,7 @@ namespace Carthago.Views
 
             if (_vm.Selected?.Id == incidentId)
             {
+                match.ApplyTimelineFilter(_timelineFilter);
                 _vm.Selected = match;
                 IncidentsList.SelectedItem = match;
                 UpdateSelectionState();
@@ -299,6 +309,9 @@ namespace Carthago.Views
             if (match == null)
                 return;
 
+            // Explicit incident pivots must honor the current page filter even
+            // if a hidden list row does not raise SelectionChanged.
+            match.ApplyTimelineFilter(_timelineFilter);
             _vm.Selected = match;
             IncidentsList.SelectedItem = match;
             IncidentsList.ScrollIntoView(match);
@@ -690,6 +703,21 @@ namespace Carthago.Views
         public ObservableCollection<string> FeedbackAppliedReasons { get; } = new();
         public ObservableCollection<string> RecommendedActions { get; } = new();
         public ObservableCollection<TimelineItemVm> TimelineItems { get; } = new();
+        public ObservableCollection<TimelineItemVm> VisibleTimelineItems { get; } = new();
+        private string _timelineFilter = "All activity";
+        public string TimelineFilter => _timelineFilter;
+        public bool HasNoMatchingTimelineItems => VisibleTimelineItems.Count == 0;
+        public string TimelineFilterSummary
+        {
+            get
+            {
+                var total = TimelineItems.Count(item => !item.IsEmptyState);
+                var visible = VisibleTimelineItems.Count(item => !item.IsEmptyState);
+                return total == 0
+                    ? "No recorded timeline activity yet."
+                    : $"Showing {visible} of {total} recorded entries · {_timelineFilter}.";
+            }
+        }
         public ObservableCollection<string> RelatedAnomalyDescriptions { get; } = new();
         public ObservableCollection<string> RelatedEventDescriptions { get; } = new();
         public ObservableCollection<IncidentDetectionLinkVm> RelatedDetectionLinks { get; } = new();
@@ -701,6 +729,22 @@ namespace Carthago.Views
         public ObservableCollection<string> Tags { get; } = new();
         public ObservableCollection<string> RuleIds { get; } = new();
         public ObservableCollection<ChecklistItemVm> ChecklistItems { get; } = new();
+
+        public void ApplyTimelineFilter(string? requestedFilter)
+        {
+            _timelineFilter = requestedFilter switch
+            {
+                "Detections" or "Anomalies" or "Risk changes" or "Case actions" or "Story updates" or "Other activity" => requestedFilter,
+                _ => "All activity"
+            };
+
+            ReplaceCollection(VisibleTimelineItems, TimelineItems.Where(item =>
+                _timelineFilter == "All activity" ||
+                (!item.IsEmptyState && string.Equals(item.FilterGroup, _timelineFilter, StringComparison.Ordinal))));
+            OnChanged(nameof(TimelineFilter));
+            OnChanged(nameof(TimelineFilterSummary));
+            OnChanged(nameof(HasNoMatchingTimelineItems));
+        }
 
         private string _summary = "";
         public string Summary
@@ -798,6 +842,7 @@ namespace Carthago.Views
                         .OrderBy(item => item.TimestampUtc)
                         .Select(item => TimelineItemVm.From(item, recordedEventIds))
                         .ToArray());
+            ApplyTimelineFilter(_timelineFilter);
             ReplaceCollection(RelatedAnomalyDescriptions,
                 incident.RelatedAnomalies.Count == 0
                     ? new[] { "No related anomalies are attached yet." }
@@ -1246,6 +1291,20 @@ namespace Carthago.Views
         public string ExactEventId { get; init; } = string.Empty;
         public bool CanInvestigateExactEvent => ExactEventId.Length > 0;
         public string ExactEventIdLabel => CanInvestigateExactEvent ? $"Recorded event: {ExactEventId}" : string.Empty;
+        public string FilterGroup { get; init; } = "Story updates";
+
+        private static string ClassifyTimelineType(string? type)
+        {
+            return type?.Trim().ToLowerInvariant() switch
+            {
+                "detection" => "Detections",
+                "anomaly" or "mlsignal" => "Anomalies",
+                "riskchange" => "Risk changes",
+                "feedback" or "suppression" or "trustrule" or "statuschange" => "Case actions",
+                "summary" or "recommendedaction" or "demostep" => "Story updates",
+                _ => "Other activity"
+            };
+        }
 
         public static TimelineItemVm From(IncidentTimelineItem item, IReadOnlySet<string> recordedEventIds)
         {
@@ -1273,6 +1332,7 @@ namespace Carthago.Views
                 RiskAfterLabel = item.RiskScoreAfter.HasValue ? $"Risk after event: {item.RiskScoreAfter.Value}" : string.Empty,
                 EndpointLabel = endpointLabel,
                 ExactEventId = exactEventId,
+                FilterGroup = ClassifyTimelineType(item.Type),
                 IsEmptyState = false
             };
         }

@@ -765,8 +765,26 @@
             <TextBlock Text="06 / INCIDENT TIMELINE" Style="{StaticResource IncidentOpsEyebrow}"/>
             <TextBlock Text="Event chronology" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,6,0,5" TextWrapping="Wrap"/>
             <TextBlock Text="Selected case activity" FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"/>
+            <!-- SOC-13: presentation filter only; underlying recorded story remains intact. -->
+            <ComboBox x:Name="TimelineFilterComboBox" Width="180" HorizontalAlignment="Left"
+                      Margin="0,12,0,5" Padding="8,5" FontSize="12"
+                      AutomationProperties.Name="Filter incident timeline by activity type">
+              <ComboBoxItem Content="All activity" IsSelected="True"/>
+              <ComboBoxItem Content="Detections"/>
+              <ComboBoxItem Content="Anomalies"/>
+              <ComboBoxItem Content="Risk changes"/>
+              <ComboBoxItem Content="Case actions"/>
+              <ComboBoxItem Content="Story updates"/>
+              <ComboBoxItem Content="Other activity"/>
+            </ComboBox>
+            <TextBlock Text="{Binding Selected.TimelineFilterSummary}" FontSize="11"
+                       Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"/>
             <Border Height="1" Background="#31536A" Margin="0,15,0,15"/>
-            <ItemsControl ItemsSource="{Binding Selected.TimelineItems}">
+            <TextBlock Text="No timeline entries match this activity filter. Choose All activity to see the full chronology."
+                       Visibility="{Binding Selected.HasNoMatchingTimelineItems, Converter={StaticResource TimelineEventVisibility}}"
+                       FontSize="12" Foreground="{StaticResource TextSubtleBrush}"
+                       TextWrapping="Wrap" Margin="0,0,0,12"/>
+            <ItemsControl ItemsSource="{Binding Selected.VisibleTimelineItems}">
               <ItemsControl.ItemTemplate>
                 <DataTemplate>
                   <Border Background="#102A3B" BorderBrush="#31536A" BorderThickness="1"
