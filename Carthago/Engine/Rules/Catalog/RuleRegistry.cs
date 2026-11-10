@@ -858,6 +858,16 @@ namespace Carthago.Engine.Rules.Catalog
                 new R833_WordRemoteTemplateThenPowerShellTlsRule(),
                 new R834_DgaLikeDnsBurstThenScriptTlsRule(),
                 new R835_MshtaFetchThenRundll32TlsRule(),
+                new R836_PostgresInboundThenServiceTlsRule(),
+                new R837_ConflictingResolverAnswerThenSynRule(),
+                new R838_PackageRegistryThenOtherPeerTlsRule(),
+                new R839_TraversalGetThenWebWorkerTlsRule(),
+                new R840_PublicRepeatedSamePathGetRule(),
+                new R841_BrowserScriptGetThenPythonTlsRule(),
+                new R842_ScriptPublicApiTlsBidirectionalRule(),
+                new R843_ProcessPeerTlsVersionRegressionRule(),
+                new R844_LowTtlDnsAnswerChurnRule(),
+                new R845_ScpDistinctInternalSshPeersRule(),
             };
         }
 
