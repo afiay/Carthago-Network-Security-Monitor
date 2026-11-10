@@ -24,6 +24,29 @@ public partial class MainWindow
             ? new Thickness(0, 0, 0, 6)
             : new Thickness(0, 0, 8, 0);
 
+        // GA UI-165: evidence narrative and taxonomy occupy paired lanes only on Wide.
+        // Keep all original named item controls, buttons, bindings and source-backed content.
+        var evidenceWide = mode == ResponsiveLayoutMode.Wide;
+        DashboardEvidenceSecondaryColumn.Width = evidenceWide
+            ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
+        DashboardEvidencePrimaryColumn.Width = new GridLength(1, GridUnitType.Star);
+        for (var evidenceIndex = 0; evidenceIndex < 5; evidenceIndex++)
+        {
+            FrameworkElement card = evidenceIndex switch
+            {
+                0 => DashboardEvidenceCard0,
+                1 => DashboardEvidenceCard1,
+                2 => DashboardEvidenceCard2,
+                3 => DashboardEvidenceCard3,
+                _ => DashboardEvidenceCard4
+            };
+            Grid.SetRow(card, evidenceWide ? evidenceIndex / 2 : evidenceIndex);
+            Grid.SetColumn(card, evidenceWide ? evidenceIndex % 2 : 0);
+            Grid.SetColumnSpan(card, evidenceWide && evidenceIndex == 4 ? 2 : 1);
+            card.Margin = evidenceWide && evidenceIndex % 2 == 0 && evidenceIndex < 4
+                ? new Thickness(0, 0, 10, 12) : new Thickness(0, 0, 0, 12);
+        }
+
         // GA UI-159: wide side-by-side filter lanes, stacked at narrower widths.
         DashboardLiveFilterCardsGrid.Columns = mode == ResponsiveLayoutMode.Wide ? 2 : 1;
         DashboardLiveClassificationCard.Margin = mode == ResponsiveLayoutMode.Wide

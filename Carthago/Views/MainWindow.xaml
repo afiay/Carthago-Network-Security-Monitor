@@ -1049,9 +1049,10 @@
                                     VerticalScrollBarVisibility="Auto"
                                     HorizontalScrollBarVisibility="Disabled"
                                     Padding="0,0,4,0">
-                        <Grid>
+                        <Grid x:Name="DashboardDetailEvidenceGrid">
                             <Grid.ColumnDefinitions>
-                              <ColumnDefinition Width="*"/>
+                              <ColumnDefinition x:Name="DashboardEvidencePrimaryColumn" Width="*"/>
+                              <ColumnDefinition x:Name="DashboardEvidenceSecondaryColumn" Width="*"/>
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                               <RowDefinition Height="Auto"/>
@@ -1061,7 +1062,7 @@
                               <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <Border Grid.Row="0" Style="{StaticResource DetailGridCard}" Background="{StaticResource CardElevatedBg}" BorderBrush="{StaticResource AccentBrush}" BorderThickness="3,1,1,1" CornerRadius="9" Margin="0,0,0,12" Padding="18,16">
+                            <Border x:Name="DashboardEvidenceCard0" Grid.Row="0" Grid.Column="0" Style="{StaticResource DetailGridCard}" Background="{StaticResource CardElevatedBg}" BorderBrush="{StaticResource AccentBrush}" BorderThickness="3,1,1,1" CornerRadius="9" Margin="0,0,10,12" Padding="16,14">
                               <StackPanel>
                                 <TextBlock x:Name="DashboardDetailReasonsLabel" Text="Reasons" Style="{StaticResource SocSubHeader}"/>
                                 <ItemsControl x:Name="DashboardDetailReasonsItems"
@@ -1076,7 +1077,7 @@
                               </StackPanel>
                             </Border>
 
-                            <Border Grid.Row="1" Style="{StaticResource DetailGridCard}" Margin="0,0,0,12" Padding="18,16">
+                            <Border x:Name="DashboardEvidenceCard1" Grid.Row="0" Grid.Column="1" Style="{StaticResource DetailGridCard}" Margin="0,0,10,12" Padding="16,14">
                               <StackPanel>
                                 <TextBlock x:Name="DashboardDetailTagsLabel" Text="Tags" Style="{StaticResource SocSubHeader}"/>
                                 <!-- GA UI-83: bound long local tag/rule chips; preserve full source text and hover access. -->
@@ -1097,7 +1098,7 @@
                               </StackPanel>
                             </Border>
 
-                            <Border Grid.Row="2" Style="{StaticResource DetailGridCard}" Margin="0,0,0,12" Padding="18,16">
+                            <Border x:Name="DashboardEvidenceCard2" Grid.Row="1" Grid.Column="0" Style="{StaticResource DetailGridCard}" Margin="0,0,10,12" Padding="16,14">
                               <StackPanel>
                                 <TextBlock x:Name="DashboardDetailRulesLabel" Text="Related rule IDs" Style="{StaticResource SocSubHeader}"/>
                                 <ItemsControl x:Name="DashboardDetailRulesItems"
@@ -1117,7 +1118,7 @@
                               </StackPanel>
                             </Border>
 
-                            <Border Grid.Row="3" Style="{StaticResource DetailGridCard}" Background="{StaticResource CardElevatedBg}" BorderBrush="{StaticResource AccentBrush}" BorderThickness="2,1,1,1" CornerRadius="9" Margin="0,0,0,12" Padding="18,16">
+                            <Border x:Name="DashboardEvidenceCard3" Grid.Row="1" Grid.Column="1" Style="{StaticResource DetailGridCard}" Background="{StaticResource CardElevatedBg}" BorderBrush="{StaticResource AccentBrush}" BorderThickness="2,1,1,1" CornerRadius="9" Margin="0,0,10,12" Padding="16,14">
                               <StackPanel>
                                 <TextBlock Text="Recommended actions" Style="{StaticResource SocSubHeader}"/>
                                 <WrapPanel>
@@ -1151,7 +1152,7 @@
                               </StackPanel>
                             </Border>
 
-                            <Border Grid.Row="4" Style="{StaticResource DetailGridCard}" Margin="0,0,0,0" Padding="18,16">
+                            <Border x:Name="DashboardEvidenceCard4" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource DetailGridCard}" Margin="0,0,0,0" Padding="18,16">
                               <!-- GA UI-73: decorative provenance keyline distinguishes reported context from incident facts. -->
                               <Grid>
                                 <Grid.ColumnDefinitions>
