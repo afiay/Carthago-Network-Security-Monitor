@@ -42,7 +42,7 @@ public partial class MainWindow
         // Wide: chart | prioritized queue | investigation.
         // Standard/Compact: chart above the existing responsive triage grid.
         var wideFocus = mode == ResponsiveLayoutMode.Wide;
-        DashboardFocusGrid.Height = wideFocus ? 540 : double.NaN;
+        DashboardFocusGrid.Height = wideFocus ? 620 : double.NaN;
         DashboardFocusTrafficColumn.Width = new GridLength(wideFocus ? 2.15 : 1, GridUnitType.Star);
         DashboardFocusTriageColumn.Width = wideFocus
             ? new GridLength(2.25, GridUnitType.Star) : new GridLength(0);
@@ -111,10 +111,10 @@ public partial class MainWindow
 
         if (mode == ResponsiveLayoutMode.Compact)
         {
-            DashboardTriageGrid.Height = 1080;
+            DashboardTriageGrid.Height = 1180;
             DashboardTriageTimelineColumn.Width = new GridLength(1, GridUnitType.Star);
             DashboardTriageDetailColumn.Width = new GridLength(0);
-            DashboardTriagePrimaryRow.Height = new GridLength(510);
+            DashboardTriagePrimaryRow.Height = new GridLength(550);
             DashboardTriageSecondaryRow.Height = new GridLength(1, GridUnitType.Star);
             PositionPanel(DashboardTimelinePanel, 0, 0);
             PositionPanel(DashboardSignalPanel, 1, 0);
@@ -142,9 +142,9 @@ public partial class MainWindow
 
         if (mode == ResponsiveLayoutMode.Standard)
         {
-            DashboardTriageGrid.Height = 500;
-            DashboardTriageTimelineColumn.Width = new GridLength(1.25, GridUnitType.Star);
-            DashboardTriageDetailColumn.Width = new GridLength(1.2, GridUnitType.Star);
+            DashboardTriageGrid.Height = 620;
+            DashboardTriageTimelineColumn.Width = new GridLength(1.35, GridUnitType.Star);
+            DashboardTriageDetailColumn.Width = new GridLength(1.65, GridUnitType.Star);
             DashboardTriagePrimaryRow.Height = new GridLength(1, GridUnitType.Star);
             DashboardTriageSecondaryRow.Height = new GridLength(0);
             PositionPanel(DashboardTimelinePanel, 0, 0);
@@ -171,9 +171,9 @@ public partial class MainWindow
             return;
         }
 
-        DashboardTriageGrid.Height = 540;
-        DashboardTriageTimelineColumn.Width = new GridLength(1.25, GridUnitType.Star);
-        DashboardTriageDetailColumn.Width = new GridLength(1.2, GridUnitType.Star);
+        DashboardTriageGrid.Height = 620;
+        DashboardTriageTimelineColumn.Width = new GridLength(1.35, GridUnitType.Star);
+        DashboardTriageDetailColumn.Width = new GridLength(1.65, GridUnitType.Star);
         DashboardTriagePrimaryRow.Height = new GridLength(1, GridUnitType.Star);
         DashboardTriageSecondaryRow.Height = new GridLength(0);
         PositionPanel(DashboardTimelinePanel, 0, 0);
