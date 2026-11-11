@@ -24,6 +24,7 @@ namespace Carthago.Views
         private readonly List<InvestigationHistoryEntry> _sessionHistory = new();
         private int _sessionHistoryIndex = -1;
         private int? _pendingHistoryIndex;
+        private string _executedSearchTerm = string.Empty;
 
         private sealed class InvestigationHistoryEntry
         {
@@ -127,6 +128,7 @@ namespace Carthago.Views
             string? searchTerm)
         {
             var term = (searchTerm ?? string.Empty).Trim();
+            _executedSearchTerm = term;
             var historyEntry = RecordSessionHistory(term);
             InvestigationSearchText.Text = term;
             var trafficSnapshot = traffic.Take(200).ToArray();
@@ -134,46 +136,23 @@ namespace Carthago.Views
             var incidentSnapshot = incidents.Take(250).ToArray();
             _cachedIncidentCases = incidentSnapshot;
             _cachedDetectionEvents = detectionSnapshot;
-            var isAddress = IPAddress.TryParse(term, out var searchedAddress);
-            int searchedPort = 0;
-            var isPortQuery = !isAddress && TryParsePortQuery(term, out searchedPort);
+            var isAddress = IPAddress.TryParse(term, out _);
+            var isPortQuery = !isAddress && TryParsePortQuery(term, out _);
             string searchedEventId = string.Empty;
             var isEventQuery = term.StartsWith("event:", StringComparison.OrdinalIgnoreCase);
             var isValidEventQuery = isEventQuery && TryParseEventQuery(term, out searchedEventId);
 
             var trafficMatches = trafficSnapshot.Where(r =>
-                term.Length == 0 || (!isEventQuery && (isAddress
-                    ? MatchesAddress(r.Source, searchedAddress!) || MatchesAddress(r.Destination, searchedAddress!)
-                    : isPortQuery
-                        ? r.SourcePort == searchedPort || r.DestinationPort == searchedPort
-                    : MatchesTrafficText(r, term))))
+                term.Length == 0 || TrafficMatchFields(r, term).Count > 0)
                 .ToArray();
             var detectionMatches = detectionSnapshot.Where(d =>
-                term.Length == 0 || (isEventQuery
-                    ? isValidEventQuery && string.Equals(d.EventId, searchedEventId, StringComparison.OrdinalIgnoreCase)
-                    : isAddress
-                    ? MatchesAddress(d.SourceIp, searchedAddress!) || MatchesAddress(d.DestinationIp, searchedAddress!)
-                    : isPortQuery
-                        ? d.SourcePort == searchedPort || d.DestinationPort == searchedPort
-                    : Contains(d.SourceIp, term) || Contains(d.DestinationIp, term) || Contains(d.RuleId, term)
-                      || Contains(d.RuleName, term) || Contains(d.Description, term) || Contains(d.Country, term)
-                      || Contains(d.DestinationHost, term) || Contains(d.ProcessName, term)
-                      || Contains(d.EventId, term) || Contains(d.FlowId, term) || Contains(d.CorrelationId, term)
-                      || Contains(d.Protocol, term)))
+                term.Length == 0 || DetectionMatchFields(d, term).Count > 0)
                 .ToArray();
 
             // These are actual incident-cache entries, not incidents inferred
             // from a traffic IP match. Port-only queries do not match cases.
-            var incidentMatches = incidentSnapshot.Where(incident => term.Length > 0 &&
-                (isEventQuery
-                    ? isValidEventQuery && IncidentReferencesEvent(incident, searchedEventId)
-                    : isAddress
-                    ? MatchesAddress(incident.PrimarySourceIp, searchedAddress!)
-                      || MatchesAddress(incident.PrimaryDestinationIp, searchedAddress!)
-                    : !isPortQuery &&
-                      (string.Equals(incident.Id, term, StringComparison.OrdinalIgnoreCase)
-                       || Contains(incident.Title, term) || Contains(incident.Category, term)
-                       || Contains(incident.PrimaryDestinationHost, term))))
+            var incidentMatches = incidentSnapshot.Where(incident =>
+                IncidentMatchFields(incident, term).Count > 0)
                 .ToArray();
 
             InvestigationTrafficGrid.ItemsSource = trafficMatches;
@@ -375,11 +354,130 @@ namespace Carthago.Views
                 Contains(record.Sni, term) || Contains(record.HttpHost, term) ||
                 Contains(record.DnsQname, term));
 
+        // Return field names, never values, so the explanation does not create
+        // a new path for displaying unreviewed or sensitive evidence.
+        internal static IReadOnlyList<string> TrafficMatchFields(TrafficRecord row, string term)
+        {
+            var fields = new List<string>();
+            if (string.IsNullOrWhiteSpace(term) || term.StartsWith("event:", StringComparison.OrdinalIgnoreCase))
+                return fields;
+            term = term.Trim();
+            if (IPAddress.TryParse(term, out var ip))
+            {
+                AddExactIp(fields, "Source IP", row.Source, ip);
+                AddExactIp(fields, "Destination IP", row.Destination, ip);
+            }
+            else if (TryParsePortQuery(term, out var port))
+            {
+                if (row.SourcePort == port) fields.Add("Source port (exact)");
+                if (row.DestinationPort == port) fields.Add("Destination port (exact)");
+            }
+            else
+            {
+                AddTextMatch(fields, "Source", row.Source, term);
+                AddTextMatch(fields, "Destination", row.Destination, term);
+                AddTextMatch(fields, "Protocol", row.Protocol, term);
+                AddTextMatch(fields, "Application service", row.ApplicationService, term);
+                AddTextMatch(fields, "Process name", row.ProcessName, term);
+                AddTextMatch(fields, "WHOIS country", row.WhoisCountry, term);
+                AddTextMatch(fields, "TLS SNI", row.Sni, term);
+                AddTextMatch(fields, "HTTP host", row.HttpHost, term);
+                AddTextMatch(fields, "DNS question", row.DnsQname, term);
+            }
+            return fields;
+        }
+
+        internal static IReadOnlyList<string> DetectionMatchFields(DetectionEvent row, string term)
+        {
+            var fields = new List<string>();
+            if (string.IsNullOrWhiteSpace(term)) return fields;
+            term = term.Trim();
+            if (term.StartsWith("event:", StringComparison.OrdinalIgnoreCase))
+            {
+                if (TryParseEventQuery(term, out var id) && string.Equals(row.EventId, id, StringComparison.OrdinalIgnoreCase))
+                    fields.Add("Event ID (exact)");
+            }
+            else if (IPAddress.TryParse(term, out var ip))
+            {
+                AddExactIp(fields, "Source IP", row.SourceIp, ip);
+                AddExactIp(fields, "Destination IP", row.DestinationIp, ip);
+            }
+            else if (TryParsePortQuery(term, out var port))
+            {
+                if (row.SourcePort == port) fields.Add("Source port (exact)");
+                if (row.DestinationPort == port) fields.Add("Destination port (exact)");
+            }
+            else
+            {
+                AddTextMatch(fields, "Source IP", row.SourceIp, term);
+                AddTextMatch(fields, "Destination IP", row.DestinationIp, term);
+                AddTextMatch(fields, "Rule ID", row.RuleId, term);
+                AddTextMatch(fields, "Rule name", row.RuleName, term);
+                AddTextMatch(fields, "Description", row.Description, term);
+                AddTextMatch(fields, "Country", row.Country, term);
+                AddTextMatch(fields, "Destination host", row.DestinationHost, term);
+                AddTextMatch(fields, "Process name", row.ProcessName, term);
+                AddTextMatch(fields, "Event ID", row.EventId, term);
+                AddTextMatch(fields, "Flow ID", row.FlowId, term);
+                AddTextMatch(fields, "Correlation ID", row.CorrelationId, term);
+                AddTextMatch(fields, "Protocol", row.Protocol, term);
+            }
+            return fields;
+        }
+
+        internal static IReadOnlyList<string> IncidentMatchFields(Incident row, string term)
+        {
+            var fields = new List<string>();
+            if (string.IsNullOrWhiteSpace(term)) return fields;
+            term = term.Trim();
+            if (term.StartsWith("event:", StringComparison.OrdinalIgnoreCase))
+            {
+                if (TryParseEventQuery(term, out var id) && IncidentReferencesEvent(row, id))
+                    fields.Add("Related event ID (exact reference)");
+            }
+            else if (IPAddress.TryParse(term, out var ip))
+            {
+                AddExactIp(fields, "Primary source IP", row.PrimarySourceIp, ip);
+                AddExactIp(fields, "Primary destination IP", row.PrimaryDestinationIp, ip);
+            }
+            else if (!TryParsePortQuery(term, out _))
+            {
+                if (string.Equals(row.Id, term, StringComparison.OrdinalIgnoreCase)) fields.Add("Case ID (exact)");
+                AddTextMatch(fields, "Case title", row.Title, term);
+                AddTextMatch(fields, "Case category", row.Category, term);
+                AddTextMatch(fields, "Primary destination host", row.PrimaryDestinationHost, term);
+            }
+            return fields;
+        }
+
+        private static void AddExactIp(List<string> fields, string label, string? value, IPAddress searched)
+        {
+            if (MatchesAddress(value, searched)) fields.Add(label + " (exact)");
+        }
+
+        private static void AddTextMatch(List<string> fields, string label, string? value, string term)
+        {
+            if (Contains(value, term)) fields.Add(label);
+        }
+
+        private static IReadOnlyList<KeyValuePair<string, string>> WithMatchContext(
+            IReadOnlyList<KeyValuePair<string, string>> evidence, IReadOnlyList<string> matched, string term)
+        {
+            var context = new List<KeyValuePair<string, string>>
+            {
+                new("Search · provenance", term.Length == 0 ? "All retained rows · no query applied"
+                    : matched.Count == 0 ? "No matching recorded field in the current query"
+                    : "Matched recorded fields: " + string.Join(", ", matched))
+            };
+            context.AddRange(evidence);
+            return context;
+        }
+
         private void InvestigationTrafficGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (InvestigationTrafficGrid.SelectedItem is TrafficRecord row)
                 SetEvidenceInspector(TrafficEvidenceExpander, TrafficEvidenceFields,
-                    "Selected traffic evidence · recorded fields", BuildTrafficEvidence(row));
+                    "Selected traffic evidence · recorded fields", WithMatchContext(BuildTrafficEvidence(row), TrafficMatchFields(row, _executedSearchTerm), _executedSearchTerm));
             else
                 SetEvidenceInspector(TrafficEvidenceExpander, TrafficEvidenceFields,
                     "Selected traffic evidence · choose a row above", null);
@@ -390,7 +488,7 @@ namespace Carthago.Views
             if (InvestigationDetectionsGrid.SelectedItem is DetectionEvent row)
             {
                 SetEvidenceInspector(DetectionEvidenceExpander, DetectionEvidenceFields,
-                    "Selected detection evidence · event details", BuildDetectionEvidence(row));
+                    "Selected detection evidence · event details", WithMatchContext(BuildDetectionEvidence(row), DetectionMatchFields(row, _executedSearchTerm), _executedSearchTerm));
                 ShowExactCaseLinks(row);
             }
             else
@@ -406,7 +504,7 @@ namespace Carthago.Views
             if (InvestigationIncidentsGrid.SelectedItem is Incident row)
             {
                 SetEvidenceInspector(IncidentEvidenceExpander, IncidentEvidenceFields,
-                    "Selected incident case context · recorded case", BuildIncidentEvidence(row));
+                    "Selected incident case context · recorded case", WithMatchContext(BuildIncidentEvidence(row), IncidentMatchFields(row, _executedSearchTerm), _executedSearchTerm));
                 ShowExactDetectionLinks(row);
             }
             else
