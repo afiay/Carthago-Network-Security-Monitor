@@ -25,6 +25,16 @@ namespace Carthago.Views
             string? error,
             DateTime? lastAnalysisUtc,
             TrafficCaptureService.StatsSnapshot? uiStats = null)
+            => UiOperationProfiler.Measure("MonitoringHealth", () => UpdateSnapshotCore(status, sourceName, source, flow, error, lastAnalysisUtc, uiStats));
+
+        private void UpdateSnapshotCore(
+            string status,
+            string sourceName,
+            CaptureSourceHealth source,
+            TrafficCaptureService.CaptureFlowSnapshot flow,
+            string? error,
+            DateTime? lastAnalysisUtc,
+            TrafficCaptureService.StatsSnapshot? uiStats)
         {
             var isRunning = string.Equals(status, "Monitoring", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(status, "Degraded", StringComparison.OrdinalIgnoreCase);

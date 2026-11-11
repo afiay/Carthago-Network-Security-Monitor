@@ -103,7 +103,7 @@ namespace Carthago
              QueueAutoStartCaptureIfConfigured();
 
              // PPS / throughput ticker
-             _ppsTimer.Tick += (_, __) =>
+             _ppsTimer.Tick += (_, __) => UiOperationProfiler.Measure("TrafficTick", () =>
             {
                 double x = DateTime.Now.ToOADate();
                 _trafficXs.Add(x);
@@ -140,7 +140,7 @@ namespace Carthago
                 if (_secondsUntilChartRefresh <= 0)
                 {
                     if (DashboardView.IsVisible || AnalyticsView.IsVisible)
-                        RenderTraffic();
+                        UiOperationProfiler.Measure("TrafficChart", RenderTraffic);
 
                     if (AnalyticsView.IsVisible)
                     {
@@ -149,17 +149,17 @@ namespace Carthago
                                 $"Map overlay: {mapService.SkippedOverlayDraws:N0} visual updates skipped because its UI queue was full; capture/detection data is unaffected.";
                         if (_protocolChartDirty)
                         {
-                            RenderProtocol();
+                            UiOperationProfiler.Measure("ProtocolChart", RenderProtocol);
                             _protocolChartDirty = false;
                         }
                         if (_talkerChartDirty)
                         {
-                            RenderTopTalkers();
+                            UiOperationProfiler.Measure("TalkerChart", RenderTopTalkers);
                             _talkerChartDirty = false;
                         }
                         if (_severityChartDirty)
                         {
-                            RenderSeverity();
+                            UiOperationProfiler.Measure("SeverityChart", RenderSeverity);
                             _severityChartDirty = false;
                         }
                     }
@@ -170,8 +170,8 @@ namespace Carthago
                 string chartCountdown = $"Charts refresh in {_secondsUntilChartRefresh}s";
                 DashboardChartRefreshCountdownText.Text = chartCountdown;
                 AnalyticsChartRefreshCountdownText.Text = chartCountdown;
-                UpdateKpis();
-            };
+                UiOperationProfiler.Measure("KpiUpdate", UpdateKpis);
+            });
             _ppsTimer.Start();
         }
 

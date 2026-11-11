@@ -3,12 +3,16 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Windows;
 using Carthago.Models;
+using Carthago.Services;
 
 namespace Carthago
 {
     public partial class MainWindow
     {
         private void CaptureService_TrafficBatchReceived(IReadOnlyList<TrafficRecord> records)
+            => UiOperationProfiler.Measure("TrafficGridBatch", () => ApplyTrafficBatch(records));
+
+        private void ApplyTrafficBatch(IReadOnlyList<TrafficRecord> records)
         {
             // The capture service delivers this on the UI dispatcher once per bounded batch.
             foreach (var record in records)

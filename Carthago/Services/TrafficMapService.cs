@@ -60,6 +60,9 @@ namespace Carthago.Services
         }
 
         private void OnRecord(TrafficRecord r)
+            => UiOperationProfiler.Measure("MapOverlaySchedule", () => OnRecordCore(r));
+
+        private void OnRecordCore(TrafficRecord r)
         {
             if (Volatile.Read(ref _visualizationActive) == 0)
                 return;

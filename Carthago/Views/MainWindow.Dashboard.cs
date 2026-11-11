@@ -190,6 +190,9 @@ namespace Carthago
         }
 
         private void RefreshDashboardAnomalies()
+            => UiOperationProfiler.Measure("DashboardAnomalies", RefreshDashboardAnomaliesCore);
+
+        private void RefreshDashboardAnomaliesCore()
         {
             if (!_dashboardCallbackGate.IsOpen || _sinkHost == null)
                 return;
@@ -222,6 +225,9 @@ namespace Carthago
         }
 
         private void RefreshDashboardLayoutFromPreferences()
+            => UiOperationProfiler.Measure("DashboardLayout", RefreshDashboardLayoutCore);
+
+        private void RefreshDashboardLayoutCore()
         {
             if (!_dashboardCallbackGate.IsOpen || !_dashboardInitialized)
                 return;
@@ -547,6 +553,9 @@ namespace Carthago
         }
 
         private void UpdateMonitoringHeader()
+            => UiOperationProfiler.Measure("MonitoringHeader", UpdateMonitoringHeaderCore);
+
+        private void UpdateMonitoringHeaderCore()
         {
             if (!_dashboardCallbackGate.IsOpen)
                 return;
