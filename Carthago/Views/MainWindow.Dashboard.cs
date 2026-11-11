@@ -40,6 +40,7 @@ namespace Carthago
         private BaselineStatus _dashboardBaselineStatus = new();
         private readonly DispatcherTimer _dashboardHeaderTimer = new() { Interval = TimeSpan.FromSeconds(5) };
         private readonly DashboardCallbackGate _dashboardCallbackGate = new();
+        private readonly UiRefreshCoalescer _dashboardAnomalyRefresh = new();
         private bool _dashboardInitialized;
         private bool _syncingAnomalyPreference;
         private bool _syncingDashboardWidgets;
@@ -105,11 +106,29 @@ namespace Carthago
             })), DispatcherPriority.Background);
 
         private void DashboardAnomalyObserved(AnomalySignal anomaly)
-            => Dispatcher.BeginInvoke(new Action(() => _dashboardCallbackGate.RunIfOpen(() =>
+        {
+            if (_dashboardAnomalyRefresh.Request())
+                PostDashboardAnomalyRefresh();
+        }
+
+        private void PostDashboardAnomalyRefresh()
+            => Dispatcher.BeginInvoke(new Action(() =>
             {
-                RefreshDashboardAnomalies();
-                UpdateMonitoringHeader();
-            })), DispatcherPriority.Background);
+                var version = _dashboardAnomalyRefresh.Version;
+                try
+                {
+                    _dashboardCallbackGate.RunIfOpen(() =>
+                    {
+                        RefreshDashboardAnomalies();
+                        UpdateMonitoringHeader();
+                    });
+                }
+                finally
+                {
+                    if (_dashboardAnomalyRefresh.Complete(version) && _dashboardCallbackGate.IsOpen)
+                        PostDashboardAnomalyRefresh();
+                }
+            }), DispatcherPriority.Background);
 
         private void DashboardBaselineChanged(BaselineStatus status)
             => Dispatcher.BeginInvoke(new Action(() => _dashboardCallbackGate.RunIfOpen(() =>
