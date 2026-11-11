@@ -2059,7 +2059,7 @@
                                        Foreground="{StaticResource TextMutedBrush}"/>
                           </DockPanel>
                         </Border>
-                        <StackPanel Grid.Row="1" Padding="14,20,14,22">
+                        <StackPanel Grid.Row="1" Margin="14,20,14,22">
                           <TextBlock Text="&gt;_" FontFamily="Consolas" FontSize="26"
                                      FontWeight="Bold" Foreground="{StaticResource AccentBrush}"
                                      Margin="0,0,0,14"/>
