@@ -146,9 +146,7 @@ namespace Carthago.Views
                     ? MatchesAddress(r.Source, searchedAddress!) || MatchesAddress(r.Destination, searchedAddress!)
                     : isPortQuery
                         ? r.SourcePort == searchedPort || r.DestinationPort == searchedPort
-                    : Contains(r.Source, term) || Contains(r.Destination, term) || Contains(r.Protocol, term)
-                      || Contains(r.ApplicationService, term) || Contains(r.ProcessName, term)
-                      || Contains(r.WhoisCountry, term) || Contains(r.Sni, term) || Contains(r.HttpHost, term))))
+                    : MatchesTrafficText(r, term))))
                 .ToArray();
             var detectionMatches = detectionSnapshot.Where(d =>
                 term.Length == 0 || (isEventQuery
@@ -365,6 +363,17 @@ namespace Carthago.Views
 
         private static bool Contains(string? value, string text)
             => value?.Contains(text, StringComparison.OrdinalIgnoreCase) == true;
+
+        // Read-only search of already retained traffic metadata. DNS question
+        // names were present in the evidence inspector but missing from the
+        // Explorer's general hostname text search (SOC-16).
+        internal static bool MatchesTrafficText(TrafficRecord record, string term)
+            => term.Length > 0 &&
+               (Contains(record.Source, term) || Contains(record.Destination, term) ||
+                Contains(record.Protocol, term) || Contains(record.ApplicationService, term) ||
+                Contains(record.ProcessName, term) || Contains(record.WhoisCountry, term) ||
+                Contains(record.Sni, term) || Contains(record.HttpHost, term) ||
+                Contains(record.DnsQname, term));
 
         private void InvestigationTrafficGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {

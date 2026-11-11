@@ -31,7 +31,7 @@
           <WrapPanel Margin="0,16,0,0">
             <TextBox x:Name="InvestigationSearchText" Width="270" MinHeight="36" MaxLength="256" Margin="0,0,8,8"
                      Style="{StaticResource SearchBox}" KeyDown="InvestigationSearchText_KeyDown"
-                     ToolTip="Exact IP, port:443, event:&lt;exact-event-id&gt;, or text from retained rule IDs, domains, flow IDs and traffic/detection metadata"
+                     ToolTip="Exact IP, port:443, event:&lt;exact-event-id&gt;, or text from retained DNS question names, rule IDs, domains, flow IDs and other traffic/detection metadata"
                      AutomationProperties.Name="Network investigation search"/>
             <Button Content="Investigate" MinWidth="116" Height="36" Margin="0,0,8,8"
                     Style="{StaticResource PrimaryButton}" Click="Investigate_Click"/>
@@ -92,6 +92,7 @@
               <DataGridTextColumn Header="Source" Binding="{Binding Source}" Width="150"/>
               <DataGridTextColumn Header="Destination" Binding="{Binding Destination}" Width="150"/>
               <DataGridTextColumn Header="Protocol" Binding="{Binding Protocol}" Width="85"/>
+              <DataGridTextColumn Header="DNS question (if recorded)" Binding="{Binding DnsQname}" Width="205"/>
               <DataGridTextColumn Header="Src port" Binding="{Binding SourcePort}" Width="80"/>
               <DataGridTextColumn Header="Dst port" Binding="{Binding DestinationPort}" Width="80"/>
               <DataGridTextColumn Header="Service" Binding="{Binding ApplicationService}" Width="145"/>
