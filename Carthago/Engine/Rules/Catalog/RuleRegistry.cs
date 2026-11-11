@@ -908,6 +908,16 @@ namespace Carthago.Engine.Rules.Catalog
                 new R883_VmwareVmxPublicTlsPeerFanoutRule(),
                 new R884_GitPrivateObjectGetFanoutRule(),
                 new R885_PublicCgiPostThenBashTlsRule(),
+                new R886_SshIngressThenInternalSmbSynRule(),
+                new R887_IdeProcessPublicTlsPeerPairRule(),
+                new R888_EsxiManagementPublicTlsPeerPairRule(),
+                new R889_HostdVpxaTlsCadenceRule(),
+                new R890_Rundll32PublicTlsPeerPairRule(),
+                new R891_PublicVncSynThenPayloadRule(),
+                new R892_BroadcastUdpNineThenRdpSynRule(),
+                new R893_PowershellDnsQueryThenSniTlsRule(),
+                new R894_PublicSshThenWebApiProbeRule(),
+                new R895_PrivateIndustrialDualPortSynRule(),
             };
         }
 
