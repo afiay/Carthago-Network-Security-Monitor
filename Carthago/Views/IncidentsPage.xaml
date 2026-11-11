@@ -821,6 +821,32 @@
                                    FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" TextWrapping="Wrap"/>
                         <TextBlock Text="{Binding Description}" Margin="0,6,0,0"
                                    Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap"/>
+                        <!-- SOC-15: only endpoints recorded on detection/anomaly observations become search pivots. -->
+                        <StackPanel Visibility="{Binding HasEndpointInvestigations, Converter={StaticResource TimelineEventVisibility}}"
+                                    Margin="0,11,0,0">
+                          <TextBlock Text="Recorded observation endpoints · matching retained records do not prove incident membership."
+                                     Foreground="{StaticResource TextMutedBrush}" FontSize="11" TextWrapping="Wrap"/>
+                          <TextBlock Text="{Binding SourceInvestigationLabel}" Margin="0,5,0,0" FontSize="11"
+                                     FontFamily="Consolas" Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap"
+                                     Visibility="{Binding CanInvestigateSource, Converter={StaticResource TimelineEventVisibility}}"/>
+                          <TextBlock Text="{Binding DestinationInvestigationLabel}" Margin="0,3,0,0" FontSize="11"
+                                     FontFamily="Consolas" Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap"
+                                     Visibility="{Binding CanInvestigateDestination, Converter={StaticResource TimelineEventVisibility}}"/>
+                          <WrapPanel Margin="0,8,0,0">
+                            <Button Content="Investigate source" Margin="0,0,8,6" Padding="10,6" FontSize="11.5"
+                                    HorizontalAlignment="Left" Style="{StaticResource SecondaryButton}"
+                                    Visibility="{Binding CanInvestigateSource, Converter={StaticResource TimelineEventVisibility}}"
+                                    Click="InvestigateTimelineSource_Click"
+                                    AutomationProperties.Name="Investigate recorded timeline source IP"
+                                    ToolTip="Search the retained network snapshot by this row's exact recorded source IP; matching traffic may be unrelated to the case."/>
+                            <Button Content="Investigate destination" Margin="0,0,0,6" Padding="10,6" FontSize="11.5"
+                                    HorizontalAlignment="Left" Style="{StaticResource SecondaryButton}"
+                                    Visibility="{Binding CanInvestigateDestination, Converter={StaticResource TimelineEventVisibility}}"
+                                    Click="InvestigateTimelineDestination_Click"
+                                    AutomationProperties.Name="Investigate recorded timeline destination"
+                                    ToolTip="Search retained network records by this row's destination IP, or by its recorded hostname when no IP is available; hostname searches use text matching."/>
+                          </WrapPanel>
+                        </StackPanel>
                         <!-- Only an explicit, case-owned Detection EventId permits this action. -->
                         <StackPanel Visibility="{Binding CanInvestigateExactEvent, Converter={StaticResource TimelineEventVisibility}}"
                                     Margin="0,11,0,0">

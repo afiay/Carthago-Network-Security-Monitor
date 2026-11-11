@@ -58,6 +58,30 @@ namespace Carthago.Views
             NetworkInvestigationRequested?.Invoke($"event:{item.ExactEventId}");
         }
 
+        private void InvestigateTimelineSource_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not Button { DataContext: TimelineItemVm item } ||
+                !item.CanInvestigateSource ||
+                _vm.Selected is not { } selected ||
+                !selected.VisibleTimelineItems.Any(current => ReferenceEquals(current, item)))
+                return;
+
+            // An exact IP query explores retained records; it does not prove
+            // that every matching record is part of this incident.
+            NetworkInvestigationRequested?.Invoke(item.SourceInvestigationQuery);
+        }
+
+        private void InvestigateTimelineDestination_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not Button { DataContext: TimelineItemVm item } ||
+                !item.CanInvestigateDestination ||
+                _vm.Selected is not { } selected ||
+                !selected.VisibleTimelineItems.Any(current => ReferenceEquals(current, item)))
+                return;
+
+            NetworkInvestigationRequested?.Invoke(item.DestinationInvestigationQuery);
+        }
+
         private void ExportAnalysis_Click(object sender, RoutedEventArgs e)
             => ExportAnalysisRequested?.Invoke();
 
@@ -1377,7 +1401,52 @@ namespace Carthago.Views
         public string ExactEventId { get; init; } = string.Empty;
         public bool CanInvestigateExactEvent => ExactEventId.Length > 0;
         public string ExactEventIdLabel => CanInvestigateExactEvent ? $"Recorded event: {ExactEventId}" : string.Empty;
+        public string SourceInvestigationQuery { get; init; } = string.Empty;
+        public string DestinationInvestigationQuery { get; init; } = string.Empty;
+        public bool CanInvestigateSource => SourceInvestigationQuery.Length > 0;
+        public bool CanInvestigateDestination => DestinationInvestigationQuery.Length > 0;
+        public bool HasEndpointInvestigations => CanInvestigateSource || CanInvestigateDestination;
+        public string SourceInvestigationLabel => CanInvestigateSource ? $"Source IP: {SourceInvestigationQuery}" : string.Empty;
+        public string DestinationInvestigationLabel => CanInvestigateDestination ? $"Destination: {DestinationInvestigationQuery}" : string.Empty;
         public string FilterGroup { get; init; } = "Story updates";
+
+        private static string CanonicalRecordedIp(string? candidate)
+        {
+            var value = candidate?.Trim();
+            if (value is not { Length: > 0 and <= 128 })
+                return string.Empty;
+
+            // IPAddress.TryParse also accepts abbreviated/hex/octal IPv4 forms.
+            // Those are not unambiguous recorded network addresses for a pivot.
+            if (!value.Contains(':'))
+            {
+                var octets = value.Split('.');
+                if (octets.Length != 4 || octets.Any(octet =>
+                        octet.Length is < 1 or > 3 ||
+                        (octet.Length > 1 && octet[0] == '0') ||
+                        octet.Any(ch => ch is < '0' or > '9')))
+                    return string.Empty;
+            }
+
+            return IPAddress.TryParse(value, out var address)
+                ? address.ToString()
+                : string.Empty;
+        }
+
+        private static string RecordedDestinationHost(string? candidate)
+        {
+            var value = candidate?.Trim();
+            if (value is not { Length: > 0 and <= 253 } ||
+                value.Contains(':') ||
+                string.Equals(value, "unknown", StringComparison.OrdinalIgnoreCase) ||
+                IPAddress.TryParse(value, out _) ||
+                Uri.CheckHostName(value) != UriHostNameType.Dns)
+                return string.Empty;
+
+            // Hostnames are text pivots in the Explorer, not exact event links.
+            // Never pass free-form labels, URLs or event:/port: commands as endpoints.
+            return value;
+        }
 
         private static string ClassifyTimelineType(string? type)
         {
@@ -1416,6 +1485,19 @@ namespace Carthago.Views
                 recordedEventIds.Contains(eventId))
                 exactEventId = eventId;
 
+            // Builder-generated summaries, risk and case-action rows can carry
+            // case-wide endpoints, which are not observations for that row.
+            var hasObservedEndpoint = item.Type?.Trim().ToLowerInvariant() is
+                "detection" or "anomaly" or "mlsignal";
+            var sourceQuery = hasObservedEndpoint ? CanonicalRecordedIp(item.SourceIp) : string.Empty;
+            var destinationQuery = hasObservedEndpoint ? CanonicalRecordedIp(item.DestinationIp) : string.Empty;
+            if (hasObservedEndpoint && destinationQuery.Length == 0)
+            {
+                destinationQuery = CanonicalRecordedIp(item.DestinationHost);
+                if (destinationQuery.Length == 0)
+                    destinationQuery = RecordedDestinationHost(item.DestinationHost);
+            }
+
             return new TimelineItemVm
             {
                 TimestampUtc = timestampUtc,
@@ -1429,6 +1511,8 @@ namespace Carthago.Views
                 RiskAfterLabel = item.RiskScoreAfter.HasValue ? $"Risk after event: {item.RiskScoreAfter.Value}" : string.Empty,
                 EndpointLabel = endpointLabel,
                 ExactEventId = exactEventId,
+                SourceInvestigationQuery = sourceQuery,
+                DestinationInvestigationQuery = destinationQuery,
                 FilterGroup = ClassifyTimelineType(item.Type),
                 IsEmptyState = false
             };
