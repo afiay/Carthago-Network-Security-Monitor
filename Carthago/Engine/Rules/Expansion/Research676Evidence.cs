@@ -178,6 +178,12 @@ namespace Carthago.Engine.Rules.Expansion
          _slots.Add(key,slot);
        }
        if(at<=slot.Last||slot.Ids.Contains(id))return false;
+       if(slot.Count==0)
+       {
+         // The first packet after a completed cadence begins a fresh window.
+         // Retain Last for duplicate/reverse-time protection.
+         slot.First=at;slot.Length=length;
+       }
        if(slot.Count>0 && ((at-slot.Last).TotalSeconds<9||(at-slot.Last).TotalSeconds>31
           ||Math.Abs(length-slot.Length)>100||at-slot.First>TimeSpan.FromMinutes(2)))
        {slot.Count=0;slot.Ids.Clear();slot.First=at;slot.Length=length;}

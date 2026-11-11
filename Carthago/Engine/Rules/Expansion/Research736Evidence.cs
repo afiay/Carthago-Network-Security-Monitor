@@ -208,6 +208,12 @@ namespace Carthago.Engine.Rules.Expansion
 
                 if (slot.Ids.Contains(id) || at <= slot.Latest) return false;
 
+                // A completed cadence leaves Count at zero while retaining Latest
+                // for monotonicity. Its next packet starts a new window, even
+                // when that packet arrives long after the previous cadence.
+                if (slot.Count == 0)
+                    slot.First = at;
+
                 if (slot.Count > 0)
                 {
                     var interval = (at - slot.Latest).TotalSeconds;
