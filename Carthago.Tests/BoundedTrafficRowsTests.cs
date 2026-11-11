@@ -43,4 +43,27 @@ public class BoundedTrafficRowsTests
         rows.PrependBatch(new[] { 1, 2, 3, 4, 5 }, 2);
         Assert.Equal(new[] { 5, 4 }, rows);
     }
+
+    [Fact]
+    public void HiddenGridRetainsNewestRowsUntilOneExplicitInvalidation()
+    {
+        var rows = new BoundedTrafficRows<int>();
+        var notifications = 0;
+        rows.CollectionChanged += (_, e) =>
+        {
+            Assert.Equal(NotifyCollectionChangedAction.Reset, e.Action);
+            notifications++;
+        };
+
+        rows.PrependBatch(new[] { 1, 2, 3 }, 4, notifyCollectionChanged: false);
+        rows.PrependBatch(new[] { 4, 5, 6 }, 4, notifyCollectionChanged: false);
+
+        Assert.Equal(new[] { 6, 5, 4, 3 }, rows);
+        Assert.Equal(0, notifications);
+
+        rows.NotifyReset();
+
+        Assert.Equal(1, notifications);
+        Assert.Equal(new[] { 6, 5, 4, 3 }, rows);
+    }
 }

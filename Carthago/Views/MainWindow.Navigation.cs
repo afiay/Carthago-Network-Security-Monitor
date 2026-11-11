@@ -2,6 +2,7 @@
 // File: Views/MainWindow.Navigation.cs
 using System.Windows;
 using System.Windows.Controls;
+using Carthago.Services;
 using Carthago.Views;
 
 namespace Carthago
@@ -47,6 +48,8 @@ namespace Carthago
 
             // No filters in sidebar for dashboard
             SidebarPanel?.HideAllFilters();
+            RequestDashboardAnalyticsRefresh(DashboardAnalyticsRefreshKind.All);
+            UpdateMonitoringHeader();
         }
 
         private void DashboardOpenMonitoringHealth_Click(object sender, RoutedEventArgs e)
@@ -75,6 +78,7 @@ namespace Carthago
         private void Nav_LiveTraffic_Click(object? sender, RoutedEventArgs e)
         {
             ShowView(LiveTrafficView);
+            _traffic.NotifyReset();
             SidebarPanel?.ActivateNav("LiveTraffic");
 
             // Only show the Live Traffic filter

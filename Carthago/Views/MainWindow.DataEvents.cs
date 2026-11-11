@@ -39,7 +39,10 @@ namespace Carthago
                     _talkerChartDirty = true;
                 }
             }
-            _traffic.PrependBatch(records, 200);
+            _traffic.PrependBatch(
+                records,
+                200,
+                notifyCollectionChanged: LiveTrafficView.Visibility == Visibility.Visible);
         }
 
         private void CaptureService_DetectionEventRaised(DetectionEvent evt)
@@ -55,7 +58,7 @@ namespace Carthago
                     _severityCounts[sev] = 0;
                 _severityCounts[sev]++;
                 _severityChartDirty = true;
-                RefreshDashboardLayoutFromPreferences();
+                RequestDashboardAnalyticsRefresh(DashboardAnalyticsRefreshKind.All);
             });
         }
     }

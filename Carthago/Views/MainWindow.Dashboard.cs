@@ -39,8 +39,9 @@ namespace Carthago
         private IReadOnlyList<AnomalySignal> _dashboardAnomalySnapshot = Array.Empty<AnomalySignal>();
         private BaselineStatus _dashboardBaselineStatus = new();
         private readonly DispatcherTimer _dashboardHeaderTimer = new() { Interval = TimeSpan.FromSeconds(5) };
+        private readonly DispatcherTimer _dashboardAnalyticsRefreshTimer = new(DispatcherPriority.Background);
         private readonly DashboardCallbackGate _dashboardCallbackGate = new();
-        private readonly UiRefreshCoalescer _dashboardAnomalyRefresh = new();
+        private readonly DashboardAnalyticsRefreshCoalescer _dashboardAnalyticsRefresh = new();
         private bool _dashboardInitialized;
         private bool _syncingAnomalyPreference;
         private bool _syncingDashboardWidgets;
@@ -86,6 +87,7 @@ namespace Carthago
             PreferencesService.PreferencesChanged += DashboardPreferencesChanged;
             DeviceComboBox.SelectionChanged += DeviceComboBox_SelectionChanged;
 
+            _dashboardAnalyticsRefreshTimer.Tick += DashboardAnalyticsRefreshTimerTick;
             _dashboardHeaderTimer.Tick += (_, __) => UpdateMonitoringHeader();
             _dashboardHeaderTimer.Start();
 
@@ -98,61 +100,93 @@ namespace Carthago
             UpdateMonitoringHeader();
         }
 
-        private void DashboardIncidentChanged(Incident incident)
-            => Dispatcher.BeginInvoke(new Action(() => _dashboardCallbackGate.RunIfOpen(() =>
-            {
-                RefreshDashboardIncidents();
-                UpdateMonitoringHeader();
-            })), DispatcherPriority.Background);
+        private void DashboardIncidentChanged(Incident _)
+            => RequestDashboardAnalyticsRefresh(DashboardAnalyticsRefreshKind.Incidents);
 
-        private void DashboardAnomalyObserved(AnomalySignal anomaly)
-        {
-            if (_dashboardAnomalyRefresh.Request())
-                PostDashboardAnomalyRefresh();
-        }
+        private void DashboardAnomalyObserved(AnomalySignal _)
+            => RequestDashboardAnalyticsRefresh(DashboardAnalyticsRefreshKind.Anomalies);
 
-        private void PostDashboardAnomalyRefresh()
-            => Dispatcher.BeginInvoke(new Action(() =>
-            {
-                var version = _dashboardAnomalyRefresh.Version;
-                try
-                {
-                    _dashboardCallbackGate.RunIfOpen(() =>
-                    {
-                        RefreshDashboardAnomalies();
-                        UpdateMonitoringHeader();
-                    });
-                }
-                finally
-                {
-                    if (_dashboardAnomalyRefresh.Complete(version) && _dashboardCallbackGate.IsOpen)
-                        PostDashboardAnomalyRefresh();
-                }
-            }), DispatcherPriority.Background);
-
-        private void DashboardBaselineChanged(BaselineStatus status)
-            => Dispatcher.BeginInvoke(new Action(() => _dashboardCallbackGate.RunIfOpen(() =>
-            {
-                _dashboardBaselineStatus = status ?? new BaselineStatus();
-                RefreshDashboardLayoutFromPreferences();
-                UpdateMonitoringHeader();
-            })), DispatcherPriority.Background);
+        private void DashboardBaselineChanged(BaselineStatus _)
+            => RequestDashboardAnalyticsRefresh(DashboardAnalyticsRefreshKind.Baseline);
 
         private void DashboardStateReset()
-            => Dispatcher.BeginInvoke(new Action(() => _dashboardCallbackGate.RunIfOpen(() =>
+            => RequestDashboardAnalyticsRefresh(DashboardAnalyticsRefreshKind.All);
+
+        private void RequestDashboardAnalyticsRefresh(DashboardAnalyticsRefreshKind kind)
+        {
+            if (!_dashboardCallbackGate.IsOpen || !_dashboardAnalyticsRefresh.Request(kind))
+                return;
+
+            Dispatcher.BeginInvoke(
+                new Action(ArmDashboardAnalyticsRefreshTimer),
+                DispatcherPriority.Background);
+        }
+
+        private void ArmDashboardAnalyticsRefreshTimer()
+            => ArmDashboardAnalyticsRefreshTimer(_dashboardAnalyticsRefresh.GetDelayUntilNextRefresh());
+
+        private void ArmDashboardAnalyticsRefreshTimer(TimeSpan delay)
+        {
+            if (!_dashboardCallbackGate.IsOpen)
+                return;
+
+            _dashboardAnalyticsRefreshTimer.Stop();
+            _dashboardAnalyticsRefreshTimer.Interval = delay > TimeSpan.Zero
+                ? delay
+                : TimeSpan.FromMilliseconds(1);
+            _dashboardAnalyticsRefreshTimer.Start();
+        }
+
+        private void DashboardAnalyticsRefreshTimerTick(object? sender, EventArgs e)
+        {
+            _dashboardAnalyticsRefreshTimer.Stop();
+            if (!_dashboardCallbackGate.IsOpen)
+                return;
+
+            if (!_dashboardAnalyticsRefresh.TryBeginRefresh(out var pending, out var retryAfter))
             {
-                RefreshDashboardIncidents();
-                RefreshDashboardAnomalies();
-                RefreshDashboardBaseline();
-                UpdateMonitoringHeader();
-            })), DispatcherPriority.Background);
+                if (retryAfter > TimeSpan.Zero)
+                    ArmDashboardAnalyticsRefreshTimer(retryAfter);
+                return;
+            }
+
+            try
+            {
+                _dashboardCallbackGate.RunIfOpen(() => ApplyDashboardAnalyticsRefresh(pending));
+            }
+            finally
+            {
+                if (_dashboardAnalyticsRefresh.CompleteRefresh() && _dashboardCallbackGate.IsOpen)
+                    ArmDashboardAnalyticsRefreshTimer();
+            }
+        }
+
+        private void ApplyDashboardAnalyticsRefresh(DashboardAnalyticsRefreshKind pending)
+        {
+            if (pending == DashboardAnalyticsRefreshKind.None)
+                return;
+
+            if ((pending & DashboardAnalyticsRefreshKind.Incidents) != 0)
+                RefreshDashboardIncidentSnapshot();
+            if ((pending & DashboardAnalyticsRefreshKind.Anomalies) != 0)
+                RefreshDashboardAnomalySnapshot();
+            if ((pending & DashboardAnalyticsRefreshKind.Baseline) != 0)
+                RefreshDashboardBaselineSnapshot();
+
+            DashboardPresentationGate.RunIfVisible(
+                DashboardView.Visibility == Visibility.Visible,
+                RefreshDashboardLayoutFromPreferences);
+            UpdateMonitoringHeader();
+        }
 
         private void DashboardPreferencesChanged(AppPreferences prefs)
             => Dispatcher.BeginInvoke(new Action(() => _dashboardCallbackGate.RunIfOpen(() =>
             {
                 ApplyAnomalyPreferenceState(prefs);
                 RefreshDashboardCustomizationSources();
-                RefreshDashboardLayoutFromPreferences();
+                DashboardPresentationGate.RunIfVisible(
+                    DashboardView.Visibility == Visibility.Visible,
+                    RefreshDashboardLayoutFromPreferences);
                 UpdateMonitoringHeader();
             })), DispatcherPriority.Background);
 
@@ -176,6 +210,12 @@ namespace Carthago
 
         private void RefreshDashboardIncidents()
         {
+            RefreshDashboardIncidentSnapshot();
+            RefreshDashboardLayoutFromPreferences();
+        }
+
+        private void RefreshDashboardIncidentSnapshot()
+        {
             if (!_dashboardCallbackGate.IsOpen || _sinkHost == null)
                 return;
 
@@ -185,29 +225,37 @@ namespace Carthago
                 .ThenByDescending(i => i.RiskScore)
                 .ThenByDescending(i => i.UpdatedUtc)
                 .ToArray();
-
-            RefreshDashboardLayoutFromPreferences();
         }
 
         private void RefreshDashboardAnomalies()
-            => UiOperationProfiler.Measure("DashboardAnomalies", RefreshDashboardAnomaliesCore);
+        {
+            RefreshDashboardAnomalySnapshot();
+            RefreshDashboardLayoutFromPreferences();
+        }
 
-        private void RefreshDashboardAnomaliesCore()
+        private void RefreshDashboardAnomalySnapshot()
+            => UiOperationProfiler.Measure("DashboardAnomalies", RefreshDashboardAnomalySnapshotCore);
+
+        private void RefreshDashboardAnomalySnapshotCore()
         {
             if (!_dashboardCallbackGate.IsOpen || _sinkHost == null)
                 return;
 
             _dashboardAnomalySnapshot = _sinkHost.Analytics.GetRecentAnomalies(160);
-            RefreshDashboardLayoutFromPreferences();
         }
 
         private void RefreshDashboardBaseline()
+        {
+            RefreshDashboardBaselineSnapshot();
+            RefreshDashboardLayoutFromPreferences();
+        }
+
+        private void RefreshDashboardBaselineSnapshot()
         {
             if (!_dashboardCallbackGate.IsOpen || _sinkHost == null)
                 return;
 
             _dashboardBaselineStatus = _sinkHost.Analytics.GetBaselineStatus();
-            RefreshDashboardLayoutFromPreferences();
         }
 
         private void RefreshDashboardCustomizationSources()
@@ -1732,6 +1780,9 @@ namespace Carthago
         private void CleanupDashboardExperience()
         {
             _dashboardCallbackGate.Close();
+            _dashboardAnalyticsRefreshTimer.Stop();
+            _dashboardAnalyticsRefreshTimer.Tick -= DashboardAnalyticsRefreshTimerTick;
+            _dashboardAnalyticsRefresh.Cancel();
             PreferencesService.PreferencesChanged -= DashboardPreferencesChanged;
             DeviceComboBox.SelectionChanged -= DeviceComboBox_SelectionChanged;
             _dashboardHeaderTimer.Stop();

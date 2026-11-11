@@ -9,7 +9,10 @@ namespace Carthago.Services
     /// <summary>One grid notification per capture batch; newest records are shown first.</summary>
     public sealed class BoundedTrafficRows<T> : ObservableCollection<T>
     {
-        public void PrependBatch(IReadOnlyList<T> records, int capacity)
+        public void PrependBatch(
+            IReadOnlyList<T> records,
+            int capacity,
+            bool notifyCollectionChanged = true)
         {
             if (records == null) throw new ArgumentNullException(nameof(records));
             if (capacity <= 0) throw new ArgumentOutOfRangeException(nameof(capacity));
@@ -22,6 +25,12 @@ namespace Carthago.Services
             while (Items.Count > capacity)
                 Items.RemoveAt(Items.Count - 1);
 
+            if (notifyCollectionChanged)
+                NotifyReset();
+        }
+
+        public void NotifyReset()
+        {
             OnPropertyChanged(new PropertyChangedEventArgs(nameof(Count)));
             OnPropertyChanged(new PropertyChangedEventArgs("Item[]"));
             OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
