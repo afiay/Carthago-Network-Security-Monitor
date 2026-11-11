@@ -268,14 +268,30 @@ namespace Carthago.Services
         {
             if (deviceCombo == null || startButton == null) return;
 
-            var devices = new List<(string Label, object Dev)>();
+            var devices = new List<(string Label, object Dev, string Tooltip)>();
+
+            // Npcap normally supplies a vendor description and an internal NPF GUID.
+            // Match the GUID against Windows network interface IDs for the familiar
+            // "Wi-Fi", "Ethernet", or user-renamed adapter alias.
+            var windowsAdapters = new List<CaptureAdapterIdentity>();
+            try
+            {
+                foreach (var adapter in System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces())
+                    windowsAdapters.Add(new CaptureAdapterIdentity(adapter.Id, adapter.Name, adapter.Description));
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Windows adapter names unavailable; using Npcap descriptions: {ex.Message}");
+            }
+
             try
             {
                 var pcapDevices = CaptureDeviceList.Instance;
                 foreach (var d in pcapDevices)
                 {
-                    string label = $"Npcap: {d.Description} ({d.Name})";
-                    devices.Add((label, d));
+                    string label = CaptureDeviceLabelFormatter.FormatNpcapLabel(d.Name, d.Description, windowsAdapters);
+                    string tooltip = $"{label}\nNpcap description: {d.Description}\nCapture device ID: {d.Name}";
+                    devices.Add((label, d, tooltip));
                 }
             }
             catch (Exception ex)
@@ -284,13 +300,19 @@ namespace Carthago.Services
             }
 
             // Always add ETW option
-            devices.Add(("ETW Kernel Capture (no Npcap required)", "ETW"));
+            devices.Add(("ETW Kernel Capture (no Npcap required)", "ETW",
+                "Windows Event Tracing capture; does not use an Npcap adapter."));
 
             _dispatcher.Invoke(() =>
             {
                 deviceCombo.Items.Clear();
                 foreach (var it in devices)
-                    deviceCombo.Items.Add(new ComboBoxItem { Content = it.Label, Tag = it.Dev });
+                    deviceCombo.Items.Add(new ComboBoxItem
+                    {
+                        Content = it.Label,
+                        Tag = it.Dev,
+                        ToolTip = it.Tooltip
+                    });
 
                 if (deviceCombo.Items.Count > 0) deviceCombo.SelectedIndex = 0;
                 startButton.IsEnabled = deviceCombo.Items.Count > 0;
