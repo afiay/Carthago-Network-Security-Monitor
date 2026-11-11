@@ -17,9 +17,31 @@ public class LocalLanDiscoveryTests
             "Wi-Fi", IPAddress.Parse("192.168.1.130"), IPAddress.Parse("255.255.255.128")) };
         var peers = LocalLanDiscovery.PlanProbeTargets(adapters);
         Assert.Equal(125, peers.Count); // .129-.254 except .130
-        Assert.DoesNotContain(IPAddress.Parse("192.168.1.130"), peers);
-        Assert.DoesNotContain(IPAddress.Parse("192.168.1.120"), peers);
+        Assert.DoesNotContain(IPAddress.Parse("192.168.1.128"), peers); // network
+        Assert.DoesNotContain(IPAddress.Parse("192.168.1.255"), peers); // broadcast
+        Assert.DoesNotContain(IPAddress.Parse("192.168.1.130"), peers); // own IP
+        Assert.DoesNotContain(IPAddress.Parse("192.168.1.120"), peers); // other subnet
+        Assert.Contains(IPAddress.Parse("192.168.1.129"), peers);
         Assert.Contains(IPAddress.Parse("192.168.1.253"), peers);
+    }
+
+    [Fact]
+    public void SubnetNetworkAndBroadcastAreNotProbedOnNarrowSubnets()
+    {
+        var quarterSubnet = new[] { new LocalLanInterface(
+            "Wi-Fi", IPAddress.Parse("192.168.1.166"), IPAddress.Parse("255.255.255.192")) };
+        var quarterPeers = LocalLanDiscovery.PlanProbeTargets(quarterSubnet);
+        Assert.Equal(61, quarterPeers.Count); // .129-.190, excluding .166
+        Assert.DoesNotContain(IPAddress.Parse("192.168.1.128"), quarterPeers);
+        Assert.DoesNotContain(IPAddress.Parse("192.168.1.191"), quarterPeers);
+        Assert.DoesNotContain(IPAddress.Parse("192.168.1.166"), quarterPeers);
+        Assert.Contains(IPAddress.Parse("192.168.1.190"), quarterPeers);
+
+        var tinySubnet = new[] { new LocalLanInterface(
+            "Ethernet", IPAddress.Parse("192.168.1.45"), IPAddress.Parse("255.255.255.252")) };
+        var tinyPeers = LocalLanDiscovery.PlanProbeTargets(tinySubnet);
+        Assert.Single(tinyPeers);
+        Assert.Equal(IPAddress.Parse("192.168.1.46"), tinyPeers[0]);
     }
 
     [Fact]

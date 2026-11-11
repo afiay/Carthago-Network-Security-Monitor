@@ -83,14 +83,17 @@ namespace Carthago.Services
                 var own = ToUInt32(adapter.Address);
                 var mask = ToUInt32(adapter.Mask);
                 var subnet = own & mask;
+                var broadcast = subnet | ~mask;
                 var local24 = own & 0xffffff00u;
 
                 // Even on /16 networks, only probe the current local /24,
-                // intersected with the actual interface subnet.
+                // intersected with the actual interface subnet. Never probe
+                // the network or broadcast address of the actual subnet.
                 for (uint offset = 1; offset <= 254 && targets.Count < maximum; offset++)
                 {
                     var candidate = local24 | offset;
-                    if (candidate == own || (candidate & mask) != subnet)
+                    if (candidate == own || candidate == subnet ||
+                        candidate == broadcast || (candidate & mask) != subnet)
                         continue;
                     var ip = FromUInt32(candidate);
                     if (IsLocalHostAddress(ip))
