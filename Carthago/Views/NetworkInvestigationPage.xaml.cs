@@ -541,6 +541,24 @@ namespace Carthago.Views
             grid.Focus();
         }
 
+        internal static int MatchKeyboardDirection(Key key, ModifierKeys modifiers)
+            => modifiers == ModifierKeys.Alt
+                ? key == Key.Up ? -1 : key == Key.Down ? 1 : 0
+                : 0;
+
+        private void InvestigationMatchGrid_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (sender is not DataGrid grid ||
+                (grid != InvestigationTrafficGrid && grid != InvestigationDetectionsGrid && grid != InvestigationIncidentsGrid))
+                return;
+            // WPF reports Alt-modified keys via SystemKey, not ordinary Key.
+            var key = e.Key == Key.System ? e.SystemKey : e.Key;
+            var direction = MatchKeyboardDirection(key, Keyboard.Modifiers);
+            if (direction == 0) return;
+            NavigateMatch(grid, direction);
+            e.Handled = true;
+        }
+
         private void PreviousTrafficMatch_Click(object sender, RoutedEventArgs e) => NavigateMatch(InvestigationTrafficGrid, -1);
         private void NextTrafficMatch_Click(object sender, RoutedEventArgs e) => NavigateMatch(InvestigationTrafficGrid, 1);
         private void PreviousDetectionMatch_Click(object sender, RoutedEventArgs e) => NavigateMatch(InvestigationDetectionsGrid, -1);

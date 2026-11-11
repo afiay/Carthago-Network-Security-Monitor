@@ -67,6 +67,8 @@
                      Foreground="{StaticResource TextMutedBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,4"/>
           <TextBlock x:Name="ScopeText" Text="No local snapshot loaded" Foreground="{StaticResource TextMutedBrush}"
                      TextWrapping="Wrap" Margin="0,3,0,0"/>
+          <TextBlock Text="Keyboard: focus a result grid, then Alt+Up / Alt+Down for previous / next match. Standard arrows remain available."
+                     Foreground="{StaticResource TextMutedBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,6,0,0"/>
         </StackPanel>
       </Border>
 
@@ -85,7 +87,7 @@
           <DataGrid x:Name="InvestigationTrafficGrid" AutoGenerateColumns="False" IsReadOnly="True"
                     Height="260" FrozenColumnCount="1" EnableRowVirtualization="True"
                     VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
-                    SelectionChanged="InvestigationTrafficGrid_SelectionChanged"
+                    SelectionChanged="InvestigationTrafficGrid_SelectionChanged" PreviewKeyDown="InvestigationMatchGrid_PreviewKeyDown"
                     AutomationProperties.Name="Matching retained network traffic">
             <DataGrid.Columns>
               <DataGridTextColumn Header="Timestamp" Binding="{Binding Timestamp}" Width="155"/>
@@ -141,7 +143,7 @@
           <DataGrid x:Name="InvestigationDetectionsGrid" AutoGenerateColumns="False" IsReadOnly="True"
                     Height="250" FrozenColumnCount="1" EnableRowVirtualization="True"
                     VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
-                    SelectionChanged="InvestigationDetectionsGrid_SelectionChanged"
+                    SelectionChanged="InvestigationDetectionsGrid_SelectionChanged" PreviewKeyDown="InvestigationMatchGrid_PreviewKeyDown"
                     AutomationProperties.Name="Matching retained detection events">
             <DataGrid.Columns>
               <DataGridTextColumn Header="Timestamp (UTC)" Binding="{Binding TimestampUtc, StringFormat={}{0:u}}" Width="160"/>
@@ -216,7 +218,7 @@
           <DataGrid x:Name="InvestigationIncidentsGrid" AutoGenerateColumns="False" IsReadOnly="True"
                     Height="185" FrozenColumnCount="1" EnableRowVirtualization="True"
                     VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
-                    SelectionChanged="InvestigationIncidentsGrid_SelectionChanged"
+                    SelectionChanged="InvestigationIncidentsGrid_SelectionChanged" PreviewKeyDown="InvestigationMatchGrid_PreviewKeyDown"
                     AutomationProperties.Name="Matching cached incident case records">
             <DataGrid.Columns>
               <DataGridTextColumn Header="Case ID" Binding="{Binding Id}" Width="185"/>
