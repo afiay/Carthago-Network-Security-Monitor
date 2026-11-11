@@ -14,7 +14,7 @@ namespace Carthago
     public partial class MainWindow : Window
     {
         // ===== Data collections =====
-        private readonly ObservableCollection<TrafficRecord> _traffic = new();
+        private readonly BoundedTrafficRows<TrafficRecord> _traffic = new();
         private readonly ObservableCollection<DetectionEvent> _alerts = new();
 
         // ===== Services (assigned in MainWindow.xaml.cs ctor) =====
@@ -80,7 +80,7 @@ namespace Carthago
             }
 
             // Hook capture service events
-            _captureService.TrafficRecordReceived += CaptureService_TrafficRecordReceived;
+            _captureService.TrafficBatchReceived += CaptureService_TrafficBatchReceived;
             _captureService.DetectionEventRaised += CaptureService_DetectionEventRaised;
             _captureService.CaptureFailed += _ =>
             {

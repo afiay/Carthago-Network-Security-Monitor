@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -30,6 +31,8 @@ namespace Carthago.Services
     {
         // ===== Public events
         public event Action<TrafficRecord>? TrafficRecordReceived;
+        /// <summary>UI-only coalescing hook; independent of detection and record delivery.</summary>
+        public event Action<IReadOnlyList<TrafficRecord>>? TrafficBatchReceived;
         public event Action<DetectionEvent>? DetectionEventRaised;
         public event Action<StatsSnapshot>? StatsUpdated;
         public event Action<Exception>? CaptureFailed;
@@ -91,6 +94,9 @@ namespace Carthago.Services
         private long _reputationEnriched;
         private long _enrichmentFallbacks;
         private long _uiRecordsDelivered;
+        private long _uiBatchesDelivered;
+        private long _uiBatchMaxDurationMs;
+        private long _uiBatchLastDurationMs;
         private long _captureStartedTicks;
         private long _lastCapturedTicks;
         private long _lastUiDeliveredTicks;
@@ -519,6 +525,8 @@ namespace Carthago.Services
                 {
                     await _dispatcher.InvokeAsync(() =>
                     {
+                        var stopwatch = Stopwatch.StartNew();
+                        var delivered = new List<TrafficRecord>(batch.Count);
                         foreach (var pending in batch)
                         {
                             try
@@ -526,12 +534,27 @@ namespace Carthago.Services
                                 pending.TryDeliver(r =>
                                 {
                                     TrafficRecordReceived?.Invoke(r);
+                                    delivered.Add(r);
                                     Interlocked.Increment(ref _uiRecordsDelivered);
                                     Interlocked.Exchange(ref _lastUiDeliveredTicks, DateTime.UtcNow.Ticks);
                                 });
                             }
                             catch (Exception ex) { Log(ex); /* keep other records flowing */ }
                         }
+                        // A single bounded collection notification per successful batch.
+                        // Exceptions here must never stop the capture or rule pipeline.
+                        try { if (delivered.Count != 0) TrafficBatchReceived?.Invoke(delivered); }
+                        catch (Exception ex) { Log(ex); }
+                        stopwatch.Stop();
+                        var ms = stopwatch.ElapsedMilliseconds;
+                        Interlocked.Increment(ref _uiBatchesDelivered);
+                        Interlocked.Exchange(ref _uiBatchLastDurationMs, ms);
+                        long previous;
+                        do
+                        {
+                            previous = Interlocked.Read(ref _uiBatchMaxDurationMs);
+                            if (ms <= previous) break;
+                        } while (Interlocked.CompareExchange(ref _uiBatchMaxDurationMs, ms, previous) != previous);
                     }, DispatcherPriority.Background);
                 }, _serviceCts.Token).ConfigureAwait(false);
             }
@@ -958,6 +981,9 @@ namespace Carthago.Services
             PacketsParsedOk = Interlocked.Read(ref _packetsParsedOk),
             PacketsParseErrors = Interlocked.Read(ref _packetsParseErrors),
             PacketsDroppedByQueue = Interlocked.Read(ref _packetsDroppedByQueue),
+            UiBatchesDelivered = Interlocked.Read(ref _uiBatchesDelivered),
+            UiBatchLastDurationMs = Interlocked.Read(ref _uiBatchLastDurationMs),
+            UiBatchMaxDurationMs = Interlocked.Read(ref _uiBatchMaxDurationMs),
             RuleEventsRaised = Interlocked.Read(ref _ruleEventsRaised),
             WhoisEnriched = Interlocked.Read(ref _whoisEnriched),
             ReputationEnriched = Interlocked.Read(ref _reputationEnriched),
@@ -1062,6 +1088,9 @@ namespace Carthago.Services
             public long PacketsParsedOk { get; init; }
             public long PacketsParseErrors { get; init; }
             public long PacketsDroppedByQueue { get; init; }
+            public long UiBatchesDelivered { get; init; }
+            public long UiBatchLastDurationMs { get; init; }
+            public long UiBatchMaxDurationMs { get; init; }
             public long RuleEventsRaised { get; init; }
             public long WhoisEnriched { get; init; }
             public long ReputationEnriched { get; init; }

@@ -581,7 +581,7 @@ namespace Carthago
 
             if (MonitoringHealthFrame.Content is Carthago.Views.MonitoringHealthPage healthPage)
                 healthPage.UpdateSnapshot(status, selectedSource ?? string.Empty, sourceHealth, flow,
-                    captureError, _sinkHost?.Analytics.LastAnalysisUtc);
+                    captureError, _sinkHost?.Analytics.LastAnalysisUtc, _captureService.GetStats());
 
             // LastAnalysisUtc is a historical observation, not a live capture-health guarantee.
             var lastAnalysis = _sinkHost?.Analytics.LastAnalysisUtc;

@@ -23,7 +23,8 @@ namespace Carthago.Views
             CaptureSourceHealth source,
             TrafficCaptureService.CaptureFlowSnapshot flow,
             string? error,
-            DateTime? lastAnalysisUtc)
+            DateTime? lastAnalysisUtc,
+            TrafficCaptureService.StatsSnapshot? uiStats = null)
         {
             var isRunning = string.Equals(status, "Monitoring", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(status, "Degraded", StringComparison.OrdinalIgnoreCase);
@@ -69,7 +70,11 @@ namespace Carthago.Views
             LastAnalysisText.Text = lastAnalysisUtc.HasValue
                 ? $"Last recorded analysis: {lastAnalysisUtc.Value.ToLocalTime():yyyy-MM-dd HH:mm:ss} (historical; not a heartbeat)"
                 : "Last recorded analysis: unavailable";
-            FlowReasonText.Text = $"Flow diagnostic: {flow.Reason}";
+            FlowReasonText.Text = $"Flow diagnostic: {flow.Reason}"
+                + (uiStats == null ? string.Empty
+                    : $" | UI drain batches: {uiStats.UiBatchesDelivered:N0}"
+                    + $" | last/max UI batch: {uiStats.UiBatchLastDurationMs}/{uiStats.UiBatchMaxDurationMs} ms"
+                    + $" | queue drops: {uiStats.PacketsDroppedByQueue:N0} (lifetime)");
             var reportedError = string.IsNullOrWhiteSpace(error) ? source.Error : error;
             CaptureErrorText.Text = string.IsNullOrWhiteSpace(reportedError) ? string.Empty : $"Capture error: {reportedError}";
             SnapshotTimeText.Text = $"Local UI snapshot: {DateTime.Now:yyyy-MM-dd HH:mm:ss}";

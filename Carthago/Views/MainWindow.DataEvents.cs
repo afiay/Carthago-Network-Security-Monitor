@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Collections.Generic;
 using System.Windows;
 using Carthago.Models;
 
@@ -7,14 +8,11 @@ namespace Carthago
 {
     public partial class MainWindow
     {
-        private void CaptureService_TrafficRecordReceived(TrafficRecord record)
+        private void CaptureService_TrafficBatchReceived(IReadOnlyList<TrafficRecord> records)
         {
-            Dispatcher.Invoke(() =>
+            // The capture service delivers this on the UI dispatcher once per bounded batch.
+            foreach (var record in records)
             {
-                _traffic.Insert(0, record);
-                if (_traffic.Count > 200)
-                    _traffic.RemoveAt(_traffic.Count - 1);
-
                 _ppsBucket++;
                 _bytesBucket += Math.Max(0, record.Length);
 
@@ -36,7 +34,8 @@ namespace Carthago
 
                     _talkerChartDirty = true;
                 }
-            });
+            }
+            _traffic.PrependBatch(records, 200);
         }
 
         private void CaptureService_DetectionEventRaised(DetectionEvent evt)
