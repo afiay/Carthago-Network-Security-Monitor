@@ -111,6 +111,39 @@
         </StackPanel>
       </Border>
 
+
+      <!-- Local network discovery is distinct from capture-source selection. -->
+      <Border Background="{StaticResource CardBgBrush}" BorderBrush="{StaticResource CardBorderBrush}"
+              BorderThickness="1" CornerRadius="14" Padding="16" Margin="0,0,0,16">
+        <StackPanel>
+          <TextBlock Text="LAN DEVICES / LOCAL NETWORK" Style="{StaticResource DashboardSectionTitle}"/>
+          <TextBlock Text="Displays observed local IPs and Windows neighbor-cache entries. 'Discover IPv4 devices' sends bounded ICMP probes on private LAN subnets. Neither a cached entry nor a missing response proves whether a device is online."
+                     TextWrapping="Wrap" Foreground="{StaticResource TextMutedBrush}" Margin="0,6,0,10"/>
+          <WrapPanel>
+            <Button x:Name="LanDiscoverButton" Content="Discover IPv4 devices" Click="LanDiscover_Click"
+                    Height="34" MinWidth="168" Margin="0,0,8,8" Style="{StaticResource PrimaryButton}"
+                    ToolTip="Opt-in ICMP discovery of up to 512 private local IPv4 targets; no port scan."/>
+            <Button x:Name="LanRefreshButton" Content="Refresh neighbor cache" Click="LanRefresh_Click"
+                    Height="34" MinWidth="160" Margin="0,0,8,8" Style="{StaticResource SecondaryButton}"
+                    ToolTip="No network probes; reads Windows ARP cache and retained traffic rows."/>
+          </WrapPanel>
+          <TextBlock x:Name="LanDeviceStatusText" Text="No local inventory loaded."
+                     Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"
+                     Margin="0,0,0,8" AutomationProperties.LiveSetting="Polite"/>
+          <DataGrid x:Name="LanDevicesGrid" AutoGenerateColumns="False" IsReadOnly="True"
+                    Height="220" EnableRowVirtualization="True"
+                    VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
+                    AutomationProperties.Name="Discovered local network device inventory">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="IP address" Binding="{Binding Address}" Width="165"/>
+              <DataGridTextColumn Header="MAC (if known)" Binding="{Binding Mac}" Width="175"/>
+              <DataGridTextColumn Header="State" Binding="{Binding State}" Width="195"/>
+              <DataGridTextColumn Header="Evidence / source" Binding="{Binding Evidence}" Width="*"/>
+            </DataGrid.Columns>
+          </DataGrid>
+        </StackPanel>
+      </Border>
+
       <Border Background="{StaticResource CardBgBrush}" BorderBrush="{StaticResource CardBorderBrush}"
               BorderThickness="1" CornerRadius="14" Padding="16" Margin="0,0,0,16">
         <StackPanel>

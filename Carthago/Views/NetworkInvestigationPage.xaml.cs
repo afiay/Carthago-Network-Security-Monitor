@@ -132,6 +132,7 @@ namespace Carthago.Views
             var historyEntry = RecordSessionHistory(term);
             InvestigationSearchText.Text = term;
             var trafficSnapshot = traffic.Take(200).ToArray();
+            UpdateLanSnapshot(trafficSnapshot);
             var detectionSnapshot = detections.Take(500).ToArray();
             var incidentSnapshot = incidents.Take(250).ToArray();
             _cachedIncidentCases = incidentSnapshot;
