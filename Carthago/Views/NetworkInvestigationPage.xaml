@@ -100,6 +100,14 @@
               <DataGridTextColumn Header="Country (if known)" Binding="{Binding WhoisCountry}" Width="150"/>
             </DataGrid.Columns>
           </DataGrid>
+          <WrapPanel Margin="0,10,0,0" VerticalAlignment="Center">
+            <Button x:Name="PreviousTrafficMatchButton" Content="← Previous record" IsEnabled="False" Height="32" Margin="0,0,8,6"
+                    Style="{StaticResource SecondaryButton}" Click="PreviousTrafficMatch_Click"/>
+            <Button x:Name="NextTrafficMatchButton" Content="Next record →" IsEnabled="False" Height="32" Margin="0,0,10,6"
+                    Style="{StaticResource SecondaryButton}" Click="NextTrafficMatch_Click"/>
+            <TextBlock x:Name="TrafficMatchPositionText" Text="No record selected" VerticalAlignment="Center"
+                       Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,6" AutomationProperties.LiveSetting="Polite"/>
+          </WrapPanel>
           <Expander x:Name="TrafficEvidenceExpander" Header="Selected traffic evidence · choose a row above"
                     IsExpanded="False" Margin="0,12,0,0" Foreground="{StaticResource TextBrush}"
                     AutomationProperties.Name="Selected traffic evidence inspector">
@@ -148,6 +156,14 @@
               <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="370"/>
             </DataGrid.Columns>
           </DataGrid>
+          <WrapPanel Margin="0,10,0,0" VerticalAlignment="Center">
+            <Button x:Name="PreviousDetectionMatchButton" Content="← Previous detection" IsEnabled="False" Height="32" Margin="0,0,8,6"
+                    Style="{StaticResource SecondaryButton}" Click="PreviousDetectionMatch_Click"/>
+            <Button x:Name="NextDetectionMatchButton" Content="Next detection →" IsEnabled="False" Height="32" Margin="0,0,10,6"
+                    Style="{StaticResource SecondaryButton}" Click="NextDetectionMatch_Click"/>
+            <TextBlock x:Name="DetectionMatchPositionText" Text="No detection selected" VerticalAlignment="Center"
+                       Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,6" AutomationProperties.LiveSetting="Polite"/>
+          </WrapPanel>
           <Expander x:Name="DetectionEvidenceExpander" Header="Selected detection evidence · choose a row above"
                     IsExpanded="False" Margin="0,12,0,0" Foreground="{StaticResource TextBrush}"
                     AutomationProperties.Name="Selected detection evidence inspector">
@@ -211,6 +227,14 @@
               <DataGridTextColumn Header="Destination" Binding="{Binding PrimaryDestinationIp}" Width="145"/>
             </DataGrid.Columns>
           </DataGrid>
+          <WrapPanel Margin="0,10,0,0" VerticalAlignment="Center">
+            <Button x:Name="PreviousIncidentMatchButton" Content="← Previous case" IsEnabled="False" Height="32" Margin="0,0,8,6"
+                    Style="{StaticResource SecondaryButton}" Click="PreviousIncidentMatch_Click"/>
+            <Button x:Name="NextIncidentMatchButton" Content="Next case →" IsEnabled="False" Height="32" Margin="0,0,10,6"
+                    Style="{StaticResource SecondaryButton}" Click="NextIncidentMatch_Click"/>
+            <TextBlock x:Name="IncidentMatchPositionText" Text="No case selected" VerticalAlignment="Center"
+                       Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,6" AutomationProperties.LiveSetting="Polite"/>
+          </WrapPanel>
           <Expander x:Name="IncidentEvidenceExpander" Header="Selected incident case context · choose a row above"
                     IsExpanded="False" Margin="0,12,0,0" Foreground="{StaticResource TextBrush}"
                     AutomationProperties.Name="Selected incident case context inspector">

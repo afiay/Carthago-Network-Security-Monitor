@@ -177,6 +177,7 @@ namespace Carthago.Views
                 InvestigationDetectionsGrid.SelectedItem = detectionMatches[0];
                 InvestigationDetectionsGrid.ScrollIntoView(detectionMatches[0]);
             }
+            UpdateMatchNavigationControls();
             TrafficCountText.Text = $"{trafficMatches.Length:N0} matching retained records";
             DetectionCountText.Text = isEventQuery && !isValidEventQuery
                 ? "Invalid event ID · no detection lookup performed"
@@ -481,6 +482,7 @@ namespace Carthago.Views
             else
                 SetEvidenceInspector(TrafficEvidenceExpander, TrafficEvidenceFields,
                     "Selected traffic evidence · choose a row above", null);
+            UpdateMatchNavigationControls();
         }
 
         private void InvestigationDetectionsGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -497,6 +499,7 @@ namespace Carthago.Views
                     "Selected detection evidence · choose a row above", null);
                 ClearCaseLinks();
             }
+            UpdateMatchNavigationControls();
         }
 
         private void InvestigationIncidentsGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -513,6 +516,64 @@ namespace Carthago.Views
                     "Selected incident case context · choose a row above", null);
                 ClearDetectionLinks();
             }
+            UpdateMatchNavigationControls();
+        }
+
+        // Return -1 at a boundary; never wrap to a different record silently.
+        // When nothing is selected, Next begins at the first retained match
+        // and Previous begins at the last retained match.
+        internal static int NextMatchIndex(int count, int current, int direction)
+        {
+            if (count <= 0 || (direction != -1 && direction != 1) || current < -1 || current >= count)
+                return -1;
+            if (current == -1) return direction == 1 ? 0 : count - 1;
+            var next = current + direction;
+            return next >= 0 && next < count ? next : -1;
+        }
+
+        private static void NavigateMatch(DataGrid grid, int direction)
+        {
+            var index = NextMatchIndex(grid.Items.Count, grid.SelectedIndex, direction);
+            if (index < 0) return;
+            var item = grid.Items[index];
+            grid.SelectedItem = item;
+            grid.ScrollIntoView(item);
+            grid.Focus();
+        }
+
+        private void PreviousTrafficMatch_Click(object sender, RoutedEventArgs e) => NavigateMatch(InvestigationTrafficGrid, -1);
+        private void NextTrafficMatch_Click(object sender, RoutedEventArgs e) => NavigateMatch(InvestigationTrafficGrid, 1);
+        private void PreviousDetectionMatch_Click(object sender, RoutedEventArgs e) => NavigateMatch(InvestigationDetectionsGrid, -1);
+        private void NextDetectionMatch_Click(object sender, RoutedEventArgs e) => NavigateMatch(InvestigationDetectionsGrid, 1);
+        private void PreviousIncidentMatch_Click(object sender, RoutedEventArgs e) => NavigateMatch(InvestigationIncidentsGrid, -1);
+        private void NextIncidentMatch_Click(object sender, RoutedEventArgs e) => NavigateMatch(InvestigationIncidentsGrid, 1);
+
+        private void UpdateMatchNavigationControls()
+        {
+            // SelectionChanged may fire while the XAML visual tree is being
+            // initialized, before later named navigation controls are assigned.
+            if (PreviousTrafficMatchButton is null || NextTrafficMatchButton is null || TrafficMatchPositionText is null ||
+                PreviousDetectionMatchButton is null || NextDetectionMatchButton is null || DetectionMatchPositionText is null ||
+                PreviousIncidentMatchButton is null || NextIncidentMatchButton is null || IncidentMatchPositionText is null)
+                return;
+            UpdateMatchNavigation(InvestigationTrafficGrid, PreviousTrafficMatchButton, NextTrafficMatchButton,
+                TrafficMatchPositionText, "record");
+            UpdateMatchNavigation(InvestigationDetectionsGrid, PreviousDetectionMatchButton, NextDetectionMatchButton,
+                DetectionMatchPositionText, "detection");
+            UpdateMatchNavigation(InvestigationIncidentsGrid, PreviousIncidentMatchButton, NextIncidentMatchButton,
+                IncidentMatchPositionText, "case");
+        }
+
+        private static void UpdateMatchNavigation(DataGrid grid, Button previous, Button next,
+            TextBlock status, string label)
+        {
+            var count = grid.Items.Count;
+            var selected = grid.SelectedIndex;
+            previous.IsEnabled = NextMatchIndex(count, selected, -1) >= 0;
+            next.IsEnabled = NextMatchIndex(count, selected, 1) >= 0;
+            status.Text = count == 0 ? $"No matching {label}s"
+                : selected < 0 ? $"No {label} selected · {count:N0} retained matches"
+                : $"{label} {selected + 1:N0} of {count:N0} retained matches";
         }
 
         private static bool IncidentReferencesEvent(Incident incident, string? eventId)
