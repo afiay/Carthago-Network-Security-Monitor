@@ -75,7 +75,7 @@ namespace Carthago.Engine.Rules.Expansion
         {
             method = string.Empty;
             uri = string.Empty;
-            return WebSignatureRequestEvidence.TryGet(r, out method, out uri)
+            return WebSignatureRequestEvidence.TryGet(r, out method, out uri, allowPut: true)
                 && method is "POST" or "PUT"
                 && PrivateToPublic(r)
                 && r.L4Len is >= 900 and <= 8192;

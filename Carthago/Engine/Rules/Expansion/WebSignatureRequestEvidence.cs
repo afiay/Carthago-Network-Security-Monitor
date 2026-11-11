@@ -10,7 +10,7 @@ namespace Carthago.Engine.Rules.Expansion
     // Shared evidence hygiene only. Each rule retains its own independent predicate.
     internal static class WebSignatureRequestEvidence
     {
-        internal static bool TryGet(TrafficRecord record, out string method, out string uri)
+        internal static bool TryGet(TrafficRecord record, out string method, out string uri, bool allowPut = false)
         {
             method = uri = string.Empty;
             if (record == null || record.Id == Guid.Empty
@@ -27,7 +27,8 @@ namespace Carthago.Engine.Rules.Expansion
                 || record.BacnetWritePropertyRequestObserved || record.LdapCleartextSimpleBindObserved
                 || record.HttpUri == null || record.HttpUri.Length < 3 || record.HttpUri.Length > 1024
                 || record.HttpUri[0] != '/'
-                || (record.HttpMethod != "GET" && record.HttpMethod != "POST"))
+                || (record.HttpMethod != "GET" && record.HttpMethod != "POST"
+                    && !(allowPut && record.HttpMethod == "PUT")))
                 return false;
             if (!IPAddress.TryParse(record.Source, out var source)
                 || !IPAddress.TryParse(record.Destination, out var destination)
