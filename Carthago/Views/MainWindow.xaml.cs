@@ -51,6 +51,7 @@ namespace Carthago
 
         private void MainWindow_Closed_DisposeSinks(object? sender, EventArgs e)
         {
+            try { (AnomaliesFrame.Content as AnomaliesPage)?.StopUpdates(); } catch { /* shutdown continues */ }
             try { _sinkHost?.Dispose(); } catch { /* ignore on shutdown */ }
         }
 

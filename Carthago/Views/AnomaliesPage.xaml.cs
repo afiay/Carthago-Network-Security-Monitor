@@ -13,6 +13,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using Carthago.Analytics;
 using Carthago.Analytics.Models;
 using Carthago.Sinks;
 
@@ -21,9 +22,13 @@ namespace Carthago.Views
     public partial class AnomaliesPage : Page, IResponsiveLayoutAware
     {
         private readonly SinkHost _host;
+        private readonly AnalyticsHost _analytics;
         private readonly Dispatcher _ui;
         private readonly AnomaliesVm _vm;
         private readonly Dictionary<string, IncidentLink> _incidentLinks = new(StringComparer.OrdinalIgnoreCase);
+        private volatile bool _updatesInactive;
+        private bool _subscriptionsAttached;
+        private bool _shuttingDown;
         private readonly Action? _openRawTraffic;
         private readonly Action? _openRawDetections;
         private readonly Action? _openIncidentQueue;
@@ -112,6 +117,7 @@ namespace Carthago.Views
             ResponsiveLayout.ApplyWhenLoaded(this, ApplyResponsiveLayout);
 
             _host = sinkHost ?? throw new ArgumentNullException(nameof(sinkHost));
+            _analytics = _host.Analytics;
             _openRawTraffic = openRawTraffic;
             _openRawDetections = openRawDetections;
             _openIncidentQueue = openIncidentQueue;
@@ -123,20 +129,20 @@ namespace Carthago.Views
             _vm = new AnomaliesVm();
             DataContext = _vm;
 
-            var analytics = _host.Analytics;
-            analytics.AnomalyObserved += OnAnomalyObserved;
-            analytics.IncidentCreated += OnIncidentChanged;
-            analytics.IncidentUpdated += OnIncidentChanged;
-            analytics.BaselineStatusChanged += OnBaselineChanged;
-            analytics.StateReset += OnStateReset;
+            AttachAnalyticsEvents();
 
             Unloaded += (_, __) =>
             {
-                analytics.AnomalyObserved -= OnAnomalyObserved;
-                analytics.IncidentCreated -= OnIncidentChanged;
-                analytics.IncidentUpdated -= OnIncidentChanged;
-                analytics.BaselineStatusChanged -= OnBaselineChanged;
-                analytics.StateReset -= OnStateReset;
+                _updatesInactive = true;
+                DetachAnalyticsEvents();
+            };
+            Loaded += (_, __) =>
+            {
+                if (_shuttingDown || _subscriptionsAttached)
+                    return;
+                AttachAnalyticsEvents();
+                LoadInitialData();
+                ApplyFilter();
             };
 
             CategoryFilter.SelectionChanged += (_, __) =>
@@ -169,6 +175,38 @@ namespace Carthago.Views
             ApplyFilter();
         }
 
+        private void AttachAnalyticsEvents()
+        {
+            if (_subscriptionsAttached || _shuttingDown)
+                return;
+            _analytics.AnomalyObserved += OnAnomalyObserved;
+            _analytics.IncidentCreated += OnIncidentChanged;
+            _analytics.IncidentUpdated += OnIncidentChanged;
+            _analytics.BaselineStatusChanged += OnBaselineChanged;
+            _analytics.StateReset += OnStateReset;
+            _subscriptionsAttached = true;
+            _updatesInactive = false;
+        }
+
+        private void DetachAnalyticsEvents()
+        {
+            if (!_subscriptionsAttached)
+                return;
+            _analytics.AnomalyObserved -= OnAnomalyObserved;
+            _analytics.IncidentCreated -= OnIncidentChanged;
+            _analytics.IncidentUpdated -= OnIncidentChanged;
+            _analytics.BaselineStatusChanged -= OnBaselineChanged;
+            _analytics.StateReset -= OnStateReset;
+            _subscriptionsAttached = false;
+        }
+
+        public void StopUpdates()
+        {
+            _shuttingDown = true;
+            _updatesInactive = true;
+            DetachAnalyticsEvents();
+        }
+
         private void LoadInitialData()
         {
             _vm.All.Clear();
@@ -176,9 +214,9 @@ namespace Carthago.Views
             _vm.Selected = null;
             _vm.RawSignalCount = 0;
             RebuildIncidentLinks();
-            UpdateBaselineStatus(_host.Analytics.GetBaselineStatus());
+            UpdateBaselineStatus(_analytics.GetBaselineStatus());
 
-            var recentAnomalies = _host.Analytics.GetRecentAnomalies(400).ToList();
+            var recentAnomalies = _analytics.GetRecentAnomalies(400).ToList();
             _vm.RawSignalCount = recentAnomalies.Count;
 
             foreach (var anomaly in recentAnomalies)
@@ -192,6 +230,7 @@ namespace Carthago.Views
         private void OnStateReset()
             => _ui.BeginInvoke(new Action(() =>
             {
+                if (_updatesInactive) return;
                 LoadInitialData();
                 ApplyFilter();
                 UpdateSelectionState();
@@ -200,6 +239,7 @@ namespace Carthago.Views
         private void OnAnomalyObserved(AnomalySignal anomaly)
             => _ui.BeginInvoke(new Action(() =>
             {
+                if (_updatesInactive) return;
                 _vm.RawSignalCount++;
                 UpsertAnomaly(anomaly);
                 RefreshCategoryOptions();
@@ -210,6 +250,7 @@ namespace Carthago.Views
         private void OnIncidentChanged(Incident incident)
             => _ui.BeginInvoke(new Action(() =>
             {
+                if (_updatesInactive) return;
                 RebuildIncidentLinks();
                 RefreshIncidentLinks();
                 ApplyFilter();
@@ -218,6 +259,7 @@ namespace Carthago.Views
         private void OnBaselineChanged(BaselineStatus status)
             => _ui.BeginInvoke(new Action(() =>
             {
+                if (_updatesInactive) return;
                 UpdateBaselineStatus(status ?? new BaselineStatus());
                 _vm.RefreshMetrics();
             }));
@@ -226,7 +268,7 @@ namespace Carthago.Views
         {
             _incidentLinks.Clear();
 
-            foreach (var incident in _host.Analytics.GetRecentIncidents(300))
+            foreach (var incident in _analytics.GetRecentIncidents(300))
             {
                 foreach (var anomaly in incident.RelatedAnomalies)
                 {
@@ -750,7 +792,7 @@ namespace Carthago.Views
                 return;
             }
 
-            _host.Analytics.MarkIncidentExpected(_vm.Selected.RelatedIncidentId);
+            _analytics.MarkIncidentExpected(_vm.Selected.RelatedIncidentId);
         }
 
         private void ViewIncident_Click(object sender, RoutedEventArgs e)
