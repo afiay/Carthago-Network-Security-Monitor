@@ -27,7 +27,11 @@ function Read-Overview {
         $stream = $entry.Open()
         $reader = New-Object System.IO.StreamReader($stream)
         try { $json = $reader.ReadToEnd() } finally { $reader.Dispose() }
-        $snapshots = @($json | ConvertFrom-Json)
+        # Windows PowerShell 5.1 may preserve a JSON root array as a single
+        # pipeline object. Explicitly enumerate it before sorting entries.
+        $parsed = ConvertFrom-Json -InputObject $json
+        $snapshots = @()
+        foreach ($snapshot in $parsed) { $snapshots += $snapshot }
         if ($snapshots.Count -eq 0) { throw "No overview entries: $resolved" }
         $latest = $snapshots | Sort-Object { [datetime]$_.CapturedAtUtc } | Select-Object -Last 1
         foreach ($field in @('PacketsCaptured', 'PacketsParsedOk', 'PacketsDroppedByQueue')) {
