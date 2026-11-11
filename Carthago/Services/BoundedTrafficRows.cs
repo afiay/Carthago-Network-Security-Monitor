@@ -17,7 +17,7 @@ namespace Carthago.Services
 
             CheckReentrancy();
             // Capture batches arrive oldest-first; the visible grid is newest-first.
-            for (var i = records.Count - 1; i >= 0; i--)
+            for (var i = 0; i < records.Count; i++)
                 Items.Insert(0, records[i]);
             while (Items.Count > capacity)
                 Items.RemoveAt(Items.Count - 1);
