@@ -1673,6 +1673,7 @@
                           <RowDefinition Height="Auto"/>
                           <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
+                        <!-- GA UI-171: severity-first record scanning with a larger evidence viewport; all displayed values remain source-backed. -->
                         <!-- GA UI-160: evidence table and provenance occupy one compact scan line. -->
                         <Grid Grid.Row="0" Margin="4,0,4,9">
                           <Grid.ColumnDefinitions>
@@ -1705,7 +1706,7 @@
                                 BorderThickness="1" CornerRadius="10" Padding="1">
                           <Grid>
                             <DataGrid x:Name="DashboardLiveEventsGrid"
-                                Height="560"
+                                Height="610"
                                 AutoGenerateColumns="False"
                                 IsReadOnly="True"
                                 CanUserAddRows="False"
@@ -1714,22 +1715,22 @@
                                 HeadersVisibility="Column"
                                 GridLinesVisibility="Horizontal"
                                 HorizontalGridLinesBrush="{StaticResource SoftDividerBrush}"
-                                RowHeight="52"
+                                RowHeight="62"
                                 AlternationCount="2"
-                                ColumnHeaderHeight="44"
+                                ColumnHeaderHeight="48"
                                 VirtualizingPanel.IsVirtualizing="True"
                                 VirtualizingPanel.VirtualizationMode="Recycling"
                                 EnableRowVirtualization="True"
                                 EnableColumnVirtualization="True"
                                 ScrollViewer.HorizontalScrollBarVisibility="Auto"
                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                FrozenColumnCount="1"
+                                FrozenColumnCount="2"
                                 AutomationProperties.Name="Recent local detection events"
-                                AutomationProperties.HelpText="Read-only local detections, up to 80 rows. The first Event time column remains visible during horizontal scrolling; navigate remaining columns with the grid keyboard controls or horizontal scroll. Event time is recorded as supplied; timezone is unverified. Evidence is reported presence or count only, not a verified chain. Delivery is transport status, not incident resolution."
+                                AutomationProperties.HelpText="Read-only local detections, up to 80 rows. The Event time and Severity columns remain visible during horizontal scrolling; navigate remaining columns with the grid keyboard controls or horizontal scroll. Event time is recorded as supplied; timezone is unverified. Evidence is reported presence or count only, not a verified chain. Delivery is transport status, not incident resolution."
                                 AutomationProperties.ItemStatus="{Binding Text, ElementName=DashboardLiveEventsStatusText}">
                         <!-- GA UI-15: reuse the theme's keyboard-only focus outline for the read-only event cells. -->
                         <!-- GA UI-155: layered, scannable operational evidence rows; no new event state. -->
-                        <!-- GA UI-158: denser 52px evidence rows and expanded 560px local stream viewport; bindings unchanged. -->
+                        <!-- GA UI-171: severity-first 62px scan rows and a 610px viewport, preserving the 80-row displayed limit. -->
                         <DataGrid.RowStyle>
                           <Style TargetType="{x:Type DataGridRow}" BasedOn="{StaticResource {x:Type DataGridRow}}">
                             <Setter Property="Background" Value="#102537"/>
@@ -1759,6 +1760,7 @@
                           </Style>
                         </DataGrid.CellStyle>
                         <DataGrid.Columns>
+                          <!-- GA UI-171: severity immediately follows the frozen recorded time; reported route and provenance remain source-bound. -->
                           <DataGridTextColumn Header="TIME" Binding="{Binding EventTime}" Width="138"
                                               ElementStyle="{StaticResource DashboardLiveMetadataCellText}">
                             <DataGridTextColumn.HeaderStyle>
@@ -1771,6 +1773,29 @@
                               </Style>
                             </DataGridTextColumn.HeaderStyle>
                           </DataGridTextColumn>
+                          <DataGridTemplateColumn Header="SEVERITY" Width="148">
+                             <DataGridTemplateColumn.CellTemplate>
+                               <DataTemplate>
+                                 <Grid Margin="3,2,8,2">
+                                   <Grid.ColumnDefinitions><ColumnDefinition Width="6"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                   <Border Grid.Column="0" Background="#47CFE4" CornerRadius="3" Margin="0,2,0,2"/>
+                                   <Border Grid.Column="1" Style="{StaticResource DashboardLiveEventsSeverityPill}" Margin="9,0,0,0" Padding="10,8">
+                                     <TextBlock Text="{Binding Severity}" FontSize="12" FontWeight="Bold"
+                                                Foreground="{StaticResource TextBrush}" HorizontalAlignment="Center"/>
+                                   </Border>
+                                 </Grid>
+                               </DataTemplate>
+                             </DataGridTemplateColumn.CellTemplate>
+                             <DataGridTemplateColumn.HeaderStyle>
+                               <Style TargetType="{x:Type DataGridColumnHeader}"
+                                      BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+                                 <Setter Property="ToolTip"
+                                         Value="Severity reported by the local detection event. It is not an independently verified impact assessment or incident priority."/>
+                                 <Setter Property="AutomationProperties.HelpText"
+                                         Value="Reported detection-event severity classification, not independently verified impact or incident priority."/>
+                               </Style>
+                             </DataGridTemplateColumn.HeaderStyle>
+                           </DataGridTemplateColumn>
                           <DataGridTemplateColumn Header="SOURCE" Width="2*" MinWidth="178">
                             <DataGridTemplateColumn.CellTemplate>
                               <DataTemplate>
@@ -1841,7 +1866,7 @@
                               </Style>
                             </DataGridTemplateColumn.HeaderStyle>
                           </DataGridTemplateColumn>
-                          <DataGridTextColumn Header="RULE" Binding="{Binding RuleId}" Width="88"
+                          <DataGridTextColumn Header="RULE" Binding="{Binding RuleId}" Width="96"
                                               ElementStyle="{StaticResource DashboardLiveMetadataCellText}">
                             <DataGridTextColumn.HeaderStyle>
                               <Style TargetType="{x:Type DataGridColumnHeader}"
@@ -1853,29 +1878,6 @@
                               </Style>
                             </DataGridTextColumn.HeaderStyle>
                           </DataGridTextColumn>
-                          <DataGridTemplateColumn Header="SEVERITY" Width="128">
-                             <DataGridTemplateColumn.CellTemplate>
-                               <DataTemplate>
-                                 <Grid Margin="2,1,8,1">
-                                   <Grid.ColumnDefinitions><ColumnDefinition Width="4"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                   <Border Grid.Column="0" Background="#47CFE4" CornerRadius="2" Margin="0,3,0,3"/>
-                                   <Border Grid.Column="1" Style="{StaticResource DashboardLiveEventsSeverityPill}" Margin="7,0,0,0" Padding="8,5">
-                                     <TextBlock Text="{Binding Severity}" FontSize="11" FontWeight="Bold"
-                                                Foreground="{StaticResource TextBrush}" HorizontalAlignment="Center"/>
-                                   </Border>
-                                 </Grid>
-                               </DataTemplate>
-                             </DataGridTemplateColumn.CellTemplate>
-                             <DataGridTemplateColumn.HeaderStyle>
-                               <Style TargetType="{x:Type DataGridColumnHeader}"
-                                      BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
-                                 <Setter Property="ToolTip"
-                                         Value="Severity reported by the local detection event. It is not an independently verified impact assessment or incident priority."/>
-                                 <Setter Property="AutomationProperties.HelpText"
-                                         Value="Reported detection-event severity classification, not independently verified impact or incident priority."/>
-                               </Style>
-                             </DataGridTemplateColumn.HeaderStyle>
-                           </DataGridTemplateColumn>
                           <DataGridTextColumn Header="PROTOCOL" Binding="{Binding Protocol}" Width="92"
                                               ElementStyle="{StaticResource DashboardLiveMetadataCellText}">
                             <DataGridTextColumn.HeaderStyle>
@@ -1888,7 +1890,6 @@
                               </Style>
                             </DataGridTextColumn.HeaderStyle>
                           </DataGridTextColumn>
-                          <!-- GA UI-157: read-only evidence and transport metadata lanes. -->
                           <DataGridTemplateColumn Header="EVIDENCE" Width="205" MinWidth="178">
                             <DataGridTemplateColumn.CellTemplate>
                               <DataTemplate>
