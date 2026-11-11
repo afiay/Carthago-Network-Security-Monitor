@@ -5,6 +5,8 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -97,6 +99,14 @@ namespace Carthago.Services
         private long _uiBatchesDelivered;
         private long _uiBatchMaxDurationMs;
         private long _uiBatchLastDurationMs;
+        private long _uiOldestBatchWaitMs;
+        private long _uiDispatcherWaitMs;
+        private long _uiMaxDispatcherWaitMs;
+        private long _uiSubscriberBatchMs;
+        private long _uiSkippedCanceled;
+        private readonly Timer? _uiDiagnosticsTimer;
+        private readonly string? _uiDiagnosticsPath;
+        private int _uiDiagnosticsWriting;
         private long _captureStartedTicks;
         private long _lastCapturedTicks;
         private long _lastUiDeliveredTicks;
@@ -159,6 +169,12 @@ namespace Carthago.Services
             _blacklistService = blacklistService;
             _dispatcher = dispatcher ?? (Application.Current?.Dispatcher ?? Dispatcher.CurrentDispatcher);
 
+            // Explicit opt-in; no filesystem writes in normal monitoring sessions.
+            _uiDiagnosticsPath = Environment.GetEnvironmentVariable("CARTHAGO_UI_DIAG_PATH");
+            if (!string.IsNullOrWhiteSpace(_uiDiagnosticsPath))
+                _uiDiagnosticsTimer = new Timer(_ => WriteUiDiagnostics(), null,
+                    TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
+
             _uiReaderTask = Task.Run(UiChannelReaderLoop);
             CaptureTaskFailureObserver.Observe(_uiReaderTask, HandleUiDrainFailure);
             for (int i = 0; i < _enrichmentWorkers.Length; i++)
@@ -175,6 +191,7 @@ namespace Carthago.Services
             StopCurrentCapture();
             _maintenanceTimer?.Dispose();
             _maintenanceTimer = null;
+            _uiDiagnosticsTimer?.Dispose();
 
             _serviceCts.Cancel();
             _uiChannel.Writer.TryComplete();
@@ -523,21 +540,40 @@ namespace Carthago.Services
             {
                 await CaptureUiDrain.RunAsync(_uiChannel.Reader, UiBatchSize, async batch =>
                 {
+                    if (batch.Count > 0)
+                    {
+                        var ageMs = Math.Max(0, (DateTime.UtcNow.Ticks - batch[0].EnqueuedUtcTicks) / TimeSpan.TicksPerMillisecond);
+                        Interlocked.Exchange(ref _uiOldestBatchWaitMs, ageMs);
+                    }
+                    var queuedAt = Stopwatch.GetTimestamp();
                     await _dispatcher.InvokeAsync(() =>
                     {
+                        var dispatcherWaitMs = (long)(1000.0 * (Stopwatch.GetTimestamp() - queuedAt) / Stopwatch.Frequency);
+                        Interlocked.Exchange(ref _uiDispatcherWaitMs, dispatcherWaitMs);
+                        long maxWait;
+                        do
+                        {
+                            maxWait = Interlocked.Read(ref _uiMaxDispatcherWaitMs);
+                            if (dispatcherWaitMs <= maxWait) break;
+                        } while (Interlocked.CompareExchange(ref _uiMaxDispatcherWaitMs, dispatcherWaitMs, maxWait) != maxWait);
                         var stopwatch = Stopwatch.StartNew();
+                        var subscriberMs = 0L;
                         var delivered = new List<TrafficRecord>(batch.Count);
                         foreach (var pending in batch)
                         {
                             try
                             {
-                                pending.TryDeliver(r =>
+                                var didDeliver = pending.TryDeliver(r =>
                                 {
+                                    var subscriberClock = Stopwatch.StartNew();
                                     TrafficRecordReceived?.Invoke(r);
+                                    subscriberClock.Stop();
+                                    subscriberMs += subscriberClock.ElapsedMilliseconds;
                                     delivered.Add(r);
                                     Interlocked.Increment(ref _uiRecordsDelivered);
                                     Interlocked.Exchange(ref _lastUiDeliveredTicks, DateTime.UtcNow.Ticks);
                                 });
+                                if (!didDeliver) Interlocked.Increment(ref _uiSkippedCanceled);
                             }
                             catch (Exception ex) { Log(ex); /* keep other records flowing */ }
                         }
@@ -545,6 +581,7 @@ namespace Carthago.Services
                         // Exceptions here must never stop the capture or rule pipeline.
                         try { if (delivered.Count != 0) TrafficBatchReceived?.Invoke(delivered); }
                         catch (Exception ex) { Log(ex); }
+                        Interlocked.Exchange(ref _uiSubscriberBatchMs, subscriberMs);
                         stopwatch.Stop();
                         var ms = stopwatch.ElapsedMilliseconds;
                         Interlocked.Increment(ref _uiBatchesDelivered);
@@ -578,6 +615,37 @@ namespace Carthago.Services
                 Volatile.Write(ref _lastCaptureError, $"UI record delivery stopped: {error.Message}");
                 CaptureFailed?.Invoke(error);
             }), DispatcherPriority.Normal);
+        }
+
+        private void WriteUiDiagnostics()
+        {
+            if (string.IsNullOrWhiteSpace(_uiDiagnosticsPath) ||
+                Interlocked.Exchange(ref _uiDiagnosticsWriting, 1) != 0) return;
+            try
+            {
+                var path = _uiDiagnosticsPath;
+                var folder = Path.GetDirectoryName(path);
+                if (!string.IsNullOrWhiteSpace(folder)) Directory.CreateDirectory(folder);
+                var header = "timestampUtc,queueDepth,captured,uiDelivered,queueDrops,batches,oldestBatchWaitMs,dispatcherWaitMs,maxDispatcherWaitMs,subscriberBatchMs,skippedCanceled" + Environment.NewLine;
+                var row = string.Join(",", new[]
+                {
+                    DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture),
+                    _uiChannel.Reader.Count.ToString(CultureInfo.InvariantCulture),
+                    Interlocked.Read(ref _packetsCaptured).ToString(CultureInfo.InvariantCulture),
+                    Interlocked.Read(ref _uiRecordsDelivered).ToString(CultureInfo.InvariantCulture),
+                    Interlocked.Read(ref _packetsDroppedByQueue).ToString(CultureInfo.InvariantCulture),
+                    Interlocked.Read(ref _uiBatchesDelivered).ToString(CultureInfo.InvariantCulture),
+                    Interlocked.Read(ref _uiOldestBatchWaitMs).ToString(CultureInfo.InvariantCulture),
+                    Interlocked.Read(ref _uiDispatcherWaitMs).ToString(CultureInfo.InvariantCulture),
+                    Interlocked.Read(ref _uiMaxDispatcherWaitMs).ToString(CultureInfo.InvariantCulture),
+                    Interlocked.Read(ref _uiSubscriberBatchMs).ToString(CultureInfo.InvariantCulture),
+                    Interlocked.Read(ref _uiSkippedCanceled).ToString(CultureInfo.InvariantCulture)
+                }) + Environment.NewLine;
+                if (!File.Exists(path)) File.AppendAllText(path, header);
+                File.AppendAllText(path, row);
+            }
+            catch (Exception ex) { Log(ex); }
+            finally { Interlocked.Exchange(ref _uiDiagnosticsWriting, 0); }
         }
 
         // ---- enrichment + rules ---------------------------------------
