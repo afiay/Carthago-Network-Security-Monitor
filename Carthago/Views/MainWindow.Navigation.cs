@@ -15,6 +15,10 @@ namespace Carthago
         /// </summary>
         private void ShowView(Grid target)
         {
+            // Avoid stale grid timers while another workspace is visible.
+            if (!ReferenceEquals(target, LiveTrafficView))
+                SuspendTrafficGridRefresh();
+
             // Map overlay work is UI-only and should not continue while hidden.
             _trafficMapSvc?.SetVisualizationActive(ReferenceEquals(target, AnalyticsView));
             // Collapse everything
@@ -78,7 +82,7 @@ namespace Carthago
         private void Nav_LiveTraffic_Click(object? sender, RoutedEventArgs e)
         {
             ShowView(LiveTrafficView);
-            _traffic.NotifyReset();
+            RefreshTrafficGridOnShow();
             SidebarPanel?.ActivateNav("LiveTraffic");
 
             // Only show the Live Traffic filter

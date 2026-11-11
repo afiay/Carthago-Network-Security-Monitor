@@ -16,6 +16,12 @@ namespace Carthago
         // ===== Data collections =====
         private readonly BoundedTrafficRows<TrafficRecord> _traffic = new();
         private readonly ObservableCollection<DetectionEvent> _alerts = new();
+        private readonly TrafficGridRefreshCoordinator _trafficGridRefresh = new();
+        private readonly System.Windows.Threading.DispatcherTimer _trafficGridRefreshTimer =
+            new(System.Windows.Threading.DispatcherPriority.Background)
+            {
+                Interval = TrafficGridRefreshCoordinator.RefreshInterval
+            };
 
         // ===== Services (assigned in MainWindow.xaml.cs ctor) =====
         private readonly TrafficCaptureService _captureService;
@@ -81,6 +87,7 @@ namespace Carthago
 
             // Hook capture service events
             _captureService.TrafficBatchReceived += CaptureService_TrafficBatchReceived;
+            _trafficGridRefreshTimer.Tick += TrafficGridRefreshTimerTick;
             _captureService.DetectionEventRaised += CaptureService_DetectionEventRaised;
             _captureService.CaptureFailed += _ =>
             {
@@ -349,6 +356,9 @@ namespace Carthago
 
         protected override void OnClosed(EventArgs e)
         {
+            _trafficGridRefreshTimer.Stop();
+            _trafficGridRefreshTimer.Tick -= TrafficGridRefreshTimerTick;
+            _trafficGridRefresh.Stop();
             PreferencesService.PreferencesChanged -= MainWindowPreferencesChanged;
             // Unsubscribe UI callbacks while analytics is still alive. The Closed event
             // disposes SinkHost, so cleanup must run before base.OnClosed.
