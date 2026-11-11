@@ -4,14 +4,53 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              SnapsToDevicePixels="True" UseLayoutRounding="True">
   <UserControl.Resources>
+    <Style x:Key="InvestigationSelectedRowStyle" TargetType="DataGridRow">
+      <Style.Triggers>
+        <Trigger Property="IsSelected" Value="True">
+          <Setter Property="Background" Value="#205D78"/>
+          <Setter Property="Foreground" Value="White"/>
+          <Setter Property="BorderBrush" Value="#63D8E7"/>
+          <Setter Property="BorderThickness" Value="1"/>
+        </Trigger>
+      </Style.Triggers>
+    </Style>
     <DataTemplate x:Key="EvidenceInspectorFieldTemplate">
       <Grid Margin="0,0,0,8">
+        <Grid.Style>
+          <Style TargetType="Grid">
+            <Setter Property="Background" Value="Transparent"/>
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding IsMatch}" Value="True">
+                <Setter Property="Background" Value="#204E5D"/>
+              </DataTrigger>
+              <DataTrigger Binding="{Binding IsProvenance}" Value="True">
+                <Setter Property="Background" Value="#17435B"/>
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </Grid.Style>
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="195"/>
           <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
-        <TextBlock Grid.Column="0" Text="{Binding Key}" Foreground="{StaticResource TextMutedBrush}"
-                   FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,0,12,0"/>
+        <TextBlock Grid.Column="0" Text="{Binding Key}"
+                   FontSize="12" TextWrapping="Wrap" Margin="5,3,12,3">
+          <TextBlock.Style>
+            <Style TargetType="TextBlock">
+              <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
+              <Setter Property="FontWeight" Value="SemiBold"/>
+              <Style.Triggers>
+                <DataTrigger Binding="{Binding IsMatch}" Value="True">
+                  <Setter Property="Foreground" Value="{StaticResource AccentAltBrush}"/>
+                  <Setter Property="FontWeight" Value="Bold"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsProvenance}" Value="True">
+                  <Setter Property="Foreground" Value="{StaticResource AccentAltBrush}"/>
+                </DataTrigger>
+              </Style.Triggers>
+            </Style>
+          </TextBlock.Style>
+        </TextBlock>
         <TextBox Grid.Column="1" Text="{Binding Value, Mode=OneWay}" IsReadOnly="True"
                  Background="Transparent" BorderThickness="0" Padding="0"
                  Foreground="{StaticResource TextBrush}" FontSize="12" TextWrapping="Wrap"
@@ -85,6 +124,7 @@
             </StackPanel>
           </DockPanel>
           <DataGrid x:Name="InvestigationTrafficGrid" AutoGenerateColumns="False" IsReadOnly="True"
+                    RowStyle="{StaticResource InvestigationSelectedRowStyle}"
                     Height="260" FrozenColumnCount="1" EnableRowVirtualization="True"
                     VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
                     SelectionChanged="InvestigationTrafficGrid_SelectionChanged" PreviewKeyDown="InvestigationMatchGrid_PreviewKeyDown"
@@ -141,6 +181,7 @@
             </StackPanel>
           </DockPanel>
           <DataGrid x:Name="InvestigationDetectionsGrid" AutoGenerateColumns="False" IsReadOnly="True"
+                    RowStyle="{StaticResource InvestigationSelectedRowStyle}"
                     Height="250" FrozenColumnCount="1" EnableRowVirtualization="True"
                     VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
                     SelectionChanged="InvestigationDetectionsGrid_SelectionChanged" PreviewKeyDown="InvestigationMatchGrid_PreviewKeyDown"
@@ -216,6 +257,7 @@
             </StackPanel>
           </DockPanel>
           <DataGrid x:Name="InvestigationIncidentsGrid" AutoGenerateColumns="False" IsReadOnly="True"
+                    RowStyle="{StaticResource InvestigationSelectedRowStyle}"
                     Height="185" FrozenColumnCount="1" EnableRowVirtualization="True"
                     VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
                     SelectionChanged="InvestigationIncidentsGrid_SelectionChanged" PreviewKeyDown="InvestigationMatchGrid_PreviewKeyDown"

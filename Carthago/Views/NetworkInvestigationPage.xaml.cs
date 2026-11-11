@@ -461,16 +461,81 @@ namespace Carthago.Views
             if (Contains(value, term)) fields.Add(label);
         }
 
-        private static IReadOnlyList<KeyValuePair<string, string>> WithMatchContext(
-            IReadOnlyList<KeyValuePair<string, string>> evidence, IReadOnlyList<string> matched, string term)
+        public sealed class InvestigationEvidenceDisplayField
         {
-            var context = new List<KeyValuePair<string, string>>
+            public InvestigationEvidenceDisplayField(string key, string value, bool isMatch, bool isProvenance)
+            {
+                Key = key;
+                Value = value;
+                IsMatch = isMatch;
+                IsProvenance = isProvenance;
+            }
+            public string Key { get; }
+            public string Value { get; }
+            public bool IsMatch { get; }
+            public bool IsProvenance { get; }
+        }
+
+        // Only explicit, displayable typed fields can gain highlight styling.
+        // A case's event-reference match must not highlight its reference count
+        // as though the exact event ID were displayed there.
+        internal static IReadOnlyList<string> HighlightEvidenceKeys(string category, IReadOnlyList<string> matched)
+        {
+            var keys = new List<string>();
+            foreach (var label in matched)
+            {
+                string? key = (category, label) switch
+                {
+                    ("traffic", "Source") or ("traffic", "Source IP (exact)") => "Endpoints · source",
+                    ("traffic", "Destination") or ("traffic", "Destination IP (exact)") => "Endpoints · destination",
+                    ("traffic", "Source port (exact)") => "Endpoints · source port",
+                    ("traffic", "Destination port (exact)") => "Endpoints · destination port",
+                    ("traffic", "Protocol") => "Packet · network protocol",
+                    ("traffic", "Application service") => "Application · service",
+                    ("traffic", "Process name") => "Host · process name",
+                    ("traffic", "WHOIS country") => "Enrichment · WHOIS country (endpoint unspecified)",
+                    ("traffic", "TLS SNI") => "Application · TLS SNI",
+                    ("traffic", "HTTP host") => "Application · HTTP host",
+                    ("traffic", "DNS question") => "Application · DNS query",
+                    ("detection", "Source IP") or ("detection", "Source IP (exact)") => "Endpoints · source",
+                    ("detection", "Destination IP") or ("detection", "Destination IP (exact)") => "Endpoints · destination",
+                    ("detection", "Source port (exact)") => "Endpoints · source port",
+                    ("detection", "Destination port (exact)") => "Endpoints · destination port",
+                    ("detection", "Event ID") or ("detection", "Event ID (exact)") => "Event · ID",
+                    ("detection", "Rule ID") => "Rule · ID",
+                    ("detection", "Rule name") => "Rule · name",
+                    ("detection", "Description") => "Rule · description",
+                    ("detection", "Country") => "Enrichment · country (endpoint unspecified)",
+                    ("detection", "Destination host") => "Endpoints · destination host",
+                    ("detection", "Process name") => "Host · process name",
+                    ("detection", "Flow ID") => "Correlation · flow ID",
+                    ("detection", "Correlation ID") => "Correlation · correlation ID",
+                    ("detection", "Protocol") => "Event · protocol",
+                    ("case", "Case ID (exact)") => "Case · ID",
+                    ("case", "Case title") => "Case · title",
+                    ("case", "Case category") => "Case · category",
+                    ("case", "Primary destination host") => "Endpoints · destination host",
+                    ("case", "Primary source IP (exact)") => "Endpoints · source",
+                    ("case", "Primary destination IP (exact)") => "Endpoints · destination",
+                    _ => null
+                };
+                if (key is not null && !keys.Contains(key, StringComparer.Ordinal)) keys.Add(key);
+            }
+            return keys;
+        }
+
+        private static IReadOnlyList<InvestigationEvidenceDisplayField> WithMatchContext(
+            IReadOnlyList<KeyValuePair<string, string>> evidence, IReadOnlyList<string> matched, string term, string category)
+        {
+            var keys = new HashSet<string>(HighlightEvidenceKeys(category, matched), StringComparer.Ordinal);
+            var context = new List<InvestigationEvidenceDisplayField>
             {
                 new("Search · provenance", term.Length == 0 ? "All retained rows · no query applied"
                     : matched.Count == 0 ? "No matching recorded field in the current query"
-                    : "Matched recorded fields: " + string.Join(", ", matched))
+                    : "Matched recorded fields: " + string.Join(", ", matched), false, true)
             };
-            context.AddRange(evidence);
+            context.AddRange(evidence.Select(field => new InvestigationEvidenceDisplayField(
+                field.Key, field.Value, keys.Contains(field.Key), false)));
             return context;
         }
 
@@ -478,7 +543,7 @@ namespace Carthago.Views
         {
             if (InvestigationTrafficGrid.SelectedItem is TrafficRecord row)
                 SetEvidenceInspector(TrafficEvidenceExpander, TrafficEvidenceFields,
-                    "Selected traffic evidence · recorded fields", WithMatchContext(BuildTrafficEvidence(row), TrafficMatchFields(row, _executedSearchTerm), _executedSearchTerm));
+                    "Selected traffic evidence · recorded fields", WithMatchContext(BuildTrafficEvidence(row), TrafficMatchFields(row, _executedSearchTerm), _executedSearchTerm, "traffic"));
             else
                 SetEvidenceInspector(TrafficEvidenceExpander, TrafficEvidenceFields,
                     "Selected traffic evidence · choose a row above", null);
@@ -490,7 +555,7 @@ namespace Carthago.Views
             if (InvestigationDetectionsGrid.SelectedItem is DetectionEvent row)
             {
                 SetEvidenceInspector(DetectionEvidenceExpander, DetectionEvidenceFields,
-                    "Selected detection evidence · event details", WithMatchContext(BuildDetectionEvidence(row), DetectionMatchFields(row, _executedSearchTerm), _executedSearchTerm));
+                    "Selected detection evidence · event details", WithMatchContext(BuildDetectionEvidence(row), DetectionMatchFields(row, _executedSearchTerm), _executedSearchTerm, "detection"));
                 ShowExactCaseLinks(row);
             }
             else
@@ -507,7 +572,7 @@ namespace Carthago.Views
             if (InvestigationIncidentsGrid.SelectedItem is Incident row)
             {
                 SetEvidenceInspector(IncidentEvidenceExpander, IncidentEvidenceFields,
-                    "Selected incident case context · recorded case", WithMatchContext(BuildIncidentEvidence(row), IncidentMatchFields(row, _executedSearchTerm), _executedSearchTerm));
+                    "Selected incident case context · recorded case", WithMatchContext(BuildIncidentEvidence(row), IncidentMatchFields(row, _executedSearchTerm), _executedSearchTerm, "case"));
                 ShowExactDetectionLinks(row);
             }
             else
@@ -701,7 +766,7 @@ namespace Carthago.Views
         }
 
         private static void SetEvidenceInspector(Expander panel, ItemsControl fields, string title,
-            IReadOnlyList<KeyValuePair<string, string>>? details)
+            IReadOnlyList<InvestigationEvidenceDisplayField>? details)
         {
             panel.Header = title;
             fields.ItemsSource = details;
