@@ -58,9 +58,9 @@ namespace Carthago.Engine.Rules.Expansion
             => port is 22 or 23 or 443 or 445 or 3389 or 5985 or 5986;
 
         internal static bool Netcat(TrafficRecord r)
-            => r != null && r.ProcessId > 0 && string.Equals(r.ProcessName?.Trim(), "nc", StringComparison.OrdinalIgnoreCase)
+            => r != null && (r.ProcessId > 0 && string.Equals(r.ProcessName?.Trim(), "nc", StringComparison.OrdinalIgnoreCase)
                 || Process(r, "nc.exe", "ncat", "ncat.exe", "netcat", "netcat.exe",
-                "nc.openbsd", "nc.traditional", "netcat.openbsd", "netcat.traditional");
+                "nc.openbsd", "nc.traditional", "netcat.openbsd", "netcat.traditional"));
 
         internal static bool Plink(TrafficRecord r)
             => Process(r, "plink", "plink.exe", "putty", "putty.exe");

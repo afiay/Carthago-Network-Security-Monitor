@@ -210,7 +210,8 @@ namespace Carthago.Engine.Rules
             return number is >= 178 and <= 197
                 or >= 201 and <= 222
                 or >= 243 and <= 257
-                or 353 or 354;
+                or 353 or 354
+                or 788 or 799 or 805;
         }
 
         private static bool RedactRuleDestination(string ruleId)
