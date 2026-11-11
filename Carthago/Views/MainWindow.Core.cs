@@ -356,6 +356,7 @@ namespace Carthago
 
         protected override void OnClosed(EventArgs e)
         {
+            CancelLanCaptureDiscovery();
             _trafficGridRefreshTimer.Stop();
             _trafficGridRefreshTimer.Tick -= TrafficGridRefreshTimerTick;
             _trafficGridRefresh.Stop();

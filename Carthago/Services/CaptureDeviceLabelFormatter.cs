@@ -63,7 +63,7 @@ namespace Carthago.Services
             return $"Npcap: {description}";
         }
 
-        private static Guid? ParseDeviceGuid(string? deviceName)
+        public static Guid? ParseDeviceGuid(string? deviceName)
         {
             if (string.IsNullOrWhiteSpace(deviceName))
                 return null;

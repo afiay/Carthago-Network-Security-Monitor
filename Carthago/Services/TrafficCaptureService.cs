@@ -118,6 +118,7 @@ namespace Carthago.Services
 
         // ===== Filters / UI
         private string? _currentFilter;
+        private IPAddress? _activeLanHost;
         private readonly Dispatcher _dispatcher;
         private readonly BlacklistService? _blacklistService;
         private readonly GeoIpService _geoIpService = new();
@@ -234,6 +235,7 @@ namespace Carthago.Services
             {
                 run = _runCts;
                 _runCts = null;
+                _activeLanHost = null;
                 device = _device;
                 _device = null;
                 source = _captureSource;
@@ -373,6 +375,14 @@ namespace Carthago.Services
                             HandleCaptureTaskFailure(run, error, deviceCombo, startButton, stopButton);
                         });
                 }
+                else if (choice.Tag is LanCaptureSelection host)
+                {
+                    // Explicit device selection narrows this capture only.
+                    // Fail closed if the host filter cannot be installed.
+                    lock (_lifecycleLock) _activeLanHost = host.Address;
+                    StartPcapCapture(host.Device,
+                        LanCaptureDiscovery.ComposeFilter(_currentFilter, host.Address), requireFilter: true);
+                }
                 else if (choice.Tag is ILiveDevice device)
                 {
                     StartPcapCapture(device, _currentFilter);
@@ -442,7 +452,7 @@ namespace Carthago.Services
             }), DispatcherPriority.Normal);
         }
 
-        private void StartPcapCapture(ILiveDevice device, string? captureFilter = null)
+        private void StartPcapCapture(ILiveDevice device, string? captureFilter = null, bool requireFilter = false)
         {
             if (device == null) throw new ArgumentNullException(nameof(device));
             lock (_lifecycleLock) _device = device;
@@ -455,7 +465,8 @@ namespace Carthago.Services
                 if (!string.IsNullOrWhiteSpace(captureFilter))
                 {
                     try { device.Filter = captureFilter; }
-                    catch (Exception ex) { Console.Error.WriteLine($"Failed to set capture filter '{captureFilter}': {ex.Message}"); }
+                    catch (Exception ex) when (!requireFilter)
+                    { Console.Error.WriteLine($"Failed to set capture filter '{captureFilter}': {ex.Message}"); }
                 }
 
                 device.StartCapture();
@@ -968,7 +979,7 @@ namespace Carthago.Services
                     device.Close();
                     device.Open();
                 }
-                device.Filter = _currentFilter ?? string.Empty;
+                device.Filter = LanCaptureDiscovery.ComposeFilter(_currentFilter, _activeLanHost);
                 if (running)
                     device.StartCapture();
             }

@@ -295,7 +295,15 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
               </Grid.RowDefinitions>
-              <TextBlock x:Name="HeaderCaptureSourceLabel" Text="Capture source" Style="{StaticResource MicroLabel}"/>
+              <DockPanel LastChildFill="True">
+                <Button x:Name="DiscoverLanCaptureButton" DockPanel.Dock="Right"
+                        Content="Discover LAN" Click="DiscoverLanCapture_Click"
+                        Height="24" Padding="6,1" Margin="6,0,0,0"
+                        Style="{StaticResource SecondaryButton}"
+                        ToolTip="Select a Wi-Fi or Ethernet Npcap adapter, then discover local IPv4 peers to add selectable host targets. Capture must be stopped."/>
+                <TextBlock x:Name="HeaderCaptureSourceLabel" Text="Capture source"
+                           VerticalAlignment="Center" Style="{StaticResource MicroLabel}"/>
+              </DockPanel>
               <ComboBox x:Name="DeviceComboBox"
                         Grid.Row="1"
                         MinWidth="120"

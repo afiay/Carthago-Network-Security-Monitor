@@ -46,11 +46,15 @@ namespace Carthago.Services
                 !ip.IsIPv6Multicast && (ip.IsIPv6LinkLocal || (b[0] & 0xfe) == 0xfc);
         }
 
-        public static IReadOnlyList<LocalLanInterface> GetLocalInterfaces()
+        public static IReadOnlyList<LocalLanInterface> GetLocalInterfaces(Guid? interfaceId = null)
         {
             var result = new List<LocalLanInterface>();
             foreach (var network in NetworkInterface.GetAllNetworkInterfaces())
             {
+                if (interfaceId.HasValue &&
+                    (!Guid.TryParse(network.Id, out var networkId) || networkId != interfaceId.Value))
+                    continue;
+
                 if (network.OperationalStatus != OperationalStatus.Up ||
                     network.NetworkInterfaceType is NetworkInterfaceType.Loopback or NetworkInterfaceType.Tunnel)
                     continue;
@@ -159,9 +163,12 @@ namespace Carthago.Services
                 .ToArray();
         }
 
-        public static async Task<LocalLanScanResult> ScanAsync(bool sendIcmp, CancellationToken token = default)
+        public static async Task<LocalLanScanResult> ScanAsync(bool sendIcmp, CancellationToken token = default,
+            Guid? interfaceId = null)
         {
-            var interfaces = GetLocalInterfaces();
+            var interfaces = GetLocalInterfaces(interfaceId);
+            if (interfaceId.HasValue && interfaces.Count == 0)
+                throw new InvalidOperationException("The selected adapter has no active private IPv4 address.");
             var targets = PlanProbeTargets(interfaces);
             var responses = new ConcurrentDictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
 
@@ -188,14 +195,35 @@ namespace Carthago.Services
             }
 
             token.ThrowIfCancellationRequested();
-            var neighbors = await ReadNeighborCacheAsync(token).ConfigureAwait(false);
+            IReadOnlyDictionary<string, string> neighbors;
+            if (interfaceId.HasValue)
+            {
+                // On Windows arp -N scopes the neighbor table to a specific
+                // local interface address. Do not attribute another adapter's
+                // cached MAC or a routed-only ICMP reply to this capture source.
+                var scoped = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var adapter in interfaces)
+                {
+                    var entries = await ReadNeighborCacheAsync(token, adapter.Address).ConfigureAwait(false);
+                    foreach (var entry in entries)
+                        scoped[entry.Key] = entry.Value;
+                }
+                neighbors = scoped;
+            }
+            else
+                neighbors = await ReadNeighborCacheAsync(token).ConfigureAwait(false);
+
             var permitted = new HashSet<string>(targets.Select(ip => ip.ToString()), StringComparer.OrdinalIgnoreCase);
-            foreach (var adapter in interfaces)
-                permitted.Add(adapter.Address.ToString());
-            return new LocalLanScanResult(
-                neighbors.Where(pair => permitted.Contains(pair.Key))
-                    .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.OrdinalIgnoreCase),
-                responses.Keys.ToArray(), sendIcmp ? targets.Count : 0);
+            if (!interfaceId.HasValue)
+                foreach (var adapter in interfaces)
+                    permitted.Add(adapter.Address.ToString());
+
+            var filteredNeighbors = neighbors.Where(pair => permitted.Contains(pair.Key))
+                .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.OrdinalIgnoreCase);
+            var filteredReplies = interfaceId.HasValue
+                ? responses.Keys.Where(filteredNeighbors.ContainsKey).ToArray()
+                : responses.Keys.ToArray();
+            return new LocalLanScanResult(filteredNeighbors, filteredReplies, sendIcmp ? targets.Count : 0);
         }
 
         public static IReadOnlyDictionary<string, string> ParseArpOutput(string? content)
@@ -218,13 +246,15 @@ namespace Carthago.Services
             return found;
         }
 
-        private static async Task<IReadOnlyDictionary<string, string>> ReadNeighborCacheAsync(CancellationToken token)
+        private static async Task<IReadOnlyDictionary<string, string>> ReadNeighborCacheAsync(
+            CancellationToken token, IPAddress? interfaceAddress = null)
         {
             try
             {
                 using var process = new Process
                 {
-                    StartInfo = new ProcessStartInfo("arp.exe", "-a")
+                    StartInfo = new ProcessStartInfo("arp.exe",
+                        interfaceAddress is null ? "-a" : $"-a -N {interfaceAddress}")
                     {
                         CreateNoWindow = true,
                         UseShellExecute = false,
