@@ -941,7 +941,7 @@ namespace Carthago.Views
             ReplaceCollection(FeedbackAppliedReasons, incident.FeedbackAppliedReasons.DefaultIfEmpty("No feedback-based risk adjustments have been applied."));
             ReplaceCollection(RecommendedActions, incident.RecommendedActions.DefaultIfEmpty("Review the supporting telemetry and validate whether the behavior is expected."));
             var recordedEventIds = (incident.RelatedEventIds ?? new List<string>())
-                .Concat((incident.RelatedEvents ?? new List<Carthago.Models.DetectionEvent>()).Select(evt => evt.EventId))
+                .Concat(incident.RelatedEvents.Select(evt => evt.EventId))
                 .Where(IncidentDetectionLinkVm.IsExactEventId)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
             ReplaceCollection(TimelineItems,

@@ -54,10 +54,10 @@ namespace Carthago.Engine.Rules.Expansion
             var r = context.Record;
             if (!Research786NetworkEvidence.TcpData(r) || !Research786NetworkEvidence.PrivatePublic(r)
                 || r.DestinationPort != 4444 || !Research676Evidence.Process(r, "python", "python3", "python.exe", "python3.exe")
-                || r.L4Len is < 900 or > 1300 || r.HttpMethod != null || r.DnsQname != null
+                || r.L4Len is not int payloadLength || payloadLength is < 900 or > 1300 || r.HttpMethod != null || r.DnsQname != null
                 || r.TlsVersion != null || r.Sni != null) return NoMatch();
             var key = r.Source! + "|" + r.Destination! + "|" + r.ProcessId;
-            if (!_cadence.Observe(key, r.Id, r.L4Len.Value, context.TimestampUtc, 4, 2, 6, 64, 30)) return NoMatch();
+            if (!_cadence.Observe(key, r.Id, payloadLength, context.TimestampUtc, 4, 2, 6, 64, 30)) return NoMatch();
 
             var status = _cooldown.Observe(r.Source!, r.Destination!, r.Id, context.TimestampUtc);
             if (status == WebSignatureObservation.None) return NoMatch();

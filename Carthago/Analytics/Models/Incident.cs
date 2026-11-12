@@ -44,7 +44,13 @@ namespace Carthago.Analytics.Models
         public bool IsAnalyzing { get; set; }
         public int OccurrenceCount { get; set; } = 1;
 
-        public List<DetectionEvent> RelatedEvents { get; set; } = new();
+        private List<DetectionEvent> _relatedEvents = new();
+        [System.Diagnostics.CodeAnalysis.AllowNull]
+        public List<DetectionEvent> RelatedEvents
+        {
+            get => _relatedEvents;
+            set => _relatedEvents = value ?? new List<DetectionEvent>();
+        }
         public List<AnomalySignal> RelatedAnomalies { get; set; } = new();
         public List<string> Evidence { get; set; } = new();
         public List<string> RecommendedActions { get; set; } = new();

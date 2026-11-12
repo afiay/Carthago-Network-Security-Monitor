@@ -53,9 +53,9 @@ namespace Carthago.Engine.Rules.Expansion
             var r = context.Record;
             if (!Research786NetworkEvidence.TcpData(r) || !Research786NetworkEvidence.PublicPrivate(r)
                 || r.DestinationPort != 80 || !WebSignatureRequestEvidence.TryGet(r, out var method, out var uri)
-                || method != "GET" || r.L4Len is < 200 or > 2048) return NoMatch();
+                || method != "GET" || r.L4Len is not int payloadLength || payloadLength is < 200 or > 2048) return NoMatch();
             var key = r.Source! + "|" + r.Destination! + "|" + uri;
-            if (!_burst.Observe(key, r.Id, r.L4Len.Value, context.TimestampUtc, 8, 20, 3200)) return NoMatch();
+            if (!_burst.Observe(key, r.Id, payloadLength, context.TimestampUtc, 8, 20, 3200)) return NoMatch();
 
             var status = _cooldown.Observe(r.Source!, r.Destination!, r.Id, context.TimestampUtc);
             if (status == WebSignatureObservation.None) return NoMatch();

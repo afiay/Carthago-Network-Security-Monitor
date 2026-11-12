@@ -54,11 +54,11 @@ namespace Carthago.Engine.Rules.Expansion
             var r = context.Record;
             if (!Research786NetworkEvidence.TcpData(r) || !Research786NetworkEvidence.PrivatePublic(r)
                 || r.DestinationPort != 8080 || !Research676Evidence.Process(r, "hostd", "hostd.exe", "vpxa")
-                || r.L4Len is < 1000 or > 4096
+                || r.L4Len is not int payloadLength || payloadLength is < 1000 or > 4096
                 || !WebSignatureRequestEvidence.TryGet(r, out var method, out var uri)
                 || method != "POST" || !uri.StartsWith("/api/", StringComparison.OrdinalIgnoreCase)) return NoMatch();
             var key = r.Source! + "|" + r.Destination! + "|" + r.ProcessId + "|" + uri;
-            if (!_posts.Observe(key, r.Id, r.L4Len.Value, context.TimestampUtc, 5, 20, 5000)) return NoMatch();
+            if (!_posts.Observe(key, r.Id, payloadLength, context.TimestampUtc, 5, 20, 5000)) return NoMatch();
 
             var status = _cooldown.Observe(r.Source!, r.Destination!, r.Id, context.TimestampUtc);
             if (status == WebSignatureObservation.None) return NoMatch();

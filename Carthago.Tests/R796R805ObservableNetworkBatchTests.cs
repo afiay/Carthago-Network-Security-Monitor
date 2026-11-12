@@ -153,6 +153,19 @@ public sealed class R796R805ObservableNetworkBatchTests
     }
 
     [Theory]
+    [InlineData("R798")]
+    public async Task MissingPayloadLengthFailsClosed(string id)
+    {
+        var rule = Rule(id);
+        for (var i = 0; i < Threshold(id); i++)
+        {
+            var packet = Packet(id, i);
+            packet.L4Len = null;
+            Assert.False((await rule.EvaluateAsync(At(packet, i * Spacing(id)))).Matched);
+        }
+    }
+
+    [Theory]
     [MemberData(nameof(Cases))]
     public async Task PositiveAndContradictoryOrMissingEvidence(string id)
     {

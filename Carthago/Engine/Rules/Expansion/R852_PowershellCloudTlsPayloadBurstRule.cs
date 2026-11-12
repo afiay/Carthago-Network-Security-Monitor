@@ -54,13 +54,13 @@ namespace Carthago.Engine.Rules.Expansion
             var r = context.Record;
             if (!Research786NetworkEvidence.TcpData(r) || !Research786NetworkEvidence.PrivatePublic(r)
                 || !Research676Evidence.Process(r, "powershell.exe", "powershell")
-                || r.DestinationPort != 443 || r.L4Len is < 1200 or > 8192
+                || r.DestinationPort != 443 || r.L4Len is not int payloadLength || payloadLength is < 1200 or > 8192
                 || string.IsNullOrWhiteSpace(r.TlsVersion)
                 || !string.Equals(r.Sni, "content.dropboxapi.com", StringComparison.OrdinalIgnoreCase)
                 || r.HttpMethod != null || r.HttpUri != null || r.DnsQname != null
                 || r.DnsIsResponse || string.Equals(r.ApplicationProtocol, "HTTP", StringComparison.OrdinalIgnoreCase)) return NoMatch();
             var key = r.Source! + "|" + r.Destination! + "|" + r.ProcessId + "|" + r.DestinationPort;
-            if (!_burst.Observe(key, r.Id, r.L4Len.Value, context.TimestampUtc, 5, 30, 10000)) return NoMatch();
+            if (!_burst.Observe(key, r.Id, payloadLength, context.TimestampUtc, 5, 30, 10000)) return NoMatch();
 
             var status = _cooldown.Observe(r.Source!, r.Destination!, r.Id, context.TimestampUtc);
             if (status == WebSignatureObservation.None) return NoMatch();

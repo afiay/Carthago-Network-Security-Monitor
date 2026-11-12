@@ -113,6 +113,19 @@ public sealed class R886R895ObservableCandidateBatchTests
     }
 
     [Theory]
+    [InlineData("R889")]
+    public async Task MissingPayloadLengthFailsClosed(string id)
+    {
+        var rule = Rule(id);
+        for (var i = 0; i < Threshold(id); i++)
+        {
+            var packet = Packet(id, i);
+            packet.L4Len = null;
+            Assert.False((await rule.EvaluateAsync(At(packet, i * Step(id)))).Matched);
+        }
+    }
+
+    [Theory]
     [MemberData(nameof(Cases))]
     public async Task TypedPositiveAndNoRawInfo(string id)
     {

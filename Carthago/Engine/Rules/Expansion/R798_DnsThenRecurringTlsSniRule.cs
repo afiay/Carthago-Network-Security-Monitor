@@ -62,10 +62,10 @@ namespace Carthago.Engine.Rules.Expansion
                 || !Research676Evidence.Process(r, "powershell.exe")
                 || r.DestinationPort != 443
                 || string.IsNullOrWhiteSpace(r.TlsVersion) || string.IsNullOrWhiteSpace(r.Sni)
-                || r.HttpMethod != null || r.DnsQname != null || r.L4Len is < 128 or > 512)
+                || r.HttpMethod != null || r.DnsQname != null || r.L4Len is not int payloadLength || payloadLength is < 128 or > 512)
                 return NoMatch();
             var key = r.Source + "|" + r.ProcessId + "|" + r.Sni!.ToLowerInvariant();
-            if (!_cadence.Observe(key, r.Id, context.TimestampUtc, false, r.L4Len.Value)) return NoMatch();
+            if (!_cadence.Observe(key, r.Id, context.TimestampUtc, false, payloadLength)) return NoMatch();
 
             var status = _cooldown.Observe(r.Source!, r.Destination!, r.Id, context.TimestampUtc);
             if (status == WebSignatureObservation.None) return NoMatch();

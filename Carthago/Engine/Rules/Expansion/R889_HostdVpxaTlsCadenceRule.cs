@@ -39,11 +39,11 @@ namespace Carthago.Engine.Rules.Expansion
             var r = context.Record;
             if (!Research786NetworkEvidence.TcpData(r) || !Research786NetworkEvidence.PrivatePublic(r)
                 || !Research676Evidence.Process(r, "hostd", "hostd.exe", "vpxa", "vpxa.exe")
-                || r.DestinationPort != 8443 || r.L4Len is < 600 or > 900
+                || r.DestinationPort != 8443 || r.L4Len is not int payloadLength || payloadLength is < 600 or > 900
                 || string.IsNullOrWhiteSpace(r.TlsVersion) || string.IsNullOrWhiteSpace(r.Sni)
                 || r.Sni.Length > 253 || r.HttpMethod != null || r.HttpUri != null || r.DnsQname != null
                 || !_cadence.Observe(r.Source! + "|" + r.Destination! + "|" + r.ProcessId + "|" + r.Sni.ToLowerInvariant(),
-                    r.Id, r.L4Len.Value, context.TimestampUtc, 4, 5, 20, 32, 65)) return NoMatch();
+                    r.Id, payloadLength, context.TimestampUtc, 4, 5, 20, 32, 65)) return NoMatch();
             var status = _cooldown.Observe(r.Source!, r.Destination!, r.Id, context.TimestampUtc);
             if (status == WebSignatureObservation.None) return NoMatch();
             if (status == WebSignatureObservation.Suppressed)

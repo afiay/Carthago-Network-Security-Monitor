@@ -69,6 +69,25 @@ public sealed class IncidentTimelineEventNavigationTests
     }
 
     [Fact]
+    public void Null_Related_Events_Are_Normalized_Without_Losing_Recorded_Event_Ids()
+    {
+        var incident = new Incident
+        {
+            RelatedEvents = null,
+            RelatedEventIds = new List<string> { "persisted-id" },
+            TimelineItems = new List<IncidentTimelineItem>
+            {
+                new() { Type = "Detection", Details = new Dictionary<string, string> { ["EventId"] = "persisted-id" } }
+            }
+        };
+
+        Assert.Empty(incident.RelatedEvents);
+        var vm = IncidentVm.From(incident);
+        Assert.Equal("persisted-id", Assert.Single(vm.TimelineItems).ExactEventId);
+        Assert.Contains("No related detections are attached yet.", vm.RelatedEventDescriptions);
+    }
+
+    [Fact]
     public void Noncanonical_Timeline_Id_Is_Never_Treated_As_An_Exact_Link()
     {
         var incident = new Incident

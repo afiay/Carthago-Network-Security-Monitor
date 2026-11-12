@@ -134,6 +134,19 @@ public sealed class R836R845ObservableCandidateBatchTests
     }
 
     [Theory]
+    [InlineData("R840")]
+    public async Task MissingPayloadLengthFailsClosed(string id)
+    {
+        var rule = Rule(id);
+        for (var i = 0; i < Count(id); i++)
+        {
+            var packet = Packet(id, i);
+            packet.L4Len = null;
+            Assert.False((await rule.EvaluateAsync(At(packet, i * 2))).Matched);
+        }
+    }
+
+    [Theory]
     [MemberData(nameof(Cases))]
     public async Task TypedPositiveIsSourceCandidateOnly(string id)
     {
