@@ -17,6 +17,8 @@ namespace Carthago.Services.EnvironmentTuning
         public List<string> VpnGateways { get; set; } = new();
         public List<string> CloudStorageProviders { get; set; } = new();
         public List<string> AdminHosts { get; set; } = new();
+        // Opt-in exact, time-bounded SMB2 maintenance scope; empty by default.
+        public List<Smb2MaintenanceScope> Smb2MaintenanceScopes { get; set; } = new();
         // Explicit Redis server inventory for verified-audit candidates only.
         // Absence means unconfigured, never automatically trusted.
         public List<string> RedisServers { get; set; } = new();

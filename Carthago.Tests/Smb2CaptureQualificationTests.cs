@@ -277,19 +277,19 @@ public sealed class Smb2CaptureQualificationTests
     {
         var p=SmbFrame(156,5,true,2,1); p[68]=89; p[132]=1; p[140]=2; return p;
     }
-    private static (TrafficRecord Syn, TrafficRecord Create, TrafficRecord Write) TargetChain(
-        string share, string file, string variant="")
+    internal static (TrafficRecord Syn, TrafficRecord Create, TrafficRecord Write) TargetChain(
+        string share, string file, string variant="", string source="8.8.8.8", string destination="10.1.2.45")
     {
         var h=new PacketHandler(); uint c=101,s=501;
-        var syn=Parse(h,"8.8.8.8","10.1.2.45",Array.Empty<byte>(),0x02,100);
-        Parse(h,"10.1.2.45","8.8.8.8",Array.Empty<byte>(),0x12,500,445,51000,101);
+        var syn=Parse(h,source,destination,Array.Empty<byte>(),0x02,100);
+        Parse(h,destination,source,Array.Empty<byte>(),0x12,500,445,51000,101);
         TrafficRecord Client(byte[] b)
         {
-            var result=Parse(h,"8.8.8.8","10.1.2.45",b,0x18,c,51000,445,s); c+=(uint)b.Length; return result;
+            var result=Parse(h,source,destination,b,0x18,c,51000,445,s); c+=(uint)b.Length; return result;
         }
         void Server(byte[] b)
         {
-            Parse(h,"10.1.2.45","8.8.8.8",b,0x18,s,445,51000,c); s+=(uint)b.Length;
+            Parse(h,destination,source,b,0x18,s,445,51000,c); s+=(uint)b.Length;
         }
         Client(TreeRequest(share));
         var tr=TreeReply();

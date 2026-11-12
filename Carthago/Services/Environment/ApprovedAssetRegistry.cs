@@ -38,6 +38,7 @@ namespace Carthago.Services.EnvironmentTuning
         private readonly ApprovedDestinationRegistry _destinations;
         private readonly ApprovedServiceRegistry _services;
         private readonly HashSet<string> _adminHosts;
+        private readonly Smb2MaintenanceScope[] _smb2MaintenanceScopes;
         private readonly HashSet<string> _redisServers;
         private readonly HashSet<string> _domainControllers;
         private readonly HashSet<string> _kubernetesApiServers;
@@ -52,6 +53,7 @@ namespace Carthago.Services.EnvironmentTuning
             _destinations = new ApprovedDestinationRegistry(Options);
             _services = new ApprovedServiceRegistry(_destinations);
             _adminHosts = ToSet(Options.Approved.AdminHosts);
+            _smb2MaintenanceScopes = Smb2MaintenanceScope.Snapshot(Options.Approved.Smb2MaintenanceScopes);
             _redisServers = ToSet(Options.Approved.RedisServers);
             _domainControllers = ToSet(Options.Approved.DomainControllers);
             _kubernetesApiServers = ToSet(Options.Approved.KubernetesApiServers);
@@ -120,6 +122,17 @@ namespace Carthago.Services.EnvironmentTuning
         {
             if (evt == null || record == null || string.IsNullOrWhiteSpace(ruleId))
                 return null;
+
+            // Exact opt-in SMB2 scope is a non-paging annotation, not authorization.
+            if (ruleId is "R910" or "R950")
+            {
+                if (!IsAdminHost(record.Source)) return null;
+                var scope = Smb2MaintenanceScope.Match(_smb2MaintenanceScopes, ruleId, evt, record);
+                return scope == null ? null : new ApprovedAssetDecision(
+                    ApprovedAssetDisposition.Shadow,
+                    "Configured SMB2 maintenance scope matched; authorization not verified.",
+                    "Approved.Smb2MaintenanceScopes", scope.ChangeId);
+            }
 
             var destination = FirstNonEmpty(evt.DestinationHost, evt.DestinationIp, record.HttpHost, record.Sni, record.DnsQname, record.Destination);
             var source = FirstNonEmpty(evt.SourceIp, record.Source);

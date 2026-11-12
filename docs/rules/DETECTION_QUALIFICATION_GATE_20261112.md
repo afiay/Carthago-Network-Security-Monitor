@@ -71,3 +71,11 @@ Owner Windows: initial DLL lock cleared; clean Release build succeeded (93.3s), 
 ## Q7-v1 — synthetic paired accuracy baseline
 
 25 new test cases (24 scenario-rule pairs plus aggregate report) covering all six Q4 SMB2 rules with separately authored raw WRITE frames, synthetic process/HTTP observations, malicious/benign identical-shape pairs, benign controls and producer-limited truncated requests. Report raw and effective alert metrics separately, exclude six producer gaps from supported metrics. Expected raw TP6/FP6/FN0/TN6; alert TP0/FP0/FN6/TN12 (Shadow); not yet executed, no production accuracy claim. Independent lab/field captures remain required. See docs/rules/SMB2_Q7_SYNTHETIC_ACCURACY_PROTOCOL.md. No detection predicate, score, registry or threshold changed.
+
+## Verified owner checkpoint — e64e2df (2026-11-13)
+
+Owner Windows Release build 36.3s; Q7 25/25, full 12,318/12,318, zero failed/skipped, 213.3s. Q7 measured raw TP6 FP6 FN0 TN6 (precision 50%, recall 100%, specificity 50%), effective alert TP0 FP0 FN6 TN12 (Shadow), six producer gaps. Both malicious and benign lookalikes confidence 0.90. Synthetic only, no production promotion.
+
+## Q8-v1 — exact scoped maintenance annotation
+
+Opt-in Approved.Smb2MaintenanceScopes for R910/R950 only; exact rule/source/destination/process/share/file categories, local TCP socket attribution, approved admin source, capture-correlated CREATE/WRITE, event packet identity, entire 45s rule window in UTC change interval, unique unambiguous scope. Return existing Shadow tuning disposition and explicit configured scope reason, never authorization proof. No rule or confidence change; Q7 frozen. Other four SMB2 rules excluded to avoid broad approvals. 22 tests authored, Windows pending. See docs/rules/SMB2_Q8_SCOPED_MAINTENANCE.md.
