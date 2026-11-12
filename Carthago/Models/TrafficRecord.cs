@@ -244,6 +244,13 @@ namespace Carthago.Models
         public int? DnsTtl { get; set; }
 
         // ===== GeoIP =====
+        // GeoLite2 observations, distinct from WHOIS registration metadata.
+        public string? SrcCity { get; set; }
+        public long? SrcAsn { get; set; }
+        public string? SrcAsnOrganization { get; set; }
+        public string? DstCity { get; set; }
+        public long? DstAsn { get; set; }
+        public string? DstAsnOrganization { get; set; }
         public string? SrcCountry { get; set; }
         public string? SrcCountryIso2 { get; set; }
         public double? SrcLat { get; set; }

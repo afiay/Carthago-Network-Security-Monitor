@@ -156,9 +156,10 @@ namespace Carthago.Services
             }
 
             var g = _geo.Lookup(ip);
-            if (g is null || !IsValidCoordinates(g.Latitude, g.Longitude)) return false;
+            if (g?.Latitude is not double geoLat || g.Longitude is not double geoLon
+                || !IsValidCoordinates(geoLat, geoLon)) return false;
 
-            lat = g.Latitude; lon = g.Longitude;
+            lat = geoLat; lon = geoLon;
             city = g.CityName; iso2 = g.CountryIso2;
             return true;
         }

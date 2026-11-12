@@ -68,15 +68,31 @@ namespace Carthago.Services.Geo
                 catch { /* ignore */ }
             }
 
-            if (lat is null || lon is null) return null;
+            return CreateResult(country, iso2, city, lat, lon, asn, asnOrg);
+        }
+
+        // Coordinates are optional; ASN-only and country-only results are useful.
+        internal static GeoInfo? CreateResult(string? country, string? iso2, string? city,
+            double? lat, double? lon, long? asn, string? asnOrg)
+        {
+            if (lat is not double latitude || lon is not double longitude
+                || !double.IsFinite(latitude) || !double.IsFinite(longitude)
+                || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180)
+            {
+                lat = null;
+                lon = null;
+            }
+            if (lat is null && asn is null && string.IsNullOrWhiteSpace(asnOrg)
+                && string.IsNullOrWhiteSpace(country) && string.IsNullOrWhiteSpace(iso2)
+                && string.IsNullOrWhiteSpace(city)) return null;
 
             return new GeoInfo
             {
                 CountryName = country,
                 CountryIso2 = iso2,
                 CityName = city,
-                Latitude = lat.Value,
-                Longitude = lon.Value,
+                Latitude = lat,
+                Longitude = lon,
                 Asn = asn,
                 AsnOrganization = asnOrg
             };
@@ -99,8 +115,8 @@ namespace Carthago.Services.Geo
             public string? CountryName { get; init; }
             public string? CountryIso2 { get; init; }
             public string? CityName { get; init; }
-            public double Latitude { get; init; }
-            public double Longitude { get; init; }
+            public double? Latitude { get; init; }
+            public double? Longitude { get; init; }
             public long? Asn { get; init; }
             public string? AsnOrganization { get; init; }
         }

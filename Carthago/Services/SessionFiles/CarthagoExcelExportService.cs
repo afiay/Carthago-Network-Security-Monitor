@@ -288,6 +288,10 @@ public sealed class CarthagoExcelExportService
             || field.StartsWith("Reputation", StringComparison.OrdinalIgnoreCase)
             || field.StartsWith("SrcCountry", StringComparison.OrdinalIgnoreCase)
             || field.StartsWith("DstCountry", StringComparison.OrdinalIgnoreCase)
+            || field.StartsWith("SrcAsn", StringComparison.OrdinalIgnoreCase)
+            || field.StartsWith("DstAsn", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(field, "SrcCity", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(field, "DstCity", StringComparison.OrdinalIgnoreCase)
             || field.EndsWith("Lat", StringComparison.OrdinalIgnoreCase)
             || field.EndsWith("Lon", StringComparison.OrdinalIgnoreCase))
             return "Enrichment field: blank means the enrichment source did not provide a value for this snapshot; it is not inferred.";

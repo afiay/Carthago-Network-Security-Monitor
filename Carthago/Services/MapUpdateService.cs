@@ -114,10 +114,7 @@ namespace Carthago.Services
                 var g = _geo.Lookup(r.Source);
                 if (g is not null)
                 {
-                    r.SrcCountry ??= g.CountryName;
-                    r.SrcCountryIso2 ??= g.CountryIso2;
-                    r.SrcLat ??= g.Latitude;
-                    r.SrcLon ??= g.Longitude;
+                    TrafficRecordGeoEnrichment.ApplySource(r, g);
                 }
             }
             if ((r.DstLat is null || r.DstLon is null || string.IsNullOrEmpty(r.DstCountryIso2)) && !string.IsNullOrWhiteSpace(r.Destination))
@@ -125,10 +122,7 @@ namespace Carthago.Services
                 var g = _geo.Lookup(r.Destination);
                 if (g is not null)
                 {
-                    r.DstCountry ??= g.CountryName;
-                    r.DstCountryIso2 ??= g.CountryIso2;
-                    r.DstLat ??= g.Latitude;
-                    r.DstLon ??= g.Longitude;
+                    TrafficRecordGeoEnrichment.ApplyDestination(r, g);
                 }
             }
         }
