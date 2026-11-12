@@ -1,3 +1,5 @@
+using System.Net;
+using System.Net.NetworkInformation;
 using Carthago.Services;
 using PacketDotNet;
 
@@ -38,6 +40,57 @@ public sealed class PacketHandlerLinkLayerTests
         Assert.Equal("10.0.0.1", record.Source);
         Assert.Equal("10.0.0.2", record.Destination);
         Assert.Equal("UDP", record.Protocol);
+    }
+
+    [Fact]
+    public void ParseFrame_SurfacesArpNeighborPresenceWithoutPretendingItIsIpTraffic()
+    {
+        var frame = NpcapArpDiscovery.BuildRequest(
+            PhysicalAddress.Parse("021122334455"),
+            IPAddress.Parse("192.168.1.10"),
+            IPAddress.Parse("192.168.1.42"));
+
+        var record = new PacketHandler().ParseFrame(frame, LinkLayers.Ethernet);
+
+        Assert.NotNull(record);
+        Assert.Equal("ARP", record.Protocol);
+        Assert.Equal("192.168.1.10", record.Source);
+        Assert.Equal("192.168.1.42", record.Destination);
+        Assert.Equal("02:11:22:33:44:55", record.MacSource);
+        Assert.Equal("FF:FF:FF:FF:FF:FF", record.MacDestination);
+        Assert.Contains("Who has 192.168.1.42", record.Info);
+        Assert.Null(record.IpVersion);
+        Assert.False(record.IsTcp);
+        Assert.False(record.IsUdp);
+    }
+
+    [Fact]
+    public void ParseFrame_SurfacesArpReplyFromSelectedNeighbor()
+    {
+        var localMac = PhysicalAddress.Parse("021122334455").GetAddressBytes();
+        var peerMac = PhysicalAddress.Parse("02AABBCCDDEE").GetAddressBytes();
+        var frame = NpcapArpDiscovery.BuildRequest(
+            new PhysicalAddress(localMac),
+            IPAddress.Parse("192.168.1.10"),
+            IPAddress.Parse("192.168.1.42"));
+        localMac.CopyTo(frame, 0);
+        peerMac.CopyTo(frame, 6);
+        frame[20] = 0;
+        frame[21] = 2; // ARP reply
+        peerMac.CopyTo(frame, 22);
+        IPAddress.Parse("192.168.1.42").GetAddressBytes().CopyTo(frame, 28);
+        localMac.CopyTo(frame, 32);
+        IPAddress.Parse("192.168.1.10").GetAddressBytes().CopyTo(frame, 38);
+
+        var record = new PacketHandler().ParseFrame(frame, LinkLayers.Ethernet);
+
+        Assert.NotNull(record);
+        Assert.Equal("ARP", record.Protocol);
+        Assert.Equal("192.168.1.42", record.Source);
+        Assert.Equal("192.168.1.10", record.Destination);
+        Assert.Equal("02:AA:BB:CC:DD:EE", record.MacSource);
+        Assert.Equal("02:11:22:33:44:55", record.MacDestination);
+        Assert.Equal("192.168.1.42 is at 02:AA:BB:CC:DD:EE", record.Info);
     }
 
     private static byte[] BuildIpv4UdpPacket()

@@ -30,13 +30,18 @@ public class TrafficGridRefreshCoordinatorTests
 
         Assert.Equal(1, schedules);
         Assert.Equal(0, resets);
-        Assert.Equal(200, rows.Count);
-        Assert.Equal(999, rows[0]);
-        Assert.Equal(800, rows[199]);
+        Assert.Empty(rows);
+        var retained = rows.GetRetainedSnapshot();
+        Assert.Equal(200, retained.Count);
+        Assert.Equal(999, retained[0]);
+        Assert.Equal(800, retained[199]);
 
         Assert.True(gate.OnTimer(visible: true));
         rows.NotifyReset();
         Assert.Equal(1, resets);
+        Assert.Equal(200, rows.Count);
+        Assert.Equal(999, rows[0]);
+        Assert.Equal(800, rows[199]);
         Assert.False(gate.OnTimer(visible: true));
 
         Assert.True(gate.Request(visible: true));
@@ -58,8 +63,10 @@ public class TrafficGridRefreshCoordinatorTests
         }
 
         Assert.Equal(0, resets);
-        Assert.Equal(999, rows[0]);
-        Assert.Equal(800, rows[199]);
+        Assert.Empty(rows);
+        var retained = rows.GetRetainedSnapshot();
+        Assert.Equal(999, retained[0]);
+        Assert.Equal(800, retained[199]);
         Assert.True(gate.Show());
         rows.NotifyReset();
         Assert.Equal(1, resets);

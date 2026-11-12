@@ -61,4 +61,5 @@ public class WindowsLanArpResolverTests
         Assert.Single(rows);
         Assert.Equal(peer, rows[0].Address);
     }
+
 }

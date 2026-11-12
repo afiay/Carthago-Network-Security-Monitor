@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Threading;
+using System.Threading.Tasks;
 using Carthago.Services;
 using Carthago.Models;
 using Xunit;
@@ -10,6 +12,113 @@ namespace Carthago.Tests;
 
 public class LocalLanDiscoveryTests
 {
+    [Fact]
+    public async Task ActiveArpDiscoveryFindsPhoneThatDoesNotAnswerIcmp()
+    {
+        var adapter = new LocalLanInterface(
+            "Wi-Fi", IPAddress.Parse("192.168.1.1"), IPAddress.Parse("255.255.255.252"));
+        var arpSources = new List<IPAddress>();
+        var pingTargets = new List<IPAddress>();
+        string? Probe(IPAddress destination, IPAddress source)
+        {
+            arpSources.Add(source);
+            return destination.Equals(IPAddress.Parse("192.168.1.2"))
+                ? "02:11:22:33:44:55"
+                : null;
+        }
+
+        var result = await LocalLanDiscovery.ScanInterfacesAsync(
+            new[] { adapter }, activeDiscovery: true, scopeNeighborCache: true,
+            CancellationToken.None, Probe,
+            (target, _) =>
+            {
+                pingTargets.Add(target);
+                return Task.FromResult(false);
+            },
+            (_, _) => Task.FromResult<IReadOnlyDictionary<string, string>>(
+                new Dictionary<string, string>()));
+
+        Assert.Equal("02:11:22:33:44:55", result.NeighborMacs["192.168.1.2"]);
+        Assert.Contains("192.168.1.2", result.ArpReplies);
+        Assert.Empty(result.PingReplies);
+        Assert.Equal(new[] { IPAddress.Parse("192.168.1.1") }, arpSources);
+        Assert.Equal(new[] { IPAddress.Parse("192.168.1.2") }, pingTargets);
+
+        var peer = Assert.Single(LanCaptureDiscovery.BuildPeers(result));
+        Assert.Equal(IPAddress.Parse("192.168.1.2"), peer.Address);
+        Assert.Contains("ARP response", peer.Evidence);
+    }
+
+    [Fact]
+    public async Task FailedArpTargetsAreNotPingedOrInventedAsPeers()
+    {
+        var adapter = new LocalLanInterface(
+            "Wi-Fi", IPAddress.Parse("192.168.1.1"), IPAddress.Parse("255.255.255.248"));
+        var pingTargets = new List<IPAddress>();
+
+        var result = await LocalLanDiscovery.ScanInterfacesAsync(
+            new[] { adapter }, activeDiscovery: true, scopeNeighborCache: true,
+            CancellationToken.None, (_, _) => null,
+            (target, _) =>
+            {
+                pingTargets.Add(target);
+                return Task.FromResult(true);
+            },
+            (_, _) => Task.FromResult<IReadOnlyDictionary<string, string>>(
+                new Dictionary<string, string>()));
+
+        Assert.Equal(5, result.TargetsProbed);
+        Assert.Empty(result.NeighborMacs);
+        Assert.Empty(result.ArpReplies);
+        Assert.Empty(result.PingReplies);
+        Assert.Empty(pingTargets);
+    }
+
+    [Fact]
+    public async Task FreshArpEvidenceWinsOverAStaleCachedMac()
+    {
+        var adapter = new LocalLanInterface(
+            "Wi-Fi", IPAddress.Parse("192.168.1.1"), IPAddress.Parse("255.255.255.252"));
+
+        var result = await LocalLanDiscovery.ScanInterfacesAsync(
+            new[] { adapter }, activeDiscovery: true, scopeNeighborCache: true,
+            CancellationToken.None,
+            (_, _) => "02:11:22:33:44:55",
+            (_, _) => Task.FromResult(false),
+            (source, _) =>
+            {
+                Assert.Equal(adapter.Address, source);
+                return Task.FromResult<IReadOnlyDictionary<string, string>>(
+                    new Dictionary<string, string> { ["192.168.1.2"] = "02:AA:BB:CC:DD:EE" });
+            });
+
+        Assert.Equal("02:11:22:33:44:55", result.NeighborMacs["192.168.1.2"]);
+    }
+
+    [Fact]
+    public async Task CancelledActiveDiscoveryStopsBeforeProbing()
+    {
+        var adapter = new LocalLanInterface(
+            "Wi-Fi", IPAddress.Parse("192.168.1.1"), IPAddress.Parse("255.255.255.252"));
+        var calls = 0;
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            LocalLanDiscovery.ScanInterfacesAsync(
+                new[] { adapter }, activeDiscovery: true, scopeNeighborCache: true,
+                cancellation.Token, (_, _) =>
+                {
+                    calls++;
+                    return null;
+                },
+                (_, _) => Task.FromResult(false),
+                (_, _) => Task.FromResult<IReadOnlyDictionary<string, string>>(
+                    new Dictionary<string, string>())));
+
+        Assert.Equal(0, calls);
+    }
+
     [Fact]
     public void TargetsRemainInsideActualSubnetAndExcludeOurOwnAddress()
     {
@@ -121,4 +230,5 @@ public class LocalLanDiscoveryTests
         Assert.Throws<ArgumentOutOfRangeException>(() =>
             LocalLanDiscovery.PlanProbeTargets(Array.Empty<LocalLanInterface>(), 0));
     }
+
 }

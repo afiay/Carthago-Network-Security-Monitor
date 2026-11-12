@@ -12,8 +12,9 @@ public class LanCaptureDiscoveryTests
     public void ExplicitHostScopeCombinesRatherThanReplacesConfiguredFilter()
     {
         var ip = IPAddress.Parse("192.168.1.42");
-        Assert.Equal("ip host 192.168.1.42", LanCaptureDiscovery.ComposeFilter(null, ip));
-        Assert.Equal("(tcp or udp) and (ip host 192.168.1.42)",
+        Assert.Equal("(ip host 192.168.1.42) or (arp host 192.168.1.42)",
+            LanCaptureDiscovery.ComposeFilter(null, ip));
+        Assert.Equal("(tcp or udp) and ((ip host 192.168.1.42) or (arp host 192.168.1.42))",
             LanCaptureDiscovery.ComposeFilter(" tcp or udp ", ip));
     }
 
@@ -33,13 +34,51 @@ public class LanCaptureDiscoveryTests
             LanCaptureDiscovery.ComposeFilter(null, IPAddress.Parse(address)));
 
     [Fact]
-    public void LabelsUseResolvedNameOrIpWithoutInventingIdentity()
+    public void LabelsDescribeDiscoveredPeersAsLocalVisibilityFilters()
     {
         var peer = new LanCapturePeer(IPAddress.Parse("192.168.1.42"), "02:11:22:33:44:55", null, "Cached");
-        Assert.Equal("Npcap: LAN 192.168.1.42 via Wi-Fi", LanCaptureDiscovery.FormatLabel(peer, "Wi-Fi"));
-        Assert.Equal("Npcap: LAN My-iPhone.local (192.168.1.42) via Wi-Fi",
+        Assert.Equal("LAN host filter: 192.168.1.42 · Wi-Fi · visible-to-PC",
+            LanCaptureDiscovery.FormatLabel(peer, "Wi-Fi"));
+        Assert.Equal("LAN host filter: My-iPhone.local (192.168.1.42) · Wi-Fi · visible-to-PC",
             LanCaptureDiscovery.FormatLabel(peer with { HostName = "My-iPhone.local." }, "Wi-Fi"));
+        Assert.Equal("LAN gateway filter: 192.168.1.42 · Wi-Fi · visible-to-PC",
+            LanCaptureDiscovery.FormatLabel(peer, "Wi-Fi", isGateway: true));
         Assert.Null(LanCaptureDiscovery.NormalizeHostName("192.168.1.42"));
+    }
+
+    [Fact]
+    public void VisibilityNoticeExplainsWhyAReachablePhoneCanHaveNoCapturedTraffic()
+    {
+        var notice = LanCaptureDiscovery.FormatVisibilityNotice(IPAddress.Parse("192.168.1.42"));
+
+        Assert.Contains("192.168.1.42", notice);
+        Assert.Contains("not a remote sensor", notice, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("phone-to-Internet", notice, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("gateway", notice, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("mirror", notice, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void KnownSleepingPhoneCanBeAddedOnlyInsideTheSelectedAdapterScope()
+    {
+        var adapter = new LocalLanInterface("Wi-Fi", IPAddress.Parse("192.168.1.153"),
+            IPAddress.Parse("255.255.255.0"));
+
+        Assert.True(LanCaptureDiscovery.TryParseManualTarget(
+            "192.168.1.123", adapter, out var phone, out var error));
+        Assert.Equal(IPAddress.Parse("192.168.1.123"), phone);
+        Assert.Null(error);
+
+        foreach (var invalid in new[]
+                 {
+                     "123", "192.168.2.123", "192.168.1.153",
+                     "192.168.1.0", "192.168.1.255", "8.8.8.8", "fe80::123"
+                 })
+        {
+            Assert.False(LanCaptureDiscovery.TryParseManualTarget(
+                invalid, adapter, out _, out var invalidError));
+            Assert.False(string.IsNullOrWhiteSpace(invalidError));
+        }
     }
 
     [Fact]
@@ -57,6 +96,25 @@ public class LanCaptureDiscoveryTests
         Assert.Contains(peers, p => p.Address.ToString() == "192.168.1.42" && p.Evidence.Contains("ICMP"));
         Assert.Contains(peers, p => p.Address.ToString() == "192.168.1.43" && p.Evidence.Contains("unconfirmed"));
         Assert.DoesNotContain(peers, p => p.Address.ToString() == "192.168.1.99");
+    }
+
+    [Fact]
+    public void DirectArpEvidenceIsDistinguishedFromAStaleCachedNeighbor()
+    {
+        var result = new LocalLanScanResult(
+            new Dictionary<string, string> {
+                ["192.168.1.42"] = "02:11:22:33:44:55",
+                ["192.168.1.43"] = "02:11:22:33:44:56"
+            },
+            Array.Empty<string>(), 254,
+            new[] { "192.168.1.42" });
+
+        var peers = LanCaptureDiscovery.BuildPeers(result);
+
+        Assert.Contains(peers, peer => peer.Address.ToString() == "192.168.1.42" &&
+            peer.Evidence == "Direct ARP response");
+        Assert.Contains(peers, peer => peer.Address.ToString() == "192.168.1.43" &&
+            peer.Evidence == "Neighbor cache (unconfirmed)");
     }
 
     [Fact]
