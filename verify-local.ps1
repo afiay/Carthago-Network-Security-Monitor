@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Local Windows verification; no GitHub Actions or paid runner required.
 [CmdletBinding()]
-param([switch]$Details, [switch]$LiveOutput)
+param([switch]$Details, [switch]$LiveOutput, [switch]$DiagnoseTestCrash)
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 $env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'
@@ -153,7 +153,25 @@ try {
     if (-not (Invoke-Stage 'restore-benchmarks' @('restore','Carthago.Benchmarks/Carthago.Benchmarks.csproj','--verbosity','quiet','--nologo'))) { exit 1 }
     if (-not (Invoke-Stage 'build-tests' @('build','Carthago.Tests/Carthago.Tests.csproj','-c','Release','--no-restore','-v','quiet','--nologo'))) { exit 1 }
     if (-not (Invoke-Stage 'build-benchmarks' @('build','Carthago.Benchmarks/Carthago.Benchmarks.csproj','-c','Release','--no-restore','-v','quiet','--nologo'))) { exit 1 }
-    $null = Invoke-Stage 'tests' @('test','Carthago.Tests/Carthago.Tests.csproj','-c','Release','--no-build','--no-restore','-v','quiet','--logger','trx;LogFileName=carthago-tests.trx','--results-directory','build-verify/test-results')
+    $testResults = Join-Path $outputDir 'test-results'
+    $testArgs = @('test','Carthago.Tests/Carthago.Tests.csproj','-c','Release','--no-build','--no-restore','-v','quiet','--logger','trx;LogFileName=carthago-tests.trx')
+    if ($DiagnoseTestCrash) {
+        # Separate diagnostic attempts from earlier completed or aborted runs.
+        # Mini dumps can contain sensitive process data; keep all artifacts local.
+        $runId = (Get-Date -Format 'yyyyMMdd-HHmmss-fff') + '-' + [Guid]::NewGuid().ToString('N').Substring(0,8)
+        $testResults = Join-Path $testResults ('crash-' + $runId)
+        New-Item -ItemType Directory -Force -Path $testResults | Out-Null
+        $testArgs += @('--blame-crash','--blame-crash-dump-type','mini','--diag',(Join-Path $testResults 'vstest-diagnostic.log'))
+        Write-Host "Crash diagnostic artifacts (local only): $testResults"
+    }
+    $testArgs += @('--results-directory',$testResults)
+    $testOk = Invoke-Stage 'tests' $testArgs
+    if (-not $testOk -and $DiagnoseTestCrash) {
+        Copy-Item -LiteralPath (Join-Path $logDir 'tests.log') -Destination (Join-Path $testResults 'tests-stage.log')
+        Write-Host 'Test stage failed. Inspect the diagnostic log, Sequence XML (if produced), TRX and crash dump (if produced). A partial passing count is not a completed run.'
+    } elseif (-not $testOk) {
+        Write-Host 'For a test-host crash, rerun with -DiagnoseTestCrash to retain separate VSTest diagnostics.'
+    }
     $benchOk = Invoke-Stage 'benchmark' @('run','--project','Carthago.Benchmarks','-c','Release','--no-build','--no-restore','--','--replay-dir','Tests/RuleReplaySamples','--output-dir','build-verify','--compare-profiles','--explain-shadow')
     if ($benchOk) {
         try {
