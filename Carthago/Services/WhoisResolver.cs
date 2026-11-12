@@ -93,9 +93,11 @@ namespace Carthago.Services
             if (Cache.TryGetValue(cacheKey, out var ce) && ce.IsFresh)
                 return ce.Text;
 
+            bool acquired = false;
             try
             {
                 await Gate.WaitAsync(ct).ConfigureAwait(false);
+                acquired = true;
 
                 // If we had ETag but expired TTL, attempt conditional GET from last source first
                 if (ce is { SourceUrl: not null, ETag: not null })
@@ -131,7 +133,7 @@ namespace Carthago.Services
             }
             finally
             {
-                if (Gate.CurrentCount < MAX_CONCURRENCY) Gate.Release();
+                if (acquired) Gate.Release();
             }
         }
 

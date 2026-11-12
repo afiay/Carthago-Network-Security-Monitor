@@ -95,6 +95,9 @@ namespace Carthago.Services
         private long _whoisEnriched;
         private long _reputationEnriched;
         private long _enrichmentFallbacks;
+        private readonly EnrichmentProviderHealth _providerHealth = new();
+        private readonly SemaphoreSlim _vpnLimiter = new(4, 4);
+        private static readonly TimeSpan RemoteLookupBudget = TimeSpan.FromSeconds(3);
         private long _uiRecordsDelivered;
         private long _uiBatchesDelivered;
         private long _uiBatchMaxDurationMs;
@@ -774,13 +777,25 @@ namespace Carthago.Services
 
                 var prefs = PreferencesService.Current;
                 var target = GetWhoisTarget(rec);
-                if (target is null) return;
+                if (target is null)
+                {
+                    rec.WhoisEnrichmentStatus = "NotApplicable";
+                    rec.ReputationEnrichmentStatus = "NotApplicable";
+                    rec.VpnEnrichmentStatus = "NotApplicable";
+                    return;
+                }
+
+                rec.WhoisEnrichmentStatus = prefs.EnableWhois ? "Pending" : "Disabled";
+                rec.ReputationEnrichmentStatus = prefs.EnableReputation ? "Pending" : "Disabled";
 
                 if (prefs.EnableWhois)
                 {
                     await Stage("whois", async () =>
                     {
-                        var w = await EnrichWithWhoisAsync(target, ct).ConfigureAwait(false);
+                        var lookup = await _providerHealth.LookupAsync("whois",
+                            token => EnrichWithWhoisAsync(target, token), RemoteLookupBudget, ct).ConfigureAwait(false);
+                        rec.WhoisEnrichmentStatus = lookup.Status.ToString();
+                        var w = lookup.Value;
                         if (w is null) return;
                         rec.WhoisLookupIp = target;
                         rec.WhoisASN = w.Asn ?? rec.WhoisASN;
@@ -796,7 +811,10 @@ namespace Carthago.Services
                 {
                     await Stage("reputation", async () =>
                     {
-                        var rep = await EnrichWithReputationAsync(target, ct).ConfigureAwait(false);
+                        var lookup = await _providerHealth.LookupAsync("reputation",
+                            token => EnrichWithReputationAsync(target, token), RemoteLookupBudget, ct).ConfigureAwait(false);
+                        rec.ReputationEnrichmentStatus = lookup.Status.ToString();
+                        var rep = lookup.Value;
                         if (rep is null) return;
                         rec.ReputationLookupIp = target;
                         rec.ReputationScore = rep.AbuseConfidenceScore;
@@ -810,7 +828,7 @@ namespace Carthago.Services
 
                 await Stage("vpn-proxy", async () =>
                 {
-                    var classification = await VpnProxyResolver.CheckAsync(new VpnContext
+                    var context = new VpnContext
                     {
                         Ip = target,
                         DstPort = rec.DestinationPort,
@@ -820,7 +838,12 @@ namespace Carthago.Services
                         Sni = rec.Sni,
                         ProcessName = rec.ProcessName,
                         AbuseScore = rec.ReputationScore
-                    }, ct).ConfigureAwait(false);
+                    };
+                    var lookup = await _providerHealth.LookupAsync("vpn-proxy",
+                        token => ClassifyVpnAsync(context, token), RemoteLookupBudget, ct).ConfigureAwait(false);
+                    rec.VpnEnrichmentStatus = lookup.Status.ToString();
+                    var classification = lookup.Value;
+                    if (classification is null) return;
 
                     rec.IsVpn = classification.IsVpn;
                     rec.IsProxy = classification.IsProxy;
@@ -830,6 +853,13 @@ namespace Carthago.Services
                 }).ConfigureAwait(false);
 
             }, () => EvaluateRules(rec), ex => Report("pipeline", ex), ct);
+        }
+
+        private async Task<VpnProxyResult?> ClassifyVpnAsync(VpnContext context, CancellationToken ct)
+        {
+            await _vpnLimiter.WaitAsync(ct).ConfigureAwait(false);
+            try { return await VpnProxyResolver.CheckAsync(context, ct).ConfigureAwait(false); }
+            finally { _vpnLimiter.Release(); }
         }
 
         private void EnrichGeo(TrafficRecord rec)
@@ -879,8 +909,12 @@ namespace Carthago.Services
             if (string.IsNullOrWhiteSpace(ip) || !IsEnrichablePublicIp(ip)) return;
 
             var ct = GetRunToken();
-            var rep = await EnrichWithReputationAsync(ip, ct).ConfigureAwait(false);
-            if (rep is null || ct.IsCancellationRequested) return;
+            var lookup = await _providerHealth.LookupAsync("reputation",
+                token => EnrichWithReputationAsync(ip, token), RemoteLookupBudget, ct).ConfigureAwait(false);
+            if (ct.IsCancellationRequested) return;
+            rec.ReputationEnrichmentStatus = lookup.Status.ToString();
+            var rep = lookup.Value;
+            if (rep is null) return;
 
             rec.ReputationLookupIp = ip;
             rec.ReputationScore = rep.AbuseConfidenceScore;
@@ -921,7 +955,10 @@ namespace Carthago.Services
         private async Task<WhoisInfo?> EnrichWithWhoisAsync(string ip, CancellationToken ct)
         {
             if (_whoisCache.TryGetValue(ip, out var cached) && !cached.IsExpired)
+            {
+                _providerHealth.RecordCacheHit("whois");
                 return cached.Value;
+            }
 
             var lazy = _whoisInflight.GetOrAdd(ip, _ =>
                 new Lazy<Task<WhoisInfo?>>(async () =>
@@ -930,7 +967,10 @@ namespace Carthago.Services
                     try
                     {
                         var raw = await WhoisResolver.LookupRawAsync(ip, ct).ConfigureAwait(false);
+                        ct.ThrowIfCancellationRequested();
                         if (string.IsNullOrWhiteSpace(raw)) return null;
+                        if (raw.StartsWith("WHOIS lookup failed:", StringComparison.OrdinalIgnoreCase))
+                            throw new InvalidOperationException("RDAP lookup failed");
 
                         var info = new WhoisInfo
                         {
@@ -940,13 +980,11 @@ namespace Carthago.Services
                             Registrar = WhoisResolver.GetRegistrar(raw),
                             Abuse = WhoisResolver.GetAbuseContact(raw)
                         };
+                        if (string.IsNullOrWhiteSpace(info.Asn) && string.IsNullOrWhiteSpace(info.Org)
+                            && string.IsNullOrWhiteSpace(info.CountryCode) && string.IsNullOrWhiteSpace(info.Registrar)
+                            && string.IsNullOrWhiteSpace(info.Abuse)) return null;
                         _whoisCache[ip] = CacheEntry<WhoisInfo>.From(info, WhoisTtl);
                         return info;
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.Error.WriteLine($"WHOIS enrich failed for {ip}: {ex.Message}");
-                        return null;
                     }
                     finally
                     {
@@ -961,7 +999,10 @@ namespace Carthago.Services
         private async Task<ReputationInfo?> EnrichWithReputationAsync(string ip, CancellationToken ct)
         {
             if (_reputationCache.TryGetValue(ip, out var cached) && !cached.IsExpired)
+            {
+                _providerHealth.RecordCacheHit("reputation");
                 return cached.Value;
+            }
 
             var lazy = _reputationInflight.GetOrAdd(ip, _ =>
                 new Lazy<Task<ReputationInfo?>>(async () =>
@@ -974,6 +1015,7 @@ namespace Carthago.Services
 
                         // Named args to avoid overload ambiguity in some SDKs
                         var resp = await client.CheckAsync(ip: ip, maxAgeInDays: 90, ct: ct).ConfigureAwait(false);
+                        ct.ThrowIfCancellationRequested();
                         if (resp is null) return null;
 
                         var rep = new ReputationInfo
@@ -984,11 +1026,6 @@ namespace Carthago.Services
                         };
                         _reputationCache[ip] = CacheEntry<ReputationInfo>.From(rep, ReputationTtl);
                         return rep;
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.Error.WriteLine($"Reputation enrich failed for {ip}: {ex.Message}");
-                        return null;
                     }
                     finally
                     {
@@ -1116,7 +1153,9 @@ namespace Carthago.Services
             ReputationEnriched = Interlocked.Read(ref _reputationEnriched),
             EnrichmentFallbacks = Interlocked.Read(ref _enrichmentFallbacks),
             WhoisCacheSize = _whoisCache.Count,
-            ReputationCacheSize = _reputationCache.Count
+            ReputationCacheSize = _reputationCache.Count,
+            EnrichmentQueueDepth = _enrichmentChannel.Reader.CanCount ? _enrichmentChannel.Reader.Count : null,
+            EnrichmentProviders = _providerHealth.Snapshot()
         };
 
         public CaptureFlowSnapshot GetCaptureFlowSnapshot()
@@ -1224,6 +1263,10 @@ namespace Carthago.Services
             public long EnrichmentFallbacks { get; init; }
             public int WhoisCacheSize { get; init; }
             public int ReputationCacheSize { get; init; }
+            public int? EnrichmentQueueDepth { get; init; }
+            // Lifetime counters for this capture service, independent of packet-stat resets.
+            public IReadOnlyDictionary<string, EnrichmentProviderSnapshot> EnrichmentProviders { get; init; }
+                = new Dictionary<string, EnrichmentProviderSnapshot>();
         }
     }
 }

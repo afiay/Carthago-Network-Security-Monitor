@@ -98,6 +98,9 @@ namespace Carthago.Models
         // ===== Process / host enrichment =====
         // Attribution method, not a claim of authenticated executable identity.
         public string? ProcessAttribution { get; set; }
+        public string? WhoisEnrichmentStatus { get; set; }
+        public string? ReputationEnrichmentStatus { get; set; }
+        public string? VpnEnrichmentStatus { get; set; }
         public string? VpnClassificationIp { get; set; }
         public int? VpnClassificationConfidence { get; set; }
 
