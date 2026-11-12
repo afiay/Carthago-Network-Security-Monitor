@@ -8,6 +8,7 @@ using Carthago.Engine.Rules;
 using Carthago.Engine.Rules.Expansion;
 using Carthago.Models;
 using Carthago.Services;
+using Carthago.Services.ProtocolIntelligence;
 using PacketDotNet;
 using Xunit;
 
@@ -46,6 +47,28 @@ public sealed class Smb2CaptureQualificationTests
         var r=Capture(src,dst,WritePayload()); r.ProcessName=process; r.ProcessId=pid;
         r.Info="SECRET-RAW-INFO-MARKER"; return r;
     }
+    [Fact]
+    public void InspectorReadsStructureSizeAfterProtocolSignature()
+    {
+        var p = WritePayload();
+        Assert.Equal((ushort)64, BinaryPrimitives.ReadUInt16LittleEndian(p.AsSpan(8,2)));
+        Assert.NotEqual((ushort)64, BinaryPrimitives.ReadUInt16LittleEndian(p.AsSpan(4,2)));
+        Assert.True(Smb2CompleteWriteInspector.TryInspect(p, 51000, 445, out var length));
+        Assert.Equal(4u, length);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(63)]
+    [InlineData(65)]
+    public void InvalidHeaderStructureSizeFailsClosed(int size)
+    {
+        var p = WritePayload();
+        BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(8,2), (ushort)size);
+        Assert.False(Smb2CompleteWriteInspector.TryInspect(p, 51000, 445, out var length));
+        Assert.Equal(0u, length);
+    }
+
     [Fact]
     public async Task CompleteCaptureActivatesR908AndDoesNotRetainFileData()
     {

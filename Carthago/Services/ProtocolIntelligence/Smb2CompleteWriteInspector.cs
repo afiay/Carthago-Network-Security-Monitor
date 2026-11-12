@@ -19,7 +19,9 @@ namespace Carthago.Services.ProtocolIntelligence
             if (frameLength != p.Length - 4 || p[4] != 0xfe || p[5] != 0x53
                 || p[6] != 0x4d || p[7] != 0x42) return false;
             var h = p.Slice(4);
-            if (U16(h,0) != 64 || U16(h,12) != 9 || U16(h,64) != 49) return false;
+            // The SMB2 header starts with the four-byte FE 'SMB' signature.
+            // StructureSize is at header offset 4 (wire offset 8), not 0.
+            if (U16(h,4) != 64 || U16(h,12) != 9 || U16(h,64) != 49) return false;
             uint flags = U32(h,16);
             // Reject response, async, related-operation, replay and compound framing.
             if ((flags & 0x20000007u) != 0 || U32(h,20) != 0
