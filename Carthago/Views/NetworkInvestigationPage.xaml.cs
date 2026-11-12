@@ -354,7 +354,8 @@ namespace Carthago.Views
                 Contains(record.Protocol, term) || Contains(record.ApplicationService, term) ||
                 Contains(record.ProcessName, term) || Contains(record.WhoisCountry, term) ||
                 Contains(record.Sni, term) || Contains(record.HttpHost, term) ||
-                Contains(record.DnsQname, term));
+                Contains(record.DnsQname, term) || Contains(record.DnsCorrelatedNames, term) ||
+                Contains(record.TlsCorrelatedSni, term));
 
         // Return field names, never values, so the explanation does not create
         // a new path for displaying unreviewed or sensitive evidence.
@@ -385,6 +386,8 @@ namespace Carthago.Views
                 AddTextMatch(fields, "TLS SNI", row.Sni, term);
                 AddTextMatch(fields, "HTTP host", row.HttpHost, term);
                 AddTextMatch(fields, "DNS question", row.DnsQname, term);
+                AddTextMatch(fields, "DNS correlated candidates", row.DnsCorrelatedNames, term);
+                AddTextMatch(fields, "TLS correlated SNI", row.TlsCorrelatedSni, term);
             }
             return fields;
         }
@@ -498,6 +501,8 @@ namespace Carthago.Views
                     ("traffic", "TLS SNI") => "Application · TLS SNI",
                     ("traffic", "HTTP host") => "Application · HTTP host",
                     ("traffic", "DNS question") => "Application · DNS query",
+                    ("traffic", "DNS correlated candidates") => "DNS correlation · candidate names",
+                    ("traffic", "TLS correlated SNI") => "TLS correlation · SNI",
                     ("detection", "Source IP") or ("detection", "Source IP (exact)") => "Endpoints · source",
                     ("detection", "Destination IP") or ("detection", "Destination IP (exact)") => "Endpoints · destination",
                     ("detection", "Source port (exact)") => "Endpoints · source port",
@@ -774,16 +779,16 @@ namespace Carthago.Views
             panel.IsExpanded = details is { Count: > 0 };
         }
 
-        private static IReadOnlyList<KeyValuePair<string, string>> BuildTrafficEvidence(TrafficRecord row)
+        internal static IReadOnlyList<KeyValuePair<string, string>> BuildTrafficEvidence(TrafficRecord row)
         {
             var fields = new List<KeyValuePair<string, string>>();
             Add(fields, "Record · local ID", row.Id.ToString("N"));
             Add(fields, "Record · observed at", row.Timestamp);
             Add(fields, "Endpoints · source", row.Source);
-            Add(fields, "Endpoints · source scope", DescribeScope(row.Source));
+            Add(fields, "Endpoints · source scope", row.SrcIpScope ?? DescribeScope(row.Source));
             Add(fields, "Endpoints · source port", row.SourcePort?.ToString());
             Add(fields, "Endpoints · destination", row.Destination);
-            Add(fields, "Endpoints · destination scope", DescribeScope(row.Destination));
+            Add(fields, "Endpoints · destination scope", row.DstIpScope ?? DescribeScope(row.Destination));
             Add(fields, "Endpoints · destination port", row.DestinationPort?.ToString());
             Add(fields, "Endpoints · source MAC", row.MacSource);
             Add(fields, "Endpoints · destination MAC", row.MacDestination);
@@ -816,6 +821,7 @@ namespace Carthago.Views
             Add(fields, "Enrichment · WHOIS country (endpoint unspecified)", row.WhoisCountry);
             Add(fields, "Enrichment · WHOIS organization", row.WhoisOrganization);
             Add(fields, "Enrichment · WHOIS ASN", row.WhoisASN);
+            fields.AddRange(ConnectionIntelligenceEvidence.Build(row));
             return fields;
         }
 
