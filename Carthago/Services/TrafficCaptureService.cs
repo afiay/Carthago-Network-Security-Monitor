@@ -568,6 +568,8 @@ namespace Carthago.Services
             if (runToken.IsCancellationRequested || _serviceCts.IsCancellationRequested)
                 return;
 
+            EndpointIpEnrichment.Apply(record);
+
             // UI pressure must never suppress rule evaluation.
             if (!_uiChannel.Writer.TryWrite(new CaptureSessionRecord<TrafficRecord>(record, runToken)))
             {
@@ -1028,47 +1030,15 @@ namespace Carthago.Services
         }
 
         private static bool IsEnrichablePublicIp(string ip)
-        {
-            if (!IPAddress.TryParse(ip, out var address) || IPAddress.IsLoopback(address))
-                return false;
-
-            if (address.IsIPv4MappedToIPv6)
-                address = address.MapToIPv4();
-
-            var bytes = address.GetAddressBytes();
-            if (address.AddressFamily == AddressFamily.InterNetwork)
-            {
-                byte a = bytes[0], b = bytes[1], c = bytes[2];
-                if (a == 0 || a == 10 || a == 127 || a >= 224) return false;
-                if (a == 100 && b >= 64 && b <= 127) return false; // CGNAT
-                if (a == 169 && b == 254) return false; // link local
-                if (a == 172 && b >= 16 && b <= 31) return false;
-                if (a == 192 && b == 168) return false;
-                if (a == 192 && b == 0 && c == 0) return false;
-                if (a == 192 && b == 0 && c == 2) return false; // TEST-NET-1
-                if (a == 198 && (b == 18 || b == 19)) return false; // benchmarking
-                if (a == 198 && b == 51 && c == 100) return false; // TEST-NET-2
-                if (a == 203 && b == 0 && c == 113) return false; // TEST-NET-3
-                return true;
-            }
-
-            if (address.AddressFamily != AddressFamily.InterNetworkV6)
-                return false;
-            if (address.Equals(IPAddress.IPv6None) || address.Equals(IPAddress.IPv6Any))
-                return false;
-            if (address.IsIPv6LinkLocal || address.IsIPv6SiteLocal || address.IsIPv6Multicast)
-                return false;
-            if ((bytes[0] & 0xFE) == 0xFC) return false; // ULA
-            if (bytes[0] == 0x20 && bytes[1] == 0x01 && bytes[2] == 0x0d && bytes[3] == 0xb8)
-                return false; // documentation range
-            return true;
-        }
+            => EndpointIpEnrichment.Classify(ip) == "Public";
 
         private static string? GetWhoisTarget(TrafficRecord record)
         {
             bool srcPublic = IsEnrichablePublicIp(record.Source ?? string.Empty);
             bool dstPublic = IsEnrichablePublicIp(record.Destination ?? string.Empty);
-            if (srcPublic && dstPublic) return record.Destination;
+            if (srcPublic && dstPublic)
+                return record.DstIsLocalHost == true && record.SrcIsLocalHost != true
+                    ? record.Source : record.Destination;
             if (srcPublic) return record.Source;
             if (dstPublic) return record.Destination;
             return null;

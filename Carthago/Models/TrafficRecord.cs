@@ -89,6 +89,12 @@ namespace Carthago.Models
         private string? _applicationService;
         public string? ApplicationService { get => _applicationService; set { _applicationService = value; OnChanged(nameof(ApplicationService)); } }
 
+        // ===== Endpoint scope (independent of VPN/proxy inference) =====
+        public string? SrcIpScope { get; set; }
+        public string? DstIpScope { get; set; }
+        public bool? SrcIsLocalHost { get; set; }
+        public bool? DstIsLocalHost { get; set; }
+
         // ===== Process / host enrichment =====
         private string? _processName;
         public string? ProcessName { get => _processName; set { _processName = value; OnChanged(nameof(ProcessName)); } }

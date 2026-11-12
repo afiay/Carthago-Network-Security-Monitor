@@ -169,35 +169,6 @@ namespace Carthago.Services
                 && latitude is >= -90 and <= 90 && longitude is >= -180 and <= 180;
 
         private static bool IsPrivate(string ip)
-        {
-            if (!IPAddress.TryParse(ip, out var a)) return false;
-            if (a.IsIPv4MappedToIPv6)
-                a = a.MapToIPv4();
-
-            if (a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
-            {
-                var b = a.GetAddressBytes();
-                if (b[0] == 0 || b[0] >= 224) return true;        // unspecified, multicast, reserved
-                if (b[0] == 10) return true;                           // 10/8
-                if (b[0] == 100 && b[1] >= 64 && b[1] <= 127) return true; // shared CGNAT /10
-                if (b[0] == 172 && b[1] >= 16 && b[1] <= 31) return true; // 172.16/12
-                if (b[0] == 192 && b[1] == 168) return true;           // 192.168/16
-                if (b[0] == 127) return true;                          // loopback
-                if (b[0] == 169 && b[1] == 254) return true;           // link-local
-                if (b[0] == 192 && b[1] == 0 && b[2] == 2) return true; // TEST-NET-1
-                if (b[0] == 198 && (b[1] == 18 || b[1] == 19)) return true; // benchmark /15
-                if (b[0] == 198 && b[1] == 51 && b[2] == 100) return true; // TEST-NET-2
-                if (b[0] == 203 && b[1] == 0 && b[2] == 113) return true; // TEST-NET-3
-            }
-            else if (a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
-            {
-                if (IPAddress.IsLoopback(a) || a.Equals(IPAddress.IPv6Any) || a.Equals(IPAddress.IPv6None)) return true;
-                if (a.IsIPv6LinkLocal || a.IsIPv6Multicast || a.IsIPv6SiteLocal) return true;
-                var b = a.GetAddressBytes();
-                if ((b[0] & 0xFE) == 0xFC) return true; // fc00::/7 (unique local)
-                if (b[0] == 0x20 && b[1] == 0x01 && b[2] == 0x0D && b[3] == 0xB8) return true; // documentation prefix
-            }
-            return false;
-        }
+            => EndpointIpEnrichment.Classify(ip) != "Public";
     }
 }
