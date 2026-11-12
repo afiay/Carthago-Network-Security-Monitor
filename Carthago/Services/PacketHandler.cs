@@ -44,6 +44,7 @@ namespace Carthago.Services
             public bool RedisConfigSetPending;
             public DateTime RedisConfigSetRequestedUtc;
             public Smb2WriteExchange.Pending? Smb2Pending;
+            public Smb2WriteTargetContext? Smb2Target;
         }
 
         private sealed class DirectionState
@@ -403,6 +404,7 @@ namespace Carthago.Services
                             {
                                 flow.RedisConfigSetPending = false;
                                 flow.Smb2Pending = null;
+                                flow.Smb2Target = null;
                             }
                     }
                 }
@@ -929,6 +931,7 @@ namespace Carthago.Services
                 state.RedisConfigSetPending = false;
                 state.RedisConfigSetRequestedUtc = default;
                 state.Smb2Pending = null;
+                state.Smb2Target = null;
             }
         }
 
@@ -940,6 +943,7 @@ namespace Carthago.Services
                 {
                     (clientToServer ? state.C2S : state.S2C).TlsActive = true;
                     state.Smb2Pending = null;
+                    state.Smb2Target = null;
                 }
             }
         }
@@ -973,8 +977,23 @@ namespace Carthago.Services
                 var direction = c2s ? flow.C2S : flow.S2C;
                 if (!complete || !flow.C2S.SynAnchored || !flow.S2C.SynAnchored
                     || flow.C2S.Invalid || flow.S2C.Invalid || flow.C2S.TlsActive || flow.S2C.TlsActive
-                    || direction.NextSeq != unchecked(seq + (uint)payload.Length)) return;
+                    || direction.NextSeq != unchecked(seq + (uint)payload.Length))
+                {
+                    flow.Smb2Target = null;
+                    return;
+                }
                 var now = DateTime.UtcNow;
+                // Separate one-shot context; Q5 WRITE correlation remains independent.
+                if ((c2s && record.DestinationPort == 445 && record.SourcePort == key.SrcPort)
+                    || (!c2s && record.SourcePort == 445 && record.DestinationPort == key.SrcPort))
+                {
+                    if (flow.Smb2Target == null && c2s && Smb2WriteTargetContext.IsTreeRequest(payload))
+                        flow.Smb2Target = new Smb2WriteTargetContext();
+                    if (flow.Smb2Target != null
+                        && !flow.Smb2Target.Observe(record, payload, c2s, direction.NextSeq, ack, now))
+                        flow.Smb2Target = null;
+                }
+                else flow.Smb2Target = null;
                 if (c2s)
                 {
                     // Pipelined writes are deliberately not correlated in this subset.
@@ -1010,6 +1029,7 @@ namespace Carthago.Services
                 {
                     state.RedisConfigSetPending = false;
                     state.Smb2Pending = null;
+                    state.Smb2Target = null;
                     return false;
                 }
 
@@ -1034,6 +1054,7 @@ namespace Carthago.Services
                         dir.Invalid = true;
                         state.RedisConfigSetPending = false;
                         state.Smb2Pending = null;
+                        state.Smb2Target = null;
                         return false; // missing segment
                     }
                     if (diff < 0)
@@ -1043,6 +1064,7 @@ namespace Carthago.Services
                         {
                             state.RedisConfigSetPending = false;
                             state.Smb2Pending = null;
+                            state.Smb2Target = null;
                             return false; // retransmission while pending: fail closed
                         }
                         if (overlap64 > 3)
@@ -1050,6 +1072,7 @@ namespace Carthago.Services
                             dir.Invalid = true;
                             state.RedisConfigSetPending = false;
                             state.Smb2Pending = null;
+                            state.Smb2Target = null;
                             return false;
                         }
                         overlap = (int)overlap64;

@@ -3,6 +3,7 @@ using System;
 using System.Buffers.Binary;
 using System.Net;
 using System.Text.Json;
+using System.Text;
 using System.Threading.Tasks;
 using Carthago.Engine.Rules;
 using Carthago.Engine.Rules.Expansion;
@@ -243,5 +244,119 @@ public sealed class Smb2CaptureQualificationTests
         Assert.Null(forged.Smb2WriteResponseCorrelationId);
         Assert.Null(forged.Smb2WriteResponseStatus);
         Assert.Null(forged.Smb2WriteAcknowledgedLength);
+    }
+
+    private static byte[] SmbFrame(int size, ushort cmd, bool reply, byte msg, byte tree)
+    {
+        var p=new byte[size]; int length=size-4;
+        p[1]=(byte)(length>>16); p[2]=(byte)(length>>8); p[3]=(byte)length;
+        p[4]=0xfe; p[5]=0x53; p[6]=0x4d; p[7]=0x42; p[8]=64;
+        BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(16,2),cmd);
+        p[20]=(byte)(reply?1:0); p[28]=msg; p[40]=tree; p[44]=1;
+        return p;
+    }
+    private static byte[] TreeRequest(string share)
+    {
+        var name=Encoding.Unicode.GetBytes("\\\\server\\"+share);
+        var p=SmbFrame(76+name.Length,3,false,1,0); p[68]=9; p[72]=72;
+        BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(74,2),(ushort)name.Length); name.CopyTo(p,76);
+        return p;
+    }
+    private static byte[] TreeReply()
+    {
+        var p=SmbFrame(84,3,true,1,1); p[68]=16; p[70]=1; return p;
+    }
+    private static byte[] CreateRequest(string name)
+    {
+        var bytes=Encoding.Unicode.GetBytes(name); var p=SmbFrame(124+bytes.Length,5,false,2,1);
+        p[68]=57; p[104]=1; p[112]=120;
+        BinaryPrimitives.WriteUInt16LittleEndian(p.AsSpan(114,2),(ushort)bytes.Length); bytes.CopyTo(p,124);
+        return p;
+    }
+    private static byte[] CreateReply()
+    {
+        var p=SmbFrame(156,5,true,2,1); p[68]=89; p[132]=1; p[140]=2; return p;
+    }
+    private static (TrafficRecord Syn, TrafficRecord Create, TrafficRecord Write) TargetChain(
+        string share, string file, string variant="")
+    {
+        var h=new PacketHandler(); uint c=101,s=501;
+        var syn=Parse(h,"8.8.8.8","10.1.2.45",Array.Empty<byte>(),0x02,100);
+        Parse(h,"10.1.2.45","8.8.8.8",Array.Empty<byte>(),0x12,500,445,51000,101);
+        TrafficRecord Client(byte[] b)
+        {
+            var result=Parse(h,"8.8.8.8","10.1.2.45",b,0x18,c,51000,445,s); c+=(uint)b.Length; return result;
+        }
+        void Server(byte[] b)
+        {
+            Parse(h,"10.1.2.45","8.8.8.8",b,0x18,s,445,51000,c); s+=(uint)b.Length;
+        }
+        Client(TreeRequest(share));
+        var tr=TreeReply();
+        if(variant=="tree-error") tr[12]=0x22;
+        if(variant=="tree-id") tr[40]=2;
+        if(variant=="tree-message") tr[28]=9;
+        if(variant=="non-disk") tr[70]=2;
+        Server(tr);
+        var create=Client(CreateRequest(file));
+        var cr=CreateReply();
+        if(variant=="create-error") cr[12]=0x22;
+        if(variant=="create-session") cr[44]=2;
+        if(variant=="create-message") cr[28]=9;
+        if(variant=="create-handle") cr[132]=9;
+        Server(cr);
+        if(variant=="intervening") Client(SmbFrame(72,6,false,3,1));
+        var w=WritePayload(); w[28]=4;
+        if(variant=="write-tree") w[40]=2;
+        if(variant=="write-session") w[44]=2;
+        if(variant=="write-handle") w[84]=9;
+        return(syn,create,Client(w));
+    }
+    [Theory]
+    [InlineData("ADMIN$","private-tool.exe","administrative-disk","executable")]
+    [InlineData("c$","private-script.ps1","administrative-disk","script")]
+    [InlineData("TeamDocs","private-report.txt","other-disk","other")]
+    public async Task ValidatedTreeAndOpenContextEnrichesWriteAndR908(string share,string name,string expectedShare,string expectedFile)
+    {
+        var chain=TargetChain(share,name);
+        Assert.True(chain.Write.Smb2CompleteWriteRequestObserved);
+        Assert.Equal(expectedShare,chain.Write.Smb2WriteShareKind);
+        Assert.Equal(expectedFile,chain.Write.Smb2WriteFileKind);
+        Assert.Equal(chain.Create.Id,chain.Write.Smb2WriteCreateCorrelationId);
+        Assert.DoesNotContain(name,JsonSerializer.Serialize(chain.Write));
+        var rule=new R908_PublicSmbSynThenParsedWriteRule();
+        await rule.EvaluateAsync(new RuleEvaluationContext(chain.Syn,Sensitivity.Balanced,Epoch));
+        var result=await rule.EvaluateAsync(new RuleEvaluationContext(chain.Write,Sensitivity.Balanced,Epoch.AddSeconds(1)));
+        Assert.True(result.Matched);
+        var json=JsonSerializer.Serialize(result.Events);
+        Assert.Contains(expectedShare,json); Assert.Contains(expectedFile,json);
+        Assert.DoesNotContain(name,json);
+    }
+    [Theory]
+    [InlineData("tree-error")]
+    [InlineData("tree-id")]
+    [InlineData("tree-message")]
+    [InlineData("non-disk")]
+    [InlineData("create-error")]
+    [InlineData("create-session")]
+    [InlineData("create-message")]
+    [InlineData("create-handle")]
+    [InlineData("intervening")]
+    [InlineData("write-tree")]
+    [InlineData("write-session")]
+    [InlineData("write-handle")]
+    public void MismatchedOrUnsupportedTargetLeavesWriteAttemptIntact(string variant)
+    {
+        var chain=TargetChain("ADMIN$","private-tool.exe",variant);
+        Assert.True(chain.Write.Smb2CompleteWriteRequestObserved);
+        Assert.Null(chain.Write.Smb2WriteShareKind);
+        Assert.Null(chain.Write.Smb2WriteFileKind);
+        Assert.Null(chain.Write.Smb2WriteCreateCorrelationId);
+    }
+    [Fact]
+    public void TargetMetadataCannotBeForgedByJson()
+    {
+        var forged=JsonSerializer.Deserialize<TrafficRecord>("{\"Smb2WriteShareKind\":\"administrative-disk\",\"Smb2WriteFileKind\":\"executable\",\"Smb2WriteCreateCorrelationId\":\"11111111-1111-1111-1111-111111111111\"}")!;
+        Assert.Null(forged.Smb2WriteShareKind); Assert.Null(forged.Smb2WriteFileKind); Assert.Null(forged.Smb2WriteCreateCorrelationId);
     }
 }

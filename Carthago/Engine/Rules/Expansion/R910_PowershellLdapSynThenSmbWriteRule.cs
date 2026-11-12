@@ -51,7 +51,7 @@ namespace Carthago.Engine.Rules.Expansion
             };
             var evt = CreateDetectionEvent(context, SeverityLevel.Medium,
                 "PowerShell private LDAP SYN then SMB2 WRITE observed; authorization, causality and outcome remain unverified.",
-                evidence, confidence =>
+                Smb2QualifiedEvidence.WithTarget(evidence, r), confidence =>
                 {
                     confidence.AddEvidence(0.45, "capture_attested_complete_smb2_write");
                     confidence.AddEvidence(0.33, "specific_workbook_observable_projection");

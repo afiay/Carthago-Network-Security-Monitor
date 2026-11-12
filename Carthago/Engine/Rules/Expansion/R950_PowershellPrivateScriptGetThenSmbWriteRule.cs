@@ -49,7 +49,7 @@ namespace Carthago.Engine.Rules.Expansion
                 new DetectionEvidenceItem("outcome", "typed_observation_only_authorization_and_outcome_unknown", "rule")
             };
             var evt = CreateDetectionEvent(context, SeverityLevel.Medium,
-                "PowerShell private PS1 GET then parsed SMB2 WRITE observed; authorization, causality and outcome remain unverified.", evidence,
+                "PowerShell private PS1 GET then parsed SMB2 WRITE observed; authorization, causality and outcome remain unverified.", Smb2QualifiedEvidence.WithTarget(evidence, r),
                 confidence =>
                 {
                     confidence.AddEvidence(0.45, "capture_attested_complete_smb2_write");

@@ -53,3 +53,13 @@ Owner Windows Release: 17/17 SMB2 qualification, 380/380 selected regressions, f
 ## Q5 — bounded SMB2 WRITE response corroboration
 
 Keep six Q4 attempt predicates unchanged. One outstanding request per existing bounded TCP flow; both observed SYN anchors, complete untrimmed payload, no TLS/gaps; match reverse response message/session/tree IDs, TCP acknowledgment, complete standalone synchronous WRITE and 30s UTC. STATUS_SUCCESS reports nonzero count at most requested length (partial distinguished); simple final ERROR reports status without count. Raw IDs only in bounded flow state; response record retains request GUID/status/count. Subsequent payload consumes slot; pipelining unsupported; SYN/FIN/RST/TLS/gap/retransmission invalidate pending. Server-reported evidence, not authentication, share/path identity, durability or successful attack. Existing alerts unchanged; no new IDs/promotions. 15 new test cases; Windows execution pending. Concurrent enrichment preserved.
+
+## Verified owner checkpoint — 6cb96d6 (2026-11-13)
+
+Owner Windows Release: 32/32 SMB2 qualification, 395/395 affected suites, full 12,272/12,272, zero failed/skipped, 172.4s. Q5 and concurrent TLS identity enrichment locally regression-verified. Local MASTER_RULE_CATALOG.md edit not part of remote checkpoint; preserve it.
+
+## Q6 — capture-correlated SMB2 target context
+
+One-shot sequential TREE_CONNECT -> successful disk-share reply -> CREATE -> successful open reply -> complete WRITE, same TCP flow/session/tree, matched message IDs and ACK, exact returned file handle, 30s UTC from tree request. Only strict standalone plaintext frames, no DFS, encrypted shares, contexts, pipe/printer, directory opens or ambiguous/intervening payload; discard on reset, gap, FIN/RST/TLS, unexpected payload or consumed WRITE. Classify ADMIN$/drive-letter shares vs other disk shares and executable/script/other requested filename suffix; only categories and CREATE packet GUID leave bounded flow state, not raw share/path or handle. Enrich R908/R910/R950 event evidence when context exists, keep predicates/severity/confidence unchanged. Server reports successful open, not authenticated authorization, actual content type, malicious intent or durable write. Strict no-context CREATE and single operation chain limit recall; no full SMB session tracking. 16 new tests authored, not executed. No IDs/promotions; master catalog untouched.
+
+Protocol references: Microsoft [MS-SMB2] sections 2.2.9–2.2.14 and 2.2.21; https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-smb2/832d2130-22e8-4afb-aafd-b30bb0901798 ; https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-smb2/e8fb45c1-a03d-44ca-b7ae-47385cfd7997 .

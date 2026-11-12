@@ -155,6 +155,10 @@ namespace Carthago.Models
         public Guid? Smb2WriteResponseCorrelationId { get; internal set; }
         public uint? Smb2WriteResponseStatus { get; internal set; }
         public uint? Smb2WriteAcknowledgedLength { get; internal set; }
+        // Capture-correlated one-shot tree/open/WRITE context; no raw paths or handles.
+        public string? Smb2WriteShareKind { get; internal set; }
+        public string? Smb2WriteFileKind { get; internal set; }
+        public Guid? Smb2WriteCreateCorrelationId { get; internal set; }
         // Capture-only initial TFTP handshake evidence; never populated by port inference.
         public byte? TftpInitialRequestOpcode { get; internal set; }
         public byte? TftpInitialReplyOpcode { get; internal set; }
