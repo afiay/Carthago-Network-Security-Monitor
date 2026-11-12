@@ -169,3 +169,8 @@ Workbook origins R1672, R1954, R1835, R1907, R1906, R2165, R1072, R1079, R1067, 
 ## R946–R965 — twenty observable source candidates
 
 Exact original workbook rows R1130, R1138, R1172, R1185, R1328, R1828, R1800, R1830, R1492, R1399, R2074, R2681, R2672, R2752, R2812, R1635, R2843, R2948, R1912, R2596. [Batch notes with original titles and direct sources](../03-detection-rules/batches/RULE_BATCH_946-965.md). Prior local owner checkpoint R926–R945 105/105 at d01ad78; earlier 171/171 at 0d2d7ef. New batch **SOURCE CANDIDATE — UNVERIFIED; xUnit source authored first; 0 builds/tests executed.** Next ID R966.
+
+
+## Qualification gate — expansion stopped at R965
+
+Owner requested enhanced qualification of existing rules before further IDs. [Qualification gate](DETECTION_QUALIFICATION_GATE_20261112.md). Q1: R946/R947/R949 capture-attested initial TFTP parser and exact request reference; source-only, tests authored, no execution. R962 DNS producer gap logged for next work. No new rule IDs; Candidate/Shadow retained.

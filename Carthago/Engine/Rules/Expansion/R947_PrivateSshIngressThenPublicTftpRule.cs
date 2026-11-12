@@ -7,18 +7,18 @@ namespace Carthago.Engine.Rules.Expansion
     public sealed class R947_PrivateSshIngressThenPublicTftpRule : EvidenceDrivenPrecisionRuleBase
     {
         private static readonly RuleDescriptor Rule = new(
-            RuleId: "R947", Name: "Private SSH ingress then public TFTP-port data", Category: "IotOtAdvanced",
-            Description: "Private TCP/22 SYN to a host followed by that host sending public UDP/69 data. This is a port-based management/transfer sequence, not ROMMON modification, firmware upgrade, reboot or authenticated SSH.", DefaultSeverity: SeverityLevel.Medium,
+            RuleId: "R947", Name: "Private SSH ingress then public parsed TFTP request", Category: "IotOtAdvanced",
+            Description: "Private TCP/22 SYN to a host followed by a capture-attested public TFTP RRQ or WRQ from that host. SSH authentication, ROMMON change, firmware and transfer completion are unknown.", DefaultSeverity: SeverityLevel.Medium,
             ConfigKey: "Rules.R947.Enabled", EnabledByDefault: true);
         private static readonly RulePrecisionProfile Profile = CreateEvidenceDrivenProfile(new PrecisionRuleSpec
         {
-            RuleId = "R947", Name = "Private SSH ingress then public TFTP-port data", Category = "IotOtAdvanced",
-            Description = "workbook.R1138: Private TCP/22 SYN to a host followed by that host sending public UDP/69 data. This is a port-based management/transfer sequence, not ROMMON modification, firmware upgrade, reboot or authenticated SSH.", Severity = SeverityLevel.Medium,
+            RuleId = "R947", Name = "Private SSH ingress then public parsed TFTP request", Category = "IotOtAdvanced",
+            Description = "workbook.R1138: Private TCP/22 SYN to a host followed by a capture-attested public TFTP RRQ or WRQ from that host. SSH authentication, ROMMON change, firmware and transfer completion are unknown.", Severity = SeverityLevel.Medium,
             Maturity = RulePrecisionMaturity.Candidate, RuntimeMode = RuleRuntimeMode.Shadow,
             RequiredTelemetry = new[] { RuleTelemetryKind.Flow },
-            RequiredFields = new[] { "source", "destination", "source.port", "destination.port", "packet.id" },
+            RequiredFields = new[] { "source", "destination", "source.port", "destination.port", "packet.id", "tftp.request.opcode", "tftp.request.correlation" },
             EvidenceFields = new[] { "research.identifier", "matched_conditions", "outcome" },
-            PositiveConditions = new[] { "Private TCP/22 SYN to a host followed by that host sending public UDP/69 data. This is a port-based management/transfer sequence, not ROMMON modification, firmware upgrade, reboot or authenticated SSH.", "Coherent typed IPv4 fields and independent bounded UTC observations." },
+            PositiveConditions = new[] { "Private TCP/22 SYN to a host followed by a capture-attested public TFTP RRQ or WRQ from that host. SSH authentication, ROMMON change, firmware and transfer completion are unknown.", "Coherent typed IPv4 fields and independent bounded UTC observations." },
             NegativeConditions = new[] { "Wrong endpoints, missing or contradictory typed evidence, duplicate IDs, reverse UTC or expired windows fail closed.",
                 "No unsupported host action, authenticated session, authorization or security outcome inferred." },
             FalsePositives = new[] { "Authorized administration, maintenance, deployment and diagnostics may share the observable shape." },
@@ -35,7 +35,7 @@ namespace Carthago.Engine.Rules.Expansion
             var r = context.Record;
             if (!Research786NetworkEvidence.Coherent(r)) return NoMatch();
             var first = Research786NetworkEvidence.Internal(r) && Research676Evidence.Syn(r) && r.DestinationPort == 22 && r.Sni == null && r.HttpUri == null && !r.DnsIsResponse && r.Source != r.Destination;
-            var second = Research786NetworkEvidence.PrivatePublic(r) && Research786NetworkEvidence.UdpData(r) && r.DestinationPort == 69 && r.HttpMethod == null && r.HttpUri == null && r.DnsQname == null && r.TlsVersion == null && r.Sni == null && !r.DnsIsResponse && r.SourcePort > 1024 && r.L4Len >= 4;
+            var second = Research786NetworkEvidence.PrivatePublic(r) && TftpQualifiedEvidence.Request(r);
             if (!first && !second) return NoMatch();
             var key = first ? r.Destination! : r.Source!;
             if (!_stages.Observe(key, r.Id, context.TimestampUtc, first, 45)) return NoMatch();
@@ -46,13 +46,13 @@ namespace Carthago.Engine.Rules.Expansion
             {
                 new DetectionEvidenceItem("research.identifier", "workbook.R1138", "owner-research"),
                 new DetectionEvidenceItem("matched_conditions", "R947_PrivateSshIngressThenPublicTftpRule", "rule"),
-                new DetectionEvidenceItem("outcome", "typed_observation_only_authorization_and_outcome_unknown", "rule")
+                new DetectionEvidenceItem("outcome", "initial_tftp_observation_only_transfer_and_authorization_unknown", "rule")
             };
             var evt = CreateDetectionEvent(context, SeverityLevel.Medium,
-                "Private SSH ingress then public TFTP-port data observed; authorization, causality and outcome remain unverified.", evidence,
+                "Private SSH ingress then public parsed TFTP request observed; authorization, causality and outcome remain unverified.", evidence,
                 confidence =>
                 {
-                    confidence.AddEvidence(0.45, "coherent_typed_packet_fields");
+                    confidence.AddEvidence(0.45, "capture_attested_tftp_initial_protocol");
                     confidence.AddEvidence(0.33, "specific_workbook_observable_projection");
                     confidence.AddCorrelation(0.12, "bounded_utc_observation");
                 }, count: 2, windowSeconds: 45);

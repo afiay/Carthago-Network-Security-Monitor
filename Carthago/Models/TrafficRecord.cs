@@ -140,6 +140,11 @@ namespace Carthago.Models
 
         // ===== MQTT (wire-derived when populated by PacketHandler) =====
         // No MQTT payload or client credentials are retained here.
+        // Capture-only initial TFTP handshake evidence; never populated by port inference.
+        public byte? TftpInitialRequestOpcode { get; internal set; }
+        public byte? TftpInitialReplyOpcode { get; internal set; }
+        public Guid? TftpRequestCorrelationId { get; internal set; }
+
         public bool MqttPublishTopicObserved { get; set; }
         public bool? MqttRetain { get; set; }
         public bool MqttControlTopicObserved { get; set; }

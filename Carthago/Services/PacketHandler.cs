@@ -31,6 +31,7 @@ namespace Carthago.Services
         private static readonly TimeSpan FlowIdleTimeout = TimeSpan.FromMinutes(5);
         private static readonly TimeSpan RedisReplyMaxAge = TimeSpan.FromSeconds(30);
         private readonly Dictionary<FlowKey, TcpStreamState> _tcp = new();
+        private readonly TftpHandshakeTracker _tftpHandshake = new();
         private readonly object _tcpSync = new();
         private int _flowOperations;
 
@@ -726,6 +727,10 @@ namespace Carthago.Services
                             rec.DnsIsResponse = dns.IsResponse;
                             AppendInfo(rec, $"[DNS {(dns.IsResponse ? "ans" : "q")}={rec.DnsQname ?? "-"} {rec.DnsQtype ?? "?"}]");
                         }
+
+                        // Capture-attested TFTP initial request/first reply, not generic port guessing.
+                        if (isIPv4 && completeIpPacket && l4PayloadLen == ipPayloadLen - 8)
+                            _tftpHandshake.Observe(rec, l4Payload, true, DateTime.UtcNow);
                     }
                 }
                 catch (Exception ex)

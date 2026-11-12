@@ -7,18 +7,18 @@ namespace Carthago.Engine.Rules.Expansion
     public sealed class R949_PrivateFtpStorThenTftpDataRule : EvidenceDrivenPrecisionRuleBase
     {
         private static readonly RuleDescriptor Rule = new(
-            RuleId: "R949", Name: "Private FTP STOR then same-peer TFTP-port data", Category: "IotOtAdvanced",
-            Description: "Private parsed FTP STOR then same-source same-destination UDP/69 data. Transfer contents, TFTP opcode, firmware identity, device role and modification outcome are unknown.", DefaultSeverity: SeverityLevel.Medium,
+            RuleId: "R949", Name: "Private FTP STOR then same-peer parsed TFTP request", Category: "IotOtAdvanced",
+            Description: "Private parsed FTP STOR followed by capture-attested TFTP RRQ or WRQ to the same peer. File identity, successful upload, firmware and authorization are unknown.", DefaultSeverity: SeverityLevel.Medium,
             ConfigKey: "Rules.R949.Enabled", EnabledByDefault: true);
         private static readonly RulePrecisionProfile Profile = CreateEvidenceDrivenProfile(new PrecisionRuleSpec
         {
-            RuleId = "R949", Name = "Private FTP STOR then same-peer TFTP-port data", Category = "IotOtAdvanced",
-            Description = "workbook.R1185: Private parsed FTP STOR then same-source same-destination UDP/69 data. Transfer contents, TFTP opcode, firmware identity, device role and modification outcome are unknown.", Severity = SeverityLevel.Medium,
+            RuleId = "R949", Name = "Private FTP STOR then same-peer parsed TFTP request", Category = "IotOtAdvanced",
+            Description = "workbook.R1185: Private parsed FTP STOR followed by capture-attested TFTP RRQ or WRQ to the same peer. File identity, successful upload, firmware and authorization are unknown.", Severity = SeverityLevel.Medium,
             Maturity = RulePrecisionMaturity.Candidate, RuntimeMode = RuleRuntimeMode.Shadow,
             RequiredTelemetry = new[] { RuleTelemetryKind.Flow },
-            RequiredFields = new[] { "source", "destination", "source.port", "destination.port", "packet.id", "application.protocol" },
+            RequiredFields = new[] { "source", "destination", "source.port", "destination.port", "packet.id", "application.protocol", "tftp.request.opcode", "tftp.request.correlation" },
             EvidenceFields = new[] { "research.identifier", "matched_conditions", "outcome" },
-            PositiveConditions = new[] { "Private parsed FTP STOR then same-source same-destination UDP/69 data. Transfer contents, TFTP opcode, firmware identity, device role and modification outcome are unknown.", "Coherent typed IPv4 fields and independent bounded UTC observations." },
+            PositiveConditions = new[] { "Private parsed FTP STOR followed by capture-attested TFTP RRQ or WRQ to the same peer. File identity, successful upload, firmware and authorization are unknown.", "Coherent typed IPv4 fields and independent bounded UTC observations." },
             NegativeConditions = new[] { "Wrong endpoints, missing or contradictory typed evidence, duplicate IDs, reverse UTC or expired windows fail closed.",
                 "No unsupported host action, authenticated session, authorization or security outcome inferred." },
             FalsePositives = new[] { "Authorized administration, maintenance, deployment and diagnostics may share the observable shape." },
@@ -35,7 +35,7 @@ namespace Carthago.Engine.Rules.Expansion
             var r = context.Record;
             if (!Research786NetworkEvidence.Coherent(r)) return NoMatch();
             var first = Research786NetworkEvidence.Internal(r) && Research786NetworkEvidence.TcpData(r) && r.DestinationPort == 21 && r.ApplicationProtocol == "ftp.stor" && r.HttpMethod == null && r.HttpUri == null && r.DnsQname == null && r.TlsVersion == null && r.Sni == null && !r.DnsIsResponse && r.Source != r.Destination;
-            var second = Research786NetworkEvidence.Internal(r) && Research786NetworkEvidence.UdpData(r) && r.DestinationPort == 69 && r.HttpMethod == null && r.HttpUri == null && r.DnsQname == null && r.TlsVersion == null && r.Sni == null && !r.DnsIsResponse && r.Source != r.Destination && r.SourcePort > 1024 && r.L4Len >= 4;
+            var second = Research786NetworkEvidence.Internal(r) && r.Source != r.Destination && TftpQualifiedEvidence.Request(r);
             if (!first && !second) return NoMatch();
             var key = r.Source! + "|" + r.Destination!;
             if (!_stages.Observe(key, r.Id, context.TimestampUtc, first, 45)) return NoMatch();
@@ -46,13 +46,13 @@ namespace Carthago.Engine.Rules.Expansion
             {
                 new DetectionEvidenceItem("research.identifier", "workbook.R1185", "owner-research"),
                 new DetectionEvidenceItem("matched_conditions", "R949_PrivateFtpStorThenTftpDataRule", "rule"),
-                new DetectionEvidenceItem("outcome", "typed_observation_only_authorization_and_outcome_unknown", "rule")
+                new DetectionEvidenceItem("outcome", "initial_tftp_observation_only_transfer_and_authorization_unknown", "rule")
             };
             var evt = CreateDetectionEvent(context, SeverityLevel.Medium,
-                "Private FTP STOR then same-peer TFTP-port data observed; authorization, causality and outcome remain unverified.", evidence,
+                "Private FTP STOR then same-peer parsed TFTP request observed; authorization, causality and outcome remain unverified.", evidence,
                 confidence =>
                 {
-                    confidence.AddEvidence(0.45, "coherent_typed_packet_fields");
+                    confidence.AddEvidence(0.45, "capture_attested_tftp_initial_protocol");
                     confidence.AddEvidence(0.33, "specific_workbook_observable_projection");
                     confidence.AddCorrelation(0.12, "bounded_utc_observation");
                 }, count: 2, windowSeconds: 45);
