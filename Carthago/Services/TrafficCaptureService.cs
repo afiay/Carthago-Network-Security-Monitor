@@ -775,6 +775,8 @@ namespace Carthago.Services
                     }
                 }).ConfigureAwait(false);
 
+                // Local process hints remain available even if remote classification times out.
+                rec.LocalVpnProcessHint = rec.ProcessId > 0 && ProcessNameSignal.IsVpnProcess(rec.ProcessName);
                 var prefs = PreferencesService.Current;
                 var target = GetWhoisTarget(rec);
                 if (target is null)
@@ -831,7 +833,9 @@ namespace Carthago.Services
                     var context = new VpnContext
                     {
                         Ip = target,
-                        DstPort = rec.DestinationPort,
+                        AllowRdap = prefs.EnableWhois,
+                        DstPort = string.Equals(target, rec.Source, StringComparison.Ordinal)
+                            ? rec.SourcePort : rec.DestinationPort,
                         Protocol = rec.Protocol,
                         Ja4h = rec.HttpJa4h,
                         Ja4x = rec.TlsJa4x,
@@ -850,6 +854,7 @@ namespace Carthago.Services
                     rec.NetworkType = classification.NetworkType;
                     rec.VpnClassificationIp = target;
                     rec.VpnClassificationConfidence = classification.Confidence;
+                    rec.VpnPortHint = classification.VpnPortHint;
                 }).ConfigureAwait(false);
 
             }, () => EvaluateRules(rec), ex => Report("pipeline", ex), ct);

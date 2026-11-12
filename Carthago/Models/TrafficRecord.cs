@@ -101,6 +101,9 @@ namespace Carthago.Models
         public string? WhoisEnrichmentStatus { get; set; }
         public string? ReputationEnrichmentStatus { get; set; }
         public string? VpnEnrichmentStatus { get; set; }
+        // Local application hint, not evidence that the remote IP is a VPN.
+        public bool? LocalVpnProcessHint { get; set; }
+        public bool? VpnPortHint { get; set; }
         public string? VpnClassificationIp { get; set; }
         public int? VpnClassificationConfidence { get; set; }
 

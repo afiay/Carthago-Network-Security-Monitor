@@ -19,6 +19,9 @@ namespace Carthago.Services
         public bool IsProxy { get; set; }
         public string NetworkType { get; set; } = "Unknown";
 
+        // Local process and port hints are not remote IP identity.
+        public bool LocalVpnProcessHint { get; set; }
+        public bool VpnPortHint { get; set; }
         public bool IsHosting { get; set; }
         public bool IsResidential { get; set; }
         public int Confidence { get; set; } // 0–100
@@ -38,6 +41,7 @@ namespace Carthago.Services
     public sealed class VpnContext
     {
         public required string Ip { get; init; }
+        public bool AllowRdap { get; init; } = true;
         public string? Sni { get; init; }         // TLS SNI if present
         public int? DstPort { get; init; }        // Destination port from flow
         public string? Protocol { get; init; }    // "TCP"/"UDP"/...
@@ -62,7 +66,9 @@ namespace Carthago.Services
             ["rdns.proxy"] = 0.9,
             ["rdns.resi"] = -0.6,
             ["port.proto"] = 0.7,
-            ["ja4.vpn"] = 1.5,
+            ["ja4.client.vpn"] = 1.5,
+            ["ja4.server.vpn"] = 1.5,
+            ["rdns.cdn"] = 0.1,
             ["proc.vpn"] = 1.8,
             ["abuse.score"] = 0.6,
         };
@@ -98,7 +104,9 @@ namespace Carthago.Services
         TimeSpan Ttl { get; }
     }
 
-    internal sealed record SignalScore(string Key, double Score, string Reason);
+    internal sealed record SignalScore(string Key, double Score, string Reason,
+        string? Organization = null, string? Asn = null, string? Country = null,
+        string? Registry = null, string? ReverseDns = null);
 
     // ===== Inference engine (sigmoid blend + reasons) =====
     internal sealed class InferenceEngine
@@ -109,10 +117,11 @@ namespace Carthago.Services
 
         private sealed class CacheEntry
         {
-            public VpnProxyResult Result = new();
+            public IReadOnlyList<SignalScore> Signals = Array.Empty<SignalScore>();
             public DateTimeOffset Expiry;
         }
         private readonly ConcurrentDictionary<string, CacheEntry> _cache = new(StringComparer.Ordinal);
+        private const int CacheCapacity = 8192;
 
         public InferenceEngine(Dictionary<string, double> weights, TimeSpan ttl, IVpnSignal[] signals)
         {
@@ -126,16 +135,15 @@ namespace Carthago.Services
             if (!IPAddress.TryParse(ctx.Ip, out var ip))
                 return Final("Invalid", 0, "Invalid IP");
 
-            if (IsBogon(ip))
-                return Final("Bogon", 95, "Bogon/private/reserved address");
+            if (EndpointIpEnrichment.Classify(ip.ToString()) != "Public")
+                return Final("Bogon", 0, "Non-public or special-use address");
 
-            // IP-scoped cache
-            if (_cache.TryGetValue(ctx.Ip, out var hit) && hit.Expiry > DateTimeOffset.UtcNow)
-                return hit.Result;
-
-            // fan-out signals in parallel
-            var tasks = _signals.Select(s => s.EvaluateAsync(ctx, ct)).ToArray();
-            await Task.WhenAll(tasks);
+            ct.ThrowIfCancellationRequested();
+            // Only stable endpoint metadata may be cached. Port, process, JA4
+            // and reputation hints are evaluated for the current connection.
+            var tasks = _signals.Select(s => EvaluateSignalAsync(s, ctx, ip, ct)).ToArray();
+            await Task.WhenAll(tasks).ConfigureAwait(false);
+            ct.ThrowIfCancellationRequested();
 
             // combine scores
             var contributions = new List<SignalScore>(32);
@@ -151,32 +159,39 @@ namespace Carthago.Services
                 double w = _weights.TryGetValue(c.Key, out var ww) ? ww : 0.0;
                 double v = w * c.Score;
                 if (Math.Abs(v) < double.Epsilon) continue;
-                z += v;
+                // Only endpoint-specific evidence contributes to remote classification.
+                if (c.Key.StartsWith("rdap.", StringComparison.Ordinal)
+                    || c.Key.StartsWith("rdns.", StringComparison.Ordinal)
+                    || c.Key == "ja4.server.vpn")
+                    z += v;
                 perKey[c.Key] = perKey.TryGetValue(c.Key, out var prev) ? prev + v : v;
                 reasons.Add($"{c.Key}: {c.Reason} (x{w:0.##})");
             }
 
             // Sigmoid → [0..1]
             double p = 1.0 / (1.0 + Math.Exp(-z));
-            int conf = (int)Math.Round(p * 100);
-
-            // Synthesis (type)
-            // NOTE: we reuse the same contributions: keys starting with ... define type leaning.
-            bool vpnLean = perKey.Keys.Any(k => k.StartsWith("ja4.vpn") || k.StartsWith("rdns.vpn") || k.StartsWith("proc.vpn"));
-            bool proxyLean = perKey.Keys.Any(k => k.StartsWith("rdns.proxy") || k.StartsWith("port.proto"));
+            bool vpnLean = perKey.ContainsKey("ja4.server.vpn") || perKey.ContainsKey("rdns.vpn");
+            bool proxyLean = perKey.ContainsKey("rdns.proxy");
+            // A neutral sigmoid is not 50% evidence that an address is a VPN.
+            int conf = vpnLean || proxyLean ? (int)Math.Round(p * 100) : 0;
             bool hosting = perKey.Keys.Any(k => k.StartsWith("rdap.hosting"));
             bool resi = perKey.Keys.Any(k => k.StartsWith("rdns.resi") || k.StartsWith("rdap.resi"));
 
-            var netType = vpnLean ? "VPN"
-                       : proxyLean ? "Proxy/CDN"
+            bool isVpn = vpnLean && conf >= 60;
+            bool isProxy = proxyLean && conf >= 55;
+            var netType = isVpn ? "VPN"
+                       : isProxy ? "Proxy"
+                       : perKey.ContainsKey("rdns.cdn") ? "CDN"
                        : hosting ? "Hosting/DC"
                        : resi ? "Residential/Mobile"
                        : "Unknown";
 
             var result = new VpnProxyResult
             {
-                IsVpn = vpnLean && conf >= 60,
-                IsProxy = proxyLean && conf >= 55,
+                IsVpn = isVpn,
+                IsProxy = isProxy,
+                LocalVpnProcessHint = perKey.ContainsKey("proc.vpn"),
+                VpnPortHint = perKey.ContainsKey("port.proto"),
                 IsHosting = hosting,
                 IsResidential = resi,
                 NetworkType = netType,
@@ -185,22 +200,15 @@ namespace Carthago.Services
                 SignalScores = perKey
             };
 
-            // Fill evidence from RDAP signal if present
-            // (rdap signal stashes org/asn/cc via a side-channel key)
-            if (_evidence.TryRemove(ctx.Ip, out var ev))
+            // Metadata travels with its own signal, never through shared IP state.
+            foreach (var evidence in contributions)
             {
-                result.Organization = ev.Org;
-                result.Asn = ev.Asn;
-                result.Country = ev.Country;
-                result.Registry = ev.Registry;
-                result.ReverseDns = ev.Rdns ?? result.ReverseDns;
+                result.Organization ??= evidence.Organization;
+                result.Asn ??= evidence.Asn;
+                result.Country ??= evidence.Country;
+                result.Registry ??= evidence.Registry;
+                result.ReverseDns ??= evidence.ReverseDns;
             }
-
-            _cache[ctx.Ip] = new CacheEntry
-            {
-                Result = result,
-                Expiry = DateTimeOffset.UtcNow.Add(_ttl)
-            };
             return result;
 
             static VpnProxyResult Final(string type, int conf, string reason)
@@ -214,36 +222,33 @@ namespace Carthago.Services
             }
         }
 
-        private static bool IsBogon(IPAddress ip)
+        private async Task<IReadOnlyList<SignalScore>> EvaluateSignalAsync(
+            IVpnSignal signal, VpnContext ctx, IPAddress ip, CancellationToken ct)
         {
-            if (IPAddress.IsLoopback(ip)) return true;
+            if (signal.Name == "rdap" && !ctx.AllowRdap)
+                return Array.Empty<SignalScore>();
+            if (signal is ReverseDnsSignal ptr && !ptr.Enabled)
+                return Array.Empty<SignalScore>();
 
-            if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+            bool endpointOnly = signal.Name is "rdap" or "rdns";
+            if (!endpointOnly)
+                return await signal.EvaluateAsync(ctx, ct).ConfigureAwait(false);
+
+            string key = signal.Name + ":" + EndpointIpEnrichment.Normalize(ip);
+            if (_cache.TryGetValue(key, out var hit) && hit.Expiry > DateTimeOffset.UtcNow)
+                return hit.Signals;
+
+            var signals = await signal.EvaluateAsync(ctx, ct).ConfigureAwait(false);
+            ct.ThrowIfCancellationRequested();
+            // Empty/failed queries are not cached as affirmative evidence.
+            if (signals.Count > 0)
             {
-                var b = ip.GetAddressBytes();
-                if (b[0] == 10) return true;
-                if (b[0] == 172 && b[1] >= 16 && b[1] <= 31) return true;
-                if (b[0] == 192 && b[1] == 168) return true;
-                if (b[0] == 169 && b[1] == 254) return true; // link-local
-                if (b[0] == 0 || b[0] == 127) return true;
-                if (b[0] >= 224 && b[0] <= 239) return true; // multicast
+                if (_cache.Count >= CacheCapacity) _cache.Clear();
+                var ttl = signal.Ttl < _ttl ? signal.Ttl : _ttl;
+                _cache[key] = new CacheEntry { Signals = signals.ToArray(), Expiry = DateTimeOffset.UtcNow.Add(ttl) };
             }
-            else
-            {
-                var s = ip.ToString().ToLowerInvariant();
-                if (ip.IsIPv6LinkLocal || ip.IsIPv6SiteLocal) return true;
-                if (s.StartsWith("fc") || s.StartsWith("fd")) return true; // ULA
-                if (s.StartsWith("fe80")) return true; // link-local
-                if (s.StartsWith("ff")) return true; // multicast
-                if (s == "::1") return true;
-            }
-            return false;
+            return signals;
         }
-
-        // RDAP signal can publish evidence for UI
-        private static readonly ConcurrentDictionary<string, (string? Org, string? Asn, string? Country, string? Registry, string? Rdns)> _evidence = new();
-        internal static void PublishEvidence(string ip, string? org, string? asn, string? cc, string? reg, string? rdns = null)
-            => _evidence[ip] = (org, asn, cc, reg, rdns);
     }
 
     // ===== Signals =====
@@ -274,6 +279,8 @@ namespace Carthago.Services
             try
             {
                 string raw = await WhoisResolver.LookupRawAsync(ctx.Ip, ct).ConfigureAwait(false);
+                if (string.IsNullOrWhiteSpace(raw) || raw.StartsWith("WHOIS lookup failed:", StringComparison.OrdinalIgnoreCase))
+                    return scores;
                 var org = WhoisResolver.GetOrganization(raw)?.Trim();
                 var asn = WhoisResolver.GetASN(raw)?.Trim();
                 var cc = WhoisResolver.GetCountry(raw)?.Trim();
@@ -286,9 +293,11 @@ namespace Carthago.Services
                 if (ContainsAny(text, Residential))
                     scores.Add(new("rdap.resi", -1.0, $"Org/ASN '{org ?? asn}' looks residential/mobile"));
 
-                InferenceEngine.PublishEvidence(ctx.Ip, org, asn, cc, reg);
+                if (org is not null || asn is not null || cc is not null || reg is not null)
+                    scores.Add(new("metadata.rdap", 0, "RDAP metadata", org, asn, cc, reg));
             }
-            catch { /* ignore */ }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
+            catch { /* no RDAP evidence */ }
 
             return scores;
         }
@@ -310,6 +319,7 @@ namespace Carthago.Services
         private readonly Func<bool> _enabled;
 
         public ReverseDnsSignal(Func<bool> enabled) => _enabled = enabled;
+        internal bool Enabled => _enabled();
 
         private static readonly string[] VpnBrands = new[]
         {
@@ -319,7 +329,7 @@ namespace Carthago.Services
 
         private static readonly string[] ProxyCdn = new[]
         {
-            "proxy","edge","cdn","revproxy","varnish","cache","anycast","squid","nginxproxy"
+            "proxy","revproxy","squid","nginxproxy"
         };
 
         private static readonly string[] ResidentialTokens = new[]
@@ -340,8 +350,7 @@ namespace Carthago.Services
                 var rdns = entry?.HostName?.Trim().ToLowerInvariant();
                 if (string.IsNullOrWhiteSpace(rdns)) return outp;
 
-                // stash to evidence
-                InferenceEngine.PublishEvidence(ctx.Ip, null, null, null, null, rdns);
+                outp.Add(new("metadata.rdns", 0, "PTR metadata", ReverseDns: rdns));
 
                 if (TorExitRx.IsMatch(rdns))
                     outp.Add(new("rdns.vpn", +1.2, $"PTR '{rdns}' resembles Tor/VPN naming"));
@@ -350,11 +359,14 @@ namespace Carthago.Services
                     outp.Add(new("rdns.vpn", +1.0, $"PTR contains VPN brand ({rdns})"));
 
                 if (ContainsAny(rdns, ProxyCdn))
-                    outp.Add(new("rdns.proxy", +0.8, $"PTR suggests proxy/CDN edge ({rdns})"));
+                    outp.Add(new("rdns.proxy", +0.8, $"PTR suggests proxy service ({rdns})"));
+                if (ContainsAny(rdns, new[] { "edge", "cdn", "cache", "anycast" }))
+                    outp.Add(new("rdns.cdn", +0.5, $"PTR suggests CDN/edge infrastructure ({rdns})"));
 
                 if (ContainsAny(rdns, ResidentialTokens))
                     outp.Add(new("rdns.resi", -0.7, $"PTR looks residential-ish ({rdns})"));
             }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
             catch { /* no PTR or timeout */ }
 
             return outp;
@@ -376,7 +388,7 @@ namespace Carthago.Services
         public TimeSpan Ttl => TimeSpan.FromMinutes(30);
 
         // Not authoritative; just weak priors
-        private static readonly HashSet<int> VpnPorts = new(new[] { 1194, 443, 500, 4500, 1701, 1723, 51820 }); // OpenVPN, TLS-tunnel, IKEv2/IPsec, L2TP, PPTP, WireGuard
+        private static readonly HashSet<int> VpnPorts = new(new[] { 1194, 500, 4500, 1701, 1723, 51820 }); // OpenVPN, TLS-tunnel, IKEv2/IPsec, L2TP, PPTP, WireGuard
 
         public Task<IReadOnlyList<SignalScore>> EvaluateAsync(VpnContext ctx, CancellationToken ct)
         {
@@ -400,13 +412,11 @@ namespace Carthago.Services
         public Task<IReadOnlyList<SignalScore>> EvaluateAsync(VpnContext ctx, CancellationToken ct)
         {
             var list = new List<SignalScore>(1);
-            string all = $"{ctx.Ja4h} {ctx.Ja4x}".ToLowerInvariant();
+            if (!string.IsNullOrWhiteSpace(ctx.Ja4h) && KnownVpnJa4h.Any(fp => ctx.Ja4h.StartsWith(fp, StringComparison.OrdinalIgnoreCase)))
+                list.Add(new("ja4.client.vpn", +1.2, "JA4H matches known VPN client fp"));
 
-            if (!string.IsNullOrWhiteSpace(ctx.Ja4h) && KnownVpnJa4h.Any(fp => all.StartsWith(fp, StringComparison.Ordinal)))
-                list.Add(new("ja4.vpn", +1.2, $"JA4H matches known VPN client fp"));
-
-            if (!string.IsNullOrWhiteSpace(ctx.Ja4x) && KnownVpnJa4x.Any(fp => all.StartsWith(fp, StringComparison.Ordinal)))
-                list.Add(new("ja4.vpn", +1.0, $"JA4X matches VPN server cert fp"));
+            if (!string.IsNullOrWhiteSpace(ctx.Ja4x) && KnownVpnJa4x.Any(fp => ctx.Ja4x.StartsWith(fp, StringComparison.OrdinalIgnoreCase)))
+                list.Add(new("ja4.server.vpn", +1.0, "JA4X matches VPN server cert fp"));
 
             return Task.FromResult<IReadOnlyList<SignalScore>>(list);
         }
@@ -420,15 +430,21 @@ namespace Carthago.Services
 
         private static readonly string[] VpnProcs = new[]
         {
-            "openvpn","openvpnserv","wireguard","wg-quick","nordvpn","protonvpn","expressvpn","windscribe","surfshark","mullvad",
+            "openvpn","openvpnserv","wireguard","wireguardtun","wg-quick","nordvpn","protonvpn","expressvpn","windscribe","surfshark","mullvad",
             "pia-service","ivpn","torguard","cyberghost"
         };
+
+        internal static bool IsVpnProcess(string? processName)
+        {
+            var p = (processName ?? "").Trim();
+            if (p.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) p = p[..^4];
+            return VpnProcs.Contains(p, StringComparer.OrdinalIgnoreCase);
+        }
 
         public Task<IReadOnlyList<SignalScore>> EvaluateAsync(VpnContext ctx, CancellationToken ct)
         {
             var list = new List<SignalScore>(1);
-            var p = (ctx.ProcessName ?? "").Trim().ToLowerInvariant();
-            if (p.Length > 0 && VpnProcs.Any(v => p.Contains(v)))
+            if (IsVpnProcess(ctx.ProcessName))
                 list.Add(new("proc.vpn", +1.5, $"Local process '{ctx.ProcessName}' looks like a VPN client"));
             return Task.FromResult<IReadOnlyList<SignalScore>>(list);
         }
