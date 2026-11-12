@@ -4,7 +4,7 @@
 
 **Windows · C# · .NET 8 · WPF · Local-first security operations**
 
-**[Browse the complete documentation](docs/README.md)** — organized by architecture, detection rules, protocol research, verification, development, design, operations and integrations.
+**[Browse the complete documentation](docs/README.md)** — audience-based reading paths, architecture, detection rules, protocol research, verification, development, design, operations and integrations.
 
 **[Master detection-rule catalog](docs/03-detection-rules/MASTER_RULE_CATALOG.md)** — one searchable index of every registered R-series rule, with source metadata and evidence links.
 
@@ -14,7 +14,7 @@ Built for security labs, detection engineering, and hands-on network operations,
 
 > **Project status:** Active development and experimentation. The repository includes a substantial detection catalog and newer security-operations foundations; the presence of a rule or module does not guarantee production validation, complete telemetry coverage, or a finished UI for every capability.
 
-**Current GA verification (October 30, 2026):** Targeted owner-run Windows **synthetic** checks are GREEN for GA 6D (26/26), GA 6E (18/18), GA 6F (recovery 15/15; writer contention 3/3), GA 6H (6/6), GA 6G (3/6/12 bounded reader rounds), GA 7 (binary DNS/TShark and V2 frame/question/source binding), and GA 8 (read-only, lossless wire-to-legacy compatibility). These are **not** whole-product certification or field detection-accuracy results. Frozen V1 remains FAILED 4/6; V2 remains `PENDING_EXTERNAL_CAPTURE_AND_REVIEW` with **0/4 external R102 sources approved**. For exact tested commits, negative-case counts, current open GA items and the historical audit trail, see [Current GA verification snapshot](docs/DEVELOPMENT_VALIDATION_LEDGER.md#current-ga-verification-snapshot--2026-10-30).
+**Historical GA verification snapshot (October 30, 2026; see the live ledger for current status):** Targeted owner-run Windows **synthetic** checks are GREEN for GA 6D (26/26), GA 6E (18/18), GA 6F (recovery 15/15; writer contention 3/3), GA 6H (6/6), GA 6G (3/6/12 bounded reader rounds), GA 7 (binary DNS/TShark and V2 frame/question/source binding), and GA 8 (read-only, lossless wire-to-legacy compatibility). These are **not** whole-product certification or field detection-accuracy results. Frozen V1 remains FAILED 4/6; V2 remains `PENDING_EXTERNAL_CAPTURE_AND_REVIEW` with **0/4 external R102 sources approved**. For exact tested commits, negative-case counts, current open GA items and the historical audit trail, see [Current GA verification snapshot](docs/DEVELOPMENT_VALIDATION_LEDGER.md#current-ga-verification-snapshot--2026-10-30).
 <img width="1893" height="982" alt="image" src="https://github.com/user-attachments/assets/e9932225-ea5f-4a68-be5c-25aacf11f25c" />
 
 ## Explore

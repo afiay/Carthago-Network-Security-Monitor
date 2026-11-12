@@ -7,6 +7,7 @@ Design principles, interface workspaces, plans and current UI implementation led
 ## Live UI development
 
 - [UI implementation ledger](../design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md)
+- [Indexed UI engineering records](../10-reference/WORKFLOW_ANCHORS.md#ui-implementation)
 
 The live ledger stays at its existing path so scheduled design work can continue. Historical alignment reports are indexed under [Archive](../archive/README.md).
 

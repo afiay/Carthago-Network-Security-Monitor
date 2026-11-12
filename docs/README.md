@@ -4,6 +4,29 @@ Canonical navigation for users, contributors, security analysts, detection engin
 
 > **Status convention:** Historical GA notes, authored xUnit scenarios and research inventories document what was written or observed at that time. They do **not** imply a fresh successful test run, field validation or production readiness. Read the live ledgers for precise verification state.
 
+## Choose your starting point
+
+| I want to… | Follow this path |
+| --- | --- |
+| Install and run Carthago | [Quick start](../README.md#quick-start) → [Getting started](01-getting-started/README.md) → [Demo scenario](01-getting-started/demo-scenario.md) |
+| Investigate an alert | [Operations](08-operations/README.md) → [Investigation copilot](08-operations/guides/InvestigationCopilot.md) → [Evidence export](08-operations/guides/TimelineAndEvidenceExport.md) |
+| Understand the system | [Architecture](02-architecture/README.md) → [Architecture safety rules](02-architecture/ArchitectureSafetyRules.md) → [Runtime data](08-operations/runtime-data.md) |
+| Add or review a detection rule | [Detection rules](03-detection-rules/README.md) → [Rule authoring](03-detection-rules/guides/AddingDetectionRules.md) → [Rule documentation standard](rules/RULE_DOCUMENTATION_STANDARD.md) |
+| Verify a rule or release | [Detection quality](05-detection-quality/README.md) → [Replay testing](05-detection-quality/guides/ReplayTesting.md) → [Validation ledger](DEVELOPMENT_VALIDATION_LEDGER.md) |
+| Develop the application or UI | [Development](06-development/README.md) → [Design](07-design/README.md) → [UI implementation ledger](design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md) |
+| Configure a sink or external integration | [Integrations](09-integrations/README.md) → [Configuration](../README.md#configuration) |
+
+## Documentation status and authority
+
+| Question | Authoritative record |
+| --- | --- |
+| What rules are registered? | [Master rule catalog](03-detection-rules/MASTER_RULE_CATALOG.md); the registry source is linked there. |
+| What has actually been verified? | [Validation ledger](DEVELOPMENT_VALIDATION_LEDGER.md) and [detection quality](05-detection-quality/README.md); check the exact SHA, scope and outcome. |
+| What is still being researched? | [Protocol research ledger](protocols/PROTOCOL_EXPANSION_PROGRESS.md) and [unified rule admission cursor](rules/UNIFIED_2500_RULE_ADMISSION_CURSOR.md). |
+| What is being designed or implemented? | [Development records](06-development/README.md) and [UI ledger](design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md). |
+| How should documentation be maintained? | [Documentation maintenance standard](10-reference/DOCUMENTATION_MAINTENANCE.md) and [stable paths](10-reference/WORKFLOW_ANCHORS.md). |
+
+
 ## Browse by topic
 
 | Area | Contents |

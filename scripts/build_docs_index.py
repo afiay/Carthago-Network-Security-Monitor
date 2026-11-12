@@ -42,6 +42,9 @@ def list_documents(directory, location):
         if file.name == "README.md":
             continue
         relative = file.relative_to(directory)
+        archive = ARCHIVE_GROUPS.get(location)
+        if archive and relative.parts[0] == archive[0]:
+            continue
         groups.setdefault(str(relative.parent), []).append(relative)
     lines = []
     for group, files in sorted(groups.items(), key=lambda v: (v[0] != ".", v[0])):
@@ -88,16 +91,19 @@ EXTRA = {
         "## Ongoing development records", "",
         "- [Development verification GAs](../development/)",
         "- [Design specifications and implementation plans](../superpowers/)",
+        "- [Indexed verification records, plans and specifications](../10-reference/WORKFLOW_ANCHORS.md)",
         "- [Development validation ledger](../DEVELOPMENT_VALIDATION_LEDGER.md)", "",
     ],
     "07-design": [
         "## Live UI development", "",
         "- [UI implementation ledger](../design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md)",
+        "- [Indexed UI engineering records](../10-reference/WORKFLOW_ANCHORS.md#ui-implementation)",
         "", "The live ledger stays at its existing path so scheduled design work can continue. Historical alignment reports are indexed under [Archive](../archive/README.md).", "",
     ],
     "10-reference": [
         "## Path-stable reference assets", "",
         "- [Stable path register](WORKFLOW_ANCHORS.md)",
+        "- [Documentation maintenance standard](DOCUMENTATION_MAINTENANCE.md)",
         "- [Legacy document path map](LEGACY_DOCUMENTATION_PATHS.md)",
         "- [Frozen V1 manifest](../holdout-evaluation-manifest.json)",
         "- [V2 manifest](../holdout-evaluation-v2-manifest.json)",
@@ -111,12 +117,93 @@ def write(path, lines):
     path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
 
 
+HOME_PATHS = [
+    "## Choose your starting point",
+    "",
+    "| I want to… | Follow this path |",
+    "| --- | --- |",
+    "| Install and run Carthago | [Quick start](../README.md#quick-start) → [Getting started](01-getting-started/README.md) → [Demo scenario](01-getting-started/demo-scenario.md) |",
+    "| Investigate an alert | [Operations](08-operations/README.md) → [Investigation copilot](08-operations/guides/InvestigationCopilot.md) → [Evidence export](08-operations/guides/TimelineAndEvidenceExport.md) |",
+    "| Understand the system | [Architecture](02-architecture/README.md) → [Architecture safety rules](02-architecture/ArchitectureSafetyRules.md) → [Runtime data](08-operations/runtime-data.md) |",
+    "| Add or review a detection rule | [Detection rules](03-detection-rules/README.md) → [Rule authoring](03-detection-rules/guides/AddingDetectionRules.md) → [Rule documentation standard](rules/RULE_DOCUMENTATION_STANDARD.md) |",
+    "| Verify a rule or release | [Detection quality](05-detection-quality/README.md) → [Replay testing](05-detection-quality/guides/ReplayTesting.md) → [Validation ledger](DEVELOPMENT_VALIDATION_LEDGER.md) |",
+    "| Develop the application or UI | [Development](06-development/README.md) → [Design](07-design/README.md) → [UI implementation ledger](design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md) |",
+    "| Configure a sink or external integration | [Integrations](09-integrations/README.md) → [Configuration](../README.md#configuration) |",
+    "",
+    "## Documentation status and authority",
+    "",
+    "| Question | Authoritative record |",
+    "| --- | --- |",
+    "| What rules are registered? | [Master rule catalog](03-detection-rules/MASTER_RULE_CATALOG.md); the registry source is linked there. |",
+    "| What has actually been verified? | [Validation ledger](DEVELOPMENT_VALIDATION_LEDGER.md) and [detection quality](05-detection-quality/README.md); check the exact SHA, scope and outcome. |",
+    "| What is still being researched? | [Protocol research ledger](protocols/PROTOCOL_EXPANSION_PROGRESS.md) and [unified rule admission cursor](rules/UNIFIED_2500_RULE_ADMISSION_CURSOR.md). |",
+    "| What is being designed or implemented? | [Development records](06-development/README.md) and [UI ledger](design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md). |",
+    "| How should documentation be maintained? | [Documentation maintenance standard](10-reference/DOCUMENTATION_MAINTENANCE.md) and [stable paths](10-reference/WORKFLOW_ANCHORS.md). |",
+    ""
+]
+
+ARCHIVE_GROUPS = {
+    "03-detection-rules": ("batches", "Rule-batch evidence", "R", "RULE_BATCH_"),
+    "04-protocols": ("research", "Protocol research GAs", "P", "PROTOCOL_GA_P"),
+}
+
+
+def archive_lines(directory, title, prefix, file_prefix):
+    """Keep historical navigation compact without moving any evidence file."""
+    lines = [f"# {title}", "", "[Topic overview](../README.md) · [Documentation home](../../README.md)", "",
+             "Historical records describe their own scope and status. A listed record is not evidence of fresh execution or production readiness.", ""]
+    groups = {}
+    for file in sorted(directory.glob("*.md"), key=lambda p: p.name):
+        if file.name == "README.md":
+            continue
+        tail = file.stem.removeprefix(file_prefix)
+        first = tail.split("-")[0].split("_")[0]
+        if file.stem.startswith(file_prefix) and first.isdigit():
+            start = (int(first) - 1) // 100 * 100 + 1
+            width = 3 if prefix == "R" else 4
+            group = (start, f"{prefix}{start:0{width}d}–{prefix}{start + 99:0{width}d} (start IDs)")
+        else:
+            group = (0, "Reconciliation and other records")
+        groups.setdefault(group, []).append(file)
+    for (_, heading), files in sorted(groups.items()):
+        lines.extend([f"## {heading}", ""])
+        for file in files:
+            lines.append(f"- [{label(file)}]({file.name})")
+        lines.append("")
+    return lines
+
+
+def stable_group_lines():
+    """Index every stable working record, including manifests and contracts."""
+    groups = [
+        ("Live ledgers", [DOCS / "DEVELOPMENT_VALIDATION_LEDGER.md", DOCS / "RULE_HARDENING_PROGRESS.md", DOCS / "protocols/PROTOCOL_EXPANSION_PROGRESS.md"]),
+        ("Rule workflow", sorted((DOCS / "rules").rglob("*.md"))),
+        ("Development verification", sorted((DOCS / "development").rglob("*.md"))),
+        ("UI implementation", sorted((DOCS / "design").rglob("*.md"))),
+        ("Engineering plans", sorted((DOCS / "superpowers/plans").rglob("*.md"))),
+        ("Engineering specifications", sorted((DOCS / "superpowers/specs").rglob("*.md"))),
+        ("Machine-readable evidence contracts", sorted((DOCS / "contracts").rglob("*.json")) + sorted(DOCS.glob("holdout-evaluation*-manifest.json"))),
+    ]
+    lines = []
+    for heading, files in groups:
+        lines.extend([f"## {heading}", ""])
+        for file in files:
+            rel = file.relative_to(DOCS).as_posix()
+            lines.append(f"- [{rel}](../{rel})")
+        lines.append("")
+    return lines
+
+
 def main():
     for folder, title, description in SECTIONS:
         path = DOCS / folder
         lines = [f"# {title}", "", description, "", "[Documentation home](../README.md)", ""]
         lines.extend(EXTRA.get(folder, []))
         lines.extend(list_documents(path, folder))
+        if folder in ARCHIVE_GROUPS:
+            subfolder, archive_title, prefix, file_prefix = ARCHIVE_GROUPS[folder]
+            lines.extend([f"## {archive_title}", "", f"[Browse the complete historical index]({subfolder}/README.md) — grouped by starting ID; all original records are preserved.", ""])
+            write(path / subfolder / "README.md", archive_lines(path / subfolder, archive_title, prefix, file_prefix))
         if folder == "03-detection-rules":
             legacy_batches = sorted(DOCS.glob("RULE_BATCH_*.md"))
             if legacy_batches:
@@ -130,27 +217,16 @@ def main():
         "# Stable paths used by development and evidence automation", "",
         "These documents keep their previous locations intentionally. Updating their paths without coordinating the scripts, tests and scheduled jobs would be a breaking interface change. They are canonical, not legacy copies.", "",
     ]
-    anchor_dirs = [DOCS / "rules", DOCS / "development", DOCS / "superpowers", DOCS / "design", DOCS / "protocols"]
-    files = [DOCS / "DEVELOPMENT_VALIDATION_LEDGER.md", DOCS / "RULE_HARDENING_PROGRESS.md"]
-    for directory in anchor_dirs:
-        if directory == DOCS / "design":
-            files.extend(p for p in directory.glob("*.md") if p.name == "CARTHAGO_UI_IMPLEMENTATION_LEDGER.md")
-        elif directory == DOCS / "protocols":
-            files.extend(p for p in directory.glob("*.md") if p.name == "PROTOCOL_EXPANSION_PROGRESS.md")
-        else:
-            files.extend(directory.rglob("*.md"))
-    for file in sorted(files):
-        rel = file.relative_to(DOCS).as_posix()
-        anchors.append(f"- [{rel}](../{rel})")
-    anchors.append("")
+    anchors.extend(stable_group_lines())
     write(DOCS / "10-reference/WORKFLOW_ANCHORS.md", anchors)
 
     lines = [
         "# Carthago documentation", "",
         "Canonical navigation for users, contributors, security analysts, detection engineers and UI developers.", "",
         "> **Status convention:** Historical GA notes, authored xUnit scenarios and research inventories document what was written or observed at that time. They do **not** imply a fresh successful test run, field validation or production readiness. Read the live ledgers for precise verification state.", "",
-        "## Browse by topic", "", "| Area | Contents |", "| --- | --- |",
     ]
+    lines.extend(HOME_PATHS)
+    lines.extend(["## Browse by topic", "", "| Area | Contents |", "| --- | --- |"])
     for folder, title, description in SECTIONS:
         lines.append(f"| [{title}]({folder}/README.md) | {description} |")
     lines.extend([
@@ -173,7 +249,7 @@ def main():
         "", "[Return to repository overview](../README.md)", "",
     ])
     write(DOCS / "README.md", lines)
-    print(f"Generated {len(SECTIONS) + 2} topic, reference and root documentation indexes.")
+    print(f"Generated {len(SECTIONS) + 2 + len(ARCHIVE_GROUPS)} documentation indexes.")
 
 
 if __name__ == "__main__":
