@@ -384,6 +384,7 @@ namespace Carthago.Services
 
                     if (tcpSyn && !tcpAck)
                     {
+                        HandshakeBuffer.Remove(tcpFlow);
                         LatencyTracker.NoteSyn(tcpFlow, DateTime.UtcNow);
                         InitSeq(tcpFlow, clientToServer: true, seqPlus1: unchecked(seq + 1));
                     }
@@ -649,7 +650,14 @@ namespace Carthago.Services
                                     HandshakeBuffer.AddServerBytes(tcpFlow, normPayload);
                                     HandshakeBuffer.TryGetServerHellos(tcpFlow, out var sh, out var cert);
                                     if (!sh.IsEmpty)
+                                    {
                                         rec.TlsJa4s = TlsJa4.FromServerHello(sh);
+                                        if (TlsIdentityEnrichment.TryReadServerHello(sh, out var negotiated))
+                                        {
+                                            rec.TlsObservedNegotiatedVersion = negotiated.Version;
+                                            rec.TlsObservedNegotiatedAlpn = negotiated.Alpn;
+                                        }
+                                    }
 
                                     if (!cert.IsEmpty)
                                     {
@@ -826,11 +834,15 @@ namespace Carthago.Services
             rec.TlsJa4x = X509Ja4X.FromCertificateDer(der);
             try
             {
-                var x = new X509Certificate2(der);
+                using var x = new X509Certificate2(der);
                 rec.CertIssuer = x.Issuer;
                 rec.CertSubject = x.Subject;
                 rec.CertValidFrom = x.NotBefore.ToUniversalTime();
                 rec.CertValidTo = x.NotAfter.ToUniversalTime();
+                // Rich identity is captured separately from legacy rule fields.
+                if (hsLen == body.Length && certLen > 0
+                    && ((body[0] << 16) | (body[1] << 8) | body[2]) == body.Length - 3)
+                    TlsIdentityEnrichment.ApplyCertificate(rec, x);
             }
             catch { /* ignore */ }
         }

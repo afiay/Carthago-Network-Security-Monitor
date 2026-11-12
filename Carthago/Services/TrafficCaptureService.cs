@@ -46,6 +46,7 @@ namespace Carthago.Services
         private ICaptureSource? _captureSource;
         private CancellationTokenSource? _runCts;
         private DnsConnectionEnrichment? _dnsConnections;
+        private TlsConnectionEnrichment? _tlsConnections;
         private int _disposed;
         private string? _lastCaptureError;
 
@@ -241,6 +242,7 @@ namespace Carthago.Services
                 run = _runCts;
                 _runCts = null;
                 _dnsConnections = null;
+                _tlsConnections = null;
                 _activeLanHost = null;
                 device = _device;
                 _device = null;
@@ -368,6 +370,7 @@ namespace Carthago.Services
             {
                 _runCts = run;
                 _dnsConnections = new DnsConnectionEnrichment();
+                _tlsConnections = new TlsConnectionEnrichment();
             }
 
             try
@@ -592,9 +595,16 @@ namespace Carthago.Services
             // Correlate in capture publication order, before asynchronous workers
             // or queue fallback. The cache belongs to this capture session only.
             DnsConnectionEnrichment? dns;
+            TlsConnectionEnrichment? tls;
             lock (_lifecycleLock)
-                dns = _runCts is not null && _runCts.Token == runToken ? _dnsConnections : null;
-            dns?.Observe(record, Environment.TickCount64);
+            {
+                bool current = _runCts is not null && _runCts.Token == runToken;
+                dns = current ? _dnsConnections : null;
+                tls = current ? _tlsConnections : null;
+            }
+            long observedAt = Environment.TickCount64;
+            dns?.Observe(record, observedAt);
+            tls?.Observe(record, observedAt);
 
             // UI pressure must never suppress rule evaluation.
             if (!_uiChannel.Writer.TryWrite(new CaptureSessionRecord<TrafficRecord>(record, runToken)))

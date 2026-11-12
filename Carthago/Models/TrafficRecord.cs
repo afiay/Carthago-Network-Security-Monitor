@@ -269,6 +269,21 @@ namespace Carthago.Models
         public string? QuicAlpn { get; set; }                // ALPN surfaced via MsQuic when available
         public string? QuicConnectionIdHash { get; set; }    // non-PII stable tag
 
+        // ===== TLS investigation enrichment (not legacy rule qualification) =====
+        public string? TlsObservedNegotiatedVersion { get; set; }
+        public string? TlsObservedNegotiatedAlpn { get; set; }
+        public string? TlsCertificateSha256 { get; set; }
+        public string? TlsCertificateDnsNames { get; set; }
+        public string? TlsCertificateNameStatus { get; set; }
+        public string? TlsCertificateValidityStatus { get; set; }
+        public string? TlsCorrelatedSni { get; set; }
+        public string? TlsCorrelatedClientAlpn { get; set; }
+        public string? TlsCorrelatedNegotiatedVersion { get; set; }
+        public string? TlsCorrelatedNegotiatedAlpn { get; set; }
+        public string? TlsCorrelatedCertificateSha256 { get; set; }
+        public string? TlsCorrelatedCertificateNameStatus { get; set; }
+        public string? TlsCorrelationEvidence { get; set; }
+
         // ===== Certificate (from TLS) =====
         public string? CertIssuer { get; set; }
         public string? CertSubject { get; set; }

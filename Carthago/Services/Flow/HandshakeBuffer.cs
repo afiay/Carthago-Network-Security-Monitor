@@ -74,6 +74,15 @@ namespace Carthago.Services.Flow
             }
         }
 
+        public static void Remove(FlowKey key)
+        {
+            lock (Sync)
+            {
+                Flows.Remove(key);
+                Flows.Remove(key.Reverse());
+            }
+        }
+
         public static void AddClientBytes(FlowKey fk, ReadOnlySpan<byte> data)
             => Append(fk, data, client: true);
 
