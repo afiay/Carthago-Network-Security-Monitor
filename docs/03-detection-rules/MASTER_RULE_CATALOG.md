@@ -1,6 +1,6 @@
 # Carthago — master detection-rule catalog
 
-**Source-content digest:** `b4fc083f52515689df12` · **Registered:** 965 unique R-series rules (`R001`–`R965`)
+**Source-content digest:** `fcfc920472d1b6c4d748` · **Registered:** 965 unique R-series rules (`R001`–`R965`)
 
 This is the **single central navigation catalog** for registered detection rules. Metadata is extracted from each rule's actual C# `RuleDescriptor` at the cited snapshot. Source registration is not proof that telemetry can reach the predicate, an alert is emitted, tests passed, or detection quality was field-validated.
 
@@ -5765,9 +5765,9 @@ Select a category below, then expand any rule to view its documentation **on thi
 </details>
 
 <details>
-<summary><strong>R792 — hostd-attributed FTP STOR request then TFTP port egress</strong> · Medium</summary>
+<summary><strong>R792 — hostd-attributed FTP STOR request then parsed TFTP WRQ egress</strong> · Medium</summary>
 
-- **Description:** hostd-attributed FTP STOR request then TFTP port egress. A bounded observation only; no config change, successful authentication, transfer, exploitation or compromise established.
+- **Description:** hostd-attributed FTP STOR request then parsed TFTP WRQ egress. A bounded observation only; no config change, successful authentication, transfer, exploitation or compromise established.
 - **Category:** EvasionTunnel
 - **Severity:** Medium
 - **Enabled by default:** true
@@ -6542,7 +6542,7 @@ Select a category below, then expand any rule to view its documentation **on thi
 <details>
 <summary><strong>R715 — Private client TFTP request followed by public-server transfer reply</strong> · Low</summary>
 
-- **Description:** A private UDP client contacts a public host on TFTP/69 and the same public host replies from an ephemeral UDP port to the original client port within 30 seconds. This does not identify a file, configuration export, upload direction, transfer completion, or exfiltration.
+- **Description:** Private client to public server: capture-attested TFTP RRQ or WRQ followed by its exact first DATA block 1 or ACK block 0 within 30 seconds. No transfer completion, file identity, firmware change, authorization or compromise established.
 - **Category:** ExfiltrationAdvanced
 - **Severity:** Low
 - **Enabled by default:** true
@@ -9642,7 +9642,7 @@ Select a category below, then expand any rule to view its documentation **on thi
 <details>
 <summary><strong>R708 — Public client TFTP request followed by private-host transfer reply</strong> · Medium</summary>
 
-- **Description:** A public UDP client contacts a private host on TFTP/69 and the same private host replies from an ephemeral UDP port to the original client port within 30 seconds. This does not identify firmware-update mode, a device role, file name, transfer completion, or authorization.
+- **Description:** Public client to private server: capture-attested TFTP RRQ or WRQ followed by its exact first DATA block 1 or ACK block 0 within 30 seconds. No transfer completion, file identity, firmware change, authorization or compromise established.
 - **Category:** IotOtAdvanced
 - **Severity:** Medium
 - **Enabled by default:** true
@@ -10578,9 +10578,9 @@ Select a category below, then expand any rule to view its documentation **on thi
 </details>
 
 <details>
-<summary><strong>R881 — Public FTP control SYN then private TFTP-port packet</strong> · Medium</summary>
+<summary><strong>R881 — Public FTP control SYN then private parsed TFTP WRQ</strong> · Medium</summary>
 
-- **Description:** Public TCP/21 SYN to a private host precedes that host&#x27;s UDP/69 packet to another private device within 60s; filenames, transfer commands and file placement are unobserved.
+- **Description:** Public TCP/21 SYN to a private host precedes that host&#x27;s capture-attested TFTP WRQ to another private device within 60s; file identity, actual transfer and file placement are unobserved.
 - **Category:** LateralMovement
 - **Severity:** Medium
 - **Enabled by default:** true
@@ -11822,9 +11822,9 @@ Select a category below, then expand any rule to view its documentation **on thi
 </details>
 
 <details>
-<summary><strong>R819 — public config-export API GET then private host public TFTP-port UDP egress</strong> · Medium</summary>
+<summary><strong>R819 — public config-export API GET then private host public parsed TFTP WRQ egress</strong> · Medium</summary>
 
-- **Description:** public config-export API GET then private host public TFTP-port UDP egress. Source-only network/process evidence; no authorization, compromise or successful outcome inferred.
+- **Description:** public config-export API GET then private host public parsed TFTP WRQ egress. Source-only network/process evidence; no authorization, compromise or successful outcome inferred.
 - **Category:** NetworkDiscovery
 - **Severity:** Medium
 - **Enabled by default:** true
