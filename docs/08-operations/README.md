@@ -6,6 +6,7 @@ Runtime storage, journaling, evidence export and investigation workflows.
 
 ## Guides and reports
 
+- [PORT SERVICE REGISTRY](PORT_SERVICE_REGISTRY.md)
 - [SESSION ARCHIVE EXPORT](SESSION_ARCHIVE_EXPORT.md)
 - [package–audit](package-audit.md)
 - [runtime–data](runtime-data.md)

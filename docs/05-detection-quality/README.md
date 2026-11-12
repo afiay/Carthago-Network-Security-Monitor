@@ -18,8 +18,10 @@ Never reinterpret an authored test as an executed test. Holdout V1 remains immut
 
 - [ACCURACY SCENARIO STRATEGY](ACCURACY_SCENARIO_STRATEGY.md)
 - [BaselineReadiness](BaselineReadiness.md)
+- [DEPLOYMENT STATE BENCHMARK 20261103](DEPLOYMENT_STATE_BENCHMARK_20261103.md)
 - [R118–R163–evidence–and–replay–matrix](R118-R163-evidence-and-replay-matrix.md)
 - [RECALL TUNING](RECALL_TUNING.md)
+- [REPLAY ACCURACY SUPPORTED VS UNSUPPORTED 20261103](REPLAY_ACCURACY_SUPPORTED_VS_UNSUPPORTED_20261103.md)
 - [REPLAY COVERAGE GAPS](REPLAY_COVERAGE_GAPS.md)
 - [anomaly–first–validation](anomaly-first-validation.md)
 
