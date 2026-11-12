@@ -918,6 +918,11 @@ namespace Carthago.Engine.Rules.Catalog
                 new R893_PowershellDnsQueryThenSniTlsRule(),
                 new R894_PublicSshThenWebApiProbeRule(),
                 new R895_PrivateIndustrialDualPortSynRule(),
+                new R896_Regsvr32PublicScriptletHttpGetRule(),
+                new R897_CmstpPublicInfHttpGetRule(),
+                new R898_NetPrivateSmbSynPeerFanoutRule(),
+                new R899_VmwarePublicResolverTlsSniRule(),
+                new R900_RegasmPublicSynThenTlsRule(),
             };
         }
 
