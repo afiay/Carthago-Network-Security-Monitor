@@ -18,3 +18,10 @@ Raw IPv4 UDP synthetic frame integration tests exercise PacketHandler through ru
 References: existing TftpRequestInspector source; RFC 1350 https://www.rfc-editor.org/rfc/rfc1350 ; RFC 2347 https://www.rfc-editor.org/rfc/rfc2347 .
 
 Status: source changes authored, not compiled or executed in this session. No CI triggered manually.
+
+
+## Q2: DNS producer and transaction qualification — R916/R962
+
+Live UDP PacketHandler previously did not populate answer address/TTL and did not establish the DNS ApplicationProtocol label for ordinary UDP messages. Added bounded complete IPv4 UDP/53 parser using existing lossless name codec: standard single IN/A question, exact wire transaction, direct single owner-matching A record, or no-answer NXDOMAIN; no truncated/multi-answer/CNAME responses, strict RR envelope bounds and length agreement. Capture-attested transaction and question/answer fields are internal-set. R916 requires matching validated query/NXDOMAIN transaction plus reverse tuple. R962 consumes matching transactions once, retains the actual query PID for distinct-address churn, and verifies answer/TTL against capture-attested values. Existing R916/R962 fixtures now originate in raw synthetic frames; additional tests cover malformed, mismatched owner/transaction/port, mixed PID and unsupported synthetic fields. The producer is not full DNS resolution and does not validate DNSSEC, CNAME chains, all authority semantics, TCP/IPv6, resolver trust, ASN/CDN baseline or malicious fast flux. Normal direct-A CDN churn can still match; process enrichment remains best effort. No promotion. Tests not executed.
+
+Reference: RFC 1035 https://www.rfc-editor.org/rfc/rfc1035 ; RFC 2308 https://www.rfc-editor.org/rfc/rfc2308 .

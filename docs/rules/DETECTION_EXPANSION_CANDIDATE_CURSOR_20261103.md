@@ -174,3 +174,5 @@ Exact original workbook rows R1130, R1138, R1172, R1185, R1328, R1828, R1800, R1
 ## Qualification gate — expansion stopped at R965
 
 Owner requested enhanced qualification of existing rules before further IDs. [Qualification gate](DETECTION_QUALIFICATION_GATE_20261112.md). Q1: R946/R947/R949 capture-attested initial TFTP parser and exact request reference; source-only, tests authored, no execution. R962 DNS producer gap logged for next work. No new rule IDs; Candidate/Shadow retained.
+
+Q2: R916/R962 complete UDP IN/A transaction and direct answer/TTL producer; R962 same-query-PID aggregation. Raw frame test source authored; zero execution; see [qualification gate](DETECTION_QUALIFICATION_GATE_20261112.md).

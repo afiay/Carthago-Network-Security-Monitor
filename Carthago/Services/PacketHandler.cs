@@ -707,8 +707,31 @@ namespace Carthago.Services
                             rec.DnsIsResponse = mdns.IsResponse;
                         }
 
+                        // -------- Complete standard UDP DNS IN/A observation --------
+                        if (isIPv4 && completeIpPacket && l4PayloadLen == ipPayloadLen - 8
+                            && (sport == 53 || dport == 53)
+                            && DnsAObservationInspector.TryInspect(l4Payload, out var observedDns)
+                            && (observedDns.IsResponse ? sport == 53 : dport == 53))
+                        {
+                            rec.ApplicationService = "DNS";
+                            rec.ApplicationProtocol = "DNS";
+                            rec.DnsValidatedTransactionId = observedDns.TransactionId;
+                            rec.DnsValidatedAQuestion = true;
+                            rec.DnsValidatedQuestionName = observedDns.Name;
+                            rec.DnsValidatedSingleAAnswer = observedDns.Address != null;
+                            rec.DnsValidatedNxdomain = observedDns.IsNxdomain;
+                            rec.DnsValidatedAnswerAddress = observedDns.Address;
+                            rec.DnsValidatedAnswerTtl = observedDns.Ttl;
+                            rec.DnsQname = observedDns.Name;
+                            rec.DnsQtype = "A";
+                            rec.DnsRcode = observedDns.IsNxdomain ? "NXDOMAIN" : "NOERROR";
+                            rec.DnsIsResponse = observedDns.IsResponse;
+                            rec.DnsAnswers = observedDns.Address;
+                            rec.DnsTtl = observedDns.Ttl;
+                        }
+
                         // -------- QUIC --------
-                        if (l4Payload.Length >= 6 && QuicLight.TryDetectQuic(l4Payload, out var quic))
+                        if (!rec.DnsValidatedAQuestion && l4Payload.Length >= 6 && QuicLight.TryDetectQuic(l4Payload, out var quic))
                         {
                             rec.ApplicationProtocol = "QUIC";
                             rec.IsQuic = true;
@@ -717,7 +740,7 @@ namespace Carthago.Services
                         }
 
                         // -------- DNS (UDP or TCP path compatible) --------
-                        if ((rec.DestinationPort == 53 || rec.SourcePort == 53) &&
+                        if (!rec.DnsValidatedAQuestion && (rec.DestinationPort == 53 || rec.SourcePort == 53) &&
                             DnsLight.TryParse(l4Payload, isTcp: false, out var dns))
                         {
                             rec.ApplicationService = "DNS";

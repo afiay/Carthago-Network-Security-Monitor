@@ -261,6 +261,15 @@ namespace Carthago.Models
         public DateTime? CertValidTo { get; set; }
 
         // ===== DNS =====
+        // Capture-attested complete standard UDP/53 IN/A message evidence.
+        public ushort? DnsValidatedTransactionId { get; internal set; }
+        public bool DnsValidatedAQuestion { get; internal set; }
+        public string? DnsValidatedQuestionName { get; internal set; }
+        public bool DnsValidatedSingleAAnswer { get; internal set; }
+        public bool DnsValidatedNxdomain { get; internal set; }
+        public string? DnsValidatedAnswerAddress { get; internal set; }
+        public int? DnsValidatedAnswerTtl { get; internal set; }
+
         public string? DnsQname { get; set; }
         public string? DnsQtype { get; set; }
         public string? DnsRcode { get; set; }
