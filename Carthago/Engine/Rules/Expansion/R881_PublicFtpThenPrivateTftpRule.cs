@@ -11,17 +11,17 @@ namespace Carthago.Engine.Rules.Expansion
     public sealed class R881_PublicFtpThenPrivateTftpRule : EvidenceDrivenPrecisionRuleBase
     {
         private static readonly RuleDescriptor Rule = new(
-            RuleId: "R881", Name: "Public FTP control SYN then private TFTP-port packet", Category: "LateralMovement",
-            Description: "Public TCP/21 SYN to a private host precedes that host's UDP/69 packet to another private device within 60s; filenames, transfer commands and file placement are unobserved.",
+            RuleId: "R881", Name: "Public FTP control SYN then private parsed TFTP WRQ", Category: "LateralMovement",
+            Description: "Public TCP/21 SYN to a private host precedes that host's capture-attested TFTP WRQ to another private device within 60s; file identity, actual transfer and file placement are unobserved.",
             DefaultSeverity: SeverityLevel.Medium, ConfigKey: "Rules.R881.Enabled",
             EnabledByDefault: true);
         private static readonly RulePrecisionProfile Profile = CreateEvidenceDrivenProfile(new PrecisionRuleSpec
         {
-            RuleId = "R881", Name = "Public FTP control SYN then private TFTP-port packet", Category = "LateralMovement",
-            Description = "workbook.R2813: Public TCP/21 SYN to a private host precedes that host's UDP/69 packet to another private device within 60s; filenames, transfer commands and file placement are unobserved.", Severity = SeverityLevel.Medium,
+            RuleId = "R881", Name = "Public FTP control SYN then private parsed TFTP WRQ", Category = "LateralMovement",
+            Description = "workbook.R2813: Public TCP/21 SYN to a private host precedes that host's capture-attested TFTP WRQ to another private device within 60s; file identity, actual transfer and file placement are unobserved.", Severity = SeverityLevel.Medium,
             Maturity = RulePrecisionMaturity.Candidate, RuntimeMode = RuleRuntimeMode.Shadow,
             RequiredTelemetry = new[] { RuleTelemetryKind.Flow },
-            RequiredFields = new[] { "source", "destination", "destination.port", "protocol", "tcp.flags", "packet.id" },
+            RequiredFields = new[] { "source", "destination", "destination.port", "protocol", "tcp.flags", "packet.id", "tftp.request.opcode", "tftp.request.correlation" },
             EvidenceFields = new[] { "research.identifier", "matched_conditions", "outcome" },
             PositiveConditions = new[]
             {
@@ -61,10 +61,8 @@ namespace Carthago.Engine.Rules.Expansion
                 _stages.Observe(r.Destination!, r.Id, context.TimestampUtc, true, 60);
                 return NoMatch();
             }
-            if (!Research786NetworkEvidence.UdpData(r) || !Research786NetworkEvidence.Internal(r)
-                || r.DestinationPort != 69 || r.L4Len is < 400 or > 900
-                || r.HttpMethod != null || r.HttpUri != null || r.DnsQname != null
-                || r.Sni != null || r.TlsVersion != null || r.ApplicationProtocol != null
+            if (!Research786NetworkEvidence.Internal(r) || r.Source == r.Destination
+                || !TftpQualifiedEvidence.Request(r) || r.TftpInitialRequestOpcode != 2
                 || !_stages.Observe(r.Source!, r.Id, context.TimestampUtc, false, 60))
                 return NoMatch();
             var status = _cooldown.Observe(r.Source!, r.Destination!, r.Id, context.TimestampUtc);
@@ -75,13 +73,13 @@ namespace Carthago.Engine.Rules.Expansion
             {
                 new DetectionEvidenceItem("research.identifier", "workbook.R2813", "owner-research"),
                 new DetectionEvidenceItem("matched_conditions", "public_ftp21_syn_then_same_private_host_udp69_to_private_peer", "rule"),
-                new DetectionEvidenceItem("outcome", "typed_packet_shape_only_causality_authorization_and_impact_unknown", "rule")
+                new DetectionEvidenceItem("outcome", "parsed_tftp_write_request_only_causality_authorization_and_impact_unknown", "rule")
             };
             var evt = CreateDetectionEvent(context, SeverityLevel.Medium,
-                "Public FTP control SYN then private TFTP-port packet; producer provenance, authorization, causality and outcome unverified.",
+                "Public FTP control SYN then private parsed TFTP WRQ; producer provenance, authorization, causality and outcome unverified.",
                 evidence, confidence =>
                 {
-                    confidence.AddEvidence(0.45, "coherent_typed_packet_fields");
+                    confidence.AddEvidence(0.45, "capture_attested_tftp_write_request");
                     confidence.AddEvidence(0.33, "independent_owner_workbook_predicate");
                     confidence.AddCorrelation(0.12, "bounded_monotonic_utc_observation");
                 }, count: 2, windowSeconds: 60);

@@ -9,9 +9,9 @@ namespace Carthago.Engine.Rules.Expansion
     {
         private static readonly RuleDescriptor Rule = new(
             RuleId: "R792",
-            Name: "hostd-attributed FTP STOR request then TFTP port egress",
+            Name: "hostd-attributed FTP STOR request then parsed TFTP WRQ egress",
             Category: "EvasionTunnel",
-            Description: "hostd-attributed FTP STOR request then TFTP port egress. A bounded observation only; no config change, successful authentication, transfer, exploitation or compromise established.",
+            Description: "hostd-attributed FTP STOR request then parsed TFTP WRQ egress. A bounded observation only; no config change, successful authentication, transfer, exploitation or compromise established.",
             DefaultSeverity: SeverityLevel.Medium,
             ConfigKey: "Rules.R792.Enabled",
             EnabledByDefault: true);
@@ -19,14 +19,14 @@ namespace Carthago.Engine.Rules.Expansion
         private static readonly RulePrecisionProfile Profile = CreateEvidenceDrivenProfile(new PrecisionRuleSpec
         {
             RuleId = "R792",
-            Name = "hostd-attributed FTP STOR request then TFTP port egress",
+            Name = "hostd-attributed FTP STOR request then parsed TFTP WRQ egress",
             Category = "EvasionTunnel",
             Description = "workbook.R1734: narrowed to actually modeled packet, DNS, HTTP, TLS, and optional local-process telemetry; original audit/outcome evidence is unavailable.",
             Severity = SeverityLevel.Medium,
             Maturity = RulePrecisionMaturity.Candidate,
             RuntimeMode = RuleRuntimeMode.Shadow,
             RequiredTelemetry = new[] { RuleTelemetryKind.Flow, RuleTelemetryKind.Process },
-            RequiredFields = new[] { "source", "destination", "packet.id", "application.protocol", "process.id", "destination.port" },
+            RequiredFields = new[] { "source", "destination", "packet.id", "application.protocol", "process.id", "destination.port", "tftp.request.opcode", "tftp.request.correlation" },
             EvidenceFields = new[] { "research.identifier", "matched_conditions", "outcome" },
             PositiveConditions = new[] { "Only coherent typed fields and this rule's distinct temporal/network predicate qualify.", "Each instance has independent, bounded, monotonic UTC packet-ID correlation state." },
             NegativeConditions = new[] { "Reject duplicate packet ID, reversed time, wrong direction, expired observations, missing or contradictory telemetry.", "Never infer authenticated user, endpoint configuration change, successful file transfer, C2, causal compromise or impact." },
@@ -57,8 +57,7 @@ namespace Carthago.Engine.Rules.Expansion
                 _sequence.Observe(key, r.Id, context.TimestampUtc, true, 60);
                 return NoMatch();
             }
-            if (!Research786NetworkEvidence.UdpData(r) || r.DestinationPort != 69
-                || r.HttpMethod != null || r.DnsQname != null || r.TlsVersion != null
+            if (!TftpQualifiedEvidence.Request(r) || r.TftpInitialRequestOpcode != 2
                 || !_sequence.Observe(key, r.Id, context.TimestampUtc, false, 60)) return NoMatch();
 
             var status = _cooldown.Observe(r.Source!, r.Destination!, r.Id, context.TimestampUtc);
@@ -72,11 +71,11 @@ namespace Carthago.Engine.Rules.Expansion
                 new DetectionEvidenceItem("outcome", "packet_sequence_only_endpoint_intent_and_outcome_unknown", "rule")
             };
             var evt = CreateDetectionEvent(context, SeverityLevel.Medium,
-                "hostd-attributed FTP STOR request then TFTP port egress observed; causal context, endpoint state and outcomes unknown.",
+                "hostd-attributed FTP STOR request then parsed TFTP WRQ egress observed; causal context, endpoint state and outcomes unknown.",
                 evidence,
                 confidence =>
                 {
-                    confidence.AddEvidence(0.45, "typed-observable-network-fields");
+                    confidence.AddEvidence(0.45, "capture-attested-tftp-write-request");
                     confidence.AddEvidence(0.33, "workbook-derived-independent-predicate");
                     confidence.AddCorrelation(0.12, "bounded-ordered-evidence");
                 },

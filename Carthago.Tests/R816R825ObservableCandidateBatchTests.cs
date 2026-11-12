@@ -70,7 +70,7 @@ public sealed class R816R825ObservableCandidateBatchTests
                     r.Source = "8.8.8.8"; r.Destination = "10.1.1.10";
                     r.DestinationPort = 80; Http(r, "GET", "/api/config/export", "device.example.org");
                 }
-                else { r.Destination = "9.9.9.9"; Udp(r, 69, 144); }
+                else { r = TftpCaptureQualificationTests.Initial("10.1.1.10", "9.9.9.9", 2); r.Info = "PRIVATE-RAW-EVIDENCE-MARKER"; }
                 break;
             case "R820":
                 if (stage == 0)

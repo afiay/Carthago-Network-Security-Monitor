@@ -11,7 +11,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId: "R708",
             Name: "Public client TFTP request followed by private-host transfer reply",
             Category: "IotOtAdvanced",
-            Description: "A public UDP client contacts a private host on TFTP/69 and the same private host replies from an ephemeral UDP port to the original client port within 30 seconds. This does not identify firmware-update mode, a device role, file name, transfer completion, or authorization.",
+            Description: "Public client to private server: capture-attested TFTP RRQ or WRQ followed by its exact first DATA block 1 or ACK block 0 within 30 seconds. No transfer completion, file identity, firmware change, authorization or compromise established.",
             DefaultSeverity: SeverityLevel.Medium,
             ConfigKey: "Rules.R708.Enabled",
             EnabledByDefault: true);
@@ -21,16 +21,16 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId = "R708",
             Name = "Public client TFTP request followed by private-host transfer reply",
             Category = "IotOtAdvanced",
-            Description = "Workbook R2799: the workbook asserts firmware-update mode from unapproved engineering sources. Carthago cannot identify that mode or approved workstation lists, so only an inbound cross-boundary TFTP request/reply shape is implemented.",
+            Description = "Workbook R2799: capture-attested TFTP initial request and protocol-consistent first reply, linked to the original request ID and reverse tuple. The full firmware/configuration and authorization analytic remains unsupported.",
             Severity = SeverityLevel.Medium,
             Maturity = RulePrecisionMaturity.Candidate,
             RuntimeMode = RuleRuntimeMode.Shadow,
             RequiredTelemetry = new[] { RuleTelemetryKind.Flow },
-            RequiredFields = new[] { "source", "destination", "udp", "source.port", "destination.port" },
+            RequiredFields = new[] { "source", "destination", "udp", "source.port", "destination.port", "tftp.request.opcode", "tftp.request.correlation", "tftp.reply.opcode" },
             EvidenceFields = new[] { "research.identifier", "matched_conditions", "outcome" },
             PositiveConditions = new[]
             {
-                "Require coherent typed producer fields and this rule's independent exact predicate.",
+                "Require capture-attested TFTP RRQ/WRQ and protocol-consistent first response linked to the exact request.",
                 "Bounded correlation uses unique packet IDs and UTC ordering where multiple observations are required.",
                 "Only the observable packet, flow, parser, or best-effort process association is claimed."
             },
@@ -58,21 +58,20 @@ namespace Carthago.Engine.Rules.Expansion
         });
 
         private readonly WebSignatureCooldown _cooldown = new();
-        private readonly Research706TftpWindow _tftp = new();
+        private readonly Research786TwoStageWindow _tftp = new();
 
         public R708_PublicClientTftpExchangeToPrivateHostRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
             var r = context.Record;
-            if (!Research706Evidence.Udp(r)) return NoMatch();
-            var request = Research706Evidence.PublicToPrivate(r) && r.DestinationPort == 69 && r.SourcePort is > 1024;
-            var reply = Research706Evidence.PrivateToPublic(r) && r.SourcePort is > 1024 && r.DestinationPort is > 1024;
+            if (!Research786NetworkEvidence.Coherent(r)) return NoMatch();
+            var request = Research786NetworkEvidence.PublicPrivate(r) && TftpQualifiedEvidence.Request(r);
+            var reply = Research786NetworkEvidence.PrivatePublic(r) && TftpQualifiedEvidence.FirstReply(r);
             if (!request && !reply) return NoMatch();
-            var client = request ? r.Source! : r.Destination!;
-            var server = request ? r.Destination! : r.Source!;
-            var clientPort = request ? r.SourcePort!.Value : r.DestinationPort!.Value;
-            if (!_tftp.Observe(client + "|" + server, request, clientPort, r.Id, context.TimestampUtc))
+            var key = (request ? r.Source! + "|" + r.Destination! + "|" + r.SourcePort
+                : r.Destination! + "|" + r.Source! + "|" + r.DestinationPort) + "|" + r.TftpRequestCorrelationId;
+            if (!_tftp.Observe(key, r.Id, context.TimestampUtc, request, 30))
                 return NoMatch();
 
             var state = _cooldown.Observe(r.Source!, r.Destination!, r.Id, context.TimestampUtc);
@@ -84,17 +83,17 @@ namespace Carthago.Engine.Rules.Expansion
             {
                 new DetectionEvidenceItem("research.identifier", "workbook.R2799", "owner-research"),
                 new DetectionEvidenceItem("matched_conditions", "public_to_private_tftp_request_reply_pair", "rule"),
-                new DetectionEvidenceItem("outcome", "inbound_tftp_exchange_shape_only_unknown", "rule")
+                new DetectionEvidenceItem("outcome", "inbound_tftp_initial_exchange_only_unknown", "rule")
             };
 
             var evt = CreateDetectionEvent(
                 context,
                 SeverityLevel.Medium,
-                "Public-client TFTP request and private-host transfer reply observed; firmware mode, file contents, and transfer success are unknown.",
+                "Public-client TFTP initial request and exact first server response observed; firmware mode, file identity and transfer completion unknown.",
                 evidence,
                 confidence =>
                 {
-                    confidence.AddEvidence(0.43, "typed-producer-evidence");
+                    confidence.AddEvidence(0.43, "capture-attested-tftp-initial-protocol");
                     confidence.AddEvidence(0.35, "specific-workbook-predicate");
                     confidence.AddCorrelation(0.12, "bounded-independent-correlation");
                 },

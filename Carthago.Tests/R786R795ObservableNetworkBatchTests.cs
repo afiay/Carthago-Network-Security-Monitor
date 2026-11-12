@@ -96,8 +96,8 @@ public sealed class R786R795ObservableNetworkBatchTests
                 }
                 else
                 {
-                    r.IsTcp = false; r.IsUdp = true; r.Protocol = "UDP"; r.TcpFlags = null;
-                    r.DestinationPort = 69; r.L4Len = 512; r.Length = 540;
+                    r = TftpCaptureQualificationTests.Initial("10.1.1.10", "8.8.8.8", 2);
+                    r.ProcessName = "hostd"; r.ProcessId = 880; r.Info = "PRIVATE-RAW-PAYLOAD-MARKER";
                 }
                 break;
             case "R793":

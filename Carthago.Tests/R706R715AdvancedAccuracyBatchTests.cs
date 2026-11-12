@@ -92,8 +92,11 @@ public sealed class R706R715AdvancedAccuracyBatchTests
                 return await rule.EvaluateAsync(At(Udp("10.1.2.3","10.1.2.50",67,68),start+1));
 
             case "R708":
-                await rule.EvaluateAsync(At(Udp("8.8.8.8","10.1.2.20",53000,69,80),start));
-                return await rule.EvaluateAsync(At(Udp("10.1.2.20","8.8.8.8",51000,53000,512),start+1));
+            {
+                var pair = TftpCaptureQualificationTests.Exchange("8.8.8.8", "10.1.2.20", 2);
+                await rule.EvaluateAsync(At(pair[0],start));
+                return await rule.EvaluateAsync(At(pair[1],start+1));
+            }
 
             case "R709":
                 return await rule.EvaluateAsync(At(OversizedHttp(),start));
@@ -122,8 +125,11 @@ public sealed class R706R715AdvancedAccuracyBatchTests
                 return await rule.EvaluateAsync(At(Syn("10.1.2.20","10.1.2.30",3389,"nc",4400),start+3));
 
             case "R715":
-                await rule.EvaluateAsync(At(Udp("10.1.2.20","8.8.8.8",53000,69,80),start));
-                return await rule.EvaluateAsync(At(Udp("8.8.8.8","10.1.2.20",51000,53000,512),start+1));
+            {
+                var pair = TftpCaptureQualificationTests.Exchange("10.1.2.20", "8.8.8.8", 2);
+                await rule.EvaluateAsync(At(pair[0],start));
+                return await rule.EvaluateAsync(At(pair[1],start+1));
+            }
 
             default:
                 throw new ArgumentOutOfRangeException(nameof(id));
@@ -337,13 +343,14 @@ public sealed class R706R715AdvancedAccuracyBatchTests
         foreach(var id in new[]{"R708","R715"})
         {
             var rule=Rule(id);
-            var req=id=="R708"?Udp("8.8.8.8","10.1.2.20",53000,69,80):Udp("10.1.2.20","8.8.8.8",53000,69,80);
-            var rep=id=="R708"?Udp("10.1.2.20","8.8.8.8",51000,53000,512):Udp("8.8.8.8","10.1.2.20",51000,53000,512);
+            var pair = id == "R708" ? TftpCaptureQualificationTests.Exchange("8.8.8.8","10.1.2.20",1)
+                : TftpCaptureQualificationTests.Exchange("10.1.2.20","8.8.8.8",1);
+            var req = pair[0]; var rep = pair[1];
             rep.Id=req.Id; await rule.EvaluateAsync(At(req,0)); Assert.False((await rule.EvaluateAsync(At(rep,1))).Matched);
             var late=Rule(id);
-            req=id=="R708"?Udp("8.8.8.8","10.1.2.20",53000,69,80):Udp("10.1.2.20","8.8.8.8",53000,69,80);
-            rep=id=="R708"?Udp("10.1.2.20","8.8.8.8",51000,53000,512):Udp("8.8.8.8","10.1.2.20",51000,53000,512);
-            await late.EvaluateAsync(At(req,0)); Assert.False((await late.EvaluateAsync(At(rep,31))).Matched);
+            pair = id == "R708" ? TftpCaptureQualificationTests.Exchange("8.8.8.8","10.1.2.20",1)
+                : TftpCaptureQualificationTests.Exchange("10.1.2.20","8.8.8.8",1);
+            await late.EvaluateAsync(At(pair[0],0)); Assert.False((await late.EvaluateAsync(At(pair[1],31))).Matched);
         }
 
         // R710 fanout, R711/R712 relay, R713 connect/payload and R714 multi-port windows all expire.

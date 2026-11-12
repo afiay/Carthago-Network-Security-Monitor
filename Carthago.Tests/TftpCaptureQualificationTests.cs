@@ -38,11 +38,12 @@ public sealed class TftpCaptureQualificationTests
         payload.CopyTo(raw, 28);
         return Assert.IsType<TrafficRecord>(handler.ParseFrame(raw, (LinkLayers)12));
     }
-    internal static TrafficRecord[] PrivatePair(byte opcode = 1)
+    internal static TrafficRecord[] PrivatePair(byte opcode = 1) => Exchange(Client, Server, opcode);
+    internal static TrafficRecord[] Exchange(string client, string server, byte opcode = 1)
     {
         var h = new PacketHandler();
-        var request = Parse(h, Client, Server, 51000, 69, Request(opcode));
-        var response = Parse(h, Server, Client, 52000, 51000,
+        var request = Parse(h, client, server, 51000, 69, Request(opcode));
+        var response = Parse(h, server, client, 52000, 51000,
             opcode == 1 ? new byte[] { 0, 3, 0, 1, 42 } : new byte[] { 0, 4, 0, 0 });
         return new[] { request, response };
     }
@@ -144,4 +145,54 @@ public sealed class TftpCaptureQualificationTests
         Assert.True((await r947.EvaluateAsync(At(Initial(Server,"8.8.8.8"),2))).Matched);
         Assert.True((await r949.EvaluateAsync(At(Initial(Client,Server,2),2))).Matched);
     }
+
+    [Theory]
+    [InlineData(true, (byte)1)]
+    [InlineData(true, (byte)2)]
+    [InlineData(false, (byte)1)]
+    [InlineData(false, (byte)2)]
+    public async Task CrossBoundaryInitialExchangeRequiresActualCaptureAndDirection(bool inbound, byte opcode)
+    {
+        string client = inbound ? "8.8.8.8" : Client;
+        string server = inbound ? Server : "8.8.8.8";
+        IDetectionRule rule = inbound ? new R708_PublicClientTftpExchangeToPrivateHostRule() : new R715_PrivateClientPublicTftpExchangeRule();
+        IDetectionRule opposite = inbound ? new R715_PrivateClientPublicTftpExchangeRule() : new R708_PublicClientTftpExchangeToPrivateHostRule();
+        var pair = Exchange(client, server, opcode);
+        Assert.False((await rule.EvaluateAsync(At(pair[0], 0))).Matched);
+        Assert.False((await opposite.EvaluateAsync(At(pair[0], 0))).Matched);
+        Assert.False((await opposite.EvaluateAsync(At(pair[1], 1))).Matched);
+        var result = await rule.EvaluateAsync(At(pair[1], 1));
+        Assert.True(result.Matched);
+        Assert.DoesNotContain("private-router-config", JsonSerializer.Serialize(result.Events));
+    }
+    [Theory]
+    [InlineData("R792")]
+    [InlineData("R819")]
+    [InlineData("R881")]
+    public async Task TransferChainsRequireWriteRequestAndRejectReadOrGenericUdp(string id)
+    {
+        IDetectionRule rule = id switch {
+            "R792" => new R792_EsxiFtpThenTftpEgressRule(),
+            "R819" => new R819_PublicConfigExportGetThenTftpEgressRule(),
+            _ => new R881_PublicFtpThenPrivateTftpRule()
+        };
+        string src = id == "R881" ? Server : Client;
+        string dst = id == "R881" ? "10.1.3.99" : "8.8.8.8";
+        var first = new TrafficRecord { Source = id == "R792" ? Client : "8.8.8.8",
+            Destination = id == "R792" ? "8.8.8.8" : src, SourcePort = 51000,
+            DestinationPort = id == "R819" ? 80 : 21, IpVersion = 4, IsTcp = true,
+            Protocol = "TCP", TcpFlags = id == "R881" ? (ushort)0x02 : (ushort)0x18,
+            Length = id == "R881" ? 40 : 120, L4Len = id == "R881" ? 0 : 80 };
+        if (id == "R792") { first.ApplicationProtocol = "ftp.stor"; first.ProcessName = "hostd"; first.ProcessId = 880; }
+        if (id == "R819") { first.ApplicationProtocol = "HTTP"; first.HttpMethod = "GET"; first.HttpUri = "/api/config/export"; first.HttpHost = "device.example.org"; }
+        Assert.False((await rule.EvaluateAsync(At(first,0))).Matched);
+        var read = Initial(src,dst,1);
+        var invalid = Parse(new PacketHandler(),src,dst,51000,69,new byte[] { 0,2,1,2,3,4 });
+        var write = Initial(src,dst,2);
+        foreach(var r in new[] { read, invalid, write }) { r.ProcessName = "hostd"; r.ProcessId = 880; }
+        Assert.False((await rule.EvaluateAsync(At(read,1))).Matched);
+        Assert.False((await rule.EvaluateAsync(At(invalid,2))).Matched);
+        Assert.True((await rule.EvaluateAsync(At(write,3))).Matched);
+    }
+
 }

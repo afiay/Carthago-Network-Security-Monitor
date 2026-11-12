@@ -78,7 +78,7 @@ public sealed class R876R885ObservableCandidateBatchTests
                 break;
             case "R881":
                 if (stage == 0) { r.Source = "8.8.8.8"; r.DestinationPort = 21; }
-                else { r.Source = "10.1.2.45"; Udp(r, "10.1.3.99", 69, 500); }
+                else { r = TftpCaptureQualificationTests.Initial("10.1.2.45", "10.1.3.99", 2); r.Info = "PRIVATE-RAW-EVIDENCE-MARKER"; }
                 break;
             case "R882":
                 r.Source = "10.1.2.45"; r.Destination = stage == 0 ? "8.8.8.8" : "9.9.9.9";
