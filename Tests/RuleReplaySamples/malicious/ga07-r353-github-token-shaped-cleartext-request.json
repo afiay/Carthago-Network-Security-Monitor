@@ -1,0 +1,28 @@
+{
+  "name": "ga07-r353-github-token-shaped-cleartext-request",
+  "classification": "Malicious",
+  "records": [
+    {
+      "source": "10.237.0.1",
+      "destination": "8.8.4.4",
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "isTcp": true,
+      "sourcePort": 52380,
+      "destinationPort": 80,
+      "httpMethod": "GET",
+      "httpUri": "/user",
+      "httpHost": "api.github.com"
+    }
+  ],
+  "rawHttpRequestsByRecordIndex": {
+    "0": "GET /user HTTP/1.1\r\nHost: api.github.com\r\nAuthorization: Bearer ghp_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\r\n\r\n"
+  },
+  "expectedMatches": [
+    "R353"
+  ],
+  "expectedNonMatches": [
+    "R354",
+    "R359"
+  ]
+}

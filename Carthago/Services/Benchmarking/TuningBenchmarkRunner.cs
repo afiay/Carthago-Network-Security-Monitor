@@ -610,6 +610,18 @@ namespace Carthago.Services.Benchmarking
                 record.HttpRequestHeaders = parsed.JoinedHeaderLines;
                 record.HttpUserAgent = parsed.UserAgent ?? record.HttpUserAgent;
                 record.HttpBasicDefaultCredentialObserved = parsed.ObservedDefaultBasicCredential;
+                // Offline synthetic requests use the same pre-redaction token
+                // observations as live capture. Only coherent TCP HTTP request
+                // metadata may carry the parser-owned flags; never import them
+                // directly from the replay JSON.
+                var attributedRequest = record.IsTcp && !record.IsUdp && !record.IsQuic
+                    && string.Equals(record.Protocol, "TCP", StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(record.ApplicationProtocol, "HTTP", StringComparison.OrdinalIgnoreCase)
+                    && record.SourcePort is > 0 and <= 65535
+                    && record.DestinationPort is > 0 and <= 65535;
+                record.HttpGitHubTokenPatternObserved = attributedRequest && parsed.ObservedGitHubTokenPattern;
+                record.HttpGitLabTokenPatternObserved = attributedRequest && parsed.ObservedGitLabTokenPattern;
+                record.HttpAzureDevOpsPatUrlObserved = attributedRequest && parsed.ObservedAzureDevOpsPatUrlPattern;
             }
 
             foreach (var (index, hex) in sample.RawOtTcpPayloadsByRecordIndex)

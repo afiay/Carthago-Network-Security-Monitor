@@ -1,0 +1,28 @@
+{
+  "name": "ga07-r354-gitlab-token-shaped-cleartext-request",
+  "classification": "Malicious",
+  "records": [
+    {
+      "source": "10.237.0.2",
+      "destination": "8.8.4.4",
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "isTcp": true,
+      "sourcePort": 52381,
+      "destinationPort": 80,
+      "httpMethod": "GET",
+      "httpUri": "/api/v4/projects",
+      "httpHost": "gitlab.com"
+    }
+  ],
+  "rawHttpRequestsByRecordIndex": {
+    "0": "GET /api/v4/projects HTTP/1.1\r\nHost: gitlab.com\r\nPrivate-Token: glpat-BBBBBBBBBBBBBBBBBBBBBBBB\r\n\r\n"
+  },
+  "expectedMatches": [
+    "R354"
+  ],
+  "expectedNonMatches": [
+    "R353",
+    "R359"
+  ]
+}

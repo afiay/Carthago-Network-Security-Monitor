@@ -1,0 +1,28 @@
+{
+  "name": "ga07-r359-azure-pat-shaped-cleartext-query",
+  "classification": "Malicious",
+  "records": [
+    {
+      "source": "10.237.0.3",
+      "destination": "8.8.4.4",
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "isTcp": true,
+      "sourcePort": 52382,
+      "destinationPort": 80,
+      "httpMethod": "GET",
+      "httpUri": "/org/_apis?pat=[REDACTED]",
+      "httpHost": "dev.azure.com"
+    }
+  ],
+  "rawHttpRequestsByRecordIndex": {
+    "0": "GET /org/_apis?pat=CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC HTTP/1.1\r\nHost: dev.azure.com\r\n\r\n"
+  },
+  "expectedMatches": [
+    "R359"
+  ],
+  "expectedNonMatches": [
+    "R353",
+    "R354"
+  ]
+}
