@@ -154,3 +154,8 @@ Original owner-workbook IDs R1730, R1756, R1896, R1717, R1706. Separate Candidat
 ## R901–R905 — independent directory-service, remote-access, SMB, upload and MMC candidates
 
 Original owner-workbook IDs R1991, R2054, R1321, R2375, R1764. Five separate typed observables: nltest LDAP→Global Catalog SYNs; public SSH→screensharingd VNC SYN-ACK to same public peer; PowerShell SMB2 WRITE→WinRM SYN; curl public HTTP PUT with exact binary Content-Type; MMC private SMB SYN→public TLS. No successful authentication, file transfer, execution, COM operation or compromise inferred. See [R901–R905](../03-detection-rules/batches/RULE_BATCH_901-905.md). **SOURCE CANDIDATE — UNVERIFIED; xUnit source authored first, 0 builds/tests executed.** Next unallocated ID: R906.
+
+
+## R906–R925 — twenty observable source candidates
+
+Original workbook origins R2110, R2358, R2239, R1122, R1223, R1470, R1643, R1689, R1769, R1827, R2055, R2642, R2656, R2344, R2362, R2476, R2193, R1180, R1345, R1233. Four review groups of five independent typed packet and process predicates. [Batch documentation](../03-detection-rules/batches/RULE_BATCH_906-925.md). Excluded R2300/R1716 as previously covered. **SOURCE CANDIDATE — UNVERIFIED; xUnit source authored first; 0 builds/tests executed.** Next unallocated ID: R926.
