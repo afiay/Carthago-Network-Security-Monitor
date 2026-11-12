@@ -89,6 +89,14 @@ namespace Carthago.Models
         private string? _applicationService;
         public string? ApplicationService { get => _applicationService; set { _applicationService = value; OnChanged(nameof(ApplicationService)); } }
 
+        // Capture observation point, not proof of an application's route or remote VPN ownership.
+        public string? CaptureBackend { get; set; }
+        public string? CaptureInterfaceId { get; set; }
+        public string? CaptureInterfaceName { get; set; }
+        public string? CaptureInterfaceType { get; set; }
+        public string? CaptureTunnelHint { get; set; }
+        public string? CaptureInterfaceEvidence { get; set; }
+
         // ===== Endpoint scope (independent of VPN/proxy inference) =====
         public string? SrcIpScope { get; set; }
         public string? DstIpScope { get; set; }

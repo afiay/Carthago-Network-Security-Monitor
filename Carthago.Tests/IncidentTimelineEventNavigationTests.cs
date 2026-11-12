@@ -81,7 +81,8 @@ public sealed class IncidentTimelineEventNavigationTests
             }
         };
 
-        Assert.Empty(incident.RelatedEvents);
+        Assert.NotNull(incident.RelatedEvents);
+        Assert.Empty(incident.RelatedEvents!);
         var vm = IncidentVm.From(incident);
         Assert.Equal("persisted-id", Assert.Single(vm.TimelineItems).ExactEventId);
         Assert.Contains("No related detections are attached yet.", vm.RelatedEventDescriptions);

@@ -42,6 +42,7 @@ namespace Carthago.Services
         // ===== Capture device or source
         private readonly object _lifecycleLock = new();
         private ILiveDevice? _device;
+        private CaptureInterfaceContext? _pcapInterfaceContext;
         private ICaptureSource? _captureSource;
         private CancellationTokenSource? _runCts;
         private int _disposed;
@@ -241,6 +242,7 @@ namespace Carthago.Services
                 _activeLanHost = null;
                 device = _device;
                 _device = null;
+                _pcapInterfaceContext = null;
                 source = _captureSource;
                 _captureSource = null;
                 etwChannel = _etwChannel;
@@ -471,7 +473,12 @@ namespace Carthago.Services
         private void StartPcapCapture(ILiveDevice device, string? captureFilter = null, bool requireFilter = false)
         {
             if (device == null) throw new ArgumentNullException(nameof(device));
-            lock (_lifecycleLock) _device = device;
+            var interfaceContext = CaptureInterfaceEnrichment.Resolve(device.Name, device.Description);
+            lock (_lifecycleLock)
+            {
+                _device = device;
+                _pcapInterfaceContext = interfaceContext;
+            }
 
             try
             {
@@ -520,6 +527,7 @@ namespace Carthago.Services
         private void OnPacketArrival(object sender, PacketCapture packet)
         {
             CancellationToken token;
+            CaptureInterfaceContext? interfaceContext;
             lock (_lifecycleLock)
             {
                 if (_runCts is null || _runCts.IsCancellationRequested || _disposed != 0)
@@ -527,6 +535,7 @@ namespace Carthago.Services
                 if (sender is ILiveDevice senderDevice && !ReferenceEquals(senderDevice, _device))
                     return; // ignore a late callback from a previous capture device
                 token = _runCts.Token;
+                interfaceContext = _pcapInterfaceContext;
             }
 
             Interlocked.Increment(ref _packetsCaptured);
@@ -537,6 +546,7 @@ namespace Carthago.Services
                 if (record is null) return;
 
                 Interlocked.Increment(ref _packetsParsedOk);
+                CaptureInterfaceEnrichment.Apply(record, interfaceContext ?? CaptureInterfaceContext.UnknownNpcap);
                 PublishRecord(record, token);
             }
             catch (Exception ex)
@@ -555,6 +565,7 @@ namespace Carthago.Services
                     Interlocked.Increment(ref _packetsCaptured);
                     Interlocked.Exchange(ref _lastCapturedTicks, DateTime.UtcNow.Ticks);
                     Interlocked.Increment(ref _packetsParsedOk);
+                    CaptureInterfaceEnrichment.Apply(record, CaptureInterfaceContext.Etw);
                     PublishRecord(record, token);
                 }
             }
