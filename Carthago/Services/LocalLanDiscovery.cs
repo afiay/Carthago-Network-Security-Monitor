@@ -16,10 +16,33 @@ namespace Carthago.Services
 {
     public sealed record LocalLanInterface(string Name, IPAddress Address, IPAddress Mask);
     public sealed record LocalLanDeviceRow(string Address, string Mac, string State, string Evidence);
-    public sealed record LocalLanScanResult(
-        IReadOnlyDictionary<string, string> NeighborMacs,
-        IReadOnlyCollection<string> PingReplies,
-        int TargetsProbed);
+    public sealed record LocalLanScanResult
+    {
+        public LocalLanScanResult(
+            IReadOnlyDictionary<string, string> neighborMacs,
+            IReadOnlyCollection<string> pingReplies,
+            int targetsProbed)
+            : this(neighborMacs, pingReplies, targetsProbed, Array.Empty<string>())
+        {
+        }
+
+        public LocalLanScanResult(
+            IReadOnlyDictionary<string, string> neighborMacs,
+            IReadOnlyCollection<string> pingReplies,
+            int targetsProbed,
+            IReadOnlyCollection<string> arpReplies)
+        {
+            NeighborMacs = neighborMacs ?? throw new ArgumentNullException(nameof(neighborMacs));
+            PingReplies = pingReplies ?? throw new ArgumentNullException(nameof(pingReplies));
+            ArpReplies = arpReplies ?? throw new ArgumentNullException(nameof(arpReplies));
+            TargetsProbed = targetsProbed;
+        }
+
+        public IReadOnlyDictionary<string, string> NeighborMacs { get; }
+        public IReadOnlyCollection<string> PingReplies { get; }
+        public int TargetsProbed { get; }
+        public IReadOnlyCollection<string> ArpReplies { get; }
+    }
 
     /// <summary>
     /// Separate from the packet capture source picker. Read-only local neighbor
@@ -169,71 +192,99 @@ namespace Carthago.Services
             var interfaces = GetLocalInterfaces(interfaceId);
             if (interfaceId.HasValue && interfaces.Count == 0)
                 throw new InvalidOperationException("The selected adapter has no active private IPv4 address.");
-            var targets = PlanProbeTargets(interfaces);
-            var responses = new ConcurrentDictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
+            return await ScanInterfacesAsync(interfaces, sendIcmp, interfaceId.HasValue, token,
+                arpResolver: null, PingAsync,
+                (source, cancellation) => ReadNeighborCacheAsync(cancellation, source)).ConfigureAwait(false);
+        }
 
-            if (sendIcmp)
+        internal static async Task<LocalLanScanResult> ScanInterfacesAsync(
+            IReadOnlyList<LocalLanInterface> interfaces,
+            bool activeDiscovery,
+            bool scopeNeighborCache,
+            CancellationToken token,
+            Func<IPAddress, IPAddress, string?>? arpResolver,
+            Func<IPAddress, CancellationToken, Task<bool>> pingAsync,
+            Func<IPAddress?, CancellationToken, Task<IReadOnlyDictionary<string, string>>> readNeighborCacheAsync)
+        {
+            if (interfaces is null) throw new ArgumentNullException(nameof(interfaces));
+            if (pingAsync is null) throw new ArgumentNullException(nameof(pingAsync));
+            if (readNeighborCacheAsync is null) throw new ArgumentNullException(nameof(readNeighborCacheAsync));
+            token.ThrowIfCancellationRequested();
+
+            var targets = PlanProbeTargets(interfaces);
+            IReadOnlyDictionary<string, string> directArp = new Dictionary<string, string>();
+            if (activeDiscovery)
+                directArp = await WindowsLanArpResolver.ResolveAsync(
+                    interfaces, targets, Array.Empty<string>(), token, arpResolver).ConfigureAwait(false);
+
+            // ARP establishes that a peer answered on the selected link. Ping
+            // only those peers to enrich evidence instead of making ICMP a
+            // discovery prerequisite.
+            var pingReplies = new ConcurrentDictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
+            if (activeDiscovery)
             {
-                using var semaphore = new SemaphoreSlim(24);
-                var jobs = targets.Select(async ip =>
+                using var slots = new SemaphoreSlim(24);
+                var jobs = directArp.Keys.Select(async address =>
                 {
-                    await semaphore.WaitAsync(token).ConfigureAwait(false);
+                    await slots.WaitAsync(token).ConfigureAwait(false);
                     try
                     {
-                        using var ping = new Ping();
-                        try
-                        {
-                            var reply = await ping.SendPingAsync(ip, 400).ConfigureAwait(false);
-                            if (reply.Status == IPStatus.Success)
-                                responses.TryAdd(ip.ToString(), 0);
-                        }
-                        catch (PingException) { /* Peer cannot answer ICMP. */ }
+                        var ip = IPAddress.Parse(address);
+                        if (await pingAsync(ip, token).ConfigureAwait(false))
+                            pingReplies.TryAdd(address, 0);
                     }
-                    finally { semaphore.Release(); }
-                });
+                    finally { slots.Release(); }
+                }).ToArray();
                 await Task.WhenAll(jobs).ConfigureAwait(false);
             }
 
             token.ThrowIfCancellationRequested();
-            IReadOnlyDictionary<string, string> neighbors;
-            if (interfaceId.HasValue)
+            var cachedNeighbors = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (scopeNeighborCache)
             {
-                // On Windows arp -N scopes the neighbor table to a specific
-                // local interface address. Do not attribute another adapter's
-                // cached MAC or a routed-only ICMP reply to this capture source.
-                var scoped = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                 foreach (var adapter in interfaces)
                 {
-                    var entries = await ReadNeighborCacheAsync(token, adapter.Address).ConfigureAwait(false);
+                    var entries = await readNeighborCacheAsync(adapter.Address, token).ConfigureAwait(false);
                     foreach (var entry in entries)
-                        scoped[entry.Key] = entry.Value;
+                        cachedNeighbors[entry.Key] = entry.Value;
                 }
-                // Native Windows ARP resolution on the selected interface
-                // supplements the command-line cache. It can find peers which
-                // do not answer ICMP, and does not depend on localized output.
-                if (sendIcmp)
-                {
-                    var resolved = await WindowsLanArpResolver.ResolveAsync(
-                        interfaces, targets, scoped.Keys, token).ConfigureAwait(false);
-                    foreach (var entry in resolved)
-                        scoped[entry.Key] = entry.Value;
-                }
-                neighbors = scoped;
             }
             else
-                neighbors = await ReadNeighborCacheAsync(token).ConfigureAwait(false);
+            {
+                var entries = await readNeighborCacheAsync(null, token).ConfigureAwait(false);
+                foreach (var entry in entries)
+                    cachedNeighbors[entry.Key] = entry.Value;
+            }
 
             var permitted = new HashSet<string>(targets.Select(ip => ip.ToString()), StringComparer.OrdinalIgnoreCase);
-            if (!interfaceId.HasValue)
+            if (!scopeNeighborCache)
                 foreach (var adapter in interfaces)
                     permitted.Add(adapter.Address.ToString());
 
-            var filteredNeighbors = neighbors.Where(pair => permitted.Contains(pair.Key))
+            var filteredNeighbors = cachedNeighbors.Where(pair => permitted.Contains(pair.Key))
                 .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.OrdinalIgnoreCase);
-            var filteredReplies = interfaceId.HasValue
-                ? responses.Keys.Where(filteredNeighbors.ContainsKey).ToArray()
-                : responses.Keys.ToArray();
-            return new LocalLanScanResult(filteredNeighbors, filteredReplies, sendIcmp ? targets.Count : 0);
+            foreach (var neighbor in directArp)
+                if (permitted.Contains(neighbor.Key))
+                    filteredNeighbors[neighbor.Key] = neighbor.Value;
+
+            var filteredPings = scopeNeighborCache
+                ? pingReplies.Keys.Where(filteredNeighbors.ContainsKey).ToArray()
+                : pingReplies.Keys.ToArray();
+            return new LocalLanScanResult(filteredNeighbors, filteredPings,
+                activeDiscovery ? targets.Count : 0, directArp.Keys.ToArray());
+        }
+
+        private static async Task<bool> PingAsync(IPAddress address, CancellationToken token)
+        {
+            token.ThrowIfCancellationRequested();
+            using var ping = new Ping();
+            try
+            {
+                var reply = await ping.SendPingAsync(address, 400).ConfigureAwait(false);
+                token.ThrowIfCancellationRequested();
+                return reply.Status == IPStatus.Success;
+            }
+            catch (PingException) { return false; }
         }
 
         public static IReadOnlyDictionary<string, string> ParseArpOutput(string? content)
@@ -256,7 +307,7 @@ namespace Carthago.Services
             return found;
         }
 
-        private static async Task<IReadOnlyDictionary<string, string>> ReadNeighborCacheAsync(
+        internal static async Task<IReadOnlyDictionary<string, string>> ReadNeighborCacheAsync(
             CancellationToken token, IPAddress? interfaceAddress = null)
         {
             try
