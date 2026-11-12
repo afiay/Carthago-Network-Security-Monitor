@@ -151,6 +151,10 @@ namespace Carthago.Models
         // Capture-attested complete, standalone SMB2 WRITE request. No raw IDs or file content retained.
         public bool Smb2CompleteWriteRequestObserved { get; internal set; }
         public uint? Smb2ValidatedWriteLength { get; internal set; }
+        // Server-reported status, not authenticated success or durable file placement.
+        public Guid? Smb2WriteResponseCorrelationId { get; internal set; }
+        public uint? Smb2WriteResponseStatus { get; internal set; }
+        public uint? Smb2WriteAcknowledgedLength { get; internal set; }
         // Capture-only initial TFTP handshake evidence; never populated by port inference.
         public byte? TftpInitialRequestOpcode { get; internal set; }
         public byte? TftpInitialReplyOpcode { get; internal set; }

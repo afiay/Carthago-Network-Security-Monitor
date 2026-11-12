@@ -45,3 +45,11 @@ R903/R908/R910/R919/R942/R950 now require capture-attested complete standalone p
 ## Q4 regression correction — owner test checkpoint 5d8bcb4
 
 Owner Windows Release compilation succeeded, but targeted tests 359/376 and full suite 12,200/12,217 (17 failures, zero skipped, 168.6s). All six Q4 rules lost positive matches; the dedicated capture test failed at the producer flag assertion. Root cause identified by source inspection: SMB2 StructureSize was read at header offset 0 (protocol signature) instead of offset 4 (wire offset 8). Correct the offset only; retain all strict framing, length, flags and identifier requirements and all existing positive/negative tests. Add one direct valid-inspector test and three invalid-header-size cases. Q4 remains unverified until owner reruns; do not proceed to Q5 or new IDs before successful regression. No CI triggered. Earlier 12,192/12,192 remains the last supplied passing full-suite checkpoint.
+
+## Verified owner checkpoint — 812b752 (2026-11-13)
+
+Owner Windows Release: 17/17 SMB2 qualification, 380/380 selected regressions, full 12,237/12,237, zero failed/skipped, 170.6s. Corrected Q4 producer and six rule regressions verified. Concurrent DNS-to-connection enrichment included. All sixteen Q1–Q4 enhanced rules locally regression-tested, not production-qualified.
+
+## Q5 — bounded SMB2 WRITE response corroboration
+
+Keep six Q4 attempt predicates unchanged. One outstanding request per existing bounded TCP flow; both observed SYN anchors, complete untrimmed payload, no TLS/gaps; match reverse response message/session/tree IDs, TCP acknowledgment, complete standalone synchronous WRITE and 30s UTC. STATUS_SUCCESS reports nonzero count at most requested length (partial distinguished); simple final ERROR reports status without count. Raw IDs only in bounded flow state; response record retains request GUID/status/count. Subsequent payload consumes slot; pipelining unsupported; SYN/FIN/RST/TLS/gap/retransmission invalidate pending. Server-reported evidence, not authentication, share/path identity, durability or successful attack. Existing alerts unchanged; no new IDs/promotions. 15 new test cases; Windows execution pending. Concurrent enrichment preserved.

@@ -43,6 +43,7 @@ namespace Carthago.Services
             // Exactly one pending Redis CONFIG SET per bounded TCP flow.
             public bool RedisConfigSetPending;
             public DateTime RedisConfigSetRequestedUtc;
+            public Smb2WriteExchange.Pending? Smb2Pending;
         }
 
         private sealed class DirectionState
@@ -398,7 +399,10 @@ namespace Carthago.Services
                     {
                         lock (_tcpSync)
                             if (_tcp.TryGetValue(tcpFlow, out var flow))
+                            {
                                 flow.RedisConfigSetPending = false;
+                                flow.Smb2Pending = null;
+                            }
                     }
                 }
 
@@ -518,6 +522,13 @@ namespace Carthago.Services
                                 rec.Smb2CompleteWriteRequestObserved = true;
                                 rec.Smb2ValidatedWriteLength = writeLength;
                             }
+
+                            // Corroborating response evidence; attempt predicates remain unchanged.
+                            if (sport == 445 || dport == 445)
+                                ObserveSmb2WriteExchange(tcpFlow, c2s, rec, normPayload,
+                                    tcpAck && !tcpSyn && completeIpPacket
+                                    && normPayload.Length == l4Payload.Length
+                                    && (tcpFlagsField.GetValueOrDefault() & 0x05) == 0, seq, ack);
 
                             // -------- Bounded EtherNet/IP ListIdentity and MQTT --------
                             if (NetworkBatch226230Wire.CipListIdentity(normPayload, sport, dport))
@@ -905,6 +916,7 @@ namespace Carthago.Services
                 dir.TlsActive = false;
                 state.RedisConfigSetPending = false;
                 state.RedisConfigSetRequestedUtc = default;
+                state.Smb2Pending = null;
             }
         }
 
@@ -913,7 +925,10 @@ namespace Carthago.Services
             lock (_tcpSync)
             {
                 if (_tcp.TryGetValue(key, out var state))
+                {
                     (clientToServer ? state.C2S : state.S2C).TlsActive = true;
+                    state.Smb2Pending = null;
+                }
             }
         }
 
@@ -934,6 +949,39 @@ namespace Carthago.Services
                 && replyUtc >= requestUtc
                 && replyUtc - requestUtc <= RedisReplyMaxAge;
 
+        // One outstanding request per existing bounded TCP flow. No raw payload retained.
+        private void ObserveSmb2WriteExchange(FlowKey key, bool c2s, TrafficRecord record,
+            ReadOnlySpan<byte> payload, bool complete, uint seq, uint ack)
+        {
+            lock (_tcpSync)
+            {
+                if (!_tcp.TryGetValue(key, out var flow)) return;
+                var pending = flow.Smb2Pending;
+                flow.Smb2Pending = null;
+                var direction = c2s ? flow.C2S : flow.S2C;
+                if (!complete || !flow.C2S.SynAnchored || !flow.S2C.SynAnchored
+                    || flow.C2S.Invalid || flow.S2C.Invalid || flow.C2S.TlsActive || flow.S2C.TlsActive
+                    || direction.NextSeq != unchecked(seq + (uint)payload.Length)) return;
+                var now = DateTime.UtcNow;
+                if (c2s)
+                {
+                    // Pipelined writes are deliberately not correlated in this subset.
+                    if (pending.HasValue || !record.Smb2CompleteWriteRequestObserved
+                        || record.Smb2ValidatedWriteLength is not uint length || record.Id == Guid.Empty) return;
+                    flow.Smb2Pending = Smb2WriteExchange.FromValidatedRequest(
+                        payload, length, record.Id, direction.NextSeq, now);
+                    return;
+                }
+                if (!pending.HasValue || record.SourcePort != 445 || record.DestinationPort != key.SrcPort
+                    || !Smb2WriteExchange.TryMatchReply(payload, pending.Value, ack, now,
+                        out uint status, out uint? count)) return;
+                record.Smb2WriteResponseCorrelationId = pending.Value.RequestId;
+                record.Smb2WriteResponseStatus = status;
+                record.Smb2WriteAcknowledgedLength = count;
+                record.ApplicationProtocol = "smb2.write.response";
+            }
+        }
+
         private bool ShouldAcceptSegment(FlowKey key, bool clientToServer, uint seq,
             ReadOnlySpan<byte> payload, out ReadOnlySpan<byte> normalized,
             out bool synAnchoredFirstPayload)
@@ -949,6 +997,7 @@ namespace Carthago.Services
                 if (dir.Invalid || dir.Collected >= MaxInspectBytesPerDir)
                 {
                     state.RedisConfigSetPending = false;
+                    state.Smb2Pending = null;
                     return false;
                 }
 
@@ -972,6 +1021,7 @@ namespace Carthago.Services
                     {
                         dir.Invalid = true;
                         state.RedisConfigSetPending = false;
+                        state.Smb2Pending = null;
                         return false; // missing segment
                     }
                     if (diff < 0)
@@ -980,12 +1030,14 @@ namespace Carthago.Services
                         if (overlap64 >= payload.Length)
                         {
                             state.RedisConfigSetPending = false;
+                            state.Smb2Pending = null;
                             return false; // retransmission while pending: fail closed
                         }
                         if (overlap64 > 3)
                         {
                             dir.Invalid = true;
                             state.RedisConfigSetPending = false;
+                            state.Smb2Pending = null;
                             return false;
                         }
                         overlap = (int)overlap64;
