@@ -1,0 +1,32 @@
+{
+  "name": "ga05-r356-jenkins-crumb-lookalike",
+  "classification": "Benign",
+  "records": [
+    {
+      "source": "10.0.0.71",
+      "destination": "10.10.0.20",
+      "protocol": "TCP",
+      "applicationProtocol": "HTTP",
+      "isTcp": true,
+      "sourcePort": 52372,
+      "destinationPort": 8080,
+      "httpMethod": "GET",
+      "httpUri": "/crumbIssuer/api/jsonx",
+      "httpHost": "jenkins.local"
+    }
+  ],
+  "rawHttpRequestsByRecordIndex": {
+    "0": "GET /crumbIssuer/api/jsonx HTTP/1.1\r\nHost: jenkins.local\r\nUser-Agent: carthago-replay\r\n\r\n"
+  },
+  "expectedMatches": [],
+  "expectedNonMatches": [
+    "R356"
+  ],
+  "environmentTuning": {
+    "approved": {
+      "ciCdServers": [
+        "10.10.0.20"
+      ]
+    }
+  }
+}

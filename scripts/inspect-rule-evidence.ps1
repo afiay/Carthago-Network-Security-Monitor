@@ -39,6 +39,17 @@ $pairedCount = @($items | Where-Object {
 
 Write-Host ("Rule inventory: {0}; positive controls: {1}; explicit negative controls: {2}; paired: {3}" -f
     $items.Count, $positiveCount, $negativeCount, $pairedCount)
+# Coverage includes fixture labels and observed IDs beyond the default registry.
+$auditProperty = $reportData.PSObject.Properties['ruleHardeningAudit']
+if ($null -ne $auditProperty -and $null -ne $auditProperty.Value) {
+    $defaultIds = @($auditProperty.Value | ForEach-Object { [string]$_.ruleId })
+    $extraIds = @($items | Where-Object { $defaultIds -notcontains $_.ruleId } |
+        ForEach-Object { [string]$_.ruleId } | Sort-Object -Unique)
+    Write-Host ("Default-rule audit: {0}; evidence-only IDs: {1}" -f $defaultIds.Count, $extraIds.Count)
+    if ($extraIds.Count -gt 0) {
+        Write-Host ("Evidence-only IDs (fixture labels or observed IDs; not default registrations): {0}" -f ($extraIds -join ', '))
+    }
+}
 Write-Host 'N/A indicates missing explicitly labeled control data, not a 0% or 100% success rate.'
 Write-Host 'Benign raw matches can be deliberately shadowed; they are not automatically false-positive alerts.'
 
