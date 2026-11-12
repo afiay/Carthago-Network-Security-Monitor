@@ -48,6 +48,9 @@ namespace Carthago.Services
         private DnsConnectionEnrichment? _dnsConnections;
         private TlsConnectionEnrichment? _tlsConnections;
         private ObservedAssetRegistry _observedAssets = new();
+        private readonly AssetHistoryStore _assetHistory = new();
+        internal AssetHistorySnapshot GetAssetHistory() => _assetHistory.Read();
+        internal string? AssetHistorySaveError => _assetHistory.LastSaveError;
 
         internal IReadOnlyList<ObservedAssetRow> GetObservedAssets()
         {
@@ -244,10 +247,13 @@ namespace Carthago.Services
             ILiveDevice? device;
             ICaptureSource? source;
             Channel<TrafficRecord>? etwChannel;
+            ObservedAssetRegistry? finalAssets;
 
             lock (_lifecycleLock)
             {
                 run = _runCts;
+                finalAssets = run is null ? null : _observedAssets;
+                finalAssets?.Seal();
                 _runCts = null;
                 _dnsConnections = null;
                 _tlsConnections = null;
@@ -278,6 +284,7 @@ namespace Carthago.Services
 
             etwChannel?.Writer.TryComplete();
             run?.Dispose();
+            if (finalAssets is not null) _assetHistory.Save(finalAssets);
         }
 
         // ---- capture start/stop ---------------------------------------
@@ -1163,6 +1170,10 @@ namespace Carthago.Services
                 // prune expired cache entries
                 PruneCache(_whoisCache);
                 PruneCache(_reputationCache);
+
+                ObservedAssetRegistry? assets;
+                lock (_lifecycleLock) assets = _runCts is null ? null : _observedAssets;
+                if (assets is not null) _assetHistory.Save(assets);
 
                 // publish stats snapshot (non-blocking)
                 var snap = GetStats();

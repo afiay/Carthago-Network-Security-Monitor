@@ -19,6 +19,10 @@ internal sealed class ObservedAssetRegistry
     private const int MaxAddresses = 32;
     private const int MaxServices = 64;
     private readonly object _gate = new();
+    private bool _sealed;
+    internal Guid SessionId { get; } = Guid.NewGuid();
+    internal DateTimeOffset SessionStartedUtc { get; } = DateTimeOffset.UtcNow;
+    internal void Seal() { lock (_gate) _sealed = true; }
     private readonly Dictionary<Key, Entry> _entries = new();
     private readonly record struct Key(string Scope, string Identity, bool Arp);
     private sealed class Entry
@@ -39,6 +43,7 @@ internal sealed class ObservedAssetRegistry
             scope = null;
         lock (_gate)
         {
+            if (_sealed) return;
             if (r.Protocol == "ARP")
             {
                 if (scope != null && r.ArpSenderMacMatchesFrame

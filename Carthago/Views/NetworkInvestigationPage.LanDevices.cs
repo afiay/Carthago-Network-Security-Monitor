@@ -18,6 +18,20 @@ namespace Carthago.Views
                 "ARP claims are not proof of device ownership or trust; service evidence is a TCP SYN-ACK, not a port scan.";
         }
 
+        private int _assetHistoryRequest;
+        internal async Task UpdateAssetHistoryAsync(Func<AssetHistorySnapshot> read, string? saveError)
+        {
+            int request = ++_assetHistoryRequest;
+            AssetHistoryStatus.Text = "Loading saved capture-session history...";
+            var history = await Task.Run(read);
+            if (request != _assetHistoryRequest) return;
+            AssetHistoryGrid.ItemsSource = history.Rows;
+            AssetHistoryStatus.Text = $"{history.SessionCount} saved session(s), {history.Rows.Count} historical identity rows. " +
+                "Historical evidence does not establish current presence. " +
+                (history.Error is null ? "" : "Read warning: " + history.Error + " ") +
+                (saveError is null ? "" : "Last checkpoint failed: " + saveError);
+        }
+
         private TrafficRecord[] _lanRecentTraffic = Array.Empty<TrafficRecord>();
         private IReadOnlyDictionary<string, string> _lanNeighborMacs = new Dictionary<string, string>();
         private IReadOnlyCollection<string> _lanPingReplies = Array.Empty<string>();

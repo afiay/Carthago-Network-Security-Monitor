@@ -171,6 +171,31 @@
       <Border Background="{StaticResource CardBgBrush}" BorderBrush="{StaticResource CardBorderBrush}"
               BorderThickness="1" CornerRadius="14" Padding="16" Margin="0,0,0,16">
         <StackPanel>
+          <TextBlock Text="SAVED ASSET HISTORY / PREVIOUS CHECKPOINTS" Style="{StaticResource DashboardSectionTitle}"/>
+          <TextBlock x:Name="AssetHistoryStatus" Text="No history loaded."
+                     TextWrapping="Wrap" Foreground="{StaticResource TextMutedBrush}" Margin="0,6,0,10"/>
+          <DataGrid x:Name="AssetHistoryGrid" AutoGenerateColumns="False" IsReadOnly="True"
+                    Height="220" EnableRowVirtualization="True"
+                    VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
+                    AutomationProperties.Name="Saved capture-session asset history">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Session started UTC" Binding="{Binding SessionStartedUtc}" Width="155"/>
+              <DataGridTextColumn Header="Identity / evidence" Binding="{Binding Asset.Evidence}" Width="165"/>
+              <DataGridTextColumn Header="Interface scope" Binding="{Binding Asset.InterfaceScope}" Width="180"/>
+              <DataGridTextColumn Header="MAC claim" Binding="{Binding Asset.Mac}" Width="150"/>
+              <DataGridTextColumn Header="Observed IPs" Binding="{Binding Asset.Addresses}" Width="200"/>
+              <DataGridTextColumn Header="TCP SYN-ACK ports" Binding="{Binding Asset.Services}" Width="150"/>
+              <DataGridTextColumn Header="First seen UTC" Binding="{Binding Asset.FirstSeenUtc}" Width="155"/>
+              <DataGridTextColumn Header="Last seen UTC" Binding="{Binding Asset.LastSeenUtc}" Width="155"/>
+              <DataGridTextColumn Header="Observations" Binding="{Binding Asset.Observations}" Width="100"/>
+            </DataGrid.Columns>
+          </DataGrid>
+        </StackPanel>
+      </Border>
+
+      <Border Background="{StaticResource CardBgBrush}" BorderBrush="{StaticResource CardBorderBrush}"
+              BorderThickness="1" CornerRadius="14" Padding="16" Margin="0,0,0,16">
+        <StackPanel>
           <DockPanel Margin="0,0,0,12">
             <Button DockPanel.Dock="Right" Content="Open Live Traffic" Style="{StaticResource SecondaryButton}"
                     MinWidth="145" Height="32" Click="OpenTraffic_Click"/>
