@@ -11,6 +11,13 @@ namespace Carthago.Views
 {
     public partial class NetworkInvestigationPage
     {
+        internal void UpdateObservedAssets(IReadOnlyList<ObservedAssetRow> assets)
+        {
+            ObservedAssetsGrid.ItemsSource = assets;
+            ObservedAssetStatus.Text = $"{assets.Count} observed identities in the current or last capture session. " +
+                "ARP claims are not proof of device ownership or trust; service evidence is a TCP SYN-ACK, not a port scan.";
+        }
+
         private TrafficRecord[] _lanRecentTraffic = Array.Empty<TrafficRecord>();
         private IReadOnlyDictionary<string, string> _lanNeighborMacs = new Dictionary<string, string>();
         private IReadOnlyCollection<string> _lanPingReplies = Array.Empty<string>();

@@ -47,6 +47,14 @@ namespace Carthago.Services
         private CancellationTokenSource? _runCts;
         private DnsConnectionEnrichment? _dnsConnections;
         private TlsConnectionEnrichment? _tlsConnections;
+        private ObservedAssetRegistry _observedAssets = new();
+
+        internal IReadOnlyList<ObservedAssetRow> GetObservedAssets()
+        {
+            ObservedAssetRegistry registry;
+            lock (_lifecycleLock) registry = _observedAssets;
+            return registry.Snapshot();
+        }
         private int _disposed;
         private string? _lastCaptureError;
 
@@ -371,6 +379,7 @@ namespace Carthago.Services
                 _runCts = run;
                 _dnsConnections = new DnsConnectionEnrichment();
                 _tlsConnections = new TlsConnectionEnrichment();
+                _observedAssets = new ObservedAssetRegistry();
             }
 
             try
@@ -596,15 +605,18 @@ namespace Carthago.Services
             // or queue fallback. The cache belongs to this capture session only.
             DnsConnectionEnrichment? dns;
             TlsConnectionEnrichment? tls;
+            ObservedAssetRegistry? assets;
             lock (_lifecycleLock)
             {
                 bool current = _runCts is not null && _runCts.Token == runToken;
                 dns = current ? _dnsConnections : null;
                 tls = current ? _tlsConnections : null;
+                assets = current ? _observedAssets : null;
             }
             long observedAt = Environment.TickCount64;
             dns?.Observe(record, observedAt);
             tls?.Observe(record, observedAt);
+            assets?.Observe(record, DateTimeOffset.UtcNow);
 
             // UI pressure must never suppress rule evaluation.
             if (!_uiChannel.Writer.TryWrite(new CaptureSessionRecord<TrafficRecord>(record, runToken)))

@@ -90,6 +90,7 @@ namespace Carthago.Models
         public string? ApplicationService { get => _applicationService; set { _applicationService = value; OnChanged(nameof(ApplicationService)); } }
 
         // Capture observation point, not proof of an application's route or remote VPN ownership.
+        internal bool ArpSenderMacMatchesFrame { get; set; }
         public string? CaptureBackend { get; set; }
         public string? CaptureInterfaceId { get; set; }
         public string? CaptureInterfaceName { get; set; }

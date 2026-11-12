@@ -147,6 +147,30 @@
       <Border Background="{StaticResource CardBgBrush}" BorderBrush="{StaticResource CardBorderBrush}"
               BorderThickness="1" CornerRadius="14" Padding="16" Margin="0,0,0,16">
         <StackPanel>
+          <TextBlock Text="OBSERVED ASSETS / CAPTURE SESSION" Style="{StaticResource DashboardSectionTitle}"/>
+          <TextBlock x:Name="ObservedAssetStatus" Text="No observed assets yet."
+                     TextWrapping="Wrap" Foreground="{StaticResource TextMutedBrush}" Margin="0,6,0,10"/>
+          <DataGrid x:Name="ObservedAssetsGrid" AutoGenerateColumns="False" IsReadOnly="True"
+                    Height="220" EnableRowVirtualization="True"
+                    VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
+                    AutomationProperties.Name="Observed asset identities">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Identity / evidence" Binding="{Binding Evidence}" Width="180"/>
+              <DataGridTextColumn Header="Interface scope" Binding="{Binding InterfaceScope}" Width="180"/>
+              <DataGridTextColumn Header="MAC claim" Binding="{Binding Mac}" Width="150"/>
+              <DataGridTextColumn Header="Observed IPs" Binding="{Binding Addresses}" Width="200"/>
+              <DataGridTextColumn Header="TCP SYN-ACK ports" Binding="{Binding Services}" Width="150"/>
+              <DataGridTextColumn Header="First seen UTC" Binding="{Binding FirstSeenUtc}" Width="155"/>
+              <DataGridTextColumn Header="Last seen UTC" Binding="{Binding LastSeenUtc}" Width="155"/>
+              <DataGridTextColumn Header="Observations" Binding="{Binding Observations}" Width="100"/>
+            </DataGrid.Columns>
+          </DataGrid>
+        </StackPanel>
+      </Border>
+
+      <Border Background="{StaticResource CardBgBrush}" BorderBrush="{StaticResource CardBorderBrush}"
+              BorderThickness="1" CornerRadius="14" Padding="16" Margin="0,0,0,16">
+        <StackPanel>
           <DockPanel Margin="0,0,0,12">
             <Button DockPanel.Dock="Right" Content="Open Live Traffic" Style="{StaticResource SecondaryButton}"
                     MinWidth="145" Height="32" Click="OpenTraffic_Click"/>

@@ -1132,6 +1132,7 @@ namespace Carthago.Services
                 Source = source,
                 Destination = destination,
                 Protocol = "ARP",
+                ArpSenderMacMatchesFrame = string.Equals(senderMac, ethernetSource, StringComparison.OrdinalIgnoreCase),
                 ProtocolVersion = "ARP/IPv4",
                 Length = frame.Length,
                 Info = info,
