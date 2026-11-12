@@ -167,7 +167,7 @@ public partial class MainWindow
         // Must be called on the WPF dispatcher. Snapshot source collections only;
         // never replay them as trusted producer events or mutate active capture.
         Dispatcher.VerifyAccess();
-        TrafficRecord[] traffic = _traffic.ToArray();
+        TrafficRecord[] traffic = _traffic.GetRetainedSnapshot().ToArray();
         DetectionEvent[] alerts = _alerts.ToArray();
         Incident[] incidents = _sinkHost?.Analytics.GetRecentIncidents(1000).ToArray() ?? Array.Empty<Incident>();
         AnomalySignal[] anomalies = _sinkHost?.Analytics.GetRecentAnomalies(1000).ToArray() ?? Array.Empty<AnomalySignal>();

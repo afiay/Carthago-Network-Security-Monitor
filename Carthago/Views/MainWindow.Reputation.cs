@@ -62,9 +62,7 @@ namespace Carthago
 
                 await _captureService.ManualReputationLookup(test);
 
-                _traffic.Insert(0, test);
-                if (_traffic.Count > 200)
-                    _traffic.RemoveAt(_traffic.Count - 1);
+                _traffic.PrependBatch(new[] { test }, 200);
 
                 bool isMalicious = test.ReputationIsMalicious == true;
                 int score = test.ReputationScore ?? 0;

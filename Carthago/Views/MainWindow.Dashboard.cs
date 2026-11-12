@@ -650,7 +650,9 @@ namespace Carthago
                     break;
             }
 
-            var selectedSource = (DeviceComboBox.SelectedItem as ComboBoxItem)?.Content?.ToString();
+            var selectedItem = DeviceComboBox.SelectedItem as ComboBoxItem;
+            var selectedSource = selectedItem?.Content?.ToString();
+            var selectedLanHost = selectedItem?.Tag as LanCaptureSelection;
             HeaderCaptureSourceText.Text = string.IsNullOrWhiteSpace(selectedSource)
                 ? "Source: waiting for selection"
                 : $"Source: {selectedSource}";
@@ -667,6 +669,10 @@ namespace Carthago
                 ? flow.State == Carthago.Services.CaptureFlowState.Stalled
                     ? $"Capture health: {flow.Captured} received, {flow.Displayed} displayed — UI delivery stalled"
                     : $"Capture health: {flow.Captured} received, {flow.Displayed} displayed, {flow.Dropped} UI records dropped"
+                : status == "Monitoring" && flow.State == Carthago.Services.CaptureFlowState.Idle && selectedLanHost is not null
+                ? $"Host filter active · waiting for {selectedLanHost.Address} traffic that reaches this PC"
+                : status == "Monitoring" && flow.State == Carthago.Services.CaptureFlowState.Starting && selectedLanHost is not null
+                ? $"Host filter starting · only locally visible {selectedLanHost.Address} traffic can appear"
                 : status == "Monitoring" && flow.State == Carthago.Services.CaptureFlowState.Idle
                 ? "Capture active · waiting for network traffic"
                 : status == "Monitoring" && flow.State == Carthago.Services.CaptureFlowState.Starting
@@ -674,7 +680,10 @@ namespace Carthago
                 : lastAnalysis.HasValue
                 ? $"●  {lastAnalysis.Value.ToLocalTime():yyyy-MM-dd HH:mm:ss}    (recorded)"
                 : "Last analysis: waiting for traffic";
-            HeaderLastAnalysisText.ToolTip = $"{sourceHealth.ToDisplayText()}\nFlow diagnostic: {flow.Reason}";
+            HeaderLastAnalysisText.ToolTip = selectedLanHost is null
+                ? $"{sourceHealth.ToDisplayText()}\nFlow diagnostic: {flow.Reason}"
+                : $"{LanCaptureDiscovery.FormatVisibilityNotice(selectedLanHost.Address)}\n\n" +
+                  $"{sourceHealth.ToDisplayText()}\nFlow diagnostic: {flow.Reason}";
 
             if (status == "Monitoring" && sourceHealth.Running)
                 HeaderLastAnalysisText.Text += $"\n{sourceHealth.ToDisplayText()}";

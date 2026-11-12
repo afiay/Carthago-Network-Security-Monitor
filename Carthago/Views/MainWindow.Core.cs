@@ -313,7 +313,7 @@ namespace Carthago
         {
             DateTime cutoff = DateTime.UtcNow - ActiveWindow;
 
-            var byProc = _traffic
+            var byProc = _traffic.GetRetainedSnapshot()
                 .Where(r => ParseIso(r.Timestamp) >= cutoff && !string.IsNullOrWhiteSpace(r.ProcessName))
                 .GroupBy(r => r.ProcessName ?? "Unknown")
                 .Select(g => new { Name = g.Key, Bytes = (long)g.Sum(x => Math.Max(0, x.Length)) })

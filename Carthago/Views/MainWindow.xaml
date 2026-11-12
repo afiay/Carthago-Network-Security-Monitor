@@ -296,12 +296,19 @@
                 <RowDefinition Height="Auto"/>
               </Grid.RowDefinitions>
               <DockPanel LastChildFill="True">
-                <Button x:Name="DiscoverLanCaptureButton" DockPanel.Dock="Right"
-                        Content="Discover LAN" Click="DiscoverLanCapture_Click"
-                        Height="24" Padding="6,1" Margin="6,0,0,0"
-                        Style="{StaticResource SecondaryButton}"
-                        ToolTip="Select a Wi-Fi or Ethernet Npcap adapter, then discover local IPv4 peers to add selectable host targets. Capture must be stopped."/>
-                <TextBlock x:Name="HeaderCaptureSourceLabel" Text="Capture source"
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="6,0,0,0">
+                  <Button x:Name="AddLanCaptureTargetButton"
+                          Content="Add IP" Click="AddLanCaptureTarget_Click"
+                          Height="24" Padding="6,1" Margin="0,0,5,0"
+                          Style="{StaticResource SecondaryButton}"
+                          ToolTip="Add a known local IPv4 address even when a sleeping phone does not answer discovery."/>
+                  <Button x:Name="DiscoverLanCaptureButton"
+                          Content="Scan LAN" Click="DiscoverLanCapture_Click"
+                          Height="24" Padding="6,1"
+                          Style="{StaticResource SecondaryButton}"
+                          ToolTip="Find local IPv4 peers and add visible-to-this-PC host filters. Discovery does not turn a phone into a remote capture source. Capture must be stopped."/>
+                </StackPanel>
+                <TextBlock x:Name="HeaderCaptureSourceLabel" Text="Capture source / host filter"
                            VerticalAlignment="Center" Style="{StaticResource MicroLabel}"/>
               </DockPanel>
               <ComboBox x:Name="DeviceComboBox"
@@ -315,9 +322,9 @@
                         Foreground="{StaticResource TextBrush}"
                         BorderBrush="{StaticResource InputBorderBrush}"
                         TextElement.Foreground="{StaticResource TextBrush}"
-                        ToolTip="Choose a local network capture source. Selection alone does not mean capture is running or healthy."
+                        ToolTip="Choose a local capture source or a discovered host filter. A host filter shows only traffic that reaches this PC; it is not a remote sensor."
                         AutomationProperties.LabeledBy="{Binding ElementName=HeaderCaptureSourceLabel}"
-                        AutomationProperties.HelpText="Choose the local capture device, then use Start Monitoring. Selecting a device does not establish that capture is active or healthy.">
+                        AutomationProperties.HelpText="Choose a local capture device or host filter, then use Start Monitoring. LAN host filters can show only packets already visible to this PC.">
                 <ComboBox.ItemTemplate>
                   <DataTemplate>
                     <TextBlock Text="{Binding}"
