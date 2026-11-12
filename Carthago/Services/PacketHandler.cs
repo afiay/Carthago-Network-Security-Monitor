@@ -718,6 +718,14 @@ namespace Carthago.Services
                             rec.DnsIsResponse = mdns.IsResponse;
                         }
 
+                        // Enrichment-only DNS evidence, separate from the strict
+                        // single-A detection qualification contract below.
+                        if (completeIpPacket && l4PayloadLen == ipPayloadLen - 8
+                            && (sport == 53 || dport == 53)
+                            && DnsAddressObservationInspector.TryInspect(l4Payload, out var addressDns)
+                            && (addressDns!.IsResponse ? sport == 53 : dport == 53))
+                            rec.DnsAddressObservation = addressDns;
+
                         // -------- Complete standard UDP DNS IN/A observation --------
                         if (isIPv4 && completeIpPacket && l4PayloadLen == ipPayloadLen - 8
                             && (sport == 53 || dport == 53)

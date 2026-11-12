@@ -281,6 +281,9 @@ namespace Carthago.Models
         public string? DnsValidatedAnswerAddress { get; internal set; }
         public int? DnsValidatedAnswerTtl { get; internal set; }
 
+        // Capture-only richer DNS observation; never populate strict rule qualification fields from it.
+        internal Carthago.Services.ProtocolIntelligence.DnsAddressObservationInspector.Observation? DnsAddressObservation { get; set; }
+
         // Observed DNS candidates, not a replacement for the actual TLS SNI.
         public string? DnsCorrelatedNames { get; set; }
         public int? DnsCorrelatedNameCount { get; set; }

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using Carthago.Models;
+using Carthago.Services.ProtocolIntelligence;
 
 namespace Carthago.Services;
 
@@ -21,7 +22,7 @@ internal sealed class DnsConnectionEnrichment
     private int _answerCount;
     private long _nextPrune;
 
-    private readonly record struct QueryKey(string Client, string Resolver, int ClientPort, ushort Id, string Name);
+    private readonly record struct QueryKey(string Client, string Resolver, int ClientPort, ushort Id, string Name, ushort Type);
     private readonly record struct AnswerKey(string Client, string Address);
     private readonly record struct Answer(long Observed, long Expires);
 
@@ -35,11 +36,22 @@ internal sealed class DnsConnectionEnrichment
                 _nextPrune = now + 1000;
             }
 
+            if (record.IsUdp && record.DnsAddressObservation is { } rich)
+            {
+                ObserveDns(record, rich.TransactionId, rich.Name, rich.QuestionType, rich.IsResponse, rich.Answers, now);
+                return;
+            }
+
             if (record.DnsValidatedAQuestion && record.DnsValidatedTransactionId is ushort id
                 && record.IsUdp && record.ApplicationProtocol == "DNS"
                 && NormalizeName(record.DnsValidatedQuestionName) is string name)
             {
-                ObserveDns(record, id, name, now);
+                var answers = record.DnsValidatedSingleAAnswer && !record.DnsValidatedNxdomain
+                    && record.DnsValidatedAnswerAddress is string addressAnswer
+                    && record.DnsValidatedAnswerTtl is int ttl && ttl > 0
+                    ? new[] { new DnsAddressObservationInspector.AddressAnswer(addressAnswer, (uint)ttl) }
+                    : Array.Empty<DnsAddressObservationInspector.AddressAnswer>();
+                ObserveDns(record, id, name, 1, record.DnsIsResponse, answers, now);
                 return;
             }
 
@@ -68,9 +80,9 @@ internal sealed class DnsConnectionEnrichment
         }
     }
 
-    private void ObserveDns(TrafficRecord r, ushort id, string name, long now)
+    private void ObserveDns(TrafficRecord r, ushort id, string name, ushort type, bool response,
+        IReadOnlyList<DnsAddressObservationInspector.AddressAnswer> answers, long now)
     {
-        bool response = r.DnsIsResponse;
         if ((response ? r.DstIsLocalHost : r.SrcIsLocalHost) != true
             || (response ? r.SourcePort : r.DestinationPort) != 53
             || (response ? r.DestinationPort : r.SourcePort) is not (> 0 and <= 65535)
@@ -78,7 +90,7 @@ internal sealed class DnsConnectionEnrichment
             || NormalizeIp(response ? r.Source : r.Destination) is not string resolver)
             return;
         int port = (response ? r.DestinationPort : r.SourcePort)!.Value;
-        var key = new QueryKey(client, resolver, port, id, name);
+        var key = new QueryKey(client, resolver, port, id, name, type);
         if (!response)
         {
             if (_pending.TryGetValue(key, out var previous) && now >= previous && now - previous < QueryLifetimeMs)
@@ -89,24 +101,28 @@ internal sealed class DnsConnectionEnrichment
         }
         if (!_pending.TryGetValue(key, out var sent) || now < sent) return;
         _pending.Remove(key);
-        if (now - sent >= QueryLifetimeMs || !r.DnsValidatedSingleAAnswer || r.DnsValidatedNxdomain
-            || r.DnsValidatedAnswerTtl is not > 0
-            || NormalizeIp(r.DnsValidatedAnswerAddress) is not string address
-            || !IPAddress.TryParse(address, out var ip) || ip.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork)
-            return;
+        if (now - sent >= QueryLifetimeMs) return;
 
-        var answerKey = new AnswerKey(client, address);
-        if (!_answers.TryGetValue(answerKey, out var bucket))
+        foreach (var answer in answers)
         {
-            if (_answerCount >= MaxAnswers) return;
-            _answers[answerKey] = bucket = new Dictionary<string, Answer>(StringComparer.Ordinal);
+            if (answer.Ttl == 0 || !IPAddress.TryParse(answer.Address, out var ip)
+                || (type == 1 && ip.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork)
+                || (type == 28 && ip.AddressFamily != System.Net.Sockets.AddressFamily.InterNetworkV6))
+                continue;
+            var address = EndpointIpEnrichment.Normalize(ip).ToString();
+            var answerKey = new AnswerKey(client, address);
+            if (!_answers.TryGetValue(answerKey, out var bucket))
+            {
+                if (_answerCount >= MaxAnswers) continue;
+                _answers[answerKey] = bucket = new Dictionary<string, Answer>(StringComparer.Ordinal);
+            }
+            if (!bucket.ContainsKey(name))
+            {
+                if (_answerCount >= MaxAnswers) continue;
+                _answerCount++;
+            }
+            bucket[name] = new Answer(now, now + Math.Min(MaxTtlMs, (long)answer.Ttl * 1000));
         }
-        if (!bucket.ContainsKey(name))
-        {
-            if (_answerCount >= MaxAnswers) return;
-            _answerCount++;
-        }
-        bucket[name] = new Answer(now, now + Math.Min(MaxTtlMs, (long)r.DnsValidatedAnswerTtl.Value * 1000));
     }
 
     private void Prune(long now)
