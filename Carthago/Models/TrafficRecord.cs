@@ -281,6 +281,11 @@ namespace Carthago.Models
         public string? DnsValidatedAnswerAddress { get; internal set; }
         public int? DnsValidatedAnswerTtl { get; internal set; }
 
+        // Observed DNS candidates, not a replacement for the actual TLS SNI.
+        public string? DnsCorrelatedNames { get; set; }
+        public int? DnsCorrelatedNameCount { get; set; }
+        public string? DnsCorrelationEvidence { get; set; }
+        public string? DnsSniAgreement { get; set; }
         public string? DnsQname { get; set; }
         public string? DnsQtype { get; set; }
         public string? DnsRcode { get; set; }
