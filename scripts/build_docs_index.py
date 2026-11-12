@@ -4,6 +4,7 @@
 This is documentation-only and does not inspect or execute product tests.
 """
 
+import argparse
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -52,7 +53,7 @@ def list_documents(directory, location):
         for rel in sorted(files, key=lambda p: p.name):
             lines.append(f"- [{label(rel)}]({rel.as_posix()})")
         lines.append("")
-    if not groups:
+    if not groups and location not in ARCHIVE_GROUPS:
         lines.append("Documents for this topic will be linked here when added.\n")
     return lines
 
@@ -69,6 +70,7 @@ EXTRA = {
         "- **[Master detection-rule catalog](MASTER_RULE_CATALOG.md)** — every registered RNNN rule, direct source links and historical evidence",
         "- [Rule hardening progress ledger](../RULE_HARDENING_PROGRESS.md)",
         "- [Rule documentation standard](../rules/RULE_DOCUMENTATION_STANDARD.md)",
+        "- [Content-pack overview](content-packs/README.md)",
         "- [Detection expansion cursor](../rules/DETECTION_EXPANSION_CANDIDATE_CURSOR_20261103.md)",
         "- [Unified 2,500-rule admission cursor](../rules/UNIFIED_2500_RULE_ADMISSION_CURSOR.md)",
         "- [Protocol-informed backlog](../rules/PROTOCOL_INFORMED_THREAT_BACKLOG.md)",
@@ -112,9 +114,18 @@ EXTRA = {
 }
 
 
+CHECK_ONLY = False
+STALE = []
+
+
 def write(path, lines):
+    content = "\n".join(lines).rstrip() + "\n"
+    if CHECK_ONLY:
+        if not path.exists() or path.read_text(encoding="utf-8") != content:
+            STALE.append(path.relative_to(ROOT).as_posix())
+        return
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+    path.write_text(content, encoding="utf-8")
 
 
 HOME_PATHS = [
@@ -195,6 +206,11 @@ def stable_group_lines():
 
 
 def main():
+    global CHECK_ONLY
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--check", action="store_true", help="Report stale indexes without writing files")
+    CHECK_ONLY = parser.parse_args().check
+    STALE.clear()
     for folder, title, description in SECTIONS:
         path = DOCS / folder
         lines = [f"# {title}", "", description, "", "[Documentation home](../README.md)", ""]
@@ -249,8 +265,18 @@ def main():
         "", "[Return to repository overview](../README.md)", "",
     ])
     write(DOCS / "README.md", lines)
-    print(f"Generated {len(SECTIONS) + 2 + len(ARCHIVE_GROUPS)} documentation indexes.")
+    count = len(SECTIONS) + 2 + len(ARCHIVE_GROUPS)
+    if CHECK_ONLY:
+        if STALE:
+            print("Stale documentation indexes:")
+            for name in STALE:
+                print(f"  {name}")
+            return 1
+        print(f"Verified {count} documentation indexes are current.")
+        return 0
+    print(f"Generated {count} documentation indexes.")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

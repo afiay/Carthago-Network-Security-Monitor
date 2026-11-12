@@ -26,7 +26,6 @@ Canonical navigation for users, contributors, security analysts, detection engin
 | What is being designed or implemented? | [Development records](06-development/README.md) and [UI ledger](design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md). |
 | How should documentation be maintained? | [Documentation maintenance standard](10-reference/DOCUMENTATION_MAINTENANCE.md) and [stable paths](10-reference/WORKFLOW_ANCHORS.md). |
 
-
 ## Browse by topic
 
 | Area | Contents |

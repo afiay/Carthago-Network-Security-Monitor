@@ -9,6 +9,7 @@ Rule-authoring contracts, catalog guides, content packs and every historical rul
 - **[Master detection-rule catalog](MASTER_RULE_CATALOG.md)** — every registered RNNN rule, direct source links and historical evidence
 - [Rule hardening progress ledger](../RULE_HARDENING_PROGRESS.md)
 - [Rule documentation standard](../rules/RULE_DOCUMENTATION_STANDARD.md)
+- [Content-pack overview](content-packs/README.md)
 - [Detection expansion cursor](../rules/DETECTION_EXPANSION_CANDIDATE_CURSOR_20261103.md)
 - [Unified 2,500-rule admission cursor](../rules/UNIFIED_2500_RULE_ADMISSION_CURSOR.md)
 - [Protocol-informed backlog](../rules/PROTOCOL_INFORMED_THREAT_BACKLOG.md)
