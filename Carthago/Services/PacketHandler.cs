@@ -141,6 +141,12 @@ namespace Carthago.Services
                     off += 2;
                 }
 
+                // ARP is valuable neighbor-presence evidence and is often the
+                // only selected-peer traffic visible on a switched LAN. Keep
+                // it explicitly separate from IP telemetry.
+                if (etherType == 0x0806)
+                    return ParseArp(frame, off, macSrc, macDst);
+
                 // ====== L3: IPv4 / IPv6 ======
                 bool isIPv4 = etherType == 0x0800;
                 bool isIPv6 = etherType == 0x86DD;
@@ -960,6 +966,51 @@ namespace Carthago.Services
                 if (s is "GET " or "POST" or "HEAD" or "PUT " or "HTTP") return true;
             }
             return false;
+        }
+
+        private static TrafficRecord? ParseArp(
+            ReadOnlySpan<byte> frame, int offset, string ethernetSource, string ethernetDestination)
+        {
+            const int arpLength = 28;
+            if (offset < 0 || frame.Length - offset < arpLength)
+                return null;
+
+            var arp = frame.Slice(offset, arpLength);
+            if (BinaryPrimitives.ReadUInt16BigEndian(arp.Slice(0, 2)) != 1 || // Ethernet
+                BinaryPrimitives.ReadUInt16BigEndian(arp.Slice(2, 2)) != 0x0800 || // IPv4
+                arp[4] != 6 || arp[5] != 4)
+                return null;
+
+            var operation = BinaryPrimitives.ReadUInt16BigEndian(arp.Slice(6, 2));
+            if (operation is not 1 and not 2)
+                return null;
+
+            var source = new IPAddress(arp.Slice(14, 4)).ToString();
+            var destination = new IPAddress(arp.Slice(24, 4)).ToString();
+            var senderMac = MacToString(arp.Slice(8, 6));
+            var info = operation == 1
+                ? $"Who has {destination}? Tell {source}"
+                : $"{source} is at {senderMac}";
+
+            return new TrafficRecord
+            {
+                Timestamp = DateTime.Now.ToString("HH:mm:ss"),
+                Source = source,
+                Destination = destination,
+                Protocol = "ARP",
+                ProtocolVersion = "ARP/IPv4",
+                Length = frame.Length,
+                Info = info,
+                Checksum = "N/A",
+                MacSource = string.IsNullOrEmpty(senderMac) ? ethernetSource : senderMac,
+                MacDestination = ethernetDestination,
+                IsTcp = false,
+                IsUdp = false,
+                IpVersion = null,
+                ApplicationProtocol = "ARP",
+                IsVpn = null,
+                IsProxy = null
+            };
         }
 
         private static string FlagsToString(ushort tf)

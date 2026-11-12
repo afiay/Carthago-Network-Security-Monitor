@@ -333,6 +333,18 @@ namespace Carthago.Services
                 return;
             }
 
+            if (choice.Tag is LanCaptureSelection selectedHost)
+            {
+                var proceed = MessageBox.Show(
+                    LanCaptureDiscovery.FormatVisibilityNotice(selectedHost.Address) +
+                    "\n\nCarthago will send one ARP presence check when capture starts so a responding " +
+                    "neighbor can appear as link-layer evidence.\n\nStart this local-visibility host filter?",
+                    "LAN host filter — local visibility only",
+                    MessageBoxButton.OKCancel, MessageBoxImage.Information);
+                if (proceed != MessageBoxResult.OK)
+                    return;
+            }
+
             // Capture sources must not overlap: release the previous session first.
             StopCurrentCapture();
             Volatile.Write(ref _lastCaptureError, null);
@@ -382,6 +394,7 @@ namespace Carthago.Services
                     lock (_lifecycleLock) _activeLanHost = host.Address;
                     StartPcapCapture(host.Device,
                         LanCaptureDiscovery.ComposeFilter(_currentFilter, host.Address), requireFilter: true);
+                    TrySendLanPresenceProbe(host);
                 }
                 else if (choice.Tag is ILiveDevice device)
                 {
@@ -477,6 +490,26 @@ namespace Carthago.Services
                 try { device.OnPacketArrival -= OnPacketArrival; } catch { }
                 try { device.Close(); } catch { }
                 throw;
+            }
+        }
+
+        private static void TrySendLanPresenceProbe(LanCaptureSelection host)
+        {
+            if (host.LocalInterface is null || host.Device.MacAddress is null)
+                return;
+
+            try
+            {
+                host.Device.SendPacket(NpcapArpDiscovery.BuildRequest(
+                    host.Device.MacAddress,
+                    host.LocalInterface.Address,
+                    host.Address));
+            }
+            catch (Exception ex)
+            {
+                // The capture is still useful for naturally occurring local
+                // traffic even if this optional one-shot presence check fails.
+                Console.Error.WriteLine($"LAN presence check failed for {host.Address}: {ex.Message}");
             }
         }
 
