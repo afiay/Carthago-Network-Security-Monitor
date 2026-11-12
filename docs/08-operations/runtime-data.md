@@ -27,3 +27,7 @@ These generated files should stay out of source control and are covered by `.git
 ## Audit Notes
 - No duplicate `Data/Sammanfattning` DOCX entry was found during this pass.
 - Large threat-intel and GeoLite inputs should remain policy-driven artifacts, not accidental commits.
+
+## Local build and verification output
+
+The repository-root `build-verify/` directory is generated locally and excluded from Git. It may contain compiled assemblies, native dependencies, benchmark reports, test logs and other reproducible output. Build and verification scripts recreate their required output directories. Keep the original source inputs under `Carthago/` and test/replay fixtures under `Tests/`; do not use a previously built binary as evidence that the current source was verified. Preserve intentionally retained verification evidence in its documented, sanitized location rather than committing this output tree.

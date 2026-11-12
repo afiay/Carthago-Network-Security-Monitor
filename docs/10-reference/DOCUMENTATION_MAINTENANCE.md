@@ -40,3 +40,9 @@ The documentation home, numbered topic indexes, batch/research indexes and stabl
 ## 4. Evidence and security
 
 Never include credentials, private capture contents, local runtime state or sensitive identifiers in documentation without an explicit approved evidence policy. Link to sanitized evidence or the appropriate controlled artifact. A proposal, research note or source test is not a deployment guarantee.
+
+## 5. Retiring redundant files
+
+- Remove exact duplicate documentation only after confirming its canonical copy and checking references. Keep distinct historical records even if titles or rule ranges match.
+- Do not commit generated `build-verify/` output, compiled binaries, local test logs or caches. Preserve source, approved fixtures and intentional historical evidence.
+- Every rule-admission commit should include refreshed catalog and indexes. Run both generators, then both `--check` commands and the link audit; do not publish stale navigation as current. If generation is blocked, report the stale catalog explicitly and do not claim it is synchronized.

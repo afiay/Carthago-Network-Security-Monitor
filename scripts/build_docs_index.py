@@ -184,16 +184,22 @@ def archive_lines(directory, title, prefix, file_prefix):
     return lines
 
 
+def stable_paths(paths):
+    # pathlib ordering is platform-dependent (Windows is case-insensitive).
+    # Sort by POSIX spelling so the same Git tree generates identical indexes.
+    return sorted(paths, key=lambda path: path.relative_to(DOCS).as_posix())
+
+
 def stable_group_lines():
     """Index every stable working record, including manifests and contracts."""
     groups = [
         ("Live ledgers", [DOCS / "DEVELOPMENT_VALIDATION_LEDGER.md", DOCS / "RULE_HARDENING_PROGRESS.md", DOCS / "protocols/PROTOCOL_EXPANSION_PROGRESS.md"]),
-        ("Rule workflow", sorted((DOCS / "rules").rglob("*.md"))),
-        ("Development verification", sorted((DOCS / "development").rglob("*.md"))),
-        ("UI implementation", sorted((DOCS / "design").rglob("*.md"))),
-        ("Engineering plans", sorted((DOCS / "superpowers/plans").rglob("*.md"))),
-        ("Engineering specifications", sorted((DOCS / "superpowers/specs").rglob("*.md"))),
-        ("Machine-readable evidence contracts", sorted((DOCS / "contracts").rglob("*.json")) + sorted(DOCS.glob("holdout-evaluation*-manifest.json"))),
+        ("Rule workflow", stable_paths((DOCS / "rules").rglob("*.md"))),
+        ("Development verification", stable_paths((DOCS / "development").rglob("*.md"))),
+        ("UI implementation", stable_paths((DOCS / "design").rglob("*.md"))),
+        ("Engineering plans", stable_paths((DOCS / "superpowers/plans").rglob("*.md"))),
+        ("Engineering specifications", stable_paths((DOCS / "superpowers/specs").rglob("*.md"))),
+        ("Machine-readable evidence contracts", stable_paths((DOCS / "contracts").rglob("*.json")) + stable_paths(DOCS.glob("holdout-evaluation*-manifest.json"))),
     ]
     lines = []
     for heading, files in groups:

@@ -74,10 +74,7 @@ Data/**/*
 !Carthago/Data/custom.geo.json
 
 # Runtime detection platform state
-build-verify/tuning-benchmark.json
-build-verify/tuning-benchmark.md
-build-verify/**/*.json
-build-verify/**/*.md
+/build-verify/
 **/detections-*.jsonl
 **/outbox-*.jsonl
 **/feedback-*.jsonl
