@@ -106,6 +106,8 @@ namespace Carthago.Models
         public bool? IsProxy { get => _isProxy; set { _isProxy = value; OnChanged(nameof(IsProxy)); } }
 
         // ===== WHOIS / enrichment =====
+        // IP selected for the successful lookup, not necessarily the destination.
+        public string? WhoisLookupIp { get; set; }
         public string? WhoisRegistrar { get; set; }
         public string? WhoisOrganization { get; set; }
         public string? WhoisCountry { get; set; }
@@ -113,6 +115,7 @@ namespace Carthago.Models
         public string? WhoisAbuseContact { get; set; }
 
         // ===== Reputation =====
+        public string? ReputationLookupIp { get; set; }
         public bool? ReputationIsMalicious { get; set; }
         public int? ReputationScore { get; set; }
         public int? ReputationReports { get; set; }

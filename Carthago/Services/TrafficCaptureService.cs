@@ -715,9 +715,9 @@ namespace Carthago.Services
         }
 
         // ---- enrichment + rules ---------------------------------------
-        private async Task EnrichAsync(TrafficRecord rec, CancellationToken ct)
+        private Task EnrichAsync(TrafficRecord rec, CancellationToken ct)
         {
-            try
+            return EnrichmentEvaluationGuard.RunAsync(async () =>
             {
                 // GeoIP is local database enrichment and belongs on the core record,
                 // not only on the map rendering path. This makes country/ISO/coords
@@ -775,6 +775,7 @@ namespace Carthago.Services
                         var w = await EnrichWithWhoisAsync(whoisTarget, ct).ConfigureAwait(false);
                         if (w is not null)
                         {
+                            rec.WhoisLookupIp = whoisTarget;
                             rec.WhoisASN = w.Asn ?? rec.WhoisASN;
                             rec.WhoisOrganization = w.Org ?? rec.WhoisOrganization;
                             rec.WhoisCountry = w.CountryCode ?? rec.WhoisCountry;
@@ -789,6 +790,7 @@ namespace Carthago.Services
                         var rep = await EnrichWithReputationAsync(whoisTarget, ct).ConfigureAwait(false);
                         if (rep is not null)
                         {
+                            rec.ReputationLookupIp = whoisTarget;
                             rec.ReputationScore = rep.AbuseConfidenceScore;
                             rec.ReputationReports = rep.TotalReports;
                             if (DateTimeOffset.TryParse(rep.LastReportedAt, out var dto))
@@ -799,13 +801,8 @@ namespace Carthago.Services
                     }
                 }
 
-                EvaluateRules(rec);
-            }
-            catch (OperationCanceledException) { /* expected on stop */ }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"EnrichAsync error: {ex.Message}");
-            }
+            }, () => EvaluateRules(rec),
+                ex => Console.Error.WriteLine($"EnrichAsync error: {ex.Message}"), ct);
         }
 
         private void EnrichGeo(TrafficRecord rec)
@@ -858,6 +855,7 @@ namespace Carthago.Services
             var rep = await EnrichWithReputationAsync(ip, ct).ConfigureAwait(false);
             if (rep is null || ct.IsCancellationRequested) return;
 
+            rec.ReputationLookupIp = ip;
             rec.ReputationScore = rep.AbuseConfidenceScore;
             rec.ReputationReports = rep.TotalReports;
             if (DateTimeOffset.TryParse(rep.LastReportedAt, out var dto))
