@@ -149,3 +149,8 @@ Original workbook IDs R1513, R1287, R1644, R1649, R1891, R1743, R1208, R2704, R2
 ## R896–R900 — local process and typed network candidates
 
 Original owner-workbook IDs R1730, R1756, R1896, R1717, R1706. Separate Candidate/Shadow rules for regsvr32 scriptlet HTTP GET, cmstp INF GET, net SMB SYN peer fanout, VMware management-process resolver-SNI TLS, and regasm/regsvcs same-flow public SYN→TLS. No endpoint execution, COM changes, share enumeration, DoH, authorization or compromise inferred. See [R896–R900](../03-detection-rules/batches/RULE_BATCH_896-900.md). **SOURCE CANDIDATE — UNVERIFIED; xUnit source authored first, 0 builds/tests executed.** Next unallocated ID: R901.
+
+
+## R901–R905 — independent directory-service, remote-access, SMB, upload and MMC candidates
+
+Original owner-workbook IDs R1991, R2054, R1321, R2375, R1764. Five separate typed observables: nltest LDAP→Global Catalog SYNs; public SSH→screensharingd VNC SYN-ACK to same public peer; PowerShell SMB2 WRITE→WinRM SYN; curl public HTTP PUT with exact binary Content-Type; MMC private SMB SYN→public TLS. No successful authentication, file transfer, execution, COM operation or compromise inferred. See [R901–R905](../03-detection-rules/batches/RULE_BATCH_901-905.md). **SOURCE CANDIDATE — UNVERIFIED; xUnit source authored first, 0 builds/tests executed.** Next unallocated ID: R906.

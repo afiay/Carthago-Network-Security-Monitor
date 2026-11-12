@@ -923,6 +923,11 @@ namespace Carthago.Engine.Rules.Catalog
                 new R898_NetPrivateSmbSynPeerFanoutRule(),
                 new R899_VmwarePublicResolverTlsSniRule(),
                 new R900_RegasmPublicSynThenTlsRule(),
+                new R901_NltestLdapThenGlobalCatalogSynRule(),
+                new R902_PublicSshThenScreensharingVncResponseRule(),
+                new R903_PowershellSmbWriteThenWinRmSynRule(),
+                new R904_CurlPublicBinaryHttpPutRule(),
+                new R905_MmcPrivateSmbThenPublicTlsRule(),
             };
         }
 
