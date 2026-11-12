@@ -38,8 +38,9 @@ namespace Carthago.Services
         /// <summary>Enable/disable Authenticode presence check (opening image cert). Default false.</summary>
         public static bool CheckSignature { get; set; } = false;
 
-        /// <summary>Per-key TTL (avoid table scans every packet). Default 20s is reasonable under load.</summary>
-        public static TimeSpan CacheTtl { get; set; } = TimeSpan.FromSeconds(20);
+        /// <summary>Short TCP tuple cache; PID creation time is revalidated on hits.</summary>
+        public static TimeSpan CacheTtl { get; set; } = TimeSpan.FromSeconds(2);
+        private const int MaxCacheEntries = 8192;
 
         private sealed class CacheEntry
         {
@@ -76,10 +77,13 @@ namespace Carthago.Services
                 {
                     if (index == 0 ? !sourceMayBeLocal : !destinationMayBeLocal) continue;
                     var c = candidates[index];
-                    if (!c.LocalPort.HasValue || c.LocalPort.Value <= 0) continue;
+                    if (c.LocalPort is not (> 0 and <= 65535)
+                        || !IPAddress.TryParse(c.LocalAddr, out _)) continue;
 
                     var key = c.MakeKey();
-                    if (TryGetFresh(key, out var pi) && pi is { ProcessId: > 0 })
+                    // UDP tables lack remote tuples, so do not cache an inferred
+                    // binding under a flow key that could outlive the binding.
+                    if (c.Proto == "TCP" && TryGetFresh(key, out var pi) && pi is { ProcessId: > 0 })
                         return pi;
 
                     int pid = c.Proto switch
@@ -96,7 +100,8 @@ namespace Carthago.Services
                     if (pid > 0)
                     {
                         var info = BuildProcessInfo(pid);
-                        SetCache(key, info);
+                        if (c.Proto == "TCP" && info.StartTime.HasValue)
+                            SetCache(key, info);
                         return info;
                     }
                 }
@@ -124,20 +129,42 @@ namespace Carthago.Services
         private static bool TryGetFresh(string key, out ProcessInfo? info)
         {
             info = null;
-            if (Cache.TryGetValue(key, out var ce) && ce.Fresh)
+            if (!Cache.TryGetValue(key, out var ce)) return false;
+            if (ce.Fresh && MatchesProcessIdentity(ce.Info.StartTime, ReadProcessStartTime(ce.Info.ProcessId)))
             {
                 info = ce.Info;
                 return true;
             }
+            // Remove only the entry we inspected; another resolver may replace it.
+            ((System.Collections.Generic.ICollection<System.Collections.Generic.KeyValuePair<string, CacheEntry>>)Cache)
+                .Remove(new(key, ce));
             return false;
+        }
+
+        internal static bool MatchesProcessIdentity(DateTime? cachedStart, DateTime? currentStart)
+            => cachedStart.HasValue && currentStart.HasValue
+                && cachedStart.Value.ToUniversalTime() == currentStart.Value.ToUniversalTime();
+
+        private static DateTime? ReadProcessStartTime(int pid)
+        {
+            try
+            {
+                using var process = Process.GetProcessById(pid);
+                return process.StartTime;
+            }
+            catch { return null; }
         }
 
         private static void SetCache(string key, ProcessInfo info)
         {
+            var ttl = CacheTtl;
+            if (ttl <= TimeSpan.Zero) return;
+            if (ttl > TimeSpan.FromSeconds(2)) ttl = TimeSpan.FromSeconds(2);
+            if (Cache.Count >= MaxCacheEntries) Cache.Clear();
             Cache[key] = new CacheEntry
             {
                 Info = info,
-                Expires = DateTimeOffset.UtcNow.Add(CacheTtl)
+                Expires = DateTimeOffset.UtcNow.Add(ttl)
             };
         }
 
@@ -152,9 +179,9 @@ namespace Carthago.Services
             public Candidate(string proto, string? localAddr, int? localPort, string? remoteAddr, int? remotePort)
             {
                 Proto = proto;
-                LocalAddr = localAddr;
+                LocalAddr = NormalizeAddress(localAddr);
                 LocalPort = localPort;
-                RemoteAddr = remoteAddr;
+                RemoteAddr = NormalizeAddress(remoteAddr);
                 RemotePort = remotePort;
             }
 
@@ -167,6 +194,9 @@ namespace Carthago.Services
                 return $"{Proto}:{lp}:{la}:{ra}:{rp}";
             }
         }
+
+        private static string? NormalizeAddress(string? address)
+            => IPAddress.TryParse(address, out var ip) ? EndpointIpEnrichment.Normalize(ip).ToString() : address;
 
         private static bool HasRemoteEndpoint(Candidate c)
             => c.RemotePort is > 0 || !string.IsNullOrWhiteSpace(c.RemoteAddr);
@@ -181,10 +211,12 @@ namespace Carthago.Services
 
         private static int FindPidUdp(Candidate c)
         {
-            // UDP tables have no remote info; match by local addr/port only
-            if (TryFindPidInUdpTable(AddressFamily.InterNetwork, c, out int pid4)) return pid4;
-            if (TryFindPidInUdp6Table(c, out int pid6)) return pid6;
-            return 0;
+            // UDP tables have no remote info; match only the known local family.
+            // Never fall through to a different family after an ambiguous result.
+            if (!IPAddress.TryParse(c.LocalAddr, out var local)) return 0;
+            return local.AddressFamily == AddressFamily.InterNetwork
+                ? (TryFindPidInUdpTable(AddressFamily.InterNetwork, c, out int pid4) ? pid4 : 0)
+                : (TryFindPidInUdp6Table(c, out int pid6) ? pid6 : 0);
         }
 
         // ---------- TCPv4 ----------
@@ -327,7 +359,7 @@ namespace Carthago.Services
                 int num = Marshal.ReadInt32(tablePtr);
                 IntPtr rowPtr = IntPtr.Add(tablePtr, 4);
 
-                int partialPid = 0;
+                var owners = new UdpOwnerSelection();
                 for (int i = 0; i < num; i++)
                 {
                     var row = Marshal.PtrToStructure<MIB_UDPROW_OWNER_PID>(rowPtr);
@@ -337,11 +369,11 @@ namespace Carthago.Services
                     var laddr = new IPAddress(row.localAddr);
                     if (!AddrOk(c.LocalAddr, laddr)) { rowPtr = Next<MIB_UDPROW_OWNER_PID>(rowPtr); continue; }
 
-                    pid = row.owningPid;
-                    return pid > 0;
+                    owners.Observe(row.owningPid);
+                    rowPtr = Next<MIB_UDPROW_OWNER_PID>(rowPtr);
                 }
 
-                pid = partialPid;
+                pid = owners.Pid;
                 return pid > 0;
             }
             catch
@@ -373,6 +405,7 @@ namespace Carthago.Services
                 int num = Marshal.ReadInt32(tablePtr);
                 IntPtr rowPtr = IntPtr.Add(tablePtr, 4);
 
+                var owners = new UdpOwnerSelection();
                 for (int i = 0; i < num; i++)
                 {
                     var row = Marshal.PtrToStructure<MIB_UDP6ROW_OWNER_PID>(rowPtr);
@@ -382,11 +415,12 @@ namespace Carthago.Services
                     var laddr = new IPAddress(row.localAddr, row.localScopeId);
                     if (!AddrOk(c.LocalAddr, laddr)) { rowPtr = Next<MIB_UDP6ROW_OWNER_PID>(rowPtr); continue; }
 
-                    pid = (int)row.owningPid;
-                    return pid > 0;
+                    owners.Observe((int)row.owningPid);
+                    rowPtr = Next<MIB_UDP6ROW_OWNER_PID>(rowPtr);
                 }
 
-                return false;
+                pid = owners.Pid;
+                return pid > 0;
             }
             catch
             {
@@ -398,12 +432,30 @@ namespace Carthago.Services
             }
         }
 
+        // Multiple matching sockets with the same PID are harmless. Distinct
+        // owners (including wildcard vs exact bindings) cannot be disambiguated
+        // from the UDP table alone, so fail closed rather than select the first.
+        internal struct UdpOwnerSelection
+        {
+            private int _pid;
+            private bool _ambiguous;
+            internal int Pid => _ambiguous ? 0 : _pid;
+            internal void Observe(int pid)
+            {
+                if (pid <= 0) { _ambiguous = true; return; }
+                if (_pid == 0) _pid = pid;
+                else if (_pid != pid) _ambiguous = true;
+            }
+        }
+
         // ---------- helpers ----------
 
         private static bool AddrOk(string? preferredLocalAddr, IPAddress candidate)
         {
             if (string.IsNullOrWhiteSpace(preferredLocalAddr)) return true;
-            if (!TryParseIp(preferredLocalAddr, out var want)) return true; // ignore preference on parse failure
+            if (!TryParseIp(preferredLocalAddr, out var want)) return false;
+            want = EndpointIpEnrichment.Normalize(want);
+            candidate = EndpointIpEnrichment.Normalize(candidate);
             if (want.AddressFamily != candidate.AddressFamily) return false;
 
             // Windows commonly reports UDP listeners bound to wildcard addresses.
