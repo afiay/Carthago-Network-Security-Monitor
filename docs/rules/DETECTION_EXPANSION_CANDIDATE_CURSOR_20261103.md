@@ -159,3 +159,8 @@ Original owner-workbook IDs R1991, R2054, R1321, R2375, R1764. Five separate typ
 ## R906–R925 — twenty observable source candidates
 
 Original workbook origins R2110, R2358, R2239, R1122, R1223, R1470, R1643, R1689, R1769, R1827, R2055, R2642, R2656, R2344, R2362, R2476, R2193, R1180, R1345, R1233. Four review groups of five independent typed packet and process predicates. [Batch documentation](../03-detection-rules/batches/RULE_BATCH_906-925.md). Excluded R2300/R1716 as previously covered. **SOURCE CANDIDATE — UNVERIFIED; xUnit source authored first; 0 builds/tests executed.** Next unallocated ID: R926.
+
+
+## R926–R945 — twenty observable source candidates
+
+Workbook origins R1672, R1954, R1835, R1907, R1906, R2165, R1072, R1079, R1067, R1613, R2053, R1659, R1290, R1444, R1806, R1925, R2654, R1948, R1874, R1976. Independent network projections, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_926-945.md). Owner local prior checkpoint: 171/171 combined R896–R925 at 0d2d7ef; new batch **SOURCE CANDIDATE — UNVERIFIED; 0 builds/tests executed.** Next ID R946.
