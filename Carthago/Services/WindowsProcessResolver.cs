@@ -59,7 +59,7 @@ namespace Carthago.Services
         public static ProcessInfo? ResolveProcess(
             string sourceIP, int? sourcePort,
             string destIP, int? destPort,
-            string protocol)
+            string protocol, bool sourceMayBeLocal = true, bool destinationMayBeLocal = true)
         {
             try
             {
@@ -72,8 +72,10 @@ namespace Carthago.Services
                     new Candidate(proto, destIP,   destPort,   sourceIP, sourcePort)
                 };
 
-                foreach (var c in candidates)
+                for (int index = 0; index < candidates.Length; index++)
                 {
+                    if (index == 0 ? !sourceMayBeLocal : !destinationMayBeLocal) continue;
+                    var c = candidates[index];
                     if (!c.LocalPort.HasValue || c.LocalPort.Value <= 0) continue;
 
                     var key = c.MakeKey();
@@ -166,6 +168,9 @@ namespace Carthago.Services
             }
         }
 
+        private static bool HasRemoteEndpoint(Candidate c)
+            => c.RemotePort is > 0 || !string.IsNullOrWhiteSpace(c.RemoteAddr);
+
         private static int FindPidTcp(Candidate c)
         {
             // v4 first, then v6; exact match by local (and remote if available)
@@ -225,8 +230,9 @@ namespace Carthago.Services
                         return pid > 0;
                     }
 
-                    // keep as fallback if we didn't find a remote-exact match
-                    if (partialPid == 0) partialPid = row.owningPid;
+                    // A different peer is not evidence for this TCP connection.
+                    // Only retain a local-only candidate when no peer was supplied.
+                    if (partialPid == 0 && !HasRemoteEndpoint(c)) partialPid = row.owningPid;
 
                     rowPtr = Next<MIB_TCPROW_OWNER_PID>(rowPtr);
                 }
@@ -285,7 +291,7 @@ namespace Carthago.Services
                         return pid > 0;
                     }
 
-                    if (partialPid == 0) partialPid = (int)row.owningPid;
+                    if (partialPid == 0 && !HasRemoteEndpoint(c)) partialPid = (int)row.owningPid;
                     rowPtr = Next<MIB_TCP6ROW_OWNER_PID>(rowPtr);
                 }
 

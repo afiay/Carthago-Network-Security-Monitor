@@ -8,6 +8,45 @@ namespace Carthago.Tests;
 public sealed class EnrichmentEvaluationGuardTests
 {
     [Fact]
+    public async Task Failed_Stage_Does_Not_Skip_Later_Stage()
+    {
+        int evaluated = 0, failed = 0, later = 0;
+        await EnrichmentEvaluationGuard.RunAsync(async () =>
+        {
+            await EnrichmentEvaluationGuard.RunStageAsync(
+                () => Task.FromException(new InvalidOperationException("failed")),
+                _ => failed++, CancellationToken.None);
+            await EnrichmentEvaluationGuard.RunStageAsync(() =>
+            {
+                later++;
+                return Task.CompletedTask;
+            }, _ => failed++, CancellationToken.None);
+        }, () => evaluated++, _ => failed++, CancellationToken.None);
+        Assert.Equal(1, failed);
+        Assert.Equal(1, later);
+        Assert.Equal(1, evaluated);
+    }
+
+    [Fact]
+    public async Task Stage_Cancellation_Skips_Later_Stage_And_Evaluation()
+    {
+        using var cts = new CancellationTokenSource();
+        int later = 0, evaluated = 0, failed = 0;
+        await EnrichmentEvaluationGuard.RunAsync(async () =>
+        {
+            await EnrichmentEvaluationGuard.RunStageAsync(() =>
+            {
+                cts.Cancel();
+                return Task.CompletedTask;
+            }, _ => failed++, cts.Token);
+            later++;
+        }, () => evaluated++, _ => failed++, cts.Token);
+        Assert.Equal(0, later);
+        Assert.Equal(0, evaluated);
+        Assert.Equal(0, failed);
+    }
+
+    [Fact]
     public async Task Successful_Enrichment_Evaluates_Once()
     {
         int evaluated = 0, failed = 0;

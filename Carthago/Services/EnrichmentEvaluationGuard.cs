@@ -7,6 +7,26 @@ namespace Carthago.Services;
 
 internal static class EnrichmentEvaluationGuard
 {
+    // A provider error must not skip later independent providers.
+    internal static async Task RunStageAsync(Func<Task> stage, Action<Exception> reportFailure,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        try
+        {
+            await stage().ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            reportFailure(ex);
+        }
+        cancellationToken.ThrowIfCancellationRequested();
+    }
+
     // Enrichment failure must not suppress local detection. Session cancellation
     // is different: never evaluate a record after its run token is cancelled.
     internal static async Task RunAsync(Func<Task> enrich, Action evaluate,

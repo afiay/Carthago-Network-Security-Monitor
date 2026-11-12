@@ -719,92 +719,117 @@ namespace Carthago.Services
         // ---- enrichment + rules ---------------------------------------
         private Task EnrichAsync(TrafficRecord rec, CancellationToken ct)
         {
+            void Report(string stage, Exception ex)
+                => Console.Error.WriteLine($"Enrichment {stage} error: {ex.Message}");
+
+            Task Stage(string name, Func<Task> action)
+                => EnrichmentEvaluationGuard.RunStageAsync(action, ex => Report(name, ex), ct);
+
             return EnrichmentEvaluationGuard.RunAsync(async () =>
             {
-                // GeoIP is local database enrichment and belongs on the core record,
-                // not only on the map rendering path. This makes country/ISO/coords
-                // available to rules, UI snapshots and Excel/CSA export.
-                EnrichGeo(rec);
-
-                WindowsProcessResolver.ProcessInfo? process = null;
-                if ((rec.IsTcp || rec.IsUdp)
-                    && (rec.SourcePort is > 0 || rec.DestinationPort is > 0))
+                await Stage("geo", () =>
                 {
-                    process = await Task.Run(
-                        () => WindowsProcessResolver.ResolveProcess(
-                            rec.Source ?? string.Empty,
-                            rec.SourcePort,
-                            rec.Destination ?? string.Empty,
-                            rec.DestinationPort,
-                            rec.Protocol ?? string.Empty),
-                        ct).ConfigureAwait(false);
+                    EnrichGeo(rec);
+                    return Task.CompletedTask;
+                }).ConfigureAwait(false);
 
-                    rec.ProcessId = process?.ProcessId ?? 0;
-                    rec.ProcessName = process?.ProcessName ?? "Unknown";
+                await Stage("process", async () =>
+                {
+                    if (rec.ProcessId > 0)
+                    {
+                        rec.ProcessAttribution ??= "CaptureProvided";
+                        return; // Do not replace capture-provided process identity.
+                    }
+                    if ((!rec.IsTcp && !rec.IsUdp)
+                        || (rec.SourcePort is not > 0 && rec.DestinationPort is not > 0))
+                    {
+                        rec.ProcessAttribution = "NotApplicable";
+                        return;
+                    }
+                    if (rec.SrcIsLocalHost != true && rec.DstIsLocalHost != true)
+                    {
+                        rec.ProcessAttribution = rec.SrcIsLocalHost == false && rec.DstIsLocalHost == false
+                            ? "NotLocal" : "LocalHostUnknown";
+                        return;
+                    }
+
+                    var process = await Task.Run(() => WindowsProcessResolver.ResolveProcess(
+                        rec.Source ?? string.Empty, rec.SourcePort,
+                        rec.Destination ?? string.Empty, rec.DestinationPort,
+                        rec.Protocol ?? string.Empty,
+                        rec.SrcIsLocalHost == true, rec.DstIsLocalHost == true), ct).ConfigureAwait(false);
+
+                    if (process is { ProcessId: > 0 })
+                    {
+                        rec.ProcessId = process.ProcessId;
+                        rec.ProcessName = process.ProcessName;
+                        rec.ProcessAttribution = rec.IsTcp ? "TcpSocketTable" : "UdpLocalBinding";
+                    }
+                    else
+                    {
+                        rec.ProcessAttribution = "Unresolved";
+                        rec.ProcessName ??= "Unknown";
+                    }
+                }).ConfigureAwait(false);
+
+                var prefs = PreferencesService.Current;
+                var target = GetWhoisTarget(rec);
+                if (target is null) return;
+
+                if (prefs.EnableWhois)
+                {
+                    await Stage("whois", async () =>
+                    {
+                        var w = await EnrichWithWhoisAsync(target, ct).ConfigureAwait(false);
+                        if (w is null) return;
+                        rec.WhoisLookupIp = target;
+                        rec.WhoisASN = w.Asn ?? rec.WhoisASN;
+                        rec.WhoisOrganization = w.Org ?? rec.WhoisOrganization;
+                        rec.WhoisCountry = w.CountryCode ?? rec.WhoisCountry;
+                        rec.WhoisRegistrar = w.Registrar ?? rec.WhoisRegistrar;
+                        rec.WhoisAbuseContact = w.Abuse ?? rec.WhoisAbuseContact;
+                        Interlocked.Increment(ref _whoisEnriched);
+                    }).ConfigureAwait(false);
                 }
 
-                var classificationTarget = GetWhoisTarget(rec) ?? rec.Source;
-                if (!string.IsNullOrWhiteSpace(classificationTarget))
+                if (prefs.EnableReputation)
                 {
-                    var classification = await VpnProxyResolver.CheckAsync(
-                        new VpnContext
-                        {
-                            Ip = classificationTarget,
-                            DstPort = rec.DestinationPort,
-                            Protocol = rec.Protocol,
-                            Ja4h = rec.HttpJa4h,
-                            Ja4x = rec.TlsJa4x,
-                            ProcessName = process?.ProcessName,
-                            AbuseScore = rec.ReputationScore
-                        },
-                        ct).ConfigureAwait(false);
+                    await Stage("reputation", async () =>
+                    {
+                        var rep = await EnrichWithReputationAsync(target, ct).ConfigureAwait(false);
+                        if (rep is null) return;
+                        rec.ReputationLookupIp = target;
+                        rec.ReputationScore = rep.AbuseConfidenceScore;
+                        rec.ReputationReports = rep.TotalReports;
+                        if (DateTimeOffset.TryParse(rep.LastReportedAt, out var dto))
+                            rec.ReputationLastSeen = dto.UtcDateTime;
+                        rec.ReputationIsMalicious = IsMalicious(rec.ReputationScore);
+                        Interlocked.Increment(ref _reputationEnriched);
+                    }).ConfigureAwait(false);
+                }
+
+                await Stage("vpn-proxy", async () =>
+                {
+                    var classification = await VpnProxyResolver.CheckAsync(new VpnContext
+                    {
+                        Ip = target,
+                        DstPort = rec.DestinationPort,
+                        Protocol = rec.Protocol,
+                        Ja4h = rec.HttpJa4h,
+                        Ja4x = rec.TlsJa4x,
+                        Sni = rec.Sni,
+                        ProcessName = rec.ProcessName,
+                        AbuseScore = rec.ReputationScore
+                    }, ct).ConfigureAwait(false);
 
                     rec.IsVpn = classification.IsVpn;
                     rec.IsProxy = classification.IsProxy;
                     rec.NetworkType = classification.NetworkType;
-                }
+                    rec.VpnClassificationIp = target;
+                    rec.VpnClassificationConfidence = classification.Confidence;
+                }).ConfigureAwait(false);
 
-                var prefs = PreferencesService.Current;
-                bool enableWhois = prefs.EnableWhois;
-                bool enableReputation = prefs.EnableReputation;
-
-                // Skip enrichment when both sides are private/special (saves budget)
-                var whoisTarget = GetWhoisTarget(rec);
-                if (whoisTarget is not null && IsEnrichablePublicIp(whoisTarget))
-                {
-                    if (enableWhois)
-                    {
-                        var w = await EnrichWithWhoisAsync(whoisTarget, ct).ConfigureAwait(false);
-                        if (w is not null)
-                        {
-                            rec.WhoisLookupIp = whoisTarget;
-                            rec.WhoisASN = w.Asn ?? rec.WhoisASN;
-                            rec.WhoisOrganization = w.Org ?? rec.WhoisOrganization;
-                            rec.WhoisCountry = w.CountryCode ?? rec.WhoisCountry;
-                            rec.WhoisRegistrar = w.Registrar ?? rec.WhoisRegistrar;
-                            rec.WhoisAbuseContact = w.Abuse ?? rec.WhoisAbuseContact;
-                            Interlocked.Increment(ref _whoisEnriched);
-                        }
-                    }
-
-                    if (enableReputation)
-                    {
-                        var rep = await EnrichWithReputationAsync(whoisTarget, ct).ConfigureAwait(false);
-                        if (rep is not null)
-                        {
-                            rec.ReputationLookupIp = whoisTarget;
-                            rec.ReputationScore = rep.AbuseConfidenceScore;
-                            rec.ReputationReports = rep.TotalReports;
-                            if (DateTimeOffset.TryParse(rep.LastReportedAt, out var dto))
-                                rec.ReputationLastSeen = dto.UtcDateTime;
-                            rec.ReputationIsMalicious = IsMalicious(rec.ReputationScore);
-                            Interlocked.Increment(ref _reputationEnriched);
-                        }
-                    }
-                }
-
-            }, () => EvaluateRules(rec),
-                ex => Console.Error.WriteLine($"EnrichAsync error: {ex.Message}"), ct);
+            }, () => EvaluateRules(rec), ex => Report("pipeline", ex), ct);
         }
 
         private void EnrichGeo(TrafficRecord rec)
