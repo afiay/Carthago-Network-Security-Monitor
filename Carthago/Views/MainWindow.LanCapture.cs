@@ -93,7 +93,9 @@ public partial class MainWindow
 
             DeviceComboBox.SelectedItem = restored ?? parent;
             if (peers.Count == 0)
-                MessageBox.Show("No LAN peers found on this adapter. Check the phone's Wi-Fi connection or client isolation.", "LAN discovery");
+                MessageBox.Show("No local IPv4 peers responded or were present in the selected adapter's neighbor cache. " +
+                    "Check that the iPhone is awake and on the same Wi-Fi, and compare its IPv4 address with the PC subnet. " +
+                    "Client isolation or a VPN may prevent discovery.", "LAN discovery");
             else
                 DeviceComboBox.IsDropDownOpen = true;
         }

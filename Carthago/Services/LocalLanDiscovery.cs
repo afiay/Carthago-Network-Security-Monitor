@@ -208,6 +208,16 @@ namespace Carthago.Services
                     foreach (var entry in entries)
                         scoped[entry.Key] = entry.Value;
                 }
+                // Native Windows ARP resolution on the selected interface
+                // supplements the command-line cache. It can find peers which
+                // do not answer ICMP, and does not depend on localized output.
+                if (sendIcmp)
+                {
+                    var resolved = await WindowsLanArpResolver.ResolveAsync(
+                        interfaces, targets, scoped.Keys, token).ConfigureAwait(false);
+                    foreach (var entry in resolved)
+                        scoped[entry.Key] = entry.Value;
+                }
                 neighbors = scoped;
             }
             else
@@ -238,7 +248,7 @@ namespace Carthago.Services
                     continue;
                 var mac = match.Groups["mac"].Value.Replace('-', ':').ToUpperInvariant();
                 // Exclude layer-2 broadcast and multicast entries, not physical hosts.
-                if (mac == "FF:FF:FF:FF:FF:FF" ||
+                if (mac == "00:00:00:00:00:00" || mac == "FF:FF:FF:FF:FF:FF" ||
                     (Convert.ToByte(mac[..2], 16) & 1) != 0)
                     continue;
                 found[ip.ToString()] = mac;
