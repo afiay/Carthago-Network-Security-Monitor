@@ -1,6 +1,6 @@
 # Carthago — master detection-rule catalog
 
-**Source-content digest:** `4c27672b84929a9f91ca` · **Registered:** 645 unique R-series rules (`R001`–`R645`)
+**Source-content digest:** `b4fc083f52515689df12` · **Registered:** 965 unique R-series rules (`R001`–`R965`)
 
 This is the **single central navigation catalog** for registered detection rules. Metadata is extracted from each rule's actual C# `RuleDescriptor` at the cited snapshot. Source registration is not proof that telemetry can reach the predicate, an alert is emitted, tests passed, or detection quality was field-validated.
 
@@ -12,57 +12,117 @@ This is the **single central navigation catalog** for registered detection rules
 
 | Detection category | Registered rules |
 | --- | ---: |
+| [AccountAccess](#accountaccess-1-rules) | 1 |
+| [AccountDiscovery](#accountdiscovery-1-rules) | 1 |
 | [ActiveDirectoryWindows](#activedirectorywindows-20-rules) | 20 |
 | [AssetInventory](#assetinventory-10-rules) | 10 |
+| [Availability](#availability-1-rules) | 1 |
 | [Behavior](#behavior-1-rules) | 1 |
-| [CloudDev](#clouddev-25-rules) | 25 |
+| [CloudDev](#clouddev-29-rules) | 29 |
 | [CloudInfrastructure](#cloudinfrastructure-20-rules) | 20 |
 | [CloudSaas](#cloudsaas-9-rules) | 9 |
+| [Collection](#collection-4-rules) | 4 |
+| [CommandAndControl](#commandandcontrol-21-rules) | 21 |
+| [CommandControl](#commandcontrol-5-rules) | 5 |
+| [ContainerDiscovery](#containerdiscovery-1-rules) | 1 |
+| [ContainerExecution](#containerexecution-1-rules) | 1 |
 | [DatabaseServiceExposure](#databaseserviceexposure-38-rules) | 38 |
-| [DataLossStaging](#datalossstaging-20-rules) | 20 |
+| [DataLossStaging](#datalossstaging-22-rules) | 22 |
+| [DefenseEvasion](#defenseevasion-1-rules) | 1 |
 | [Detection-engine health](#detection-engine-health-7-rules) | 7 |
 | [DevOpsSupplyChain](#devopssupplychain-20-rules) | 20 |
+| [Discovery](#discovery-16-rules) | 16 |
 | [DNS](#dns-7-rules) | 7 |
-| [Dns](#dns-10-rules) | 10 |
-| [DnsAdvanced](#dnsadvanced-29-rules) | 29 |
+| [Dns](#dns-14-rules) | 14 |
+| [DnsAdvanced](#dnsadvanced-35-rules) | 35 |
+| [DnsThreat](#dnsthreat-5-rules) | 5 |
 | [Egress](#egress-6-rules) | 6 |
 | [EmailCollaboration](#emailcollaboration-20-rules) | 20 |
-| [EvasionInfra](#evasioninfra-28-rules) | 28 |
-| [EvasionTunnel](#evasiontunnel-16-rules) | 16 |
-| [Exfiltration](#exfiltration-2-rules) | 2 |
-| [ExfiltrationAdvanced](#exfiltrationadvanced-20-rules) | 20 |
+| [EvasionInfra](#evasioninfra-56-rules) | 56 |
+| [EvasionTunnel](#evasiontunnel-61-rules) | 61 |
+| [Execution](#execution-11-rules) | 11 |
+| [Exfiltration](#exfiltration-13-rules) | 13 |
+| [ExfiltrationAdvanced](#exfiltrationadvanced-39-rules) | 39 |
 | [GeoIP](#geoip-1-rules) | 1 |
 | [HTTP](#http-7-rules) | 7 |
-| [HttpApi](#httpapi-61-rules) | 61 |
+| [HttpApi](#httpapi-90-rules) | 90 |
 | [ICMP](#icmp-2-rules) | 2 |
 | [Identity](#identity-1-rules) | 1 |
-| [IdentityAccess](#identityaccess-20-rules) | 20 |
+| [IdentityAccess](#identityaccess-28-rules) | 28 |
 | [IdentityAdvanced](#identityadvanced-20-rules) | 20 |
-| [IotOt](#iotot-10-rules) | 10 |
-| [IotOtAdvanced](#iototadvanced-34-rules) | 34 |
+| [Impact](#impact-1-rules) | 1 |
+| [Industrial](#industrial-1-rules) | 1 |
+| [InitialAccess](#initialaccess-7-rules) | 7 |
+| [IotOt](#iotot-17-rules) | 17 |
+| [IotOtAdvanced](#iototadvanced-57-rules) | 57 |
 | [IPv6](#ipv6-6-rules) | 6 |
 | [KubernetesContainer](#kubernetescontainer-20-rules) | 20 |
 | [Lateral Movement](#lateral-movement-1-rules) | 1 |
-| [LateralMovement](#lateralmovement-11-rules) | 11 |
-| [LocalDiscoveryWireless](#localdiscoverywireless-20-rules) | 20 |
+| [LateralMovement](#lateralmovement-45-rules) | 45 |
+| [LocalDiscoveryWireless](#localdiscoverywireless-21-rules) | 21 |
 | [MalwareC2](#malwarec2-20-rules) | 20 |
-| [Network](#network-5-rules) | 5 |
-| [NetworkApplianceExposure](#networkapplianceexposure-20-rules) | 20 |
+| [Network](#network-10-rules) | 10 |
+| [NetworkApplianceExposure](#networkapplianceexposure-21-rules) | 21 |
+| [NetworkDiscovery](#networkdiscovery-7-rules) | 7 |
 | [OtIcsDeep](#oticsdeep-21-rules) | 21 |
 | [Payload](#payload-1-rules) | 1 |
 | [Payloads](#payloads-10-rules) | 10 |
 | [PlatformHealthAdvanced](#platformhealthadvanced-16-rules) | 16 |
 | [Protocol](#protocol-1-rules) | 1 |
+| [ProtocolIntelligence](#protocolintelligence-1-rules) | 1 |
 | [QUIC](#quic-2-rules) | 2 |
 | [Reconnaissance](#reconnaissance-1-rules) | 1 |
+| [RemoteAccess](#remoteaccess-2-rules) | 2 |
 | [SSH](#ssh-1-rules) | 1 |
 | [Threat Intel](#threat-intel-2-rules) | 2 |
 | [TLS](#tls-8-rules) | 8 |
-| [TlsPki](#tlspki-15-rules) | 15 |
+| [TlsPki](#tlspki-17-rules) | 17 |
+| [WebAttack](#webattack-1-rules) | 1 |
+| [WebThreat](#webthreat-3-rules) | 3 |
 
 ## Browse rule documentation
 
 Select a category below, then expand any rule to view its documentation **on this page**. GitHub supports these native expandable sections without JavaScript. Use the category links above to jump directly to a group. Each entry is generated from its C# descriptor, with links to the authoritative batch evidence; authored tests are not proof of test execution.
+
+### AccountAccess: 1 rules
+
+<details>
+<summary>Choose a rule from 1 AccountAccess entries</summary>
+
+<details>
+<summary><strong>R808 — ldapmodify-attributed Kerberos then LDAP service SYN sequence</strong> · Medium</summary>
+
+- **Description:** ldapmodify-attributed Kerberos then LDAP service SYN sequence. Observable packet/process shape only; no authorization, causality, success or compromise inferred.
+- **Category:** AccountAccess
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R808_LdapmodifyKerberosThenLdapSynRule.cs)
+- **Detailed evidence and test scenarios:** [806-815](batches/RULE_BATCH_806-815.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+</details>
+
+### AccountDiscovery: 1 rules
+
+<details>
+<summary>Choose a rule from 1 AccountDiscovery entries</summary>
+
+<details>
+<summary><strong>R823 — dscl-attributed private LDAP/389 then LDAPS/636 SYN</strong> · Medium</summary>
+
+- **Description:** dscl-attributed private LDAP/389 then LDAPS/636 SYN. Source-only network/process evidence; no authorization, compromise or successful outcome inferred.
+- **Category:** AccountDiscovery
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R823_DsclLdapThenLdapsSynRule.cs)
+- **Detailed evidence and test scenarios:** [816-825](batches/RULE_BATCH_816-825.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+</details>
 
 ### ActiveDirectoryWindows: 20 rules
 
@@ -468,6 +528,26 @@ Select a category below, then expand any rule to view its documentation **on thi
 
 </details>
 
+### Availability: 1 rules
+
+<details>
+<summary>Choose a rule from 1 Availability entries</summary>
+
+<details>
+<summary><strong>R874 — Private OT TCP/502 SYN burst with unique packets</strong> · Medium</summary>
+
+- **Description:** Eight distinct private-to-private TCP/502 SYN packets to the same peer within 30s; this is only a packet-rate shape, not device counter evidence, dropped traffic or proven denial of service.
+- **Category:** Availability
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R874_PrivateOtTcpSynBurstRule.cs)
+- **Detailed evidence and test scenarios:** [866-875](batches/RULE_BATCH_866-875.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+</details>
+
 ### Behavior: 1 rules
 
 <details>
@@ -488,10 +568,10 @@ Select a category below, then expand any rule to view its documentation **on thi
 
 </details>
 
-### CloudDev: 25 rules
+### CloudDev: 29 rules
 
 <details>
-<summary>Choose a rule from 25 CloudDev entries</summary>
+<summary>Choose a rule from 29 CloudDev entries</summary>
 
 <details>
 <summary><strong>R198 — AWS Metadata Credential Retrieval</strong> · Critical</summary>
@@ -815,6 +895,58 @@ Select a category below, then expand any rule to view its documentation **on thi
 - **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R222_UnauthorizedOverlayNetworkEgressRule.cs)
 - **Detailed evidence and test scenarios:** [221-225](batches/RULE_BATCH_221-225.md)
 - **Verification record:** 0 executed (reported)
+
+</details>
+
+<details>
+<summary><strong>R656 — Attributed Git smart-HTTP push request to official code host</strong> · Medium</summary>
+
+- **Description:** Attributed Git smart-HTTP push request to official code host. R207 requires a first-seen unofficial remote host; this candidate requires a Git-attributed request to official GitHub/GitLab with /git-receive-pack, not a repository-exfiltration outcome.
+- **Category:** CloudDev
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R656_OfficialGitRemoteProcessSmartHttpPushRequestRule.cs)
+- **Detailed evidence and test scenarios:** [656-665](batches/RULE_BATCH_656-665.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R717 — Script or curl process POST to GitHub/GitLab repository API</strong> · Medium</summary>
+
+- **Description:** A PowerShell, curl, or Python process is associated with a cleartext outbound HTTP POST to a GitHub or GitLab repository API route. File reads, request-body contents, authentication, accepted upload, repository modification, and exfiltration are not observed.
+- **Category:** CloudDev
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R717_ScriptProcessCodeRepositoryApiPostRule.cs)
+- **Detailed evidence and test scenarios:** [716-725](batches/RULE_BATCH_716-725.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R751 — macOS-characteristic process code-repository TLS payload burst</strong> · Medium</summary>
+
+- **Description:** osascript, curl, git, Microsoft Word, or Microsoft Excel is associated with four substantial TLS/443 payload observations to GitHub, GitLab, or Bitbucket within two minutes. Repository API method, authentication, git operation, local file source and exfiltration are not observed.
+- **Category:** CloudDev
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R751_MacProcessCodeRepositoryTlsPayloadBurstRule.cs)
+- **Detailed evidence and test scenarios:** [746-755](batches/RULE_BATCH_746-755.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R756 — ESXi management-process code-repository TLS payload burst</strong> · Medium</summary>
+
+- **Description:** hostd, vpxa, or vmx is associated with four substantial TLS/443 payload observations to GitHub, GitLab, or Bitbucket within two minutes. Datastore reads, HTTPS method, authentication, repository operation, unique TCP bytes and exfiltration are not observed.
+- **Category:** CloudDev
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R756_EsxiManagementProcessCodeRepositoryTlsBurstRule.cs)
+- **Detailed evidence and test scenarios:** [756-765](batches/RULE_BATCH_756-765.md)
+- **Verification record:** Candidate — unverified (reported)
 
 </details>
 
@@ -1205,6 +1337,457 @@ Select a category below, then expand any rule to view its documentation **on thi
 - **Enabled by default:** true
 - **Implementation:** [C# source](../../Carthago/Engine/Rules/CloudSaas/R112_SaaSExportLikeTrafficPatternRule.cs)
 - **Detailed evidence and test scenarios:** [111-115](batches/RULE_BATCH_111-115.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+</details>
+
+### Collection: 4 rules
+
+<details>
+<summary>Choose a rule from 4 Collection entries</summary>
+
+<details>
+<summary><strong>R813 — PowerShell HTTP enumeration of four distinct external API resources</strong> · Medium</summary>
+
+- **Description:** PowerShell HTTP enumeration of four distinct external API resources. Observable packet/process shape only; no authorization, causality, success or compromise inferred.
+- **Category:** Collection
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R813_PowershellPublicApiPathEnumerationRule.cs)
+- **Detailed evidence and test scenarios:** [806-815](batches/RULE_BATCH_806-815.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R814 — PowerShell external media GET followed by different-peer TLS/8443 payload</strong> · Medium</summary>
+
+- **Description:** PowerShell external media GET followed by different-peer TLS/8443 payload. Observable packet/process shape only; no authorization, causality, success or compromise inferred.
+- **Category:** Collection
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R814_PowershellMediaGetThenUnusualTlsEgressRule.cs)
+- **Detailed evidence and test scenarios:** [806-815](batches/RULE_BATCH_806-815.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R816 — curl-attributed distinct Confluence-style page API GET burst</strong> · Medium</summary>
+
+- **Description:** curl-attributed distinct Confluence-style page API GET burst. Source-only network/process evidence; no authorization, compromise or successful outcome inferred.
+- **Category:** Collection
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R816_ConfluenceApiDistinctPageGetRule.cs)
+- **Detailed evidence and test scenarios:** [816-825](batches/RULE_BATCH_816-825.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R884 — Git-attributed private repository HTTP object GET fanout</strong> · Medium</summary>
+
+- **Description:** git-attributed HTTP GET visits four distinct .git/objects paths on one private server within 60s; authenticated SaaS principal, repository confidentiality and unusual download volume are not established.
+- **Category:** Collection
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R884_GitPrivateObjectGetFanoutRule.cs)
+- **Detailed evidence and test scenarios:** [876-885](batches/RULE_BATCH_876-885.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+</details>
+
+### CommandAndControl: 21 rules
+
+<details>
+<summary>Choose a rule from 21 CommandAndControl entries</summary>
+
+<details>
+<summary><strong>R856 — Frpc public TCP/7000 SYN then payload</strong> · Medium</summary>
+
+- **Description:** A frpc-attributed public TCP/7000 SYN precedes same-peer payload within 30s; CLI options, relay use and connection success unknown.
+- **Category:** CommandAndControl
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R856_FrpcPublicTcp7000SynThenPayloadRule.cs)
+- **Detailed evidence and test scenarios:** [856-865](batches/RULE_BATCH_856-865.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R862 — Rundll32 DNS TXT query followed by matching-name TLS SNI</strong> · Medium</summary>
+
+- **Description:** Same locally attributed rundll32 PID makes a public DNS/TXT query then a public TLS/443 packet with matching SNI within 60s; queried content and C2 unknown.
+- **Category:** CommandAndControl
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R862_Rundll32DnsTxtThenSameNameTlsRule.cs)
+- **Detailed evidence and test scenarios:** [856-865](batches/RULE_BATCH_856-865.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R870 — ESXi hostd-attributed repeated public HTTP GET polling</strong> · Medium</summary>
+
+- **Description:** Four hostd-attributed GET requests to one public web-service polling URI within 40s; one-way C2, remote commands and ESXi role are not established.
+- **Category:** CommandAndControl
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R870_HostdPublicHttpPollBurstRule.cs)
+- **Detailed evidence and test scenarios:** [866-875](batches/RULE_BATCH_866-875.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R882 — ESXi utility public script GET then other-peer HTTP check-in POST</strong> · Medium</summary>
+
+- **Description:** esxcli-attributed public HTTP GET for a .sh path precedes busybox-attributed HTTP check-in POST to a different public IP from the same private host within 60s; no process lineage, execution or C2 proved.
+- **Category:** CommandAndControl
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R882_EsxiGetThenOtherPeerPostRule.cs)
+- **Detailed evidence and test scenarios:** [876-885](batches/RULE_BATCH_876-885.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R883 — VMware VMX-attributed TLS/8443 to three public peers</strong> · Medium</summary>
+
+- **Description:** VMware VMX-attributed TCP payload with TLS metadata on 8443 reaches three distinct public IPs with one SNI within 90s; VM identity, allowlist status, encrypted content and C2 are unknown.
+- **Category:** CommandAndControl
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R883_VmwareVmxPublicTlsPeerFanoutRule.cs)
+- **Detailed evidence and test scenarios:** [876-885](batches/RULE_BATCH_876-885.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R887 — IDE-attributed TLS tunnel-name traffic to two public peers</strong> · Medium</summary>
+
+- **Description:** An IDE process sends TLS/443 payloads to two distinct public IPs under the same tunnel-like SNI within 45s; installation, extension behavior and tunneling are not proved.
+- **Category:** CommandAndControl
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R887_IdeProcessPublicTlsPeerPairRule.cs)
+- **Detailed evidence and test scenarios:** [886-895](batches/RULE_BATCH_886-895.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R888 — ESXi management process TLS to two public peers</strong> · Medium</summary>
+
+- **Description:** hostd- or vpxa-attributed TLS/443 data reaches two distinct public IPs with one SNI within 45s; management role, trust baseline and C2 are not established.
+- **Category:** CommandAndControl
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R888_EsxiManagementPublicTlsPeerPairRule.cs)
+- **Detailed evidence and test scenarios:** [886-895](batches/RULE_BATCH_886-895.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R889 — ESXi management TLS/8443 repeated payload cadence</strong> · Medium</summary>
+
+- **Description:** Four near-sized hostd/vpxa-attributed TLS/8443 data packets to one public peer spaced 5–20 seconds apart within 65s; neither junk payload encoding nor C2 is decoded.
+- **Category:** CommandAndControl
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R889_HostdVpxaTlsCadenceRule.cs)
+- **Detailed evidence and test scenarios:** [886-895](batches/RULE_BATCH_886-895.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R890 — Rundll32-attributed TLS/9443 to two public peers</strong> · Medium</summary>
+
+- **Description:** rundll32-attributed TLS/9443 payloads reach two distinct public IPs sharing one SNI within 45s; DLL loading, asymmetric traffic and malicious intent cannot be inferred.
+- **Category:** CommandAndControl
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R890_Rundll32PublicTlsPeerPairRule.cs)
+- **Detailed evidence and test scenarios:** [886-895](batches/RULE_BATCH_886-895.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R893 — PowerShell-attributed DNS A query then matching SNI TLS</strong> · Medium</summary>
+
+- **Description:** A PowerShell-attributed private DNS A query precedes TLS/443 from the same private source and process to a public peer with matching SNI within 60s; DNS response, asset role, allowlist and C2 are not proved.
+- **Category:** CommandAndControl
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R893_PowershellDnsQueryThenSniTlsRule.cs)
+- **Detailed evidence and test scenarios:** [886-895](batches/RULE_BATCH_886-895.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R913 — Hostd public SSH-port data burst</strong> · Medium</summary>
+
+- **Description:** Hostd/vpxa PID sends four TCP/22 data records of at least 512 bytes to a public peer. SSH content, encoding and C2 are unknown.
+- **Category:** CommandAndControl
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R913_HostdPublicSshDataBurstRule.cs)
+- **Detailed evidence and test scenarios:** [906-925](batches/RULE_BATCH_906-925.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R920 — PowerShell public PS1 GET then TLS</strong> · Medium</summary>
+
+- **Description:** Same private source and PowerShell PID sends public cleartext GET for .ps1 then public TLS/443 data. Download completion, IEX, execution and C2 are unknown.
+- **Category:** CommandAndControl
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R920_PowershellScriptGetThenPublicTlsRule.cs)
+- **Detailed evidence and test scenarios:** [906-925](batches/RULE_BATCH_906-925.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R921 — AnyDesk public TCP/6568 SYN then same-peer TLS</strong> · Medium</summary>
+
+- **Description:** Same private source, AnyDesk PID and public peer TCP/6568 SYN followed by TLS/443 data. Installation path, interactive control, consent and session outcome are unknown.
+- **Category:** CommandAndControl
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R921_AnydeskPublic6568ThenTlsRule.cs)
+- **Detailed evidence and test scenarios:** [906-925](batches/RULE_BATCH_906-925.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R923 — IIS worker public ASPX HTTP POST</strong> · Medium</summary>
+
+- **Description:** Local w3wp attribution and outbound public HTTP POST to an .aspx path with at least 512 transport bytes. IIS module installation, contents, persistence and C2 are unknown.
+- **Category:** CommandAndControl
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R923_IisWorkerPublicAspxPostRule.cs)
+- **Detailed evidence and test scenarios:** [906-925](batches/RULE_BATCH_906-925.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R925 — BITSAdmin private SMB SYN then public HTTP GET</strong> · Medium</summary>
+
+- **Description:** Same private source and bitsadmin PID TCP/445 SYN to private peer followed by public HTTP GET. BITS job, notification command, transfer and persistence are unknown.
+- **Category:** CommandAndControl
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R925_BitsadminPrivateSmbThenPublicHttpGetRule.cs)
+- **Detailed evidence and test scenarios:** [906-925](batches/RULE_BATCH_906-925.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R937 — IDE marketplace TLS then same-PID public SSH SYN</strong> · Medium</summary>
+
+- **Description:** Code or JetBrains Toolbox PID sends TLS/443 with marketplace SNI then TCP/22 SYN to a public peer. Extension installation, SSH tunnel and authorization are unknown.
+- **Category:** CommandAndControl
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R937_IdeMacMarketplaceThenSshPublicSynRule.cs)
+- **Detailed evidence and test scenarios:** [926-945](batches/RULE_BATCH_926-945.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R940 — TeamViewer public TLS/5938 vendor-name contact</strong> · Medium</summary>
+
+- **Description:** TeamViewer-attributed public TLS/5938 with SNI equal to teamviewer.com or its subdomain. Remote control session, installation provenance, persistence and consent are unknown.
+- **Category:** CommandAndControl
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R940_TeamviewerPublic5938TlsRule.cs)
+- **Detailed evidence and test scenarios:** [926-945](batches/RULE_BATCH_926-945.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R941 — Public proxy ingress then private SOCKS-port SYN</strong> · Medium</summary>
+
+- **Description:** Public TCP/3128 SYN to a private host followed by that host initiating TCP/1080 SYN to another private peer within 45s. Proxy setup, forwarding configuration and actual relay are unknown.
+- **Category:** CommandAndControl
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R941_PublicProxySynThenPrivateSocksSynRule.cs)
+- **Detailed evidence and test scenarios:** [926-945](batches/RULE_BATCH_926-945.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R954 — Public PHP GET then Bash public TCP/4444 SYN</strong> · Medium</summary>
+
+- **Description:** Public HTTP GET for a .php path on a private host followed by Bash-attributed TCP/4444 SYN from that host to a public peer. Webshell creation, process ancestry, command execution and C2 are unknown.
+- **Category:** CommandAndControl
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R954_PublicPhpGetThenBashPublic4444SynRule.cs)
+- **Detailed evidence and test scenarios:** [946-965](batches/RULE_BATCH_946-965.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R955 — Public ASPX POST then IIS worker public WinRM SYN</strong> · Medium</summary>
+
+- **Description:** Public HTTP POST to a private .aspx endpoint followed by w3wp-attributed TCP/5985 SYN from that host to a public peer. File creation, child shells, authenticated WinRM, execution and compromise are unknown.
+- **Category:** CommandAndControl
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R955_PublicAspxPostThenW3wpPublicWinRmRule.cs)
+- **Detailed evidence and test scenarios:** [946-965](batches/RULE_BATCH_946-965.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R963 — Public SSH ingress then sshd-attributed public TLS</strong> · Medium</summary>
+
+- **Description:** Public SSH TCP/22 SYN to a private host then sshd-attributed public TLS/443 from that host. XZ backdoor, SSH child process, authentication and command execution are unknown.
+- **Category:** CommandAndControl
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R963_PublicSshIngressThenSshdPublicTlsRule.cs)
+- **Detailed evidence and test scenarios:** [946-965](batches/RULE_BATCH_946-965.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+</details>
+
+### CommandControl: 5 rules
+
+<details>
+<summary>Choose a rule from 5 CommandControl entries</summary>
+
+<details>
+<summary><strong>R835 — mshta HTA GET then rundll32 other-peer TLS payload</strong> · Medium</summary>
+
+- **Description:** Same local IP two-process network sequence only; no payload execution, process ancestry, C2 command, or multi-stage implant inferred.
+- **Category:** CommandControl
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R835_MshtaFetchThenRundll32TlsRule.cs)
+- **Detailed evidence and test scenarios:** [826-835](batches/RULE_BATCH_826-835.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R837 — Conflicting public resolver A answers then selected-IP SYN</strong> · Medium</summary>
+
+- **Description:** Two different public resolver IPs send different single public A answers for one qname to one client; that client SYNs to second answer within 60s. No resolver trust or poison proven.
+- **Category:** CommandControl
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R837_ConflictingResolverAnswerThenSynRule.cs)
+- **Detailed evidence and test scenarios:** [836-845](batches/RULE_BATCH_836-845.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R838 — Package client registry TLS then different-peer TLS</strong> · Medium</summary>
+
+- **Description:** Same npm, pip or dotnet process and PID contacts a known package registry then a different public peer on TCP/8443; no package tampering or malicious build claimed.
+- **Category:** CommandControl
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R838_PackageRegistryThenOtherPeerTlsRule.cs)
+- **Detailed evidence and test scenarios:** [836-845](batches/RULE_BATCH_836-845.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R842 — Script-attributed public API TLS then reverse-tuple payload</strong> · Medium</summary>
+
+- **Description:** PowerShell or wscript TLS request to a selected web-service SNI then reverse-5-tuple TCP reply within 60 seconds; no decrypted C2 content or commands inferred.
+- **Category:** CommandControl
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R842_ScriptPublicApiTlsBidirectionalRule.cs)
+- **Detailed evidence and test scenarios:** [836-845](batches/RULE_BATCH_836-845.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R844 — Three low-TTL single-IP DNS A answers changing over time</strong> · Medium</summary>
+
+- **Description:** Same public DNS resolver sends three distinct single-public-IPv4 A answers with TTL 1-30s to one private client for one qname within 45s; not a fast-flux or C2 verdict.
+- **Category:** CommandControl
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R844_LowTtlDnsAnswerChurnRule.cs)
+- **Detailed evidence and test scenarios:** [836-845](batches/RULE_BATCH_836-845.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+</details>
+
+### ContainerDiscovery: 1 rules
+
+<details>
+<summary>Choose a rule from 1 ContainerDiscovery entries</summary>
+
+<details>
+<summary><strong>R821 — docker-attributed container-list then image-list HTTP API sequence</strong> · Medium</summary>
+
+- **Description:** docker-attributed container-list then image-list HTTP API sequence. Source-only network/process evidence; no authorization, compromise or successful outcome inferred.
+- **Category:** ContainerDiscovery
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R821_DockerContainerThenImageApiEnumerationRule.cs)
+- **Detailed evidence and test scenarios:** [816-825](batches/RULE_BATCH_816-825.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+</details>
+
+### ContainerExecution: 1 rules
+
+<details>
+<summary>Choose a rule from 1 ContainerExecution entries</summary>
+
+<details>
+<summary><strong>R822 — docker build API POST then same-process public TCP/443 SYN</strong> · Medium</summary>
+
+- **Description:** docker build API POST then same-process public TCP/443 SYN. Source-only network/process evidence; no authorization, compromise or successful outcome inferred.
+- **Category:** ContainerExecution
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R822_DockerBuildPostThenExternalSynRule.cs)
+- **Detailed evidence and test scenarios:** [816-825](batches/RULE_BATCH_816-825.md)
 - **Verification record:** Candidate — unverified (reported)
 
 </details>
@@ -1712,10 +2295,10 @@ Select a category below, then expand any rule to view its documentation **on thi
 
 </details>
 
-### DataLossStaging: 20 rules
+### DataLossStaging: 22 rules
 
 <details>
-<summary>Choose a rule from 20 DataLossStaging entries</summary>
+<summary>Choose a rule from 22 DataLossStaging entries</summary>
 
 <details>
 <summary><strong>R493 — Browser Password Store File Upload</strong> · Critical</summary>
@@ -1973,6 +2556,52 @@ Select a category below, then expand any rule to view its documentation **on thi
 - **Enabled by default:** true
 - **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R512_SensitiveFilenameToPersonalEmailRule.cs)
 - **Detailed evidence and test scenarios:** [511-520](batches/RULE_BATCH_511-520.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R657 — Script or CLI process posting to paste-service API</strong> · Medium</summary>
+
+- **Description:** Script or CLI process posting to paste-service API. R220 and R503 count large or repeated paste-service POSTs. This candidate requires an exact API route and locally attributed scripting client for one request.
+- **Category:** DataLossStaging
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R657_ScriptAttributedPasteApiHttpPostRequestRule.cs)
+- **Detailed evidence and test scenarios:** [656-665](batches/RULE_BATCH_656-665.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R733 — macOS utility or Office process TLS contact to text-storage service</strong> · Low</summary>
+
+- **Description:** osascript, curl, wget, Microsoft Word, or Microsoft Excel is associated with outbound TLS/443 to a known text-storage service. Clipboard/file reads, HTTP method/body, authentication, upload, exfiltration and service response are not observed.
+- **Category:** DataLossStaging
+- **Severity:** Low
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R733_MacProcessTextStorageTlsContactRule.cs)
+- **Detailed evidence and test scenarios:** [726-735](batches/RULE_BATCH_726-735.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+</details>
+
+### DefenseEvasion: 1 rules
+
+<details>
+<summary>Choose a rule from 1 DefenseEvasion entries</summary>
+
+<details>
+<summary><strong>R843 — Same process and peer TLS 1.3 then TLS 1.0 or 1.1</strong> · Medium</summary>
+
+- **Description:** Same local curl/python2 process and public peer observed with TLS 1.3 then older TLS 1.0/1.1 within 90 seconds; no negotiated downgrade or exploit confirmed.
+- **Category:** DefenseEvasion
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R843_ProcessPeerTlsVersionRegressionRule.cs)
+- **Detailed evidence and test scenarios:** [836-845](batches/RULE_BATCH_836-845.md)
 - **Verification record:** Candidate — unverified (reported)
 
 </details>
@@ -2344,6 +2973,221 @@ Select a category below, then expand any rule to view its documentation **on thi
 
 </details>
 
+### Discovery: 16 rules
+
+<details>
+<summary>Choose a rule from 16 Discovery entries</summary>
+
+<details>
+<summary><strong>R773 — Private-source SNMP target fanout</strong> · Low</summary>
+
+- **Description:** One private source sends coherent UDP/161 observations to four distinct private targets within thirty seconds. System-information OIDs, source authorization, device role, SNMP response content and successful discovery are not observed.
+- **Category:** Discovery
+- **Severity:** Low
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R773_PrivateSnmpTargetFanoutDiscoveryRule.cs)
+- **Detailed evidence and test scenarios:** [766-775](batches/RULE_BATCH_766-775.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R788 — Named resolver repeats TXT question to three public upstreams</strong> · Medium</summary>
+
+- **Description:** Named resolver repeats TXT question to three public upstreams. A bounded observation only; no config change, successful authentication, transfer, exploitation or compromise established.
+- **Category:** Discovery
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R788_DnsResolverMultiUpstreamTxtQueryRule.cs)
+- **Detailed evidence and test scenarios:** [786-795](batches/RULE_BATCH_786-795.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R797 — wmic-attributed RPC SYN to four internal hosts in one subnet</strong> · Medium</summary>
+
+- **Description:** wmic-attributed RPC SYN to four internal hosts in one subnet. Packet/process shape only; no authorization, exploitation, transfer completion, command execution or compromise inferred.
+- **Category:** Discovery
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R797_WmicRpcPrivateTargetFanoutRule.cs)
+- **Detailed evidence and test scenarios:** [796-805](batches/RULE_BATCH_796-805.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R804 — private SNMP probe followed by SSH SYN to same private device</strong> · Medium</summary>
+
+- **Description:** private SNMP probe followed by SSH SYN to same private device. Packet/process shape only; no authorization, exploitation, transfer completion, command execution or compromise inferred.
+- **Category:** Discovery
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R804_SnmpProbeThenSshSynRule.cs)
+- **Detailed evidence and test scenarios:** [796-805](batches/RULE_BATCH_796-805.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R864 — Docker-proxy public TCP/1080 SYN peer fanout</strong> · Medium</summary>
+
+- **Description:** Docker-proxy-attributed TCP/1080 SYN attempts reach three distinct public IPs within 60s; proxy deployment, container identity and abuse are unknown.
+- **Category:** Discovery
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R864_DockerProxyPublicSocksSynFanoutRule.cs)
+- **Detailed evidence and test scenarios:** [856-865](batches/RULE_BATCH_856-865.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R871 — Private Modbus TCP payloads across four devices</strong> · Medium</summary>
+
+- **Description:** A modpoll-attributed private client sends similarly sized TCP data to four distinct private TCP/502 hosts in one /24 within 60s; read function, asset identity and collection outcome are unknown.
+- **Category:** Discovery
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R871_ModbusMultiDevicePayloadWalkRule.cs)
+- **Detailed evidence and test scenarios:** [866-875](batches/RULE_BATCH_866-875.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R872 — Public client probes two embedded camera image endpoints</strong> · Medium</summary>
+
+- **Description:** One public client requests both /snapshot.jpg and /stream.mjpg on the same private HTTP service within 45s; no image capture, device type or screenshot return verified.
+- **Category:** Discovery
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R872_EmbeddedSnapshotEndpointPairRule.cs)
+- **Detailed evidence and test scenarios:** [866-875](batches/RULE_BATCH_866-875.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R873 — SSDP-port multicast then private HTTP device SYN</strong> · Medium</summary>
+
+- **Description:** Private source sends UDP/1900 to SSDP multicast then TCP SYN to another private device&#x27;s 8008 within 60s; no decoded M-SEARCH, IGMP join or discovered service verified.
+- **Category:** Discovery
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R873_SsdpMulticastThenDeviceHttpSynRule.cs)
+- **Detailed evidence and test scenarios:** [866-875](batches/RULE_BATCH_866-875.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R894 — Public source probes SSH then web API login</strong> · Medium</summary>
+
+- **Description:** Same public client SYNs to private SSH/22 then POSTs /api/login on the same private host HTTP/80 within 60s; neither authentication, server operating system, exposed ICS role nor authorization is established.
+- **Category:** Discovery
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R894_PublicSshThenWebApiProbeRule.cs)
+- **Detailed evidence and test scenarios:** [886-895](batches/RULE_BATCH_886-895.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R895 — Private client SYNs to Modbus and EtherNet/IP host ports</strong> · Medium</summary>
+
+- **Description:** Same private source SYNs to TCP/502 then TCP/44818 on one private host within 45s; newly attached device, inventory enrollment, OT asset role and authentication are unknown.
+- **Category:** Discovery
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R895_PrivateIndustrialDualPortSynRule.cs)
+- **Detailed evidence and test scenarios:** [886-895](batches/RULE_BATCH_886-895.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R898 — Net-attributed private SMB SYN peer fanout</strong> · Medium</summary>
+
+- **Description:** Same private source and net/net1 PID SYNs to three distinct private TCP/445 peers in 45 seconds; share enumeration, SMB authentication and lateral success are unknown.
+- **Category:** Discovery
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R898_NetPrivateSmbSynPeerFanoutRule.cs)
+- **Detailed evidence and test scenarios:** [896-900](batches/RULE_BATCH_896-900.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R901 — Nltest private LDAP then Global Catalog SYN</strong> · Medium</summary>
+
+- **Description:** Same private source, nltest PID and private peer receive TCP/389 then TCP/3268 SYNs within 45s; LDAP queries, domain trust enumeration and authentication are not observed.
+- **Category:** Discovery
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R901_NltestLdapThenGlobalCatalogSynRule.cs)
+- **Detailed evidence and test scenarios:** [901-905](batches/RULE_BATCH_901-905.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R956 — Net utility private RPC then same-peer LDAP SYN</strong> · Medium</summary>
+
+- **Description:** Same net/net1 PID sends TCP/135 then TCP/389 SYN to one private peer. Enumeration command, returned system/user data and authorization are unknown.
+- **Category:** Discovery
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R956_NetPrivateRpcThenLdapRule.cs)
+- **Detailed evidence and test scenarios:** [946-965](batches/RULE_BATCH_946-965.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R957 — WMIC private RPC then same-peer SMB SYN</strong> · Medium</summary>
+
+- **Description:** Same WMIC PID sends private TCP/135 then TCP/445 SYN to one peer. WMI query, returned system information, authenticated session, OT role and authorization are unknown.
+- **Category:** Discovery
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R957_WmicPrivateRpcThenSmbRule.cs)
+- **Detailed evidence and test scenarios:** [946-965](batches/RULE_BATCH_946-965.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R958 — Curl connectivity-check GET then private TCP/902 SYN</strong> · Medium</summary>
+
+- **Description:** Same curl PID sends public HTTP GET to exact connectivitycheck.gstatic.com /generate_204 followed by private TCP/902 SYN. ESXi identity, shell command, service identity and authorized connectivity check are unknown.
+- **Category:** Discovery
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R958_CurlConnectivityGetThenPrivate902SynRule.cs)
+- **Detailed evidence and test scenarios:** [946-965](batches/RULE_BATCH_946-965.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R959 — PowerShell public DNS-port SYN then same-peer TLS</strong> · Medium</summary>
+
+- **Description:** Same PowerShell PID contacts public TCP/53 then sends TLS/443 data to the same public peer. Test-NetConnection, DNS query, connectivity test intent and authorization are unknown.
+- **Category:** Discovery
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R959_PowershellPublicDnsPortSynThenTlsRule.cs)
+- **Detailed evidence and test scenarios:** [946-965](batches/RULE_BATCH_946-965.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+</details>
+
 ### DNS: 7 rules
 
 <details>
@@ -2442,10 +3286,10 @@ Select a category below, then expand any rule to view its documentation **on thi
 
 </details>
 
-### Dns: 10 rules
+### Dns: 14 rules
 
 <details>
-<summary>Choose a rule from 10 Dns entries</summary>
+<summary>Choose a rule from 14 Dns entries</summary>
 
 <details>
 <summary><strong>R094 — DGA-Like Domain Query</strong> · High</summary>
@@ -2577,12 +3421,64 @@ Select a category below, then expand any rule to view its documentation **on thi
 
 </details>
 
+<details>
+<summary><strong>R763 — ESXi-style DNS tool high-entropy query burst</strong> · Medium</summary>
+
+- **Description:** busybox or nslookup is associated with three high-entropy DNS queries to a public resolver for the same root domain within two minutes. ESXi asset identity, shell script origin, malicious VIB presence, encoded payload meaning and DNS tunneling success are not observed.
+- **Category:** Dns
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R763_EsxiStyleDnsTunnelShapeRule.cs)
+- **Detailed evidence and test scenarios:** [756-765](batches/RULE_BATCH_756-765.md)
+- **Verification record:** Candidate — unverified (reported)
+
 </details>
 
-### DnsAdvanced: 29 rules
+<details>
+<summary><strong>R764 — Linux DNS-tunneling tool high-entropy query burst</strong> · High</summary>
+
+- **Description:** iodine, iodined, dnscat2, dnscat2-client, or dig is associated with three high-entropy DNS queries to a public resolver for the same root domain within two minutes. Cron/reverse-shell ancestry, encoded content, authoritative-server control and tunneling success are not observed.
+- **Category:** Dns
+- **Severity:** High
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R764_LinuxDnsTunnelToolQueryBurstRule.cs)
+- **Detailed evidence and test scenarios:** [756-765](batches/RULE_BATCH_756-765.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
 
 <details>
-<summary>Choose a rule from 29 DnsAdvanced entries</summary>
+<summary><strong>R766 — osascript high-entropy DNS query burst</strong> · Medium</summary>
+
+- **Description:** osascript is associated with three high-entropy DNS queries to a public resolver for the same root domain within two minutes. AppleScript origin, encoded content, authoritative-server control, data exfiltration and command-and-control are not established.
+- **Category:** Dns
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R766_OsascriptHighEntropyDnsQueryBurstRule.cs)
+- **Detailed evidence and test scenarios:** [766-775](batches/RULE_BATCH_766-775.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R767 — Windows script/LOLBIN high-entropy DNS query burst</strong> · High</summary>
+
+- **Description:** PowerShell, rundll32, or Windows Python is associated with three high-entropy DNS queries to a public resolver for the same root domain within two minutes. Command line, encoded payload meaning, authoritative-server ownership and DNS-tunneling success are not observed.
+- **Category:** Dns
+- **Severity:** High
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R767_WindowsScriptHighEntropyDnsQueryBurstRule.cs)
+- **Detailed evidence and test scenarios:** [766-775](batches/RULE_BATCH_766-775.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+</details>
+
+### DnsAdvanced: 35 rules
+
+<details>
+<summary>Choose a rule from 35 DnsAdvanced entries</summary>
 
 <details>
 <summary><strong>R178 — DNS Query For Crypto Mining Pool</strong> · High</summary>
@@ -2961,6 +3857,156 @@ Select a category below, then expand any rule to view its documentation **on thi
 
 </details>
 
+<details>
+<summary><strong>R660 — OT engineering process sends native DNS query directly to public resolver</strong> · Low</summary>
+
+- **Description:** OT engineering process sends native DNS query directly to public resolver. R102 is DNS label tunneling; this rule requires attributed engineering process and a public resolver, without claiming DNS policy violation.
+- **Category:** DnsAdvanced
+- **Severity:** Low
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R660_EngineeringProcessDirectPublicDnsQueryRule.cs)
+- **Detailed evidence and test scenarios:** [656-665](batches/RULE_BATCH_656-665.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R723 — Script process direct external high-entropy DNS query</strong> · Medium</summary>
+
+- **Description:** A script/interpreter process is associated with a direct query to a public DNS destination where the first label is long and high-diversity. Resolver policy, tunneling semantics, payload encoding, C2, and process command line are not observed.
+- **Category:** DnsAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R723_ScriptProcessDirectExternalHighEntropyDnsRule.cs)
+- **Detailed evidence and test scenarios:** [716-725](batches/RULE_BATCH_716-725.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R727 — Linux script process direct external DNS-over-TLS contact</strong> · Medium</summary>
+
+- **Description:** A scripting or shell process is associated with direct outbound TLS/853 to a public peer. Resolver policy, asset role, DNS payload, DoT authorization, tunneling, C2 and query contents are not observed.
+- **Category:** DnsAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R727_LinuxScriptProcessDirectExternalDotRule.cs)
+- **Detailed evidence and test scenarios:** [726-735](batches/RULE_BATCH_726-735.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R834 — script-host distinct DGA-like DNS burst followed by TLS payload</strong> · Medium</summary>
+
+- **Description:** Four script-attributed high-digit DNS questions and a subsequent TLS payload at a public peer; no DGA attribution, NXDOMAIN ratio or malicious verdict is established.
+- **Category:** DnsAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R834_DgaLikeDnsBurstThenScriptTlsRule.cs)
+- **Detailed evidence and test scenarios:** [826-835](batches/RULE_BATCH_826-835.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R899 — VMware management-process TLS to public resolver SNI</strong> · Medium</summary>
+
+- **Description:** Local hostd/vpxa attribution and TLS/443 to a public IP with exact recognized resolver SNI; HTTPS DNS requests, resolver identity, VMware asset role and tunneling are unknown.
+- **Category:** DnsAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R899_VmwarePublicResolverTlsSniRule.cs)
+- **Detailed evidence and test scenarios:** [896-900](batches/RULE_BATCH_896-900.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R916 — Hostd public DNS query then reverse-tuple NXDOMAIN</strong> · Medium</summary>
+
+- **Description:** Hostd/vpxa capture-attested UDP IN/A query to a public resolver followed by a validated no-answer NXDOMAIN with matching transaction ID, normalized question and reverse tuple. DGA, resolver trust and attack outcome remain unknown.
+- **Category:** DnsAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R916_HostdPublicDnsQueryNxdomainReplyRule.cs)
+- **Detailed evidence and test scenarios:** [906-925](batches/RULE_BATCH_906-925.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+</details>
+
+### DnsThreat: 5 rules
+
+<details>
+<summary>Choose a rule from 5 DnsThreat entries</summary>
+
+<details>
+<summary><strong>R866 — Distinct subdomain DNS A replies share one public address</strong> · Medium</summary>
+
+- **Description:** Three distinct internal-client DNS A response names under one base domain resolve to the same public IPv4 within 60s; zone updates and wildcard configuration are not observable.
+- **Category:** DnsThreat
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R866_MultiSubdomainSamePublicAnswerRule.cs)
+- **Detailed evidence and test scenarios:** [866-875](batches/RULE_BATCH_866-875.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R867 — DNS SRV answer followed by matching public TLS SNI</strong> · Medium</summary>
+
+- **Description:** A private DNS SRV reply advertises a hostname, followed by the recipient&#x27;s TLS connection bearing that SNI within 90s; DNS dynamic update or authentication is not observable.
+- **Category:** DnsThreat
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R867_SrvReplyThenMatchingTlsSniRule.cs)
+- **Detailed evidence and test scenarios:** [866-875](batches/RULE_BATCH_866-875.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R868 — Same DNS name receives private then public A answer across clients</strong> · Medium</summary>
+
+- **Description:** Same private resolver answers one internal name with a private IPv4 and then a public IPv4 to a different client within 90s; split-horizon policy or unauthorized edits remain unknown.
+- **Category:** DnsThreat
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R868_SplitScopeSameNameAReplyRule.cs)
+- **Detailed evidence and test scenarios:** [866-875](batches/RULE_BATCH_866-875.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R876 — Three low-TTL DNS answers then SYN to latest public answer</strong> · Medium</summary>
+
+- **Description:** Same private resolver gives three distinct low-TTL public A answers for one name to one private client, then the client SYNs to the last address; neither malicious fast-flux control nor process lineage is established.
+- **Category:** DnsThreat
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R876_FastFluxDnsReplyThenAnswerSynRule.cs)
+- **Detailed evidence and test scenarios:** [876-885](batches/RULE_BATCH_876-885.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R962 — CLI DNS A query then three distinct low-TTL public answers</strong> · Medium</summary>
+
+- **Description:** Local curl/python-attributed complete UDP IN/A queries, each matched to a direct single-A low-TTL reply by wire transaction ID and reverse tuple, then three distinct public answers for the same querying PID, resolver and name within 45s. Legitimate CDN behavior and malicious fast flux are not distinguished.
+- **Category:** DnsThreat
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R962_CliDnsQueryLowTtlReplyChurnRule.cs)
+- **Detailed evidence and test scenarios:** [946-965](batches/RULE_BATCH_946-965.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
 </details>
 
 ### Egress: 6 rules
@@ -3315,10 +4361,10 @@ Select a category below, then expand any rule to view its documentation **on thi
 
 </details>
 
-### EvasionInfra: 28 rules
+### EvasionInfra: 56 rules
 
 <details>
-<summary>Choose a rule from 28 EvasionInfra entries</summary>
+<summary>Choose a rule from 56 EvasionInfra entries</summary>
 
 <details>
 <summary><strong>R258 — ICMP Destination Unreachable Spike</strong> · Medium</summary>
@@ -3684,12 +4730,376 @@ Select a category below, then expand any rule to view its documentation **on thi
 
 </details>
 
+<details>
+<summary><strong>R647 — Known miner process contacting external pool-associated TCP port</strong> · Medium</summary>
+
+- **Description:** Known miner process contacting external pool-associated TCP port. R178 detects miner pool DNS, R266 first-seen process; this requires exact miner basename and port to public IP.
+- **Category:** EvasionInfra
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R647_MinerProcessPublicPoolPortEgressRule.cs)
+- **Detailed evidence and test scenarios:** [646-655](batches/RULE_BATCH_646-655.md)
+- **Verification record:** Candidate — unverified (reported)
+
 </details>
 
-### EvasionTunnel: 16 rules
+<details>
+<summary><strong>R650 — Curl/Wget attributed process outbound public subnet fanout</strong> · Medium</summary>
+
+- **Description:** Curl/Wget attributed process outbound public subnet fanout. R017 sweeps internal targets; R036 heavy upload to one target. This requires one process+PID, three public /24s.
+- **Category:** EvasionInfra
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R650_CurlWgetProcessPublicSubnetFanoutRule.cs)
+- **Detailed evidence and test scenarios:** [646-655](batches/RULE_BATCH_646-655.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
 
 <details>
-<summary>Choose a rule from 16 EvasionTunnel entries</summary>
+<summary><strong>R661 — PowerShell or script-host process to external mail-service port</strong> · Medium</summary>
+
+- **Description:** PowerShell or script-host process to external mail-service port. R020 and R313 detect generic outbound SMTP; this specifically requires a scripting process with PID and also includes IMAP/POP3 port families.
+- **Category:** EvasionInfra
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R661_ScriptHostExternalMailServiceTcpEgressRule.cs)
+- **Detailed evidence and test scenarios:** [656-665](batches/RULE_BATCH_656-665.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R680 — Unusual local process SYN fanout to three internal hosts</strong> · Medium</summary>
+
+- **Description:** Unusual local process SYN fanout to three internal hosts; PID enrichment is best-effort, and an internal SYN fanout is not proof of proxying or lateral command execution.
+- **Category:** EvasionInfra
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R680_UnusualProcessInternalPrivateHostFanoutRule.cs)
+- **Detailed evidence and test scenarios:** [676-685](batches/RULE_BATCH_676-685.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R700 — Rundll32-associated external WebDAV request</strong> · Medium</summary>
+
+- **Description:** Rundll32-associated external WebDAV request. DavSetCookie command line, parent process, code launch and CVE exploitation are not observed.
+- **Category:** EvasionInfra
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R700_Rundll32ExternalWebDavRequestRule.cs)
+- **Detailed evidence and test scenarios:** [696-705](batches/RULE_BATCH_696-705.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R701 — Net.exe-associated external WebDAV request</strong> · Medium</summary>
+
+- **Description:** Net.exe-associated external WebDAV request. The `net use` command line and successful mount result are not observable from the packet record.
+- **Category:** EvasionInfra
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R701_NetExeExternalWebDavRequestRule.cs)
+- **Detailed evidence and test scenarios:** [696-705](batches/RULE_BATCH_696-705.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R720 — WMIC process cleartext external XSL fetch</strong> · Medium</summary>
+
+- **Description:** A locally attributed wmic.exe process issues a cleartext outbound HTTP GET for an .xsl or .xslt resource. The /format command-line switch, XSL script contents, in-memory execution, application-control bypass, and code execution are not observed.
+- **Category:** EvasionInfra
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R720_WmicExternalXslHttpFetchRule.cs)
+- **Detailed evidence and test scenarios:** [716-725](batches/RULE_BATCH_716-725.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R735 — ESXi process HTTP/TLS service-port mismatch</strong> · Low</summary>
+
+- **Description:** hostd, vpxa, or vmx is associated with parsed HTTP on VMware service ports 902/903 or TLS on cleartext web ports 80/8000/8080. Certificate validity, payload impersonation, malicious tunneling and compromise are not observed.
+- **Category:** EvasionInfra
+- **Severity:** Low
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R735_EsxiProcessWebProtocolPortMismatchRule.cs)
+- **Detailed evidence and test scenarios:** [726-735](batches/RULE_BATCH_726-735.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R743 — ESXi management-process fixed-size uncommon-port egress cadence</strong> · Low</summary>
+
+- **Description:** hostd, vpxa, or vmx is associated with three similarly sized raw TCP payload observations to one public uncommon port at regular 9–31 second intervals. Encoded data, lookup tables, file contents, tunnel establishment and command-and-control are not observed.
+- **Category:** EvasionInfra
+- **Severity:** Low
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R743_EsxiManagementProcessFixedSizeEgressCadenceRule.cs)
+- **Detailed evidence and test scenarios:** [736-745](batches/RULE_BATCH_736-745.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R826 — Notepad-attributed SYNs to two distinct public peers</strong> · Medium</summary>
+
+- **Description:** The local Notepad process has two separate outbound TCP SYN attempts; code injection, execution and connection success are unknown.
+- **Category:** EvasionInfra
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R826_NotepadDistinctExternalSynRule.cs)
+- **Detailed evidence and test scenarios:** [826-835](batches/RULE_BATCH_826-835.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R846 — Microsoft Dialer-attributed public TCP/443 SYN</strong> · Medium</summary>
+
+- **Description:** A locally attributed dialer.exe initiates a typed public TCP/443 SYN; neither injection, C2, connection completion nor actor intent is proven.
+- **Category:** EvasionInfra
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R846_DialerExternalSynRule.cs)
+- **Detailed evidence and test scenarios:** [846-855](batches/RULE_BATCH_846-855.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R847 — AddInUtil-attributed public TCP/8443 SYN</strong> · Medium</summary>
+
+- **Description:** Addinutil.exe local process attribution to a public TCP/8443 SYN; no remote payload, C2 or successful connection inferred.
+- **Category:** EvasionInfra
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R847_AddinUtilExternalSynRule.cs)
+- **Detailed evidence and test scenarios:** [846-855](batches/RULE_BATCH_846-855.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R848 — Equation Editor-attributed public HTTP-port SYN</strong> · Medium</summary>
+
+- **Description:** Legacy Eqnedt32.exe process attributed to a public TCP/80 SYN; no document exploit, code injection or successful connection asserted.
+- **Category:** EvasionInfra
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R848_Eqnedt32ExternalSynRule.cs)
+- **Detailed evidence and test scenarios:** [846-855](batches/RULE_BATCH_846-855.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R857 — Awk-attributed public TLS/8443 medium payload</strong> · Medium</summary>
+
+- **Description:** An awk-attributed public TLS/8443 TCP payload has 720–820 bytes; process command line, decoded scripts and asset role are unknown.
+- **Category:** EvasionInfra
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R857_AwkUnusualPublicTlsPayloadRule.cs)
+- **Detailed evidence and test scenarios:** [856-865](batches/RULE_BATCH_856-865.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R860 — Regsvr32-attributed UDP/1194 payload fanout</strong> · Medium</summary>
+
+- **Description:** Regsvr32-attributed UDP/1194 payload packets reach three distinct public peers in 60s; DLL invocation, endpoint lineage and exfiltration are unknown.
+- **Category:** EvasionInfra
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R860_Regsvr32PublicUdp1194FanoutRule.cs)
+- **Detailed evidence and test scenarios:** [856-865](batches/RULE_BATCH_856-865.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R900 — Regasm or Regsvcs-attributed public SYN then TLS data</strong> · Medium</summary>
+
+- **Description:** Same private source, public peer, local regasm/regsvcs PID and source port SYN to TCP/443 followed by TLS-marked TCP data in 45 seconds; COM registration, assembly load, execution and C2 are unknown.
+- **Category:** EvasionInfra
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R900_RegasmPublicSynThenTlsRule.cs)
+- **Detailed evidence and test scenarios:** [896-900](batches/RULE_BATCH_896-900.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R905 — MMC private SMB SYN then public TLS data</strong> · Medium</summary>
+
+- **Description:** Same private source and mmc PID initiate TCP/445 to a private peer then TLS-marked TCP/443 data to a public peer within 45s; MMC document loading, COM activation, DLL loading and causality are not observed.
+- **Category:** EvasionInfra
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R905_MmcPrivateSmbThenPublicTlsRule.cs)
+- **Detailed evidence and test scenarios:** [901-905](batches/RULE_BATCH_901-905.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R914 — Rundll32 public SYN then future-dated peer certificate</strong> · Medium</summary>
+
+- **Description:** Rundll32 TCP/443 SYN followed by reverse-tuple certificate metadata with validity start more than 24 hours in the future. Certificate acceptance, library load and C2 are unknown.
+- **Category:** EvasionInfra
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R914_Rundll32SynThenFutureCertificateRule.cs)
+- **Detailed evidence and test scenarios:** [906-925](batches/RULE_BATCH_906-925.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R929 — ClickOnce dfsvc manifest GET then public TLS</strong> · Medium</summary>
+
+- **Description:** Same private source and dfsvc PID GETs a public .application path then sends public TLS/443 data within 45s. ClickOnce install, manifest validation, child process and execution are unknown.
+- **Category:** EvasionInfra
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R929_DfsvcManifestThenPublicTlsRule.cs)
+- **Detailed evidence and test scenarios:** [926-945](batches/RULE_BATCH_926-945.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R930 — MSBuild public targets GET then public SMB SYN</strong> · Medium</summary>
+
+- **Description:** Same local MSBuild PID retrieves a .targets path over cleartext public HTTP then initiates TCP/445 to a public peer. Build execution, downloaded contents and SMB authentication are unknown.
+- **Category:** EvasionInfra
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R930_MsbuildTargetsGetThenPublicSmbRule.cs)
+- **Detailed evidence and test scenarios:** [926-945](batches/RULE_BATCH_926-945.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R935 — Hostd public SYN then equal issuer/subject certificate</strong> · Medium</summary>
+
+- **Description:** Hostd/vpxa TCP/443 SYN followed by reverse-flow visible TLS certificate whose issuer and subject strings are equal. Self-signature validity, vendor trust and C2 are unknown.
+- **Category:** EvasionInfra
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R935_HostdSynThenEqualIssuerSubjectCertRule.cs)
+- **Detailed evidence and test scenarios:** [926-945](batches/RULE_BATCH_926-945.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R936 — Python public TLS SYN then inverted certificate validity</strong> · Medium</summary>
+
+- **Description:** Python-attributed public TCP/443 SYN followed by reverse-flow certificate metadata with NotAfter earlier than NotBefore. Parser observation only; certificate verification, acceptance, crypto library and compromise are unknown.
+- **Category:** EvasionInfra
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R936_PythonPublicTlsCertificateValidityInversionRule.cs)
+- **Detailed evidence and test scenarios:** [926-945](batches/RULE_BATCH_926-945.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R943 — InstallUtil public MSI GET then same-PID TLS</strong> · Medium</summary>
+
+- **Description:** InstallUtil PID sends public HTTP GET for an MSI path then public TLS/443 data. Signed binary status, installer contents, registration and execution are unknown.
+- **Category:** EvasionInfra
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R943_InstallutilPublicMsiGetThenTlsRule.cs)
+- **Detailed evidence and test scenarios:** [926-945](batches/RULE_BATCH_926-945.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R944 — MSHTA public HTA GET then private WinRM SYN</strong> · Medium</summary>
+
+- **Description:** Same private source and MSHTA PID sends public HTTP GET for .hta then private TCP/5985 SYN. HTA execution, child process, authentication and remote command are unknown.
+- **Category:** EvasionInfra
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R944_MshtaHtaGetThenPrivateWinRmSynRule.cs)
+- **Detailed evidence and test scenarios:** [926-945](batches/RULE_BATCH_926-945.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R951 — Teams public TLS then same-PID public SMB SYN</strong> · Medium</summary>
+
+- **Description:** Same local Teams PID sends public TLS/443 with visible SNI then public TCP/445 SYN to a different or same peer. Electron argument abuse, child process, app-resource change and execution are unknown.
+- **Category:** EvasionInfra
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R951_TeamsPublicTlsThenPublicSmbRule.cs)
+- **Detailed evidence and test scenarios:** [946-965](batches/RULE_BATCH_946-965.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R952 — Wscript public VBS GET then same-PID public TLS</strong> · Medium</summary>
+
+- **Description:** Wscript PID retrieves a public .vbs path then sends public TLS/443 data. SyncAppvPublishingServer invocation, embedded PowerShell, script content and execution are unknown.
+- **Category:** EvasionInfra
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R952_WscriptPublicVbsGetThenTlsRule.cs)
+- **Detailed evidence and test scenarios:** [946-965](batches/RULE_BATCH_946-965.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R953 — Cscript private JS GET then same-peer RPC SYN</strong> · Medium</summary>
+
+- **Description:** Same private cscript PID retrieves a .js path from a private peer then TCP/135 SYN to that peer. Signature status, script arguments, child process, RPC execution and authorization are unknown.
+- **Category:** EvasionInfra
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R953_CscriptPrivateJsGetThenRpcSynRule.cs)
+- **Detailed evidence and test scenarios:** [946-965](batches/RULE_BATCH_946-965.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R965 — Spoolsv public DLL GET then same-peer SMB SYN</strong> · Medium</summary>
+
+- **Description:** Same spoolsv PID retrieves public DLL-suffix HTTP path then TCP/445 SYN to same public peer. Print-monitor registry write, DLL load, AddMonitor call and persistence are unknown.
+- **Category:** EvasionInfra
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R965_SpoolsvPublicDllGetThenSmbSynRule.cs)
+- **Detailed evidence and test scenarios:** [946-965](batches/RULE_BATCH_946-965.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+</details>
+
+### EvasionTunnel: 61 rules
+
+<details>
+<summary>Choose a rule from 61 EvasionTunnel entries</summary>
 
 <details>
 <summary><strong>R513 — SSH Dynamic SOCKS Proxy Use</strong> · High</summary>
@@ -3899,12 +5309,747 @@ Select a category below, then expand any rule to view its documentation **on thi
 
 </details>
 
+<details>
+<summary><strong>R662 — IDE process observed using Visual Studio developer-tunnel TLS SNI</strong> · Low</summary>
+
+- **Description:** IDE process observed using Visual Studio developer-tunnel TLS SNI. R516/R517 handle other tunneling providers; this exact Visual Studio development-tunnel SNI and IDE process conjunction differs.
+- **Category:** EvasionTunnel
+- **Severity:** Low
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R662_IdeProcessVisualStudioDevTunnelTlsSniEgressRule.cs)
+- **Detailed evidence and test scenarios:** [656-665](batches/RULE_BATCH_656-665.md)
+- **Verification record:** Candidate — unverified (reported)
+
 </details>
 
-### Exfiltration: 2 rules
+<details>
+<summary><strong>R667 — Script process publishes MQTT control-topic request to external broker</strong> · Medium</summary>
+
+- **Description:** Script process publishes MQTT control-topic request to external broker. MQTT parser labels a publish request; no client identity, broker acceptance, C2 or actuation outcome is established.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R667_ScriptProcessMqttControlTopicPublishRule.cs)
+- **Detailed evidence and test scenarios:** [666-675](batches/RULE_BATCH_666-675.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
 
 <details>
-<summary>Choose a rule from 2 Exfiltration entries</summary>
+<summary><strong>R670 — Four regularly spaced fixed-size ICMP echo requests</strong> · Low</summary>
+
+- **Description:** Four regularly spaced fixed-size ICMP echo requests. A regular ping sequence is often benign and does not prove C2 or tunneling.
+- **Category:** EvasionTunnel
+- **Severity:** Low
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R670_RegularFixedLengthIcmpEchoSequenceRule.cs)
+- **Detailed evidence and test scenarios:** [666-675](batches/RULE_BATCH_666-675.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R674 — Same local PID receives public TCP SYN then initiates external high-port SYN</strong> · Medium</summary>
+
+- **Description:** Same local PID receives public TCP SYN then initiates external high-port SYN. Two SYNs do not prove process spawning, packet forwarding, NAT, an established proxy or a C2 relay.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R674_SameProcessInboundToOutboundPublicTcpSynSequenceRule.cs)
+- **Detailed evidence and test scenarios:** [666-675](batches/RULE_BATCH_666-675.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R675 — System utility TLS SNI contact to web collaboration endpoint</strong> · Low</summary>
+
+- **Description:** System utility TLS SNI contact to web collaboration endpoint. No upload/download, persistent session, malicious C2 use, TLS content, or reliable process executable identity.
+- **Category:** EvasionTunnel
+- **Severity:** Low
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R675_UnusualSystemUtilityTlsSniToWebCollaborationHostRule.cs)
+- **Detailed evidence and test scenarios:** [666-675](batches/RULE_BATCH_666-675.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R681 — Unusual local process contacts two public peers on proxy-associated TCP ports</strong> · Medium</summary>
+
+- **Description:** Unusual local process contacts two public peers on proxy-associated TCP ports; No SOCKS handshake, established proxy, C2 relay or forwarded payload is observed.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R681_UnusualProcessDualPublicProxyPortSynRule.cs)
+- **Detailed evidence and test scenarios:** [676-685](batches/RULE_BATCH_676-685.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R694 — NPS npc.exe process associated with external TCP egress</strong> · Medium</summary>
+
+- **Description:** NPS npc.exe process associated with external TCP egress. No NPS command line, vkey/password, server mode, proxy handshake or actual traffic forwarding is observed.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R694_NpsNpcProcessExternalTcpEgressRule.cs)
+- **Detailed evidence and test scenarios:** [686-695](batches/RULE_BATCH_686-695.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R695 — IOX iox.exe process associated with external TCP egress</strong> · Medium</summary>
+
+- **Description:** IOX iox.exe process associated with external TCP egress. No fwd/proxy command-line mode, listener role, SOCKS semantics, tunnel establishment or forwarded bytes are observed.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R695_IoxProcessExternalTcpEgressRule.cs)
+- **Detailed evidence and test scenarios:** [686-695](batches/RULE_BATCH_686-695.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R703 — Script-like process emits repeated raw UDP payloads to one public high-port peer</strong> · Low</summary>
+
+- **Description:** Script-like process emits repeated raw UDP payloads to one public high-port peer. Five UDP datagrams do not prove non-application C2, exfiltration, payload semantics or server receipt.
+- **Category:** EvasionTunnel
+- **Severity:** Low
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R703_ScriptProcessRepeatedPublicUdpPayloadBurstRule.cs)
+- **Detailed evidence and test scenarios:** [696-705](batches/RULE_BATCH_696-705.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R704 — Unattributed private host receives internal high-port SYN then initiates admin-service SYN to another private host</strong> · Low</summary>
+
+- **Description:** Unattributed private host receives internal high-port SYN then initiates admin-service SYN to another private host. Two SYN packets do not prove a proxy, C2 relay, ESXi shell tool, accepted connection or forwarded payload.
+- **Category:** EvasionTunnel
+- **Severity:** Low
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R704_UnattributedInternalRelaySynSequenceRule.cs)
+- **Detailed evidence and test scenarios:** [696-705](batches/RULE_BATCH_696-705.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R705 — Unattributed private host receives public high-port SYN then initiates SYN to a different public peer</strong> · Low</summary>
+
+- **Description:** Unattributed private host receives public high-port SYN then initiates SYN to a different public peer. Host-level SYN correlation does not establish netcat/socat, reverse tunnel, traffic bridging or successful connections.
+- **Category:** EvasionTunnel
+- **Severity:** Low
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R705_UnattributedPublicBridgeSynSequenceRule.cs)
+- **Detailed evidence and test scenarios:** [696-705](batches/RULE_BATCH_696-705.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R706 — Public source three-port knock followed by private-host admin SYN</strong> · Medium</summary>
+
+- **Description:** A public source sends SYNs to exactly three distinct high ports on one private host, then an admin-service SYN within 60 seconds. This does not prove closed-port responses, firewall changes, listener activation, magic-packet handling, or a successful session.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R706_DirectHostPortKnockThenAdminSynRule.cs)
+- **Detailed evidence and test scenarios:** [706-715](batches/RULE_BATCH_706-715.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R711 — Plink or PuTTY process contacts public SSH then internal admin service</strong> · Medium</summary>
+
+- **Description:** The same best-effort local Plink/PuTTY PID first sends an outbound SSH SYN to a public peer and then an outbound SYN to a different private admin-service peer within 30 seconds. This does not prove SSH port forwarding, encapsulated RDP/SMB, authentication, or an established tunnel.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R711_PlinkSshThenInternalAdminLegRule.cs)
+- **Detailed evidence and test scenarios:** [706-715](batches/RULE_BATCH_706-715.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R712 — Socat process receives public SYN then contacts internal admin service</strong> · Medium</summary>
+
+- **Description:** The same best-effort local Socat PID receives a public high-port SYN and then initiates a SYN from that local host to a different private admin-service peer within 30 seconds. Two SYNs do not prove port forwarding, encapsulation, payload relay, or a successful connection.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R712_SocatPublicIngressThenInternalAdminLegRule.cs)
+- **Detailed evidence and test scenarios:** [706-715](batches/RULE_BATCH_706-715.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R713 — Netcat process external high-port SYN followed by raw TCP payload</strong> · Medium</summary>
+
+- **Description:** The same best-effort Netcat/Ncat PID sends an outbound SYN to a public uncommon high port and then a raw TCP payload observation on the same tuple within 30 seconds. Command-line -e/-c flags, shell execution, server acceptance, and reverse-shell semantics are not observed.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R713_NetcatExternalHighPortConnectPayloadRule.cs)
+- **Detailed evidence and test scenarios:** [706-715](batches/RULE_BATCH_706-715.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R721 — Hybrid Connection Manager TLS SNI to Azure Service Bus</strong> · Low</summary>
+
+- **Description:** HybridConnectionManager.exe is associated with outbound TLS to a servicebus.windows.net SNI. Service state, Hybrid Connection configuration, authentication, successful relay establishment, and malicious intent are not observed.
+- **Category:** EvasionTunnel
+- **Severity:** Low
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R721_HybridConnectionManagerServiceBusTlsRule.cs)
+- **Detailed evidence and test scenarios:** [716-725](batches/RULE_BATCH_716-725.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R741 — Hypervisor management process TLS contact to dead-drop service</strong> · Low</summary>
+
+- **Description:** hostd, vpxa, or vmx is associated with outbound TLS/443 to a bounded paste/Gist text-storage service. Retrieved content, embedded secondary C2 indicators, response data and malicious intent are not observed.
+- **Category:** EvasionTunnel
+- **Severity:** Low
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R741_HypervisorProcessDeadDropTlsContactRule.cs)
+- **Detailed evidence and test scenarios:** [736-745](batches/RULE_BATCH_736-745.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R742 — BusyBox/curl/wget external TLS heartbeat-shaped cadence</strong> · Low</summary>
+
+- **Description:** busybox, curl, or wget is associated with three similarly sized TLS/443 payload observations to one public peer at regular 9–31 second intervals. Common dead-drop, cloud-storage, code-repository and public-IP discovery hosts are excluded. Shell origin, HTTP content, command-and-control and server responses are not observed.
+- **Category:** EvasionTunnel
+- **Severity:** Low
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R742_BusyBoxCliWebHeartbeatCadenceRule.cs)
+- **Detailed evidence and test scenarios:** [736-745](batches/RULE_BATCH_736-745.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R744 — ESXi management-process public proxy-port fanout</strong> · Medium</summary>
+
+- **Description:** hostd, vpxa, or vmx initiates TCP SYNs to three distinct public peers on proxy/tunnel-associated ports within one minute. Traffic forwarding, relay chaining, authenticated proxy use, multi-hop routing and malicious intent are not observed.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R744_EsxiManagementProcessProxyPortFanoutRule.cs)
+- **Detailed evidence and test scenarios:** [736-745](batches/RULE_BATCH_736-745.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R758 — Public uncommon-port trigger followed by reverse SYN to origin</strong> · Medium</summary>
+
+- **Description:** A low-volume public-to-private TCP SYN to an uncommon high port is followed within 90 seconds by a TCP SYN from that private host back to the same public source. Packet-filter installation, raw-socket activity, accepted sessions, reverse-shell semantics and compromise are not observed.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R758_PublicUncommonTriggerThenReverseSynRule.cs)
+- **Detailed evidence and test scenarios:** [756-765](batches/RULE_BATCH_756-765.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R769 — Perl/Ruby high-rate cleartext HTTP request burst</strong> · Medium</summary>
+
+- **Description:** perl or ruby is associated with twelve parser-backed cleartext HTTP GET/POST requests to one public peer within ten seconds. Process novelty, response volume, request semantics and command-and-control are not observed.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R769_LinuxPerlRubyHttpRequestBurstRule.cs)
+- **Detailed evidence and test scenarios:** [766-775](batches/RULE_BATCH_766-775.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R770 — Windows LOLBIN outbound web-traffic burst</strong> · Medium</summary>
+
+- **Description:** regsvr32, mshta, wscript, or cscript is associated with eight HTTP request or TLS/443 payload observations to one public peer within twenty seconds. Process novelty, response volume, script content and command-and-control are not observed.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R770_WindowsLolbinWebTrafficBurstRule.cs)
+- **Detailed evidence and test scenarios:** [766-775](batches/RULE_BATCH_766-775.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R776 — Windows PowerShell HTTP POST burst to text-storage host</strong> · Medium</summary>
+
+- **Description:** Windows PowerShell HTTP POST burst to text-storage host. This is a narrow packet/process association, not proof of file access, transfer completion, command execution, exfiltration, or compromise.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R776_WindowsPowerShellPasteHttpPostBurstRule.cs)
+- **Detailed evidence and test scenarios:** [776-785](batches/RULE_BATCH_776-785.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R777 — Windows git HTTP POST burst to code-repository host</strong> · Medium</summary>
+
+- **Description:** Windows git HTTP POST burst to code-repository host. This is a narrow packet/process association, not proof of file access, transfer completion, command execution, exfiltration, or compromise.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R777_WindowsGitRepositoryHttpPostBurstRule.cs)
+- **Detailed evidence and test scenarios:** [776-785](batches/RULE_BATCH_776-785.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R778 — Windows Excel TLS/443 burst to cloud-storage host</strong> · Medium</summary>
+
+- **Description:** Windows Excel TLS/443 burst to cloud-storage host. This is a narrow packet/process association, not proof of file access, transfer completion, command execution, exfiltration, or compromise.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R778_WindowsExcelCloudStorageTlsBurstRule.cs)
+- **Detailed evidence and test scenarios:** [776-785](batches/RULE_BATCH_776-785.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R779 — Windows 7-Zip uncommon-port TLS payload burst</strong> · Medium</summary>
+
+- **Description:** Windows 7-Zip uncommon-port TLS payload burst. This is a narrow packet/process association, not proof of file access, transfer completion, command execution, exfiltration, or compromise.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R779_Windows7ZipUncommonPortTlsBurstRule.cs)
+- **Detailed evidence and test scenarios:** [776-785](batches/RULE_BATCH_776-785.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R780 — Windows PowerShell TCP/21 payload burst</strong> · Medium</summary>
+
+- **Description:** Windows PowerShell TCP/21 payload burst. This is a narrow packet/process association, not proof of file access, transfer completion, command execution, exfiltration, or compromise.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R780_WindowsPowerShellFtpPortPayloadBurstRule.cs)
+- **Detailed evidence and test scenarios:** [776-785](batches/RULE_BATCH_776-785.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R781 — ESXi hostd TLS/443 burst to text-storage host</strong> · Medium</summary>
+
+- **Description:** ESXi hostd TLS/443 burst to text-storage host. This is a narrow packet/process association, not proof of file access, transfer completion, command execution, exfiltration, or compromise.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R781_EsxiHostdTextStorageTlsBurstRule.cs)
+- **Detailed evidence and test scenarios:** [776-785](batches/RULE_BATCH_776-785.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R782 — Linux tar TLS/443 burst to cloud-storage host</strong> · Medium</summary>
+
+- **Description:** Linux tar TLS/443 burst to cloud-storage host. This is a narrow packet/process association, not proof of file access, transfer completion, command execution, exfiltration, or compromise.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R782_LinuxTarCloudStorageTlsBurstRule.cs)
+- **Detailed evidence and test scenarios:** [776-785](batches/RULE_BATCH_776-785.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R783 — Linux rsync TCP/21 payload burst</strong> · Medium</summary>
+
+- **Description:** Linux rsync TCP/21 payload burst. This is a narrow packet/process association, not proof of file access, transfer completion, command execution, exfiltration, or compromise.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R783_LinuxRsyncFtpPortPayloadBurstRule.cs)
+- **Detailed evidence and test scenarios:** [776-785](batches/RULE_BATCH_776-785.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R784 — macOS osascript HTTP POST burst to text-storage host</strong> · Medium</summary>
+
+- **Description:** macOS osascript HTTP POST burst to text-storage host. This is a narrow packet/process association, not proof of file access, transfer completion, command execution, exfiltration, or compromise.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R784_MacOsascriptTextStorageHttpPostBurstRule.cs)
+- **Detailed evidence and test scenarios:** [776-785](batches/RULE_BATCH_776-785.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R785 — macOS launchd fixed-size TLS/443 egress cadence</strong> · Medium</summary>
+
+- **Description:** macOS launchd fixed-size TLS/443 egress cadence. This is a narrow packet/process association, not proof of file access, transfer completion, command execution, exfiltration, or compromise.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R785_MacLaunchdFixedSizeTlsCadenceRule.cs)
+- **Detailed evidence and test scenarios:** [776-785](batches/RULE_BATCH_776-785.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R786 — Large DNS-over-TCP TXT query burst toward public resolver</strong> · Medium</summary>
+
+- **Description:** Large DNS-over-TCP TXT query burst toward public resolver. A bounded observation only; no config change, successful authentication, transfer, exploitation or compromise established.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R786_TcpDnsTxtLargeQueryBurstRule.cs)
+- **Detailed evidence and test scenarios:** [786-795](batches/RULE_BATCH_786-795.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R787 — DNS A query followed by process-attributed unusual public SYN</strong> · Medium</summary>
+
+- **Description:** DNS A query followed by process-attributed unusual public SYN. A bounded observation only; no config change, successful authentication, transfer, exploitation or compromise established.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R787_DnsThenUnusualPublicConnectRule.cs)
+- **Detailed evidence and test scenarios:** [786-795](batches/RULE_BATCH_786-795.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R790 — Public server certificate issuer changes across captured handshakes</strong> · Medium</summary>
+
+- **Description:** Public server certificate issuer changes across captured handshakes. A bounded observation only; no config change, successful authentication, transfer, exploitation or compromise established.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R790_RemoteTlsIssuerShiftRule.cs)
+- **Detailed evidence and test scenarios:** [786-795](batches/RULE_BATCH_786-795.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R792 — hostd-attributed FTP STOR request then TFTP port egress</strong> · Medium</summary>
+
+- **Description:** hostd-attributed FTP STOR request then TFTP port egress. A bounded observation only; no config change, successful authentication, transfer, exploitation or compromise established.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R792_EsxiFtpThenTftpEgressRule.cs)
+- **Detailed evidence and test scenarios:** [786-795](batches/RULE_BATCH_786-795.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R793 — Public proxy-port SYN followed by nginx-attributed external SYN</strong> · Medium</summary>
+
+- **Description:** Public proxy-port SYN followed by nginx-attributed external SYN. A bounded observation only; no config change, successful authentication, transfer, exploitation or compromise established.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R793_PublicProxyIngressThenNginxEgressRule.cs)
+- **Detailed evidence and test scenarios:** [786-795](batches/RULE_BATCH_786-795.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R796 — frpc-attributed internal proxy-leg then public TLS-port SYN</strong> · Medium</summary>
+
+- **Description:** frpc-attributed internal proxy-leg then public TLS-port SYN. Packet/process shape only; no authorization, exploitation, transfer completion, command execution or compromise inferred.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R796_FrpcInternalThenExternalSynRule.cs)
+- **Detailed evidence and test scenarios:** [796-805](batches/RULE_BATCH_796-805.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R798 — DNS A query followed by same-process repeating TLS/SNI cadence</strong> · Medium</summary>
+
+- **Description:** DNS A query followed by same-process repeating TLS/SNI cadence. Packet/process shape only; no authorization, exploitation, transfer completion, command execution or compromise inferred.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R798_DnsThenRecurringTlsSniRule.cs)
+- **Detailed evidence and test scenarios:** [796-805](batches/RULE_BATCH_796-805.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R799 — process-linked DNS TXT query then cleartext HTTP POST to same host</strong> · Medium</summary>
+
+- **Description:** process-linked DNS TXT query then cleartext HTTP POST to same host. Packet/process shape only; no authorization, exploitation, transfer completion, command execution or compromise inferred.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R799_DnsTxtThenSameHostHttpPostRule.cs)
+- **Detailed evidence and test scenarios:** [796-805](batches/RULE_BATCH_796-805.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R805 — five distinct long base32-shaped TXT subdomain questions</strong> · Medium</summary>
+
+- **Description:** five distinct long base32-shaped TXT subdomain questions. Packet/process shape only; no authorization, exploitation, transfer completion, command execution or compromise inferred.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R805_EncodedDnsTxtDistinctQueryBurstRule.cs)
+- **Detailed evidence and test scenarios:** [796-805](batches/RULE_BATCH_796-805.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R810 — frpc-attributed versioned QUIC fanout to three public peers</strong> · Medium</summary>
+
+- **Description:** frpc-attributed versioned QUIC fanout to three public peers. Observable packet/process shape only; no authorization, causality, success or compromise inferred.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R810_FrpcQuicPublicPeerFanoutRule.cs)
+- **Detailed evidence and test scenarios:** [806-815](batches/RULE_BATCH_806-815.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R812 — openssl-attributed recurrent UDP/4444 public payload traffic</strong> · Medium</summary>
+
+- **Description:** openssl-attributed recurrent UDP/4444 public payload traffic. Observable packet/process shape only; no authorization, causality, success or compromise inferred.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R812_OpensslPublicUdpPayloadBurstRule.cs)
+- **Detailed evidence and test scenarios:** [806-815](batches/RULE_BATCH_806-815.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R815 — osascript attributed alternating short and long external TLS packets</strong> · Medium</summary>
+
+- **Description:** osascript attributed alternating short and long external TLS packets. Observable packet/process shape only; no authorization, causality, success or compromise inferred.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R815_OsascriptAlternatingTlsPayloadSizesRule.cs)
+- **Detailed evidence and test scenarios:** [806-815](batches/RULE_BATCH_806-815.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R818 — IDE marketplace TLS contact then different-peer TCP/8443 SYN</strong> · Medium</summary>
+
+- **Description:** IDE marketplace TLS contact then different-peer TCP/8443 SYN. Source-only network/process evidence; no authorization, compromise or successful outcome inferred.
+- **Category:** EvasionTunnel
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R818_IdeMarketplaceThenUnusualTlsPortRule.cs)
+- **Detailed evidence and test scenarios:** [816-825](batches/RULE_BATCH_816-825.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+</details>
+
+### Execution: 11 rules
+
+<details>
+<summary>Choose a rule from 11 Execution entries</summary>
+
+<details>
+<summary><strong>R752 — msiexec cleartext HTTP retrieval of remote installer package</strong> · Medium</summary>
+
+- **Description:** msiexec is associated with an outbound cleartext HTTP GET whose path ends in .msi, .msp, or .mst. Command-line arguments, package signature, download completion, installation, DLL execution and compromise are not observed.
+- **Category:** Execution
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R752_MsiexecRemoteMsiHttpGetRule.cs)
+- **Detailed evidence and test scenarios:** [746-755](batches/RULE_BATCH_746-755.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R762 — MSBuild external TLS payload burst</strong> · Medium</summary>
+
+- **Description:** msbuild.exe is associated with four substantial TLS/443 payload observations to one public peer within two minutes. Project path, command line, child process, module load, file write, injection behavior and malicious proxy execution are not observed.
+- **Category:** Execution
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R762_MsbuildExternalTlsPayloadBurstRule.cs)
+- **Detailed evidence and test scenarios:** [756-765](batches/RULE_BATCH_756-765.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R806 — Docker registry manifest GET then xmrig pool-service payload</strong> · Medium</summary>
+
+- **Description:** Docker manifest HTTP GET followed by same-host xmrig public TCP/3333 payload. No container creation, launch or compromise inferred.
+- **Category:** Execution
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R806_DockerManifestThenMinerPoolPayloadRule.cs)
+- **Detailed evidence and test scenarios:** [806-815](batches/RULE_BATCH_806-815.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R817 — curl script URL GET then shell-attributed different-peer TLS payload</strong> · Medium</summary>
+
+- **Description:** curl script URL GET then shell-attributed different-peer TLS payload. Source-only network/process evidence; no authorization, compromise or successful outcome inferred.
+- **Category:** Execution
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R817_ScriptHttpGetThenShellPublicEgressRule.cs)
+- **Detailed evidence and test scenarios:** [816-825](batches/RULE_BATCH_816-825.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R820 — Safari JavaScript GET then osascript different-peer TLS/8443</strong> · Medium</summary>
+
+- **Description:** Safari JavaScript GET then osascript different-peer TLS/8443. Source-only network/process evidence; no authorization, compromise or successful outcome inferred.
+- **Category:** Execution
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R820_SafariJavascriptThenOsascriptTlsRule.cs)
+- **Detailed evidence and test scenarios:** [816-825](batches/RULE_BATCH_816-825.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R831 — MpCmdRun-attributed archive GET from public direct-IP host</strong> · Medium</summary>
+
+- **Description:** MpCmdRun process-attributed HTTP archive URL is observable; command-line DownloadFile mode, disk path and successful download are unavailable.
+- **Category:** Execution
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R831_MpCmdRunDirectIpArchiveGetRule.cs)
+- **Detailed evidence and test scenarios:** [826-835](batches/RULE_BATCH_826-835.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R833 — Word remote template GET followed by PowerShell other-peer TLS</strong> · Medium</summary>
+
+- **Description:** Same local IP Word template HTTP request and later PowerShell public TLS egress; no parent process lineage or malicious document is observed.
+- **Category:** Execution
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R833_WordRemoteTemplateThenPowerShellTlsRule.cs)
+- **Detailed evidence and test scenarios:** [826-835](batches/RULE_BATCH_826-835.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R841 — Browser JavaScript GET then Python different-peer TLS</strong> · Medium</summary>
+
+- **Description:** Local Firefox/Chromium GET of a .js path followed by python/python3 TLS/8443 to a different public peer; no drive-by code execution or parentage inferred.
+- **Category:** Execution
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R841_BrowserScriptGetThenPythonTlsRule.cs)
+- **Detailed evidence and test scenarios:** [836-845](batches/RULE_BATCH_836-845.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R861 — Thunderbird ZIP GET followed by bash TLS to another peer</strong> · Medium</summary>
+
+- **Description:** A thunderbird-attributed cleartext .zip GET precedes bash-attributed public TLS/8443 to a different peer inside 60s; attachment opening and process lineage unknown.
+- **Category:** Execution
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R861_ThunderbirdZipGetThenBashTlsRule.cs)
+- **Detailed evidence and test scenarios:** [856-865](batches/RULE_BATCH_856-865.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R865 — Curl CMD-file GET followed by cmd-attributed public SYN</strong> · Medium</summary>
+
+- **Description:** Curl-attributed HTTP/80 .cmd GET precedes cmd-attributed TCP/8443 SYN to another public peer within 60s; file execution, shell ancestry and download success unknown.
+- **Category:** Execution
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R865_CurlCmdGetThenCmdPublicSynRule.cs)
+- **Detailed evidence and test scenarios:** [856-865](batches/RULE_BATCH_856-865.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R877 — Docker remote create and start HTTP API requests</strong> · Medium</summary>
+
+- **Description:** Same private client sends Docker HTTP/2375 POST /containers/create then a POST /containers/{id}/start to the same daemon within 60s; no image policy, privileged flags or successful deployment is verified.
+- **Category:** Execution
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R877_DockerApiCreateThenStartRequestRule.cs)
+- **Detailed evidence and test scenarios:** [876-885](batches/RULE_BATCH_876-885.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+</details>
+
+### Exfiltration: 13 rules
+
+<details>
+<summary>Choose a rule from 13 Exfiltration entries</summary>
 
 <details>
 <summary><strong>R008 — Exfiltration</strong> · High</summary>
@@ -3932,12 +6077,155 @@ Select a category below, then expand any rule to view its documentation **on thi
 
 </details>
 
+<details>
+<summary><strong>R849 — Python same-peer uniform outbound TCP payload cadence</strong> · Medium</summary>
+
+- **Description:** Four Python-attributed public TCP/4444 payloads of near-equal size at 2-6 second spacing; no file, exfiltration content or completed transfer inferred.
+- **Category:** Exfiltration
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R849_PythonUniformOutboundPayloadCadenceRule.cs)
+- **Detailed evidence and test scenarios:** [846-855](batches/RULE_BATCH_846-855.md)
+- **Verification record:** Candidate — unverified (reported)
+
 </details>
 
-### ExfiltrationAdvanced: 20 rules
+<details>
+<summary><strong>R852 — PowerShell Dropbox-content TLS payload burst</strong> · Medium</summary>
+
+- **Description:** Five same-PID outbound PowerShell TCP/443 payload packets of &gt;=1200 bytes to content.dropboxapi.com SNI in 30s; no decrypted upload, account identity, file or exfiltration established.
+- **Category:** Exfiltration
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R852_PowershellCloudTlsPayloadBurstRule.cs)
+- **Detailed evidence and test scenarios:** [846-855](batches/RULE_BATCH_846-855.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
 
 <details>
-<summary>Choose a rule from 20 ExfiltrationAdvanced entries</summary>
+<summary><strong>R854 — PowerShell public SYNs tagged Wi-Fi and Cellular</strong> · Medium</summary>
+
+- **Description:** Same local PowerShell PID has typed public TCP/8443 SYNs tagged Wi-Fi and Cellular within 90s; labels are untrusted enrichment, not physical interface or exfiltration proof.
+- **Category:** Exfiltration
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R854_PowershellAlternateNetworkTypeSynRule.cs)
+- **Detailed evidence and test scenarios:** [846-855](batches/RULE_BATCH_846-855.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R855 — Hostd-attributed public HTTP/8080 POST burst</strong> · Medium</summary>
+
+- **Description:** Five hostd/vpxa-attributed cleartext POST packets to one public TCP/8080 peer in 20s; no ESXi provenance, FTP, transferred file, unauthorized policy or completed exfiltration established.
+- **Category:** Exfiltration
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R855_HostdExternalHttpPostBurstRule.cs)
+- **Detailed evidence and test scenarios:** [846-855](batches/RULE_BATCH_846-855.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R858 — Hostd-attributed public TLS/9443 large burst</strong> · Medium</summary>
+
+- **Description:** Five hostd-attributed TLS/9443 packets to one public peer in 30s and &gt;=9000 packet-payload bytes; ESXi role, data transfer and exfiltration unknown.
+- **Category:** Exfiltration
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R858_HostdPublicTls9443BurstRule.cs)
+- **Detailed evidence and test scenarios:** [856-865](batches/RULE_BATCH_856-865.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R863 — Rsync-attributed public TCP/873 payload burst</strong> · Medium</summary>
+
+- **Description:** Five rsync-attributed TCP/873 packets to one public peer within 30s have at least 10000 payload bytes; file read and successful sync not observed.
+- **Category:** Exfiltration
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R863_RsyncPublic873PayloadBurstRule.cs)
+- **Detailed evidence and test scenarios:** [856-865](batches/RULE_BATCH_856-865.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R904 — Curl public binary HTTP PUT request</strong> · Medium</summary>
+
+- **Description:** Local curl attribution and a public cleartext HTTP PUT with exact application/octet-stream content-type, typed request and at least 512 transport payload bytes; file contents, upload completion and exfiltration are unknown.
+- **Category:** Exfiltration
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R904_CurlPublicBinaryHttpPutRule.cs)
+- **Detailed evidence and test scenarios:** [901-905](batches/RULE_BATCH_901-905.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R938 — Ollama public embedding API HTTP POST</strong> · Medium</summary>
+
+- **Description:** Ollama-attributed cleartext public POST to /api/embed or /api/embeddings on TCP/11434 with at least 512 transport bytes. Input contents, sensitive data, AI policy and exfiltration are unknown.
+- **Category:** Exfiltration
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R938_OllamaPublicEmbeddingHttpPostRule.cs)
+- **Detailed evidence and test scenarios:** [926-945](batches/RULE_BATCH_926-945.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R939 — Curl public HTTP POST cadence</strong> · Medium</summary>
+
+- **Description:** Same private curl PID and public HTTP host/path sends four POST records of 512–4096 transport bytes at 5–20s intervals within 65s. Scheduled task, file contents and transfer completion are unknown.
+- **Category:** Exfiltration
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R939_CurlPublicRepeatedUploadCadenceRule.cs)
+- **Detailed evidence and test scenarios:** [926-945](batches/RULE_BATCH_926-945.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R945 — Osascript public Discord webhook HTTP POST</strong> · Medium</summary>
+
+- **Description:** Osascript-attributed cleartext public HTTP POST to Discord webhook path with exact Discord host. Webhook token, content, authorization and C2 are unknown.
+- **Category:** Exfiltration
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R945_OsascriptPublicDiscordWebhookPostRule.cs)
+- **Detailed evidence and test scenarios:** [926-945](batches/RULE_BATCH_926-945.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R964 — OpenSSL public TLS/8443 then same-peer TLS/443</strong> · Medium</summary>
+
+- **Description:** Same OpenSSL PID sends TLS data to public TCP/8443 then TCP/443 at the same peer. File encryption, symmetric key use, content, operating system and exfiltration are unknown.
+- **Category:** Exfiltration
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R964_OpensslPublic8443ThenSamePeer443TlsRule.cs)
+- **Detailed evidence and test scenarios:** [946-965](batches/RULE_BATCH_946-965.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+</details>
+
+### ExfiltrationAdvanced: 39 rules
+
+<details>
+<summary>Choose a rule from 39 ExfiltrationAdvanced entries</summary>
 
 <details>
 <summary><strong>R243 — Large Outbound Archive Transfer</strong> · High</summary>
@@ -4199,6 +6487,253 @@ Select a category below, then expand any rule to view its documentation **on thi
 
 </details>
 
+<details>
+<summary><strong>R652 — Script host FTP upload command to public endpoint</strong> · High</summary>
+
+- **Description:** Script host FTP upload command to public endpoint. R248 generic FTP STOR/appe; this requires correlated local script-host process/PID and parsed request.
+- **Category:** ExfiltrationAdvanced
+- **Severity:** High
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R652_ScriptHostFtpExternalUploadRequestRule.cs)
+- **Detailed evidence and test scenarios:** [646-655](batches/RULE_BATCH_646-655.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R658 — Regular-size outbound TCP payload sequence from an attributed process</strong> · Low</summary>
+
+- **Description:** Regular-size outbound TCP payload sequence from an attributed process. R254 counts repeated declared HTTP uploads; this matches four non-HTTP TCP payload observations with constrained lengths and spacing, without transfer claims.
+- **Category:** ExfiltrationAdvanced
+- **Severity:** Low
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R658_UniformIntervalOutboundProcessTcpPayloadSequenceRule.cs)
+- **Detailed evidence and test scenarios:** [656-665](batches/RULE_BATCH_656-665.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R663 — FTP STOR then APPE requests to same external peer</strong> · Medium</summary>
+
+- **Description:** FTP STOR then APPE requests to same external peer. R248 detects a single STOR/APPEND command and R652 requires script-host identity; this candidate requires both distinct request types in order.
+- **Category:** ExfiltrationAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R663_ExternalFtpStorAppeRequestPairRule.cs)
+- **Detailed evidence and test scenarios:** [656-665](batches/RULE_BATCH_656-665.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R671 — Eight large raw TCP payload observations from an attributed script process</strong> · Low</summary>
+
+- **Description:** Eight large raw TCP payload observations from an attributed script process. Observed packet payload length is not directional application bytes, delivery, data content or demonstrated junk traffic.
+- **Category:** ExfiltrationAdvanced
+- **Severity:** Low
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R671_ScriptProcessLargeRawTcpPayloadBurstRule.cs)
+- **Detailed evidence and test scenarios:** [666-675](batches/RULE_BATCH_666-675.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R715 — Private client TFTP request followed by public-server transfer reply</strong> · Low</summary>
+
+- **Description:** A private UDP client contacts a public host on TFTP/69 and the same public host replies from an ephemeral UDP port to the original client port within 30 seconds. This does not identify a file, configuration export, upload direction, transfer completion, or exfiltration.
+- **Category:** ExfiltrationAdvanced
+- **Severity:** Low
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R715_PrivateClientPublicTftpExchangeRule.cs)
+- **Detailed evidence and test scenarios:** [706-715](batches/RULE_BATCH_706-715.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R718 — PowerShell or Office process TLS payload burst to cloud storage</strong> · Medium</summary>
+
+- **Description:** A PowerShell or Office process is associated with four substantial TLS payload observations to a known cloud-storage SNI within two minutes. Packet lengths are not unique transferred bytes and do not prove an upload, file access, authentication, or exfiltration.
+- **Category:** ExfiltrationAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R718_UnusualProcessCloudStorageTlsPayloadBurstRule.cs)
+- **Detailed evidence and test scenarios:** [716-725](batches/RULE_BATCH_716-725.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R719 — PowerShell process raw SMB-port payload burst to public host</strong> · Medium</summary>
+
+- **Description:** A PowerShell process produces three raw TCP payload observations to a public TCP/445 peer within two minutes. SMB authentication, share access, file transfer, unique byte counts, and exfiltration are not observed.
+- **Category:** ExfiltrationAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R719_PowerShellExternalSmbPayloadBurstRule.cs)
+- **Detailed evidence and test scenarios:** [716-725](batches/RULE_BATCH_716-725.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R726 — ESXi management process external TLS payload burst</strong> · Medium</summary>
+
+- **Description:** hostd, vpxa, or vmx is associated with four substantial TLS/443 payload observations to one public peer within two minutes. Packet lengths are not unique transferred bytes and do not prove datastore reads, uploads, web-service use, exfiltration, or compromise.
+- **Category:** ExfiltrationAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R726_EsxiManagementProcessExternalTlsBurstRule.cs)
+- **Detailed evidence and test scenarios:** [726-735](batches/RULE_BATCH_726-735.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R734 — macOS non-browser process external TLS payload burst</strong> · Low</summary>
+
+- **Description:** A non-browser macOS scripting/utility process produces four substantial TLS/443 payload observations to one public peer within two minutes. Known text-storage, code-repository and cloud-storage service families are excluded to avoid overlap. File reads, compression, unique transfer bytes and exfiltration are not observed.
+- **Category:** ExfiltrationAdvanced
+- **Severity:** Low
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R734_MacNonBrowserExternalTlsPayloadBurstRule.cs)
+- **Detailed evidence and test scenarios:** [726-735](batches/RULE_BATCH_726-735.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R736 — Linux non-browser process external TLS payload burst</strong> · Medium</summary>
+
+- **Description:** curl, wget, Python, rsync, scp, sftp, or rclone is associated with four substantial TLS/443 payload observations to one public peer within two minutes. File reads, archive creation, unique TCP bytes, upload semantics and exfiltration are not observed.
+- **Category:** ExfiltrationAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R736_LinuxNonBrowserTlsPayloadBurstRule.cs)
+- **Detailed evidence and test scenarios:** [736-745](batches/RULE_BATCH_736-745.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R737 — Linux CLI/script large cleartext HTTP upload-shaped burst</strong> · Medium</summary>
+
+- **Description:** curl, wget, Python, or Python3 is associated with four substantial cleartext HTTP POST/PUT packet observations to one public peer within two minutes. Local file access, request-body reconstruction, response status, delivered bytes and exfiltration are not observed.
+- **Category:** ExfiltrationAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R737_LinuxCliLargeHttpPostBurstRule.cs)
+- **Detailed evidence and test scenarios:** [736-745](batches/RULE_BATCH_736-745.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R738 — Linux transfer-tool recurrent outbound payload cadence</strong> · Low</summary>
+
+- **Description:** rsync, scp, sftp, rclone, curl, wget, or Python is associated with three similarly sized outbound TCP payload observations to the same public peer at regular 20–70 second intervals. Cron scheduling, user identity, file contents, transfer completion and exfiltration are not observed.
+- **Category:** ExfiltrationAdvanced
+- **Severity:** Low
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R738_LinuxRecurrentTransferCadenceRule.cs)
+- **Detailed evidence and test scenarios:** [736-745](batches/RULE_BATCH_736-745.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R740 — macOS utility cleartext HTTP upload-shaped burst</strong> · Medium</summary>
+
+- **Description:** osascript, Microsoft Word, Microsoft Excel, or Preview is associated with four substantial cleartext HTTP POST/PUT packet observations to one public peer within two minutes. Local document access, request-body reconstruction, response, delivered bytes and exfiltration are not observed.
+- **Category:** ExfiltrationAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R740_MacOsUtilityLargeHttpPostBurstRule.cs)
+- **Detailed evidence and test scenarios:** [736-745](batches/RULE_BATCH_736-745.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R746 — ESXi management-process nonstandard-port TLS payload burst</strong> · Medium</summary>
+
+- **Description:** hostd, vpxa, or vmx is associated with four substantial TLS payload observations to one public peer on a bounded nonstandard TLS port within two minutes. Encryption algorithm, file source, unique TCP bytes, upload semantics and exfiltration are not observed.
+- **Category:** ExfiltrationAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R746_EsxiManagementProcessNonstandardTlsBurstRule.cs)
+- **Detailed evidence and test scenarios:** [746-755](batches/RULE_BATCH_746-755.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R747 — Windows archive-tool external TLS payload burst</strong> · Medium</summary>
+
+- **Description:** 7-Zip or WinRAR process attribution is associated with four substantial TLS/443 payload observations to one public peer within two minutes. Archive creation, local file access, destination novelty, request semantics and exfiltration are not observed.
+- **Category:** ExfiltrationAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R747_WindowsArchiveToolExternalTlsBurstRule.cs)
+- **Detailed evidence and test scenarios:** [746-755](batches/RULE_BATCH_746-755.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R748 — Linux crypto-tool uncommon-port payload burst</strong> · Medium</summary>
+
+- **Description:** openssl, gpg, gpg2, or age is associated with four substantial raw TCP payload observations to one public uncommon port within two minutes. Encryption invocation, key material, file source, delivered bytes and exfiltration are not observed.
+- **Category:** ExfiltrationAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R748_LinuxCryptoToolUncommonPortPayloadBurstRule.cs)
+- **Detailed evidence and test scenarios:** [746-755](batches/RULE_BATCH_746-755.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R749 — ESXi-style shell tool external FTP upload request</strong> · High</summary>
+
+- **Description:** busybox, curl, wget, ftpput, or lftp is associated with a parsed FTP STOR/APPE upload command to a public endpoint. Shell history, source file, server response, data-channel delivery and exfiltration are not observed.
+- **Category:** ExfiltrationAdvanced
+- **Severity:** High
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R749_EsxiShellToolExternalFtpUploadRequestRule.cs)
+- **Detailed evidence and test scenarios:** [746-755](batches/RULE_BATCH_746-755.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R750 — macOS-characteristic process cloud-storage TLS payload burst</strong> · Medium</summary>
+
+- **Description:** osascript, Microsoft Word, Microsoft Excel, or Preview is associated with four substantial TLS/443 payload observations to a known cloud-storage SNI within two minutes. Local file reads, xattr changes, upload semantics, unique bytes and exfiltration are not observed.
+- **Category:** ExfiltrationAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R750_MacProcessCloudStorageTlsPayloadBurstRule.cs)
+- **Detailed evidence and test scenarios:** [746-755](batches/RULE_BATCH_746-755.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R753 — osascript recurrent external TLS cadence</strong> · Low</summary>
+
+- **Description:** osascript is associated with three similarly sized TLS/443 payload observations to one public peer at 30–90 second intervals. LaunchAgent scheduling, user identity, local file access, request content and exfiltration are not observed.
+- **Category:** ExfiltrationAdvanced
+- **Severity:** Low
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R753_OsascriptExternalTlsRecurrentCadenceRule.cs)
+- **Detailed evidence and test scenarios:** [746-755](batches/RULE_BATCH_746-755.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
 </details>
 
 ### GeoIP: 1 rules
@@ -4319,10 +6854,10 @@ Select a category below, then expand any rule to view its documentation **on thi
 
 </details>
 
-### HttpApi: 61 rules
+### HttpApi: 90 rules
 
 <details>
-<summary>Choose a rule from 61 HttpApi entries</summary>
+<summary>Choose a rule from 90 HttpApi entries</summary>
 
 <details>
 <summary><strong>R153 — GraphQL Introspection Query</strong> · Medium</summary>
@@ -5117,6 +7652,383 @@ Select a category below, then expand any rule to view its documentation **on thi
 
 </details>
 
+<details>
+<summary><strong>R646 — HTTP firmware upload request to device management endpoint</strong> · High</summary>
+
+- **Description:** HTTP firmware upload request to device management endpoint. R236 detects firmware GET/download; this requires a POST with upload path and binary content-type. No change outcome.
+- **Category:** HttpApi
+- **Severity:** High
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R646_DeviceFirmwareHttpUploadAttemptRule.cs)
+- **Detailed evidence and test scenarios:** [646-655](batches/RULE_BATCH_646-655.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R651 — External CMS content-save POST request observed</strong> · Medium</summary>
+
+- **Description:** External CMS content-save POST request observed. R087 monitors webshell upload, R169 admin login; this requires an explicit content-editor save POST from public to private.
+- **Category:** HttpApi
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R651_ExternalCmsContentSavePostAttemptRule.cs)
+- **Detailed evidence and test scenarios:** [646-655](batches/RULE_BATCH_646-655.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R664 — Script process GET carrying a long encoded query to public IP literal</strong> · Medium</summary>
+
+- **Description:** Script process GET carrying a long encoded query to public IP literal. R019 is generic encoded/long URI, while this requires a script process/PID, exact IP literal HTTP host, GET and explicit long URL-safe query parameter.
+- **Category:** HttpApi
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R664_ScriptProcessLongEncodedHttpGetToIpLiteralRule.cs)
+- **Detailed evidence and test scenarios:** [656-665](batches/RULE_BATCH_656-665.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R666 — Specific SQL injection token in cleartext HTTP GET URI</strong> · Medium</summary>
+
+- **Description:** Specific SQL injection token in cleartext HTTP GET URI. Only observed URI bytes, no database execution, returned data, or HTTP status.
+- **Category:** HttpApi
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R666_SpecificSqlInjectionGetUriRequestRule.cs)
+- **Detailed evidence and test scenarios:** [666-675](batches/RULE_BATCH_666-675.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R668 — Rundll32-associated HTTP API POST to a public host</strong> · Medium</summary>
+
+- **Description:** Rundll32-associated HTTP API POST to a public host. Process-to-flow PID attribution is best effort; HTTP request is not C2 or delivery evidence.
+- **Category:** HttpApi
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R668_Rundll32CleartextApiPostPublicRule.cs)
+- **Detailed evidence and test scenarios:** [666-675](batches/RULE_BATCH_666-675.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R672 — PowerShell POST with long Base64-like data parameter to named web host</strong> · Medium</summary>
+
+- **Description:** PowerShell POST with long Base64-like data parameter to named web host. Query characters cannot prove encoding purpose, payload content or C2.
+- **Category:** HttpApi
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R672_PowerShellBase64LikeHttpPostParameterRule.cs)
+- **Detailed evidence and test scenarios:** [666-675](batches/RULE_BATCH_666-675.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R673 — Script HTTP GET with repeated double-percent-encoded segments</strong> · Low</summary>
+
+- **Description:** Script HTTP GET with repeated double-percent-encoded segments. This is URL-encoding shape, not a proved custom encoder, malware or successful execution.
+- **Category:** HttpApi
+- **Severity:** Low
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R673_ScriptProcessRepeatedDoublePercentEncodedHttpGetRule.cs)
+- **Detailed evidence and test scenarios:** [666-675](batches/RULE_BATCH_666-675.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R682 — Rundll32/MSHTA browser-agent HTTP heartbeat-shaped GET sequence</strong> · Low</summary>
+
+- **Description:** Rundll32/MSHTA browser-agent HTTP heartbeat-shaped GET sequence; No browser impersonation intent, HTTP response, C2 beacon or executable identity proof is established.
+- **Category:** HttpApi
+- **Severity:** Low
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R682_SystemUtilityBrowserAgentHttpGetHeartbeatRule.cs)
+- **Detailed evidence and test scenarios:** [676-685](batches/RULE_BATCH_676-685.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R686 — Bitsadmin-associated cleartext HTTP GET to direct public IP</strong> · Medium</summary>
+
+- **Description:** Bitsadmin-associated cleartext HTTP GET to direct public IP. The original Sigma command-line transfer flags and local output path are unavailable; an HTTP GET is not proof of file download or execution.
+- **Category:** HttpApi
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R686_BitsadminDirectIpCleartextHttpGetRule.cs)
+- **Detailed evidence and test scenarios:** [686-695](batches/RULE_BATCH_686-695.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R687 — Certutil-associated cleartext HTTP GET to direct public IP</strong> · Medium</summary>
+
+- **Description:** Certutil-associated cleartext HTTP GET to direct public IP. Certutil URL-cache/verify flags and filesystem destination are not observable; no completed download is inferred.
+- **Category:** HttpApi
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R687_CertutilDirectIpCleartextHttpGetRule.cs)
+- **Detailed evidence and test scenarios:** [686-695](batches/RULE_BATCH_686-695.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R688 — Wget-associated cleartext HTTP GET to direct public IP</strong> · Medium</summary>
+
+- **Description:** Wget-associated cleartext HTTP GET to direct public IP. The original suspicious local output-path condition is unavailable; observed request does not establish saved content.
+- **Category:** HttpApi
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R688_WgetDirectIpCleartextHttpGetRule.cs)
+- **Detailed evidence and test scenarios:** [686-695](batches/RULE_BATCH_686-695.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R689 — Curl-associated contact to selected file-sharing service host</strong> · Low</summary>
+
+- **Description:** Curl-associated contact to selected file-sharing service host. The source rule requires command-line download/output flags and suspicious extension; SNI/HTTP host contact alone does not prove a file download.
+- **Category:** HttpApi
+- **Severity:** Low
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R689_CurlFileSharingServiceHostEgressRule.cs)
+- **Detailed evidence and test scenarios:** [686-695](batches/RULE_BATCH_686-695.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R690 — Curl-associated cleartext HTTP GET for suspicious file extension</strong> · Medium</summary>
+
+- **Description:** Curl-associated cleartext HTTP GET for suspicious file extension. Curl output-file arguments and local filesystem destination are unavailable; request path does not prove content was received or written.
+- **Category:** HttpApi
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R690_CurlSuspiciousExtensionCleartextHttpGetRule.cs)
+- **Detailed evidence and test scenarios:** [686-695](batches/RULE_BATCH_686-695.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R696 — Bitsadmin-associated contact to selected file-sharing service</strong> · Medium</summary>
+
+- **Description:** Bitsadmin-associated contact to selected file-sharing service. Command-line transfer switches, output path and completed download are not observed.
+- **Category:** HttpApi
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R696_BitsadminFileSharingServiceContactRule.cs)
+- **Detailed evidence and test scenarios:** [696-705](batches/RULE_BATCH_696-705.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R697 — Certutil-associated contact to selected file-sharing service</strong> · Medium</summary>
+
+- **Description:** Certutil-associated contact to selected file-sharing service. Certutil URL-cache/verify flags and any downloaded file are not observable.
+- **Category:** HttpApi
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R697_CertutilFileSharingServiceContactRule.cs)
+- **Detailed evidence and test scenarios:** [696-705](batches/RULE_BATCH_696-705.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R698 — PowerShell-associated contact to selected file-sharing service</strong> · Medium</summary>
+
+- **Description:** PowerShell-associated contact to selected file-sharing service. PowerShell download APIs, script contents, local file writes and transfer success are not visible.
+- **Category:** HttpApi
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R698_PowerShellFileSharingServiceContactRule.cs)
+- **Detailed evidence and test scenarios:** [696-705](batches/RULE_BATCH_696-705.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R699 — Office process cleartext HTTP GET for executable or script-like path</strong> · Medium</summary>
+
+- **Description:** Office process cleartext HTTP GET for executable or script-like path. Office command-line URL invocation and saved-file destination are unavailable; a GET path is not proof of download.
+- **Category:** HttpApi
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R699_OfficeProcessSuspiciousExtensionHttpGetRule.cs)
+- **Detailed evidence and test scenarios:** [696-705](batches/RULE_BATCH_696-705.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R722 — Bitsadmin suspicious-extension cleartext HTTP GET</strong> · Medium</summary>
+
+- **Description:** A bitsadmin.exe process is associated with an outbound cleartext HTTP GET whose URI ends in a script, executable, archive, webshell, or similar high-risk extension. Command-line BITS flags, local target path, response, file write, and completed download are not observed.
+- **Category:** HttpApi
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R722_BitsadminSuspiciousExtensionHttpGetRule.cs)
+- **Detailed evidence and test scenarios:** [716-725](batches/RULE_BATCH_716-725.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R725 — Curl or Wget cleartext GET with browser-like User-Agent</strong> · Low</summary>
+
+- **Description:** Curl or Wget is associated with an outbound cleartext HTTP GET carrying a browser-like Mozilla User-Agent. Interactive-shell or scheduled-job context and spoofing intent are not visible, so this is only an observable process/header mismatch.
+- **Category:** HttpApi
+- **Severity:** Low
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R725_CurlWgetBrowserUserAgentHttpGetRule.cs)
+- **Detailed evidence and test scenarios:** [716-725](batches/RULE_BATCH_716-725.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R760 — macOS-style script process with browser-like User-Agent</strong> · Low</summary>
+
+- **Description:** osascript, Python, or Python3 is associated with an outbound cleartext HTTP GET/POST carrying a browser-like Macintosh User-Agent. LaunchAgent origin, interactive context, spoofing intent, response and security outcome are not observed.
+- **Category:** HttpApi
+- **Severity:** Low
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R760_MacScriptBrowserUserAgentHttpRequestRule.cs)
+- **Detailed evidence and test scenarios:** [756-765](batches/RULE_BATCH_756-765.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R828 — wget cleartext tar GET using public direct-IP HTTP host</strong> · Medium</summary>
+
+- **Description:** Wget process and direct-IP HTTP tar request are visible; original HTTPS certificate bypass flag, file write and archive contents are not.
+- **Category:** HttpApi
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R828_WgetDirectIpTarHttpGetRule.cs)
+- **Detailed evidence and test scenarios:** [826-835](batches/RULE_BATCH_826-835.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R829 — cleartext executable GET from a .zip top-level domain</strong> · Medium</summary>
+
+- **Description:** Observed HTTP executable-extension request to a .zip domain only; file write, MOTW stream content and transfer completion are not seen.
+- **Category:** HttpApi
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R829_ZipTldExecutableHttpGetRule.cs)
+- **Detailed evidence and test scenarios:** [826-835](batches/RULE_BATCH_826-835.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R830 — two distinct executable GET paths at one public IP host</strong> · Medium</summary>
+
+- **Description:** Distinct cleartext executable requests to one public direct-IP HTTP origin are observed; no Zone.Identifier stream, downloaded file or execution is proven.
+- **Category:** HttpApi
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R830_DirectIpDistinctExecutableGetRule.cs)
+- **Detailed evidence and test scenarios:** [826-835](batches/RULE_BATCH_826-835.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R896 — Regsvr32-attributed public HTTP scriptlet GET</strong> · Medium</summary>
+
+- **Description:** Local regsvr32 attribution and a public HTTP GET ending in .sct; scriptlet execution, module load, command line and authorization are unknown.
+- **Category:** HttpApi
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R896_Regsvr32PublicScriptletHttpGetRule.cs)
+- **Detailed evidence and test scenarios:** [896-900](batches/RULE_BATCH_896-900.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R897 — CMSTP-attributed public HTTP INF GET</strong> · Medium</summary>
+
+- **Description:** Local cmstp attribution and a public HTTP GET ending in .inf; profile installation, command line, DLL load and privilege change are unknown.
+- **Category:** HttpApi
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R897_CmstpPublicInfHttpGetRule.cs)
+- **Detailed evidence and test scenarios:** [896-900](batches/RULE_BATCH_896-900.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R907 — MSHTA public HTTP GET for image or PDF suffix</strong> · Medium</summary>
+
+- **Description:** MSHTA public HTTP GET for .png, .jpg or .pdf. File contents, polyglot format and execution are unknown.
+- **Category:** HttpApi
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R907_MshtaPublicDisguisedArtifactGetRule.cs)
+- **Detailed evidence and test scenarios:** [906-925](batches/RULE_BATCH_906-925.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R926 — Odbcconf public HTTP DLL GET</strong> · Medium</summary>
+
+- **Description:** Odbcconf-attributed public HTTP GET for a DLL path. REGSVR arguments, DLL load, execution and authorization are not observed.
+- **Category:** HttpApi
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R926_OdbcconfPublicDllHttpGetRule.cs)
+- **Detailed evidence and test scenarios:** [926-945](batches/RULE_BATCH_926-945.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R927 — Cscript public HTTP scriptlet GET</strong> · Medium</summary>
+
+- **Description:** Cscript-attributed public HTTP GET for a .sct resource. PubPrn invocation, script moniker and script execution are not observed.
+- **Category:** HttpApi
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R927_CscriptPublicScriptletHttpGetRule.cs)
+- **Detailed evidence and test scenarios:** [926-945](batches/RULE_BATCH_926-945.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R928 — JamPlus public HTTP Jam-file GET</strong> · Medium</summary>
+
+- **Description:** JamPlus-attributed cleartext HTTP GET for a .jam resource. Build invocation, file contents, child process and execution are unknown.
+- **Category:** HttpApi
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R928_JamplusPublicJamHttpGetRule.cs)
+- **Detailed evidence and test scenarios:** [926-945](batches/RULE_BATCH_926-945.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
 </details>
 
 ### ICMP: 2 rules
@@ -5172,10 +8084,10 @@ Select a category below, then expand any rule to view its documentation **on thi
 
 </details>
 
-### IdentityAccess: 20 rules
+### IdentityAccess: 28 rules
 
 <details>
-<summary>Choose a rule from 20 IdentityAccess entries</summary>
+<summary>Choose a rule from 28 IdentityAccess entries</summary>
 
 <details>
 <summary><strong>R123 — Suspicious VPN Login Path</strong> · High</summary>
@@ -5433,6 +8345,110 @@ Select a category below, then expand any rule to view its documentation **on thi
 - **Enabled by default:** true
 - **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R644_RdpPublicClientSynAckExposureEvidenceRule.cs)
 - **Detailed evidence and test scenarios:** [636-645](batches/RULE_BATCH_636-645.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R648 — VNC private listener SYN-ACK response to a public client</strong> · Medium</summary>
+
+- **Description:** VNC private listener SYN-ACK response to a public client. R124 RDP exposure and R644 RDP SYN-ACK have a different service; this is VNC TCP/5900 response only.
+- **Category:** IdentityAccess
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R648_VncListenerPublicSynAckResponseRule.cs)
+- **Detailed evidence and test scenarios:** [646-655](batches/RULE_BATCH_646-655.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R649 — WinRM private listener SYN-ACK response to a public client</strong> · Medium</summary>
+
+- **Description:** WinRM private listener SYN-ACK response to a public client. R125 flags inbound WinRM service access, not observed server SYN-ACK; this requires response direction and flags.
+- **Category:** IdentityAccess
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R649_WinRmListenerPublicSynAckResponseRule.cs)
+- **Detailed evidence and test scenarios:** [646-655](batches/RULE_BATCH_646-655.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R691 — Private SMB listener SYN-ACK response to a public client</strong> · Medium</summary>
+
+- **Description:** Private SMB listener SYN-ACK response to a public client. The original Event 4624 successful logon is not available. SYN-ACK proves only a TCP listener response, not SMB authentication or successful login.
+- **Category:** IdentityAccess
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R691_SmbListenerPublicClientSynAckEvidenceRule.cs)
+- **Detailed evidence and test scenarios:** [686-695](batches/RULE_BATCH_686-695.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R692 — Outlook-associated external WebDAV request or SMB SYN attempt</strong> · Medium</summary>
+
+- **Description:** Outlook-associated external WebDAV request or SMB SYN attempt. The original registry-access evidence is unavailable. Network activity does not prove CVE-2023-23397 exploitation, NTLM disclosure, or credential capture.
+- **Category:** IdentityAccess
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R692_OutlookExternalWebDavOrSmbAttemptRule.cs)
+- **Detailed evidence and test scenarios:** [686-695](batches/RULE_BATCH_686-695.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R693 — SnippingTool-associated external SMB SYN or cleartext HTTP GET</strong> · Medium</summary>
+
+- **Description:** SnippingTool-associated external SMB SYN or cleartext HTTP GET. The ms-screensketch URI handler and filePath command-line value are not observed. Do not claim CVE exploitation, SSRF or NTLM leakage.
+- **Category:** IdentityAccess
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R693_SnippingToolExternalRemoteResourceAttemptRule.cs)
+- **Detailed evidence and test scenarios:** [686-695](batches/RULE_BATCH_686-695.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R759 — Linux VNC process public-client SYN-ACK exposure evidence</strong> · Medium</summary>
+
+- **Description:** x11vnc, vncserver, Xvnc, or Xtigervnc is associated with a private-host TCP/5900 SYN-ACK to a public client. Authentication, listener ownership beyond best-effort process attribution, session establishment and authorization are not observed.
+- **Category:** IdentityAccess
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R759_LinuxVncProcessPublicSynAckRule.cs)
+- **Detailed evidence and test scenarios:** [756-765](batches/RULE_BATCH_756-765.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R832 — CertOC process GET to a direct public IP HTTP origin</strong> · Medium</summary>
+
+- **Description:** CertOC-associated direct-IP cleartext HTTP GET only; command-line GetCACAPS, CA response, material write and certificate trust are not visible.
+- **Category:** IdentityAccess
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R832_CertocPublicIpHttpGetRule.cs)
+- **Detailed evidence and test scenarios:** [826-835](batches/RULE_BATCH_826-835.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R915 — Dsconfigad private LDAP then Kerberos SYN</strong> · Medium</summary>
+
+- **Description:** Same dsconfigad PID and private peer TCP/389 SYN then TCP/88 SYN. Domain enrollment, account creation and authentication are unknown.
+- **Category:** IdentityAccess
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R915_DsconfigadLdapThenKerberosSynRule.cs)
+- **Detailed evidence and test scenarios:** [906-925](batches/RULE_BATCH_906-925.md)
 - **Verification record:** Candidate — unverified (reported)
 
 </details>
@@ -5706,10 +8722,148 @@ Select a category below, then expand any rule to view its documentation **on thi
 
 </details>
 
-### IotOt: 10 rules
+### Impact: 1 rules
 
 <details>
-<summary>Choose a rule from 10 IotOt entries</summary>
+<summary>Choose a rule from 1 Impact entries</summary>
+
+<details>
+<summary><strong>R840 — Same public client repeated HTTP GET to private service path</strong> · Medium</summary>
+
+- **Description:** Eight coherent same-path public-to-private cleartext HTTP/80 GET packets over twenty seconds; no network-layer denial-of-service impact or resource depletion inferred.
+- **Category:** Impact
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R840_PublicRepeatedSamePathGetRule.cs)
+- **Detailed evidence and test scenarios:** [836-845](batches/RULE_BATCH_836-845.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+</details>
+
+### Industrial: 1 rules
+
+<details>
+<summary>Choose a rule from 1 Industrial entries</summary>
+
+<details>
+<summary><strong>R853 — One internal telemetry peer sends TCP/1883 with two source MACs</strong> · Medium</summary>
+
+- **Description:** Two coherent same-endpoint internal TCP/1883 reporting payload packets carry distinct canonical Ethernet source MACs within 60s; no enrolled identity, message spoof or physical process divergence established.
+- **Category:** Industrial
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R853_ReportingPeerSourceMacChangeRule.cs)
+- **Detailed evidence and test scenarios:** [846-855](batches/RULE_BATCH_846-855.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+</details>
+
+### InitialAccess: 7 rules
+
+<details>
+<summary>Choose a rule from 7 InitialAccess entries</summary>
+
+<details>
+<summary><strong>R839 — Public encoded traversal GET then web-worker public TLS</strong> · Medium</summary>
+
+- **Description:** Inbound cleartext encoded traversal GET on HTTP/80 followed by w3wp process attributed outbound TLS/8443 from the private web host; exploit success and worker causality unknown.
+- **Category:** InitialAccess
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R839_TraversalGetThenWebWorkerTlsRule.cs)
+- **Detailed evidence and test scenarios:** [836-845](batches/RULE_BATCH_836-845.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R875 — Public DNP3-port TCP SYN followed by application-sized data</strong> · Medium</summary>
+
+- **Description:** One public client sends TCP SYN then application-sized TCP data to the same private TCP/20000 host within 40s; no DNP3 decoder, authenticated session or device command is implied.
+- **Category:** InitialAccess
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R875_PublicDnp3SynThenPayloadRule.cs)
+- **Detailed evidence and test scenarios:** [866-875](batches/RULE_BATCH_866-875.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R878 — Public SSH SYN followed by same-flow payload</strong> · Medium</summary>
+
+- **Description:** Public TCP/22 SYN to a private host is followed by application-sized data from the same public client and source port within 40s; Linux identity, SSH authentication, authorization and OT asset role are unknown.
+- **Category:** InitialAccess
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R878_PublicSshSynThenPayloadRule.cs)
+- **Detailed evidence and test scenarios:** [876-885](batches/RULE_BATCH_876-885.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R885 — Public CGI POST then same host bash-attributed public TLS</strong> · Medium</summary>
+
+- **Description:** Public POST to a private CGI diagnostic path precedes bash-attributed public TLS/8443 to a different IP from that host within 60s; no process spawn, command execution, exploitation or causality proven.
+- **Category:** InitialAccess
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R885_PublicCgiPostThenBashTlsRule.cs)
+- **Detailed evidence and test scenarios:** [876-885](batches/RULE_BATCH_876-885.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R891 — Public VNC SYN followed by same-flow client data</strong> · Medium</summary>
+
+- **Description:** Public SYN/5900 to private host followed by client application-sized data on the same source port within 40s; VNC authentication, session takeover, GUI action and file transfer are not observed.
+- **Category:** InitialAccess
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R891_PublicVncSynThenPayloadRule.cs)
+- **Detailed evidence and test scenarios:** [886-895](batches/RULE_BATCH_886-895.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R902 — Public SSH attempt then screensharingd VNC SYN-ACK</strong> · Medium</summary>
+
+- **Description:** Public TCP/22 SYN to a private host followed by locally attributed screensharingd TCP/5900 SYN-ACK back to the same public peer within 45s; no SSH or VNC authentication or linked user session is established.
+- **Category:** InitialAccess
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R902_PublicSshThenScreensharingVncResponseRule.cs)
+- **Detailed evidence and test scenarios:** [901-905](batches/RULE_BATCH_901-905.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R922 — Public HTTP POST to PowerShell Web Access path</strong> · Medium</summary>
+
+- **Description:** Public cleartext HTTP POST to /pswa/default.aspx or /pswa/ on a private host. PSWA installation, credentials and execution are unknown.
+- **Category:** InitialAccess
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R922_PublicPswaLoginRequestRule.cs)
+- **Detailed evidence and test scenarios:** [906-925](batches/RULE_BATCH_906-925.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+</details>
+
+### IotOt: 17 rules
+
+<details>
+<summary>Choose a rule from 17 IotOt entries</summary>
 
 <details>
 <summary><strong>R113 — MQTT Broker Connection to Unapproved Host</strong> · High</summary>
@@ -5841,12 +8995,103 @@ Select a category below, then expand any rule to view its documentation **on thi
 
 </details>
 
+<details>
+<summary><strong>R800 — scada-named process field-device SYN then public HTTP API GET</strong> · Medium</summary>
+
+- **Description:** scada-named process field-device SYN then public HTTP API GET. Packet/process shape only; no authorization, exploitation, transfer completion, command execution or compromise inferred.
+- **Category:** IotOt
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R800_ScadaDeviceSynThenPublicHttpRule.cs)
+- **Detailed evidence and test scenarios:** [796-805](batches/RULE_BATCH_796-805.md)
+- **Verification record:** Candidate — unverified (reported)
+
 </details>
 
-### IotOtAdvanced: 34 rules
+<details>
+<summary><strong>R801 — EtherNet/IP ListIdentity probe then Modbus SYN to same private device</strong> · Medium</summary>
+
+- **Description:** EtherNet/IP ListIdentity probe then Modbus SYN to same private device. Packet/process shape only; no authorization, exploitation, transfer completion, command execution or compromise inferred.
+- **Category:** IotOt
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R801_CipIdentityThenModbusSynRule.cs)
+- **Detailed evidence and test scenarios:** [796-805](batches/RULE_BATCH_796-805.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
 
 <details>
-<summary>Choose a rule from 34 IotOtAdvanced entries</summary>
+<summary><strong>R802 — python-attributed probes of three OT protocol ports on one device</strong> · Medium</summary>
+
+- **Description:** python-attributed probes of three OT protocol ports on one device. Packet/process shape only; no authorization, exploitation, transfer completion, command execution or compromise inferred.
+- **Category:** IotOt
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R802_PythonOtServiceMultiPortProbeRule.cs)
+- **Detailed evidence and test scenarios:** [796-805](batches/RULE_BATCH_796-805.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R803 — CoAP multicast discovery then process-linked direct public DNS TXT</strong> · Medium</summary>
+
+- **Description:** CoAP multicast discovery then process-linked direct public DNS TXT. Packet/process shape only; no authorization, exploitation, transfer completion, command execution or compromise inferred.
+- **Category:** IotOt
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R803_CoapDiscoveryThenPublicDnsTxtRule.cs)
+- **Detailed evidence and test scenarios:** [796-805](batches/RULE_BATCH_796-805.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R932 — Public MQTT control-topic publish request</strong> · Medium</summary>
+
+- **Description:** Public source sends parsed MQTT control-topic PUBLISH to private TCP/1883. Broker policy, acknowledgement, authorization and device action are unknown.
+- **Category:** IotOt
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R932_PublicMqttControlPublishRule.cs)
+- **Detailed evidence and test scenarios:** [926-945](batches/RULE_BATCH_926-945.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R933 — MQTT private client SYN then retained PUBLISH</strong> · Medium</summary>
+
+- **Description:** Private client TCP/1883 SYN to private broker followed by same-flow parsed retained control-topic PUBLISH. Reconnection, delivery, command application and device response are unknown.
+- **Category:** IotOt
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R933_MqttSynThenRetainedPublishRule.cs)
+- **Detailed evidence and test scenarios:** [926-945](batches/RULE_BATCH_926-945.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R934 — MQTT client TLS to distinct public broker peers</strong> · Medium</summary>
+
+- **Description:** Same private mosquitto_pub PID sends TLS/8883 to two distinct public peers within 45s. Broker trust-root changes, broker identity, MQTT session and policy are unknown.
+- **Category:** IotOt
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R934_MqttBrokerTlsDifferentPublicPeersRule.cs)
+- **Detailed evidence and test scenarios:** [926-945](batches/RULE_BATCH_926-945.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+</details>
+
+### IotOtAdvanced: 57 rules
+
+<details>
+<summary>Choose a rule from 57 IotOtAdvanced entries</summary>
 
 <details>
 <summary><strong>R223 — ICS Protocol To Internet</strong> · Critical</summary>
@@ -6290,6 +9535,305 @@ Select a category below, then expand any rule to view its documentation **on thi
 
 </details>
 
+<details>
+<summary><strong>R653 — Public-client Modbus non-write request multi-host sweep</strong> · Medium</summary>
+
+- **Description:** Public-client Modbus non-write request multi-host sweep. R548 is Modbus WRITE cross-subnet fanout; R653 requires non-write request classification to three hosts in one private /24.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R653_PublicModbusNonWriteHostSweepRule.cs)
+- **Detailed evidence and test scenarios:** [646-655](batches/RULE_BATCH_646-655.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R654 — Public-client S7Comm multi-host discovery sweep</strong> · High</summary>
+
+- **Description:** Public-client S7Comm multi-host discovery sweep. R225 covers outside-segment S7, R478 block transfer; this requires one public client and three private S7 hosts in one /24.
+- **Category:** IotOtAdvanced
+- **Severity:** High
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R654_PublicS7CommHostSweepRule.cs)
+- **Detailed evidence and test scenarios:** [646-655](batches/RULE_BATCH_646-655.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R655 — Public-client EtherNet/IP ListIdentity multi-host probe</strong> · Medium</summary>
+
+- **Description:** Public-client EtherNet/IP ListIdentity multi-host probe. R488 generic CIP ListIdentity burst and R643 internal sequential scan; this is public-to-private fanout to three exact hosts.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R655_PublicEtherNetIpListIdentityHostSweepRule.cs)
+- **Detailed evidence and test scenarios:** [646-655](batches/RULE_BATCH_646-655.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R679 — Private OT-service listener TCP SYN-ACK to public client</strong> · Medium</summary>
+
+- **Description:** Private OT-service listener TCP SYN-ACK to public client; Port-associated SYN-ACK alone does not verify an ICS device, protocol decoder success, successful authentication or NAT exposure.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R679_IndustrialServicePortPublicClientSynAckRule.cs)
+- **Detailed evidence and test scenarios:** [676-685](batches/RULE_BATCH_676-685.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R683 — Parsed cleartext HTTP POST on native Modbus TCP service port</strong> · Medium</summary>
+
+- **Description:** Parsed cleartext HTTP POST on native Modbus TCP service port; A legitimate nonstandard HTTP service may use port 502; no ICS protocol masquerade intent or exploit is proved.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R683_HttpPostDetectedOnModbusServicePortRule.cs)
+- **Detailed evidence and test scenarios:** [676-685](batches/RULE_BATCH_676-685.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R684 — Public OPC UA-port SYN and private-server SYN-ACK exchange</strong> · Medium</summary>
+
+- **Description:** Public OPC UA-port SYN and private-server SYN-ACK exchange; The TCP exchange does not prove OPC UA payload, API execution, user approval, login or completed TCP handshake.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R684_OpcUaPublicClientSynSynAckExchangeRule.cs)
+- **Detailed evidence and test scenarios:** [676-685](batches/RULE_BATCH_676-685.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R685 — Large parsed S7Comm response records from three private devices</strong> · Medium</summary>
+
+- **Description:** Large parsed S7Comm response records from three private devices; Large response records do not establish directory listing, point/tag identification, device inventory or compromise.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R685_MultiDeviceLargeS7CommResponseFanInRule.cs)
+- **Detailed evidence and test scenarios:** [676-685](batches/RULE_BATCH_676-685.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R702 — Known application protocol classified on an incompatible OT service port</strong> · Medium</summary>
+
+- **Description:** Known application protocol classified on an incompatible OT service port. Protocol classification mismatch is not proof of an intercepting hook, asset compromise, malformed response or unauthorized tool.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R702_OtServiceProtocolClassificationMismatchRule.cs)
+- **Detailed evidence and test scenarios:** [696-705](batches/RULE_BATCH_696-705.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R708 — Public client TFTP request followed by private-host transfer reply</strong> · Medium</summary>
+
+- **Description:** A public UDP client contacts a private host on TFTP/69 and the same private host replies from an ephemeral UDP port to the original client port within 30 seconds. This does not identify firmware-update mode, a device role, file name, transfer completion, or authorization.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R708_PublicClientTftpExchangeToPrivateHostRule.cs)
+- **Detailed evidence and test scenarios:** [706-715](batches/RULE_BATCH_706-715.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R709 — Public oversized cleartext HTTP request to management-style port</strong> · Medium</summary>
+
+- **Description:** A public client sends a parser-coherent cleartext HTTP GET/POST with a URI longer than 1024 characters to a private management-style HTTP port. This does not identify an embedded asset, exploit string, vulnerable application, or exploit success.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R709_PublicOversizedManagementHttpRequestRule.cs)
+- **Detailed evidence and test scenarios:** [706-715](batches/RULE_BATCH_706-715.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R710 — Private host UDP/11211 fanout to three public peers</strong> · Medium</summary>
+
+- **Description:** One private source sends coherent UDP datagrams to Memcached port 11211 on three distinct public peers within 60 seconds. This is an amplification-shaped fanout only; source spoofing, Memcached command semantics, reflection, victim traffic, and denial-of-service impact are not observed.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R710_PublicMemcachedUdpFanoutRule.cs)
+- **Detailed evidence and test scenarios:** [706-715](batches/RULE_BATCH_706-715.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R716 — SIPROTEC-shaped 18-byte UDP/50000 fanout to private devices</strong> · Medium</summary>
+
+- **Description:** One source sends 18-byte UDP payloads to diagnostic port 50000 on two distinct private devices within 60 seconds. This is a narrow SIPROTEC/Industroyer-shaped packet pattern only; restart service semantics, device identity, authorization, offline state, and impact are unverified.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R716_SiprotecDiagnosticUdpFanoutRule.cs)
+- **Detailed evidence and test scenarios:** [716-725](batches/RULE_BATCH_716-725.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R728 — Node runtime connection attempt to private OT service</strong> · Medium</summary>
+
+- **Description:** node or nodejs is associated with a TCP SYN to a private OT service port. Parent process, script path, user, approved asset role, application payload and device outcome are not observed.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R728_NodeRuntimePrivateOtServiceSynRule.cs)
+- **Detailed evidence and test scenarios:** [726-735](batches/RULE_BATCH_726-735.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R729 — Python runtime connection attempt to private OT service</strong> · Medium</summary>
+
+- **Description:** python or python3 is associated with a TCP SYN to a private OT service port. Script path, parent process, user, approved automation role, application payload and device outcome are not observed.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R729_PythonRuntimePrivateOtServiceSynRule.cs)
+- **Detailed evidence and test scenarios:** [726-735](batches/RULE_BATCH_726-735.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R730 — Unix shell connection attempt to private OT service</strong> · Medium</summary>
+
+- **Description:** bash, sh, ash, zsh, or busybox is associated with a TCP SYN to a private OT service port. Parent process, command line, remote-session origin, asset role, application payload and device outcome are not observed.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R730_UnixShellPrivateOtServiceSynRule.cs)
+- **Detailed evidence and test scenarios:** [726-735](batches/RULE_BATCH_726-735.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R771 — Public-source SNMP/161 query burst to private host</strong> · Medium</summary>
+
+- **Description:** A public source sends twelve coherent UDP/161 observations to one private host within ten seconds. SNMP GETBULK/GETNEXT semantics, community strings, authentication state, exact OIDs and MIB-dump completion are not observed.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R771_PublicSnmpQueryBurstToPrivateHostRule.cs)
+- **Detailed evidence and test scenarios:** [766-775](batches/RULE_BATCH_766-775.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R772 — High-rate payload traffic to private OT service</strong> · Medium</summary>
+
+- **Description:** Twenty payload-bearing TCP/UDP observations target one private OT-associated service port within ten seconds. Malformed PDU semantics, approved-controller identity, poll failure, device resource exhaustion, service degradation and denial-of-service impact are not observed.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R772_PrivateOtServicePayloadFloodShapeRule.cs)
+- **Detailed evidence and test scenarios:** [766-775](batches/RULE_BATCH_766-775.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R946 — Private TFTP initial request then matched first response</strong> · Medium</summary>
+
+- **Description:** Private parsed TFTP RRQ or WRQ followed by the exact capture-correlated DATA block 1 or ACK block 0 within 45 seconds. Transfer completion, filename, firmware and authorization are unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R946_PrivateTftpRequestThenEphemeralReplyRule.cs)
+- **Detailed evidence and test scenarios:** [946-965](batches/RULE_BATCH_946-965.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R947 — Private SSH ingress then public parsed TFTP request</strong> · Medium</summary>
+
+- **Description:** Private TCP/22 SYN to a host followed by a capture-attested public TFTP RRQ or WRQ from that host. SSH authentication, ROMMON change, firmware and transfer completion are unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R947_PrivateSshIngressThenPublicTftpRule.cs)
+- **Detailed evidence and test scenarios:** [946-965](batches/RULE_BATCH_946-965.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R948 — Private FTP STOR then same-peer SSH SYN</strong> · Medium</summary>
+
+- **Description:** Private parsed FTP STOR request followed by same-source same-destination TCP/22 SYN. File name, upload completion, SCP, firmware role, boot configuration and authorization are unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R948_PrivateFtpStorThenSshSynRule.cs)
+- **Detailed evidence and test scenarios:** [946-965](batches/RULE_BATCH_946-965.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R949 — Private FTP STOR then same-peer parsed TFTP request</strong> · Medium</summary>
+
+- **Description:** Private parsed FTP STOR followed by capture-attested TFTP RRQ or WRQ to the same peer. File identity, successful upload, firmware and authorization are unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R949_PrivateFtpStorThenTftpDataRule.cs)
+- **Detailed evidence and test scenarios:** [946-965](batches/RULE_BATCH_946-965.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R960 — Private SSH-port payload cadence with local tool attribution</strong> · Medium</summary>
+
+- **Description:** Same private ssh/plink PID and private peer sends four TCP/22 data records of 512–4096 bytes at 5–20 second intervals. ICS role, approved management baseline, decoded SSH command and authorization are unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R960_PrivateSshPortPayloadCadenceRule.cs)
+- **Detailed evidence and test scenarios:** [946-965](batches/RULE_BATCH_946-965.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R961 — Public proxy-port ingress then private Modbus SYN</strong> · Medium</summary>
+
+- **Description:** Public TCP/3128 SYN to a private host followed by that host sending TCP/502 SYN to a private peer in a different /24. Proxy relay, VLAN policy, device role, authentication and control action are unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R961_PublicProxyIngressThenPrivateModbusSynRule.cs)
+- **Detailed evidence and test scenarios:** [946-965](batches/RULE_BATCH_946-965.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
 </details>
 
 ### IPv6: 6 rules
@@ -6664,10 +10208,10 @@ Select a category below, then expand any rule to view its documentation **on thi
 
 </details>
 
-### LateralMovement: 11 rules
+### LateralMovement: 45 rules
 
 <details>
-<summary>Choose a rule from 11 LateralMovement entries</summary>
+<summary>Choose a rule from 45 LateralMovement entries</summary>
 
 <details>
 <summary><strong>R073 — RDPLateral Movement Burst</strong> · High</summary>
@@ -6812,12 +10356,454 @@ Select a category below, then expand any rule to view its documentation **on thi
 
 </details>
 
+<details>
+<summary><strong>R665 — Explorer WebDAV-like GET followed by SMB SYN to same public peer</strong> · Medium</summary>
+
+- **Description:** Explorer WebDAV-like GET followed by SMB SYN to same public peer. R174 observes inbound WebDAV abuse; R351 requires NTLM-attributed telemetry. This candidate observes only two ordered outbound network attempts, never credential coercion.
+- **Category:** LateralMovement
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R665_ExplorerWebDavThenExternalSmbSynSequenceRule.cs)
+- **Detailed evidence and test scenarios:** [656-665](batches/RULE_BATCH_656-665.md)
+- **Verification record:** Candidate — unverified (reported)
+
 </details>
 
-### LocalDiscoveryWireless: 20 rules
+<details>
+<summary><strong>R754 — macOS-style transfer tool private-peer payload burst</strong> · Medium</summary>
+
+- **Description:** scp, sftp, or rsync is associated with four substantial TCP payload observations to one private peer on port 22 or 873 within two minutes. File identity, remote authentication, transfer direction, unique bytes, execution on the destination and lateral compromise are not observed.
+- **Category:** LateralMovement
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R754_MacTransferToolPrivatePeerPayloadBurstRule.cs)
+- **Detailed evidence and test scenarios:** [746-755](batches/RULE_BATCH_746-755.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
 
 <details>
-<summary>Choose a rule from 20 LocalDiscoveryWireless entries</summary>
+<summary><strong>R755 — Public VNC attempt followed by macOS-style script egress</strong> · Medium</summary>
+
+- **Description:** A public-to-private TCP SYN to VNC/5900 is followed within 90 seconds by outbound public traffic from the same private host attributed to osascript, zsh, curl, or python3. VNC authentication, exploit success, process parentage, service crash, causal linkage and compromise are not observed.
+- **Category:** LateralMovement
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R755_PublicVncAttemptThenMacScriptEgressRule.cs)
+- **Detailed evidence and test scenarios:** [746-755](batches/RULE_BATCH_746-755.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R757 — LLMNR/NBNS conflicting response followed by SMB connection to responder</strong> · Medium</summary>
+
+- **Description:** A parser-corroborated unicast conflicting LLMNR/NBNS response from one private host is followed within 60 seconds by a TCP SYN from the same peer to that responder on SMB/445. Credential interception, NTLM relay classification, authentication and compromise are not observed.
+- **Category:** LateralMovement
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R757_LlmnrNbnsConflictThenSmbRelayShapeRule.cs)
+- **Detailed evidence and test scenarios:** [756-765](batches/RULE_BATCH_756-765.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R765 — Public Linux-service attempt followed by shell/tool egress</strong> · Medium</summary>
+
+- **Description:** A public-to-private TCP SYN to a common Linux remote/service port is followed within 90 seconds by outbound public traffic from the same private host attributed to bash, sh, zsh, curl, wget, Python or Python3. Service crash, shell parentage, successful login/exploit, causal linkage and compromise are not observed.
+- **Category:** LateralMovement
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R765_LinuxRemoteServiceAttemptThenShellEgressRule.cs)
+- **Detailed evidence and test scenarios:** [756-765](batches/RULE_BATCH_756-765.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R775 — macOS SSH listener response followed by user-tool egress</strong> · Medium</summary>
+
+- **Description:** An sshd-attributed private-host TCP/22 SYN-ACK to a public client is followed within ninety seconds by outbound public traffic from the same host attributed to zsh, osascript, curl, or python3. Login success, user identity, process parentage, interactive shell state, causality and compromise are not observed.
+- **Category:** LateralMovement
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R775_MacSshdPublicSynAckThenUserToolEgressRule.cs)
+- **Detailed evidence and test scenarios:** [766-775](batches/RULE_BATCH_766-775.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R789 — Net-process SMB2 write request followed by TCP FIN</strong> · Medium</summary>
+
+- **Description:** Net-process SMB2 write request followed by TCP FIN. A bounded observation only; no config change, successful authentication, transfer, exploitation or compromise established.
+- **Category:** LateralMovement
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R789_NetProcessSmbWriteThenFinRule.cs)
+- **Detailed evidence and test scenarios:** [786-795](batches/RULE_BATCH_786-795.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R791 — Public administrative HTTP POST then local curl TLS egress</strong> · Medium</summary>
+
+- **Description:** Public administrative HTTP POST then local curl TLS egress. A bounded observation only; no config change, successful authentication, transfer, exploitation or compromise established.
+- **Category:** LateralMovement
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R791_PublicAdminPostThenCurlEgressRule.cs)
+- **Detailed evidence and test scenarios:** [786-795](batches/RULE_BATCH_786-795.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R794 — Internal proxy-port SYN followed by relay SYN into a third subnet</strong> · Medium</summary>
+
+- **Description:** Internal proxy-port SYN followed by relay SYN into a third subnet. A bounded observation only; no config change, successful authentication, transfer, exploitation or compromise established.
+- **Category:** LateralMovement
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R794_InterSubnetRelayToAdminPortRule.cs)
+- **Detailed evidence and test scenarios:** [786-795](batches/RULE_BATCH_786-795.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R807 — Public SSH service reply followed by local east-west SSH SYN</strong> · Medium</summary>
+
+- **Description:** Public SSH service reply followed by local east-west SSH SYN. Observable packet/process shape only; no authorization, causality, success or compromise inferred.
+- **Category:** LateralMovement
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R807_PublicSshServiceThenEastWestSshRule.cs)
+- **Detailed evidence and test scenarios:** [806-815](batches/RULE_BATCH_806-815.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R836 — PostgreSQL inbound SYN then service-attributed public TLS</strong> · Medium</summary>
+
+- **Description:** Public inbound TCP/5432 SYN followed by postgres-attributed TLS/8443 outbound from same private host; no SQL COPY PROGRAM, process execution or transfer proven.
+- **Category:** LateralMovement
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R836_PostgresInboundThenServiceTlsRule.cs)
+- **Detailed evidence and test scenarios:** [836-845](batches/RULE_BATCH_836-845.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R845 — scp-attributed payloads to two internal SSH subnets</strong> · Medium</summary>
+
+- **Description:** Same local scp PID sends TCP payload on port22 to hosts in two distinct private /24 subnets within 60s; no file transfer completion or ESXi-specific proof.
+- **Category:** LateralMovement
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R845_ScpDistinctInternalSshPeersRule.cs)
+- **Detailed evidence and test scenarios:** [836-845](batches/RULE_BATCH_836-845.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R850 — Public OpenSLP ingress SYN then internal SSH SYN</strong> · Medium</summary>
+
+- **Description:** A public TCP SYN targets private OpenSLP/427, followed by that private host initiating an internal TCP/22 SYN within 60s; no ESXi identity or exploitation proven.
+- **Category:** LateralMovement
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R850_PublicOpenSlpThenInternalSshSynRule.cs)
+- **Detailed evidence and test scenarios:** [846-855](batches/RULE_BATCH_846-855.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R851 — Public SSH ingress SYN then local shell public SYN</strong> · Medium</summary>
+
+- **Description:** Incoming public TCP/22 SYN followed by locally attributed bash/sh outbound public TCP/8443 SYN on same private host; SSH login, shell lineage and execution not proven.
+- **Category:** LateralMovement
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R851_PublicSshIngressThenShellPublicSynRule.cs)
+- **Detailed evidence and test scenarios:** [846-855](batches/RULE_BATCH_846-855.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R859 — Public SSH ingress then esxcli-attributed TLS egress</strong> · Medium</summary>
+
+- **Description:** Public SSH/22 inbound SYN then esxcli-attributed public TLS/8443 from same private host within 60s; no login, host role or command proven.
+- **Category:** LateralMovement
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R859_PublicSshIngressThenEsxcliPublicTlsRule.cs)
+- **Detailed evidence and test scenarios:** [856-865](batches/RULE_BATCH_856-865.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R869 — Public RPC 135 SYN followed by dynamic-port SYN to same host</strong> · Medium</summary>
+
+- **Description:** One public client sends SYN to a private RPC endpoint on TCP/135 then to the same host on a dynamic RPC-like port within 45s; no DCOM invocation, login, process creation or execution is proven.
+- **Category:** LateralMovement
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R869_PublicRpcEndpointThenDynamicPortRule.cs)
+- **Detailed evidence and test scenarios:** [866-875](batches/RULE_BATCH_866-875.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R879 — Public Telnet SYN then busybox-attributed public TLS</strong> · Medium</summary>
+
+- **Description:** Public TCP/23 SYN to private host precedes busybox-attributed TLS/8443 egress from that host within 60s; Telnet login, shell execution, process causality and device role are not established.
+- **Category:** LateralMovement
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R879_PublicTelnetThenBusyboxTlsRule.cs)
+- **Detailed evidence and test scenarios:** [876-885](batches/RULE_BATCH_876-885.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R881 — Public FTP control SYN then private TFTP-port packet</strong> · Medium</summary>
+
+- **Description:** Public TCP/21 SYN to a private host precedes that host&#x27;s UDP/69 packet to another private device within 60s; filenames, transfer commands and file placement are unobserved.
+- **Category:** LateralMovement
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R881_PublicFtpThenPrivateTftpRule.cs)
+- **Detailed evidence and test scenarios:** [876-885](batches/RULE_BATCH_876-885.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R886 — Public SSH SYN followed by private SMB SYN</strong> · Medium</summary>
+
+- **Description:** Public SSH SYN into a private host followed by that host initiating private SMB/445 SYN within 60s; no SSH login, interactive shell, privilege escalation or lateral success is proved.
+- **Category:** LateralMovement
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R886_SshIngressThenInternalSmbSynRule.cs)
+- **Detailed evidence and test scenarios:** [886-895](batches/RULE_BATCH_886-895.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R892 — Private broadcast UDP/9 then RDP SYN from same source</strong> · Medium</summary>
+
+- **Description:** Private source sends broadcast-address UDP/9 payload sized 102 bytes then SYNs to a private RDP/3389 peer within 45s; magic-packet bytes, host wake, firewall change and successful RDP are not decoded.
+- **Category:** LateralMovement
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R892_BroadcastUdpNineThenRdpSynRule.cs)
+- **Detailed evidence and test scenarios:** [886-895](batches/RULE_BATCH_886-895.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R903 — PowerShell private SMB2 WRITE then WinRM SYN</strong> · Medium</summary>
+
+- **Description:** Same private source and PowerShell PID send a parsed SMB2 WRITE request to TCP/445 then a TCP/5985 SYN to that private peer within 45s; file creation, transfer completion, authenticated WinRM and execution are unknown.
+- **Category:** LateralMovement
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R903_PowershellSmbWriteThenWinRmSynRule.cs)
+- **Detailed evidence and test scenarios:** [901-905](batches/RULE_BATCH_901-905.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R906 — Rundll32 public SMB SYN then same-flow data</strong> · Medium</summary>
+
+- **Description:** Rundll32-associated TCP/445 SYN then TCP data on the same public peer and source port. Remote DLL path, execution and authentication are unknown.
+- **Category:** LateralMovement
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R906_Rundll32PublicSmbSynThenDataRule.cs)
+- **Detailed evidence and test scenarios:** [906-925](batches/RULE_BATCH_906-925.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R908 — Public SMB SYN then same-flow parsed WRITE</strong> · Medium</summary>
+
+- **Description:** Public TCP/445 SYN to private host followed by parsed SMB2 WRITE on the same source port. Admin share, account, filename and write success are unknown.
+- **Category:** LateralMovement
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R908_PublicSmbSynThenParsedWriteRule.cs)
+- **Detailed evidence and test scenarios:** [906-925](batches/RULE_BATCH_906-925.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R909 — Private SSH ingress then public RDP SYN</strong> · Medium</summary>
+
+- **Description:** Private TCP/22 SYN to a private host followed by that host sending TCP/3389 SYN to a public peer. Bastion role, login and authorization are unknown.
+- **Category:** LateralMovement
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R909_PrivateSshIngressThenPublicRdpSynRule.cs)
+- **Detailed evidence and test scenarios:** [906-925](batches/RULE_BATCH_906-925.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R910 — PowerShell private LDAP SYN then SMB2 WRITE</strong> · Medium</summary>
+
+- **Description:** Same private source, PowerShell PID and private peer TCP/389 SYN then parsed SMB2 WRITE. GPO object, SYSVOL path, authentication and modification are unknown.
+- **Category:** LateralMovement
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R910_PowershellLdapSynThenSmbWriteRule.cs)
+- **Detailed evidence and test scenarios:** [906-925](batches/RULE_BATCH_906-925.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R911 — Rsync private TCP/873 data to three peers</strong> · Medium</summary>
+
+- **Description:** Same private source and rsync PID sends TCP/873 data to three distinct private peers. File, arguments, authorization and execution are unknown.
+- **Category:** LateralMovement
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R911_RsyncPrivatePeerDataFanoutRule.cs)
+- **Detailed evidence and test scenarios:** [906-925](batches/RULE_BATCH_906-925.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R912 — Public SSH SYN then BusyBox private rsync-port data</strong> · Medium</summary>
+
+- **Description:** Public SSH SYN to private host then BusyBox TCP/873 data from that host to a private peer. Shell execution, SSH authentication and transfer are unknown.
+- **Category:** LateralMovement
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R912_PublicSshThenBusyboxPrivateRsyncRule.cs)
+- **Detailed evidence and test scenarios:** [906-925](batches/RULE_BATCH_906-925.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R917 — Private RDP ingress then private WinRM SYN</strong> · Medium</summary>
+
+- **Description:** Private TCP/3389 SYN to private host followed by that host sending TCP/5985 SYN to another private peer. ICS role, approved matrix, login and execution are unknown.
+- **Category:** LateralMovement
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R917_PrivateRdpThenOtherHostWinRmSynRule.cs)
+- **Detailed evidence and test scenarios:** [906-925](batches/RULE_BATCH_906-925.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R918 — PowerShell private Modbus WRITE then public TLS</strong> · Medium</summary>
+
+- **Description:** Same private source and PowerShell PID sends parsed private Modbus write request then public TLS/443 data. Script, OT role, authorization and write outcome are unknown.
+- **Category:** LateralMovement
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R918_PowershellModbusWriteThenPublicTlsRule.cs)
+- **Detailed evidence and test scenarios:** [906-925](batches/RULE_BATCH_906-925.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R919 — PsExec private SMB2 WRITE then RPC SYN</strong> · Medium</summary>
+
+- **Description:** Same private source, PsExec PID and private peer parsed SMB2 WRITE then TCP/135 SYN. Named pipe, service creation, account and execution are unknown.
+- **Category:** LateralMovement
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R919_PsexecSmbWriteThenRpcSynRule.cs)
+- **Detailed evidence and test scenarios:** [906-925](batches/RULE_BATCH_906-925.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R924 — Public RDP SYN then private SMB SYN from target</strong> · Medium</summary>
+
+- **Description:** Public TCP/3389 SYN to private host followed by that host sending TCP/445 SYN to a private peer. Authentication, sessions and lateral compromise are unknown.
+- **Category:** LateralMovement
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R924_PublicRdpThenPrivateSmbSynRule.cs)
+- **Detailed evidence and test scenarios:** [906-925](batches/RULE_BATCH_906-925.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R931 — NTLMRelayx private SMB then LDAP SYN</strong> · Medium</summary>
+
+- **Description:** Same private source and ntlmrelayx PID contacts private SMB/445 then LDAP/389 on another or same private peer. Credential relay, authentication and privilege changes are unknown.
+- **Category:** LateralMovement
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R931_NtlmrelayxPrivateSmbThenLdapSynRule.cs)
+- **Detailed evidence and test scenarios:** [926-945](batches/RULE_BATCH_926-945.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R942 — Private SMB2 WRITE then Modbus SYN</strong> · Medium</summary>
+
+- **Description:** Private source sends a parsed SMB2 WRITE to a private host followed by that host initiating TCP/502 SYN to another private peer. File extension, execution, OT asset role and successful control action are unknown.
+- **Category:** LateralMovement
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R942_PrivateSmbWriteThenModbusSynRule.cs)
+- **Detailed evidence and test scenarios:** [926-945](batches/RULE_BATCH_926-945.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R950 — PowerShell private PS1 GET then parsed SMB2 WRITE</strong> · Medium</summary>
+
+- **Description:** Same private PowerShell PID retrieves a .ps1 path over private HTTP then issues a parsed SMB2 WRITE to the same private peer. GPO, logon script setting, file contents, user logon and execution are unknown.
+- **Category:** LateralMovement
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R950_PowershellPrivateScriptGetThenSmbWriteRule.cs)
+- **Detailed evidence and test scenarios:** [946-965](batches/RULE_BATCH_946-965.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+</details>
+
+### LocalDiscoveryWireless: 21 rules
+
+<details>
+<summary>Choose a rule from 21 LocalDiscoveryWireless entries</summary>
 
 <details>
 <summary><strong>R453 — mDNS Service Enumeration High Rate</strong> · Medium</summary>
@@ -7075,6 +11061,19 @@ Select a category below, then expand any rule to view its documentation **on thi
 - **Enabled by default:** true
 - **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R472_RemoteSupportToolUnexpectedUseRule.cs)
 - **Detailed evidence and test scenarios:** [471-480](batches/RULE_BATCH_471-480.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R707 — Two distinct private DHCP responders target one client</strong> · Medium</summary>
+
+- **Description:** Two distinct private source addresses send coherent UDP/67-to-68 datagrams to the same private client within 10 seconds. The packets are not parsed as DHCP OFFER/ACK and do not establish rogue-server status or malicious DNS/gateway options.
+- **Category:** LocalDiscoveryWireless
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R707_CompetingDhcpResponderDatagramsRule.cs)
+- **Detailed evidence and test scenarios:** [706-715](batches/RULE_BATCH_706-715.md)
 - **Verification record:** Candidate — unverified (reported)
 
 </details>
@@ -7348,10 +11347,10 @@ Select a category below, then expand any rule to view its documentation **on thi
 
 </details>
 
-### Network: 5 rules
+### Network: 10 rules
 
 <details>
-<summary>Choose a rule from 5 Network entries</summary>
+<summary>Choose a rule from 10 Network entries</summary>
 
 <details>
 <summary><strong>R001 — Port Scan</strong> · Low</summary>
@@ -7418,12 +11417,77 @@ Select a category below, then expand any rule to view its documentation **on thi
 
 </details>
 
+<details>
+<summary><strong>R731 — Windows network-tool outbound SYN/UDP flood shape</strong> · Medium</summary>
+
+- **Description:** PowerShell, cmd, or curl is associated with twelve outbound SYN or small UDP observations to one public peer/port within ten seconds. CPU exhaustion, interface throughput, victim impact, spoofing and denial of service are not observed.
+- **Category:** Network
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R731_WindowsNetworkToolOutboundFloodShapeRule.cs)
+- **Detailed evidence and test scenarios:** [726-735](batches/RULE_BATCH_726-735.md)
+- **Verification record:** Candidate — unverified (reported)
+
 </details>
 
-### NetworkApplianceExposure: 20 rules
+<details>
+<summary><strong>R732 — Linux network-tool outbound SYN/UDP flood shape</strong> · Medium</summary>
+
+- **Description:** bash, sh, python, curl, or wget is associated with twelve outbound SYN or small UDP observations to one public peer/port within ten seconds. Kernel throughput, resource exhaustion, spoofing, victim impact and denial of service are not observed.
+- **Category:** Network
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R732_LinuxNetworkToolOutboundFloodShapeRule.cs)
+- **Detailed evidence and test scenarios:** [726-735](batches/RULE_BATCH_726-735.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
 
 <details>
-<summary>Choose a rule from 20 NetworkApplianceExposure entries</summary>
+<summary><strong>R739 — Linux script/CLI cleartext HTTP request flood</strong> · Medium</summary>
+
+- **Description:** curl, wget, Python, or Python3 produces twelve parsed cleartext HTTP GET/POST requests to one public peer within ten seconds. Backend CPU/memory exhaustion, worker spawning, server errors and denial-of-service impact are not observed.
+- **Category:** Network
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R739_LinuxScriptHttpRequestFloodRule.cs)
+- **Detailed evidence and test scenarios:** [736-745](batches/RULE_BATCH_736-745.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R745 — hping/nping rapid public-target SYN fanout</strong> · Medium</summary>
+
+- **Description:** hping3, hping, or nping produces TCP SYNs to four distinct public targets within ten seconds. Packet rate beyond the observed threshold, source spoofing, victim impact and denial-of-service outcome are not observed.
+- **Category:** Network
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R745_HpingNpingPublicTargetFanoutRule.cs)
+- **Detailed evidence and test scenarios:** [736-745](batches/RULE_BATCH_736-745.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R768 — osascript outbound SYN/UDP flood shape</strong> · Medium</summary>
+
+- **Description:** osascript is associated with twelve outbound TCP SYN or small UDP observations to one public peer and port within ten seconds. UI context, packet-generator command line, throughput, spoofing, victim impact and denial-of-service outcome are not observed.
+- **Category:** Network
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R768_OsascriptOutboundFloodShapeRule.cs)
+- **Detailed evidence and test scenarios:** [766-775](batches/RULE_BATCH_766-775.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+</details>
+
+### NetworkApplianceExposure: 21 rules
+
+<details>
+<summary>Choose a rule from 21 NetworkApplianceExposure entries</summary>
 
 <details>
 <summary><strong>R413 — Citrix Netscaler Gateway Scan Pattern</strong> · High</summary>
@@ -7681,6 +11745,117 @@ Select a category below, then expand any rule to view its documentation **on thi
 - **Enabled by default:** true
 - **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R432_ConsulNomadAdminProbeRule.cs)
 - **Detailed evidence and test scenarios:** [431-440](batches/RULE_BATCH_431-440.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R659 — Public client probing SNMP, NETCONF, and HTTPS management ports</strong> · Medium</summary>
+
+- **Description:** Public client probing SNMP, NETCONF, and HTTPS management ports. R585 tracks a triad of parsed administrative operations, not this exact cross-transport SNMP/NETCONF/HTTPS port triad.
+- **Category:** NetworkApplianceExposure
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R659_PublicManagementPortTriadToPrivateDeviceRule.cs)
+- **Detailed evidence and test scenarios:** [656-665](batches/RULE_BATCH_656-665.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+</details>
+
+### NetworkDiscovery: 7 rules
+
+<details>
+<summary>Choose a rule from 7 NetworkDiscovery entries</summary>
+
+<details>
+<summary><strong>R676 — Unicast–broadcast–network-address TCP SYN signaling sequence</strong> · Low</summary>
+
+- **Description:** Unicast–broadcast–network-address TCP SYN signaling sequence; No firewall activation, router change, magic packet acceptance or SSH session is observed.
+- **Category:** NetworkDiscovery
+- **Severity:** Low
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R676_UnicastBroadcastNetworkAddressSynKnockRule.cs)
+- **Detailed evidence and test scenarios:** [676-685](batches/RULE_BATCH_676-685.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R678 — Sequential three-host internal-subnet ICMP echo discovery</strong> · Low</summary>
+
+- **Description:** Sequential three-host internal-subnet ICMP echo discovery; No full network scan, unauthorized discovery or ARP probe is inferred.
+- **Category:** NetworkDiscovery
+- **Severity:** Low
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R678_SequentialInternalSubnetIcmpEchoWalkRule.cs)
+- **Detailed evidence and test scenarios:** [676-685](batches/RULE_BATCH_676-685.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R714 — Netcat process probes four ports on one private peer</strong> · Low</summary>
+
+- **Description:** One best-effort Netcat/Ncat PID sends SYNs to four distinct ports on the same private peer within 30 seconds. This is a service-discovery-shaped probe only; container context, vulnerability state, connect success, and lateral movement are not observed.
+- **Category:** NetworkDiscovery
+- **Severity:** Low
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R714_NetcatInternalMultiPortProbeRule.cs)
+- **Detailed evidence and test scenarios:** [706-715](batches/RULE_BATCH_706-715.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R724 — Network utility contact to public-IP discovery service</strong> · Low</summary>
+
+- **Description:** Curl, Wget, or PowerShell is associated with an outbound HTTP/TLS contact to a bounded public-IP discovery service. The user&#x27;s intent, shell command, returned public IP, subsequent behavior, and malicious purpose are not observed.
+- **Category:** NetworkDiscovery
+- **Severity:** Low
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R724_NetworkUtilityPublicIpDiscoveryServiceRule.cs)
+- **Detailed evidence and test scenarios:** [716-725](batches/RULE_BATCH_716-725.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R819 — public config-export API GET then private host public TFTP-port UDP egress</strong> · Medium</summary>
+
+- **Description:** public config-export API GET then private host public TFTP-port UDP egress. Source-only network/process evidence; no authorization, compromise or successful outcome inferred.
+- **Category:** NetworkDiscovery
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R819_PublicConfigExportGetThenTftpEgressRule.cs)
+- **Detailed evidence and test scenarios:** [816-825](batches/RULE_BATCH_816-825.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R824 — ping-attributed ICMP echo to three distinct public hosts</strong> · Medium</summary>
+
+- **Description:** ping-attributed ICMP echo to three distinct public hosts. Source-only network/process evidence; no authorization, compromise or successful outcome inferred.
+- **Category:** NetworkDiscovery
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R824_PingProcessPublicIcmpTargetFanoutRule.cs)
+- **Detailed evidence and test scenarios:** [816-825](batches/RULE_BATCH_816-825.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R827 — finger.exe SYNs to three distinct public finger services</strong> · Medium</summary>
+
+- **Description:** Process-attributed TCP/79 SYN fanout only; the original process-execution signal and remote username lookups are not observed.
+- **Category:** NetworkDiscovery
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R827_FingerPublicTargetFanoutRule.cs)
+- **Detailed evidence and test scenarios:** [826-835](batches/RULE_BATCH_826-835.md)
 - **Verification record:** Candidate — unverified (reported)
 
 </details>
@@ -8293,8 +12468,8 @@ Select a category below, then expand any rule to view its documentation **on thi
 - **Severity:** Medium
 - **Enabled by default:** true
 - **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R541_ContentPackValidationFailureRule.cs)
-- **Detailed evidence and test scenarios:** [Selected rule overview](guides/R273_R544_SelectedRules.md) — no batch GA
-- **Verification record:** No batch record
+- **Detailed evidence and test scenarios:** [541-544](batches/RULE_BATCH_541-544.md)
+- **Verification record:** 0 executed (reported)
 
 </details>
 
@@ -8306,8 +12481,8 @@ Select a category below, then expand any rule to view its documentation **on thi
 - **Severity:** High
 - **Enabled by default:** true
 - **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R542_ReplayBenchmarkRegressionRule.cs)
-- **Detailed evidence and test scenarios:** [Selected rule overview](guides/R273_R544_SelectedRules.md) — no batch GA
-- **Verification record:** No batch record
+- **Detailed evidence and test scenarios:** [541-544](batches/RULE_BATCH_541-544.md)
+- **Verification record:** 0 executed (reported)
 
 </details>
 
@@ -8319,8 +12494,8 @@ Select a category below, then expand any rule to view its documentation **on thi
 - **Severity:** Medium
 - **Enabled by default:** true
 - **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R543_RuleConfigProfileDriftRule.cs)
-- **Detailed evidence and test scenarios:** [Selected rule overview](guides/R273_R544_SelectedRules.md) — no batch GA
-- **Verification record:** No batch record
+- **Detailed evidence and test scenarios:** [541-544](batches/RULE_BATCH_541-544.md)
+- **Verification record:** 0 executed (reported)
 
 </details>
 
@@ -8332,8 +12507,8 @@ Select a category below, then expand any rule to view its documentation **on thi
 - **Severity:** Medium
 - **Enabled by default:** true
 - **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R544_ExcessiveSuppressionRatioRule.cs)
-- **Detailed evidence and test scenarios:** [Selected rule overview](guides/R273_R544_SelectedRules.md) — no batch GA
-- **Verification record:** No batch record
+- **Detailed evidence and test scenarios:** [541-544](batches/RULE_BATCH_541-544.md)
+- **Verification record:** 0 executed (reported)
 
 </details>
 
@@ -8354,6 +12529,26 @@ Select a category below, then expand any rule to view its documentation **on thi
 - **Implementation:** [C# source](../../Carthago/Engine/Rules/Existing/R005_SuspiciousProtocolRule.cs)
 - **Detailed evidence and test scenarios:** [001-005](batches/RULE_BATCH_001-005.md)
 - **Verification record:** See historical verification record
+
+</details>
+
+</details>
+
+### ProtocolIntelligence: 1 rules
+
+<details>
+<summary>Choose a rule from 1 ProtocolIntelligence entries</summary>
+
+<details>
+<summary><strong>R811 — Repeated expired remote TLS certificates on service port 9443</strong> · Medium</summary>
+
+- **Description:** Repeated expired remote TLS certificates on service port 9443. Observable packet/process shape only; no authorization, causality, success or compromise inferred.
+- **Category:** ProtocolIntelligence
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R811_ExpiredCertificateUnusualTlsPortRule.cs)
+- **Detailed evidence and test scenarios:** [806-815](batches/RULE_BATCH_806-815.md)
+- **Verification record:** Candidate — unverified (reported)
 
 </details>
 
@@ -8406,6 +12601,39 @@ Select a category below, then expand any rule to view its documentation **on thi
 - **Enabled by default:** true
 - **Implementation:** [C# source](../../Carthago/Engine/Rules/Existing/R017_InternalHostSweepRule.cs)
 - **Detailed evidence and test scenarios:** [016-020](batches/RULE_BATCH_016-020.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+</details>
+
+### RemoteAccess: 2 rules
+
+<details>
+<summary>Choose a rule from 2 RemoteAccess entries</summary>
+
+<details>
+<summary><strong>R761 — RMM process recurrent external TLS cadence</strong> · Medium</summary>
+
+- **Description:** TeamViewer, AnyDesk, or ScreenConnect/ConnectWise Control process attribution is associated with three similarly sized TLS/443 payload observations to one public peer at 10–60 second intervals. Installation, firewall changes, session establishment, operator identity and malicious use are not observed.
+- **Category:** RemoteAccess
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R761_RmmProcessExternalTlsCadenceRule.cs)
+- **Detailed evidence and test scenarios:** [756-765](batches/RULE_BATCH_756-765.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R774 — macOS screensharingd public VNC SYN-ACK</strong> · Medium</summary>
+
+- **Description:** screensharingd is associated with a private-host TCP/5900 SYN-ACK to a public client. Unified-log login evidence, authentication, remote-control session establishment, user interaction and authorization are not observed.
+- **Category:** RemoteAccess
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R774_MacScreensharingdPublicVncSynAckRule.cs)
+- **Detailed evidence and test scenarios:** [766-775](batches/RULE_BATCH_766-775.md)
 - **Verification record:** Candidate — unverified (reported)
 
 </details>
@@ -8576,10 +12804,10 @@ Select a category below, then expand any rule to view its documentation **on thi
 
 </details>
 
-### TlsPki: 15 rules
+### TlsPki: 17 rules
 
 <details>
-<summary>Choose a rule from 15 TlsPki entries</summary>
+<summary>Choose a rule from 17 TlsPki entries</summary>
 
 <details>
 <summary><strong>R138 — Self-Signed Certificate To External Host</strong> · Medium</summary>
@@ -8776,10 +13004,102 @@ Select a category below, then expand any rule to view its documentation **on thi
 
 </details>
 
+<details>
+<summary><strong>R669 — System binary TLS ClientHello on nominal HTTP port 80</strong> · Medium</summary>
+
+- **Description:** System binary TLS ClientHello on nominal HTTP port 80. No TLS cert validation, server authentication, or protocol impersonation proof.
+- **Category:** TlsPki
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R669_SystemBinaryTlsClientOnCleartextPort80Rule.cs)
+- **Detailed evidence and test scenarios:** [666-675](batches/RULE_BATCH_666-675.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R677 — Outbound TLS observation on DNS port 53 or alternate HTTP port 8080</strong> · Medium</summary>
+
+- **Description:** Outbound TLS observation on DNS port 53 or alternate HTTP port 8080; Unusual TLS port alone does not establish a tunnel, certificate abuse or encrypted C2.
+- **Category:** TlsPki
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R677_TlsClientHelloOnDnsOrAltHttpPortRule.cs)
+- **Detailed evidence and test scenarios:** [676-685](batches/RULE_BATCH_676-685.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+</details>
+
+### WebAttack: 1 rules
+
+<details>
+<summary>Choose a rule from 1 WebAttack entries</summary>
+
+<details>
+<summary><strong>R795 — Large public HTTP POST burst to firmware upload endpoint</strong> · Medium</summary>
+
+- **Description:** Large public HTTP POST burst to firmware upload endpoint. A bounded observation only; no config change, successful authentication, transfer, exploitation or compromise established.
+- **Category:** WebAttack
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R795_PublicManagementUploadPostBurstRule.cs)
+- **Detailed evidence and test scenarios:** [786-795](batches/RULE_BATCH_786-795.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+</details>
+
+### WebThreat: 3 rules
+
+<details>
+<summary>Choose a rule from 3 WebThreat entries</summary>
+
+<details>
+<summary><strong>R809 — Public client login POST followed by portal administration POST</strong> · Medium</summary>
+
+- **Description:** Public client login POST followed by portal administration POST. Observable packet/process shape only; no authorization, causality, success or compromise inferred.
+- **Category:** WebThreat
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R809_PublicLoginThenPortalAdminPostRule.cs)
+- **Detailed evidence and test scenarios:** [806-815](batches/RULE_BATCH_806-815.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R825 — Public image upload POST then matching served-path GET</strong> · Medium</summary>
+
+- **Description:** Public image-upload POST followed by same-source matching served-path GET. No file modification, defacement or upload success inferred.
+- **Category:** WebThreat
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R825_PublicWebUploadThenServedGetRule.cs)
+- **Detailed evidence and test scenarios:** [816-825](batches/RULE_BATCH_816-825.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R880 — Public CGI traversal GET followed by admin upload POST</strong> · Medium</summary>
+
+- **Description:** One public client sends GET to /cgi-bin/.%2e/ followed by POST to /admin/upload on same private web host within 45s; no server error, upload, spawned process or exploit success is observed.
+- **Category:** WebThreat
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R880_PublicTraversalThenAdminPostRule.cs)
+- **Detailed evidence and test scenarios:** [876-885](batches/RULE_BATCH_876-885.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
 </details>
 
 ## Evidence coverage notes
 
-No direct `RULE_BATCH_*` page was located for: R541, R542, R543, R544. Consult the [selected historical rule guide](guides/R273_R544_SelectedRules.md) where applicable. Missing documentation is not evidence that a rule is absent or untested.
+Every registered rule maps to at least one historical batch page. That is evidence of documentation coverage only, not validation.
 
 **Refresh:** run `python3 scripts/build_rule_catalog.py` from the repository root after a rule GA, followed by `python3 scripts/build_docs_index.py` and the static `python3 scripts/check_docs_links.py` inspection. This is source-only and does not run Carthago tests.
