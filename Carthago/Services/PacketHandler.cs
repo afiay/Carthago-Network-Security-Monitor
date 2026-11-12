@@ -507,6 +507,17 @@ namespace Carthago.Services
                                 rec.ApplicationProtocol = ftpOperation;
                             if (c2s && NetworkBatch246250Wire.Smb2Write(normPayload, sport, dport))
                                 rec.ApplicationProtocol = "smb2.write.request";
+                            // Stronger, opt-in evidence for qualified rules. Legacy classification stays intact.
+                            if (c2s && tcpAck && !tcpSyn && completeIpPacket
+                                && normPayload.Length == l4Payload.Length
+                                && (tcpFlagsField.GetValueOrDefault() & 0x05) == 0
+                                && !IsTlsActive(tcpFlow, c2s)
+                                && Smb2CompleteWriteInspector.TryInspect(normPayload, sport, dport, out var writeLength))
+                            {
+                                rec.ApplicationProtocol = "smb2.write.request";
+                                rec.Smb2CompleteWriteRequestObserved = true;
+                                rec.Smb2ValidatedWriteLength = writeLength;
+                            }
 
                             // -------- Bounded EtherNet/IP ListIdentity and MQTT --------
                             if (NetworkBatch226230Wire.CipListIdentity(normPayload, sport, dport))

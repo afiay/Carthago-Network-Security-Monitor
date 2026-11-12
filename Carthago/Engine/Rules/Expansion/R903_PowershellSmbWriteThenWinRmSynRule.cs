@@ -16,9 +16,9 @@ namespace Carthago.Engine.Rules.Expansion
             Description = "workbook.R1321: Same private source and PowerShell PID send a parsed SMB2 WRITE request to TCP/445 then a TCP/5985 SYN to that private peer within 45s; file creation, transfer completion, authenticated WinRM and execution are unknown.", Severity = SeverityLevel.Medium,
             Maturity = RulePrecisionMaturity.Candidate, RuntimeMode = RuleRuntimeMode.Shadow,
             RequiredTelemetry = new[] { RuleTelemetryKind.Flow, RuleTelemetryKind.Process },
-            RequiredFields = new[] { "source", "destination", "destination.port", "tcp.flags", "application.protocol", "packet.id", "process.id", "process.name" },
+            RequiredFields = new[] { "source", "destination", "destination.port", "tcp.flags", "application.protocol", "packet.id", "process.id", "process.name", "smb2.complete_write", "smb2.write_length" },
             EvidenceFields = new[] { "research.identifier", "matched_conditions", "outcome" },
-            PositiveConditions = new[] { "Coherent typed IPv4 packet and specific process attribution where required.", "Ordered independent UTC observations where correlation applies." },
+            PositiveConditions = new[] { "Require capture-attested complete standalone SMB2 WRITE with nonzero session/tree/file identifiers and in-bounds data; not a label alone.", "Coherent typed IPv4 packet and specific process attribution where required.", "Ordered independent UTC observations where correlation applies." },
             NegativeConditions = new[] { "Missing or contradictory typed evidence, wrong endpoint, duplicate IDs, reverse UTC and expired correlation fail closed.",
                 "No unsupported authentication, execution, file access, authorization or causality inferred." },
             FalsePositives = new[] { "Approved administration, diagnostics, maintenance and software deployment can match." },
@@ -39,7 +39,7 @@ namespace Carthago.Engine.Rules.Expansion
                 || !Research676Evidence.Process(r, "powershell.exe", "powershell", "pwsh.exe", "pwsh")
                 || r.Source == r.Destination || r.Sni != null || r.HttpUri != null || r.DnsIsResponse) return NoMatch();
             var first = Research786NetworkEvidence.TcpData(r) && r.DestinationPort == 445
-                && string.Equals(r.ApplicationProtocol, "smb2.write.request", StringComparison.Ordinal)
+                && Smb2QualifiedEvidence.Write(r)
                 && r.HttpMethod == null && r.DnsQname == null && r.TlsVersion == null;
             var second = Research676Evidence.Syn(r) && r.DestinationPort == 5985;
             if (!first && !second) return NoMatch();
@@ -58,7 +58,7 @@ namespace Carthago.Engine.Rules.Expansion
                 "PowerShell private SMB2 WRITE then WinRM SYN observed; authorization, causality and security outcome remain unverified.",
                 evidence, confidence =>
                 {
-                    confidence.AddEvidence(0.45, "coherent_typed_packet_fields");
+                    confidence.AddEvidence(0.45, "capture_attested_complete_smb2_write");
                     confidence.AddEvidence(0.33, "source_specific_workbook_projection");
                     confidence.AddCorrelation(0.12, "bounded_utc_observation");
                 }, count: 2, windowSeconds: 45);

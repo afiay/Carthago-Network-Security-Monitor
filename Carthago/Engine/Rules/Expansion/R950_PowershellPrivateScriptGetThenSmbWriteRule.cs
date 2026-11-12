@@ -16,9 +16,9 @@ namespace Carthago.Engine.Rules.Expansion
             Description = "workbook.R1328: Same private PowerShell PID retrieves a .ps1 path over private HTTP then issues a parsed SMB2 WRITE to the same private peer. GPO, logon script setting, file contents, user logon and execution are unknown.", Severity = SeverityLevel.Medium,
             Maturity = RulePrecisionMaturity.Candidate, RuntimeMode = RuleRuntimeMode.Shadow,
             RequiredTelemetry = new[] { RuleTelemetryKind.Flow, RuleTelemetryKind.Process, RuleTelemetryKind.Http },
-            RequiredFields = new[] { "source", "destination", "source.port", "destination.port", "packet.id", "process.id", "process.name", "http.method", "http.uri", "http.host", "application.protocol" },
+            RequiredFields = new[] { "source", "destination", "source.port", "destination.port", "packet.id", "process.id", "process.name", "http.method", "http.uri", "http.host", "application.protocol", "smb2.complete_write", "smb2.write_length" },
             EvidenceFields = new[] { "research.identifier", "matched_conditions", "outcome" },
-            PositiveConditions = new[] { "Same private PowerShell PID retrieves a .ps1 path over private HTTP then issues a parsed SMB2 WRITE to the same private peer. GPO, logon script setting, file contents, user logon and execution are unknown.", "Coherent typed IPv4 fields and independent bounded UTC observations." },
+            PositiveConditions = new[] { "Require capture-attested complete standalone SMB2 WRITE with nonzero session/tree/file identifiers and in-bounds data; not a label alone.", "Same private PowerShell PID retrieves a .ps1 path over private HTTP then issues a parsed SMB2 WRITE to the same private peer. GPO, logon script setting, file contents, user logon and execution are unknown.", "Coherent typed IPv4 fields and independent bounded UTC observations." },
             NegativeConditions = new[] { "Wrong endpoints, missing or contradictory typed evidence, duplicate IDs, reverse UTC or expired windows fail closed.",
                 "No unsupported host action, authenticated session, authorization or security outcome inferred." },
             FalsePositives = new[] { "Authorized administration, maintenance, deployment and diagnostics may share the observable shape." },
@@ -35,7 +35,7 @@ namespace Carthago.Engine.Rules.Expansion
             var r = context.Record;
             if (!Research786NetworkEvidence.Coherent(r)) return NoMatch();
             var first = Research786NetworkEvidence.Internal(r) && Research786NetworkEvidence.TcpData(r) && r.DestinationPort == 80 && Research676Evidence.Process(r, "powershell.exe", "powershell", "pwsh.exe", "pwsh") && WebSignatureRequestEvidence.TryGet(r, out var method, out var uri) && method == "GET" && (uri.Split('?')[0].EndsWith(".ps1", StringComparison.OrdinalIgnoreCase)) && !string.IsNullOrWhiteSpace(r.HttpHost) && r.HttpHost.Length <= 253 && r.Source != r.Destination;
-            var second = Research786NetworkEvidence.Internal(r) && Research786NetworkEvidence.TcpData(r) && Research676Evidence.Process(r, "powershell.exe", "powershell", "pwsh.exe", "pwsh") && r.Source != r.Destination && r.DestinationPort == 445 && r.ApplicationProtocol == "smb2.write.request" && r.HttpMethod == null && r.HttpUri == null && r.DnsQname == null && r.TlsVersion == null && r.Sni == null && !r.DnsIsResponse;
+            var second = Research786NetworkEvidence.Internal(r) && Research786NetworkEvidence.TcpData(r) && Research676Evidence.Process(r, "powershell.exe", "powershell", "pwsh.exe", "pwsh") && r.Source != r.Destination && r.DestinationPort == 445 && Smb2QualifiedEvidence.Write(r) && r.HttpMethod == null && r.HttpUri == null && r.DnsQname == null && r.TlsVersion == null && r.Sni == null && !r.DnsIsResponse;
             if (!first && !second) return NoMatch();
             var key = r.Source! + "|" + r.Destination! + "|" + r.ProcessId;
             if (!_stages.Observe(key, r.Id, context.TimestampUtc, first, 45)) return NoMatch();
@@ -52,7 +52,7 @@ namespace Carthago.Engine.Rules.Expansion
                 "PowerShell private PS1 GET then parsed SMB2 WRITE observed; authorization, causality and outcome remain unverified.", evidence,
                 confidence =>
                 {
-                    confidence.AddEvidence(0.45, "coherent_typed_packet_fields");
+                    confidence.AddEvidence(0.45, "capture_attested_complete_smb2_write");
                     confidence.AddEvidence(0.33, "specific_workbook_observable_projection");
                     confidence.AddCorrelation(0.12, "bounded_utc_observation");
                 }, count: 2, windowSeconds: 45);

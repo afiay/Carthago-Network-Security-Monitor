@@ -45,7 +45,7 @@ public sealed class R901R905ObservableCandidateBatchTests
                 break;
             case "R903":
                 r.ProcessName = "powershell.exe"; r.DestinationPort = stage == 0 ? 445 : 5985;
-                if (stage == 0) { Data(r, 620); r.ApplicationProtocol = "smb2.write.request"; }
+                if (stage == 0) { r = Smb2CaptureQualificationTests.WritePacket(r.Source!, r.Destination!, r.ProcessName, r.ProcessId); }
                 break;
             case "R904":
                 r.ProcessName = "curl.exe"; r.Destination = "8.8.8.8"; r.DestinationPort = 80;

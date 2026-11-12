@@ -16,9 +16,9 @@ namespace Carthago.Engine.Rules.Expansion
             Description = "workbook.R2654: Private source sends a parsed SMB2 WRITE to a private host followed by that host initiating TCP/502 SYN to another private peer. File extension, execution, OT asset role and successful control action are unknown.", Severity = SeverityLevel.Medium,
             Maturity = RulePrecisionMaturity.Candidate, RuntimeMode = RuleRuntimeMode.Shadow,
             RequiredTelemetry = new[] { RuleTelemetryKind.Flow },
-            RequiredFields = new[] { "source", "destination", "source.port", "destination.port", "packet.id", "tcp.flags" },
+            RequiredFields = new[] { "source", "destination", "source.port", "destination.port", "packet.id", "tcp.flags", "smb2.complete_write", "smb2.write_length" },
             EvidenceFields = new[] { "research.identifier", "matched_conditions", "outcome" },
-            PositiveConditions = new[] { "Private source sends a parsed SMB2 WRITE to a private host followed by that host initiating TCP/502 SYN to another private peer. File extension, execution, OT asset role and successful control action are unknown.", "Coherent typed IPv4 fields and independent bounded UTC observations." },
+            PositiveConditions = new[] { "Require capture-attested complete standalone SMB2 WRITE with nonzero session/tree/file identifiers and in-bounds data; not a label alone.", "Private source sends a parsed SMB2 WRITE to a private host followed by that host initiating TCP/502 SYN to another private peer. File extension, execution, OT asset role and successful control action are unknown.", "Coherent typed IPv4 fields and independent bounded UTC observations." },
             NegativeConditions = new[] { "Wrong endpoints, missing or contradictory typed evidence, duplicate IDs, reverse UTC or expired windows fail closed.",
                 "No unsupported endpoint action, authenticated session, authorization or security outcome inferred." },
             FalsePositives = new[] { "Authorized administration, maintenance, deployment and diagnostics may share the observable shape." },
@@ -34,7 +34,7 @@ namespace Carthago.Engine.Rules.Expansion
         {
             var r = context.Record;
             if (!Research786NetworkEvidence.Coherent(r)) return NoMatch();
-            var first = Research786NetworkEvidence.TcpData(r) && Research786NetworkEvidence.Internal(r) && r.Source != r.Destination && r.DestinationPort == 445 && r.ApplicationProtocol == "smb2.write.request" && r.HttpMethod == null && r.HttpUri == null && r.DnsQname == null && r.TlsVersion == null && r.Sni == null && !r.DnsIsResponse;
+            var first = Research786NetworkEvidence.TcpData(r) && Research786NetworkEvidence.Internal(r) && r.Source != r.Destination && r.DestinationPort == 445 && Smb2QualifiedEvidence.Write(r) && r.HttpMethod == null && r.HttpUri == null && r.DnsQname == null && r.TlsVersion == null && r.Sni == null && !r.DnsIsResponse;
             var second = Research676Evidence.Syn(r) && Research786NetworkEvidence.Internal(r) && r.DestinationPort == 502 && r.Sni == null && r.HttpUri == null && !r.DnsIsResponse && r.Source != r.Destination;
             if (!first && !second) return NoMatch();
             var key = first ? r.Destination! : r.Source!;
@@ -52,7 +52,7 @@ namespace Carthago.Engine.Rules.Expansion
                 "Private SMB2 WRITE then Modbus SYN observed; authorization, causality and outcome remain unverified.", evidence,
                 confidence =>
                 {
-                    confidence.AddEvidence(0.45, "coherent_typed_packet_fields");
+                    confidence.AddEvidence(0.45, "capture_attested_complete_smb2_write");
                     confidence.AddEvidence(0.33, "specific_workbook_observable_projection");
                     confidence.AddCorrelation(0.12, "bounded_utc_observation");
                 }, count: 2, windowSeconds: 45);

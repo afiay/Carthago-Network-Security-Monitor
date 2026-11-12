@@ -140,6 +140,9 @@ namespace Carthago.Models
 
         // ===== MQTT (wire-derived when populated by PacketHandler) =====
         // No MQTT payload or client credentials are retained here.
+        // Capture-attested complete, standalone SMB2 WRITE request. No raw IDs or file content retained.
+        public bool Smb2CompleteWriteRequestObserved { get; internal set; }
+        public uint? Smb2ValidatedWriteLength { get; internal set; }
         // Capture-only initial TFTP handshake evidence; never populated by port inference.
         public byte? TftpInitialRequestOpcode { get; internal set; }
         public byte? TftpInitialReplyOpcode { get; internal set; }
