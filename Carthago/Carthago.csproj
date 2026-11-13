@@ -48,6 +48,17 @@
     <Compile Remove="Services/ProtocolIntelligence/DnsAddressObservationInspector.cs" />
     <Compile Remove="Services/ProtocolIntelligence/BacnetEventDisableInspector.cs" />
     <Compile Remove="Models/TrafficRecord.cs" />
+    <Compile Remove="Services/ProtocolIntelligence/Iec104ApduInspector.cs" />
+    <Compile Remove="Services/ProtocolIntelligence/Iec104StartupOffSequence.cs" />
+    <Compile Remove="Services/ProtocolIntelligence/OpcUaConnectionInspector.cs" />
+    <Compile Remove="Services/ProtocolIntelligence/OpcUaHelloAckInspector.cs" />
+    <Compile Remove="Services/ProtocolIntelligence/ModbusOversizedReadExchangeInspector.cs" />
+    <Compile Remove="Services/ProtocolIntelligence/ModbusBulkFileReadInspector.cs" />
+    <Compile Remove="Services/ProtocolIntelligence/LdapMessageInspector.cs" />
+    <Compile Remove="Services/ProtocolIntelligence/TftpRequestInspector.cs" />
+    <Compile Remove="Services/ProtocolIntelligence/TftpHandshakeTracker.cs" />
+    <Compile Remove="Services/ProtocolIntelligence/Smb2WriteExchange.cs" />
+    <Compile Remove="Services/ProtocolIntelligence/Smb2WriteTargetContext.cs" />
     <Compile Remove="Services/ProtocolIntelligence/SnmpEnterpriseSetInspector.cs" />
     <Compile Remove="Services/ProtocolIntelligence/BacnetBvlcControlInspector.cs" />
     <Compile Remove="Services/ProtocolIntelligence/BacnetDeviceCommunicationControlInspector.cs" />

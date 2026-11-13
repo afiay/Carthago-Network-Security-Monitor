@@ -33,6 +33,17 @@
     <Compile Include="../Carthago/Services/ProtocolIntelligence/Dnp3UnsolicitedBinaryEventInspector.cs" Link="Services/ProtocolIntelligence/Dnp3UnsolicitedBinaryEventInspector.cs" />
     <Compile Include="../Carthago/Services/ProtocolIntelligence/ModbusSingleRegisterWriteInspector.cs" Link="Services/ProtocolIntelligence/ModbusSingleRegisterWriteInspector.cs" />
     <Compile Include="../Carthago/Services/ProtocolIntelligence/ModbusClearMaskWriteInspector.cs" Link="Services/ProtocolIntelligence/ModbusClearMaskWriteInspector.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/Iec104ApduInspector.cs" Link="Services/ProtocolIntelligence/Iec104ApduInspector.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/Iec104StartupOffSequence.cs" Link="Services/ProtocolIntelligence/Iec104StartupOffSequence.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/OpcUaConnectionInspector.cs" Link="Services/ProtocolIntelligence/OpcUaConnectionInspector.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/OpcUaHelloAckInspector.cs" Link="Services/ProtocolIntelligence/OpcUaHelloAckInspector.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/ModbusOversizedReadExchangeInspector.cs" Link="Services/ProtocolIntelligence/ModbusOversizedReadExchangeInspector.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/ModbusBulkFileReadInspector.cs" Link="Services/ProtocolIntelligence/ModbusBulkFileReadInspector.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/LdapMessageInspector.cs" Link="Services/ProtocolIntelligence/LdapMessageInspector.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/TftpRequestInspector.cs" Link="Services/ProtocolIntelligence/TftpRequestInspector.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/TftpHandshakeTracker.cs" Link="Services/ProtocolIntelligence/TftpHandshakeTracker.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/Smb2WriteExchange.cs" Link="Services/ProtocolIntelligence/Smb2WriteExchange.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/Smb2WriteTargetContext.cs" Link="Services/ProtocolIntelligence/Smb2WriteTargetContext.cs" />
     <!-- Preserve existing internal access while consumers migrate. -->
     <InternalsVisibleTo Include="Carthago" />
     <InternalsVisibleTo Include="carthago" />
