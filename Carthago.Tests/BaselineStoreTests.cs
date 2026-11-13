@@ -165,4 +165,42 @@ public sealed class BaselineStoreTests
         }
         finally { Directory.Delete(directory, recursive: true); }
     }
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Failed_Journal_Write_Latches_Global_And_Scoped_Readiness(bool clear)
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "carthago-baseline-tests", Guid.NewGuid().ToString("N"));
+        try
+        {
+            var options = new BaselineOptions { DirectoryPath = directory, MinimumObservations = 2,
+                MinimumDistinctKeys = 2, MinimumObservationSpan = TimeSpan.FromMinutes(1) };
+            var store = new BaselineStore(options);
+            var now = DateTime.UtcNow;
+            var first = new BaselineObservation("dns.domain", "host-a", "one.test", now.AddHours(-1), "");
+            var second = new BaselineObservation("dns.domain", "host-a", "two.test", now, "");
+            await store.ObserveAsync(first);
+            await store.ObserveAsync(second);
+            Assert.True(store.Readiness.IsReady);
+            var journal = Path.Combine(directory, "baseline-journal.jsonl");
+            using (var locked = new FileStream(journal, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+            {
+                await Assert.ThrowsAnyAsync<IOException>(async () =>
+                {
+                    if (clear) await store.ClearAsync();
+                    else await store.ObserveAsync(second);
+                });
+            }
+            Assert.False(store.Readiness.IsReady);
+            Assert.Contains("baseline persistence failed", (await store.GetReadinessAsync()).Blockers);
+            var scoped = await store.GetScopedReadinessAsync("dns.domain", "host-a");
+            Assert.False(scoped.IsReady);
+            Assert.Contains("baseline persistence failed", scoped.Blockers);
+            Assert.Equal(2, scoped.ObservationCount);
+            await store.ObserveAsync(second);
+            Assert.False(store.Readiness.IsReady);
+            Assert.False((await store.GetScopedReadinessAsync("dns.domain", "host-a")).IsReady);
+        }
+        finally { Directory.Delete(directory, recursive: true); }
+    }
 }

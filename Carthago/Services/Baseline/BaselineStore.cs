@@ -66,6 +66,7 @@ namespace Carthago.Services.Baseline
         private readonly Dictionary<string, Entry> _entries = new(StringComparer.Ordinal);
         private bool _loaded;
         private bool _corruptJournal;
+        private bool _persistenceFailed;
         private BaselineReadiness _readiness = BaselineReadiness.Unavailable("baseline not loaded");
 
         public BaselineStore(BaselineOptions options)
@@ -164,6 +165,7 @@ namespace Carthago.Services.Baseline
                 }
                 catch
                 {
+                    _persistenceFailed = true;
                     Volatile.Write(ref _readiness, BaselineReadiness.Unavailable("baseline persistence failed"));
                     throw;
                 }
@@ -183,8 +185,17 @@ namespace Carthago.Services.Baseline
             await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
             try
             {
-                await AppendJournalAsync(new JournalRecord { Operation = "clear" }, cancellationToken)
-                    .ConfigureAwait(false);
+                try
+                {
+                    await AppendJournalAsync(new JournalRecord { Operation = "clear" }, cancellationToken)
+                        .ConfigureAwait(false);
+                }
+                catch
+                {
+                    _persistenceFailed = true;
+                    Volatile.Write(ref _readiness, BaselineReadiness.Unavailable("baseline persistence failed"));
+                    throw;
+                }
                 _entries.Clear();
                 _loaded = true;
                 UpdateReadiness();
@@ -232,6 +243,9 @@ namespace Carthago.Services.Baseline
             var span = distinct == 0 ? TimeSpan.Zero : last - first;
             if (!_loaded) blockers.Add("baseline not loaded");
             if (_corruptJournal) blockers.Add("corrupt baseline journal");
+            // An ambiguous append may have partially persisted. Do not let a
+            // readiness refresh or later successful write erase that uncertainty.
+            if (_persistenceFailed) blockers.Add("baseline persistence failed");
             if (count < _options.MinimumObservations) blockers.Add("insufficient persisted observations");
             if (distinct < _options.MinimumDistinctKeys) blockers.Add("insufficient distinct baseline keys");
             if (span < _options.MinimumObservationSpan) blockers.Add("baseline observation duration too short");
