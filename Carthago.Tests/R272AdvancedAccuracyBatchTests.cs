@@ -74,7 +74,8 @@ public sealed class R272AdvancedAccuracyBatchTests
             var ftp = Packet(host, "10.214.1.21", 21);
             ftp.ApplicationService = "FTP";
             ftp.Info = "PASS synthetic-test-only-value";
-            Assert.Contains(RuleEngine.Evaluate(ftp, Sensitivity.Balanced), e => e.RuleId == "R014");
+            var ftpEvent = Assert.Single(System.Linq.Enumerable.Where(
+                RuleEngine.Evaluate(ftp, Sensitivity.Balanced), e => e.RuleId == "R014"));
 
             var smb = Packet(host, "8.8.8.8", 445);
             smb.Flags = "SYN"; smb.TcpFlags = 2;
@@ -118,6 +119,20 @@ public sealed class R272AdvancedAccuracyBatchTests
                 Assert.False(new R272_MultiSignalRuleStackSurgeFromHostRule()
                     .EvaluateAsync(boundary).AsTask().GetAwaiter().GetResult().Matched);
             }
+            // The actual emitted event timestamp defines the inclusive boundary.
+            var exact = ftpEvent.TimestampUtc.AddMinutes(10);
+            Assert.Contains(RuleEngine.SnapshotR272Signals(host, exact), s => s.RuleId == "R014");
+            Assert.DoesNotContain(RuleEngine.SnapshotR272Signals(host, exact.AddTicks(1)),
+                s => s.RuleId == "R014");
+
+            // Mapped IPv6 and IPv4 refer to the same producer host.
+            var mapped = Packet("::ffff:" + host, "10.214.1.21", 443);
+            mapped.IpVersion = 6;
+            var mappedContext = RuleEvaluationContext.CreateForEngine(mapped, Sensitivity.Balanced,
+                now, RuleEngineHealthSnapshot.Empty(now));
+            Assert.True(new R272_MultiSignalRuleStackSurgeFromHostRule()
+                .EvaluateAsync(mappedContext).AsTask().GetAwaiter().GetResult().Matched);
+
             probe.Source = "10.214.1.99";
             Assert.False(new R272_MultiSignalRuleStackSurgeFromHostRule()
                 .EvaluateAsync(context).AsTask().GetAwaiter().GetResult().Matched);

@@ -48,6 +48,10 @@ namespace Carthago.Engine.Rules.Expansion
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
+            if (!System.Net.IPAddress.TryParse(context.Record.Source, out var address))
+                return NoMatch();
+            if (address.IsIPv4MappedToIPv6) address = address.MapToIPv4();
+            var canonicalHost = address.ToString();
             var signals = context.GetR272Signals();
             var families = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var rules = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -71,7 +75,7 @@ namespace Carthago.Engine.Rules.Expansion
             return MatchEvasionInfra(context, SeverityLevel.High, "Independent rule detections from one source",
                 "RuleStackSurge", evidence,
                 c => { c.AddEvidence(0.40, "engine-emission"); c.AddEvidence(0.30, "distinct-families"); c.AddEvidence(0.20, "host-window"); },
-                count: rules.Count, window: Profile.Window, cooldownKey: context.Record.Source + ":rule-stack");
+                count: rules.Count, window: Profile.Window, cooldownKey: canonicalHost + ":rule-stack");
         }
     }
 }
