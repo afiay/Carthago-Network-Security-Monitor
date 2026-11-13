@@ -29,7 +29,17 @@ internal static class EnrichmentHealthPresentation
             $"Enrichment queue depth: {stats.EnrichmentQueueDepth?.ToString(CultureInfo.InvariantCulture) ?? "unknown"}; " +
             $"fallback records (lifetime): {stats.EnrichmentFallbacks:N0}. " +
             "Provider success is not proof of detection accuracy or endpoint trust. " +
-            WorkerSummary(stats.EnrichmentWorkers) + " " + CoverageSummary(stats.EnrichmentCoverage), providers);
+            WorkerSummary(stats.EnrichmentWorkers) + " " + CoverageSummary(stats.EnrichmentCoverage) + " " + StorageSummary(stats.EnrichmentStorage), providers);
+    }
+
+    internal static string StorageSummary(EnrichmentStorageSnapshot? s)
+    {
+        if (s is null) return "Storage diagnostics unavailable.";
+        return $"Current/last session assets: {s.Assets.Count}/{s.Assets.Limit}, capacity-rejected observations: {s.Assets.Rejected}; " +
+            $"external destinations: {s.Destinations.Count}/{s.Destinations.Limit}, capacity-rejected observations: {s.Destinations.Rejected}. " +
+            $"Checkpoint writes: {s.Checkpoints.Writes}, failures: {s.Checkpoints.Failures}; " +
+            (s.Checkpoints.LastError is not null ? "Last save error: " + s.Checkpoints.LastError : "No save error reported.") +
+            " Retained history may be incomplete; rejection counts are observations, not unique identities.";
     }
 
     internal static string CoverageSummary(EnrichmentCoverageSnapshot? c)

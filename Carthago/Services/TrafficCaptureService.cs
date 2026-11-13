@@ -1232,6 +1232,13 @@ namespace Carthago.Services
             }
         }
 
+        private EnrichmentStorageSnapshot GetEnrichmentStorageHealth()
+        {
+            ObservedAssetRegistry registry;
+            lock (_lifecycleLock) registry = _observedAssets;
+            return new(registry.Communications.CapacitySnapshot(), registry.CapacitySnapshot(), _assetHistory.HealthSnapshot());
+        }
+
         public StatsSnapshot GetStats() => new()
         {
             PacketsCaptured = Interlocked.Read(ref _packetsCaptured),
@@ -1250,7 +1257,8 @@ namespace Carthago.Services
             EnrichmentQueueDepth = _enrichmentChannel.Reader.CanCount ? _enrichmentChannel.Reader.Count : null,
             EnrichmentProviders = _providerHealth.Snapshot(),
             EnrichmentWorkers = _workerHealth.Snapshot(),
-            EnrichmentCoverage = _coverageHealth.Snapshot()
+            EnrichmentCoverage = _coverageHealth.Snapshot(),
+            EnrichmentStorage = GetEnrichmentStorageHealth()
         };
 
         public CaptureFlowSnapshot GetCaptureFlowSnapshot()
@@ -1358,6 +1366,7 @@ namespace Carthago.Services
             public long EnrichmentFallbacks { get; init; }
             public EnrichmentWorkerSnapshot? EnrichmentWorkers { get; init; }
             public EnrichmentCoverageSnapshot? EnrichmentCoverage { get; init; }
+            public EnrichmentStorageSnapshot? EnrichmentStorage { get; init; }
             public int WhoisCacheSize { get; init; }
             public int ReputationCacheSize { get; init; }
             public int? EnrichmentQueueDepth { get; init; }

@@ -21,6 +21,9 @@ internal sealed class ExternalCommunicationRegistry
     private const int MetadataLimit = 8;
     private readonly object _gate = new();
     private bool _sealed;
+    private long _capacityRejected;
+    internal RegistryCapacitySnapshot CapacitySnapshot()
+    { lock (_gate) return new(_entries.Count, Capacity, _capacityRejected); }
     private readonly Dictionary<Key, Entry> _entries = new();
     private readonly record struct Key(string Scope, string Local, string Destination);
     private sealed class Entry
@@ -54,7 +57,7 @@ internal sealed class ExternalCommunicationRegistry
             if (_sealed) return;
             if (!_entries.TryGetValue(key, out var entry))
             {
-                if (_entries.Count >= Capacity) return;
+                if (_entries.Count >= Capacity) { if (_capacityRejected < long.MaxValue) _capacityRejected++; return; }
                 _entries[key] = entry = new Entry { First = now, Last = now };
             }
             if (entry.Count < long.MaxValue) entry.Count++;

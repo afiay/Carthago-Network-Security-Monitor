@@ -20,6 +20,9 @@ internal sealed class ObservedAssetRegistry
     private const int MaxServices = 64;
     private readonly object _gate = new();
     private bool _sealed;
+    private long _capacityRejected;
+    internal RegistryCapacitySnapshot CapacitySnapshot()
+    { lock (_gate) return new(_entries.Count, Capacity, _capacityRejected); }
     internal Guid SessionId { get; } = Guid.NewGuid();
     internal DateTimeOffset SessionStartedUtc { get; } = DateTimeOffset.UtcNow;
     internal ExternalCommunicationRegistry Communications { get; } = new();
@@ -72,7 +75,7 @@ internal sealed class ObservedAssetRegistry
     {
         if (!_entries.TryGetValue(key, out var entry))
         {
-            if (_entries.Count >= Capacity) return; // bounded, preserve existing history
+            if (_entries.Count >= Capacity) { if (_capacityRejected < long.MaxValue) _capacityRejected++; return; } // bounded, preserve existing history
             _entries[key] = entry = new Entry { First = now, Last = now };
         }
         if (now < entry.First) entry.First = now;

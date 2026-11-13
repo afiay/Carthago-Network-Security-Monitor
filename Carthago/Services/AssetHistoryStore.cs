@@ -23,6 +23,10 @@ internal sealed class AssetHistoryStore
     private static readonly object IoGate = new();
     private readonly string _directory;
     private string? _lastSaveError;
+    private long _writes, _failures;
+    private readonly object _healthGate = new();
+    internal CheckpointHealthSnapshot HealthSnapshot()
+    { lock (_healthGate) return new(_writes, _failures, _lastSaveError); }
     internal string? LastSaveError => Volatile.Read(ref _lastSaveError);
 
     // Public constructor/properties for System.Text.Json, even though internal type.
@@ -58,12 +62,12 @@ internal sealed class AssetHistoryStore
                 File.Move(temp, path, overwrite: true);
                 temp = null;
                 foreach (var old in Files().Skip(MaxSessions)) File.Delete(old);
-                Volatile.Write(ref _lastSaveError, null);
+                lock (_healthGate) { _writes++; Volatile.Write(ref _lastSaveError, null); }
                 return true;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or NotSupportedException)
             {
-                Volatile.Write(ref _lastSaveError, ex.Message);
+                lock (_healthGate) { _failures++; Volatile.Write(ref _lastSaveError, ex.Message); }
                 return false;
             }
             finally
