@@ -990,6 +990,7 @@ namespace Carthago.Engine.Rules.Catalog
                 new R965_SpoolsvPublicDllGetThenSmbSynRule(),
                 new R966_PublicSnmpEnterpriseSetRequestRule(),
                 new R967_PublicDnp3UnsolicitedBinaryEventRule(),
+                new R968_PublicModbusSameRegisterWriteBurstRule(),
             };
         }
 

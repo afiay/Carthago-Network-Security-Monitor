@@ -431,6 +431,15 @@ namespace Carthago.Services
                             if (OtProtocolLight.TryIdentifyTcp(normPayload, sport, dport, out var otProtocol))
                                 rec.ApplicationProtocol = otProtocol;
 
+                            // Capture-qualified Modbus function 06 first request.
+                            // Keep the existing OT protocol label; only internal point evidence is new.
+                            if (isIPv4 && c2s && tcpAck && !tcpSyn && synAnchoredFirstPayload &&
+                                dport == 502 && sport is > 0 and <= 65535 && sport != 502 &&
+                                tcpFlagsField == 0x18 && completeIpPacket &&
+                                normPayload.Length == l4Payload.Length && !IsTlsActive(tcpFlow, c2s) &&
+                                ModbusSingleRegisterWriteInspector.TryInspect(normPayload, out uint modbusPoint))
+                                rec.ModbusSingleRegisterWritePoint = modbusPoint;
+
                             // -------- Plaintext LDAP simple BindRequest --------
                             // Strictly complete first client payload on an
                             // observed SYN-anchored TCP/389 flow, not a port,

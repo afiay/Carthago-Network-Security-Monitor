@@ -186,3 +186,8 @@ Workbook R2773, AN2183; capture-decoded external SNMP enterprise SET, Candidate/
 ## R967 — decoded DNP3 unsolicited binary input events
 
 Workbook R2781, AN2236; independent Candidate/Shadow, complete raw UDP frame/CRC and typed application structure. [Batch notes](../03-detection-rules/batches/RULE_BATCH_967-967.md). 28 authored tests, zero execution; no enrollment or spoofing claim. Next ID R968.
+
+
+## R968 — capture-qualified Modbus same-register write burst
+
+Workbook R2725 AN1870; narrow function 06 first-request burst across distinct ports, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_968-968.md). 26 authored tests, zero execution; no scan-cycle/authorization/effect claim. Next ID R969.

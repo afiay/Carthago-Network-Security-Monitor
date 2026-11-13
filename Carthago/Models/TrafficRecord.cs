@@ -163,6 +163,8 @@ namespace Carthago.Models
         // Capture-only initial TFTP handshake evidence; never populated by port inference.
         public bool SnmpEnterpriseSetRequestObserved { get; internal set; }
         public bool Dnp3UnsolicitedBinaryEventObserved { get; internal set; }
+        // Capture-only unit/register key, intentionally excluded from JSON/export.
+        internal uint? ModbusSingleRegisterWritePoint { get; set; }
         public byte? TftpInitialRequestOpcode { get; internal set; }
         public byte? TftpInitialReplyOpcode { get; internal set; }
         public Guid? TftpRequestCorrelationId { get; internal set; }
