@@ -1,4 +1,4 @@
-# Active sensors — AS-01 TCP exposure / AS-02 DNS integrity
+# Active sensors — AS-01 through AS-04
 
 Status: source candidate; Windows build, tests and live smoke pending.
 
@@ -20,7 +20,7 @@ dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQua
 Expected checks include scope rejection, fixed port list, distinct outcome classification, timeout, cancellation, and source address propagation. No live probe is executed by these unit tests. On Windows, manually select an authorized LAN lab host with a known listening service and a refused port; verify result statuses, UI cancel, and that active capture prevents the check.
 
 ## Next
-AS-04: HTTP health without redirects outside scope. Later: durable exposure snapshots and change detection with explicit baseline approval, active-origin evidence isolation, and opt-in scheduling. Do not promote detection rules on these observations until producer and replay contracts are tested.
+Later: durable exposure snapshots and change detection with explicit baseline approval, active-origin evidence isolation, and opt-in scheduling. Do not promote detection rules on these observations until producer and replay contracts are tested.
 
 ## AS-02 — DNS integrity
 
@@ -45,3 +45,15 @@ dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQua
 ```
 
 Tests include local scope/port/name validation, fingerprint and validity evidence, strict rejection, cancellation, and isolated loopback TLS rejection/timeout. Manual Windows smoke: approved trusted TLS endpoint and self-signed/mismatched certificate; verify no trust override, no application payload, and no protocol/cipher claims on rejected handshakes. No detector promotion or persistence.
+
+## AS-04 — HTTP/HTTPS health
+
+Select an authorized LAN host, stop monitoring, and choose Check HTTP/HTTPS health from the capture-source context menu. Supply the expected ASCII/punycode DNS hostname for Host/SNI; select 80/8080 (HTTP) or 443/8443 (HTTPS). One source-bound TCP connection, one HEAD / HTTP/1.1 request, five-second overall cancellation budget, no DNS resolution, proxy, redirects, cookies, credentials or intentional body reads. HTTPS requires the same strict platform trust as AS-03 before writing the request; no certificate downloads or revocation checking. HTTP/1.0 and HTTP/1.1 final status codes 200–599 are supported; interim 1xx, HTTP/2, malformed, incomplete, oversized (16 KiB) or excessive (>128) headers are inconclusive. Selected security headers are recorded as observed values (including duplicates), not evaluated as secure; report-only CSP is separate. Redirects 301/302/303/307/308 are classified by URI origin only, never followed; destination text, cookies and unselected headers are not retained in observations. Origin equivalence is not a DNS/route authorization check. No body download, application login, persisted baseline, detection promotion or vulnerability finding. A HEAD rejection may reflect method policy rather than service unavailability.
+
+Windows verification pending:
+
+```powershell
+dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~HttpHealthSensorTests|FullyQualifiedName~TlsInspectionSensorTests|FullyQualifiedName~DnsIntegritySensorTests|FullyQualifiedName~TcpExposureSensorTests"
+```
+
+Unit and isolated loopback tests cover scope, request construction, response framing, selected headers, redirect classification, header budget, timeout and cancellation. Manual Windows smoke: trusted HTTPS endpoint, invalid certificate (no HTTP request), HTTP redirect and HEAD rejection. No test execution claimed.
