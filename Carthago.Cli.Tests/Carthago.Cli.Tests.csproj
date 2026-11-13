@@ -15,4 +15,7 @@
     </PackageReference>
     <ProjectReference Include="../Carthago.Cli/Carthago.Cli.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../Carthago/Services/Cli/SensorHeartbeatReadProjection.cs" Link="Shared/SensorHeartbeatReadProjection.cs" />
+  </ItemGroup>
 </Project>

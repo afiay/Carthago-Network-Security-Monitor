@@ -37,6 +37,15 @@ namespace Carthago
                 var token = _cliCts.Token;
                 _ = Task.Run(async () =>
                 {
+                    try { await WindowsLocalReadPipe.ServeLiveAsync(CliLiveQueryHost.QueryAsync, token); }
+                    catch (OperationCanceledException) when (token.IsCancellationRequested) { }
+                    catch (Exception ex) when (ex is not OutOfMemoryException)
+                    {
+                        Console.Error.WriteLine("[CLI] Local v2 query endpoint unavailable.");
+                    }
+                });
+                _ = Task.Run(async () =>
+                {
                     try { await WindowsLocalReadPipe.ServeAsync(CliReadHost.Query, token); }
                     catch (OperationCanceledException) when (token.IsCancellationRequested) { }
                     catch (Exception ex) when (ex is not OutOfMemoryException)

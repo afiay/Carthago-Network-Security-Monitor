@@ -31,6 +31,11 @@ public static class CliApplication
           carthago capabilities [--json]
           carthago engine status [--json]
           carthago rules summary [--json]
+          carthago rules list --live [--offset N --limit N] [--json]
+          carthago rules show <rule-id> --live [--json]
+          carthago rules validate [--json]
+          carthago sensors list [--offset N --limit N] [--json]
+          carthago sensors health [--json]
           carthago rules list <file.csa> [--offset N --limit N] [--json]
           carthago rules show <file.csa> <rule-id> [--json]
           carthago rules quality <ledger.md> [--json]
@@ -45,7 +50,8 @@ public static class CliApplication
 
     public static async Task<int> RunAsync(string[] args, TextWriter output, TextWriter error,
         CancellationToken token = default,
-        Func<ReadCommand, CancellationToken, Task<ReadResponse>>? query = null)
+        Func<ReadCommand, CancellationToken, Task<ReadResponse>>? query = null,
+        Func<LiveQuery, CancellationToken, Task<LiveQueryResult>>? liveQuery = null)
     {
         // Options are accepted only in the documented trailing position.
         if (args.Length == 0 || args is ["--help"] or ["-h"] or ["help"])
@@ -102,6 +108,27 @@ public static class CliApplication
                     return await LiveAsync(ReadCommand.HostStatus, output, error, json, token, query);
                 case ["rules", "summary"]:
                     return await LiveAsync(ReadCommand.RulesSummary, output, error, json, token, query);
+
+                case ["rules", "list", "--live"]:
+                    return await QueryV2Async(LiveQueryKind.RulesList, 0, 50, null, output, error, json, token, liveQuery);
+                case ["rules", "list", "--live", "--offset", var liveOffset, "--limit", var liveLimit]:
+                    if (!OfflineRuleQueries.TryPage(liveOffset, liveLimit, out int liveStart, out int liveSize))
+                        return await FailAsync(error, json, UsageError, "invalid_usage", "Offset must be nonnegative; limit must be 1–100.");
+                    return await QueryV2Async(LiveQueryKind.RulesList, liveStart, liveSize, null, output, error, json, token, liveQuery);
+                case ["rules", "show", var liveId, "--live"]:
+                    if (!LiveQueryProtocol.RuleIdValid(liveId))
+                        return await FailAsync(error, json, UsageError, "invalid_usage", "Expected uppercase numeric rule ID.");
+                    return await QueryV2Async(LiveQueryKind.RuleShow, 0, 1, liveId, output, error, json, token, liveQuery);
+                case ["rules", "validate"]:
+                    return await QueryV2Async(LiveQueryKind.RulesValidate, 0, 1, null, output, error, json, token, liveQuery);
+                case ["sensors", "list"]:
+                    return await QueryV2Async(LiveQueryKind.SensorsList, 0, 50, null, output, error, json, token, liveQuery);
+                case ["sensors", "list", "--offset", var sensorOffset, "--limit", var sensorLimit]:
+                    if (!OfflineRuleQueries.TryPage(sensorOffset, sensorLimit, out int sensorStart, out int sensorSize))
+                        return await FailAsync(error, json, UsageError, "invalid_usage", "Offset must be nonnegative; limit must be 1–100.");
+                    return await QueryV2Async(LiveQueryKind.SensorsList, sensorStart, sensorSize, null, output, error, json, token, liveQuery);
+                case ["sensors", "health"]:
+                    return await QueryV2Async(LiveQueryKind.SensorsHealth, 0, 1, null, output, error, json, token, liveQuery);
 
                 case ["rules", "list", var listPath]:
                     return await ListRulesAsync(listPath, 0, 50, output, error, json, token);
@@ -193,6 +220,58 @@ public static class CliApplication
                 enabledByDefault = response.EnabledByDefault, planned = response.Planned, validation = "not_assessed" },
                 $"Registered: {response.Registered}\\nEnabled by default: {response.EnabledByDefault}\\nPlanned: {response.Planned}\\nValidation: not assessed");
         return Success;
+    }
+
+    private static async Task<int> QueryV2Async(LiveQueryKind kind, int offset, int limit, string? id,
+        TextWriter output, TextWriter error, bool json, CancellationToken token,
+        Func<LiveQuery, CancellationToken, Task<LiveQueryResult>>? query)
+    {
+        var request = new LiveQuery(LiveQueryProtocol.Version, Guid.NewGuid(), kind, offset, limit, id);
+        if (query is null && !OperatingSystem.IsWindows())
+            return await FailAsync(error, json, DataError, "unsupported_platform", "Live queries require Windows.");
+        LiveQueryResult response;
+        try
+        {
+            if (query is not null) response = await query(request, token);
+            else if (OperatingSystem.IsWindows()) response = await WindowsLocalReadPipe.QueryLiveAsync(request, token);
+            else return await FailAsync(error, json, DataError, "unsupported_platform", "Live queries require Windows.");
+            LiveQueryProtocol.ValidateResult(response, request);
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException && !token.IsCancellationRequested)
+        {
+            return await FailAsync(error, json, DataError, "engine_unavailable", "Local v2 query endpoint unavailable or invalid.");
+        }
+        token.ThrowIfCancellationRequested();
+        if (response.State == LiveQueryState.NotFound)
+            return await FailAsync(error, json, DataError, "rule_not_found", "Rule not found in the live catalog.");
+        if (response.State != LiveQueryState.Available)
+            return await FailAsync(error, json, DataError, "source_unavailable", "Host data unavailable; no zero-count inference.");
+        const string provenance = "same_user_local_endpoint";
+        if (kind is LiveQueryKind.RulesList or LiveQueryKind.RuleShow)
+            await WriteAsync(output, json, new { schemaVersion = SchemaVersion, provenance, response.ObservedUtc,
+                total = response.Total, offset, limit, rules = response.Rules, validation = "not_assessed" },
+                $"Live registered catalog: {response.Total} matching rows (offset {offset}, limit {limit})\n" +
+                string.Join("\n", response.Rules!.Select(r => $"{r.RuleId} {r.Name} | {r.Category} | {r.DefaultSeverity} | default enabled: {r.EnabledByDefault} | planned: {r.Planned}")) +
+                "\nDetection validation: not assessed");
+        else if (kind == LiveQueryKind.RulesValidate)
+            await WriteAsync(output, json, new { schemaVersion = SchemaVersion, provenance, response.ObservedUtc,
+                catalogErrors = response.CatalogErrors, catalogIntegrity = response.CatalogErrors == 0 ? "passed" : "failed",
+                detectionValidation = "not_assessed" },
+                $"Catalog integrity errors: {response.CatalogErrors}\nDetection validation: not assessed");
+        else if (kind == LiveQueryKind.SensorsList)
+            await WriteAsync(output, json, new { schemaVersion = SchemaVersion, provenance, response.ObservedUtc,
+                total = response.Total, offset, limit, sensors = response.Sensors, lookbackDays = 7,
+                heartbeatTrust = "unverified_journal", sensorHealth = "not_assessed" },
+                $"Stored sensor heartbeat IDs: {response.Total} (7-day journal window)\n" +
+                string.Join("\n", response.Sensors!.Select(s => $"{s.SensorId} {s.LastHeartbeatUtc:O} {s.Freshness}")) +
+                "\nSensor runtime health: not assessed");
+        else
+            await WriteAsync(output, json, new { schemaVersion = SchemaVersion, provenance, response.ObservedUtc,
+                total = response.Total, fresh = response.Fresh, stale = response.Stale, future = response.Future,
+                lookbackDays = 7, freshnessSeconds = 300, futureToleranceSeconds = 30,
+                heartbeatTrust = "unverified_journal", sensorHealth = "not_assessed" },
+                $"Stored heartbeat IDs: {response.Total}\nFresh: {response.Fresh}\nStale: {response.Stale}\nFuture: {response.Future}\nSensor runtime health: not assessed");
+        return kind == LiveQueryKind.RulesValidate && response.CatalogErrors != 0 ? DataError : Success;
     }
 
     private static bool IsCsaPath(string path) => !string.IsNullOrWhiteSpace(path)

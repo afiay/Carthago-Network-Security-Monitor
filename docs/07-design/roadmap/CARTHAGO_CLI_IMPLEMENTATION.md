@@ -122,3 +122,43 @@ The historical ledger is provisional, not a complete rule inventory.
 A future machine-readable, pinned-SHA execution manifest is required for
 actual qualification counts. Live catalog pagination and sensor health remain
 CLI-003B; no false claim of their implementation. Tests authored, unexecuted.
+
+## CLI-003B — live catalog and heartbeat queries
+
+SOURCE CANDIDATE — UNVERIFIED. Adds separate v2 Windows pipe, using the same
+current-user local-only security boundary as v1. Both opt in with
+--enable-cli-ipc. No change to v1 framing or offline commands. v2 uses a
+4-byte big-endian length prefix, strict bounded JSON (1 KiB request, 128 KiB
+response), correlation IDs, allowlisted queries, typed responses, bounded
+pages (1–100), five-second I/O deadlines and acknowledgment. No mutation.
+
+```powershell
+dotnet run --project Carthago/Carthago.csproj -c Release -- --enable-cli-ipc
+# Second terminal, same Windows user/elevation:
+dotnet run --project Carthago.Cli -c Release -- rules list --live --offset 0 --limit 25 --json
+dotnet run --project Carthago.Cli -c Release -- rules show R001 --live --json
+dotnet run --project Carthago.Cli -c Release -- rules validate --json
+dotnet run --project Carthago.Cli -c Release -- sensors list --json
+dotnet run --project Carthago.Cli -c Release -- sensors health --json
+```
+
+Rules use RuleCatalog.All, numeric core rule ordering, registered/default
+metadata only. Catalog validation invokes RuleCatalog.Validate, returning
+error count and exit 3 for a failed structural check; not detection accuracy
+or rule qualification. No active config assertion.
+
+Sensor queries read the existing CommonApplicationData/Carthago/sensors
+heartbeat journal files for the current UTC date plus six previous dates.
+Each file is bounded to 1 MiB, records to 8192 characters and unique IDs to
+10,000. Latest timestamp wins regardless of file order. Missing journals,
+malformed records or size/permission errors return unavailable, not zero.
+Fresh means at most five minutes old, future means more than 30 seconds
+ahead of observation, otherwise stale. This is unverified journal freshness,
+not authenticated telemetry or runtime liveness. Only safe sensor IDs,
+timestamps and freshness labels are projected. No active probes or control.
+A future timestamp can mask earlier heartbeats and must be treated as
+untrusted, not healthy. Older files outside the window are not inspected.
+
+Authored portable protocol, CLI, heartbeat projection and Windows loopback
+tests; no execution in publishing environment. Verify actual Windows
+builds, pipe lifecycle and account/remote restrictions before promotion.

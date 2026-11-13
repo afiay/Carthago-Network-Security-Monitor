@@ -11,7 +11,7 @@ namespace Carthago.Contracts;
 
 /// <summary>Windows-only, same-account local pipe. No application identity attestation.</summary>
 [SupportedOSPlatform("windows")]
-public static class WindowsLocalReadPipe
+public static partial class WindowsLocalReadPipe
 {
     private static readonly TimeSpan Deadline = TimeSpan.FromSeconds(5);
 
