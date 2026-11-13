@@ -105,18 +105,21 @@ public static class GatewayIntegritySensor
             }
         }
 
-        bool opened = false, started = false;
-        device.OnPacketArrival += OnPacket;
-        try
+        bool openAttempted = false, startAttempted = false, attached = false;
+        await ReservedNpcapOperation.RunAsync(async () =>
         {
             token.ThrowIfCancellationRequested();
+            // Mark attempted operations before calling native code: partial
+            // initialization must also be cleaned up.
+            attached = true;
+            device.OnPacketArrival += OnPacket;
+            openAttempted = true;
             device.Open(new DeviceConfiguration { Mode = DeviceModes.Promiscuous, ReadTimeout = 100, Snaplen = 96, Immediate = true });
-            opened = true;
             if (device.LinkType != LinkLayers.Ethernet)
                 throw new NotSupportedException("Gateway integrity requires an Ethernet-style Npcap adapter.");
             device.Filter = "arp or (vlan and arp)";
+            startAttempted = true;
             device.StartCapture();
-            started = true;
             lock (gate) collecting = true;
             // Do not stop after the first reply: retain competing claims across both windows.
             for (int pass = 0; pass < 2; pass++)
@@ -125,17 +128,14 @@ public static class GatewayIntegritySensor
                 device.SendPacket(request);
                 await Task.Delay(pass == 0 ? 350 : 850, token).ConfigureAwait(false);
             }
-        }
-        finally
+        }, () =>
         {
             lock (gate) collecting = false;
-            try { if (started) device.StopCapture(); }
-            finally
-            {
-                try { if (opened) device.Close(); }
-                finally { device.OnPacketArrival -= OnPacket; }
-            }
-        }
+            ReservedNpcapOperation.Cleanup(
+                () => { if (startAttempted) device.StopCapture(); },
+                () => { if (openAttempted) device.Close(); },
+                () => { if (attached) device.OnPacketArrival -= OnPacket; });
+        }, token).ConfigureAwait(false);
         token.ThrowIfCancellationRequested();
         lock (gate) return Evaluate(adapter.Address, gateway, claims, cached, expected, overflow);
     }

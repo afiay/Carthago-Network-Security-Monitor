@@ -139,11 +139,13 @@ public static class NpcapArpDiscovery
             }
         }
 
-        var opened = false;
-        var started = false;
-        device.OnPacketArrival += OnPacketArrival;
-        try
+        bool openAttempted = false, startAttempted = false, attached = false;
+        await ReservedNpcapOperation.RunAsync(async () =>
         {
+            token.ThrowIfCancellationRequested();
+            attached = true;
+            device.OnPacketArrival += OnPacketArrival;
+            openAttempted = true;
             device.Open(new DeviceConfiguration
             {
                 Mode = DeviceModes.Promiscuous,
@@ -151,12 +153,11 @@ public static class NpcapArpDiscovery
                 Snaplen = 96,
                 Immediate = true
             });
-            opened = true;
             if (device.LinkType != LinkLayers.Ethernet)
                 throw new NotSupportedException($"LAN ARP discovery requires an Ethernet-style Npcap link, not {device.LinkType}.");
             device.Filter = "arp";
+            startAttempted = true;
             device.StartCapture();
-            started = true;
 
             // Two compact passes tolerate ordinary Wi-Fi loss while keeping
             // the selector responsive. The second pass skips peers already seen.
@@ -173,15 +174,10 @@ public static class NpcapArpDiscovery
                 }
                 await Task.Delay(pass == 0 ? 250 : 850, token).ConfigureAwait(false);
             }
-        }
-        finally
-        {
-            if (started)
-                try { device.StopCapture(); } catch { }
-            if (opened)
-                try { device.Close(); } catch { }
-            device.OnPacketArrival -= OnPacketArrival;
-        }
+        }, () => ReservedNpcapOperation.Cleanup(
+            () => { if (startAttempted) device.StopCapture(); },
+            () => { if (openAttempted) device.Close(); },
+            () => { if (attached) device.OnPacketArrival -= OnPacketArrival; }), token).ConfigureAwait(false);
 
         token.ThrowIfCancellationRequested();
         // Phones commonly enter Wi-Fi power-save and miss a burst scan. Keep
