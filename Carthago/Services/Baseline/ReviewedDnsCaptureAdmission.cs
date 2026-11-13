@@ -10,6 +10,7 @@ namespace Carthago.Services.Baseline
     internal sealed class ReviewedDnsCaptureAdmission
     {
         private const long MaxJournalBytes = 64 * 1024 * 1024;
+        private const int MaxRecordBytes = 65 * 20001;
         private readonly string _directory;
         private readonly ReviewedDnsAuthenticatedIntake _intake;
 
@@ -34,45 +35,56 @@ namespace Carthago.Services.Baseline
                 if (journal.Length > MaxJournalBytes) return false;
                 var existing = new HashSet<string>(StringComparer.Ordinal);
                 var captures = new HashSet<string>(StringComparer.Ordinal);
-                // A torn record blocks all further admission rather than allowing replay.
-                using (var reader = new StreamReader(journal, Encoding.ASCII, false, 4096, true))
+                // Parse exact ASCII LF records with a bounded buffer. StreamReader
+                // would accept CR/BOM variants and allocate an unbounded line.
+                using (var reader = new BufferedStream(journal, 4096))
                 {
-                    if (journal.Length != 0)
-                    {
-                        journal.Position = journal.Length - 1;
-                        if (journal.ReadByte() != 10) return false;
-                        journal.Position = 0;
-                    }
-                    string? line;
-                    while ((line = reader.ReadLine()) != null)
-                    {
-                        var fields = line.Split(',');
-                        if (fields.Length < 2 || fields.Length > 20001 ||
-                            !IsDigest(fields[0]) || !captures.Add(fields[0])) return false;
-                        for (int i = 1; i < fields.Length; i++)
-                            if (!IsDigest(fields[i]) || !existing.Add(fields[i])) return false;
-                    }
+                    if (!ReadJournal(reader, captures, existing)) return false;
+                    if (captures.Contains(digest)) return false;
+                    foreach (var id in observations)
+                        if (existing.Contains(id)) return false;
+                    byte[] record = Encoding.ASCII.GetBytes(digest + "," + string.Join(",", observations) + "\n");
+                    if (journal.Length + record.Length > MaxJournalBytes) return false;
+                    reader.Write(record);
+                    reader.Flush();
+                    journal.Flush(flushToDisk: true);
+                    return true;
                 }
-                if (captures.Contains(digest)) return false;
-                foreach (var id in observations)
-                    if (existing.Contains(id)) return false;
-                byte[] record = Encoding.ASCII.GetBytes(digest + "," + string.Join(",", observations) + "\n");
-                if (journal.Length + record.Length > MaxJournalBytes) return false;
-                journal.Position = journal.Length;
-                journal.Write(record);
-                journal.Flush(flushToDisk: true);
-                return true;
             }
             catch (IOException) { return false; }
             catch (UnauthorizedAccessException) { return false; }
         }
 
-        private static bool IsDigest(string value)
+        private static bool ReadJournal(Stream reader, HashSet<string> captures, HashSet<string> existing)
         {
-            if (value.Length != 64) return false;
-            foreach (char c in value)
-                if (!(c >= '0' && c <= '9') && !(c >= 'A' && c <= 'F')) return false;
-            return true;
+            var field = new byte[64];
+            int length = 0, fields = 0, recordBytes = 0;
+            int value;
+            while ((value = reader.ReadByte()) != -1)
+            {
+                if (++recordBytes > MaxRecordBytes) return false;
+                if (value == ',' || value == 10)
+                {
+                    if (length != 64 || ++fields > 20001) return false;
+                    string digest = Encoding.ASCII.GetString(field);
+                    if (!(fields == 1 ? captures.Add(digest) : existing.Add(digest))) return false;
+                    length = 0;
+                    if (value == 10)
+                    {
+                        if (fields < 2) return false;
+                        fields = 0;
+                        recordBytes = 0;
+                    }
+                }
+                else
+                {
+                    if (length == 64 || !((value >= '0' && value <= '9') ||
+                        (value >= 'A' && value <= 'F'))) return false;
+                    field[length++] = (byte)value;
+                }
+            }
+            return recordBytes == 0;
         }
+
     }
 }

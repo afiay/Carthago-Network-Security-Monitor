@@ -185,8 +185,26 @@ public sealed class ReviewedDnsPacketIntakeTests
                 Assert.True(reopened.TryReserve(freshManifest, freshSignature, fresh,
                     "192.0.2.1", "sensor", "interface", "network"));
                 Assert.Single(Directory.GetFiles(directory));
-                File.AppendAllText(Path.Combine(directory, "admission.v1"), "torn");
-                Assert.False(reopened.TryReserve(freshManifest, freshSignature, fresh,
+                string journalPath = Path.Combine(directory, "admission.v1");
+                byte[] goodJournal = File.ReadAllBytes(journalPath);
+                byte[] third = (byte[])capture.Clone();
+                BinaryPrimitives.WriteUInt32LittleEndian(third.AsSpan(28), 2);
+                byte[] thirdManifest = RepackManifest(third);
+                byte[] thirdSignature = reviewer.SignData(thirdManifest, HashAlgorithmName.SHA256,
+                    DSASignatureFormat.IeeeP1363FixedFieldConcatenation);
+                foreach (string corrupt in new[] { "torn", "\\r\\n", new string('A', 65) + "\\n",
+                    new string('A', 64) + ",," + new string('B', 64) + "\\n",
+                    new string('A', 64) + "," + new string('b', 64) + "\\n" })
+                {
+                    File.WriteAllBytes(journalPath, goodJournal);
+                    File.AppendAllText(journalPath, corrupt);
+                    byte[] before = File.ReadAllBytes(journalPath);
+                    Assert.False(reopened.TryReserve(thirdManifest, thirdSignature, third,
+                        "192.0.2.1", "sensor", "interface", "network"));
+                    Assert.Equal(before, File.ReadAllBytes(journalPath));
+                }
+                File.WriteAllBytes(journalPath, goodJournal);
+                Assert.True(reopened.TryReserve(thirdManifest, thirdSignature, third,
                     "192.0.2.1", "sensor", "interface", "network"));
                 var missing = new ReviewedDnsCaptureAdmission(Path.Combine(directory, "missing"), intake);
                 Assert.False(missing.TryReserve(manifest, signature, capture,
