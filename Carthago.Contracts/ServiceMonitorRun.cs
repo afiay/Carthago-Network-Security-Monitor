@@ -11,7 +11,7 @@ public sealed class ServiceMonitorRun : IDisposable
 
     public ServiceMonitorRun(ForegroundMonitorOptions options,
         Func<CancellationToken, Task<IForegroundCapture>> factory, TextWriter error,
-        Func<TimeSpan, CancellationToken, Task>? delay = null)
+        Func<TimeSpan, CancellationToken, Task>? delay = null, Action<ForegroundMonitorCounters>? sample = null)
     {
         ArgumentNullException.ThrowIfNull(factory);
         if (options.EnableCliIpc || options.AllowCliStop) throw new ArgumentException("Service IPC disabled.");
@@ -22,7 +22,7 @@ public sealed class ServiceMonitorRun : IDisposable
                 _stop.Token.ThrowIfCancellationRequested();
                 var capture = await factory(_stop.Token).ConfigureAwait(false);
                 return await ForegroundMonitor.RunAsync(new StartupCapture(capture, _started), options,
-                    TextWriter.Null, error, _stop.Token, delay).ConfigureAwait(false);
+                    TextWriter.Null, error, _stop.Token, delay, sample: sample).ConfigureAwait(false);
             }
             catch (OperationCanceledException) when (_stop.IsCancellationRequested) { return 130; }
             catch (Exception ex) when (ex is not OutOfMemoryException)

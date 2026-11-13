@@ -31,6 +31,7 @@ public static class CliApplication
           carthago capabilities [--json]
           carthago engine status [--json]
           carthago monitor status [--json]
+          carthago service status|health|start|stop|doctor [--json]
           carthago engine health [--json]
           carthago monitor stop [--session GUID] [--json]
           carthago rules summary [--json]
@@ -122,6 +123,10 @@ public static class CliApplication
                         string.Join("\n", capabilities.Select(c => $"{c.Name}: {c.State} — {c.Reason}")));
                     return Success;
 
+                case ["service", var serviceAction] when serviceAction is "status" or "health" or "start" or "stop" or "doctor":
+                    if (!OperatingSystem.IsWindows())
+                        return await FailAsync(error, json, DataError, "unsupported_platform", "Windows SCM required.");
+                    return await ServiceCommands.RunAsync(serviceAction, new WindowsServiceControl(), output, error, json, token);
                 case ["monitor", "status"]:
                 case ["engine", "health"]:
                     return await MonitorAsync(false, null, output, error, json, token, monitorQuery);

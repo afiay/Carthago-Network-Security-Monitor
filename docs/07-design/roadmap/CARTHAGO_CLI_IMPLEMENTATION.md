@@ -333,3 +333,21 @@ preferences and journal directories resolve under service identity. No
 durable status snapshot, cross-account query, installer or recovery policy
 automation yet. Tests authored, not executed; build, SCM and real Npcap
 qualification still required.
+
+## CLI-005C2 — SCM commands and durable service sample
+
+SOURCE CANDIDATE — UNVERIFIED. Fixed local CarthagoMonitor SCM name;
+CLI service status/start/stop/health/doctor, native SCM authorization
+(minimum access per operation), no elevation or arbitrary service names.
+Start/stop poll up to 30 seconds for SCM confirmation, cancellation
+returns 130 without rolling back an already requested transition.
+Service sample written atomically to CommonApplicationData/Carthago/
+ServiceStatus/monitor.json at configured interval; preprovision directory
+with service-write/admin-control and intended operator-read ACLs.
+Write failure fails the monitoring worker. Schema/size/identity checks,
+PID + actual process start time, 120s freshness, future timestamps reject;
+SCM state rechecked after read. A fresh sample is not continuous capture
+health, lossless capture, journal delivery or detection accuracy proof.
+Stale/invalid/missing/mismatched/unreadable sample not exposed as current.
+SCM status independent of sample; health/doctor exit 3 if no fresh sample.
+No install/recovery automation, capture validation or Windows tests run.

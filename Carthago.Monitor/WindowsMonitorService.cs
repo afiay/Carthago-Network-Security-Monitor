@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 using System;
 using System.IO;
+using System.Diagnostics;
 using System.ServiceProcess;
 using System.Threading;
 using System.Threading.Tasks;
@@ -36,13 +37,20 @@ internal sealed class WindowsMonitorService : ServiceBase
         try
         {
             var options = MonitorServiceConfiguration.Load(_configPath);
+            string statusPath = ServiceHealthStore.DefaultPath;
+            ServiceHealthStore.CheckPath(statusPath);
+            using var process = Process.GetCurrentProcess();
+            var processStarted = new DateTimeOffset(process.StartTime.ToUniversalTime());
+            int pid = process.Id;
+            Guid session = Guid.NewGuid();
             _run = new ServiceMonitorRun(options, async token =>
             {
                 PreferencesService.Load();
                 await PortServiceResolver.InitializeAsync().ConfigureAwait(false);
                 token.ThrowIfCancellationRequested();
                 return new NpcapForegroundCapture();
-            }, TextWriter.Null);
+            }, TextWriter.Null, sample: counters => ServiceHealthStore.Write(statusPath,
+                new ServiceHealthSnapshot(1, session, pid, processStarted, DateTimeOffset.UtcNow, counters)));
             _run.Started.WaitAsync(TimeSpan.FromSeconds(30)).GetAwaiter().GetResult();
             // An unexpected worker exit is a process failure, not a healthy idle service.
             // Worker cleanup has completed before this continuation runs.
@@ -62,6 +70,7 @@ internal sealed class WindowsMonitorService : ServiceBase
                 _run.RequestStop();
                 try { _run.Completion.WaitAsync(TimeSpan.FromSeconds(10)).GetAwaiter().GetResult(); }
                 catch { /* startup failed; never advertise running */ }
+                if (!_run.Completion.IsCompleted) Environment.Exit(3);
             }
             throw;
         }

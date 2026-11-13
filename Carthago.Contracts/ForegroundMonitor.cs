@@ -58,7 +58,7 @@ public static class ForegroundMonitor
 
     public static async Task<int> RunAsync(IForegroundCapture capture, ForegroundMonitorOptions options,
         TextWriter output, TextWriter error, CancellationToken token,
-        Func<TimeSpan, CancellationToken, Task>? delay = null, MonitorControlSession? session = null)
+        Func<TimeSpan, CancellationToken, Task>? delay = null, MonitorControlSession? session = null, Action<ForegroundMonitorCounters>? sample = null)
     {
         delay ??= Task.Delay;
         int exit = 0;
@@ -73,6 +73,7 @@ public static class ForegroundMonitor
                 if (!capture.CaptureRequested) throw new InvalidOperationException("Capture no longer requested.");
                 var counters = capture.ReadCounters();
                 session?.Publish(counters);
+                sample?.Invoke(counters);
                 // Not a proof of continuous source liveness or lossless capture.
                 string state = counters.Captured > 0 ? "capture_observed" : "started_no_packets_observed";
                 await output.WriteLineAsync(options.Json ? JsonSerializer.Serialize(new

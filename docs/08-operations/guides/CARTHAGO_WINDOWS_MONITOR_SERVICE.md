@@ -94,3 +94,30 @@ sc.exe delete CarthagoMonitor
 Do not remove persisted journals or configuration as part of service
 unregistration. If stop fails or times out, inspect SCM and the process;
 do not treat it as a successful graceful shutdown.
+
+## Service health and CLI management (CLI-005C2)
+
+Before starting the service, provision
+C:\ProgramData\Carthago\ServiceStatus with administrator-controlled ACLs:
+service identity Modify (including create/replace/delete temporary files),
+intended operators Read, administrators/SYSTEM Full Control. Remove
+untrusted write access on this directory and ancestors. The service
+requires this directory and fails if sample publication fails. No
+automatic ACL changes are made. Sample contains only process/session
+identity, UTC timestamps and aggregate counters, not raw evidence.
+
+```powershell
+dotnet run --project Carthago.Cli -c Release -- service status --json
+dotnet run --project Carthago.Cli -c Release -- service start
+dotnet run --project Carthago.Cli -c Release -- service health --json
+dotnet run --project Carthago.Cli -c Release -- service doctor --json
+dotnet run --project Carthago.Cli -c Release -- service stop
+```
+
+The SCM authorization boundary applies; no automatic elevation. Status
+does not imply capture health. Health/doctor require a current matching
+process sample (PID plus process start time); users unable to read the
+process identity or sample must not interpret this as zero activity.
+Stopped service may leave its previous sample on disk, which is never
+accepted as current. Freshness limit 120 seconds; status interval 1–60s.
+CLI transition polling is bounded, but native SCM calls can block.
