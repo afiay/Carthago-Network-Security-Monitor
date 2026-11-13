@@ -80,6 +80,8 @@ namespace Carthago.Services
                     if (c.LocalPort is not (> 0 and <= 65535)
                         || !IPAddress.TryParse(c.LocalAddr, out _)) continue;
 
+                    if (c.Proto == "TCP" && !HasCompleteTcpTuple(c.LocalAddr, c.LocalPort, c.RemoteAddr, c.RemotePort)) continue;
+
                     var key = c.MakeKey();
                     // UDP tables lack remote tuples, so do not cache an inferred
                     // binding under a flow key that could outlive the binding.
@@ -198,8 +200,21 @@ namespace Carthago.Services
         private static string? NormalizeAddress(string? address)
             => IPAddress.TryParse(address, out var ip) ? EndpointIpEnrichment.Normalize(ip).ToString() : address;
 
-        private static bool HasRemoteEndpoint(Candidate c)
-            => c.RemotePort is > 0 || !string.IsNullOrWhiteSpace(c.RemoteAddr);
+        internal static bool HasCompleteTcpTuple(string? local, int? localPort, string? remote, int? remotePort)
+        {
+            if (localPort is not (> 0 and <= 65535) || remotePort is not (> 0 and <= 65535)
+                || !IPAddress.TryParse(local, out var l) || !IPAddress.TryParse(remote, out var r))
+                return false;
+            l = EndpointIpEnrichment.Normalize(l);
+            r = EndpointIpEnrichment.Normalize(r);
+            return l.AddressFamily == r.AddressFamily
+                && !l.Equals(IPAddress.Any) && !l.Equals(IPAddress.IPv6Any)
+                && !r.Equals(IPAddress.Any) && !r.Equals(IPAddress.IPv6Any);
+        }
+
+        internal static bool TcpLocalAddressMatches(string? local, IPAddress candidate)
+            => IPAddress.TryParse(local, out var address)
+                && EndpointIpEnrichment.Normalize(address).Equals(EndpointIpEnrichment.Normalize(candidate));
 
         private static int FindPidTcp(Candidate c)
         {
@@ -238,7 +253,6 @@ namespace Carthago.Services
                 int num = Marshal.ReadInt32(tablePtr);
                 IntPtr rowPtr = IntPtr.Add(tablePtr, 4);
 
-                int partialPid = 0;
                 for (int i = 0; i < num; i++)
                 {
                     var row = Marshal.PtrToStructure<MIB_TCPROW_OWNER_PID>(rowPtr);
@@ -247,7 +261,7 @@ namespace Carthago.Services
                     if (lport != c.LocalPort) { rowPtr = Next<MIB_TCPROW_OWNER_PID>(rowPtr); continue; }
 
                     var laddr = new IPAddress(row.localAddr);
-                    if (!AddrOk(c.LocalAddr, laddr)) { rowPtr = Next<MIB_TCPROW_OWNER_PID>(rowPtr); continue; }
+                    if (!TcpLocalAddressMatches(c.LocalAddr, laddr)) { rowPtr = Next<MIB_TCPROW_OWNER_PID>(rowPtr); continue; }
 
                     // remote disambiguation if caller provided
                     bool remoteOk = true;
@@ -262,15 +276,11 @@ namespace Carthago.Services
                         return pid > 0;
                     }
 
-                    // A different peer is not evidence for this TCP connection.
-                    // Only retain a local-only candidate when no peer was supplied.
-                    if (partialPid == 0 && !HasRemoteEndpoint(c)) partialPid = row.owningPid;
 
                     rowPtr = Next<MIB_TCPROW_OWNER_PID>(rowPtr);
                 }
 
-                pid = partialPid;
-                return pid > 0;
+                return false;
             }
             catch
             {
@@ -301,7 +311,6 @@ namespace Carthago.Services
                 int num = Marshal.ReadInt32(tablePtr);
                 IntPtr rowPtr = IntPtr.Add(tablePtr, 4);
 
-                int partialPid = 0;
                 for (int i = 0; i < num; i++)
                 {
                     var row = Marshal.PtrToStructure<MIB_TCP6ROW_OWNER_PID>(rowPtr);
@@ -309,7 +318,7 @@ namespace Carthago.Services
                     if (lport != c.LocalPort) { rowPtr = Next<MIB_TCP6ROW_OWNER_PID>(rowPtr); continue; }
 
                     var laddr = new IPAddress(row.localAddr, row.localScopeId);
-                    if (!AddrOk(c.LocalAddr, laddr)) { rowPtr = Next<MIB_TCP6ROW_OWNER_PID>(rowPtr); continue; }
+                    if (!TcpLocalAddressMatches(c.LocalAddr, laddr)) { rowPtr = Next<MIB_TCP6ROW_OWNER_PID>(rowPtr); continue; }
 
                     bool remoteOk = true;
                     if (c.RemotePort.HasValue && c.RemotePort.Value > 0)
@@ -323,12 +332,10 @@ namespace Carthago.Services
                         return pid > 0;
                     }
 
-                    if (partialPid == 0 && !HasRemoteEndpoint(c)) partialPid = (int)row.owningPid;
                     rowPtr = Next<MIB_TCP6ROW_OWNER_PID>(rowPtr);
                 }
 
-                pid = partialPid;
-                return pid > 0;
+                return false;
             }
             catch
             {

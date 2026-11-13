@@ -57,4 +57,23 @@ public sealed class ProcessAttributionEnrichmentTests
         Assert.False(WindowsProcessResolver.AddressMatchesForTests("invalid", IPAddress.Any));
         Assert.False(WindowsProcessResolver.AddressMatchesForTests("192.168.1.10", IPAddress.IPv6Any));
     }
+
+    [Theory]
+    [InlineData("192.168.1.10", 50000, "8.8.8.8", 443, true)]
+    [InlineData("::ffff:192.168.1.10", 50000, "8.8.8.8", 443, true)]
+    [InlineData("192.168.1.10", 50000, null, 443, false)]
+    [InlineData("192.168.1.10", 50000, "8.8.8.8", null, false)]
+    [InlineData("192.168.1.10", 50000, "0.0.0.0", 443, false)]
+    [InlineData("192.168.1.10", 50000, "::1", 443, false)]
+    [InlineData("192.168.1.10", 65536, "8.8.8.8", 443, false)]
+    public void Tcp_Attribution_Requires_Complete_Concrete_Tuple(string local, int? lp, string? remote, int? rp, bool expected)
+        => Assert.Equal(expected, WindowsProcessResolver.HasCompleteTcpTuple(local, lp, remote, rp));
+
+    [Fact]
+    public void Tcp_Local_Match_Does_Not_Accept_Wildcard_Listener()
+    {
+        Assert.False(WindowsProcessResolver.TcpLocalAddressMatches("192.168.1.10", IPAddress.Any));
+        Assert.False(WindowsProcessResolver.TcpLocalAddressMatches("::1", IPAddress.IPv6Any));
+        Assert.True(WindowsProcessResolver.TcpLocalAddressMatches("::ffff:192.168.1.10", IPAddress.Parse("192.168.1.10")));
+    }
 }
