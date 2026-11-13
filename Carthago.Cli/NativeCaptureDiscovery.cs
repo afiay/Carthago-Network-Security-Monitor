@@ -59,6 +59,14 @@ internal static class NativeCaptureDiscovery
 
     private static IApi? Open(string provider)
     {
+        var handle=LoadHandle(provider);
+        if(handle==IntPtr.Zero)return null;
+        try { return new Api(handle); }
+        catch { NativeLibrary.Free(handle);throw; }
+    }
+
+    internal static IntPtr LoadHandle(string provider)
+    {
         IntPtr handle=IntPtr.Zero;
         if(provider=="wpcap")
         {
@@ -71,14 +79,12 @@ internal static class NativeCaptureDiscovery
                 if(handle!=IntPtr.Zero)break;
             }
         }
-        else
+        else if(provider=="libpcap")
         {
             foreach(var soname in new[]{"libpcap.so.1","libpcap.so.0.8","libpcap.so"})
                 if(NativeLibrary.TryLoad(soname,out handle))break;
         }
-        if(handle==IntPtr.Zero)return null;
-        try { return new Api(handle); }
-        catch { NativeLibrary.Free(handle);throw; }
+        return handle;
     }
 
     [DllImport("kernel32.dll",EntryPoint="LoadLibraryExW",CharSet=CharSet.Unicode,SetLastError=true)]

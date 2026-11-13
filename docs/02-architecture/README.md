@@ -40,3 +40,4 @@ System boundaries, evidence lineage, sensors and architectural constraints.
 - [CLI-007B — Portable capture adapter lifecycle](CLI-007B-PortableCaptureLifecycle.md)
 - [CLI-007C — Bounded portable frame pipeline](CLI-007C-BoundedFramePipeline.md)
 - [CLI-007D.1 — Native capture discovery](CLI-007D1-NativeCaptureDiscovery.md)
+- [CLI-007D.2 — Native pcap capture source](CLI-007D2-NativePcapCaptureSource.md)
