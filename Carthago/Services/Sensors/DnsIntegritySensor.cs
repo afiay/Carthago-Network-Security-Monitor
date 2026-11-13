@@ -168,12 +168,19 @@ public static class DnsIntegritySensor
         return expected.SetEquals(observed) ? DnsIntegrityStatus.AnswersMatch : DnsIntegrityStatus.AnswersDiffer;
     }
 
-    private static async Task<byte[]> ExchangeAsync(IPAddress source, IPAddress resolver,
-        byte[] query, CancellationToken token)
+    private static Task<byte[]> ExchangeAsync(IPAddress source, IPAddress resolver,
+        byte[] query, CancellationToken token) =>
+        ExchangeEndpointAsync(source, resolver, 53, query, token);
+
+    // Internal transport seam for ephemeral loopback ports in laboratory tests.
+    // Public CheckAsync still enforces LAN scope and the fixed DNS port 53.
+    internal static async Task<byte[]> ExchangeEndpointAsync(IPAddress source, IPAddress resolver,
+        int port, byte[] query, CancellationToken token)
     {
+        token.ThrowIfCancellationRequested();
         using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
         socket.Bind(new IPEndPoint(source, 0));
-        await socket.ConnectAsync(new IPEndPoint(resolver, 53), token).ConfigureAwait(false);
+        await socket.ConnectAsync(new IPEndPoint(resolver, port), token).ConfigureAwait(false);
         await socket.SendAsync(query.AsMemory(), SocketFlags.None, token).ConfigureAwait(false);
         // Connected UDP socket filters other source endpoints. Oversize datagrams fail closed.
         var buffer = new byte[4097];

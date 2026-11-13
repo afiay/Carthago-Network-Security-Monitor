@@ -88,7 +88,8 @@ public static class TcpExposureSensor
         _ => TcpExposureStatus.Error
     };
 
-    private static async Task ConnectAsync(IPAddress source, IPAddress target, int port,
+    // Internal seam for a real loopback connection in isolated lab tests.
+    internal static async Task ConnectAsync(IPAddress source, IPAddress target, int port,
         CancellationToken token)
     {
         using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
