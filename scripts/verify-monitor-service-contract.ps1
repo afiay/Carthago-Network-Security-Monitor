@@ -3,7 +3,6 @@
 [CmdletBinding()]
 param()
 $ErrorActionPreference='Stop'
-$root=Split-Path -Parent $PSScriptRoot
 foreach ($name in @('MonitorServiceQualification.psm1','test-monitor-service-preflight.ps1','verify-monitor-service.ps1')) {
     $tokens=$null; $errors=$null
     $null=[System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PSScriptRoot $name),[ref]$tokens,[ref]$errors)
@@ -16,7 +15,7 @@ try {
     $path=Join-Path $dir 'journal.jsonl'
     $now=[DateTimeOffset]::UtcNow.AddSeconds(-2)
     $start=$now.AddSeconds(-2)
-    $row=[ordered]@{eventId=[Guid]::NewGuid().ToString('N');timestampUtc=$now.ToString('o');deliveryStatus='Persisted'}
+    $row=[ordered]@{eventId=[Guid]::NewGuid().ToString('N');timestampUtc=$now.UtcDateTime.ToString('o');deliveryStatus='Persisted'}
     $line=($row | ConvertTo-Json -Compress)+[Environment]::NewLine
     $utf8=New-Object Text.UTF8Encoding($false)
     [IO.File]::WriteAllText($path,$line,$utf8)
