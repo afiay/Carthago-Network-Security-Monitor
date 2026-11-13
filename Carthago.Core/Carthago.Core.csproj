@@ -70,6 +70,7 @@
     <Compile Include="../Carthago/Engine/Rules/Abstractions/ConfidenceBuilder.cs" Link="Engine/Rules/Abstractions/ConfidenceBuilder.cs" />
     <Compile Include="../Carthago/Engine/Rules/Abstractions/EvidenceBuilder.cs" Link="Engine/Rules/Abstractions/EvidenceBuilder.cs" />
     <Compile Include="../Carthago/Engine/Rules/Abstractions/RuleIdValidator.cs" Link="Engine/Rules/Abstractions/RuleIdValidator.cs" />
+    <Compile Include="../Carthago/Engine/Rules/Expansion/WebSignatureRequestEvidence.cs" Link="Engine/Rules/Expansion/WebSignatureRequestEvidence.cs" />
     <!-- Preserve existing internal access while consumers migrate. -->
     <InternalsVisibleTo Include="Carthago" />
     <InternalsVisibleTo Include="carthago" />

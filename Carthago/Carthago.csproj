@@ -105,6 +105,7 @@
     <Compile Remove="Engine/Rules/Abstractions/RuleEvaluationResult.cs" />
     <Compile Remove="Engine/Rules/Abstractions/RuleNoMatchReason.cs" />
     <Compile Remove="Engine/Rules/Abstractions/RuleMode.cs" />
+    <Compile Remove="Engine/Rules/Expansion/WebSignatureRequestEvidence.cs" />
   </ItemGroup>
 
   <!-- Content to copy -->

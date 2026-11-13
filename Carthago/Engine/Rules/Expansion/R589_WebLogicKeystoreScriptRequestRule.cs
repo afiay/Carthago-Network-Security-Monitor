@@ -53,16 +53,12 @@ namespace Carthago.Engine.Rules.Expansion
             }
         });
 
-        private readonly WebSignatureCooldown _cooldown = new();
+        private readonly PortableR589Detector _detector = new();
         public R589_WebLogicKeystoreScriptRequestRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            var record = context.Record;
-            if (!WebSignatureRequestEvidence.TryGet(record, out var method, out var uri)
-                || !SignatureMatches(method, uri))
-                return NoMatch();
-            var observation = _cooldown.Observe(record.Source!, record.Destination!, record.Id, context.TimestampUtc);
+            var observation = _detector.Evaluate(context.Packet, out var method);
             if (observation == WebSignatureObservation.None) return NoMatch();
             if (observation == WebSignatureObservation.Suppressed)
                 return RuleEvaluationResult.SuppressedMatch(Descriptor.RuleId);
@@ -84,15 +80,5 @@ namespace Carthago.Engine.Rules.Expansion
             return RuleEvaluationResult.Match(Descriptor.RuleId, evt);
         }
 
-        private static bool SignatureMatches(string method, string uri)
-        {
-            var delimiter = uri.IndexOf('?');
-            var path = delimiter >= 0 ? uri.Substring(0, delimiter) : uri;
-            var query = delimiter >= 0 ? uri.Substring(delimiter + 1) : string.Empty;
-            if (!path.Contains("/config/keystore/", StringComparison.OrdinalIgnoreCase)) return false;
-return path.EndsWith(".jsp", StringComparison.OrdinalIgnoreCase)
-    || path.EndsWith(".jspx", StringComparison.OrdinalIgnoreCase)
-    || path.EndsWith(".jsf", StringComparison.OrdinalIgnoreCase);
-        }
     }
 }
