@@ -57,26 +57,31 @@ public partial class MainWindow
                     : heroNavStack ? new Thickness(0, 0, 0, 6) : new Thickness(0, 0, 8, 0);
         }
 
-        // Wide: chart | prioritized queue | investigation.
-        // Standard/Compact: chart above the existing responsive triage grid.
+        // GA UI-183: one shared workspace, with independent staggered Wide lanes.
         var wideFocus = mode == ResponsiveLayoutMode.Wide;
-        DashboardFocusGrid.Height = wideFocus ? 540 : double.NaN;
-        // GA UI-179: fill the bounded Wide plot row; retain a finite plot on the scrolling stack.
+        var compactFocus = mode == ResponsiveLayoutMode.Compact;
+        var rows = DashboardOperationsWorkspace.RowDefinitions;
+        var columns = DashboardOperationsWorkspace.ColumnDefinitions;
+        columns[0].Width = new GridLength(wideFocus ? 2.15 : compactFocus ? 1 : 1.4, GridUnitType.Star);
+        columns[1].Width = compactFocus ? new GridLength(0) : new GridLength(wideFocus ? 1.05 : 1.6, GridUnitType.Star);
+        columns[2].Width = wideFocus ? new GridLength(1.2, GridUnitType.Star) : new GridLength(0);
+        rows[0].Height = wideFocus ? new GridLength(420) : GridLength.Auto;
+        rows[1].Height = new GridLength(wideFocus ? 180 : compactFocus ? 600 : 660);
+        rows[2].Height = compactFocus ? new GridLength(660) : GridLength.Auto;
+        rows[3].Height = wideFocus ? new GridLength(0) : GridLength.Auto;
+        rows[4].Height = compactFocus ? GridLength.Auto : new GridLength(0);
         TrafficPlot.Height = wideFocus ? double.NaN : 300;
-        DashboardFocusTrafficColumn.Width = new GridLength(wideFocus ? 2.15 : 1, GridUnitType.Star);
-        DashboardFocusTriageColumn.Width = wideFocus
-            ? new GridLength(2.25, GridUnitType.Star) : new GridLength(0);
-        DashboardFocusPrimaryRow.Height = wideFocus
-            ? new GridLength(1, GridUnitType.Star) : GridLength.Auto;
-        DashboardFocusSecondaryRow.Height = wideFocus
-            ? new GridLength(0) : GridLength.Auto;
-        Grid.SetRow(DashboardTrafficChartPanel, 0);
-        Grid.SetColumn(DashboardTrafficChartPanel, 0);
-        Grid.SetRow(DashboardTriageGrid, wideFocus ? 0 : 1);
-        Grid.SetColumn(DashboardTriageGrid, wideFocus ? 1 : 0);
-        DashboardTrafficChartPanel.Margin = wideFocus
-            ? new Thickness(0, 0, 12, 0) : new Thickness(0, 0, 0, 12);
-        DashboardTriageGrid.Margin = new Thickness(0);
+        PlaceDashboardPanel(DashboardTrafficChartPanel, 0, 0, 1, wideFocus || compactFocus ? 1 : 2,
+            wideFocus ? new Thickness(0,0,12,12) : new Thickness(0,0,0,12));
+        PlaceDashboardPanel(DashboardTimelinePanel, wideFocus ? 0 : 1, wideFocus ? 1 : 0, 1, 1,
+            wideFocus || !compactFocus ? new Thickness(0,0,12,12) : new Thickness(0,0,0,12));
+        PlaceDashboardPanel(DashboardSignalPanel, wideFocus ? 0 : compactFocus ? 2 : 1,
+            wideFocus ? 2 : compactFocus ? 0 : 1, wideFocus ? 2 : 1, 1, new Thickness(0,0,0,12));
+        PlaceDashboardPanel(DashboardLiveEventsPanel, wideFocus ? 1 : compactFocus ? 3 : 2, 0,
+            wideFocus ? 2 : 1, compactFocus ? 1 : 2,
+            wideFocus ? new Thickness(0,0,12,0) : new Thickness(0,0,0,10));
+        PlaceDashboardPanel(DashboardCliCompanionPanel, wideFocus ? 2 : compactFocus ? 4 : 3,
+            wideFocus ? 2 : 0, 1, wideFocus || compactFocus ? 1 : 2, new Thickness(0));
 
         var overviewPanelKey = narrowKpis ? "DashboardOverviewKpiNarrowPanel" : mode switch
         {
@@ -102,24 +107,7 @@ public partial class MainWindow
             ? new Thickness(0, 6, 0, 0)
             : new Thickness(12, 0, 0, 0);
 
-        // GA UI-91: dock the unavailable CLI beside the local event stream on Wide;
-        // stack below the full-width, horizontally scrollable event table otherwise.
-        var wideLower = mode == ResponsiveLayoutMode.Wide;
-        DashboardLowerEventsColumn.Width = new GridLength(wideLower ? 8.0 / 3.0 : 1, GridUnitType.Star);
-        DashboardLowerCliColumn.Width = wideLower
-            ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
-        DashboardLowerPrimaryRow.Height = GridLength.Auto;
-        DashboardLowerSecondaryRow.Height = wideLower ? new GridLength(0) : GridLength.Auto;
-        Grid.SetRow(DashboardLiveEventsPanel, 0);
-        Grid.SetColumn(DashboardLiveEventsPanel, 0);
-        Grid.SetRow(DashboardCliCompanionPanel, wideLower ? 0 : 1);
-        Grid.SetColumn(DashboardCliCompanionPanel, wideLower ? 1 : 0);
-        DashboardLiveEventsPanel.Margin = wideLower
-            ? new Thickness(0, 0, 12, 0) : new Thickness(0, 0, 0, 10);
-        DashboardCliCompanionPanel.Margin = new Thickness(0);
-        DashboardCliCompanionPanel.Width = double.NaN;
-        DashboardCliCompanionPanel.HorizontalAlignment = HorizontalAlignment.Stretch;
-
+        var wideLower = wideFocus;
         // GA UI-171: retain the wider severity-first evidence viewport on Wide and Standard;
         // Compact and below-1024 preserve a shorter readable scan surface.
         DashboardLiveEventsGrid.Height = mode == ResponsiveLayoutMode.Wide ? 610 :
@@ -129,7 +117,7 @@ public partial class MainWindow
         // GA UI-162: keep the terminal as a full evidence companion on Wide, but
         // avoid a second 560-unit visual-only slab beneath the live table when stacked.
         // This is presentation-only: the CLI remains unavailable in every mode.
-        DashboardCliCompanionPanel.MinHeight = wideLower ? 560 : 300;
+        DashboardCliCompanionPanel.MinHeight = wideLower ? 300 : 300;
         DashboardCliCapabilityRow.Height = wideLower
             ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
         DashboardCliCapabilityPanel.Visibility = wideLower
@@ -137,16 +125,6 @@ public partial class MainWindow
 
         if (mode == ResponsiveLayoutMode.Compact)
         {
-            DashboardTriageGrid.Height = 1260;
-            DashboardTriageTimelineColumn.Width = new GridLength(1, GridUnitType.Star);
-            DashboardTriageDetailColumn.Width = new GridLength(0);
-            DashboardTriagePrimaryRow.Height = new GridLength(600);
-            DashboardTriageSecondaryRow.Height = new GridLength(1, GridUnitType.Star);
-            PositionPanel(DashboardTimelinePanel, 0, 0);
-            PositionPanel(DashboardSignalPanel, 1, 0);
-            DashboardTimelinePanel.Margin = new Thickness(0, 0, 0, 10);
-            DashboardSignalPanel.Margin = new Thickness(0);
-
             DashboardSummaryGrid.Height = 660;
             DashboardSummaryFirstColumn.Width = new GridLength(1, GridUnitType.Star);
             DashboardSummarySecondColumn.Width = new GridLength(0);
@@ -168,16 +146,6 @@ public partial class MainWindow
 
         if (mode == ResponsiveLayoutMode.Standard)
         {
-            DashboardTriageGrid.Height = 660;
-            DashboardTriageTimelineColumn.Width = new GridLength(1.4, GridUnitType.Star);
-            DashboardTriageDetailColumn.Width = new GridLength(1.6, GridUnitType.Star);
-            DashboardTriagePrimaryRow.Height = new GridLength(1, GridUnitType.Star);
-            DashboardTriageSecondaryRow.Height = new GridLength(0);
-            PositionPanel(DashboardTimelinePanel, 0, 0);
-            PositionPanel(DashboardSignalPanel, 0, 1);
-            DashboardTimelinePanel.Margin = new Thickness(0, 0, 16, 0);
-            DashboardSignalPanel.Margin = new Thickness(0);
-
             DashboardSummaryGrid.Height = 450;
             DashboardSummaryFirstColumn.Width = new GridLength(1, GridUnitType.Star);
             DashboardSummarySecondColumn.Width = new GridLength(1, GridUnitType.Star);
@@ -197,16 +165,6 @@ public partial class MainWindow
             return;
         }
 
-        DashboardTriageGrid.Height = 540;
-        DashboardTriageTimelineColumn.Width = new GridLength(1.4, GridUnitType.Star);
-        DashboardTriageDetailColumn.Width = new GridLength(1.6, GridUnitType.Star);
-        DashboardTriagePrimaryRow.Height = new GridLength(1, GridUnitType.Star);
-        DashboardTriageSecondaryRow.Height = new GridLength(0);
-        PositionPanel(DashboardTimelinePanel, 0, 0);
-        PositionPanel(DashboardSignalPanel, 0, 1);
-        DashboardTimelinePanel.Margin = new Thickness(0, 0, 12, 0);
-        DashboardSignalPanel.Margin = new Thickness(0);
-
         DashboardSummaryGrid.Height = 264;
         DashboardSummaryFirstColumn.Width = new GridLength(1.02, GridUnitType.Star);
         DashboardSummarySecondColumn.Width = new GridLength(1, GridUnitType.Star);
@@ -223,6 +181,15 @@ public partial class MainWindow
         DashboardHostsPanel.Margin = new Thickness(0, 0, 12, 0);
         DashboardActionsPanel.Margin = new Thickness(0, 0, 12, 0);
         DashboardOperationsPanel.Margin = new Thickness(0);
+    }
+
+    private static void PlaceDashboardPanel(FrameworkElement element, int row, int column, int rowSpan, int columnSpan, Thickness margin)
+    {
+        Grid.SetRow(element, row);
+        Grid.SetColumn(element, column);
+        Grid.SetRowSpan(element, rowSpan);
+        Grid.SetColumnSpan(element, columnSpan);
+        element.Margin = margin;
     }
 
     private static void PositionPanel(FrameworkElement element, int row, int column)
