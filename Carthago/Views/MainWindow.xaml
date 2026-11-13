@@ -309,6 +309,11 @@
                         ToolTip="Choose a local capture source or a discovered host filter. A host filter shows only traffic that reaches this PC; it is not a remote sensor."
                         AutomationProperties.LabeledBy="{Binding ElementName=HeaderCaptureSourceLabel}"
                         AutomationProperties.HelpText="Choose a local capture device or host filter, then use Start Monitoring. LAN host filters can show only packets already visible to this PC.">
+                <ComboBox.ContextMenu>
+                  <ContextMenu>
+                    <MenuItem Header="Check TCP exposure (selected LAN host)" Click="CheckLanTcpExposure_Click"/>
+                  </ContextMenu>
+                </ComboBox.ContextMenu>
                 <ComboBox.ItemTemplate>
                   <DataTemplate>
                     <TextBlock Text="{Binding}"
