@@ -34,6 +34,7 @@ try {
         ScheduledGatewayTests = 7
         ActiveServiceLifecycleTests = 8
         ActiveServiceProvisioningTests = 5
+        ActiveServiceHealthTests = 4
     }
     $branch = (& git branch --show-current).Trim()
     if ($LASTEXITCODE -ne 0 -or $branch -ne 'feature/carthago-reliability-hardening') {

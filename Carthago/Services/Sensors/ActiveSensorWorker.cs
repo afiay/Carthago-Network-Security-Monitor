@@ -24,7 +24,8 @@ public static class ActiveSensorWorker
         CancellationToken token, ActiveSensorProfileStore store,
         Func<Guid, IReadOnlyList<LocalLanInterface>> resolve, Func<ActiveSensorManager> createManager,
         Func<DateTimeOffset>? clock = null, Func<ActiveSensorProfile, bool>? gatewayCurrent = null,
-        IReadOnlyDictionary<string, Guid>? pinnedGrants = null, Action? ready = null)
+        IReadOnlyDictionary<string, Guid>? pinnedGrants = null, Action? ready = null,
+        Action<ActiveSensorManager, DateTimeOffset, DateTimeOffset>? sample = null)
     {
         bool status = args is ["status"] or ["status", "--json"];
         var ids = new List<string>();
@@ -104,7 +105,10 @@ public static class ActiveSensorWorker
             output.WriteLine($"Starting {selected.Count} grant-bound profile(s); acquiring scheduler reservation. Ctrl+C stops.");
             try
             {
-                await manager.RunAsync(deadline.Token, stopWhenAllBlocked: true, ready: ready).ConfigureAwait(false);
+                await manager.RunAsync(deadline.Token, stopWhenAllBlocked: true, ready: ready,
+                    sample: sample is null ? null : () => sample(manager,
+                        new DateTimeOffset(selected.Min(x => x.Grant.ExpiresTicks), TimeSpan.Zero),
+                        new DateTimeOffset(selected.Max(x => x.Grant.ExpiresTicks), TimeSpan.Zero))).ConfigureAwait(false);
                 error.WriteLine("All selected profiles blocked. No further checks.");
                 return 3;
             }

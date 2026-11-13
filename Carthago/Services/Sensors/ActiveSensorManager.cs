@@ -41,7 +41,14 @@ internal sealed record ActiveSensorProfile(Guid Id, Guid AdapterId, LocalLanInte
 internal sealed record ActiveSensorRun(string Outcome, bool Responsive, ActiveEvidenceRow? Evidence);
 internal sealed record ActiveSensorScheduleState(ActiveSensorProfile Profile, DateTimeOffset NextDueUtc,
     DateTimeOffset? LastRunUtc, string LastOutcome, int ConsecutiveFailures, bool Running,
-    bool ScopeBlocked, string HistoryStatus);
+    bool ScopeBlocked, string HistoryStatus)
+{
+    internal long CompletedProbes { get; init; }
+    internal long ResponsiveProbes { get; init; }
+    internal long DeferredChecks { get; init; }
+    internal long StorageFailures { get; init; }
+    internal DateTimeOffset? LastResponsiveUtc { get; init; }
+}
 
 internal sealed class ActiveSensorManager
 {
@@ -167,7 +174,7 @@ internal sealed class ActiveSensorManager
         var p = state.Profile;
         string outcome = "Probe failed", history = "Not requested";
         int failures = state.ConsecutiveFailures;
-        bool blocked = false;
+        bool blocked = false, completed = false, responsive = false, deferred = false;
         try
         {
             token.ThrowIfCancellationRequested();
@@ -223,6 +230,8 @@ internal sealed class ActiveSensorManager
                 history = p.SaveHistory ? "Not saved" : "Not requested";
                 return true;
             }
+            completed = true;
+            responsive = result.Responsive;
             outcome = result.Outcome;
             failures = result.Responsive ? 0 : Math.Min(failures + 1, 30);
             if (p.SaveHistory)
@@ -245,6 +254,7 @@ internal sealed class ActiveSensorManager
         }
         catch (CaptureReservationUnavailableException) when (p.Kind == ActiveSensorKind.Gateway)
         {
+            deferred = true;
             outcome = "Capture unavailable — deferred";
             history = p.SaveHistory ? "Not saved" : "Not requested";
             return true;
@@ -273,13 +283,18 @@ internal sealed class ActiveSensorManager
                 var now = _clock();
                 _states[p.Id] = state with { Running = false, LastRunUtc = now, LastOutcome = outcome,
                     ConsecutiveFailures = failures, ScopeBlocked = blocked, HistoryStatus = history,
+                    CompletedProbes = state.CompletedProbes + (completed ? 1 : 0),
+                    ResponsiveProbes = state.ResponsiveProbes + (responsive ? 1 : 0),
+                    DeferredChecks = state.DeferredChecks + (deferred ? 1 : 0),
+                    StorageFailures = state.StorageFailures + (history == "Storage failed" ? 1 : 0),
+                    LastResponsiveUtc = responsive ? now : state.LastResponsiveUtc,
                     NextDueUtc = blocked ? DateTimeOffset.MaxValue : now + NextDelay(p.Interval, failures) };
                 _busy = false;
             }
         }
     }
 
-    internal async Task RunAsync(CancellationToken token, bool stopWhenAllBlocked = false, Action? ready = null)
+    internal async Task RunAsync(CancellationToken token, bool stopWhenAllBlocked = false, Action? ready = null, Action? sample = null)
     {
         token.ThrowIfCancellationRequested();
         lock (_gate)
@@ -296,10 +311,12 @@ internal sealed class ActiveSensorManager
                 throw new InvalidOperationException("Active scheduler reservation unavailable.");
             lock (_gate) _reserved = true;
             token.ThrowIfCancellationRequested();
+            sample?.Invoke();
             ready?.Invoke();
             while (true)
             {
                 await RunDueCoreAsync(token, fromLoop: true).ConfigureAwait(false);
+                sample?.Invoke();
                 if (stopWhenAllBlocked)
                 {
                     lock (_gate)

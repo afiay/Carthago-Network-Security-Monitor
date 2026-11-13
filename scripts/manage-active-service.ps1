@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 [CmdletBinding(SupportsShouldProcess)]
 param(
-    [Parameter(Mandatory)][ValidateSet('Preflight','Install','Start','Stop','Remove','Status')][string]$Action,
+    [Parameter(Mandatory)][ValidateSet('Preflight','Install','Start','Stop','Remove','Status','Health')][string]$Action,
     [string]$MonitorExe,[string]$ConfigPath,[string]$Account,[string]$ExpectedExeSha256,
     [switch]$ConfirmAuthorizedDeployment
 )
@@ -16,6 +16,37 @@ function Assert-Administrator {
         $principal=[Security.Principal.WindowsPrincipal]::new($identity)
         if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) { throw 'Elevated PowerShell required.' }
     } finally { $identity.Dispose() }
+}
+if ($Action -eq 'Health') {
+    # Read only; no network or service transitions.
+    $s=Read-ServiceRegistration
+    if ($null -eq $s -or $s.State -ne 'Running' -or $s.ProcessId -le 0) {
+        [pscustomobject]@{health='Unavailable';reason='ServiceNotRunning'} | ConvertTo-Json; return
+    }
+    try {
+        if (-not $ConfigPath -or -not $MonitorExe -or -not $Account) { throw 'Deployment identity required.' }
+        $pre=[pscustomobject]@{imagePath=(Get-ActiveServiceImage $MonitorExe $ConfigPath);accountSid=(Get-ActiveAccountSid $Account)}
+        Assert-ActiveRegisteredService $s $pre
+        $config=Assert-ActiveLocalPath $ConfigPath
+        $file=Assert-ActiveLocalPath (Join-Path ([IO.Path]::GetDirectoryName($config)) 'health.json')
+        if ((Get-Item -LiteralPath $file).Length -gt 16384) { throw 'Health snapshot too large.' }
+        $sample=Get-Content -LiteralPath $file -Raw | ConvertFrom-Json
+        $proc=Get-Process -Id $s.ProcessId
+        $now=[DateTimeOffset]::UtcNow
+        $sampleTime=[DateTimeOffset]::Parse([string]$sample.sampleUtc)
+        $start=[DateTimeOffset]::Parse([string]$sample.processStartedUtc)
+        if ($sample.schemaVersion -ne 1 -or $sample.processId -ne $s.ProcessId -or
+            [Guid]$sample.sessionId -eq [Guid]::Empty -or -not $sample.schedulerOwned -or
+            [Math]::Abs(($start - [DateTimeOffset]$proc.StartTime.ToUniversalTime()).TotalSeconds) -gt 1 -or
+            $sampleTime -lt $start -or $sampleTime -gt $now -or ($now-$sampleTime).TotalSeconds -gt 30 -or
+            $sample.assessment -notin @('Unavailable','Degraded','Pending','ResponsiveObserved')) { throw 'Stale or invalid sample.' }
+        $again=Read-ServiceRegistration
+        if ($again.State -ne 'Running' -or $again.ProcessId -ne $s.ProcessId) { throw 'Service changed.' }
+        [pscustomobject]@{health='FreshSample';assessment=$sample.assessment;snapshot=$sample;securityAccuracyValidated=$false} | ConvertTo-Json -Depth 5
+    } catch {
+        [pscustomobject]@{health='Unavailable';reason='SnapshotMissingStaleOrUnverified'} | ConvertTo-Json
+    }
+    return
 }
 if ($Action -eq 'Status') {
     $s=Read-ServiceRegistration
