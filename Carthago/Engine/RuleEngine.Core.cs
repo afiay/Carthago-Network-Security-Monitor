@@ -504,6 +504,23 @@ namespace Carthago.Services
             }
         }
 
+        // Snapshot only engine-owned, post-policy signals; never infer from packet text.
+        internal static IReadOnlyList<(string RuleId, string Family)> SnapshotR272Signals(string? source, DateTime now)
+        {
+            if (!IPAddress.TryParse(source, out var address))
+                return Array.Empty<(string, string)>();
+            if (address.IsIPv4MappedToIPv6) address = address.MapToIPv4();
+            var host = address.ToString();
+            lock (R272SignalLock)
+            {
+                var cutoff = now.AddMinutes(-10);
+                return Array.AsReadOnly(R272Signals
+                    .Where(signal => signal.Host == host && signal.Timestamp >= cutoff && signal.Timestamp <= now)
+                    .Select(signal => (signal.RuleId, signal.Family))
+                    .ToArray());
+            }
+        }
+
         private static bool IsCooldownSuppressed(RuleEvaluationResult result)
         {
             if (result?.Events == null)
