@@ -221,4 +221,72 @@ internal sealed class ActiveEvidenceStore
             { return new(Array.Empty<ActiveEvidenceRow>(), "Active evidence history unavailable."); }
         }
     }
+
+    // Approval references a retained row; never silently advances or copies evidence.
+    internal sealed class Approval
+    {
+        public string Id { get; set; } = "";
+        public Guid ObservationId { get; set; }
+        public long ApprovedTicks { get; set; }
+    }
+    internal const int MaxApprovals = 128;
+    private static string ScopeKey(ActiveEvidenceRow row) => Convert.ToHexString(SHA256.HashData(
+        Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new[] { row.Sensor, row.AdapterId, row.Source, row.Target, row.ProbeKey }))));
+
+    internal bool Approve(Guid observationId)
+    {
+        lock (Gate)
+        {
+            try
+            {
+                if (!File.Exists(_path)) return false;
+                using var db = Open();
+                var rows = Collection(db);
+                var approvals = db.GetCollection<Approval>("active_approved_baselines");
+                var now = _clock();
+                db.BeginTrans();
+                try
+                {
+                    Prune(rows, now);
+                    var row = rows.FindById(observationId);
+                    if (row is null || !Valid(row, now) || !ActiveChangeDetector.EligibleBaseline(row))
+                    { db.Rollback(); return false; }
+                    foreach (var old in approvals.FindAll().ToArray())
+                        if (rows.FindById(old.ObservationId) is null) approvals.Delete(old.Id);
+                    var key = ScopeKey(row);
+                    if (approvals.FindById(key) is null && approvals.Count() >= MaxApprovals)
+                    { db.Rollback(); return false; }
+                    approvals.Upsert(new Approval { Id = key, ObservationId = row.Id, ApprovedTicks = now.UtcDateTime.Ticks });
+                    db.Commit();
+                    return true;
+                }
+                catch { db.Rollback(); throw; }
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException) { return false; }
+        }
+    }
+
+    internal ActiveChangeResult CompareApproved(Guid currentId)
+    {
+        lock (Gate)
+        {
+            try
+            {
+                if (!File.Exists(_path)) return new("Incomparable", Array.Empty<ActiveChange>(), "No saved history.");
+                using var db = Open();
+                var rows = Collection(db);
+                var now = _clock();
+                var current = rows.FindById(currentId);
+                if (current is null || !Valid(current, now))
+                    return new("Incomparable", Array.Empty<ActiveChange>(), "Current observation unavailable or expired.");
+                var approval = db.GetCollection<Approval>("active_approved_baselines").FindById(ScopeKey(current));
+                var baseline = approval is null ? null : rows.FindById(approval.ObservationId);
+                if (baseline is null || !Valid(baseline, now))
+                    return new("NoApprovedBaseline", Array.Empty<ActiveChange>(), "Approve a retained observation for this exact scope.");
+                return ActiveChangeDetector.Compare(baseline, current);
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            { return new("Unavailable", Array.Empty<ActiveChange>(), "Active history comparison unavailable."); }
+        }
+    }
 }

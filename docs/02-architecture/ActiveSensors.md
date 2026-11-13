@@ -1,4 +1,4 @@
-# Active sensors — AS-01 through AS-08
+# Active sensors — AS-01 through AS-09
 
 Status: source candidate; Windows build, tests and live smoke pending.
 
@@ -105,3 +105,15 @@ dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQua
 ```
 
 Deterministic clock/transport tests cover explicit start, scope revalidation, single in-flight execution, duplicate/capacity bounds, interval/backoff, cancellation and history opt-in. Manual Windows smoke: approved host, start/stop, close during probe, scope change and persisted history. No runtime verification claimed.
+
+## AS-09 — Approved active exposure comparisons
+
+From Active sensor history select a retained observation and explicitly approve it as the comparison reference for its exact sensor/adapter/source/target/probe key. One approval per scope, max 128; references only, no duplicate payload and no automatic advancement. Approval requires usable evidence and cannot convert rejected TLS, conflicting gateway claims or inconclusive probes into references. Replacement requires confirmation. Compare a newer selected row to the approved retained observation; expired/evicted references are unavailable. No implicit baseline, no network action. Compare only definite TCP Open/Refused transitions, positive DNS A sets, observed TLS certificate fingerprint/validity/policy, final HTTP status and headers on successful responses, direct gateway MAC claims, and authenticated SNMP inventory fields. Missing/timeout/malformed evidence is not a negative finding; SNMP uptime is not reboot evidence. Changes are investigation observations, not attacks. No detection event or automatic blocking. History retention remains 30 days/5000 rows; approval metadata is local and bounded, not an authenticated trust store.
+
+Windows verification pending:
+
+```powershell
+dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~ActiveChangeDetectorTests|FullyQualifiedName~ActiveEvidenceStoreTests|FullyQualifiedName~ActiveSensorManagerTests"
+```
+
+Tests cover explicit approval/replacement/expiry, exact scope, chronology, positive and inconclusive comparisons across six sensors. No test execution claimed.

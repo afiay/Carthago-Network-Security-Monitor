@@ -31,6 +31,8 @@ public partial class MainWindow
         { return "\n\nActive history: not saved (invalid observation)."; }
     }
 
+    private sealed record ActiveHistoryChoice(Guid Id, string Label);
+
     private void OpenActiveEvidenceHistory_Click(object sender, RoutedEventArgs e)
     {
         var dialog = new Window { Owner = this, Title = "Active sensor history", Width = 820, Height = 580,
@@ -45,6 +47,12 @@ public partial class MainWindow
         var target = new TextBox { Width = 180, Margin = new Thickness(8, 0, 8, 0), ToolTip = "Exact target IPv4, or blank for all" };
         var refresh = new Button { Content = "Refresh", Padding = new Thickness(10, 4, 10, 4) };
         line.Children.Add(sensor); line.Children.Add(target); line.Children.Add(refresh); filters.Children.Add(line);
+        var choices = new ComboBox { Margin = new Thickness(0, 8, 0, 4), DisplayMemberPath = "Label" };
+        filters.Children.Add(choices);
+        var baselineActions = new StackPanel { Orientation = Orientation.Horizontal };
+        var approve = new Button { Content = "Approve selected baseline", Margin = new Thickness(0, 0, 8, 0) };
+        var compare = new Button { Content = "Compare selected with approved baseline" };
+        baselineActions.Children.Add(approve); baselineActions.Children.Add(compare); filters.Children.Add(baselineActions);
         var status = new TextBlock { Margin = new Thickness(0, 8, 0, 8), TextWrapping = TextWrapping.Wrap };
         filters.Children.Add(status);
         DockPanel.SetDock(filters, Dock.Top); panel.Children.Add(filters);
@@ -65,12 +73,44 @@ public partial class MainWindow
                 var result = await Task.Run(() => new ActiveEvidenceStore().Read(kind, ip));
                 if (closed) return;
                 status.Text = $"{result.Rows.Count} observation(s). {result.Error}";
+                choices.ItemsSource = result.Rows.Select(r => new ActiveHistoryChoice(r.Id,
+                    $"{new DateTime(r.ObservedTicks, DateTimeKind.Utc):u} | {r.Sensor} | {r.Target} | {r.ProbeKey} | {r.Status}")).ToArray();
+                choices.SelectedIndex = result.Rows.Count > 0 ? 0 : -1;
                 output.Text = string.Join("\n\n", result.Rows.Select(r =>
                     $"{new DateTime(r.ObservedTicks, DateTimeKind.Utc):u} | {r.Sensor} | {r.Target} | {r.Status}\n" +
                     $"Adapter: {r.AdapterId} | Source: {r.Source} | Probe: {r.ProbeKey}\n{r.EvidenceJson}"));
             }
             finally { if (!closed) refresh.IsEnabled = true; }
         }
+        approve.Click += async (_, _) =>
+        {
+            if (choices.SelectedItem is not ActiveHistoryChoice item || !approve.IsEnabled) return;
+            if (MessageBox.Show(dialog, "Approve this observation as the comparison reference for its exact scope? " +
+                "This replaces any previous approval for that scope; it does not establish trust.", "Approve baseline",
+                MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+            approve.IsEnabled = compare.IsEnabled = false;
+            try
+            {
+                bool ok = await Task.Run(() => new ActiveEvidenceStore().Approve(item.Id));
+                if (!closed) status.Text = ok ? "Baseline approved." : "Approval failed: unavailable, inconclusive or capacity reached.";
+            }
+            finally { if (!closed) approve.IsEnabled = compare.IsEnabled = true; }
+        };
+        compare.Click += async (_, _) =>
+        {
+            if (choices.SelectedItem is not ActiveHistoryChoice item || !compare.IsEnabled) return;
+            approve.IsEnabled = compare.IsEnabled = false;
+            try
+            {
+                var result = await Task.Run(() => new ActiveEvidenceStore().CompareApproved(item.Id));
+                if (!closed)
+                {
+                    status.Text = result.Status + " — " + result.Note;
+                    output.Text = string.Join("\n", result.Changes.Select(c => $"{c.Kind} | {c.Field}: {c.Before} → {c.After}"));
+                }
+            }
+            finally { if (!closed) approve.IsEnabled = compare.IsEnabled = true; }
+        };
         refresh.Click += async (_, _) => await Load();
         dialog.Loaded += async (_, _) => await Load();
         dialog.ShowDialog();
