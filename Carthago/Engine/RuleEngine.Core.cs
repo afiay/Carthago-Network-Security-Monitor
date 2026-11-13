@@ -468,10 +468,39 @@ namespace Carthago.Services
                 NoteHit(evt, record.ProcessId, now);
                 LogDetection(evt);
                 results.Add(evt);
+                RecordR272EmittedSignal(evt, descriptor, now);
                 trace.EmittedRuleIds.Add(evt.RuleId);
                 _lastDetectionAt = now;
                 Interlocked.Increment(ref _emittedEvents);
                 RuleEngineMetrics.Increment(ruleId, RuleMetricNames.RuleEmittedTotal);
+            }
+        }
+
+        // R272 producer checkpoint: only the post-policy emission path may add signals.
+        // Separate from legacy severity correlation; no packet text or shadow hits.
+        private static readonly object R272SignalLock = new();
+        private static readonly List<(string Host, string RuleId, string Family, DateTime Timestamp)> R272Signals = new();
+        private const int R272SignalCapacity = 4096;
+
+        private static void RecordR272EmittedSignal(DetectionEvent evt, RuleDescriptor descriptor, DateTime now)
+        {
+            if (descriptor.RuleId == "R272" || evt.RuleId != descriptor.RuleId ||
+                string.IsNullOrWhiteSpace(descriptor.Category) ||
+                !IPAddress.TryParse(evt.SourceIp, out var address) ||
+                IPAddress.IsLoopback(address) || address.Equals(IPAddress.Any) ||
+                address.Equals(IPAddress.IPv6Any))
+                return;
+
+            var host = address.IsIPv4MappedToIPv6 ? address.MapToIPv4().ToString() : address.ToString();
+            lock (R272SignalLock)
+            {
+                var cutoff = now.AddMinutes(-10);
+                R272Signals.RemoveAll(signal => signal.Timestamp < cutoff || signal.Timestamp > now);
+                // One latest observation per host/rule; repeat emissions cannot inflate cardinality.
+                R272Signals.RemoveAll(signal => signal.Host == host && signal.RuleId == descriptor.RuleId);
+                if (R272Signals.Count >= R272SignalCapacity)
+                    R272Signals.RemoveAt(0);
+                R272Signals.Add((host, descriptor.RuleId, descriptor.Category, now));
             }
         }
 
