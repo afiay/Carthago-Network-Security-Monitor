@@ -72,6 +72,34 @@ public sealed class ReviewedDnsPacketIntakeTests
             startUtc = (change == "interval" ? start.AddSeconds(1) : start).ToString("O"),
             endUtc = start.AddMinutes(1).ToString("O"), classification = "reviewed-benign", reviewId = "test"
         });
+        using var reviewer = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        byte[] key = reviewer.ExportSubjectPublicKeyInfo();
+        var intake = new ReviewedDnsAuthenticatedIntake(key);
+        byte[] signature = reviewer.SignData(manifest, HashAlgorithmName.SHA256,
+            DSASignatureFormat.IeeeP1363FixedFieldConcatenation);
+        Assert.Equal(expected, intake.Matches(manifest, signature, capture,
+            "192.0.2.1", "sensor", "interface", "network"));
+        if (change == "valid")
+        {
+            using var other = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+            byte[] wrong = other.SignData(manifest, HashAlgorithmName.SHA256,
+                DSASignatureFormat.IeeeP1363FixedFieldConcatenation);
+            Assert.False(intake.Matches(manifest, wrong, capture,
+                "192.0.2.1", "sensor", "interface", "network"));
+            Assert.False(intake.Matches(manifest, signature, capture,
+                "192.0.2.1", "other", "interface", "network"));
+            byte[] altered = (byte[])manifest.Clone();
+            altered[0] ^= 1;
+            Assert.False(intake.Matches(altered, signature, capture,
+                "192.0.2.1", "sensor", "interface", "network"));
+            byte[] changedCapture = (byte[])capture.Clone();
+            changedCapture[^1] ^= 1;
+            Assert.False(intake.Matches(manifest, signature, changedCapture,
+                "192.0.2.1", "sensor", "interface", "network"));
+            Array.Clear(key, 0, key.Length);
+            Assert.True(intake.Matches(manifest, signature, capture,
+                "192.0.2.1", "sensor", "interface", "network"));
+        }
         Assert.Equal(expected, ReviewedDnsPacketIntake.Matches(manifest, Hash(manifest), capture,
             "192.0.2.1", "sensor", "interface", "network"));
     }
