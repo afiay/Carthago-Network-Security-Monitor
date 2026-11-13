@@ -98,10 +98,12 @@ public sealed class TlsInspectionSensorTests
     public async Task SelfSignedLoopbackHandshakeRetainsEvidenceButRejectsTrust()
     {
         var now = DateTimeOffset.UtcNow;
-        using var cert = Certificate(now.AddDays(-1), now.AddDays(1));
+        using var generated = Certificate(now.AddDays(-1), now.AddDays(1));
+        using var cert = LoopbackTlsCertificateFixture.ForServer(generated);
         var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        Exception? serverFailure = null;
         async Task Serve()
         {
             using var peer = await listener.AcceptTcpClientAsync(cts.Token);
@@ -111,16 +113,19 @@ public sealed class TlsInspectionSensorTests
                 await tls.AuthenticateAsServerAsync(new SslServerAuthenticationOptions
                 { ServerCertificate = cert, EnabledSslProtocols = SslProtocols.Tls12 }, cts.Token);
             }
-            catch (AuthenticationException) { }
-            catch (System.IO.IOException) { }
+            catch (AuthenticationException ex) { serverFailure = ex; }
+            catch (System.IO.IOException ex) { serverFailure = ex; }
         }
         var server = Serve();
         try
         {
             var result = await TlsInspectionSensor.CheckEndpointAsync(IPAddress.Loopback, IPAddress.Loopback,
                 ((IPEndPoint)listener.LocalEndpoint).Port, "wrong.example", null, TimeSpan.FromSeconds(5), cts.Token);
-            Assert.Equal(TlsInspectionStatus.CertificateRejected, result.Status);
+            await server;
+            Assert.True(result.Status == TlsInspectionStatus.CertificateRejected,
+                $"Expected CertificateRejected, actual {result.Status}; loopback server: {serverFailure}");
             Assert.NotNull(result.Certificate);
+            Assert.Equal(Convert.ToHexString(SHA256.HashData(cert.RawData)).ToLowerInvariant(), result.Certificate!.Sha256);
             Assert.True(result.Certificate!.PolicyErrors.HasFlag(SslPolicyErrors.RemoteCertificateNameMismatch));
             Assert.Null(result.Protocol);
             Assert.Null(result.CipherSuite);

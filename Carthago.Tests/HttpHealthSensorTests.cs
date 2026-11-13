@@ -165,10 +165,12 @@ public sealed class HttpHealthSensorTests
         var san = new System.Security.Cryptography.X509Certificates.SubjectAlternativeNameBuilder();
         san.AddDnsName("lab.example");
         certRequest.CertificateExtensions.Add(san.Build());
-        using var cert = certRequest.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(1));
+        using var generated = certRequest.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(1));
+        using var cert = LoopbackTlsCertificateFixture.ForServer(generated);
         var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        Exception? serverFailure = null;
         async Task<int> Serve()
         {
             using var peer = await listener.AcceptTcpClientAsync(cts.Token);
@@ -183,20 +185,23 @@ public sealed class HttpHealthSensorTests
                 var buffer = new byte[1];
                 return await tls.ReadAsync(buffer.AsMemory(), cts.Token);
             }
-            catch (System.Security.Authentication.AuthenticationException) { return 0; }
-            catch (System.IO.IOException) { return 0; }
+            catch (System.Security.Authentication.AuthenticationException ex) { serverFailure = ex; return 0; }
+            catch (System.IO.IOException ex) { serverFailure = ex; return 0; }
         }
         var server = Serve();
         try
         {
             var result = await HttpHealthSensor.CheckEndpointAsync(IPAddress.Loopback, IPAddress.Loopback,
                 ((IPEndPoint)listener.LocalEndpoint).Port, "wrong.example", true, TimeSpan.FromSeconds(5), cts.Token);
-            Assert.Equal(HttpHealthStatus.TlsRejected, result.Status);
+            int received = await server;
+            Assert.True(result.Status == HttpHealthStatus.TlsRejected,
+                $"Expected TlsRejected, actual {result.Status}; loopback server: {serverFailure}");
             Assert.NotNull(result.Certificate);
+            Assert.Equal(Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(cert.RawData)).ToLowerInvariant(), result.Certificate!.Sha256);
             Assert.True(result.Certificate!.PolicyErrors.HasFlag(System.Net.Security.SslPolicyErrors.RemoteCertificateNameMismatch));
             Assert.Null(result.StatusCode);
             Assert.Empty(result.Headers);
-            Assert.Equal(0, await server);
+            Assert.Equal(0, received);
         }
         finally
         {
