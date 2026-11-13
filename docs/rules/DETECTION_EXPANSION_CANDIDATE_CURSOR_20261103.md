@@ -241,3 +241,8 @@ Workbook R2690 AN1920; exact complete whole-array directory request, Candidate/S
 ## R978 — Modbus FC20 bulk file-record response
 
 Workbook R2797 AN2244; capture-qualified exact one-record request/response, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_978-978.md). 45 authored cases, zero execution; no returned content classification, authorization or baseline claim. Next ID R979.
+
+
+## R979 — BACnet Event_Enable all-transition disable request
+
+Workbook R2711 AN1861; exact captured WriteProperty bit-string request, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_979-979.md). 42 authored cases, zero execution; no accepted command, authorization or alarm-state effect claim. Next ID R980.

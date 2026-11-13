@@ -789,6 +789,15 @@ namespace Carthago.Services
                             rec.BacnetObjectListReadObserved = true;
                         }
 
+                        // Exact BACnet Event_Enable all-transition disable bit string.
+                        if (isIPv4 && dport == 47808 && sport is > 0 and <= 65535 &&
+                            completeIpPacket && l4PayloadLen == ipPayloadLen - 8 && !rec.IsQuic &&
+                            BacnetEventDisableInspector.TryInspect(l4Payload))
+                        {
+                            rec.ApplicationProtocol = "bacnet.event_enable.disable_all.request";
+                            rec.BacnetEventDisableRequestObserved = true;
+                        }
+
                         // -------- Bounded CoAP and WS-Discovery requests --------
                         if (NetworkBatch231235Wire.CoapDiscovery(l4Payload, sport, dport))
                             rec.ApplicationProtocol = "coap.discovery";

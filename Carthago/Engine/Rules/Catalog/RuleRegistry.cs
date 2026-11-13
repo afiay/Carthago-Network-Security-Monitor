@@ -1001,6 +1001,7 @@ namespace Carthago.Engine.Rules.Catalog
                 new R976_PublicSnmpConnectionTableGetNextRule(),
                 new R977_PublicBacnetObjectListReadRule(),
                 new R978_PrivateModbusBulkFileReadResponseRule(),
+                new R979_PublicBacnetEventDisableRequestRule(),
             };
         }
 
