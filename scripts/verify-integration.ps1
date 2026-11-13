@@ -27,7 +27,7 @@ try {
     $report = [ordered]@{
         schemaVersion = 1; sourceSha = $SourceSha; startedUtc = [DateTime]::UtcNow.ToString('o')
         finishedUtc = $null; status = 'NotCompleted'; stages = [ordered]@{}
-        cliTests = $null; blocker = $null; fieldAccuracyQualified = $false
+        cliTests = $null; windowsTests = $null; blocker = $null; fieldAccuracyQualified = $false
     }
     function Invoke-IntegrationStage([string]$Name, [string]$Command, [string[]]$Arguments) {
         Assert-PinnedCheckout
@@ -68,9 +68,47 @@ try {
         $failed = [int]$counters.GetAttribute('failed')
         $report.cliTests = [ordered]@{ total=$total; passed=$passed; executed=$executed; failed=$failed }
         if ($total -le 0 -or $total -ne $passed -or $total -ne $executed -or $failed -ne 0) { throw 'CLI tests incomplete or nonpassing.' }
-        # Run in a child shell because verify-local.ps1 may call exit.
+        Write-Host "CLI tests: $passed/$total passed; $failed failed."
+        # A unique per-run TRX avoids attributing a stale standalone result to
+        # this integration SHA. Preserve the original failure and exit status.
+        $windowsResults = Join-Path $dir 'windows-tests'
+        $windowsTrx = Join-Path $windowsResults 'carthago-tests.trx'
         $shell = (Get-Process -Id $PID).Path
-        Invoke-IntegrationStage 'windows-verification' $shell @('-NoProfile','-File',(Join-Path $root 'verify-local.ps1'))
+        try {
+            Invoke-IntegrationStage 'windows-verification' $shell @('-NoProfile','-File',(Join-Path $root 'verify-local.ps1'),'-TestResultsDirectory',$windowsResults)
+        } finally {
+            try {
+                if (Test-Path -LiteralPath $windowsTrx -PathType Leaf) {
+                    [xml]$windowsXml = Get-Content -LiteralPath $windowsTrx -Raw
+                    $wc = $windowsXml.SelectSingleNode("//*[local-name()='ResultSummary']/*[local-name()='Counters']")
+                    if ($null -eq $wc) { throw 'Windows TRX counters missing.' }
+                    $report.windowsTests = [ordered]@{
+                        total=[int]$wc.GetAttribute('total'); passed=[int]$wc.GetAttribute('passed')
+                        executed=[int]$wc.GetAttribute('executed'); failed=[int]$wc.GetAttribute('failed')
+                    }
+                    Write-Host ("Windows tests: {0}/{1} passed; {2} failed; {3} executed." -f $report.windowsTests.passed,$report.windowsTests.total,$report.windowsTests.failed,$report.windowsTests.executed)
+                    $failedRows = @($windowsXml.SelectNodes("//*[local-name()='UnitTestResult' and @outcome='Failed']"))
+                    if ($failedRows.Count -gt 0) {
+                        Write-Host "--- Windows failed tests ($($failedRows.Count)) ---"
+                        foreach ($row in @($failedRows | Select-Object -First 40)) {
+                            Write-Host ("FAIL: " + $row.GetAttribute('testName'))
+                            $message = $row.SelectSingleNode("*[local-name()='Output']/*[local-name()='ErrorInfo']/*[local-name()='Message']")
+                            if ($null -ne $message) {
+                                $line = ($message.InnerText -replace '\s+', ' ').Trim()
+                                if ($line.Length -gt 600) { $line = $line.Substring(0,600) + ' ...' }
+                                Write-Host "  $line"
+                            }
+                        }
+                        if ($failedRows.Count -gt 40) { Write-Host 'Additional failures are in the complete TRX.' }
+                    }
+                    Write-Host "Windows TRX: $windowsTrx"
+                } else {
+                    Write-Host 'No Windows TRX produced; inspect the local test log for build or test-host failure.'
+                }
+            } catch {
+                Write-Host "Windows test diagnostics unavailable: $($_.Exception.Message)"
+            }
+        }
         $windowsLog = Get-Content -LiteralPath (Join-Path $dir 'windows-verification.log') -Raw
         if ($windowsLog -notmatch '(?m)^PASS: local build, tests and replay validation\.\s*$') { throw 'Windows verifier did not report final PASS.' }
         Assert-PinnedCheckout

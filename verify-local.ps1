@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: MIT
 # Local Windows verification; no GitHub Actions or paid runner required.
 [CmdletBinding()]
-param([switch]$Details, [switch]$LiveOutput, [switch]$DiagnoseTestCrash)
+param([switch]$Details, [switch]$LiveOutput, [switch]$DiagnoseTestCrash,
+    [string]$TestResultsDirectory)
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 $env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'
@@ -153,7 +154,8 @@ try {
     if (-not (Invoke-Stage 'restore-benchmarks' @('restore','Carthago.Benchmarks/Carthago.Benchmarks.csproj','--verbosity','quiet','--nologo'))) { exit 1 }
     if (-not (Invoke-Stage 'build-tests' @('build','Carthago.Tests/Carthago.Tests.csproj','-c','Release','--no-restore','-v','quiet','--nologo'))) { exit 1 }
     if (-not (Invoke-Stage 'build-benchmarks' @('build','Carthago.Benchmarks/Carthago.Benchmarks.csproj','-c','Release','--no-restore','-v','quiet','--nologo'))) { exit 1 }
-    $testResults = Join-Path $outputDir 'test-results'
+    $testResults = if ($TestResultsDirectory) { $TestResultsDirectory } else { Join-Path $outputDir 'test-results' }
+    New-Item -ItemType Directory -Force -Path $testResults | Out-Null
     $testArgs = @('test','Carthago.Tests/Carthago.Tests.csproj','-c','Release','--no-build','--no-restore','-v','quiet','--logger','trx;LogFileName=carthago-tests.trx')
     if ($DiagnoseTestCrash) {
         # Separate diagnostic attempts from earlier completed or aborted runs.
