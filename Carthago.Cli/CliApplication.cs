@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using System.Text.Json;
 using Carthago.Services.SessionFiles;
 using Carthago.Contracts;
+using Carthago.Engine.Rules;
 
 namespace Carthago.Cli;
 
@@ -35,6 +36,7 @@ public static class CliApplication
           carthago engine health [--json]
           carthago monitor stop [--session GUID] [--json]
           carthago rules summary [--json]
+          carthago rules capabilities [--portable|RULE_ID] [--json]
           carthago rules list --live [--offset N --limit N] [--json]
           carthago rules show <rule-id> --live [--json]
           carthago rules validate [--json]
@@ -87,6 +89,23 @@ public static class CliApplication
                 return await TailAsync(command, output, error, json, token, investigationQuery);
             if (command.Length > 0 && (command[0] is "alerts" or "incidents" or "events" or "hosts"))
                 return await InvestigateAsync(command, output, error, json, token, investigationQuery);
+            if (command is ["rules", "capabilities", ..])
+            {
+                if (command.Length > 3 || (command.Length == 3 && command[2] != "--portable" &&
+                    (command[2] != command[2].Trim() || !RuleIdValidator.IsCoreRuleId(command[2]))))
+                    return await FailAsync(error, json, UsageError, "invalid_usage",
+                        "Expected rules capabilities [--portable|RULE_ID] [--json].");
+                var rows = command.Length == 3 && command[2] != "--portable"
+                    ? new[] { PortableRuleCatalog.Describe(command[2]) }
+                    : PortableRuleCatalog.All.ToArray();
+                await WriteAsync(output, json, new { schemaVersion = SchemaVersion,
+                    scope = "compiled_portable_catalog", registration = "not_assessed",
+                    detectionValidation = "not_assessed", supportedCount = PortableRuleCatalog.All.Count, rules = rows },
+                    "Compiled portable catalog only; live registration and detection validation not assessed.\n" +
+                    string.Join("\n", rows.Select(r => $"{r.RuleId}: {r.Status} {r.Name} | {string.Join(",", r.ExecutionEnvironments)} | qualification={r.Qualification}" +
+                        (r.Reason is null ? "" : $" | {r.Reason}"))));
+                return Success;
+            }
             if (command is ["pcap", "detect", ..])
             {
                 if (!PcapDetectCommand.TryParse(command, out var path, out var rules, out var limit))
@@ -147,7 +166,8 @@ public static class CliApplication
                         new Capability("live.incidents", "unavailable", "No live incident connection."),
                         new Capability("capture", "unavailable", "No CLI live capture provider."),
                         new Capability("pcap.inspect", "available", "Read-only classic PCAP and PCAPNG enhanced-packet telemetry; no rule execution."),
-                        new Capability("pcap.detect", "available", "Offline R586–R590 request observations only; unsupported IDs reported explicitly."),
+                        new Capability("pcap.detect", "available", "Offline portable request observations; see rules capabilities for supported IDs."),
+                        new Capability("rules.capabilities", "available", "Compiled portable detector catalog; not live registration or validation."),
                         new Capability("sensor.control", "unavailable", "No CLI sensor control provider.")
                     };
                     await WriteAsync(output, json, new { schemaVersion = SchemaVersion, capabilities },

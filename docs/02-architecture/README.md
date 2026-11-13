@@ -33,3 +33,4 @@ System boundaries, evidence lineage, sensors and architectural constraints.
 - [CLI-006D.4 — Offline replay dispatcher](CLI-006D4-OfflineReplayDispatcher.md)
 - [CLI-006D.5A — Portable detection expansion](CLI-006D5A-PortableDetectionExpansion.md)
 - [CLI-006D.5B — Five portable detectors](CLI-006D5B-FivePortableDetectors.md)
+- [CLI-006D.6 — Portable rule capability catalog](CLI-006D6-PortableRuleCapabilities.md)

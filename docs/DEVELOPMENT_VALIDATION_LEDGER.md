@@ -2298,3 +2298,8 @@ Reviewed parent `59b2d177729271e64ca8f55c87c50e412b045add`, WindowsProcessResolv
 ## 2026-11-13 — CLI-006D.5B five portable HTTP detectors
 
 **SOURCE CANDIDATE — UNVERIFIED.** Parent `24d976c296c89e635de3a891b78d5c551685b371`. Extract R586/R588/R590 predicates and instance cooldown unchanged into shared Core; Windows adapters retain descriptors, Shadow policy, severity/confidence and evidence. Dispatcher supports R586–R590. Fifteen portable signature cases, three cooldown/evidence cases, one five-rule replay and fifteen Windows parity cases authored; zero executed. No builds, live capture, Actions or rule promotion. See [architecture](02-architecture/CLI-006D5B-FivePortableDetectors.md).
+
+
+## 2026-11-13 — CLI-006D.6 portable rule capability catalog
+
+**SOURCE CANDIDATE — UNVERIFIED.** Parent `f39e4b877d5b12bc92542cec77b11d0e8c13f1d2`. Co-locate five portable metadata entries and fresh evaluator factories; dispatcher derives support and execution from the same registrations. Offline rules capabilities list/lookup with explicit unsupported numeric IDs, evidence, methods, replay environments, state/cooldown and non-assessed qualification/registration. Nine synthetic cases authored, zero executed. No builds, live capture, Actions or rule promotion. See [architecture](02-architecture/CLI-006D6-PortableRuleCapabilities.md).
