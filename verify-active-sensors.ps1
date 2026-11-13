@@ -74,6 +74,7 @@ try {
         serviceNegativeContractPassed = $false
         expectedTotal = ($expected.Values | Measure-Object -Sum).Sum
         testExitCode = $null
+        trxSha256 = $null
         total = 0
         passed = 0
         failedOrSkipped = 0
@@ -203,6 +204,7 @@ try {
         exit 1
     }
     try {
+        $report.trxSha256 = (Get-FileHash -LiteralPath $trxPath -Algorithm SHA256).Hash
         [xml]$trx = Get-Content -LiteralPath $trxPath -Raw
         $definitions = @{}
         $duplicateDefinitions = 0
@@ -220,11 +222,15 @@ try {
         $unknown = 0
         $executionIds = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
         $duplicateExecutions = 0
+        $testIds = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+        $duplicateResults = 0
         $resultNodes = @($trx.SelectNodes("//*[local-name()='UnitTestResult']"))
         foreach ($result in $resultNodes) {
             $executionId = $result.GetAttribute('executionId')
             if (-not $executionId -or -not $executionIds.Add($executionId)) { $duplicateExecutions++ }
-            $className = $definitions[$result.GetAttribute('testId')]
+            $testId = $result.GetAttribute('testId')
+            if (-not $testId -or -not $testIds.Add($testId)) { $duplicateResults++ }
+            $className = $definitions[$testId]
             $outcome = $result.GetAttribute('outcome')
             $report.total++
             if ($outcome -eq 'Passed') { $report.passed++ } else { $report.failedOrSkipped++ }
@@ -250,7 +256,8 @@ try {
             [int]$counters.GetAttribute('executed') -ne $report.total -or
             $summary.GetAttribute('outcome') -notin @('Completed', 'Passed') -or
             $report.total -ne $report.expectedTotal -or $unknown -ne 0 -or
-            $duplicateDefinitions -ne 0 -or $duplicateExecutions -ne 0) { $complete = $false }
+            $duplicateDefinitions -ne 0 -or $duplicateExecutions -ne 0 -or $duplicateResults -ne 0 -or
+            $definitions.Count -ne $report.total) { $complete = $false }
         $afterSha = (& git rev-parse HEAD).Trim()
         $shaExit = $LASTEXITCODE
         $afterBranch = (& git branch --show-current).Trim()

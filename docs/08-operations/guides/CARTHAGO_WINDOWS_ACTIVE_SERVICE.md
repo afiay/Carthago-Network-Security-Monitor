@@ -141,3 +141,44 @@ designated case are not passes. These are physical observation contracts,
 not attack accuracy or packet-trace proof. SCM positive/negative reports
 now record source SHA; manually establish that the installed executable and
 all dependencies came from that same trusted build.
+
+
+## G6E/G — Observe coexistence and assemble release evidence
+
+Start both separately authorized Manual services in the lab. Do not select a
+Gateway profile for a no-deferral coexistence run while passive Npcap owns the
+capture reservation. Gateway coexistence remains a known limitation, qualified
+separately by the contention case. Select suitable responsive lab endpoints
+and approved intervals that produce progress during the observation window.
+
+~~~powershell
+.\scripts\observe-active-service-soak.ps1 @params -Hours 12 -MaxActiveWorkingSetMiB 512 -MaxPassiveWorkingSetMiB 2048 -MaxCombinedCpuPercent 25 -MaxEvidenceMiB 256 -ConfirmAuthorizedSoak
+~~~
+
+The budget values above are illustrative, not a measured baseline. Choose
+and document budgets appropriate to the hardware and intended workload.
+The observer does not start, stop, renew grants or send probes. It samples
+actual process working sets, combined CPU normalized to logical processors,
+evidence database/journal size and both health snapshots every ten seconds.
+A valid window requires capture and active probe progress and no unexpected
+session change, gaps, blocked profiles, deferrals or recorded failures.
+Reports are under build-verify/active-soak/<run-id>/soak.json.
+
+The 24-hour grant cap requires separate explicitly authorized windows (1–23
+hours each). Accumulate 24–72 hours, with each gap and restart documented;
+do not represent this as continuous 24–72-hour service operation. Network
+bytes, loss and actual probe scheduling drift require independent lab
+measurements; observer counters do not prove lossless capture.
+
+~~~powershell
+.\scripts\verify-active-release.ps1 -SyntheticReport $synthetic -PhysicalReports $physical -PositiveServiceReport $recovery -NegativeServiceReports $negative -SoakReports $soak -ExpectedExeSha256 $params.ExpectedExeSha256
+~~~
+
+Use actual JSON paths, not placeholders, all from the same clean source
+commit; record positive recovery after the negative runs. The synthetic
+report must retain its adjacent TRX. Capture the positive/negative script
+JSON outputs in separate files outside tracked source. The evidence gate
+does not create a release, mark production approved or change services.
+Manual review of provenance/dependency hashes, effective ACLs, cross-account
+DPAPI, packet overhead/loss, individual negative fixture causes, central
+detection integration limits and known Gateway contention remains required.
