@@ -2333,3 +2333,8 @@ Reviewed parent `981d0175af5044281fbfe57048e78563ac46ad39`, native resolver, pro
 ## 2026-11-13 — CLI-007C bounded portable frame pipeline
 
 **SOURCE CANDIDATE — UNVERIFIED.** Parent da3ad888208cc4f20434cd4b39dde7367632538a. Add bounded copied handoff and buffered runner, packet/byte limits including in-flight, drop-newest, explicit invalid/capacity/processed/abandoned counters, cancellation drain and failure cleanup. Twelve synthetic cases authored, zero executed; pinned CLI gate now requires CLI-007A/B/C classes. No build/test/live capture/Actions. See [architecture](02-architecture/CLI-007C-BoundedFramePipeline.md).
+
+
+## 2026-11-13 — CLI-007D.1 native capture discovery
+
+**SOURCE CANDIDATE — UNVERIFIED.** Parent 18ece487deab49be5876d205e01b8d90dbcb3c27. Read-only wpcap/libpcap discovery and bounded interface enumeration, explicit unknown capture permissions and no live capture. Twelve synthetic cases authored, zero executed; qualification gate updated. No builds/tests/native calls/Actions executed. See [architecture](02-architecture/CLI-007D1-NativeCaptureDiscovery.md).

@@ -1,0 +1,9 @@
+# CLI-007D.1 — Native capture discovery
+
+**SOURCE CANDIDATE — UNVERIFIED.** Parent 18ece487deab49be5876d205e01b8d90dbcb3c27. CLI-006E execution pending.
+
+Commands: carthago capture doctor --json; carthago capture interfaces --json. Both are read-only discovery and return schema v1 with mode discovery_only, provider, library/version, enumeration status, reason and exact sorted interface IDs plus loopback flag. Success means a diagnostic response, not capture readiness; unavailable library and failed enumeration remain structured results. Capture permission and detection validation not_assessed; live capture not_implemented. No capture handle, packet read, filter, service start or privilege elevation.
+
+Windows loads wpcap from absolute system Npcap directory then System32 compatibility path with restricted dependency search; Linux uses loader sonames libpcap.so.1/.0.8/.so. Verify required exports, enumerate using pcap_findalldevs, release with pcap_freealldevs, unload library. No addresses or descriptions returned. Bound list to 256, reject invalid/duplicate IDs and invalid UTF-8 rather than alter IDs. Native calls are synchronous and cancellation is checked before/after discovery, not an interrupt guarantee. Windows provider label does not prove Npcap identity; version identifies actual library. Library/driver ABI and permissions require native qualification. Linux loader follows OS search configuration.
+
+Twelve synthetic tests authored; zero executed. CLI qualification gate requires their class. Owner focused command: dotnet test Carthago.Cli.Tests/Carthago.Cli.Tests.csproj -c Release --filter FullyQualifiedName~NativeCaptureDiscoveryTests. Next: native capture adapter with explicit open/activation permissions, fixed link type, cancellation and loss statistics. References: https://npcap.com/guide/npcap-devguide.html ; https://man7.org/linux/man-pages/man3/pcap_findalldevs.3pcap.html

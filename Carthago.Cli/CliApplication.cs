@@ -30,6 +30,8 @@ public static class CliApplication
           carthago --version [--json]
           carthago status [--json]
           carthago capabilities [--json]
+          carthago capture doctor [--json]
+          carthago capture interfaces [--json]
           carthago engine status [--json]
           carthago monitor status [--json]
           carthago service status|health|start|stop|doctor [--json]
@@ -89,6 +91,23 @@ public static class CliApplication
                 return await TailAsync(command, output, error, json, token, investigationQuery);
             if (command.Length > 0 && (command[0] is "alerts" or "incidents" or "events" or "hosts"))
                 return await InvestigateAsync(command, output, error, json, token, investigationQuery);
+            if (command is ["capture", ..])
+            {
+                if (command is not (["capture", "doctor"] or ["capture", "interfaces"]))
+                    return await FailAsync(error, json, UsageError, "invalid_usage",
+                        "Expected capture doctor|interfaces [--json].");
+                var discovery = NativeCaptureDiscovery.Discover();
+                token.ThrowIfCancellationRequested();
+                await WriteAsync(output, json, new { schemaVersion = SchemaVersion, mode = "discovery_only",
+                    discovery.Provider, discovery.LibraryStatus, discovery.LibraryVersion,
+                    discovery.EnumerationStatus, discovery.Reason, discovery.Interfaces,
+                    capturePermission = "not_assessed", liveCapture = "not_implemented",
+                    detectionValidation = "not_assessed" },
+                    $"Capture provider: {discovery.Provider}; library: {discovery.LibraryStatus}; enumeration: {discovery.EnumerationStatus}.\n" +
+                    "Capture permission not assessed; live capture not implemented.\n" +
+                    string.Join("\n", discovery.Interfaces.Select(i => $"{i.Id} | loopback={i.Loopback}")));
+                return Success;
+            }
             if (command is ["rules", "capabilities", ..])
             {
                 if (command.Length > 3 || (command.Length == 3 && command[2] != "--portable" &&
@@ -165,6 +184,7 @@ public static class CliApplication
                         new Capability("live.rules", "unavailable", "Windows opt-in catalog query; use rules summary to check connectivity."),
                         new Capability("live.incidents", "unavailable", "No live incident connection."),
                         new Capability("capture", "unavailable", "No CLI live capture provider."),
+                        new Capability("capture.discovery", "available", "Read-only provider discovery; no capture handle opened."),
                         new Capability("pcap.inspect", "available", "Read-only classic PCAP and PCAPNG enhanced-packet telemetry; no rule execution."),
                         new Capability("pcap.detect", "available", "Offline portable request observations; see rules capabilities for supported IDs."),
                         new Capability("rules.capabilities", "available", "Compiled portable detector catalog; not live registration or validation."),
