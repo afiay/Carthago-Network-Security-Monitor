@@ -3,6 +3,8 @@ using System;
 using System.Buffers.Binary;
 using System.Net;
 using System.IO;
+using System.Collections.Generic;
+using System.Security.Cryptography;
 using Carthago.Services.Benchmarking;
 
 namespace Carthago.Services.Baseline
@@ -14,7 +16,13 @@ namespace Carthago.Services.Baseline
     {
         internal static bool Matches(ReadOnlySpan<byte> manifest, string manifestDigest,
             ReadOnlySpan<byte> capture, string source, string sensor, string interfaceId, string network)
+            => TryGetObservations(manifest, manifestDigest, capture, source, sensor, interfaceId, network, out _);
+
+        internal static bool TryGetObservations(ReadOnlySpan<byte> manifest, string manifestDigest,
+            ReadOnlySpan<byte> capture, string source, string sensor, string interfaceId, string network,
+            out string[] observations)
         {
+            observations = Array.Empty<string>();
             QualifiedDnsScope scope;
             try { scope = QualifiedDnsScope.Create(source, sensor, interfaceId, network); }
             catch (ArgumentException) { return false; }
@@ -34,9 +42,28 @@ namespace Carthago.Services.Baseline
             if (parsed.Frames.Count == 0) return false;
             foreach (var frame in parsed.Frames)
                 if (frame.Truncated || !IsQuery(frame.Bytes, ip)) return false;
-            return ReviewedDnsManifestBinding.Matches(manifest, manifestDigest,
+            if (!ReviewedDnsManifestBinding.Matches(manifest, manifestDigest,
                 capture, scope, new DateTimeOffset(parsed.Frames[0].Utc),
-                new DateTimeOffset(parsed.Frames[^1].Utc));
+                new DateTimeOffset(parsed.Frames[^1].Utc))) return false;
+            var unique = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var frame in parsed.Frames)
+            {
+                // Ignore PCAP headers, Ethernet addresses/padding and mutable IP headers.
+                // Exact UTC timestamp, IPv4 endpoints and UDP datagram define v1 identity.
+                var ipBytes = frame.Bytes.AsSpan(14);
+                int total = Be(ipBytes.Slice(2));
+                byte[] identity = new byte[8 + 8 + total - 20];
+                BinaryPrimitives.WriteInt64LittleEndian(identity, frame.Utc.Ticks);
+                ipBytes.Slice(12, 8).CopyTo(identity.AsSpan(8));
+                ipBytes.Slice(20, total - 20).CopyTo(identity.AsSpan(16));
+                // UDP checksum can differ due to capture offload; omit it.
+                identity[22] = 0; identity[23] = 0;
+                unique.Add(Convert.ToHexString(SHA256.HashData(identity)));
+            }
+            observations = new string[unique.Count];
+            unique.CopyTo(observations);
+            Array.Sort(observations, StringComparer.Ordinal);
+            return true;
         }
 
         private static uint U32(ReadOnlySpan<byte> b) => BinaryPrimitives.ReadUInt32LittleEndian(b);

@@ -116,6 +116,43 @@ public sealed class ReviewedDnsPacketIntakeTests
                 "192.0.2.1", "other", "interface", "network"));
             Assert.False(intake.Matches(manifest, signature, capture,
                 "192.0.2.1", "sensor", "interface", "other"));
+            Assert.True(intake.TryValidate(manifest, signature, capture,
+                "192.0.2.1", "sensor", "interface", "network", out var originalDigest, out var originalIds));
+            Assert.Single(originalIds);
+            byte[] repacked = (byte[])capture.Clone();
+            repacked[16] = 0xfe; // different snaplen, same packet
+            repacked[40] = 0x42; // different Ethernet address
+            repacked[40 + 40] = 0x12; // UDP checksum
+            byte[] RepackManifest(byte[] bytes) => JsonSerializer.SerializeToUtf8Bytes(new {
+                version = 1, scope = scope.Subject, captureSha256 = Hash(bytes),
+                startUtc = start.ToString("O"), endUtc = start.AddMinutes(1).ToString("O"),
+                classification = "reviewed-benign", reviewId = "repacked"
+            });
+            byte[] repackedManifest = RepackManifest(repacked);
+            byte[] repackedSignature = reviewer.SignData(repackedManifest, HashAlgorithmName.SHA256,
+                DSASignatureFormat.IeeeP1363FixedFieldConcatenation);
+            Assert.True(intake.TryValidate(repackedManifest, repackedSignature, repacked,
+                "192.0.2.1", "sensor", "interface", "network", out var repackedDigest, out var repackedIds));
+            Assert.NotEqual(originalDigest, repackedDigest);
+            Assert.Equal(originalIds, repackedIds);
+            // Duplicate records in one container yield one observation identity.
+            byte[] repeated = new byte[capture.Length + capture.Length - 24];
+            capture.CopyTo(repeated, 0);
+            Array.Copy(capture, 24, repeated, capture.Length, capture.Length - 24);
+            byte[] repeatedManifest = RepackManifest(repeated);
+            byte[] repeatedSignature = reviewer.SignData(repeatedManifest, HashAlgorithmName.SHA256,
+                DSASignatureFormat.IeeeP1363FixedFieldConcatenation);
+            Assert.True(intake.TryValidate(repeatedManifest, repeatedSignature, repeated,
+                "192.0.2.1", "sensor", "interface", "network", out _, out var repeatedIds));
+            Assert.Equal(originalIds, repeatedIds);
+            BinaryPrimitives.WriteUInt32LittleEndian(repeated.AsSpan(capture.Length + 4), 1);
+            repeatedManifest = RepackManifest(repeated);
+            repeatedSignature = reviewer.SignData(repeatedManifest, HashAlgorithmName.SHA256,
+                DSASignatureFormat.IeeeP1363FixedFieldConcatenation);
+            Assert.True(intake.TryValidate(repeatedManifest, repeatedSignature, repeated,
+                "192.0.2.1", "sensor", "interface", "network", out _, out var distinctIds));
+            Assert.Equal(2, distinctIds.Length);
+            Assert.Contains(originalIds[0], distinctIds);
             string directory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(directory);
             try

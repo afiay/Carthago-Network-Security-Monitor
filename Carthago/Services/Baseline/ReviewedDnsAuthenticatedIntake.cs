@@ -27,7 +27,14 @@ namespace Carthago.Services.Baseline
         internal bool TryValidate(ReadOnlySpan<byte> manifest, ReadOnlySpan<byte> signature,
             ReadOnlySpan<byte> capture, string source, string sensor, string interfaceId, string network,
             out string captureDigest)
+            => TryValidate(manifest, signature, capture, source, sensor, interfaceId, network,
+                out captureDigest, out _);
+
+        internal bool TryValidate(ReadOnlySpan<byte> manifest, ReadOnlySpan<byte> signature,
+            ReadOnlySpan<byte> capture, string source, string sensor, string interfaceId, string network,
+            out string captureDigest, out string[] observations)
         {
+            observations = Array.Empty<string>();
             captureDigest = string.Empty;
             if (manifest.IsEmpty || manifest.Length > 16384 || signature.Length != 64 ||
                 capture.IsEmpty || capture.Length > 32 * 1024 * 1024) return false;
@@ -42,9 +49,9 @@ namespace Carthago.Services.Baseline
                 return false;
             // Snapshot capture bytes before structural checks and digest comparison.
             byte[] boundCapture = capture.ToArray();
-            if (!ReviewedDnsPacketIntake.Matches(signedManifest,
+            if (!ReviewedDnsPacketIntake.TryGetObservations(signedManifest,
                 Convert.ToHexString(SHA256.HashData(signedManifest)), boundCapture,
-                source, sensor, interfaceId, network)) return false;
+                source, sensor, interfaceId, network, out observations)) return false;
             captureDigest = Convert.ToHexString(SHA256.HashData(boundCapture));
             return true;
         }
