@@ -18,6 +18,8 @@ namespace Carthago.Services
             _lastAlertAt.Clear();
             _lastSeenSrc.Clear();
             _entityHits.Clear();
+            lock (R272SignalLock)
+                R272Signals.Clear();
             _lastTrace = null;
 
             Interlocked.Exchange(ref _evalCalls, 0);
