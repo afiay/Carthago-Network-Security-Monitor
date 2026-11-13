@@ -35,6 +35,10 @@ public sealed class RuntimeEnrichmentRegressionTests
                 Assert.Equal(GeoIpService.DatabaseAvailability.Missing, missing.CityDatabaseStatus);
                 Assert.Equal(GeoIpService.DatabaseAvailability.Missing, missing.AsnDatabaseStatus);
                 Assert.Null(missing.Lookup("8.8.8.8"));
+                var outcome = missing.LookupWithOutcomes("8.8.8.8");
+                Assert.Null(outcome.Info);
+                Assert.Equal(GeoIpService.LookupOutcome.NotAttempted, outcome.City);
+                Assert.Equal(GeoIpService.LookupOutcome.NotAttempted, outcome.Asn);
             }
 
             File.WriteAllText(Path.Combine(root, "Data", "GeoLite2-City.mmdb"), "not a database");
@@ -44,6 +48,9 @@ public sealed class RuntimeEnrichmentRegressionTests
             Assert.False(invalid.IsCityDbAvailable);
             Assert.False(invalid.IsAsnDbAvailable);
             Assert.Null(invalid.Lookup("8.8.8.8"));
+            var outcome = invalid.LookupWithOutcomes("8.8.8.8");
+            Assert.Equal(GeoIpService.LookupOutcome.NotAttempted, outcome.City);
+            Assert.Equal(GeoIpService.LookupOutcome.NotAttempted, outcome.Asn);
         }
         finally { Directory.Delete(root, true); }
     }

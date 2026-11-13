@@ -5,6 +5,7 @@ using System.IO;
 using System.Net;
 using MaxMind.GeoIP2;
 using MaxMind.GeoIP2.Responses;
+using MaxMind.GeoIP2.Exceptions;
 
 namespace Carthago.Services.Geo
 {
@@ -61,9 +62,15 @@ namespace Carthago.Services.Geo
                 ? type is "GeoLite2-City" or "GeoIP2-City"
                 : type is "GeoLite2-ASN" or "GeoIP2-ASN";
 
-        public GeoInfo? Lookup(string ip)
+        public enum LookupOutcome { NotAttempted, Found, NotFound, Failed }
+
+        public GeoInfo? Lookup(string ip) => LookupWithOutcomes(ip).Info;
+
+        internal (GeoInfo? Info, LookupOutcome City, LookupOutcome Asn) LookupWithOutcomes(string ip)
         {
-            if (!TryGetLookupAddress(ip, out var addr)) return null;
+            if (!TryGetLookupAddress(ip, out var addr)) return (null, LookupOutcome.NotAttempted, LookupOutcome.NotAttempted);
+            var cityOutcome = LookupOutcome.NotAttempted;
+            var asnOutcome = LookupOutcome.NotAttempted;
 
             string? country = null, iso2 = null, city = null, asnOrg = null;
             long? asn = null;
@@ -79,8 +86,10 @@ namespace Carthago.Services.Geo
                     city = res.City?.Name;
                     lat = res.Location?.Latitude;
                     lon = res.Location?.Longitude;
+                    cityOutcome = LookupOutcome.Found;
                 }
-                catch { /* not found */ }
+                catch (AddressNotFoundException) { cityOutcome = LookupOutcome.NotFound; }
+                catch { cityOutcome = LookupOutcome.Failed; }
             }
 
             if (IsAsnDbAvailable && _asnDb != null)
@@ -90,11 +99,13 @@ namespace Carthago.Services.Geo
                     var res = _asnDb.Asn(addr);
                     asn = res.AutonomousSystemNumber;
                     asnOrg = res.AutonomousSystemOrganization;
+                    asnOutcome = LookupOutcome.Found;
                 }
-                catch { /* ignore */ }
+                catch (AddressNotFoundException) { asnOutcome = LookupOutcome.NotFound; }
+                catch { asnOutcome = LookupOutcome.Failed; }
             }
 
-            return CreateResult(country, iso2, city, lat, lon, asn, asnOrg);
+            return (CreateResult(country, iso2, city, lat, lon, asn, asnOrg), cityOutcome, asnOutcome);
         }
 
         // Keep the provider boundary consistent with capture endpoint scope.
