@@ -179,7 +179,8 @@ internal sealed class NpcapForegroundCapture : IForegroundCapture
     public ForegroundMonitorCounters ReadCounters()
     {
         var stats = _capture.GetStats();
-        return new(stats.PacketsCaptured, stats.PacketsParsedOk, stats.PacketsParseErrors, stats.RuleEventsRaised);
+        return new(stats.PacketsCaptured, stats.PacketsParsedOk, stats.PacketsParseErrors, stats.RuleEventsRaised,
+            _capture.GetHeadlessPipelineTelemetry());
     }
     public async ValueTask DisposeAsync()
     {

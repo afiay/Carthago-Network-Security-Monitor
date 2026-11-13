@@ -23,11 +23,12 @@ public static class ServiceHealthStore
 
     public static void Validate(ServiceHealthSnapshot s)
     {
-        if (s.SchemaVersion != 1 || s.SessionId == Guid.Empty || s.ProcessId <= 0 ||
+        if (s.SchemaVersion is not (1 or 2) || (s.SchemaVersion == 2) != (s.Counters?.Pipeline is not null) || s.SessionId == Guid.Empty || s.ProcessId <= 0 ||
             s.ProcessStartedUtc == default || s.ProcessStartedUtc.Offset != TimeSpan.Zero ||
             s.SampledUtc.Offset != TimeSpan.Zero || s.SampledUtc < s.ProcessStartedUtc ||
             s.Counters is not { } c || c.Captured < 0 || c.Parsed < 0 || c.ParseErrors < 0 || c.Detections < 0)
             throw new InvalidDataException("Invalid service health snapshot.");
+        if (s.Counters.Pipeline is { } telemetry) PipelineHealth.Validate(telemetry);
     }
 
     // Directory must be provisioned with administrator-controlled ACLs before service start.
@@ -75,7 +76,18 @@ public static class ServiceHealthStore
         if (stream.ReadByte() != -1) throw new InvalidDataException("Status changed while reading.");
         using var doc = JsonDocument.Parse(bytes, new JsonDocumentOptions { MaxDepth = 6 });
         RequireFields(doc.RootElement, "schemaVersion", "sessionId", "processId", "processStartedUtc", "sampledUtc", "counters");
-        RequireFields(doc.RootElement.GetProperty("counters"), "captured", "parsed", "parseErrors", "detections");
+        var counters = doc.RootElement.GetProperty("counters");
+        var version = doc.RootElement.GetProperty("schemaVersion");
+        if (version.ValueKind != JsonValueKind.Number || !version.TryGetInt32(out int schema) || schema is not (1 or 2))
+            throw new InvalidDataException("Unsupported status schema.");
+        if (schema == 2)
+        {
+            RequireFields(counters, "captured", "parsed", "parseErrors", "detections", "pipeline");
+            RequireFields(counters.GetProperty("pipeline"), "nativeStarted", "lastPacketUtc", "queueDepth", "queueCapacity",
+                "workersAlive", "workersConfigured", "workerFaults", "enrichmentFallbacks", "evaluations",
+                "journalWriteFailures", "persistedDetections", "ruleFailures");
+        }
+        else RequireFields(counters, "captured", "parsed", "parseErrors", "detections");
         var snapshot = JsonSerializer.Deserialize<ServiceHealthSnapshot>(bytes, Json)
             ?? throw new InvalidDataException("Missing status.");
         Validate(snapshot);

@@ -6,6 +6,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
@@ -1368,6 +1369,23 @@ namespace Carthago.Services
             => ticks > 0 ? new DateTimeOffset(new DateTime(ticks, DateTimeKind.Utc)) : null;
 
         public sealed record CaptureFlowSnapshot(CaptureFlowState State, long Captured, long Displayed, long Dropped, string Reason);
+
+        public PipelineTelemetry GetHeadlessPipelineTelemetry()
+        {
+            if (!_headless) throw new InvalidOperationException("Headless telemetry required.");
+            bool nativeStarted;
+            lock (_lifecycleLock)
+                nativeStarted = _device is not null && _device.Started && _runCts is { IsCancellationRequested: false };
+            var workers = _workerHealth.Snapshot();
+            var totals = RuleEngineHealthState.ReadLifetimeCounters();
+            var metrics = RuleEngineMetrics.Snapshot();
+            long Sum(string name) => metrics.Where(kv => kv.Key == name || kv.Key.EndsWith(":" + name, StringComparison.Ordinal)).Sum(kv => kv.Value);
+            return new(nativeStarted, ToUtcOffset(Interlocked.Read(ref _lastCapturedTicks)),
+                _enrichmentChannel.Reader.CanCount ? _enrichmentChannel.Reader.Count : null, EnrichmentQueueCapacity,
+                _enrichmentWorkers.Count(t => !t.IsCompleted), _enrichmentWorkers.Length, workers.Faulted,
+                Interlocked.Read(ref _enrichmentFallbacks), totals.Evaluations, totals.JournalFailures,
+                Sum(RuleMetricNames.RulePersistedTotal), Sum(RuleMetricNames.RuleFailedTotal));
+        }
 
         public CaptureSourceHealth GetCaptureSourceHealth()
         {

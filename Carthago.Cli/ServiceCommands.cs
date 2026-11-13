@@ -67,14 +67,17 @@ public static class ServiceCommands
                 }
             }
             token.ThrowIfCancellationRequested();
+            var assessment = action is "health" or "doctor" ? PipelineHealth.Assess(snapshot?.Counters,
+                snapshot?.SampledUtc, DateTimeOffset.UtcNow, status.State == ScmState.Running) : null;
             var payload = new { schemaVersion = 1, service = WindowsServiceControl.ServiceName,
                 scmState = status.State.ToString().ToLowerInvariant(), status.ProcessId, status.Win32ExitCode,
-                operation = action, health, snapshot, sourceHealth = "not_assessed", detectionValidation = "not_assessed" };
+                operation = action, health, snapshot, assessment, sourceHealth = "not_assessed", detectionValidation = "not_assessed" };
             await output.WriteLineAsync(json ? JsonSerializer.Serialize(payload, Json) :
                 $"CarthagoMonitor: {status.State}; PID {status.ProcessId}; health: {health}." +
-                (snapshot is null ? "" : $" Captured: {snapshot.Counters.Captured}; parsed: {snapshot.Counters.Parsed}; detections: {snapshot.Counters.Detections}."));
+                (snapshot is null ? "" : $" Captured: {snapshot.Counters.Captured}; parsed: {snapshot.Counters.Parsed}; detections: {snapshot.Counters.Detections}.") + (assessment is null ? "" : $" Pipeline: {assessment.State}."));
             // Doctor/health fail if no current sample, while status reports SCM state as-is.
-            return (action is "health" or "doctor") && health != "fresh_sample" ? 3 : 0;
+            return (action is "health" or "doctor") && (health != "fresh_sample" || assessment?.State == "failed" ||
+                (snapshot?.SchemaVersion == 2 && assessment?.State == "unknown")) ? 3 : 0;
         }
         catch (OperationCanceledException) when (token.IsCancellationRequested) { return 130; }
         catch (Exception ex) when (ex is not OutOfMemoryException)

@@ -128,8 +128,9 @@ public static class CliApplication
                         return await FailAsync(error, json, DataError, "unsupported_platform", "Windows SCM required.");
                     return await ServiceCommands.RunAsync(serviceAction, new WindowsServiceControl(), output, error, json, token);
                 case ["monitor", "status"]:
-                case ["engine", "health"]:
                     return await MonitorAsync(false, null, output, error, json, token, monitorQuery);
+                case ["engine", "health"]:
+                    return await MonitorAsync(false, null, output, error, json, token, monitorQuery, detailed: true);
                 case ["monitor", "stop"]:
                     return await MonitorAsync(true, null, output, error, json, token, monitorQuery);
                 case ["monitor", "stop", "--session", var sessionId]:
@@ -385,7 +386,7 @@ public static class CliApplication
     }
 
     private static async Task<int> MonitorAsync(bool stop, Guid? target, TextWriter output, TextWriter error,
-        bool json, CancellationToken token, Func<MonitorControlRequest, CancellationToken, Task<MonitorControlResponse>>? query)
+        bool json, CancellationToken token, Func<MonitorControlRequest, CancellationToken, Task<MonitorControlResponse>>? query, bool detailed = false)
     {
         if (query is null && !OperatingSystem.IsWindows())
             return await FailAsync(error, json, DataError, "unsupported_platform", "Monitor control requires Windows.");
@@ -403,7 +404,7 @@ public static class CliApplication
         try
         {
             MonitorControlResponse result;
-            if (!stop) result = await Send(MonitorControlKind.Status, null);
+            if (!stop) result = await Send(detailed ? MonitorControlKind.Health : MonitorControlKind.Status, null);
             else
             {
                 // Resolve once, then target that specific session to avoid stopping a replacement.
@@ -419,18 +420,21 @@ public static class CliApplication
                 MonitorControlState.Monitoring => "monitoring",
                 _ => "stopping"
             };
+            var assessment = detailed ? PipelineHealth.Assess(result.Counters, result.SampledUtc, DateTimeOffset.UtcNow,
+                result.State == MonitorControlState.Monitoring) : null;
             await WriteAsync(output, json, new { schemaVersion = SchemaVersion, provenance = "same_user_local_endpoint",
                 mode = "foreground_headless", sessionId = result.SessionId, state, stopAllowed = result.StopAllowed,
-                outcome = stop ? "stop_requested" : "available", result.ObservedUtc, result.SampledUtc, result.Counters,
+                outcome = stop ? "stop_requested" : "available", result.ObservedUtc, result.SampledUtc, result.Counters, assessment,
                 sourceHealth = "not_assessed", detectionValidation = "not_assessed" },
                 stop ? $"Stop requested for {result.SessionId:D}; shutdown not confirmed." :
                     $"Foreground monitor: {state} | session {result.SessionId:D} | stop allowed: {result.StopAllowed} | " +
-                    (result.Counters is null ? "Counters unavailable." : $"Captured: {result.Counters.Captured}, parsed: {result.Counters.Parsed}, parse errors: {result.Counters.ParseErrors}, detections: {result.Counters.Detections}."));
-            return Success;
+                    (result.Counters is null ? "Counters unavailable." : $"Captured: {result.Counters.Captured}, parsed: {result.Counters.Parsed}, parse errors: {result.Counters.ParseErrors}, detections: {result.Counters.Detections}.") + (assessment is null ? "" : $" Pipeline: {assessment.State}."));
+            return detailed && (assessment?.State is "failed" or "unknown") ? DataError : Success;
         }
         catch (Exception ex) when (ex is not OutOfMemoryException && !token.IsCancellationRequested)
         {
-            return await FailAsync(error, json, DataError, "monitor_unavailable", "Foreground IPC endpoint unavailable or invalid; stop outcome not confirmed.");
+            return await FailAsync(error, json, DataError, "monitor_unavailable", stop ? "Foreground IPC endpoint unavailable or invalid; stop outcome not confirmed." :
+                    "Foreground IPC endpoint unavailable or invalid.");
         }
     }
 

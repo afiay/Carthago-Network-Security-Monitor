@@ -5,7 +5,8 @@ namespace Carthago.Contracts;
 
 public sealed record ForegroundMonitorOptions(string InterfaceId, string? Filter, int StatusSeconds, bool Json,
     bool EnableCliIpc = false, bool AllowCliStop = false);
-public sealed record ForegroundMonitorCounters(long Captured, long Parsed, long ParseErrors, long Detections);
+public sealed record ForegroundMonitorCounters(long Captured, long Parsed, long ParseErrors, long Detections,
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] PipelineTelemetry? Pipeline = null);
 public interface IForegroundCapture : IAsyncDisposable
 {
     void Start(string interfaceId, string? filter);
@@ -74,13 +75,16 @@ public static class ForegroundMonitor
                 var counters = capture.ReadCounters();
                 session?.Publish(counters);
                 sample?.Invoke(counters);
+                var observed = DateTimeOffset.UtcNow;
                 // Not a proof of continuous source liveness or lossless capture.
                 string state = counters.Captured > 0 ? "capture_observed" : "started_no_packets_observed";
                 await output.WriteLineAsync(options.Json ? JsonSerializer.Serialize(new
                 {
                     schemaVersion = 1, mode = "foreground_headless", state,
-                    observedUtc = DateTimeOffset.UtcNow, counters.Captured, counters.Parsed,
+                    observedUtc = observed, counters.Captured, counters.Parsed,
                     counters.ParseErrors, detections = counters.Detections,
+                    pipeline = counters.Pipeline,
+                    assessment = PipelineHealth.Assess(counters, observed, observed, true),
                     sourceHealth = "not_assessed", detectionValidation = "not_assessed"
                 }, new JsonSerializerOptions(JsonSerializerDefaults.Web)) :
                     $"{state}: captured={counters.Captured}, parsed={counters.Parsed}, parseErrors={counters.ParseErrors}, detections={counters.Detections}");

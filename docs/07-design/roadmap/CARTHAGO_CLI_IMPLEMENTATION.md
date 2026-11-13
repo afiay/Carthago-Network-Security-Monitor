@@ -382,3 +382,25 @@ not pending enrichment/rule evaluation or authenticated owner identity.
 Named object squatting can deny startup; no security-boundary claim.
 Windows cross-process/session/account, crash release, actual native
 startup/stop and desktop regressions remain unverified.
+
+## CLI-005C3C — measured pipeline assessment
+
+SOURCE CANDIDATE — UNVERIFIED. Headless adapter adds native Started,
+last packet UTC, queue depth/capacity, live/configured worker tasks,
+worker faults/fallbacks, evaluation count and process-lifetime journal
+failure/persisted/rule failure counters. Health read is non-destructive.
+Foreground V4 Health request returns extended counters; old Status/Stop
+requests omit extension. Service snapshot schema 2 includes pipeline;
+reader accepts schema 1 (unknown assessment) and schema 2. Update CLI
+and service together; old readers reject schema 2. Engine health is
+foreground only; service health is SCM/process-bound. Fixed policy:
+120s sample age, 30s recent packet window, 80% queue pressure, 10% lifetime
+parse error ratio with >=20 attempts. Fail on native not started,
+zero worker tasks or any lifetime journal failure; degrade on worker
+exit/fault, fallback, rule failure, queue pressure or parse ratio.
+Historical failures latch until process restart; no recovery inference.
+Idle is not proof of native source health; healthy means observed
+pipeline with no measured degradation, not losslessness/accuracy.
+Journal not exercised if no persisted event; external sink delivery
+not assessed. Samples are non-atomic across counters. Tests authored,
+Windows/runtime verification pending.

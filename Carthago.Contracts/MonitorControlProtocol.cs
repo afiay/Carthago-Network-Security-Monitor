@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 namespace Carthago.Contracts;
 
-public enum MonitorControlKind { Status = 1, Stop = 2 }
+public enum MonitorControlKind { Status = 1, Stop = 2, Health = 3 }
 public enum MonitorControlState { Starting = 1, Monitoring = 2, Stopping = 3 }
 public enum MonitorControlOutcome { Available = 1, StopAccepted = 2, StopDisabled = 3, SessionMismatch = 4, AlreadyStopping = 5 }
 public sealed record MonitorControlRequest(int Version, Guid Correlation, MonitorControlKind Kind, Guid? SessionId = null);
@@ -15,8 +15,8 @@ public static class MonitorControlProtocol
     public static void ValidateRequest(MonitorControlRequest q)
     {
         if (q.Version != Version || q.Correlation == Guid.Empty ||
-            q.Kind is not (MonitorControlKind.Status or MonitorControlKind.Stop) ||
-            (q.Kind == MonitorControlKind.Status && q.SessionId is not null) ||
+            q.Kind is not (MonitorControlKind.Status or MonitorControlKind.Stop or MonitorControlKind.Health) ||
+            (q.Kind != MonitorControlKind.Stop && q.SessionId is not null) ||
             (q.Kind == MonitorControlKind.Stop && (q.SessionId is null || q.SessionId == Guid.Empty)))
             throw new InvalidDataException("Invalid monitor request.");
     }
@@ -31,7 +31,8 @@ public static class MonitorControlProtocol
             (r.SampledUtc is { } sampled && (sampled.Offset != TimeSpan.Zero || sampled == default || sampled > r.ObservedUtc)) ||
             (r.Counters is { } c && (c.Captured < 0 || c.Parsed < 0 || c.ParseErrors < 0 || c.Detections < 0)) ||
             (r.State == MonitorControlState.Starting && r.Counters is not null) ||
-            (q.Kind == MonitorControlKind.Status && r.Outcome != MonitorControlOutcome.Available) ||
+            (q.Kind != MonitorControlKind.Stop && r.Outcome != MonitorControlOutcome.Available) ||
+            (q.Kind != MonitorControlKind.Health && r.Counters?.Pipeline is not null) ||
             (q.Kind == MonitorControlKind.Stop && r.Outcome == MonitorControlOutcome.Available) ||
             (r.Outcome == MonitorControlOutcome.SessionMismatch && q.SessionId == r.SessionId) ||
             (q.Kind == MonitorControlKind.Stop && r.Outcome != MonitorControlOutcome.SessionMismatch && q.SessionId != r.SessionId) ||
@@ -39,6 +40,7 @@ public static class MonitorControlProtocol
             (r.Outcome == MonitorControlOutcome.StopDisabled && r.StopAllowed) ||
             (r.Outcome == MonitorControlOutcome.AlreadyStopping && r.State != MonitorControlState.Stopping))
             throw new InvalidDataException("Invalid monitor response.");
+        if (r.Counters?.Pipeline is { } telemetry) PipelineHealth.Validate(telemetry);
     }
 }
 
@@ -85,7 +87,7 @@ public sealed class MonitorControlSession
         MonitorControlProtocol.ValidateRequest(q);
         lock (_gate)
         {
-            var outcome = q.Kind == MonitorControlKind.Status ? MonitorControlOutcome.Available :
+            var outcome = q.Kind != MonitorControlKind.Stop ? MonitorControlOutcome.Available :
                 q.SessionId != SessionId ? MonitorControlOutcome.SessionMismatch :
                 !_allowStop ? MonitorControlOutcome.StopDisabled :
                 _state == MonitorControlState.Stopping ? MonitorControlOutcome.AlreadyStopping :
@@ -94,7 +96,8 @@ public sealed class MonitorControlSession
             var now = DateTimeOffset.UtcNow;
             if (_sampledUtc is { } sampled && sampled > now) now = sampled;
             return new(MonitorControlProtocol.Version, q.Correlation, q.Kind, SessionId,
-                _state, outcome, _allowStop, now, _sampledUtc, _counters);
+                _state, outcome, _allowStop, now, _sampledUtc,
+                q.Kind == MonitorControlKind.Health ? _counters : _counters is null ? null : _counters with { Pipeline = null });
         }
     }
 

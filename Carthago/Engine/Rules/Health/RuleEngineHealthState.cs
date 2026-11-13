@@ -52,6 +52,10 @@ namespace Carthago.Services
             _lastMonotonicBaseUtc = referenceUtc.Kind == DateTimeKind.Utc ? referenceUtc : referenceUtc.ToUniversalTime();
         }
 
+        // Non-destructive telemetry: unlike Snapshot, does not consume capture-drop delta.
+        public static (long Evaluations, long JournalFailures) ReadLifetimeCounters() =>
+            (Interlocked.Read(ref _evaluationCount), Interlocked.Read(ref _journalWriteFailureCount));
+
         public static RuleEngineHealthSnapshot Snapshot(DateTime timestampUtc)
         {
             var totalDrops = Interlocked.Read(ref _captureDropCount);

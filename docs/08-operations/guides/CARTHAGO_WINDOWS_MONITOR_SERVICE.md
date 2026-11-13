@@ -165,3 +165,20 @@ retrying capture. This is cooperative exclusion, not protection from old
 builds, unrelated capture tools, active sensors or hostile local processes.
 The previously documented operator-exclusive-capture confirmation remains
 required until Windows cross-account/session qualification passes.
+
+## Measured pipeline health (CLI-005C3C)
+
+Update service and CLI together. Service snapshot schema 2 carries
+pipeline telemetry; older CLI readers cannot read schema 2. New CLI
+reads schema 1 as legacy/unknown. service health/doctor report separate
+snapshot freshness and pipeline assessment. Foreground engine health
+uses a new V4 Health query; status/stop keep old response shape.
+Failed or unknown schema-2 assessment returns exit 3, idle/degraded
+remain observable results. Legacy fresh schema-1 health remains exit 0
+with unknown assessment. No fresh sample returns exit 3.
+
+Healthy is limited to observed recent capture, rule evaluation and
+absence of measured degradation. Idle does not distinguish quiet
+traffic from a silently stalled source. Journal failures are cumulative
+and latch failed until process restart; persistence observed does not
+establish external sink delivery. Detection accuracy is not assessed.

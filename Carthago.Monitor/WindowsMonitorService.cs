@@ -50,7 +50,7 @@ internal sealed class WindowsMonitorService : ServiceBase
                 token.ThrowIfCancellationRequested();
                 return new NpcapForegroundCapture();
             }, TextWriter.Null, sample: counters => ServiceHealthStore.Write(statusPath,
-                new ServiceHealthSnapshot(1, session, pid, processStarted, DateTimeOffset.UtcNow, counters)));
+                new ServiceHealthSnapshot(2, session, pid, processStarted, DateTimeOffset.UtcNow, counters)));
             _run.Started.WaitAsync(TimeSpan.FromSeconds(30)).GetAwaiter().GetResult();
             // An unexpected worker exit is a process failure, not a healthy idle service.
             // Worker cleanup has completed before this continuation runs.
