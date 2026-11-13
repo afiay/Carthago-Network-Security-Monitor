@@ -65,17 +65,17 @@ namespace Carthago
             Grid.SetRow(SettingsHeroGuidance, wide ? 0 : 1);
             Grid.SetColumn(SettingsHeroGuidance, wide ? 1 : 0);
             SettingsHeroIntro.Margin = wide ? new Thickness(0, 0, 16, 0) : new Thickness(0, 0, 0, 12);
-            SettingsWorkspaceMap.Columns = wide ? 3 : 1;
+            SettingsWorkspaceMap.Columns = narrowKpis ? 1 : 2;
             SettingsSensitivityProfiles.Columns = wide ? 3 : 1;
             for (var index = 0; index < SettingsSensitivityProfiles.Children.Count; index++)
             {
                 if (SettingsSensitivityProfiles.Children[index] is Border card)
                     card.Margin = wide ? new Thickness(0, 0, index < 2 ? 12 : 0, 0) : new Thickness(0, 0, 0, index < 2 ? 12 : 0);
             }
-            foreach (var tile in SettingsWorkspaceMap.Children)
+            for (var index = 0; index < SettingsWorkspaceMap.Children.Count; index++)
             {
-                if (tile is Border border)
-                    border.Margin = wide ? new Thickness(0, 0, 10, 0) : new Thickness(0, 0, 0, 10);
+                if (SettingsWorkspaceMap.Children[index] is Border tile)
+                    tile.Margin = new Thickness(0, 0, !narrowKpis && index % 2 == 0 ? 12 : 0, 12);
             }
             SettingsSensitivityLabelColumn.Width = new GridLength(narrowKpis ? 130 : 160);
             SettingsCaptureExternalColumn.Width = wide ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
@@ -89,6 +89,23 @@ namespace Carthago
             // The existing settings values and session-only credential handler are unchanged.
         }
 
+
+        // GA UI-176: in-page navigation only; no preference or capture mutations.
+        private void SettingsWorkspaceJump_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not Button button)
+                return;
+
+            FrameworkElement? target = (button.Tag as string) switch
+            {
+                "Detection" => SettingsDetectionGroup,
+                "Capture" => SettingsCaptureGroup,
+                "Dashboard" => SettingsDashboardGroup,
+                "Actions" => SettingsFooterActionsGrid,
+                _ => null
+            };
+            target?.BringIntoView(new Rect(0, 0, 1, 1));
+        }
 
         private void SaveSettings_Click(object sender, RoutedEventArgs e)
         {
