@@ -44,6 +44,16 @@
     <Compile Include="../Carthago/Services/ProtocolIntelligence/TftpHandshakeTracker.cs" Link="Services/ProtocolIntelligence/TftpHandshakeTracker.cs" />
     <Compile Include="../Carthago/Services/ProtocolIntelligence/Smb2WriteExchange.cs" Link="Services/ProtocolIntelligence/Smb2WriteExchange.cs" />
     <Compile Include="../Carthago/Services/ProtocolIntelligence/Smb2WriteTargetContext.cs" Link="Services/ProtocolIntelligence/Smb2WriteTargetContext.cs" />
+    <Compile Include="../Carthago/Services/NetworkBatch226230Wire.cs" Link="Services/NetworkBatch226230Wire.cs" />
+    <Compile Include="../Carthago/Services/NetworkBatch231235Wire.cs" Link="Services/NetworkBatch231235Wire.cs" />
+    <Compile Include="../Carthago/Services/NetworkBatch246250Wire.cs" Link="Services/NetworkBatch246250Wire.cs" />
+    <Compile Include="../Carthago/Services/OtProtocolLight.cs" Link="Services/OtProtocolLight.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/DnsAObservationInspector.cs" Link="Services/ProtocolIntelligence/DnsAObservationInspector.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/EtherNetIpRegisterSessionInspector.cs" Link="Services/ProtocolIntelligence/EtherNetIpRegisterSessionInspector.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/FinsControllerStopInspector.cs" Link="Services/ProtocolIntelligence/FinsControllerStopInspector.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/FinsDataMemoryClearInspector.cs" Link="Services/ProtocolIntelligence/FinsDataMemoryClearInspector.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/FinsNodeNegotiationInspector.cs" Link="Services/ProtocolIntelligence/FinsNodeNegotiationInspector.cs" />
+    <Compile Include="../Carthago/Services/TlsIdentityEnrichment.cs" Link="Services/TlsIdentityEnrichment.cs" />
     <!-- Preserve existing internal access while consumers migrate. -->
     <InternalsVisibleTo Include="Carthago" />
     <InternalsVisibleTo Include="carthago" />

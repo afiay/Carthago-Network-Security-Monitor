@@ -48,6 +48,16 @@
     <Compile Remove="Services/ProtocolIntelligence/DnsAddressObservationInspector.cs" />
     <Compile Remove="Services/ProtocolIntelligence/BacnetEventDisableInspector.cs" />
     <Compile Remove="Models/TrafficRecord.cs" />
+    <Compile Remove="Services/NetworkBatch226230Wire.cs" />
+    <Compile Remove="Services/NetworkBatch231235Wire.cs" />
+    <Compile Remove="Services/NetworkBatch246250Wire.cs" />
+    <Compile Remove="Services/OtProtocolLight.cs" />
+    <Compile Remove="Services/ProtocolIntelligence/DnsAObservationInspector.cs" />
+    <Compile Remove="Services/ProtocolIntelligence/EtherNetIpRegisterSessionInspector.cs" />
+    <Compile Remove="Services/ProtocolIntelligence/FinsControllerStopInspector.cs" />
+    <Compile Remove="Services/ProtocolIntelligence/FinsDataMemoryClearInspector.cs" />
+    <Compile Remove="Services/ProtocolIntelligence/FinsNodeNegotiationInspector.cs" />
+    <Compile Remove="Services/TlsIdentityEnrichment.cs" />
     <Compile Remove="Services/ProtocolIntelligence/Iec104ApduInspector.cs" />
     <Compile Remove="Services/ProtocolIntelligence/Iec104StartupOffSequence.cs" />
     <Compile Remove="Services/ProtocolIntelligence/OpcUaConnectionInspector.cs" />

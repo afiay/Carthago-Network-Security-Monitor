@@ -21,3 +21,4 @@ System boundaries, evidence lineage, sensors and architectural constraints.
 - [CLI-006B.3C2A — Portable fingerprints](CLI-006B3C2A-PortableFingerprints.md)
 - [CLI-006B.3C2B — Portable industrial inspectors](CLI-006B3C2B-PortableIndustrial.md)
 - [CLI-006B.3C2C — Portable protocol exchanges](CLI-006B3C2C-PortableExchanges.md)
+- [CLI-006B.3C3A — Portable packet helpers](CLI-006B3C3A-PortablePacketHelpers.md)
