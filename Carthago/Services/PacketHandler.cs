@@ -914,6 +914,15 @@ namespace Carthago.Services
                             rec.Dnp3RestartRequestObserved = true;
                         }
 
+                        // Exact DNP3 disable unsolicited for all three event classes.
+                        if (isIPv4 && sport == 20000 && dport == 20000 &&
+                            completeIpPacket && l4PayloadLen == ipPayloadLen - 8 && !rec.IsQuic &&
+                            Dnp3DisableUnsolicitedInspector.TryInspect(l4Payload))
+                        {
+                            rec.ApplicationProtocol = "dnp3.disable_unsolicited.request";
+                            rec.Dnp3DisableUnsolicitedObserved = true;
+                        }
+
                         // Capture-attested TFTP initial request/first reply, not generic port guessing.
                         if (isIPv4 && completeIpPacket && l4PayloadLen == ipPayloadLen - 8)
                             _tftpHandshake.Observe(rec, l4Payload, true, _utcNow());

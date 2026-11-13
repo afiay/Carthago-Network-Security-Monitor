@@ -175,6 +175,7 @@ namespace Carthago.Models
         public bool BacnetEventDisableRequestObserved { get; internal set; }
         public bool Dnp3UnsolicitedBinaryEventObserved { get; internal set; }
         public bool Dnp3RestartRequestObserved { get; internal set; }
+        public bool Dnp3DisableUnsolicitedObserved { get; internal set; }
         // Capture-only unit/register key, intentionally excluded from JSON/export.
         internal uint? ModbusSingleRegisterWritePoint { get; set; }
         public byte? TftpInitialRequestOpcode { get; internal set; }

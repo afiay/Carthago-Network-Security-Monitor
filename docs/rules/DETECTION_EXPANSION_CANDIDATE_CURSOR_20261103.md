@@ -251,3 +251,8 @@ Workbook R2711 AN1861; exact captured WriteProperty bit-string request, Candidat
 ## R980 — DNP3 cold/warm restart request
 
 Workbook R2697 AN1933; exact CRC-checked master restart command, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_980-980.md). 36 authored cases, zero execution; no source approval, accepted command or actual restart claim. Next ID R981.
+
+
+## R981 — DNP3 Disable Unsolicited all event classes
+
+Workbook R2717 AN2216; request-only projection, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_981-981.md). 36 authored cases, zero execution; no reporting loss or continued polling claim. Next ID R982.

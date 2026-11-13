@@ -1003,6 +1003,7 @@ namespace Carthago.Engine.Rules.Catalog
                 new R978_PrivateModbusBulkFileReadResponseRule(),
                 new R979_PublicBacnetEventDisableRequestRule(),
                 new R980_PublicDnp3RestartRequestRule(),
+                new R981_PublicDnp3DisableUnsolicitedRule(),
             };
         }
 
