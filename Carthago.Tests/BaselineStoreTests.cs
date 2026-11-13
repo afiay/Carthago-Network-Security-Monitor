@@ -134,4 +134,35 @@ public sealed class BaselineStoreTests
         Assert.Contains(readiness.Blockers, item => item.Contains("corrupt", StringComparison.OrdinalIgnoreCase));
         Assert.Equal("{invalid historical baseline", await File.ReadAllTextAsync(snapshot));
     }
+    [Fact]
+    public async Task ScopedReadiness_Does_Not_Borrow_History_From_Other_Subjects_Or_Kinds()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "carthago-baseline-tests", Guid.NewGuid().ToString("N"));
+        try
+        {
+            var options = new BaselineOptions { DirectoryPath = directory, MinimumObservations = 2,
+                MinimumDistinctKeys = 2, MinimumObservationSpan = TimeSpan.FromMinutes(30) };
+            var store = new BaselineStore(options);
+            var now = DateTime.UtcNow;
+            await store.ObserveAsync(new BaselineObservation("dns.domain", "host-ab", "one.test", now.AddHours(-1), ""));
+            await store.ObserveAsync(new BaselineObservation("dns.domain", "host-ab", "two.test", now, ""));
+            await store.ObserveAsync(new BaselineObservation("dns.other", "host-a", "one.test", now.AddHours(-1), ""));
+            await store.ObserveAsync(new BaselineObservation("dns.other", "host-a", "two.test", now, ""));
+            Assert.True(store.Readiness.IsReady);
+            var empty = await store.GetScopedReadinessAsync("dns.domain", "host-a");
+            Assert.False(empty.IsReady);
+            Assert.Equal(0, empty.ObservationCount);
+            await store.ObserveAsync(new BaselineObservation("dns.domain", "host-a", "one.test", now.AddHours(-1), ""));
+            Assert.False((await store.GetScopedReadinessAsync("dns.domain", "host-a")).IsReady);
+            await store.ObserveAsync(new BaselineObservation("dns.domain", "host-a", "two.test", now, ""));
+            var reopened = new BaselineStore(options);
+            var ready = await reopened.GetScopedReadinessAsync("dns.domain", "host-a");
+            Assert.True(ready.IsReady);
+            Assert.Equal(2, ready.ObservationCount);
+            Assert.Equal(2, ready.DistinctKeys);
+            await reopened.ClearAsync();
+            Assert.False((await reopened.GetScopedReadinessAsync("dns.domain", "host-a")).IsReady);
+        }
+        finally { Directory.Delete(directory, recursive: true); }
+    }
 }

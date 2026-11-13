@@ -117,6 +117,27 @@ namespace Carthago.Services.Baseline
             finally { _gate.Release(); }
         }
 
+        // Scope is exact kind + subject, not a prefix or a global readiness proxy.
+        // This measures persisted history only; callers must independently establish
+        // capture provenance and environment identity before using it for promotion.
+        public async Task<BaselineReadiness> GetScopedReadinessAsync(
+            string kind, string subject, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(kind) || string.IsNullOrWhiteSpace(subject))
+                throw new ArgumentException("A baseline scope needs a kind and subject.");
+
+            await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                await LoadIfNeededAsync(cancellationToken).ConfigureAwait(false);
+                var prefix = JsonSerializer.Serialize(new[] { kind, subject });
+                prefix = prefix.Substring(0, prefix.Length - 1) + ",";
+                return CalculateReadiness(_entries.Where(pair =>
+                    pair.Key.StartsWith(prefix, StringComparison.Ordinal)).Select(pair => pair.Value));
+            }
+            finally { _gate.Release(); }
+        }
+
         public async Task<BaselineDecision> ObserveAsync(
             BaselineObservation observation, CancellationToken cancellationToken = default)
         {
@@ -187,14 +208,19 @@ namespace Carthago.Services.Baseline
         }
 
         private void UpdateReadiness()
+            => Volatile.Write(ref _readiness, CalculateReadiness(_entries.Values));
+
+        private BaselineReadiness CalculateReadiness(IEnumerable<Entry> entries)
         {
             var now = DateTime.UtcNow;
             var count = 0;
             var first = DateTime.MaxValue;
             var last = DateTime.MinValue;
             var blockers = new List<string>();
-            foreach (var entry in _entries.Values)
+            var distinct = 0;
+            foreach (var entry in entries)
             {
+                distinct++;
                 count += entry.Count;
                 if (entry.FirstSeenUtc < first) first = entry.FirstSeenUtc;
                 if (entry.LastSeenUtc > last) last = entry.LastSeenUtc;
@@ -203,17 +229,17 @@ namespace Carthago.Services.Baseline
                     blockers.Add("invalid baseline observation timestamps or counts");
             }
 
-            var span = _entries.Count == 0 ? TimeSpan.Zero : last - first;
+            var span = distinct == 0 ? TimeSpan.Zero : last - first;
             if (!_loaded) blockers.Add("baseline not loaded");
             if (_corruptJournal) blockers.Add("corrupt baseline journal");
             if (count < _options.MinimumObservations) blockers.Add("insufficient persisted observations");
-            if (_entries.Count < _options.MinimumDistinctKeys) blockers.Add("insufficient distinct baseline keys");
+            if (distinct < _options.MinimumDistinctKeys) blockers.Add("insufficient distinct baseline keys");
             if (span < _options.MinimumObservationSpan) blockers.Add("baseline observation duration too short");
-            if (_entries.Count == 0 || now - last > _options.MaximumObservationAge)
+            if (distinct == 0 || now - last > _options.MaximumObservationAge)
                 blockers.Add("baseline observations are stale");
             if (_options.LearningMode) blockers.Add("forced learning mode");
-            Volatile.Write(ref _readiness, new BaselineReadiness(blockers.Count == 0, count,
-                _entries.Count, span, blockers.Distinct(StringComparer.OrdinalIgnoreCase).ToArray()));
+            return new BaselineReadiness(blockers.Count == 0, count,
+                distinct, span, blockers.Distinct(StringComparer.OrdinalIgnoreCase).ToArray());
         }
 
         private async Task LoadIfNeededAsync(CancellationToken cancellationToken)
