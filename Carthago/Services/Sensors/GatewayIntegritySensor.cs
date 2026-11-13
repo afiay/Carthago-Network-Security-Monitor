@@ -18,6 +18,11 @@ public sealed record GatewayIntegrityObservation(IPAddress Source, IPAddress Gat
     bool CacheDiffers, string? ExpectedMac, bool ClaimLimitReached, DateTimeOffset ObservedUtc);
 
 /// <summary>Two targeted ARP requests, with distinct claims retained independently of neighbor cache.</summary>
+internal sealed class GatewayScopeChangedException : InvalidOperationException
+{
+    internal GatewayScopeChangedException() : base("The selected adapter, configured gateway or authorization has changed.") { }
+}
+
 public static class GatewayIntegritySensor
 {
     internal const int MaxClaims = 16;
@@ -28,6 +33,7 @@ public static class GatewayIntegritySensor
         string hex = value.Trim().Replace(":", "").Replace("-", "");
         if (hex.Length != 12 || hex.Any(c => !Uri.IsHexDigit(c))) return null;
         var bytes = Convert.FromHexString(hex);
+        if (bytes.All(b => b == 0) || (bytes[0] & 1) != 0) return null;
         return WindowsLanArpResolver.FormatMac(bytes, 6);
     }
 
@@ -65,8 +71,18 @@ public static class GatewayIntegritySensor
             expected, limitReached, DateTimeOffset.UtcNow);
     }
 
-    public static async Task<GatewayIntegrityObservation> CheckAsync(ILiveDevice device,
-        LocalLanInterface adapter, IPAddress gateway, string? expectedMac, CancellationToken token = default)
+    internal static bool IsConfiguredGateway(Guid id, LocalLanInterface adapter, IPAddress gateway) =>
+        LocalLanDiscovery.GetLocalInterfaces(id).Any(a => a.Address.Equals(adapter.Address) && a.Mask.Equals(adapter.Mask)) &&
+        LocalLanDiscovery.PlanProbeTargets(new[] { adapter }).Contains(gateway) &&
+        NetworkInterface.GetAllNetworkInterfaces().Any(n => Guid.TryParse(n.Id, out var guid) && guid == id &&
+            n.GetIPProperties().GatewayAddresses.Any(g => g.Address.Equals(gateway)));
+
+    public static Task<GatewayIntegrityObservation> CheckAsync(ILiveDevice device,
+        LocalLanInterface adapter, IPAddress gateway, string? expectedMac, CancellationToken token = default) =>
+        CheckAuthorizedAsync(device, adapter, gateway, expectedMac, () => true, token);
+
+    internal static async Task<GatewayIntegrityObservation> CheckAuthorizedAsync(ILiveDevice device,
+        LocalLanInterface adapter, IPAddress gateway, string? expectedMac, Func<bool> authorized, CancellationToken token)
     {
         ArgumentNullException.ThrowIfNull(device);
         ArgumentNullException.ThrowIfNull(adapter);
@@ -79,12 +95,13 @@ public static class GatewayIntegritySensor
             throw new ArgumentException("Expected MAC must be a nonzero unicast 6-byte MAC.", nameof(expectedMac));
         // Verify the live adapter, source IP and configured gateway again at execution.
         var id = CaptureDeviceLabelFormatter.ParseDeviceGuid(device.Name);
-        if (!id.HasValue || !LocalLanDiscovery.GetLocalInterfaces(id.Value).Any(a =>
-                a.Address.Equals(adapter.Address) && a.Mask.Equals(adapter.Mask)) ||
-            !NetworkInterface.GetAllNetworkInterfaces().Any(n =>
-                Guid.TryParse(n.Id, out var guid) && guid == id.Value &&
-                n.GetIPProperties().GatewayAddresses.Any(g => g.Address.Equals(gateway))))
-            throw new InvalidOperationException("The selected adapter or configured gateway has changed.");
+        void EnsureScope()
+        {
+            token.ThrowIfCancellationRequested();
+            if (!id.HasValue || !IsConfiguredGateway(id.Value, adapter, gateway) || !authorized())
+                throw new GatewayScopeChangedException();
+        }
+        EnsureScope();
         var mac = device.MacAddress ?? throw new InvalidOperationException("Adapter MAC unavailable.");
         var request = NpcapArpDiscovery.BuildRequest(mac, adapter.Address, gateway);
 
@@ -108,7 +125,7 @@ public static class GatewayIntegritySensor
         bool openAttempted = false, startAttempted = false, attached = false;
         await ReservedNpcapOperation.RunAsync(async () =>
         {
-            token.ThrowIfCancellationRequested();
+            EnsureScope();
             // Mark attempted operations before calling native code: partial
             // initialization must also be cleaned up.
             attached = true;
@@ -124,7 +141,7 @@ public static class GatewayIntegritySensor
             // Do not stop after the first reply: retain competing claims across both windows.
             for (int pass = 0; pass < 2; pass++)
             {
-                token.ThrowIfCancellationRequested();
+                EnsureScope();
                 device.SendPacket(request);
                 await Task.Delay(pass == 0 ? 350 : 850, token).ConfigureAwait(false);
             }
@@ -136,7 +153,7 @@ public static class GatewayIntegritySensor
                 () => { if (openAttempted) device.Close(); },
                 () => { if (attached) device.OnPacketArrival -= OnPacket; });
         }, token).ConfigureAwait(false);
-        token.ThrowIfCancellationRequested();
+        EnsureScope();
         lock (gate) return Evaluate(adapter.Address, gateway, claims, cached, expected, overflow);
     }
 }

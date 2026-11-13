@@ -20,7 +20,7 @@ public sealed class ActiveSensorManagerTests
     private static readonly DateTimeOffset Initial = new(2026, 11, 13, 0, 0, 0, TimeSpan.Zero);
 
     [Theory]
-    [InlineData("Gateway")]
+    [InlineData("100")]
     [InlineData("99")]
     public void ManualOnlyRejected(string kind) => Assert.Throws<ArgumentException>(() => Profile(Enum.Parse<ActiveSensorKind>(kind)));
 

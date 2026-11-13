@@ -22,9 +22,9 @@ internal sealed record ActiveSensorProfile(Guid Id, Guid AdapterId, LocalLanInte
             throw new ArgumentException("Select an approved local IPv4 target and adapter.");
         if (interval < TimeSpan.FromMinutes(5) || interval > TimeSpan.FromHours(24))
             throw new ArgumentException("Interval must be between five minutes and 24 hours.");
-        if (kind is not (ActiveSensorKind.Tcp or ActiveSensorKind.Dns or ActiveSensorKind.Tls or ActiveSensorKind.Http or ActiveSensorKind.Snmp))
+        if (kind is not (ActiveSensorKind.Tcp or ActiveSensorKind.Dns or ActiveSensorKind.Tls or ActiveSensorKind.Http or ActiveSensorKind.Snmp or ActiveSensorKind.Gateway))
             throw new ArgumentException("This sensor is manual-only.");
-        if (kind == ActiveSensorKind.Tcp) { hostName = ""; port = 0; }
+        if (kind is ActiveSensorKind.Tcp or ActiveSensorKind.Gateway) { hostName = ""; port = 0; }
         else if (kind == ActiveSensorKind.Snmp) { hostName = ""; port = 161; }
         else
         {
@@ -55,6 +55,8 @@ internal sealed class ActiveSensorManager
     private readonly Func<ActiveEvidenceRow, bool> _save;
     private readonly Func<ActiveSensorProfile, LocalLanInterface, SnmpCredential, CancellationToken, Task<ActiveSensorRun>> _snmpProbe;
     private readonly Func<IDisposable> _acquireReservation;
+    private readonly Func<ActiveSensorProfile, bool> _gatewayCurrent;
+    private readonly Func<ActiveSensorProfile, LocalLanInterface, Func<bool>, CancellationToken, Task<ActiveSensorRun>> _gatewayProbe;
     private readonly bool _allowsTestTick;
     private bool _busy;
     private bool _loopActive;
@@ -63,7 +65,9 @@ internal sealed class ActiveSensorManager
         Func<ActiveSensorProfile, LocalLanInterface?>? resolve = null,
         Func<ActiveSensorProfile, LocalLanInterface, CancellationToken, Task<ActiveSensorRun>>? probe = null,
         Func<ActiveEvidenceRow, bool>? save = null, Func<IDisposable>? acquireReservation = null,
-        Func<ActiveSensorProfile, LocalLanInterface, SnmpCredential, CancellationToken, Task<ActiveSensorRun>>? snmpProbe = null)
+        Func<ActiveSensorProfile, LocalLanInterface, SnmpCredential, CancellationToken, Task<ActiveSensorRun>>? snmpProbe = null,
+        Func<ActiveSensorProfile, bool>? gatewayCurrent = null,
+        Func<ActiveSensorProfile, LocalLanInterface, Func<bool>, CancellationToken, Task<ActiveSensorRun>>? gatewayProbe = null)
     {
         _clock = clock ?? (() => DateTimeOffset.UtcNow);
         _resolve = resolve ?? Resolve;
@@ -71,7 +75,9 @@ internal sealed class ActiveSensorManager
         _snmpProbe = snmpProbe ?? ProbeSnmpAsync;
         _save = save ?? (row => new ActiveEvidenceStore().Save(row));
         _acquireReservation = acquireReservation ?? WindowsActiveSchedulerReservation.Acquire;
-        _allowsTestTick = probe is not null || snmpProbe is not null;
+        _gatewayCurrent = gatewayCurrent ?? (p => GatewayIntegritySensor.IsConfiguredGateway(p.AdapterId, p.Adapter, p.Target));
+        _gatewayProbe = gatewayProbe ?? ProbeGatewayAsync;
+        _allowsTestTick = probe is not null || snmpProbe is not null || gatewayProbe is not null;
     }
 
     internal void Add(ActiveSensorProfile p) => AddCore(p, null, Guid.Empty);
@@ -85,8 +91,8 @@ internal sealed class ActiveSensorManager
 
     private void AddCore(ActiveSensorProfile p, ActiveSensorProfileStore? store, Guid grantId)
     {
-        if (p.Kind == ActiveSensorKind.Snmp && store is null)
-            throw new InvalidOperationException("Scheduled SNMP requires a credential-bound durable grant.");
+        if (p.Kind is ActiveSensorKind.Snmp or ActiveSensorKind.Gateway && store is null)
+            throw new InvalidOperationException("Scheduled SNMP and Gateway require a durable grant.");
         // Revalidate even if a caller directly constructs an internal record.
         var valid = ActiveSensorProfile.Create(p.AdapterId, p.Adapter, p.Target, p.Kind, p.HostName,
             p.Port, p.Interval, p.SaveHistory);
@@ -183,7 +189,13 @@ internal sealed class ActiveSensorManager
             }
             token.ThrowIfCancellationRequested();
             ActiveSensorRun result;
-            if (p.Kind == ActiveSensorKind.Snmp)
+            if (p.Kind == ActiveSensorKind.Gateway)
+            {
+                if (!_gatewayCurrent(p)) throw new GatewayScopeChangedException();
+                result = await _gatewayProbe(p, adapter, () => Authorized(p) && _gatewayCurrent(p), token).ConfigureAwait(false);
+                if (!_gatewayCurrent(p)) throw new GatewayScopeChangedException();
+            }
+            else if (p.Kind == ActiveSensorKind.Snmp)
             {
                 var binding = _grants[p.Id];
                 var secret = binding.Store.LoadAuthorizedSnmp(p, binding.GrantId);
@@ -229,6 +241,19 @@ internal sealed class ActiveSensorManager
                     catch (Exception ex) when (ex is not OutOfMemoryException) { history = "Storage failed"; }
                 }
             }
+            return true;
+        }
+        catch (CaptureReservationUnavailableException) when (p.Kind == ActiveSensorKind.Gateway)
+        {
+            outcome = "Capture unavailable — deferred";
+            history = p.SaveHistory ? "Not saved" : "Not requested";
+            return true;
+        }
+        catch (GatewayScopeChangedException) when (p.Kind == ActiveSensorKind.Gateway)
+        {
+            blocked = true;
+            outcome = "Gateway scope or authorization changed — remove and reapprove";
+            history = p.SaveHistory ? "Not saved" : "Not requested";
             return true;
         }
         catch (OperationCanceledException) when (token.IsCancellationRequested)
@@ -291,6 +316,18 @@ internal sealed class ActiveSensorManager
     private static LocalLanInterface? Resolve(ActiveSensorProfile p) =>
         LocalLanDiscovery.GetLocalInterfaces(p.AdapterId).FirstOrDefault(a =>
             a.Address.Equals(p.Adapter.Address) && a.Mask.Equals(p.Adapter.Mask));
+
+    private static async Task<ActiveSensorRun> ProbeGatewayAsync(ActiveSensorProfile p, LocalLanInterface adapter,
+        Func<bool> authorized, CancellationToken token)
+    {
+        var devices = SharpPcap.CaptureDeviceList.Instance.OfType<SharpPcap.ILiveDevice>()
+            .Where(d => CaptureDeviceLabelFormatter.ParseDeviceGuid(d.Name) == p.AdapterId).ToArray();
+        if (devices.Length != 1) throw new GatewayScopeChangedException();
+        var observation = await GatewayIntegritySensor.CheckAuthorizedAsync(devices[0], adapter, p.Target,
+            null, authorized, token).ConfigureAwait(false);
+        return new(observation.Status.ToString(), observation.Status != GatewayIntegrityStatus.NoReply,
+            ActiveEvidenceProjection.From(p.AdapterId, observation));
+    }
 
     private static async Task<ActiveSensorRun> ProbeSnmpAsync(ActiveSensorProfile p, LocalLanInterface adapter,
         SnmpCredential secret, CancellationToken token)

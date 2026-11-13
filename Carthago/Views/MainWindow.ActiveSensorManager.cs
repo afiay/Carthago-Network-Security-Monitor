@@ -41,13 +41,13 @@ public partial class MainWindow
         var inputs = new StackPanel();
         inputs.Children.Add(new TextBlock { Text = $"Approved target: {host.Address} via {adapter.Name} ({adapter.Address})\n" +
             "Add profiles, then explicitly start. One probe at a time; first check immediately, minimum five-minute interval. " +
-            "Closing stops all checks. Saved configurations require session approval or a valid durable grant. Gateway remains manual-only; SNMP requires a durable credential-bound grant.",
+            "Closing stops all checks. Saved configurations require session approval or a valid durable grant. Gateway and SNMP require durable grants; gateway checks defer while passive capture owns Npcap.",
             TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 10) });
         inputs.Children.Add(new TextBlock { Text = "Sensor" });
-        var kind = new ComboBox { ItemsSource = new[] { ActiveSensorKind.Tcp, ActiveSensorKind.Dns, ActiveSensorKind.Tls, ActiveSensorKind.Http, ActiveSensorKind.Snmp },
+        var kind = new ComboBox { ItemsSource = new[] { ActiveSensorKind.Tcp, ActiveSensorKind.Dns, ActiveSensorKind.Tls, ActiveSensorKind.Http, ActiveSensorKind.Snmp, ActiveSensorKind.Gateway },
             SelectedIndex = 0, Margin = new Thickness(0, 3, 0, 7) };
         inputs.Children.Add(kind);
-        inputs.Children.Add(new TextBlock { Text = "DNS hostname (required for DNS/TLS/HTTP; ignored for TCP/SNMP)" });
+        inputs.Children.Add(new TextBlock { Text = "DNS hostname (required for DNS/TLS/HTTP; ignored for TCP/SNMP/Gateway)" });
         var name = new TextBox { MaxLength = 254, Margin = new Thickness(0, 3, 0, 7) }; inputs.Children.Add(name);
         inputs.Children.Add(new TextBlock { Text = "Port (TLS/HTTP only)" });
         var port = new ComboBox { ItemsSource = new[] { 443, 8443, 80, 8080, 5986, 636, 8883 }, SelectedIndex = 0,
@@ -134,7 +134,7 @@ public partial class MainWindow
                     LocalLanDiscovery.PlanProbeTargets(new[] { a }).Contains(host.Address));
                 if (live is null) { message.Text = "Selected live scope has changed. Close and select the current host."; return; }
                 var profile = selected.ApproveForSession(id.Value, live, host.Address);
-                if (profile.Kind == ActiveSensorKind.Snmp) { message.Text = "SNMP requires a durable grant; use Grant then Load authorized profile."; return; }
+                if (profile.Kind is ActiveSensorKind.Snmp or ActiveSensorKind.Gateway) { message.Text = "SNMP and Gateway require a durable grant; use Grant then Load authorized profile."; return; }
                 if (MessageBox.Show(dialog, $"Authorize this configuration for this session?\n{selected.Label}\n" +
                     $"Adapter: {selected.AdapterId}\nNo probes run until Start.",
                     "Reapprove active profile", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
@@ -158,7 +158,10 @@ public partial class MainWindow
                 a.Address.Equals(adapter.Address) && a.Mask.Equals(adapter.Mask) &&
                 LocalLanDiscovery.PlanProbeTargets(new[] { a }).Contains(host.Address));
             if (live is null) throw new InvalidOperationException("Selected live scope has changed.");
-            return selected.ApproveForSession(id.Value, live, host.Address);
+            var profile = selected.ApproveForSession(id.Value, live, host.Address);
+            if (profile.Kind == ActiveSensorKind.Gateway && !GatewayIntegritySensor.IsConfiguredGateway(id.Value, live, host.Address))
+                throw new InvalidOperationException("Select the current configured IPv4 gateway.");
+            return profile;
         }
         grant.Click += (_, _) =>
         {
@@ -219,11 +222,13 @@ public partial class MainWindow
             {
                 var profile = ActiveSensorProfile.Create(id!.Value, adapter, host.Address, (ActiveSensorKind)kind.SelectedItem,
                     name.Text, (int)port.SelectedItem, TimeSpan.FromMinutes((int)interval.SelectedItem), save.IsChecked == true);
-                if (profile.Kind == ActiveSensorKind.Snmp)
+                if (profile.Kind is ActiveSensorKind.Snmp or ActiveSensorKind.Gateway)
                 {
-                    if (MessageBox.Show(dialog, "Save this SNMP configuration only? No execution permission is granted.",
+                    if (profile.Kind == ActiveSensorKind.Gateway && !GatewayIntegritySensor.IsConfiguredGateway(id.Value, adapter, host.Address))
+                    { message.Text = "Select the current configured IPv4 gateway."; return; }
+                    if (MessageBox.Show(dialog, "Save this configuration only? No execution permission is granted.",
                         "SNMP schedule", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
-                    message.Text = profileStore.Save(profile) ? "SNMP configuration saved. Grant authorization then load it." : "Could not save SNMP configuration.";
+                    message.Text = profileStore.Save(profile) ? "Configuration saved. Grant authorization then load it." : "Could not save configuration.";
                     RefreshSaved(); return;
                 }
                 manager.Add(profile);

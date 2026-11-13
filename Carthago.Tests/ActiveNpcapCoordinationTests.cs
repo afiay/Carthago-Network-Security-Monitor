@@ -19,7 +19,7 @@ public sealed class ActiveNpcapCoordinationTests
         string name = Name();
         using var owner = WindowsCaptureReservation.AcquireNamed(name);
         int operations = 0, cleanups = 0;
-        await Assert.ThrowsAsync<InvalidOperationException>(() => ReservedNpcapOperation.RunAsync(
+        await Assert.ThrowsAsync<CaptureReservationUnavailableException>(() => ReservedNpcapOperation.RunAsync(
             () => { operations++; return Task.CompletedTask; }, () => cleanups++, default,
             () => WindowsCaptureReservation.AcquireNamed(name)));
         Assert.Equal(0, operations);

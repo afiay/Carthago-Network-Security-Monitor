@@ -23,7 +23,7 @@ public static class ActiveSensorWorker
     internal static async Task<int> ExecuteCoreAsync(string[] args, TextWriter output, TextWriter error,
         CancellationToken token, ActiveSensorProfileStore store,
         Func<Guid, IReadOnlyList<LocalLanInterface>> resolve, Func<ActiveSensorManager> createManager,
-        Func<DateTimeOffset>? clock = null)
+        Func<DateTimeOffset>? clock = null, Func<ActiveSensorProfile, bool>? gatewayCurrent = null)
     {
         bool status = args is ["status"] or ["status", "--json"];
         var ids = new List<string>();
@@ -82,6 +82,8 @@ public static class ActiveSensorWorker
                 if (live.Length != 1)
                 { error.WriteLine("Selected configuration's live adapter scope is unavailable or ambiguous."); return 3; }
                 var profile = row.ApproveForSession(candidate.AdapterId, live[0], candidate.Target);
+                if (profile.Kind == ActiveSensorKind.Gateway && !(gatewayCurrent ?? (p => GatewayIntegritySensor.IsConfiguredGateway(p.AdapterId, p.Adapter, p.Target)))(profile))
+                { error.WriteLine("Selected target is no longer the configured gateway."); return 3; }
                 var grant = store.ReadValidGrant(profile);
                 if (grant is null) { error.WriteLine("Selected configuration has no valid durable grant."); return 3; }
                 selected.Add((profile, grant));
