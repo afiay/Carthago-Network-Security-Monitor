@@ -138,7 +138,7 @@ internal sealed class ActiveEvidenceStore
     private static bool Valid(ActiveEvidenceRow row, DateTimeOffset now)
     {
         if (row.Id == Guid.Empty || row.Version != 1 || row.Origin != "ActiveProbe" ||
-            !Enum.TryParse<ActiveSensorKind>(row.Sensor, out var kind) || kind.ToString() != row.Sensor ||
+            !Enum.TryParse<ActiveSensorKind>(row.Sensor, out var kind) || !Enum.IsDefined(kind) || kind.ToString() != row.Sensor ||
             !Guid.TryParseExact(row.AdapterId, "D", out var adapter) || adapter == Guid.Empty ||
             !ValidAddress(row.Source) || !ValidAddress(row.Target) || row.Source == row.Target ||
             string.IsNullOrWhiteSpace(row.ProbeKey) || row.ProbeKey.Length > 512 ||
@@ -195,7 +195,8 @@ internal sealed class ActiveEvidenceStore
 
     internal ActiveEvidenceRead Read(ActiveSensorKind? sensor = null, string? target = null, int limit = MaxQuery)
     {
-        if (limit is < 1 or > MaxQuery || (target is not null && !ValidAddress(target)))
+        if (limit is < 1 or > MaxQuery || (sensor.HasValue && !Enum.IsDefined(sensor.Value)) ||
+            (target is not null && !ValidAddress(target)))
             return new(Array.Empty<ActiveEvidenceRow>(), "Invalid history filter.");
         lock (Gate)
         {

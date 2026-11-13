@@ -58,10 +58,13 @@ public sealed class ActiveEvidenceStoreTests : IDisposable
         Assert.Equal("192.168.1.2", Assert.Single(Store().Read(ActiveSensorKind.Dns, "192.168.1.2", 1).Rows).Target);
         Assert.Empty(Store().Read(ActiveSensorKind.Tls).Rows);
         Assert.NotNull(Store().Read(target: "8.8.8.8").Error);
+        Assert.NotNull(Store().Read((ActiveSensorKind)999).Error);
     }
 
     [Theory]
     [InlineData("origin")]
+    [InlineData("unknown-sensor")]
+    [InlineData("invalid-json")]
     [InlineData("version")]
     [InlineData("adapter")]
     [InlineData("target")]
@@ -74,6 +77,8 @@ public sealed class ActiveEvidenceStoreTests : IDisposable
         switch (change)
         {
             case "origin": row.Origin = "Passive"; break;
+            case "unknown-sensor": row.Sensor = "999"; break;
+            case "invalid-json": row.EvidenceJson = "not-json"; break;
             case "version": row.Version = 2; break;
             case "adapter": row.AdapterId = ""; break;
             case "target": row.Target = "8.8.8.8"; break;
