@@ -32,6 +32,7 @@ public static class CliApplication
           carthago capabilities [--json]
           carthago capture doctor [--json]
           carthago capture interfaces [--json]
+          carthago capture qualify --interface ID --seconds 1-60 --authorized-test-time [--json]
           carthago engine status [--json]
           carthago monitor status [--json]
           carthago service status|health|start|stop|doctor [--json]
@@ -91,6 +92,18 @@ public static class CliApplication
                 return await TailAsync(command, output, error, json, token, investigationQuery);
             if (command.Length > 0 && (command[0] is "alerts" or "incidents" or "events" or "hosts"))
                 return await InvestigateAsync(command, output, error, json, token, investigationQuery);
+            if (command is ["capture", "qualify", ..])
+            {
+                if (!NativeCaptureQualification.TryParse(command, out var options))
+                    return await FailAsync(error,json,UsageError,"invalid_usage",
+                        "Expected capture qualify --interface ID --seconds 1-60 --authorized-test-time [--json].");
+                var sample=await NativeCaptureQualification.RunAsync(options!,token);
+                await WriteAsync(output,json,new { schemaVersion=SchemaVersion,mode="native_capture_sample",
+                    detectionValidation="not_assessed",fieldAccuracy="not_assessed",liveCaptureQualification="not_assessed",sample },
+                    $"Native capture sample: {sample.Status}; parsed={sample.Monitor?.Parsed??0}; driver statistics={sample.Driver.Status}.\n" +
+                    "Sample only; no field accuracy or deployment qualification.");
+                return sample.Status=="cancelled"?Cancelled:sample.Status=="sample_observed"?Success:DataError;
+            }
             if (command is ["capture", ..])
             {
                 if (command is not (["capture", "doctor"] or ["capture", "interfaces"]))
@@ -101,10 +114,10 @@ public static class CliApplication
                 await WriteAsync(output, json, new { schemaVersion = SchemaVersion, mode = "discovery_only",
                     discovery.Provider, discovery.LibraryStatus, discovery.LibraryVersion,
                     discovery.EnumerationStatus, discovery.Reason, discovery.Interfaces,
-                    capturePermission = "not_assessed", liveCapture = "not_implemented",
+                    capturePermission = "not_assessed", liveCapture = "qualification_sample_only",
                     detectionValidation = "not_assessed" },
                     $"Capture provider: {discovery.Provider}; library: {discovery.LibraryStatus}; enumeration: {discovery.EnumerationStatus}.\n" +
-                    "Capture permission not assessed; live capture not implemented.\n" +
+                    "Capture permission not assessed; only an explicit qualification sample is available.\n" +
                     string.Join("\n", discovery.Interfaces.Select(i => $"{i.Id} | loopback={i.Loopback}")));
                 return Success;
             }
@@ -183,7 +196,7 @@ public static class CliApplication
                         new Capability("live.events", "unavailable", "No live event transport."),
                         new Capability("live.rules", "unavailable", "Windows opt-in catalog query; use rules summary to check connectivity."),
                         new Capability("live.incidents", "unavailable", "No live incident connection."),
-                        new Capability("capture", "unavailable", "No CLI live capture provider."),
+                        new Capability("capture", "unavailable", "No unattended live monitor; explicit bounded qualification sample only."),
                         new Capability("capture.discovery", "available", "Read-only provider discovery; no capture handle opened."),
                         new Capability("pcap.inspect", "available", "Read-only classic PCAP and PCAPNG enhanced-packet telemetry; no rule execution."),
                         new Capability("pcap.detect", "available", "Offline portable request observations; see rules capabilities for supported IDs."),

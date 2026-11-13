@@ -2348,3 +2348,8 @@ Reviewed live parent `8294185345a8117556016b3a2b7d77ba91658109`, ledger, qualifi
 ## 2026-11-13 — CLI-007D.2 native pcap capture source
 
 **SOURCE CANDIDATE — UNVERIFIED.** Parent 0b248e48aad95264295149fbeb0f752e9c4841f5. Add internal native source, shared library loader, explicit local interface, non-promiscuous nonblocking pcap lifecycle, ABI-specific bounded copied frames, cooperative polling cancellation and cleanup. Seventeen synthetic cases authored, zero executed; pinned gate updated. No public live-start, native calls, builds/tests/Actions or qualification claim. See [architecture](02-architecture/CLI-007D2-NativePcapCaptureSource.md).
+
+
+## 2026-11-13 — CLI-007D.3 native driver statistics and bounded qualification sample
+
+**SOURCE CANDIDATE — UNVERIFIED.** Parent 32c381650dbe8ddcdfb8d6f76f19612aca9f0f2c. Add final pcap_stats sample before close, provider-dependent raw counters and unavailable states, explicit owner-authorized bounded capture qualify command with separate native/queue/monitor evidence, no release claim. Fifteen additional synthetic cases authored, zero executed. Pinned gate updated. No native capture, builds/tests/Actions executed. See [architecture](02-architecture/CLI-007D3-NativeCaptureQualification.md).

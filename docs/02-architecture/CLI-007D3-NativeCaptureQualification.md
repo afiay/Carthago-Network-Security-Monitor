@@ -1,0 +1,9 @@
+# CLI-007D.3 — Native driver statistics and bounded capture sample
+
+**SOURCE CANDIDATE — UNVERIFIED.** Parent 32c381650dbe8ddcdfb8d6f76f19612aca9f0f2c. CLI-006E execution pending.
+
+Sample pcap_stats once on the owning source before close, after successful startup; optional export, unsigned raw counters, 24-byte allocation for Windows' extended structure. Linux interface-drop zero ambiguous; Windows interface-drop not reported (Npcap does not implement it). Failed sample is unavailable with null counters, not zero; cleanup still runs. Statistics are final cumulative provider counters, not a loss rate or reconciled queue counts. No live polling/concurrent native calls.
+
+Explicit bounded diagnostic: carthago capture qualify --interface ID --seconds 5 --authorized-test-time --json. Duration 1–60 seconds, cooperative deadline, all five portable detectors, bounded queue, no payload/finding output or traffic generation. No automatic privilege elevation. Exit 0 only if sample observed parsed frames; 3 for failed or inconclusive, 130 for external cancellation; diagnostic JSON reports native statistics, pipeline and monitor counters. Zero drops or sample observation do not certify field accuracy, capture health, deployment or release readiness. Actual native activation and shutdown can exceed cooperative deadline if provider stalls. Use only an authorized interface; quiet interface is inconclusive. Existing discovery and Windows host remain separate; no unattended live-start command.
+
+Fifteen additional synthetic cases authored (5 stats, 10 qualification), zero executed. Pinned CLI gate updated. Owner-run native sample requires explicit authorization and actual Windows/Linux driver environment. References: https://npcap.com/guide/npcap-api.html ; https://www.man7.org/linux/man-pages/man3/pcap_stats.3pcap.html

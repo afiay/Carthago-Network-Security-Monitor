@@ -11,7 +11,9 @@ public sealed class NativePcapCaptureSourceTests
     private sealed class Api:NativePcapCaptureSource.IApi
     {
         internal int Link=101,Opens,Reads,Closes,Disposals;
-        internal bool FailOpen;
+        internal bool FailOpen,FailStats;
+        internal int StatsCalls;
+        internal readonly List<string> Cleanup=new();
         internal int Code=1;
         internal string? Id;
         internal PortableCaptureFrame? Frame=new(new byte[]{0x45},1,DateTime.UnixEpoch);
@@ -20,8 +22,14 @@ public sealed class NativePcapCaptureSourceTests
         { Opens++;Id=id;if(FailOpen)throw new InvalidOperationException();return Link; }
         public int Next(out PortableCaptureFrame? frame)
         { Reads++;Reading.TrySetResult(true);frame=Frame;return Code; }
-        public void Close()=>Closes++;
-        public void Dispose()=>Disposals++;
+        public NativePcapCaptureSource.DriverStatistics ReadStatistics()
+        {
+            StatsCalls++;Cleanup.Add("stats");
+            if(FailStats)throw new InvalidOperationException();
+            return new("available",12,2,null,"not_reported_on_windows");
+        }
+        public void Close(){Closes++;Cleanup.Add("close");}
+        public void Dispose(){Disposals++;Cleanup.Add("dispose");}
     }
 
     [Fact]
@@ -141,6 +149,57 @@ public sealed class NativePcapCaptureSourceTests
             Assert.Throws<InvalidDataException>(()=>NativePcapCaptureSource.DecodePacket(h,IntPtr.Zero,false));
         }
         finally{Marshal.FreeHGlobal(h);}
+    }
+
+    [Fact]
+    public async Task StatisticsSampledOnceBeforeCloseAndRetainedAfterDispose()
+    {
+        var api=new Api();var source=new NativePcapCaptureSource("eth0",()=>api);
+        Assert.Equal("not_attempted",source.FinalStatistics.Status);
+        await source.StartAsync(default);
+        await source.StopAsync();await source.DisposeAsync();await source.DisposeAsync();
+        Assert.Equal(new[]{"stats","close","dispose"},api.Cleanup);
+        Assert.Equal("available",source.FinalStatistics.Status);
+        Assert.Equal(12u,source.FinalStatistics.Received);
+        Assert.Equal(2u,source.FinalStatistics.BufferDropped);
+        Assert.Null(source.FinalStatistics.InterfaceDropped);
+    }
+
+    [Fact]
+    public async Task StatisticsFailureDoesNotPreventCleanup()
+    {
+        var api=new Api{FailStats=true};var source=new NativePcapCaptureSource("eth0",()=>api);
+        await source.StartAsync(default);await source.DisposeAsync();
+        Assert.Equal("unavailable",source.FinalStatistics.Status);
+        Assert.Null(source.FinalStatistics.Received);
+        Assert.Equal(new[]{"stats","close","dispose"},api.Cleanup);
+    }
+
+    [Fact]
+    public async Task FailedStartupDoesNotSampleInactiveHandle()
+    {
+        var api=new Api{FailOpen=true};var source=new NativePcapCaptureSource("eth0",()=>api);
+        await PortableCaptureRun.RunAsync(source,new[]{"R589"},default);
+        Assert.Equal("not_attempted",source.FinalStatistics.Status);
+        Assert.Equal(0,api.StatsCalls);
+        Assert.Equal(new[]{"close","dispose"},api.Cleanup);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void StatisticsDecodeUnsignedCountersAndProviderLimitations(bool windows)
+    {
+        var p=Marshal.AllocHGlobal(24);
+        try
+        {
+            Marshal.WriteInt32(p,0,-1);Marshal.WriteInt32(p,4,3);Marshal.WriteInt32(p,8,7);
+            var sample=NativePcapCaptureSource.DecodeStatistics(p,windows);
+            Assert.Equal(uint.MaxValue,sample.Received);
+            Assert.Equal(3u,sample.BufferDropped);
+            Assert.Equal(windows?(uint?)null:7u,sample.InterfaceDropped);
+        }
+        finally{Marshal.FreeHGlobal(p);}
     }
 
     [Fact]

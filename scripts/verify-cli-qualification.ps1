@@ -187,7 +187,8 @@ try {
             'Carthago.Cli.Tests.PortableCaptureRunTests'=10
             'Carthago.Cli.Tests.PortableBufferedCaptureTests'=12
             'Carthago.Cli.Tests.NativeCaptureDiscoveryTests'=12
-            'Carthago.Cli.Tests.NativePcapCaptureSourceTests'=17
+            'Carthago.Cli.Tests.NativePcapCaptureSourceTests'=22
+            'Carthago.Cli.Tests.NativeCaptureQualificationTests'=10
             'Carthago.Cli.Tests.PortableReplayTests'=12
             'Carthago.Cli.Tests.PortableRuleCapabilityTests'=9
             'Carthago.Cli.Tests.PortableHttpBatchTests'=18

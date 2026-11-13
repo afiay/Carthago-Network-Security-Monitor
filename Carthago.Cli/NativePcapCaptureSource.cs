@@ -14,8 +14,18 @@ internal sealed class NativePcapCaptureSource : IPortableCaptureSource
         int Open(string interfaceId);
         // 1 packet, 0 no packet, -2 EOF, -1 error. Own packet bytes on return.
         int Next(out PortableCaptureFrame? frame);
+        DriverStatistics ReadStatistics() => DriverStatistics.Unavailable;
         void Close();
     }
+
+    // Raw provider counters, not reconciled with managed frame counts.
+    internal sealed record DriverStatistics(string Status,uint? Received,uint? BufferDropped,uint? InterfaceDropped,
+        string InterfaceDropMeaning)
+    {
+        internal static readonly DriverStatistics Unavailable=new("unavailable",null,null,null,"not_assessed");
+        internal static readonly DriverStatistics NotAttempted=new("not_attempted",null,null,null,"not_assessed");
+    }
+    internal DriverStatistics FinalStatistics { get; private set; }=DriverStatistics.NotAttempted;
 
     private readonly string _id;
     private readonly Func<IApi> _factory;
@@ -62,8 +72,7 @@ internal sealed class NativePcapCaptureSource : IPortableCaptureSource
     public ValueTask StopAsync()
     {
         if(_stopped)return ValueTask.CompletedTask;
-        _stopped=true;_started=false;
-        _api?.Close();
+        FinishCapture();
         return ValueTask.CompletedTask;
     }
 
@@ -71,9 +80,35 @@ internal sealed class NativePcapCaptureSource : IPortableCaptureSource
     {
         if(_disposed)return ValueTask.CompletedTask;
         _disposed=true;
-        try { if(!_stopped){_stopped=true;_started=false;_api?.Close();} }
+        try { if(!_stopped)FinishCapture(); }
         finally { _api?.Dispose();_api=null; }
         return ValueTask.CompletedTask;
+    }
+
+    private void FinishCapture()
+    {
+        _stopped=true;
+        try
+        {
+            if(_started && _api is not null)
+            {
+                try { FinalStatistics=_api.ReadStatistics(); }
+                catch(Exception ex) when(ex is not OutOfMemoryException)
+                { FinalStatistics=DriverStatistics.Unavailable; }
+            }
+        }
+        finally { _started=false;_api?.Close(); }
+    }
+
+    internal static DriverStatistics DecodeStatistics(IntPtr buffer,bool windows)
+    {
+        if(buffer==IntPtr.Zero)throw new ArgumentException("Statistics buffer required.",nameof(buffer));
+        uint recv=unchecked((uint)Marshal.ReadInt32(buffer,0));
+        uint drop=unchecked((uint)Marshal.ReadInt32(buffer,4));
+        uint ifdrop=unchecked((uint)Marshal.ReadInt32(buffer,8));
+        // Npcap does not implement ps_ifdrop. Linux zero is ambiguous.
+        return new("available",recv,drop,windows?null:ifdrop,
+            windows?"not_reported_on_windows":"provider_dependent_zero_may_be_unavailable");
     }
 
     private static IApi OpenNativeApi()
@@ -121,6 +156,8 @@ internal sealed class NativePcapCaptureSource : IPortableCaptureSource
     private delegate int NextFn(IntPtr handle,out IntPtr header,out IntPtr data);
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate void CloseFn(IntPtr handle);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    private delegate int StatsFn(IntPtr handle,IntPtr buffer);
 
     private sealed class Api:IApi
     {
@@ -132,6 +169,7 @@ internal sealed class NativePcapCaptureSource : IPortableCaptureSource
         private readonly NonblockFn _nonblock;
         private readonly NextFn _next;
         private readonly CloseFn _close;
+        private readonly StatsFn? _stats;
 
         internal Api(IntPtr library,bool windows)
         {
@@ -148,6 +186,8 @@ internal sealed class NativePcapCaptureSource : IPortableCaptureSource
             _nonblock=Export<NonblockFn>("pcap_setnonblock");
             _next=Export<NextFn>("pcap_next_ex");
             _close=Export<CloseFn>("pcap_close");
+            if(NativeLibrary.TryGetExport(library,"pcap_stats",out var stats))
+                _stats=Marshal.GetDelegateForFunctionPointer<StatsFn>(stats);
         }
         public int Open(string interfaceId)
         {
@@ -172,6 +212,18 @@ internal sealed class NativePcapCaptureSource : IPortableCaptureSource
             int code=_next(_capture,out var header,out var data);
             if(code==1)frame=DecodePacket(header,data,_windows);
             return code;
+        }
+        public DriverStatistics ReadStatistics()
+        {
+            if(_capture==IntPtr.Zero||_stats is null)return DriverStatistics.Unavailable;
+            // Windows pcap_stat has six uint fields; Linux has three. Reserve all six.
+            var buffer=Marshal.AllocHGlobal(24);
+            try
+            {
+                Marshal.Copy(new byte[24],0,buffer,24);
+                return _stats(_capture,buffer)==0?DecodeStatistics(buffer,_windows):DriverStatistics.Unavailable;
+            }
+            finally { Marshal.FreeHGlobal(buffer); }
         }
         public void Close()
         {
