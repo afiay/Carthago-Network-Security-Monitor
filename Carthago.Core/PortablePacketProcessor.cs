@@ -33,6 +33,7 @@ namespace Carthago.Services
         private readonly Func<int, string, string> _serviceName;
         private readonly Func<byte[], string?> _certificateFingerprint;
         private readonly Func<DateTime> _displayNow;
+        private readonly Action<bool,string>? _diagnostic;
 
         // Portable sessions own their state by default. Host adapters can explicitly share legacy state.
         internal PortablePacketProcessor(Func<DateTime> utcNow,
@@ -40,10 +41,12 @@ namespace Carthago.Services
             Func<byte[], string?>? certificateFingerprint = null,
             Func<DateTime>? displayNow = null,
             HandshakeBufferState? handshakes = null,
-            LatencyTrackerState? latency = null)
+            LatencyTrackerState? latency = null,
+            Action<bool,string>? diagnostic = null)
         {
             _utcNow = utcNow ?? throw new ArgumentNullException(nameof(utcNow));
             _displayNow = displayNow ?? utcNow;
+            _diagnostic = diagnostic;
             _serviceName = serviceName ?? ((_, _) => "Unknown");
             _certificateFingerprint = certificateFingerprint ?? (_ => null);
             _handshakes = handshakes ?? new HandshakeBufferState(_utcNow);
@@ -753,7 +756,7 @@ namespace Carthago.Services
                 }
                 catch (Exception ex)
                 {
-                    Console.Error.WriteLine($"[PacketHandler] L7 parse error: {ex.Message}");
+                    _diagnostic?.Invoke(true, $"[PacketHandler] L7 parse error: {ex.Message}");
                 }
 
                 // Final info line (protocol and 5-tuple)
@@ -768,7 +771,7 @@ namespace Carthago.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Packet parsing error: {ex.Message}");
+                _diagnostic?.Invoke(false, $"Packet parsing error: {ex.Message}");
                 return null;
             }
         }

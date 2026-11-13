@@ -27,7 +27,8 @@ namespace Carthago.Services
             _processor = new PortablePacketProcessor(utcNow,
                 (port, protocol) => PortServiceResolver.GetServiceName(port, protocol),
                 der => X509Ja4X.FromCertificateDer(der), () => DateTime.Now,
-                handshakes, latency);
+                handshakes, latency, (isError, message) =>
+                { if (isError) Console.Error.WriteLine(message); else Console.WriteLine(message); });
         }
 
         public TrafficRecord? ParsePacket(PacketCapture e)
