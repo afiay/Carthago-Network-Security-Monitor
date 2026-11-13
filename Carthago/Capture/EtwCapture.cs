@@ -34,6 +34,8 @@ namespace Carthago.Capture
         private CaptureRun? _run;
         private int _running;
         private int _disposed;
+        private int _cleanupFailed;
+        public bool CleanupFailed => Volatile.Read(ref _cleanupFailed) != 0;
 
         private long _eventsObserved;
         private long _eventsPublished;
@@ -109,7 +111,8 @@ namespace Carthago.Capture
                     if (Volatile.Read(
                             ref run.StopRequested) != 0)
                     {
-                        session.Dispose();
+                        try { session.Dispose(); }
+                        catch { Interlocked.Exchange(ref _cleanupFailed, 1); throw; }
                         return;
                     }
 
@@ -215,6 +218,7 @@ namespace Carthago.Capture
                     }
                     catch (Exception ex)
                     {
+                        Interlocked.Exchange(ref _cleanupFailed, 1);
                         Console.Error.WriteLine(
                             $"[ETW] Session cleanup failed: " +
                             ex.Message);
@@ -312,6 +316,7 @@ namespace Carthago.Capture
                 }
                 catch (Exception ex)
                 {
+                    Interlocked.Exchange(ref _cleanupFailed, 1);
                     Console.Error.WriteLine(
                         $"[ETW] Stop failed: {ex.Message}");
                 }
@@ -331,6 +336,7 @@ namespace Carthago.Capture
             }
             catch (Exception ex)
             {
+                Interlocked.Exchange(ref _cleanupFailed, 1);
                 Console.Error.WriteLine(
                     $"[ETW] Dispose encountered an error: " +
                     ex.Message);

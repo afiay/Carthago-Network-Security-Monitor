@@ -365,3 +365,20 @@ installation, ACL mutation, recovery policy change or service process kill.
 Journal is shared, not session-attributed; no detection is inconclusive.
 RequireJournalEvidence requires observed append and detection counter delta.
 Manual restart is not crash recovery. Windows execution pending.
+
+## CLI-005C3B — cooperative machine-wide capture reservation
+
+SOURCE CANDIDATE — UNVERIFIED. Shared TrafficCaptureService reserves a
+Windows Global named mutex object before Npcap or ETW startup. Ownership
+is object existence (exclusive creation), not thread-affine mutex wait;
+handle closes on confirmed native cleanup, process exit or crash.
+Authenticated users can open existing object with SYNCHRONIZE only;
+SYSTEM/admin full access. Existing object or access failure rejects startup.
+Native stop/close/detach failures retain handle in process-lifetime
+quarantine; no restart in that process. ETW cleanup errors tracked.
+Reservation covers cooperative desktop/foreground/service capture paths,
+not arbitrary third-party or older builds, not all independent sensors,
+not pending enrichment/rule evaluation or authenticated owner identity.
+Named object squatting can deny startup; no security-boundary claim.
+Windows cross-process/session/account, crash release, actual native
+startup/stop and desktop regressions remain unverified.

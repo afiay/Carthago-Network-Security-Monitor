@@ -16,6 +16,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
 using Carthago.Capture;
+using Carthago.Contracts;
 using Carthago.Models;
 using Carthago.Services.Benchmarking;
 using Carthago.Services.Geo;
@@ -41,6 +42,9 @@ namespace Carthago.Services
 
         // ===== Capture device or source
         private readonly object _lifecycleLock = new();
+        private readonly object _captureTransitionGate = new();
+        private WindowsCaptureReservation? _captureReservation;
+        private bool _captureCleanupFailed;
         private ILiveDevice? _device;
         private CaptureInterfaceContext? _pcapInterfaceContext;
         private ICaptureSource? _captureSource;
@@ -247,8 +251,15 @@ namespace Carthago.Services
         private static void Log(Exception ex)
             => Console.Error.WriteLine($"[TrafficCaptureService] {ex.GetType().Name}: {ex.Message}");
 
-        private void StopCurrentCapture()
+        private bool StopCurrentCapture()
         {
+            lock (_captureTransitionGate) return StopCurrentCaptureCore();
+        }
+
+        private bool StopCurrentCaptureCore()
+        {
+            if (_captureCleanupFailed) return false;
+            bool cleanupOk = true;
             CancellationTokenSource? run;
             ILiveDevice? device;
             ICaptureSource? source;
@@ -273,24 +284,36 @@ namespace Carthago.Services
                 _etwChannel = null;
             }
 
-            try { run?.Cancel(); } catch (Exception ex) { Log(ex); }
+            try { run?.Cancel(); } catch (Exception ex) { cleanupOk = false; Log(ex); }
 
             if (device != null)
             {
-                try { device.OnPacketArrival -= OnPacketArrival; } catch (Exception ex) { Log(ex); }
-                try { device.StopCapture(); } catch (Exception ex) { Log(ex); }
-                try { device.Close(); } catch (Exception ex) { Log(ex); }
+                try { device.OnPacketArrival -= OnPacketArrival; } catch (Exception ex) { cleanupOk = false; Log(ex); }
+                try { if (device.Started) device.StopCapture(); } catch (Exception ex) { cleanupOk = false; Log(ex); }
+                try { device.Close(); } catch (Exception ex) { cleanupOk = false; Log(ex); }
             }
 
             if (source != null)
             {
-                try { source.StopAsync().GetAwaiter().GetResult(); } catch (Exception ex) { Log(ex); }
-                try { source.Dispose(); } catch (Exception ex) { Log(ex); }
+                try { source.StopAsync().GetAwaiter().GetResult(); } catch (Exception ex) { cleanupOk = false; Log(ex); }
+                try { source.Dispose(); } catch (Exception ex) { cleanupOk = false; Log(ex); }
+                if (source is EtwCapture { CleanupFailed: true }) cleanupOk = false;
             }
 
             etwChannel?.Writer.TryComplete();
             run?.Dispose();
+            // Native sources have stopped before another process may reserve capture.
+            var reservation = _captureReservation;
+            _captureReservation = null;
+            if (cleanupOk) reservation?.Dispose();
+            else
+            {
+                _captureCleanupFailed = true;
+                reservation?.Quarantine();
+                Volatile.Write(ref _lastCaptureError, "Capture cleanup not confirmed; reservation retained until process exit.");
+            }
             if (finalAssets is not null) _assetHistory.Save(finalAssets);
+            return cleanupOk;
         }
 
         // ---- capture start/stop ---------------------------------------
@@ -375,56 +398,57 @@ namespace Carthago.Services
                     return;
             }
 
-            var run = PrepareCaptureSession();
-
             try
             {
-                if (choice.Tag is string mode && mode.Equals("ETW", StringComparison.OrdinalIgnoreCase))
+                lock (_captureTransitionGate)
                 {
-                    var etwChannel = Channel.CreateBounded<TrafficRecord>(
-                        new BoundedChannelOptions(UiQueueCapacity)
-                        {
-                            FullMode = BoundedChannelFullMode.Wait,
-                            SingleReader = true,
-                            SingleWriter = false
-                        });
-                    var source = new EtwCapture(etwChannel);
-                    lock (_lifecycleLock)
+                    var run = PrepareCaptureSession();
+                    if (choice.Tag is string mode && mode.Equals("ETW", StringComparison.OrdinalIgnoreCase))
                     {
-                        _etwChannel = etwChannel;
-                        _captureSource = source;
-                    }
-
-                    _etwReaderTask = Task.Run(() => EtwReaderLoop(etwChannel.Reader, run.Token));
-                    _etwCaptureTask = source.StartAsync();
-                    CapturePipelineFailureObserver.Observe(_etwCaptureTask, _etwReaderTask,
-                        (stage, error) =>
+                        var etwChannel = Channel.CreateBounded<TrafficRecord>(
+                            new BoundedChannelOptions(UiQueueCapacity)
+                            {
+                                FullMode = BoundedChannelFullMode.Wait,
+                                SingleReader = true,
+                                SingleWriter = false
+                            });
+                        var source = new EtwCapture(etwChannel);
+                        lock (_lifecycleLock)
                         {
-                            Log(new InvalidOperationException($"ETW {stage} failed", error));
-                            HandleCaptureTaskFailure(run, error, deviceCombo, startButton, stopButton);
-                        });
+                            _etwChannel = etwChannel;
+                            _captureSource = source;
+                        }
+    
+                        _etwReaderTask = Task.Run(() => EtwReaderLoop(etwChannel.Reader, run.Token));
+                        _etwCaptureTask = source.StartAsync();
+                        CapturePipelineFailureObserver.Observe(_etwCaptureTask, _etwReaderTask,
+                            (stage, error) =>
+                            {
+                                Log(new InvalidOperationException($"ETW {stage} failed", error));
+                                HandleCaptureTaskFailure(run, error, deviceCombo, startButton, stopButton);
+                            });
+                    }
+                    else if (choice.Tag is LanCaptureSelection host)
+                    {
+                        // Explicit device selection narrows this capture only.
+                        // Fail closed if the host filter cannot be installed.
+                        lock (_lifecycleLock) _activeLanHost = host.Address;
+                        StartPcapCapture(host.Device,
+                            LanCaptureDiscovery.ComposeFilter(_currentFilter, host.Address), requireFilter: true);
+                        TrySendLanPresenceProbe(host);
+                    }
+                    else if (choice.Tag is ILiveDevice device)
+                    {
+                        StartPcapCapture(device, _currentFilter);
+                    }
+                    else
+                    {
+                        StopCurrentCapture();
+                        MessageBox.Show("Invalid capture selection.", "Capture",
+                            MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
                 }
-                else if (choice.Tag is LanCaptureSelection host)
-                {
-                    // Explicit device selection narrows this capture only.
-                    // Fail closed if the host filter cannot be installed.
-                    lock (_lifecycleLock) _activeLanHost = host.Address;
-                    StartPcapCapture(host.Device,
-                        LanCaptureDiscovery.ComposeFilter(_currentFilter, host.Address), requireFilter: true);
-                    TrySendLanPresenceProbe(host);
-                }
-                else if (choice.Tag is ILiveDevice device)
-                {
-                    StartPcapCapture(device, _currentFilter);
-                }
-                else
-                {
-                    StopCurrentCapture();
-                    MessageBox.Show("Invalid capture selection.", "Capture",
-                        MessageBoxButton.OK, MessageBoxImage.Error);
-                    return;
-                }
-
                 _dispatcher.Invoke(() =>
                 {
                     startButton.IsEnabled = false;
@@ -434,9 +458,15 @@ namespace Carthago.Services
             }
             catch (Exception ex)
             {
-                StopCurrentCapture();
+                bool stopped = StopCurrentCapture();
                 Log(ex);
-                Volatile.Write(ref _lastCaptureError, ex.Message);
+                if (stopped) Volatile.Write(ref _lastCaptureError, ex.Message);
+                else
+                {
+                    startButton.IsEnabled = false;
+                    stopButton.IsEnabled = false;
+                    deviceCombo.IsEnabled = false;
+                }
                 CaptureFailed?.Invoke(ex);
                 MessageBox.Show($"Failed to start capture: {ex.Message}", "Capture",
                     MessageBoxButton.OK, MessageBoxImage.Error);
@@ -446,8 +476,11 @@ namespace Carthago.Services
         // Shared capture-session initialization for desktop and foreground host.
         private CancellationTokenSource PrepareCaptureSession()
         {
+            if (Volatile.Read(ref _disposed) != 0)
+                throw new ObjectDisposedException(nameof(TrafficCaptureService));
             // Capture sources must not overlap: release the previous session first.
-            StopCurrentCapture();
+            if (!StopCurrentCaptureCore()) throw new InvalidOperationException("Previous capture cleanup not confirmed; restart the process.");
+            _captureReservation = WindowsCaptureReservation.Acquire();
             Volatile.Write(ref _lastCaptureError, null);
             Interlocked.Exchange(ref _capturedAtStart, Interlocked.Read(ref _packetsCaptured));
             Interlocked.Exchange(ref _deliveredAtStart, Interlocked.Read(ref _uiRecordsDelivered));
@@ -474,12 +507,18 @@ namespace Carthago.Services
             if (!_headless) throw new InvalidOperationException("Headless mode required.");
             if (Volatile.Read(ref _disposed) != 0) throw new ObjectDisposedException(nameof(TrafficCaptureService));
             ArgumentNullException.ThrowIfNull(device);
-            PrepareCaptureSession();
-            try { StartPcapCapture(device, filter, requireFilter: true); }
-            catch
+            lock (_captureTransitionGate)
             {
-                StopCurrentCapture();
-                throw;
+                try
+                {
+                    PrepareCaptureSession();
+                    StartPcapCapture(device, filter, requireFilter: true);
+                }
+                catch
+                {
+                    StopCurrentCaptureCore();
+                    throw;
+                }
             }
         }
 
@@ -489,19 +528,21 @@ namespace Carthago.Services
             if (!_headless) throw new InvalidOperationException("Headless mode required.");
             Dispose();
             await Task.WhenAll(_enrichmentWorkers).WaitAsync(token).ConfigureAwait(false);
+            if (_captureCleanupFailed) throw new InvalidOperationException("Native capture cleanup not confirmed.");
         }
 
         public void StopCapture(Button startButton, Button stopButton, ComboBox deviceCombo)
         {
-            StopCurrentCapture();
+            bool stopped = StopCurrentCapture();
             if (Volatile.Read(ref _disposed) != 0) return;
-            Volatile.Write(ref _lastCaptureError, null);
+            if (stopped) Volatile.Write(ref _lastCaptureError, null);
+            else MessageBox.Show("Capture cleanup not confirmed. Close CARTHAGO before restarting capture.", "Capture", MessageBoxButton.OK, MessageBoxImage.Error);
 
             _dispatcher.Invoke(() =>
             {
-                startButton.IsEnabled = true;
+                startButton.IsEnabled = stopped;
                 stopButton.IsEnabled = false;
-                deviceCombo.IsEnabled = true;
+                deviceCombo.IsEnabled = stopped;
             });
         }
 
@@ -521,11 +562,11 @@ namespace Carthago.Services
                         return;
                 }
 
-                StopCurrentCapture();
-                Volatile.Write(ref _lastCaptureError, error.Message);
-                startButton.IsEnabled = true;
+                bool stopped = StopCurrentCapture();
+                if (stopped) Volatile.Write(ref _lastCaptureError, error.Message);
+                startButton.IsEnabled = stopped;
                 stopButton.IsEnabled = false;
-                deviceCombo.IsEnabled = true;
+                deviceCombo.IsEnabled = stopped;
                 CaptureFailed?.Invoke(error);
             }), DispatcherPriority.Normal);
         }
@@ -540,27 +581,18 @@ namespace Carthago.Services
                 _pcapInterfaceContext = interfaceContext;
             }
 
-            try
-            {
-                device.OnPacketArrival += OnPacketArrival;
-                device.Open();
+            // The shared stop path owns cleanup even on partial startup.
+            device.OnPacketArrival += OnPacketArrival;
+            device.Open();
 
-                if (!string.IsNullOrWhiteSpace(captureFilter))
-                {
-                    try { device.Filter = captureFilter; }
-                    catch (Exception ex) when (!requireFilter)
-                    { Console.Error.WriteLine($"Failed to set capture filter '{captureFilter}': {ex.Message}"); }
-                }
-
-                device.StartCapture();
-            }
-            catch
+            if (!string.IsNullOrWhiteSpace(captureFilter))
             {
-                // detach if partially wired
-                try { device.OnPacketArrival -= OnPacketArrival; } catch { }
-                try { device.Close(); } catch { }
-                throw;
+                try { device.Filter = captureFilter; }
+                catch (Exception ex) when (!requireFilter)
+                { Console.Error.WriteLine($"Failed to set capture filter '{captureFilter}': {ex.Message}"); }
             }
+
+            device.StartCapture();
         }
 
         private static void TrySendLanPresenceProbe(LanCaptureSelection host)
@@ -1183,36 +1215,39 @@ namespace Carthago.Services
         // ---- helpers ---------------------------------------------------
         public void ApplyFilter(string? bpf)
         {
-            SetDefaultFilter(bpf);
-
-            if (_captureSource != null && _device == null)
+            lock (_captureTransitionGate)
             {
-                MessageBox.Show("BPF capture filters are available only with Npcap, not ETW.",
-                    "Capture filter", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
+                SetDefaultFilter(bpf);
 
-            var device = _device;
-            if (device == null) return;
-
-            try
-            {
-                bool running = device.Started;
-                if (running)
+                if (_captureSource != null && _device == null)
                 {
-                    device.StopCapture();
-                    device.Close();
-                    device.Open();
+                    MessageBox.Show("BPF capture filters are available only with Npcap, not ETW.",
+                        "Capture filter", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
                 }
-                device.Filter = LanCaptureDiscovery.ComposeFilter(_currentFilter, _activeLanHost);
-                if (running)
-                    device.StartCapture();
-            }
-            catch (Exception ex)
-            {
-                Log(ex);
-                MessageBox.Show($"Failed to apply capture filter: {ex.Message}",
-                    "Capture filter", MessageBoxButton.OK, MessageBoxImage.Error);
+
+                var device = _device;
+                if (device == null) return;
+
+                try
+                {
+                    bool running = device.Started;
+                    if (running)
+                    {
+                        device.StopCapture();
+                        device.Close();
+                        device.Open();
+                    }
+                    device.Filter = LanCaptureDiscovery.ComposeFilter(_currentFilter, _activeLanHost);
+                    if (running)
+                        device.StartCapture();
+                }
+                catch (Exception ex)
+                {
+                    Log(ex);
+                    MessageBox.Show($"Failed to apply capture filter: {ex.Message}",
+                        "Capture filter", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
 

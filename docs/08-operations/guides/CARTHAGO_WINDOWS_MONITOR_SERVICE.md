@@ -154,3 +154,14 @@ Shared journal is not session-attributed; avoid UTC midnight. Report
 contains hashes, counter deltas and labels, no raw detection rows.
 Passing only qualifies observed scope, not recovery or full runtime
 correctness. Native Windows qualification remains pending.
+
+## Capture reservation (CLI-005C3B)
+
+Updated desktop, foreground and service capture use one Global Windows
+reservation. Close/stop another CARTHAGO capture before starting. A native
+cleanup failure retains the reservation until the owning process exits;
+inspect the failure and close the affected process rather than repeatedly
+retrying capture. This is cooperative exclusion, not protection from old
+builds, unrelated capture tools, active sensors or hostile local processes.
+The previously documented operator-exclusive-capture confirmation remains
+required until Windows cross-account/session qualification passes.
