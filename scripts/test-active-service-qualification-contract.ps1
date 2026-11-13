@@ -31,4 +31,14 @@ $x=Sample; $x.completedProbes=1; $x.responsiveProbes=1
 Reject { Assert-ActiveHealthProgress $valid (ConvertTo-ActiveHealthSample $x 123 $start $now) 2 }
 $x=Sample; $x.sessionId=[Guid]::NewGuid().ToString('D')
 Reject { Assert-ActiveHealthProgress $valid (ConvertTo-ActiveHealthSample $x 123 $start $now) 2 }
+$x=Sample; $x.sampleUtc=$now.UtcDateTime
+Require ((ConvertTo-ActiveHealthSample $x 123 $start $now).sampleUtc -ceq $valid.sampleUtc)
+$x=Sample; $x.sampleUtc='2026-11-13T12:00:00'; Reject { ConvertTo-ActiveHealthSample $x 123 $start $now }
+$fixture=Join-Path ([IO.Path]::GetTempPath()) ('carthago-health-contract-'+[Guid]::NewGuid().ToString('N')+'.json')
+try {
+    [IO.File]::WriteAllText($fixture,((Sample) | ConvertTo-Json -Compress),[Text.UTF8Encoding]::new($false))
+    Require (Test-ActiveObservedScope (ConvertTo-ActiveHealthSample (Read-ActiveHealthFile $fixture) 123 $start $now) 2)
+    [IO.File]::WriteAllBytes($fixture,(New-Object byte[] 16385))
+    Reject { Read-ActiveHealthFile $fixture }
+} finally { if (Test-Path -LiteralPath $fixture) { Remove-Item -LiteralPath $fixture -Force } }
 Write-Output 'PASS AS-Q07G5E offline lifecycle qualification contract'

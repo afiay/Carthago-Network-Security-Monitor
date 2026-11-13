@@ -30,8 +30,7 @@ if ($Action -eq 'Health') {
         Assert-ActiveRegisteredService $s $pre
         $config=Assert-ActiveLocalPath $ConfigPath
         $file=Assert-ActiveLocalPath (Join-Path ([IO.Path]::GetDirectoryName($config)) 'health.json')
-        if ((Get-Item -LiteralPath $file).Length -gt 16384) { throw 'Health snapshot too large.' }
-        $sample=Get-Content -LiteralPath $file -Raw | ConvertFrom-Json
+        $sample=Read-ActiveHealthFile $file
         $proc=Get-Process -Id $s.ProcessId
         try { $sample=ConvertTo-ActiveHealthSample $sample $s.ProcessId ([DateTimeOffset]($proc.StartTime.ToUniversalTime())) ([DateTimeOffset]::UtcNow) }
         finally { $proc.Dispose() }

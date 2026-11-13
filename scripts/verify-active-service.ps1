@@ -41,8 +41,7 @@ function Read-FreshSample {
     $s=Assert-Unchanged
     if ($s.State -ne 'Running' -or $s.ProcessId -le 0) { throw 'Service not running.' }
     $file=Assert-ActiveLocalPath (Join-Path ([IO.Path]::GetDirectoryName($pre.configPath)) 'health.json')
-    if ((Get-Item -LiteralPath $file).Length -gt 16384) { throw 'Health snapshot too large.' }
-    $sample=Get-Content -LiteralPath $file -Raw | ConvertFrom-Json
+    $sample=Read-ActiveHealthFile $file
     $process=Get-Process -Id $s.ProcessId
     try {
         $start=[DateTimeOffset]($process.StartTime.ToUniversalTime())
