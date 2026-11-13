@@ -25,9 +25,9 @@ public sealed class PortableRuleCapabilityTests
         using var json=JsonDocument.Parse(result.Out);var root=json.RootElement;
         Assert.Equal("compiled_portable_catalog",root.GetProperty("scope").GetString());
         Assert.Equal("not_assessed",root.GetProperty("registration").GetString());
-        Assert.Equal(10,root.GetProperty("supportedCount").GetInt32());
+        Assert.Equal(15,root.GetProperty("supportedCount").GetInt32());
         var rows=root.GetProperty("rules").EnumerateArray().ToArray();
-        Assert.Equal(new[]{"R586","R587","R588","R589","R590","R591","R592","R593","R594","R595"},rows.Select(r=>r.GetProperty("ruleId").GetString()).ToArray());
+        Assert.Equal(new[]{"R586","R587","R588","R589","R590","R591","R592","R593","R594","R595","R596","R597","R598","R599","R600"},rows.Select(r=>r.GetProperty("ruleId").GetString()).ToArray());
         foreach(var r in rows)
         {
             Assert.Equal("supported",r.GetProperty("status").GetString());
@@ -36,6 +36,8 @@ public sealed class PortableRuleCapabilityTests
             Assert.Equal(600,r.GetProperty("cooldownSeconds").GetInt32());
             Assert.Equal(new[]{"pcap","pcapng"},r.GetProperty("executionEnvironments").EnumerateArray().Select(x=>x.GetString()).ToArray());
             Assert.Contains("http.uri",r.GetProperty("requiredEvidence").EnumerateArray().Select(x=>x.GetString()));
+            if(r.GetProperty("ruleId").GetString()=="R596")Assert.Contains("http.user_agent",r.GetProperty("requiredEvidence").EnumerateArray().Select(x=>x.GetString()));
+            if(r.GetProperty("ruleId").GetString()=="R600")Assert.Equal("POST",Assert.Single(r.GetProperty("httpMethods").EnumerateArray()).GetString());
         }
         var portable=await Run("rules","capabilities","--portable","--json");
         Assert.Equal(result.Out,portable.Out);
@@ -88,7 +90,12 @@ public sealed class PortableRuleCapabilityTests
             ["R592"]="/test.html?dwn=example&fn=sample",
             ["R593"]="/?doAs=`example`",
             ["R594"]="/rest/api/latest/projects/test?prefix=%00--exec",
-            ["R595"]="/public/plugins/graph/../../../../example"};
+            ["R595"]="/public/plugins/graph/../../../../example",
+            ["R596"]="/cgi-bin/jarrewrite.sh",
+            ["R597"]="/manager/controllers/default/resource/tvs.php?class_key=../windows/win.ini%00",
+            ["R598"]="/?file=C:/Users/example",
+            ["R599"]="/apply_abstract.cgi?file=..%2fexample",
+            ["R600"]="/owa/auth/Current/themes/resources/example"};
         var first=new PortableReplayDispatcher();var second=new PortableReplayDispatcher();
         Assert.Equal(paths.Keys.OrderBy(x=>x).ToArray(),PortableRuleCatalog.All.Select(x=>x.RuleId).ToArray());
         foreach(var capability in PortableRuleCatalog.All)
@@ -97,7 +104,7 @@ public sealed class PortableRuleCapabilityTests
             Assert.True(PortableReplayDispatcher.Supports(id));
             var record=new TrafficRecord{Source="192.0.2.1",Destination="198.51.100.2",
                 SourcePort=51000,DestinationPort=7001,Protocol="TCP",IsTcp=true,Length=128,L4Len=88,
-                ApplicationProtocol="HTTP",HttpMethod="GET",HttpUri=paths[id]};
+                ApplicationProtocol="HTTP",HttpMethod=id=="R600"?"POST":"GET",HttpUri=paths[id],HttpUserAgent=id=="R596"?"() { example":null};
             var context=new PacketEvaluationContext(record,Sensitivity.Balanced,DateTime.UnixEpoch);
             Assert.Equal(WebSignatureObservation.Match,first.Evaluate(id,context,out _));
             Assert.Equal(WebSignatureObservation.None,first.Evaluate(id,context,out _));

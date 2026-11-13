@@ -19,11 +19,13 @@ internal static class PortableRuleCatalog
     private static readonly IReadOnlyList<string> Evidence=Array.AsReadOnly(new[]{
         "packet.id","timestamp.utc","source.ip","destination.ip","source.port","destination.port",
         "tcp","http.method","http.uri","coherent_cleartext_http"});
+    private static readonly IReadOnlyList<string> UserAgentEvidence=Array.AsReadOnly(Evidence.Append("http.user_agent").ToArray());
+    private static readonly IReadOnlyList<string> Post=Array.AsReadOnly(new[]{"POST"});
     private static readonly IReadOnlyList<string> Get=Array.AsReadOnly(new[]{"GET"});
     private static readonly IReadOnlyList<string> GetPost=Array.AsReadOnly(new[]{"GET","POST"});
 
-    private static Capability Supported(string id,string name,IReadOnlyList<string> methods) =>
-        new(id,name,"supported",Environments,Evidence,methods,"capture_section_interface_clock_epoch_per_rule",
+    private static Capability Supported(string id,string name,IReadOnlyList<string> methods,IReadOnlyList<string>? evidence=null) =>
+        new(id,name,"supported",Environments,evidence??Evidence,methods,"capture_section_interface_clock_epoch_per_rule",
             600,"not_assessed","not_evaluated_by_replay","not_assessed",null);
 
     // Metadata and constructor are co-located. Every new registration becomes
@@ -39,7 +41,12 @@ internal static class PortableRuleCatalog
         new(Supported("R592","DEWMODE webshell-shaped query request",GetPost),()=>new PortableR592Detector().Evaluate),
         new(Supported("R593","Apache Spark doAs backtick request",GetPost),()=>new PortableR593Detector().Evaluate),
         new(Supported("R594","Bitbucket archive exec-prefix request",GetPost),()=>new PortableR594Detector().Evaluate),
-        new(Supported("R595","Grafana plugin traversal request",GetPost),()=>new PortableR595Detector().Evaluate)
+        new(Supported("R595","Grafana plugin traversal request",GetPost),()=>new PortableR595Detector().Evaluate),
+        new(Supported("R596","SonicWall Jarrewrite Suspicious User Agent Request",GetPost,UserAgentEvidence),()=>new PortableR596Detector().Evaluate),
+        new(Supported("R597","MODx tvs.php class_key traversal request",GetPost),()=>new PortableR597Detector().Evaluate),
+        new(Supported("R598","Windows local filesystem path in HTTP query",GetPost),()=>new PortableR598Detector().Evaluate),
+        new(Supported("R599","Arcadyan apply_abstract.cgi encoded traversal request",GetPost),()=>new PortableR599Detector().Evaluate),
+        new(Supported("R600","Exchange HAFNIUM themes-resource POST request",Post),()=>new PortableR600Detector().Evaluate)
     };
 
     private static readonly IReadOnlyList<Capability> Capabilities =

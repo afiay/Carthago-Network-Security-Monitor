@@ -48,3 +48,5 @@ System boundaries, evidence lineage, sensors and architectural constraints.
 - [CLI-007E.4 — Journal failure hardening](CLI-007E4-JournalFailureHardening.md)
 
 - [CLI-009A — Portable rules R591–R595](CLI-009A-PortableRulesR591-R595.md)
+
+- [CLI-009B — Portable rules R596–R600](CLI-009B-PortableRulesR596-R600.md)

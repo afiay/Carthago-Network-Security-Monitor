@@ -53,17 +53,12 @@ namespace Carthago.Engine.Rules.Expansion
             }
         });
 
-        private readonly WebSignatureCooldown _cooldown = new();
+        private readonly PortableR598Detector _detector = new();
         public R598_WindowsLocalPathInHttpQueryRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            var record = context.Record;
-            if (!WebSignatureRequestEvidence.TryGet(record, out var method, out var uri)
-                || !SignatureMatches(method, uri, record.HttpUserAgent, record.HttpRequestHeaders))
-                return NoMatch();
-
-            var observed = _cooldown.Observe(record.Source!, record.Destination!, record.Id, context.TimestampUtc);
+            var observed = _detector.Evaluate(context.Packet, out var method);
             if (observed == WebSignatureObservation.None) return NoMatch();
             if (observed == WebSignatureObservation.Suppressed)
                 return RuleEvaluationResult.SuppressedMatch(Descriptor.RuleId);
@@ -86,17 +81,5 @@ namespace Carthago.Engine.Rules.Expansion
             return RuleEvaluationResult.Match(Descriptor.RuleId, evt);
         }
 
-        private static bool SignatureMatches(string method, string uri, string? userAgent, string? headers)
-        {
-            var mark = uri.IndexOf('?');
-            var path = mark >= 0 ? uri.Substring(0, mark) : uri;
-            var query = mark >= 0 ? uri.Substring(mark + 1) : string.Empty;
-            return query.Contains("=C:/Users", StringComparison.OrdinalIgnoreCase)
-                || query.Contains("=C:/Program%20Files", StringComparison.OrdinalIgnoreCase)
-                || query.Contains("=C:/Windows", StringComparison.OrdinalIgnoreCase)
-                || query.Contains("=C%3A%5CUsers", StringComparison.OrdinalIgnoreCase)
-                || query.Contains("=C%3A%5CProgram%20Files", StringComparison.OrdinalIgnoreCase)
-                || query.Contains("=C%3A%5CWindows", StringComparison.OrdinalIgnoreCase);
-        }
     }
 }

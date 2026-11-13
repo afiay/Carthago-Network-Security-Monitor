@@ -192,7 +192,8 @@ try {
             'Carthago.Cli.Tests.PortableMonitorCommandTests'=21
             'Carthago.Cli.Tests.PortableMonitorControlTests'=10
             'Carthago.Cli.Tests.PortableMonitorJournalTests'=12
-            'Carthago.Cli.Tests.PortableReplayTests'=13
+            'Carthago.Cli.Tests.PortableReplayTests'=14
+            'Carthago.Cli.Tests.PortableHttp596600Tests'=29
             'Carthago.Cli.Tests.PortableHttp591595Tests'=25
             'Carthago.Cli.Tests.PortableRuleCapabilityTests'=9
             'Carthago.Cli.Tests.PortableHttpBatchTests'=18
@@ -207,7 +208,7 @@ try {
         if (-not (Test-Path -LiteralPath $cli -PathType Leaf)) { throw 'Built CLI assembly missing.' }
         Require-Stage 'cli-capabilities' @($cli,'rules','capabilities','--json')
         $catalog=Get-Content -LiteralPath (Join-Path $dir 'cli-capabilities.log') -Raw | ConvertFrom-Json
-        $expected=@('R586','R587','R588','R589','R590','R591','R592','R593','R594','R595')
+        $expected=@('R586','R587','R588','R589','R590','R591','R592','R593','R594','R595','R596','R597','R598','R599','R600')
         $actual=@($catalog.rules | ForEach-Object { $_.ruleId })
         if ($catalog.schemaVersion -ne 1 -or $catalog.scope -cne 'compiled_portable_catalog' -or
             $catalog.detectionValidation -cne 'not_assessed' -or $catalog.supportedCount -ne $expected.Count -or
@@ -222,11 +223,12 @@ try {
         $report.portableSyntheticQualified=$true
         if ($IncludeWindowsParity) {
             Require-Stage 'windows-build' @('build','Carthago.Tests/Carthago.Tests.csproj','-c','Release','--no-incremental','--nologo')
-            Invoke-TestSuite 'windows-parity' 'Carthago.Tests/Carthago.Tests.csproj' 'FullyQualifiedName~PortableR587ParityTests|FullyQualifiedName~PortableR589ParityTests|FullyQualifiedName~PortableHttpBatchParityTests|FullyQualifiedName~PortableHttp591595ParityTests' @{
+            Invoke-TestSuite 'windows-parity' 'Carthago.Tests/Carthago.Tests.csproj' 'FullyQualifiedName~PortableR587ParityTests|FullyQualifiedName~PortableR589ParityTests|FullyQualifiedName~PortableHttpBatchParityTests|FullyQualifiedName~PortableHttp591595ParityTests|FullyQualifiedName~PortableHttp596600ParityTests' @{
                 'Carthago.Tests.PortableR587ParityTests'=4
                 'Carthago.Tests.PortableR589ParityTests'=4
                 'Carthago.Tests.PortableHttpBatchParityTests'=15
                 'Carthago.Tests.PortableHttp591595ParityTests'=20
+                'Carthago.Tests.PortableHttp596600ParityTests'=24
             }
             $report.windowsParityQualified=$true
         }

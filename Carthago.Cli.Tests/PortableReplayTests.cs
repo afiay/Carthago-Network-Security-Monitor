@@ -9,9 +9,9 @@ namespace Carthago.Cli.Tests;
 
 public sealed class PortableReplayTests
 {
-    private static byte[] Frame(string path)
+    private static byte[] Frame(string path,string method="GET",string? ua=null)
     {
-        var payload=Encoding.ASCII.GetBytes($"GET {path} HTTP/1.1\r\nHost: example.test\r\n\r\n");
+        var payload=Encoding.ASCII.GetBytes($"{method} {path} HTTP/1.1\r\nHost: example.test\r\n"+(ua is null?"":$"User-Agent: {ua}\r\n")+"\r\n");
         var b=new byte[40+payload.Length];
         b[0]=0x45;b[8]=64;b[9]=6;
         new byte[]{192,0,2,1,198,51,100,2}.CopyTo(b,12);
@@ -215,6 +215,29 @@ public sealed class PortableReplayTests
         Assert.Equal(new[]{"R591","R592","R593","R594","R595"},replay.GetProperty("findings").EnumerateArray()
             .Select(f=>f.GetProperty("ruleId").GetString()).ToArray());
         Assert.DoesNotContain("%00--exec",r.Output);
+        Assert.Equal("unsupported_detector",replay.GetProperty("rules")[5].GetProperty("status").GetString());
+    }
+
+    [Fact]
+    public async Task HeaderAndPostRulesReplayWithIndependentCounters()
+    {
+        var bytes=Pcap((100,Frame("/cgi-bin/jarrewrite.sh", "GET", "() { example"),null),
+            (101,Frame("/manager/controllers/default/resource/tvs.php?class_key=../windows/win.ini%00"),null),
+            (102,Frame("/?file=C:/Users/example"),null),
+            (103,Frame("/apply_abstract.cgi?file=..%2fexample"),null),
+            (104,Frame("/owa/auth/Current/themes/resources/example", "POST"),null),
+            (105,Frame("/cgi-bin/jarrewrite.sh","GET","() { example"),null),
+            (106,Frame("/cgi-bin/jarrewrite.sh"),null),(107,Frame("/owa/auth/Current/themes/resources/example"),null));
+        var r=await Run(bytes,".pcap","R596,R597,R598,R599,R600,R1000");
+        Assert.Equal(0,r.Code);
+        using var json=JsonDocument.Parse(r.Output);var replay=json.RootElement.GetProperty("replay");
+        Assert.Equal(5,replay.GetProperty("matchCount").GetInt32());
+        Assert.Equal(1,replay.GetProperty("suppressedCount").GetInt32());
+        Assert.Equal(new[]{"R596","R597","R598","R599","R600"},replay.GetProperty("findings").EnumerateArray()
+            .Select(f=>f.GetProperty("ruleId").GetString()).ToArray());
+        Assert.DoesNotContain("() { example",r.Output);
+        Assert.DoesNotContain("C:/Users",r.Output);
+        Assert.Equal("POST",replay.GetProperty("findings")[4].GetProperty("method").GetString());
         Assert.Equal("unsupported_detector",replay.GetProperty("rules")[5].GetProperty("status").GetString());
     }
 }

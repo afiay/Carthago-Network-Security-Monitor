@@ -2378,3 +2378,8 @@ Reviewed live parent `8294185345a8117556016b3a2b7d77ba91658109`, ledger, qualifi
 ## 2026-11-13 — CLI-009A portable rules R591–R595
 
 **SOURCE CANDIDATE — UNVERIFIED.** Reviewed fe1fa4222222e53b06dffc2b86bc8b3bc5269ebe. Extract five original HTTP predicates into Core and delegate Windows wrappers, extend portable catalog to ten IDs. 25 portable predicate/evidence cases, 20 Windows parity cases, one replay case authored; zero executed. Update catalog assertions and pinned qualification gate. No runtime promotion or changes to existing rule semantics. See [architecture](02-architecture/CLI-009A-PortableRulesR591-R595.md).
+
+
+## 2026-11-13 — CLI-009B portable rules R596–R600
+
+**SOURCE CANDIDATE — UNVERIFIED.** Reviewed 60c32f03602f52fde35cb42b952893cabb5103c2. Extract five original HTTP predicates into Core and delegate Windows wrappers. Catalog fifteen IDs; R596 requires User-Agent, R600 POST only. 29 portable cases, 24 Windows parity cases and one PCAP replay case authored, zero executed. Gate updated. No runtime promotion, native capture, build/test/Actions. See [architecture](02-architecture/CLI-009B-PortableRulesR596-R600.md).
