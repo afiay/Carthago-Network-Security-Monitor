@@ -5940,3 +5940,14 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Ownership:** MainWindow.xaml, MainWindow.Settings.cs, this ledger. Existing named selector/label/column/profile grid, selection handler, Save/Reset, coverage navigation, threshold copy and profile indices preserved. No engine, capture, privacy, telemetry, shared API, tests or automation changes. Responsive controller retains existing breakpoint contract and removes trailing profile gutter. No new named elements.
 
 **Risks / planned unexecuted:** WPF resource and ElementName trigger resolution, staged selection versus saved profile, Save/Reset, coverage navigation, long labels, keyboard focus, 1920/1440/1100/1099/1024/1023/640 widths and DPI 100/125/150/200%. Builds 0; tests 0; CI 0; captures 0; renders 0. Next GA UI-175: Settings action and persistence hierarchy after fresh audit.
+
+
+## GA UI-175 — Settings persistence and action command workspace
+
+**2026-11-13 · SOURCE CANDIDATE — UNVERIFIED.** Exact approved Library reference libfile_b0a34361560c8191b641e432b3e6b15c visually inspected. Baseline `cb85ca8c1a46f77db92c160325096c416ec81b7a`, tree `dd7644d3705eb283743d1283dc5f6ab6b03ebc5e`; prior GA UI-174. Recent independent baseline, enrichment and detection commits preserved.
+
+**Visible before → after:** Equal Save/Reset cards become a dominant 1.7:1 Save lane and subordinate Reset lane, with three inset lifecycle cards (on Save, immediate Dashboard, session-only credential), a full-width primary action and distinct Reset scope inset. Wide ≥1440 uses asymmetric lanes; Standard 1100–1439, Compact 1024–1099 and below-1024 fallback stack Save above Reset with 12-unit gap. Reference mapping: layered navy surfaces, cyan primary action, subdued secondary action, compact operational cards. No demo telemetry. Static impact HIGH in Settings footer; no WPF render.
+
+**Ownership / static review:** MainWindow.xaml, MainWindow.Settings.cs, this ledger only. Existing SaveSettings_Click and ResetSettings_Click handlers, tooltip/accessibility bindings, preference synchronization, Dashboard immediate updates and session-only credential handler unchanged. Existing Theme.xaml resources reused; new named layout elements consumed only by Settings responsive controller. No Engine/Models/Services, detection, capture, privacy, telemetry, shared APIs, tests, workflows or automation changes. Reset remains immediate without confirmation; no new behavior or claim of dirty-state tracking.
+
+**Risks / planned unexecuted:** WPF parsing/name generation, responsive initial and resize placement, 1920/1440/1100/1099/1024/1023/640 widths, DPI 100/125/150/200%, keyboard order, button fit, Save/Reset scope, immediate dashboard preferences, session credential non-persistence and scroll reachability. Builds 0; tests 0; CI 0; captures 0; renders 0. Next GA UI-176: fresh audit of Settings header/workspace navigation and remaining cross-screen visual consistency.
