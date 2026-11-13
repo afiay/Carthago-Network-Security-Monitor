@@ -115,4 +115,41 @@ public sealed class CarthagoEnrichmentExportTests
         }
         finally { Directory.Delete(directory, recursive: true); }
     }
+
+    [Fact]
+    public async Task Workbook_Hostile_Text_Remains_Valid_Literal_Text()
+    {
+        string directory = Path.Combine(Path.GetTempPath(), "carthago-text-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        try
+        {
+            string path = Path.Combine(directory, "text.xlsx");
+            string hostile = "=1+1\u0000\u0001\uFFFE\t\n😀";
+            string longText = new string('a', 32754) + "😀" + new string('b', 30);
+            var snapshot = CarthagoSessionSnapshot.CreateEmpty();
+            snapshot.AddRows("Enrichment", new[] { new { Hostile = hostile, LongText = longText } });
+            await new CarthagoExcelExportService().ExportAsync(path, snapshot);
+            using var document = SpreadsheetDocument.Open(path, false);
+            Assert.Empty(new OpenXmlValidator().Validate(document));
+            var workbook = document.WorkbookPart!;
+            var sheet = workbook.Workbook.Descendants<Sheet>().Single(s => s.Name!.Value == "Enrichment");
+            var cells = ((WorksheetPart)workbook.GetPartById(sheet.Id!.Value!))
+                .Worksheet.GetFirstChild<SheetData>()!.Elements<Row>().Last().Elements<Cell>().ToArray();
+            Assert.Equal(CellValues.InlineString, cells[0].DataType!.Value);
+            Assert.Null(cells[0].CellFormula);
+            Assert.Equal("=1+1\uFFFD\uFFFD\uFFFD\t\n😀", cells[0].InlineString!.InnerText);
+            string truncated = cells[1].InlineString!.InnerText;
+            Assert.EndsWith(" [TRUNCATED]", truncated);
+            Assert.True(truncated.Length <= 32767);
+            Assert.DoesNotContain("\uFFFD", truncated);
+            Assert.Equal(new string('a', 32754) + " [TRUNCATED]", truncated);
+        }
+        finally { Directory.Delete(directory, recursive: true); }
+    }
+
+    [Fact]
+    public void Inline_Text_Repairs_Unpaired_Surrogates_And_Preserves_Valid_Pairs()
+    {
+        Assert.Equal("�😀�", CarthagoExcelExportService.PrepareInlineText("\uD800😀\uDC00"));
+    }
 }

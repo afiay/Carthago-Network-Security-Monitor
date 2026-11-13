@@ -353,9 +353,38 @@ public sealed class CarthagoExcelExportService
         };
         // String/array/object cells remain InlineString, so formula-like content
         // can never become executable spreadsheet formulas.
-        return result.Length <= MaximumTextLength
-            ? result
-            : result[..(MaximumTextLength - 18)] + " [TRUNCATED]";
+        return LimitText(result);
+    }
+
+    private static string LimitText(string value)
+    {
+        if (value.Length <= MaximumTextLength) return value;
+        const string suffix = " [TRUNCATED]";
+        int end = MaximumTextLength - suffix.Length;
+        if (char.IsHighSurrogate(value[end - 1]) && char.IsLowSurrogate(value[end]))
+            end--;
+        return value[..end] + suffix;
+    }
+
+    // XML 1.0 cannot represent certain captured control characters or lone
+    // surrogates. Replace them visibly in XLSX only; keep valid pairs intact.
+    internal static string PrepareInlineText(string value)
+    {
+        var result = new System.Text.StringBuilder(value.Length);
+        for (int i = 0; i < value.Length; i++)
+        {
+            char c = value[i];
+            if (char.IsHighSurrogate(c) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
+            {
+                result.Append(c).Append(value[++i]);
+            }
+            else if (c == '\t' || c == '\n' || c == '\r' ||
+                     (c >= ' ' && c <= '\uD7FF') || (c >= '\uE000' && c <= '\uFFFD'))
+                result.Append(c);
+            else
+                result.Append('\uFFFD');
+        }
+        return LimitText(result.ToString());
     }
 
     private static void WriteRow(OpenXmlWriter writer, IEnumerable<ExcelCellValue> values, uint rowIndex)
@@ -373,7 +402,7 @@ public sealed class CarthagoExcelExportService
             if (value.DataType == CellValues.InlineString)
             {
                 cell.InlineString = new InlineString(
-                    new Text(value.Value) { Space = SpaceProcessingModeValues.Preserve });
+                    new Text(PrepareInlineText(value.Value)) { Space = SpaceProcessingModeValues.Preserve });
             }
             else
             {
