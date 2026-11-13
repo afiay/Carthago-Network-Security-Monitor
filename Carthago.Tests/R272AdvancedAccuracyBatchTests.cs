@@ -108,6 +108,21 @@ public sealed class R272AdvancedAccuracyBatchTests
                 .EvaluateAsync(new RuleEvaluationContext(probe, Sensitivity.Balanced, now))
                 .AsTask().GetAwaiter().GetResult().Matched);
 
+            // The snapshot is frozen at creation; future and expired observations
+            // must not qualify even when the same host has emitted three families.
+            foreach (var offset in new[] { TimeSpan.FromMinutes(-1), TimeSpan.FromMinutes(11) })
+            {
+                var at = now.Add(offset);
+                var boundary = RuleEvaluationContext.CreateForEngine(probe, Sensitivity.Balanced,
+                    at, RuleEngineHealthSnapshot.Empty(at));
+                Assert.False(new R272_MultiSignalRuleStackSurgeFromHostRule()
+                    .EvaluateAsync(boundary).AsTask().GetAwaiter().GetResult().Matched);
+            }
+            probe.Source = "10.214.1.99";
+            Assert.False(new R272_MultiSignalRuleStackSurgeFromHostRule()
+                .EvaluateAsync(context).AsTask().GetAwaiter().GetResult().Matched);
+            probe.Source = host;
+
             RuleEngine.ResetRuntimeStateForReplay();
             var reset = RuleEvaluationContext.CreateForEngine(probe, Sensitivity.Balanced,
                 now, RuleEngineHealthSnapshot.Empty(now));
