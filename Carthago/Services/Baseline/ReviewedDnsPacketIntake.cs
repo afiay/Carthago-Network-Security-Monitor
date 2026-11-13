@@ -2,6 +2,8 @@
 using System;
 using System.Buffers.Binary;
 using System.Net;
+using System.IO;
+using Carthago.Services.Benchmarking;
 
 namespace Carthago.Services.Baseline
 {
@@ -24,27 +26,17 @@ namespace Carthago.Services.Baseline
                 U16(capture.Slice(6)) != 4 || U32(capture.Slice(20)) != 1) return false;
             uint snap = U32(capture.Slice(16));
             if (snap == 0 || snap > 65535) return false;
-            int pos = 24, count = 0;
-            DateTimeOffset first = default, last = default;
-            while (pos < capture.Length)
-            {
-                if (++count > 20000 || capture.Length - pos < 16) return false;
-                var header = capture.Slice(pos, 16);
-                uint seconds = U32(header), micros = U32(header.Slice(4));
-                uint length = U32(header.Slice(8));
-                pos += 16;
-                if (micros >= 1000000 || length == 0 || length > snap ||
-                    length != U32(header.Slice(12)) || length > capture.Length - pos) return false;
-                var timestamp = DateTimeOffset.FromUnixTimeSeconds(seconds).AddTicks(micros * 10L);
-                if (count == 1) first = timestamp;
-                else if (timestamp < last) return false;
-                last = timestamp;
-                if (last - first > TimeSpan.FromMinutes(10) ||
-                    !IsQuery(capture.Slice(pos, (int)length), ip)) return false;
-                pos += (int)length;
-            }
-            return count > 0 && ReviewedDnsManifestBinding.Matches(manifest, manifestDigest,
-                capture, scope, first, last);
+            // Reuse Q9 record framing and timestamp validation; retain the narrower
+            // DNS format policy above and reject every truncated or unrelated frame.
+            Smb2LabCaptureRunner.Capture parsed;
+            try { parsed = Smb2LabCaptureRunner.ParseClassicPcap(capture.ToArray()); }
+            catch (InvalidDataException) { return false; }
+            if (parsed.Frames.Count == 0) return false;
+            foreach (var frame in parsed.Frames)
+                if (frame.Truncated || !IsQuery(frame.Bytes, ip)) return false;
+            return ReviewedDnsManifestBinding.Matches(manifest, manifestDigest,
+                capture, scope, new DateTimeOffset(parsed.Frames[0].Utc),
+                new DateTimeOffset(parsed.Frames[^1].Utc));
         }
 
         private static uint U32(ReadOnlySpan<byte> b) => BinaryPrimitives.ReadUInt32LittleEndian(b);

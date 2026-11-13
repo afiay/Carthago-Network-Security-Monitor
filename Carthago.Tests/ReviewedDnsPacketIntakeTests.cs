@@ -23,6 +23,10 @@ public sealed class ReviewedDnsPacketIntakeTests
     [InlineData("bad-micros", false)]
     [InlineData("trailing-frame", false)]
     [InlineData("two-valid", true)]
+    [InlineData("record-truncated", false)]
+    [InlineData("oversized-snap", false)]
+    [InlineData("unsupported-link", false)]
+    [InlineData("unsupported-magic", false)]
     [InlineData("second-source", false)]
     [InlineData("reverse-time", false)]
     [InlineData("second-outside", false)]
@@ -47,6 +51,10 @@ public sealed class ReviewedDnsPacketIntakeTests
         Write(28, change == "bad-micros" ? 1000000u : 0u);
         Write(32, (uint)frame.Length); Write(36, (uint)frame.Length);
         frame.CopyTo(capture, 40);
+        if (change == "record-truncated") Write(36, (uint)frame.Length + 1);
+        if (change == "oversized-snap") Write(16, 65536);
+        if (change == "unsupported-link") Write(20, 101);
+        if (change == "unsupported-magic") Write(0, 0xa1b23c4d);
         if (change == "truncated") Array.Resize(ref capture, capture.Length - 1);
         if (change == "empty") Array.Resize(ref capture, 24);
         if (change is "two-valid" or "second-source" or "reverse-time" or "second-outside")
