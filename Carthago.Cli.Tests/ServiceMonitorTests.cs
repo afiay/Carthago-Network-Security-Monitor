@@ -76,9 +76,81 @@ public sealed class ServiceMonitorTests
         => Assert.Throws<ArgumentException>(() => new ServiceMonitorRun(new("id", null, 1, false, true, true),
             _ => Task.FromResult<IForegroundCapture>(new Fake()), TextWriter.Null));
 
+    [Fact]
+    public async Task StartupWaitsForFirstHealthPublication()
+    {
+        var adapter = new Fake();
+        var entered = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var run = new ServiceMonitorRun(new("id", null, 1, false),
+            _ => Task.FromResult<IForegroundCapture>(adapter), TextWriter.Null,
+            sample: _ =>
+            {
+                entered.TrySetResult(true);
+                release.Task.WaitAsync(TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
+            });
+        try
+        {
+            await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.False(run.Started.IsCompleted);
+            Assert.True(adapter.CaptureRequested);
+            release.TrySetResult(true);
+            await run.Started.WaitAsync(TimeSpan.FromSeconds(5));
+        }
+        finally
+        {
+            release.TrySetResult(true);
+            run.RequestStop();
+            Assert.Equal(130, await run.Completion.WaitAsync(TimeSpan.FromSeconds(5)));
+        }
+        Assert.True(adapter.Disposed);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task FirstHealthFailureNeverSignalsReady(bool failRead)
+    {
+        var adapter = new Fake { FailRead = failRead };
+        using var run = new ServiceMonitorRun(new("id", null, 1, false),
+            _ => Task.FromResult<IForegroundCapture>(adapter), TextWriter.Null,
+            sample: _ => { if (!failRead) throw new IOException("Synthetic publication failure."); });
+        await Assert.ThrowsAsync<InvalidOperationException>(() => run.Started.WaitAsync(TimeSpan.FromSeconds(5)));
+        Assert.Equal(3, await run.Completion.WaitAsync(TimeSpan.FromSeconds(5)));
+        Assert.True(adapter.Disposed);
+    }
+
+    [Fact]
+    public async Task StopDuringFirstPublicationDoesNotSignalReady()
+    {
+        var adapter = new Fake();
+        var entered = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var run = new ServiceMonitorRun(new("id", null, 1, false),
+            _ => Task.FromResult<IForegroundCapture>(adapter), TextWriter.Null,
+            sample: _ =>
+            {
+                entered.TrySetResult(true);
+                release.Task.WaitAsync(TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
+            });
+        try
+        {
+            await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            run.RequestStop();
+        }
+        finally
+        {
+            release.TrySetResult(true);
+            run.RequestStop();
+            Assert.Equal(130, await run.Completion.WaitAsync(TimeSpan.FromSeconds(5)));
+        }
+        await Assert.ThrowsAsync<InvalidOperationException>(() => run.Started);
+        Assert.True(adapter.Disposed);
+    }
+
     private sealed class Fake : IForegroundCapture
     {
-        public bool FailStart, Disposed;
+        public bool FailStart, FailRead, Disposed;
         public bool Confirm = true;
         public bool CaptureRequested { get; private set; }
         public void Start(string interfaceId, string? filter)
@@ -86,7 +158,11 @@ public sealed class ServiceMonitorTests
             if (FailStart) throw new InvalidOperationException();
             CaptureRequested = Confirm;
         }
-        public ForegroundMonitorCounters ReadCounters() => new(0, 0, 0, 0);
+        public ForegroundMonitorCounters ReadCounters()
+        {
+            if (FailRead) throw new InvalidOperationException("Synthetic counter read failure.");
+            return new(0, 0, 0, 0);
+        }
         public ValueTask DisposeAsync() { Disposed = true; CaptureRequested = false; return ValueTask.CompletedTask; }
     }
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 namespace Carthago.Contracts;
 
-/// <summary>SCM-independent worker boundary. Startup is signaled only after the capture adapter starts.</summary>
+/// <summary>SCM-independent worker boundary. Startup requires a confirmed capture and successful first health sample.</summary>
 public sealed class ServiceMonitorRun : IDisposable
 {
     private readonly CancellationTokenSource _stop = new();
@@ -21,8 +21,17 @@ public sealed class ServiceMonitorRun : IDisposable
             {
                 _stop.Token.ThrowIfCancellationRequested();
                 var capture = await factory(_stop.Token).ConfigureAwait(false);
-                return await ForegroundMonitor.RunAsync(new StartupCapture(capture, _started), options,
-                    TextWriter.Null, error, _stop.Token, delay, sample: sample).ConfigureAwait(false);
+                return await ForegroundMonitor.RunAsync(capture, options, TextWriter.Null, error,
+                    _stop.Token, delay, sample: counters =>
+                    {
+                        // ForegroundMonitor has confirmed CaptureRequested and read counters.
+                        // In SCM mode, sample persists the health snapshot. A failed first
+                        // publication must not signal readiness to the service controller.
+                        _stop.Token.ThrowIfCancellationRequested();
+                        sample?.Invoke(counters);
+                        _stop.Token.ThrowIfCancellationRequested();
+                        _started.TrySetResult(true);
+                    }).ConfigureAwait(false);
             }
             catch (OperationCanceledException) when (_stop.IsCancellationRequested) { return 130; }
             catch (Exception ex) when (ex is not OutOfMemoryException)
@@ -32,7 +41,7 @@ public sealed class ServiceMonitorRun : IDisposable
             }
             finally
             {
-                _started.TrySetException(new InvalidOperationException("Capture startup not confirmed."));
+                _started.TrySetException(new InvalidOperationException("Capture startup and first health sample not confirmed."));
             }
         });
     }
@@ -45,16 +54,4 @@ public sealed class ServiceMonitorRun : IDisposable
         _stop.Dispose();
     }
 
-    private sealed class StartupCapture(IForegroundCapture inner, TaskCompletionSource<bool> started) : IForegroundCapture
-    {
-        public void Start(string interfaceId, string? filter)
-        {
-            inner.Start(interfaceId, filter);
-            if (!inner.CaptureRequested) throw new InvalidOperationException("Capture did not confirm startup.");
-            started.TrySetResult(true);
-        }
-        public bool CaptureRequested => inner.CaptureRequested;
-        public ForegroundMonitorCounters ReadCounters() => inner.ReadCounters();
-        public ValueTask DisposeAsync() => inner.DisposeAsync();
-    }
 }
