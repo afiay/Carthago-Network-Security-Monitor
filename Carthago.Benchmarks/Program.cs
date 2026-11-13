@@ -19,8 +19,9 @@ if (args.Length > 0 && args[0] == "--smb2-lab-manifest")
         Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(labReport,
             new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
     }
-    catch (Exception ex) when (ex is System.IO.IOException or System.Text.Json.JsonException
-        or ArgumentException or InvalidOperationException or UnauthorizedAccessException)
+    catch (Exception ex) when (ex is System.IO.InvalidDataException || ex is System.IO.IOException
+        || ex is System.Text.Json.JsonException || ex is ArgumentException
+        || ex is InvalidOperationException || ex is UnauthorizedAccessException)
     {
         // Avoid leaking private capture paths/manifest contents in error messages.
         Console.Error.WriteLine("SMB2 lab replay rejected: " + ex.GetType().Name);

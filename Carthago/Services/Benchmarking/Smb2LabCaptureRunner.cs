@@ -30,6 +30,7 @@ namespace Carthago.Services.Benchmarking
         };
         private sealed class Manifest
         {
+            public Manifest() { }
             public int Version {get;set;}
             public string CaseId {get;set;}="";
             public string Label {get;set;}="";
@@ -49,7 +50,7 @@ namespace Carthago.Services.Benchmarking
         internal sealed record Capture(LinkLayers LinkLayer, IReadOnlyList<Frame> Frames);
 
         public sealed record LabReport(string CaseId,string Label,string TargetRule,
-            string CaptureSha256,string GroundTruthSha256,string GroundTruthStatus,
+            string ManifestSha256,string CaptureSha256,string GroundTruthSha256,string GroundTruthStatus,
             int FrameCount,int TruncatedFrames,int ScopedTcpFrames,
             int QualifiedWrites,int CorrelatedTargets,int CorrelatedReplies,
             bool ExpectedWrite,string CoverageStatus,bool? RawMatch,bool? PrecisionGateAllowsAlert,
@@ -134,7 +135,7 @@ namespace Carthago.Services.Benchmarking
                 m.ExpectedWrite==true&&writes==0?"expected-write-not-qualified":
                 m.ExpectedWrite==false&&writes>0?"ground-truth-conflict":
                 rule==null?"process-attribution-unavailable":"packet-rule-evaluated";
-            return new(m.CaseId,m.Label,m.TargetRule,captureHash,truthHash,
+            return new(m.CaseId,m.Label,m.TargetRule,Hash(manifestBytes),captureHash,truthHash,
                 "operator-supplied-hash-verified-not-independently-validated",
                 capture.Frames.Count,truncated,scoped,writes,targets,replies,m.ExpectedWrite!.Value,
                 coverage,rule==null?null:raw,rule==null?null:alert,confidence,mode,false);

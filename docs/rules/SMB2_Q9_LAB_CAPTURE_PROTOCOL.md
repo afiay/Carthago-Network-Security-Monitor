@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-Owner checkpoint 6a677b7: Q8 22/22, combined 104/104, full 12,354/12,354 (288.3s), Release 52s. Q7 frozen synthetic metrics unchanged. This phase delivers a packet-only offline runner and 13 synthetic reader/replay contract cases, not an independent capture corpus or production accuracy result.
+Owner checkpoint 6a677b7: Q8 22/22, combined 104/104, full 12,354/12,354 (288.3s), Release 52s. Q7 frozen synthetic metrics unchanged. This phase delivers a packet-only offline runner and 15 synthetic reader/replay contract cases, not an independent capture corpus or production accuracy result.
 
 Use an isolated Windows lab with a client, an SMB server and, for R942, a third controlled host. Use a private virtual switch or dedicated lab VLAN, no connection to public or production networks. Use ordinary harmless text files and dedicated test accounts; no real secrets, production traffic, malicious executables or destructive actions. Keep default security settings; do not weaken production SMB signing/encryption. Encrypted, segmented, compound and late-after-budget writes may legitimately remain unqualified.
 
@@ -36,7 +36,7 @@ Use a JSON object, camelCase, version 1; replace placeholders with real values. 
 }
 ```
 
-Labels: benign or malicious-simulation. expectedWrite means independently expected on-wire WRITE attempt, not successful storage. For R908 or process-dependent rules omit followupDestinationIp. Use actual capture bounds (UTC) and exact IPv4 endpoints. Hash with `Get-FileHash -Algorithm SHA256`. Relative filenames only, unique JSON fields, no path traversal. Keep manifest and inputs private; report contains case/label and hashes, not raw packets, paths, addresses or ground-truth text.
+Labels: benign or malicious-simulation. expectedWrite means independently expected on-wire WRITE attempt, not successful storage. For R908 or process-dependent rules omit followupDestinationIp. Use actual capture bounds (UTC) and exact IPv4 endpoints. Hash with `Get-FileHash -Algorithm SHA256`. Relative filenames only, unique JSON fields, no path traversal. Keep manifest and inputs private; report contains case/label and hashes (including the manifest itself), not raw packets, paths, addresses or ground-truth text.
 
 ## Run (one explicit invocation per case)
 

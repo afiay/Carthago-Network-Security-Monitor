@@ -7,6 +7,8 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Carthago.Services.Benchmarking;
+using Carthago.Services;
+using PacketDotNet;
 using Xunit;
 
 namespace Carthago.Tests;
@@ -15,14 +17,15 @@ namespace Carthago.Tests;
 public sealed class Smb2LabCaptureRunnerTests
 {
     private static readonly DateTime Epoch=new(2026,11,13,12,0,0,DateTimeKind.Utc);
-    private static byte[] Tcp(string src,string dst,int sport,int dport,byte flags,uint seq,byte[] payload)
+    private static byte[] Tcp(string src,string dst,int sport,int dport,byte flags,uint seq,byte[] payload,uint ack=0)
     {
         var p=new byte[40+payload.Length];p[0]=0x45;p[8]=64;p[9]=6;
         BinaryPrimitives.WriteUInt16BigEndian(p.AsSpan(2,2),(ushort)p.Length);
         IPAddress.Parse(src).GetAddressBytes().CopyTo(p,12);IPAddress.Parse(dst).GetAddressBytes().CopyTo(p,16);
         BinaryPrimitives.WriteUInt16BigEndian(p.AsSpan(20,2),(ushort)sport);
         BinaryPrimitives.WriteUInt16BigEndian(p.AsSpan(22,2),(ushort)dport);
-        BinaryPrimitives.WriteUInt32BigEndian(p.AsSpan(24,4),seq);p[32]=0x50;p[33]=flags;
+        BinaryPrimitives.WriteUInt32BigEndian(p.AsSpan(24,4),seq);
+        BinaryPrimitives.WriteUInt32BigEndian(p.AsSpan(28,4),ack);p[32]=0x50;p[33]=flags;
         payload.CopyTo(p,40);return p;
     }
     private static byte[] Write()
@@ -81,6 +84,7 @@ public sealed class Smb2LabCaptureRunnerTests
     {
         var result=await Run(Pcap(big:big,nano:nano));
         Assert.Equal(3,result.FrameCount);Assert.Equal(1,result.QualifiedWrites);
+        Assert.Equal(64,result.ManifestSha256.Length);
         Assert.Equal("packet-rule-evaluated",result.CoverageStatus);
         Assert.True(result.RawMatch);Assert.False(result.PrecisionGateAllowsAlert);
         Assert.False(result.ProductionPromotionEligible);
@@ -123,5 +127,27 @@ public sealed class Smb2LabCaptureRunnerTests
             case "time": BinaryPrimitives.WriteUInt32LittleEndian(p.AsSpan(28,4),1000000);break;
         }
         Assert.Throws<InvalidDataException>(()=>Smb2LabCaptureRunner.ParseClassicPcap(p));
+    }
+
+    [Theory]
+    [InlineData(30,true)]
+    [InlineData(31,false)]
+    public void CaptureClockControlsProducerResponseExpiry(int seconds,bool expected)
+    {
+        DateTime now=Epoch;
+        var handler=new PacketHandler(()=>now);
+        var link=(LinkLayers)101;
+        handler.ParseFrame(Tcp("10.77.1.20","10.77.2.40",53000,445,0x02,100,Array.Empty<byte>()),link);
+        handler.ParseFrame(Tcp("10.77.2.40","10.77.1.20",445,53000,0x12,500,Array.Empty<byte>(),101),link);
+        var request=handler.ParseFrame(Tcp("10.77.1.20","10.77.2.40",53000,445,0x18,101,Write(),501),link);
+        Assert.NotNull(request);Assert.True(request!.Smb2CompleteWriteRequestObserved);
+        var reply=new byte[84];reply[3]=80;reply[4]=0xfe;reply[5]=0x53;reply[6]=0x4d;reply[7]=0x42;
+        reply[8]=64;reply[16]=9;reply[20]=1;reply[28]=1;reply[40]=1;reply[44]=1;
+        reply[68]=17;reply[72]=4;
+        now=Epoch.AddSeconds(seconds);
+        var response=handler.ParseFrame(Tcp("10.77.2.40","10.77.1.20",445,53000,0x18,501,reply,221),link);
+        Assert.NotNull(response);
+        Assert.Equal(expected,response!.Smb2WriteResponseCorrelationId.HasValue);
+        if(expected)Assert.Equal(request.Id,response.Smb2WriteResponseCorrelationId);
     }
 }

@@ -86,4 +86,6 @@ Owner Windows Release: Q8 22/22, combined 104/104, full 12,354/12,354, zero fail
 
 ## Q9-v1 — original lab PCAP intake
 
-Add explicit packet-only CLI runner, strict classic-PCAP reader and hash-bound per-case manifest/independent operator evidence file. Capture timestamp drives PacketHandler UTC correlation and rule evaluation; default live clock unchanged. Scoped R908/R942 raw and precision gate decisions; four process-dependent rules reported unavailable, no identity fabrication. Distinct truncation/coverage/conflict outcomes; no raw payloads in report, no real lab data yet, no aggregate accuracy claims. 13 synthetic contract tests authored, Windows pending. See docs/rules/SMB2_Q9_LAB_CAPTURE_PROTOCOL.md.
+Add explicit packet-only CLI runner, strict classic-PCAP reader and hash-bound per-case manifest/independent operator evidence file. Capture timestamp drives PacketHandler UTC correlation and rule evaluation; default live clock unchanged. Scoped R908/R942 raw and precision gate decisions; four process-dependent rules reported unavailable, no identity fabrication. Distinct truncation/coverage/conflict outcomes; no raw payloads in report, no real lab data yet, no aggregate accuracy claims. 15 synthetic contract tests authored, Windows pending. See docs/rules/SMB2_Q9_LAB_CAPTURE_PROTOCOL.md.
+
+Q9 intake review: explicitly handle invalid-data CLI failures without exposing private input paths, bind manifest bytes in report, and add capture-clock SMB2 response tests at 30s/31s. No Windows execution yet.
