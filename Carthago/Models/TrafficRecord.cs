@@ -161,6 +161,7 @@ namespace Carthago.Models
         public string? Smb2WriteFileKind { get; internal set; }
         public Guid? Smb2WriteCreateCorrelationId { get; internal set; }
         // Capture-only initial TFTP handshake evidence; never populated by port inference.
+        public bool SnmpEnterpriseSetRequestObserved { get; internal set; }
         public byte? TftpInitialRequestOpcode { get; internal set; }
         public byte? TftpInitialReplyOpcode { get; internal set; }
         public Guid? TftpRequestCorrelationId { get; internal set; }

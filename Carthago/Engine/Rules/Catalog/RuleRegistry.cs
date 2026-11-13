@@ -988,6 +988,7 @@ namespace Carthago.Engine.Rules.Catalog
                 new R963_PublicSshIngressThenSshdPublicTlsRule(),
                 new R964_OpensslPublic8443ThenSamePeer443TlsRule(),
                 new R965_SpoolsvPublicDllGetThenSmbSynRule(),
+                new R966_PublicSnmpEnterpriseSetRequestRule(),
             };
         }
 

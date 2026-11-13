@@ -797,6 +797,15 @@ namespace Carthago.Services
                             AppendInfo(rec, $"[DNS {(dns.IsResponse ? "ans" : "q")}={rec.DnsQname ?? "-"} {rec.DnsQtype ?? "?"}]");
                         }
 
+                        // Complete, capture-attested SNMP enterprise SET. No community or value retained.
+                        if (isIPv4 && dport == 161 && sport is > 0 and <= 65535 &&
+                            completeIpPacket && l4PayloadLen == ipPayloadLen - 8 && !rec.IsQuic &&
+                            SnmpEnterpriseSetInspector.TryInspect(l4Payload))
+                        {
+                            rec.ApplicationProtocol = "snmp.enterprise.set.request";
+                            rec.SnmpEnterpriseSetRequestObserved = true;
+                        }
+
                         // Capture-attested TFTP initial request/first reply, not generic port guessing.
                         if (isIPv4 && completeIpPacket && l4PayloadLen == ipPayloadLen - 8)
                             _tftpHandshake.Observe(rec, l4Payload, true, _utcNow());
