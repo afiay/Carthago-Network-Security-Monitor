@@ -38,7 +38,8 @@ public sealed class ActiveFindingReleaseMatrixTests
                     ambiguous ? TlsInspectionStatus.HandshakeFailed :
                         policy == SslPolicyErrors.None ? TlsInspectionStatus.Authenticated : TlsInspectionStatus.CertificateRejected,
                     ambiguous ? null : new TlsCertificateEvidence("subject", "issuer", "serial",
-                        new string(rule == 4 && changed ? 'b' : 'a', 64), Now.AddDays(-2), Now.AddDays(2),
+                        new string(rule == 4 && changed ? 'b' : 'a', 64), Now.AddDays(-2),
+                        rule == 5 ? Now.AddMinutes(-7) : Now.AddDays(2),
                         rule == 5 && changed ? "Expired" : "WithinValidityPeriod", null, null, policy,
                         Array.Empty<X509ChainStatusFlags>(), null), null, null, t, TimeSpan.Zero));
             case 7: case 8:

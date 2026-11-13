@@ -182,3 +182,5 @@ does not create a release, mark production approved or change services.
 Manual review of provenance/dependency hashes, effective ACLs, cross-account
 DPAPI, packet overhead/loss, individual negative fixture causes, central
 detection integration limits and known Gateway contention remains required.
+
+Before running any live stage, execute scripts/test-active-release-contract.ps1 and the standard synthetic gate. Pin one clean candidate commit for the entire multi-day qualification; do not pull or switch that checkout between reports. New branch commits require requalification or an explicit, reviewed release-delta process (not implemented).

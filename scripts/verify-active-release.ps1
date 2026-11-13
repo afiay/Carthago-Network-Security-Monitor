@@ -31,7 +31,8 @@ try {
         @($b.suites).Count -eq 28 -and $b.testExitCode -eq 0 -and $b.buildExitCode -eq 0 -and
         $b.monitorBuildExitCode -eq 0 -and $b.monitorHelpExitCode -eq 0 -and $b.monitorInvalidCommandExitCode -eq 2 -and
         $b.processQualificationBuildExitCode -eq 0 -and $b.processQualificationExitCode -eq 0 -and $b.liveLabContractExitCode -eq 0 -and
-        $b.deploymentContractPassed -eq $true -and $b.serviceLifecycleContractPassed -eq $true -and $b.serviceNegativeContractPassed -eq $true) 'Synthetic gate not passed.'
+        $b.deploymentContractPassed -eq $true -and $b.serviceLifecycleContractPassed -eq $true -and $b.serviceNegativeContractPassed -eq $true -and
+        $b.releaseContractPassed -eq $true) 'Synthetic gate not passed.'
     $trxPath=Join-Path (Split-Path -Parent (Get-Item -LiteralPath $SyntheticReport).FullName) 'active-sensors.trx'
     Require ((Get-FileHash -LiteralPath $trxPath -Algorithm SHA256).Hash -ceq $b.trxSha256) 'TRX hash mismatch.'
     [xml]$trx=Get-Content -LiteralPath $trxPath -Raw
@@ -45,7 +46,8 @@ try {
     foreach ($file in $PhysicalReports) {
         $r=Read-Report $file
         Require ($r.case -cin $required -and -not $seen.ContainsKey($r.case) -and
-            $r.result -ceq 'expected_physical_outcome_confirmed' -and $r.productionEvidenceWritten -is [bool] -and -not $r.productionEvidenceWritten) 'Physical report incomplete or duplicate.'
+            $r.result -ceq 'expected_physical_outcome_confirmed' -and $r.productionEvidenceWritten -is [bool] -and -not $r.productionEvidenceWritten -and
+            (Test-ActivePhysicalOutcome $r.case $r.exitCode $r.labResult $r.outcome $r.expectedMatch)) 'Physical report incomplete or duplicate.'
         $seen[$r.case]=$true
     }
     Require ($seen.Count -eq $required.Count) 'Missing physical cases.'
@@ -54,7 +56,8 @@ try {
     Require ($s.result -ceq 'qualified_for_observed_operational_scope' -and $s.firstRun -ceq 'start_observe_stop_confirmed' -and
         $s.restart -ceq 'new_session_responsive_scope_observed' -and $s.cleanup -ceq 'stopped_confirmed' -and
         $s.profiles -ge 1 -and $s.profiles -le 16 -and $s.firstResponsiveProfiles -eq $s.profiles -and
-        $s.secondResponsiveProfiles -eq $s.profiles -and [Guid]$s.firstSessionId -ne [Guid]$s.secondSessionId) 'Positive SCM gate incomplete.'
+        $s.secondResponsiveProfiles -eq $s.profiles -and [Guid]$s.firstSessionId -ne [Guid]::Empty -and
+        [Guid]$s.secondSessionId -ne [Guid]::Empty -and [Guid]$s.firstSessionId -ne [Guid]$s.secondSessionId) 'Positive SCM gate incomplete.'
     $reasons=@{}
     $attempts=@{}
     $lastNegative=[DateTimeOffset]::MinValue
@@ -62,7 +65,7 @@ try {
         $n=Read-Report $file;Same-Binary $n
         Require ($n.expectedReason -cin @('NoValidGrant','PinnedGrantMismatch','SnmpCredentialUnavailable') -and
             $n.result -ceq 'qualified_expected_startup_rejection' -and $n.rejection -ceq 'expected_pre_readiness_rejection_confirmed' -and
-            $n.cleanup -ceq 'stopped_confirmed' -and [Guid]$n.attemptId -ne [Guid]::Empty -and -not $attempts.ContainsKey([string]$n.attemptId)) 'Negative SCM gate incomplete or duplicate.'
+            $n.cleanup -ceq 'stopped_confirmed' -and ($n.scmExitCode -ne 0 -or $n.serviceSpecificExitCode -ne 0) -and [Guid]$n.attemptId -ne [Guid]::Empty -and -not $attempts.ContainsKey([string]$n.attemptId)) 'Negative SCM gate incomplete or duplicate.'
         $reasons[$n.expectedReason]=$true;$attempts[[string]$n.attemptId]=$true
         if ([DateTimeOffset]$n.finishedUtc -gt $lastNegative) { $lastNegative=[DateTimeOffset]$n.finishedUtc }
     }

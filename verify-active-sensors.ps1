@@ -72,6 +72,7 @@ try {
         deploymentContractPassed = $false
         serviceLifecycleContractPassed = $false
         serviceNegativeContractPassed = $false
+        releaseContractPassed = $false
         expectedTotal = ($expected.Values | Measure-Object -Sum).Sum
         testExitCode = $null
         trxSha256 = $null
@@ -97,6 +98,17 @@ try {
     }
     if (-not (Get-Command dotnet -ErrorAction SilentlyContinue) -or $env:OS -ne 'Windows_NT') {
         $report.blocker = 'Windows and .NET SDK required.'
+        Write-Report
+        exit 1
+    }
+    try {
+        $releaseOutput = @(& (Join-Path $root 'scripts/test-active-release-contract.ps1'))
+        $releaseOutput | Set-Content -LiteralPath (Join-Path $dir 'release-contract.log') -Encoding UTF8
+        if ($releaseOutput -notcontains 'PASS AS-Q07G6 offline release contract') { throw 'Missing release contract marker.' }
+        $report.releaseContractPassed = $true
+    } catch {
+        $report.status = 'ReleaseContractFailed'
+        $report.blocker = 'Offline release contract or PowerShell source parse failed.'
         Write-Report
         exit 1
     }

@@ -14,7 +14,7 @@ $sensor=if($Case.StartsWith('Gateway')){'gateway'}else{'snmp'}
 $dir=Join-Path $root ('build-verify/active-physical/'+[Guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $dir -Force | Out-Null
 $report=[ordered]@{schemaVersion=1;sourceSha=$sha;case=$Case;sensor=$sensor;startedUtc=[DateTimeOffset]::UtcNow.ToString('o');
-    result='incomplete_or_failed';outcome=$null;expectedMatch=$null;exitCode=$null;productionEvidenceWritten=$null}
+    result='incomplete_or_failed';labResult=$null;outcome=$null;expectedMatch=$null;exitCode=$null;productionEvidenceWritten=$null}
 $code=3
 try {
     & dotnet build $project -c Release --nologo *> (Join-Path $dir 'build.log')
@@ -27,16 +27,8 @@ try {
     $r=$raw[0] | ConvertFrom-Json
     if ($r.schemaVersion -ne 1 -or $r.mode -cne 'physical-lab' -or $r.sensor -cne $sensor -or
         $r.productionEvidenceWritten -isnot [bool] -or $r.productionEvidenceWritten) { throw 'Unexpected physical report.' }
-    $ok=switch ($Case) {
-        'GatewayMatch' { $report.exitCode -eq 0 -and $r.result -ceq 'Passed' -and $r.outcome -ceq 'BaselineMatch' -and $r.expectedMatch -eq $true }
-        'GatewayMismatch' { $report.exitCode -eq 1 -and $r.result -ceq 'Failed' -and $r.outcome -ceq 'BaselineDifference' -and $r.expectedMatch -eq $false }
-        'GatewayNoReply' { $report.exitCode -eq 3 -and $r.result -ceq 'Inconclusive' -and $r.outcome -ceq 'NoReply' }
-        'GatewayContention' { $report.exitCode -eq 3 -and $r.result -ceq 'Inconclusive' -and $r.outcome -ceq 'CaptureReservationUnavailable' }
-        'SnmpMatch' { $report.exitCode -eq 0 -and $r.result -ceq 'Passed' -and $r.outcome -ceq 'Observed' -and $r.expectedMatch -eq $true }
-        'SnmpMismatch' { $report.exitCode -eq 1 -and $r.result -ceq 'Failed' -and $r.outcome -ceq 'Observed' -and $r.expectedMatch -eq $false }
-        'SnmpTimeout' { $report.exitCode -eq 3 -and $r.result -ceq 'Inconclusive' -and $r.outcome -ceq 'TimedOut' }
-    }
-    $report.outcome=$r.outcome;$report.expectedMatch=$r.expectedMatch;$report.productionEvidenceWritten=$r.productionEvidenceWritten
+    $report.labResult=$r.result;$report.outcome=$r.outcome;$report.expectedMatch=$r.expectedMatch;$report.productionEvidenceWritten=$r.productionEvidenceWritten
+    $ok=Test-ActivePhysicalOutcome $Case $report.exitCode $report.labResult $report.outcome $report.expectedMatch
     Assert-ActiveReleaseSource $root $sha
     if (-not $ok) { throw 'Expected physical outcome not established.' }
     $report.result='expected_physical_outcome_confirmed';$code=0
