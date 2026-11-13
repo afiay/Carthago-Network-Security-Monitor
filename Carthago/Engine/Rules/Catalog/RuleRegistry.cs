@@ -1007,6 +1007,7 @@ namespace Carthago.Engine.Rules.Catalog
                 new R982_PublicModbusClearMaskWriteRule(),
                 new R983_PrivateFinsNodeNegotiationToPublicClientRule(),
                 new R984_PublicFinsDataMemoryClearRule(),
+                new R985_PublicFinsControllerStopRequestRule(),
             };
         }
 
