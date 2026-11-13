@@ -172,6 +172,7 @@ namespace Carthago.Models
         public bool ModbusBulkFileReadResponseObserved { get; internal set; }
         public bool ModbusClearMaskWriteObserved { get; internal set; }
         public bool FinsNodeNegotiationObserved { get; internal set; }
+        public bool FinsDataMemoryClearObserved { get; internal set; }
         public bool BacnetReinitializeDeviceRequestObserved { get; internal set; }
         public bool BacnetObjectListReadObserved { get; internal set; }
         public bool BacnetEventDisableRequestObserved { get; internal set; }

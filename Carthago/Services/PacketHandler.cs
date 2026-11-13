@@ -717,6 +717,15 @@ namespace Carthago.Services
                             rec.Dnp3DisableUnsolicitedObserved = true;
                         }
 
+                        // Exact FINS/UDP sixteen-word Data Memory zero-block write.
+                        if (isIPv4 && sport == 9600 && dport == 9600 &&
+                            completeIpPacket && l4PayloadLen == ipPayloadLen - 8 && !rec.IsQuic &&
+                            FinsDataMemoryClearInspector.TryInspect(l4Payload))
+                        {
+                            rec.ApplicationProtocol = "fins.udp.data_memory_clear.request";
+                            rec.FinsDataMemoryClearObserved = true;
+                        }
+
                         // Capture-attested TFTP initial request/first reply, not generic port guessing.
                         if (isIPv4 && completeIpPacket && l4PayloadLen == ipPayloadLen - 8)
                             _tftpHandshake.Observe(rec, l4Payload, true, _utcNow());

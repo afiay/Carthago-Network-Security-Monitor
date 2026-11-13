@@ -266,3 +266,8 @@ Workbook R2714 AN1908; exact capture-qualified clear-all mask request, Candidate
 ## R983 — FINS/TCP node negotiation
 
 Workbook R2782 AN2253; exact capture-qualified native-protocol negotiation, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_983-983.md). 40 authored cases, zero execution; no asset policy or authentication claim. Next ID R984.
+
+
+## R984 — FINS/UDP Data Memory zero-block write
+
+Workbook R2714 AN1908; narrow exact request, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_984-984.md). 34 authored cases, zero executed; no safe-range, authorization, write outcome or historian drift claim. Next R985.
