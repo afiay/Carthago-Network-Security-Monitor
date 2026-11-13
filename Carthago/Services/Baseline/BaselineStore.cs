@@ -272,7 +272,10 @@ namespace Carthago.Services.Baseline
                     if (saved != null)
                         foreach (var item in saved)
                         {
-                            if (item.Value == null || !IsValidKey(item.Key))
+                            if (item.Value == null || !IsValidKey(item.Key) ||
+                                item.Value.Count <= 0 || item.Value.FirstSeenUtc == default ||
+                                item.Value.LastSeenUtc < item.Value.FirstSeenUtc ||
+                                item.Value.LastSeenUtc > DateTime.UtcNow.AddMinutes(5))
                                 _corruptJournal = true;
                             else
                                 _entries[item.Key] = item.Value;
@@ -293,7 +296,8 @@ namespace Carthago.Services.Baseline
                     try { record = JsonSerializer.Deserialize<JournalRecord>(line); }
                     catch (JsonException) { _corruptJournal = true; continue; }
                     if (record?.Operation == "clear") _entries.Clear();
-                    else if (record?.Operation == "observe" && IsValidKey(record.Key))
+                    else if (record?.Operation == "observe" && IsValidKey(record.Key) &&
+                        record.TimestampUtc != default && record.TimestampUtc <= DateTime.UtcNow.AddMinutes(5))
                         AddObservation(record.Key!, record.TimestampUtc);
                     else _corruptJournal = true;
                 }

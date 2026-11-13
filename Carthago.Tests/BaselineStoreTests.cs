@@ -244,4 +244,41 @@ public sealed class BaselineStoreTests
         }
         finally { Directory.Delete(directory, recursive: true); }
     }
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Invalid_Persisted_Observation_Cannot_Be_Repaired_By_Later_Valid_History(bool snapshot)
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "carthago-baseline-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        try
+        {
+            var now = DateTime.UtcNow;
+            var key = System.Text.Json.JsonSerializer.Serialize(new[] { "dns.domain", "host-a", "one.test" });
+            if (snapshot)
+            {
+                var entries = new System.Collections.Generic.Dictionary<string, object>
+                {
+                    [key] = new { Count = 0, FirstSeenUtc = now, LastSeenUtc = now }
+                };
+                await File.WriteAllTextAsync(Path.Combine(directory, "baseline.json"),
+                    System.Text.Json.JsonSerializer.Serialize(entries));
+            }
+            else
+            {
+                var record = new { Operation = "observe", Key = key, TimestampUtc = now.AddDays(1) };
+                await File.WriteAllTextAsync(Path.Combine(directory, "baseline-journal.jsonl"),
+                    System.Text.Json.JsonSerializer.Serialize(record) + Environment.NewLine);
+            }
+            var store = new BaselineStore(new BaselineOptions { DirectoryPath = directory,
+                MinimumObservations = 1, MinimumDistinctKeys = 1, MinimumObservationSpan = TimeSpan.Zero });
+            await store.ObserveAsync(new BaselineObservation("dns.domain", "host-a", "one.test", now, ""));
+            var readiness = await store.GetScopedReadinessAsync("dns.domain", "host-a");
+            Assert.False(readiness.IsReady);
+            Assert.Equal(1, readiness.ObservationCount);
+            Assert.Contains("corrupt baseline journal", readiness.Blockers);
+            Assert.False((await store.GetReadinessAsync()).IsReady);
+        }
+        finally { Directory.Delete(directory, recursive: true); }
+    }
 }
