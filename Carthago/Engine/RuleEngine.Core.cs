@@ -125,7 +125,7 @@ namespace Carthago.Services
             RuleTelemetryCoverageStore.ObserveRecord(record, now);
             var healthSnapshot = RuleEngineHealthState.Snapshot(now);
             RuleEngineHealthState.RecordEvaluationStart(now);
-            var context = new RuleEvaluationContext(record, sensitivity, now, healthSnapshot);
+            var context = RuleEvaluationContext.CreateForEngine(record, sensitivity, now, healthSnapshot);
             var trace = new RuleEvaluationTrace
             {
                 PacketId = record.Id.ToString("N"),
