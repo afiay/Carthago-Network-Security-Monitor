@@ -483,4 +483,32 @@ public sealed class GeoIpMmdbIntegrationTests
         }
         finally { Directory.Delete(root, true); }
     }
+
+    [Fact]
+    public void Real_Readers_Cache_Normalized_Hits_And_Misses_With_Bounded_Lifetime()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "carthago-mmdb-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var data = Directory.CreateDirectory(Path.Combine(root, "Data"));
+            File.WriteAllBytes(Path.Combine(data.FullName, "GeoLite2-City.mmdb"), Convert.FromBase64String(CityFixture));
+            long now = 0;
+            using var geo = new GeoIpService(root, cacheCapacity: 2, clock: () => now);
+            Assert.Equal("GB", geo.Lookup("81.2.69.142")?.CountryIso2);
+            Assert.Equal("GB", geo.Lookup("::ffff:81.2.69.142")?.CountryIso2);
+            Assert.Null(geo.Lookup("8.8.8.8"));
+            Assert.Null(geo.Lookup("8.8.8.8"));
+            Assert.Equal(2L, geo.CityLookupHealth.Attempts);
+            now = 300_000;
+            Assert.Equal("GB", geo.Lookup("81.2.69.142")?.CountryIso2);
+            Assert.Equal(3L, geo.CityLookupHealth.Attempts);
+            Assert.Null(geo.Lookup("1.0.0.1"));
+            Assert.Equal("GB", geo.Lookup("81.2.69.142")?.CountryIso2);
+            Assert.Equal(5L, geo.CityLookupHealth.Attempts);
+            geo.Dispose();
+            Assert.Null(geo.Lookup("81.2.69.142"));
+            Assert.Equal(5L, geo.CityLookupHealth.Attempts);
+        }
+        finally { Directory.Delete(root, true); }
+    }
 }

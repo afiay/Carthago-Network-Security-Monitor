@@ -2,6 +2,7 @@
 // File: Services/Geo/GeoIpService.cs
 using System;
 using System.IO;
+using System.Collections.Generic;
 using System.Net;
 using MaxMind.GeoIP2;
 using MaxMind.GeoIP2.Responses;
@@ -14,6 +15,11 @@ namespace Carthago.Services.Geo
         private readonly string _baseDir;
         private DatabaseReader? _cityDb;
         private DatabaseReader? _asnDb;
+        private readonly object _lookupGate = new();
+        private readonly Dictionary<IPAddress, (GeoInfo? Info, long Expires)> _cache = new();
+        private readonly int _cacheCapacity;
+        private readonly Func<long> _clock;
+        private const long CacheTtlMs = 300_000;
 
         public enum DatabaseAvailability { Missing, Unavailable, Ready }
 
@@ -27,8 +33,11 @@ namespace Carthago.Services.Geo
 
         public GeoIpService() : this(AppContext.BaseDirectory) { }
 
-        internal GeoIpService(string baseDir)
+        internal GeoIpService(string baseDir, int cacheCapacity = 4096, Func<long>? clock = null)
         {
+            if (cacheCapacity <= 0) throw new ArgumentOutOfRangeException(nameof(cacheCapacity));
+            _cacheCapacity = cacheCapacity;
+            _clock = clock ?? (() => Environment.TickCount64);
             _baseDir = baseDir;
             _cityDb = OpenDatabase(CityDbPath, true, out var cityStatus);
             CityDatabaseStatus = cityStatus;
@@ -100,9 +109,33 @@ namespace Carthago.Services.Geo
         public LookupHealthSnapshot CityLookupHealth => _cityHealth.Snapshot();
         public LookupHealthSnapshot AsnLookupHealth => _asnHealth.Snapshot();
 
-        public GeoInfo? Lookup(string ip) => LookupWithOutcomes(ip).Info;
+        public GeoInfo? Lookup(string ip)
+        {
+            if (!TryGetLookupAddress(ip, out var address)) return null;
+            lock (_lookupGate)
+            {
+                var now = _clock();
+                if (_cache.TryGetValue(address, out var cached) && now < cached.Expires)
+                    return cached.Info;
+                _cache.Remove(address);
+                var result = LookupWithOutcomes(ip);
+                // Cache completed hits/misses, never failures or wholly skipped requests.
+                if (result.City != LookupOutcome.Failed && result.Asn != LookupOutcome.Failed
+                    && (result.City != LookupOutcome.NotAttempted || result.Asn != LookupOutcome.NotAttempted))
+                {
+                    if (_cache.Count >= _cacheCapacity) _cache.Clear();
+                    _cache[address] = (result.Info, now + CacheTtlMs);
+                }
+                return result.Info;
+            }
+        }
 
         internal (GeoInfo? Info, LookupOutcome City, LookupOutcome Asn) LookupWithOutcomes(string ip)
+        {
+            lock (_lookupGate) return LookupUncached(ip);
+        }
+
+        private (GeoInfo? Info, LookupOutcome City, LookupOutcome Asn) LookupUncached(string ip)
         {
             if (!TryGetLookupAddress(ip, out var addr)) return (null, LookupOutcome.NotAttempted, LookupOutcome.NotAttempted);
             var cityOutcome = LookupOutcome.NotAttempted;
@@ -193,6 +226,9 @@ namespace Carthago.Services.Geo
 
         public void Dispose()
         {
+            lock (_lookupGate)
+            {
+            _cache.Clear();
             _cityDb?.Dispose();
             _cityDb = null;
             _asnDb?.Dispose();
@@ -201,6 +237,7 @@ namespace Carthago.Services.Geo
                 CityDatabaseStatus = DatabaseAvailability.Unavailable;
             if (AsnDatabaseStatus == DatabaseAvailability.Ready)
                 AsnDatabaseStatus = DatabaseAvailability.Unavailable;
+            }
         }
 
         public sealed class GeoInfo
