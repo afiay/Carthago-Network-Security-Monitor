@@ -20,3 +20,5 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
+
+ASN fixture: https://github.com/maxmind/MaxMind-DB/blob/main/test-data/GeoLite2-ASN-Test.mmdb ; Git blob 381f68b615d2a2ae729b9553a3553b0a1b7b5526. Source data: https://github.com/maxmind/MaxMind-DB/blob/main/source-data/GeoLite2-ASN-Test.json (1.0.0.0/24, ASN 15169). Same upstream MIT license above.
