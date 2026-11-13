@@ -313,6 +313,7 @@
                   <ContextMenu>
                     <MenuItem Header="Check TCP exposure (selected LAN host)" Click="CheckLanTcpExposure_Click"/>
                     <MenuItem Header="Check DNS integrity (selected LAN resolver)" Click="CheckLanDnsIntegrity_Click"/>
+                    <MenuItem Header="Inspect TLS certificate (selected LAN host)" Click="CheckLanTlsInspection_Click"/>
                   </ContextMenu>
                 </ComboBox.ContextMenu>
                 <ComboBox.ItemTemplate>

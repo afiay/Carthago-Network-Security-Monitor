@@ -20,7 +20,6 @@ dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQua
 Expected checks include scope rejection, fixed port list, distinct outcome classification, timeout, cancellation, and source address propagation. No live probe is executed by these unit tests. On Windows, manually select an authorized LAN lab host with a known listening service and a refused port; verify result statuses, UI cancel, and that active capture prevents the check.
 
 ## Next
-AS-03: TLS certificate identity/validity from approved endpoints (no global trust bypass).
 AS-04: HTTP health without redirects outside scope. Later: durable exposure snapshots and change detection with explicit baseline approval, active-origin evidence isolation, and opt-in scheduling. Do not promote detection rules on these observations until producer and replay contracts are tested.
 
 ## AS-02 — DNS integrity
@@ -34,3 +33,15 @@ dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQua
 ```
 
 Unit tests use synthetic responses; manual lab check should include known A answers, NXDOMAIN, timeout and cancellation.
+
+## AS-03 — TLS inspection
+
+Select a LAN host with Scan LAN/Add IP, stop monitoring, and choose Inspect TLS certificate from the capture-source context menu. Select direct TLS port 443, 8443, 5986, 636 or 8883, enter the expected DNS identity and optionally an independently verified 64-hex SHA-256 leaf fingerprint. One source-bound TCP/TLS handshake, five-second overall cancellation budget, no DNS resolution, application data, client credentials, or trust-store changes. OS-selected protocols; negotiated protocol/cipher reported only after successful authenticated handshake. Strict platform hostname/chain validation; certificate callback records leaf metadata even when rejecting, never accepts policy errors or treats a fingerprint match as a trust override. Chain policy disables certificate downloads and revocation checks (revocation status unknown). No claim of exhaustive TLS version support, STARTTLS, IP SAN identity, revocation or persistent fingerprint history.
+
+Windows validation pending:
+
+```powershell
+dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~TlsInspectionSensorTests|FullyQualifiedName~TlsIdentityEnrichmentTests|FullyQualifiedName~DnsIntegritySensorTests|FullyQualifiedName~TcpExposureSensorTests"
+```
+
+Tests include local scope/port/name validation, fingerprint and validity evidence, strict rejection, cancellation, and isolated loopback TLS rejection/timeout. Manual Windows smoke: approved trusted TLS endpoint and self-signed/mismatched certificate; verify no trust override, no application payload, and no protocol/cipher claims on rejected handshakes. No detector promotion or persistence.
