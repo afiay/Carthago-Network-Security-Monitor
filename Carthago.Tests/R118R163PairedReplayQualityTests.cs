@@ -41,7 +41,19 @@ public sealed class R118R163PairedReplayQualityTests
         var json = System.Text.Json.JsonSerializer.Serialize(report);
         Assert.DoesNotContain("YWRtaW46YWRtaW4=", json);
         foreach (var profile in report.ProfileResults.Keys)
-            Assert.DoesNotContain("R118", positive.Profiles[profile].AlertRuleIds);
+        {
+            var cold = positive.Profiles[profile];
+            var calibrated = positive.DeploymentStateProfiles["CalibratedConfigured"][profile];
+            var coldDecision = Assert.Single(cold.RuleDecisions, item => item.RuleId == "R118");
+            var calibratedDecision = Assert.Single(calibrated.RuleDecisions, item => item.RuleId == "R118");
+            Assert.Equal(coldDecision.Confidence, calibratedDecision.Confidence, 6);
+            Assert.True(calibratedDecision.Confidence < 0.86);
+            Assert.DoesNotContain("R118", cold.AlertRuleIds);
+            Assert.DoesNotContain("R118", calibrated.AlertRuleIds);
+            Assert.Contains(calibratedDecision.RuntimePrecisionReasons,
+                reason => reason.Contains("below precision floor 86%", StringComparison.Ordinal));
+            Assert.DoesNotContain("R118", negative.DeploymentStateProfiles["CalibratedConfigured"][profile].AlertRuleIds);
+        }
     }
 
     [Fact]
