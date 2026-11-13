@@ -172,7 +172,22 @@ public sealed class ReviewedDnsPacketIntakeTests
                 var alternate = new ReviewedDnsCaptureAdmission(directory, otherIntake);
                 Assert.False(alternate.TryReserve(otherManifest, otherSignature, capture,
                     "192.0.2.1", "other", "interface", "network"));
+                Assert.False(reopened.TryReserve(repackedManifest, repackedSignature, repacked,
+                    "192.0.2.1", "sensor", "interface", "network"));
+                Assert.False(reopened.TryReserve(repeatedManifest, repeatedSignature, repeated,
+                    "192.0.2.1", "sensor", "interface", "network"));
+                // The new observation in the rejected mixed capture was not reserved.
+                byte[] fresh = (byte[])capture.Clone();
+                BinaryPrimitives.WriteUInt32LittleEndian(fresh.AsSpan(28), 1);
+                byte[] freshManifest = RepackManifest(fresh);
+                byte[] freshSignature = reviewer.SignData(freshManifest, HashAlgorithmName.SHA256,
+                    DSASignatureFormat.IeeeP1363FixedFieldConcatenation);
+                Assert.True(reopened.TryReserve(freshManifest, freshSignature, fresh,
+                    "192.0.2.1", "sensor", "interface", "network"));
                 Assert.Single(Directory.GetFiles(directory));
+                File.AppendAllText(Path.Combine(directory, "admission.v1"), "torn");
+                Assert.False(reopened.TryReserve(freshManifest, freshSignature, fresh,
+                    "192.0.2.1", "sensor", "interface", "network"));
                 var missing = new ReviewedDnsCaptureAdmission(Path.Combine(directory, "missing"), intake);
                 Assert.False(missing.TryReserve(manifest, signature, capture,
                     "192.0.2.1", "sensor", "interface", "network"));
