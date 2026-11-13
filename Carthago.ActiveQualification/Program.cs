@@ -10,7 +10,7 @@ using Carthago.Services.Sensors;
 namespace Carthago.ActiveQualification;
 
 // Dedicated synthetic qualification executable, not a production monitor command.
-// No real interfaces, network probes, production paths or reservation names.
+// Default and child modes are synthetic. Explicit live mode is separately gated.
 internal static class Program
 {
     private static readonly Guid AdapterId = Guid.Parse("02702701-1234-4321-9999-000000000001");
@@ -38,6 +38,8 @@ internal static class Program
             if (args is ["--child", var idText, var mode] && Guid.TryParseExact(idText, "N", out var id) &&
                 id != Guid.Empty && mode is "hold" or "contend" or "revoke" or "rotate")
                 return await ChildAsync(id, mode);
+            if (args is ["--live-contract"]) return LiveSensorLab.VerifyContract();
+            if (args.Length > 0 && args[0] == "live") return await LiveSensorLab.RunAsync(args);
             if (args.Length != 0) return 2;
             if (!OperatingSystem.IsWindows()) throw new PlatformNotSupportedException("Windows required.");
             await ScenarioAsync("graceful");

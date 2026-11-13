@@ -61,6 +61,7 @@ try {
         monitorInvalidCommandExitCode = $null
         processQualificationBuildExitCode = $null
         processQualificationExitCode = $null
+        liveLabContractExitCode = $null
         expectedTotal = ($expected.Values | Measure-Object -Sum).Sum
         testExitCode = $null
         total = 0
@@ -135,6 +136,15 @@ try {
         -not (Select-String -LiteralPath (Join-Path $dir 'process-qualification.log') -SimpleMatch 'PASS AS-Q07G3 4/4 separate-process scenarios' -Quiet)) {
         $report.status = 'ProcessQualificationFailed'
         $report.blocker = 'Separate-process ownership or authorization qualification failed.'
+        Write-Report
+        exit 1
+    }
+    $report.liveLabContractExitCode = Invoke-Dotnet @('run', '--project', $processProject, '-c', 'Release',
+        '--no-build', '--no-restore', '--', '--live-contract') (Join-Path $dir 'live-lab-contract.log')
+    if ($report.liveLabContractExitCode -ne 0 -or
+        -not (Select-String -LiteralPath (Join-Path $dir 'live-lab-contract.log') -SimpleMatch 'PASS AS-Q07G4 offline live-lab contract' -Quiet)) {
+        $report.status = 'LiveLabContractFailed'
+        $report.blocker = 'Offline physical-lab argument or result-classification contract failed.'
         Write-Report
         exit 1
     }
