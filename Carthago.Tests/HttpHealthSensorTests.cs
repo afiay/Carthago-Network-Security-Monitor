@@ -156,6 +156,57 @@ public sealed class HttpHealthSensorTests
     }
 
     [Fact]
+    public async Task UntrustedHttpsPeerCannotReceiveHttpRequest()
+    {
+        using var key = System.Security.Cryptography.RSA.Create(2048);
+        var certRequest = new System.Security.Cryptography.X509Certificates.CertificateRequest(
+            "CN=lab.example", key, System.Security.Cryptography.HashAlgorithmName.SHA256,
+            System.Security.Cryptography.RSASignaturePadding.Pkcs1);
+        var san = new System.Security.Cryptography.X509Certificates.SubjectAlternativeNameBuilder();
+        san.AddDnsName("lab.example");
+        certRequest.CertificateExtensions.Add(san.Build());
+        using var cert = certRequest.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(1));
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        async Task<int> Serve()
+        {
+            using var peer = await listener.AcceptTcpClientAsync(cts.Token);
+            using var tls = new System.Net.Security.SslStream(peer.GetStream());
+            try
+            {
+                await tls.AuthenticateAsServerAsync(new System.Net.Security.SslServerAuthenticationOptions
+                {
+                    ServerCertificate = cert,
+                    EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12
+                }, cts.Token);
+                var buffer = new byte[1];
+                return await tls.ReadAsync(buffer.AsMemory(), cts.Token);
+            }
+            catch (System.Security.Authentication.AuthenticationException) { return 0; }
+            catch (System.IO.IOException) { return 0; }
+        }
+        var server = Serve();
+        try
+        {
+            var result = await HttpHealthSensor.CheckEndpointAsync(IPAddress.Loopback, IPAddress.Loopback,
+                ((IPEndPoint)listener.LocalEndpoint).Port, "wrong.example", true, TimeSpan.FromSeconds(5), cts.Token);
+            Assert.Equal(HttpHealthStatus.TlsRejected, result.Status);
+            Assert.NotNull(result.Certificate);
+            Assert.True(result.Certificate!.PolicyErrors.HasFlag(System.Net.Security.SslPolicyErrors.RemoteCertificateNameMismatch));
+            Assert.Null(result.StatusCode);
+            Assert.Empty(result.Headers);
+            Assert.Equal(0, await server);
+        }
+        finally
+        {
+            listener.Stop();
+            cts.Cancel();
+            try { await server; } catch (OperationCanceledException) { }
+        }
+    }
+
+    [Fact]
     public void PreCancelledRequestDoesNotConnect()
     {
         using var cts = new CancellationTokenSource();
