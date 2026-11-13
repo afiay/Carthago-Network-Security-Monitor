@@ -19,3 +19,4 @@ System boundaries, evidence lineage, sensors and architectural constraints.
 - [CLI-006B.3B — Portable transport decoding](CLI-006B3B-PortableTransport.md)
 - [CLI-006B.3C1 — Portable application parsers](CLI-006B3C1-PortableApplicationParsers.md)
 - [CLI-006B.3C2A — Portable fingerprints](CLI-006B3C2A-PortableFingerprints.md)
+- [CLI-006B.3C2B — Portable industrial inspectors](CLI-006B3C2B-PortableIndustrial.md)

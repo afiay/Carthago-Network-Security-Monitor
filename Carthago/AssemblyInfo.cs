@@ -4,6 +4,13 @@ using System.Windows;
 [assembly: InternalsVisibleTo("Carthago.Tests")]
 // Preserve the former public model location for CLR type resolution.
 [assembly: TypeForwardedTo(typeof(Carthago.Models.TrafficRecord))]
+[assembly: TypeForwardedTo(typeof(Carthago.Services.ProtocolIntelligence.BacnetBvlcControlInspector))]
+[assembly: TypeForwardedTo(typeof(Carthago.Services.ProtocolIntelligence.BvlcControlFunction))]
+[assembly: TypeForwardedTo(typeof(Carthago.Services.ProtocolIntelligence.BvlcControlObservation))]
+[assembly: TypeForwardedTo(typeof(Carthago.Services.ProtocolIntelligence.BacnetDeviceCommunicationControlInspector))]
+[assembly: TypeForwardedTo(typeof(Carthago.Services.ProtocolIntelligence.BacnetDeviceCommunicationControlObservation))]
+[assembly: TypeForwardedTo(typeof(Carthago.Services.ProtocolIntelligence.BacnetWritePropertyInspector))]
+[assembly: TypeForwardedTo(typeof(Carthago.Services.ProtocolIntelligence.BacnetWritePropertyObservation))]
 [assembly: TypeForwardedTo(typeof(Carthago.Services.Fingerprints.HttpJa4H))]
 [assembly: TypeForwardedTo(typeof(Carthago.Services.Fingerprints.TlsJa4))]
 [assembly: TypeForwardedTo(typeof(Carthago.Services.Fingerprints.TcpJa4T))]

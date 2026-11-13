@@ -22,6 +22,17 @@
     <Compile Include="../Carthago/Services/ProtocolIntelligence/Resp2CommandInspector.cs" Link="Services/ProtocolIntelligence/Resp2CommandInspector.cs" />
     <Compile Include="../Carthago/Services/ProtocolIntelligence/Resp2SimpleReplyInspector.cs" Link="Services/ProtocolIntelligence/Resp2SimpleReplyInspector.cs" />
     <Compile Include="../Carthago/Services/ProtocolIntelligence/Smb2CompleteWriteInspector.cs" Link="Services/ProtocolIntelligence/Smb2CompleteWriteInspector.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/SnmpEnterpriseSetInspector.cs" Link="Services/ProtocolIntelligence/SnmpEnterpriseSetInspector.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/BacnetBvlcControlInspector.cs" Link="Services/ProtocolIntelligence/BacnetBvlcControlInspector.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/BacnetDeviceCommunicationControlInspector.cs" Link="Services/ProtocolIntelligence/BacnetDeviceCommunicationControlInspector.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/BacnetObjectListReadInspector.cs" Link="Services/ProtocolIntelligence/BacnetObjectListReadInspector.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/BacnetReinitializeDeviceInspector.cs" Link="Services/ProtocolIntelligence/BacnetReinitializeDeviceInspector.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/BacnetWritePropertyInspector.cs" Link="Services/ProtocolIntelligence/BacnetWritePropertyInspector.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/Dnp3DisableUnsolicitedInspector.cs" Link="Services/ProtocolIntelligence/Dnp3DisableUnsolicitedInspector.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/Dnp3RestartRequestInspector.cs" Link="Services/ProtocolIntelligence/Dnp3RestartRequestInspector.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/Dnp3UnsolicitedBinaryEventInspector.cs" Link="Services/ProtocolIntelligence/Dnp3UnsolicitedBinaryEventInspector.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/ModbusSingleRegisterWriteInspector.cs" Link="Services/ProtocolIntelligence/ModbusSingleRegisterWriteInspector.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/ModbusClearMaskWriteInspector.cs" Link="Services/ProtocolIntelligence/ModbusClearMaskWriteInspector.cs" />
     <!-- Preserve existing internal access while consumers migrate. -->
     <InternalsVisibleTo Include="Carthago" />
     <InternalsVisibleTo Include="carthago" />
