@@ -10,7 +10,8 @@ using System.Threading;
 namespace Carthago.Services;
 
 internal sealed record AssetHistoryRow(string SessionId, string SessionStartedUtc, ObservedAssetRow Asset);
-internal sealed record AssetHistorySnapshot(int SessionCount, IReadOnlyList<AssetHistoryRow> Rows, string? Error);
+internal sealed record AssetHistorySnapshot(int SessionCount, IReadOnlyList<AssetHistoryRow> Rows, string? Error,
+    IReadOnlyList<CommunicationHistoryRow>? Communications = null);
 
 // Independent of detection baseline readiness. One replaceable file per capture
 // session, never an append of the same cumulative counters.
@@ -25,7 +26,8 @@ internal sealed class AssetHistoryStore
     internal string? LastSaveError => Volatile.Read(ref _lastSaveError);
 
     // Public constructor/properties for System.Text.Json, even though internal type.
-    public sealed record Checkpoint(int Version, Guid SessionId, DateTimeOffset StartedUtc, ObservedAssetRow[] Assets);
+    public sealed record Checkpoint(int Version, Guid SessionId, DateTimeOffset StartedUtc, ObservedAssetRow[] Assets,
+        ExternalCommunicationRow[]? Communications = null);
 
     internal AssetHistoryStore(string? directory = null)
         => _directory = directory ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -41,9 +43,10 @@ internal sealed class AssetHistoryStore
                 // Snapshot under the same writer gate, so a periodic save cannot
                 // overwrite a newer final checkpoint with an older snapshot.
                 var rows = registry.Snapshot();
-                if (rows.Count == 0) return true;
+                var communications = registry.Communications.Snapshot();
+                if (rows.Count == 0 && communications.Count == 0) return true;
                 Directory.CreateDirectory(_directory);
-                var checkpoint = new Checkpoint(1, registry.SessionId, registry.SessionStartedUtc, rows.ToArray());
+                var checkpoint = new Checkpoint(2, registry.SessionId, registry.SessionStartedUtc, rows.ToArray(), communications.ToArray());
                 string path = Path.Combine(_directory, FileName(checkpoint));
                 temp = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
                 using (var stream = new FileStream(temp, FileMode.CreateNew, FileAccess.Write, FileShare.None))
@@ -76,6 +79,7 @@ internal sealed class AssetHistoryStore
         lock (IoGate)
         {
             var result = new List<AssetHistoryRow>();
+            var communications = new List<CommunicationHistoryRow>();
             int sessions = 0, skipped = 0;
             try
             {
@@ -87,8 +91,11 @@ internal sealed class AssetHistoryStore
                         using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete);
                         if (stream.Length > MaxBytes) { skipped++; continue; }
                         var saved = JsonSerializer.Deserialize<Checkpoint>(stream);
-                        if (saved is null || saved.Version != 1 || saved.SessionId == Guid.Empty
-                            || saved.StartedUtc == default || saved.Assets is null || saved.Assets.Length is < 1 or > MaxRows
+                        if (saved is null || saved.Version is not (1 or 2) || saved.SessionId == Guid.Empty
+                            || saved.StartedUtc == default || saved.Assets is null || saved.Assets.Length > MaxRows
+                            || (saved.Version == 2 && (saved.Communications is null || saved.Communications.Length > ExternalCommunicationRegistry.Capacity
+                                || saved.Communications.Any(a => !ExternalCommunicationRegistry.Valid(a))))
+                            || (saved.Assets.Length == 0 && (saved.Version == 1 || saved.Communications?.Length == 0))
                             || Path.GetFileName(path) != FileName(saved)
                             || saved.Assets.Any(a => !Valid(a)))
                         { skipped++; continue; }
@@ -96,14 +103,17 @@ internal sealed class AssetHistoryStore
                         string started = saved.StartedUtc.UtcDateTime.ToString("u", CultureInfo.InvariantCulture);
                         foreach (var asset in saved.Assets)
                             result.Add(new(saved.SessionId.ToString("N"), started, asset));
+                        if (saved.Version == 2 && saved.Communications is not null)
+                            foreach (var communication in saved.Communications)
+                                communications.Add(new(saved.SessionId, saved.StartedUtc, communication));
                     }
                     catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or NotSupportedException)
                     { skipped++; }
                 }
-                return new(sessions, result.ToArray(), skipped == 0 ? null : $"{skipped} unreadable or invalid checkpoint(s) skipped.");
+                return new(sessions, result.ToArray(), skipped == 0 ? null : $"{skipped} unreadable or invalid checkpoint(s) skipped.", communications.ToArray());
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-            { return new(sessions, result.ToArray(), ex.Message); }
+            { return new(sessions, result.ToArray(), ex.Message, communications.ToArray()); }
         }
     }
 

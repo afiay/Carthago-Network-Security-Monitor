@@ -7,7 +7,7 @@ using System.Linq;
 namespace Carthago.Services;
 
 internal sealed record ObservedAssetSessionSnapshot(Guid SessionId, DateTimeOffset StartedUtc,
-    IReadOnlyList<ObservedAssetRow> Rows);
+    IReadOnlyList<ObservedAssetRow> Rows, IReadOnlyList<ExternalCommunicationRow>? Communications = null);
 internal sealed record AssetBehaviorRow(string Identity, string InterfaceScope, string Status, int PriorSessions,
     string NewAddresses, string NewServices, string HistoricalMacClaims, string SessionMacClaims);
 internal sealed record AssetBehaviorSnapshot(IReadOnlyList<AssetBehaviorRow> Rows, string Summary);

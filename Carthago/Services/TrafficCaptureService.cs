@@ -56,7 +56,7 @@ namespace Carthago.Services
         {
             ObservedAssetRegistry registry;
             lock (_lifecycleLock) registry = _observedAssets;
-            return new(registry.SessionId, registry.SessionStartedUtc, registry.Snapshot());
+            return new(registry.SessionId, registry.SessionStartedUtc, registry.Snapshot(), registry.Communications.Snapshot());
         }
 
         internal IReadOnlyList<ObservedAssetRow> GetObservedAssets() => GetObservedAssetSession().Rows;
@@ -625,7 +625,9 @@ namespace Carthago.Services
             long observedAt = Environment.TickCount64;
             dns?.Observe(record, observedAt);
             tls?.Observe(record, observedAt);
-            assets?.Observe(record, DateTimeOffset.UtcNow);
+            var now = DateTimeOffset.UtcNow;
+            assets?.Observe(record, now);
+            assets?.Communications.Observe(record, now);
 
             // UI pressure must never suppress rule evaluation.
             if (!_uiChannel.Writer.TryWrite(new CaptureSessionRecord<TrafficRecord>(record, runToken)))
@@ -828,6 +830,13 @@ namespace Carthago.Services
                         rec.ProcessName ??= "Unknown";
                     }
                 }).ConfigureAwait(false);
+
+                // Metadata only: do not count the same packet again, or create a
+                // destination that was not admitted at publication time.
+                ObservedAssetRegistry? communicationAssets;
+                lock (_lifecycleLock)
+                    communicationAssets = _runCts is not null && _runCts.Token == ct ? _observedAssets : null;
+                communicationAssets?.Communications.AddMetadata(rec);
 
                 // Local process hints remain available even if remote classification times out.
                 rec.LocalVpnProcessHint = rec.ProcessId > 0 && ProcessNameSignal.IsVpnProcess(rec.ProcessName);

@@ -22,7 +22,8 @@ internal sealed class ObservedAssetRegistry
     private bool _sealed;
     internal Guid SessionId { get; } = Guid.NewGuid();
     internal DateTimeOffset SessionStartedUtc { get; } = DateTimeOffset.UtcNow;
-    internal void Seal() { lock (_gate) _sealed = true; }
+    internal ExternalCommunicationRegistry Communications { get; } = new();
+    internal void Seal() { lock (_gate) { _sealed = true; Communications.Seal(); } }
     private readonly Dictionary<Key, Entry> _entries = new();
     private readonly record struct Key(string Scope, string Identity, bool Arp);
     private sealed class Entry

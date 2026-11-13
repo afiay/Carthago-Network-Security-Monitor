@@ -25,15 +25,20 @@ namespace Carthago.Views
             AssetHistoryStatus.Text = "Loading saved capture-session history...";
             AssetChangesStatus.Text = "Comparing earlier saved observations...";
             AssetChangesGrid.ItemsSource = null;
+            CommunicationChangesGrid.ItemsSource = null;
+            CommunicationChangesStatus.Text = "Comparing retained external communication...";
             var result = await Task.Run(() =>
             {
                 var saved = read();
-                return (History: saved, Comparison: AssetBehaviorComparison.Compare(current, saved));
+                return (History: saved, Comparison: AssetBehaviorComparison.Compare(current, saved),
+                    Communication: ExternalCommunicationComparison.Compare(current, saved));
             });
             if (request != _assetHistoryRequest) return;
             var history = result.History;
             AssetChangesGrid.ItemsSource = result.Comparison.Rows;
             AssetChangesStatus.Text = result.Comparison.Summary;
+            CommunicationChangesGrid.ItemsSource = result.Communication.Rows;
+            CommunicationChangesStatus.Text = result.Communication.Summary;
             AssetHistoryGrid.ItemsSource = history.Rows;
             AssetHistoryStatus.Text = $"{history.SessionCount} saved session(s), {history.Rows.Count} historical identity rows. " +
                 "Historical evidence does not establish current presence. " +

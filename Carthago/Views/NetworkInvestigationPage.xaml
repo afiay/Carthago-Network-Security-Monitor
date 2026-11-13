@@ -220,6 +220,32 @@
       <Border Background="{StaticResource CardBgBrush}" BorderBrush="{StaticResource CardBorderBrush}"
               BorderThickness="1" CornerRadius="14" Padding="16" Margin="0,0,0,16">
         <StackPanel>
+          <TextBlock Text="EXTERNAL COMMUNICATION / RETAINED HISTORY" Style="{StaticResource DashboardSectionTitle}"/>
+          <TextBlock x:Name="CommunicationChangesStatus" Text="No comparison loaded."
+                     TextWrapping="Wrap" Foreground="{StaticResource TextMutedBrush}" Margin="0,6,0,10"/>
+          <DataGrid x:Name="CommunicationChangesGrid" AutoGenerateColumns="False" IsReadOnly="True"
+                    Height="240" EnableRowVirtualization="True"
+                    VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Local IP" Binding="{Binding LocalIp}" Width="150"/>
+              <DataGridTextColumn Header="Interface scope" Binding="{Binding InterfaceScope}" Width="180"/>
+              <DataGridTextColumn Header="Public destination" Binding="{Binding Destination}" Width="170"/>
+              <DataGridTextColumn Header="Retained destination status" Binding="{Binding Status}" Width="230"/>
+              <DataGridTextColumn Header="TCP SYN / UDP observations" Binding="{Binding Observations}" Width="155"/>
+              <DataGridTextColumn Header="Observed ASNs" Binding="{Binding Asns}" Width="130"/>
+              <DataGridTextColumn Header="Observed countries" Binding="{Binding Countries}" Width="130"/>
+              <DataGridTextColumn Header="Attributed process names" Binding="{Binding Processes}" Width="200"/>
+              <DataGridTextColumn Header="ASNs absent from prior metadata" Binding="{Binding NewAsns}" Width="180"/>
+              <DataGridTextColumn Header="Countries absent from prior metadata" Binding="{Binding NewCountries}" Width="180"/>
+              <DataGridTextColumn Header="Process names absent for destination" Binding="{Binding NewProcesses}" Width="200"/>
+            </DataGrid.Columns>
+          </DataGrid>
+        </StackPanel>
+      </Border>
+
+      <Border Background="{StaticResource CardBgBrush}" BorderBrush="{StaticResource CardBorderBrush}"
+              BorderThickness="1" CornerRadius="14" Padding="16" Margin="0,0,0,16">
+        <StackPanel>
           <DockPanel Margin="0,0,0,12">
             <Button DockPanel.Dock="Right" Content="Open Live Traffic" Style="{StaticResource SecondaryButton}"
                     MinWidth="145" Height="32" Click="OpenTraffic_Click"/>
