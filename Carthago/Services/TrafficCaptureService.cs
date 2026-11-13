@@ -141,6 +141,7 @@ namespace Carthago.Services
         private string? _currentFilter;
         private IPAddress? _activeLanHost;
         private readonly Dispatcher _dispatcher;
+        private readonly bool _headless;
         private readonly BlacklistService? _blacklistService;
         private readonly GeoIpService _geoIpService = new();
         private readonly object _geoIpLock = new();
@@ -186,18 +187,19 @@ namespace Carthago.Services
         {
         }
 
-        public TrafficCaptureService(BlacklistService? blacklistService, Dispatcher dispatcher)
+        public TrafficCaptureService(BlacklistService? blacklistService, Dispatcher dispatcher, bool headless = false)
         {
             _blacklistService = blacklistService;
+            _headless = headless;
             _dispatcher = dispatcher ?? (Application.Current?.Dispatcher ?? Dispatcher.CurrentDispatcher);
 
             // Explicit opt-in; no filesystem writes in normal monitoring sessions.
             _uiDiagnosticsPath = Environment.GetEnvironmentVariable("CARTHAGO_UI_DIAG_PATH");
-            if (!string.IsNullOrWhiteSpace(_uiDiagnosticsPath))
+            if (!headless && !string.IsNullOrWhiteSpace(_uiDiagnosticsPath))
                 _uiDiagnosticsTimer = new Timer(_ => WriteUiDiagnostics(), null,
                     TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
 
-            _uiReaderTask = Task.Run(UiChannelReaderLoop);
+            _uiReaderTask = headless ? Task.CompletedTask : Task.Run(UiChannelReaderLoop);
             CaptureTaskFailureObserver.Observe(_uiReaderTask, HandleUiDrainFailure);
             for (int i = 0; i < _enrichmentWorkers.Length; i++)
                 _enrichmentWorkers[i] = Task.Run(EnrichmentWorkerLoop);
@@ -373,25 +375,7 @@ namespace Carthago.Services
                     return;
             }
 
-            // Capture sources must not overlap: release the previous session first.
-            StopCurrentCapture();
-            Volatile.Write(ref _lastCaptureError, null);
-            Interlocked.Exchange(ref _capturedAtStart, Interlocked.Read(ref _packetsCaptured));
-            Interlocked.Exchange(ref _deliveredAtStart, Interlocked.Read(ref _uiRecordsDelivered));
-            Interlocked.Exchange(ref _droppedAtStart, Interlocked.Read(ref _packetsDroppedByQueue));
-            Interlocked.Exchange(ref _parsedAtStart, Interlocked.Read(ref _packetsParsedOk));
-            Interlocked.Exchange(ref _parseErrorsAtStart, Interlocked.Read(ref _packetsParseErrors));
-            Interlocked.Exchange(ref _lastCapturedTicks, 0);
-            Interlocked.Exchange(ref _lastUiDeliveredTicks, 0);
-            Interlocked.Exchange(ref _captureStartedTicks, DateTime.UtcNow.Ticks);
-            var run = CancellationTokenSource.CreateLinkedTokenSource(_serviceCts.Token);
-            lock (_lifecycleLock)
-            {
-                _runCts = run;
-                _dnsConnections = new DnsConnectionEnrichment();
-                _tlsConnections = new TlsConnectionEnrichment();
-                _observedAssets = new ObservedAssetRegistry();
-            }
+            var run = PrepareCaptureSession();
 
             try
             {
@@ -457,6 +441,54 @@ namespace Carthago.Services
                 MessageBox.Show($"Failed to start capture: {ex.Message}", "Capture",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        // Shared capture-session initialization for desktop and foreground host.
+        private CancellationTokenSource PrepareCaptureSession()
+        {
+            // Capture sources must not overlap: release the previous session first.
+            StopCurrentCapture();
+            Volatile.Write(ref _lastCaptureError, null);
+            Interlocked.Exchange(ref _capturedAtStart, Interlocked.Read(ref _packetsCaptured));
+            Interlocked.Exchange(ref _deliveredAtStart, Interlocked.Read(ref _uiRecordsDelivered));
+            Interlocked.Exchange(ref _droppedAtStart, Interlocked.Read(ref _packetsDroppedByQueue));
+            Interlocked.Exchange(ref _parsedAtStart, Interlocked.Read(ref _packetsParsedOk));
+            Interlocked.Exchange(ref _parseErrorsAtStart, Interlocked.Read(ref _packetsParseErrors));
+            Interlocked.Exchange(ref _lastCapturedTicks, 0);
+            Interlocked.Exchange(ref _lastUiDeliveredTicks, 0);
+            Interlocked.Exchange(ref _captureStartedTicks, DateTime.UtcNow.Ticks);
+            var run = CancellationTokenSource.CreateLinkedTokenSource(_serviceCts.Token);
+            lock (_lifecycleLock)
+            {
+                _runCts = run;
+                _dnsConnections = new DnsConnectionEnrichment();
+                _tlsConnections = new TlsConnectionEnrichment();
+                _observedAssets = new ObservedAssetRegistry();
+            }
+            return run;
+        }
+
+        /// <summary>Foreground-only Npcap start, no WPF controls or implicit filter fallback.</summary>
+        public void StartHeadlessNpcap(ILiveDevice device, string? filter = null)
+        {
+            if (!_headless) throw new InvalidOperationException("Headless mode required.");
+            if (Volatile.Read(ref _disposed) != 0) throw new ObjectDisposedException(nameof(TrafficCaptureService));
+            ArgumentNullException.ThrowIfNull(device);
+            PrepareCaptureSession();
+            try { StartPcapCapture(device, filter, requireFilter: true); }
+            catch
+            {
+                StopCurrentCapture();
+                throw;
+            }
+        }
+
+        /// <summary>Stop capture and wait for cancellation of existing background workers.</summary>
+        public async Task StopHeadlessAsync(CancellationToken token)
+        {
+            if (!_headless) throw new InvalidOperationException("Headless mode required.");
+            Dispose();
+            await Task.WhenAll(_enrichmentWorkers).WaitAsync(token).ConfigureAwait(false);
         }
 
         public void StopCapture(Button startButton, Button stopButton, ComboBox deviceCombo)
@@ -633,7 +665,7 @@ namespace Carthago.Services
             _coverageHealth.ObservePublication(record);
 
             // UI pressure must never suppress rule evaluation.
-            if (!_uiChannel.Writer.TryWrite(new CaptureSessionRecord<TrafficRecord>(record, runToken)))
+            if (!_headless && !_uiChannel.Writer.TryWrite(new CaptureSessionRecord<TrafficRecord>(record, runToken)))
             {
                 Interlocked.Increment(ref _packetsDroppedByQueue);
                 RuleEngine.ReportCaptureDrops(1);
@@ -871,6 +903,15 @@ namespace Carthago.Services
                     return;
                 }
 
+                if (_headless)
+                {
+                    // Foreground host is local-only by default. No remote IP lookups.
+                    rec.WhoisEnrichmentStatus = "Disabled";
+                    rec.ReputationEnrichmentStatus = "Disabled";
+                    rec.VpnEnrichmentStatus = "Disabled";
+                    return;
+                }
+
                 rec.WhoisEnrichmentStatus = prefs.EnableWhois ? "Pending" : "Disabled";
                 rec.ReputationEnrichmentStatus = prefs.EnableReputation ? "Pending" : "Disabled";
 
@@ -1020,7 +1061,7 @@ namespace Carthago.Services
             if (evt is null) return;
             try
             {
-                if (_dispatcher.CheckAccess())
+                if (_headless || _dispatcher.CheckAccess())
                     DetectionEventRaised?.Invoke(evt);
                 else
                     _dispatcher.BeginInvoke(() => DetectionEventRaised?.Invoke(evt));
@@ -1207,6 +1248,8 @@ namespace Carthago.Services
                 lock (_lifecycleLock) assets = _runCts is null ? null : _observedAssets;
                 if (assets is not null) _assetHistory.Save(assets);
 
+                // Foreground host polls counters; no dispatcher work without a message pump.
+                if (_headless) return;
                 // publish stats snapshot (non-blocking)
                 var snap = GetStats();
                 try

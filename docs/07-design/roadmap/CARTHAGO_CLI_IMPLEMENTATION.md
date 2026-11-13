@@ -246,3 +246,34 @@ prefix, losslessness, atomic snapshots or cross-midnight delivery. No
 automatic retry, durable checkpoint or push subscription. Relative windows
 are recalculated each request; use fixed date for more stable paging.
 Tests authored, unexecuted; Windows and .NET validation pending.
+
+## CLI-005A — Windows foreground headless monitor
+
+SOURCE CANDIDATE — UNVERIFIED. New Carthago.Monitor Windows console project
+references existing WPF engine assembly; no Application/window or message
+pump is started. Actual TrafficCaptureService Npcap path shares session
+initialization with desktop. Headless mode bypasses UI delivery queue and
+dispatcher callbacks, retains packet parsing/local enrichment/rule evaluation
+and existing mandatory detection journal. Remote WHOIS/reputation/VPN
+classification and external sinks/analytics host are not started. No
+threat-feed initialization, active sensors, ETW or Linux capture yet.
+
+```powershell
+dotnet run --project Carthago.Monitor -c Release -- capture interfaces --json
+dotnet run --project Carthago.Monitor -c Release -- monitor start --interface '<exact Npcap ID>' --filter 'tcp' --json
+```
+
+Foreground only: Ctrl+C stops, returns 130; startup or shutdown failure
+returns 3. Explicit exact interface; BPF filter fails closed if rejected.
+No automatic device selection. Status defaults to every five seconds,
+1–60 seconds configurable. Counters are actual pipeline totals, not
+proof of lossless capture, sustained liveness or detection accuracy.
+Legacy engine stdout is suppressed during monitor run; journal preserved.
+Existing error logs may still contain operational details. Close desktop
+first; foreground mutex only protects same-session foreground instances.
+Existing synchronous native start/stop may block; ten-second worker wait
+does not bound native stop. Cancellation can discard queued enrichment;
+not a drain or no-loss guarantee. No service manager, persistent daemon,
+remote stop, IPC or automatic restart in this increment. Tests authored,
+not executed. Windows Npcap permissions, real device start/filter/stop,
+journal creation, desktop regression and worker shutdown require tests.
