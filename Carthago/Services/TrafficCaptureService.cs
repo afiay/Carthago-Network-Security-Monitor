@@ -1258,7 +1258,9 @@ namespace Carthago.Services
             EnrichmentProviders = _providerHealth.Snapshot(),
             EnrichmentWorkers = _workerHealth.Snapshot(),
             EnrichmentCoverage = _coverageHealth.Snapshot(),
-            EnrichmentStorage = GetEnrichmentStorageHealth()
+            EnrichmentStorage = GetEnrichmentStorageHealth(),
+            GeoCityDatabaseStatus = _geoIpService.CityDatabaseStatus,
+            GeoAsnDatabaseStatus = _geoIpService.AsnDatabaseStatus
         };
 
         public CaptureFlowSnapshot GetCaptureFlowSnapshot()
@@ -1367,6 +1369,8 @@ namespace Carthago.Services
             public EnrichmentWorkerSnapshot? EnrichmentWorkers { get; init; }
             public EnrichmentCoverageSnapshot? EnrichmentCoverage { get; init; }
             public EnrichmentStorageSnapshot? EnrichmentStorage { get; init; }
+            public GeoIpService.DatabaseAvailability? GeoCityDatabaseStatus { get; init; }
+            public GeoIpService.DatabaseAvailability? GeoAsnDatabaseStatus { get; init; }
             public int WhoisCacheSize { get; init; }
             public int ReputationCacheSize { get; init; }
             public int? EnrichmentQueueDepth { get; init; }

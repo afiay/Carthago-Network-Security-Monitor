@@ -34,6 +34,24 @@ public sealed class EnrichmentHealthPresentationTests
         Assert.Equal(2L, row.CacheHits);
     }
     [Fact]
+    public void Geo_Database_States_Are_Independent_And_Not_Lookup_Outcomes()
+    {
+        var stats = new TrafficCaptureService.StatsSnapshot
+        {
+            GeoCityDatabaseStatus = Carthago.Services.Geo.GeoIpService.DatabaseAvailability.Missing,
+            GeoAsnDatabaseStatus = Carthago.Services.Geo.GeoIpService.DatabaseAvailability.Ready
+        };
+        var display = EnrichmentHealthPresentation.Build(stats);
+        Assert.Contains("City Missing; ASN Ready", display.Summary);
+        Assert.Contains("not a successful lookup", display.Summary);
+        Assert.Contains("City unknown; ASN unknown", EnrichmentHealthPresentation.Build(new TrafficCaptureService.StatsSnapshot()).Summary);
+        Assert.Contains("City Unavailable; ASN unknown", EnrichmentHealthPresentation.Build(new TrafficCaptureService.StatsSnapshot
+        {
+            GeoCityDatabaseStatus = Carthago.Services.Geo.GeoIpService.DatabaseAvailability.Unavailable
+        }).Summary);
+    }
+
+    [Fact]
     public void Cancellation_Remains_A_Distinct_Outcome()
     {
         var stats = new TrafficCaptureService.StatsSnapshot

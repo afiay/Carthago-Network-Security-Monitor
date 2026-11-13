@@ -29,7 +29,14 @@ internal static class EnrichmentHealthPresentation
             $"Enrichment queue depth: {stats.EnrichmentQueueDepth?.ToString(CultureInfo.InvariantCulture) ?? "unknown"}; " +
             $"fallback records (lifetime): {stats.EnrichmentFallbacks:N0}. " +
             "Provider success is not proof of detection accuracy or endpoint trust. " +
-            WorkerSummary(stats.EnrichmentWorkers) + " " + CoverageSummary(stats.EnrichmentCoverage) + " " + StorageSummary(stats.EnrichmentStorage), providers);
+            WorkerSummary(stats.EnrichmentWorkers) + " " + CoverageSummary(stats.EnrichmentCoverage) + " " + StorageSummary(stats.EnrichmentStorage) + " " + GeoSummary(stats), providers);
+    }
+
+    internal static string GeoSummary(TrafficCaptureService.StatsSnapshot stats)
+    {
+        return $"GeoIP databases (reader startup): City {stats.GeoCityDatabaseStatus?.ToString() ?? "unknown"}; " +
+            $"ASN {stats.GeoAsnDatabaseStatus?.ToString() ?? "unknown"}. " +
+            "Ready means reader opened, not a successful lookup or verified database edition.";
     }
 
     internal static string StorageSummary(EnrichmentStorageSnapshot? s)
