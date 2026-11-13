@@ -28,14 +28,14 @@ namespace Carthago.Services
             var descriptor = rule.Descriptor;
             var approvedAssets = ApprovedAssetRegistry.Current;
             var baseline = BaselineStore.Current;
-            var readiness = baseline.Readiness;
+            var readiness = ResolveLiveBaselineReadiness(descriptor.RuleId, baseline.Readiness);
             var decision = RuleTuningCatalog.Resolve(
                 _cfg.Profile,
                 descriptor,
                 evt,
                 record,
                 approvedAssets,
-                baselineLearningMode: baseline.IsLearningMode,
+                baselineLearningMode: baseline.IsLearningMode || !readiness.IsReady,
                 effectiveConfidenceScore: evt.ConfidenceScore,
                 baselineReady: readiness.IsReady);
 
@@ -88,6 +88,16 @@ namespace Carthago.Services
                 ReasonDetails = reasonDetails
             };
         }
+
+        // Persisted observations currently lack an independently qualified benign
+        // DNS source/interface identity. Global readiness is not sufficient to
+        // promote these two detectors in live capture. Benchmark simulations
+        // remain separate and may explicitly exercise calibrated policy.
+        internal static BaselineReadiness ResolveLiveBaselineReadiness(
+            string ruleId, BaselineReadiness globalReadiness)
+            => ruleId is "R102" or "R103"
+                ? BaselineReadiness.Unavailable("qualified source/interface DNS baseline unavailable")
+                : globalReadiness;
 
         private static RuleTuningDecision ResolveContentPackTuningDecision(IContentPackRule rule, DetectionEvent evt, TrafficRecord record, RuleMode configuredMode)
         {
