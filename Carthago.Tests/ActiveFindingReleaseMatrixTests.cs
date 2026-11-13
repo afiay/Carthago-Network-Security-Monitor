@@ -16,7 +16,7 @@ public sealed class ActiveFindingReleaseMatrixTests
     private static readonly Guid Adapter = Guid.Parse("02702701-1234-4321-9999-000000000001");
     private static readonly IPAddress Source = IPAddress.Parse("192.168.1.20"), Target = IPAddress.Parse("192.168.1.1");
     private static readonly DateTimeOffset Now = new(2026, 11, 13, 12, 0, 0, TimeSpan.Zero);
-    private static ActiveEvidenceRow Row(int rule, string variant, DateTimeOffset t)
+    private static ActiveEvidenceRow Row(int rule, string variant, DateTimeOffset t, bool crossesExpiry = true)
     {
         bool changed = variant == "changed", ambiguous = variant == "ambiguous";
         switch (rule)
@@ -33,15 +33,17 @@ public sealed class ActiveFindingReleaseMatrixTests
                     ambiguous ? DnsIntegrityStatus.TimedOut : DnsIntegrityStatus.AnswersObserved,
                     ambiguous ? Array.Empty<string>() : new[] { changed ? "192.0.2.2" : "192.0.2.1" }, 0, t, TimeSpan.Zero, null));
             case 4: case 5: case 6:
-                var policy = rule == 6 && changed ? SslPolicyErrors.RemoteCertificateNameMismatch : SslPolicyErrors.None;
+                bool expired = rule == 5 && changed;
+                var policy = expired ? SslPolicyErrors.RemoteCertificateChainErrors :
+                    rule == 6 && changed ? SslPolicyErrors.RemoteCertificateNameMismatch : SslPolicyErrors.None;
                 return ActiveEvidenceProjection.From(Adapter, new TlsInspectionObservation(Source, Target, 443, "lab.example",
                     ambiguous ? TlsInspectionStatus.HandshakeFailed :
                         policy == SslPolicyErrors.None ? TlsInspectionStatus.Authenticated : TlsInspectionStatus.CertificateRejected,
                     ambiguous ? null : new TlsCertificateEvidence("subject", "issuer", "serial",
                         new string(rule == 4 && changed ? 'b' : 'a', 64), Now.AddDays(-2),
-                        rule == 5 ? Now.AddMinutes(-7) : Now.AddDays(2),
-                        rule == 5 && changed ? "Expired" : "WithinValidityPeriod", null, null, policy,
-                        Array.Empty<X509ChainStatusFlags>(), null), null, null, t, TimeSpan.Zero));
+                        rule == 5 && crossesExpiry ? Now.AddMinutes(-7) : Now.AddDays(2),
+                        expired ? "Expired" : "WithinValidityPeriod", null, null, policy,
+                        expired ? new[] { X509ChainStatusFlags.NotTimeValid } : Array.Empty<X509ChainStatusFlags>(), null), null, null, t, TimeSpan.Zero));
             case 7: case 8:
                 var headers = rule == 8 && changed ? Array.Empty<HttpHeaderEvidence>() :
                     new[] { new HttpHeaderEvidence("Strict-Transport-Security", new[] { "max-age=123" }) };
@@ -78,14 +80,19 @@ public sealed class ActiveFindingReleaseMatrixTests
     [InlineData(11, "positive")] [InlineData(11, "benign")] [InlineData(11, "ambiguous")]
     public void EveryRuleRequiresTwoMatchingDefiniteChanges(int rule, string scenario)
     {
-        var baseline = Row(rule, "baseline", Now.AddHours(-1));
-        var first = Row(rule, scenario == "benign" ? "baseline" : "changed", Now.AddMinutes(-5));
-        var current = Row(rule, scenario == "positive" ? "changed" : scenario == "ambiguous" ? "ambiguous" : "baseline", Now);
+        bool crossesExpiry = scenario != "benign";
+        var baseline = Row(rule, "baseline", Now.AddHours(-1), crossesExpiry);
+        var first = Row(rule, scenario == "benign" ? "baseline" : "changed", Now.AddMinutes(-5), crossesExpiry);
+        var current = Row(rule, scenario == "positive" ? "changed" : scenario == "ambiguous" ? "ambiguous" : "baseline", Now, crossesExpiry);
         var findings = ActiveFindingQualification.Qualify(baseline, first, current, Now.AddMinutes(-10).UtcDateTime.Ticks, Now);
         if (scenario == "positive")
         {
-            var finding = Assert.Single(findings);
-            Assert.Equal($"ASD{rule:000}", finding.RuleId);
+            // Real certificate expiry also changes the strict TLS trust policy.
+            // Preserve both findings; do not suppress the second valid change.
+            if (rule == 5)
+                Assert.Equal(new[] { "ASD005", "ASD006" }, findings.Select(x => x.RuleId).OrderBy(x => x).ToArray());
+            else Assert.Single(findings);
+            var finding = Assert.Single(findings.Where(x => x.RuleId == $"ASD{rule:000}"));
             Assert.Equal(baseline.Id, finding.BaselineId);
             Assert.Equal(first.Id, finding.FirstObservationId);
             Assert.Equal(current.Id, finding.ConfirmingObservationId);
