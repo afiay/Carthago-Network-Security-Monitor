@@ -16,3 +16,4 @@ System boundaries, evidence lineage, sensors and architectural constraints.
 - [CLI-006B.1 — Portable protocol parsing](CLI-006B1-PortableProtocols.md)
 - [CLI-006B.2 — Shared traffic model](CLI-006B2-SharedTrafficModel.md)
 - [CLI-006B.3A — Portable frame headers](CLI-006B3A-PortableFrameHeaders.md)
+- [CLI-006B.3B — Portable transport decoding](CLI-006B3B-PortableTransport.md)
