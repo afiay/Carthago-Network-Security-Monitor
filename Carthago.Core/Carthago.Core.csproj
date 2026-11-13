@@ -64,6 +64,12 @@
     <Compile Include="../Carthago/Engine/Rules/Abstractions/RuleEvaluationResult.cs" Link="Engine/Rules/Abstractions/RuleEvaluationResult.cs" />
     <Compile Include="../Carthago/Engine/Rules/Abstractions/RuleNoMatchReason.cs" Link="Engine/Rules/Abstractions/RuleNoMatchReason.cs" />
     <Compile Include="../Carthago/Engine/Rules/Abstractions/RuleMode.cs" Link="Engine/Rules/Abstractions/RuleMode.cs" />
+    <Compile Include="../Carthago/Engine/Rules/Abstractions/RuleEvaluationTrace.cs" Link="Engine/Rules/Abstractions/RuleEvaluationTrace.cs" />
+    <Compile Include="../Carthago/Engine/Rules/Abstractions/RuleIntelligence.cs" Link="Engine/Rules/Abstractions/RuleIntelligence.cs" />
+    <Compile Include="../Carthago/Engine/Rules/Abstractions/RulePrecisionProfile.cs" Link="Engine/Rules/Abstractions/RulePrecisionProfile.cs" />
+    <Compile Include="../Carthago/Engine/Rules/Abstractions/ConfidenceBuilder.cs" Link="Engine/Rules/Abstractions/ConfidenceBuilder.cs" />
+    <Compile Include="../Carthago/Engine/Rules/Abstractions/EvidenceBuilder.cs" Link="Engine/Rules/Abstractions/EvidenceBuilder.cs" />
+    <Compile Include="../Carthago/Engine/Rules/Abstractions/RuleIdValidator.cs" Link="Engine/Rules/Abstractions/RuleIdValidator.cs" />
     <!-- Preserve existing internal access while consumers migrate. -->
     <InternalsVisibleTo Include="Carthago" />
     <InternalsVisibleTo Include="carthago" />

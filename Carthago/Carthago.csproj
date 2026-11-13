@@ -48,6 +48,12 @@
     <Compile Remove="Services/ProtocolIntelligence/DnsAddressObservationInspector.cs" />
     <Compile Remove="Services/ProtocolIntelligence/BacnetEventDisableInspector.cs" />
     <Compile Remove="Models/TrafficRecord.cs" />
+    <Compile Remove="Engine/Rules/Abstractions/RuleEvaluationTrace.cs" />
+    <Compile Remove="Engine/Rules/Abstractions/RuleIntelligence.cs" />
+    <Compile Remove="Engine/Rules/Abstractions/RulePrecisionProfile.cs" />
+    <Compile Remove="Engine/Rules/Abstractions/ConfidenceBuilder.cs" />
+    <Compile Remove="Engine/Rules/Abstractions/EvidenceBuilder.cs" />
+    <Compile Remove="Engine/Rules/Abstractions/RuleIdValidator.cs" />
     <Compile Remove="Services/ProtocolIntelligence/EtherNetIpIdentityResetInspector.cs" />
     <Compile Remove="Services/Flow/FlowKey.cs" />
     <Compile Remove="Services/Flow/HandshakeBuffer.cs" />
