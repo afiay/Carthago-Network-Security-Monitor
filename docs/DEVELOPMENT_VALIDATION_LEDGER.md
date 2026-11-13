@@ -2363,3 +2363,8 @@ Reviewed live parent `8294185345a8117556016b3a2b7d77ba91658109`, ledger, qualifi
 ## 2026-11-13 — CLI-007E.2 portable session control
 
 **SOURCE CANDIDATE — UNVERIFIED.** Parent 588e746e198c99f9258af9782f86d61e15574291. Add opt-in same-user named-pipe session status/health/stop, separate stop grant, fixed bounded protocol, deadlines and foreground lifecycle integration. Ten synthetic/local IPC cases authored, zero executed; pinned gate updated. Existing Windows IPC unchanged. No build/test/native capture/Actions or qualification claim. See [architecture](02-architecture/CLI-007E2-PortableSessionControl.md).
+
+
+## 2026-11-13 — CLI-007E.3 portable monitoring journal
+
+**SOURCE CANDIDATE — UNVERIFIED.** Reviewed source 9bea1f5b44ec3f949a0f1df7506230e47c1386a9. Add opt-in per-session bounded NDJSON journal, rotation, read-only untrusted inspection, partial-tail/retention-gap reporting and projected findings. Eleven synthetic cases authored, zero executed; pinned gate updated. No build/test/native capture/Actions or deployment qualification. See [architecture](02-architecture/CLI-007E3-PortableMonitorJournal.md).

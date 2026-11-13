@@ -1,0 +1,9 @@
+# CLI-007E.3 — Portable monitoring journal
+
+**SOURCE CANDIDATE — UNVERIFIED.** Reviewed source 9bea1f5b44ec3f949a0f1df7506230e47c1386a9. CLI-006E/native qualification pending.
+
+Opt-in monitor run --journal-directory DIR (existing trusted operator-provisioned root). Unique session GUID directory, Unix owner-only creation mode; Windows inherits root ACL. Write the same sanitized event envelope as stdout with monotonically increasing sequence; NDJSON UTF-8, flush to disk each record, rotate at 1 MiB, retain four segments per session. Only writer-owned oldest segment deleted, no global retention/deletion or unrelated files touched. Root must be private and trusted; no adversarial filesystem race protection. Journal write errors stop the run through existing lifecycle error path; synchronous disk I/O can delay capture/shutdown. No integrity authentication or durability guarantee against storage failure. No existing Windows journal changes.
+
+Read-only monitor journal <session-directory> [--limit 1-100] [--json]. Inspect closed or abandoned sessions (active writer denies sharing), bounded segments and records, verify session and sequence, report retained records/finding counts and rotation gap, ignore only incomplete final line, reject malformed complete records. Return only projected supported rule IDs, method, timestamp, sequence and packet ordinal; no imported arbitrary fields. Shutdown record means recorded, not successful shutdown; missing record does not prove crash. Untrusted provenance, no detection qualification. No global journal discovery or cross-session retention.
+
+Eleven synthetic cases authored, zero executed; pinned qualification gate updated. Owner focused command: dotnet test Carthago.Cli.Tests/Carthago.Cli.Tests.csproj -c Release --filter FullyQualifiedName~PortableMonitorJournalTests. Next: journal integration and failure qualification, then Linux deployment.

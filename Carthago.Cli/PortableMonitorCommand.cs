@@ -6,16 +6,16 @@ using Carthago.Services;
 
 namespace Carthago.Cli;
 
-/// <summary>Explicit foreground test host with optional session control. No persistence or active response.</summary>
+/// <summary>Explicit foreground test host with optional session control. Optional bounded journal; no active response.</summary>
 internal static class PortableMonitorCommand
 {
-    internal sealed record Options(string InterfaceId,string[] Rules,int StatusSeconds,int MaxPackets,long MaxBytes,bool EnableControl=false,bool AllowStop=false);
+    internal sealed record Options(string InterfaceId,string[] Rules,int StatusSeconds,int MaxPackets,long MaxBytes,bool EnableControl=false,bool AllowStop=false,string? JournalDirectory=null);
 
     internal static bool TryParse(string[] command,out Options? options)
     {
         options=null;
         if(command is not ["monitor","run",..])return false;
-        string? id=null;string[]? rules=null;bool authorized=false,control=false,allowStop=false;
+        string? id=null,journalDirectory=null;string[]? rules=null;bool authorized=false,control=false,allowStop=false;
         int seconds=5,packets=256;long bytes=16L*1024*1024;
         var seen=new HashSet<string>(StringComparer.Ordinal);
         for(int i=2;i<command.Length;i++)
@@ -34,6 +34,9 @@ internal static class PortableMonitorCommand
                         value.Contains("://",StringComparison.Ordinal)||value.Any(c=>char.IsControl(c)||
                             char.GetUnicodeCategory(c)==UnicodeCategory.Format))return false;
                     id=value;break;
+                case "--journal-directory":
+                    if(!PortableMonitorJournal.ValidPath(value))return false;
+                    journalDirectory=value;break;
                 case "--rules":
                     if(value.Length>1024)return false;
                     rules=value.Split(',');
@@ -53,7 +56,7 @@ internal static class PortableMonitorCommand
             }
         }
         if(!authorized||id is null||rules is null||(allowStop&&!control))return false;
-        options=new(id,rules,seconds,packets,bytes,control,allowStop);return true;
+        options=new(id,rules,seconds,packets,bytes,control,allowStop,journalDirectory);return true;
     }
 
     private static readonly JsonSerializerOptions JsonOptions=new(JsonSerializerDefaults.Web);
@@ -65,6 +68,8 @@ internal static class PortableMonitorCommand
         using var reportStop=new CancellationTokenSource();
         var source=(create??(id=>new NativePcapCaptureSource(id)))(options.InterfaceId);
         var sessionId=Guid.NewGuid();
+        using var journal=options.JournalDirectory is null?null:new PortableMonitorJournal(options.JournalDirectory,sessionId);
+        long sequence=0;
         var outputGate=new object();
         PortableBufferedCaptureRun.Progress? progress=null;
         bool reportingFailed=false,controlFailed=false;
@@ -74,9 +79,11 @@ internal static class PortableMonitorCommand
         {
             lock(outputGate)
             {
-                output.WriteLine(json?JsonSerializer.Serialize(new { schemaVersion=1,mode="portable_foreground",
-                    eventType,sessionId,observedUtc=DateTime.UtcNow,detectionValidation="not_assessed",
-                    sourceHealth="not_assessed",data },JsonOptions):text);
+                var line=JsonSerializer.Serialize(new { schemaVersion=1,mode="portable_foreground",
+                    eventType,sessionId,sequence=++sequence,observedUtc=DateTime.UtcNow,detectionValidation="not_assessed",
+                    sourceHealth="not_assessed",data },JsonOptions);
+                journal?.Append(line);
+                output.WriteLine(json?line:text);
                 output.Flush();
             }
         }
@@ -120,7 +127,7 @@ internal static class PortableMonitorCommand
                             stop.Token,()=>stop.Cancel(),controlStop.Token,()=>{controlFailed=true;stop.Cancel();});
                     }
                     Emit("started",new { rules=options.Rules,options.StatusSeconds,options.MaxPackets,options.MaxBytes,
-                        controlEnabled=options.EnableControl,stopAllowed=options.AllowStop },
+                        controlEnabled=options.EnableControl,stopAllowed=options.AllowStop,journalEnabled=journal is not null },
                         $"Portable monitor started: {string.Join(",",options.Rules)}; session={sessionId:D}; control={options.EnableControl}; stopAllowed={options.AllowStop}");
                     Volatile.Write(ref progress,p);
                 })).ConfigureAwait(false);
