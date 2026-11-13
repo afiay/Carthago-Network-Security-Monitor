@@ -88,4 +88,16 @@ public sealed class ProcessAttributionEnrichmentTests
     [InlineData(12u, false)]
     public void Tcp_Ownership_Excludes_Nonlive_States(uint state, bool expected)
         => Assert.Equal(expected, WindowsProcessResolver.IsTcpOwnershipState(state));
+
+    [Fact]
+    public void Cached_Metadata_Requires_Current_Owner_And_Identity()
+    {
+        var start = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        var cached = new WindowsProcessResolver.ProcessInfo { ProcessId = 100, StartTime = start };
+        Assert.True(WindowsProcessResolver.CanReuseProcessMetadata(cached, 100, start));
+        Assert.False(WindowsProcessResolver.CanReuseProcessMetadata(cached, 0, start));
+        Assert.False(WindowsProcessResolver.CanReuseProcessMetadata(cached, 200, start));
+        Assert.False(WindowsProcessResolver.CanReuseProcessMetadata(cached, 100, start.AddSeconds(1)));
+        Assert.False(WindowsProcessResolver.CanReuseProcessMetadata(cached, 100, null));
+    }
 }

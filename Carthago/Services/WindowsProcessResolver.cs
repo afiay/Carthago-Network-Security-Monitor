@@ -38,7 +38,7 @@ namespace Carthago.Services
         /// <summary>Enable/disable Authenticode presence check (opening image cert). Default false.</summary>
         public static bool CheckSignature { get; set; } = false;
 
-        /// <summary>Short TCP tuple cache; PID creation time is revalidated on hits.</summary>
+        /// <summary>Short TCP metadata cache; socket ownership and PID creation time are revalidated on hits.</summary>
         public static TimeSpan CacheTtl { get; set; } = TimeSpan.FromSeconds(2);
         private const int MaxCacheEntries = 8192;
 
@@ -85,15 +85,16 @@ namespace Carthago.Services
                     var key = c.MakeKey();
                     // UDP tables lack remote tuples, so do not cache an inferred
                     // binding under a flow key that could outlive the binding.
-                    if (c.Proto == "TCP" && TryGetFresh(key, out var pi) && pi is { ProcessId: > 0 })
-                        return pi;
-
                     int pid = c.Proto switch
                     {
                         "TCP" => FindPidTcp(c),
                         "UDP" => FindPidUdp(c),
                         _ => 0
                     };
+
+                    // Cache metadata only after a fresh socket-table ownership observation.
+                    if (c.Proto == "TCP" && TryGetFresh(key, pid, out var pi))
+                        return pi;
 
                     // Never cache a miss as a normal 20-second result. The first
                     // candidate may be the remote endpoint (especially inbound),
@@ -128,11 +129,11 @@ namespace Carthago.Services
 
         // ---------------- internal ----------------
 
-        private static bool TryGetFresh(string key, out ProcessInfo? info)
+        private static bool TryGetFresh(string key, int observedPid, out ProcessInfo? info)
         {
             info = null;
             if (!Cache.TryGetValue(key, out var ce)) return false;
-            if (ce.Fresh && MatchesProcessIdentity(ce.Info.StartTime, ReadProcessStartTime(ce.Info.ProcessId)))
+            if (ce.Fresh && CanReuseProcessMetadata(ce.Info, observedPid, observedPid > 0 ? ReadProcessStartTime(observedPid) : null))
             {
                 info = ce.Info;
                 return true;
@@ -142,6 +143,10 @@ namespace Carthago.Services
                 .Remove(new(key, ce));
             return false;
         }
+
+        internal static bool CanReuseProcessMetadata(ProcessInfo cached, int observedPid, DateTime? observedStart)
+            => observedPid > 0 && cached.ProcessId == observedPid
+                && MatchesProcessIdentity(cached.StartTime, observedStart);
 
         internal static bool MatchesProcessIdentity(DateTime? cachedStart, DateTime? currentStart)
             => cachedStart.HasValue && currentStart.HasValue

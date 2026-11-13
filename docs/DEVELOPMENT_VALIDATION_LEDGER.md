@@ -2383,3 +2383,8 @@ Reviewed live parent `8294185345a8117556016b3a2b7d77ba91658109`, ledger, qualifi
 ## 2026-11-13 — CLI-009B portable rules R596–R600
 
 **SOURCE CANDIDATE — UNVERIFIED.** Reviewed 60c32f03602f52fde35cb42b952893cabb5103c2. Extract five original HTTP predicates into Core and delegate Windows wrappers. Catalog fifteen IDs; R596 requires User-Agent, R600 POST only. 29 portable cases, 24 Windows parity cases and one PCAP replay case authored, zero executed. Gate updated. No runtime promotion, native capture, build/test/Actions. See [architecture](02-architecture/CLI-009B-PortableRulesR596-R600.md).
+
+
+## 2026-11-13 — Enrichment Phase 13.3 fresh TCP ownership before metadata reuse
+
+Reviewed parent `ab43a967e303fa285dec0786aa4e78b3926675cc`, resolver, process regressions and ledger. Move TCP cache lookup after fresh native ownership scan; require matching positive observed PID and creation time before metadata reuse. Missing/ambiguous ownership invalidates inspected cache entry; UDP unchanged. One regression with five assertions authored, zero executed. Native scan cost and capture-session lifecycle remain pending; no claim of packet-time ownership or performance qualification. Windows: `dotnet test .\\Carthago.Tests\\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~ProcessAttributionEnrichmentTests"`.
