@@ -159,7 +159,14 @@ namespace Carthago.Engine.Rules
                 effectiveMode = RulePrecisionCatalog.MostRestrictive(effectiveMode, RuleMode.Shadow);
             }
 
-            if (RequiresEnvironmentScope(profile) && !EnvironmentEvidencePresent(observedKinds, record, profile, approvedAssets))
+            // These parser-backed token rules require an explicit CI/CD destination
+            // scope. Generic process/MAC attribution or descriptive evidence is
+            // not an approved server and must not bypass this independent gate.
+            var environmentSatisfied = n is 353 or 354 or 359
+                ? approvedAssets != null && (approvedAssets.IsApprovedCiCdServer(record.Destination)
+                    || approvedAssets.IsApprovedCiCdServer(record.HttpHost))
+                : EnvironmentEvidencePresent(observedKinds, record, profile, approvedAssets);
+            if (RequiresEnvironmentScope(profile) && !environmentSatisfied)
             {
                 effectiveMode = RulePrecisionCatalog.MostRestrictive(effectiveMode, RuleMode.Shadow);
                 reasons.Add("environment-scoped rule lacks approved asset/segment/controller evidence; non-paging until configured");

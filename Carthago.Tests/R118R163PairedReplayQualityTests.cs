@@ -69,6 +69,14 @@ public sealed class R118R163PairedReplayQualityTests
                 item => item.RuleId == "R163");
             Assert.Equal(0.62, decision.Confidence, 6);
             Assert.DoesNotContain("R163", sample.Profiles[profile].AlertRuleIds);
+            // Calibration alone cannot establish an inbound-to-egress causal link.
+            var calibrated = sample.DeploymentStateProfiles["CalibratedConfigured"][profile];
+            var calibratedDecision = Assert.Single(calibrated.RuleDecisions,
+                item => item.RuleId == "R163");
+            Assert.Equal(0.62, calibratedDecision.Confidence, 6);
+            Assert.DoesNotContain("R163", calibrated.AlertRuleIds);
+            Assert.Contains(calibratedDecision.RuntimePrecisionReasons,
+                reason => reason.Contains("below precision floor 84%", StringComparison.Ordinal));
         }
     }
 

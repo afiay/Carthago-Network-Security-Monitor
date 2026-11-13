@@ -30,7 +30,7 @@ public sealed class Ga08DevOpsEnvironmentScopeTests
             };
             foreach (var item in cases)
             {
-                foreach (var scope in new[] { "exact", "unrelated" })
+                foreach (var scope in new[] { "exact", "unrelated", "unrelated-attributed", "exact-attributed" })
                 {
                     var fixture = JsonNode.Parse(await File.ReadAllTextAsync(
                         Path.Combine(source, item.Name + ".json")))!.AsObject();
@@ -41,9 +41,15 @@ public sealed class Ga08DevOpsEnvironmentScopeTests
                         ["approved"] = new JsonObject
                         {
                             ["ciCdServers"] = new JsonArray(JsonValue.Create(
-                                scope == "exact" ? item.Host : "unrelated.example.invalid"))
+                                scope.StartsWith("exact", StringComparison.Ordinal) ? item.Host : "unrelated.example.invalid"))
                         }
                     };
+                    if (scope.EndsWith("-attributed", StringComparison.Ordinal))
+                    {
+                        var record = fixture["records"]!.AsArray()[0]!.AsObject();
+                        record["processName"] = "synthetic-client.exe";
+                        record["macSource"] = "02:00:00:00:00:01";
+                    }
                     await File.WriteAllTextAsync(Path.Combine(directory, name + ".json"),
                         fixture.ToJsonString());
                 }
@@ -51,10 +57,10 @@ public sealed class Ga08DevOpsEnvironmentScopeTests
 
             var report = await new TuningBenchmarkRunner().RunAsync(
                 new TuningBenchmarkOptions { ReplayDirectory = directory });
-            Assert.Equal(6, report.SampleResults.Count);
+            Assert.Equal(12, report.SampleResults.Count);
             foreach (var item in cases)
             {
-                foreach (var scope in new[] { "exact", "unrelated" })
+                foreach (var scope in new[] { "exact", "unrelated", "unrelated-attributed", "exact-attributed" })
                 {
                     var sample = Assert.Single(report.SampleResults,
                         value => value.Name == item.Name + "-" + scope);
@@ -66,7 +72,7 @@ public sealed class Ga08DevOpsEnvironmentScopeTests
                     Assert.Contains(item.Id, cold.ShadowRuleIds);
                     var trace = Assert.Single(calibrated.RuleDecisions, value => value.RuleId == item.Id);
                     Assert.True(trace.Confidence >= 0.78);
-                    if (scope == "exact")
+                    if (scope.StartsWith("exact", StringComparison.Ordinal))
                     {
                         Assert.Contains(item.Id, calibrated.AlertRuleIds);
                         Assert.Equal("Alert", trace.EffectiveMode);
