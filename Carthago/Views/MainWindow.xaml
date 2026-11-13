@@ -83,79 +83,63 @@
         <Setter Property="AutomationProperties.HelpText" Value="This cell reports detection-event delivery transport status only, not investigation progress, remediation or incident resolution."/>
       </Style>
       <DataTemplate x:Key="DashboardKpiCardTemplate">
-                      <Border Style="{StaticResource DashboardOverviewKpiCard}" Height="132">
-                        <Grid>
-                          <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                            <RowDefinition Height="Auto"/>
-                          </Grid.RowDefinitions>
-                          <Border Grid.RowSpan="3" Width="3" HorizontalAlignment="Left" Margin="-17,0,0,0"
-                                  Background="{Binding AccentBrush}" CornerRadius="2" Opacity="0.9" IsHitTestVisible="False"/>
-
-                          <DockPanel LastChildFill="True">
-                            <!-- KPI card has no overflow command; use the existing information glyph. -->
-                            <StackPanel Orientation="Horizontal">
-                              <TextBlock x:Name="DashboardKpiCardTitle" Text="{Binding Title}" Style="{StaticResource MicroLabel}"/>
-                              <!-- GA UI-36: informational glyph is keyboard-focusable; no command or menu is introduced. -->
-                              <TextBlock Text="  &#x24D8;"
-                                          Style="{StaticResource SocInfoGlyph}"
-                                          Focusable="True"
-                                          KeyboardNavigation.IsTabStop="True"
-                                          FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
-                                          ToolTipService.ShowsToolTipOnKeyboardFocus="True"
-                                          ToolTip="{Binding InformationText}"
-                                          AutomationProperties.Name="{Binding InformationAccessibilityName}"
-                                          AutomationProperties.HelpText="{Binding InformationText}"/>
-                            </StackPanel>
-                          </DockPanel>
-
-                          <Grid Grid.Row="1" Margin="0,5,0,0">
-                            <Grid.ColumnDefinitions>
-                              <ColumnDefinition Width="*"/>
-                              <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                              <TextBlock Text="{Binding Value}"
-                                          AutomationProperties.LabeledBy="{Binding ElementName=DashboardKpiCardTitle}"
-                                          AutomationProperties.HelpText="{Binding InformationText}"
-                                         FontSize="27"
-                                         FontWeight="Bold"/>
-                              <TextBlock Text="{Binding DeltaText}"
-                                         Foreground="{Binding AccentBrush}"
-                                         FontSize="11"
-                                         FontWeight="SemiBold"
-                                         Margin="8,6,0,0"/>
-                            </StackPanel>
-                            <Border Grid.Column="1"
-                                    Width="46"
-                                    Height="46"
-                                    CornerRadius="12"
-                                    Background="#0B1728"
-                                    BorderBrush="{Binding AccentBrush}"
-                                    BorderThickness="1"
-                                    Opacity="0.98">
-                              <TextBlock Text="{Binding Icon}"
-                                         FontSize="22"
-                                         Foreground="{Binding AccentBrush}"
-                                         HorizontalAlignment="Center"
-                                         VerticalAlignment="Center"/>
-                            </Border>
-                          </Grid>
-
-                          <TextBlock Grid.Row="2"
-                                     Text="{Binding TrendText}"
-                                     FontFamily="Consolas"
-                                     Foreground="{Binding AccentBrush}"
-                                     FontSize="12"
-                                     Height="16"
-                                     Opacity="0.95"
-                                     TextWrapping="NoWrap"
-                                     TextTrimming="CharacterEllipsis"
-                                     ToolTip="{Binding TrendText}"/>
-                        </Grid>
-                      </Border>
-                    </DataTemplate>
+        <!-- GA UI-178: compact reference-aligned metric tile; all values remain source-bound. -->
+        <Border Style="{StaticResource DashboardOverviewKpiCard}" MinHeight="108"
+                Padding="12,10" CornerRadius="10">
+          <Grid>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="*"/>
+              <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto"/>
+              <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Border Width="32" Height="32" CornerRadius="8" Background="#0B1728"
+                    BorderBrush="{Binding AccentBrush}" BorderThickness="1"
+                    VerticalAlignment="Top" Margin="0,2,10,0">
+              <TextBlock Text="{Binding Icon}" FontSize="18" Foreground="{Binding AccentBrush}"
+                         HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+              <DockPanel LastChildFill="True">
+                <TextBlock DockPanel.Dock="Right" Text="  &#x24D8;"
+                           Style="{StaticResource SocInfoGlyph}"
+                           Focusable="True" KeyboardNavigation.IsTabStop="True"
+                           FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
+                           ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                           ToolTip="{Binding InformationText}"
+                           AutomationProperties.Name="{Binding InformationAccessibilityName}"
+                           AutomationProperties.HelpText="{Binding InformationText}"/>
+                <TextBlock x:Name="DashboardKpiCardTitle" Text="{Binding Title}"
+                           Style="{StaticResource MicroLabel}" TextWrapping="Wrap"/>
+              </DockPanel>
+              <TextBlock Text="{Binding Value}" FontSize="25" FontWeight="Bold"
+                         TextWrapping="Wrap" Margin="0,3,0,0"
+                         AutomationProperties.LabeledBy="{Binding ElementName=DashboardKpiCardTitle}"
+                         AutomationProperties.HelpText="{Binding InformationText}"/>
+              <TextBlock Text="{Binding DeltaText}" Foreground="{Binding AccentBrush}"
+                         FontSize="11" FontWeight="SemiBold" TextWrapping="Wrap">
+                <TextBlock.Style>
+                  <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding DeltaText}" Value="">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </TextBlock.Style>
+              </TextBlock>
+            </StackPanel>
+            <Border Grid.Row="1" Grid.ColumnSpan="2" BorderBrush="#29475D"
+                    BorderThickness="0,1,0,0" Margin="0,7,0,0" Padding="0,5,0,0">
+              <TextBlock Text="{Binding TrendText}" FontFamily="Consolas"
+                         Foreground="{Binding AccentBrush}" FontSize="11" Opacity="0.95"
+                         TextWrapping="Wrap" ToolTip="{Binding TrendText}"/>
+            </Border>
+          </Grid>
+        </Border>
+      </DataTemplate>
     </ResourceDictionary>
   </Window.Resources>
 
