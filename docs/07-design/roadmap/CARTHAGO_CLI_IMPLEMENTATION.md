@@ -66,7 +66,7 @@ v1 binary frames (18-byte request, 39-byte response), correlation ID, command
 allowlist, bounded counts, timestamps, no identity claims from the wire.
 Windows named pipe uses a protected current-user SID DACL, first-instance
 creation and PIPE_REJECT_REMOTE_CLIENTS; client uses CurrentUserOnly and local
-"." server name. One request per connection, five-second I/O deadlines.
+"." server name. One request per connection, five-second I/O deadlines; a one-byte client acknowledgment prevents disconnect from discarding unread responses.
 Same-account processes are inside the trust boundary: this is not signed
 application attestation or protection against a compromised same-user process.
 

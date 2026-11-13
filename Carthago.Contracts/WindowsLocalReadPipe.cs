@@ -34,7 +34,9 @@ public static class WindowsLocalReadPipe
         await client.WriteAsync(LocalReadProtocol.EncodeRequest(request), deadline.Token).ConfigureAwait(false);
         var bytes = new byte[LocalReadProtocol.ResponseBytes];
         await client.ReadExactlyAsync(bytes, deadline.Token).ConfigureAwait(false);
-        return LocalReadProtocol.DecodeResponse(bytes, request);
+        var response = LocalReadProtocol.DecodeResponse(bytes, request);
+        await client.WriteAsync(new byte[] { LocalReadProtocol.Acknowledgment }, deadline.Token).ConfigureAwait(false);
+        return response;
     }
 
     /// <summary>One connection at a time; one request per connection; no remote clients.</summary>
@@ -63,6 +65,12 @@ public static class WindowsLocalReadPipe
                 if (response.Command != request.Command || response.Correlation != request.Correlation)
                     throw new InvalidDataException("Provider response mismatch.");
                 await server.WriteAsync(LocalReadProtocol.EncodeResponse(response), deadline.Token).ConfigureAwait(false);
+                // DisconnectNamedPipe discards unread data. Wait until the client confirms
+                // it read and validated the complete response; never wait beyond the deadline.
+                var acknowledgment = new byte[1];
+                await server.ReadExactlyAsync(acknowledgment, deadline.Token).ConfigureAwait(false);
+                if (acknowledgment[0] != LocalReadProtocol.Acknowledgment)
+                    throw new InvalidDataException("Invalid acknowledgment.");
             }
             catch (Exception ex) when (ex is IOException or InvalidDataException or OperationCanceledException)
             {

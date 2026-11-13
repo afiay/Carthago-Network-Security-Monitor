@@ -15,6 +15,7 @@ public static class LocalReadProtocol
     public const byte Version = 1;
     public const int RequestBytes = 18;
     public const int ResponseBytes = 39;
+    public const byte Acknowledgment = 0x06;
 
     public static byte[] EncodeRequest(ReadRequest request)
     {
