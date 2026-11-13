@@ -206,3 +206,8 @@ Workbook R2708 AN2212; exact same-flow startup and first OFF execution, Candidat
 ## R971 — SNMP high-demand GETBULK
 
 Workbook R2744 AN1249; exact one-request operation-level predicate distinct from R771 packet burst. [Batch notes](../03-detection-rules/batches/RULE_BATCH_971-971.md). Candidate/Shadow, 31 authored cases, zero execution; no returned data/authorization claim. Next ID R972.
+
+
+## R972 — SNMP exact system fingerprint GET
+
+Workbook R2771 AN2186; three distinct RFC3418 system scalars, exact GET PDU, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_972-972.md). 32 authored cases, zero execution; no returned fingerprint/authorization claim. Next ID R973.
