@@ -53,6 +53,7 @@ namespace Carthago.Services
             public Smb2WriteTargetContext? Smb2Target;
             public Iec104StartupOffSequence? Iec104Startup;
             public OpcUaHelloAckInspector.Hello? OpcUaHello;
+            public ModbusOversizedReadExchangeInspector.Pending? ModbusOversizedRead;
         }
 
         private sealed class DirectionState
@@ -415,6 +416,7 @@ namespace Carthago.Services
                                 flow.Smb2Target = null;
                                 flow.Iec104Startup = null;
                                 flow.OpcUaHello = null;
+                                flow.ModbusOversizedRead = null;
                             }
                     }
                 }
@@ -444,6 +446,12 @@ namespace Carthago.Services
                             // OPC UA HEL/ACK on the same observed TCP connection.
                             if (isIPv4 && (c2s ? dport == 4840 && sport != 4840 : sport == 4840 && dport != 4840))
                                 ObserveOpcUaHelloAck(tcpFlow, rec, c2s, normPayload,
+                                    synAnchoredFirstPayload, tcpFlagsField == 0x18 &&
+                                    completeIpPacket && normPayload.Length == l4Payload.Length, seq, ack);
+
+                            // Exact Modbus FC03 oversized read / exception 03 exchange.
+                            if (isIPv4 && (c2s ? dport == 502 && sport != 502 : sport == 502 && dport != 502))
+                                ObserveModbusOversizedRead(tcpFlow, rec, c2s, normPayload,
                                     synAnchoredFirstPayload, tcpFlagsField == 0x18 &&
                                     completeIpPacket && normPayload.Length == l4Payload.Length, seq, ack);
 
@@ -1000,6 +1008,7 @@ namespace Carthago.Services
                 state.Smb2Target = null;
                 state.Iec104Startup = null;
                 state.OpcUaHello = null;
+                state.ModbusOversizedRead = null;
             }
         }
 
@@ -1014,6 +1023,7 @@ namespace Carthago.Services
                     state.Smb2Target = null;
                     state.Iec104Startup = null;
                     state.OpcUaHello = null;
+                    state.ModbusOversizedRead = null;
                 }
             }
         }
@@ -1084,6 +1094,32 @@ namespace Carthago.Services
             }
         }
 
+        private void ObserveModbusOversizedRead(FlowKey key, TrafficRecord record, bool client,
+            ReadOnlySpan<byte> data, bool first, bool complete, uint seq, uint ack)
+        {
+            lock (_tcpSync)
+            {
+                if (!_tcp.TryGetValue(key, out var flow)) return;
+                var pending = flow.ModbusOversizedRead;
+                flow.ModbusOversizedRead = null;
+                var dir = client ? flow.C2S : flow.S2C;
+                var opposite = client ? flow.S2C : flow.C2S;
+                if (!first || !complete || !dir.SynAnchored || !opposite.SynAnchored ||
+                    dir.Invalid || opposite.Invalid || dir.TlsActive || opposite.TlsActive ||
+                    dir.NextSeq != unchecked(seq + (uint)data.Length) || ack != opposite.NextSeq)
+                    return;
+                var now = _utcNow();
+                if (client)
+                {
+                    if (ModbusOversizedReadExchangeInspector.TryRequest(data, now, out var request))
+                        flow.ModbusOversizedRead = request;
+                }
+                else if (pending.HasValue &&
+                    ModbusOversizedReadExchangeInspector.IsMatchingException(data, pending.Value, now))
+                    record.ModbusOversizedReadExceptionObserved = true;
+            }
+        }
+
         // One outstanding request per existing bounded TCP flow. No raw payload retained.
         private void ObserveSmb2WriteExchange(FlowKey key, bool c2s, TrafficRecord record,
             ReadOnlySpan<byte> payload, bool complete, uint seq, uint ack)
@@ -1151,6 +1187,7 @@ namespace Carthago.Services
                     state.Smb2Target = null;
                         state.Iec104Startup = null;
                         state.OpcUaHello = null;
+                        state.ModbusOversizedRead = null;
                     return false;
                 }
 
@@ -1178,6 +1215,7 @@ namespace Carthago.Services
                         state.Smb2Target = null;
                         state.Iec104Startup = null;
                         state.OpcUaHello = null;
+                        state.ModbusOversizedRead = null;
                         return false; // missing segment
                     }
                     if (diff < 0)
@@ -1190,6 +1228,7 @@ namespace Carthago.Services
                             state.Smb2Target = null;
                         state.Iec104Startup = null;
                         state.OpcUaHello = null;
+                        state.ModbusOversizedRead = null;
                             return false; // retransmission while pending: fail closed
                         }
                         if (overlap64 > 3)
@@ -1200,6 +1239,7 @@ namespace Carthago.Services
                             state.Smb2Target = null;
                         state.Iec104Startup = null;
                         state.OpcUaHello = null;
+                        state.ModbusOversizedRead = null;
                             return false;
                         }
                         overlap = (int)overlap64;

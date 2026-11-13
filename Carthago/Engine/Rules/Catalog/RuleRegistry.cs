@@ -996,6 +996,7 @@ namespace Carthago.Engine.Rules.Catalog
                 new R971_PublicSnmpHighDemandGetBulkRule(),
                 new R972_PublicSnmpSystemFingerprintGetRule(),
                 new R973_PrivateOpcUaHelloAckToPublicClientRule(),
+                new R974_PrivateModbusOversizedReadExceptionRule(),
             };
         }
 

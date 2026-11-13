@@ -216,3 +216,8 @@ Workbook R2771 AN2186; three distinct RFC3418 system scalars, exact GET PDU, Can
 ## R973 — OPC UA HEL/ACK with public client
 
 Workbook R2782 AN2253; capture-qualified same-flow application transport handshake, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_973-973.md). 36 authored cases, zero execution; no authentication, API execution or asset inventory claim. Next ID R974.
+
+
+## R974 — Modbus oversized FC03 request and matching exception 03
+
+Workbook R2790 AN2288; capture-qualified same-flow transaction and unit, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_974-974.md). 39 authored cases, zero execution; no exploit intent or impact claim. Next ID R975.
