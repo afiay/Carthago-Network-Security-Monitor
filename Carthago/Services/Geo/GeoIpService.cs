@@ -20,6 +20,16 @@ namespace Carthago.Services.Geo
         private readonly int _cacheCapacity;
         private readonly Func<long> _clock;
         private const long CacheTtlMs = 300_000;
+        private long _positiveHits, _negativeHits, _misses, _expired, _evicted;
+        public readonly record struct CacheHealthSnapshot(long PositiveHits, long NegativeHits, long Misses,
+            long Expired, long Evicted, int Occupancy, int Capacity)
+        {
+            public long Requests => PositiveHits + NegativeHits + Misses;
+        }
+        public CacheHealthSnapshot CacheHealth
+        {
+            get { lock (_lookupGate) return new(_positiveHits, _negativeHits, _misses, _expired, _evicted, _cache.Count, _cacheCapacity); }
+        }
 
         public enum DatabaseAvailability { Missing, Unavailable, Ready }
 
@@ -114,16 +124,29 @@ namespace Carthago.Services.Geo
             if (!TryGetLookupAddress(ip, out var address)) return null;
             lock (_lookupGate)
             {
+                if (!IsCityDbAvailable && !IsAsnDbAvailable) return null;
                 var now = _clock();
-                if (_cache.TryGetValue(address, out var cached) && now < cached.Expires)
-                    return cached.Info;
-                _cache.Remove(address);
-                var result = LookupWithOutcomes(ip);
+                if (_cache.TryGetValue(address, out var cached))
+                {
+                    if (now < cached.Expires)
+                    {
+                        if (cached.Info is null) _negativeHits++; else _positiveHits++;
+                        return cached.Info;
+                    }
+                    _expired++;
+                    _cache.Remove(address);
+                }
+                _misses++;
+                var result = LookupUncached(ip);
                 // Cache completed hits/misses, never failures or wholly skipped requests.
                 if (result.City != LookupOutcome.Failed && result.Asn != LookupOutcome.Failed
                     && (result.City != LookupOutcome.NotAttempted || result.Asn != LookupOutcome.NotAttempted))
                 {
-                    if (_cache.Count >= _cacheCapacity) _cache.Clear();
+                    if (_cache.Count >= _cacheCapacity)
+                    {
+                        _evicted += _cache.Count;
+                        _cache.Clear();
+                    }
                     _cache[address] = (result.Info, now + CacheTtlMs);
                 }
                 return result.Info;

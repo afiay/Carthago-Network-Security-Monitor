@@ -82,4 +82,19 @@ public sealed class EnrichmentHealthPresentationTests
         Assert.Equal(1L, row.Cancelled);
         Assert.Equal(50.0, double.Parse(row.SuccessShare.Replace("%", "").Trim(), System.Globalization.CultureInfo.InvariantCulture));
     }
+
+    [Fact]
+    public void Geo_Cache_Requests_Are_Separate_From_Database_Attempts()
+    {
+        var stats = new TrafficCaptureService.StatsSnapshot
+        {
+            GeoCacheHealth = new(3, 1, 4, 1, 2, 2, 8),
+            GeoCityLookupHealth = new(1, 2, 0)
+        };
+        var summary = EnrichmentHealthPresentation.Build(stats).Summary;
+        Assert.Contains("8 eligible requests, 3 positive hits, 1 negative hits, 4 misses", summary);
+        Assert.Contains("City: 3 attempts", summary);
+        Assert.Contains("retained entries: 2/8", summary);
+        Assert.Contains("GeoIP cache metrics unavailable", EnrichmentHealthPresentation.Build(new TrafficCaptureService.StatsSnapshot()).Summary);
+    }
 }

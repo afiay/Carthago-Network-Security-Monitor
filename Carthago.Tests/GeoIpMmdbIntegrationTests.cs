@@ -505,9 +505,33 @@ public sealed class GeoIpMmdbIntegrationTests
             Assert.Null(geo.Lookup("1.0.0.1"));
             Assert.Equal("GB", geo.Lookup("81.2.69.142")?.CountryIso2);
             Assert.Equal(5L, geo.CityLookupHealth.Attempts);
+            Assert.Equal(new GeoIpService.CacheHealthSnapshot(1, 1, 5, 1, 2, 2, 2), geo.CacheHealth);
             geo.Dispose();
             Assert.Null(geo.Lookup("81.2.69.142"));
             Assert.Equal(5L, geo.CityLookupHealth.Attempts);
+            Assert.Equal(7L, geo.CacheHealth.Requests);
+            Assert.Equal(0, geo.CacheHealth.Occupancy);
+        }
+        finally { Directory.Delete(root, true); }
+    }
+
+    [Fact]
+    public void Concurrent_Lookup_And_Disposal_Do_Not_Use_Disposed_Readers()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "carthago-mmdb-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var data = Directory.CreateDirectory(Path.Combine(root, "Data"));
+            File.WriteAllBytes(Path.Combine(data.FullName, "GeoLite2-City.mmdb"), Convert.FromBase64String(CityFixture));
+            using var geo = new GeoIpService(root);
+            Assert.Equal("GB", geo.Lookup("81.2.69.142")?.CountryIso2);
+            System.Threading.Tasks.Parallel.Invoke(
+                () => { for (int i = 0; i < 200; i++) geo.Lookup("81.2.69.142"); },
+                () => { for (int i = 0; i < 200; i++) geo.LookupWithOutcomes("81.2.69.142"); },
+                () => geo.Dispose());
+            Assert.Null(geo.Lookup("81.2.69.142"));
+            Assert.Equal(0L, geo.CityLookupHealth.Failed);
+            Assert.Equal(0, geo.CacheHealth.Occupancy);
         }
         finally { Directory.Delete(root, true); }
     }

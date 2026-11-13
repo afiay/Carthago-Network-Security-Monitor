@@ -1341,7 +1341,8 @@ namespace Carthago.Services
             GeoCityDatabaseStatus = _geoIpService.CityDatabaseStatus,
             GeoAsnDatabaseStatus = _geoIpService.AsnDatabaseStatus,
             GeoCityLookupHealth = _geoIpService.CityLookupHealth,
-            GeoAsnLookupHealth = _geoIpService.AsnLookupHealth
+            GeoAsnLookupHealth = _geoIpService.AsnLookupHealth,
+            GeoCacheHealth = _geoIpService.CacheHealth
         };
 
         public CaptureFlowSnapshot GetCaptureFlowSnapshot()
@@ -1471,6 +1472,7 @@ namespace Carthago.Services
             public GeoIpService.DatabaseAvailability? GeoAsnDatabaseStatus { get; init; }
             public GeoIpService.LookupHealthSnapshot? GeoCityLookupHealth { get; init; }
             public GeoIpService.LookupHealthSnapshot? GeoAsnLookupHealth { get; init; }
+            public GeoIpService.CacheHealthSnapshot? GeoCacheHealth { get; init; }
             public int WhoisCacheSize { get; init; }
             public int ReputationCacheSize { get; init; }
             public int? EnrichmentQueueDepth { get; init; }

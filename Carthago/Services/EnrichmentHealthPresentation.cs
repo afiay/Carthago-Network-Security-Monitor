@@ -40,7 +40,15 @@ internal static class EnrichmentHealthPresentation
             "Ready means reader opened with a supported declared edition, not a successful lookup. " +
             "GeoIP completed database attempts (service lifetime): " +
             GeoLookupSummary("City", stats.GeoCityLookupHealth) + "; " +
-            GeoLookupSummary("ASN", stats.GeoAsnLookupHealth) + ". Records found do not imply usable field coverage.";
+            GeoLookupSummary("ASN", stats.GeoAsnLookupHealth) + ". Records found do not imply usable field coverage. " + GeoCacheSummary(stats.GeoCacheHealth);
+    }
+
+    private static string GeoCacheSummary(GeoIpService.CacheHealthSnapshot? snapshot)
+    {
+        if (snapshot is not { } h) return "GeoIP cache metrics unavailable.";
+        string rate = h.Requests == 0 ? "—" : ((double)(h.PositiveHits + h.NegativeHits) / h.Requests).ToString("P1", CultureInfo.InvariantCulture);
+        return $"GeoIP cache (service lifetime): {h.Requests} eligible requests, {h.PositiveHits} positive hits, {h.NegativeHits} negative hits, {h.Misses} misses (hit share {rate}); " +
+            $"expired on access: {h.Expired}, capacity-evicted entries: {h.Evicted}, retained entries: {h.Occupancy}/{h.Capacity}. Cache requests are not database attempts.";
     }
 
     private static string GeoLookupSummary(string name, GeoIpService.LookupHealthSnapshot? snapshot)
