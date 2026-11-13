@@ -32,7 +32,7 @@ class RuleCatalogIds(unittest.TestCase):
                 self.assertEqual(batch, rules[-1].batch)
                 self.assertEqual("Candidate — unverified (reported)", rules[-1].verification)
                 self.assertEqual("R1000",catalog.REGISTRATION.search("new R1000_Rule()").group(1).split("_")[0])
-                self.assertEqual(["R1000","Example","Test","Fixture","Medium","Test","true"],
+                self.assertEqual(["R1000","Example","Test","Fixture","SeverityLevel.Medium","Test","true"],
                     catalog.positional_descriptor('"R1000", "Example", "Test", "Fixture", SeverityLevel.Medium, "Test", true'))
                 registry.write_text(registry.read_text(encoding="utf-8").replace("R1000_Rule","R01000_Rule"),encoding="utf-8")
                 with self.assertRaisesRegex(ValueError,"Noncanonical"):

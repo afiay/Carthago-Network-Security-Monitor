@@ -50,3 +50,7 @@ Next ID R1001 only after live registry and qualification review. The 1,000-sourc
 ## Four-digit milestone compatibility
 
 R1000 is classified as a canonical core ID (not a content-pack ID), and the core catalog, available catalog, and session catalog export use numeric core ordering while retaining ordinal pack ordering. The shared registry test checks R999/R1000/R3085, invalid numeric IDs, 410 pack IDs, catalog consistency, and export ordering. The documentation generator accepts canonical four-digit IDs and ranges; regenerate the master catalog from a full checkout after the batch.
+
+### Isolated Python regression execution
+
+The four-digit catalog regression was executed against the copied source catalog parser functions in a temporary Python environment. The initial assertion expected `Medium` where the positional parser contract returns `SeverityLevel.Medium`; the test expectation was corrected, and the rerun passed (1 test). No .NET tests or full-checkout catalog generation were executed.
