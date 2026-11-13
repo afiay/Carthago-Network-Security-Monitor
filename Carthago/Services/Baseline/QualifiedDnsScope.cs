@@ -25,6 +25,8 @@ namespace Carthago.Services.Baseline
                     !string.Equals(value, value.Trim(), StringComparison.Ordinal))
                     throw new ArgumentException("A bounded, exact capture identity is required.");
             if (address.IsIPv4MappedToIPv6) address = address.MapToIPv4();
+            if (address.Equals(IPAddress.Any))
+                throw new ArgumentException("A concrete source IP is required.", nameof(source));
             return new QualifiedDnsScope(JsonSerializer.Serialize(new[]
                 { address.ToString(), captureSource, interfaceId, networkId }));
         }

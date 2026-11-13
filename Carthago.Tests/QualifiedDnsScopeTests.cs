@@ -23,6 +23,7 @@ public sealed class QualifiedDnsScopeTests
 
     [Theory]
     [InlineData("0.0.0.0", "sensor", "nic", "network")]
+    [InlineData("::ffff:0.0.0.0", "sensor", "nic", "network")]
     [InlineData("::", "sensor", "nic", "network")]
     [InlineData("invalid", "sensor", "nic", "network")]
     [InlineData("192.0.2.1", "", "nic", "network")]
