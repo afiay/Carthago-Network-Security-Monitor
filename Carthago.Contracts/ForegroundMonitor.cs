@@ -3,7 +3,8 @@ using System.Text.Json;
 
 namespace Carthago.Contracts;
 
-public sealed record ForegroundMonitorOptions(string InterfaceId, string? Filter, int StatusSeconds, bool Json);
+public sealed record ForegroundMonitorOptions(string InterfaceId, string? Filter, int StatusSeconds, bool Json,
+    bool EnableCliIpc = false, bool AllowCliStop = false);
 public sealed record ForegroundMonitorCounters(long Captured, long Parsed, long ParseErrors, long Detections);
 public interface IForegroundCapture : IAsyncDisposable
 {
@@ -20,13 +21,15 @@ public static class ForegroundMonitor
         if (args.Length < 4 || args[0] != "monitor" || args[1] != "start") return false;
         string? id = null, filter = null;
         int seconds = 5;
-        bool json = false;
+        bool json = false, ipc = false, allowStop = false;
         var seen = new HashSet<string>(StringComparer.Ordinal);
         for (int i = 2; i < args.Length; i++)
         {
             string key = args[i];
             if (!seen.Add(key)) return false;
             if (key == "--json") { json = true; continue; }
+            if (key == "--enable-cli-ipc") { ipc = true; continue; }
+            if (key == "--allow-cli-stop") { allowStop = true; continue; }
             if (++i >= args.Length) return false;
             string value = args[i];
             switch (key)
@@ -44,8 +47,8 @@ public static class ForegroundMonitor
                 default: return false;
             }
         }
-        if (id is null) return false;
-        options = new(id, filter, seconds, json);
+        if (id is null || (allowStop && !ipc)) return false;
+        options = new(id, filter, seconds, json, ipc, allowStop);
         return true;
     }
 
@@ -55,7 +58,7 @@ public static class ForegroundMonitor
 
     public static async Task<int> RunAsync(IForegroundCapture capture, ForegroundMonitorOptions options,
         TextWriter output, TextWriter error, CancellationToken token,
-        Func<TimeSpan, CancellationToken, Task>? delay = null)
+        Func<TimeSpan, CancellationToken, Task>? delay = null, MonitorControlSession? session = null)
     {
         delay ??= Task.Delay;
         int exit = 0;
@@ -63,11 +66,13 @@ public static class ForegroundMonitor
         {
             token.ThrowIfCancellationRequested();
             capture.Start(options.InterfaceId, options.Filter);
+            session?.MarkStarted();
             while (true)
             {
                 token.ThrowIfCancellationRequested();
                 if (!capture.CaptureRequested) throw new InvalidOperationException("Capture no longer requested.");
                 var counters = capture.ReadCounters();
+                session?.Publish(counters);
                 // Not a proof of continuous source liveness or lossless capture.
                 string state = counters.Captured > 0 ? "capture_observed" : "started_no_packets_observed";
                 await output.WriteLineAsync(options.Json ? JsonSerializer.Serialize(new
@@ -90,6 +95,7 @@ public static class ForegroundMonitor
         }
         finally
         {
+            session?.MarkStopping();
             try { await capture.DisposeAsync(); }
             catch (Exception ex) when (ex is not OutOfMemoryException)
             {

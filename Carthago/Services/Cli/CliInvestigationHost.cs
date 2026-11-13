@@ -8,9 +8,15 @@ using Carthago.Contracts;
 
 namespace Carthago.Services.Cli;
 
-internal static class CliInvestigationHost
+public static class CliInvestigationHost
 {
-    internal static async Task<InvestigationResponse> QueryAsync(InvestigationRequest request, CancellationToken token)
+    public static Task<InvestigationResponse> QueryAsync(InvestigationRequest request, CancellationToken token)
+        => QueryCoreAsync(request, token, allowDesktop: true);
+
+    public static Task<InvestigationResponse> QueryHeadlessAsync(InvestigationRequest request, CancellationToken token)
+        => QueryCoreAsync(request, token, allowDesktop: false);
+
+    private static async Task<InvestigationResponse> QueryCoreAsync(InvestigationRequest request, CancellationToken token, bool allowDesktop)
     {
         InvestigationProtocol.ValidateRequest(request);
         var now = DateTimeOffset.UtcNow;
@@ -27,6 +33,7 @@ internal static class CliInvestigationHost
                 page = await DetectionJournalQuery.ReadAsync(DetectionJournal.Current.GetJournalPath(now.UtcDateTime),
                     request.Filter, token).ConfigureAwait(false);
         }
+        else if (!allowDesktop) page = null;
         else
         {
             var app = Application.Current;

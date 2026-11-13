@@ -277,3 +277,36 @@ not a drain or no-loss guarantee. No service manager, persistent daemon,
 remote stop, IPC or automatic restart in this increment. Tests authored,
 not executed. Windows Npcap permissions, real device start/filter/stop,
 journal creation, desktop regression and worker shutdown require tests.
+
+## CLI-005B — headless IPC and explicit stop authorization
+
+SOURCE CANDIDATE — UNVERIFIED. Foreground monitor --enable-cli-ipc reserves
+existing V1/V2/V3 read endpoints and a separate V4 monitor lifecycle pipe
+before capture starts. Same current-user SID, local-only, first-instance
+security boundary; no application identity attestation. V1/V2 reuse desktop
+providers; V3 uses same journal reader, non-alert queries unavailable (no
+headless analytics/traffic/host cache). Desktop V4 is not exposed. If any
+default endpoint is occupied, startup fails closed; close desktop first.
+An unexpected endpoint exit requests monitor shutdown. No remote network IPC.
+
+```powershell
+dotnet run --project Carthago.Monitor -c Release -- monitor start --interface '<exact Npcap ID>' --enable-cli-ipc --allow-cli-stop
+# Other terminal, same user/elevation:
+dotnet run --project Carthago.Cli -c Release -- monitor status --json
+dotnet run --project Carthago.Cli -c Release -- engine health --json
+dotnet run --project Carthago.Cli -c Release -- alerts list --live --json
+dotnet run --project Carthago.Cli -c Release -- monitor stop
+```
+
+Stop is disabled by default and requires both launch flags. A stop request
+targets a nonempty per-process session GUID; CLI resolves status once if
+--session GUID not supplied. Server commits cancellation only after valid
+response acknowledgment. Acceptance is not proof of shutdown; client
+disconnect or native blocking can prevent completion. No process kill,
+arbitrary commands, service manager, restart or remote start. Status
+returns lifecycle and most recent sampled counters (nullable before
+sampling), sample time and observation time, no inferred health/accuracy.
+Stop and Ctrl+C use the existing cancellation/disposal path (exit 130 if
+successful cancellation, 3 on failure). Existing desktop capture without
+IPC is not excluded by pipe ownership. Tests authored, Windows validation
+and native capture still pending.

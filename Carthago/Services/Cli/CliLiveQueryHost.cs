@@ -10,9 +10,9 @@ using System.IO;
 
 namespace Carthago.Services.Cli;
 
-internal static class CliLiveQueryHost
+public static class CliLiveQueryHost
 {
-    internal static async Task<LiveQueryResult> QueryAsync(LiveQuery q, CancellationToken token)
+    public static async Task<LiveQueryResult> QueryAsync(LiveQuery q, CancellationToken token)
     {
         LiveQueryProtocol.ValidateQuery(q);
         token.ThrowIfCancellationRequested();

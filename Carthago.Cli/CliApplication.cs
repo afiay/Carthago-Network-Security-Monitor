@@ -7,7 +7,7 @@ using Carthago.Contracts;
 
 namespace Carthago.Cli;
 
-/// <summary>Read-only CLI boundary. No engine start, remote network access or trusted event ingestion.</summary>
+/// <summary>Local CLI; read queries and explicit session-scoped foreground stop only.</summary>
 public static class CliApplication
 {
     public const int SchemaVersion = 1;
@@ -22,7 +22,7 @@ public static class CliApplication
         ?? "0.1.0";
 
     private const string Help = """
-        CARTHAGO CLI — read-only offline companion
+        CARTHAGO CLI — local monitoring companion
 
         Usage:
           carthago --help
@@ -30,6 +30,9 @@ public static class CliApplication
           carthago status [--json]
           carthago capabilities [--json]
           carthago engine status [--json]
+          carthago monitor status [--json]
+          carthago engine health [--json]
+          carthago monitor stop [--session GUID] [--json]
           carthago rules summary [--json]
           carthago rules list --live [--offset N --limit N] [--json]
           carthago rules show <rule-id> --live [--json]
@@ -50,7 +53,8 @@ public static class CliApplication
           carthago hosts list <file.csa|--live> [--source-ip IP] [--offset N] [--limit N] [--json]
 
         status reports this CLI only, not the monitoring engine.
-        Live queries require Windows and a WPF host started with --enable-cli-ipc.
+        Live queries require Windows and an IPC-enabled desktop or foreground host.
+        Monitor stop requires foreground --allow-cli-stop (in addition to --enable-cli-ipc).
         session inspect verifies an existing CSA archive and reports category counts;
         imported data is untrusted and no raw rows are printed.
         Exit codes: 0 success, 2 usage, 3 data/runtime error, 130 cancelled.
@@ -60,7 +64,8 @@ public static class CliApplication
         CancellationToken token = default,
         Func<ReadCommand, CancellationToken, Task<ReadResponse>>? query = null,
         Func<LiveQuery, CancellationToken, Task<LiveQueryResult>>? liveQuery = null,
-        Func<InvestigationRequest, CancellationToken, Task<InvestigationResponse>>? investigationQuery = null)
+        Func<InvestigationRequest, CancellationToken, Task<InvestigationResponse>>? investigationQuery = null,
+        Func<MonitorControlRequest, CancellationToken, Task<MonitorControlResponse>>? monitorQuery = null)
     {
         // Options are accepted only in the documented trailing position.
         if (args.Length == 0 || args is ["--help"] or ["-h"] or ["help"])
@@ -117,6 +122,15 @@ public static class CliApplication
                         string.Join("\n", capabilities.Select(c => $"{c.Name}: {c.State} — {c.Reason}")));
                     return Success;
 
+                case ["monitor", "status"]:
+                case ["engine", "health"]:
+                    return await MonitorAsync(false, null, output, error, json, token, monitorQuery);
+                case ["monitor", "stop"]:
+                    return await MonitorAsync(true, null, output, error, json, token, monitorQuery);
+                case ["monitor", "stop", "--session", var sessionId]:
+                    if (!Guid.TryParseExact(sessionId, "D", out var target) || target == Guid.Empty)
+                        return await FailAsync(error, json, UsageError, "invalid_usage", "Expected a nonempty session GUID.");
+                    return await MonitorAsync(true, target, output, error, json, token, monitorQuery);
                 case ["engine", "status"]:
                     return await LiveAsync(ReadCommand.HostStatus, output, error, json, token, query);
                 case ["rules", "summary"]:
@@ -218,7 +232,7 @@ public static class CliApplication
         catch (Exception ex) when (ex is not OutOfMemoryException && !token.IsCancellationRequested)
         {
             return await FailAsync(error, json, DataError, "engine_unavailable",
-                "Local endpoint unavailable. Start WPF with --enable-cli-ipc using the same account and elevation.");
+                "Local endpoint unavailable. Start desktop or foreground monitor with --enable-cli-ipc using the same account and elevation.");
         }
         token.ThrowIfCancellationRequested();
         if (response.State != ReadState.Available)
@@ -362,6 +376,56 @@ public static class CliApplication
         {
             return await FailAsync(error, json, DataError, "tail_interrupted",
                 "Tail interrupted: journal unavailable, changed, UTC day changed or endpoint failed. Restart to replay the current day.");
+        }
+    }
+
+    private static async Task<int> MonitorAsync(bool stop, Guid? target, TextWriter output, TextWriter error,
+        bool json, CancellationToken token, Func<MonitorControlRequest, CancellationToken, Task<MonitorControlResponse>>? query)
+    {
+        if (query is null && !OperatingSystem.IsWindows())
+            return await FailAsync(error, json, DataError, "unsupported_platform", "Monitor control requires Windows.");
+        query ??= (request, ct) => OperatingSystem.IsWindows()
+            ? WindowsLocalReadPipe.QueryMonitorAsync(request, ct)
+            : Task.FromException<MonitorControlResponse>(new PlatformNotSupportedException());
+        async Task<MonitorControlResponse> Send(MonitorControlKind kind, Guid? id)
+        {
+            var request = new MonitorControlRequest(MonitorControlProtocol.Version, Guid.NewGuid(), kind, id);
+            var response = await query(request, token);
+            MonitorControlProtocol.ValidateResponse(response, request);
+            token.ThrowIfCancellationRequested();
+            return response;
+        }
+        try
+        {
+            MonitorControlResponse result;
+            if (!stop) result = await Send(MonitorControlKind.Status, null);
+            else
+            {
+                // Resolve once, then target that specific session to avoid stopping a replacement.
+                if (target is null) target = (await Send(MonitorControlKind.Status, null)).SessionId;
+                result = await Send(MonitorControlKind.Stop, target);
+                if (result.Outcome != MonitorControlOutcome.StopAccepted)
+                    return await FailAsync(error, json, DataError, result.Outcome.ToString().ToLowerInvariant(),
+                        "Stop was not accepted; check session identity, authorization and lifecycle.");
+            }
+            string state = result.State switch
+            {
+                MonitorControlState.Starting => "starting",
+                MonitorControlState.Monitoring => "monitoring",
+                _ => "stopping"
+            };
+            await WriteAsync(output, json, new { schemaVersion = SchemaVersion, provenance = "same_user_local_endpoint",
+                mode = "foreground_headless", sessionId = result.SessionId, state, stopAllowed = result.StopAllowed,
+                outcome = stop ? "stop_requested" : "available", result.ObservedUtc, result.SampledUtc, result.Counters,
+                sourceHealth = "not_assessed", detectionValidation = "not_assessed" },
+                stop ? $"Stop requested for {result.SessionId:D}; shutdown not confirmed." :
+                    $"Foreground monitor: {state} | session {result.SessionId:D} | stop allowed: {result.StopAllowed} | " +
+                    (result.Counters is null ? "Counters unavailable." : $"Captured: {result.Counters.Captured}, parsed: {result.Counters.Parsed}, parse errors: {result.Counters.ParseErrors}, detections: {result.Counters.Detections}."));
+            return Success;
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException && !token.IsCancellationRequested)
+        {
+            return await FailAsync(error, json, DataError, "monitor_unavailable", "Foreground IPC endpoint unavailable or invalid; stop outcome not confirmed.");
         }
     }
 

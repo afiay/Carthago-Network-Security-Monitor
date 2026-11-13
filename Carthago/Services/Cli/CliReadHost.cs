@@ -4,9 +4,9 @@ using Carthago.Engine.Rules.Catalog;
 
 namespace Carthago.Services.Cli;
 
-internal static class CliReadHost
+public static class CliReadHost
 {
-    internal static ReadResponse Query(ReadRequest request)
+    public static ReadResponse Query(ReadRequest request)
     {
         var now = DateTimeOffset.UtcNow;
         if (request.Command == ReadCommand.HostStatus)

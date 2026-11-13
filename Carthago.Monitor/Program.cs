@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Windows.Threading;
 using Carthago.Contracts;
 using Carthago.Services;
+using Carthago.Services.Cli;
 using SharpPcap;
 
 namespace Carthago.Monitor;
@@ -18,7 +19,7 @@ internal static class Program
         {
             output.WriteLine("CARTHAGO foreground monitor (Windows/Npcap)\n" +
                 "  carthago-monitor capture interfaces [--json]\n" +
-                "  carthago-monitor monitor start --interface ID [--filter BPF] [--status-seconds N] [--json]\n" +
+                "  carthago-monitor monitor start --interface ID [--filter BPF] [--status-seconds N] [--json] [--enable-cli-ipc] [--allow-cli-stop]\n" +
                 "Ctrl+C stops monitoring. Close the desktop monitor before starting. No remote enrichment or external sinks.");
             return 0;
         }
@@ -63,13 +64,39 @@ internal static class Program
         // Existing engine writes free-text detections to Console.Out. Keep structured
         // monitor stdout independent; persisted journal remains the source of evidence.
         Console.SetOut(TextWriter.Null);
+        using var listeners = new CancellationTokenSource();
+        var tasks = new List<Task>();
+        int listenerFailed = 0;
         try
         {
             PreferencesService.Load();
             await PortServiceResolver.InitializeAsync();
             cancel.Token.ThrowIfCancellationRequested();
+            MonitorControlSession? session = null;
+            if (options.EnableCliIpc)
+            {
+                session = new MonitorControlSession(options.AllowCliStop, cancel.Cancel);
+                // Reserve all default endpoints before capture. No fallback to a partial
+                // endpoint set if a desktop/other host already owns a pipe.
+                tasks.Add(WindowsLocalReadPipe.ServeAsync(CliReadHost.Query, listeners.Token));
+                tasks.Add(WindowsLocalReadPipe.ServeLiveAsync(CliLiveQueryHost.QueryAsync, listeners.Token));
+                tasks.Add(WindowsLocalReadPipe.ServeInvestigationAsync(CliInvestigationHost.QueryHeadlessAsync, listeners.Token));
+                tasks.Add(WindowsLocalReadPipe.ServeMonitorAsync(session, listeners.Token));
+                if (tasks.Any(t => t.IsCompleted)) throw new InvalidOperationException("IPC reservation failed.");
+                foreach (var task in tasks)
+                    _ = task.ContinueWith(t =>
+                    {
+                        if (!listeners.IsCancellationRequested)
+                        {
+                            Interlocked.Exchange(ref listenerFailed, 1);
+                            cancel.Cancel();
+                        }
+                        _ = t.Exception; // Observe failures.
+                    }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+            }
             var capture = new NpcapForegroundCapture();
-            return await ForegroundMonitor.RunAsync(capture, options, output, error, cancel.Token);
+            int result = await ForegroundMonitor.RunAsync(capture, options, output, error, cancel.Token, session: session);
+            return Volatile.Read(ref listenerFailed) != 0 ? 3 : result;
         }
         catch (OperationCanceledException) when (cancel.IsCancellationRequested) { return 130; }
         catch (Exception ex) when (ex is not OutOfMemoryException)
@@ -79,6 +106,9 @@ internal static class Program
         }
         finally
         {
+            listeners.Cancel();
+            try { await Task.WhenAll(tasks).WaitAsync(TimeSpan.FromSeconds(5)); }
+            catch (Exception ex) when (ex is not OutOfMemoryException) { /* cancellation or endpoint failure */ }
             Console.CancelKeyPress -= handler;
             Console.SetOut(output);
         }
