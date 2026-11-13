@@ -17,10 +17,10 @@ try {
         HttpHealthSensorTests = 38
         GatewayIntegritySensorTests = 23
         SnmpInfrastructureSensorTests = 41
-        ActiveEvidenceStoreTests = 16
+        ActiveEvidenceStoreTests = 21
         ActiveSensorManagerTests = 15
         ActiveChangeDetectorTests = 15
-        ActiveFindingQualificationTests = 14
+        ActiveFindingQualificationTests = 15
     }
     $branch = (& git branch --show-current).Trim()
     if ($LASTEXITCODE -ne 0 -or $branch -ne 'feature/carthago-reliability-hardening') {

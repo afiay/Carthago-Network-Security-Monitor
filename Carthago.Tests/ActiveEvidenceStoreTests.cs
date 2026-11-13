@@ -65,6 +65,10 @@ public sealed class ActiveEvidenceStoreTests : IDisposable
     [InlineData("origin")]
     [InlineData("unknown-sensor")]
     [InlineData("invalid-json")]
+    [InlineData("duplicate-json")]
+    [InlineData("unknown-status")]
+    [InlineData("numeric-status")]
+    [InlineData("near-future")]
     [InlineData("version")]
     [InlineData("adapter")]
     [InlineData("target")]
@@ -79,6 +83,10 @@ public sealed class ActiveEvidenceStoreTests : IDisposable
             case "origin": row.Origin = "Passive"; break;
             case "unknown-sensor": row.Sensor = "999"; break;
             case "invalid-json": row.EvidenceJson = "not-json"; break;
+            case "duplicate-json": row.EvidenceJson = "{\"nested\":[{\"x\":1,\"x\":2}]}"; break;
+            case "unknown-status": row.Status = "Changed"; break;
+            case "numeric-status": row.Status = "0"; break;
+            case "near-future": row.ObservedTicks = Now.AddSeconds(1).Ticks; break;
             case "version": row.Version = 2; break;
             case "adapter": row.AdapterId = ""; break;
             case "target": row.Target = "8.8.8.8"; break;
@@ -88,6 +96,17 @@ public sealed class ActiveEvidenceStoreTests : IDisposable
         }
         Assert.False(Store().Save(row));
         Assert.Empty(Store().Read().Rows);
+    }
+
+
+    [Fact]
+    public void SameScopeRequiresStrictChronologyButIndependentScopeMayBeOlder()
+    {
+        Assert.True(Store().Save(Dns(Now)));
+        Assert.False(Store().Save(Dns(Now)));
+        Assert.False(Store().Save(Dns(Now.AddMinutes(-1))));
+        Assert.True(Store().Save(Dns(Now.AddMinutes(-1), "192.168.1.2")));
+        Assert.Equal(2, Store().Read().Rows.Count);
     }
 
     [Fact]

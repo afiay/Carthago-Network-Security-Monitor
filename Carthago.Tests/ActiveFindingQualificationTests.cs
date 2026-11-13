@@ -144,5 +144,22 @@ public sealed class ActiveFindingQualificationTests : IDisposable
         Assert.Empty(Store().ReadFindings().Rows);
     }
 
+
+    [Fact]
+    public void LateContradictoryObservationCannotRewriteConfirmedSequence()
+    {
+        var baseline = Dns(Now.AddHours(-1), "192.0.2.1");
+        Assert.True(Store().Save(baseline)); Assert.True(Store().Approve(baseline.Id));
+        _now = Now.AddMinutes(5);
+        Assert.True(Store().Save(Dns(_now, "192.0.2.2")));
+        _now = Now.AddMinutes(10);
+        Assert.True(Store().Save(Dns(_now, "192.0.2.2")));
+        var finding = Assert.Single(Store().ReadFindings().Rows);
+        Assert.False(Store().Save(Dns(Now.AddMinutes(7), "192.0.2.1")));
+        Assert.False(Store().Save(Dns(_now, "192.0.2.1")));
+        Assert.Equal(finding.Id, Assert.Single(Store().ReadFindings().Rows).Id);
+        Assert.Equal(3, Store().Read().Rows.Count);
+    }
+
     public void Dispose() { if (Directory.Exists(_dir)) Directory.Delete(_dir, true); }
 }

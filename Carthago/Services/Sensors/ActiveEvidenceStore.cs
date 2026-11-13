@@ -136,6 +136,35 @@ internal sealed class ActiveEvidenceStore
         IPAddress.TryParse(value, out var ip) && ip.AddressFamily == AddressFamily.InterNetwork &&
         LocalLanDiscovery.IsLocalHostAddress(ip) && value == ip.ToString();
 
+    private static bool ValidStatus(string sensor, string status) => sensor switch
+    {
+        "Tcp" => status == "Completed",
+        "Dns" => Enum.TryParse<DnsIntegrityStatus>(status, out var dns) && Enum.IsDefined(dns) && dns.ToString() == status,
+        "Tls" => Enum.TryParse<TlsInspectionStatus>(status, out var tls) && Enum.IsDefined(tls) && tls.ToString() == status,
+        "Http" => Enum.TryParse<HttpHealthStatus>(status, out var http) && Enum.IsDefined(http) && http.ToString() == status,
+        "Gateway" => Enum.TryParse<GatewayIntegrityStatus>(status, out var gateway) && Enum.IsDefined(gateway) && gateway.ToString() == status,
+        "Snmp" => Enum.TryParse<SnmpInfrastructureStatus>(status, out var snmp) && Enum.IsDefined(snmp) && snmp.ToString() == status,
+        _ => false
+    };
+
+    // JsonElement.TryGetProperty uses the last duplicate property. Reject
+    // ambiguous objects at every nesting level instead of interpreting them.
+    internal static bool UnambiguousJson(JsonElement value)
+    {
+        if (value.ValueKind == JsonValueKind.Object)
+        {
+            var names = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var property in value.EnumerateObject())
+                if (!names.Add(property.Name) || !UnambiguousJson(property.Value)) return false;
+        }
+        else if (value.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in value.EnumerateArray())
+                if (!UnambiguousJson(item)) return false;
+        }
+        return true;
+    }
+
     private static bool Valid(ActiveEvidenceRow row, DateTimeOffset now)
     {
         if (row.Id == Guid.Empty || row.Version != 1 || row.Origin != "ActiveProbe" ||
@@ -143,15 +172,15 @@ internal sealed class ActiveEvidenceStore
             !Guid.TryParseExact(row.AdapterId, "D", out var adapter) || adapter == Guid.Empty ||
             !ValidAddress(row.Source) || !ValidAddress(row.Target) || row.Source == row.Target ||
             string.IsNullOrWhiteSpace(row.ProbeKey) || row.ProbeKey.Length > 512 ||
-            string.IsNullOrWhiteSpace(row.Status) || row.Status.Length > 64 ||
+            string.IsNullOrWhiteSpace(row.Status) || row.Status.Length > 64 || !ValidStatus(row.Sensor, row.Status) ||
             row.ObservedTicks < (now - Retention).UtcDateTime.Ticks ||
-            row.ObservedTicks > now.AddMinutes(5).UtcDateTime.Ticks ||
+            row.ObservedTicks > now.UtcDateTime.Ticks ||
             string.IsNullOrWhiteSpace(row.EvidenceJson) || Encoding.UTF8.GetByteCount(row.EvidenceJson) > MaxPayloadBytes)
             return false;
         try
         {
             using var json = JsonDocument.Parse(row.EvidenceJson);
-            return json.RootElement.ValueKind == JsonValueKind.Object;
+            return json.RootElement.ValueKind == JsonValueKind.Object && UnambiguousJson(json.RootElement);
         }
         catch (JsonException) { return false; }
     }
@@ -181,12 +210,18 @@ internal sealed class ActiveEvidenceStore
                 {
                     // Insert, not upsert: a reused observation ID cannot rewrite history.
                     if (rows.FindById(row.Id) is not null) { db.Rollback(); return false; }
+                    // A late arrival could retroactively contradict a persisted
+                    // two-observation confirmation. Live history is append-only
+                    // in event time within each exact scope, not across scopes.
+                    if (rows.Find(x => x.Target == row.Target).Any(previous =>
+                        ActiveChangeDetector.SameScope(previous, row) && previous.ObservedTicks >= row.ObservedTicks))
+                    { db.Rollback(); return false; }
                     rows.Insert(row);
                     Prune(rows, now);
                     // A backdated insert outside the retained newest set is not a successful save.
                     if (rows.FindById(row.Id) is null) { db.Rollback(); return false; }
                     EvaluateLatest(db, rows, row, now);
-                    db.Commit();
+                    if (!db.Commit()) return false;
                     return true;
                 }
                 catch { db.Rollback(); throw; }
@@ -259,7 +294,7 @@ internal sealed class ActiveEvidenceStore
                     if (approvals.FindById(key) is null && approvals.Count() >= MaxApprovals)
                     { db.Rollback(); return false; }
                     approvals.Upsert(new Approval { Id = key, ObservationId = row.Id, ApprovedTicks = now.UtcDateTime.Ticks });
-                    db.Commit();
+                    if (!db.Commit()) return false;
                     return true;
                 }
                 catch { db.Rollback(); throw; }
