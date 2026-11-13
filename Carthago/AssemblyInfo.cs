@@ -4,6 +4,9 @@ using System.Windows;
 [assembly: InternalsVisibleTo("Carthago.Tests")]
 // Preserve the former public model location for CLR type resolution.
 [assembly: TypeForwardedTo(typeof(Carthago.Models.TrafficRecord))]
+[assembly: TypeForwardedTo(typeof(Carthago.Services.Flow.FlowKey))]
+[assembly: TypeForwardedTo(typeof(Carthago.Services.Flow.HandshakeBuffer))]
+[assembly: TypeForwardedTo(typeof(Carthago.Services.Flow.LatencyTracker))]
 [assembly: TypeForwardedTo(typeof(Carthago.Services.ProtocolIntelligence.Iec104ApduInspector))]
 [assembly: TypeForwardedTo(typeof(Carthago.Services.ProtocolIntelligence.Iec104FrameKind))]
 [assembly: TypeForwardedTo(typeof(Carthago.Services.ProtocolIntelligence.Iec104ApduObservation))]

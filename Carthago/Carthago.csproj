@@ -48,6 +48,9 @@
     <Compile Remove="Services/ProtocolIntelligence/DnsAddressObservationInspector.cs" />
     <Compile Remove="Services/ProtocolIntelligence/BacnetEventDisableInspector.cs" />
     <Compile Remove="Models/TrafficRecord.cs" />
+    <Compile Remove="Services/Flow/FlowKey.cs" />
+    <Compile Remove="Services/Flow/HandshakeBuffer.cs" />
+    <Compile Remove="Services/Flow/LatencyTracker.cs" />
     <Compile Remove="Services/NetworkBatch226230Wire.cs" />
     <Compile Remove="Services/NetworkBatch231235Wire.cs" />
     <Compile Remove="Services/NetworkBatch246250Wire.cs" />

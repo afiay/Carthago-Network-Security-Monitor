@@ -14,7 +14,7 @@ namespace Carthago.Services.Flow
     /// across multiple TLS handshake records. TLS 1.3 encrypted certificates are
     /// not visible to passive packet inspection.
     /// </summary>
-    public static class HandshakeBuffer
+    internal sealed class HandshakeBufferState
     {
         // Hard limits protect the monitor against traffic floods and malformed TLS.
         private const int MaxFlows = 1024;
@@ -37,35 +37,38 @@ namespace Carthago.Services.Flow
             public DateTime LastSeenUtc;
         }
 
-        private static readonly object Sync = new();
-        private static readonly Dictionary<FlowKey, FlowBuffer> Flows = new();
-        private static DateTime _lastSweepUtc = DateTime.MinValue;
-        private static long _expiredFlows;
-        private static long _evictedFlows;
-        private static long _rejectedSegments;
+        private readonly Func<DateTime> _utcNow;
+        internal HandshakeBufferState(Func<DateTime> utcNow) => _utcNow = utcNow ?? throw new ArgumentNullException(nameof(utcNow));
 
-        public static int ActiveFlowCount
+        private readonly object Sync = new();
+        private readonly Dictionary<FlowKey, FlowBuffer> Flows = new();
+        private DateTime _lastSweepUtc = DateTime.MinValue;
+        private long _expiredFlows;
+        private long _evictedFlows;
+        private long _rejectedSegments;
+
+        public int ActiveFlowCount
         {
             get { lock (Sync) return Flows.Count; }
         }
 
-        public static long ExpiredFlowCount
+        public long ExpiredFlowCount
         {
             get { lock (Sync) return _expiredFlows; }
         }
 
-        public static long EvictedFlowCount
+        public long EvictedFlowCount
         {
             get { lock (Sync) return _evictedFlows; }
         }
 
-        public static long RejectedSegmentCount
+        public long RejectedSegmentCount
         {
             get { lock (Sync) return _rejectedSegments; }
         }
 
         /// <summary>Discard cached handshake data, for example between capture sessions.</summary>
-        public static void Clear()
+        public void Clear()
         {
             lock (Sync)
             {
@@ -74,7 +77,7 @@ namespace Carthago.Services.Flow
             }
         }
 
-        public static void Remove(FlowKey key)
+        public void Remove(FlowKey key)
         {
             lock (Sync)
             {
@@ -83,19 +86,19 @@ namespace Carthago.Services.Flow
             }
         }
 
-        public static void AddClientBytes(FlowKey fk, ReadOnlySpan<byte> data)
+        public void AddClientBytes(FlowKey fk, ReadOnlySpan<byte> data)
             => Append(fk, data, client: true);
 
-        public static void AddServerBytes(FlowKey fk, ReadOnlySpan<byte> data)
+        public void AddServerBytes(FlowKey fk, ReadOnlySpan<byte> data)
             => Append(fk, data, client: false);
 
-        private static void Append(FlowKey key, ReadOnlySpan<byte> data, bool client)
+        private void Append(FlowKey key, ReadOnlySpan<byte> data, bool client)
         {
             if (data.IsEmpty) return;
 
             lock (Sync)
             {
-                var now = DateTime.UtcNow;
+                var now = _utcNow();
                 SweepExpiredIfDue(now);
 
                 if (!Flows.TryGetValue(key, out var flow))
@@ -130,7 +133,7 @@ namespace Carthago.Services.Flow
             }
         }
 
-        private static void AppendDirection(
+        private void AppendDirection(
             ref byte[] buffer, ref int length, ref bool overflowed,
             ReadOnlySpan<byte> data)
         {
@@ -166,7 +169,7 @@ namespace Carthago.Services.Flow
         /// Returns a stable, immutable snapshot, never a view over a mutable buffer.
         /// The returned record can be passed to existing TLS fingerprint parsers.
         /// </summary>
-        public static ReadOnlySpan<byte> TryGetClientHello(FlowKey fk)
+        public ReadOnlySpan<byte> TryGetClientHello(FlowKey fk)
         {
             lock (Sync)
             {
@@ -194,7 +197,7 @@ namespace Carthago.Services.Flow
         /// Returns immutable snapshots for visible ServerHello and Certificate
         /// messages. A TLS 1.3 encrypted certificate cannot be extracted here.
         /// </summary>
-        public static void TryGetServerHellos(
+        public void TryGetServerHellos(
             FlowKey fk,
             out ReadOnlySpan<byte> serverHello,
             out ReadOnlySpan<byte> certificate)
@@ -226,9 +229,9 @@ namespace Carthago.Services.Flow
             }
         }
 
-        private static bool TryGetLiveFlow(FlowKey key, out FlowBuffer flow)
+        private bool TryGetLiveFlow(FlowKey key, out FlowBuffer flow)
         {
-            var now = DateTime.UtcNow;
+            var now = _utcNow();
             SweepExpiredIfDue(now);
 
             if (Flows.TryGetValue(key, out var candidate))
@@ -327,7 +330,7 @@ namespace Carthago.Services.Flow
             }
         }
 
-        private static void SweepExpiredIfDue(DateTime now)
+        private void SweepExpiredIfDue(DateTime now)
         {
             if (now - _lastSweepUtc < SweepInterval) return;
             _lastSweepUtc = now;
@@ -346,7 +349,7 @@ namespace Carthago.Services.Flow
             }
         }
 
-        private static void EvictOldest()
+        private void EvictOldest()
         {
             FlowKey oldestKey = default;
             DateTime oldest = DateTime.MaxValue;
@@ -363,5 +366,22 @@ namespace Carthago.Services.Flow
             if (found && Flows.Remove(oldestKey))
                 _evictedFlows++;
         }
+    }
+
+    /// <summary>Legacy process-wide facade; new packet sessions can own independent state.</summary>
+    public static class HandshakeBuffer
+    {
+        internal static HandshakeBufferState Shared { get; } = new(() => DateTime.UtcNow);
+        public static int ActiveFlowCount => Shared.ActiveFlowCount;
+        public static long ExpiredFlowCount => Shared.ExpiredFlowCount;
+        public static long EvictedFlowCount => Shared.EvictedFlowCount;
+        public static long RejectedSegmentCount => Shared.RejectedSegmentCount;
+        public static void Clear() => Shared.Clear();
+        public static void Remove(FlowKey key) => Shared.Remove(key);
+        public static void AddClientBytes(FlowKey fk, ReadOnlySpan<byte> data) => Shared.AddClientBytes(fk, data);
+        public static void AddServerBytes(FlowKey fk, ReadOnlySpan<byte> data) => Shared.AddServerBytes(fk, data);
+        public static ReadOnlySpan<byte> TryGetClientHello(FlowKey fk) => Shared.TryGetClientHello(fk);
+        public static void TryGetServerHellos(FlowKey fk, out ReadOnlySpan<byte> serverHello, out ReadOnlySpan<byte> certificate)
+            => Shared.TryGetServerHellos(fk, out serverHello, out certificate);
     }
 }

@@ -54,6 +54,9 @@
     <Compile Include="../Carthago/Services/ProtocolIntelligence/FinsDataMemoryClearInspector.cs" Link="Services/ProtocolIntelligence/FinsDataMemoryClearInspector.cs" />
     <Compile Include="../Carthago/Services/ProtocolIntelligence/FinsNodeNegotiationInspector.cs" Link="Services/ProtocolIntelligence/FinsNodeNegotiationInspector.cs" />
     <Compile Include="../Carthago/Services/TlsIdentityEnrichment.cs" Link="Services/TlsIdentityEnrichment.cs" />
+    <Compile Include="../Carthago/Services/Flow/FlowKey.cs" Link="Services/Flow/FlowKey.cs" />
+    <Compile Include="../Carthago/Services/Flow/HandshakeBuffer.cs" Link="Services/Flow/HandshakeBuffer.cs" />
+    <Compile Include="../Carthago/Services/Flow/LatencyTracker.cs" Link="Services/Flow/LatencyTracker.cs" />
     <!-- Preserve existing internal access while consumers migrate. -->
     <InternalsVisibleTo Include="Carthago" />
     <InternalsVisibleTo Include="carthago" />

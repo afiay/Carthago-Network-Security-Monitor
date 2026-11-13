@@ -39,7 +39,19 @@ namespace Carthago.Services
         public PacketHandler() : this(() => DateTime.UtcNow) { }
 
         // Offline capture replay supplies original packet time; live capture retains UTC wall clock.
-        internal PacketHandler(Func<DateTime> utcNow) => _utcNow = utcNow ?? throw new ArgumentNullException(nameof(utcNow));
+        private readonly HandshakeBufferState _handshakes;
+        private readonly LatencyTrackerState _latency;
+
+        internal PacketHandler(Func<DateTime> utcNow)
+            : this(utcNow, HandshakeBuffer.Shared, LatencyTracker.Shared) { }
+
+        // Explicit session ownership for portable/replay callers; legacy constructors retain shared state.
+        internal PacketHandler(Func<DateTime> utcNow, HandshakeBufferState handshakes, LatencyTrackerState latency)
+        {
+            _utcNow = utcNow ?? throw new ArgumentNullException(nameof(utcNow));
+            _handshakes = handshakes ?? throw new ArgumentNullException(nameof(handshakes));
+            _latency = latency ?? throw new ArgumentNullException(nameof(latency));
+        }
 
         private sealed class TcpStreamState
         {
@@ -170,15 +182,15 @@ namespace Carthago.Services
 
                     if (tcpSyn && !tcpAck)
                     {
-                        HandshakeBuffer.Remove(tcpFlow);
-                        LatencyTracker.NoteSyn(tcpFlow, _utcNow());
+                        _handshakes.Remove(tcpFlow);
+                        _latency.NoteSyn(tcpFlow, _utcNow());
                         InitSeq(tcpFlow, clientToServer: true, seqPlus1: unchecked(seq + 1),
                             nativeHandshakeEligible: isIPv4 && completeIpPacket && l4Payload.IsEmpty &&
                                 tcpFlagsField == 0x02 && (dport == 9600 || dport == 44818) && sport != dport);
                     }
                     else if (tcpSyn && tcpAck)
                     {
-                        LatencyTracker.NoteSynAck(tcpFlow, _utcNow());
+                        _latency.NoteSynAck(tcpFlow, _utcNow());
                         InitSeq(tcpFlow, clientToServer: false, seqPlus1: unchecked(seq + 1),
                             synAcknowledgment: ack, nativeHandshakeEligible: isIPv4 && completeIpPacket &&
                                 l4Payload.IsEmpty && tcpFlagsField == 0x12 && (sport == 9600 || sport == 44818) && dport != sport);
@@ -439,7 +451,7 @@ namespace Carthago.Services
                                 var (readable, tag) = HttpJa4H.Compute(http.Method, http.HttpVersion, http.HeaderNames, http.UserAgent);
                                 rec.HttpJa4h = $"{readable}|{tag}";
 
-                                if (c2s) LatencyTracker.NoteFirstDataClient(tcpFlow, _utcNow());
+                                if (c2s) _latency.NoteFirstDataClient(tcpFlow, _utcNow());
                                 AppendInfo(rec, $"[HTTP host={rec.HttpHost ?? "-"} ua={(rec.HttpUserAgent ?? "-")}]");
                             }
 
@@ -482,8 +494,8 @@ namespace Carthago.Services
                             {
                                 if (c2s)
                                 {
-                                    HandshakeBuffer.AddClientBytes(tcpFlow, normPayload);
-                                    var ch = HandshakeBuffer.TryGetClientHello(tcpFlow);
+                                    _handshakes.AddClientBytes(tcpFlow, normPayload);
+                                    var ch = _handshakes.TryGetClientHello(tcpFlow);
                                     if (!ch.IsEmpty)
                                     {
                                         rec.ApplicationProtocol = "TLS";
@@ -500,8 +512,8 @@ namespace Carthago.Services
                                 }
                                 else
                                 {
-                                    HandshakeBuffer.AddServerBytes(tcpFlow, normPayload);
-                                    HandshakeBuffer.TryGetServerHellos(tcpFlow, out var sh, out var cert);
+                                    _handshakes.AddServerBytes(tcpFlow, normPayload);
+                                    _handshakes.TryGetServerHellos(tcpFlow, out var sh, out var cert);
                                     if (!sh.IsEmpty)
                                     {
                                         rec.TlsJa4s = TlsJa4.FromServerHello(sh);
@@ -515,10 +527,10 @@ namespace Carthago.Services
                                     if (!cert.IsEmpty)
                                     {
                                         TryExtractCert(rec, cert);
-                                        LatencyTracker.NoteFirstDataServer(tcpFlow, _utcNow());
+                                        _latency.NoteFirstDataServer(tcpFlow, _utcNow());
                                     }
 
-                                    var (l, ls) = LatencyTracker.GetLatencyFingerprints(tcpFlow);
+                                    var (l, ls) = _latency.GetLatencyFingerprints(tcpFlow);
                                     if (!string.IsNullOrEmpty(l)) rec.Ja4L = l;
                                     if (!string.IsNullOrEmpty(ls)) rec.Ja4LS = ls;
                                 }
