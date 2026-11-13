@@ -2293,3 +2293,8 @@ Reviewed parent `59b2d177729271e64ca8f55c87c50e412b045add`, WindowsProcessResolv
 ## 2026-11-13 — CLI-006D.5A second portable detector and independent accounting
 
 **SOURCE CANDIDATE — UNVERIFIED.** Parent `d9ade6dba94bc9fd7e802bdcefdc6f52c36326eb`. R587 extracted unchanged into Core; Windows adapter retains policy and evidence. Replay supports R587/R589 with independent counters/cooldowns. Nine portable and four Windows parity cases authored, zero executed. Fix stale capability assertion. No builds, live capture or Actions. See [architecture](02-architecture/CLI-006D5A-PortableDetectionExpansion.md) for focused commands and next gate.
+
+
+## 2026-11-13 — CLI-006D.5B five portable HTTP detectors
+
+**SOURCE CANDIDATE — UNVERIFIED.** Parent `24d976c296c89e635de3a891b78d5c551685b371`. Extract R586/R588/R590 predicates and instance cooldown unchanged into shared Core; Windows adapters retain descriptors, Shadow policy, severity/confidence and evidence. Dispatcher supports R586–R590. Fifteen portable signature cases, three cooldown/evidence cases, one five-rule replay and fifteen Windows parity cases authored; zero executed. No builds, live capture, Actions or rule promotion. See [architecture](02-architecture/CLI-006D5B-FivePortableDetectors.md).

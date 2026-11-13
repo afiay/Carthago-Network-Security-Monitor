@@ -156,6 +156,35 @@ public sealed class PortableReplayTests
         Assert.Equal("R587",findings[1].GetProperty("ruleId").GetString());
     }
 
+    [Fact]
+    public async Task FivePortableRulesKeepIndependentCountsAcrossCapture()
+    {
+        var bytes=Pcap((100,Frame("/wp-content/plugins/wp2shell_test/file.php"),null),
+            (101,Frame("/SetupWizard.aspx/next"),null),
+            (102,Frame("/LogoImageHandler.ashx?clazz=example"),null),
+            (103,Frame("/config/keystore/test.jsp"),null),
+            (104,Frame("/?search=%00{.cmd.exe"),null),
+            (105,Frame("/wp-content/plugins/wp2shell_test/file.php"),null),
+            (106,Frame("/LogoImageHandler.ashx?class=example"),null));
+        var r=await Run(bytes,".pcap","R590,R589,R588,R587,R586,R1000");
+        Assert.Equal(0,r.Code);
+        using var json=JsonDocument.Parse(r.Output);
+        var replay=json.RootElement.GetProperty("replay");
+        Assert.Equal(5,replay.GetProperty("matchCount").GetInt32());
+        Assert.Equal(1,replay.GetProperty("suppressedCount").GetInt32());
+        var rules=replay.GetProperty("rules");
+        for(int i=0;i<5;i++)
+        {
+            Assert.Equal(7,rules[i].GetProperty("evaluated").GetInt32());
+            Assert.Equal(1,rules[i].GetProperty("matches").GetInt32());
+            Assert.Equal(i==4?1:0,rules[i].GetProperty("suppressed").GetInt32());
+        }
+        Assert.Equal("unsupported_detector",rules[5].GetProperty("status").GetString());
+        Assert.Equal(new[]{"R586","R587","R588","R589","R590"},replay.GetProperty("findings")
+            .EnumerateArray().Select(f=>f.GetProperty("ruleId").GetString()).ToArray());
+        Assert.DoesNotContain("cmd.exe",r.Output);
+    }
+
     [Theory]
     [InlineData("R589,R589")]
     [InlineData("R0589")]
