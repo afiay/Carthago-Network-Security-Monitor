@@ -29,17 +29,23 @@ namespace Carthago.Services.Geo
         internal GeoIpService(string baseDir)
         {
             _baseDir = baseDir;
-            _cityDb = OpenDatabase(CityDbPath, out var cityStatus);
+            _cityDb = OpenDatabase(CityDbPath, true, out var cityStatus);
             CityDatabaseStatus = cityStatus;
-            _asnDb = OpenDatabase(AsnDbPath, out var asnStatus);
+            _asnDb = OpenDatabase(AsnDbPath, false, out var asnStatus);
             AsnDatabaseStatus = asnStatus;
         }
 
-        private static DatabaseReader? OpenDatabase(string path, out DatabaseAvailability status)
+        private static DatabaseReader? OpenDatabase(string path, bool city, out DatabaseAvailability status)
         {
             try
             {
                 var reader = new DatabaseReader(path);
+                if (!IsExpectedDatabaseType(reader.Metadata.DatabaseType, city))
+                {
+                    reader.Dispose();
+                    status = DatabaseAvailability.Unavailable;
+                    return null;
+                }
                 status = DatabaseAvailability.Ready;
                 return reader;
             }
@@ -48,6 +54,12 @@ namespace Carthago.Services.Geo
             catch { status = DatabaseAvailability.Unavailable; }
             return null;
         }
+
+        // Validate the actual metadata, not the filename. Only supported City/ASN editions.
+        internal static bool IsExpectedDatabaseType(string? type, bool city) =>
+            city
+                ? type is "GeoLite2-City" or "GeoIP2-City"
+                : type is "GeoLite2-ASN" or "GeoIP2-ASN";
 
         public GeoInfo? Lookup(string ip)
         {

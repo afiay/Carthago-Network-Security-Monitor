@@ -9,6 +9,20 @@ namespace Carthago.Tests;
 
 public sealed class RuntimeEnrichmentRegressionTests
 {
+    [Theory]
+    [InlineData("GeoLite2-City", true, true)]
+    [InlineData("GeoIP2-City", true, true)]
+    [InlineData("GeoLite2-ASN", false, true)]
+    [InlineData("GeoIP2-ASN", false, true)]
+    [InlineData("GeoLite2-City", false, false)]
+    [InlineData("GeoLite2-ASN", true, false)]
+    [InlineData("GeoLite2-Country", true, false)]
+    [InlineData(null, false, false)]
+    public void Geo_Database_Edition_Must_Match_Reader_Role(string? type, bool city, bool expected)
+    {
+        Assert.Equal(expected, GeoIpService.IsExpectedDatabaseType(type, city));
+    }
+
     [Fact]
     public void Geo_Database_Status_Separates_Missing_And_Unreadable_Files()
     {
