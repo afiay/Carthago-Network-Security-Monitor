@@ -2313,3 +2313,8 @@ Reviewed parent `59b2d177729271e64ca8f55c87c50e412b045add`, WindowsProcessResolv
 ## 2026-11-13 — CLI-006E.2 executable capture replay qualification
 
 **SOURCE CANDIDATE — UNVERIFIED.** Parent `9ca3cf9a9c838d84639951374c7fe427837454d2`. Extend CLI qualification with deterministic synthetic PCAP and PCAPNG fixtures and actual executable replay stages; assert five independent matches, one cooldown suppression, benign negative, explicit unsupported R1000, per-rule counts and sanitized output. Record fixture SHA-256 and observed counts. Zero builds/tests/replays/Actions executed. Portable qualification now requires both smoke stages. See [architecture](02-architecture/CLI-006E2-ExecutableReplayQualification.md). Next: owner-run gate and actual failure repair.
+
+
+## 2026-11-13 — Enrichment Phase 13 TCP table ownership ambiguity
+
+Reviewed parent `981d0175af5044281fbfe57048e78563ac46ad39`, native resolver, process tests, ETW capture and VPN inference. TCP IPv4/IPv6 table scans now exclude nonlive states and aggregate matching owners rather than return first row; distinct or unknown owners fail closed using existing owner selection. Eight state cases authored, existing owner-selection regressions cover ambiguity. Zero executed; Windows native integration pending. ETW capture currently publishes no PID; no ETW application ownership claim. Next: cache tuple lifetime and session isolation. No detection changes. Windows: `dotnet test .\\Carthago.Tests\\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~ProcessAttributionEnrichmentTests"`.

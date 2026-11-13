@@ -234,6 +234,10 @@ namespace Carthago.Services
                 : (TryFindPidInUdp6Table(c, out int pid6) ? pid6 : 0);
         }
 
+        // MIB_TCP_STATE: SYN_SENT through LAST_ACK, plus CLOSING.
+        // CLOSED, LISTEN, TIME_WAIT and DELETE_TCB do not establish a live owner.
+        internal static bool IsTcpOwnershipState(uint state) => state is >= 3 and <= 10;
+
         // ---------- TCPv4 ----------
 
         private static bool TryFindPidInTcpTable(AddressFamily af, Candidate c, out int pid)
@@ -253,10 +257,12 @@ namespace Carthago.Services
                 int num = Marshal.ReadInt32(tablePtr);
                 IntPtr rowPtr = IntPtr.Add(tablePtr, 4);
 
+                var owners = new UdpOwnerSelection();
                 for (int i = 0; i < num; i++)
                 {
                     var row = Marshal.PtrToStructure<MIB_TCPROW_OWNER_PID>(rowPtr);
 
+                    if (!IsTcpOwnershipState(row.state)) { rowPtr = Next<MIB_TCPROW_OWNER_PID>(rowPtr); continue; }
                     int lport = ReadPort(row.localPort);
                     if (lport != c.LocalPort) { rowPtr = Next<MIB_TCPROW_OWNER_PID>(rowPtr); continue; }
 
@@ -270,17 +276,14 @@ namespace Carthago.Services
                     if (remoteOk && !string.IsNullOrWhiteSpace(c.RemoteAddr))
                         remoteOk = TryParseIp(c.RemoteAddr!, out var wantR) && wantR.Equals(new IPAddress(row.remoteAddr));
 
-                    if (remoteOk)
-                    {
-                        pid = row.owningPid;
-                        return pid > 0;
-                    }
+                    if (remoteOk) owners.Observe(row.owningPid);
 
 
                     rowPtr = Next<MIB_TCPROW_OWNER_PID>(rowPtr);
                 }
 
-                return false;
+                pid = owners.Pid;
+                return pid > 0;
             }
             catch
             {
@@ -311,9 +314,11 @@ namespace Carthago.Services
                 int num = Marshal.ReadInt32(tablePtr);
                 IntPtr rowPtr = IntPtr.Add(tablePtr, 4);
 
+                var owners = new UdpOwnerSelection();
                 for (int i = 0; i < num; i++)
                 {
                     var row = Marshal.PtrToStructure<MIB_TCP6ROW_OWNER_PID>(rowPtr);
+                    if (!IsTcpOwnershipState(row.state)) { rowPtr = Next<MIB_TCP6ROW_OWNER_PID>(rowPtr); continue; }
                     int lport = ReadPort(row.localPort);
                     if (lport != c.LocalPort) { rowPtr = Next<MIB_TCP6ROW_OWNER_PID>(rowPtr); continue; }
 
@@ -326,16 +331,13 @@ namespace Carthago.Services
                     if (remoteOk && !string.IsNullOrWhiteSpace(c.RemoteAddr))
                         remoteOk = TryParseIp(c.RemoteAddr!, out var wantR) && wantR.Equals(new IPAddress(row.remoteAddr, row.remoteScopeId));
 
-                    if (remoteOk)
-                    {
-                        pid = (int)row.owningPid;
-                        return pid > 0;
-                    }
+                    if (remoteOk) owners.Observe((int)row.owningPid);
 
                     rowPtr = Next<MIB_TCP6ROW_OWNER_PID>(rowPtr);
                 }
 
-                return false;
+                pid = owners.Pid;
+                return pid > 0;
             }
             catch
             {

@@ -76,4 +76,16 @@ public sealed class ProcessAttributionEnrichmentTests
         Assert.False(WindowsProcessResolver.TcpLocalAddressMatches("::1", IPAddress.IPv6Any));
         Assert.True(WindowsProcessResolver.TcpLocalAddressMatches("::ffff:192.168.1.10", IPAddress.Parse("192.168.1.10")));
     }
+
+    [Theory]
+    [InlineData(0u, false)]
+    [InlineData(1u, false)]
+    [InlineData(2u, false)]
+    [InlineData(3u, true)]
+    [InlineData(5u, true)]
+    [InlineData(10u, true)]
+    [InlineData(11u, false)]
+    [InlineData(12u, false)]
+    public void Tcp_Ownership_Excludes_Nonlive_States(uint state, bool expected)
+        => Assert.Equal(expected, WindowsProcessResolver.IsTcpOwnershipState(state));
 }
