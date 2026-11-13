@@ -30,6 +30,8 @@ internal static class Program
                 "  carthago-monitor monitor start --interface ID [--filter BPF] [--status-seconds N] [--json] [--enable-cli-ipc] [--allow-cli-stop]\n" +
                 "  carthago-monitor active status [--json]\n" +
                 "  carthago-monitor active run --profile ID [--profile ID ...]\n" +
+                "  carthago-monitor active-service validate --config ABSOLUTE_PATH\n" +
+                "  carthago-monitor active-service run --config ABSOLUTE_PATH (SCM only)\n" +
                 "  carthago-monitor service validate --config ABSOLUTE_PATH [--json]\n" +
                 "  carthago-monitor service run --config ABSOLUTE_PATH (SCM only)\n" +
                 "Ctrl+C stops monitoring. Close the desktop monitor before starting. No remote enrichment or external sinks.");
@@ -46,6 +48,32 @@ internal static class Program
                     .GetAwaiter().GetResult();
             }
             finally { Console.CancelKeyPress -= handler; }
+        }
+        if (args is ["active-service", "validate", "--config", var activeConfig])
+        {
+            try
+            {
+                var config = ActiveServiceConfiguration.Load(activeConfig);
+                output.WriteLine(JsonSerializer.Serialize(new { schemaVersion = 1, configuration = "valid",
+                    profileCount = config.Profiles.Count, accountValidated = false, executionValidated = false }));
+                return 0;
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            { error.WriteLine("Invalid or unavailable active service configuration."); return 3; }
+        }
+        if (args is ["active-service", "run", "--config", var activePath])
+        {
+            if (!Path.IsPathFullyQualified(activePath) || Environment.UserInteractive)
+            { error.WriteLine("Active service run requires SCM and an absolute configuration path."); return 2; }
+            try
+            {
+                Directory.SetCurrentDirectory(AppContext.BaseDirectory);
+                using var service = new WindowsActiveMonitorService(activePath);
+                ServiceBase.Run(service);
+                return service.ExitCode == 0 ? 0 : 3;
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            { error.WriteLine("Active service dispatch or lifecycle failed."); return 3; }
         }
         if (args is ["service", "validate", "--config", _] or
             ["service", "validate", "--config", _, "--json"])
