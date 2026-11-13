@@ -8,6 +8,7 @@ namespace Carthago.Cli;
 
 public static class ServiceCommands
 {
+    internal const string MonitorServiceName = "CarthagoMonitor";
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
     public static async Task<int> RunAsync(string action, IServiceControl control, TextWriter output, TextWriter error,
         bool json, CancellationToken token, Func<ServiceHealthSnapshot>? read = null,
@@ -69,7 +70,7 @@ public static class ServiceCommands
             token.ThrowIfCancellationRequested();
             var assessment = action is "health" or "doctor" ? PipelineHealth.Assess(snapshot?.Counters,
                 snapshot?.SampledUtc, DateTimeOffset.UtcNow, status.State == ScmState.Running) : null;
-            var payload = new { schemaVersion = 1, service = WindowsServiceControl.ServiceName,
+            var payload = new { schemaVersion = 1, service = MonitorServiceName,
                 scmState = status.State.ToString().ToLowerInvariant(), status.ProcessId, status.Win32ExitCode,
                 operation = action, health, snapshot, assessment, sourceHealth = "not_assessed", detectionValidation = "not_assessed" };
             await output.WriteLineAsync(json ? JsonSerializer.Serialize(payload, Json) :

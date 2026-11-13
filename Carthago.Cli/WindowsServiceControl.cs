@@ -19,7 +19,7 @@ public interface IServiceControl
 [SupportedOSPlatform("windows")]
 public sealed class WindowsServiceControl : IServiceControl
 {
-    public const string ServiceName = "CarthagoMonitor";
+    public const string ServiceName = ServiceCommands.MonitorServiceName;
     private const uint Connect = 0x0001, QueryStatus = 0x0004, StartAccess = 0x0010, StopAccess = 0x0020;
 
     public ScmStatus Status()

@@ -36,8 +36,8 @@ namespace Carthago.Engine.Rules
         // Core IDs form the R group and sort by numeric value; all other IDs
         // keep their historical ordinal-ignore-case ordering. Never truncate
         // an ID or compare its suffix alone against a pack identifier.
-        public static IComparer<string> NumericComparer { get; } =
-            Comparer<string>.Create(CompareIds);
+        public static IComparer<string?> NumericComparer { get; } =
+            Comparer<string?>.Create(CompareIds);
 
         private static int CompareIds(string? left, string? right)
         {

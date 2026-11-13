@@ -9,6 +9,7 @@
     <Version>0.1.0</Version>
   </PropertyGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="Carthago.Cli.Tests" />
     <ProjectReference Include="../Carthago.Contracts/Carthago.Contracts.csproj" />
     <ProjectReference Include="../Carthago.Core/Carthago.Core.csproj" />
   </ItemGroup>
