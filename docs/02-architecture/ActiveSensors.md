@@ -257,3 +257,7 @@ Rebuilt malformed ActiveServiceQualification.psm1 (duplicated text inside timest
 ## AS-Q07G6B/F — Release matrix source candidate
 
 Added 34 finding-level cases: ASD001–ASD011 each receives a positive repeated change, unchanged negative, and ambiguous second observation; an additional duplicate-JSON case rejects ambiguity even when comparison is invoked outside the store. 392 expected xUnit cases across 28 suites. Integrated synthetic report now records negative SCM contract success explicitly. Stress fixture projects the actual selected DNS name; named reservation rejects null. No Windows execution claimed; no central journal integration or real-world accuracy claim.
+
+## AS-Q07G6C/D — Source-bound physical and SCM evidence
+
+Added scripts/verify-active-physical.ps1 with seven explicit physical cases (gateway match/mismatch/no reply/contention; SNMP match/mismatch/timeout). Builds from a clean exact branch commit, invokes interactive live-lab only after explicit confirmation, accepts only the designated result/outcome/exit contract and emits source SHA plus sanitized result; no production evidence or credentials. Positive and negative SCM reports now carry clean source SHA, and positive reports record distinct responsive profiles in both runs. Actual devices and SCM execution remain pending; executable provenance must be reviewed separately. No automatic service startup.

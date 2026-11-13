@@ -13,6 +13,9 @@ $identity=[Security.Principal.WindowsIdentity]::GetCurrent()
 try {
     if (-not ([Security.Principal.WindowsPrincipal]::new($identity)).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) { throw 'Elevated PowerShell required.' }
 } finally { $identity.Dispose() }
+Import-Module (Join-Path $PSScriptRoot 'ActiveReleaseSource.psm1') -Force
+$repoRoot=Split-Path -Parent $PSScriptRoot
+$sourceSha=Get-ActiveReleaseSource $repoRoot
 $pre=Get-ActiveServicePreflight $MonitorExe $ConfigPath $Account $ExpectedExeSha256
 if ($ExpectedConfigSha256 -notmatch '^[0-9a-fA-F]{64}$' -or $pre.configSha256 -ine $ExpectedConfigSha256) { throw 'Negative fixture configuration hash mismatch.' }
 $name='CarthagoActiveMonitor'
@@ -39,7 +42,7 @@ function Get-ArtifactHash([string]$Name) {
 # its possible LiteDB journal independently. A preexisting marker is not proof.
 $before=@{}
 foreach ($file in @('health.json','evidence.db','evidence-log.db','startup-rejection.json')) { $before[$file]=Get-ArtifactHash $file }
-$report=[ordered]@{schemaVersion=1;expectedReason=$ExpectedReason;configSha256=$pre.configSha256;exeSha256=$pre.exeSha256;
+$report=[ordered]@{schemaVersion=1;sourceSha=$sourceSha;expectedReason=$ExpectedReason;configSha256=$pre.configSha256;exeSha256=$pre.exeSha256;
     startedUtc=[DateTimeOffset]::UtcNow.ToString('o');rejection='not_run';cleanup='not_run';result='incomplete_or_failed';
     recoveryValidated=$false;securityAccuracyValidated=$false;failure=$null}
 $attempted=$false;$code=3
@@ -64,6 +67,7 @@ try {
         if ((Get-ArtifactHash $file) -cne $before[$file]) { throw 'Health or evidence changed during rejected startup.' }
     }
     Assert-Inputs
+    Assert-ActiveReleaseSource $repoRoot $sourceSha
     $report.rejection='expected_pre_readiness_rejection_confirmed'
     $report.attemptId=[string]$record.attemptId
     $report.scmExitCode=$s.ExitCode

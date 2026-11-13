@@ -118,3 +118,26 @@ a valid lab grant and configure, then rerun the positive G5E harness to
 establish recovery. No automatic recovery or startup changes.
 
 G6A release audit: update monitor and management scripts together. Health schema 2 requires responsiveProfiles equal to selected profiles for qualification; aggregate probe totals alone are insufficient. Schema 1 is deliberately unavailable to the new reader. The offline lifecycle contract must pass before actual SCM runs.
+
+
+## G6C/D source-bound laboratory reports
+
+Use a clean exact release candidate checkout. The physical wrapper builds the
+qualification executable and retains a sanitized report in
+build-verify/active-physical/<run-id>/physical.json. Use elevated, interactive
+Windows console and authorized lab equipment. Each case requires PROBE.
+
+~~~powershell
+.\scripts\verify-active-physical.ps1 -Case GatewayMatch -Adapter YOUR_GUID -Source YOUR_IPV4 -Target YOUR_GATEWAY -Expected EXPECTED_MAC -ConfirmAuthorizedPhysicalLab
+~~~
+
+Repeat with GatewayMismatch (deliberately different valid expected MAC),
+GatewayNoReply (controlled configured gateway does not answer),
+GatewayContention (passive Npcap owner running; no active scheduler owner),
+SnmpMatch, SnmpMismatch (deliberately different valid expected OID), and
+SnmpTimeout (controlled nonresponding SNMP agent). Do not disrupt production
+networks to manufacture failures. Inconclusive results not matching the
+designated case are not passes. These are physical observation contracts,
+not attack accuracy or packet-trace proof. SCM positive/negative reports
+now record source SHA; manually establish that the installed executable and
+all dependencies came from that same trusted build.

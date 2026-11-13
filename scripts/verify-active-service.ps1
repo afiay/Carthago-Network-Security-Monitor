@@ -14,6 +14,9 @@ $identity=[Security.Principal.WindowsIdentity]::GetCurrent()
 try {
     if (-not ([Security.Principal.WindowsPrincipal]::new($identity)).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) { throw 'Elevated PowerShell required.' }
 } finally { $identity.Dispose() }
+Import-Module (Join-Path $PSScriptRoot 'ActiveReleaseSource.psm1') -Force
+$repoRoot=Split-Path -Parent $PSScriptRoot
+$sourceSha=Get-ActiveReleaseSource $repoRoot
 $pre=Get-ActiveServicePreflight $MonitorExe $ConfigPath $Account $ExpectedExeSha256
 $name='CarthagoActiveMonitor'
 function Registration { Get-CimInstance Win32_Service -Filter "Name='CarthagoActiveMonitor'" }
@@ -30,7 +33,7 @@ if ($s.State -ne 'Stopped') { throw 'Service must initially be stopped; existing
 if (@(Get-Process -Name 'Carthago','carthago-monitor','Carthago.ActiveQualification' -ErrorAction SilentlyContinue).Count -ne 0) {
     throw 'Close desktop, passive and foreground monitor processes before qualification.'
 }
-$report=[ordered]@{schemaVersion=1;startedUtc=[DateTimeOffset]::UtcNow.ToString('o');exeSha256=$pre.exeSha256;
+$report=[ordered]@{schemaVersion=1;sourceSha=$sourceSha;startedUtc=[DateTimeOffset]::UtcNow.ToString('o');exeSha256=$pre.exeSha256;
     configSha256=$pre.configSha256;profiles=$pre.profileCount;firstRun='not_run';restart='not_run';
     cleanup='not_run';result='incomplete_or_failed';failure=$null;securityAccuracyValidated=$false;
     grantRejectionScmValidated=$false;physicalProtocolCoverage='not_assessed'}
@@ -106,6 +109,7 @@ try {
     $report.firstSessionId=$first.sessionId
     $report.firstCompleted=$last.completedProbes
     $report.firstResponsive=$last.responsiveProbes
+    $report.firstResponsiveProfiles=$last.responsiveProfiles
     Stop-Observed
     $report.firstRun='start_observe_stop_confirmed'
     $second=Start-Observed
@@ -116,8 +120,10 @@ try {
     $report.secondSessionId=$second.sessionId
     $report.secondCompleted=$end.completedProbes
     $report.secondResponsive=$end.responsiveProbes
+    $report.secondResponsiveProfiles=$end.responsiveProfiles
     Stop-Observed
     $null=Assert-Unchanged
+    Assert-ActiveReleaseSource $repoRoot $sourceSha
     $code=0
 } catch {
     $report.failure=$_.Exception.Message
