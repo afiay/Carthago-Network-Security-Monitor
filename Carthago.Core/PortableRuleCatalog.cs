@@ -34,7 +34,12 @@ internal static class PortableRuleCatalog
         new(Supported("R587","ScreenConnect SetupWizard path request",Get),()=>new PortableR587Detector().Evaluate),
         new(Supported("R588","SolarWinds SUPERNOVA handler request",GetPost),()=>new PortableR588Detector().Evaluate),
         new(Supported("R589","WebLogic keystore script request",GetPost),()=>new PortableR589Detector().Evaluate),
-        new(Supported("R590","Rejetto HFS search injection request",Get),()=>new PortableR590Detector().Evaluate)
+        new(Supported("R590","Rejetto HFS search injection request",Get),()=>new PortableR590Detector().Evaluate),
+        new(Supported("R591","ADSelfService suspicious endpoint request",GetPost),()=>new PortableR591Detector().Evaluate),
+        new(Supported("R592","DEWMODE webshell-shaped query request",GetPost),()=>new PortableR592Detector().Evaluate),
+        new(Supported("R593","Apache Spark doAs backtick request",GetPost),()=>new PortableR593Detector().Evaluate),
+        new(Supported("R594","Bitbucket archive exec-prefix request",GetPost),()=>new PortableR594Detector().Evaluate),
+        new(Supported("R595","Grafana plugin traversal request",GetPost),()=>new PortableR595Detector().Evaluate)
     };
 
     private static readonly IReadOnlyList<Capability> Capabilities =

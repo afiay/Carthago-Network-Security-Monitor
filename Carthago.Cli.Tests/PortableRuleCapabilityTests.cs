@@ -25,9 +25,9 @@ public sealed class PortableRuleCapabilityTests
         using var json=JsonDocument.Parse(result.Out);var root=json.RootElement;
         Assert.Equal("compiled_portable_catalog",root.GetProperty("scope").GetString());
         Assert.Equal("not_assessed",root.GetProperty("registration").GetString());
-        Assert.Equal(5,root.GetProperty("supportedCount").GetInt32());
+        Assert.Equal(10,root.GetProperty("supportedCount").GetInt32());
         var rows=root.GetProperty("rules").EnumerateArray().ToArray();
-        Assert.Equal(new[]{"R586","R587","R588","R589","R590"},rows.Select(r=>r.GetProperty("ruleId").GetString()).ToArray());
+        Assert.Equal(new[]{"R586","R587","R588","R589","R590","R591","R592","R593","R594","R595"},rows.Select(r=>r.GetProperty("ruleId").GetString()).ToArray());
         foreach(var r in rows)
         {
             Assert.Equal("supported",r.GetProperty("status").GetString());
@@ -83,7 +83,12 @@ public sealed class PortableRuleCapabilityTests
             ["R587"]="/SetupWizard.aspx/next",
             ["R588"]="/LogoImageHandler.ashx?clazz=example",
             ["R589"]="/config/keystore/test.jsp",
-            ["R590"]="/?search=%00{.cmd.exe"};
+            ["R590"]="/?search=%00{.cmd.exe",
+            ["R591"]="/ServletApi/../RestApi/LogonCustomization",
+            ["R592"]="/test.html?dwn=example&fn=sample",
+            ["R593"]="/?doAs=`example`",
+            ["R594"]="/rest/api/latest/projects/test?prefix=%00--exec",
+            ["R595"]="/public/plugins/graph/../../../../example"};
         var first=new PortableReplayDispatcher();var second=new PortableReplayDispatcher();
         Assert.Equal(paths.Keys.OrderBy(x=>x).ToArray(),PortableRuleCatalog.All.Select(x=>x.RuleId).ToArray());
         foreach(var capability in PortableRuleCatalog.All)

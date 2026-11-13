@@ -197,4 +197,24 @@ public sealed class PortableReplayTests
         Assert.Equal(2,await CliApplication.RunAsync(new[]{"pcap","detect","missing.pcap","--rules",ids,"--json"},output,error));
         Assert.Empty(output.ToString());
     }
+
+    [Fact]
+    public async Task NextFivePortableRulesReplayIndependently()
+    {
+        var bytes=Pcap((100,Frame("/ServletApi/../RestApi/LogonCustomization"),null),
+            (101,Frame("/test.html?dwn=example&fn=sample"),null),
+            (102,Frame("/?doAs=`example`"),null),
+            (103,Frame("/rest/api/latest/projects/test?prefix=%00--exec"),null),
+            (104,Frame("/public/plugins/graph/../../../../example"),null),
+            (105,Frame("/ServletApi/../RestApi/LogonCustomization"),null),(106,Frame("/public/plugins/graph/../../../example"),null));
+        var r=await Run(bytes,".pcap","R591,R592,R593,R594,R595,R1000");
+        Assert.Equal(0,r.Code);
+        using var json=JsonDocument.Parse(r.Output);var replay=json.RootElement.GetProperty("replay");
+        Assert.Equal(5,replay.GetProperty("matchCount").GetInt32());
+        Assert.Equal(1,replay.GetProperty("suppressedCount").GetInt32());
+        Assert.Equal(new[]{"R591","R592","R593","R594","R595"},replay.GetProperty("findings").EnumerateArray()
+            .Select(f=>f.GetProperty("ruleId").GetString()).ToArray());
+        Assert.DoesNotContain("%00--exec",r.Output);
+        Assert.Equal("unsupported_detector",replay.GetProperty("rules")[5].GetProperty("status").GetString());
+    }
 }

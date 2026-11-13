@@ -2373,3 +2373,8 @@ Reviewed live parent `8294185345a8117556016b3a2b7d77ba91658109`, ledger, qualifi
 ## 2026-11-13 — CLI-007E.4 portable journal failure hardening
 
 **SOURCE CANDIDATE — UNVERIFIED.** Reviewed source 72d63d9d038d5dbf8376deff9f1b59cf1f25de92. Latch journal append failures, provision before source creation, no disk retry after failure, final console failure and capture cleanup accounting even on final write/close failure. Seven synthetic integration/writer cases authored, zero executed; pinned gate updated. No global deletion, native capture, builds/tests/Actions or qualification claim. See [architecture](02-architecture/CLI-007E4-JournalFailureHardening.md).
+
+
+## 2026-11-13 — CLI-009A portable rules R591–R595
+
+**SOURCE CANDIDATE — UNVERIFIED.** Reviewed fe1fa4222222e53b06dffc2b86bc8b3bc5269ebe. Extract five original HTTP predicates into Core and delegate Windows wrappers, extend portable catalog to ten IDs. 25 portable predicate/evidence cases, 20 Windows parity cases, one replay case authored; zero executed. Update catalog assertions and pinned qualification gate. No runtime promotion or changes to existing rule semantics. See [architecture](02-architecture/CLI-009A-PortableRulesR591-R595.md).
