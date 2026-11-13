@@ -14,6 +14,14 @@
     <Compile Include="../Carthago/Services/ProtocolIntelligence/BacnetEventDisableInspector.cs" Link="Services/ProtocolIntelligence/BacnetEventDisableInspector.cs" />
     <Compile Include="../Carthago/Models/TrafficRecord.cs" Link="Models/TrafficRecord.cs" />
     <Compile Include="../Carthago/Engine/Rules/Abstractions/SensitiveTelemetryContracts.cs" Link="Engine/Rules/Abstractions/SensitiveTelemetryContracts.cs" />
+    <Compile Include="../Carthago/Services/Fingerprints/HttpJa4H.cs" Link="Services/Fingerprints/HttpJa4H.cs" />
+    <Compile Include="../Carthago/Services/Fingerprints/TlsJa4.cs" Link="Services/Fingerprints/TlsJa4.cs" />
+    <Compile Include="../Carthago/Services/Fingerprints/TcpJa4T.cs" Link="Services/Fingerprints/TcpJa4T.cs" />
+    <Compile Include="../Carthago/Services/Fingerprints/SshJa4SSH.cs" Link="Services/Fingerprints/SshJa4SSH.cs" />
+    <Compile Include="../Carthago/Services/Fingerprints/Hassh.cs" Link="Services/Fingerprints/Hassh.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/Resp2CommandInspector.cs" Link="Services/ProtocolIntelligence/Resp2CommandInspector.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/Resp2SimpleReplyInspector.cs" Link="Services/ProtocolIntelligence/Resp2SimpleReplyInspector.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/Smb2CompleteWriteInspector.cs" Link="Services/ProtocolIntelligence/Smb2CompleteWriteInspector.cs" />
     <!-- Preserve existing internal access while consumers migrate. -->
     <InternalsVisibleTo Include="Carthago" />
     <InternalsVisibleTo Include="carthago" />

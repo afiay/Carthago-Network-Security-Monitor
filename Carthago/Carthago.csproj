@@ -48,6 +48,14 @@
     <Compile Remove="Services/ProtocolIntelligence/DnsAddressObservationInspector.cs" />
     <Compile Remove="Services/ProtocolIntelligence/BacnetEventDisableInspector.cs" />
     <Compile Remove="Models/TrafficRecord.cs" />
+    <Compile Remove="Services/Fingerprints/HttpJa4H.cs" />
+    <Compile Remove="Services/Fingerprints/TlsJa4.cs" />
+    <Compile Remove="Services/Fingerprints/TcpJa4T.cs" />
+    <Compile Remove="Services/Fingerprints/SshJa4SSH.cs" />
+    <Compile Remove="Services/Fingerprints/Hassh.cs" />
+    <Compile Remove="Services/ProtocolIntelligence/Resp2CommandInspector.cs" />
+    <Compile Remove="Services/ProtocolIntelligence/Resp2SimpleReplyInspector.cs" />
+    <Compile Remove="Services/ProtocolIntelligence/Smb2CompleteWriteInspector.cs" />
     <Compile Remove="Engine/Rules/Abstractions/SensitiveTelemetryContracts.cs" />
   </ItemGroup>
 
