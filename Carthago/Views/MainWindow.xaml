@@ -316,6 +316,7 @@
                     <MenuItem Header="Inspect TLS certificate (selected LAN host)" Click="CheckLanTlsInspection_Click"/>
                     <MenuItem Header="Check HTTP/HTTPS health (selected LAN host)" Click="CheckLanHttpHealth_Click"/>
                     <MenuItem Header="Check gateway integrity (selected adapter)" Click="CheckGatewayIntegrity_Click"/>
+                    <MenuItem Header="Check SNMPv3 infrastructure (selected LAN host)" Click="CheckLanSnmpInfrastructure_Click"/>
                   </ContextMenu>
                 </ComboBox.ContextMenu>
                 <ComboBox.ItemTemplate>

@@ -1,4 +1,4 @@
-# Active sensors — AS-01 through AS-05
+# Active sensors — AS-01 through AS-06
 
 Status: source candidate; Windows build, tests and live smoke pending.
 
@@ -69,3 +69,15 @@ dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQua
 ```
 
 Synthetic frame tests cover strict source/destination matching, VLAN, unrelated frames, cache-only evidence, duplicate versus competing claims, baseline and overflow. Live Npcap smoke required: authorized gateway, selected adapter, cancellation/cleanup, and isolated lab conflicting claims. No execution claimed.
+
+## AS-06 — SNMPv3 infrastructure
+
+Select an authorized LAN SNMP agent, stop monitoring, choose Check SNMPv3 infrastructure, supply a read-only USM user and SHA-256/AES-128 passphrases. Source-bound connected UDP port 161, one engine discovery and one authPriv GET, five-second overall cancellation budget, bounded 8192-byte datagrams. No v1/v2c fallback, SET, walk, retries, credential storage or diagnostic logging. Managed password strings are transient, not guaranteed zeroized. Discovery reports are unauthenticated and never supply inventory. Require matching message/request IDs, engine/user/context, authPriv flags, SHA-256 digest and AES salt lengths, library hash validation and engine boots/time window before projecting exact requested OIDs in order. Reports, error responses, missing/wrong-type values and transport failures are separate from complete observations. sysUpTime is agent uptime in centiseconds, not proof of device reboot. Initial scope: five fixed scalar objects (sysDescr, sysObjectID, sysUpTime, sysName, ifNumber). Interface tables, counters, vendor health, time resynchronization, persistent baselines and scheduling deferred.
+
+Windows verification pending:
+
+```powershell
+dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~SnmpInfrastructureSensorTests|FullyQualifiedName~SharpSnmpClientAdapterTests|FullyQualifiedName~SnmpClientAdapterTests"
+```
+
+Unit tests cover input scope, credentials, exact OID projection and types. Before qualification, run an authorized SNMPv3 SHA-256/AES lab agent and verify correct credentials, wrong authentication/privacy, wrong engine/context, tampered digest, downgrade, timeout and cancellation on real wire. No runtime verification claimed.
