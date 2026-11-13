@@ -19,12 +19,21 @@ namespace Carthago.Views
         }
 
         private int _assetHistoryRequest;
-        internal async Task UpdateAssetHistoryAsync(Func<AssetHistorySnapshot> read, string? saveError)
+        internal async Task UpdateAssetHistoryAsync(Func<AssetHistorySnapshot> read, string? saveError, ObservedAssetSessionSnapshot current)
         {
             int request = ++_assetHistoryRequest;
             AssetHistoryStatus.Text = "Loading saved capture-session history...";
-            var history = await Task.Run(read);
+            AssetChangesStatus.Text = "Comparing earlier saved observations...";
+            AssetChangesGrid.ItemsSource = null;
+            var result = await Task.Run(() =>
+            {
+                var saved = read();
+                return (History: saved, Comparison: AssetBehaviorComparison.Compare(current, saved));
+            });
             if (request != _assetHistoryRequest) return;
+            var history = result.History;
+            AssetChangesGrid.ItemsSource = result.Comparison.Rows;
+            AssetChangesStatus.Text = result.Comparison.Summary;
             AssetHistoryGrid.ItemsSource = history.Rows;
             AssetHistoryStatus.Text = $"{history.SessionCount} saved session(s), {history.Rows.Count} historical identity rows. " +
                 "Historical evidence does not establish current presence. " +

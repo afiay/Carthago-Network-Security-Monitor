@@ -196,6 +196,30 @@
       <Border Background="{StaticResource CardBgBrush}" BorderBrush="{StaticResource CardBorderBrush}"
               BorderThickness="1" CornerRadius="14" Padding="16" Margin="0,0,0,16">
         <StackPanel>
+          <TextBlock Text="ASSET CHANGES / RETAINED HISTORY COMPARISON" Style="{StaticResource DashboardSectionTitle}"/>
+          <TextBlock x:Name="AssetChangesStatus" Text="No comparison loaded."
+                     TextWrapping="Wrap" Foreground="{StaticResource TextMutedBrush}" Margin="0,6,0,10"/>
+          <DataGrid x:Name="AssetChangesGrid" AutoGenerateColumns="False" IsReadOnly="True"
+                    Height="240" EnableRowVirtualization="True"
+                    VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
+                    AutomationProperties.Name="Asset historical change comparison">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Identity / evidence" Binding="{Binding Identity}" Width="200"/>
+              <DataGridTextColumn Header="Interface scope" Binding="{Binding InterfaceScope}" Width="180"/>
+              <DataGridTextColumn Header="Comparison status" Binding="{Binding Status}" Width="200"/>
+              <DataGridTextColumn Header="Prior sessions" Binding="{Binding PriorSessions}" Width="110"/>
+              <DataGridTextColumn Header="Newly observed IP claims" Binding="{Binding NewAddresses}" Width="200"/>
+              <DataGridTextColumn Header="Newly observed TCP SYN-ACK ports" Binding="{Binding NewServices}" Width="180"/>
+              <DataGridTextColumn Header="Different MAC claims in earlier history" Binding="{Binding HistoricalMacClaims}" Width="260"/>
+              <DataGridTextColumn Header="Different MAC claims in this session" Binding="{Binding SessionMacClaims}" Width="260"/>
+            </DataGrid.Columns>
+          </DataGrid>
+        </StackPanel>
+      </Border>
+
+      <Border Background="{StaticResource CardBgBrush}" BorderBrush="{StaticResource CardBorderBrush}"
+              BorderThickness="1" CornerRadius="14" Padding="16" Margin="0,0,0,16">
+        <StackPanel>
           <DockPanel Margin="0,0,0,12">
             <Button DockPanel.Dock="Right" Content="Open Live Traffic" Style="{StaticResource SecondaryButton}"
                     MinWidth="145" Height="32" Click="OpenTraffic_Click"/>

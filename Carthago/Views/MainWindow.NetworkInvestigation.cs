@@ -55,8 +55,9 @@ namespace Carthago
             // Sidebar return resumes the active investigation instead of
             // replacing it with a blank query. Explicit empty searches still
             // create a fresh step through the existing search controls.
-            page.UpdateObservedAssets(_captureService.GetObservedAssets());
-            _ = page.UpdateAssetHistoryAsync(_captureService.GetAssetHistory, _captureService.AssetHistorySaveError);
+            var assets = _captureService.GetObservedAssetSession();
+            page.UpdateObservedAssets(assets.Rows);
+            _ = page.UpdateAssetHistoryAsync(_captureService.GetAssetHistory, _captureService.AssetHistorySaveError, assets);
             page.UpdateSnapshot(_traffic.GetRetainedSnapshot(), _alerts, cachedIncidents,
                 searchTerm ?? page.CurrentHistoryTerm);
         }

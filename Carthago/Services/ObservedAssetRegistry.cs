@@ -93,7 +93,7 @@ internal sealed class ObservedAssetRegistry
                     p.Value.Last.UtcDateTime.ToString("u", CultureInfo.InvariantCulture), p.Value.Count)).ToArray();
     }
 
-    private static string? NormalizeAddress(string? value)
+    internal static string? NormalizeAddress(string? value)
     {
         if (!IPAddress.TryParse(value, out var ip)) return null;
         ip = EndpointIpEnrichment.Normalize(ip);
@@ -101,7 +101,7 @@ internal sealed class ObservedAssetRegistry
         return scope is "Private" or "Public" or "LinkLocal" or "SharedCGNAT" ? ip.ToString() : null;
     }
 
-    private static string? NormalizeMac(string? value)
+    internal static string? NormalizeMac(string? value)
     {
         if (string.IsNullOrWhiteSpace(value)) return null;
         var raw = value.Replace(":", "").Replace("-", "");

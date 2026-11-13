@@ -52,12 +52,14 @@ namespace Carthago.Services
         internal AssetHistorySnapshot GetAssetHistory() => _assetHistory.Read();
         internal string? AssetHistorySaveError => _assetHistory.LastSaveError;
 
-        internal IReadOnlyList<ObservedAssetRow> GetObservedAssets()
+        internal ObservedAssetSessionSnapshot GetObservedAssetSession()
         {
             ObservedAssetRegistry registry;
             lock (_lifecycleLock) registry = _observedAssets;
-            return registry.Snapshot();
+            return new(registry.SessionId, registry.SessionStartedUtc, registry.Snapshot());
         }
+
+        internal IReadOnlyList<ObservedAssetRow> GetObservedAssets() => GetObservedAssetSession().Rows;
         private int _disposed;
         private string? _lastCaptureError;
 
