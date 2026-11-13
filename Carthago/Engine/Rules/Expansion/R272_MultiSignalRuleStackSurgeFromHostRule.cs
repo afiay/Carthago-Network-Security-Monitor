@@ -27,8 +27,8 @@ namespace Carthago.Engine.Rules.Expansion
             positiveConditions: new[]
             {
                 "Requires distinct emitted rule-engine events with rule IDs, family, host, timestamp and provenance.",
-                "No trusted per-host detection-event correlation adapter is connected to TrafficRecord.",
-                "Fail closed until a trusted rule-event correlation adapter exists."
+                "Uses only engine-owned post-policy emitted detections for the source host.",
+                "Requires at least three distinct rules and three distinct detection families."
             },
             negativeConditions: new[]
             {
@@ -48,12 +48,31 @@ namespace Carthago.Engine.Rules.Expansion
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            // A packet record contains no rule-engine alert IDs, family identifiers,
-            // correlation provenance or distinct emitted detections. Counting
-            // destinations or packet descriptions would fabricate a rule-stack surge.
-            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
-                "TRUSTED_RULE_EVENT_CORRELATION_UNAVAILABLE",
-                "R272 requires distinct, authenticated rule-engine detection events; packet traffic is not a substitute.");
+            var signals = Carthago.Services.RuleEngine.SnapshotR272Signals(
+                context.Record.Source, context.TimestampUtc);
+            var families = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var rules = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var signal in signals)
+            {
+                if (signal.RuleId == "R272") continue;
+                rules.Add(signal.RuleId);
+                families.Add(signal.Family);
+            }
+            if (rules.Count < 3 || families.Count < 3)
+                return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                    "R272_INDEPENDENT_SIGNALS_REQUIRED",
+                    "Three distinct emitted rules and detection families are required.");
+
+            var evidence = new List<DetectionEvidenceItem>
+            {
+                new("matched_conditions", "engine_emitted_signals,distinct_rules,distinct_families", "rule"),
+                new("rule.signalCount", rules.Count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule"),
+                new("rule.familyCount", families.Count.ToString(System.Globalization.CultureInfo.InvariantCulture), "rule")
+            };
+            return MatchEvasionInfra(context, SeverityLevel.High, "Independent rule detections from one source",
+                "RuleStackSurge", evidence,
+                c => { c.AddEvidence(0.40, "engine-emission"); c.AddEvidence(0.30, "distinct-families"); c.AddEvidence(0.20, "host-window"); },
+                count: rules.Count, window: Profile.Window, cooldownKey: context.Record.Source + ":rule-stack");
         }
     }
 }
