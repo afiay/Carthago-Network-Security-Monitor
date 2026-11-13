@@ -258,3 +258,7 @@ Columns: rule, catalog implementation path, required producer, positive evidence
 ## Resume checkpoint
 
 R271 source inspected: calls ThreatFeedService.TryMatch on exact observed source and NetworkBatch271275Evidence.HasSourceOverlap with snapshot LastBuild and evaluation timestamp. Profile floor 88, Alert, 45-minute cooldown. Historical progress explicitly calls helper positive contract-only; inspect actual service snapshot lifecycle and reputation population before adding detector tests. R270 and R272–R274 historical fail-closed dispositions require trusted pipeline, emitted-rule correlation and IdP/MFA producers respectively; no new qualification claim. Next: inspect these five implementations and existing test paths, prioritize R271 real feed snapshot integration. Do not use a fake global feed or weaken policy. No source or test modifications in this checkpoint.
+
+### R271 checkpoint — snapshot statistics consistency
+
+Inspected source `a94633003ba3de24ab53a07dace8e42eaaf7c721`. `ThreatFeedService.CurrentStats` now captures one snapshot before reading all counters and freshness; no detector threshold or qualification status changed. The configured URLHaus adapter currently emits host/domain/URL indicators, not explicit IPv4 indicators; exact IP classification in lookup alone does not establish an independent reputation producer. Next: inspect reputation producer and add real feed-to-detector positive/negative fixtures; keep R271 pending. No tests executed.

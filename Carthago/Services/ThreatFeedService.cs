@@ -115,17 +115,23 @@ namespace Carthago.Services
 
         // Live stats
         public sealed record Stats(DateTimeOffset LastBuild, long Indicators, int Feeds, double BloomFpr, long HostCount, long DomainCount, long UrlCount, long IpCount);
-        public static Stats CurrentStats =>
-            new(
-                _snapshot.BuiltAt,
-                _snapshot.IndicatorCount,
-                _snapshot.SourceCount,
-                _snapshot.Bloom.EstimatedFalsePositiveRate,
-                _snapshot.Hosts.Count,
-                _snapshot.Domains.Count,
-                _snapshot.Urls.Count,
-                _snapshot.Ip4.Count + _snapshot.Ip6.Count
-            );
+        public static Stats CurrentStats
+        {
+            get
+            {
+                var snapshot = _snapshot;
+                return new Stats(
+                    snapshot.BuiltAt,
+                    snapshot.IndicatorCount,
+                    snapshot.SourceCount,
+                    snapshot.Bloom.EstimatedFalsePositiveRate,
+                    snapshot.Hosts.Count,
+                    snapshot.Domains.Count,
+                    snapshot.Urls.Count,
+                    snapshot.Ip4.Count + snapshot.Ip6.Count
+                );
+            }
+        }
 
         // ======== Public lifecycle ========
 
