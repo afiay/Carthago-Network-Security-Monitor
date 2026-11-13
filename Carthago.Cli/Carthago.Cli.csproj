@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>carthago</AssemblyName>
+    <RootNamespace>Carthago.Cli</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Reuse the existing portable CSA implementation, not the WPF executable.
+         Extract these sources into a shared library in a later milestone. -->
+    <Compile Include="../Carthago/Services/SessionFiles/CarthagoSessionSnapshot.cs" Link="Shared/CarthagoSessionSnapshot.cs" />
+    <Compile Include="../Carthago/Services/SessionFiles/CarthagoSessionArchiveService.cs" Link="Shared/CarthagoSessionArchiveService.cs" />
+  </ItemGroup>
+</Project>
