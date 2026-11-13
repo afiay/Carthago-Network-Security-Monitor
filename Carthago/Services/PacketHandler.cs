@@ -905,6 +905,15 @@ namespace Carthago.Services
                             rec.Dnp3UnsolicitedBinaryEventObserved = true;
                         }
 
+                        // Exact master-to-outstation DNP3 cold/warm restart request.
+                        if (isIPv4 && sport == 20000 && dport == 20000 &&
+                            completeIpPacket && l4PayloadLen == ipPayloadLen - 8 && !rec.IsQuic &&
+                            Dnp3RestartRequestInspector.TryInspect(l4Payload))
+                        {
+                            rec.ApplicationProtocol = "dnp3.restart.request";
+                            rec.Dnp3RestartRequestObserved = true;
+                        }
+
                         // Capture-attested TFTP initial request/first reply, not generic port guessing.
                         if (isIPv4 && completeIpPacket && l4PayloadLen == ipPayloadLen - 8)
                             _tftpHandshake.Observe(rec, l4Payload, true, _utcNow());

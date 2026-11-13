@@ -246,3 +246,8 @@ Workbook R2797 AN2244; capture-qualified exact one-record request/response, Cand
 ## R979 — BACnet Event_Enable all-transition disable request
 
 Workbook R2711 AN1861; exact captured WriteProperty bit-string request, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_979-979.md). 42 authored cases, zero execution; no accepted command, authorization or alarm-state effect claim. Next ID R980.
+
+
+## R980 — DNP3 cold/warm restart request
+
+Workbook R2697 AN1933; exact CRC-checked master restart command, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_980-980.md). 36 authored cases, zero execution; no source approval, accepted command or actual restart claim. Next ID R981.
