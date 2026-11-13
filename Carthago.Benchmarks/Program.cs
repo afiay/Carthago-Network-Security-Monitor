@@ -4,6 +4,31 @@ using System.Linq;
 using Carthago.Services.Benchmarking;
 using Carthago.Services;
 
+// Explicit offline lab mode; never loads the live rules/environment configuration.
+if (args.Length > 0 && args[0] == "--smb2-lab-manifest")
+{
+    if (args.Length != 2)
+    {
+        Console.Error.WriteLine("Usage: --smb2-lab-manifest <manifest.json>");
+        Environment.ExitCode = 2;
+        return;
+    }
+    try
+    {
+        var labReport = await Smb2LabCaptureRunner.RunAsync(args[1]);
+        Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(labReport,
+            new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+    }
+    catch (Exception ex) when (ex is System.IO.IOException or System.Text.Json.JsonException
+        or ArgumentException or InvalidOperationException or UnauthorizedAccessException)
+    {
+        // Avoid leaking private capture paths/manifest contents in error messages.
+        Console.Error.WriteLine("SMB2 lab replay rejected: " + ex.GetType().Name);
+        Environment.ExitCode = 2;
+    }
+    return;
+}
+
 var options = new TuningBenchmarkOptions();
 var verbose = false;
 var compareProfiles = false;

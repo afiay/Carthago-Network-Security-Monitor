@@ -34,6 +34,12 @@ namespace Carthago.Services
         private readonly TftpHandshakeTracker _tftpHandshake = new();
         private readonly object _tcpSync = new();
         private int _flowOperations;
+        private readonly Func<DateTime> _utcNow;
+
+        public PacketHandler() : this(() => DateTime.UtcNow) { }
+
+        // Offline capture replay supplies original packet time; live capture retains UTC wall clock.
+        internal PacketHandler(Func<DateTime> utcNow) => _utcNow = utcNow ?? throw new ArgumentNullException(nameof(utcNow));
 
         private sealed class TcpStreamState
         {
@@ -386,12 +392,12 @@ namespace Carthago.Services
                     if (tcpSyn && !tcpAck)
                     {
                         HandshakeBuffer.Remove(tcpFlow);
-                        LatencyTracker.NoteSyn(tcpFlow, DateTime.UtcNow);
+                        LatencyTracker.NoteSyn(tcpFlow, _utcNow());
                         InitSeq(tcpFlow, clientToServer: true, seqPlus1: unchecked(seq + 1));
                     }
                     else if (tcpSyn && tcpAck)
                     {
-                        LatencyTracker.NoteSynAck(tcpFlow, DateTime.UtcNow);
+                        LatencyTracker.NoteSynAck(tcpFlow, _utcNow());
                         InitSeq(tcpFlow, clientToServer: false, seqPlus1: unchecked(seq + 1));
                     }
 
@@ -471,7 +477,7 @@ namespace Carthago.Services
                                     {
                                         flow.RedisConfigSetPending = admitted;
                                         flow.RedisConfigSetRequestedUtc = admitted
-                                            ? DateTime.UtcNow : default;
+                                            ? _utcNow() : default;
                                     }
                                 }
                             }
@@ -487,7 +493,7 @@ namespace Carthago.Services
                                         pending = flow.RedisConfigSetPending
                                             && IsWithinRedisReplyWindow(
                                                 flow.RedisConfigSetRequestedUtc,
-                                                DateTime.UtcNow);
+                                                _utcNow());
                                         flow.RedisConfigSetPending = false;
                                         flow.RedisConfigSetRequestedUtc = default;
                                     }
@@ -588,7 +594,7 @@ namespace Carthago.Services
                                 var (readable, tag) = HttpJa4H.Compute(http.Method, http.HttpVersion, http.HeaderNames, http.UserAgent);
                                 rec.HttpJa4h = $"{readable}|{tag}";
 
-                                if (c2s) LatencyTracker.NoteFirstDataClient(tcpFlow, DateTime.UtcNow);
+                                if (c2s) LatencyTracker.NoteFirstDataClient(tcpFlow, _utcNow());
                                 AppendInfo(rec, $"[HTTP host={rec.HttpHost ?? "-"} ua={(rec.HttpUserAgent ?? "-")}]");
                             }
 
@@ -664,7 +670,7 @@ namespace Carthago.Services
                                     if (!cert.IsEmpty)
                                     {
                                         TryExtractCert(rec, cert);
-                                        LatencyTracker.NoteFirstDataServer(tcpFlow, DateTime.UtcNow);
+                                        LatencyTracker.NoteFirstDataServer(tcpFlow, _utcNow());
                                     }
 
                                     var (l, ls) = LatencyTracker.GetLatencyFingerprints(tcpFlow);
@@ -793,7 +799,7 @@ namespace Carthago.Services
 
                         // Capture-attested TFTP initial request/first reply, not generic port guessing.
                         if (isIPv4 && completeIpPacket && l4PayloadLen == ipPayloadLen - 8)
-                            _tftpHandshake.Observe(rec, l4Payload, true, DateTime.UtcNow);
+                            _tftpHandshake.Observe(rec, l4Payload, true, _utcNow());
                     }
                 }
                 catch (Exception ex)
@@ -909,7 +915,7 @@ namespace Carthago.Services
         {
             lock (_tcpSync)
             {
-                var state = GetOrAddState(key, DateTime.UtcNow);
+                var state = GetOrAddState(key, _utcNow());
                 // A new client SYN invalidates both directions of a reused
                 // 5-tuple, so an old SYN-ACK cannot authenticate this flow.
                 if (clientToServer)
@@ -982,7 +988,7 @@ namespace Carthago.Services
                     flow.Smb2Target = null;
                     return;
                 }
-                var now = DateTime.UtcNow;
+                var now = _utcNow();
                 // Separate one-shot context; Q5 WRITE correlation remains independent.
                 if ((c2s && record.DestinationPort == 445 && record.SourcePort == key.SrcPort)
                     || (!c2s && record.SourcePort == 445 && record.DestinationPort == key.SrcPort))
@@ -1023,7 +1029,7 @@ namespace Carthago.Services
 
             lock (_tcpSync)
             {
-                var state = GetOrAddState(key, DateTime.UtcNow);
+                var state = GetOrAddState(key, _utcNow());
                 var dir = clientToServer ? state.C2S : state.S2C;
                 if (dir.Invalid || dir.Collected >= MaxInspectBytesPerDir)
                 {
