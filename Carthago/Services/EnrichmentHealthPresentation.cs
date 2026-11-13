@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 using System.Collections.Generic;
 using System.Globalization;
+using Carthago.Services.Geo;
 
 namespace Carthago.Services;
 
@@ -36,7 +37,17 @@ internal static class EnrichmentHealthPresentation
     {
         return $"GeoIP databases (reader startup): City {stats.GeoCityDatabaseStatus?.ToString() ?? "unknown"}; " +
             $"ASN {stats.GeoAsnDatabaseStatus?.ToString() ?? "unknown"}. " +
-            "Ready means reader opened, not a successful lookup or verified database edition.";
+            "Ready means reader opened with a supported declared edition, not a successful lookup. " +
+            "GeoIP completed database attempts (service lifetime): " +
+            GeoLookupSummary("City", stats.GeoCityLookupHealth) + "; " +
+            GeoLookupSummary("ASN", stats.GeoAsnLookupHealth) + ". Records found do not imply usable field coverage.";
+    }
+
+    private static string GeoLookupSummary(string name, GeoIpService.LookupHealthSnapshot? snapshot)
+    {
+        if (snapshot is not { } h) return name + " unknown";
+        string rate = h.Attempts == 0 ? "—" : ((double)h.Failed / h.Attempts).ToString("P1", CultureInfo.InvariantCulture);
+        return $"{name}: {h.Attempts} attempts, {h.Found} found, {h.NotFound} not found, {h.Failed} failed (failure share {rate})";
     }
 
     internal static string StorageSummary(EnrichmentStorageSnapshot? s)

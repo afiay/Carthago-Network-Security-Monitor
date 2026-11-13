@@ -52,6 +52,23 @@ public sealed class EnrichmentHealthPresentationTests
     }
 
     [Fact]
+    public void Geo_Lookup_Health_Uses_Independent_Completed_Attempts()
+    {
+        var stats = new TrafficCaptureService.StatsSnapshot
+        {
+            GeoCityLookupHealth = new(2, 1, 1),
+            GeoAsnLookupHealth = new(0, 0, 0)
+        };
+        var summary = EnrichmentHealthPresentation.Build(stats).Summary;
+        Assert.Contains("service lifetime", summary);
+        Assert.Contains("City: 4 attempts, 2 found, 1 not found, 1 failed", summary);
+        Assert.Contains("ASN: 0 attempts, 0 found, 0 not found, 0 failed (failure share —)", summary);
+        Assert.Contains("25", summary);
+        Assert.Contains("City unknown; ASN unknown", EnrichmentHealthPresentation.Build(new TrafficCaptureService.StatsSnapshot()).Summary);
+        Assert.Contains("Records found do not imply usable field coverage", summary);
+    }
+
+    [Fact]
     public void Cancellation_Remains_A_Distinct_Outcome()
     {
         var stats = new TrafficCaptureService.StatsSnapshot
