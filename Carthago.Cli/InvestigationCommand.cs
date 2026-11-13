@@ -32,7 +32,8 @@ public static class InvestigationCommand
         if (command[1] != "list" || (command.Length - 3) % 2 != 0) return false;
         var seen = new HashSet<string>(StringComparer.Ordinal);
         string offset = "0", limit = "50";
-        string? severity = null, sourceIp = null;
+        string? severity = null, sourceIp = null, date = null;
+        int? since = null;
         for (int i = 3; i < command.Length; i += 2)
         {
             string key = command[i], value = command[i + 1];
@@ -45,6 +46,12 @@ public static class InvestigationCommand
                     if (kind is not (InvestigationKind.Alerts or InvestigationKind.Incidents) ||
                         (severity = InvestigationQueries.NormalizeSeverity(value)) is null) return false;
                     break;
+                case "--date":
+                    if (path != "--live" || kind != InvestigationKind.Alerts || !JournalWindow.TryDate(value, out _)) return false;
+                    date = value; break;
+                case "--since":
+                    if (path != "--live" || kind != InvestigationKind.Alerts || !JournalWindow.TryDuration(value, out int minutes)) return false;
+                    since = minutes; break;
                 case "--source-ip":
                     if ((sourceIp = InvestigationQueries.NormalizeIp(value)) is null) return false;
                     break;
@@ -52,7 +59,8 @@ public static class InvestigationCommand
             }
         }
         if (!OfflineRuleQueries.TryPage(offset, limit, out int start, out int size)) return false;
-        filter = new InvestigationFilter(start, size, severity, sourceIp);
+        if (date is not null && since is not null) return false;
+        filter = new InvestigationFilter(start, size, severity, sourceIp, JournalDate: date, SinceMinutes: since);
         return true;
     }
 }

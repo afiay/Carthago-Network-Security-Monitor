@@ -36,6 +36,8 @@ public static class InvestigationProtocol
             p.Rows.Count != Math.Min(p.Limit, Math.Max(0, p.Total - p.Offset)) ||
             (q.Filter.Id is not null && p.Total > 1))
             throw new InvalidDataException("Invalid investigation page.");
+        JournalWindow? window = q.Filter.JournalDate is not null || q.Filter.SinceMinutes is not null
+            ? JournalWindow.Resolve(q.Filter, r.ObservedUtc) : null;
         var ids = new HashSet<Guid>();
         foreach (var row in p.Rows)
         {
@@ -50,6 +52,7 @@ public static class InvestigationProtocol
                 (row.Protocol is not null && !InvestigationProjection.IsProtocol(row.Protocol)) ||
                 (row.Status is not null && !InvestigationProjection.IsStatus(q.Kind, row.Status)) ||
                 (row.ObservedUtc is not null && row.ObservedUtc.Value.Offset != TimeSpan.Zero) ||
+                (window is not null && (row.ObservedUtc is null || !window.Contains(row.ObservedUtc.Value))) ||
                 row.SourcePort is < 0 or > 65535 || row.DestinationPort is < 0 or > 65535 ||
                 row.RiskScore is < 0 || row.OccurrenceCount is < 0 || row.Length is < 0 ||
                 (q.Filter.Id is not null && Guid.Parse(row.Id!) != Guid.Parse(q.Filter.Id)) ||

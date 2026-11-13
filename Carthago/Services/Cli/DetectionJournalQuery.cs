@@ -17,6 +17,36 @@ public static class DetectionJournalQuery
 
     public static async Task<InvestigationPage?> ReadAsync(string path, InvestigationFilter filter, CancellationToken token)
     {
+        var rows = await ReadRowsAsync(path, token).ConfigureAwait(false);
+        if (rows is null) return null;
+        return Project(rows, filter, token);
+    }
+
+    public static async Task<InvestigationPage?> ReadWindowAsync(Func<DateTime, string> pathForDay,
+        InvestigationFilter filter, JournalWindow window, CancellationToken token)
+    {
+        var rows = new List<JsonElement>();
+        int days = 0;
+        foreach (var day in window.Days())
+        {
+            if (++days > 2) throw new InvalidDataException("Too many journal days.");
+            var dayRows = await ReadRowsAsync(pathForDay(day), token).ConfigureAwait(false);
+            if (dayRows is null) return null; // no silent partial coverage
+            rows.AddRange(dayRows);
+        }
+        return Project(rows, filter, token, window);
+    }
+
+    private static InvestigationPage Project(List<JsonElement> rows, InvestigationFilter filter,
+        CancellationToken token, JournalWindow? window = null)
+    {
+        var page = InvestigationProjection.Select(rows, InvestigationKind.Alerts, filter, token, window);
+        if (page.OmittedRows != 0) throw new InvalidDataException("Journal contains invalid detection identities.");
+        return page;
+    }
+
+    private static async Task<List<JsonElement>?> ReadRowsAsync(string path, CancellationToken token)
+    {
         FileStream stream;
         try { stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 8192, useAsync: true); }
         catch (FileNotFoundException) { return null; }
@@ -45,9 +75,7 @@ public static class DetectionJournalQuery
                     throw new InvalidDataException("Malformed journal row.");
                 rows.Add(doc.RootElement.Clone());
             }
-            var page = InvestigationProjection.Select(rows, InvestigationKind.Alerts, filter, token);
-            if (page.OmittedRows != 0) throw new InvalidDataException("Journal contains invalid detection identities.");
-            return page;
+            return rows;
         }
     }
 }

@@ -6,7 +6,9 @@ namespace Carthago.Contracts;
 
 public enum InvestigationKind { Alerts, Incidents, Events, Hosts }
 public sealed record InvestigationFilter(int Offset = 0, int Limit = 50, string? Severity = null,
-    string? SourceIp = null, string? Id = null);
+    string? SourceIp = null, string? Id = null,
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] string? JournalDate = null,
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] int? SinceMinutes = null);
 public sealed record InvestigationRow(string? Id, DateTimeOffset? ObservedUtc, string? RuleId,
     string? Severity, string? SourceIp, string? DestinationIp, int? SourcePort, int? DestinationPort,
     string? Protocol, string? Status, int? RiskScore, int? OccurrenceCount, int? Length);
@@ -36,6 +38,11 @@ public static class InvestigationProjection
 
     public static void ValidateFilter(InvestigationKind kind, InvestigationFilter filter)
     {
+        if ((filter.JournalDate is not null || filter.SinceMinutes is not null) &&
+            (kind != InvestigationKind.Alerts || filter.Id is not null ||
+             (filter.JournalDate is not null && (!JournalWindow.TryDate(filter.JournalDate, out _) || filter.SinceMinutes is not null)) ||
+             filter.SinceMinutes is < 1 or > 1440))
+            throw new ArgumentException("Invalid journal window.");
         if (!Enum.IsDefined(kind) || filter.Offset < 0 || filter.Limit is < 1 or > 100 ||
             (filter.Severity is not null && (NormalizeSeverity(filter.Severity) is null ||
                 kind is not (InvestigationKind.Alerts or InvestigationKind.Incidents))) ||
@@ -45,7 +52,7 @@ public static class InvestigationProjection
     }
 
     public static InvestigationPage Select(IEnumerable<JsonElement> rows, InvestigationKind kind,
-        InvestigationFilter filter, CancellationToken token)
+        InvestigationFilter filter, CancellationToken token, JournalWindow? window = null)
     {
         ValidateFilter(kind, filter);
         string? severity = NormalizeSeverity(filter.Severity);
@@ -62,6 +69,11 @@ public static class InvestigationProjection
             if (kind != InvestigationKind.Hosts &&
                 !ids.Add(Guid.Parse(row.Id!)))
                 throw new InvalidDataException("Duplicate investigation identity.");
+            if (window is not null)
+            {
+                if (row.ObservedUtc is null) throw new InvalidDataException("Journal timestamp unavailable.");
+                if (!window.Contains(row.ObservedUtc.Value)) continue;
+            }
             if (severity is not null && row.Severity != severity) continue;
             if (sourceIp is not null && row.SourceIp != sourceIp) continue;
             if (filter.Id is not null && Guid.Parse(row.Id!) != Guid.Parse(filter.Id)) continue;

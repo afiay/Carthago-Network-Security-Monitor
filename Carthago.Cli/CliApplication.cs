@@ -42,6 +42,8 @@ public static class CliApplication
           carthago session inspect <file.csa> [--json]
           carthago alerts list <file.csa|--live> [--severity LEVEL] [--source-ip IP] [--offset N] [--limit N] [--json]
           carthago alerts show <file.csa|--live> <event-id> [--json]
+          carthago alerts list --live [--date YYYY-MM-DD | --since 1h] [--json]
+          carthago alerts tail --live [--severity LEVEL] [--source-ip IP] [--json]
           carthago incidents list <file.csa|--live> [--severity LEVEL] [--source-ip IP] [--offset N] [--limit N] [--json]
           carthago incidents show <file.csa|--live> <incident-id> [--json]
           carthago events list <file.csa|--live> [--source-ip IP] [--offset N] [--limit N] [--json]
@@ -73,6 +75,8 @@ public static class CliApplication
         try
         {
             token.ThrowIfCancellationRequested();
+            if (command is ["alerts", "tail", ..])
+                return await TailAsync(command, output, error, json, token, investigationQuery);
             if (command.Length > 0 && (command[0] is "alerts" or "incidents" or "events" or "hosts"))
                 return await InvestigateAsync(command, output, error, json, token, investigationQuery);
             switch (command)
@@ -327,13 +331,38 @@ public static class CliApplication
         var page = response.Page!;
         if (show && page.Total == 0)
             return await FailAsync(error, json, DataError, "record_not_found", "Record not found in the bounded source.");
-        string source = InvestigationProtocol.Source(kind);
+        bool historical = filter.JournalDate is not null || filter.SinceMinutes is not null;
+        string source = historical ? "bounded_detection_journal_window" : InvestigationProtocol.Source(kind);
+        JournalWindow? window = historical ? JournalWindow.Resolve(filter, response.ObservedUtc) : null;
         await WriteAsync(output, json, new { schemaVersion = SchemaVersion, provenance = "same_user_local_endpoint",
-            source, coverage = "bounded_source_not_complete_history", response.ObservedUtc, page },
+            source, coverage = "bounded_source_not_complete_history", response.ObservedUtc, window, page },
             $"Source: {source}; {page.Total} matching rows; {page.OmittedRows} omitted; not complete history.\n" +
             string.Join("\n", page.Rows.Select(r =>
                 $"{r.Id ?? "-"} | {r.ObservedUtc?.ToString("O") ?? "-"} | {r.RuleId ?? "-"} | {r.Severity ?? "-"} | {r.SourceIp ?? "-"} -> {r.DestinationIp ?? "-"} | {r.Protocol ?? "-"} | {r.Status ?? "-"}")));
         return Success;
+    }
+
+    private static async Task<int> TailAsync(string[] command, TextWriter output, TextWriter error, bool json,
+        CancellationToken token, Func<InvestigationRequest, CancellationToken, Task<InvestigationResponse>>? query)
+    {
+        if (!AlertTail.TryParse(command, out var filter))
+            return await FailAsync(error, json, UsageError, "invalid_usage", "Invalid tail command. Use --help.");
+        if (query is null && !OperatingSystem.IsWindows())
+            return await FailAsync(error, json, DataError, "unsupported_platform", "Live queries require Windows.");
+        if (query is null)
+            query = (request, ct) => OperatingSystem.IsWindows()
+                ? WindowsLocalReadPipe.QueryInvestigationAsync(request, ct)
+                : Task.FromException<InvestigationResponse>(new PlatformNotSupportedException());
+        try
+        {
+            await AlertTail.RunAsync(filter, output, query, json, token);
+            return Success;
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException && !token.IsCancellationRequested)
+        {
+            return await FailAsync(error, json, DataError, "tail_interrupted",
+                "Tail interrupted: journal unavailable, changed, UTC day changed or endpoint failed. Restart to replay the current day.");
+        }
     }
 
     private static bool IsCsaPath(string path) => !string.IsNullOrWhiteSpace(path)

@@ -215,3 +215,34 @@ Pagination is bounded, not an immutable cross-query snapshot; cache changes
 may change ordering/counts between pages. Synchronous cache clone and
 dispatcher projection are not preemptible; cancellation checked per row.
 Runtime tests and native pipe verification still required. No Actions run.
+
+## CLI-004C — historical journal windows and polling tail
+
+SOURCE CANDIDATE — UNVERIFIED. Adds optional V3 request filter fields
+journalDate (YYYY-MM-DD UTC) or sinceMinutes (1–1440), mutually exclusive,
+live alerts list only. Null fields omitted on wire for existing V3 commands.
+Old V3 hosts reject new fields; update both host and CLI. Server resolves
+relative windows using its observation clock. Half-open [start,end) UTC
+range; relative window may span at most two daily journals. Each uses
+existing 8 MiB/20,000-record cap. Any missing required day, malformed
+record, invalid identity or missing explicit UTC timestamp fails closed.
+No implicit historical coverage or signature claim. Future calendar dates
+are rejected. Pages preserve day then file order, not timestamp order.
+
+```powershell
+dotnet run --project Carthago.Cli -c Release -- alerts list --live --date 2026-11-12 --json
+dotnet run --project Carthago.Cli -c Release -- alerts list --live --since 1h --severity high --json
+dotnet run --project Carthago.Cli -c Release -- alerts tail --live --severity high --json
+```
+
+Tail replays the current UTC day's matching rows from the beginning, then
+polls every two seconds, 100 rows per page with one-row overlap and bounded
+20,000 emitted IDs. JSON is NDJSON, one record per line, stdout only; errors
+go to stderr, Ctrl+C returns 130. Stops on unavailable/malformed source,
+cursor mismatch, count shrink, duplicate IDs, capacity or UTC date change.
+Restart replays the current day, so consumers must deduplicate across
+restarts. Overlap detects some shifts/truncation but cannot prove immutable
+prefix, losslessness, atomic snapshots or cross-midnight delivery. No
+automatic retry, durable checkpoint or push subscription. Relative windows
+are recalculated each request; use fixed date for more stable paging.
+Tests authored, unexecuted; Windows and .NET validation pending.

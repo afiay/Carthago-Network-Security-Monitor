@@ -17,8 +17,15 @@ internal static class CliInvestigationHost
         InvestigationPage? page;
         if (request.Kind == InvestigationKind.Alerts)
         {
-            page = await DetectionJournalQuery.ReadAsync(DetectionJournal.Current.GetJournalPath(now.UtcDateTime),
-                request.Filter, token).ConfigureAwait(false);
+            if (request.Filter.JournalDate is not null || request.Filter.SinceMinutes is not null)
+            {
+                var window = JournalWindow.Resolve(request.Filter, now);
+                page = await DetectionJournalQuery.ReadWindowAsync(DetectionJournal.Current.GetJournalPath,
+                    request.Filter, window, token).ConfigureAwait(false);
+            }
+            else
+                page = await DetectionJournalQuery.ReadAsync(DetectionJournal.Current.GetJournalPath(now.UtcDateTime),
+                    request.Filter, token).ConfigureAwait(false);
         }
         else
         {
