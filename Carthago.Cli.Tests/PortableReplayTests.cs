@@ -20,11 +20,28 @@ public sealed class PortableReplayTests
         BinaryPrimitives.WriteUInt16BigEndian(b.AsSpan(22),7001);
         b[32]=0x50;b[33]=0x18;payload.CopyTo(b,40);return b;
     }
+    // Fresh requests on the same TCP flow advance by their payload length.
+    // Raw mode is reserved for deliberately malformed or retransmitted segments.
+    private static byte[] WithSequence(byte[] frame,uint sequence)
+    {
+        var copy=(byte[])frame.Clone();
+        BinaryPrimitives.WriteUInt32BigEndian(copy.AsSpan(24,4),sequence);
+        return copy;
+    }
     private static byte[] Pcap(params (uint Seconds,byte[] Data,uint? Original)[] packets)
+        =>PcapWithSequence(true,packets);
+    private static byte[] PcapWithSequence(bool advance,params (uint Seconds,byte[] Data,uint? Original)[] packets)
     {
         using var m=new MemoryStream();using var w=new BinaryWriter(m);
         w.Write(0xa1b2c3d4u);w.Write((ushort)2);w.Write((ushort)4);w.Write(0u);w.Write(0u);w.Write(65535u);w.Write(101u);
-        foreach(var p in packets){w.Write(p.Seconds);w.Write(0u);w.Write((uint)p.Data.Length);w.Write(p.Original??(uint)p.Data.Length);w.Write(p.Data);}
+        uint sequence=0;
+        foreach(var p in packets)
+        {
+            var data=advance&&p.Data.Length>40?WithSequence(p.Data,sequence):p.Data;
+            if(advance&&data.Length>40)sequence=unchecked(sequence+(uint)(data.Length-40));
+            w.Write(p.Seconds);w.Write(0u);w.Write((uint)data.Length);
+            w.Write(p.Original??(uint)data.Length);w.Write(data);
+        }
         return m.ToArray();
     }
     private static byte[] Block(uint type,Action<BinaryWriter> body)
@@ -80,7 +97,7 @@ public sealed class PortableReplayTests
     {
         var hit=Frame("/config/keystore/test.jsp");
         var bytes=new[]{Section(),Interface(),Interface(),Packet(0,2_000_000,hit),
-            Packet(1,2_000_000,hit),Packet(0,3_000_000,hit),Packet(0,1_000_000,hit),
+            Packet(1,2_000_000,hit),Packet(0,3_000_000,WithSequence(hit,(uint)(hit.Length-40))),Packet(0,1_000_000,hit),
             Section(),Interface(),Packet(0,1_000_000,hit)}.SelectMany(x=>x).ToArray();
         var r=await Run(bytes,".pcapng");Assert.Equal(0,r.Code);
         using var json=JsonDocument.Parse(r.Output);var replay=json.RootElement.GetProperty("replay");
@@ -90,6 +107,21 @@ public sealed class PortableReplayTests
         var findings=replay.GetProperty("findings");
         Assert.Equal(1,findings[1].GetProperty("interfaceId").GetInt32());
         Assert.Equal(1,findings[3].GetProperty("section").GetInt32());
+    }
+
+    [Fact]
+    public async Task RetransmissionDoesNotBecomeNewRequestOrCooldownSuppression()
+    {
+        var hit=Frame("/config/keystore/test.jsp");
+        var next=WithSequence(hit,(uint)(hit.Length-40));
+        var bytes=PcapWithSequence(false,(100,hit,null),(101,hit,null),(102,next,null));
+        var r=await Run(bytes,".pcap");Assert.Equal(0,r.Code);
+        using var json=JsonDocument.Parse(r.Output);var replay=json.RootElement.GetProperty("replay");
+        Assert.Equal(3,replay.GetProperty("parsed").GetInt32());
+        Assert.Equal(1,replay.GetProperty("matchCount").GetInt32());
+        Assert.Equal(1,replay.GetProperty("suppressedCount").GetInt32());
+        Assert.Equal(3,replay.GetProperty("rules")[0].GetProperty("evaluated").GetInt32());
+        Assert.Single(replay.GetProperty("findings").EnumerateArray());
     }
 
     [Fact]

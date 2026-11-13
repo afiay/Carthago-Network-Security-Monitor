@@ -17,6 +17,8 @@ public sealed class PortableBufferedCaptureTests
         BinaryPrimitives.WriteUInt16BigEndian(b.AsSpan(2),(ushort)b.Length);
         BinaryPrimitives.WriteUInt16BigEndian(b.AsSpan(20),51000);
         BinaryPrimitives.WriteUInt16BigEndian(b.AsSpan(22),7001);
+        // The source emits equal-length successive requests, not retransmissions.
+        BinaryPrimitives.WriteUInt32BigEndian(b.AsSpan(24),checked((uint)(seconds*payload.Length)));
         b[32]=0x50;b[33]=0x18;payload.CopyTo(b,40);
         return new(b,(uint)b.Length,DateTime.UnixEpoch.AddSeconds(seconds));
     }

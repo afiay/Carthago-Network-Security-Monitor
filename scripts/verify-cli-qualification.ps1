@@ -89,7 +89,7 @@ try {
         }
     }
     # Synthetic raw IPv4/TCP fixtures only. No capture device or real traffic.
-    function New-SmokeFrame([string]$Uri) {
+    function New-SmokeFrame([string]$Uri,[uint32]$Sequence) {
         $payload=[Text.Encoding]::ASCII.GetBytes("GET $Uri HTTP/1.1`r`nHost: example.test`r`n`r`n")
         [byte[]]$frame=New-Object byte[] (40+$payload.Length)
         $frame[0]=0x45; $frame[8]=64; $frame[9]=6
@@ -98,6 +98,10 @@ try {
         [Array]::Copy($addresses,0,$frame,12,8)
         $frame[20]=0xc7; $frame[21]=0x38 # 51000
         $frame[22]=0x1b; $frame[23]=0x59 # 7001
+        $frame[24]=[byte](($Sequence -shr 24) -band 255)
+        $frame[25]=[byte](($Sequence -shr 16) -band 255)
+        $frame[26]=[byte](($Sequence -shr 8) -band 255)
+        $frame[27]=[byte]($Sequence -band 255)
         $frame[32]=0x50; $frame[33]=0x18
         [Array]::Copy($payload,0,$frame,40,$payload.Length)
         return ,$frame
@@ -122,8 +126,10 @@ try {
                 $writer.Write([uint32]2712847316);$writer.Write([uint16]2);$writer.Write([uint16]4)
                 $writer.Write([uint32]0);$writer.Write([uint32]0);$writer.Write([uint32]65535);$writer.Write([uint32]101)
             }
+            [uint32]$sequence=0
             for ($i=0;$i -lt $uris.Count;$i++) {
-                [byte[]]$frame=New-SmokeFrame $uris[$i]
+                [byte[]]$frame=New-SmokeFrame $uris[$i] $sequence
+                $sequence += [uint32]($frame.Length-40)
                 $seconds=[uint32](100+$i)
                 if ($Ng) {
                     $padding=(4-($frame.Length % 4)) % 4

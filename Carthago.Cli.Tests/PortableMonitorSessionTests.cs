@@ -10,7 +10,7 @@ public sealed class PortableMonitorSessionTests
 {
     private static readonly DateTime Epoch = DateTime.UnixEpoch.AddHours(1);
 
-    private static byte[] Frame(string path)
+    private static byte[] Frame(string path,uint sequence=0)
     {
         var payload=Encoding.ASCII.GetBytes($"GET {path} HTTP/1.1\r\nHost: example.test\r\n\r\n");
         var b=new byte[40+payload.Length];
@@ -19,6 +19,7 @@ public sealed class PortableMonitorSessionTests
         BinaryPrimitives.WriteUInt16BigEndian(b.AsSpan(2),(ushort)b.Length);
         BinaryPrimitives.WriteUInt16BigEndian(b.AsSpan(20),51000);
         BinaryPrimitives.WriteUInt16BigEndian(b.AsSpan(22),7001);
+        BinaryPrimitives.WriteUInt32BigEndian(b.AsSpan(24),sequence);
         b[32]=0x50;b[33]=0x18;payload.CopyTo(b,40);return b;
     }
 
@@ -32,16 +33,23 @@ public sealed class PortableMonitorSessionTests
         var paths=new[]{"/wp-content/plugins/wp2shell_test/file.php","/SetupWizard.aspx/next",
             "/LogoImageHandler.ashx?clazz=example","/config/keystore/test.jsp","/?search=%00{.cmd.exe"};
         var session=new PortableMonitorSession(101,ids);
+        uint sequence=0;
+        byte[] Next(string path)
+        {
+            var frame=Frame(path,sequence);
+            sequence=unchecked(sequence+(uint)(frame.Length-40));
+            return frame;
+        }
         for(int i=0;i<ids.Length;i++)
         {
-            var result=Feed(session,Frame(paths[i]),i);
+            var result=Feed(session,Next(paths[i]),i);
             Assert.Equal("parsed",result.Status);
             Assert.Equal((long)i+1,result.PacketNumber);
             Assert.Equal(ids[i],Assert.Single(result.Findings).RuleId);
             Assert.Equal("GET",result.Findings[0].Method);
         }
-        Assert.Empty(Feed(session,Frame(paths[0]),5).Findings);
-        Assert.Empty(Feed(session,Frame("/LogoImageHandler.ashx?class=example"),6).Findings);
+        Assert.Empty(Feed(session,Next(paths[0]),5).Findings);
+        Assert.Empty(Feed(session,Next("/LogoImageHandler.ashx?class=example"),6).Findings);
         var s=session.ReadSnapshot();
         Assert.Equal(7L,s.Received);Assert.Equal(7L,s.Parsed);Assert.Equal(5L,s.Matches);Assert.Equal(1L,s.Suppressed);
         Assert.All(s.Rules,r=>{Assert.Equal(7L,r.Evaluated);Assert.Equal(1L,r.Matches);});
@@ -68,7 +76,8 @@ public sealed class PortableMonitorSessionTests
         var session=new PortableMonitorSession(101,new[]{"R589"});
         var frame=Frame("/config/keystore/test.jsp");
         Assert.Single(Feed(session,frame,10).Findings);
-        Assert.Empty(Feed(session,frame,11).Findings);
+        var next=Frame("/config/keystore/test.jsp",(uint)(frame.Length-40));
+        Assert.Empty(Feed(session,next,11).Findings);
         Assert.True(session.Process(frame,(uint)frame.Length+1,Epoch).ClockReset);
         Assert.Single(Feed(session,frame,1).Findings);
         var s=session.ReadSnapshot();
@@ -86,7 +95,9 @@ public sealed class PortableMonitorSessionTests
         Assert.Single(Feed(a,frame).Findings);
         var before=a.ReadSnapshot();
         Assert.Single(Feed(b,frame).Findings);
-        Assert.Empty(Feed(a,frame,1).Findings);
+        var next=Frame("/config/keystore/test.jsp",(uint)(frame.Length-40));
+        Assert.Empty(Feed(a,next,1).Findings);
+        Assert.Equal(1L,a.ReadSnapshot().Suppressed);
         Assert.Equal(1L,b.ReadSnapshot().Received);
         Assert.Equal(1L,before.Received);Assert.Equal(0L,before.Suppressed);
         Assert.Equal("R589",Assert.Single(a.ReadSnapshot().Rules).RuleId);
