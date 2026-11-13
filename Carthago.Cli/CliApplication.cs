@@ -40,6 +40,12 @@ public static class CliApplication
           carthago rules show <file.csa> <rule-id> [--json]
           carthago rules quality <ledger.md> [--json]
           carthago session inspect <file.csa> [--json]
+          carthago alerts list <file.csa> [--severity LEVEL] [--source-ip IP] [--offset N] [--limit N] [--json]
+          carthago alerts show <file.csa> <event-id> [--json]
+          carthago incidents list <file.csa> [--severity LEVEL] [--source-ip IP] [--offset N] [--limit N] [--json]
+          carthago incidents show <file.csa> <incident-id> [--json]
+          carthago events list <file.csa> [--source-ip IP] [--offset N] [--limit N] [--json]
+          carthago hosts list <file.csa> [--source-ip IP] [--offset N] [--limit N] [--json]
 
         status reports this CLI only, not the monitoring engine.
         Live queries require Windows and a WPF host started with --enable-cli-ipc.
@@ -66,6 +72,8 @@ public static class CliApplication
         try
         {
             token.ThrowIfCancellationRequested();
+            if (command.Length > 0 && (command[0] is "alerts" or "incidents" or "events" or "hosts"))
+                return await InvestigateAsync(command, output, error, json, token);
             switch (command)
             {
                 case ["--version"]:
@@ -272,6 +280,23 @@ public static class CliApplication
                 heartbeatTrust = "unverified_journal", sensorHealth = "not_assessed" },
                 $"Stored heartbeat IDs: {response.Total}\nFresh: {response.Fresh}\nStale: {response.Stale}\nFuture: {response.Future}\nSensor runtime health: not assessed");
         return kind == LiveQueryKind.RulesValidate && response.CatalogErrors != 0 ? DataError : Success;
+    }
+
+    private static async Task<int> InvestigateAsync(string[] command, TextWriter output, TextWriter error,
+        bool json, CancellationToken token)
+    {
+        if (!InvestigationCommand.TryParse(command, out var kind, out string path, out var filter, out bool show))
+            return await FailAsync(error, json, UsageError, "invalid_usage", "Invalid investigation command. Use --help.");
+        var page = await InvestigationQueries.ReadAsync(path, kind, filter, token);
+        if (show && page.Total == 0)
+            return await FailAsync(error, json, DataError, "record_not_found", "Record not found in saved session.");
+        string category = kind.ToString().ToLowerInvariant();
+        string human = $"Saved {category}: {page.Total} matching rows; {page.OmittedRows} omitted; not live or complete history.\n" +
+            string.Join("\n", page.Rows.Select(r =>
+                $"{r.Id ?? "-"} | {r.ObservedUtc?.ToString("O") ?? "-"} | {r.RuleId ?? "-"} | {r.Severity ?? "-"} | {r.SourceIp ?? "-"} -> {r.DestinationIp ?? "-"} | {r.Protocol ?? "-"} | {r.Status ?? "-"}"));
+        await WriteAsync(output, json, new { schemaVersion = SchemaVersion, provenance = "untrusted_import",
+            source = "saved_session", coverage = "retained_snapshot_not_complete_history", category, page }, human);
+        return Success;
     }
 
     private static bool IsCsaPath(string path) => !string.IsNullOrWhiteSpace(path)

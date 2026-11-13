@@ -162,3 +162,33 @@ untrusted, not healthy. Older files outside the window are not inspected.
 Authored portable protocol, CLI, heartbeat projection and Windows loopback
 tests; no execution in publishing environment. Verify actual Windows
 builds, pipe lifecycle and account/remote restrictions before promotion.
+
+## CLI-004A — offline investigation queries
+
+SOURCE CANDIDATE — UNVERIFIED. Six read-only forms query existing CSA v1
+Alerts, Incidents, Traffic and Hosts categories. No live journal or engine
+query in this increment; no new IPC surface. Explicit file path required.
+
+```powershell
+dotnet run --project Carthago.Cli -c Release -- alerts list ./session.csa --severity high --limit 25 --json
+dotnet run --project Carthago.Cli -c Release -- alerts show ./session.csa <event-id> --json
+dotnet run --project Carthago.Cli -c Release -- incidents list ./session.csa --json
+dotnet run --project Carthago.Cli -c Release -- incidents show ./session.csa <incident-id> --json
+dotnet run --project Carthago.Cli -c Release -- events list ./session.csa --source-ip 192.168.1.10 --json
+dotnet run --project Carthago.Cli -c Release -- hosts list ./session.csa --json
+```
+
+List options: offset >= 0, limit 1–100 (default 50), exact canonical source
+IP, exact severity for alerts/incidents only (info/low/medium/high/critical).
+Pages preserve stored row order, not chronological order. Show accepts N/D
+GUIDs; duplicate alert/incident IDs or conflicting incident aliases fail
+closed. Missing/invalid mandatory identity rows and non-IP host labels are
+counted as omitted. Missing optional fields remain null. Traffic display
+timestamps are not converted to UTC; only explicit UTC event/incident/host
+fields are used. Fixed enum/identifier/IP/numeric projections omit arbitrary
+descriptions, payload, analyst notes, process names and evidence. IPs and
+identifiers are still sensitive operational metadata. Archive integrity is
+not authentication. Output explicitly describes retained snapshot coverage,
+not a full capture or complete journal. Pagination bounds output but the
+existing CSA reader materializes all categories; memory gate remains open.
+Tests authored, no execution. Live journal/incident queries are CLI-004B.
