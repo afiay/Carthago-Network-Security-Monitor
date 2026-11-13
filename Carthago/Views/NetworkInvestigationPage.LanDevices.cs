@@ -42,6 +42,7 @@ namespace Carthago.Views
             AssetHistoryGrid.ItemsSource = history.Rows;
             AssetHistoryStatus.Text = $"{history.SessionCount} saved session(s), {history.Rows.Count} historical identity rows. " +
                 "Historical evidence does not establish current presence. " +
+                AssetHistoryCoveragePresentation.Describe(history) + " " +
                 (history.Error is null ? "" : "Read warning: " + history.Error + " ") +
                 (saveError is null ? "" : "Last checkpoint failed: " + saveError);
         }
