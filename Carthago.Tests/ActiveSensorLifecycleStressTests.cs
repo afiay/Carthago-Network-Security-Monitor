@@ -6,6 +6,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Carthago.Services;
+using Carthago.Contracts;
 using Carthago.Services.Sensors;
 using Xunit;
 
@@ -130,7 +131,8 @@ public sealed class ActiveSensorLifecycleStressTests : IDisposable
             {
                 entered.TrySetResult(true);
                 if (!release.Wait(TimeSpan.FromSeconds(10))) throw new TimeoutException("Test release timed out");
-            }).Save(row));
+            }).Save(row), acquireReservation: () => WindowsActiveSchedulerReservation.AcquireNamed(
+                @"Global\Carthago.Test.ActiveScheduler." + Guid.NewGuid().ToString("N")));
         manager.Add(Profile());
         manager.Add(Profile("other.example"));
         var running = Task.Run(() => manager.RunAsync(cts.Token));

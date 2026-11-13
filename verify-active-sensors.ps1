@@ -25,6 +25,7 @@ try {
         ActiveSensorLifecycleStressTests = 7
         ActiveIncidentContextTests = 8
         ActiveSensorProfileStoreTests = 10
+        ActiveSchedulerOwnershipTests = 5
     }
     $branch = (& git branch --show-current).Trim()
     if ($LASTEXITCODE -ne 0 -or $branch -ne 'feature/carthago-reliability-hardening') {
@@ -86,7 +87,7 @@ try {
         exit 1
     }
     $filter = ($expected.Keys | ForEach-Object { 'FullyQualifiedName~' + $_ }) -join '|'
-    Write-Host 'AS-Q01: execute fourteen active sensor suites (synthetic and loopback only)'
+    Write-Host 'AS-Q01: execute fifteen active sensor suites (synthetic and loopback only)'
     $report.testExitCode = Invoke-Dotnet @('test', $project, '-c', 'Release', '--no-build', '--no-restore',
         '--filter', $filter, '--logger', 'trx;LogFileName=active-sensors.trx', '--results-directory', $dir) (Join-Path $dir 'tests.log')
     if (-not (Test-Path -LiteralPath $trxPath)) {

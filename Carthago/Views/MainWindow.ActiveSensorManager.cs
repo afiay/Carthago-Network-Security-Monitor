@@ -147,7 +147,12 @@ public partial class MainWindow
             RefreshSaved();
         };
         var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        timer.Tick += (_, _) => Refresh();
+        timer.Tick += (_, _) =>
+        {
+            Refresh();
+            if (active is not null && !active.IsCancellationRequested && manager.HasReservation)
+                message.Text = "Running approved profiles — machine-wide ownership held.";
+        };
         timer.Start();
         add.Click += (_, _) =>
         {
@@ -173,17 +178,19 @@ public partial class MainWindow
             active = cancellation;
             start.IsEnabled = add.IsEnabled = remove.IsEnabled = remember.IsEnabled = restore.IsEnabled = forget.IsEnabled = false;
             stop.IsEnabled = true;
-            message.Text = "Running approved profiles.";
+            message.Text = "Starting — acquiring machine-wide scheduler ownership…";
+            string? failure = null;
             try { await Task.Run(() => manager.RunAsync(cancellation.Token), cancellation.Token); }
-            catch (OperationCanceledException) { }
-            catch (Exception) { message.Text = "Scheduler stopped unexpectedly."; }
+            catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
+            catch (InvalidOperationException ex) { failure = ex.Message; }
+            catch (Exception ex) when (ex is not OutOfMemoryException) { failure = "Scheduler stopped unexpectedly."; }
             finally
             {
                 active = null;
                 stop.IsEnabled = false;
                 start.IsEnabled = add.IsEnabled = remove.IsEnabled = remember.IsEnabled = restore.IsEnabled = forget.IsEnabled = true;
                 if (closeRequested) dialog.Close();
-                else { message.Text = "Stopped — no scheduled network activity."; Refresh(); }
+                else { message.Text = failure ?? "Stopped — no scheduled network activity."; Refresh(); }
             }
         };
         stop.Click += (_, _) => { active?.Cancel(); stop.IsEnabled = false; message.Text = "Stopping; waiting for current probe cleanup…"; };

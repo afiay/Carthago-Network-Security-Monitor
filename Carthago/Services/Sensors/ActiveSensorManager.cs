@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Carthago.Contracts;
 
 namespace Carthago.Services.Sensors;
 
@@ -50,17 +51,22 @@ internal sealed class ActiveSensorManager
     private readonly Func<ActiveSensorProfile, LocalLanInterface?> _resolve;
     private readonly Func<ActiveSensorProfile, LocalLanInterface, CancellationToken, Task<ActiveSensorRun>> _probe;
     private readonly Func<ActiveEvidenceRow, bool> _save;
+    private readonly Func<IDisposable> _acquireReservation;
+    private readonly bool _allowsTestTick;
     private bool _busy;
+    private bool _loopActive;
 
     internal ActiveSensorManager(Func<DateTimeOffset>? clock = null,
         Func<ActiveSensorProfile, LocalLanInterface?>? resolve = null,
         Func<ActiveSensorProfile, LocalLanInterface, CancellationToken, Task<ActiveSensorRun>>? probe = null,
-        Func<ActiveEvidenceRow, bool>? save = null)
+        Func<ActiveEvidenceRow, bool>? save = null, Func<IDisposable>? acquireReservation = null)
     {
         _clock = clock ?? (() => DateTimeOffset.UtcNow);
         _resolve = resolve ?? Resolve;
         _probe = probe ?? ProbeAsync;
         _save = save ?? (row => new ActiveEvidenceStore().Save(row));
+        _acquireReservation = acquireReservation ?? WindowsActiveSchedulerReservation.Acquire;
+        _allowsTestTick = probe is not null;
     }
 
     internal void Add(ActiveSensorProfile p)
@@ -72,7 +78,7 @@ internal sealed class ActiveSensorManager
             throw new ArgumentException("Invalid profile.");
         lock (_gate)
         {
-            if (_busy) throw new InvalidOperationException("Wait for the current probe to finish.");
+            if (_busy || _loopActive) throw new InvalidOperationException("Stop the scheduler before changing profiles.");
             if (_states.Count >= MaxProfiles) throw new InvalidOperationException("Profile limit reached.");
             if (_states.Values.Any(s => s.Profile.AdapterId == p.AdapterId &&
                 s.Profile.Adapter.Address.Equals(p.Adapter.Address) && s.Profile.Target.Equals(p.Target) &&
@@ -86,10 +92,13 @@ internal sealed class ActiveSensorManager
     {
         lock (_gate)
         {
-            if (_busy) return false;
+            if (_busy || _loopActive) return false;
             return _states.Remove(id);
         }
     }
+
+    private bool _reserved;
+    internal bool HasReservation { get { lock (_gate) return _reserved; } }
 
     internal IReadOnlyList<ActiveSensorScheduleState> Snapshot()
     {
@@ -104,14 +113,22 @@ internal sealed class ActiveSensorManager
             interval.Ticks * (1L << Math.Min(failures, 5))));
     }
 
-    // At most one due profile per tick and globally one in-flight probe.
-    internal async Task<bool> RunDueAsync(CancellationToken token)
+    // Deterministic test seam: a standalone tick is permitted only with an
+    // injected probe, never alongside the production loop. Production callers
+    // must use RunAsync, which holds the machine-wide reservation.
+    internal Task<bool> RunDueAsync(CancellationToken token)
+    {
+        if (!_allowsTestTick) throw new InvalidOperationException("Use the reserved scheduler loop.");
+        return RunDueCoreAsync(token, fromLoop: false);
+    }
+
+    private async Task<bool> RunDueCoreAsync(CancellationToken token, bool fromLoop)
     {
         token.ThrowIfCancellationRequested();
         ActiveSensorScheduleState state;
         lock (_gate)
         {
-            if (_busy) return false;
+            if (_busy || _loopActive != fromLoop) return false;
             var now = _clock();
             var due = _states.Values.Where(s => !s.ScopeBlocked && s.NextDueUtc <= now)
                 .OrderBy(s => s.NextDueUtc).ThenBy(s => s.Profile.Id).FirstOrDefault();
@@ -178,10 +195,30 @@ internal sealed class ActiveSensorManager
 
     internal async Task RunAsync(CancellationToken token)
     {
-        while (!token.IsCancellationRequested)
+        token.ThrowIfCancellationRequested();
+        lock (_gate)
         {
-            await RunDueAsync(token).ConfigureAwait(false);
-            await Task.Delay(TimeSpan.FromSeconds(1), token).ConfigureAwait(false);
+            if (_loopActive || _busy) throw new InvalidOperationException("This scheduler is already running.");
+            if (_states.Count == 0) throw new InvalidOperationException("No session profiles approved.");
+            _loopActive = true;
+        }
+        try
+        {
+            // Do not start a single probe until native ownership is established.
+            // Dispose only after the current probe and any synchronous save finish.
+            using var reservation = _acquireReservation() ??
+                throw new InvalidOperationException("Active scheduler reservation unavailable.");
+            lock (_gate) _reserved = true;
+            token.ThrowIfCancellationRequested();
+            while (true)
+            {
+                await RunDueCoreAsync(token, fromLoop: true).ConfigureAwait(false);
+                await Task.Delay(TimeSpan.FromSeconds(1), token).ConfigureAwait(false);
+            }
+        }
+        finally
+        {
+            lock (_gate) { _reserved = false; _loopActive = false; }
         }
     }
 
