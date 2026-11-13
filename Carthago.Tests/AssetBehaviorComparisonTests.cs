@@ -35,12 +35,30 @@ public sealed class AssetBehaviorComparisonTests
     [Fact]
     public void Current_Checkpoint_And_Overlapping_History_Are_Excluded()
     {
-        var current = Current(Arp());
+        var sameSecond = Arp() with
+        {
+            FirstSeenUtc = "2026-11-13 10:00:00Z",
+            LastSeenUtc = "2026-11-13 10:01:00Z"
+        };
+        var current = Current(sameSecond);
         var overlap = Arp() with { LastSeenUtc = "2026-11-13 10:01:00Z" };
-        var row = Assert.Single(Compare(current, Saved(Arp(), current.SessionId),
-            Saved(overlap), Saved(Arp(), start: "2026-11-13 10:00:00Z")).Rows);
+        // Keep all excluded checkpoints chronologically valid. A session
+        // starting at the cutoff is ineligible, not corrupted.
+        var row = Assert.Single(Compare(current, Saved(sameSecond, current.SessionId, "2026-11-13 10:00:00Z"),
+            Saved(overlap), Saved(sameSecond, start: "2026-11-13 10:00:00Z")).Rows);
         Assert.Equal("No comparable prior observations", row.Status);
         Assert.Equal(0, row.PriorSessions);
+    }
+
+    [Fact]
+    public void Last_Seen_Before_Session_Start_Withholds_Novelty()
+    {
+        var current = Current(Arp("192.168.1.10; 192.168.1.20"));
+        var invalid = Saved(Arp(), start: "2026-11-12 11:00:00Z");
+        var row = Assert.Single(Compare(current, Saved(Arp()), invalid).Rows);
+        Assert.Equal("History incomplete; novelty withheld", row.Status);
+        Assert.Equal(1, row.PriorSessions);
+        Assert.Empty(row.NewAddresses);
     }
 
     [Fact]
