@@ -55,11 +55,10 @@ namespace Carthago.Engine.Rules
             OAuthDeviceFlowPromotionAuthorization? trustedR275PromotionAuthorization,
             bool requireCapabilityBinding)
         {
-            Record = record ?? throw new ArgumentNullException(nameof(record));
-            Sensitivity = sensitivity;
-            TimestampUtc = timestampUtc.Kind == DateTimeKind.Utc
-                ? timestampUtc
-                : timestampUtc.ToUniversalTime();
+            // Preserve the host's historical local/unspecified timestamp normalization.
+            // Portable callers must supply UTC explicitly; no host capability is transferred.
+            Packet = new PacketEvaluationContext(record, sensitivity,
+                timestampUtc.Kind == DateTimeKind.Utc ? timestampUtc : timestampUtc.ToUniversalTime());
             HealthSnapshot = healthSnapshot
                 ?? RuleEngineHealthSnapshot.Empty(TimestampUtc);
 
@@ -100,9 +99,10 @@ namespace Carthago.Engine.Rules
             => string.Equals(Record.Source, R272Source, StringComparison.Ordinal)
                 ? R272Signals : Array.Empty<(string, string)>();
 
-        public TrafficRecord Record { get; }
-        public Sensitivity Sensitivity { get; }
-        public DateTime TimestampUtc { get; }
+        public PacketEvaluationContext Packet { get; }
+        public TrafficRecord Record => Packet.Record;
+        public Sensitivity Sensitivity => Packet.Sensitivity;
+        public DateTime TimestampUtc => Packet.TimestampUtc;
         public RuleEngineHealthSnapshot HealthSnapshot { get; }
 
         // Deliberately internal. Public RuleEvaluationContext construction stays

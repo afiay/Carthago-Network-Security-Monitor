@@ -28,3 +28,4 @@ System boundaries, evidence lineage, sensors and architectural constraints.
 - [CLI-006C.2 — PCAPNG inspection](CLI-006C2-PcapNg.md)
 - [CLI-006D.1 — Portable detection data model](CLI-006D1-PortableDetectionModel.md)
 - [CLI-006B.4A1 — Portable detection contracts](CLI-006B4A1-PortableDetectionContracts.md)
+- [CLI-006D.2 — Portable packet evaluation context](CLI-006D2-PortableEvaluationContext.md)
