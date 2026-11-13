@@ -194,7 +194,13 @@ namespace Carthago.Services.Geo
         public void Dispose()
         {
             _cityDb?.Dispose();
+            _cityDb = null;
             _asnDb?.Dispose();
+            _asnDb = null;
+            if (CityDatabaseStatus == DatabaseAvailability.Ready)
+                CityDatabaseStatus = DatabaseAvailability.Unavailable;
+            if (AsnDatabaseStatus == DatabaseAvailability.Ready)
+                AsnDatabaseStatus = DatabaseAvailability.Unavailable;
         }
 
         public sealed class GeoInfo
