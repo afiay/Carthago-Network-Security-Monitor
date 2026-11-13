@@ -124,6 +124,7 @@ internal sealed class ActiveExecutionGrant
     public long GrantedTicks { get; set; }
     public long ExpiresTicks { get; set; }
     public long? RevokedTicks { get; set; }
+    public Guid? CredentialGeneration { get; set; }
 }
 
 internal sealed class ActiveSensorProfileStore
@@ -132,28 +133,52 @@ internal sealed class ActiveSensorProfileStore
     private static readonly object Gate = new();
     private readonly string _path;
     private readonly Func<DateTimeOffset> _clock;
+    private readonly SnmpCredentialVault _vault;
     internal static readonly TimeSpan MaxGrantLifetime = TimeSpan.FromHours(24);
 
-    internal ActiveSensorProfileStore(string? path = null, Func<DateTimeOffset>? clock = null)
+    internal ActiveSensorProfileStore(string? path = null, Func<DateTimeOffset>? clock = null,
+        SnmpCredentialVault? vault = null)
     {
         _path = path ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "Carthago", "active-sensor-profiles.db");
         _clock = clock ?? (() => DateTimeOffset.UtcNow);
+        _vault = vault ?? new SnmpCredentialVault();
     }
 
     private static ILiteCollection<ActiveExecutionGrant> Grants(LiteDatabase db) =>
         db.GetCollection<ActiveExecutionGrant>("active_execution_grants");
 
-    private static bool ValidGrant(ActiveExecutionGrant? grant, SavedActiveSensorProfile row, long now) =>
+    private bool ValidGrant(ActiveExecutionGrant? grant, SavedActiveSensorProfile row, long now) =>
         grant is not null && grant.Id == row.Id && grant.GrantId != Guid.Empty &&
         grant.ConfigurationDigest == row.ConfigurationDigest() && grant.RevokedTicks is null &&
         grant.GrantedTicks > 0 && grant.GrantedTicks <= now && now < grant.ExpiresTicks &&
         grant.ExpiresTicks - grant.GrantedTicks <= MaxGrantLifetime.Ticks &&
-        grant.ExpiresTicks <= DateTime.MaxValue.Ticks;
+        grant.ExpiresTicks <= DateTime.MaxValue.Ticks && CredentialMatches(grant, row);
+
+    private static SnmpCredentialScope Scope(ActiveSensorProfile p) => SnmpCredentialScope.Create(p.AdapterId, p.Adapter, p.Target);
+
+    private bool CredentialMatches(ActiveExecutionGrant grant, SavedActiveSensorProfile row)
+    {
+        if (row.Sensor != ActiveSensorKind.Snmp.ToString()) return grant.CredentialGeneration is null;
+        return grant.CredentialGeneration is Guid generation && generation != Guid.Empty &&
+            row.TryValidate(out var p) && p is not null && _vault.GetGeneration(Scope(p)) == generation;
+    }
+
+    internal Guid? CurrentSnmpCredentialGeneration(ActiveSensorProfile p) =>
+        p.Kind == ActiveSensorKind.Snmp ? _vault.GetGeneration(Scope(p)) : null;
+
+    internal SnmpCredential? LoadAuthorizedSnmp(ActiveSensorProfile p, Guid grantId)
+    {
+        if (p.Kind != ActiveSensorKind.Snmp || grantId == Guid.Empty) return null;
+        var grant = ReadValidGrant(p);
+        if (grant?.GrantId != grantId || grant.CredentialGeneration is not Guid generation) return null;
+        var secret = _vault.Load(Scope(p), generation);
+        return secret is not null && IsAuthorized(p, grantId) ? secret : null;
+    }
 
     // The caller explicitly approves a current live scope before requesting a
     // grant. Recheck exact saved parameters inside the same database transaction.
-    internal ActiveExecutionGrant? Grant(ActiveSensorProfile approved, TimeSpan lifetime)
+    internal ActiveExecutionGrant? Grant(ActiveSensorProfile approved, TimeSpan lifetime, Guid? credentialGeneration = null)
     {
         if (lifetime <= TimeSpan.Zero || lifetime > MaxGrantLifetime) return null;
         lock (Gate)
@@ -161,6 +186,12 @@ internal sealed class ActiveSensorProfileStore
             try
             {
                 var expected = SavedActiveSensorProfile.From(approved);
+                if (approved.Kind == ActiveSensorKind.Snmp)
+                {
+                    if (credentialGeneration is not Guid generation || generation == Guid.Empty ||
+                        _vault.Load(Scope(approved), generation) is null) return null;
+                }
+                else if (credentialGeneration.HasValue) return null;
                 if (!File.Exists(_path)) return null;
                 using var db = Open();
                 var rows = Collection(db);
@@ -173,7 +204,7 @@ internal sealed class ActiveSensorProfileStore
                     { db.Rollback(); return null; }
                     var now = _clock();
                     var grant = new ActiveExecutionGrant { Id = row.Id, GrantId = Guid.NewGuid(),
-                        ConfigurationDigest = row.ConfigurationDigest(), GrantedTicks = now.UtcDateTime.Ticks,
+                        ConfigurationDigest = row.ConfigurationDigest(), CredentialGeneration = credentialGeneration, GrantedTicks = now.UtcDateTime.Ticks,
                         ExpiresTicks = (now + lifetime).UtcDateTime.Ticks };
                     if (!ValidGrant(grant, row, now.UtcDateTime.Ticks)) { db.Rollback(); return null; }
                     grants.Upsert(grant);

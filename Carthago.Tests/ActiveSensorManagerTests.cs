@@ -21,7 +21,7 @@ public sealed class ActiveSensorManagerTests
 
     [Theory]
     [InlineData("Gateway")]
-    [InlineData("Snmp")]
+    [InlineData("99")]
     public void ManualOnlyRejected(string kind) => Assert.Throws<ArgumentException>(() => Profile(Enum.Parse<ActiveSensorKind>(kind)));
 
     [Theory]

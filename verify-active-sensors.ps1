@@ -29,6 +29,7 @@ try {
         ActiveExecutionGrantTests = 9
         ActiveSensorWorkerTests = 7
         SnmpCredentialVaultTests = 7
+        ScheduledSnmpAuthorizationTests = 7
     }
     $branch = (& git branch --show-current).Trim()
     if ($LASTEXITCODE -ne 0 -or $branch -ne 'feature/carthago-reliability-hardening') {

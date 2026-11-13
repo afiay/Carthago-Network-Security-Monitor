@@ -64,7 +64,7 @@ public sealed class ActiveSensorProfileStoreTests : IDisposable
     public void InvalidOrManualOnlyConfigurationRejected()
     {
         var profile = Profile();
-        Assert.False(Store().Save(profile with { Kind = ActiveSensorKind.Snmp }));
+        Assert.False(Store().Save(profile with { Kind = ActiveSensorKind.Snmp })); // noncanonical DNS parameters
         Assert.False(Store().Save(profile with { Kind = ActiveSensorKind.Gateway }));
         Assert.False(Store().Save(profile with { Interval = TimeSpan.FromSeconds(301) }));
         Assert.False(Store().Save(profile with { Adapter = Adapter with { Mask = IPAddress.Parse("255.0.255.0") } }));

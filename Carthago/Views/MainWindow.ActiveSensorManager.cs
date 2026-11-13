@@ -41,13 +41,13 @@ public partial class MainWindow
         var inputs = new StackPanel();
         inputs.Children.Add(new TextBlock { Text = $"Approved target: {host.Address} via {adapter.Name} ({adapter.Address})\n" +
             "Add profiles, then explicitly start. One probe at a time; first check immediately, minimum five-minute interval. " +
-            "Closing stops all checks. Saved configurations require session approval or a valid durable grant. Gateway and SNMP remain manual-only.",
+            "Closing stops all checks. Saved configurations require session approval or a valid durable grant. Gateway remains manual-only; SNMP requires a durable credential-bound grant.",
             TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 10) });
         inputs.Children.Add(new TextBlock { Text = "Sensor" });
-        var kind = new ComboBox { ItemsSource = new[] { ActiveSensorKind.Tcp, ActiveSensorKind.Dns, ActiveSensorKind.Tls, ActiveSensorKind.Http },
+        var kind = new ComboBox { ItemsSource = new[] { ActiveSensorKind.Tcp, ActiveSensorKind.Dns, ActiveSensorKind.Tls, ActiveSensorKind.Http, ActiveSensorKind.Snmp },
             SelectedIndex = 0, Margin = new Thickness(0, 3, 0, 7) };
         inputs.Children.Add(kind);
-        inputs.Children.Add(new TextBlock { Text = "DNS hostname (required for DNS/TLS/HTTP; ignored for TCP)" });
+        inputs.Children.Add(new TextBlock { Text = "DNS hostname (required for DNS/TLS/HTTP; ignored for TCP/SNMP)" });
         var name = new TextBox { MaxLength = 254, Margin = new Thickness(0, 3, 0, 7) }; inputs.Children.Add(name);
         inputs.Children.Add(new TextBlock { Text = "Port (TLS/HTTP only)" });
         var port = new ComboBox { ItemsSource = new[] { 443, 8443, 80, 8080, 5986, 636, 8883 }, SelectedIndex = 0,
@@ -134,6 +134,7 @@ public partial class MainWindow
                     LocalLanDiscovery.PlanProbeTargets(new[] { a }).Contains(host.Address));
                 if (live is null) { message.Text = "Selected live scope has changed. Close and select the current host."; return; }
                 var profile = selected.ApproveForSession(id.Value, live, host.Address);
+                if (profile.Kind == ActiveSensorKind.Snmp) { message.Text = "SNMP requires a durable grant; use Grant then Load authorized profile."; return; }
                 if (MessageBox.Show(dialog, $"Authorize this configuration for this session?\n{selected.Label}\n" +
                     $"Adapter: {selected.AdapterId}\nNo probes run until Start.",
                     "Reapprove active profile", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
@@ -165,10 +166,15 @@ public partial class MainWindow
             try
             {
                 var profile = ResolveSaved(selected);
+                var generation = profileStore.CurrentSnmpCredentialGeneration(profile);
+                if (profile.Kind == ActiveSensorKind.Snmp && !generation.HasValue)
+                { message.Text = "Save an encrypted credential for this agent in the SNMP inspector first."; return; }
                 if (MessageBox.Show(dialog, $"Grant this exact configuration permission to run scheduled probes for 24 hours?\n{selected.Label}\n" +
-                    $"Adapter: {selected.AdapterId}\nNo automatic startup. Revocation blocks subsequent checks.",
+                    $"Adapter: {selected.AdapterId}\n" +
+                    (generation.HasValue ? $"Credential generation: {generation.Value:D}\n" : "") +
+                    "No automatic startup. Revocation blocks subsequent checks.",
                     "Durable active authorization", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
-                var result = profileStore.Grant(profile, TimeSpan.FromHours(24));
+                var result = profileStore.Grant(profile, TimeSpan.FromHours(24), generation);
                 message.Text = result is null ? "Authorization could not be saved." :
                     $"Authorized until {new DateTime(result.ExpiresTicks, DateTimeKind.Utc):u}. Load authorized profile, then Start.";
             }
@@ -211,8 +217,16 @@ public partial class MainWindow
             if (active is not null) return;
             try
             {
-                manager.Add(ActiveSensorProfile.Create(id!.Value, adapter, host.Address, (ActiveSensorKind)kind.SelectedItem,
-                    name.Text, (int)port.SelectedItem, TimeSpan.FromMinutes((int)interval.SelectedItem), save.IsChecked == true));
+                var profile = ActiveSensorProfile.Create(id!.Value, adapter, host.Address, (ActiveSensorKind)kind.SelectedItem,
+                    name.Text, (int)port.SelectedItem, TimeSpan.FromMinutes((int)interval.SelectedItem), save.IsChecked == true);
+                if (profile.Kind == ActiveSensorKind.Snmp)
+                {
+                    if (MessageBox.Show(dialog, "Save this SNMP configuration only? No execution permission is granted.",
+                        "SNMP schedule", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+                    message.Text = profileStore.Save(profile) ? "SNMP configuration saved. Grant authorization then load it." : "Could not save SNMP configuration.";
+                    RefreshSaved(); return;
+                }
+                manager.Add(profile);
                 message.Text = "Profile approved for this session. Start to enable checks.";
                 Refresh();
             }
