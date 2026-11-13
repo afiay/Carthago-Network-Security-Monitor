@@ -2323,3 +2323,8 @@ Reviewed parent `981d0175af5044281fbfe57048e78563ac46ad39`, native resolver, pro
 ## 2026-11-13 — CLI-007A portable headless frame session
 
 **SOURCE CANDIDATE — UNVERIFIED.** Parent `a1fe45e07ee420a9c4a131877ac250163e53445b`. CLI-006E execution still pending. Add Core-only ordered single-source frame session using existing processor/dispatcher, bounded input and rule selection, isolated state/clock reset, sanitized findings and long counters. Ten synthetic cases authored, zero executed. No native adapter, live capture, policy changes, build/test/Actions or release qualification. Existing replay and Windows host unchanged. See [architecture](02-architecture/CLI-007A-PortableMonitorSession.md). Next: owner-run qualification then adapter lifecycle.
+
+
+## 2026-11-13 — CLI-007B portable capture adapter lifecycle
+
+**SOURCE CANDIDATE — UNVERIFIED.** Parent 567663805b668d3a29dfded793cb1ac03083bbcd. Add Core pull source contract and single-owner lifecycle runner with finite/live EOF distinction, cooperative cancellation, partial-start cleanup, independent cleanup failure flags and sanitized phase codes. Ten synthetic cases authored, zero executed. No native capture, queue, build/test/Actions or qualification claim. See [architecture](02-architecture/CLI-007B-PortableCaptureLifecycle.md).

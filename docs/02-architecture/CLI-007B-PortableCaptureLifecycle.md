@@ -1,0 +1,7 @@
+# CLI-007B — Portable capture adapter lifecycle
+
+**SOURCE CANDIDATE — UNVERIFIED.** Parent 567663805b668d3a29dfded793cb1ac03083bbcd. CLI-006E qualification pending.
+
+Core-only pull contract: StartAsync returns fixed link type; ReadAsync yields one stable frame or EOF; StopAsync and DisposeAsync release resources. One source per run, caller transfers lifetime ownership. Validate rule selection before startup, then construct a portable monitor session from the returned link type. Serial read/process/observe; no queue or concurrent callbacks. Live EOF fails closed; finite sources must explicitly opt into clean EOF. Cancellation is cooperative and checked before processing. Stop is attempted after any startup attempt, including partial startup failure; dispose always attempted even if stop fails. Cleanup uses no cancelled token; adapters must unblock reads and complete cleanup. No timeout or forced termination guarantee. Cleanup failure overrides success/cancellation while retaining primary failure code and separate cleanup flags. No raw exception details, payloads, native driver, live capture, service integration or deployment.
+
+Ten synthetic cases authored; zero executed. Owner gate: dotnet test Carthago.Cli.Tests/Carthago.Cli.Tests.csproj -c Release --filter "FullyQualifiedName~PortableCaptureRunTests|FullyQualifiedName~PortableMonitorSessionTests". Next: bounded handoff and drop/drain accounting, then native adapters after actual qualification.
