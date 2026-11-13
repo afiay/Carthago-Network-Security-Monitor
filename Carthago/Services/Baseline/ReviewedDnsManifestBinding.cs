@@ -9,6 +9,12 @@ namespace Carthago.Services.Baseline
     // No live baseline writer consumes this result.
     internal static class ReviewedDnsManifestBinding
     {
+        // DateTimeOffset parsing can interpret a missing offset using local time.
+        // Require an explicit UTC designator so acceptance is host-independent.
+        private static bool HasExplicitUtcOffset(string? value) =>
+            value != null && (value.EndsWith("Z", StringComparison.Ordinal) ||
+                value.EndsWith("+00:00", StringComparison.Ordinal));
+
         internal static bool Matches(ReadOnlySpan<byte> manifest, string expectedManifestSha256,
             ReadOnlySpan<byte> capture, QualifiedDnsScope scope, DateTimeOffset firstPacket,
             DateTimeOffset lastPacket)
@@ -37,6 +43,7 @@ namespace Carthago.Services.Baseline
                 if (!root.TryGetProperty("startUtc", out var start) ||
                     !root.TryGetProperty("endUtc", out var end) ||
                     start.ValueKind != JsonValueKind.String || end.ValueKind != JsonValueKind.String ||
+                    !HasExplicitUtcOffset(start.GetString()) || !HasExplicitUtcOffset(end.GetString()) ||
                     !start.TryGetDateTimeOffset(out var from) || !end.TryGetDateTimeOffset(out var to) ||
                     from.Offset != TimeSpan.Zero || to.Offset != TimeSpan.Zero ||
                     firstPacket.Offset != TimeSpan.Zero || lastPacket.Offset != TimeSpan.Zero ||

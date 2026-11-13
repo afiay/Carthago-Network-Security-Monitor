@@ -20,6 +20,10 @@ public sealed class ReviewedDnsManifestBindingTests
     [InlineData("classification", false)]
     [InlineData("duplicate", false)]
     [InlineData("review", false)]
+    [InlineData("missing-start-offset", false)]
+    [InlineData("missing-end-offset", false)]
+    [InlineData("explicit-z", true)]
+    [InlineData("nonzero-offset", false)]
     public void Manifest_Binds_Exact_Bytes_Scope_And_Interval(string change, bool expected)
     {
         byte[] capture = { 1, 2, 3 };
@@ -28,7 +32,10 @@ public sealed class ReviewedDnsManifestBindingTests
         var end = start.AddMinutes(1);
         var manifest = JsonSerializer.Serialize(new {
             version = 1, scope = scope.Subject, captureSha256 = Digest(capture),
-            startUtc = start, endUtc = end,
+            startUtc = change == "missing-start-offset" ? "2026-11-13T10:00:00" :
+                change == "explicit-z" ? "2026-11-13T10:00:00Z" :
+                change == "nonzero-offset" ? "2026-11-13T11:00:00+01:00" : start.ToString("O"),
+            endUtc = change == "missing-end-offset" ? "2026-11-13T10:01:00" : end.ToString("O"),
             classification = change == "classification" ? "synthetic" : "reviewed-benign",
             reviewId = change == "review" ? "" : "review-1"
         });
