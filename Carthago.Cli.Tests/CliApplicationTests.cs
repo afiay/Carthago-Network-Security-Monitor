@@ -45,7 +45,9 @@ public sealed class CliApplicationTests
         using var doc = JsonDocument.Parse(result.Out);
         Assert.Equal(0, result.Code);
         var capabilities = doc.RootElement.GetProperty("capabilities").EnumerateArray().ToArray();
-        Assert.Single(capabilities.Where(c => c.GetProperty("state").GetString() == "available"));
+        Assert.Equal(new[] { "pcap.detect", "pcap.inspect", "session.inspect" },
+            capabilities.Where(c => c.GetProperty("state").GetString() == "available")
+                .Select(c => c.GetProperty("name").GetString()).OrderBy(n => n, StringComparer.Ordinal).ToArray());
         Assert.Equal("unavailable", capabilities.Single(c => c.GetProperty("name").GetString() == "capture")
             .GetProperty("state").GetString());
     }

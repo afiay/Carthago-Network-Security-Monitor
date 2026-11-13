@@ -2288,3 +2288,8 @@ Reviewed parent `59b2d177729271e64ca8f55c87c50e412b045add`, WindowsProcessResolv
 ## 2026-11-13 — CLI-006D.4 offline replay dispatcher
 
 **SOURCE CANDIDATE — UNVERIFIED.** Parent `a894a36f036fccad864d6c4c7ebf4172a12411e3`. Shared bounded PCAP/PCAPNG observer, Core R589 dispatcher, explicit unsupported numeric IDs, per-interface/section/clock epoch state, bounded findings and complete counters. Nine synthetic cases authored, zero executed. No live alert, rule promotion, capture or Actions. See [architecture](02-architecture/CLI-006D4-OfflineReplayDispatcher.md) for commands, boundaries and next gate.
+
+
+## 2026-11-13 — CLI-006D.5A second portable detector and independent accounting
+
+**SOURCE CANDIDATE — UNVERIFIED.** Parent `d9ade6dba94bc9fd7e802bdcefdc6f52c36326eb`. R587 extracted unchanged into Core; Windows adapter retains policy and evidence. Replay supports R587/R589 with independent counters/cooldowns. Nine portable and four Windows parity cases authored, zero executed. Fix stale capability assertion. No builds, live capture or Actions. See [architecture](02-architecture/CLI-006D5A-PortableDetectionExpansion.md) for focused commands and next gate.

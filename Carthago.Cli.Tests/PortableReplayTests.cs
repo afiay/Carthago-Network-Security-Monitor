@@ -116,6 +116,46 @@ public sealed class PortableReplayTests
         Assert.Equal(130,stopped.Code);Assert.Empty(stopped.Output);
     }
 
+    [Fact]
+    public async Task TwoRulesHaveIndependentCountersAndCooldowns()
+    {
+        var wizard=Frame("/SetupWizard.aspx/next");
+        var keystore=Frame("/config/keystore/test.jsp");
+        var both=Frame("/SetupWizard.aspx/config/keystore/test.jsp");
+        var bytes=Pcap((100,wizard,null),(101,keystore,null),(102,both,null),
+            (700,wizard,null),(701,Frame("/other?x=/SetupWizard.aspx/next"),null));
+        var r=await Run(bytes,".pcap","R589,R587,R1000",2);
+        Assert.Equal(0,r.Code);
+        using var json=JsonDocument.Parse(r.Output);
+        var replay=json.RootElement.GetProperty("replay");
+        Assert.Equal(3,replay.GetProperty("matchCount").GetInt32());
+        Assert.Equal(2,replay.GetProperty("suppressedCount").GetInt32());
+        Assert.True(replay.GetProperty("findingsTruncated").GetBoolean());
+        var rules=replay.GetProperty("rules");
+        Assert.Equal("R589",rules[0].GetProperty("ruleId").GetString());
+        Assert.Equal(1,rules[0].GetProperty("matches").GetInt32());
+        Assert.Equal(2,rules[1].GetProperty("matches").GetInt32());
+        Assert.Equal(1,rules[0].GetProperty("suppressed").GetInt32());
+        Assert.Equal(1,rules[1].GetProperty("suppressed").GetInt32());
+        Assert.Equal(5,rules[0].GetProperty("evaluated").GetInt32());
+        Assert.Equal(5,rules[1].GetProperty("evaluated").GetInt32());
+        Assert.Equal("unsupported_detector",rules[2].GetProperty("status").GetString());
+        Assert.Equal("R587",replay.GetProperty("findings")[0].GetProperty("ruleId").GetString());
+        Assert.Equal("R589",replay.GetProperty("findings")[1].GetProperty("ruleId").GetString());
+    }
+
+    [Fact]
+    public async Task OnePacketCanMatchBothRulesInSelectionOrder()
+    {
+        var r=await Run(Pcap((100,Frame("/SetupWizard.aspx/config/keystore/test.jsp"),null)),".pcap","R589,R587");
+        Assert.Equal(0,r.Code);
+        using var json=JsonDocument.Parse(r.Output);
+        var findings=json.RootElement.GetProperty("replay").GetProperty("findings");
+        Assert.Equal(2,findings.GetArrayLength());
+        Assert.Equal("R589",findings[0].GetProperty("ruleId").GetString());
+        Assert.Equal("R587",findings[1].GetProperty("ruleId").GetString());
+    }
+
     [Theory]
     [InlineData("R589,R589")]
     [InlineData("R0589")]

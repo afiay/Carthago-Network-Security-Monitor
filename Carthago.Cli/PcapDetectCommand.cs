@@ -16,6 +16,8 @@ internal static class PcapDetectCommand
         int ClockResets,int MatchCount,int SuppressedCount,int FindingLimit,bool FindingsTruncated,
         IReadOnlyList<RuleResult> Rules,IReadOnlyList<Finding> Findings);
 
+    private sealed class Counts { internal int Evaluated, Matches, Suppressed; }
+
     internal static bool TryParse(string[] command,out string path,out string[] rules,out int limit)
     {
         path="";rules=Array.Empty<string>();limit=50;
@@ -41,7 +43,8 @@ internal static class PcapDetectCommand
         // Retain only the current processor epoch per interface (maximum eight).
         // A replaced parser marks the same reset boundary for detector state.
         var sessions=new Dictionary<int,(PortablePacketProcessor Processor,PortableReplayDispatcher Dispatcher)>();
-        int section=-1,evaluated=0,matches=0,suppressed=0;
+        int section=-1,matches=0,suppressed=0;
+        var counts=supported.ToDictionary(id=>id,id=>new Counts(),StringComparer.Ordinal);
         var capture=await PcapInspectCommand.InspectAsync(path,1,token,(row,record,processor)=>
         {
             token.ThrowIfCancellationRequested();
@@ -55,18 +58,19 @@ internal static class PcapDetectCommand
             var context=new PacketEvaluationContext(record,Sensitivity.Balanced,row.TimestampUtc);
             foreach(var id in supported)
             {
-                evaluated++;
+                var count=counts[id];
+                count.Evaluated++;
                 var observation=session.Dispatcher.Evaluate(id,context,out var method);
-                if(observation==WebSignatureObservation.Suppressed) suppressed++;
+                if(observation==WebSignatureObservation.Suppressed) { suppressed++; count.Suppressed++; }
                 if(observation!=WebSignatureObservation.Match) continue;
-                matches++;
+                matches++;count.Matches++;
                 if(findings.Count<limit) findings.Add(new(id,row.PacketNumber,row.TimestampUtc,row.Nanoseconds,
                     row.Section,row.InterfaceId,method));
             }
         });
         token.ThrowIfCancellationRequested();
         var results=rules.Select(id=>PortableReplayDispatcher.Supports(id)
-            ?new RuleResult(id,"evaluated",evaluated,matches,suppressed)
+            ?new RuleResult(id,"evaluated",counts[id].Evaluated,counts[id].Matches,counts[id].Suppressed)
             :new RuleResult(id,"unsupported_detector",0,0,0)).ToArray();
         return new(capture.Format,capture.PacketsRead,capture.Parsed,capture.Rejected,capture.CaptureTruncated,
             capture.ClockResets,matches,suppressed,limit,matches>findings.Count,results,findings);
