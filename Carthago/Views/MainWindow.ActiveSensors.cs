@@ -65,12 +65,24 @@ public partial class MainWindow
         var saveHistory = AddActiveEvidenceOptIn(panel);
         panel.Children.Add(output);
         dialog.Content = panel;
-        using var cancellation = new CancellationTokenSource();
+        CancellationTokenSource? active = null;
         bool closed = false;
-        dialog.Closed += (_, _) => { closed = true; cancellation.Cancel(); };
+        bool closeRequested = false;
+        dialog.Closing += (_, args) =>
+        {
+            if (active is null) return;
+            args.Cancel = true;
+            closeRequested = true;
+            active.Cancel();
+            output.Text = "Cancelling; waiting for probe and storage cleanup…";
+        };
+        dialog.Closed += (_, _) => closed = true;
         close.Click += (_, _) => dialog.Close();
         run.Click += async (_, _) =>
         {
+            if (active is not null) return;
+            using var cancellation = new CancellationTokenSource();
+            active = cancellation;
             bool persist = saveHistory.IsChecked == true;
             saveHistory.IsEnabled = false;
             run.IsEnabled = false;
@@ -85,7 +97,7 @@ public partial class MainWindow
                         (o.SocketError.HasValue ? $" — {o.SocketError}" : ""))) +
                         "\n\nOpen = TCP handshake completed. Refused = explicit connection refusal. " +
                         "Timeout/unreachable/error do not establish that a port is closed.";
-                if (persist && !closed && !cancellation.IsCancellationRequested)
+                if (persist && !closed && !closeRequested && !cancellation.IsCancellationRequested)
                 {
                     var saved = await SaveActiveEvidenceAsync(() => ActiveEvidenceProjection.From(id!.Value, observations));
                     if (!closed) output.Text += saved;
@@ -93,7 +105,12 @@ public partial class MainWindow
             }
             catch (OperationCanceledException) { if (!closed) output.Text = "Check cancelled."; }
             catch (Exception ex) { if (!closed) output.Text = "Check failed: " + ex.Message; }
-            finally { if (!closed) { close.Content = "Close"; saveHistory.IsEnabled = true; } }
+            finally
+            {
+                active = null;
+                if (closeRequested) dialog.Close();
+                else if (!closed) { close.Content = "Close"; saveHistory.IsEnabled = true; run.IsEnabled = true; }
+            }
         };
         dialog.ShowDialog();
     }

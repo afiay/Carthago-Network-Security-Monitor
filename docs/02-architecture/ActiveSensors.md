@@ -129,3 +129,17 @@ dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQua
 ```
 
 Test positive repeat confirmation, distinct IDs, scope, timing, intervening recovery, no approval, retention, replay/deduplication, and DetectionEvent provenance. No runtime execution claimed.
+
+## AS-Q01 / AS-Q02 — Local qualification gate
+
+Run from the clean feature branch on Windows:
+
+```powershell
+.\verify-active-sensors.ps1
+```
+
+The script builds the actual Release test project (including its WPF app reference), then runs exactly the ten active sensor suites with --no-build/--no-restore. Fresh per-run TRX, build/test logs and qualification.json are written under ignored build-verify/active-sensors/<run-id>. Source SHA and clean-worktree checks prevent attributing stale results to a changed checkout. The gate checks suite-level minimum case counts (234 total as of AS-Q02), nonzero execution, no skipped/failed cases, TRX counters, exit codes and unchanged source. A pass means synthetic and isolated loopback qualification only; no live LAN probes are executed by this script.
+
+AS-Q02 source review fixes manual TCP/DNS/TLS/HTTP/SNMP dialogs to hold their modal owner until cancelled work and any already-started storage operation finish. New saves are suppressed after a close request; an already-started transaction may finish. TCP now creates a per-run token rather than disposing it as the dialog closes. SNMP discovery requires a bound noAuthNoPriv report with usable nonnegative engine boots/time, empty user/auth/privacy parameters, consistent context engine, correct counter OID/type and zero error index. These are source changes with ten additional discovery tests; no Windows build or execution is claimed.
+
+Live smoke gate: run only on explicitly authorized lab hosts. Record adapter/target and expected versus actual for TCP listening/refused/timeout, DNS known A/NXDOMAIN/timeout, trusted and untrusted TLS, HTTP 200/redirect/error, gateway direct claim and cancellation, and a real SHA-256/AES-128 SNMPv3 agent with valid/invalid credentials. Save two distinct matching changes after baseline approval and verify one active finding, no passive attack attribution. Close each dialog mid-probe and confirm owner stays blocked until cleanup. No production qualification until these checks are recorded.

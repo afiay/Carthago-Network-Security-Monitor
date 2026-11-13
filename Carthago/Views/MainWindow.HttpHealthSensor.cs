@@ -58,13 +58,22 @@ public partial class MainWindow
         panel.Children.Add(output); dialog.Content = panel;
         CancellationTokenSource? active = null;
         bool closed = false;
+        bool closeRequested = false;
+        dialog.Closing += (_, args) =>
+        {
+            if (active is null) return;
+            args.Cancel = true;
+            closeRequested = true;
+            active.Cancel();
+            output.Text = "Cancelling; waiting for probe and storage cleanup…";
+        };
         dialog.Closed += (_, _) => { closed = true; active?.Cancel(); };
         close.Click += (_, _) => dialog.Close();
         run.Click += async (_, _) =>
         {
+            if (active is not null) return;
             bool persist = saveHistory.IsChecked == true;
             saveHistory.IsEnabled = false;
-            if (active is not null) return;
             using var cancellation = new CancellationTokenSource();
             active = cancellation;
             run.IsEnabled = port.IsEnabled = name.IsEnabled = false;
@@ -80,7 +89,7 @@ public partial class MainWindow
                     "\nObserved selected headers:\n" +
                     string.Join("\n", result.Headers.SelectMany(h => h.Values.Select(v => h.Name + ": " + v))) +
                     "\n\nMissing headers, HTTP error statuses and redirects are observations, not vulnerability findings. No redirect destination text is retained.";
-                if (persist && !closed && !cancellation.IsCancellationRequested)
+                if (persist && !closed && !closeRequested && !cancellation.IsCancellationRequested)
                 {
                     var saved = await SaveActiveEvidenceAsync(() => ActiveEvidenceProjection.From(id!.Value, result));
                     if (!closed) output.Text += saved;
@@ -91,6 +100,7 @@ public partial class MainWindow
             finally
             {
                 active = null;
+                if (closeRequested) dialog.Close();
                 if (!closed) saveHistory.IsEnabled = true;
                 if (!closed) { run.IsEnabled = port.IsEnabled = name.IsEnabled = true; close.Content = "Close"; }
             }

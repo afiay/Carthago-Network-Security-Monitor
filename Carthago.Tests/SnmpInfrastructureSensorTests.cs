@@ -161,6 +161,36 @@ public sealed class SnmpInfrastructureSensorTests
         Assert.False(SnmpInfrastructureSensor.TryReadEnvelope(writer.Encode(), out _));
     }
 
+    [Theory]
+    [InlineData("valid", true)]
+    [InlineData("wrong-message", false)]
+    [InlineData("wrong-request", false)]
+    [InlineData("negative-boots", false)]
+    [InlineData("negative-time", false)]
+    [InlineData("wrong-user", false)]
+    [InlineData("wrong-context", false)]
+    [InlineData("wrong-type", false)]
+    [InlineData("wrong-oid", false)]
+    [InlineData("error-index", false)]
+    public void DiscoveryReportMustBeBoundAndStructurallyValid(string change, bool expected)
+    {
+        var engine = new OctetString(new byte[] { 0x80, 0, 0, 1, 2, 3 });
+        var other = new OctetString(new byte[] { 0x80, 0, 0, 1, 2, 4 });
+        var report = new ReportMessage(VersionCode.V3,
+            new Header(new Integer32(change == "wrong-message" ? 99 : 11), new Integer32(8192), (Levels)0),
+            new SecurityParameters(engine, new Integer32(change == "negative-boots" ? -1 : 1),
+                new Integer32(change == "negative-time" ? -1 : 100),
+                change == "wrong-user" ? new OctetString("other") : OctetString.Empty,
+                OctetString.Empty, OctetString.Empty),
+            new Scope(change == "wrong-context" ? other : engine, OctetString.Empty,
+                new ReportPdu(change == "wrong-request" ? 99 : 12, ErrorCode.NoError, change == "error-index" ? 1 : 0,
+                    new List<Variable> { new(new ObjectIdentifier(change == "wrong-oid" ?
+                        "1.3.6.1.6.3.15.1.1.3.0" : "1.3.6.1.6.3.15.1.1.4.0"),
+                        change == "wrong-type" ? new Integer32(1) : new Counter32(1u)) })),
+            DefaultPrivacyProvider.DefaultPair, null);
+        Assert.Equal(expected, SnmpInfrastructureSensor.ValidDiscovery(report, 11, 12));
+    }
+
     [Fact]
     public void PreCancelledRequestDoesNotConnect()
     {

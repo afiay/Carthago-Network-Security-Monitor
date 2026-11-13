@@ -76,9 +76,19 @@ public static class SnmpInfrastructureSensor
     internal static bool ValidDiscovery(ISnmpMessage message, int messageId, int requestId) =>
         message.Version == VersionCode.V3 && message.TypeCode() == SnmpType.ReportPdu &&
         message.MessageId() == messageId && message.RequestId() == requestId &&
+        (int)message.Header.SecurityLevel == 0 && !message.Parameters.IsInvalid &&
         message.Parameters.EngineId?.GetRaw().Length is >= 5 and <= 32 &&
-        message.Pdu().ErrorStatus.ToInt32() == 0 && message.Pdu().Variables.Count == 1 &&
-        message.Pdu().Variables[0].Id.ToString() == "1.3.6.1.6.3.15.1.1.4.0";
+        message.Parameters.EngineBoots?.ToInt32() is >= 0 and < int.MaxValue &&
+        message.Parameters.EngineTime?.ToInt32() is >= 0 &&
+        message.Parameters.UserName.Equals(OctetString.Empty) &&
+        (message.Parameters.AuthenticationParameters?.GetRaw().Length ?? 0) == 0 &&
+        (message.Parameters.PrivacyParameters?.GetRaw().Length ?? 0) == 0 &&
+        (Equals(message.Scope.ContextEngineId, OctetString.Empty) ||
+            Equals(message.Scope.ContextEngineId, message.Parameters.EngineId)) &&
+        message.Pdu().ErrorStatus.ToInt32() == 0 && message.Pdu().ErrorIndex.ToInt32() == 0 &&
+        message.Pdu().Variables.Count == 1 &&
+        message.Pdu().Variables[0].Id.ToString() == "1.3.6.1.6.3.15.1.1.4.0" &&
+        message.Pdu().Variables[0].Data is Counter32;
 
     internal static bool ValidResponse(ISnmpMessage response, ISnmpMessage request, bool encryptedScope)
     {

@@ -75,13 +75,22 @@ public partial class MainWindow
         dialog.Content = panel;
         CancellationTokenSource? active = null;
         bool closed = false;
+        bool closeRequested = false;
+        dialog.Closing += (_, args) =>
+        {
+            if (active is null) return;
+            args.Cancel = true;
+            closeRequested = true;
+            active.Cancel();
+            output.Text = "Cancelling; waiting for probe and storage cleanup…";
+        };
         dialog.Closed += (_, _) => { closed = true; active?.Cancel(); };
         close.Click += (_, _) => dialog.Close();
         run.Click += async (_, _) =>
         {
+            if (active is not null) return;
             bool persist = saveHistory.IsChecked == true;
             saveHistory.IsEnabled = false;
-            if (active is not null) return;
             using var cancellation = new CancellationTokenSource();
             active = cancellation;
             run.IsEnabled = false;
@@ -109,7 +118,7 @@ public partial class MainWindow
                         $"Expected IPv4: {string.Join(", ", baseline.Select(ip => ip.ToString()))}\n" +
                         (observation.SocketError.HasValue ? $"Socket: {observation.SocketError}\n" : "") +
                         "\nA mismatch is not proof of DNS poisoning. Truncation, no address and errors are inconclusive.";
-                if (persist && !closed && !cancellation.IsCancellationRequested)
+                if (persist && !closed && !closeRequested && !cancellation.IsCancellationRequested)
                 {
                     var saved = await SaveActiveEvidenceAsync(() => ActiveEvidenceProjection.From(id!.Value, observation));
                     if (!closed) output.Text += saved;
@@ -120,6 +129,7 @@ public partial class MainWindow
             finally
             {
                 active = null;
+                if (closeRequested) dialog.Close();
                 if (!closed) saveHistory.IsEnabled = true;
                 if (!closed)
                 {
