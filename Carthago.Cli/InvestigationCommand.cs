@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: MIT
+using Carthago.Contracts;
+
 namespace Carthago.Cli;
 
 public static class InvestigationCommand
@@ -17,8 +19,8 @@ public static class InvestigationCommand
             default: return false;
         }
         path = command[2];
-        if (string.IsNullOrWhiteSpace(path) || path.StartsWith("--", StringComparison.Ordinal) ||
-            !string.Equals(Path.GetExtension(path), ".csa", StringComparison.OrdinalIgnoreCase)) return false;
+        if (path != "--live" && (string.IsNullOrWhiteSpace(path) || path.StartsWith("--", StringComparison.Ordinal) ||
+            !string.Equals(Path.GetExtension(path), ".csa", StringComparison.OrdinalIgnoreCase))) return false;
         if (command[1] == "show")
         {
             show = true;

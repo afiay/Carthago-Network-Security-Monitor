@@ -40,12 +40,12 @@ public static class CliApplication
           carthago rules show <file.csa> <rule-id> [--json]
           carthago rules quality <ledger.md> [--json]
           carthago session inspect <file.csa> [--json]
-          carthago alerts list <file.csa> [--severity LEVEL] [--source-ip IP] [--offset N] [--limit N] [--json]
-          carthago alerts show <file.csa> <event-id> [--json]
-          carthago incidents list <file.csa> [--severity LEVEL] [--source-ip IP] [--offset N] [--limit N] [--json]
-          carthago incidents show <file.csa> <incident-id> [--json]
-          carthago events list <file.csa> [--source-ip IP] [--offset N] [--limit N] [--json]
-          carthago hosts list <file.csa> [--source-ip IP] [--offset N] [--limit N] [--json]
+          carthago alerts list <file.csa|--live> [--severity LEVEL] [--source-ip IP] [--offset N] [--limit N] [--json]
+          carthago alerts show <file.csa|--live> <event-id> [--json]
+          carthago incidents list <file.csa|--live> [--severity LEVEL] [--source-ip IP] [--offset N] [--limit N] [--json]
+          carthago incidents show <file.csa|--live> <incident-id> [--json]
+          carthago events list <file.csa|--live> [--source-ip IP] [--offset N] [--limit N] [--json]
+          carthago hosts list <file.csa|--live> [--source-ip IP] [--offset N] [--limit N] [--json]
 
         status reports this CLI only, not the monitoring engine.
         Live queries require Windows and a WPF host started with --enable-cli-ipc.
@@ -57,7 +57,8 @@ public static class CliApplication
     public static async Task<int> RunAsync(string[] args, TextWriter output, TextWriter error,
         CancellationToken token = default,
         Func<ReadCommand, CancellationToken, Task<ReadResponse>>? query = null,
-        Func<LiveQuery, CancellationToken, Task<LiveQueryResult>>? liveQuery = null)
+        Func<LiveQuery, CancellationToken, Task<LiveQueryResult>>? liveQuery = null,
+        Func<InvestigationRequest, CancellationToken, Task<InvestigationResponse>>? investigationQuery = null)
     {
         // Options are accepted only in the documented trailing position.
         if (args.Length == 0 || args is ["--help"] or ["-h"] or ["help"])
@@ -73,7 +74,7 @@ public static class CliApplication
         {
             token.ThrowIfCancellationRequested();
             if (command.Length > 0 && (command[0] is "alerts" or "incidents" or "events" or "hosts"))
-                return await InvestigateAsync(command, output, error, json, token);
+                return await InvestigateAsync(command, output, error, json, token, investigationQuery);
             switch (command)
             {
                 case ["--version"]:
@@ -283,10 +284,12 @@ public static class CliApplication
     }
 
     private static async Task<int> InvestigateAsync(string[] command, TextWriter output, TextWriter error,
-        bool json, CancellationToken token)
+        bool json, CancellationToken token, Func<InvestigationRequest, CancellationToken, Task<InvestigationResponse>>? query)
     {
         if (!InvestigationCommand.TryParse(command, out var kind, out string path, out var filter, out bool show))
             return await FailAsync(error, json, UsageError, "invalid_usage", "Invalid investigation command. Use --help.");
+        if (path == "--live")
+            return await InvestigateLiveAsync(kind, filter, show, output, error, json, token, query);
         var page = await InvestigationQueries.ReadAsync(path, kind, filter, token);
         if (show && page.Total == 0)
             return await FailAsync(error, json, DataError, "record_not_found", "Record not found in saved session.");
@@ -296,6 +299,40 @@ public static class CliApplication
                 $"{r.Id ?? "-"} | {r.ObservedUtc?.ToString("O") ?? "-"} | {r.RuleId ?? "-"} | {r.Severity ?? "-"} | {r.SourceIp ?? "-"} -> {r.DestinationIp ?? "-"} | {r.Protocol ?? "-"} | {r.Status ?? "-"}"));
         await WriteAsync(output, json, new { schemaVersion = SchemaVersion, provenance = "untrusted_import",
             source = "saved_session", coverage = "retained_snapshot_not_complete_history", category, page }, human);
+        return Success;
+    }
+
+    private static async Task<int> InvestigateLiveAsync(InvestigationKind kind, InvestigationFilter filter, bool show,
+        TextWriter output, TextWriter error, bool json, CancellationToken token,
+        Func<InvestigationRequest, CancellationToken, Task<InvestigationResponse>>? query)
+    {
+        if (query is null && !OperatingSystem.IsWindows())
+            return await FailAsync(error, json, DataError, "unsupported_platform", "Live queries require Windows.");
+        var request = new InvestigationRequest(InvestigationProtocol.Version, Guid.NewGuid(), kind, filter);
+        InvestigationResponse response;
+        try
+        {
+            if (query is not null) response = await query(request, token);
+            else if (OperatingSystem.IsWindows()) response = await WindowsLocalReadPipe.QueryInvestigationAsync(request, token);
+            else return await FailAsync(error, json, DataError, "unsupported_platform", "Live queries require Windows.");
+            InvestigationProtocol.ValidateResponse(response, request);
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException && !token.IsCancellationRequested)
+        {
+            return await FailAsync(error, json, DataError, "engine_unavailable", "Local v3 investigation endpoint unavailable or invalid.");
+        }
+        token.ThrowIfCancellationRequested();
+        if (response.State != LiveQueryState.Available)
+            return await FailAsync(error, json, DataError, "source_unavailable", "Requested source unavailable; no zero-count inference.");
+        var page = response.Page!;
+        if (show && page.Total == 0)
+            return await FailAsync(error, json, DataError, "record_not_found", "Record not found in the bounded source.");
+        string source = InvestigationProtocol.Source(kind);
+        await WriteAsync(output, json, new { schemaVersion = SchemaVersion, provenance = "same_user_local_endpoint",
+            source, coverage = "bounded_source_not_complete_history", response.ObservedUtc, page },
+            $"Source: {source}; {page.Total} matching rows; {page.OmittedRows} omitted; not complete history.\n" +
+            string.Join("\n", page.Rows.Select(r =>
+                $"{r.Id ?? "-"} | {r.ObservedUtc?.ToString("O") ?? "-"} | {r.RuleId ?? "-"} | {r.Severity ?? "-"} | {r.SourceIp ?? "-"} -> {r.DestinationIp ?? "-"} | {r.Protocol ?? "-"} | {r.Status ?? "-"}")));
         return Success;
     }
 

@@ -192,3 +192,26 @@ not authentication. Output explicitly describes retained snapshot coverage,
 not a full capture or complete journal. Pagination bounds output but the
 existing CSA reader materializes all categories; memory gate remains open.
 Tests authored, no execution. Live journal/incident queries are CLI-004B.
+
+## CLI-004B — bounded live investigation
+
+SOURCE CANDIDATE — UNVERIFIED. Separate v3 local pipe; v1/v2 unchanged.
+Same user, local-only, opt-in, five-second I/O deadline, strict bounded JSON
+and correlation validation. Shared portable projection also serves offline
+CSA commands. Syntax: alerts/incidents list|show --live [ID or filters],
+events/hosts list --live [filters]. No tail/streaming yet.
+
+Alerts: current UTC date journal via DetectionJournal.Current.GetJournalPath,
+8 MiB / 20,000 rows / 128 Ki characters per row; incomplete or malformed
+journal unavailable. No previous-day lookup, no full history, no signature
+verification; journal contents are persisted records, not proof of live
+capture or authenticated detections. Camel-case journal and Pascal-case CSA
+fields accepted, ambiguous case-duplicate fields rejected. Incidents: up to
+1,000 cache entries using existing GetRecentIncidents ordering. Traffic:
+retained UI rows, no inferred UTC timestamp. Hosts: current observed-host
+table, at most 10,000 entries, no online assertion. UI projections run on
+dispatcher at background priority; no mutation. Missing source is not zero.
+Pagination is bounded, not an immutable cross-query snapshot; cache changes
+may change ordering/counts between pages. Synchronous cache clone and
+dispatcher projection are not preemptible; cancellation checked per row.
+Runtime tests and native pipe verification still required. No Actions run.

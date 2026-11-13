@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 using System.Text.Json;
+using Carthago.Contracts;
 using Carthago.Services.SessionFiles;
 using Xunit;
 

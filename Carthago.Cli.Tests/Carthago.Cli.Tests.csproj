@@ -18,4 +18,7 @@
   <ItemGroup>
     <Compile Include="../Carthago/Services/Cli/SensorHeartbeatReadProjection.cs" Link="Shared/SensorHeartbeatReadProjection.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../Carthago/Services/Cli/DetectionJournalQuery.cs" Link="Shared/DetectionJournalQuery.cs" />
+  </ItemGroup>
 </Project>
