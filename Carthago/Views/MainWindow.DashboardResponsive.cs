@@ -54,13 +54,24 @@ public partial class MainWindow
         DashboardLiveMetadataCard.Margin = mode == ResponsiveLayoutMode.Wide
             ? new Thickness(8, 0, 0, 0) : new Thickness(0);
 
-        // GA UI-90: hero status flows below the title only when the shell is below 1024px.
-        Grid.SetRow(DashboardHeroStatusCard, narrowKpis ? 1 : 0);
-        Grid.SetColumn(DashboardHeroStatusCard, narrowKpis ? 0 : 1);
-        DashboardHeroStatusCard.HorizontalAlignment = narrowKpis
-            ? HorizontalAlignment.Left : HorizontalAlignment.Right;
-        DashboardHeroStatusCard.Margin = narrowKpis
-            ? new Thickness(0, 14, 0, 0) : new Thickness(12, 0, 0, 0);
+        // GA UI-177: compact masthead with a separate operational navigation rail.
+        var heroWide = mode == ResponsiveLayoutMode.Wide;
+        Grid.SetRow(DashboardHeroStatusCard, heroWide ? 0 : 1);
+        Grid.SetColumn(DashboardHeroStatusCard, heroWide ? 1 : 0);
+        Grid.SetColumnSpan(DashboardHeroStatusCard, heroWide ? 1 : 2);
+        DashboardHeroStatusCard.HorizontalAlignment = heroWide
+            ? HorizontalAlignment.Right : HorizontalAlignment.Stretch;
+        DashboardHeroStatusCard.Margin = heroWide
+            ? new Thickness(12, 0, 0, 0) : new Thickness(0, 10, 0, 0);
+        var heroNavStack = mode == ResponsiveLayoutMode.Compact || narrowKpis;
+        DashboardHeroNavigationGrid.Columns = heroNavStack ? 1 : 3;
+        for (var i = 0; i < DashboardHeroNavigationGrid.Children.Count; i++)
+        {
+            if (DashboardHeroNavigationGrid.Children[i] is FrameworkElement action)
+                action.Margin = i == DashboardHeroNavigationGrid.Children.Count - 1
+                    ? new Thickness(0)
+                    : heroNavStack ? new Thickness(0, 0, 0, 6) : new Thickness(0, 0, 8, 0);
+        }
 
         // Wide: chart | prioritized queue | investigation.
         // Standard/Compact: chart above the existing responsive triage grid.
