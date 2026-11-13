@@ -261,3 +261,8 @@ Workbook R2717 AN2216; request-only projection, Candidate/Shadow. [Batch notes](
 ## R982 — Modbus FC22 all-zero mask write
 
 Workbook R2714 AN1908; exact capture-qualified clear-all mask request, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_982-982.md). 23 authored cases, zero execution; no safe-range, authorization, accepted write or historian drift claim. Next ID R983.
+
+
+## R983 — FINS/TCP node negotiation
+
+Workbook R2782 AN2253; exact capture-qualified native-protocol negotiation, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_983-983.md). 40 authored cases, zero execution; no asset policy or authentication claim. Next ID R984.

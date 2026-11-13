@@ -55,6 +55,9 @@ namespace Carthago.Services
             public OpcUaHelloAckInspector.Hello? OpcUaHello;
             public ModbusOversizedReadExchangeInspector.Pending? ModbusOversizedRead;
             public ModbusBulkFileReadInspector.Pending? ModbusBulkFileRead;
+            public FinsNodeNegotiationInspector.Pending? FinsNodeRequest;
+            public bool FinsSynAckValid;
+            public bool FinsClientSynValid;
         }
 
         private sealed class DirectionState
@@ -167,12 +170,16 @@ namespace Carthago.Services
                     {
                         HandshakeBuffer.Remove(tcpFlow);
                         LatencyTracker.NoteSyn(tcpFlow, _utcNow());
-                        InitSeq(tcpFlow, clientToServer: true, seqPlus1: unchecked(seq + 1));
+                        InitSeq(tcpFlow, clientToServer: true, seqPlus1: unchecked(seq + 1),
+                            finsHandshakeEligible: isIPv4 && completeIpPacket && l4Payload.IsEmpty &&
+                                tcpFlagsField == 0x02 && dport == 9600 && sport != 9600);
                     }
                     else if (tcpSyn && tcpAck)
                     {
                         LatencyTracker.NoteSynAck(tcpFlow, _utcNow());
-                        InitSeq(tcpFlow, clientToServer: false, seqPlus1: unchecked(seq + 1));
+                        InitSeq(tcpFlow, clientToServer: false, seqPlus1: unchecked(seq + 1),
+                            synAcknowledgment: ack, finsHandshakeEligible: isIPv4 && completeIpPacket &&
+                                l4Payload.IsEmpty && tcpFlagsField == 0x12 && sport == 9600 && dport != 9600);
                     }
 
                     // FIN or RST terminates any pending request, including on
@@ -189,6 +196,9 @@ namespace Carthago.Services
                                 flow.OpcUaHello = null;
                                 flow.ModbusOversizedRead = null;
                                 flow.ModbusBulkFileRead = null;
+                                flow.FinsNodeRequest = null;
+                                flow.FinsSynAckValid = false;
+                                flow.FinsClientSynValid = false;
                             }
                     }
                 }
@@ -241,6 +251,12 @@ namespace Carthago.Services
                                 normPayload.Length == l4Payload.Length && !IsTlsActive(tcpFlow, c2s) &&
                                 ModbusSingleRegisterWriteInspector.TryInspect(normPayload, out uint modbusPoint))
                                 rec.ModbusSingleRegisterWritePoint = modbusPoint;
+
+                            // Exact FINS/TCP node-address negotiation.
+                            if (isIPv4 && (c2s ? dport == 9600 && sport != 9600 : sport == 9600 && dport != 9600))
+                                ObserveFinsNodeNegotiation(tcpFlow, rec, c2s, normPayload,
+                                    synAnchoredFirstPayload, tcpFlagsField == 0x18 &&
+                                    completeIpPacket && normPayload.Length == l4Payload.Length, seq, ack);
 
                             // Exact FC22 all-zero mask write, first client request only.
                             if (isIPv4 && c2s && tcpAck && !tcpSyn && synAnchoredFirstPayload &&
@@ -815,11 +831,23 @@ namespace Carthago.Services
             return state;
         }
 
-        private void InitSeq(FlowKey key, bool clientToServer, uint seqPlus1)
+        private void InitSeq(FlowKey key, bool clientToServer, uint seqPlus1,
+            uint synAcknowledgment = 0, bool finsHandshakeEligible = false)
         {
             lock (_tcpSync)
             {
                 var state = GetOrAddState(key, _utcNow());
+                // FINS negotiation requires the original complete client SYN
+                // and a matching server SYN-ACK, without changing other rules.
+                if (clientToServer)
+                {
+                    state.FinsClientSynValid = finsHandshakeEligible;
+                    state.FinsSynAckValid = false;
+                }
+                else
+                    state.FinsSynAckValid = finsHandshakeEligible && state.FinsClientSynValid &&
+                        state.C2S.SynAnchored && state.C2S.Collected == 0 &&
+                        !state.C2S.Invalid && state.C2S.NextSeq == synAcknowledgment;
                 // A new client SYN invalidates both directions of a reused
                 // 5-tuple, so an old SYN-ACK cannot authenticate this flow.
                 if (clientToServer)
@@ -846,6 +874,7 @@ namespace Carthago.Services
                 state.OpcUaHello = null;
                 state.ModbusOversizedRead = null;
                 state.ModbusBulkFileRead = null;
+                state.FinsNodeRequest = null;
             }
         }
 
@@ -862,6 +891,7 @@ namespace Carthago.Services
                     state.OpcUaHello = null;
                     state.ModbusOversizedRead = null;
                     state.ModbusBulkFileRead = null;
+                    state.FinsNodeRequest = null;
                 }
             }
         }
@@ -984,6 +1014,36 @@ namespace Carthago.Services
             }
         }
 
+        private void ObserveFinsNodeNegotiation(FlowKey key, TrafficRecord record, bool client,
+            ReadOnlySpan<byte> data, bool first, bool complete, uint seq, uint ack)
+        {
+            lock (_tcpSync)
+            {
+                if (!_tcp.TryGetValue(key, out var flow)) return;
+                var pending = flow.FinsNodeRequest;
+                flow.FinsNodeRequest = null;
+                var dir = client ? flow.C2S : flow.S2C;
+                var opposite = client ? flow.S2C : flow.C2S;
+                if (!flow.FinsSynAckValid || !first || !complete ||
+                    !dir.SynAnchored || !opposite.SynAnchored ||
+                    dir.Invalid || opposite.Invalid || dir.TlsActive || opposite.TlsActive ||
+                    dir.NextSeq != unchecked(seq + (uint)data.Length) || ack != opposite.NextSeq)
+                    return;
+                var now = _utcNow();
+                if (client)
+                {
+                    if (FinsNodeNegotiationInspector.TryRequest(data, now, out var request))
+                        flow.FinsNodeRequest = request;
+                }
+                else if (pending.HasValue &&
+                    FinsNodeNegotiationInspector.IsMatchingResponse(data, pending.Value, now))
+                {
+                    record.ApplicationProtocol = "fins.tcp.node_negotiation.response";
+                    record.FinsNodeNegotiationObserved = true;
+                }
+            }
+        }
+
         // One outstanding request per existing bounded TCP flow. No raw payload retained.
         private void ObserveSmb2WriteExchange(FlowKey key, bool c2s, TrafficRecord record,
             ReadOnlySpan<byte> payload, bool complete, uint seq, uint ack)
@@ -1053,6 +1113,7 @@ namespace Carthago.Services
                         state.OpcUaHello = null;
                         state.ModbusOversizedRead = null;
                         state.ModbusBulkFileRead = null;
+                        state.FinsNodeRequest = null;
                     return false;
                 }
 
@@ -1082,6 +1143,7 @@ namespace Carthago.Services
                         state.OpcUaHello = null;
                         state.ModbusOversizedRead = null;
                         state.ModbusBulkFileRead = null;
+                        state.FinsNodeRequest = null;
                         return false; // missing segment
                     }
                     if (diff < 0)
@@ -1096,6 +1158,7 @@ namespace Carthago.Services
                         state.OpcUaHello = null;
                         state.ModbusOversizedRead = null;
                         state.ModbusBulkFileRead = null;
+                        state.FinsNodeRequest = null;
                             return false; // retransmission while pending: fail closed
                         }
                         if (overlap64 > 3)
@@ -1108,6 +1171,7 @@ namespace Carthago.Services
                         state.OpcUaHello = null;
                         state.ModbusOversizedRead = null;
                         state.ModbusBulkFileRead = null;
+                        state.FinsNodeRequest = null;
                             return false;
                         }
                         overlap = (int)overlap64;
