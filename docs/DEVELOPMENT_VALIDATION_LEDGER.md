@@ -2353,3 +2353,8 @@ Reviewed live parent `8294185345a8117556016b3a2b7d77ba91658109`, ledger, qualifi
 ## 2026-11-13 — CLI-007D.3 native driver statistics and bounded qualification sample
 
 **SOURCE CANDIDATE — UNVERIFIED.** Parent 32c381650dbe8ddcdfb8d6f76f19612aca9f0f2c. Add final pcap_stats sample before close, provider-dependent raw counters and unavailable states, explicit owner-authorized bounded capture qualify command with separate native/queue/monitor evidence, no release claim. Fifteen additional synthetic cases authored, zero executed. Pinned gate updated. No native capture, builds/tests/Actions executed. See [architecture](02-architecture/CLI-007D3-NativeCaptureQualification.md).
+
+
+## 2026-11-13 — CLI-007E.1 portable foreground monitor
+
+**SOURCE CANDIDATE — UNVERIFIED.** Parent 242372bf230aeeda127a5c5fe66606b4303dbd16. Add explicit authorized monitor run with native source/bounded pipeline, periodic independent health snapshots, sanitized NDJSON findings, session ID and final cleanup/statistics. Fifteen synthetic cases authored, zero executed; pinned gate updated. Existing Windows IPC unchanged; no build/test/native capture/Actions or deployment qualification. See [architecture](02-architecture/CLI-007E1-PortableForegroundMonitor.md).

@@ -82,12 +82,14 @@ internal sealed class PortableFrameQueue
 /// <summary>One owned pull source, one ordered consumer, bounded copied frame handoff.</summary>
 internal static class PortableBufferedCaptureRun
 {
+    internal sealed record Progress(Func<PortableMonitorSession.Snapshot> Monitor,Func<PortableFrameQueue.Counters> Pipeline);
     internal sealed record Result(PortableCaptureRun.Completion Status,string? Failure,bool StopFailed,bool DisposeFailed,
         PortableMonitorSession.Snapshot? Snapshot,PortableFrameQueue.Counters Pipeline);
 
     internal static async Task<Result> RunAsync(IPortableCaptureSource source,IEnumerable<string> rules,
         CancellationToken token,int maxPackets=256,long maxBytes=16L*1024*1024,
-        bool allowEndOfSource=false,Action<PortableMonitorSession.FrameResult>? observe=null)
+        bool allowEndOfSource=false,Action<PortableMonitorSession.FrameResult>? observe=null,
+        Action<Progress>? started=null)
     {
         ArgumentNullException.ThrowIfNull(source);
         // Validate queue options before taking lifetime ownership.
@@ -111,6 +113,7 @@ internal static class PortableBufferedCaptureRun
             token.ThrowIfCancellationRequested();
             session=new PortableMonitorSession(link,selection);
             var active=session;
+            started?.Invoke(new(active.ReadSnapshot,queue.ReadCounters));
             // Run consumer separately even when a source returns synchronously.
             // No run cancellation token on consumer: graceful shutdown drains accepted frames.
             var consumer=Task.Run(async ()=>

@@ -35,6 +35,7 @@ public static class CliApplication
           carthago capture qualify --interface ID --seconds 1-60 --authorized-test-time [--json]
           carthago engine status [--json]
           carthago monitor status [--json]
+          carthago monitor run --interface ID --rules R586[,R...] --authorized-test-time [--status-seconds N] [--max-packets N] [--max-bytes N] [--json]
           carthago service status|health|start|stop|doctor [--json]
           carthago engine health [--json]
           carthago monitor stop [--session GUID] [--json]
@@ -92,6 +93,13 @@ public static class CliApplication
                 return await TailAsync(command, output, error, json, token, investigationQuery);
             if (command.Length > 0 && (command[0] is "alerts" or "incidents" or "events" or "hosts"))
                 return await InvestigateAsync(command, output, error, json, token, investigationQuery);
+            if (command is ["monitor", "run", ..])
+            {
+                if (!PortableMonitorCommand.TryParse(command,out var monitorOptions))
+                    return await FailAsync(error,json,UsageError,"invalid_usage",
+                        "Expected monitor run --interface ID --rules R586[,R...] --authorized-test-time [--status-seconds N] [--max-packets N] [--max-bytes N] [--json].");
+                return await PortableMonitorCommand.RunAsync(monitorOptions!,output,json,token);
+            }
             if (command is ["capture", "qualify", ..])
             {
                 if (!NativeCaptureQualification.TryParse(command, out var options))
@@ -114,10 +122,10 @@ public static class CliApplication
                 await WriteAsync(output, json, new { schemaVersion = SchemaVersion, mode = "discovery_only",
                     discovery.Provider, discovery.LibraryStatus, discovery.LibraryVersion,
                     discovery.EnumerationStatus, discovery.Reason, discovery.Interfaces,
-                    capturePermission = "not_assessed", liveCapture = "qualification_sample_only",
+                    capturePermission = "not_assessed", liveCapture = "explicit_foreground_test_only",
                     detectionValidation = "not_assessed" },
                     $"Capture provider: {discovery.Provider}; library: {discovery.LibraryStatus}; enumeration: {discovery.EnumerationStatus}.\n" +
-                    "Capture permission not assessed; only an explicit qualification sample is available.\n" +
+                    "Capture permission not assessed; explicit foreground test mode available.\n" +
                     string.Join("\n", discovery.Interfaces.Select(i => $"{i.Id} | loopback={i.Loopback}")));
                 return Success;
             }
@@ -196,7 +204,8 @@ public static class CliApplication
                         new Capability("live.events", "unavailable", "No live event transport."),
                         new Capability("live.rules", "unavailable", "Windows opt-in catalog query; use rules summary to check connectivity."),
                         new Capability("live.incidents", "unavailable", "No live incident connection."),
-                        new Capability("capture", "unavailable", "No unattended live monitor; explicit bounded qualification sample only."),
+                        new Capability("capture", "unavailable", "No qualified unattended capture; explicit foreground test mode only."),
+                        new Capability("monitor.run", "available", "Explicit foreground portable capture test; native readiness not assessed."),
                         new Capability("capture.discovery", "available", "Read-only provider discovery; no capture handle opened."),
                         new Capability("pcap.inspect", "available", "Read-only classic PCAP and PCAPNG enhanced-packet telemetry; no rule execution."),
                         new Capability("pcap.detect", "available", "Offline portable request observations; see rules capabilities for supported IDs."),
