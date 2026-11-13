@@ -44,6 +44,9 @@
     <Compile Remove="Tests\**\*.cs" />
     <Compile Remove="Services/SessionFiles/CarthagoSessionSnapshot.cs" />
     <Compile Remove="Services/SessionFiles/CarthagoSessionArchiveService.cs" />
+    <Compile Remove="Services/DnsWireNameCodec.cs" />
+    <Compile Remove="Services/ProtocolIntelligence/DnsAddressObservationInspector.cs" />
+    <Compile Remove="Services/ProtocolIntelligence/BacnetEventDisableInspector.cs" />
   </ItemGroup>
 
   <!-- Content to copy -->

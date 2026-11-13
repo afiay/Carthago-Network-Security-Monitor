@@ -6,9 +6,12 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- Retain canonical source paths during the incremental extraction.
-         These two files are compiled only by Core, not by either host. -->
+         These files are compiled only by Core, not by either host. -->
     <Compile Include="../Carthago/Services/SessionFiles/CarthagoSessionSnapshot.cs" Link="SessionFiles/CarthagoSessionSnapshot.cs" />
     <Compile Include="../Carthago/Services/SessionFiles/CarthagoSessionArchiveService.cs" Link="SessionFiles/CarthagoSessionArchiveService.cs" />
+    <Compile Include="../Carthago/Services/DnsWireNameCodec.cs" Link="Services/DnsWireNameCodec.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/DnsAddressObservationInspector.cs" Link="Services/ProtocolIntelligence/DnsAddressObservationInspector.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/BacnetEventDisableInspector.cs" Link="Services/ProtocolIntelligence/BacnetEventDisableInspector.cs" />
     <!-- Preserve existing internal access while consumers migrate. -->
     <InternalsVisibleTo Include="Carthago" />
     <InternalsVisibleTo Include="carthago" />
