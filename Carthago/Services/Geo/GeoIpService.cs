@@ -10,29 +10,43 @@ namespace Carthago.Services.Geo
 {
     public sealed class GeoIpService : IDisposable
     {
-        private readonly string _baseDir = AppContext.BaseDirectory;
+        private readonly string _baseDir;
         private DatabaseReader? _cityDb;
         private DatabaseReader? _asnDb;
 
-        public bool IsCityDbAvailable { get; private set; }
-        public bool IsAsnDbAvailable { get; private set; }
+        public enum DatabaseAvailability { Missing, Unavailable, Ready }
+
+        public DatabaseAvailability CityDatabaseStatus { get; private set; }
+        public DatabaseAvailability AsnDatabaseStatus { get; private set; }
+        public bool IsCityDbAvailable => CityDatabaseStatus == DatabaseAvailability.Ready;
+        public bool IsAsnDbAvailable => AsnDatabaseStatus == DatabaseAvailability.Ready;
 
         public string CityDbPath => Path.Combine(_baseDir, "Data", "GeoLite2-City.mmdb");
         public string AsnDbPath => Path.Combine(_baseDir, "Data", "GeoLite2-ASN.mmdb");
 
-        public GeoIpService()
+        public GeoIpService() : this(AppContext.BaseDirectory) { }
+
+        internal GeoIpService(string baseDir)
+        {
+            _baseDir = baseDir;
+            _cityDb = OpenDatabase(CityDbPath, out var cityStatus);
+            CityDatabaseStatus = cityStatus;
+            _asnDb = OpenDatabase(AsnDbPath, out var asnStatus);
+            AsnDatabaseStatus = asnStatus;
+        }
+
+        private static DatabaseReader? OpenDatabase(string path, out DatabaseAvailability status)
         {
             try
             {
-                if (File.Exists(CityDbPath)) { _cityDb = new DatabaseReader(CityDbPath); IsCityDbAvailable = true; }
+                var reader = new DatabaseReader(path);
+                status = DatabaseAvailability.Ready;
+                return reader;
             }
-            catch { IsCityDbAvailable = false; }
-
-            try
-            {
-                if (File.Exists(AsnDbPath)) { _asnDb = new DatabaseReader(AsnDbPath); IsAsnDbAvailable = true; }
-            }
-            catch { IsAsnDbAvailable = false; }
+            catch (FileNotFoundException) { status = DatabaseAvailability.Missing; }
+            catch (DirectoryNotFoundException) { status = DatabaseAvailability.Missing; }
+            catch { status = DatabaseAvailability.Unavailable; }
+            return null;
         }
 
         public GeoInfo? Lookup(string ip)

@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using System.Net;
 using Carthago.Models;
 using Carthago.Services;
@@ -7,6 +9,31 @@ namespace Carthago.Tests;
 
 public sealed class RuntimeEnrichmentRegressionTests
 {
+    [Fact]
+    public void Geo_Database_Status_Separates_Missing_And_Unreadable_Files()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "carthago-geo-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            Directory.CreateDirectory(Path.Combine(root, "Data"));
+            using (var missing = new GeoIpService(root))
+            {
+                Assert.Equal(GeoIpService.DatabaseAvailability.Missing, missing.CityDatabaseStatus);
+                Assert.Equal(GeoIpService.DatabaseAvailability.Missing, missing.AsnDatabaseStatus);
+                Assert.Null(missing.Lookup("8.8.8.8"));
+            }
+
+            File.WriteAllText(Path.Combine(root, "Data", "GeoLite2-City.mmdb"), "not a database");
+            using var invalid = new GeoIpService(root);
+            Assert.Equal(GeoIpService.DatabaseAvailability.Unavailable, invalid.CityDatabaseStatus);
+            Assert.Equal(GeoIpService.DatabaseAvailability.Missing, invalid.AsnDatabaseStatus);
+            Assert.False(invalid.IsCityDbAvailable);
+            Assert.False(invalid.IsAsnDbAvailable);
+            Assert.Null(invalid.Lookup("8.8.8.8"));
+        }
+        finally { Directory.Delete(root, true); }
+    }
+
     [Fact]
     public void WindowsProcessResolver_Accepts_Wildcard_Local_Bindings()
     {

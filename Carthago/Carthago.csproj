@@ -63,10 +63,10 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Data\GeoLite2-*.mmdb">
+    <None Update="Data\GeoLite2-*.mmdb">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Data\custom.geo.json" Condition="Exists('Data\custom.geo.json')">
+    <None Update="Data\custom.geo.json" Condition="Exists('Data\custom.geo.json')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
