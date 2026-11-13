@@ -233,8 +233,16 @@ try {
             $registryPath = Join-Path $root 'Carthago/Engine/Rules/Catalog/RuleRegistry.cs'
             $registrySource = Get-Content -LiteralPath $registryPath -Raw
             $registryIds = @([regex]::Matches($registrySource,
-                '\bnew\s+(R\d{3})_[A-Za-z0-9_]+\s*\(') |
+                '\bnew\s+(R[0-9]{3,})_[A-Za-z0-9_]+\s*\(') |
                 ForEach-Object { $_.Groups[1].Value })
+            # Canonical ID parsing must agree with the runtime: positive Int32,
+            # minimum three-digit padding, no extra leading zeros.
+            $invalidRegistryIds = @($registryIds | Where-Object {
+                $n = 0
+                -not [int]::TryParse($_.Substring(1), [Globalization.NumberStyles]::None,
+                    [Globalization.CultureInfo]::InvariantCulture, [ref]$n) -or
+                    $n -lt 1 -or $_ -cne ('R' + $n.ToString('D3', [Globalization.CultureInfo]::InvariantCulture))
+            })
             $auditIds = @($audit | ForEach-Object { [string]$_.ruleId })
             $duplicateRegistry = @($registryIds | Group-Object | Where-Object Count -gt 1)
             $duplicateAudit = @($auditIds | Group-Object | Where-Object Count -gt 1)
@@ -243,12 +251,14 @@ try {
             # R001-R695 were already registered when this gate was introduced.
             # Treat this as a minimum-preservation floor, not an exact upper limit.
             if ($registryIds.Count -lt 695 -or $registryIds -notcontains 'R695' -or
+                $invalidRegistryIds.Count -gt 0 -or
                 $duplicateRegistry.Count -gt 0 -or $duplicateAudit.Count -gt 0 -or
                 $missingAuditIds.Count -gt 0 -or $unexpectedAuditIds.Count -gt 0) {
                 $failures.Add('rule-catalog-inventory')
                 Write-Host ("FAIL: registry={0}, benchmark audit={1}, duplicate registry={2}, duplicate audit={3}, missing={4}, unexpected={5}" -f
                     $registryIds.Count, $auditIds.Count, $duplicateRegistry.Count,
                     $duplicateAudit.Count, $missingAuditIds.Count, $unexpectedAuditIds.Count)
+                foreach ($id in @($invalidRegistryIds | Select-Object -First 12)) { Write-Host "  Invalid registry ID: $id" }
                 foreach ($id in @($missingAuditIds | Select-Object -First 12)) { Write-Host "  Missing benchmark entry: $id" }
                 foreach ($id in @($unexpectedAuditIds | Select-Object -First 12)) { Write-Host "  Unexpected benchmark entry: $id" }
             } else {

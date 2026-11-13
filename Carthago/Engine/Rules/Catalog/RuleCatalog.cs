@@ -11,12 +11,12 @@ namespace Carthago.Engine.Rules.Catalog
     public static class RuleCatalog
     {
         private static readonly Lazy<IReadOnlyList<IDetectionRule>> _rules = new(() =>
-            RuleRegistry.CreateDefaultRules().OrderBy(r => RuleIdValidator.CoreOrder(r.Descriptor.RuleId)).ToArray());
+            RuleRegistry.CreateDefaultRules().OrderBy(r => r.Descriptor.RuleId, RuleIdValidator.NumericComparer).ToArray());
 
         private static readonly Lazy<IReadOnlyList<RuleDescriptor>> _descriptors = new(() =>
             _rules.Value.Select(r => r.Descriptor).ToArray());
         private static readonly Lazy<IReadOnlyList<IDetectionRule>> _availableRules = new(() =>
-            RuleRegistry.CreateAvailableRules().OrderBy(static rule => RuleIdValidator.SortGroup(rule.Descriptor.RuleId), StringComparer.OrdinalIgnoreCase).ThenBy(static rule => RuleIdValidator.CoreOrder(rule.Descriptor.RuleId)).ToArray());
+            RuleRegistry.CreateAvailableRules().OrderBy(static rule => rule.Descriptor.RuleId, RuleIdValidator.NumericComparer).ToArray());
         private static readonly Lazy<IReadOnlyList<RuleDescriptor>> _availableDescriptors = new(() =>
             _availableRules.Value.Select(static rule => rule.Descriptor).ToArray());
 
@@ -49,8 +49,8 @@ namespace Carthago.Engine.Rules.Catalog
                 if (Find(expected) == null) errors.Add($"Missing preserved rule {expected}");
             }
 
-            var registryIds = RuleRegistry.CreateDefaultRules().Select(r => r.Descriptor.RuleId).OrderBy(id => id, StringComparer.Ordinal).ToArray();
-            var catalogIds = All.Select(d => d.RuleId).OrderBy(id => id, StringComparer.Ordinal).ToArray();
+            var registryIds = RuleRegistry.CreateDefaultRules().Select(r => r.Descriptor.RuleId).OrderBy(id => id, RuleIdValidator.NumericComparer).ToArray();
+            var catalogIds = All.Select(d => d.RuleId).OrderBy(id => id, RuleIdValidator.NumericComparer).ToArray();
             if (!registryIds.SequenceEqual(catalogIds, StringComparer.Ordinal)) errors.Add("RuleRegistry and RuleCatalog do not agree.");
 
             foreach (var rule in Rules)

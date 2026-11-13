@@ -48,7 +48,7 @@ namespace Carthago.Services.Benchmarking
 
             var entries = new List<TuningBenchmarkRuleHardeningEntry>();
             foreach (var descriptor in RuleCatalog.All
-                .OrderBy(static item => item.RuleId, StringComparer.OrdinalIgnoreCase))
+                .OrderBy(static item => item.RuleId, RuleIdValidator.NumericComparer))
             {
                 var precision = RulePrecisionCatalog.GetProfile(descriptor);
                 var tuning = RuleTuningCatalog.GetBaseDecision(descriptor.RuleId);

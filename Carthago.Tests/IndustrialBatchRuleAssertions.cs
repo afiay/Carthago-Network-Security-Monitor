@@ -116,6 +116,10 @@ public sealed class IndustrialBatchRegistryQualityTests
         Assert.Equal(ids.Length,ids.Distinct(StringComparer.OrdinalIgnoreCase).Count());
         Assert.Equal(Enumerable.Range(1,ids.Length).Select(n=>$"R{n:000}"),ids);
         Assert.Equal(ids,RuleCatalog.All.Select(d=>d.RuleId).ToArray());
+        Assert.Equal(ids,Carthago.Engine.Rules.Tuning.RuleTuningClassifier.Snapshot().Select(d=>d.RuleId).ToArray());
+        var subset=rules.Where(r=>r.Descriptor.RuleId=="R999" || r.Descriptor.RuleId=="R1000" || r.Descriptor.RuleId=="R101").Reverse().ToArray();
+        var coverage=new Carthago.Engine.Rules.Health.RuleTelemetryCoverageService(()=>subset).Snapshot();
+        Assert.Equal(new[]{"R101","R999","R1000"},coverage.RuleImpacts.Select(d=>d.RuleId).ToArray());
         Assert.Equal(ids,RuleCatalog.AllAvailable.Where(d=>RuleIdValidator.IsCoreRuleId(d.RuleId)).Select(d=>d.RuleId).ToArray());
         Assert.True(RuleIdValidator.IsCoreRuleId("R999"));
         Assert.True(RuleIdValidator.IsCoreRuleId("R1000"));

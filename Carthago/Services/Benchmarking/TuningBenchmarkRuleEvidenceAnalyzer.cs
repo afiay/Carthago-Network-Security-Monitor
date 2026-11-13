@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Carthago.Engine.Rules;
 
 namespace Carthago.Services.Benchmarking
 {
@@ -27,7 +28,7 @@ namespace Carthago.Services.Benchmarking
                     .SelectMany(static sample => sample.ActualMatches))
                 .Where(static id => !string.IsNullOrWhiteSpace(id))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
-                .OrderBy(static id => id, StringComparer.OrdinalIgnoreCase);
+                .OrderBy(static id => id, RuleIdValidator.NumericComparer);
 
             var entries = allRuleIds.ToDictionary(
                 static id => id,
@@ -97,7 +98,7 @@ namespace Carthago.Services.Benchmarking
             }
 
             return entries.Values
-                .OrderBy(static item => item.RuleId, StringComparer.OrdinalIgnoreCase)
+                .OrderBy(static item => item.RuleId, RuleIdValidator.NumericComparer)
                 .ToList();
         }
     }

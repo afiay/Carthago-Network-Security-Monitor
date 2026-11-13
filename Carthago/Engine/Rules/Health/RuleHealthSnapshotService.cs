@@ -34,7 +34,7 @@ namespace Carthago.Engine.Rules.Health
 
         public IReadOnlyList<RuleHealthSnapshot> Snapshot()
         {
-            var rules = _ruleProvider().OrderBy(static rule => rule.Descriptor.RuleId, StringComparer.OrdinalIgnoreCase).ToArray();
+            var rules = _ruleProvider().OrderBy(static rule => rule.Descriptor.RuleId, RuleIdValidator.NumericComparer).ToArray();
             var validationReport = _validator.Validate(rules);
             var replayCoverageByRule = new RuleReplayCoverageService().Build(_replayResultProvider(), rules.Select(static rule => rule.Descriptor));
             var tuningInsightService = new RuleTuningInsightService();

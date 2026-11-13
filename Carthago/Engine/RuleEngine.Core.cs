@@ -84,7 +84,7 @@ namespace Carthago.Services
                 return _rules.Value;
 
             return _rules.Value.Concat(activation.ActiveRules)
-                .OrderBy(static rule => rule.Descriptor.RuleId, StringComparer.OrdinalIgnoreCase)
+                .OrderBy(static rule => rule.Descriptor.RuleId, RuleIdValidator.NumericComparer)
                 .ToArray();
         }
 

@@ -6,7 +6,7 @@ Rule-authoring contracts, catalog guides, content packs and every historical rul
 
 ## Working source of truth
 
-- **[Master detection-rule catalog](MASTER_RULE_CATALOG.md)** — every registered RNNN rule, direct source links and historical evidence
+- **[Master detection-rule catalog](MASTER_RULE_CATALOG.md)** — every registered R-series rule, direct source links and historical evidence
 - [Rule hardening progress ledger](../RULE_HARDENING_PROGRESS.md)
 - [Rule documentation standard](../rules/RULE_DOCUMENTATION_STANDARD.md)
 - [Content-pack overview](content-packs/README.md)
@@ -38,6 +38,7 @@ The master catalog is the central entry point; batch files remain historical *so
 - [AddingDetectionRules](guides/AddingDetectionRules.md)
 - [ContentPacks](guides/ContentPacks.md)
 - [DetectionEngineeringModel](guides/DetectionEngineeringModel.md)
+- [FOUR DIGIT RULE ID COMPATIBILITY](guides/FOUR_DIGIT_RULE_ID_COMPATIBILITY.md)
 - [R123 R272 SelectedRules](guides/R123_R272_SelectedRules.md)
 - [R273 R544 SelectedRules](guides/R273_R544_SelectedRules.md)
 - [ResearchBackedDetectionRules](guides/ResearchBackedDetectionRules.md)

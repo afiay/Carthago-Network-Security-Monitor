@@ -94,7 +94,7 @@ namespace Carthago.Engine.Rules
         }
 
         private static int RuleNumber(string? ruleId)
-            => int.TryParse((ruleId ?? string.Empty).Trim().TrimStart('R', 'r'), out var n) ? n : 0;
+            => RuleIdValidator.TryGetCoreNumber(RuleIdValidator.Normalize(ruleId ?? string.Empty), out var n) ? n : 0;
 
         private static RuleMaturity MaturityFor(int n)
         {

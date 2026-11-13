@@ -147,7 +147,7 @@ namespace Carthago.Engine.Rules.Health
             => _states.Values
                 .Select(static state => state.RuleId)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
-                .OrderBy(static ruleId => ruleId, StringComparer.OrdinalIgnoreCase)
+                .OrderBy(static ruleId => ruleId, RuleIdValidator.NumericComparer)
                 .Select(Snapshot)
                 .ToArray();
 

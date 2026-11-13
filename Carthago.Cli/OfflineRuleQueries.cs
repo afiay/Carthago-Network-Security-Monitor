@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 using System.Globalization;
+using Carthago.Engine.Rules;
 using System.Text;
 using System.Text.Json;
 using Carthago.Services.SessionFiles;
@@ -19,8 +20,8 @@ public static class OfflineRuleQueries
     public sealed record QualitySummary(int LedgerRows, int AuditPending, int ProducerBlocked,
         int OtherOrUnclassified, string Validation, string Provenance);
 
-    public static bool IsRuleId(string id) => id.Length is >= 4 and <= 10
-        && id[0] == 'R' && id.Skip(1).All(c => c is >= '0' and <= '9');
+    public static bool IsRuleId(string id) => id is not null && id == id.Trim()
+        && RuleIdValidator.IsCoreRuleId(id);
 
     public static bool TryPage(string offset, string limit, out int start, out int size)
     {
@@ -63,8 +64,7 @@ public static class OfflineRuleQueries
                 row.TryGetProperty("Revision", out var rev) && rev.ValueKind == JsonValueKind.Number
                     && rev.TryGetInt32(out int n) && n > 0 ? n : null));
         }
-        return result.OrderBy(r => long.Parse(r.RuleId.AsSpan(1), CultureInfo.InvariantCulture))
-            .ThenBy(r => r.RuleId, StringComparer.Ordinal).ToArray();
+        return result.OrderBy(r => r.RuleId, RuleIdValidator.NumericComparer).ToArray();
     }
 
     // Fixed projection: never emit description, evidence, raw payload or arbitrary columns.

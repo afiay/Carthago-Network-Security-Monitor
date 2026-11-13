@@ -67,7 +67,7 @@ EXTRA = {
     ],
     "03-detection-rules": [
         "## Working source of truth", "",
-        "- **[Master detection-rule catalog](MASTER_RULE_CATALOG.md)** — every registered RNNN rule, direct source links and historical evidence",
+        "- **[Master detection-rule catalog](MASTER_RULE_CATALOG.md)** — every registered R-series rule, direct source links and historical evidence",
         "- [Rule hardening progress ledger](../RULE_HARDENING_PROGRESS.md)",
         "- [Rule documentation standard](../rules/RULE_DOCUMENTATION_STANDARD.md)",
         "- [Content-pack overview](content-packs/README.md)",

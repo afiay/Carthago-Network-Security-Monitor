@@ -132,7 +132,7 @@ namespace Carthago.Engine.Rules.Health
 
         public TelemetryCoverageSnapshot Snapshot()
         {
-            var rules = _ruleProvider().OrderBy(static rule => rule.Descriptor.RuleId, StringComparer.OrdinalIgnoreCase).ToArray();
+            var rules = _ruleProvider().OrderBy(static rule => rule.Descriptor.RuleId, RuleIdValidator.NumericComparer).ToArray();
             var observations = RuleTelemetryCoverageStore.SnapshotObservations();
             var impacts = rules.Select(rule => BuildImpact(rule.Descriptor.RuleId, rule.Intelligence?.PrecisionProfile ?? RulePrecisionCatalog.GetProfile(rule.Descriptor))).ToArray();
             return new TelemetryCoverageSnapshot(DateTime.UtcNow, RuleTelemetryCoverageStore.RecordsObserved, observations, impacts);

@@ -57,7 +57,7 @@ namespace Carthago.Engine.Rules.Health
 
             return new RuleCatalogValidationReport(findings
                 .OrderByDescending(static finding => finding.Severity)
-                .ThenBy(static finding => finding.RuleId, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(static finding => finding.RuleId, RuleIdValidator.NumericComparer)
                 .ThenBy(static finding => finding.Code, StringComparer.OrdinalIgnoreCase)
                 .ToArray());
         }
@@ -84,7 +84,7 @@ namespace Carthago.Engine.Rules.Health
                     .Select(static rule => rule.Descriptor.RuleId)
                     .Where(static id => !string.IsNullOrWhiteSpace(id))
                     .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .OrderBy(static id => id, StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(static id => id, RuleIdValidator.NumericComparer)
                     .ToArray();
                 var message = $"ConfigKey '{duplicate.Key}' is used by: {string.Join(", ", affectedRuleIds)}.";
 
@@ -120,7 +120,7 @@ namespace Carthago.Engine.Rules.Health
 
             if (!RuleIdValidator.IsValid(ruleId))
             {
-                findings.Add(new RuleCatalogValidationFinding(ruleId, RuleCatalogValidationSeverity.Error, "INVALID_RULE_ID", $"RuleId '{ruleId}' does not match the expected core R000 or content-pack rule ID format.", "CatalogIdentity"));
+                findings.Add(new RuleCatalogValidationFinding(ruleId, RuleCatalogValidationSeverity.Error, "INVALID_RULE_ID", $"RuleId '{ruleId}' does not match the expected canonical positive core R001/R1000 or content-pack rule ID format.", "CatalogIdentity"));
             }
 
             if (string.IsNullOrWhiteSpace(descriptor.Name))

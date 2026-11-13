@@ -104,11 +104,11 @@ namespace Carthago.Services.Benchmarking
             var assertions = BuildAssertions(sample, expectedMatches, expectedEmitted, expectedNonMatches, expectedSuppressed, expectedShadowed);
             var observations = BuildObservations(detections, traces, noMatchCodesByRule);
             var observationByRule = observations.ToDictionary(static item => item.RuleId, StringComparer.OrdinalIgnoreCase);
-            var actualMatched = matched.OrderBy(static id => id, StringComparer.OrdinalIgnoreCase).ToList();
-            var actualEmitted = emitted.OrderBy(static id => id, StringComparer.OrdinalIgnoreCase).ToList();
-            var actualSuppressed = suppressed.OrderBy(static id => id, StringComparer.OrdinalIgnoreCase).ToList();
-            var actualShadowed = shadowed.OrderBy(static id => id, StringComparer.OrdinalIgnoreCase).ToList();
-            var actualFailed = failed.OrderBy(static id => id, StringComparer.OrdinalIgnoreCase).ToList();
+            var actualMatched = matched.OrderBy(static id => id, RuleIdValidator.NumericComparer).ToList();
+            var actualEmitted = emitted.OrderBy(static id => id, RuleIdValidator.NumericComparer).ToList();
+            var actualSuppressed = suppressed.OrderBy(static id => id, RuleIdValidator.NumericComparer).ToList();
+            var actualShadowed = shadowed.OrderBy(static id => id, RuleIdValidator.NumericComparer).ToList();
+            var actualFailed = failed.OrderBy(static id => id, RuleIdValidator.NumericComparer).ToList();
 
             var result = new RuleReplaySampleResult
             {
@@ -230,11 +230,11 @@ namespace Carthago.Services.Benchmarking
 
             result.UnexpectedRuleIds = result.UnexpectedRuleIds
                 .Distinct(StringComparer.OrdinalIgnoreCase)
-                .OrderBy(static id => id, StringComparer.OrdinalIgnoreCase)
+                .OrderBy(static id => id, RuleIdValidator.NumericComparer)
                 .ToList();
             result.MissingExpectedRuleIds = result.MissingExpectedRuleIds
                 .Distinct(StringComparer.OrdinalIgnoreCase)
-                .OrderBy(static id => id, StringComparer.OrdinalIgnoreCase)
+                .OrderBy(static id => id, RuleIdValidator.NumericComparer)
                 .ToList();
             return result;
         }
@@ -289,12 +289,12 @@ namespace Carthago.Services.Benchmarking
                 .Where(static sample => sample.Classification == ReplaySampleClassification.Benign)
                 .SelectMany(static sample => sample.UnexpectedRuleIds.Concat(sample.EmittedRuleIds))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
-                .OrderBy(static id => id, StringComparer.OrdinalIgnoreCase)
+                .OrderBy(static id => id, RuleIdValidator.NumericComparer)
                 .ToList();
             result.Summary.RulesWithNoReplayCoverage = RuleCatalog.All
                 .Select(static descriptor => descriptor.RuleId)
                 .Where(ruleId => !covered.Contains(ruleId))
-                .OrderBy(static id => id, StringComparer.OrdinalIgnoreCase)
+                .OrderBy(static id => id, RuleIdValidator.NumericComparer)
                 .ToList();
 
             return result;
@@ -556,7 +556,7 @@ namespace Carthago.Services.Benchmarking
                     .ToList();
             }
 
-            return observations.Values.OrderBy(static item => item.RuleId, StringComparer.OrdinalIgnoreCase).ToList();
+            return observations.Values.OrderBy(static item => item.RuleId, RuleIdValidator.NumericComparer).ToList();
         }
 
         private static IEnumerable<string> ExtractEvidenceKeys(DetectionEvent evt)

@@ -1036,8 +1036,7 @@ namespace Carthago.Engine.Rules.Catalog
                 .Cast<IDetectionRule>();
 
             return core.Concat(packRules)
-                .OrderBy(static rule => RuleIdValidator.SortGroup(rule.Descriptor.RuleId), System.StringComparer.OrdinalIgnoreCase)
-                .ThenBy(static rule => RuleIdValidator.CoreOrder(rule.Descriptor.RuleId))
+                .OrderBy(static rule => rule.Descriptor.RuleId, RuleIdValidator.NumericComparer)
                 .ToArray();
         }
     }

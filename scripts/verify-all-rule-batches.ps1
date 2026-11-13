@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT
-# One deferred Windows acceptance run for every authored five-rule batch.
+# Historical R001–R544 advanced five-rule acceptance gate plus full registered-suite regression.
+# Later native QualityTests are covered by the full suite, not by this legacy per-rule filename count.
 # Do not invoke until the project owner explicitly declares test time.
 [CmdletBinding()]
 param(
@@ -45,7 +46,7 @@ try {
         }
     }
     $authored = @($authored | Sort-Object -Unique)
-    if ($authored.Count -eq 0) { throw 'No advanced rule-batch test files were found.' }
+    if ($authored.Count -eq 0) { throw 'No historical R001–R544 advanced rule-batch test files were found.' }
     $lastRule = [int]$authored[-1]
     if ($lastRule -gt 544 -or ($lastRule % 5 -ne 0 -and $lastRule -ne 544)) {
         throw "Incomplete five-rule batch: last advanced test file is R$('{0:000}' -f $lastRule)."

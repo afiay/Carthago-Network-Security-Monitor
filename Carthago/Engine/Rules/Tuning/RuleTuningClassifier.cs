@@ -161,7 +161,7 @@ namespace Carthago.Engine.Rules.Tuning
         }
 
         public static IReadOnlyList<RuleTuningDecision> Snapshot()
-            => RuleCatalog.All.Select(Classify).OrderBy(static decision => decision.RuleId, StringComparer.OrdinalIgnoreCase).ToArray();
+            => RuleCatalog.All.Select(Classify).OrderBy(static decision => decision.RuleId, RuleIdValidator.NumericComparer).ToArray();
 
         private static RuleTuningTier DetermineTier(int n)
         {
@@ -223,7 +223,7 @@ namespace Carthago.Engine.Rules.Tuning
             };
 
         internal static int RuleNumber(string? ruleId)
-            => int.TryParse((ruleId ?? string.Empty).Trim().TrimStart('R', 'r'), out var n) ? n : 0;
+            => RuleIdValidator.TryGetCoreNumber(RuleIdValidator.Normalize(ruleId ?? string.Empty), out var n) ? n : 0;
 
         internal static bool IsExploitOrPayload(int n) => StrongPayloadRules.Contains(n);
         internal static bool IsDirectCredentialLeak(int n) => n is 14 or 133 or 134 or 135 or 136 or 205 or 353 or 354 or 359 or 360 or 365 or 367 or 369 or 374 or 383;

@@ -59,7 +59,7 @@ internal static class CarthagoRuleCatalogExport
         return RuleRegistry.CreateDefaultRules()
             .GroupBy(rule => rule.Descriptor.RuleId, StringComparer.OrdinalIgnoreCase)
             .Select(group => group.First())
-            .OrderBy(rule => RuleIdValidator.CoreOrder(rule.Descriptor.RuleId))
+            .OrderBy(rule => rule.Descriptor.RuleId, RuleIdValidator.NumericComparer)
             .Select(rule =>
             {
                 RuleDescriptor descriptor = rule.Descriptor;

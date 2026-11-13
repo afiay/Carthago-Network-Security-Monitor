@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 using System.Text.Json;
+using Carthago.Engine.Rules;
 using Carthago.Services.SessionFiles;
 using Xunit;
 
@@ -7,6 +8,54 @@ namespace Carthago.Cli.Tests;
 
 public sealed class OfflineRuleQueriesTests
 {
+    [Theory]
+    [InlineData("R001", true)]
+    [InlineData("R999", true)]
+    [InlineData("R1000", true)]
+    [InlineData("R3085", true)]
+    [InlineData("R2147483647", true)]
+    [InlineData("R000", false)]
+    [InlineData("R01000", false)]
+    [InlineData("R100", true)]
+    [InlineData("R2147483648", false)]
+    [InlineData("R99999999999999999999", false)]
+    [InlineData("R1000X", false)]
+    [InlineData("R1000 ", false)]
+    [InlineData("r1000", false)]
+    [InlineData("OT001", false)]
+    [InlineData("R١٠٠٠", false)]
+    public void CanonicalCoreIdsOnly(string id, bool expected)
+        => Assert.Equal(expected, OfflineRuleQueries.IsRuleId(id));
+
+    [Fact]
+    public void SharedComparerPreservesCoreAndPackOrder()
+    {
+        var ids = new[] { "R1000", "R999", "R001", "R3085", "OT001", "R101", "WEB001", "AD001" };
+        Assert.Equal(new[] { "AD001", "OT001", "R001", "R101", "R999", "R1000", "R3085", "WEB001" },
+            ids.OrderBy(id => id, RuleIdValidator.NumericComparer).ToArray());
+        Assert.True(RuleIdValidator.TryGetCoreNumber("R1000", out int number));
+        Assert.Equal(1000, number);
+        Assert.False(RuleIdValidator.IsPackRuleId("R1000"));
+        Assert.True(RuleIdValidator.IsPackRuleId("OT001"));
+    }
+
+    [Theory]
+    [InlineData("R000")]
+    [InlineData("R01000")]
+    [InlineData("R2147483648")]
+    public async Task NoncanonicalArchiveIdFailsClosed(string id)
+    {
+        string path = Temp(".csa");
+        try
+        {
+            var snapshot = CarthagoSessionSnapshot.CreateEmpty();
+            snapshot.AddRows("Rules", new[] { new { RuleId = "R1000" }, new { RuleId = id } });
+            await new CarthagoSessionArchiveService().SaveAsync(path, snapshot);
+            await Assert.ThrowsAsync<InvalidDataException>(() => OfflineRuleQueries.ListAsync(path, 0, 10, default));
+        }
+        finally { File.Delete(path); }
+    }
+
     [Fact]
     public async Task ListUsesNumericOrderAndBoundedPage()
     {
@@ -20,6 +69,8 @@ public sealed class OfflineRuleQueriesTests
             var page = await OfflineRuleQueries.ListAsync(path, 1, 1, default);
             Assert.Equal(3, page.Total);
             Assert.Equal("R999", Assert.Single(page.Rules).RuleId);
+            Assert.Equal("R1000", Assert.Single((await OfflineRuleQueries.ListAsync(path, 2, 1, default)).Rules).RuleId);
+            Assert.Equal("R1000", (await OfflineRuleQueries.ShowAsync(path, "R1000", default))!.RuleId);
             Assert.Empty((await OfflineRuleQueries.ListAsync(path, 99, 1, default)).Rules);
         }
         finally { File.Delete(path); }
@@ -78,7 +129,7 @@ public sealed class OfflineRuleQueriesTests
             await File.WriteAllTextAsync(path, Header +
                 "| R001 | source | pending | pending | pending | pending | audit pending |\n" +
                 "| R002 | source | missing | none | none | none | producer-blocked; tests unexecuted |\n" +
-                "| R003 | source | reviewed | passed | passed | passed | reviewed |\n");
+                "| R1000 | source | reviewed | passed | passed | passed | reviewed |\n");
             var quality = await OfflineRuleQueries.QualityAsync(path, default);
             Assert.Equal(3, quality.LedgerRows);
             Assert.Equal(1, quality.AuditPending);

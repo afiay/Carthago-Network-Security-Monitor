@@ -155,7 +155,7 @@ namespace Carthago.Services.Diagnostics
                     LastSuppressionPolicyId = suppressionPolicyStats.LastPolicyId,
                     LastSuppressionPolicyReason = suppressionPolicyStats.LastReason
                 };
-            }).OrderBy(x => x.RuleId, StringComparer.OrdinalIgnoreCase).ToArray();
+            }).OrderBy(x => x.RuleId, RuleIdValidator.NumericComparer).ToArray();
         }
 
         private async Task<List<DetectionEvent>> ReadRecentEventsAsync(DateTime nowUtc, CancellationToken cancellationToken)
