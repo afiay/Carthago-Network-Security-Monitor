@@ -1,4 +1,10 @@
 // SPDX-License-Identifier: MIT
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Text.Json;
 using System.Windows.Threading;
 using Carthago.Contracts;
@@ -89,7 +95,7 @@ internal static class Program
                         if (!listeners.IsCancellationRequested)
                         {
                             Interlocked.Exchange(ref listenerFailed, 1);
-                            cancel.Cancel();
+                            try { cancel.Cancel(); } catch (ObjectDisposedException) { /* process exiting */ }
                         }
                         _ = t.Exception; // Observe failures.
                     }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
@@ -98,7 +104,7 @@ internal static class Program
             int result = await ForegroundMonitor.RunAsync(capture, options, output, error, cancel.Token, session: session);
             return Volatile.Read(ref listenerFailed) != 0 ? 3 : result;
         }
-        catch (OperationCanceledException) when (cancel.IsCancellationRequested) { return 130; }
+        catch (OperationCanceledException) when (cancel.IsCancellationRequested) { return Volatile.Read(ref listenerFailed) != 0 ? 3 : 130; }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
             error.WriteLine("Foreground monitor initialization failed.");

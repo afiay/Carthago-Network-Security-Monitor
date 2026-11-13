@@ -92,7 +92,7 @@ public sealed class MonitorControlSession
                 MonitorControlOutcome.StopAccepted;
             // Wall clock adjustments must not make a previously sampled counter frame invalid.
             var now = DateTimeOffset.UtcNow;
-            if (_sampledUtc > now) now = _sampledUtc.Value;
+            if (_sampledUtc is { } sampled && sampled > now) now = sampled;
             return new(MonitorControlProtocol.Version, q.Correlation, q.Kind, SessionId,
                 _state, outcome, _allowStop, now, _sampledUtc, _counters);
         }
