@@ -35,7 +35,16 @@ public sealed class ScheduledGatewayTests : IDisposable
         Assert.Equal("", p.HostName);
         Assert.Equal(0, p.Port);
         Assert.True(Store().Save(p));
-        Assert.Equal("Gateway", Assert.Single(Store().Read().Rows).Sensor);
+        var saved = Assert.Single(Store().Read().Rows);
+        Assert.Equal("Gateway", saved.Sensor);
+        Assert.Equal("", saved.HostName);
+        using (var db = new LiteDB.LiteDatabase(Path.Combine(_dir, "profiles.db")))
+        {
+            var row = db.GetCollection("saved_active_profiles").FindById(saved.Id);
+            Assert.NotNull(row);
+            Assert.True(row["HostName"].IsString);
+            Assert.Equal("", row["HostName"].AsString);
+        }
         Assert.Throws<InvalidOperationException>(() => new ActiveSensorManager().Add(p));
         Assert.Null(Store().ReadValidGrant(p));
     }

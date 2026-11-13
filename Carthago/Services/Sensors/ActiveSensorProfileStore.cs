@@ -132,6 +132,9 @@ internal sealed class ActiveSensorProfileStore
 {
     internal const int MaxSavedProfiles = 64;
     private static readonly object Gate = new();
+    // Canonical TCP/Gateway/SNMP profiles intentionally have an empty host.
+    // Preserve exact strings in this database, without changing the global mapper.
+    private static readonly BsonMapper ProfileMapper = new() { EmptyStringToNull = false, TrimWhitespace = false };
     private readonly string _path;
     private readonly Func<DateTimeOffset> _clock;
     private readonly SnmpCredentialVault _vault;
@@ -265,7 +268,7 @@ internal sealed class ActiveSensorProfileStore
     private LiteDatabase Open()
     {
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(_path))!);
-        return new LiteDatabase(_path);
+        return new LiteDatabase(_path, ProfileMapper);
     }
 
     private static ILiteCollection<SavedActiveSensorProfile> Collection(LiteDatabase db) =>

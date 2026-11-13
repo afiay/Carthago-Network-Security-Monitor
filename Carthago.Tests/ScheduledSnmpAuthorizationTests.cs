@@ -34,7 +34,16 @@ public sealed class ScheduledSnmpAuthorizationTests : IDisposable
     {
         var p = Profile();
         Assert.True(Store().Save(p));
-        Assert.Equal("Snmp", Assert.Single(Store().Read().Rows).Sensor);
+        var saved = Assert.Single(Store().Read().Rows);
+        Assert.Equal("Snmp", saved.Sensor);
+        Assert.Equal("", saved.HostName);
+        using (var db = new LiteDB.LiteDatabase(Path.Combine(_dir, "profiles.db")))
+        {
+            var row = db.GetCollection("saved_active_profiles").FindById(saved.Id);
+            Assert.NotNull(row);
+            Assert.True(row["HostName"].IsString);
+            Assert.Equal("", row["HostName"].AsString);
+        }
         Assert.Null(Store().Grant(p, TimeSpan.FromHours(1)));
         Assert.Throws<InvalidOperationException>(() => new ActiveSensorManager().Add(p));
         Assert.Null(Store().ReadValidGrant(p));
