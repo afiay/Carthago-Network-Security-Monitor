@@ -56,8 +56,9 @@ namespace Carthago.Services
             public ModbusOversizedReadExchangeInspector.Pending? ModbusOversizedRead;
             public ModbusBulkFileReadInspector.Pending? ModbusBulkFileRead;
             public FinsNodeNegotiationInspector.Pending? FinsNodeRequest;
-            public bool FinsSynAckValid;
-            public bool FinsClientSynValid;
+            public EtherNetIpRegisterSessionInspector.Pending? EtherNetIpSessionRequest;
+            public bool NativeSynAckValid;
+            public bool NativeClientSynValid;
         }
 
         private sealed class DirectionState
@@ -171,15 +172,15 @@ namespace Carthago.Services
                         HandshakeBuffer.Remove(tcpFlow);
                         LatencyTracker.NoteSyn(tcpFlow, _utcNow());
                         InitSeq(tcpFlow, clientToServer: true, seqPlus1: unchecked(seq + 1),
-                            finsHandshakeEligible: isIPv4 && completeIpPacket && l4Payload.IsEmpty &&
-                                tcpFlagsField == 0x02 && dport == 9600 && sport != 9600);
+                            nativeHandshakeEligible: isIPv4 && completeIpPacket && l4Payload.IsEmpty &&
+                                tcpFlagsField == 0x02 && (dport == 9600 || dport == 44818) && sport != dport);
                     }
                     else if (tcpSyn && tcpAck)
                     {
                         LatencyTracker.NoteSynAck(tcpFlow, _utcNow());
                         InitSeq(tcpFlow, clientToServer: false, seqPlus1: unchecked(seq + 1),
-                            synAcknowledgment: ack, finsHandshakeEligible: isIPv4 && completeIpPacket &&
-                                l4Payload.IsEmpty && tcpFlagsField == 0x12 && sport == 9600 && dport != 9600);
+                            synAcknowledgment: ack, nativeHandshakeEligible: isIPv4 && completeIpPacket &&
+                                l4Payload.IsEmpty && tcpFlagsField == 0x12 && (sport == 9600 || sport == 44818) && dport != sport);
                     }
 
                     // FIN or RST terminates any pending request, including on
@@ -197,8 +198,9 @@ namespace Carthago.Services
                                 flow.ModbusOversizedRead = null;
                                 flow.ModbusBulkFileRead = null;
                                 flow.FinsNodeRequest = null;
-                                flow.FinsSynAckValid = false;
-                                flow.FinsClientSynValid = false;
+                                flow.EtherNetIpSessionRequest = null;
+                                flow.NativeSynAckValid = false;
+                                flow.NativeClientSynValid = false;
                             }
                     }
                 }
@@ -255,6 +257,12 @@ namespace Carthago.Services
                             // Exact FINS/TCP node-address negotiation.
                             if (isIPv4 && (c2s ? dport == 9600 && sport != 9600 : sport == 9600 && dport != 9600))
                                 ObserveFinsNodeNegotiation(tcpFlow, rec, c2s, normPayload,
+                                    synAnchoredFirstPayload, tcpFlagsField == 0x18 &&
+                                    completeIpPacket && normPayload.Length == l4Payload.Length, seq, ack);
+
+                            // Exact EtherNet/IP RegisterSession negotiation.
+                            if (isIPv4 && (c2s ? dport == 44818 && sport != 44818 : sport == 44818 && dport != 44818))
+                                ObserveEtherNetIpRegisterSession(tcpFlow, rec, c2s, normPayload,
                                     synAnchoredFirstPayload, tcpFlagsField == 0x18 &&
                                     completeIpPacket && normPayload.Length == l4Payload.Length, seq, ack);
 
@@ -850,20 +858,20 @@ namespace Carthago.Services
         }
 
         private void InitSeq(FlowKey key, bool clientToServer, uint seqPlus1,
-            uint synAcknowledgment = 0, bool finsHandshakeEligible = false)
+            uint synAcknowledgment = 0, bool nativeHandshakeEligible = false)
         {
             lock (_tcpSync)
             {
                 var state = GetOrAddState(key, _utcNow());
-                // FINS negotiation requires the original complete client SYN
+                // Native FINS and EtherNet/IP negotiation require the original complete client SYN
                 // and a matching server SYN-ACK, without changing other rules.
                 if (clientToServer)
                 {
-                    state.FinsClientSynValid = finsHandshakeEligible;
-                    state.FinsSynAckValid = false;
+                    state.NativeClientSynValid = nativeHandshakeEligible;
+                    state.NativeSynAckValid = false;
                 }
                 else
-                    state.FinsSynAckValid = finsHandshakeEligible && state.FinsClientSynValid &&
+                    state.NativeSynAckValid = nativeHandshakeEligible && state.NativeClientSynValid &&
                         state.C2S.SynAnchored && state.C2S.Collected == 0 &&
                         !state.C2S.Invalid && state.C2S.NextSeq == synAcknowledgment;
                 // A new client SYN invalidates both directions of a reused
@@ -893,6 +901,7 @@ namespace Carthago.Services
                 state.ModbusOversizedRead = null;
                 state.ModbusBulkFileRead = null;
                 state.FinsNodeRequest = null;
+                state.EtherNetIpSessionRequest = null;
             }
         }
 
@@ -910,6 +919,7 @@ namespace Carthago.Services
                     state.ModbusOversizedRead = null;
                     state.ModbusBulkFileRead = null;
                     state.FinsNodeRequest = null;
+                    state.EtherNetIpSessionRequest = null;
                 }
             }
         }
@@ -1042,7 +1052,7 @@ namespace Carthago.Services
                 flow.FinsNodeRequest = null;
                 var dir = client ? flow.C2S : flow.S2C;
                 var opposite = client ? flow.S2C : flow.C2S;
-                if (!flow.FinsSynAckValid || !first || !complete ||
+                if (!flow.NativeSynAckValid || !first || !complete ||
                     !dir.SynAnchored || !opposite.SynAnchored ||
                     dir.Invalid || opposite.Invalid || dir.TlsActive || opposite.TlsActive ||
                     dir.NextSeq != unchecked(seq + (uint)data.Length) || ack != opposite.NextSeq)
@@ -1058,6 +1068,36 @@ namespace Carthago.Services
                 {
                     record.ApplicationProtocol = "fins.tcp.node_negotiation.response";
                     record.FinsNodeNegotiationObserved = true;
+                }
+            }
+        }
+
+        private void ObserveEtherNetIpRegisterSession(FlowKey key, TrafficRecord record, bool client,
+            ReadOnlySpan<byte> data, bool first, bool complete, uint seq, uint ack)
+        {
+            lock (_tcpSync)
+            {
+                if (!_tcp.TryGetValue(key, out var flow)) return;
+                var pending = flow.EtherNetIpSessionRequest;
+                flow.EtherNetIpSessionRequest = null;
+                var dir = client ? flow.C2S : flow.S2C;
+                var opposite = client ? flow.S2C : flow.C2S;
+                if (!flow.NativeSynAckValid || !first || !complete ||
+                    !dir.SynAnchored || !opposite.SynAnchored ||
+                    dir.Invalid || opposite.Invalid || dir.TlsActive || opposite.TlsActive ||
+                    dir.NextSeq != unchecked(seq + (uint)data.Length) || ack != opposite.NextSeq)
+                    return;
+                var now = _utcNow();
+                if (client)
+                {
+                    if (EtherNetIpRegisterSessionInspector.TryRequest(data, now, out var request))
+                        flow.EtherNetIpSessionRequest = request;
+                }
+                else if (pending.HasValue &&
+                    EtherNetIpRegisterSessionInspector.IsMatchingResponse(data, pending.Value, now))
+                {
+                    record.ApplicationProtocol = "enip.tcp.register_session.response";
+                    record.EtherNetIpRegisterSessionObserved = true;
                 }
             }
         }
@@ -1132,6 +1172,7 @@ namespace Carthago.Services
                         state.ModbusOversizedRead = null;
                         state.ModbusBulkFileRead = null;
                         state.FinsNodeRequest = null;
+                        state.EtherNetIpSessionRequest = null;
                     return false;
                 }
 
@@ -1162,6 +1203,7 @@ namespace Carthago.Services
                         state.ModbusOversizedRead = null;
                         state.ModbusBulkFileRead = null;
                         state.FinsNodeRequest = null;
+                        state.EtherNetIpSessionRequest = null;
                         return false; // missing segment
                     }
                     if (diff < 0)
@@ -1177,6 +1219,7 @@ namespace Carthago.Services
                         state.ModbusOversizedRead = null;
                         state.ModbusBulkFileRead = null;
                         state.FinsNodeRequest = null;
+                        state.EtherNetIpSessionRequest = null;
                             return false; // retransmission while pending: fail closed
                         }
                         if (overlap64 > 3)
@@ -1190,6 +1233,7 @@ namespace Carthago.Services
                         state.ModbusOversizedRead = null;
                         state.ModbusBulkFileRead = null;
                         state.FinsNodeRequest = null;
+                        state.EtherNetIpSessionRequest = null;
                             return false;
                         }
                         overlap = (int)overlap64;

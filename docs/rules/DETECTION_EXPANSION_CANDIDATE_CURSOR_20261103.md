@@ -276,3 +276,8 @@ Workbook R2714 AN1908; narrow exact request, Candidate/Shadow. [Batch notes](../
 ## R985 — FINS/UDP controller STOP
 
 Workbook R2721 AN1887; exact request-only mode-change projection, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_985-985.md). 28 authored cases, zero executed; no actual mode transition or authorization claim. Next R986.
+
+
+## R986 — EtherNet/IP RegisterSession
+
+Workbook R2782 AN2253; exact capture-qualified session registration, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_986-986.md). 40 authored cases, zero executed; no authentication or policy claim. Next R987.
