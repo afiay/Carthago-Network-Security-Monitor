@@ -66,10 +66,10 @@ namespace Carthago
             SettingsHeroIntro.Margin = wide ? new Thickness(0, 0, 16, 0) : new Thickness(0, 0, 0, 12);
             SettingsWorkspaceMap.Columns = wide ? 3 : 1;
             SettingsSensitivityProfiles.Columns = wide ? 3 : 1;
-            foreach (var profile in SettingsSensitivityProfiles.Children)
+            for (var index = 0; index < SettingsSensitivityProfiles.Children.Count; index++)
             {
-                if (profile is Border card)
-                    card.Margin = wide ? new Thickness(0, 0, 10, 0) : new Thickness(0, 0, 0, 10);
+                if (SettingsSensitivityProfiles.Children[index] is Border card)
+                    card.Margin = wide ? new Thickness(0, 0, index < 2 ? 12 : 0, 0) : new Thickness(0, 0, 0, index < 2 ? 12 : 0);
             }
             foreach (var tile in SettingsWorkspaceMap.Children)
             {

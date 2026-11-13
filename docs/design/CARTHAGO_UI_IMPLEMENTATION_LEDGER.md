@@ -5929,3 +5929,14 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Ownership / static review:** MainWindow.xaml, MainWindow.Settings.cs and this ledger only. Existing input names, labels, tooltips, status binding, ApplyApiKey_Click, Save/Reset and preference handlers preserved; replaced UI-local label column with responsive external column and three named cards. No changes to capture, external requests, credential persistence, Engine/Models/Services, detection, telemetry, shared APIs, tests, workflows or automations. Existing reference design resources reused. 
 
 **Risks / PLANNED UNEXECUTED:** WPF parse/resource resolution, initial placement and resize reflow, long checkbox labels, keyboard order, masked input and session action, Save/Reset and active Npcap filter semantics, status accuracy, 1920/1440/1100/1099/1024/1023/640 widths and 100/125/150/200% DPI. Builds 0; tests 0; CI 0; captures 0; renders 0. Next GA UI-174: Settings detection policy internal hierarchy after fresh audit.
+
+
+## GA UI-174 — Detection policy selection and evidence workspace
+
+**2026-11-13 · SOURCE CANDIDATE — UNVERIFIED.** Approved Library reference libfile_b0a34361560c8191b641e432b3e6b15c visually inspected. Baseline `6a28203006fd1e1df2e486469ff545bb2b6234c1`, tree `ea55dd449565f1e651f6c1cf6327d980920d92f1`; prior GA UI-173.
+
+**Visible before → after:** Flat selector and loose coverage link become independent rounded policy-selection and evidence-command panels with 21-unit headings, 18-unit insets and a 12-unit rhythm. The three existing profile cards now visibly distinguish the staged selection via source-bound SelectedIndex triggers (accent border and raised navy surface), not a fabricated active runtime state. Wide retains three aligned cards; Standard/Compact/below-1024 stack them. Selector width is capped rather than fixed. Reference mapping: layered navy operational panels and cyan hierarchy; no demo data. Static impact HIGH in Settings detection section; no render.
+
+**Ownership:** MainWindow.xaml, MainWindow.Settings.cs, this ledger. Existing named selector/label/column/profile grid, selection handler, Save/Reset, coverage navigation, threshold copy and profile indices preserved. No engine, capture, privacy, telemetry, shared API, tests or automation changes. Responsive controller retains existing breakpoint contract and removes trailing profile gutter. No new named elements.
+
+**Risks / planned unexecuted:** WPF resource and ElementName trigger resolution, staged selection versus saved profile, Save/Reset, coverage navigation, long labels, keyboard focus, 1920/1440/1100/1099/1024/1023/640 widths and DPI 100/125/150/200%. Builds 0; tests 0; CI 0; captures 0; renders 0. Next GA UI-175: Settings action and persistence hierarchy after fresh audit.

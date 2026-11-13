@@ -2770,24 +2770,32 @@
                         Header="Detection Sensitivity" Tag="01  /  SIGNAL POLICY" Style="{StaticResource SettingsOpsGroup}"
                         Margin="0,0,0,14">
                 <Grid Margin="14,16,14,12">
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition x:Name="SettingsSensitivityLabelColumn" Width="160"/>
-                    <ColumnDefinition Width="*"/>
-                  </Grid.ColumnDefinitions>
                   <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
                   </Grid.RowDefinitions>
-
+                  <Border Background="#17283A" BorderBrush="#34536B" BorderThickness="1" CornerRadius="12" Padding="18" Margin="0,0,0,12">
+                    <Grid>
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition x:Name="SettingsSensitivityLabelColumn" Width="160"/>
+                        <ColumnDefinition Width="*"/>
+                      </Grid.ColumnDefinitions>
+                      <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                      </Grid.RowDefinitions>
+                      <StackPanel Grid.ColumnSpan="2" Margin="0,0,0,14">
+                        <TextBlock Text="01 / POLICY SELECTION" Foreground="#49A9CC" FontWeight="Bold" FontSize="12"/>
+                        <TextBlock Text="Choose a detection profile" FontSize="21" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,5,0,0"/>
+                        <TextBlock Text="Selection is staged until Save. The cards below compare profile parameters, not live detection results." Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap" Margin="0,5,0,0"/>
+                      </StackPanel>
                   <!-- GA UI-65: clarify staged sensitivity selection and the scope of Save/Reset without changing preference handlers. -->
                   <TextBlock x:Name="SettingsSensitivityLabel" Text="Sensitivity"
-                             VerticalAlignment="Center"/>
+                             Grid.Row="1" VerticalAlignment="Center"/>
                   <ComboBox x:Name="SensitivityCombo"
-                            Grid.Column="1"
-                            Width="220"
+                            Grid.Row="1" Grid.Column="1"
+                            MaxWidth="220" HorizontalAlignment="Stretch"
                             SelectedIndex="1"
                             ToolTip="Choose Relaxed, Balanced or Aggressive detection sensitivity. Changing selection alone does not save it; Save persists this and other settings and reapplies runtime preferences."
                             ToolTipService.ShowsToolTipOnKeyboardFocus="True"
@@ -2798,10 +2806,26 @@
                     <ComboBoxItem Content="Balanced"/>
                     <ComboBoxItem Content="Aggressive"/>
                   </ComboBox>
+                    </Grid>
+                  </Border>
 
                   <!-- GA UI-118: substantial three-profile visual comparison, no new preference or detection behavior. -->
-                  <UniformGrid x:Name="SettingsSensitivityProfiles" Grid.Row="1" Grid.ColumnSpan="2" Columns="3" Margin="0,16,0,8">
-                    <Border Background="#101D2D" BorderBrush="#49A9CC" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,0,10,0" MinHeight="130">
+                  <UniformGrid x:Name="SettingsSensitivityProfiles" Grid.Row="1" Columns="3" Margin="0,0,0,12">
+                    <Border CornerRadius="12" Padding="18" Margin="0,0,10,0" MinHeight="156">
+                      <Border.Style>
+                        <Style TargetType="Border">
+                          <Setter Property="Background" Value="#101D2D"/>
+                          <Setter Property="BorderBrush" Value="#34536B"/>
+                          <Setter Property="BorderThickness" Value="1"/>
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedIndex, ElementName=SensitivityCombo}" Value="0">
+                              <Setter Property="Background" Value="#193247"/>
+                              <Setter Property="BorderBrush" Value="#49A9CC"/>
+                              <Setter Property="BorderThickness" Value="2"/>
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </Border.Style>
                       <StackPanel>
                         <TextBlock Text="RELAXED" Foreground="#49A9CC" FontWeight="Bold" FontSize="12"/>
                         <TextBlock Text="0.50" FontSize="26" FontWeight="Bold" Foreground="{StaticResource TextBrush}" Margin="0,8,0,0"/>
@@ -2812,7 +2836,21 @@
                         <TextBlock Text="Higher reputation cutoff; less sensitive thresholds." Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap" FontSize="11" Margin="0,9,0,0"/>
                       </StackPanel>
                     </Border>
-                    <Border Background="#101D2D" BorderBrush="#34C9C0" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,0,10,0" MinHeight="130">
+                    <Border CornerRadius="12" Padding="18" Margin="0,0,10,0" MinHeight="156">
+                      <Border.Style>
+                        <Style TargetType="Border">
+                          <Setter Property="Background" Value="#101D2D"/>
+                          <Setter Property="BorderBrush" Value="#34536B"/>
+                          <Setter Property="BorderThickness" Value="1"/>
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedIndex, ElementName=SensitivityCombo}" Value="1">
+                              <Setter Property="Background" Value="#193247"/>
+                              <Setter Property="BorderBrush" Value="#34C9C0"/>
+                              <Setter Property="BorderThickness" Value="2"/>
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </Border.Style>
                       <StackPanel>
                         <TextBlock Text="BALANCED" Foreground="#34C9C0" FontWeight="Bold" FontSize="12"/>
                         <TextBlock Text="1.00" FontSize="26" FontWeight="Bold" Foreground="{StaticResource TextBrush}" Margin="0,8,0,0"/>
@@ -2823,7 +2861,21 @@
                         <TextBlock Text="Default reference threshold profile." Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap" FontSize="11" Margin="0,9,0,0"/>
                       </StackPanel>
                     </Border>
-                    <Border Background="#101D2D" BorderBrush="#E8AC55" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,0,0,0" MinHeight="130">
+                    <Border CornerRadius="12" Padding="18" Margin="0,0,10,0" MinHeight="156">
+                      <Border.Style>
+                        <Style TargetType="Border">
+                          <Setter Property="Background" Value="#101D2D"/>
+                          <Setter Property="BorderBrush" Value="#34536B"/>
+                          <Setter Property="BorderThickness" Value="1"/>
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedIndex, ElementName=SensitivityCombo}" Value="2">
+                              <Setter Property="Background" Value="#193247"/>
+                              <Setter Property="BorderBrush" Value="#E8AC55"/>
+                              <Setter Property="BorderThickness" Value="2"/>
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </Border.Style>
                       <StackPanel>
                         <TextBlock Text="AGGRESSIVE" Foreground="#E8AC55" FontWeight="Bold" FontSize="12"/>
                         <TextBlock Text="1.50" FontSize="26" FontWeight="Bold" Foreground="{StaticResource TextBrush}" Margin="0,8,0,0"/>
@@ -2836,21 +2888,17 @@
                     </Border>
                   </UniformGrid>
 
-                  <TextBlock Grid.Row="2"
-                             Grid.ColumnSpan="2"
-                             Foreground="{StaticResource TextSubtleBrush}"
-                             Margin="0,8,0,0"
-                             Text="Higher sensitivity lowers rule thresholds (e.g., fewer packets/bytes needed to trigger) and flags lower reputation scores."
-                             TextWrapping="Wrap"/>
-
-                  <WrapPanel Grid.Row="3" Grid.ColumnSpan="2" Margin="0,12,0,0">
-                    <Button Content="Open Detection Coverage Center" MinWidth="220" Height="36"
-                            Style="{StaticResource SecondaryButton}" Click="SettingsOpenDetectionCoverage_Click"
-                            AutomationProperties.Name="Inspect registered rules, evaluations and telemetry coverage"/>
-                    <TextBlock Text="Read-only rule status and catalog diagnostics; does not change sensitivity."
-                               Foreground="{StaticResource TextMutedBrush}" FontSize="11"
-                               VerticalAlignment="Center" TextWrapping="Wrap" Margin="12,5,0,0"/>
-                  </WrapPanel>
+                  <Border Grid.Row="2" Background="#101D2D" BorderBrush="#34536B" BorderThickness="1" CornerRadius="12" Padding="18">
+                    <StackPanel>
+                      <TextBlock Text="02 / POLICY EVIDENCE" Foreground="#49A9CC" FontWeight="Bold" FontSize="12"/>
+                      <TextBlock Text="Inspect detection coverage" FontSize="21" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,5,0,0"/>
+                      <TextBlock Foreground="{StaticResource TextSubtleBrush}" Margin="0,8,0,12" Text="Higher sensitivity lowers rule thresholds (e.g., fewer packets/bytes needed to trigger) and flags lower reputation scores." TextWrapping="Wrap"/>
+                      <Button Content="Open Detection Coverage Center" HorizontalAlignment="Left" MinWidth="220" Height="36"
+                              Style="{StaticResource SecondaryButton}" Click="SettingsOpenDetectionCoverage_Click"
+                              AutomationProperties.Name="Inspect registered rules, evaluations and telemetry coverage"/>
+                      <TextBlock Text="Read-only rule status and catalog diagnostics; does not change sensitivity." Foreground="{StaticResource TextMutedBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                    </StackPanel>
+                  </Border>
 
 
                 </Grid>
