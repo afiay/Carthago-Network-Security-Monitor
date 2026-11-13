@@ -54,6 +54,7 @@ namespace Carthago.Services
             public Iec104StartupOffSequence? Iec104Startup;
             public OpcUaHelloAckInspector.Hello? OpcUaHello;
             public ModbusOversizedReadExchangeInspector.Pending? ModbusOversizedRead;
+            public ModbusBulkFileReadInspector.Pending? ModbusBulkFileRead;
         }
 
         private sealed class DirectionState
@@ -417,6 +418,7 @@ namespace Carthago.Services
                                 flow.Iec104Startup = null;
                                 flow.OpcUaHello = null;
                                 flow.ModbusOversizedRead = null;
+                                flow.ModbusBulkFileRead = null;
                             }
                     }
                 }
@@ -452,6 +454,12 @@ namespace Carthago.Services
                             // Exact Modbus FC03 oversized read / exception 03 exchange.
                             if (isIPv4 && (c2s ? dport == 502 && sport != 502 : sport == 502 && dport != 502))
                                 ObserveModbusOversizedRead(tcpFlow, rec, c2s, normPayload,
+                                    synAnchoredFirstPayload, tcpFlagsField == 0x18 &&
+                                    completeIpPacket && normPayload.Length == l4Payload.Length, seq, ack);
+
+                            // Exact Modbus FC20 bulk file-record request/response.
+                            if (isIPv4 && (c2s ? dport == 502 && sport != 502 : sport == 502 && dport != 502))
+                                ObserveModbusBulkFileRead(tcpFlow, rec, c2s, normPayload,
                                     synAnchoredFirstPayload, tcpFlagsField == 0x18 &&
                                     completeIpPacket && normPayload.Length == l4Payload.Length, seq, ack);
 
@@ -1032,6 +1040,7 @@ namespace Carthago.Services
                 state.Iec104Startup = null;
                 state.OpcUaHello = null;
                 state.ModbusOversizedRead = null;
+                state.ModbusBulkFileRead = null;
             }
         }
 
@@ -1047,6 +1056,7 @@ namespace Carthago.Services
                     state.Iec104Startup = null;
                     state.OpcUaHello = null;
                     state.ModbusOversizedRead = null;
+                    state.ModbusBulkFileRead = null;
                 }
             }
         }
@@ -1143,6 +1153,32 @@ namespace Carthago.Services
             }
         }
 
+        private void ObserveModbusBulkFileRead(FlowKey key, TrafficRecord record, bool client,
+            ReadOnlySpan<byte> data, bool first, bool complete, uint seq, uint ack)
+        {
+            lock (_tcpSync)
+            {
+                if (!_tcp.TryGetValue(key, out var flow)) return;
+                var pending = flow.ModbusBulkFileRead;
+                flow.ModbusBulkFileRead = null;
+                var dir = client ? flow.C2S : flow.S2C;
+                var opposite = client ? flow.S2C : flow.C2S;
+                if (!first || !complete || !dir.SynAnchored || !opposite.SynAnchored ||
+                    dir.Invalid || opposite.Invalid || dir.TlsActive || opposite.TlsActive ||
+                    dir.NextSeq != unchecked(seq + (uint)data.Length) || ack != opposite.NextSeq)
+                    return;
+                var now = _utcNow();
+                if (client)
+                {
+                    if (ModbusBulkFileReadInspector.TryRequest(data, now, out var request))
+                        flow.ModbusBulkFileRead = request;
+                }
+                else if (pending.HasValue &&
+                    ModbusBulkFileReadInspector.IsMatchingResponse(data, pending.Value, now))
+                    record.ModbusBulkFileReadResponseObserved = true;
+            }
+        }
+
         // One outstanding request per existing bounded TCP flow. No raw payload retained.
         private void ObserveSmb2WriteExchange(FlowKey key, bool c2s, TrafficRecord record,
             ReadOnlySpan<byte> payload, bool complete, uint seq, uint ack)
@@ -1211,6 +1247,7 @@ namespace Carthago.Services
                         state.Iec104Startup = null;
                         state.OpcUaHello = null;
                         state.ModbusOversizedRead = null;
+                        state.ModbusBulkFileRead = null;
                     return false;
                 }
 
@@ -1239,6 +1276,7 @@ namespace Carthago.Services
                         state.Iec104Startup = null;
                         state.OpcUaHello = null;
                         state.ModbusOversizedRead = null;
+                        state.ModbusBulkFileRead = null;
                         return false; // missing segment
                     }
                     if (diff < 0)
@@ -1252,6 +1290,7 @@ namespace Carthago.Services
                         state.Iec104Startup = null;
                         state.OpcUaHello = null;
                         state.ModbusOversizedRead = null;
+                        state.ModbusBulkFileRead = null;
                             return false; // retransmission while pending: fail closed
                         }
                         if (overlap64 > 3)
@@ -1263,6 +1302,7 @@ namespace Carthago.Services
                         state.Iec104Startup = null;
                         state.OpcUaHello = null;
                         state.ModbusOversizedRead = null;
+                        state.ModbusBulkFileRead = null;
                             return false;
                         }
                         overlap = (int)overlap64;

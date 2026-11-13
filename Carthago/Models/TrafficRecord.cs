@@ -169,6 +169,7 @@ namespace Carthago.Models
         public bool Iec104StartupOffExecuteObserved { get; internal set; }
         public bool OpcUaHelloAckObserved { get; internal set; }
         public bool ModbusOversizedReadExceptionObserved { get; internal set; }
+        public bool ModbusBulkFileReadResponseObserved { get; internal set; }
         public bool BacnetReinitializeDeviceRequestObserved { get; internal set; }
         public bool BacnetObjectListReadObserved { get; internal set; }
         public bool Dnp3UnsolicitedBinaryEventObserved { get; internal set; }

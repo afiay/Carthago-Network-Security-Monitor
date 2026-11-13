@@ -236,3 +236,8 @@ Workbook R2791 AN2184; exact two legacy table roots; Candidate/Shadow. [Batch no
 ## R977 — BACnet Device Object_List ReadProperty
 
 Workbook R2690 AN1920; exact complete whole-array directory request, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_977-977.md). 37 authored cases, zero execution; no completed namespace enumeration, authorization or baseline claim. Next ID R978.
+
+
+## R978 — Modbus FC20 bulk file-record response
+
+Workbook R2797 AN2244; capture-qualified exact one-record request/response, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_978-978.md). 45 authored cases, zero execution; no returned content classification, authorization or baseline claim. Next ID R979.
