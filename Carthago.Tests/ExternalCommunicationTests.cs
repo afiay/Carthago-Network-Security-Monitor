@@ -25,7 +25,8 @@ public sealed class ExternalCommunicationTests
     private static ObservedAssetSessionSnapshot Current(params ExternalCommunicationRow[] rows)
         => new(Guid.NewGuid(), Now, Array.Empty<ObservedAssetRow>(), rows);
     private static CommunicationComparisonSnapshot Compare(ObservedAssetSessionSnapshot current, params CommunicationHistoryRow[] rows)
-        => ExternalCommunicationComparison.Compare(current, new(rows.Length, Array.Empty<AssetHistoryRow>(), null, rows));
+        => ExternalCommunicationComparison.Compare(current, new(rows.Length, Array.Empty<AssetHistoryRow>(), null, rows,
+            rows.Select(r => new CheckpointCoverage(r.SessionId, r.StartedUtc, 0, 0)).ToArray()));
 
     [Fact]
     public void Outbound_Syn_And_Udp_Are_Observed_Not_Inbound_Or_Ack()
@@ -124,6 +125,50 @@ public sealed class ExternalCommunicationTests
             Assert.Equal("Previously observed destination", result.Rows[0].Status);
             Assert.Contains("novelty withheld", result.Rows[1].Status);
         }
+    }
+
+    [Fact]
+    public void Missing_Coverage_Withholds_Absence()
+    {
+        var current = Current(Row("1.1.1.1"));
+        var prior = Saved(Row());
+        var result = ExternalCommunicationComparison.Compare(current,
+            new(1, Array.Empty<AssetHistoryRow>(), null, new[] { prior }));
+        Assert.Contains("novelty withheld", Assert.Single(result.Rows).Status);
+    }
+
+    [Theory]
+    [InlineData(2, null, null, true)]
+    [InlineData(3, null, 0L, false)]
+    [InlineData(3, -1L, 0L, false)]
+    [InlineData(3, 7L, 0L, true)]
+    public void Checkpoint_Version_And_Capacity_Validation(int version, long? rejected, long? assetRejected, bool valid)
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "carthago-migration-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            Directory.CreateDirectory(dir);
+            var id = Guid.NewGuid();
+            var started = Now.AddDays(-1);
+            var checkpoint = new AssetHistoryStore.Checkpoint(version, id, started,
+                Array.Empty<ObservedAssetRow>(), new[] { Row() }, rejected, assetRejected);
+            var path = Path.Combine(dir, $"asset-{started.UtcDateTime.Ticks:D19}-{id:N}.json");
+            File.WriteAllText(path, System.Text.Json.JsonSerializer.Serialize(checkpoint));
+            var history = new AssetHistoryStore(dir).Read();
+            Assert.Equal(valid ? 1 : 0, history.SessionCount);
+            if (valid)
+            {
+                Assert.Null(history.Error);
+                Assert.Equal(rejected, Assert.Single(history.Coverage!).DestinationRejected);
+                Assert.Single(history.Communications!);
+            }
+            else
+            {
+                Assert.NotNull(history.Error);
+                Assert.Empty(history.Communications!);
+            }
+        }
+        finally { if (Directory.Exists(dir)) Directory.Delete(dir, true); }
     }
 
     [Fact]

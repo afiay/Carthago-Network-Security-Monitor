@@ -42,7 +42,9 @@ internal static class ExternalCommunicationComparison
                 DateTimeOffset.TryParseExact(r.Asset.LastSeenUtc, "u", System.Globalization.CultureInfo.InvariantCulture,
                     System.Globalization.DateTimeStyles.AssumeUniversal, out var last) && last.UtcDateTime >= cutoff)
                 excluded.Add(id);
-        bool truncated = (history.Coverage ?? Array.Empty<CheckpointCoverage>()).Any(c =>
+        var coverage = history.Coverage ?? Array.Empty<CheckpointCoverage>();
+        var covered = coverage.Where(c => c.DestinationRejected == 0).Select(c => c.SessionId).ToHashSet();
+        bool truncated = saved.Any(r => !excluded.Contains(r.SessionId) && !covered.Contains(r.SessionId)) || coverage.Any(c =>
             c.SessionId != current.SessionId && c.StartedUtc < current.StartedUtc && !excluded.Contains(c.SessionId)
             && c.DestinationRejected is null or > 0);
         var prior = rows.Select(r => new Host(r.InterfaceScope, r.LocalIp)).Distinct().ToDictionary(h => h, _ => new Prior());
