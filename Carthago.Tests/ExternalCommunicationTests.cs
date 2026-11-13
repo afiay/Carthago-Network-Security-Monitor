@@ -112,7 +112,22 @@ public sealed class ExternalCommunicationTests
     }
 
     [Fact]
-    public void Version_Two_Checkpoint_Persists_Communication_Without_Count_Inflation()
+    public void Truncated_Or_Legacy_History_Withholds_Absence_But_Preserves_Presence()
+    {
+        var current = Current(Row(), Row("1.1.1.1"));
+        var prior = Saved(Row());
+        foreach (long? rejected in new long?[] { null, 1 })
+        {
+            var history = new AssetHistorySnapshot(1, Array.Empty<AssetHistoryRow>(), null, new[] { prior },
+                new[] { new CheckpointCoverage(prior.SessionId, prior.StartedUtc, rejected, 0) });
+            var result = ExternalCommunicationComparison.Compare(current, history);
+            Assert.Equal("Previously observed destination", result.Rows[0].Status);
+            Assert.Contains("novelty withheld", result.Rows[1].Status);
+        }
+    }
+
+    [Fact]
+    public void Version_Three_Checkpoint_Persists_Communication_Without_Count_Inflation()
     {
         var dir = Path.Combine(Path.GetTempPath(), "carthago-comms-" + Guid.NewGuid().ToString("N"));
         try
@@ -123,6 +138,7 @@ public sealed class ExternalCommunicationTests
             Assert.True(store.Save(registry)); Assert.True(store.Save(registry));
             var history = new AssetHistoryStore(dir).Read();
             Assert.Null(history.Error); Assert.Equal(1, history.SessionCount);
+            Assert.Equal(0L, Assert.Single(history.Coverage!).DestinationRejected);
             Assert.Equal(1L, Assert.Single(history.Communications!).Row.Observations);
         }
         finally { if (Directory.Exists(dir)) Directory.Delete(dir, true); }

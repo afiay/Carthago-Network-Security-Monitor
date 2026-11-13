@@ -42,6 +42,9 @@ internal static class ExternalCommunicationComparison
                 DateTimeOffset.TryParseExact(r.Asset.LastSeenUtc, "u", System.Globalization.CultureInfo.InvariantCulture,
                     System.Globalization.DateTimeStyles.AssumeUniversal, out var last) && last.UtcDateTime >= cutoff)
                 excluded.Add(id);
+        bool truncated = (history.Coverage ?? Array.Empty<CheckpointCoverage>()).Any(c =>
+            c.SessionId != current.SessionId && c.StartedUtc < current.StartedUtc && !excluded.Contains(c.SessionId)
+            && c.DestinationRejected is null or > 0);
         var prior = rows.Select(r => new Host(r.InterfaceScope, r.LocalIp)).Distinct().ToDictionary(h => h, _ => new Prior());
         foreach (var r in saved)
         {
@@ -60,8 +63,9 @@ internal static class ExternalCommunicationComparison
         foreach (var r in rows)
         {
             var p = prior[new(r.InterfaceScope, r.LocalIp)];
-            bool comparable = p.Destinations.Count > 0 && !incomplete;
-            string status = incomplete ? "History incomplete; novelty withheld" : !comparable ? "No comparable prior communication"
+            bool comparable = p.Destinations.Count > 0 && !incomplete && !truncated;
+            string status = incomplete ? "History incomplete; novelty withheld" : truncated && !p.Destinations.Contains(r.Destination)
+                ? "History capacity unknown or truncated; novelty withheld" : p.Destinations.Contains(r.Destination) ? "Previously observed destination" : !comparable ? "No comparable prior communication"
                 : p.Destinations.Contains(r.Destination) ? "Previously observed destination" : "Destination not in retained history";
             var asns = comparable && p.Asns.Count > 0 ? r.Asns.Where(a => !p.Asns.Contains(a)) : Array.Empty<string>();
             var countries = comparable && p.Countries.Count > 0 ? r.Countries.Where(a => !p.Countries.Contains(a)) : Array.Empty<string>();
@@ -73,6 +77,6 @@ internal static class ExternalCommunicationComparison
         return new(result, $"{result.Count} outbound destination rows. TCP SYN attempts / UDP datagrams, not confirmed connections. " +
             "Only earlier checkpoints with communication data for the same interface and local IP are compared. " +
             "Metadata absence is not proof of novelty; blank comparison fields may mean missing prior metadata. " +
-            "Process names are not executable identities. " + (incomplete ? "History incomplete: novelty withheld." : ""));
+            "Process names are not executable identities. " + (incomplete ? "History incomplete: novelty withheld." : truncated ? "Earlier checkpoint capacity unknown or truncated: novelty withheld." : ""));
     }
 }
