@@ -12,6 +12,7 @@
     <Compile Include="../Carthago/Services/DnsWireNameCodec.cs" Link="Services/DnsWireNameCodec.cs" />
     <Compile Include="../Carthago/Services/ProtocolIntelligence/DnsAddressObservationInspector.cs" Link="Services/ProtocolIntelligence/DnsAddressObservationInspector.cs" />
     <Compile Include="../Carthago/Services/ProtocolIntelligence/BacnetEventDisableInspector.cs" Link="Services/ProtocolIntelligence/BacnetEventDisableInspector.cs" />
+    <Compile Include="../Carthago/Models/TrafficRecord.cs" Link="Models/TrafficRecord.cs" />
     <!-- Preserve existing internal access while consumers migrate. -->
     <InternalsVisibleTo Include="Carthago" />
     <InternalsVisibleTo Include="carthago" />

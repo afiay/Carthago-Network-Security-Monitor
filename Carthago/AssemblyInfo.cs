@@ -2,6 +2,8 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 
 [assembly: InternalsVisibleTo("Carthago.Tests")]
+// Preserve the former public model location for CLR type resolution.
+[assembly: TypeForwardedTo(typeof(Carthago.Models.TrafficRecord))]
 
 [assembly:ThemeInfo(
     ResourceDictionaryLocation.None,            //where theme specific resource dictionaries are located

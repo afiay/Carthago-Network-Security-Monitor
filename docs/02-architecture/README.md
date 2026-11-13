@@ -14,3 +14,4 @@ System boundaries, evidence lineage, sensors and architectural constraints.
 - [SensorFleet](SensorFleet.md)
 - [CLI-006A — Portable Core](CLI-006A-PortableCore.md)
 - [CLI-006B.1 — Portable protocol parsing](CLI-006B1-PortableProtocols.md)
+- [CLI-006B.2 — Shared traffic model](CLI-006B2-SharedTrafficModel.md)

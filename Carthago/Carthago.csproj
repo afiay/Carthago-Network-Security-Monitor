@@ -47,6 +47,7 @@
     <Compile Remove="Services/DnsWireNameCodec.cs" />
     <Compile Remove="Services/ProtocolIntelligence/DnsAddressObservationInspector.cs" />
     <Compile Remove="Services/ProtocolIntelligence/BacnetEventDisableInspector.cs" />
+    <Compile Remove="Models/TrafficRecord.cs" />
   </ItemGroup>
 
   <!-- Content to copy -->
