@@ -57,6 +57,9 @@ try {
         status = 'NotExecuted'
         buildExitCode = $null
         monitorBuildExitCode = $null
+        monitorHelpExitCode = $null
+        monitorInvalidCommandExitCode = $null
+        expectedTotal = ($expected.Values | Measure-Object -Sum).Sum
         testExitCode = $null
         total = 0
         passed = 0
@@ -102,6 +105,20 @@ try {
         Get-Content -LiteralPath (Join-Path $dir 'monitor-build.log') -Tail 35
         exit 1
     }
+    # Exercise the actual console entry point, not just the in-process worker.
+    # Neither invocation reads saved profiles, opens Npcap or sends probes.
+    $report.monitorHelpExitCode = Invoke-Dotnet @('run', '--project', $monitorProject, '-c', 'Release',
+        '--no-build', '--no-restore', '--', '--help') (Join-Path $dir 'monitor-help.log')
+    $report.monitorInvalidCommandExitCode = Invoke-Dotnet @('run', '--project', $monitorProject, '-c', 'Release',
+        '--no-build', '--no-restore', '--', 'active', 'run', '--profile', 'invalid') (Join-Path $dir 'monitor-invalid.log')
+    if ($report.monitorHelpExitCode -ne 0 -or $report.monitorInvalidCommandExitCode -ne 2 -or
+        -not (Select-String -LiteralPath (Join-Path $dir 'monitor-help.log') -SimpleMatch 'carthago-monitor active status' -Quiet) -or
+        -not (Select-String -LiteralPath (Join-Path $dir 'monitor-invalid.log') -SimpleMatch 'Invalid or duplicate profile ID.' -Quiet)) {
+        $report.status = 'HostSmokeFailed'
+        $report.blocker = 'Monitor executable help or invalid-command contract failed.'
+        Write-Report
+        exit 1
+    }
     $filter = ($expected.Keys | ForEach-Object { 'FullyQualifiedName~' + $_ }) -join '|'
     Write-Host "AS-Q01: execute $($expected.Count) active sensor suites (synthetic and loopback only)"
     $report.testExitCode = Invoke-Dotnet @('test', $project, '-c', 'Release', '--no-build', '--no-restore',
@@ -116,18 +133,25 @@ try {
     try {
         [xml]$trx = Get-Content -LiteralPath $trxPath -Raw
         $definitions = @{}
+        $duplicateDefinitions = 0
         foreach ($unit in $trx.SelectNodes("//*[local-name()='UnitTest']")) {
             $method = $unit.SelectSingleNode("./*[local-name()='TestMethod']")
             if ($null -ne $method) {
                 $className = $method.GetAttribute('className').Split(',')[0].Trim()
-                $definitions[$unit.GetAttribute('id')] = $className
+                $id = $unit.GetAttribute('id')
+                if (-not $id -or $definitions.ContainsKey($id)) { $duplicateDefinitions++ }
+                else { $definitions[$id] = $className }
             }
         }
         $counts = @{}
         foreach ($name in $expected.Keys) { $counts[$name] = [ordered]@{ total = 0; passed = 0; failedOrSkipped = 0 } }
         $unknown = 0
+        $executionIds = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+        $duplicateExecutions = 0
         $resultNodes = @($trx.SelectNodes("//*[local-name()='UnitTestResult']"))
         foreach ($result in $resultNodes) {
+            $executionId = $result.GetAttribute('executionId')
+            if (-not $executionId -or -not $executionIds.Add($executionId)) { $duplicateExecutions++ }
             $className = $definitions[$result.GetAttribute('testId')]
             $outcome = $result.GetAttribute('outcome')
             $report.total++
@@ -141,19 +165,28 @@ try {
         $complete = $true
         foreach ($name in $expected.Keys) {
             $count = $counts[$name]
-            $report.suites += [ordered]@{ name = $name; minimumExpected = $expected[$name];
+            $report.suites += [ordered]@{ name = $name; expected = $expected[$name];
                 total = $count.total; passed = $count.passed; failedOrSkipped = $count.failedOrSkipped }
-            if ($count.total -lt $expected[$name] -or $count.failedOrSkipped -ne 0) { $complete = $false }
-            Write-Host ("{0}: {1}/{2} passed (minimum {3})" -f $name, $count.passed, $count.total, $expected[$name])
+            if ($count.total -ne $expected[$name] -or $count.failedOrSkipped -ne 0) { $complete = $false }
+            Write-Host ("{0}: {1}/{2} passed (expected {3})" -f $name, $count.passed, $count.total, $expected[$name])
         }
         $summary = $trx.SelectSingleNode("//*[local-name()='ResultSummary']")
         $counters = $trx.SelectSingleNode("//*[local-name()='ResultSummary']/*[local-name()='Counters']")
         if ($null -eq $summary -or $null -eq $counters -or
             [int]$counters.GetAttribute('total') -ne $report.total -or
-            [int]$counters.GetAttribute('passed') -ne $report.passed -or $unknown -ne 0) { $complete = $false }
+            [int]$counters.GetAttribute('passed') -ne $report.passed -or
+            [int]$counters.GetAttribute('executed') -ne $report.total -or
+            $summary.GetAttribute('outcome') -notin @('Completed', 'Passed') -or
+            $report.total -ne $report.expectedTotal -or $unknown -ne 0 -or
+            $duplicateDefinitions -ne 0 -or $duplicateExecutions -ne 0) { $complete = $false }
         $afterSha = (& git rev-parse HEAD).Trim()
+        $shaExit = $LASTEXITCODE
+        $afterBranch = (& git branch --show-current).Trim()
+        $branchExit = $LASTEXITCODE
         $afterDirty = @(& git status --porcelain --untracked-files=all)
-        if ($afterSha -ne $sha -or $afterDirty.Count -ne 0) {
+        $dirtyExit = $LASTEXITCODE
+        if ($shaExit -ne 0 -or $branchExit -ne 0 -or $dirtyExit -ne 0 -or
+            $afterSha -ne $sha -or $afterBranch -ne $branch -or $afterDirty.Count -ne 0) {
             $report.status = 'SourceChanged'
             $report.blocker = 'Source or worktree changed during verification.'
         } elseif ($report.testExitCode -ne 0 -or $report.failedOrSkipped -ne 0) {
@@ -161,7 +194,7 @@ try {
             $report.blocker = 'Test process failed or non-passing outcomes present.'
         } elseif (-not $complete -or $report.total -eq 0) {
             $report.status = 'Incomplete'
-            $report.blocker = 'Missing suites/cases, unknown test results or inconsistent TRX counters.'
+            $report.blocker = 'Unexpected suite/case counts, duplicate identities, unknown results or inconsistent TRX counters.'
         } else { $report.status = 'Passed' }
     } catch {
         $report.status = 'Incomplete'

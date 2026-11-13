@@ -249,8 +249,12 @@ internal sealed class ActiveEvidenceStore
                 var now = _clock();
                 using var db = Open();
                 var rows = Collection(db);
-                db.BeginTrans();
-                try { Prune(rows, now); db.Commit(); }
+                if (!db.BeginTrans()) return new(Array.Empty<ActiveEvidenceRow>(), "Active history transaction unavailable.");
+                try
+                {
+                    Prune(rows, now);
+                    if (!db.Commit()) return new(Array.Empty<ActiveEvidenceRow>(), "Active history retention failed.");
+                }
                 catch { db.Rollback(); throw; }
                 // Bounded retained population; exact filters before limiting, stable tie ordering.
                 var all = rows.Query().OrderByDescending(x => x.ObservedTicks).Limit(MaxRows).ToList();
@@ -287,7 +291,7 @@ internal sealed class ActiveEvidenceStore
                 var rows = Collection(db);
                 var approvals = db.GetCollection<Approval>("active_approved_baselines");
                 var now = _clock();
-                db.BeginTrans();
+                if (!db.BeginTrans()) return false;
                 try
                 {
                     Prune(rows, now);
