@@ -136,5 +136,27 @@ public sealed class ActiveSensorWorkerTests : IDisposable
         Assert.Contains("All selected profiles blocked", error.ToString());
     }
 
+    [Fact]
+    public async Task PinnedGrantRejectsReplacementBeforeManagerOrReadiness()
+    {
+        var p = Profile();
+        var id = Save(p);
+        var original = Assert.IsType<ActiveExecutionGrant>(Store().ReadValidGrant(p));
+        var replacement = Assert.IsType<ActiveExecutionGrant>(Store().Grant(p, TimeSpan.FromHours(1)));
+        Assert.NotEqual(original.GrantId, replacement.GrantId);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+        int managers = 0, ready = 0;
+        var result = await ActiveSensorWorker.ExecuteCoreAsync(new[] { "run", "--profile", id },
+            output, error, default, Store(), _ => new[] { Adapter },
+            () => { managers++; return new ActiveSensorManager(); }, () => _now,
+            pinnedGrants: new System.Collections.Generic.Dictionary<string, Guid> { [id] = original.GrantId },
+            ready: () => ready++);
+        Assert.Equal(3, result);
+        Assert.Equal(0, managers);
+        Assert.Equal(0, ready);
+        Assert.Contains("does not match the pinned grant", error.ToString());
+    }
+
     public void Dispose() { if (Directory.Exists(_dir)) Directory.Delete(_dir, true); }
 }

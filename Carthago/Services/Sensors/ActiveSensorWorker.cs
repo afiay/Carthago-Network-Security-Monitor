@@ -86,9 +86,10 @@ public static class ActiveSensorWorker
                 if (profile.Kind == ActiveSensorKind.Gateway && !(gatewayCurrent ?? (p => GatewayIntegritySensor.IsConfiguredGateway(p.AdapterId, p.Adapter, p.Target)))(profile))
                 { error.WriteLine("Selected target is no longer the configured gateway."); return 3; }
                 var grant = store.ReadValidGrant(profile);
-                if (grant is null || pinnedGrants is not null &&
+                if (grant is null) { error.WriteLine("Selected configuration has no valid durable grant."); return 3; }
+                if (pinnedGrants is not null &&
                     (!pinnedGrants.TryGetValue(id, out var pinned) || pinned != grant.GrantId))
-                { error.WriteLine("Selected configuration has no valid matching durable grant."); return 3; }
+                { error.WriteLine("Selected configuration does not match the pinned grant."); return 3; }
                 selected.Add((profile, grant));
             }
             var manager = createManager();

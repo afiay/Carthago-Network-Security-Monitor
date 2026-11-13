@@ -27,7 +27,7 @@ try {
         ActiveSensorProfileStoreTests = 10
         ActiveSchedulerOwnershipTests = 5
         ActiveExecutionGrantTests = 9
-        ActiveSensorWorkerTests = 7
+        ActiveSensorWorkerTests = 8
         SnmpCredentialVaultTests = 7
         ScheduledSnmpAuthorizationTests = 7
         ActiveNpcapCoordinationTests = 8
