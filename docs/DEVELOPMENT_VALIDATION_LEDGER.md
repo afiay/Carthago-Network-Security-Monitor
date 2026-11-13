@@ -2358,3 +2358,8 @@ Reviewed live parent `8294185345a8117556016b3a2b7d77ba91658109`, ledger, qualifi
 ## 2026-11-13 — CLI-007E.1 portable foreground monitor
 
 **SOURCE CANDIDATE — UNVERIFIED.** Parent 242372bf230aeeda127a5c5fe66606b4303dbd16. Add explicit authorized monitor run with native source/bounded pipeline, periodic independent health snapshots, sanitized NDJSON findings, session ID and final cleanup/statistics. Fifteen synthetic cases authored, zero executed; pinned gate updated. Existing Windows IPC unchanged; no build/test/native capture/Actions or deployment qualification. See [architecture](02-architecture/CLI-007E1-PortableForegroundMonitor.md).
+
+
+## 2026-11-13 — CLI-007E.2 portable session control
+
+**SOURCE CANDIDATE — UNVERIFIED.** Parent 588e746e198c99f9258af9782f86d61e15574291. Add opt-in same-user named-pipe session status/health/stop, separate stop grant, fixed bounded protocol, deadlines and foreground lifecycle integration. Ten synthetic/local IPC cases authored, zero executed; pinned gate updated. Existing Windows IPC unchanged. No build/test/native capture/Actions or qualification claim. See [architecture](02-architecture/CLI-007E2-PortableSessionControl.md).

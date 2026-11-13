@@ -1,0 +1,9 @@
+# CLI-007E.2 — Portable session control
+
+**SOURCE CANDIDATE — UNVERIFIED.** Parent 588e746e198c99f9258af9782f86d61e15574291. CLI-006E/native qualification pending.
+
+Opt in on monitor run with --enable-portable-control; --allow-portable-stop requires that flag. The started event announces session GUID and control/stop flags. Separate monitor portable-status|portable-health|portable-stop --session GUID [--json] commands preserve existing Windows IPC. Session-specific .NET named pipe uses CurrentUserOnly on both ends, local client ".", one connection at a time, fixed 18-byte version/op/session request, bounded 16 KiB length-prefixed response, two-second client and per-connection deadline. No global discovery, PID stop, secrets, raw packet fields or privilege escalation. Same-user access is not protection from other processes running as that identity; Windows remote named-pipe exposure is subject to host OS policy. Use same account/elevation. No claim of cross-user isolation until actual platform tests.
+
+Status is running/stopping; health includes independent monitor and queue snapshots with native stats final-only. Stop is denied unless explicitly granted. Acknowledgement stop_accepted means request written, not shutdown confirmed; foreground drains and reports final stopped event. Wrong/stale session fails unavailable; no fallback to other sessions. Server lifetime ends with foreground run, fatal control errors request shutdown. Native capture/cleanup remains cooperative. Slow output may delay shutdown. No persistence or unattended deployment.
+
+Ten synthetic/local IPC cases authored; zero executed. Qualification gate includes class. Owner focused command: dotnet test Carthago.Cli.Tests/Carthago.Cli.Tests.csproj -c Release --filter FullyQualifiedName~PortableMonitorControlTests. Next: actual qualification and persistent sanitized evidence.

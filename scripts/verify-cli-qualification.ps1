@@ -190,6 +190,7 @@ try {
             'Carthago.Cli.Tests.NativePcapCaptureSourceTests'=22
             'Carthago.Cli.Tests.NativeCaptureQualificationTests'=10
             'Carthago.Cli.Tests.PortableMonitorCommandTests'=15
+            'Carthago.Cli.Tests.PortableMonitorControlTests'=10
             'Carthago.Cli.Tests.PortableReplayTests'=12
             'Carthago.Cli.Tests.PortableRuleCapabilityTests'=9
             'Carthago.Cli.Tests.PortableHttpBatchTests'=18

@@ -6,16 +6,16 @@ using Carthago.Services;
 
 namespace Carthago.Cli;
 
-/// <summary>Explicit foreground test host. No IPC, persistence, service registration or active response.</summary>
+/// <summary>Explicit foreground test host with optional session control. No persistence or active response.</summary>
 internal static class PortableMonitorCommand
 {
-    internal sealed record Options(string InterfaceId,string[] Rules,int StatusSeconds,int MaxPackets,long MaxBytes);
+    internal sealed record Options(string InterfaceId,string[] Rules,int StatusSeconds,int MaxPackets,long MaxBytes,bool EnableControl=false,bool AllowStop=false);
 
     internal static bool TryParse(string[] command,out Options? options)
     {
         options=null;
         if(command is not ["monitor","run",..])return false;
-        string? id=null;string[]? rules=null;bool authorized=false;
+        string? id=null;string[]? rules=null;bool authorized=false,control=false,allowStop=false;
         int seconds=5,packets=256;long bytes=16L*1024*1024;
         var seen=new HashSet<string>(StringComparer.Ordinal);
         for(int i=2;i<command.Length;i++)
@@ -23,6 +23,8 @@ internal static class PortableMonitorCommand
             string key=command[i];
             if(!seen.Add(key))return false;
             if(key=="--authorized-test-time"){authorized=true;continue;}
+            if(key=="--enable-portable-control"){control=true;continue;}
+            if(key=="--allow-portable-stop"){allowStop=true;continue;}
             if(++i>=command.Length)return false;
             string value=command[i];
             switch(key)
@@ -50,8 +52,8 @@ internal static class PortableMonitorCommand
                 default:return false;
             }
         }
-        if(!authorized||id is null||rules is null)return false;
-        options=new(id,rules,seconds,packets,bytes);return true;
+        if(!authorized||id is null||rules is null||(allowStop&&!control))return false;
+        options=new(id,rules,seconds,packets,bytes,control,allowStop);return true;
     }
 
     private static readonly JsonSerializerOptions JsonOptions=new(JsonSerializerDefaults.Web);
@@ -65,7 +67,9 @@ internal static class PortableMonitorCommand
         var sessionId=Guid.NewGuid();
         var outputGate=new object();
         PortableBufferedCaptureRun.Progress? progress=null;
-        bool reportingFailed=false;
+        bool reportingFailed=false,controlFailed=false;
+        using var controlStop=new CancellationTokenSource();
+        Task controlTask=Task.CompletedTask;
         void Emit<T>(string eventType,T data,string text)
         {
             lock(outputGate)
@@ -109,19 +113,28 @@ internal static class PortableMonitorCommand
                             $"Observation: {finding.RuleId} packet={frame.PacketNumber} {frame.TimestampUtc:O} {finding.Method}");
                 },started:p=>
                 {
-                    Emit("started",new { rules=options.Rules,options.StatusSeconds,options.MaxPackets,options.MaxBytes },
-                        $"Portable monitor started: {string.Join(",",options.Rules)}");
+                    if(options.EnableControl)
+                    {
+                        var pipe=PortableMonitorControl.CreateServer(sessionId);
+                        controlTask=PortableMonitorControl.ServeAsync(pipe,sessionId,p,options.AllowStop,
+                            stop.Token,()=>stop.Cancel(),controlStop.Token,()=>{controlFailed=true;stop.Cancel();});
+                    }
+                    Emit("started",new { rules=options.Rules,options.StatusSeconds,options.MaxPackets,options.MaxBytes,
+                        controlEnabled=options.EnableControl,stopAllowed=options.AllowStop },
+                        $"Portable monitor started: {string.Join(",",options.Rules)}; session={sessionId:D}; control={options.EnableControl}; stopAllowed={options.AllowStop}");
                     Volatile.Write(ref progress,p);
                 })).ConfigureAwait(false);
         }
         finally
         {
             reportStop.Cancel();
+            controlStop.Cancel();
             await reporting.ConfigureAwait(false);
+            await controlTask.ConfigureAwait(false);
         }
-        string status=reportingFailed||run.Status==PortableCaptureRun.Completion.Failed?"failed":
+        string status=reportingFailed||controlFailed||run.Status==PortableCaptureRun.Completion.Failed?"failed":
             token.IsCancellationRequested?"cancelled":"stopped";
-        Emit("stopped",new { status,failure=reportingFailed?"reporting_failed":run.Failure,
+        Emit("stopped",new { status,failure=reportingFailed?"reporting_failed":controlFailed?"control_failed":run.Failure,
             run.StopFailed,run.DisposeFailed,driver=source.FinalStatistics,pipeline=run.Pipeline,monitor=run.Snapshot },
             $"Portable monitor {status}: captured={run.Pipeline.Captured}; processed={run.Pipeline.Processed}; abandoned={run.Pipeline.Abandoned}");
         return status=="failed"?CliApplication.DataError:status=="cancelled"?CliApplication.Cancelled:CliApplication.Success;

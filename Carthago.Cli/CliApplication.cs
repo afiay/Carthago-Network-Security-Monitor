@@ -35,7 +35,8 @@ public static class CliApplication
           carthago capture qualify --interface ID --seconds 1-60 --authorized-test-time [--json]
           carthago engine status [--json]
           carthago monitor status [--json]
-          carthago monitor run --interface ID --rules R586[,R...] --authorized-test-time [--status-seconds N] [--max-packets N] [--max-bytes N] [--json]
+          carthago monitor portable-status|portable-health|portable-stop --session GUID [--json]
+          carthago monitor run --interface ID --rules R586[,R...] --authorized-test-time [--status-seconds N] [--max-packets N] [--max-bytes N] [--enable-portable-control [--allow-portable-stop]] [--json]
           carthago service status|health|start|stop|doctor [--json]
           carthago engine health [--json]
           carthago monitor stop [--session GUID] [--json]
@@ -93,6 +94,17 @@ public static class CliApplication
                 return await TailAsync(command, output, error, json, token, investigationQuery);
             if (command.Length > 0 && (command[0] is "alerts" or "incidents" or "events" or "hosts"))
                 return await InvestigateAsync(command, output, error, json, token, investigationQuery);
+            if (command is ["monitor", "portable-status" or "portable-health" or "portable-stop", ..])
+            {
+                if(!PortableMonitorControl.TryParse(command,out var session,out var operation))
+                    return await FailAsync(error,json,UsageError,"invalid_usage",
+                        "Expected monitor portable-status|portable-health|portable-stop --session GUID [--json].");
+                var response=await PortableMonitorControl.QueryAsync(session,operation,token);
+                await WriteAsync(output,json,response,
+                    $"Portable monitor {response.SessionId:D}: {response.Status}; stopAllowed={response.StopAllowed}."+
+                    (response.Pipeline is null?"":$" Captured={response.Pipeline.Captured}; processed={response.Pipeline.Processed}."));
+                return response.Status is "running" or "stopping" or "stop_accepted"?Success:DataError;
+            }
             if (command is ["monitor", "run", ..])
             {
                 if (!PortableMonitorCommand.TryParse(command,out var monitorOptions))
@@ -205,6 +217,7 @@ public static class CliApplication
                         new Capability("live.rules", "unavailable", "Windows opt-in catalog query; use rules summary to check connectivity."),
                         new Capability("live.incidents", "unavailable", "No live incident connection."),
                         new Capability("capture", "unavailable", "No qualified unattended capture; explicit foreground test mode only."),
+                        new Capability("monitor.portable-control", "available", "Opt-in same-user session-specific portable status, health and stop."),
                         new Capability("monitor.run", "available", "Explicit foreground portable capture test; native readiness not assessed."),
                         new Capability("capture.discovery", "available", "Read-only provider discovery; no capture handle opened."),
                         new Capability("pcap.inspect", "available", "Read-only classic PCAP and PCAPNG enhanced-packet telemetry; no rule execution."),
