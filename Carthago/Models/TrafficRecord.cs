@@ -162,6 +162,7 @@ namespace Carthago.Models
         public Guid? Smb2WriteCreateCorrelationId { get; internal set; }
         // Capture-only initial TFTP handshake evidence; never populated by port inference.
         public bool SnmpEnterpriseSetRequestObserved { get; internal set; }
+        public bool SnmpUpsRebootRequestObserved { get; internal set; }
         public bool Dnp3UnsolicitedBinaryEventObserved { get; internal set; }
         // Capture-only unit/register key, intentionally excluded from JSON/export.
         internal uint? ModbusSingleRegisterWritePoint { get; set; }

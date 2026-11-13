@@ -3,11 +3,18 @@ using System;
 
 namespace Carthago.Services.ProtocolIntelligence
 {
-    // Narrow definite-length BER subset: complete SNMPv1/v2c enterprise SET
-    // with integer or octet-string values. No community, OID or value retained.
+    // Narrow definite-length BER subset: complete SNMPv1/v2c SET with
+    // integer or octet-string values. Separate enterprise and exact UPS reboot
+    // predicates. No community, OID or value retained.
     internal static class SnmpEnterpriseSetInspector
     {
-        internal static bool TryInspect(ReadOnlySpan<byte> packet)
+        // RFC 1628 UPS-MIB upsRebootWithDuration.0 (not an enterprise OID).
+        private static readonly byte[] UpsRebootOid = { 0x2B, 6, 1, 2, 1, 33, 1, 8, 4, 0 };
+
+        internal static bool TryInspect(ReadOnlySpan<byte> packet) => TryInspectSet(packet, false);
+        internal static bool TryInspectUpsReboot(ReadOnlySpan<byte> packet) => TryInspectSet(packet, true);
+
+        private static bool TryInspectSet(ReadOnlySpan<byte> packet, bool upsReboot)
         {
             if (packet.Length is < 20 or > 4096) return false;
             int p = 0;
@@ -35,6 +42,17 @@ namespace Carthago.Services.ProtocolIntelligence
                 if (tag != 0x02 && tag != 0x04) return false;
                 if (!Take(binding, ref b, tag, out var value) || b != binding.Length ||
                     (tag == 0x02 ? !Integer(value) : value.Length > 1024)) return false;
+                // A reboot candidate is a single exact scalar binding with a
+                // nonnegative canonical signed Integer32 duration. No other
+                // UPS controls, enterprise objects or mixed SETs are admitted.
+                if (upsReboot)
+                {
+                    if (count != 1 || tag != 0x02 || (value[0] & 0x80) != 0 ||
+                        !oid.SequenceEqual(UpsRebootOid)) return false;
+                    enterprise = true;
+                    continue;
+                }
+
                 // 1.3.6.1.4.1.<enterprise>.<object>; prefix alone is not an object.
                 if (oid.Length >= 7 && oid[0] == 0x2B && oid[1] == 6 &&
                     oid[2] == 1 && oid[3] == 4 && oid[4] == 1)

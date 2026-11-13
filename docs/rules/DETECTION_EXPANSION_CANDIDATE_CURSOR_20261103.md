@@ -191,3 +191,8 @@ Workbook R2781, AN2236; independent Candidate/Shadow, complete raw UDP frame/CRC
 ## R968 — capture-qualified Modbus same-register write burst
 
 Workbook R2725 AN1870; narrow function 06 first-request burst across distinct ports, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_968-968.md). 26 authored tests, zero execution; no scan-cycle/authorization/effect claim. Next ID R969.
+
+
+## R969 — capture-qualified SNMP UPS reboot-duration request
+
+Workbook R2768 AN2187; exact RFC1628 UPS reboot scalar, bounded BER, separate from enterprise SET, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_969-969.md). 29 authored cases, zero execution; no power-state/authorization claim. Next ID R970.

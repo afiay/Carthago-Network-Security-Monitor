@@ -991,6 +991,7 @@ namespace Carthago.Engine.Rules.Catalog
                 new R966_PublicSnmpEnterpriseSetRequestRule(),
                 new R967_PublicDnp3UnsolicitedBinaryEventRule(),
                 new R968_PublicModbusSameRegisterWriteBurstRule(),
+                new R969_PublicSnmpUpsRebootRequestRule(),
             };
         }
 

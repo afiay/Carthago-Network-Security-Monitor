@@ -808,11 +808,18 @@ namespace Carthago.Services
 
                         // Complete, capture-attested SNMP enterprise SET. No community or value retained.
                         if (isIPv4 && dport == 161 && sport is > 0 and <= 65535 &&
-                            completeIpPacket && l4PayloadLen == ipPayloadLen - 8 && !rec.IsQuic &&
-                            SnmpEnterpriseSetInspector.TryInspect(l4Payload))
+                            completeIpPacket && l4PayloadLen == ipPayloadLen - 8 && !rec.IsQuic)
                         {
-                            rec.ApplicationProtocol = "snmp.enterprise.set.request";
-                            rec.SnmpEnterpriseSetRequestObserved = true;
+                            if (SnmpEnterpriseSetInspector.TryInspect(l4Payload))
+                            {
+                                rec.ApplicationProtocol = "snmp.enterprise.set.request";
+                                rec.SnmpEnterpriseSetRequestObserved = true;
+                            }
+                            else if (SnmpEnterpriseSetInspector.TryInspectUpsReboot(l4Payload))
+                            {
+                                rec.ApplicationProtocol = "snmp.ups.reboot.request";
+                                rec.SnmpUpsRebootRequestObserved = true;
+                            }
                         }
 
                         // Complete DNP3 unsolicited binary input events. CRC is not authentication.
