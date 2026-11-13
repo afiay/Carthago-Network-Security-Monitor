@@ -31,3 +31,26 @@ The source inventory is read-only against Git blobs; its script/module are from 
 For each rule record exact SHA, source/descriptor, positive and negative cases (including benign lookalikes), producer path, observed test results, replay evidence and operational disposition. Missing producer or independent labels remain blocked. Preserve R102 frozen V1 and pending V2, Shadow/Disabled semantics, confidence floors, and all historical test results. No new IDs in IQ-01.
 
 Next: review the pinned inventory and resolve source ambiguities; execute the integration gate on Windows, record actual results, then prioritize R966–R1000 and producer-dependent rules. Active sensors have a separate synthetic verifier (`verify-active-sensors.ps1`); live network checks and UI visual acceptance remain separate authorized gates.
+
+## 2026-11-14 — Owner-run build diagnosis and corrective retest
+
+Status: **RED at tested SHA; corrective source candidate UNVERIFIED.** The owner synchronized the existing feature branch (209 fast-forward commits) and used Windows PowerShell 5.1 with .NET SDK 9.0.321. The first integration run at `a4c01f86a4aa13b8b4dce9047da8334b51856f07` stopped at the solution build (exit 1). The diagnostic-only change `390a5801e2e2cb9049f79a26aa5515624925e8a5` now prints a stage start, success or last 80 lines of the failure log and its full path; complete logs remain local. The owner reran at that SHA and reported 12 compiler errors and two warnings; no xUnit or replay stage was reached. Contracts, Core and CLI compiled, but the overall solution did not.
+
+| Observed diagnostic at 390a5801 | Correction in 0861e45c | Status |
+| --- | --- | --- |
+| 8 CS0122: CLI tests cannot access NativePcapCaptureSource, NativeCaptureDiscovery or IPortableMonitorJournal | Add InternalsVisibleTo for Carthago.Cli.Tests in Carthago.Cli.csproj; keep implementation types internal | Retest pending |
+| 4 CS0104: ambiguous JsonSerializer in ActiveEvidenceStore and ActiveSensorProfileStore | Alias System.Text.Json.JsonSerializer explicitly; retain LiteDB storage and existing serialization calls | Retest pending |
+| CA1416: platform-neutral ServiceCommands references WindowsServiceControl.ServiceName | Share platform-neutral service-name constant; preserve the public Windows alias and native platform guard | Retest pending |
+| CS8620: nullable RuleId finding passed to numeric comparer | Declare IComparer<string?> consistently with existing null-aware CompareIds; preserve numeric ordering | Retest pending |
+
+Corrective commit: [0861e45c832337b5815ae195e0d58812652bfb63](https://github.com/afiay/Carthago-Network-Security-Monitor/commit/0861e45c832337b5815ae195e0d58812652bfb63). No test assertions, rule modes, thresholds, sensor grants, or release gates changed. The existing tests are the regression checks; no new test results or Windows build success are claimed. The supplied owner transcript is evidence of the failed build only; full log and integration.json remain local under build-verify/integration/20261113-231710-390a5801e2e2-72d2353e.
+
+Owner retest from a clean checkout:
+
+```powershell
+git pull --ff-only origin feature/carthago-reliability-hardening
+$sha = (git rev-parse HEAD).Trim()
+.\scripts\verify-integration.ps1 -SourceSha $sha -AuthorizedTestTime
+```
+
+Record the actual retest SHA (including any intervening documentation or source commits), build exit, CLI TRX counters, Windows regression counts and replay outcome. On integration success, run the dedicated active-sensor verifier and CLI qualification with Windows parity at the same clean SHA; retain their reports separately. Physical sensors, live capture, field accuracy and production readiness remain unverified. Keep the 1,000 registered core IDs distinct from individually qualified rules and portable CLI capabilities. No Actions dispatch or live probe was performed for these corrections.
