@@ -772,6 +772,15 @@ namespace Carthago.Services
                             rec.BacnetReinitializeDeviceRequestObserved = true;
                         }
 
+                        // Exact BACnet Device Object_List whole-array read.
+                        if (isIPv4 && dport == 47808 && sport is > 0 and <= 65535 &&
+                            completeIpPacket && l4PayloadLen == ipPayloadLen - 8 && !rec.IsQuic &&
+                            BacnetObjectListReadInspector.TryInspect(l4Payload))
+                        {
+                            rec.ApplicationProtocol = "bacnet.device.object_list.read";
+                            rec.BacnetObjectListReadObserved = true;
+                        }
+
                         // -------- Bounded CoAP and WS-Discovery requests --------
                         if (NetworkBatch231235Wire.CoapDiscovery(l4Payload, sport, dport))
                             rec.ApplicationProtocol = "coap.discovery";

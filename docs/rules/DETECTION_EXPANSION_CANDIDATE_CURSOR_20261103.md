@@ -231,3 +231,8 @@ Workbook R2697 AN1933; exact capture-qualified confirmed service 20, Candidate/S
 ## R976 — SNMP connection table GETNEXT
 
 Workbook R2791 AN2184; exact two legacy table roots; Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_976-976.md). 30 authored cases, zero execution; NMS authorization and baseline missing, no completed walk claim. Next ID R977.
+
+
+## R977 — BACnet Device Object_List ReadProperty
+
+Workbook R2690 AN1920; exact complete whole-array directory request, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_977-977.md). 37 authored cases, zero execution; no completed namespace enumeration, authorization or baseline claim. Next ID R978.

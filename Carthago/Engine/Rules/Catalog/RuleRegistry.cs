@@ -999,6 +999,7 @@ namespace Carthago.Engine.Rules.Catalog
                 new R974_PrivateModbusOversizedReadExceptionRule(),
                 new R975_PublicBacnetReinitializeDeviceRequestRule(),
                 new R976_PublicSnmpConnectionTableGetNextRule(),
+                new R977_PublicBacnetObjectListReadRule(),
             };
         }
 

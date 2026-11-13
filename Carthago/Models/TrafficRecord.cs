@@ -170,6 +170,7 @@ namespace Carthago.Models
         public bool OpcUaHelloAckObserved { get; internal set; }
         public bool ModbusOversizedReadExceptionObserved { get; internal set; }
         public bool BacnetReinitializeDeviceRequestObserved { get; internal set; }
+        public bool BacnetObjectListReadObserved { get; internal set; }
         public bool Dnp3UnsolicitedBinaryEventObserved { get; internal set; }
         // Capture-only unit/register key, intentionally excluded from JSON/export.
         internal uint? ModbusSingleRegisterWritePoint { get; set; }
