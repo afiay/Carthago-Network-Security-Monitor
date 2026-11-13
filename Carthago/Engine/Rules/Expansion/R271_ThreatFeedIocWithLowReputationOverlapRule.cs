@@ -51,9 +51,9 @@ namespace Carthago.Engine.Rules.Expansion
             var record = context.Record;
             // Match the same observed SOURCE IP in the locally loaded feed and the
             // source-IP reputation enrichment. Never infer an IOC from packet Info.
-            if (!Carthago.Services.ThreatFeedService.TryMatch(record.Source ?? string.Empty, out var feed)
+            if (!Carthago.Services.ThreatFeedService.TryMatch(record.Source ?? string.Empty, out var feed, out var builtAt)
                 || !NetworkBatch271275Evidence.HasSourceOverlap(
-                    record, feed, Carthago.Services.ThreatFeedService.CurrentStats.LastBuild,
+                    record, feed, builtAt,
                     context.TimestampUtc))
                 return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
                     "TRUSTED_SOURCE_IOC_REPUTATION_OVERLAP_REQUIRED",

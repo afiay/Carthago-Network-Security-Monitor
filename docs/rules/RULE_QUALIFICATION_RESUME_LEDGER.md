@@ -7,7 +7,7 @@ Columns: rule, catalog implementation path, required producer, positive evidence
 | Rule | Implementation | Producer | Positive | Negative | Boundary | Status/blocker |
 |---|---|---|---|---|---|---|
 | R270 | Carthago/Engine/Rules/Expansion/R270_DetectionPipelineTamperingIndicatorRule.cs | pending inspection | pending inspection | pending | pending | audit pending |
-| R271 | Carthago/Engine/Rules/Expansion/R271_ThreatFeedIocWithLowReputationOverlapRule.cs | exact source-IP feed + independent reputation | helper-only per historical progress; detector test pending | pending | pending | producer/fixture review |
+| R271 | Carthago/Engine/Rules/Expansion/R271_ThreatFeedIocWithLowReputationOverlapRule.cs | exact source-IP feed + independent reputation; snapshot-consistent match/time | helper-only per historical progress; detector test pending | pending | pending | source reviewed 800a2b3a421d04909c2a4b48d30e437cd7cf4654; snapshot race corrected; reputation provenance and detector fixture pending |
 | R272 | Carthago/Engine/Rules/Expansion/R272_MultiSignalRuleStackSurgeFromHostRule.cs | pending inspection | pending inspection | pending | pending | audit pending |
 | R273 | Carthago/Engine/Rules/Expansion/R273_ImpossibleTravelAuthenticationSequenceRule.cs | pending inspection | pending inspection | pending | pending | audit pending |
 | R274 | Carthago/Engine/Rules/Expansion/R274_MFAPushFatiguePatternRule.cs | pending inspection | pending inspection | pending | pending | audit pending |

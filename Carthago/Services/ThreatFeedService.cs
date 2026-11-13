@@ -166,17 +166,23 @@ namespace Carthago.Services
         // ======== Queries ========
 
         public static bool TryMatch(string value, out MatchInfo info)
+            => TryMatch(value, out info, out _);
+
+        // Match and freshness must come from the same immutable snapshot.
+        public static bool TryMatch(string value, out MatchInfo info, out DateTimeOffset builtAt)
         {
+            var snapshot = _snapshot;
+            builtAt = snapshot.BuiltAt;
             info = default!;
             if (string.IsNullOrWhiteSpace(value)) return false;
             var v = NormalizeValue(value);
 
             // Bloom prefilter: cheap fast-fail
-            if (!_snapshot.Bloom.MightContain(v))
+            if (!snapshot.Bloom.MightContain(v))
                 return false;
 
             // Exact meta
-            if (_snapshot.Meta.TryGetValue(v, out var meta))
+            if (snapshot.Meta.TryGetValue(v, out var meta))
             {
                 var kind = ClassifyStringKind(v);
                 info = new MatchInfo(kind, v, meta.Confidence, meta.Sources.ToArray(), meta.Tags.ToArray());
@@ -184,7 +190,7 @@ namespace Carthago.Services
             }
 
             // For backward host-only callers
-            if (_snapshot.Hosts.Contains(v) && _snapshot.Meta.TryGetValue(v, out meta))
+            if (snapshot.Hosts.Contains(v) && snapshot.Meta.TryGetValue(v, out meta))
             {
                 info = new MatchInfo(IndicatorKind.Host, v, meta.Confidence, meta.Sources.ToArray(), meta.Tags.ToArray());
                 return true;
