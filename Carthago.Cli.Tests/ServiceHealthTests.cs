@@ -66,7 +66,7 @@ public sealed class ServiceHealthTests
     [Fact]
     public async Task StartWaitsForScmConfirmation()
     {
-        var scm = new Fake(new(ScmState.Stopped, 0, 0), new(ScmState.StartPending, 123, 0), new(ScmState.Running, 123, 0));
+        var scm = new Fake(new ScmStatus(ScmState.Stopped, 0, 0), new ScmStatus(ScmState.StartPending, 123, 0), new ScmStatus(ScmState.Running, 123, 0));
         using var output = new StringWriter();
         using var error = new StringWriter();
         Assert.Equal(0, await ServiceCommands.RunAsync("start", scm, output, error, true, default, delay: (_, _) => Task.CompletedTask));
@@ -77,7 +77,7 @@ public sealed class ServiceHealthTests
     [Fact]
     public async Task StopWaitsForScmConfirmation()
     {
-        var scm = new Fake(new(ScmState.Running, 123, 0), new(ScmState.StopPending, 123, 0), new(ScmState.Stopped, 0, 0));
+        var scm = new Fake(new ScmStatus(ScmState.Running, 123, 0), new ScmStatus(ScmState.StopPending, 123, 0), new ScmStatus(ScmState.Stopped, 0, 0));
         using var output = new StringWriter();
         using var error = new StringWriter();
         Assert.Equal(0, await ServiceCommands.RunAsync("stop", scm, output, error, true, default, delay: (_, _) => Task.CompletedTask));
@@ -88,7 +88,7 @@ public sealed class ServiceHealthTests
     [Fact]
     public async Task TransitionTimeoutDoesNotClaimSuccess()
     {
-        var scm = new Fake(new(ScmState.StartPending, 123, 0));
+        var scm = new Fake(new ScmStatus(ScmState.StartPending, 123, 0));
         using var output = new StringWriter();
         using var error = new StringWriter();
         Assert.Equal(3, await ServiceCommands.RunAsync("start", scm, output, error, true, default, delay: (_, _) => Task.CompletedTask));
@@ -101,7 +101,7 @@ public sealed class ServiceHealthTests
     [InlineData(1060, "service_not_installed")]
     public async Task ScmErrorsAreExplicit(int nativeCode, string expected)
     {
-        var scm = new Fake(new(ScmState.Stopped, 0, 0)) { Error = nativeCode };
+        var scm = new Fake(new ScmStatus(ScmState.Stopped, 0, 0)) { Error = nativeCode };
         using var output = new StringWriter();
         using var error = new StringWriter();
         Assert.Equal(3, await ServiceCommands.RunAsync("status", scm, output, error, true, default));
@@ -112,7 +112,7 @@ public sealed class ServiceHealthTests
     [Fact]
     public async Task HealthDoesNotReadStoppedServiceSnapshot()
     {
-        var scm = new Fake(new(ScmState.Stopped, 0, 0));
+        var scm = new Fake(new ScmStatus(ScmState.Stopped, 0, 0));
         using var output = new StringWriter();
         using var error = new StringWriter();
         bool called = false;
@@ -127,7 +127,7 @@ public sealed class ServiceHealthTests
     public async Task HealthRejectsServiceReplacementDuringRead()
     {
         var s = Sample(DateTimeOffset.UtcNow);
-        var scm = new Fake(new(ScmState.Running, 123, 0), new(ScmState.Running, 456, 0));
+        var scm = new Fake(new ScmStatus(ScmState.Running, 123, 0), new ScmStatus(ScmState.Running, 456, 0));
         using var output = new StringWriter();
         using var error = new StringWriter();
         Assert.Equal(3, await ServiceCommands.RunAsync("health", scm, output, error, true, default,
@@ -140,7 +140,7 @@ public sealed class ServiceHealthTests
     public async Task DoctorReportsFreshSampleWithoutClaimingDetectorAccuracy()
     {
         var s = Sample(DateTimeOffset.UtcNow);
-        var scm = new Fake(new(ScmState.Running, 123, 0));
+        var scm = new Fake(new ScmStatus(ScmState.Running, 123, 0));
         using var output = new StringWriter();
         using var error = new StringWriter();
         Assert.Equal(0, await ServiceCommands.RunAsync("doctor", scm, output, error, true, default,
@@ -153,7 +153,7 @@ public sealed class ServiceHealthTests
     public async Task CancellationAfterRequestDoesNotClaimRollback()
     {
         using var cancel = new CancellationTokenSource();
-        var scm = new Fake(new(ScmState.Stopped, 0, 0));
+        var scm = new Fake(new ScmStatus(ScmState.Stopped, 0, 0));
         using var output = new StringWriter();
         using var error = new StringWriter();
         Assert.Equal(130, await ServiceCommands.RunAsync("start", scm, output, error, true, cancel.Token,

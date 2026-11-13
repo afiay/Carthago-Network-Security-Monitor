@@ -56,7 +56,8 @@ public static class ServiceCommands
                         health = ServiceHealthStore.Assess(candidate, status.ProcessId, processStart(status.ProcessId), DateTimeOffset.UtcNow);
                         // Recheck SCM after reading; do not attach a sample across service replacement.
                         var after = control.Status();
-                        if (after.State != ScmState.Running || after.ProcessId != status.ProcessId)
+                        if (after.State != ScmState.Running || after.ProcessId != status.ProcessId ||
+                            (health == "fresh_sample" && processStart(after.ProcessId) != candidate.ProcessStartedUtc))
                             health = "service_changed";
                         status = after;
                         if (health == "fresh_sample") snapshot = candidate;
