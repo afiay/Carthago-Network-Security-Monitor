@@ -65,6 +65,7 @@ public partial class MainWindow
         DockPanel.SetDock(actions, Dock.Bottom); panel.Children.Add(actions);
         var output = new TextBox { IsReadOnly = true, TextWrapping = TextWrapping.Wrap,
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Margin = new Thickness(0, 0, 0, 12), Text = "No ARP request sent." };
+        var saveHistory = AddActiveEvidenceOptIn(panel);
         panel.Children.Add(output); dialog.Content = panel;
         CancellationTokenSource? active = null;
         bool closeRequested = false;
@@ -80,6 +81,8 @@ public partial class MainWindow
         close.Click += (_, _) => dialog.Close();
         run.Click += async (_, _) =>
         {
+            bool persist = saveHistory.IsChecked == true;
+            saveHistory.IsEnabled = false;
             if (active is not null) return;
             using var cancellation = new CancellationTokenSource();
             active = cancellation;
@@ -99,6 +102,11 @@ public partial class MainWindow
                     $"Cache differs from at least one direct claim: {result.CacheDiffers}\n" +
                     $"Claim limit reached: {result.ClaimLimitReached}\n\n" +
                     "No reply does not prove the gateway is offline. A match does not authenticate a gateway; investigate changes and failover.";
+                if (persist && !closeRequested && !cancellation.IsCancellationRequested)
+                {
+                    var saved = await SaveActiveEvidenceAsync(() => ActiveEvidenceProjection.From(id!.Value, result));
+                    if (!closeRequested) output.Text += saved;
+                }
             }
             catch (OperationCanceledException) { output.Text = "Check cancelled."; }
             catch (Exception ex) { output.Text = "Check not completed: " + ex.Message; }
@@ -106,7 +114,7 @@ public partial class MainWindow
             {
                 active = null;
                 if (closeRequested) dialog.Close();
-                else { run.IsEnabled = choice.IsEnabled = baseline.IsEnabled = true; close.Content = "Close"; }
+                else { saveHistory.IsEnabled = true; run.IsEnabled = choice.IsEnabled = baseline.IsEnabled = true; close.Content = "Close"; }
             }
         };
         dialog.ShowDialog();

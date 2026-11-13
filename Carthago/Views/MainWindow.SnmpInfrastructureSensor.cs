@@ -54,6 +54,7 @@ public partial class MainWindow
         DockPanel.SetDock(actions, Dock.Bottom); panel.Children.Add(actions);
         var output = new TextBox { IsReadOnly = true, TextWrapping = TextWrapping.Wrap,
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Margin = new Thickness(0, 0, 0, 12), Text = "No request sent." };
+        var saveHistory = AddActiveEvidenceOptIn(panel);
         panel.Children.Add(output); dialog.Content = panel;
         CancellationTokenSource? active = null;
         bool closed = false;
@@ -61,6 +62,8 @@ public partial class MainWindow
         close.Click += (_, _) => dialog.Close();
         run.Click += async (_, _) =>
         {
+            bool persist = saveHistory.IsChecked == true;
+            saveHistory.IsEnabled = false;
             if (active is not null) return;
             using var cancellation = new CancellationTokenSource();
             active = cancellation;
@@ -83,6 +86,11 @@ public partial class MainWindow
                     $"Object ID: {evi.ObjectId ?? "Not established"}\nAgent uptime: {evi.UptimeCentiseconds?.ToString() ?? "Not established"} centiseconds\n" +
                     $"Interface count: {evi.InterfaceCount?.ToString() ?? "Not established"}\n") +
                     "\nAgent uptime is not necessarily device uptime. Reports, timeout and errors are not proof that credentials are wrong or the device is offline.";
+                if (persist && !closed && !cancellation.IsCancellationRequested)
+                {
+                    var saved = await SaveActiveEvidenceAsync(() => ActiveEvidenceProjection.From(id!.Value, result));
+                    if (!closed) output.Text += saved;
+                }
             }
             catch (OperationCanceledException) { if (!closed) output.Text = "Check cancelled."; }
             catch (ArgumentException) { if (!closed) output.Text = "Invalid scope or credentials. Use ASCII user and 8–128 printable ASCII passphrases."; }
@@ -90,6 +98,7 @@ public partial class MainWindow
             finally
             {
                 active = null;
+                if (!closed) saveHistory.IsEnabled = true;
                 if (!closed) { run.IsEnabled = user.IsEnabled = auth.IsEnabled = privacy.IsEnabled = true; close.Content = "Close"; }
             }
         };

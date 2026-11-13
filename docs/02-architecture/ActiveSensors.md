@@ -1,4 +1,4 @@
-# Active sensors — AS-01 through AS-06
+# Active sensors — AS-01 through AS-07
 
 Status: source candidate; Windows build, tests and live smoke pending.
 
@@ -81,3 +81,15 @@ dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQua
 ```
 
 Unit tests cover input scope, credentials, exact OID projection and types, library-generated authPriv wire messages, tampered digest, wrong engine/user/context/request IDs and plaintext downgrade. Before qualification, run an authorized SNMPv3 SHA-256/AES lab agent and verify correct credentials, wrong authentication/privacy, wrong engine/context, tampered digest, downgrade, timeout and cancellation on real wire. No runtime verification claimed.
+
+## AS-07 — Active evidence history
+
+Each of the six manual dialogs has an unchecked opt-in Save completed observation to local active history checkbox. Only completed observations (including inconclusive probe outcomes) are eligible; cancelled or thrown requests are not saved. One row per inspection, including the complete fixed-port TCP batch. Separate per-user %LOCALAPPDATA%/Carthago/active-evidence.db LiteDB, collection active_observations; version, ActiveProbe origin, GUID observation and adapter identity, source/target, probe key, UTC ticks, status and typed projected JSON. No TrafficRecord, rule, passive baseline or detection insertion. No credentials, packet bytes, raw HTTP header values, TLS subject/issuer/SAN or SNMP free text stored; SHA-256 hashes of selected HTTP values and SNMP name/description support comparison (not anonymization). DNS query name, local IP/MAC and certificate fingerprint remain sensitive local metadata. No automatic trust or baseline approval. Insert and retention in one transaction; duplicate IDs rejected, max 5,000 rows and 30 days, prune on save/read, 16 KiB payload, up to 200 results per exact sensor/target query. Database file size may not shrink immediately after pruning. Per-operation handles and in-process gate; storage errors displayed separately from probe outcomes. History menu displays projected JSON; no background scheduling, multi-process writer coordination beyond LiteDB locking, encryption at rest or export yet.
+
+Windows verification pending:
+
+```powershell
+dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~ActiveEvidenceStoreTests|FullyQualifiedName~LocalStoreLifecycleTests"
+```
+
+Tests cover persistence, duplicate IDs, retention, filters, invalid rows, storage failure and all six projections. Manual smoke: opt in/out, reopen history, confirm failure is not reported as saved, verify no secrets or passive detection events. No runtime verification claimed.

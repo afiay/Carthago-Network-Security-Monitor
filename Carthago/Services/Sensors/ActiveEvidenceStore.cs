@@ -1,0 +1,223 @@
+// SPDX-License-Identifier: MIT
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.Sockets;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using LiteDB;
+
+namespace Carthago.Services.Sensors;
+
+internal enum ActiveSensorKind { Tcp, Dns, Tls, Http, Gateway, Snmp }
+
+// Separate active-probe evidence; never a TrafficRecord, detection or approved baseline.
+// Public properties support LiteDB mapping; only typed projection factories create rows.
+internal sealed class ActiveEvidenceRow
+{
+    public Guid Id { get; set; }
+    public int Version { get; set; } = 1;
+    public string Origin { get; set; } = "ActiveProbe";
+    public string Sensor { get; set; } = "";
+    public string AdapterId { get; set; } = "";
+    public string Source { get; set; } = "";
+    public string Target { get; set; } = "";
+    public string ProbeKey { get; set; } = "";
+    public string Status { get; set; } = "";
+    public long ObservedTicks { get; set; }
+    public string EvidenceJson { get; set; } = "";
+}
+
+internal static class ActiveEvidenceProjection
+{
+    private static string Hash(string value) =>
+        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value))).ToLowerInvariant();
+    private static string? HashOptional(string? value) => value is null ? null : Hash(value);
+
+    private static ActiveEvidenceRow Row(Guid adapter, IPAddress source, IPAddress target,
+        ActiveSensorKind sensor, string key, string status, DateTimeOffset observed, object evidence) =>
+        new()
+        {
+            Id = Guid.NewGuid(), AdapterId = adapter.ToString("D"), Source = source.ToString(),
+            Target = target.ToString(), Sensor = sensor.ToString(), ProbeKey = key, Status = status,
+            ObservedTicks = observed.UtcDateTime.Ticks, EvidenceJson = JsonSerializer.Serialize(evidence)
+        };
+
+    internal static ActiveEvidenceRow From(Guid adapter, IReadOnlyList<TcpExposureObservation> values)
+    {
+        if (values.Count != TcpExposureSensor.DefaultPorts.Count ||
+            !values.Select(v => v.Port).SequenceEqual(TcpExposureSensor.DefaultPorts) ||
+            values.Any(v => !v.Source.Equals(values[0].Source) || !v.Target.Equals(values[0].Target)))
+            throw new ArgumentException("Expected one complete TCP exposure scan.");
+        return Row(adapter, values[0].Source, values[0].Target, ActiveSensorKind.Tcp, "fixed-ports-v1",
+            "Completed", values.Max(v => v.ObservedUtc), new
+            {
+                Ports = values.Select(v => new { v.Port, Status = v.Status.ToString(),
+                    DurationMs = v.Duration.TotalMilliseconds, SocketError = v.SocketError?.ToString() }).ToArray()
+            });
+    }
+
+    internal static ActiveEvidenceRow From(Guid adapter, DnsIntegrityObservation v) =>
+        Row(adapter, v.Source, v.Resolver, ActiveSensorKind.Dns, v.Name, v.Status.ToString(), v.ObservedUtc,
+            new { v.Addresses, v.ResponseCode, DurationMs = v.Duration.TotalMilliseconds, SocketError = v.SocketError?.ToString() });
+
+    private static object? Certificate(TlsCertificateEvidence? c) => c is null ? null : new
+    {
+        c.Sha256, c.NotBeforeUtc, c.NotAfterUtc, c.Validity, PolicyErrors = c.PolicyErrors.ToString(),
+        ChainErrors = c.ChainErrors.Select(e => e.ToString()).ToArray(), c.FingerprintMatches
+    };
+
+    internal static ActiveEvidenceRow From(Guid adapter, TlsInspectionObservation v) =>
+        Row(adapter, v.Source, v.Target, ActiveSensorKind.Tls, $"{v.HostName}:{v.Port}", v.Status.ToString(), v.ObservedUtc,
+            new { v.Port, v.Protocol, v.CipherSuite, Certificate = Certificate(v.Certificate), DurationMs = v.Duration.TotalMilliseconds });
+
+    internal static ActiveEvidenceRow From(Guid adapter, HttpHealthObservation v) =>
+        Row(adapter, v.Source, v.Target, ActiveSensorKind.Http, $"{(v.Https ? "https" : "http")}://{v.HostName}:{v.Port}",
+            v.Status.ToString(), v.ObservedUtc, new
+            {
+                v.StatusCode, Redirect = v.Redirect.ToString(), Certificate = Certificate(v.Certificate),
+                Headers = v.Headers.Select(h => new { h.Name, ValueHashes = h.Values.Select(Hash).ToArray() }).ToArray(),
+                DurationMs = v.Duration.TotalMilliseconds
+            });
+
+    internal static ActiveEvidenceRow From(Guid adapter, GatewayIntegrityObservation v) =>
+        Row(adapter, v.Source, v.Gateway, ActiveSensorKind.Gateway, "arp", v.Status.ToString(), v.ObservedUtc,
+            new { v.DirectMacs, v.CachedMac, v.CacheDiffers, v.ClaimLimitReached });
+
+    internal static ActiveEvidenceRow From(Guid adapter, SnmpInfrastructureObservation v) =>
+        Row(adapter, v.Source, v.Target, ActiveSensorKind.Snmp, "udp:161/sys-scalars-v1", v.Status.ToString(), v.ObservedUtc,
+            new { NameHash = HashOptional(v.Evidence?.Name), DescriptionHash = HashOptional(v.Evidence?.Description),
+                ObjectId = v.Evidence?.ObjectId, UptimeCentiseconds = v.Evidence?.UptimeCentiseconds, InterfaceCount = v.Evidence?.InterfaceCount,
+                DurationMs = v.Duration.TotalMilliseconds });
+}
+
+internal sealed record ActiveEvidenceRead(IReadOnlyList<ActiveEvidenceRow> Rows, string? Error);
+
+internal sealed class ActiveEvidenceStore
+{
+    internal const int MaxRows = 5000;
+    internal const int MaxPayloadBytes = 16 * 1024;
+    internal const int MaxQuery = 200;
+    internal static readonly TimeSpan Retention = TimeSpan.FromDays(30);
+    private static readonly object Gate = new();
+    private readonly string _path;
+    private readonly int _capacity;
+    private readonly Func<DateTimeOffset> _clock;
+
+    internal ActiveEvidenceStore(string? path = null, int capacity = MaxRows, Func<DateTimeOffset>? clock = null)
+    {
+        if (capacity is < 1 or > MaxRows) throw new ArgumentOutOfRangeException(nameof(capacity));
+        _path = path ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Carthago", "active-evidence.db");
+        _capacity = capacity;
+        _clock = clock ?? (() => DateTimeOffset.UtcNow);
+    }
+
+    private LiteDatabase Open()
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(_path))!);
+        return new LiteDatabase(_path);
+    }
+
+    private static ILiteCollection<ActiveEvidenceRow> Collection(LiteDatabase db)
+    {
+        var rows = db.GetCollection<ActiveEvidenceRow>("active_observations");
+        rows.EnsureIndex(x => x.ObservedTicks);
+        rows.EnsureIndex(x => x.Target);
+        rows.EnsureIndex(x => x.Sensor);
+        return rows;
+    }
+
+    private static bool ValidAddress(string value) =>
+        IPAddress.TryParse(value, out var ip) && ip.AddressFamily == AddressFamily.InterNetwork &&
+        LocalLanDiscovery.IsLocalHostAddress(ip) && value == ip.ToString();
+
+    private static bool Valid(ActiveEvidenceRow row, DateTimeOffset now)
+    {
+        if (row.Id == Guid.Empty || row.Version != 1 || row.Origin != "ActiveProbe" ||
+            !Enum.TryParse<ActiveSensorKind>(row.Sensor, out var kind) || kind.ToString() != row.Sensor ||
+            !Guid.TryParseExact(row.AdapterId, "D", out var adapter) || adapter == Guid.Empty ||
+            !ValidAddress(row.Source) || !ValidAddress(row.Target) || row.Source == row.Target ||
+            string.IsNullOrWhiteSpace(row.ProbeKey) || row.ProbeKey.Length > 512 ||
+            string.IsNullOrWhiteSpace(row.Status) || row.Status.Length > 64 ||
+            row.ObservedTicks < (now - Retention).UtcDateTime.Ticks ||
+            row.ObservedTicks > now.AddMinutes(5).UtcDateTime.Ticks ||
+            string.IsNullOrWhiteSpace(row.EvidenceJson) || Encoding.UTF8.GetByteCount(row.EvidenceJson) > MaxPayloadBytes)
+            return false;
+        try
+        {
+            using var json = JsonDocument.Parse(row.EvidenceJson);
+            return json.RootElement.ValueKind == JsonValueKind.Object;
+        }
+        catch (JsonException) { return false; }
+    }
+
+    private void Prune(ILiteCollection<ActiveEvidenceRow> rows, DateTimeOffset now)
+    {
+        long cutoff = (now - Retention).UtcDateTime.Ticks;
+        rows.DeleteMany(x => x.ObservedTicks < cutoff);
+        int excess = rows.Count() - _capacity;
+        if (excess > 0)
+            foreach (var stale in rows.Query().OrderBy(x => x.ObservedTicks).Limit(excess).ToList())
+                rows.Delete(stale.Id);
+    }
+
+    internal bool Save(ActiveEvidenceRow row)
+    {
+        lock (Gate)
+        {
+            try
+            {
+                var now = _clock();
+                if (!Valid(row, now)) return false;
+                using var db = Open();
+                var rows = Collection(db);
+                db.BeginTrans();
+                try
+                {
+                    // Insert, not upsert: a reused observation ID cannot rewrite history.
+                    if (rows.FindById(row.Id) is not null) { db.Rollback(); return false; }
+                    rows.Insert(row);
+                    Prune(rows, now);
+                    // A backdated insert outside the retained newest set is not a successful save.
+                    if (rows.FindById(row.Id) is null) { db.Rollback(); return false; }
+                    db.Commit();
+                    return true;
+                }
+                catch { db.Rollback(); throw; }
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException) { return false; }
+        }
+    }
+
+    internal ActiveEvidenceRead Read(ActiveSensorKind? sensor = null, string? target = null, int limit = MaxQuery)
+    {
+        if (limit is < 1 or > MaxQuery || (target is not null && !ValidAddress(target)))
+            return new(Array.Empty<ActiveEvidenceRow>(), "Invalid history filter.");
+        lock (Gate)
+        {
+            try
+            {
+                if (!File.Exists(_path)) return new(Array.Empty<ActiveEvidenceRow>(), null);
+                var now = _clock();
+                using var db = Open();
+                var rows = Collection(db);
+                db.BeginTrans();
+                try { Prune(rows, now); db.Commit(); }
+                catch { db.Rollback(); throw; }
+                // Bounded retained population; exact filters before limiting, stable tie ordering.
+                var all = rows.Query().OrderByDescending(x => x.ObservedTicks).Limit(MaxRows).ToList();
+                var matched = all.Where(r => (sensor is null || r.Sensor == sensor.Value.ToString()) &&
+                    (target is null || r.Target == target)).ToArray();
+                var valid = matched.Where(r => Valid(r, now)).OrderByDescending(r => r.ObservedTicks)
+                    .ThenBy(r => r.Id).Take(limit).ToArray();
+                return new(valid, matched.Any(r => !Valid(r, now)) ? "Invalid history entries skipped." : null);
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            { return new(Array.Empty<ActiveEvidenceRow>(), "Active evidence history unavailable."); }
+        }
+    }
+}

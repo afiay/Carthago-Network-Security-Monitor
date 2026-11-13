@@ -62,6 +62,7 @@ public partial class MainWindow
             Margin = new Thickness(0, 0, 0, 12),
             Text = "TCP ports: " + string.Join(", ", TcpExposureSensor.DefaultPorts)
         };
+        var saveHistory = AddActiveEvidenceOptIn(panel);
         panel.Children.Add(output);
         dialog.Content = panel;
         using var cancellation = new CancellationTokenSource();
@@ -70,6 +71,8 @@ public partial class MainWindow
         close.Click += (_, _) => dialog.Close();
         run.Click += async (_, _) =>
         {
+            bool persist = saveHistory.IsChecked == true;
+            saveHistory.IsEnabled = false;
             run.IsEnabled = false;
             close.Content = "Cancel / close";
             output.Text = "Checking selected host…";
@@ -82,10 +85,15 @@ public partial class MainWindow
                         (o.SocketError.HasValue ? $" — {o.SocketError}" : ""))) +
                         "\n\nOpen = TCP handshake completed. Refused = explicit connection refusal. " +
                         "Timeout/unreachable/error do not establish that a port is closed.";
+                if (persist && !closed && !cancellation.IsCancellationRequested)
+                {
+                    var saved = await SaveActiveEvidenceAsync(() => ActiveEvidenceProjection.From(id!.Value, observations));
+                    if (!closed) output.Text += saved;
+                }
             }
             catch (OperationCanceledException) { if (!closed) output.Text = "Check cancelled."; }
             catch (Exception ex) { if (!closed) output.Text = "Check failed: " + ex.Message; }
-            finally { if (!closed) close.Content = "Close"; }
+            finally { if (!closed) { close.Content = "Close"; saveHistory.IsEnabled = true; } }
         };
         dialog.ShowDialog();
     }

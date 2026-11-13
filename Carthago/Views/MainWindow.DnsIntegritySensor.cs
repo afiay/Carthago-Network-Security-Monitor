@@ -70,6 +70,7 @@ public partial class MainWindow
             Margin = new Thickness(0, 0, 0, 12),
             Text = "No query sent. Without a baseline, addresses are observations only."
         };
+        var saveHistory = AddActiveEvidenceOptIn(panel);
         panel.Children.Add(output);
         dialog.Content = panel;
         CancellationTokenSource? active = null;
@@ -78,6 +79,8 @@ public partial class MainWindow
         close.Click += (_, _) => dialog.Close();
         run.Click += async (_, _) =>
         {
+            bool persist = saveHistory.IsChecked == true;
+            saveHistory.IsEnabled = false;
             if (active is not null) return;
             using var cancellation = new CancellationTokenSource();
             active = cancellation;
@@ -106,12 +109,18 @@ public partial class MainWindow
                         $"Expected IPv4: {string.Join(", ", baseline.Select(ip => ip.ToString()))}\n" +
                         (observation.SocketError.HasValue ? $"Socket: {observation.SocketError}\n" : "") +
                         "\nA mismatch is not proof of DNS poisoning. Truncation, no address and errors are inconclusive.";
+                if (persist && !closed && !cancellation.IsCancellationRequested)
+                {
+                    var saved = await SaveActiveEvidenceAsync(() => ActiveEvidenceProjection.From(id!.Value, observation));
+                    if (!closed) output.Text += saved;
+                }
             }
             catch (OperationCanceledException) { if (!closed) output.Text = "Query cancelled."; }
             catch (Exception ex) { if (!closed) output.Text = "Query not completed: " + ex.Message; }
             finally
             {
                 active = null;
+                if (!closed) saveHistory.IsEnabled = true;
                 if (!closed)
                 {
                     run.IsEnabled = name.IsEnabled = expected.IsEnabled = true;

@@ -54,6 +54,7 @@ public partial class MainWindow
         var output = new TextBox { IsReadOnly = true, TextWrapping = TextWrapping.Wrap,
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Margin = new Thickness(0, 0, 0, 12),
             Text = "No request sent." };
+        var saveHistory = AddActiveEvidenceOptIn(panel);
         panel.Children.Add(output); dialog.Content = panel;
         CancellationTokenSource? active = null;
         bool closed = false;
@@ -61,6 +62,8 @@ public partial class MainWindow
         close.Click += (_, _) => dialog.Close();
         run.Click += async (_, _) =>
         {
+            bool persist = saveHistory.IsChecked == true;
+            saveHistory.IsEnabled = false;
             if (active is not null) return;
             using var cancellation = new CancellationTokenSource();
             active = cancellation;
@@ -77,12 +80,18 @@ public partial class MainWindow
                     "\nObserved selected headers:\n" +
                     string.Join("\n", result.Headers.SelectMany(h => h.Values.Select(v => h.Name + ": " + v))) +
                     "\n\nMissing headers, HTTP error statuses and redirects are observations, not vulnerability findings. No redirect destination text is retained.";
+                if (persist && !closed && !cancellation.IsCancellationRequested)
+                {
+                    var saved = await SaveActiveEvidenceAsync(() => ActiveEvidenceProjection.From(id!.Value, result));
+                    if (!closed) output.Text += saved;
+                }
             }
             catch (OperationCanceledException) { if (!closed) output.Text = "Check cancelled."; }
             catch (Exception ex) { if (!closed) output.Text = "Check not completed: " + ex.Message; }
             finally
             {
                 active = null;
+                if (!closed) saveHistory.IsEnabled = true;
                 if (!closed) { run.IsEnabled = port.IsEnabled = name.IsEnabled = true; close.Content = "Close"; }
             }
         };
