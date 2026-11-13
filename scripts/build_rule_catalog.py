@@ -22,8 +22,8 @@ RULE_ROOT = ROOT / "Carthago/Engine/Rules"
 BATCH_DIRS = [ROOT / "docs/03-detection-rules/batches", ROOT / "docs"]
 CATALOG = ROOT / "docs/03-detection-rules/MASTER_RULE_CATALOG.md"
 
-REGISTRATION = re.compile(r"\bnew\s+(R(?P<id>\d{3})_[A-Za-z0-9_]+)\s*\(\s*\)")
-BATCH = re.compile(r"^RULE_BATCH_(\d{3})[-_](\d{3})\.md$")
+REGISTRATION = re.compile(r"\bnew\s+(R(?P<id>\d{3,})_[A-Za-z0-9_]+)\s*\(\s*\)")
+BATCH = re.compile(r"^RULE_BATCH_(\d{3,})[-_](\d{3,})\.md$")
 STRING_FIELD = r'\b{field}\s*:\s*"((?:\\.|[^"\\])*)"'
 SEVERITY = re.compile(r"\bDefaultSeverity\s*:\s*SeverityLevel\.(\w+)")
 ENABLED = re.compile(r"\bEnabledByDefault\s*:\s*(true|false)\b")
@@ -68,7 +68,7 @@ def field(text: str, name: str) -> str:
 def positional_descriptor(text: str) -> list[str] | None:
     """Recognize seven literal constructor arguments in older R-series rules."""
     tokens = re.findall(r'"(?:\\.|[^"\\])*"|SeverityLevel\.\w+|\b(?:true|false)\b', text)
-    if len(tokens) != 7 or not re.fullmatch(r'"R\d{3}"', tokens[0]):
+    if len(tokens) != 7 or not re.fullmatch(r'"R\d{3,}"', tokens[0]):
         return None
     if not all(tokens[i].startswith('"') for i in (1, 2, 3, 5)):
         return None
@@ -117,7 +117,9 @@ def collect_rules() -> list[Rule]:
     names = [m.group(1) for m in REGISTRATION.finditer(default)]
     if not names:
         raise ValueError("No registered R-series classes found in CreateDefaultRules")
-    ids = [int(name[1:4]) for name in names]
+    ids = [int(name.split('_', 1)[0][1:]) for name in names]
+    if any(name.split("_", 1)[0] != f"R{number:03d}" for name, number in zip(names, ids)):
+        raise ValueError("Noncanonical registered R-series ID")
     if len(ids) != len(set(ids)):
         raise ValueError("Duplicate registered RNNN IDs")
     if sorted(ids) != list(range(1, max(ids) + 1)):
@@ -136,7 +138,7 @@ def collect_rules() -> list[Rule]:
         desc = descriptor_text(source.read_text(encoding="utf-8-sig"))
         if not desc:
             raise ValueError(f"{name}: no explicit RuleDescriptor initializer found")
-        identifier = name[:4]
+        identifier = name.split('_', 1)[0]
         positional = positional_descriptor(desc)
         explicit_id = positional[0] if positional else field(desc, "RuleId")
         if explicit_id != identifier:

@@ -6,6 +6,27 @@ using System.ComponentModel;
 
 namespace Carthago.Models
 {
+    // Capture-only classification for the R988–R1000 native request batch.
+    // Explicit values preserve export compatibility. A single value prevents
+    // one exact wire predicate being represented as multiple new operations.
+    public enum IndustrialBatchOperation
+    {
+        None = 0,
+        BacnetDeviceSystemStatusRead = 988,
+        BacnetDeviceAllPropertiesRead = 989,
+        BacnetInputOutOfService = 990,
+        BacnetAtomicFileRead = 991,
+        BacnetAtomicFileWrite = 992,
+        FinsCpuStatusRead = 993,
+        FinsBulkDataMemoryRead = 994,
+        Dnp3IntegrityRead = 995,
+        Dnp3AbsoluteTimeWrite = 996,
+        ModbusReadWriteSamePairZero = 997,
+        ModbusBulkFileWrite = 998,
+        SnmpInterfaceAdminDown = 999,
+        SnmpIpv4ForwardingDisable = 1000,
+    }
+
     public class TrafficRecord : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -176,6 +197,7 @@ namespace Carthago.Models
         public bool FinsControllerStopObserved { get; internal set; }
         public bool EtherNetIpRegisterSessionObserved { get; internal set; }
         public bool EtherNetIpIdentityResetObserved { get; internal set; }
+        public IndustrialBatchOperation IndustrialOperation { get; internal set; }
         public bool BacnetReinitializeDeviceRequestObserved { get; internal set; }
         public bool BacnetObjectListReadObserved { get; internal set; }
         public bool BacnetEventDisableRequestObserved { get; internal set; }

@@ -721,6 +721,11 @@ namespace Carthago.Engine.Rules
 
             return field.ToLowerInvariant() switch
             {
+                "capture_only_industrial_batch_operation" =>
+                    record.IndustrialOperation != IndustrialBatchOperation.None &&
+                    string.Equals(record.ApplicationProtocol,
+                        Carthago.Services.ProtocolIntelligence.IndustrialBatchInspector.Label(record.IndustrialOperation),
+                        StringComparison.Ordinal) && !string.IsNullOrEmpty(record.ApplicationProtocol),
                 "source" => HasAny(record.Source),
                 "destination" => HasAny(record.Destination),
                 // These provenance fields are set only by PacketHandler after

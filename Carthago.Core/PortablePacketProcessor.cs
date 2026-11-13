@@ -178,14 +178,14 @@ namespace Carthago.Services
                         _latency.NoteSyn(tcpFlow, _utcNow());
                         InitSeq(tcpFlow, clientToServer: true, seqPlus1: unchecked(seq + 1),
                             nativeHandshakeEligible: isIPv4 && completeIpPacket && l4Payload.IsEmpty &&
-                                tcpFlagsField == 0x02 && (dport == 9600 || dport == 44818) && sport != dport);
+                                tcpFlagsField == 0x02 && (dport == 9600 || dport == 44818 || dport == 502) && sport != dport);
                     }
                     else if (tcpSyn && tcpAck)
                     {
                         _latency.NoteSynAck(tcpFlow, _utcNow());
                         InitSeq(tcpFlow, clientToServer: false, seqPlus1: unchecked(seq + 1),
                             synAcknowledgment: ack, nativeHandshakeEligible: isIPv4 && completeIpPacket &&
-                                l4Payload.IsEmpty && tcpFlagsField == 0x12 && (sport == 9600 || sport == 44818) && dport != sport);
+                                l4Payload.IsEmpty && tcpFlagsField == 0x12 && (sport == 9600 || sport == 44818 || sport == 502) && dport != sport);
                     }
 
                     // FIN or RST terminates any pending request, including on
@@ -279,6 +279,13 @@ namespace Carthago.Services
                                 normPayload.Length == l4Payload.Length && !IsTlsActive(tcpFlow, c2s) &&
                                 ModbusClearMaskWriteInspector.TryInspect(normPayload))
                                 rec.ModbusClearMaskWriteObserved = true;
+
+                            // R997/R998: strict first native Modbus request, with
+                            // matching SYN-ACK and exact full TCP sequence/ACK.
+                            if (isIPv4 && c2s && dport == 502 && sport is > 0 and <= 65535 &&
+                                sport != 502 && tcpFlagsField == 0x18 && synAnchoredFirstPayload &&
+                                completeIpPacket && normPayload.Length == l4Payload.Length)
+                                ObserveIndustrialBatchModbus(tcpFlow, rec, normPayload, seq, ack);
 
                             // -------- Plaintext LDAP simple BindRequest --------
                             // Strictly complete first client payload on an
@@ -749,6 +756,19 @@ namespace Carthago.Services
                             rec.FinsControllerStopObserved = true;
                         }
 
+                        // R988–R1000: complete native UDP request predicates.
+                        // Do not infer a command from a service port or label.
+                        if (isIPv4 && completeIpPacket && l4PayloadLen == ipPayloadLen - 8 &&
+                            !rec.IsQuic && sport is > 0 and <= 65535 && dport is > 0 and <= 65535)
+                        {
+                            var operation = IndustrialBatchInspector.InspectUdp(sport.Value, dport.Value, l4Payload);
+                            if (operation != IndustrialBatchOperation.None)
+                            {
+                                rec.IndustrialOperation = operation;
+                                rec.ApplicationProtocol = IndustrialBatchInspector.Label(operation);
+                            }
+                        }
+
                         // Capture-attested TFTP initial request/first reply, not generic port guessing.
                         if (isIPv4 && completeIpPacket && l4PayloadLen == ipPayloadLen - 8)
                             _tftpHandshake.Observe(rec, l4Payload, true, _utcNow());
@@ -869,7 +889,7 @@ namespace Carthago.Services
             lock (_tcpSync)
             {
                 var state = GetOrAddState(key, _utcNow());
-                // Native FINS and EtherNet/IP negotiation require the original complete client SYN
+                // Native FINS, EtherNet/IP and new Modbus requests require the original complete client SYN
                 // and a matching server SYN-ACK, without changing other rules.
                 if (clientToServer)
                 {
@@ -1077,6 +1097,24 @@ namespace Carthago.Services
                     record.ApplicationProtocol = "fins.tcp.node_negotiation.response";
                     record.FinsNodeNegotiationObserved = true;
                 }
+            }
+        }
+
+        private void ObserveIndustrialBatchModbus(FlowKey key, TrafficRecord record,
+            ReadOnlySpan<byte> data, uint seq, uint ack)
+        {
+            lock (_tcpSync)
+            {
+                if (!_tcp.TryGetValue(key, out var flow) || !flow.NativeSynAckValid ||
+                    !flow.C2S.SynAnchored || !flow.S2C.SynAnchored ||
+                    flow.C2S.Invalid || flow.S2C.Invalid || flow.C2S.TlsActive || flow.S2C.TlsActive ||
+                    flow.C2S.Collected != data.Length || flow.S2C.Collected != 0 ||
+                    flow.C2S.NextSeq != unchecked(seq + (uint)data.Length) || ack != flow.S2C.NextSeq)
+                    return;
+                var operation = IndustrialBatchInspector.InspectModbus(data);
+                if (operation == IndustrialBatchOperation.None) return;
+                record.IndustrialOperation = operation;
+                record.ApplicationProtocol = IndustrialBatchInspector.Label(operation);
             }
         }
 

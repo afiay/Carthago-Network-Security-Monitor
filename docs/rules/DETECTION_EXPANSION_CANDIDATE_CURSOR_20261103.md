@@ -286,3 +286,8 @@ Workbook R2782 AN2253; exact capture-qualified session registration, Candidate/S
 ## R987 — EtherNet/IP CIP Identity Reset
 
 Workbook R2697 AN1933; exact registered-session reset request, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_987-987.md). 43 authored cases, zero executed; no actual restart or approval claim. Next R988.
+
+
+## R988–R1000 — 1,000 source rules
+
+[Batch evidence and exact per-rule test counts](../03-detection-rules/batches/RULE_BATCH_988-1000.md). 13 distinct native request predicates, 414 dedicated xUnit cases plus one shared registry and 27 portable cases authored, zero .NET executed. Candidate/Shadow, no promotion. Four-digit catalog support added. Next R1001 subject to live registry and qualification gate.

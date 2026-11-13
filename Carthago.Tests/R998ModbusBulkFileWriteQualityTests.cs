@@ -1,0 +1,72 @@
+// SPDX-License-Identifier: MIT
+using System.Threading.Tasks;
+using Carthago.Engine.Rules.Expansion;
+using Carthago.Models;
+using Xunit;
+
+namespace Carthago.Tests;
+
+public sealed class R998ModbusBulkFileWriteQualityTests
+{
+    private const string Primary="0001000000D20115CF060001000000640718293A4B5C6D7E8FA0B1C2D3E4F5061728394A5B6C7D8E9FB0C1D2E3F405162738495A6B7C8D9EAFC0D1E2F30415263748596A7B8C9DAEBFD0E1F2031425364758697A8B9CADBECFE0F102132435465768798A9BACBDCEDFF00112233445566778899AABBCCDDEEF00112233445566778899AABBCCDDEEFF102132435465768798A9BACBDCEDFE0F2031425364758697A8B9CADBECFD0E1F30415263748596A7B8C9DAEBFC0D1E2F405162738495A6B7C8D9EAFB0C1D2E3F5061728394A5B6C7D8E9FA0B1C2D3E";
+    private const string Secondary="FFFF000000FAF715F7060001269800780718293A4B5C6D7E8FA0B1C2D3E4F5061728394A5B6C7D8E9FB0C1D2E3F405162738495A6B7C8D9EAFC0D1E2F30415263748596A7B8C9DAEBFD0E1F2031425364758697A8B9CADBECFE0F102132435465768798A9BACBDCEDFF00112233445566778899AABBCCDDEEF00112233445566778899AABBCCDDEEFF102132435465768798A9BACBDCEDFE0F2031425364758697A8B9CADBECFD0E1F30415263748596A7B8C9DAEBFC0D1E2F405162738495A6B7C8D9EAFB0C1D2E3F5061728394A5B6C7D8E9FA0B1C2D3E4F60718293A4B5C6D7E8F90A1B2C3D4E5F708192A3B4C5D6E7F8091A2B3C4D5E6F8091A2B3C4D5E6";
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public Task PositiveWireAndNonconvergence(bool secondary)
+        => IndustrialBatchRuleAssertions.Positive(new R998_PublicModbusBulkFileWriteRule(),IndustrialBatchOperation.ModbusBulkFileWrite,502,true,false,secondary?Secondary:Primary);
+
+    [Theory]
+    [InlineData("protocol",3,1)]
+    [InlineData("mbap-length",5,0)]
+    [InlineData("unit-zero",6,0)]
+    [InlineData("unit-248",6,248)]
+    [InlineData("other-function",7,6)]
+    [InlineData("byte-count",8,1)]
+    [InlineData("reference-type",9,5)]
+    [InlineData("file-zero",11,0)]
+    [InlineData("record-too-high",12,255)]
+    [InlineData("quantity-low",15,99)]
+    [InlineData("quantity-high",15,121)]
+    public Task SemanticAndHeaderNegative(string name,int offset,int value)
+        => IndustrialBatchRuleAssertions.Negative(new R998_PublicModbusBulkFileWriteRule(),IndustrialBatchOperation.ModbusBulkFileWrite,502,true,false,
+            IndustrialBatchWireFixtures.Mutate(Primary,name,offset,value,false));
+
+    [Theory]
+    [InlineData("record-crosses-end","0001000000D20115CF06000126AD00640718293A4B5C6D7E8FA0B1C2D3E4F5061728394A5B6C7D8E9FB0C1D2E3F405162738495A6B7C8D9EAFC0D1E2F30415263748596A7B8C9DAEBFD0E1F2031425364758697A8B9CADBECFE0F102132435465768798A9BACBDCEDFF00112233445566778899AABBCCDDEEF00112233445566778899AABBCCDDEEFF102132435465768798A9BACBDCEDFE0F2031425364758697A8B9CADBECFD0E1F30415263748596A7B8C9DAEBFC0D1E2F405162738495A6B7C8D9EAFB0C1D2E3F5061728394A5B6C7D8E9FA0B1C2D3E")]
+    [InlineData("quantity-99","0001000000D00115CD060001000000630718293A4B5C6D7E8FA0B1C2D3E4F5061728394A5B6C7D8E9FB0C1D2E3F405162738495A6B7C8D9EAFC0D1E2F30415263748596A7B8C9DAEBFD0E1F2031425364758697A8B9CADBECFE0F102132435465768798A9BACBDCEDFF00112233445566778899AABBCCDDEEF00112233445566778899AABBCCDDEEFF102132435465768798A9BACBDCEDFE0F2031425364758697A8B9CADBECFD0E1F30415263748596A7B8C9DAEBFC0D1E2F405162738495A6B7C8D9EAFB0C1D2E3F5061728394A5B6C7D8E9FA0B1C")]
+    [InlineData("quantity-121","0001000000FC0115F9060001000000790718293A4B5C6D7E8FA0B1C2D3E4F5061728394A5B6C7D8E9FB0C1D2E3F405162738495A6B7C8D9EAFC0D1E2F30415263748596A7B8C9DAEBFD0E1F2031425364758697A8B9CADBECFE0F102132435465768798A9BACBDCEDFF00112233445566778899AABBCCDDEEF00112233445566778899AABBCCDDEEFF102132435465768798A9BACBDCEDFE0F2031425364758697A8B9CADBECFD0E1F30415263748596A7B8C9DAEBFC0D1E2F405162738495A6B7C8D9EAFB0C1D2E3F5061728394A5B6C7D8E9FA0B1C2D3E4F60718293A4B5C6D7E8F90A1B2C3D4E5F708192A3B4C5D6E7F8091A2B3C4D5E6F8091A2B3C4D5E6F708")]
+    public Task CompleteAlternativeWireNegative(string name,string hex)
+        => IndustrialBatchRuleAssertions.Negative(new R998_PublicModbusBulkFileWriteRule(),IndustrialBatchOperation.ModbusBulkFileWrite,502,true,false,IndustrialBatchWireFixtures.Decode(hex));
+
+    [Theory]
+    [InlineData("truncated")]
+    [InlineData("trailing")]
+    [InlineData("coalesced")]
+    [InlineData("empty")]
+    [InlineData("wrong-port")]
+    [InlineData("wrong-source-port")]
+    [InlineData("private-source")]
+    [InlineData("public-destination")]
+    [InlineData("ip-incomplete")]
+    [InlineData("ip-fragment")]
+    [InlineData("wrong-transport")]
+    [InlineData("no-syn")]
+    [InlineData("no-synack")]
+    [InlineData("wrong-synack")]
+    [InlineData("wrong-ack")]
+    [InlineData("gap")]
+    [InlineData("retransmit")]
+    [InlineData("second-payload")]
+    [InlineData("server-first")]
+    [InlineData("fin-before")]
+    [InlineData("fragmented-payload")]
+    [InlineData("non-psh")]
+    [InlineData("response")]
+    public Task ScopeTransportAndCaptureNegative(string variant)
+        => IndustrialBatchRuleAssertions.Negative(new R998_PublicModbusBulkFileWriteRule(),IndustrialBatchOperation.ModbusBulkFileWrite,502,true,false,IndustrialBatchWireFixtures.Decode(Primary),variant);
+
+    [Fact]
+    public Task CaptureProofCooldownAndIsolation()
+        => IndustrialBatchRuleAssertions.ProofAndState(()=>new R998_PublicModbusBulkFileWriteRule(),IndustrialBatchOperation.ModbusBulkFileWrite,502,true,false,Primary);
+}

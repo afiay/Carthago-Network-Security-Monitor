@@ -21,4 +21,7 @@
   <ItemGroup>
     <Compile Include="../Carthago/Services/Cli/DetectionJournalQuery.cs" Link="Shared/DetectionJournalQuery.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../Carthago.Tests/IndustrialBatchWireFixtures.cs" Link="Shared/IndustrialBatchWireFixtures.cs" />
+  </ItemGroup>
 </Project>

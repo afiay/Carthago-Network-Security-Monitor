@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 using System;
+using Carthago.Models;
 
 namespace Carthago.Services.ProtocolIntelligence
 {
@@ -117,6 +118,56 @@ namespace Carthago.Services.ProtocolIntelligence
             }
             return seen == 3;
         }
+
+        // RFC 2863 ifAdminStatus and RFC 4293 ipForwarding.
+        // Exactly one canonical INTEGER down/not-forwarding (2) binding.
+        // Reuse the established complete BER reader; no community/OID retained.
+        internal static IndustrialBatchOperation InspectNetworkControlSet(ReadOnlySpan<byte> packet)
+        {
+            if (packet.Length is < 20 or > 4096) return IndustrialBatchOperation.None;
+            int p = 0;
+            if (!Take(packet, ref p, 0x30, out var message) || p != packet.Length)
+                return IndustrialBatchOperation.None;
+            p = 0;
+            if (!Take(message, ref p, 0x02, out var version) || version.Length != 1 ||
+                version[0] > 1 || !Take(message, ref p, 0x04, out var community) ||
+                community.Length is < 1 or > 255 || !Take(message, ref p, 0xA3, out var request) ||
+                p != message.Length) return IndustrialBatchOperation.None;
+            p = 0;
+            if (!Take(request, ref p, 0x02, out var id) || !Integer(id) ||
+                !Take(request, ref p, 0x02, out var error) || !Zero(error) ||
+                !Take(request, ref p, 0x02, out var index) || !Zero(index) ||
+                !Take(request, ref p, 0x30, out var list) || p != request.Length)
+                return IndustrialBatchOperation.None;
+            p = 0;
+            if (!Take(list, ref p, 0x30, out var binding) || p != list.Length)
+                return IndustrialBatchOperation.None;
+            p = 0;
+            if (!Take(binding, ref p, 0x06, out var oid) || !ValidOid(oid) ||
+                !Take(binding, ref p, 0x02, out var value) || p != binding.Length ||
+                value.Length != 1 || value[0] != 2) return IndustrialBatchOperation.None;
+
+            if (oid.SequenceEqual(IpForwardingOid)) return IndustrialBatchOperation.SnmpIpv4ForwardingDisable;
+            if (oid.Length <= IfAdminStatusPrefix.Length ||
+                !oid[..IfAdminStatusPrefix.Length].SequenceEqual(IfAdminStatusPrefix))
+                return IndustrialBatchOperation.None;
+            var arc = oid[IfAdminStatusPrefix.Length..];
+            // One positive canonical IF-MIB InterfaceIndex (1..Int32.MaxValue).
+            if (arc.Length is < 1 or > 5 || arc[0] == 0x80)
+                return IndustrialBatchOperation.None;
+            uint ifIndex = 0;
+            for (int i = 0; i < arc.Length; i++)
+            {
+                if (((arc[i] & 0x80) != 0) != (i < arc.Length - 1) ||
+                    ifIndex > ((uint)int.MaxValue >> 7)) return IndustrialBatchOperation.None;
+                ifIndex = (ifIndex << 7) | (uint)(arc[i] & 0x7F);
+            }
+            return ifIndex is >= 1 and <= int.MaxValue
+                ? IndustrialBatchOperation.SnmpInterfaceAdminDown : IndustrialBatchOperation.None;
+        }
+
+        private static readonly byte[] IpForwardingOid = { 0x2B, 6, 1, 2, 1, 4, 1, 0 };
+        private static readonly byte[] IfAdminStatusPrefix = { 0x2B, 6, 1, 2, 1, 2, 2, 1, 7 };
 
         private static bool TryInspectSet(ReadOnlySpan<byte> packet, bool upsReboot)
         {

@@ -11,12 +11,12 @@ namespace Carthago.Engine.Rules.Catalog
     public static class RuleCatalog
     {
         private static readonly Lazy<IReadOnlyList<IDetectionRule>> _rules = new(() =>
-            RuleRegistry.CreateDefaultRules().OrderBy(r => r.Descriptor.RuleId, StringComparer.Ordinal).ToArray());
+            RuleRegistry.CreateDefaultRules().OrderBy(r => RuleIdValidator.CoreOrder(r.Descriptor.RuleId)).ToArray());
 
         private static readonly Lazy<IReadOnlyList<RuleDescriptor>> _descriptors = new(() =>
             _rules.Value.Select(r => r.Descriptor).ToArray());
         private static readonly Lazy<IReadOnlyList<IDetectionRule>> _availableRules = new(() =>
-            RuleRegistry.CreateAvailableRules().OrderBy(static rule => rule.Descriptor.RuleId, StringComparer.OrdinalIgnoreCase).ToArray());
+            RuleRegistry.CreateAvailableRules().OrderBy(static rule => RuleIdValidator.SortGroup(rule.Descriptor.RuleId), StringComparer.OrdinalIgnoreCase).ThenBy(static rule => RuleIdValidator.CoreOrder(rule.Descriptor.RuleId)).ToArray());
         private static readonly Lazy<IReadOnlyList<RuleDescriptor>> _availableDescriptors = new(() =>
             _availableRules.Value.Select(static rule => rule.Descriptor).ToArray());
 

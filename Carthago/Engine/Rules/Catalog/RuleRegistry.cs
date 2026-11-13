@@ -1010,6 +1010,19 @@ namespace Carthago.Engine.Rules.Catalog
                 new R985_PublicFinsControllerStopRequestRule(),
                 new R986_PrivateEtherNetIpRegisterSessionRule(),
                 new R987_PublicEtherNetIpIdentityResetRule(),
+                new R988_PublicBacnetDeviceSystemStatusReadRule(),
+                new R989_PublicBacnetDeviceAllPropertiesReadRule(),
+                new R990_PublicBacnetInputOutOfServiceRule(),
+                new R991_PublicBacnetAtomicFileReadRule(),
+                new R992_PublicBacnetAtomicFileWriteRule(),
+                new R993_PublicFinsCpuStatusReadRule(),
+                new R994_PublicFinsBulkDataMemoryReadRule(),
+                new R995_PublicDnp3IntegrityReadRule(),
+                new R996_PublicDnp3AbsoluteTimeWriteRule(),
+                new R997_PublicModbusReadWriteSamePairZeroRule(),
+                new R998_PublicModbusBulkFileWriteRule(),
+                new R999_PublicSnmpInterfaceAdminDownRule(),
+                new R1000_PublicSnmpIpv4ForwardingDisableRule(),
             };
         }
 
@@ -1023,7 +1036,8 @@ namespace Carthago.Engine.Rules.Catalog
                 .Cast<IDetectionRule>();
 
             return core.Concat(packRules)
-                .OrderBy(static rule => rule.Descriptor.RuleId, System.StringComparer.OrdinalIgnoreCase)
+                .OrderBy(static rule => RuleIdValidator.SortGroup(rule.Descriptor.RuleId), System.StringComparer.OrdinalIgnoreCase)
+                .ThenBy(static rule => RuleIdValidator.CoreOrder(rule.Descriptor.RuleId))
                 .ToArray();
         }
     }
