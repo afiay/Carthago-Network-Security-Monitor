@@ -8,6 +8,7 @@
     <AssemblyName>carthago-monitor</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="System.ServiceProcess.ServiceController" Version="8.0.0" />
     <ProjectReference Include="../Carthago/Carthago.csproj" />
     <ProjectReference Include="../Carthago.Contracts/Carthago.Contracts.csproj" />
   </ItemGroup>

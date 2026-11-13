@@ -310,3 +310,26 @@ Stop and Ctrl+C use the existing cancellation/disposal path (exit 130 if
 successful cancellation, 3 on failure). Existing desktop capture without
 IPC is not excluded by pipe ownership. Tests authored, Windows validation
 and native capture still pending.
+
+## CLI-005C1 — Windows SCM service host
+
+SOURCE CANDIDATE — UNVERIFIED. New service run/validate commands in
+Carthago.Monitor, ServiceBase integration via System.ServiceProcess.ServiceController
+8.0.0. Config is explicit, absolute path, UTF-8 JSON <=16 KiB, strict
+schema/version and fields. Service uses same foreground Npcap adapter and
+rule/journal path; no desktop UI, external sinks, remote IP enrichment,
+foreground IPC or CLI stop. SCM owns lifecycle, not a privileged pipe.
+Service runs with the configured Windows account; do not use LocalSystem
+by default. See service deployment guide for prerequisites and commands.
+
+Startup waits for adapter confirmation (30s, plus bounded cleanup wait);
+SCM pending wait hint requested. Stop cancels worker and waits 20s;
+native start/stop may block and cancellation can discard pending records.
+Stop timeout/failure is not a successful shutdown. Unexpected worker exit
+after startup terminates the dedicated service process with exit 3 for SCM
+failure handling; recovery policy is operator-controlled, not auto-installed.
+Service startup uses deployment directory for bundled resources; existing
+preferences and journal directories resolve under service identity. No
+durable status snapshot, cross-account query, installer or recovery policy
+automation yet. Tests authored, not executed; build, SCM and real Npcap
+qualification still required.

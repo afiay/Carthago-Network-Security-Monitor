@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Text.Json;
+using System.ServiceProcess;
 using System.Windows.Threading;
 using Carthago.Contracts;
 using Carthago.Services;
@@ -26,8 +27,52 @@ internal static class Program
             output.WriteLine("CARTHAGO foreground monitor (Windows/Npcap)\n" +
                 "  carthago-monitor capture interfaces [--json]\n" +
                 "  carthago-monitor monitor start --interface ID [--filter BPF] [--status-seconds N] [--json] [--enable-cli-ipc] [--allow-cli-stop]\n" +
+                "  carthago-monitor service validate --config ABSOLUTE_PATH [--json]\n" +
+                "  carthago-monitor service run --config ABSOLUTE_PATH (SCM only)\n" +
                 "Ctrl+C stops monitoring. Close the desktop monitor before starting. No remote enrichment or external sinks.");
             return 0;
+        }
+        if (args is ["service", "validate", "--config", _] or
+            ["service", "validate", "--config", _, "--json"])
+        {
+            try
+            {
+                var config = MonitorServiceConfiguration.Load(args[3]);
+                output.WriteLine(args[^1] == "--json" ? JsonSerializer.Serialize(new
+                {
+                    schemaVersion = 1, configuration = "valid", interfaceId = config.InterfaceId,
+                    filterConfigured = config.Filter is not null, statusSeconds = config.StatusSeconds,
+                    captureValidated = false
+                }) : "Configuration valid; capture permissions and filter have not been tested.");
+                return 0;
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                error.WriteLine("Invalid or unavailable service configuration.");
+                return 3;
+            }
+        }
+        if (args is ["service", "run", "--config", var servicePath])
+        {
+            if (!Path.IsPathFullyQualified(servicePath) || Environment.UserInteractive)
+            {
+                error.WriteLine("Service run requires SCM and an absolute configuration path.");
+                return 2;
+            }
+            // SCM normally starts in System32. Resolve bundled engine data from deployment.
+            try
+            {
+                Directory.SetCurrentDirectory(AppContext.BaseDirectory);
+                Console.SetOut(TextWriter.Null);
+                using var service = new WindowsMonitorService(servicePath);
+                ServiceBase.Run(service);
+                return service.ExitCode == 0 ? 0 : 3;
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                error.WriteLine("Windows service dispatch or lifecycle failed.");
+                return 3;
+            }
         }
         if (args is ["capture", "interfaces"] or ["capture", "interfaces", "--json"])
         {
