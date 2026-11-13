@@ -68,5 +68,48 @@ public sealed class ActiveServiceRejectionTests : IDisposable
         Assert.Equal(8, System.Linq.Enumerable.Count(row.EnumerateObject()));
         Assert.Single(Directory.GetFiles(_dir));
     }
+    [Fact]
+    public async Task CorruptSnmpCiphertextReportsTypedRejectionBeforeReadiness()
+    {
+        var vaultPath = Path.Combine(_dir, "credentials.db");
+        var vault = new SnmpCredentialVault(vaultPath);
+        var store = new ActiveSensorProfileStore(Path.Combine(_dir, "profiles.db"), vault: vault);
+        var profile = ActiveSensorProfile.Create(AdapterId, Adapter, Target, ActiveSensorKind.Snmp, "", 161, TimeSpan.FromMinutes(5), true);
+        var scope = SnmpCredentialScope.Create(AdapterId, Adapter, Target);
+        Assert.True(store.Save(profile));
+        var generation = vault.Save(scope, new SnmpCredential("lab-user", "authphrase", "privphrase"));
+        var grant = Assert.IsType<ActiveExecutionGrant>(store.Grant(profile, TimeSpan.FromHours(1), generation));
+        using (var db = new LiteDB.LiteDatabase(vaultPath))
+        {
+            var rows = db.GetCollection<SnmpCredentialVault.Entry>("snmp_credentials");
+            var row = rows.FindById(scope.Key);
+            row.ProtectedPayload = new byte[] { 1, 2, 3 };
+            Assert.True(rows.Update(row));
+        }
+        var reasons = new List<ActiveServiceRejectionReason>();
+        int managers = 0, ready = 0, samples = 0;
+        using var output = new StringWriter(); using var error = new StringWriter();
+        Assert.Equal(3, await ActiveSensorWorker.ExecuteCoreAsync(new[] { "run", "--profile", grant.Id },
+            output, error, default, store, _ => new[] { Adapter },
+            () => { managers++; return new ActiveSensorManager(); },
+            pinnedGrants: new Dictionary<string, Guid> { [grant.Id] = grant.GrantId },
+            ready: () => ready++, sample: (_, _, _) => samples++, startupRejected: reasons.Add));
+        Assert.Equal(ActiveServiceRejectionReason.SnmpCredentialUnavailable, Assert.Single(reasons));
+        Assert.Equal(0, managers); Assert.Equal(0, ready); Assert.Equal(0, samples);
+    }
+
+    [Fact]
+    public void LoadedConfigurationHashIncludesExactParsedBytes()
+    {
+        Directory.CreateDirectory(_dir);
+        var bytes = ActiveServiceProvisioning.BuildConfiguration("S-1-5-21-100-200-300-1001",
+            new[] { new Carthago.Contracts.ActiveServiceSelection(new string('a', 64), Guid.NewGuid()) });
+        string path = Path.Combine(_dir, "config.json");
+        File.WriteAllBytes(path, bytes);
+        var config = Carthago.Contracts.ActiveServiceConfiguration.Load(path, out string hash);
+        Assert.Single(config.Profiles);
+        Assert.Equal(Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes)), hash);
+    }
+
     public void Dispose() { if (Directory.Exists(_dir)) Directory.Delete(_dir, true); }
 }

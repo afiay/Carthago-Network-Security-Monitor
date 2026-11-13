@@ -20,7 +20,7 @@ public static class ActiveServiceWorker
         if (!string.Equals(Path.GetFullPath(configPath), Path.Combine(root, ActiveServiceStorage.ConfigName), StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Service configuration must be the provisioned account-local file.");
         // Re-read after verifying the protected file and account-local location.
-        options = ActiveServiceConfiguration.Load(configPath);
+        options = ActiveServiceConfiguration.Load(configPath, out string configSha256);
         if (options.AccountSid != account.Value) throw new InvalidOperationException("Service account SID mismatch.");
         var store = ActiveServiceStorage.Store(root);
         var evidence = new ActiveEvidenceStore(Path.Combine(root, "evidence.db"));
@@ -29,7 +29,7 @@ public static class ActiveServiceWorker
             new DateTimeOffset(process.StartTime.ToUniversalTime()));
         var rejection = new ActiveServiceStartupRejection(root, process.Id,
             new DateTimeOffset(process.StartTime.ToUniversalTime()),
-            Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(configPath))));
+            configSha256);
         var pinned = options.Profiles.ToDictionary(p => p.ProfileId, p => p.GrantId, StringComparer.Ordinal);
         var args = new[] { "run" }.Concat(options.Profiles.SelectMany(p => new[] { "--profile", p.ProfileId })).ToArray();
         return ActiveSensorWorker.ExecuteCoreAsync(args, TextWriter.Null, TextWriter.Null, token, store,

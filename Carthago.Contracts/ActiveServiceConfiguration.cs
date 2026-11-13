@@ -9,7 +9,9 @@ public sealed record ActiveServiceOptions(string AccountSid, IReadOnlyList<Activ
 public static class ActiveServiceConfiguration
 {
     public const int MaxBytes = 16384;
-    public static ActiveServiceOptions Load(string path)
+    public static ActiveServiceOptions Load(string path) => Load(path, out _);
+
+    public static ActiveServiceOptions Load(string path, out string sha256)
     {
         if (!OperatingSystem.IsWindows() || !Path.IsPathFullyQualified(path))
             throw new InvalidDataException("Windows absolute local configuration path required.");
@@ -24,7 +26,9 @@ public static class ActiveServiceConfiguration
         var bytes = new byte[(int)stream.Length];
         stream.ReadExactly(bytes);
         if (stream.ReadByte() != -1) throw new InvalidDataException("Configuration changed.");
-        return Parse(bytes);
+        var options = Parse(bytes);
+        sha256 = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes));
+        return options;
     }
 
     public static ActiveServiceOptions Parse(ReadOnlyMemory<byte> bytes)
