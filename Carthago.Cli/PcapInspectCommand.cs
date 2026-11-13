@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 using System.Globalization;
 using Carthago.Services;
+using Carthago.Models;
 
 namespace Carthago.Cli;
 
@@ -25,14 +26,15 @@ internal static class PcapInspectCommand
 
     private static bool IsCapturePath(string path)=>Path.GetExtension(path).ToLowerInvariant() is ".pcap" or ".pcapng";
 
-    internal static async Task<Result> InspectAsync(string path,int limit,CancellationToken token)
+    internal static async Task<Result> InspectAsync(string path,int limit,CancellationToken token,
+        Action<Row,TrafficRecord,PortablePacketProcessor>? observe=null)
     {
         if(limit is <1 or >100)throw new ArgumentOutOfRangeException(nameof(limit));
         await using var stream=new FileStream(path,FileMode.Open,FileAccess.Read,FileShare.Read,65536,
             FileOptions.Asynchronous|FileOptions.SequentialScan);
         if(stream.Length>PortablePcapReader.MaxFileBytes)throw new InvalidDataException("Capture exceeds limit.");
         if(string.Equals(Path.GetExtension(path),".pcapng",StringComparison.OrdinalIgnoreCase))
-            return await InspectNgAsync(stream,limit,token);
+            return await InspectNgAsync(stream,limit,token,observe);
         var reader=await PortablePcapReader.OpenAsync(stream,token);
         var now=DateTime.UnixEpoch;
         DateTime? previous=null;
@@ -57,9 +59,13 @@ internal static class PcapInspectCommand
             var rec=processor.ParseFrame(packet.Data,reader.LinkLayerType);
             if(rec is null){rejected++;continue;}
             parsed++;
-            if(rows.Count<limit)
-                rows.Add(new Row(read,now,packet.Nanoseconds,rec.Source,rec.Destination,rec.SourcePort,
-                    rec.DestinationPort,rec.Protocol,rec.ApplicationProtocol,rec.Length,0,0,reader.LinkLayerType));
+            if(rows.Count<limit || observe is not null)
+            {
+                var row=new Row(read,now,packet.Nanoseconds,rec.Source,rec.Destination,rec.SourcePort,
+                    rec.DestinationPort,rec.Protocol,rec.ApplicationProtocol,rec.Length,0,0,reader.LinkLayerType);
+                if(rows.Count<limit) rows.Add(row);
+                observe?.Invoke(row,rec,processor);
+            }
         }
         token.ThrowIfCancellationRequested();
         return new Result(reader.LinkLayerType,reader.TimestampResolution,read,parsed,rejected,truncated,resets,limit,rows);
@@ -73,7 +79,8 @@ internal static class PcapInspectCommand
         internal InterfaceSession()=>Processor=new PortablePacketProcessor(()=>Now);
     }
 
-    private static async Task<Result> InspectNgAsync(Stream stream,int limit,CancellationToken token)
+    private static async Task<Result> InspectNgAsync(Stream stream,int limit,CancellationToken token,
+        Action<Row,TrafficRecord,PortablePacketProcessor>? observe)
     {
         var reader=new PortablePcapNgReader(stream);
         var sessions=new Dictionary<int,InterfaceSession>();
@@ -96,9 +103,14 @@ internal static class PcapInspectCommand
             var rec=session.Processor.ParseFrame(packet.Data,packet.LinkLayerType);
             if(rec is null){rejected++;continue;}
             parsed++;
-            if(rows.Count<limit)rows.Add(new Row(read,packet.TimestampUtc,packet.Nanoseconds,
-                rec.Source,rec.Destination,rec.SourcePort,rec.DestinationPort,rec.Protocol,rec.ApplicationProtocol,
-                rec.Length,packet.Section,packet.InterfaceId,packet.LinkLayerType));
+            if(rows.Count<limit || observe is not null)
+            {
+                var row=new Row(read,packet.TimestampUtc,packet.Nanoseconds,
+                    rec.Source,rec.Destination,rec.SourcePort,rec.DestinationPort,rec.Protocol,rec.ApplicationProtocol,
+                    rec.Length,packet.Section,packet.InterfaceId,packet.LinkLayerType);
+                if(rows.Count<limit) rows.Add(row);
+                observe?.Invoke(row,rec,session.Processor);
+            }
         }
         token.ThrowIfCancellationRequested();
         return new Result(null,"per_interface",read,parsed,rejected,truncated,resets,limit,rows,

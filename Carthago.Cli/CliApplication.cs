@@ -45,6 +45,7 @@ public static class CliApplication
           carthago rules quality <ledger.md> [--json]
           carthago session inspect <file.csa> [--json]
           carthago pcap inspect <file.pcap|file.pcapng> [--limit N] [--json]
+          carthago pcap detect <file.pcap|file.pcapng> --rules R589[,R...] [--limit N] [--json]
           carthago alerts list <file.csa|--live> [--severity LEVEL] [--source-ip IP] [--offset N] [--limit N] [--json]
           carthago alerts show <file.csa|--live> <event-id> [--json]
           carthago alerts list --live [--date YYYY-MM-DD | --since 1h] [--json]
@@ -86,6 +87,20 @@ public static class CliApplication
                 return await TailAsync(command, output, error, json, token, investigationQuery);
             if (command.Length > 0 && (command[0] is "alerts" or "incidents" or "events" or "hosts"))
                 return await InvestigateAsync(command, output, error, json, token, investigationQuery);
+            if (command is ["pcap", "detect", ..])
+            {
+                if (!PcapDetectCommand.TryParse(command, out var path, out var rules, out var limit))
+                    return await FailAsync(error, json, UsageError, "invalid_usage",
+                        "Expected pcap detect <file.pcap|file.pcapng> --rules R589[,R...] [--limit 1-100] [--json].");
+                var replay = await PcapDetectCommand.RunAsync(path, rules, limit, token);
+                await WriteAsync(output, json, new { schemaVersion = SchemaVersion, provenance = "untrusted_capture",
+                    mode = "offline_replay", detectionValidation = "not_assessed", replay },
+                    $"Offline replay: {replay.PacketsRead} packets; {replay.Parsed} parsed; {replay.MatchCount} observations; {replay.SuppressedCount} suppressed.\n" +
+                    string.Join("\n", replay.Rules.Select(r => $"{r.RuleId}: {r.Status}; evaluated={r.Evaluated}; matches={r.Matches}")) +
+                    "\nUntrusted observations only; no live alert publication.\n" +
+                    string.Join("\n", replay.Findings.Select(f => $"{f.RuleId} packet={f.PacketNumber} {f.TimestampUtc:O} {f.Method}")));
+                return Success;
+            }
             if (command.Length > 0 && command[0] == "pcap")
             {
                 if (!PcapInspectCommand.TryParse(command, out var pcapPath, out var pcapLimit))
@@ -132,6 +147,7 @@ public static class CliApplication
                         new Capability("live.incidents", "unavailable", "No live incident connection."),
                         new Capability("capture", "unavailable", "No CLI live capture provider."),
                         new Capability("pcap.inspect", "available", "Read-only classic PCAP and PCAPNG enhanced-packet telemetry; no rule execution."),
+                        new Capability("pcap.detect", "available", "Offline R589 request observations only; unsupported IDs reported explicitly."),
                         new Capability("sensor.control", "unavailable", "No CLI sensor control provider.")
                     };
                     await WriteAsync(output, json, new { schemaVersion = SchemaVersion, capabilities },

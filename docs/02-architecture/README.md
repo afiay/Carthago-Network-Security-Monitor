@@ -30,3 +30,4 @@ System boundaries, evidence lineage, sensors and architectural constraints.
 - [CLI-006B.4A1 — Portable detection contracts](CLI-006B4A1-PortableDetectionContracts.md)
 - [CLI-006D.2 — Portable packet evaluation context](CLI-006D2-PortableEvaluationContext.md)
 - [CLI-006D.3 — First portable detector](CLI-006D3-FirstPortableDetector.md)
+- [CLI-006D.4 — Offline replay dispatcher](CLI-006D4-OfflineReplayDispatcher.md)
