@@ -5995,3 +5995,14 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Ownership/static review:** MainWindow.xaml, MainWindow.DashboardResponsive.cs, this ledger only. Reviewed named focus/lower grids, chart and triage XAML, responsive partial, shell mode, Plots.cs direct plot consumers and theme. No changes to plot series, 10/120 history, capture status, incident selection, event retention 80/500, unavailable CLI, shared APIs, Engine/Models/Services, detection, privacy, Cisco/WebView2, tests or automation. Existing plot instance and handlers retained.
 
 **Risks/planned unexecuted:** ScottPlot stretch and redraw, long footer text, initial and resize layout, investigation/CLI boundary, event horizontal scrolling, 1920/1440/1100/1099/1024/1023/640 widths, DPI 100/125/150/200%, capture waiting and retained-history states, keyboard reachability. Builds 0; tests 0; CI 0; captures 0; renders 0. Next GA UI-180: investigation header and bounded evidence scroll composition, then revisit focus height/staggered layout.
+
+
+## GA UI-180 — Compact investigation header and single-lane evidence
+
+**2026-11-13 · SOURCE CANDIDATE — UNVERIFIED.** Approved Library image libfile_b0a34361560c8191b641e432b3e6b15c visually inspected. Baseline `108a2684f3364e26c81d13dc4862861ccaa89168`, tree `37ada20f9e88450130dd42a96060339951cae8e9`; prior GA UI-179.
+
+**Visible before → after:** 92-unit circular risk ring becomes a 48-unit compact rectangular risk tile with severity-colored bottom rail; selected finding title 24 → 17, panel inset 22 → 14, tighter severity summary and fact cards. Six facts use two columns in all modes; five evidence cards form one ordered vertical lane rather than two narrow Wide lanes. Existing bounded star-row ScrollViewer and 660-unit focus height retained. Reference mapping: compact risk summary, aligned metadata and vertical evidence; no demo values or confidence reinterpretation. Static impact substantial in Dashboard investigation; no render.
+
+**Ownership/static review:** MainWindow.xaml, MainWindow.DashboardResponsive.cs and this ledger only. Existing named risk Border remains a Border; Dashboard.cs updates its brush, tooltip, risk text and label unchanged. Existing evidence names, bindings, handlers, actions and scroll host preserved. No shared API, capture, detection, telemetry, privacy, ScottPlot 10/120, Live Events 80/500, Cisco/WebView2, unavailable CLI, tests or automation changes. Wide/Standard/Compact/below-1024 use two fact columns and one evidence lane; outer breakpoint logic unchanged.
+
+**Risks/planned unexecuted:** WPF resource/name resolution, long endpoint values, narrow header fit, evidence viewport and keyboard reachability, selection and empty state, 1920/1440/1100/1099/1024/1023/640 widths and DPI 100/125/150/200%. Builds 0; tests 0; CI 0; captures 0; renders 0. Next GA UI-181: audit focus height and staggered Dashboard composition after fresh live audit.

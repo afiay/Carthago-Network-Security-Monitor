@@ -966,7 +966,7 @@
                           Style="{StaticResource DashboardFocusPanel}"
                           BorderBrush="{StaticResource AccentBrush}"
                           BorderThickness="2,1,1,1"
-                          Padding="22">
+                          Padding="14">
                     <Grid>
                       <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -1000,10 +1000,10 @@
                         </StackPanel>
                         <StackPanel Grid.Column="1" HorizontalAlignment="Right">
                           <TextBlock Text="RISK SCORE" Style="{StaticResource MicroLabel}" HorizontalAlignment="Right"/>
-                          <Border x:Name="DashboardDetailRiskRing" Width="92" Height="92" CornerRadius="46" BorderThickness="6" BorderBrush="{StaticResource WarnBrush}" Margin="0,4,0,0"
+                          <Border x:Name="DashboardDetailRiskRing" MinWidth="72" Height="48" CornerRadius="8" BorderThickness="0,0,0,3" BorderBrush="{StaticResource WarnBrush}" Margin="0,4,0,0"
                                   ToolTip="Local risk score unavailable; baseline learning is not proof of capture health.">
                             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                              <TextBlock x:Name="DashboardDetailRiskText" Text="&#x2014;" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center"
+                              <TextBlock x:Name="DashboardDetailRiskText" Text="&#x2014;" FontSize="19" FontWeight="Bold" HorizontalAlignment="Center"
                                          AutomationProperties.Name="Local risk score unavailable"
                                          AutomationProperties.HelpText="Local risk scores are estimates, not detection confidence or verified accuracy."/>
                               <TextBlock x:Name="DashboardDetailRiskBadgeText" Text="Learning" Foreground="{StaticResource WarnBrush}" FontSize="10" FontWeight="Bold" HorizontalAlignment="Center"/>
@@ -1025,39 +1025,39 @@
                         </StackPanel>
                       </Grid>
 
-                      <Border x:Name="DashboardDetailSeverityStripe" Grid.Row="1" Margin="0,14,0,16" Background="{StaticResource CardElevatedBg}" BorderBrush="{StaticResource WarnBrush}" BorderThickness="6,1,1,1" CornerRadius="12" Padding="22,18,20,18">
+                      <Border x:Name="DashboardDetailSeverityStripe" Grid.Row="1" Margin="0,8,0,8" Background="{StaticResource CardElevatedBg}" BorderBrush="{StaticResource WarnBrush}" BorderThickness="6,1,1,1" CornerRadius="8" Padding="10,8">
                         <StackPanel>
-                          <TextBlock x:Name="DashboardDetailTitleText" Text="No selected signal" FontSize="24" FontWeight="SemiBold" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="54" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                          <TextBlock x:Name="DashboardDetailTitleText" Text="No selected signal" FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="54" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                           <TextBlock x:Name="DashboardDetailSubtitleText" Text="Start monitoring or run demo mode to populate the workspace." Foreground="{StaticResource TextSubtleBrush}" FontSize="13" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="36" Margin="0,4,0,0" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                         </StackPanel>
                       </Border>
 
-                      <UniformGrid x:Name="DashboardDetailFactsGrid" Grid.Row="2" Columns="3" Margin="0,0,0,12">
-                        <Border Style="{StaticResource DetailGridCard}" Margin="0,0,8,6" Background="{StaticResource CardElevatedBg}" BorderBrush="{StaticResource AccentBrush}" BorderThickness="2,1,1,1" Padding="14,12">
+                      <UniformGrid x:Name="DashboardDetailFactsGrid" Grid.Row="2" Columns="2" Margin="0,0,0,8">
+                        <Border Style="{StaticResource DetailGridCard}" Margin="0,0,0,6" Background="{StaticResource CardElevatedBg}" BorderBrush="{StaticResource AccentBrush}" BorderThickness="2,1,1,1" Padding="8,6">
                           <StackPanel>
                             <TextBlock x:Name="DashboardDetailSourceLabel" Text="Source host" Style="{StaticResource MicroLabel}"/>
                             <TextBlock x:Name="DashboardDetailSourceText" AutomationProperties.LabeledBy="{Binding ElementName=DashboardDetailSourceLabel}" Text="&#x2014;" Style="{StaticResource MonoValue}" Margin="0,4,0,0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                           </StackPanel>
                         </Border>
-                        <Border x:Name="DashboardDetailDestinationCard" Style="{StaticResource DetailGridCard}" Margin="0,0,8,6" Background="{StaticResource CardElevatedBg}" BorderBrush="{StaticResource AccentBrush}" BorderThickness="2,1,1,1" Padding="14,12">
+                        <Border x:Name="DashboardDetailDestinationCard" Style="{StaticResource DetailGridCard}" Margin="0,0,0,6" Background="{StaticResource CardElevatedBg}" BorderBrush="{StaticResource AccentBrush}" BorderThickness="2,1,1,1" Padding="8,6">
                           <StackPanel>
                             <TextBlock x:Name="DashboardDetailDestinationLabel" Text="Destination" Style="{StaticResource MicroLabel}"/>
                             <TextBlock x:Name="DashboardDetailDestinationText" AutomationProperties.LabeledBy="{Binding ElementName=DashboardDetailDestinationLabel}" Text="&#x2014;" Style="{StaticResource MonoValue}" Margin="0,4,0,0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                           </StackPanel>
                         </Border>
-                        <Border x:Name="DashboardDetailProtocolCard" Style="{StaticResource DetailGridCard}" Margin="0,0,0,6" Background="{StaticResource CardElevatedBg}" Padding="14,12">
+                        <Border x:Name="DashboardDetailProtocolCard" Style="{StaticResource DetailGridCard}" Margin="0,0,0,6" Background="{StaticResource CardElevatedBg}" Padding="8,6">
                           <StackPanel>
                             <TextBlock x:Name="DashboardDetailProtocolLabel" Text="Protocol / port" Style="{StaticResource MicroLabel}"/>
                             <TextBlock x:Name="DashboardDetailProtocolText" AutomationProperties.LabeledBy="{Binding ElementName=DashboardDetailProtocolLabel}" Text="&#x2014;" Style="{StaticResource MonoValue}" Margin="0,4,0,0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                           </StackPanel>
                         </Border>
-                        <Border x:Name="DashboardDetailCategoryCard" Style="{StaticResource DetailGridCard}" Margin="0,0,8,0">
+                        <Border x:Name="DashboardDetailCategoryCard" Style="{StaticResource DetailGridCard}" Margin="0,0,0,6">
                           <StackPanel>
                             <TextBlock x:Name="DashboardDetailCategoryLabel" Text="Category" Style="{StaticResource MicroLabel}"/>
                             <TextBlock x:Name="DashboardDetailCategoryText" AutomationProperties.LabeledBy="{Binding ElementName=DashboardDetailCategoryLabel}" Text="&#x2014;" Style="{StaticResource MonoValue}" Margin="0,4,0,0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                           </StackPanel>
                         </Border>
-                        <Border Style="{StaticResource DetailGridCard}" Margin="0,0,8,0">
+                        <Border Style="{StaticResource DetailGridCard}" Margin="0,0,0,6">
                           <StackPanel>
                             <TextBlock x:Name="DashboardDetailDetectedLabel" Text="Detected" Style="{StaticResource MicroLabel}"/>
                             <TextBlock x:Name="DashboardDetailDetectedText" AutomationProperties.LabeledBy="{Binding ElementName=DashboardDetailDetectedLabel}" Text="&#x2014;" Style="{StaticResource MonoValue}" Margin="0,4,0,0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
@@ -1078,7 +1078,7 @@
                         <Grid x:Name="DashboardDetailEvidenceGrid">
                             <Grid.ColumnDefinitions>
                               <ColumnDefinition x:Name="DashboardEvidencePrimaryColumn" Width="*"/>
-                              <ColumnDefinition x:Name="DashboardEvidenceSecondaryColumn" Width="*"/>
+                              <ColumnDefinition x:Name="DashboardEvidenceSecondaryColumn" Width="0"/>
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                               <RowDefinition Height="Auto"/>
@@ -1088,7 +1088,7 @@
                               <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <Border x:Name="DashboardEvidenceCard0" Grid.Row="0" Grid.Column="0" Style="{StaticResource DetailGridCard}" Background="{StaticResource CardElevatedBg}" BorderBrush="{StaticResource AccentBrush}" BorderThickness="3,1,1,1" CornerRadius="9" Margin="0,0,10,12" Padding="16,14">
+                            <Border x:Name="DashboardEvidenceCard0" Grid.Row="0" Grid.Column="0" Style="{StaticResource DetailGridCard}" Background="{StaticResource CardElevatedBg}" BorderBrush="{StaticResource AccentBrush}" BorderThickness="3,1,1,1" CornerRadius="9" Margin="0,0,0,8" Padding="10,8">
                               <StackPanel>
                                 <TextBlock x:Name="DashboardDetailReasonsLabel" Text="Reasons" Style="{StaticResource SocSubHeader}"/>
                                 <ItemsControl x:Name="DashboardDetailReasonsItems"
@@ -1103,7 +1103,7 @@
                               </StackPanel>
                             </Border>
 
-                            <Border x:Name="DashboardEvidenceCard1" Grid.Row="0" Grid.Column="1" Style="{StaticResource DetailGridCard}" Margin="0,0,10,12" Padding="16,14">
+                            <Border x:Name="DashboardEvidenceCard1" Grid.Row="1" Grid.Column="0" Style="{StaticResource DetailGridCard}" Margin="0,0,0,8" Padding="10,8">
                               <StackPanel>
                                 <TextBlock x:Name="DashboardDetailTagsLabel" Text="Tags" Style="{StaticResource SocSubHeader}"/>
                                 <!-- GA UI-83: bound long local tag/rule chips; preserve full source text and hover access. -->
@@ -1124,7 +1124,7 @@
                               </StackPanel>
                             </Border>
 
-                            <Border x:Name="DashboardEvidenceCard2" Grid.Row="1" Grid.Column="0" Style="{StaticResource DetailGridCard}" Margin="0,0,10,12" Padding="16,14">
+                            <Border x:Name="DashboardEvidenceCard2" Grid.Row="2" Grid.Column="0" Style="{StaticResource DetailGridCard}" Margin="0,0,0,8" Padding="10,8">
                               <StackPanel>
                                 <TextBlock x:Name="DashboardDetailRulesLabel" Text="Related rule IDs" Style="{StaticResource SocSubHeader}"/>
                                 <ItemsControl x:Name="DashboardDetailRulesItems"
@@ -1144,7 +1144,7 @@
                               </StackPanel>
                             </Border>
 
-                            <Border x:Name="DashboardEvidenceCard3" Grid.Row="1" Grid.Column="1" Style="{StaticResource DetailGridCard}" Background="{StaticResource CardElevatedBg}" BorderBrush="{StaticResource AccentBrush}" BorderThickness="2,1,1,1" CornerRadius="9" Margin="0,0,10,12" Padding="16,14">
+                            <Border x:Name="DashboardEvidenceCard3" Grid.Row="3" Grid.Column="0" Style="{StaticResource DetailGridCard}" Background="{StaticResource CardElevatedBg}" BorderBrush="{StaticResource AccentBrush}" BorderThickness="2,1,1,1" CornerRadius="9" Margin="0,0,0,8" Padding="10,8">
                               <StackPanel>
                                 <TextBlock Text="Recommended actions" Style="{StaticResource SocSubHeader}"/>
                                 <WrapPanel>
@@ -1155,7 +1155,7 @@
                                            ToolTip="Opens a correlated incident workspace when available; otherwise opens Anomalies."
                                            AutomationProperties.Name="Review local finding"
                                            AutomationProperties.HelpText="Opens a correlated incident workspace when available; otherwise opens the Anomalies view. Does not isolate a host."
-                                           Click="DashboardInvestigateHost_Click" Margin="0,0,8,6"/>
+                                           Click="DashboardInvestigateHost_Click" Margin="0,0,0,6"/>
                                   <!-- GA UI-52: existing linked-incident navigation; explain its conditional availability without changing the handler. -->
                                   <Button x:Name="DashboardViewRelatedIncidentButton"
                                           Content="View Related Incident"
@@ -1167,18 +1167,18 @@
                                           MinWidth="154" Height="30"
                                           Style="{StaticResource SecondaryButton}"
                                           Click="DashboardViewRelatedIncident_Click"
-                                          Margin="0,0,8,6"/>
+                                          Margin="0,0,0,6"/>
                                   <Button Content="Full Detail"
                                           ToolTip="Opens the existing Signal Investigation dialog for the current local incident or anomaly context. Opening it does not start capture or verify evidence."
                                           ToolTipService.ShowsToolTipOnKeyboardFocus="True"
                                           AutomationProperties.Name="Open signal investigation detail"
                                           AutomationProperties.HelpText="Opens a modal detail view of the current local incident or anomaly context. The dialog can copy a summary or offer navigation to incident or anomaly views; opening it does not capture traffic, export raw evidence or remediate."
-                                          MinWidth="96" Height="30" Style="{StaticResource SecondaryButton}" Click="DashboardOpenSignalDetail_Click" Margin="0,0,8,6"/>
+                                          MinWidth="96" Height="30" Style="{StaticResource SecondaryButton}" Click="DashboardOpenSignalDetail_Click" Margin="0,0,0,6"/>
                                 </WrapPanel>
                               </StackPanel>
                             </Border>
 
-                            <Border x:Name="DashboardEvidenceCard4" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource DetailGridCard}" Margin="0,0,0,0" Padding="18,16">
+                            <Border x:Name="DashboardEvidenceCard4" Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="1" Style="{StaticResource DetailGridCard}" Margin="0,0,0,0" Padding="10,8">
                               <!-- GA UI-73: decorative provenance keyline distinguishes reported context from incident facts. -->
                               <Grid>
                                 <Grid.ColumnDefinitions>

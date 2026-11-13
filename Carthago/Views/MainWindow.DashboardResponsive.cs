@@ -8,27 +8,12 @@ public partial class MainWindow
 {
     partial void ApplyDashboardResponsiveLayout(ResponsiveLayoutMode mode, bool narrowKpis)
     {
-        // Preserve three fact columns at 1024px and above; allow two below 1024px.
-        // This changes presentation only, not the selected incident or its source values.
-        DashboardDetailFactsGrid.Columns = narrowKpis ? 2 : 3;
-
-        // GA UI-44: keep gutters aligned when the existing six fact cards wrap to two columns.
-        // The three-column margins remain identical to the original design.
-        DashboardDetailDestinationCard.Margin = narrowKpis
-            ? new Thickness(0, 0, 0, 6)
-            : new Thickness(0, 0, 8, 6);
-        DashboardDetailProtocolCard.Margin = narrowKpis
-            ? new Thickness(0, 0, 8, 6)
-            : new Thickness(0, 0, 0, 6);
-        DashboardDetailCategoryCard.Margin = narrowKpis
-            ? new Thickness(0, 0, 0, 6)
-            : new Thickness(0, 0, 8, 0);
-
-        // GA UI-165: evidence narrative and taxonomy occupy paired lanes only on Wide.
-        // Keep all original named item controls, buttons, bindings and source-backed content.
-        var evidenceWide = mode == ResponsiveLayoutMode.Wide;
-        DashboardEvidenceSecondaryColumn.Width = evidenceWide
-            ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
+        // GA UI-180: the investigation lane is narrow even in Wide mode.
+        DashboardDetailFactsGrid.Columns = 2;
+        DashboardDetailDestinationCard.Margin = new Thickness(0, 0, 0, 6);
+        DashboardDetailProtocolCard.Margin = new Thickness(0, 0, 6, 6);
+        DashboardDetailCategoryCard.Margin = new Thickness(0, 0, 0, 6);
+        DashboardEvidenceSecondaryColumn.Width = new GridLength(0);
         DashboardEvidencePrimaryColumn.Width = new GridLength(1, GridUnitType.Star);
         for (var evidenceIndex = 0; evidenceIndex < 5; evidenceIndex++)
         {
@@ -40,11 +25,10 @@ public partial class MainWindow
                 3 => DashboardEvidenceCard3,
                 _ => DashboardEvidenceCard4
             };
-            Grid.SetRow(card, evidenceWide ? evidenceIndex / 2 : evidenceIndex);
-            Grid.SetColumn(card, evidenceWide ? evidenceIndex % 2 : 0);
-            Grid.SetColumnSpan(card, evidenceWide && evidenceIndex == 4 ? 2 : 1);
-            card.Margin = evidenceWide && evidenceIndex % 2 == 0 && evidenceIndex < 4
-                ? new Thickness(0, 0, 10, 12) : new Thickness(0, 0, 0, 12);
+            Grid.SetRow(card, evidenceIndex);
+            Grid.SetColumn(card, 0);
+            Grid.SetColumnSpan(card, 1);
+            card.Margin = new Thickness(0, 0, 0, 8);
         }
 
         // GA UI-159: wide side-by-side filter lanes, stacked at narrower widths.
