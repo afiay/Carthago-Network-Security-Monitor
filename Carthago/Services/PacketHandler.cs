@@ -806,6 +806,15 @@ namespace Carthago.Services
                             rec.SnmpEnterpriseSetRequestObserved = true;
                         }
 
+                        // Complete DNP3 unsolicited binary input events. CRC is not authentication.
+                        if (isIPv4 && sport == 20000 && dport == 20000 &&
+                            completeIpPacket && l4PayloadLen == ipPayloadLen - 8 && !rec.IsQuic &&
+                            Dnp3UnsolicitedBinaryEventInspector.TryInspect(l4Payload))
+                        {
+                            rec.ApplicationProtocol = "dnp3.unsolicited.binary_event";
+                            rec.Dnp3UnsolicitedBinaryEventObserved = true;
+                        }
+
                         // Capture-attested TFTP initial request/first reply, not generic port guessing.
                         if (isIPv4 && completeIpPacket && l4PayloadLen == ipPayloadLen - 8)
                             _tftpHandshake.Observe(rec, l4Payload, true, _utcNow());

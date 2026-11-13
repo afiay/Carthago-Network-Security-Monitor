@@ -181,3 +181,8 @@ Q2: R916/R962 complete UDP IN/A transaction and direct answer/TTL producer; R962
 ## R966 — owner resumed quality-gated expansion
 
 Workbook R2773, AN2183; capture-decoded external SNMP enterprise SET, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_966-966.md). Source and tests authored; no execution or promotion. Existing qualification work continues. Next ID R967.
+
+
+## R967 — decoded DNP3 unsolicited binary input events
+
+Workbook R2781, AN2236; independent Candidate/Shadow, complete raw UDP frame/CRC and typed application structure. [Batch notes](../03-detection-rules/batches/RULE_BATCH_967-967.md). 28 authored tests, zero execution; no enrollment or spoofing claim. Next ID R968.

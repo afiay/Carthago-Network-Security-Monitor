@@ -127,6 +127,9 @@ public sealed class R966SnmpEnterpriseSetQualityTests
     public async Task LabelsAndContradictoryTelemetryCannotSubstituteForCapture()
     {
         var rule = new R966_PublicSnmpEnterpriseSetRequestRule();
+        var forged = JsonSerializer.Deserialize<TrafficRecord>(
+            "{\"SnmpEnterpriseSetRequestObserved\":true,\"ApplicationProtocol\":\"snmp.enterprise.set.request\"}")!;
+        Assert.False(forged.SnmpEnterpriseSetRequestObserved);
         var fake = Capture(new byte[] { 1, 2, 3 });
         fake.ApplicationProtocol = "snmp.enterprise.set.request"; fake.Info = "SNMP SET";
         Assert.False((await rule.EvaluateAsync(At(fake, 0))).Matched);
