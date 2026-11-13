@@ -22,7 +22,13 @@ namespace Carthago.Services.Baseline
 
         internal bool Matches(ReadOnlySpan<byte> manifest, ReadOnlySpan<byte> signature,
             ReadOnlySpan<byte> capture, string source, string sensor, string interfaceId, string network)
+            => TryValidate(manifest, signature, capture, source, sensor, interfaceId, network, out _);
+
+        internal bool TryValidate(ReadOnlySpan<byte> manifest, ReadOnlySpan<byte> signature,
+            ReadOnlySpan<byte> capture, string source, string sensor, string interfaceId, string network,
+            out string captureDigest)
         {
+            captureDigest = string.Empty;
             if (manifest.IsEmpty || manifest.Length > 16384 || signature.Length != 64 ||
                 capture.IsEmpty || capture.Length > 32 * 1024 * 1024) return false;
             QualifiedDnsScope submittedScope;
@@ -36,9 +42,11 @@ namespace Carthago.Services.Baseline
                 return false;
             // Snapshot capture bytes before structural checks and digest comparison.
             byte[] boundCapture = capture.ToArray();
-            return ReviewedDnsPacketIntake.Matches(signedManifest,
+            if (!ReviewedDnsPacketIntake.Matches(signedManifest,
                 Convert.ToHexString(SHA256.HashData(signedManifest)), boundCapture,
-                source, sensor, interfaceId, network);
+                source, sensor, interfaceId, network)) return false;
+            captureDigest = Convert.ToHexString(SHA256.HashData(boundCapture));
+            return true;
         }
     }
 }

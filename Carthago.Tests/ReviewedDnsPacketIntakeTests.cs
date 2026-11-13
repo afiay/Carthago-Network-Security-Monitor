@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 using System;
 using System.Buffers.Binary;
+using System.IO;
+using System.Threading.Tasks;
 using System.Security.Cryptography;
 using System.Text.Json;
 using Carthago.Services.Baseline;
@@ -114,6 +116,31 @@ public sealed class ReviewedDnsPacketIntakeTests
                 "192.0.2.1", "other", "interface", "network"));
             Assert.False(intake.Matches(manifest, signature, capture,
                 "192.0.2.1", "sensor", "interface", "other"));
+            string directory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(directory);
+            try
+            {
+                var admission = new ReviewedDnsCaptureAdmission(directory, intake);
+                Assert.False(admission.TryReserve(manifest, wrong, capture,
+                    "192.0.2.1", "sensor", "interface", "network"));
+                Assert.Empty(Directory.GetFiles(directory));
+                bool[] accepted = new bool[8];
+                Parallel.For(0, accepted.Length, i => accepted[i] =
+                    admission.TryReserve(manifest, signature, capture,
+                        "192.0.2.1", "sensor", "interface", "network"));
+                Assert.Single(Array.FindAll(accepted, value => value));
+                var reopened = new ReviewedDnsCaptureAdmission(directory, intake);
+                Assert.False(reopened.TryReserve(manifest, signature, capture,
+                    "192.0.2.1", "sensor", "interface", "network"));
+                var alternate = new ReviewedDnsCaptureAdmission(directory, otherIntake);
+                Assert.False(alternate.TryReserve(otherManifest, otherSignature, capture,
+                    "192.0.2.1", "other", "interface", "network"));
+                Assert.Single(Directory.GetFiles(directory));
+                var missing = new ReviewedDnsCaptureAdmission(Path.Combine(directory, "missing"), intake);
+                Assert.False(missing.TryReserve(manifest, signature, capture,
+                    "192.0.2.1", "sensor", "interface", "network"));
+            }
+            finally { Directory.Delete(directory, recursive: true); }
             Array.Clear(key, 0, key.Length);
             Assert.True(intake.Matches(manifest, signature, capture,
                 "192.0.2.1", "sensor", "interface", "network"));
