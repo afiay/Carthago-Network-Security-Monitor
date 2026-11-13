@@ -57,6 +57,7 @@
     <Compile Include="../Carthago/Services/Flow/FlowKey.cs" Link="Services/Flow/FlowKey.cs" />
     <Compile Include="../Carthago/Services/Flow/HandshakeBuffer.cs" Link="Services/Flow/HandshakeBuffer.cs" />
     <Compile Include="../Carthago/Services/Flow/LatencyTracker.cs" Link="Services/Flow/LatencyTracker.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/EtherNetIpIdentityResetInspector.cs" Link="Services/ProtocolIntelligence/EtherNetIpIdentityResetInspector.cs" />
     <!-- Preserve existing internal access while consumers migrate. -->
     <InternalsVisibleTo Include="Carthago" />
     <InternalsVisibleTo Include="carthago" />
