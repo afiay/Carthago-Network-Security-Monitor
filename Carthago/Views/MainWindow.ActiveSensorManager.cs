@@ -41,7 +41,7 @@ public partial class MainWindow
         var inputs = new StackPanel();
         inputs.Children.Add(new TextBlock { Text = $"Approved target: {host.Address} via {adapter.Name} ({adapter.Address})\n" +
             "Add profiles, then explicitly start. One probe at a time; first check immediately, minimum five-minute interval. " +
-            "Closing stops all checks. Saved configurations require fresh approval. Gateway and SNMP remain manual-only.",
+            "Closing stops all checks. Saved configurations require session approval or a valid durable grant. Gateway and SNMP remain manual-only.",
             TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 10) });
         inputs.Children.Add(new TextBlock { Text = "Sensor" });
         var kind = new ComboBox { ItemsSource = new[] { ActiveSensorKind.Tcp, ActiveSensorKind.Dns, ActiveSensorKind.Tls, ActiveSensorKind.Http },
@@ -58,7 +58,7 @@ public partial class MainWindow
         var save = new CheckBox { Content = "Save completed observations to local active history", IsChecked = false,
             Margin = new Thickness(0, 0, 0, 8) }; inputs.Children.Add(save);
         var add = new Button { Content = "Approve and add profile", Padding = new Thickness(8, 4, 8, 4) }; inputs.Children.Add(add);
-        inputs.Children.Add(new TextBlock { Text = "Saved configurations (inactive until reapproved)", Margin = new Thickness(0, 8, 0, 4) });
+        inputs.Children.Add(new TextBlock { Text = "Saved configurations (inactive until loaded and started)", Margin = new Thickness(0, 8, 0, 4) });
         var saved = new ComboBox { DisplayMemberPath = "Label", Margin = new Thickness(0, 0, 0, 5) };
         inputs.Children.Add(saved);
         var savedActions = new WrapPanel();
@@ -66,6 +66,11 @@ public partial class MainWindow
         var restore = new Button { Content = "Reapprove saved profile", Margin = new Thickness(0, 0, 8, 4) };
         var forget = new Button { Content = "Delete saved profile", Margin = new Thickness(0, 0, 8, 4) };
         foreach (var button in new[] { remember, restore, forget })
+        { button.Padding = new Thickness(8, 4, 8, 4); savedActions.Children.Add(button); }
+        var grant = new Button { Content = "Grant 24-hour authorization", Margin = new Thickness(0, 0, 8, 4) };
+        var useGrant = new Button { Content = "Load authorized profile", Margin = new Thickness(0, 0, 8, 4) };
+        var revoke = new Button { Content = "Revoke durable grant", Margin = new Thickness(0, 0, 8, 4) };
+        foreach (var button in new[] { grant, useGrant, revoke })
         { button.Padding = new Thickness(8, 4, 8, 4); savedActions.Children.Add(button); }
         inputs.Children.Add(savedActions);
         DockPanel.SetDock(inputs, Dock.Top); panel.Children.Add(inputs);
@@ -146,6 +151,53 @@ public partial class MainWindow
             message.Text = profileStore.Delete(selected.Id) ? "Saved configuration deleted." : "Could not delete configuration.";
             RefreshSaved();
         };
+        ActiveSensorProfile ResolveSaved(SavedActiveSensorProfile selected)
+        {
+            var live = LocalLanDiscovery.GetLocalInterfaces(id!.Value).FirstOrDefault(a =>
+                a.Address.Equals(adapter.Address) && a.Mask.Equals(adapter.Mask) &&
+                LocalLanDiscovery.PlanProbeTargets(new[] { a }).Contains(host.Address));
+            if (live is null) throw new InvalidOperationException("Selected live scope has changed.");
+            return selected.ApproveForSession(id.Value, live, host.Address);
+        }
+        grant.Click += (_, _) =>
+        {
+            if (active is not null || saved.SelectedItem is not SavedActiveSensorProfile selected) return;
+            try
+            {
+                var profile = ResolveSaved(selected);
+                if (MessageBox.Show(dialog, $"Grant this exact configuration permission to run scheduled probes for 24 hours?\n{selected.Label}\n" +
+                    $"Adapter: {selected.AdapterId}\nNo automatic startup. Revocation blocks subsequent checks.",
+                    "Durable active authorization", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+                var result = profileStore.Grant(profile, TimeSpan.FromHours(24));
+                message.Text = result is null ? "Authorization could not be saved." :
+                    $"Authorized until {new DateTime(result.ExpiresTicks, DateTimeKind.Utc):u}. Load authorized profile, then Start.";
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException) { message.Text = ex.Message; }
+        };
+        useGrant.Click += (_, _) =>
+        {
+            if (active is not null || saved.SelectedItem is not SavedActiveSensorProfile selected) return;
+            try
+            {
+                var profile = ResolveSaved(selected);
+                var authorization = profileStore.ReadValidGrant(profile);
+                if (authorization is null) { message.Text = "No valid durable grant. Grant authorization or reapprove for session."; return; }
+                manager.AddAuthorized(profile, profileStore, authorization.GrantId);
+                message.Text = $"Authorized profile loaded (expires {new DateTime(authorization.ExpiresTicks, DateTimeKind.Utc):u}). Start to enable checks.";
+                Refresh();
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException) { message.Text = ex.Message; }
+        };
+        revoke.Click += (_, _) =>
+        {
+            if (saved.SelectedItem is not SavedActiveSensorProfile selected) return;
+            if (MessageBox.Show(dialog, "Revoke this durable grant? Subsequent checks using it will be blocked. " +
+                "A separately approved session profile is not revoked. Stop to cancel an in-flight probe.",
+                "Revoke durable grant", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+            var ok = profileStore.Revoke(selected.Id);
+            if (ok && active is not null) { active.Cancel(); stop.IsEnabled = false; }
+            message.Text = ok ? "Durable grant revoked. Stopping current scheduler if running." : "No grant revoked or storage unavailable.";
+        };
         var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         timer.Tick += (_, _) =>
         {
@@ -176,7 +228,7 @@ public partial class MainWindow
             if (active is not null || manager.Snapshot().Count == 0) return;
             using var cancellation = new CancellationTokenSource();
             active = cancellation;
-            start.IsEnabled = add.IsEnabled = remove.IsEnabled = remember.IsEnabled = restore.IsEnabled = forget.IsEnabled = false;
+            start.IsEnabled = add.IsEnabled = remove.IsEnabled = remember.IsEnabled = restore.IsEnabled = forget.IsEnabled = grant.IsEnabled = useGrant.IsEnabled = false;
             stop.IsEnabled = true;
             message.Text = "Starting — acquiring machine-wide scheduler ownership…";
             string? failure = null;
@@ -188,7 +240,7 @@ public partial class MainWindow
             {
                 active = null;
                 stop.IsEnabled = false;
-                start.IsEnabled = add.IsEnabled = remove.IsEnabled = remember.IsEnabled = restore.IsEnabled = forget.IsEnabled = true;
+                start.IsEnabled = add.IsEnabled = remove.IsEnabled = remember.IsEnabled = restore.IsEnabled = forget.IsEnabled = grant.IsEnabled = useGrant.IsEnabled = true;
                 if (closeRequested) dialog.Close();
                 else { message.Text = failure ?? "Stopped — no scheduled network activity."; Refresh(); }
             }

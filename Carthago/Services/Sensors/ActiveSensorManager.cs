@@ -47,6 +47,7 @@ internal sealed class ActiveSensorManager
     internal const int MaxProfiles = 16;
     private readonly object _gate = new();
     private readonly Dictionary<Guid, ActiveSensorScheduleState> _states = new();
+    private readonly Dictionary<Guid, (ActiveSensorProfileStore Store, Guid GrantId)> _grants = new();
     private readonly Func<DateTimeOffset> _clock;
     private readonly Func<ActiveSensorProfile, LocalLanInterface?> _resolve;
     private readonly Func<ActiveSensorProfile, LocalLanInterface, CancellationToken, Task<ActiveSensorRun>> _probe;
@@ -69,7 +70,16 @@ internal sealed class ActiveSensorManager
         _allowsTestTick = probe is not null;
     }
 
-    internal void Add(ActiveSensorProfile p)
+    internal void Add(ActiveSensorProfile p) => AddCore(p, null, Guid.Empty);
+
+    internal void AddAuthorized(ActiveSensorProfile p, ActiveSensorProfileStore store, Guid grantId)
+    {
+        ArgumentNullException.ThrowIfNull(store);
+        if (!store.IsAuthorized(p, grantId)) throw new InvalidOperationException("Durable authorization unavailable or expired.");
+        AddCore(p, store, grantId);
+    }
+
+    private void AddCore(ActiveSensorProfile p, ActiveSensorProfileStore? store, Guid grantId)
     {
         // Revalidate even if a caller directly constructs an internal record.
         var valid = ActiveSensorProfile.Create(p.AdapterId, p.Adapter, p.Target, p.Kind, p.HostName,
@@ -85,6 +95,7 @@ internal sealed class ActiveSensorManager
                 s.Profile.Kind == p.Kind && s.Profile.HostName == p.HostName && s.Profile.Port == p.Port))
                 throw new InvalidOperationException("This endpoint and sensor are already approved.");
             _states.Add(p.Id, new(p, _clock(), null, "Not run", 0, false, false, "Not requested"));
+            if (store is not null) _grants.Add(p.Id, (store, grantId));
         }
     }
 
@@ -93,9 +104,13 @@ internal sealed class ActiveSensorManager
         lock (_gate)
         {
             if (_busy || _loopActive) return false;
+            _grants.Remove(id);
             return _states.Remove(id);
         }
     }
+
+    private bool Authorized(ActiveSensorProfile p) => !_grants.TryGetValue(p.Id, out var grant) ||
+        grant.Store.IsAuthorized(p, grant.GrantId);
 
     private bool _reserved;
     internal bool HasReservation { get { lock (_gate) return _reserved; } }
@@ -154,8 +169,22 @@ internal sealed class ActiveSensorManager
                 outcome = "Scope changed — remove and reapprove";
                 return true;
             }
+            if (!Authorized(p))
+            {
+                blocked = true;
+                outcome = "Authorization expired, revoked or unavailable — remove and reapprove";
+                return true;
+            }
+            token.ThrowIfCancellationRequested();
             var result = await _probe(p, adapter, token).ConfigureAwait(false);
             token.ThrowIfCancellationRequested();
+            if (!Authorized(p))
+            {
+                blocked = true;
+                outcome = "Authorization ended during probe — evidence not saved";
+                history = p.SaveHistory ? "Not saved" : "Not requested";
+                return true;
+            }
             outcome = result.Outcome;
             failures = result.Responsive ? 0 : Math.Min(failures + 1, 30);
             if (p.SaveHistory)
@@ -164,6 +193,12 @@ internal sealed class ActiveSensorManager
                 if (result.Evidence is not null)
                 {
                     token.ThrowIfCancellationRequested();
+                    if (!Authorized(p))
+                    {
+                        blocked = true;
+                        outcome = "Authorization ended before persistence — evidence not saved";
+                        return true;
+                    }
                     try { history = _save(result.Evidence) ? "Saved" : "Storage failed"; }
                     catch (Exception ex) when (ex is not OutOfMemoryException) { history = "Storage failed"; }
                 }

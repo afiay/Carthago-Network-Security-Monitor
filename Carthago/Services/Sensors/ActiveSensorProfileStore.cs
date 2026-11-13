@@ -50,6 +50,13 @@ internal sealed record SavedActiveSensorProfile
         return row;
     }
 
+    // Identity includes scope, not mutable scheduling preferences. A grant
+    // separately binds every execution parameter, including those preferences.
+    internal string ConfigurationDigest() => Convert.ToHexString(SHA256.HashData(
+        Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new[] { Id, Version.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            IntervalMinutes.ToString(System.Globalization.CultureInfo.InvariantCulture), SaveHistory ? "true" : "false" }))))
+        .ToLowerInvariant();
+
     private static string Key(SavedActiveSensorProfile row) =>
         Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new[]
         {
@@ -109,15 +116,119 @@ internal sealed record SavedActiveSensorProfile
 
 internal sealed record SavedActiveProfileRead(IReadOnlyList<SavedActiveSensorProfile> Rows, string? Error);
 
+internal sealed class ActiveExecutionGrant
+{
+    public string Id { get; set; } = ""; // saved configuration ID
+    public Guid GrantId { get; set; }
+    public string ConfigurationDigest { get; set; } = "";
+    public long GrantedTicks { get; set; }
+    public long ExpiresTicks { get; set; }
+    public long? RevokedTicks { get; set; }
+}
+
 internal sealed class ActiveSensorProfileStore
 {
     internal const int MaxSavedProfiles = 64;
     private static readonly object Gate = new();
     private readonly string _path;
+    private readonly Func<DateTimeOffset> _clock;
+    internal static readonly TimeSpan MaxGrantLifetime = TimeSpan.FromHours(24);
 
-    internal ActiveSensorProfileStore(string? path = null) =>
+    internal ActiveSensorProfileStore(string? path = null, Func<DateTimeOffset>? clock = null)
+    {
         _path = path ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "Carthago", "active-sensor-profiles.db");
+        _clock = clock ?? (() => DateTimeOffset.UtcNow);
+    }
+
+    private static ILiteCollection<ActiveExecutionGrant> Grants(LiteDatabase db) =>
+        db.GetCollection<ActiveExecutionGrant>("active_execution_grants");
+
+    private static bool ValidGrant(ActiveExecutionGrant? grant, SavedActiveSensorProfile row, long now) =>
+        grant is not null && grant.Id == row.Id && grant.GrantId != Guid.Empty &&
+        grant.ConfigurationDigest == row.ConfigurationDigest() && grant.RevokedTicks is null &&
+        grant.GrantedTicks > 0 && grant.GrantedTicks <= now && now < grant.ExpiresTicks &&
+        grant.ExpiresTicks - grant.GrantedTicks <= MaxGrantLifetime.Ticks &&
+        grant.ExpiresTicks <= DateTime.MaxValue.Ticks;
+
+    // The caller explicitly approves a current live scope before requesting a
+    // grant. Recheck exact saved parameters inside the same database transaction.
+    internal ActiveExecutionGrant? Grant(ActiveSensorProfile approved, TimeSpan lifetime)
+    {
+        if (lifetime <= TimeSpan.Zero || lifetime > MaxGrantLifetime) return null;
+        lock (Gate)
+        {
+            try
+            {
+                var expected = SavedActiveSensorProfile.From(approved);
+                if (!File.Exists(_path)) return null;
+                using var db = Open();
+                var rows = Collection(db);
+                var grants = Grants(db);
+                if (!db.BeginTrans()) return null;
+                try
+                {
+                    var row = rows.FindById(expected.Id);
+                    if (row is null || !row.TryValidate(out _) || row.ConfigurationDigest() != expected.ConfigurationDigest())
+                    { db.Rollback(); return null; }
+                    var now = _clock();
+                    var grant = new ActiveExecutionGrant { Id = row.Id, GrantId = Guid.NewGuid(),
+                        ConfigurationDigest = row.ConfigurationDigest(), GrantedTicks = now.UtcDateTime.Ticks,
+                        ExpiresTicks = (now + lifetime).UtcDateTime.Ticks };
+                    if (!ValidGrant(grant, row, now.UtcDateTime.Ticks)) { db.Rollback(); return null; }
+                    grants.Upsert(grant);
+                    return db.Commit() ? grant : null;
+                }
+                catch { db.Rollback(); throw; }
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException) { return null; }
+        }
+    }
+
+    internal ActiveExecutionGrant? ReadValidGrant(ActiveSensorProfile profile)
+    {
+        lock (Gate)
+        {
+            try
+            {
+                var expected = SavedActiveSensorProfile.From(profile);
+                if (!File.Exists(_path)) return null;
+                using var db = Open();
+                var row = Collection(db).FindById(expected.Id);
+                if (row is null || !row.TryValidate(out _) || row.ConfigurationDigest() != expected.ConfigurationDigest()) return null;
+                var grant = Grants(db).FindById(row.Id);
+                return ValidGrant(grant, row, _clock().UtcDateTime.Ticks) ? grant : null;
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException) { return null; }
+        }
+    }
+
+    internal bool IsAuthorized(ActiveSensorProfile profile, Guid grantId) =>
+        grantId != Guid.Empty && ReadValidGrant(profile)?.GrantId == grantId;
+
+    internal bool Revoke(string id)
+    {
+        lock (Gate)
+        {
+            try
+            {
+                if (!File.Exists(_path)) return false;
+                using var db = Open();
+                var grants = Grants(db);
+                if (!db.BeginTrans()) return false;
+                try
+                {
+                    var grant = grants.FindById(id);
+                    if (grant is null || grant.RevokedTicks.HasValue) { db.Rollback(); return false; }
+                    grant.RevokedTicks = _clock().UtcDateTime.Ticks;
+                    grants.Update(grant);
+                    return db.Commit();
+                }
+                catch { db.Rollback(); throw; }
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException) { return false; }
+        }
+    }
 
     private LiteDatabase Open()
     {
@@ -165,6 +276,11 @@ internal sealed class ActiveSensorProfileStore
                     if (rows.Count() > MaxSavedProfiles || rows.FindAll().Any(r => !r.TryValidate(out _)) ||
                         rows.FindById(row.Id) is null && rows.Count() >= MaxSavedProfiles)
                     { db.Rollback(); return false; }
+                    var previous = rows.FindById(row.Id);
+                    // Delete the old grant atomically on any execution parameter
+                    // change. Changing back cannot resurrect authorization.
+                    if (previous is not null && previous.ConfigurationDigest() != row.ConfigurationDigest())
+                        Grants(db).Delete(row.Id);
                     rows.Upsert(row);
                     return db.Commit();
                 }
@@ -183,7 +299,14 @@ internal sealed class ActiveSensorProfileStore
             {
                 if (!File.Exists(_path)) return false;
                 using var db = Open();
-                return Collection(db).Delete(id);
+                if (!db.BeginTrans()) return false;
+                try
+                {
+                    if (!Collection(db).Delete(id)) { db.Rollback(); return false; }
+                    Grants(db).Delete(id);
+                    return db.Commit();
+                }
+                catch { db.Rollback(); throw; }
             }
             catch (Exception ex) when (ex is not OutOfMemoryException) { return false; }
         }
