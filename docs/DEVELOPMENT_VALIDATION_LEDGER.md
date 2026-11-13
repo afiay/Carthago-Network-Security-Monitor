@@ -2308,3 +2308,8 @@ Reviewed parent `59b2d177729271e64ca8f55c87c50e412b045add`, WindowsProcessResolv
 ## 2026-11-13 — CLI-006E.1 pinned synthetic CLI qualification gate
 
 **SOURCE CANDIDATE — UNVERIFIED.** Parent `e9b3ff95651de71f76d8c67329c206c7a28922c6`. Add owner-authorized `scripts/verify-cli-qualification.ps1`: pinned clean branch checkout, portable build/full CLI suite, fresh TRX required class counts, actual CLI capability smoke, optional Windows build and minimum 23 parity cases. Local ignored reports distinguish portable, Windows parity, field, capture and deployment qualification. Zero builds/tests/replays/Actions executed. Existing GA-IQ-01 unchanged. See [architecture](02-architecture/CLI-006E1-QualificationGate.md) for commands and limitations.
+
+
+## 2026-11-13 — CLI-006E.2 executable capture replay qualification
+
+**SOURCE CANDIDATE — UNVERIFIED.** Parent `9ca3cf9a9c838d84639951374c7fe427837454d2`. Extend CLI qualification with deterministic synthetic PCAP and PCAPNG fixtures and actual executable replay stages; assert five independent matches, one cooldown suppression, benign negative, explicit unsupported R1000, per-rule counts and sanitized output. Record fixture SHA-256 and observed counts. Zero builds/tests/replays/Actions executed. Portable qualification now requires both smoke stages. See [architecture](02-architecture/CLI-006E2-ExecutableReplayQualification.md). Next: owner-run gate and actual failure repair.

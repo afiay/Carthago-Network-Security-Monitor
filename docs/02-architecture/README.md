@@ -35,3 +35,4 @@ System boundaries, evidence lineage, sensors and architectural constraints.
 - [CLI-006D.5B — Five portable detectors](CLI-006D5B-FivePortableDetectors.md)
 - [CLI-006D.6 — Portable rule capability catalog](CLI-006D6-PortableRuleCapabilities.md)
 - [CLI-006E.1 — Pinned CLI qualification gate](CLI-006E1-QualificationGate.md)
+- [CLI-006E.2 — Executable replay qualification](CLI-006E2-ExecutableReplayQualification.md)
