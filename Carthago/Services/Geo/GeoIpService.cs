@@ -64,6 +64,42 @@ namespace Carthago.Services.Geo
 
         public enum LookupOutcome { NotAttempted, Found, NotFound, Failed }
 
+        // Service-lifetime completed database attempts; skipped requests are excluded.
+        public readonly record struct LookupHealthSnapshot(long Found, long NotFound, long Failed)
+        {
+            public long Attempts => Found + NotFound + Failed;
+        }
+
+        internal sealed class LookupHealthCounter
+        {
+            private readonly object _gate = new();
+            private long _found, _notFound, _failed;
+
+            internal void Record(LookupOutcome outcome)
+            {
+                if (outcome == LookupOutcome.NotAttempted) return;
+                lock (_gate)
+                {
+                    switch (outcome)
+                    {
+                        case LookupOutcome.Found: _found++; break;
+                        case LookupOutcome.NotFound: _notFound++; break;
+                        case LookupOutcome.Failed: _failed++; break;
+                    }
+                }
+            }
+
+            internal LookupHealthSnapshot Snapshot()
+            {
+                lock (_gate) return new(_found, _notFound, _failed);
+            }
+        }
+
+        private readonly LookupHealthCounter _cityHealth = new();
+        private readonly LookupHealthCounter _asnHealth = new();
+        public LookupHealthSnapshot CityLookupHealth => _cityHealth.Snapshot();
+        public LookupHealthSnapshot AsnLookupHealth => _asnHealth.Snapshot();
+
         public GeoInfo? Lookup(string ip) => LookupWithOutcomes(ip).Info;
 
         internal (GeoInfo? Info, LookupOutcome City, LookupOutcome Asn) LookupWithOutcomes(string ip)
@@ -105,6 +141,8 @@ namespace Carthago.Services.Geo
                 catch { asnOutcome = LookupOutcome.Failed; }
             }
 
+            _cityHealth.Record(cityOutcome);
+            _asnHealth.Record(asnOutcome);
             return (CreateResult(country, iso2, city, lat, lon, asn, asnOrg), cityOutcome, asnOutcome);
         }
 

@@ -9,6 +9,25 @@ namespace Carthago.Tests;
 
 public sealed class RuntimeEnrichmentRegressionTests
 {
+    [Fact]
+    public void Geo_Lookup_Health_Counts_Completed_Attempts_Independently()
+    {
+        var city = new GeoIpService.LookupHealthCounter();
+        var asn = new GeoIpService.LookupHealthCounter();
+        System.Threading.Tasks.Parallel.For(0, 1000, _ =>
+        {
+            city.Record(GeoIpService.LookupOutcome.Found);
+            city.Record(GeoIpService.LookupOutcome.NotFound);
+            city.Record(GeoIpService.LookupOutcome.Failed);
+            asn.Record(GeoIpService.LookupOutcome.Found);
+            asn.Record(GeoIpService.LookupOutcome.NotAttempted);
+        });
+        Assert.Equal(new GeoIpService.LookupHealthSnapshot(1000, 1000, 1000), city.Snapshot());
+        Assert.Equal(3000L, city.Snapshot().Attempts);
+        Assert.Equal(new GeoIpService.LookupHealthSnapshot(1000, 0, 0), asn.Snapshot());
+        Assert.Equal(1000L, asn.Snapshot().Attempts);
+    }
+
     [Theory]
     [InlineData("GeoLite2-City", true, true)]
     [InlineData("GeoIP2-City", true, true)]
@@ -35,6 +54,9 @@ public sealed class RuntimeEnrichmentRegressionTests
                 Assert.Equal(GeoIpService.DatabaseAvailability.Missing, missing.CityDatabaseStatus);
                 Assert.Equal(GeoIpService.DatabaseAvailability.Missing, missing.AsnDatabaseStatus);
                 Assert.Null(missing.Lookup("8.8.8.8"));
+                Assert.Null(missing.Lookup("192.168.1.1"));
+                Assert.Equal(0L, missing.CityLookupHealth.Attempts);
+                Assert.Equal(0L, missing.AsnLookupHealth.Attempts);
                 var outcome = missing.LookupWithOutcomes("8.8.8.8");
                 Assert.Null(outcome.Info);
                 Assert.Equal(GeoIpService.LookupOutcome.NotAttempted, outcome.City);
