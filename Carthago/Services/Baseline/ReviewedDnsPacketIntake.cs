@@ -59,6 +59,8 @@ namespace Carthago.Services.Baseline
                 !ip.Slice(12, 4).SequenceEqual(source)) return false;
             int total = Be(ip.Slice(2));
             if (total < 45 || total > ip.Length) return false;
+            // Permit only Ethernet minimum-frame padding, not arbitrary trailing bytes.
+            if (ip.Length > Math.Max(total, 46)) return false;
             var udp = ip.Slice(20, total - 20);
             if (Be(udp) == 0 || Be(udp.Slice(2)) != 53 || Be(udp.Slice(4)) != udp.Length) return false;
             var dns = udp.Slice(8);

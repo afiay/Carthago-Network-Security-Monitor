@@ -21,6 +21,11 @@ public sealed class ReviewedDnsPacketIntakeTests
     [InlineData("fragment", false)]
     [InlineData("empty", false)]
     [InlineData("bad-micros", false)]
+    [InlineData("trailing-frame", false)]
+    [InlineData("two-valid", true)]
+    [InlineData("second-source", false)]
+    [InlineData("reverse-time", false)]
+    [InlineData("second-outside", false)]
     public void Packet_Bytes_Determine_Source_And_Time(string change, bool expected)
     {
         var start = new DateTimeOffset(2026, 11, 13, 10, 0, 0, TimeSpan.Zero);
@@ -33,6 +38,7 @@ public sealed class ReviewedDnsPacketIntakeTests
         if (change == "source") frame[29] = 2;
         if (change == "response") frame[44] = 0x80;
         if (change == "fragment") frame[20] = 0x20;
+        if (change == "trailing-frame") Array.Resize(ref frame, frame.Length + 1);
         byte[] capture = new byte[40 + frame.Length];
         void Write(int p, uint v) => BinaryPrimitives.WriteUInt32LittleEndian(capture.AsSpan(p), v);
         Write(0, 0xa1b2c3d4); capture[4] = 2; capture[6] = 4;
@@ -43,6 +49,15 @@ public sealed class ReviewedDnsPacketIntakeTests
         frame.CopyTo(capture, 40);
         if (change == "truncated") Array.Resize(ref capture, capture.Length - 1);
         if (change == "empty") Array.Resize(ref capture, 24);
+        if (change is "two-valid" or "second-source" or "reverse-time" or "second-outside")
+        {
+            int second = capture.Length;
+            Array.Resize(ref capture, second + 16 + frame.Length);
+            Array.Copy(capture, 24, capture, second, 16 + frame.Length);
+            Write(second, (uint)start.AddSeconds(change == "reverse-time" ? -1 :
+                change == "second-outside" ? 61 : 1).ToUnixTimeSeconds());
+            if (change == "second-source") capture[second + 16 + 29] = 2;
+        }
         var scope = QualifiedDnsScope.Create("192.0.2.1", "sensor", "interface", "network");
         byte[] manifest = JsonSerializer.SerializeToUtf8Bytes(new {
             version = 1, scope = scope.Subject, captureSha256 = Hash(capture),
