@@ -64,6 +64,7 @@ try {
         processQualificationBuildExitCode = $null
         processQualificationExitCode = $null
         liveLabContractExitCode = $null
+        deploymentContractPassed = $false
         expectedTotal = ($expected.Values | Measure-Object -Sum).Sum
         testExitCode = $null
         total = 0
@@ -147,6 +148,17 @@ try {
         -not (Select-String -LiteralPath (Join-Path $dir 'live-lab-contract.log') -SimpleMatch 'PASS AS-Q07G4 offline live-lab contract' -Quiet)) {
         $report.status = 'LiveLabContractFailed'
         $report.blocker = 'Offline physical-lab argument or result-classification contract failed.'
+        Write-Report
+        exit 1
+    }
+    try {
+        $deploymentOutput = @(& (Join-Path $root 'scripts/test-active-service-deployment-contract.ps1'))
+        $deploymentOutput | Set-Content -LiteralPath (Join-Path $dir 'deployment-contract.log') -Encoding UTF8
+        if ($deploymentOutput -notcontains 'PASS AS-Q07G5C offline deployment contract') { throw 'Missing deployment contract marker.' }
+        $report.deploymentContractPassed = $true
+    } catch {
+        $report.status = 'DeploymentContractFailed'
+        $report.blocker = 'Offline active service deployment contract failed.'
         Write-Report
         exit 1
     }
