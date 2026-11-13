@@ -103,6 +103,25 @@ public sealed class AssetHistoryStoreTests : IDisposable
         registry.Observe(Local(), Now.AddSeconds(1));
         Assert.Equal(1L, Assert.Single(registry.Snapshot()).Observations);
     }
+    [Fact]
+    public void Version_One_Asset_Only_Checkpoint_Remains_Readable()
+    {
+        Directory.CreateDirectory(_directory);
+        var registry = Registry();
+        var id = registry.SessionId;
+        var started = registry.SessionStartedUtc;
+        // Serialize the original schema, without any newer optional properties.
+        var legacy = new { Version = 1, SessionId = id, StartedUtc = started, Assets = registry.Snapshot() };
+        var path = Path.Combine(_directory, $"asset-{started.UtcDateTime.Ticks:D19}-{id:N}.json");
+        File.WriteAllText(path, System.Text.Json.JsonSerializer.Serialize(legacy));
+        var history = new AssetHistoryStore(_directory).Read();
+        Assert.Null(history.Error);
+        Assert.Equal(1, history.SessionCount);
+        Assert.Equal("192.168.1.10", Assert.Single(history.Rows).Asset.Addresses);
+        Assert.Empty(history.Communications!);
+        Assert.Empty(history.Coverage!);
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_directory)) Directory.Delete(_directory, recursive: true);

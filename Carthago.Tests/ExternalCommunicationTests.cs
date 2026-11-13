@@ -172,6 +172,33 @@ public sealed class ExternalCommunicationTests
     }
 
     [Fact]
+    public void Saturated_Registry_Roundtrip_Withholds_Absent_Destination()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "carthago-saturated-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var registry = new ObservedAssetRegistry();
+            var seen = registry.SessionStartedUtc.AddSeconds(1);
+            for (int i = 0; i < ExternalCommunicationRegistry.Capacity; i++)
+                registry.Communications.Observe(Packet($"8.8.{i / 256}.{i % 256}"), seen);
+            registry.Communications.Observe(Packet("1.1.1.1"), seen);
+            registry.Communications.Observe(Packet("1.1.1.1"), seen);
+            registry.Seal();
+            Assert.True(new AssetHistoryStore(dir).Save(registry));
+            var history = new AssetHistoryStore(dir).Read();
+            Assert.Null(history.Error);
+            Assert.Equal(ExternalCommunicationRegistry.Capacity, history.Communications!.Count);
+            Assert.Equal(2L, Assert.Single(history.Coverage!).DestinationRejected);
+            var current = new ObservedAssetSessionSnapshot(Guid.NewGuid(), seen.AddMinutes(1),
+                Array.Empty<ObservedAssetRow>(), new[] { Row("1.1.1.1"), Row("8.8.0.0") });
+            var result = ExternalCommunicationComparison.Compare(current, history);
+            Assert.Contains("novelty withheld", result.Rows.Single(x => x.Destination == "1.1.1.1").Status);
+            Assert.Equal("Previously observed destination", result.Rows.Single(x => x.Destination == "8.8.0.0").Status);
+        }
+        finally { if (Directory.Exists(dir)) Directory.Delete(dir, true); }
+    }
+
+    [Fact]
     public void Version_Three_Checkpoint_Persists_Communication_Without_Count_Inflation()
     {
         var dir = Path.Combine(Path.GetTempPath(), "carthago-comms-" + Guid.NewGuid().ToString("N"));
