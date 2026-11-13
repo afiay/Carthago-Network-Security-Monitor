@@ -31,14 +31,25 @@ try {
     }
     function Invoke-IntegrationStage([string]$Name, [string]$Command, [string[]]$Arguments) {
         Assert-PinnedCheckout
+        $logPath = Join-Path $dir ($Name + '.log')
+        Write-Host "START: $Name (log: $logPath)"
         $previous = $ErrorActionPreference
         $ErrorActionPreference = 'Continue'
         try {
-            & $Command @Arguments *> (Join-Path $dir ($Name + '.log'))
+            & $Command @Arguments *> $logPath
             $code = $LASTEXITCODE
         } finally { $ErrorActionPreference = $previous }
         $report.stages[$Name] = $code
-        if ($code -ne 0) { throw "Stage $Name failed (exit $code); inspect its log." }
+        if ($code -ne 0) {
+            # Keep the complete private log, but surface the actual failure in
+            # the owner console so a copied transcript is actionable.
+            if (Test-Path -LiteralPath $logPath -PathType Leaf) {
+                Write-Host "--- $Name failure (last 80 lines) ---"
+                Get-Content -LiteralPath $logPath -Tail 80 | ForEach-Object { Write-Host $_ }
+            }
+            throw "Stage $Name failed (exit $code); full log: $logPath"
+        }
+        Write-Host "PASS: $Name"
         Assert-PinnedCheckout
     }
     try {
