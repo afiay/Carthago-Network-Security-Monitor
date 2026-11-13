@@ -56,3 +56,32 @@ after config loss/expiry without running the deployed binary. Removal preserves
 all service data and the account. A failed registration verification requires
 manual inspection; no automatic rollback that could remove a concurrent service.
 No automatic startup until actual SCM qualification and recovery policy review.
+
+
+## Actual SCM lifecycle qualification (AS-Q07G5E)
+
+The service must be registered Manual, stopped, with valid pinned grants,
+and the deployment must pass preflight. Close all other Carthago monitor
+and scheduler processes. Confirm that every selected profile is authorized
+for real probes, and allow a maintenance window for two runs.
+
+~~~powershell
+.\scripts\verify-active-service.ps1 @params -RunLifecycle -ConfirmAuthorizedTargetsAndMaintenanceWindow -ObserveSeconds 60
+~~~
+
+This starts, observes, stops, restarts, observes and stops the existing
+service. It never installs, edits configuration, renews/revokes grants or
+changes startup/recovery policy. It requires fresh current-process health,
+advancing sample time, monotonic counters, unchanged grant windows,
+no pending/blocked/failing profiles, no deferrals or storage failures,
+responsive and completed aggregate counts at least the selected count,
+new session/process start on restart and successful SCM stop exit codes.
+Configuration and executable hashes are rechecked. Output is a JSON report;
+exit 0 qualifies only observed operational scope, exit 3 is incomplete or
+failed. A final cleanup failure requires manual intervention. Native SCM
+calls may block independently of transition wait budgets. Use a dedicated
+lab configuration; real probes and opt-in evidence persistence occur.
+Aggregate counters do not prove each individual sensor's protocol accuracy.
+Actual negative SCM grant tests require separately provisioned lab grants;
+this harness does not invalidate existing authorization. Automatic startup
+remains unqualified.

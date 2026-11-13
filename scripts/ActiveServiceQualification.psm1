@@ -1,0 +1,71 @@
+# SPDX-License-Identifier: MIT
+Set-StrictMode -Version Latest
+$ErrorActionPreference='Stop'
+
+function ConvertTo-ActiveHealthSample($Sample,[int]$ProcessId,[DateTimeOffset]$ProcessStarted,[DateTimeOffset]$Now) {
+    $keys=@('schemaVersion','sessionId','processId','processStartedUtc','sampleUtc','schedulerOwned',
+        'profiles','blockedProfiles','pendingProfiles','profilesWithFailures','completedProbes','responsiveProbes',
+        'deferredChecks','storageFailures','lastResponsiveUtc','earliestGrantExpiryUtc','latestGrantExpiryUtc','assessment')
+    $actual=@($Sample.PSObject.Properties.Name)
+    if ($actual.Count -ne $keys.Count -or @($actual | Where-Object {$_ -cnotin $keys}).Count -ne 0) { throw 'Unexpected health schema.' }
+    foreach ($key in @('schemaVersion','processId','profiles','blockedProfiles','pendingProfiles','profilesWithFailures',
+        'completedProbes','responsiveProbes','deferredChecks','storageFailures')) {
+        $v=$Sample.$key
+        if (($v -isnot [int] -and $v -isnot [long]) -or $v -lt 0) { throw 'Invalid health counter.' }
+    }
+    $session=[Guid]$Sample.sessionId
+    $start=[DateTimeOffset]::Parse([string]$Sample.processStartedUtc,[Globalization.CultureInfo]::InvariantCulture)
+    $time=[DateTimeOffset]::Parse([string]$Sample.sampleUtc,[Globalization.CultureInfo]::InvariantCulture)
+    $earliest=[DateTimeOffset]::Parse([string]$Sample.earliestGrantExpiryUtc,[Globalization.CultureInfo]::InvariantCulture)
+    $latest=[DateTimeOffset]::Parse([string]$Sample.latestGrantExpiryUtc,[Globalization.CultureInfo]::InvariantCulture)
+    if ($Sample.schemaVersion -ne 1 -or $session -eq [Guid]::Empty -or $ProcessId -le 0 -or
+        $Sample.processId -ne $ProcessId -or $Sample.schedulerOwned -isnot [bool] -or -not $Sample.schedulerOwned -or
+        [Math]::Abs(($start-$ProcessStarted).TotalSeconds) -gt 1 -or
+        $time -lt $start -or $time -gt $Now -or ($Now-$time).TotalSeconds -gt 30 -or
+        $earliest -gt $latest -or $latest -le $start -or
+        $Sample.profiles -lt 1 -or $Sample.profiles -gt 16 -or
+        $Sample.blockedProfiles -gt $Sample.profiles -or $Sample.pendingProfiles -gt $Sample.profiles -or
+        $Sample.profilesWithFailures -gt $Sample.profiles -or $Sample.responsiveProbes -gt $Sample.completedProbes -or
+        $Sample.storageFailures -gt $Sample.completedProbes -or
+        $Sample.assessment -cnotin @('Unavailable','Degraded','Pending','ResponsiveObserved')) { throw 'Invalid or stale health sample.' }
+    $last=$null
+    if ($null -ne $Sample.lastResponsiveUtc) {
+        $last=[DateTimeOffset]::Parse([string]$Sample.lastResponsiveUtc,[Globalization.CultureInfo]::InvariantCulture)
+        if ($last -lt $start -or $last -gt $time -or $Sample.responsiveProbes -eq 0) { throw 'Invalid responsive timestamp.' }
+    } elseif ($Sample.responsiveProbes -ne 0) { throw 'Missing responsive timestamp.' }
+    # Return only the allowlisted, validated fields; never relay arbitrary JSON.
+    [pscustomobject][ordered]@{
+        schemaVersion=1;sessionId=$session.ToString('D');processId=$ProcessId
+        processStartedUtc=$start.ToUniversalTime().ToString('o');sampleUtc=$time.ToUniversalTime().ToString('o')
+        schedulerOwned=$true;profiles=$Sample.profiles;blockedProfiles=$Sample.blockedProfiles
+        pendingProfiles=$Sample.pendingProfiles;profilesWithFailures=$Sample.profilesWithFailures
+        completedProbes=$Sample.completedProbes;responsiveProbes=$Sample.responsiveProbes
+        deferredChecks=$Sample.deferredChecks;storageFailures=$Sample.storageFailures
+        lastResponsiveUtc=if($null -ne $last){$last.ToUniversalTime().ToString('o')}else{$null}
+        earliestGrantExpiryUtc=$earliest.ToUniversalTime().ToString('o');latestGrantExpiryUtc=$latest.ToUniversalTime().ToString('o')
+        assessment=$Sample.assessment
+    }
+}
+
+function Assert-ActiveHealthProgress($Previous,$Current,[int]$ExpectedProfiles) {
+    if ($Current.profiles -ne $ExpectedProfiles -or $Current.profiles -ne $Previous.profiles -or
+        $Current.sessionId -cne $Previous.sessionId -or $Current.processId -ne $Previous.processId -or
+        $Current.processStartedUtc -cne $Previous.processStartedUtc -or
+        $Current.earliestGrantExpiryUtc -cne $Previous.earliestGrantExpiryUtc -or
+        $Current.latestGrantExpiryUtc -cne $Previous.latestGrantExpiryUtc -or
+        [DateTimeOffset]$Current.sampleUtc -lt [DateTimeOffset]$Previous.sampleUtc) { throw 'Service session or grant window changed.' }
+    foreach ($key in @('completedProbes','responsiveProbes','deferredChecks','storageFailures')) {
+        if ($Current.$key -lt $Previous.$key) { throw 'Health counter regression.' }
+    }
+    if ($Previous.lastResponsiveUtc -and (-not $Current.lastResponsiveUtc -or
+        [DateTimeOffset]$Current.lastResponsiveUtc -lt [DateTimeOffset]$Previous.lastResponsiveUtc)) { throw 'Responsive timestamp regressed.' }
+}
+
+function Test-ActiveObservedScope($Sample,[int]$ExpectedProfiles) {
+    return ($Sample.profiles -eq $ExpectedProfiles -and $Sample.pendingProfiles -eq 0 -and
+        $Sample.blockedProfiles -eq 0 -and $Sample.profilesWithFailures -eq 0 -and
+        $Sample.storageFailures -eq 0 -and $Sample.deferredChecks -eq 0 -and
+        $Sample.completedProbes -ge $ExpectedProfiles -and $Sample.responsiveProbes -ge $ExpectedProfiles -and
+        $Sample.assessment -ceq 'ResponsiveObserved')
+}
+Export-ModuleMember -Function ConvertTo-ActiveHealthSample,Assert-ActiveHealthProgress,Test-ActiveObservedScope

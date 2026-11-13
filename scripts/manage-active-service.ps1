@@ -7,6 +7,7 @@ param(
 )
 $ErrorActionPreference='Stop'
 Import-Module (Join-Path $PSScriptRoot 'ActiveServiceDeployment.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot 'ActiveServiceQualification.psm1') -Force
 if ($env:OS -ne 'Windows_NT') { throw 'Windows required.' }
 $name='CarthagoActiveMonitor'
 function Read-ServiceRegistration { Get-CimInstance Win32_Service -Filter "Name='CarthagoActiveMonitor'" }
@@ -32,14 +33,8 @@ if ($Action -eq 'Health') {
         if ((Get-Item -LiteralPath $file).Length -gt 16384) { throw 'Health snapshot too large.' }
         $sample=Get-Content -LiteralPath $file -Raw | ConvertFrom-Json
         $proc=Get-Process -Id $s.ProcessId
-        $now=[DateTimeOffset]::UtcNow
-        $sampleTime=[DateTimeOffset]::Parse([string]$sample.sampleUtc)
-        $start=[DateTimeOffset]::Parse([string]$sample.processStartedUtc)
-        if ($sample.schemaVersion -ne 1 -or $sample.processId -ne $s.ProcessId -or
-            [Guid]$sample.sessionId -eq [Guid]::Empty -or -not $sample.schedulerOwned -or
-            [Math]::Abs(($start - [DateTimeOffset]$proc.StartTime.ToUniversalTime()).TotalSeconds) -gt 1 -or
-            $sampleTime -lt $start -or $sampleTime -gt $now -or ($now-$sampleTime).TotalSeconds -gt 30 -or
-            $sample.assessment -notin @('Unavailable','Degraded','Pending','ResponsiveObserved')) { throw 'Stale or invalid sample.' }
+        try { $sample=ConvertTo-ActiveHealthSample $sample $s.ProcessId ([DateTimeOffset]($proc.StartTime.ToUniversalTime())) ([DateTimeOffset]::UtcNow) }
+        finally { $proc.Dispose() }
         $again=Read-ServiceRegistration
         if ($again.State -ne 'Running' -or $again.ProcessId -ne $s.ProcessId) { throw 'Service changed.' }
         [pscustomobject]@{health='FreshSample';assessment=$sample.assessment;snapshot=$sample;securityAccuracyValidated=$false} | ConvertTo-Json -Depth 5

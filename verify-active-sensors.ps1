@@ -66,6 +66,7 @@ try {
         processQualificationExitCode = $null
         liveLabContractExitCode = $null
         deploymentContractPassed = $false
+        serviceLifecycleContractPassed = $false
         expectedTotal = ($expected.Values | Measure-Object -Sum).Sum
         testExitCode = $null
         total = 0
@@ -160,6 +161,17 @@ try {
     } catch {
         $report.status = 'DeploymentContractFailed'
         $report.blocker = 'Offline active service deployment contract failed.'
+        Write-Report
+        exit 1
+    }
+    try {
+        $lifecycleOutput = @(& (Join-Path $root 'scripts/test-active-service-qualification-contract.ps1'))
+        $lifecycleOutput | Set-Content -LiteralPath (Join-Path $dir 'service-lifecycle-contract.log') -Encoding UTF8
+        if ($lifecycleOutput -notcontains 'PASS AS-Q07G5E offline lifecycle qualification contract') { throw 'Missing lifecycle contract marker.' }
+        $report.serviceLifecycleContractPassed = $true
+    } catch {
+        $report.status = 'ServiceLifecycleContractFailed'
+        $report.blocker = 'Offline active service lifecycle qualification contract failed.'
         Write-Report
         exit 1
     }
