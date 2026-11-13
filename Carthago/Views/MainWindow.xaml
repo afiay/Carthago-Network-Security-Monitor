@@ -2861,128 +2861,35 @@
                          Header="Capture &amp; Enrichment Configuration" Tag="02  /  DATA SOURCES" Style="{StaticResource SettingsOpsGroup}"
                          Margin="0,0,0,14">
                 <Grid Margin="18,20,18,18">
-                  <!-- GA UI-117: three visibly distinct operational zones; existing named inputs and handlers stay in place. -->
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition x:Name="SettingsCaptureLabelColumn" Width="160"/>
-                    <ColumnDefinition Width="*"/>
-                  </Grid.ColumnDefinitions>
-                  <Grid.RowDefinitions>
-                    <RowDefinition Height="58"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                  </Grid.RowDefinitions>
-
-                  <!-- Section-scale card surfaces are behind all controls and remain presentation-only. -->
-                  <Border Grid.Row="0" Grid.RowSpan="2" Grid.ColumnSpan="2"
-                          Style="{StaticResource SettingsCaptureZone}"
-                          BorderBrush="#28728B" Margin="-9,-9,-9,9"
-                          IsHitTestVisible="False"/>
-                  <Border Grid.Row="2" Grid.RowSpan="3" Grid.ColumnSpan="2"
-                          Style="{StaticResource SettingsCaptureZone}"
-                          BorderBrush="#2B566B" Margin="-9,-5,-9,9"
-                          IsHitTestVisible="False"/>
-                  <Border Grid.Row="5" Grid.RowSpan="4" Grid.ColumnSpan="2"
-                          Style="{StaticResource SettingsCaptureZone}"
-                          BorderBrush="#28728B" Margin="-9,-5,-9,-7"
-                          IsHitTestVisible="False"/>
-                  <!-- Auto-start -->
-                  <TextBlock Text="Auto-Start Capture"
-                             FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="12,0,6,0"
-                             VerticalAlignment="Center"/>
-                  <StackPanel Grid.Column="1"
-                              Orientation="Horizontal">
-                    <CheckBox x:Name="AutoStartCheck"
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition x:Name="SettingsCaptureExternalColumn" Width="*"/></Grid.ColumnDefinitions>
+                  <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                  <Border x:Name="SettingsCaptureLocalCard" Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="18"><StackPanel><TextBlock Text="01 / LOCAL CAPTURE" Foreground="{StaticResource AccentBrush}" FontSize="12" FontWeight="Bold"/><TextBlock Text="Capture defaults" Foreground="{StaticResource TextBrush}" FontSize="21" FontWeight="SemiBold" Margin="0,6,0,4" TextWrapping="Wrap"/><TextBlock Text="Saved preferences for launch and Npcap filtering." Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,0,0,16"/><Border Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,12"><StackPanel><CheckBox x:Name="AutoStartCheck"
                               Content="Start capture on launch"
                               ToolTip="Save to request capture at the next application launch when a capture source and enabled Start control are available. Checking alone does not start capture or confirm packet flow."
                               ToolTipService.ShowsToolTipOnKeyboardFocus="True"
-                              AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
-                  </StackPanel>
-                  <TextBlock Grid.Row="1"
-                             Grid.ColumnSpan="2"
-                             Margin="12,4,0,8"
-                             Foreground="{StaticResource TextSubtleBrush}"
-                             Text="Tip: Useful for appliances or headless deployments."/>
-
-                  <!-- External enrichment settings: distinct operational zone. -->
-                  <!-- WHOIS -->
-                  <TextBlock Grid.Row="2"
-                             Text="Enable WHOIS"
-                             FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="12,0,6,0"
-                             VerticalAlignment="Center"/>
-                  <StackPanel Grid.Row="2"
-                              Grid.Column="1"
-                              Orientation="Horizontal">
-                    <CheckBox x:Name="EnableWhoisCheck"
-                              Content="Resolve WHOIS / ASN / Org"
-                              ToolTip="Save to enable external WHOIS, ASN and organization lookups for eligible public IPs in processed traffic. Checking alone does not make a request; lookup results are not guaranteed."
-                              ToolTipService.ShowsToolTipOnKeyboardFocus="True"
-                              AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
-                  </StackPanel>
-
-                  <!-- Reputation -->
-                  <TextBlock Grid.Row="3"
-                             Text="Enable Reputation"
-                             FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="12,0,6,0"
-                             VerticalAlignment="Center"/>
-                  <StackPanel Grid.Row="3"
-                              Grid.Column="1"
-                              Orientation="Horizontal">
-                    <CheckBox x:Name="EnableRepCheck"
-                              Content="AbuseIPDB reputation lookups"
-                              ToolTip="Save to enable external AbuseIPDB reputation lookups for eligible public IPs in processed traffic. A valid API key is required. Checking alone does not validate credentials or make a request."
-                              ToolTipService.ShowsToolTipOnKeyboardFocus="True"
-                              AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
-                  </StackPanel>
-                  <TextBlock Grid.Row="4"
-                             Grid.ColumnSpan="2"
-                             Margin="12,4,0,8"
-                             Foreground="{StaticResource TextWarningBrush}"
-                             TextWrapping="Wrap"
-                             Text="Requires a valid AbuseIPDB API key. For best results, set ABUSEIPDB_API_KEY in a .env file or environment variable."/>
-
-                  <!-- GA UI-133: full-width local filter and stacked session credential actions, preventing narrow-width collisions. -->
-                  <!-- Local filter and session credential settings: distinct operational zone. -->
-                  <!-- BPF filter -->
-                  <!-- GA UI-66: label the existing BPF field and disclose Save's active-Npcap effect without changing capture logic. -->
-                  <TextBlock x:Name="SettingsDefaultBpfLabel"
-                             Grid.Row="5"
-                             Text="Default BPF Filter"
-                             FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="12,0,6,0"
-                             VerticalAlignment="Center"/>
-                  <Grid Grid.Row="5" Grid.Column="1" Margin="0,6,0,6">
-                    <TextBox x:Name="DefaultFilterText"
+                              AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/></StackPanel></Border><TextBlock x:Name="SettingsDefaultBpfLabel" Text="Default BPF Filter" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,0,0,8"/><TextBox x:Name="DefaultFilterText"
                              HorizontalAlignment="Stretch"
                              MinWidth="0"
                              ToolTip="Default BPF expression for Npcap capture (for example, tcp or port 443). Editing alone does not apply it. Save stores the default; when Npcap capture is active, Save also reapplies the filter and may briefly restart capture. Blank clears the saved default. This is not an ETW filter."
                              ToolTipService.ShowsToolTipOnKeyboardFocus="True"
                              AutomationProperties.LabeledBy="{Binding ElementName=SettingsDefaultBpfLabel}"
-                             AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
-                  </Grid>
-
-                  <!-- API key -->
-                  <!-- GA UI-68: make the existing session-only credential action discoverable without exposing the secret. -->
-                  <TextBlock x:Name="SettingsAbuseApiKeyLabel"
-                             Grid.Row="6"
-                             Text="AbuseIPDB API Key"
-                             FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="12,0,6,0"
-                             VerticalAlignment="Center"/>
-                  <Grid Grid.Row="6" Grid.Column="1" Margin="0,8,0,8">
-                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                    <PasswordBox x:Name="AbuseApiKeyBox"
+                             AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/><TextBlock Text="Save applies the default to active Npcap capture; capture may briefly restart. Not an ETW filter." Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,10,0,0"/></StackPanel></Border>
+                  <Border x:Name="SettingsCaptureExternalCard" Grid.Column="1" Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="18"><StackPanel><TextBlock Text="02 / EXTERNAL LOOKUPS" Foreground="{StaticResource AccentBrush}" FontSize="12" FontWeight="Bold"/><TextBlock Text="Enrichment providers" Foreground="{StaticResource TextBrush}" FontSize="21" FontWeight="SemiBold" Margin="0,6,0,4" TextWrapping="Wrap"/><TextBlock Text="Optional external lookups for eligible public IPs." Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,0,0,16"/><Border Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,12"><StackPanel><CheckBox x:Name="EnableWhoisCheck"
+                              Content="Resolve WHOIS / ASN / Org"
+                              ToolTip="Save to enable external WHOIS, ASN and organization lookups for eligible public IPs in processed traffic. Checking alone does not make a request; lookup results are not guaranteed."
+                              ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                              AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/></StackPanel></Border><Border Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,12"><StackPanel><CheckBox x:Name="EnableRepCheck"
+                              Content="AbuseIPDB reputation lookups"
+                              ToolTip="Save to enable external AbuseIPDB reputation lookups for eligible public IPs in processed traffic. A valid API key is required. Checking alone does not validate credentials or make a request."
+                              ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                              AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/></StackPanel></Border><TextBlock Text="Reputation requires a valid AbuseIPDB API key. Configure ABUSEIPDB_API_KEY in the environment or .env for persistence." Foreground="{StaticResource TextWarningBrush}" TextWrapping="Wrap"/></StackPanel></Border>
+                  <Border x:Name="SettingsCaptureCredentialCard" Grid.Row="1" Grid.ColumnSpan="2" Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="18"><StackPanel><TextBlock Text="03 / SESSION ONLY" Foreground="{StaticResource AccentBrush}" FontSize="12" FontWeight="Bold"/><TextBlock Text="AbuseIPDB credential" Foreground="{StaticResource TextBrush}" FontSize="21" FontWeight="SemiBold" Margin="0,6,0,4" TextWrapping="Wrap"/><TextBlock Text="Separate in-memory override; Save settings does not persist this key." Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,0,0,16"/><TextBlock x:Name="SettingsAbuseApiKeyLabel" Text="AbuseIPDB API Key" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,0,0,8"/><PasswordBox x:Name="AbuseApiKeyBox"
                                  HorizontalAlignment="Stretch"
                                  MinWidth="0"
                                  ToolTip="Enter an AbuseIPDB API key. This masked field and Save settings do not persist the key. Use the adjacent session button to apply an in-memory override; it does not validate credentials or initiate a lookup. For persistence, use the existing environment or .env configuration."
                                  ToolTipService.ShowsToolTipOnKeyboardFocus="True"
                                  AutomationProperties.LabeledBy="{Binding ElementName=SettingsAbuseApiKeyLabel}"
-                                 AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
-                                 Margin="0,0,0,10"/>
-                    <Button Grid.Row="1"
+                                 AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/><StackPanel Margin="0,12,0,0"><Button 
                             HorizontalAlignment="Left"
                             Content="Use for this session"
                             ToolTip="Applies a nonempty key for this running session only and refreshes the displayed key status. Does not save preferences, validate credentials, enable reputation lookups, or initiate a request. Empty input shows a warning."
@@ -2990,28 +2897,14 @@
                             AutomationProperties.Name="Use AbuseIPDB API key for this session"
                             AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                             Click="ApplyApiKey_Click"
-                            MinWidth="160"
-            Style="{StaticResource SecondaryButton}"/>
-                  </Grid>
-
-                  <!-- Status line -->
-                  <!-- GA UI-84: key configuration status is not credential validation or lookup success. -->
-                  <TextBlock x:Name="ApiKeyStatusText"
-                             Grid.Row="7"
+                            MinWidth="0"
+            Style="{StaticResource SecondaryButton}"/></StackPanel><Border Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,14,0,0"><StackPanel><TextBlock x:Name="ApiKeyStatusText"
                              Grid.ColumnSpan="2"
-                             Margin="0,8,0,0"
                              Foreground="{StaticResource TextSubtleBrush}"
                              TextWrapping="Wrap"
                              AutomationProperties.Name="{Binding Text, RelativeSource={RelativeSource Self}}"
                              AutomationProperties.HelpText="Configuration status only; not proof of valid credentials or a successful lookup. The existing status producer can describe an environment-provided key as a session override."
-                             Text="Key status: unknown"/>
-                  <TextBlock Grid.Row="8"
-                             Grid.ColumnSpan="2"
-                             Margin="0,3,0,0"
-                             Foreground="{StaticResource TextMutedBrush}"
-                             FontSize="11"
-                             TextWrapping="Wrap"
-                             Text="Configuration status only &#x2022; not a credential validation or lookup result."/>
+                             Text="Key status: unknown"/><TextBlock Text="Configuration status only; not a credential validation or lookup result." Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/></StackPanel></Border></StackPanel></Border>
                 </Grid>
               </GroupBox>
 
