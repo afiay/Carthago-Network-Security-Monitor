@@ -142,12 +142,12 @@ public static class CliApplication
                     var rule = await OfflineRuleQueries.ShowAsync(rulePath, ruleId, token);
                     if (rule is null) return await FailAsync(error, json, DataError, "rule_not_found", "Rule not found in the saved catalog.");
                     await WriteAsync(output, json, new { schemaVersion = SchemaVersion, provenance = "untrusted_import",
-                        validation = "not_assessed", rule }, $"{rule.RuleId} {rule.Name ?? "(name unavailable)"}\\nCategory: {rule.Category ?? "unavailable"}\\nDefault severity: {rule.DefaultSeverity ?? "unavailable"}\\nEnabled by default: {rule.EnabledByDefault?.ToString() ?? "unavailable"}\\nPlanned: {rule.IsPlanned?.ToString() ?? "unavailable"}\\nMaturity: {rule.Maturity ?? "unavailable"}\\nValidation: not assessed (saved catalog)");
+                        validation = "not_assessed", rule }, $"{rule.RuleId} {rule.Name ?? "(name unavailable)"}\nCategory: {rule.Category ?? "unavailable"}\nDefault severity: {rule.DefaultSeverity ?? "unavailable"}\nEnabled by default: {rule.EnabledByDefault?.ToString() ?? "unavailable"}\nPlanned: {rule.IsPlanned?.ToString() ?? "unavailable"}\nMaturity: {rule.Maturity ?? "unavailable"}\nValidation: not assessed (saved catalog)");
                     return Success;
                 case ["rules", "quality", var ledgerPath] when !string.IsNullOrWhiteSpace(ledgerPath) && !ledgerPath.StartsWith("--", StringComparison.Ordinal):
                     var quality = await OfflineRuleQueries.QualityAsync(ledgerPath, token);
                     await WriteAsync(output, json, new { schemaVersion = SchemaVersion, quality },
-                        $"Ledger rows: {quality.LedgerRows}\\nAudit pending: {quality.AuditPending}\\nProducer-blocked labels: {quality.ProducerBlocked}\\nOther/unclassified: {quality.OtherOrUnclassified}\\nValidation: not assessed; provisional ledger, not live coverage.");
+                        $"Ledger rows: {quality.LedgerRows}\nAudit pending: {quality.AuditPending}\nProducer-blocked labels: {quality.ProducerBlocked}\nOther/unclassified: {quality.OtherOrUnclassified}\nValidation: not assessed; provisional ledger, not live coverage.");
                     return Success;
 
                 case ["session", "inspect", var path] when !string.IsNullOrWhiteSpace(path) && !path.StartsWith("--", StringComparison.Ordinal):
@@ -213,12 +213,12 @@ public static class CliApplication
         if (command == ReadCommand.HostStatus)
             await WriteAsync(output, json, new { schemaVersion = SchemaVersion, hostStatus = "reachable",
                 engineHealth = "not_assessed", provenance = "same_user_local_endpoint", observedUtc = response.ObservedUtc },
-                "Local CARTHAGO host: reachable\\nDetection engine health: not assessed");
+                "Local CARTHAGO host: reachable\nDetection engine health: not assessed");
         else
             await WriteAsync(output, json, new { schemaVersion = SchemaVersion, provenance = "same_user_local_endpoint",
                 observedUtc = response.ObservedUtc, registered = response.Registered,
                 enabledByDefault = response.EnabledByDefault, planned = response.Planned, validation = "not_assessed" },
-                $"Registered: {response.Registered}\\nEnabled by default: {response.EnabledByDefault}\\nPlanned: {response.Planned}\\nValidation: not assessed");
+                $"Registered: {response.Registered}\nEnabled by default: {response.EnabledByDefault}\nPlanned: {response.Planned}\nValidation: not assessed");
         return Success;
     }
 
@@ -285,8 +285,8 @@ public static class CliApplication
         var page = await OfflineRuleQueries.ListAsync(path, offset, limit, token);
         await WriteAsync(output, json, new { schemaVersion = SchemaVersion, provenance = "untrusted_import",
             validation = "not_assessed", page },
-            $"Saved catalog: {page.Total} rows (offset {page.Offset}, limit {page.Limit})\\n" +
-            string.Join("\\n", page.Rules.Select(r => $"{r.RuleId} {r.Name ?? "(name unavailable)"}")));
+            $"Saved catalog: {page.Total} rows (offset {page.Offset}, limit {page.Limit})\n" +
+            string.Join("\n", page.Rules.Select(r => $"{r.RuleId} {r.Name ?? "(name unavailable)"}")));
         return Success;
     }
 

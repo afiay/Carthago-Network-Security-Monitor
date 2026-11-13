@@ -54,6 +54,8 @@ public static class SensorHeartbeatReadProjection
                     if (line.Length > 8192) throw new InvalidDataException("Heartbeat record too large.");
                     using var doc = JsonDocument.Parse(line, new JsonDocumentOptions { MaxDepth = 8 });
                     var root = doc.RootElement;
+                    if (root.ValueKind == JsonValueKind.Object && root.EnumerateObject().GroupBy(p => p.Name, StringComparer.Ordinal).Any(g => g.Count() > 1))
+                        throw new InvalidDataException("Duplicate heartbeat field.");
                     if (root.ValueKind != JsonValueKind.Object ||
                         !root.TryGetProperty("SensorId", out var idValue) || idValue.ValueKind != JsonValueKind.String ||
                         !root.TryGetProperty("TimestampUtc", out var timestamp) || timestamp.ValueKind != JsonValueKind.String ||

@@ -130,7 +130,7 @@ current-user local-only security boundary as v1. Both opt in with
 --enable-cli-ipc. No change to v1 framing or offline commands. v2 uses a
 4-byte big-endian length prefix, strict bounded JSON (1 KiB request, 128 KiB
 response), correlation IDs, allowlisted queries, typed responses, bounded
-pages (1–100), five-second I/O deadlines and acknowledgment. No mutation.
+pages (1–100), five-second I/O deadlines and acknowledgment. Synchronous catalog construction/validation is not preemptible; it runs on the background listener task. No mutation.
 
 ```powershell
 dotnet run --project Carthago/Carthago.csproj -c Release -- --enable-cli-ipc
@@ -151,7 +151,7 @@ Sensor queries read the existing CommonApplicationData/Carthago/sensors
 heartbeat journal files for the current UTC date plus six previous dates.
 Each file is bounded to 1 MiB, records to 8192 characters and unique IDs to
 10,000. Latest timestamp wins regardless of file order. Missing journals,
-malformed records or size/permission errors return unavailable, not zero.
+malformed records (including duplicate JSON fields) or size/permission errors return unavailable, not zero.
 Fresh means at most five minutes old, future means more than 30 seconds
 ahead of observation, otherwise stale. This is unverified journal freshness,
 not authenticated telemetry or runtime liveness. Only safe sensor IDs,

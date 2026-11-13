@@ -127,6 +127,44 @@ public sealed class LiveQueryTests
         }
     }
 
+    [Fact]
+    public async Task DuplicateJsonFieldsAndUnknownFieldsRejected()
+    {
+        foreach (string json in new[]
+        {
+            "{\"version\":2,\"version\":2,\"correlation\":\"00000000-0000-0000-0000-000000000001\",\"kind\":1,\"offset\":0,\"limit\":1,\"ruleId\":null}",
+            "{\"version\":2,\"correlation\":\"00000000-0000-0000-0000-000000000001\",\"kind\":1,\"offset\":0,\"limit\":1,\"ruleId\":null,\"identity\":\"spoof\"}"
+        })
+        {
+            using var stream = new MemoryStream();
+            byte[] body = System.Text.Encoding.UTF8.GetBytes(json);
+            byte[] header = new byte[4];
+            System.Buffers.Binary.BinaryPrimitives.WriteInt32BigEndian(header, body.Length);
+            stream.Write(header);
+            stream.Write(body);
+            stream.Position = 0;
+            await Assert.ThrowsAnyAsync<Exception>(() => LiveQueryProtocol.ReadAsync<LiveQuery>(stream, 1024, default));
+        }
+    }
+
+    [Fact]
+    public async Task HeartbeatBoundaryAndDuplicateIdentityRejected()
+    {
+        string dir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        var now = new DateTimeOffset(2026, 11, 13, 12, 0, 0, TimeSpan.Zero);
+        string file = Path.Combine(dir, "heartbeats-2026-11-13.jsonl");
+        try
+        {
+            await File.WriteAllTextAsync(file, Row("A", now.AddMinutes(-5)) + Row("B", now.AddSeconds(30)));
+            var rows = await SensorHeartbeatReadProjection.ReadAsync(dir, now, default);
+            Assert.All(rows!, row => Assert.Equal("fresh", row.Freshness));
+            await File.WriteAllTextAsync(file, "{\"SensorId\":\"A\",\"SensorId\":\"B\",\"TimestampUtc\":\"2026-11-13T12:00:00Z\"}");
+            await Assert.ThrowsAsync<InvalidDataException>(() => SensorHeartbeatReadProjection.ReadAsync(dir, now, default));
+        }
+        finally { Directory.Delete(dir, true); }
+    }
+
     private static string Row(string id, DateTimeOffset time) =>
         System.Text.Json.JsonSerializer.Serialize(new { SensorId = id, TimestampUtc = time }) + "\n";
 }
