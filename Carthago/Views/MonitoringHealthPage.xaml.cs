@@ -88,6 +88,9 @@ namespace Carthago.Views
             var reportedError = string.IsNullOrWhiteSpace(error) ? source.Error : error;
             CaptureErrorText.Text = string.IsNullOrWhiteSpace(reportedError) ? string.Empty : $"Capture error: {reportedError}";
             SnapshotTimeText.Text = $"Local UI snapshot: {DateTime.Now:yyyy-MM-dd HH:mm:ss}";
+            var enrichment = EnrichmentHealthPresentation.Build(uiStats);
+            EnrichmentSummaryText.Text = enrichment.Summary;
+            EnrichmentProviderGrid.ItemsSource = enrichment.Providers;
         }
 
         private void OpenRawTraffic_Click(object sender, RoutedEventArgs e)

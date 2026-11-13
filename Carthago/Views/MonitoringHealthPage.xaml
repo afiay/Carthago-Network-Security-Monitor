@@ -96,6 +96,28 @@
                      Foreground="{StaticResource TextMutedBrush}" Margin="0,10,0,0"/>
         </StackPanel>
       </Border>
+      <Border Background="{StaticResource CardBgBrush}" BorderBrush="{StaticResource CardBorderBrush}"
+              BorderThickness="1" CornerRadius="14" Padding="18" Margin="0,16,0,0">
+        <StackPanel>
+          <TextBlock Text="ENRICHMENT HEALTH" Style="{StaticResource DashboardSectionTitle}"/>
+          <TextBlock x:Name="EnrichmentSummaryText" Text="No enrichment snapshot available."
+                     Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,8,0,12"/>
+          <DataGrid x:Name="EnrichmentProviderGrid" AutoGenerateColumns="False" IsReadOnly="True" Height="160"
+                    EnableRowVirtualization="True" AutomationProperties.Name="Enrichment provider health">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Provider" Binding="{Binding Provider}" Width="130"/>
+              <DataGridTextColumn Header="Success" Binding="{Binding Success}" Width="90"/>
+              <DataGridTextColumn Header="Unavailable" Binding="{Binding Unavailable}" Width="100"/>
+              <DataGridTextColumn Header="Failed" Binding="{Binding Failed}" Width="80"/>
+              <DataGridTextColumn Header="Timeout" Binding="{Binding TimedOut}" Width="85"/>
+              <DataGridTextColumn Header="Cancelled" Binding="{Binding Cancelled}" Width="90"/>
+              <DataGridTextColumn Header="Cache hits" Binding="{Binding CacheHits}" Width="90"/>
+              <DataGridTextColumn Header="Success share" Binding="{Binding SuccessShare}" Width="110"/>
+              <DataGridTextColumn Header="Mean / max ms" Binding="{Binding Latency}" Width="130"/>
+            </DataGrid.Columns>
+          </DataGrid>
+        </StackPanel>
+      </Border>
     </StackPanel>
   </ScrollViewer>
 </UserControl>
