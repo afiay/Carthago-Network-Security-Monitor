@@ -82,6 +82,24 @@ namespace Carthago.Engine.Rules
             TrustedR275PromotionAuthorization = trustedR275PromotionAuthorization;
         }
 
+        internal static RuleEvaluationContext CreateForEngine(
+            TrafficRecord record, Sensitivity sensitivity, DateTime timestampUtc,
+            RuleEngineHealthSnapshot healthSnapshot)
+        {
+            var context = new RuleEvaluationContext(record, sensitivity, timestampUtc, healthSnapshot);
+            context.R272Source = record.Source;
+            context.R272Signals = RuleEngine.SnapshotR272Signals(record.Source, context.TimestampUtc);
+            return context;
+        }
+
+        private string? R272Source { get; set; }
+        private System.Collections.Generic.IReadOnlyList<(string RuleId, string Family)> R272Signals { get; set; }
+            = Array.Empty<(string, string)>();
+
+        internal System.Collections.Generic.IReadOnlyList<(string RuleId, string Family)> GetR272Signals()
+            => string.Equals(Record.Source, R272Source, StringComparison.Ordinal)
+                ? R272Signals : Array.Empty<(string, string)>();
+
         public TrafficRecord Record { get; }
         public Sensitivity Sensitivity { get; }
         public DateTime TimestampUtc { get; }
