@@ -46,7 +46,11 @@ internal static class PortableRuleCatalog
         new(Supported("R597","MODx tvs.php class_key traversal request",GetPost),()=>new PortableR597Detector().Evaluate),
         new(Supported("R598","Windows local filesystem path in HTTP query",GetPost),()=>new PortableR598Detector().Evaluate),
         new(Supported("R599","Arcadyan apply_abstract.cgi encoded traversal request",GetPost),()=>new PortableR599Detector().Evaluate),
-        new(Supported("R600","Exchange HAFNIUM themes-resource POST request",Post),()=>new PortableR600Detector().Evaluate)
+        new(Supported("R600","Exchange HAFNIUM themes-resource POST request",Post),()=>new PortableR600Detector().Evaluate),
+        new(Supported("R602","SolarWinds Orion resource API bypass-shaped request",GetPost),()=>new PortableR602Detector().Evaluate),
+        new(Supported("R603","WebLogic JNDI binding handle LDAP URI request",Get),()=>new PortableR603Detector().Evaluate),
+        new(Supported("R604","Exchange ECP or OWA VIEWSTATE-bearing GET",Get),()=>new PortableR604Detector().Evaluate),
+        new(Supported("R605","Confluence upload.action filename traversal POST",Post),()=>new PortableR605Detector().Evaluate)
     };
 
     private static readonly IReadOnlyList<Capability> Capabilities =
@@ -57,7 +61,8 @@ internal static class PortableRuleCatalog
 
     internal static Capability Describe(string id)=>Find(id) ??
         new(id,"","unsupported_detector",Array.Empty<string>(),Array.Empty<string>(),Array.Empty<string>(),
-            "not_assessed",null,"not_assessed","not_assessed","not_assessed","no_portable_detector_registered");
+            "not_assessed",null,"not_assessed","not_assessed","not_assessed",
+            id=="R601"?"complete_http_header_evidence_required":"no_portable_detector_registered");
 
     internal static Dictionary<string,Evaluator> CreateEvaluators() =>
         Entries.ToDictionary(e=>e.Capability.RuleId,e=>e.Factory(),StringComparer.Ordinal);

@@ -25,9 +25,9 @@ public sealed class PortableRuleCapabilityTests
         using var json=JsonDocument.Parse(result.Out);var root=json.RootElement;
         Assert.Equal("compiled_portable_catalog",root.GetProperty("scope").GetString());
         Assert.Equal("not_assessed",root.GetProperty("registration").GetString());
-        Assert.Equal(15,root.GetProperty("supportedCount").GetInt32());
+        Assert.Equal(19,root.GetProperty("supportedCount").GetInt32());
         var rows=root.GetProperty("rules").EnumerateArray().ToArray();
-        Assert.Equal(new[]{"R586","R587","R588","R589","R590","R591","R592","R593","R594","R595","R596","R597","R598","R599","R600"},rows.Select(r=>r.GetProperty("ruleId").GetString()).ToArray());
+        Assert.Equal(new[]{"R586","R587","R588","R589","R590","R591","R592","R593","R594","R595","R596","R597","R598","R599","R600","R602","R603","R604","R605"},rows.Select(r=>r.GetProperty("ruleId").GetString()).ToArray());
         foreach(var r in rows)
         {
             Assert.Equal("supported",r.GetProperty("status").GetString());
@@ -95,7 +95,11 @@ public sealed class PortableRuleCapabilityTests
             ["R597"]="/manager/controllers/default/resource/tvs.php?class_key=../windows/win.ini%00",
             ["R598"]="/?file=C:/Users/example",
             ["R599"]="/apply_abstract.cgi?file=..%2fexample",
-            ["R600"]="/owa/auth/Current/themes/resources/example"};
+            ["R600"]="/owa/auth/Current/themes/resources/example",
+            ["R602"]="/SolarWinds/api/WebResource.axd",
+            ["R603"]="/?handle=com.bea.console.handles.JndiBindingHandle&ref=ldap://example.test&server=AdminServer",
+            ["R604"]="/ecp/test?__VIEWSTATE=example",
+            ["R605"]="/upload.action?filename=../../../../example"};
         var first=new PortableReplayDispatcher();var second=new PortableReplayDispatcher();
         Assert.Equal(paths.Keys.OrderBy(x=>x).ToArray(),PortableRuleCatalog.All.Select(x=>x.RuleId).ToArray());
         foreach(var capability in PortableRuleCatalog.All)
@@ -104,7 +108,7 @@ public sealed class PortableRuleCapabilityTests
             Assert.True(PortableReplayDispatcher.Supports(id));
             var record=new TrafficRecord{Source="192.0.2.1",Destination="198.51.100.2",
                 SourcePort=51000,DestinationPort=7001,Protocol="TCP",IsTcp=true,Length=128,L4Len=88,
-                ApplicationProtocol="HTTP",HttpMethod=id=="R600"?"POST":"GET",HttpUri=paths[id],HttpUserAgent=id=="R596"?"() { example":null};
+                ApplicationProtocol="HTTP",HttpMethod=id is "R600" or "R605"?"POST":"GET",HttpUri=paths[id],HttpUserAgent=id=="R596"?"() { example":null};
             var context=new PacketEvaluationContext(record,Sensitivity.Balanced,DateTime.UnixEpoch);
             Assert.Equal(WebSignatureObservation.Match,first.Evaluate(id,context,out _));
             Assert.Equal(WebSignatureObservation.None,first.Evaluate(id,context,out _));
@@ -124,5 +128,17 @@ public sealed class PortableRuleCapabilityTests
         using var output=new StringWriter();using var error=new StringWriter();
         Assert.Equal(130,await CliApplication.RunAsync(new[]{"rules","capabilities","--json"},output,error,cancel.Token));
         Assert.Empty(output.ToString());
+    }
+
+    [Fact]
+    public async Task HeaderAbsenceRuleRemainsUnsupportedWithExplicitReason()
+    {
+        var result=await Run("rules","capabilities","R601","--json");
+        Assert.Equal(0,result.Code);
+        using var json=JsonDocument.Parse(result.Out);
+        var row=json.RootElement.GetProperty("rules")[0];
+        Assert.Equal("unsupported_detector",row.GetProperty("status").GetString());
+        Assert.Equal("complete_http_header_evidence_required",row.GetProperty("reason").GetString());
+        Assert.False(PortableReplayDispatcher.Supports("R601"));
     }
 }

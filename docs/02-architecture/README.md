@@ -50,3 +50,5 @@ System boundaries, evidence lineage, sensors and architectural constraints.
 - [CLI-009A — Portable rules R591–R595](CLI-009A-PortableRulesR591-R595.md)
 
 - [CLI-009B — Portable rules R596–R600](CLI-009B-PortableRulesR596-R600.md)
+
+- [CLI-009C — Portable rules R602–R605 and R601 evidence gap](CLI-009C-PortableRulesR601-R605.md)

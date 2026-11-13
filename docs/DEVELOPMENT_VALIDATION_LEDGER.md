@@ -2388,3 +2388,8 @@ Reviewed live parent `8294185345a8117556016b3a2b7d77ba91658109`, ledger, qualifi
 ## 2026-11-13 — Enrichment Phase 13.3 fresh TCP ownership before metadata reuse
 
 Reviewed parent `ab43a967e303fa285dec0786aa4e78b3926675cc`, resolver, process regressions and ledger. Move TCP cache lookup after fresh native ownership scan; require matching positive observed PID and creation time before metadata reuse. Missing/ambiguous ownership invalidates inspected cache entry; UDP unchanged. One regression with five assertions authored, zero executed. Native scan cost and capture-session lifecycle remain pending; no claim of packet-time ownership or performance qualification. Windows: `dotnet test .\\Carthago.Tests\\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~ProcessAttributionEnrichmentTests"`.
+
+
+## 2026-11-14 — CLI-009C portable rules R602–R605 and R601 evidence gap
+
+**SOURCE CANDIDATE — UNVERIFIED.** Reviewed 15016c0769591345fccac3a93f674476461d6af6. Four original HTTP predicates extracted into Core with Windows wrappers unchanged in policy/evidence. R601 explicitly unsupported pending complete header evidence; Windows R601 unchanged. Catalog 19 IDs; 24 portable predicate/evidence, 20 Windows parity, one replay and one capability case authored, zero executed. Gate updated. No runtime promotion, builds/tests/native capture/Actions. See [architecture](02-architecture/CLI-009C-PortableRulesR601-R605.md).

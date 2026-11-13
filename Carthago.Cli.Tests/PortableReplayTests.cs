@@ -240,4 +240,24 @@ public sealed class PortableReplayTests
         Assert.Equal("POST",replay.GetProperty("findings")[4].GetProperty("method").GetString());
         Assert.Equal("unsupported_detector",replay.GetProperty("rules")[5].GetProperty("status").GetString());
     }
+
+    [Fact]
+    public async Task FourMigratedRulesReplayAndHeaderAbsenceRemainsUnsupported()
+    {
+        var bytes=Pcap((100,Frame("/SolarWinds/api/WebResource.axd","GET"),null),
+            (101,Frame("/?handle=com.bea.console.handles.JndiBindingHandle&ref=ldap://example.test&server=AdminServer","GET"),null),
+            (102,Frame("/ecp/test?__VIEWSTATE=example","GET"),null),
+            (103,Frame("/upload.action?filename=../../../../example","POST"),null),
+            (104,Frame("/SolarWinds/api/WebResource.axd"),null),(105,Frame("/?cmd=read","POST"),null));
+        var r=await Run(bytes,".pcap","R601,R602,R603,R604,R605");
+        Assert.Equal(0,r.Code);
+        using var json=JsonDocument.Parse(r.Output);var replay=json.RootElement.GetProperty("replay");
+        Assert.Equal(4,replay.GetProperty("matchCount").GetInt32());
+        Assert.Equal(1,replay.GetProperty("suppressedCount").GetInt32());
+        Assert.Equal(new[]{"R602","R603","R604","R605"},replay.GetProperty("findings").EnumerateArray()
+            .Select(f=>f.GetProperty("ruleId").GetString()).ToArray());
+        Assert.Equal("unsupported_detector",replay.GetProperty("rules")[0].GetProperty("status").GetString());
+        Assert.Equal(0,replay.GetProperty("rules")[0].GetProperty("evaluated").GetInt32());
+        Assert.DoesNotContain("ldap://",r.Output);
+    }
 }
