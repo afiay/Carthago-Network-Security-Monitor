@@ -83,6 +83,41 @@ namespace Carthago.Services.ProtocolIntelligence
             return seen == 7;
         }
 
+        // RFC 1213 legacy TCP connection and UDP listener table roots.
+        // Exact unordered GETNEXT pair; no claim of a completed table walk.
+        internal static bool TryInspectConnectionTableGetNext(ReadOnlySpan<byte> packet)
+        {
+            if (packet.Length is < 20 or > 4096) return false;
+            int p = 0;
+            if (!Take(packet, ref p, 0x30, out var message) || p != packet.Length) return false;
+            p = 0;
+            if (!Take(message, ref p, 0x02, out var version) ||
+                version.Length != 1 || version[0] > 1 ||
+                !Take(message, ref p, 0x04, out var community) || community.Length is < 1 or > 255 ||
+                !Take(message, ref p, 0xA1, out var request) || p != message.Length) return false;
+            p = 0;
+            if (!Take(request, ref p, 0x02, out var id) || !Integer(id) ||
+                !Take(request, ref p, 0x02, out var error) || !Zero(error) ||
+                !Take(request, ref p, 0x02, out var index) || !Zero(index) ||
+                !Take(request, ref p, 0x30, out var list) || p != request.Length) return false;
+            p = 0;
+            int seen = 0;
+            while (p < list.Length)
+            {
+                if (!Take(list, ref p, 0x30, out var binding)) return false;
+                int b = 0;
+                if (!Take(binding, ref b, 0x06, out var oid) || oid.Length != 7 ||
+                    oid[0] != 0x2B || oid[1] != 6 || oid[2] != 1 || oid[3] != 2 ||
+                    oid[4] != 1 || !Take(binding, ref b, 0x05, out var value) ||
+                    !value.IsEmpty || b != binding.Length) return false;
+                int bit = oid[5] == 6 && oid[6] == 13 ? 1 :
+                    oid[5] == 7 && oid[6] == 5 ? 2 : 0;
+                if (bit == 0 || (seen & bit) != 0) return false;
+                seen |= bit;
+            }
+            return seen == 3;
+        }
+
         private static bool TryInspectSet(ReadOnlySpan<byte> packet, bool upsReboot)
         {
             if (packet.Length is < 20 or > 4096) return false;

@@ -863,6 +863,11 @@ namespace Carthago.Services
                                 rec.ApplicationProtocol = "snmp.get.system_fingerprint.request";
                                 rec.SnmpSystemFingerprintGetObserved = true;
                             }
+                            else if (sport != 161 && SnmpEnterpriseSetInspector.TryInspectConnectionTableGetNext(l4Payload))
+                            {
+                                rec.ApplicationProtocol = "snmp.getnext.connection_tables.request";
+                                rec.SnmpConnectionTableGetNextObserved = true;
+                            }
                         }
 
                         // Complete DNP3 unsolicited binary input events. CRC is not authentication.

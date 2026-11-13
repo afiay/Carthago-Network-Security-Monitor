@@ -226,3 +226,8 @@ Workbook R2790 AN2288; capture-qualified same-flow transaction and unit, Candida
 ## R975 — BACnet ReinitializeDevice coldstart/warmstart
 
 Workbook R2697 AN1933; exact capture-qualified confirmed service 20, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_975-975.md). 37 authored cases, zero execution; no authorized-source, accepted command or device restart outcome claim. Next ID R976.
+
+
+## R976 — SNMP connection table GETNEXT
+
+Workbook R2791 AN2184; exact two legacy table roots; Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_976-976.md). 30 authored cases, zero execution; NMS authorization and baseline missing, no completed walk claim. Next ID R977.

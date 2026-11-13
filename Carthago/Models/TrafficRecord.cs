@@ -165,6 +165,7 @@ namespace Carthago.Models
         public bool SnmpUpsRebootRequestObserved { get; internal set; }
         public bool SnmpHighDemandGetBulkObserved { get; internal set; }
         public bool SnmpSystemFingerprintGetObserved { get; internal set; }
+        public bool SnmpConnectionTableGetNextObserved { get; internal set; }
         public bool Iec104StartupOffExecuteObserved { get; internal set; }
         public bool OpcUaHelloAckObserved { get; internal set; }
         public bool ModbusOversizedReadExceptionObserved { get; internal set; }
