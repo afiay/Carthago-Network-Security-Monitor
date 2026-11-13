@@ -621,7 +621,7 @@
                 </ItemsControl>
                 <!-- GA UI-90: reference-aligned three-panel operational composition at Wide.
                      Standard and Compact stack chart before triage through the existing responsive partial. -->
-                <Grid x:Name="DashboardFocusGrid" Height="660" Margin="0,0,0,12">
+                <Grid x:Name="DashboardFocusGrid" Height="600" Margin="0,0,0,12">
                   <Grid.RowDefinitions>
                     <RowDefinition x:Name="DashboardFocusPrimaryRow" Height="*"/>
                     <RowDefinition x:Name="DashboardFocusSecondaryRow" Height="0"/>
@@ -770,7 +770,7 @@
                   </Grid>
                 </Border>
                 <!-- Main triage area -->
-                <Grid x:Name="DashboardTriageGrid" Grid.Row="0" Grid.Column="1" Height="660" Margin="0">
+                <Grid x:Name="DashboardTriageGrid" Grid.Row="0" Grid.Column="1" Height="600" Margin="0">
                   <Grid.RowDefinitions>
                     <RowDefinition x:Name="DashboardTriagePrimaryRow" Height="*"/>
                     <RowDefinition x:Name="DashboardTriageSecondaryRow" Height="0"/>
@@ -1032,7 +1032,14 @@
                         </StackPanel>
                       </Border>
 
-                      <UniformGrid x:Name="DashboardDetailFactsGrid" Grid.Row="2" Columns="2" Margin="0,0,0,8">
+                      
+
+                      <ScrollViewer Grid.Row="2" Grid.RowSpan="2"
+                                    VerticalScrollBarVisibility="Auto"
+                                    HorizontalScrollBarVisibility="Disabled"
+                                    Padding="0,0,4,0">
+                        <StackPanel>
+                        <UniformGrid x:Name="DashboardDetailFactsGrid" Columns="2" Margin="0,0,0,8">
                         <Border Style="{StaticResource DetailGridCard}" Margin="0,0,0,6" Background="{StaticResource CardElevatedBg}" BorderBrush="{StaticResource AccentBrush}" BorderThickness="2,1,1,1" Padding="8,6">
                           <StackPanel>
                             <TextBlock x:Name="DashboardDetailSourceLabel" Text="Source host" Style="{StaticResource MicroLabel}"/>
@@ -1070,11 +1077,6 @@
                           </StackPanel>
                         </Border>
                       </UniformGrid>
-
-                      <ScrollViewer Grid.Row="3"
-                                    VerticalScrollBarVisibility="Auto"
-                                    HorizontalScrollBarVisibility="Disabled"
-                                    Padding="0,0,4,0">
                         <Grid x:Name="DashboardDetailEvidenceGrid">
                             <Grid.ColumnDefinitions>
                               <ColumnDefinition x:Name="DashboardEvidencePrimaryColumn" Width="*"/>
@@ -1204,303 +1206,13 @@
                               </Grid>
                             </Border>
                         </Grid>
+                        </StackPanel>
                       </ScrollViewer>
                     </Grid>
                   </Border>
                 </Grid>
 
                 </Grid>
-
-                <!-- Preference-controlled secondary metrics follow the main operations canvas. -->
-                <!-- Existing preference-controlled statistics remain accessible below the overview. -->
-                <TextBlock Text="Additional metrics"
-                           Style="{StaticResource DashboardSectionTitle}"
-                           FontSize="13"
-                           Margin="0,2,0,8"/>
-                <ItemsControl x:Name="DashboardKpiItemsControl" AutomationProperties.Name="Additional dashboard metric cards" Margin="0,0,0,12"
-                              HorizontalContentAlignment="Stretch"
-                              ItemTemplate="{StaticResource DashboardKpiCardTemplate}"
-                              ItemContainerStyle="{StaticResource DashboardKpiItemContainerStyle}">
-                  <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                      <UniformGrid IsItemsHost="True" Columns="5"/>
-                    </ItemsPanelTemplate>
-                  </ItemsControl.ItemsPanel>
-                  
-                  
-                </ItemsControl>
-
-                <!-- Lower widgets -->
-                <Grid x:Name="DashboardSummaryGrid" Height="264" Margin="0,8,0,18">
-                  <Grid.RowDefinitions>
-                    <RowDefinition x:Name="DashboardSummaryFirstRow" Height="*"/>
-                    <RowDefinition x:Name="DashboardSummarySecondRow" Height="0"/>
-                    <RowDefinition x:Name="DashboardSummaryThirdRow" Height="0"/>
-                  </Grid.RowDefinitions>
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition x:Name="DashboardSummaryFirstColumn" Width="1.02*"/>
-                    <ColumnDefinition x:Name="DashboardSummarySecondColumn" Width="1*"/>
-                    <ColumnDefinition x:Name="DashboardSummaryThirdColumn" Width="1*"/>
-                  </Grid.ColumnDefinitions>
-                  <Border x:Name="DashboardHostsPanel" Grid.Column="0" Style="{StaticResource PageSurface}" Padding="14" Margin="0,0,12,0" BorderThickness="4,1,1,1" BorderBrush="#20C8E7">
-                    <StackPanel>
-                      <DockPanel LastChildFill="True">
-                        <StackPanel Orientation="Horizontal">
-                          <TextBlock Text="01  /  HOST PRIORITY" FontSize="10" FontWeight="Bold" Foreground="#20C8E7" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                          <TextBlock Text="High-Risk Hosts" Style="{StaticResource DashboardSectionTitle}"
-                                     AutomationProperties.HelpText="Up to five hosts from recent local correlated incidents, or anomaly signals when no incident hosts are available. Risk is a local ranking score, not detection confidence."/>
-                          <TextBlock Text="  &#x24D8;" Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"
-                                     Focusable="True"
-                                     KeyboardNavigation.IsTabStop="True"
-                                     FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
-                                     ToolTipService.ShowsToolTipOnKeyboardFocus="True"
-                                     ToolTip="Local host ranking: correlated incident hosts take priority; anomaly signals are the fallback. Risk is not detection confidence."
-                                     AutomationProperties.Name="High-risk hosts source information"
-                                     AutomationProperties.HelpText="Local host ranking: correlated incident hosts take priority; anomaly signals are the fallback. Risk is not detection confidence."/>
-                        </StackPanel>
-                      </DockPanel>
-                      <Grid Margin="0,6,0,4">
-                        <Grid.ColumnDefinitions>
-                          <ColumnDefinition Width="*" MinWidth="170"/>
-                          <ColumnDefinition Width="48"/>
-                          <ColumnDefinition Width="62"/>
-                          <ColumnDefinition Width="84"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="Host" Style="{StaticResource MicroLabel}"/>
-                        <TextBlock Grid.Column="1" Text="Risk" Style="{StaticResource MicroLabel}" HorizontalAlignment="Right"/>
-                        <!-- GA UI-81: make source-specific column guidance discoverable by keyboard without altering local host data. -->
-                        <TextBlock Grid.Column="2" Text="Items" Style="{StaticResource MicroLabel}" HorizontalAlignment="Right"
-                                   Focusable="True"
-                                   KeyboardNavigation.IsTabStop="True"
-                                   FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
-                                   ToolTipService.ShowsToolTipOnKeyboardFocus="True"
-                                   ToolTip="Related correlated incidents, or anomaly signals when no incident hosts are available."
-                                   AutomationProperties.Name="High-risk hosts: related items column"
-                                   AutomationProperties.HelpText="Counts unresolved correlated incidents for each host, or anomaly signals when no incident hosts are available. Not packet counts or verified impact."/>
-                        <TextBlock Grid.Column="3" Text="Activity" Style="{StaticResource MicroLabel}" Margin="12,0,0,0"
-                                   Focusable="True"
-                                   KeyboardNavigation.IsTabStop="True"
-                                   FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
-                                   ToolTipService.ShowsToolTipOnKeyboardFocus="True"
-                                   ToolTip="Relative activity over the past 60 minutes in eight time buckets, oldest to newest. Based on incident updates or anomaly creations, not packet traffic or changes in risk."
-                                   AutomationProperties.Name="High-risk hosts: relative activity column"
-                                   AutomationProperties.HelpText="Eight relative 60-minute time buckets, oldest to newest, from incident last-update or anomaly creation timestamps. Not packet traffic, absolute event counts or a risk-score trend."/>
-                      </Grid>
-                      <ScrollViewer VerticalScrollBarVisibility="Auto"
-                                    HorizontalScrollBarVisibility="Disabled"
-                                    MaxHeight="112">
-                        <ItemsControl x:Name="DashboardHostItemsControl"
-                                      AutomationProperties.Name="High-risk hosts from local observations"
-                                      AutomationProperties.HelpText="Up to five host rows. Items counts correlated incidents, or anomaly signals when no incident hosts are available. Risk is a local ranking score, not detection confidence. Activity bars show relative timestamp density over 60 minutes, not traffic or risk trends.">
-                          <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                              <Grid Margin="0,1,0,1" MinHeight="20">
-                                <Grid.ColumnDefinitions>
-                                  <ColumnDefinition Width="*" MinWidth="170"/>
-                                  <ColumnDefinition Width="48"/>
-                                  <ColumnDefinition Width="62"/>
-                                  <ColumnDefinition Width="84"/>
-                                </Grid.ColumnDefinitions>
-                                <!-- GA UI-72: subdued, non-interactive row separator for local host rankings. -->
-                                <Border Grid.ColumnSpan="4"
-                                        BorderBrush="{StaticResource SoftDividerBrush}"
-                                        BorderThickness="0,0,0,1"
-                                        VerticalAlignment="Bottom"
-                                        IsHitTestVisible="False"
-                                        SnapsToDevicePixels="True"/>
-                                <TextBlock Text="{Binding HostDisplay}"
-                                           AutomationProperties.Name="{Binding AccessibilityLabel}"
-                                           ToolTip="{Binding Host}"
-                                           FontFamily="Consolas"
-                                           FontSize="12"
-                                           Foreground="{StaticResource TextBrush}"
-                                           TextWrapping="NoWrap"
-                                           TextTrimming="CharacterEllipsis"
-                                           VerticalAlignment="Center"/>
-                                <TextBlock Grid.Column="1"
-                                           Text="{Binding RiskScore}"
-                                           ToolTip="Maximum local risk score for this host group; not detection confidence or verified impact."
-                                           AutomationProperties.HelpText="Maximum local risk score among unresolved correlated incidents, or among anomaly signals when no incident hosts are available. Not detection confidence or verified impact."
-                                           FontSize="12"
-                                           Foreground="{Binding AccentBrush}"
-                                           FontWeight="Bold"
-                                           HorizontalAlignment="Right"
-                                           VerticalAlignment="Center"/>
-                                <TextBlock Grid.Column="2"
-                                           Text="{Binding ActiveIncidents}"
-                                           ToolTip="Number of unresolved correlated incidents for this host, or anomaly signals in the fallback when no incident hosts are available."
-                                           AutomationProperties.HelpText="Count of grouped unresolved correlated incidents, or anomaly signals when no incident hosts are available. Not a packet count or verified incident impact."
-                                           FontSize="12"
-                                           Foreground="{StaticResource TextSubtleBrush}"
-                                           HorizontalAlignment="Right"
-                                           VerticalAlignment="Center"/>
-                                <TextBlock Grid.Column="3"
-                                           Text="{Binding TrendText}"
-                                           ToolTip="{Binding ActivityAccessibilityLabel}"
-                                           AutomationProperties.Name="{Binding ActivityAccessibilityLabel}"
-                                           FontSize="12"
-                                           FontFamily="Consolas"
-                                           Foreground="{Binding AccentBrush}"
-                                           TextWrapping="NoWrap"
-                                           TextTrimming="CharacterEllipsis"
-                                           Margin="12,0,0,0"
-                                           VerticalAlignment="Center"/>
-                              </Grid>
-                            </DataTemplate>
-                          </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                      </ScrollViewer>
-                      <Button Content="Review findings  &#x2192;"
-                               Width="190" Height="30" HorizontalAlignment="Left"
-                               Style="{StaticResource SecondaryButton}"
-                               ToolTip="Opens a correlated incident workspace when available; otherwise opens Anomalies. This is not a host inventory."
-                               ToolTipService.ShowsToolTipOnKeyboardFocus="True"
-                               AutomationProperties.Name="Review local findings"
-                               AutomationProperties.HelpText="Opens a correlated incident workspace when available; otherwise opens the Anomalies view. Does not open a complete host inventory."
-                               Click="DashboardInvestigateHost_Click" Margin="0,8,0,0"/>
-                    </StackPanel>
-                  </Border>
-
-                  <Border x:Name="DashboardActionsPanel" Grid.Column="1" Style="{StaticResource PageSurface}" Padding="14" Margin="0,0,12,0" BorderThickness="4,1,1,1" BorderBrush="#38D5BD">
-                    <StackPanel>
-                      <DockPanel LastChildFill="True">
-                        <StackPanel Orientation="Horizontal">
-                          <TextBlock Text="02  /  REVIEW QUEUE" FontSize="10" FontWeight="Bold" Foreground="#38D5BD" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                          <TextBlock Text="Recommended Actions" Style="{StaticResource DashboardSectionTitle}"
-                                     AutomationProperties.HelpText="Local review suggestions only; this panel does not execute remediation. Numbered badges indicate position, while anomaly badges can show local risk scores."/>
-                          <TextBlock Text="  &#x24D8;" Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"
-                                     Focusable="True"
-                                     KeyboardNavigation.IsTabStop="True"
-                                     FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
-                                     ToolTipService.ShowsToolTipOnKeyboardFocus="True"
-                                     ToolTip="Suggested local review steps, not automatic remediation. Badge meaning depends on the source; see each row."
-                                     AutomationProperties.Name="Recommended actions source information"
-                                     AutomationProperties.HelpText="Suggested local review steps, not automatic remediation. Badge meaning depends on the source; see each row."/>
-                        </StackPanel>
-                      </DockPanel>
-                      <!-- GA UI-76: visible source-accurate guidance; these are review suggestions, not commands. -->
-                      <TextBlock Text="Review suggestions only &#x2022; no automatic remediation"
-                                 Style="{StaticResource TinyStatusText}"
-                                 TextWrapping="Wrap"
-                                 Margin="0,3,0,0"/>
-                      <ScrollViewer VerticalScrollBarVisibility="Auto"
-                                    HorizontalScrollBarVisibility="Disabled"
-                                    MaxHeight="118"
-                                    Margin="0,8,0,0">
-                        <ItemsControl x:Name="DashboardActionItemsControl"
-                                       AutomationProperties.Name="Suggested local review actions"
-                                       AutomationProperties.HelpText="Suggestions are informational, not executed here. Badges indicate action-list position, local anomaly risk, or no numeric value depending on the source.">
-                          <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                              <Border Style="{StaticResource QueueListItem}">
-                                <Grid>
-                                  <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="36"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                  </Grid.ColumnDefinitions>
-                                  <TextBlock Text="{Binding Icon}" FontSize="18" Foreground="{Binding AccentBrush}" VerticalAlignment="Center"/>
-                                  <StackPanel Grid.Column="1">
-                                    <TextBlock Text="{Binding Title}" ToolTip="{Binding Title}" FontWeight="SemiBold" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
-                                    <TextBlock Text="{Binding Subtitle}" ToolTip="{Binding Subtitle}" Foreground="{StaticResource TextMutedBrush}" FontSize="12" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="0,3,0,0"/>
-                                  </StackPanel>
-                                  <Border Grid.Column="2" Style="{StaticResource RiskBadge}" BorderBrush="{Binding AccentBrush}" Background="#0B1728" VerticalAlignment="Center"
-                                           ToolTip="{Binding BadgeDescription}">
-                                    <TextBlock Text="{Binding CountText}" AutomationProperties.Name="{Binding BadgeDescription}" Foreground="{Binding AccentBrush}" FontWeight="Bold" FontSize="11"/>
-                                  </Border>
-                                </Grid>
-                              </Border>
-                            </DataTemplate>
-                          </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                      </ScrollViewer>
-                    </StackPanel>
-                  </Border>
-
-                  <Border x:Name="DashboardOperationsPanel" Grid.Column="2" Style="{StaticResource PageSurface}" Padding="12" Margin="0" BorderThickness="4,1,1,1" BorderBrush="#81A8CE">
-                    <StackPanel>
-                      <DockPanel LastChildFill="True">
-                        <StackPanel Orientation="Horizontal">
-                          <TextBlock Text="03  /  WORKSPACE LINKS" FontSize="10" FontWeight="Bold" Foreground="#81A8CE" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                          <TextBlock Text="Raw / Advanced Shortcuts" Style="{StaticResource DashboardSectionTitle}"
-                                     AutomationProperties.HelpText="Existing Live Traffic and Detection Events navigation only. No separate PCAP Explorer or forensics workspace is opened."/>
-                          <TextBlock Text="  &#x24D8;" Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"
-                                     Focusable="True"
-                                     KeyboardNavigation.IsTabStop="True"
-                                     FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
-                                     ToolTipService.ShowsToolTipOnKeyboardFocus="True"
-                                     ToolTip="These shortcuts open existing Live Traffic or Detection Events views, not separate PCAP or forensics workspaces."
-                                     AutomationProperties.Name="Raw and advanced shortcut destinations information"
-                                     AutomationProperties.HelpText="These shortcuts open existing Live Traffic or Detection Events views, not separate PCAP or forensics workspaces."/>
-                        </StackPanel>
-                      </DockPanel>
-                      <UniformGrid Columns="2" Margin="0,8,0,0">
-                        <Button Style="{StaticResource ShortcutTile}" Click="DashboardRawTraffic_Click"
-                                ToolTip="Opens the existing Live Traffic view and its traffic filters. Navigation only; this shortcut does not start capture or export packets."
-                                ToolTipService.ShowsToolTipOnKeyboardFocus="True"
-                                AutomationProperties.Name="Raw Traffic"
-                                AutomationProperties.HelpText="Opens the existing Live Traffic view and its traffic filters.">
-                          <Grid>
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                            <TextBlock Text="&#x2301;" FontSize="20" Foreground="{StaticResource TextSubtleBrush}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                            <StackPanel Grid.Column="1">
-                              <TextBlock Text="Raw Traffic" FontWeight="SemiBold" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
-                              <TextBlock Text="Inspect packets &amp; flows" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
-                            </StackPanel>
-                          </Grid>
-                        </Button>
-                        <Button Style="{StaticResource ShortcutTile}" Click="DashboardRawDetections_Click"
-                                ToolTip="Opens the existing Detection Events view and its detection filters. Navigation only; this shortcut does not verify detections or export evidence."
-                                ToolTipService.ShowsToolTipOnKeyboardFocus="True"
-                                AutomationProperties.Name="Raw Detections"
-                                AutomationProperties.HelpText="Opens the existing Detection Events view and its detection filters.">
-                          <Grid>
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                            <TextBlock Text="&#x25C7;" FontSize="20" Foreground="{StaticResource TextSubtleBrush}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                            <StackPanel Grid.Column="1">
-                              <TextBlock Text="Raw Detections" FontWeight="SemiBold" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
-                              <TextBlock Text="View rule hits" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
-                            </StackPanel>
-                          </Grid>
-                        </Button>
-                        <Button Style="{StaticResource ShortcutTile}" Click="DashboardPcapExplorer_Click"
-                                ToolTip="Opens the existing Live Traffic view. No separate PCAP Explorer is opened and this shortcut does not start capture."
-                                ToolTipService.ShowsToolTipOnKeyboardFocus="True"
-                                AutomationProperties.Name="Traffic Analysis"
-                                AutomationProperties.HelpText="Opens the existing Live Traffic view, not a separate PCAP Explorer.">
-                          <Grid>
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                            <TextBlock Text="&#x25A4;" FontSize="19" Foreground="{StaticResource TextSubtleBrush}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                            <StackPanel Grid.Column="1">
-                              <TextBlock Text="Traffic Analysis" FontWeight="SemiBold" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
-                              <TextBlock Text="Opens Live Traffic" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
-                            </StackPanel>
-                          </Grid>
-                        </Button>
-                        <Button Style="{StaticResource ShortcutTile}" Click="DashboardForensicsWorkspace_Click"
-                                ToolTip="Opens the existing Detection Events view. No separate forensics workspace is opened and this shortcut does not export raw evidence."
-                                ToolTipService.ShowsToolTipOnKeyboardFocus="True"
-                                AutomationProperties.Name="Detection Investigation"
-                                AutomationProperties.HelpText="Opens the existing Detection Events view, not a separate Forensics Workspace.">
-                          <Grid>
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                            <TextBlock Text="&#x2315;" FontSize="20" Foreground="{StaticResource TextSubtleBrush}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                            <StackPanel Grid.Column="1">
-                              <TextBlock Text="Detection Investigation" FontWeight="SemiBold" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
-                              <TextBlock Text="Opens Detection Events" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
-                            </StackPanel>
-                          </Grid>
-                        </Button>
-                      </UniformGrid>
-                      <Button Content="Open Live Traffic  &#x2192;" Width="180" Height="30" HorizontalAlignment="Left" Style="{StaticResource SecondaryButton}" Click="DashboardRawTraffic_Click" Margin="0,8,0,0"
-                              ToolTip="Opens the existing Live Traffic view and its sidebar traffic filters. Navigation only; this button does not start capture."
-                              ToolTipService.ShowsToolTipOnKeyboardFocus="True"
-                              AutomationProperties.Name="Open Live Traffic"
-                              AutomationProperties.HelpText="Opens the existing Live Traffic view."/>
-                    </StackPanel>
-                  </Border>
-                </Grid>
-
 
                 <!-- GA UI-91: responsive operations band for the local event stream and unavailable CLI. -->
                 <Grid x:Name="DashboardLowerGrid" Margin="0,0,0,10">
@@ -2142,6 +1854,297 @@
                   </Grid>
                 </Border>
                 </Grid>
+                <!-- Preference-controlled secondary metrics follow the main operations canvas. -->
+                <!-- Existing preference-controlled statistics remain accessible below the overview. -->
+                <TextBlock Text="Additional metrics"
+                           Style="{StaticResource DashboardSectionTitle}"
+                           FontSize="13"
+                           Margin="0,2,0,8"/>
+                <ItemsControl x:Name="DashboardKpiItemsControl" AutomationProperties.Name="Additional dashboard metric cards" Margin="0,0,0,12"
+                              HorizontalContentAlignment="Stretch"
+                              ItemTemplate="{StaticResource DashboardKpiCardTemplate}"
+                              ItemContainerStyle="{StaticResource DashboardKpiItemContainerStyle}">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                      <UniformGrid IsItemsHost="True" Columns="5"/>
+                    </ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  
+                  
+                </ItemsControl>
+
+                <!-- Lower widgets -->
+                <Grid x:Name="DashboardSummaryGrid" Height="264" Margin="0,8,0,18">
+                  <Grid.RowDefinitions>
+                    <RowDefinition x:Name="DashboardSummaryFirstRow" Height="*"/>
+                    <RowDefinition x:Name="DashboardSummarySecondRow" Height="0"/>
+                    <RowDefinition x:Name="DashboardSummaryThirdRow" Height="0"/>
+                  </Grid.RowDefinitions>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition x:Name="DashboardSummaryFirstColumn" Width="1.02*"/>
+                    <ColumnDefinition x:Name="DashboardSummarySecondColumn" Width="1*"/>
+                    <ColumnDefinition x:Name="DashboardSummaryThirdColumn" Width="1*"/>
+                  </Grid.ColumnDefinitions>
+                  <Border x:Name="DashboardHostsPanel" Grid.Column="0" Style="{StaticResource PageSurface}" Padding="14" Margin="0,0,12,0" BorderThickness="4,1,1,1" BorderBrush="#20C8E7">
+                    <StackPanel>
+                      <DockPanel LastChildFill="True">
+                        <StackPanel Orientation="Horizontal">
+                          <TextBlock Text="01  /  HOST PRIORITY" FontSize="10" FontWeight="Bold" Foreground="#20C8E7" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                          <TextBlock Text="High-Risk Hosts" Style="{StaticResource DashboardSectionTitle}"
+                                     AutomationProperties.HelpText="Up to five hosts from recent local correlated incidents, or anomaly signals when no incident hosts are available. Risk is a local ranking score, not detection confidence."/>
+                          <TextBlock Text="  &#x24D8;" Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"
+                                     Focusable="True"
+                                     KeyboardNavigation.IsTabStop="True"
+                                     FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
+                                     ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                                     ToolTip="Local host ranking: correlated incident hosts take priority; anomaly signals are the fallback. Risk is not detection confidence."
+                                     AutomationProperties.Name="High-risk hosts source information"
+                                     AutomationProperties.HelpText="Local host ranking: correlated incident hosts take priority; anomaly signals are the fallback. Risk is not detection confidence."/>
+                        </StackPanel>
+                      </DockPanel>
+                      <Grid Margin="0,6,0,4">
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="*" MinWidth="170"/>
+                          <ColumnDefinition Width="48"/>
+                          <ColumnDefinition Width="62"/>
+                          <ColumnDefinition Width="84"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Host" Style="{StaticResource MicroLabel}"/>
+                        <TextBlock Grid.Column="1" Text="Risk" Style="{StaticResource MicroLabel}" HorizontalAlignment="Right"/>
+                        <!-- GA UI-81: make source-specific column guidance discoverable by keyboard without altering local host data. -->
+                        <TextBlock Grid.Column="2" Text="Items" Style="{StaticResource MicroLabel}" HorizontalAlignment="Right"
+                                   Focusable="True"
+                                   KeyboardNavigation.IsTabStop="True"
+                                   FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
+                                   ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                                   ToolTip="Related correlated incidents, or anomaly signals when no incident hosts are available."
+                                   AutomationProperties.Name="High-risk hosts: related items column"
+                                   AutomationProperties.HelpText="Counts unresolved correlated incidents for each host, or anomaly signals when no incident hosts are available. Not packet counts or verified impact."/>
+                        <TextBlock Grid.Column="3" Text="Activity" Style="{StaticResource MicroLabel}" Margin="12,0,0,0"
+                                   Focusable="True"
+                                   KeyboardNavigation.IsTabStop="True"
+                                   FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
+                                   ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                                   ToolTip="Relative activity over the past 60 minutes in eight time buckets, oldest to newest. Based on incident updates or anomaly creations, not packet traffic or changes in risk."
+                                   AutomationProperties.Name="High-risk hosts: relative activity column"
+                                   AutomationProperties.HelpText="Eight relative 60-minute time buckets, oldest to newest, from incident last-update or anomaly creation timestamps. Not packet traffic, absolute event counts or a risk-score trend."/>
+                      </Grid>
+                      <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                    HorizontalScrollBarVisibility="Disabled"
+                                    MaxHeight="112">
+                        <ItemsControl x:Name="DashboardHostItemsControl"
+                                      AutomationProperties.Name="High-risk hosts from local observations"
+                                      AutomationProperties.HelpText="Up to five host rows. Items counts correlated incidents, or anomaly signals when no incident hosts are available. Risk is a local ranking score, not detection confidence. Activity bars show relative timestamp density over 60 minutes, not traffic or risk trends.">
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                              <Grid Margin="0,1,0,1" MinHeight="20">
+                                <Grid.ColumnDefinitions>
+                                  <ColumnDefinition Width="*" MinWidth="170"/>
+                                  <ColumnDefinition Width="48"/>
+                                  <ColumnDefinition Width="62"/>
+                                  <ColumnDefinition Width="84"/>
+                                </Grid.ColumnDefinitions>
+                                <!-- GA UI-72: subdued, non-interactive row separator for local host rankings. -->
+                                <Border Grid.ColumnSpan="4"
+                                        BorderBrush="{StaticResource SoftDividerBrush}"
+                                        BorderThickness="0,0,0,1"
+                                        VerticalAlignment="Bottom"
+                                        IsHitTestVisible="False"
+                                        SnapsToDevicePixels="True"/>
+                                <TextBlock Text="{Binding HostDisplay}"
+                                           AutomationProperties.Name="{Binding AccessibilityLabel}"
+                                           ToolTip="{Binding Host}"
+                                           FontFamily="Consolas"
+                                           FontSize="12"
+                                           Foreground="{StaticResource TextBrush}"
+                                           TextWrapping="NoWrap"
+                                           TextTrimming="CharacterEllipsis"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding RiskScore}"
+                                           ToolTip="Maximum local risk score for this host group; not detection confidence or verified impact."
+                                           AutomationProperties.HelpText="Maximum local risk score among unresolved correlated incidents, or among anomaly signals when no incident hosts are available. Not detection confidence or verified impact."
+                                           FontSize="12"
+                                           Foreground="{Binding AccentBrush}"
+                                           FontWeight="Bold"
+                                           HorizontalAlignment="Right"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="2"
+                                           Text="{Binding ActiveIncidents}"
+                                           ToolTip="Number of unresolved correlated incidents for this host, or anomaly signals in the fallback when no incident hosts are available."
+                                           AutomationProperties.HelpText="Count of grouped unresolved correlated incidents, or anomaly signals when no incident hosts are available. Not a packet count or verified incident impact."
+                                           FontSize="12"
+                                           Foreground="{StaticResource TextSubtleBrush}"
+                                           HorizontalAlignment="Right"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="3"
+                                           Text="{Binding TrendText}"
+                                           ToolTip="{Binding ActivityAccessibilityLabel}"
+                                           AutomationProperties.Name="{Binding ActivityAccessibilityLabel}"
+                                           FontSize="12"
+                                           FontFamily="Consolas"
+                                           Foreground="{Binding AccentBrush}"
+                                           TextWrapping="NoWrap"
+                                           TextTrimming="CharacterEllipsis"
+                                           Margin="12,0,0,0"
+                                           VerticalAlignment="Center"/>
+                              </Grid>
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                      </ScrollViewer>
+                      <Button Content="Review findings  &#x2192;"
+                               Width="190" Height="30" HorizontalAlignment="Left"
+                               Style="{StaticResource SecondaryButton}"
+                               ToolTip="Opens a correlated incident workspace when available; otherwise opens Anomalies. This is not a host inventory."
+                               ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                               AutomationProperties.Name="Review local findings"
+                               AutomationProperties.HelpText="Opens a correlated incident workspace when available; otherwise opens the Anomalies view. Does not open a complete host inventory."
+                               Click="DashboardInvestigateHost_Click" Margin="0,8,0,0"/>
+                    </StackPanel>
+                  </Border>
+
+                  <Border x:Name="DashboardActionsPanel" Grid.Column="1" Style="{StaticResource PageSurface}" Padding="14" Margin="0,0,12,0" BorderThickness="4,1,1,1" BorderBrush="#38D5BD">
+                    <StackPanel>
+                      <DockPanel LastChildFill="True">
+                        <StackPanel Orientation="Horizontal">
+                          <TextBlock Text="02  /  REVIEW QUEUE" FontSize="10" FontWeight="Bold" Foreground="#38D5BD" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                          <TextBlock Text="Recommended Actions" Style="{StaticResource DashboardSectionTitle}"
+                                     AutomationProperties.HelpText="Local review suggestions only; this panel does not execute remediation. Numbered badges indicate position, while anomaly badges can show local risk scores."/>
+                          <TextBlock Text="  &#x24D8;" Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"
+                                     Focusable="True"
+                                     KeyboardNavigation.IsTabStop="True"
+                                     FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
+                                     ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                                     ToolTip="Suggested local review steps, not automatic remediation. Badge meaning depends on the source; see each row."
+                                     AutomationProperties.Name="Recommended actions source information"
+                                     AutomationProperties.HelpText="Suggested local review steps, not automatic remediation. Badge meaning depends on the source; see each row."/>
+                        </StackPanel>
+                      </DockPanel>
+                      <!-- GA UI-76: visible source-accurate guidance; these are review suggestions, not commands. -->
+                      <TextBlock Text="Review suggestions only &#x2022; no automatic remediation"
+                                 Style="{StaticResource TinyStatusText}"
+                                 TextWrapping="Wrap"
+                                 Margin="0,3,0,0"/>
+                      <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                    HorizontalScrollBarVisibility="Disabled"
+                                    MaxHeight="118"
+                                    Margin="0,8,0,0">
+                        <ItemsControl x:Name="DashboardActionItemsControl"
+                                       AutomationProperties.Name="Suggested local review actions"
+                                       AutomationProperties.HelpText="Suggestions are informational, not executed here. Badges indicate action-list position, local anomaly risk, or no numeric value depending on the source.">
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                              <Border Style="{StaticResource QueueListItem}">
+                                <Grid>
+                                  <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="36"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                  </Grid.ColumnDefinitions>
+                                  <TextBlock Text="{Binding Icon}" FontSize="18" Foreground="{Binding AccentBrush}" VerticalAlignment="Center"/>
+                                  <StackPanel Grid.Column="1">
+                                    <TextBlock Text="{Binding Title}" ToolTip="{Binding Title}" FontWeight="SemiBold" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{Binding Subtitle}" ToolTip="{Binding Subtitle}" Foreground="{StaticResource TextMutedBrush}" FontSize="12" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="0,3,0,0"/>
+                                  </StackPanel>
+                                  <Border Grid.Column="2" Style="{StaticResource RiskBadge}" BorderBrush="{Binding AccentBrush}" Background="#0B1728" VerticalAlignment="Center"
+                                           ToolTip="{Binding BadgeDescription}">
+                                    <TextBlock Text="{Binding CountText}" AutomationProperties.Name="{Binding BadgeDescription}" Foreground="{Binding AccentBrush}" FontWeight="Bold" FontSize="11"/>
+                                  </Border>
+                                </Grid>
+                              </Border>
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                      </ScrollViewer>
+                    </StackPanel>
+                  </Border>
+
+                  <Border x:Name="DashboardOperationsPanel" Grid.Column="2" Style="{StaticResource PageSurface}" Padding="12" Margin="0" BorderThickness="4,1,1,1" BorderBrush="#81A8CE">
+                    <StackPanel>
+                      <DockPanel LastChildFill="True">
+                        <StackPanel Orientation="Horizontal">
+                          <TextBlock Text="03  /  WORKSPACE LINKS" FontSize="10" FontWeight="Bold" Foreground="#81A8CE" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                          <TextBlock Text="Raw / Advanced Shortcuts" Style="{StaticResource DashboardSectionTitle}"
+                                     AutomationProperties.HelpText="Existing Live Traffic and Detection Events navigation only. No separate PCAP Explorer or forensics workspace is opened."/>
+                          <TextBlock Text="  &#x24D8;" Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"
+                                     Focusable="True"
+                                     KeyboardNavigation.IsTabStop="True"
+                                     FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
+                                     ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                                     ToolTip="These shortcuts open existing Live Traffic or Detection Events views, not separate PCAP or forensics workspaces."
+                                     AutomationProperties.Name="Raw and advanced shortcut destinations information"
+                                     AutomationProperties.HelpText="These shortcuts open existing Live Traffic or Detection Events views, not separate PCAP or forensics workspaces."/>
+                        </StackPanel>
+                      </DockPanel>
+                      <UniformGrid Columns="2" Margin="0,8,0,0">
+                        <Button Style="{StaticResource ShortcutTile}" Click="DashboardRawTraffic_Click"
+                                ToolTip="Opens the existing Live Traffic view and its traffic filters. Navigation only; this shortcut does not start capture or export packets."
+                                ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                                AutomationProperties.Name="Raw Traffic"
+                                AutomationProperties.HelpText="Opens the existing Live Traffic view and its traffic filters.">
+                          <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <TextBlock Text="&#x2301;" FontSize="20" Foreground="{StaticResource TextSubtleBrush}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            <StackPanel Grid.Column="1">
+                              <TextBlock Text="Raw Traffic" FontWeight="SemiBold" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+                              <TextBlock Text="Inspect packets &amp; flows" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
+                            </StackPanel>
+                          </Grid>
+                        </Button>
+                        <Button Style="{StaticResource ShortcutTile}" Click="DashboardRawDetections_Click"
+                                ToolTip="Opens the existing Detection Events view and its detection filters. Navigation only; this shortcut does not verify detections or export evidence."
+                                ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                                AutomationProperties.Name="Raw Detections"
+                                AutomationProperties.HelpText="Opens the existing Detection Events view and its detection filters.">
+                          <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <TextBlock Text="&#x25C7;" FontSize="20" Foreground="{StaticResource TextSubtleBrush}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            <StackPanel Grid.Column="1">
+                              <TextBlock Text="Raw Detections" FontWeight="SemiBold" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+                              <TextBlock Text="View rule hits" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
+                            </StackPanel>
+                          </Grid>
+                        </Button>
+                        <Button Style="{StaticResource ShortcutTile}" Click="DashboardPcapExplorer_Click"
+                                ToolTip="Opens the existing Live Traffic view. No separate PCAP Explorer is opened and this shortcut does not start capture."
+                                ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                                AutomationProperties.Name="Traffic Analysis"
+                                AutomationProperties.HelpText="Opens the existing Live Traffic view, not a separate PCAP Explorer.">
+                          <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <TextBlock Text="&#x25A4;" FontSize="19" Foreground="{StaticResource TextSubtleBrush}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            <StackPanel Grid.Column="1">
+                              <TextBlock Text="Traffic Analysis" FontWeight="SemiBold" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+                              <TextBlock Text="Opens Live Traffic" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
+                            </StackPanel>
+                          </Grid>
+                        </Button>
+                        <Button Style="{StaticResource ShortcutTile}" Click="DashboardForensicsWorkspace_Click"
+                                ToolTip="Opens the existing Detection Events view. No separate forensics workspace is opened and this shortcut does not export raw evidence."
+                                ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                                AutomationProperties.Name="Detection Investigation"
+                                AutomationProperties.HelpText="Opens the existing Detection Events view, not a separate Forensics Workspace.">
+                          <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <TextBlock Text="&#x2315;" FontSize="20" Foreground="{StaticResource TextSubtleBrush}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            <StackPanel Grid.Column="1">
+                              <TextBlock Text="Detection Investigation" FontWeight="SemiBold" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+                              <TextBlock Text="Opens Detection Events" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
+                            </StackPanel>
+                          </Grid>
+                        </Button>
+                      </UniformGrid>
+                      <Button Content="Open Live Traffic  &#x2192;" Width="180" Height="30" HorizontalAlignment="Left" Style="{StaticResource SecondaryButton}" Click="DashboardRawTraffic_Click" Margin="0,8,0,0"
+                              ToolTip="Opens the existing Live Traffic view and its sidebar traffic filters. Navigation only; this button does not start capture."
+                              ToolTipService.ShowsToolTipOnKeyboardFocus="True"
+                              AutomationProperties.Name="Open Live Traffic"
+                              AutomationProperties.HelpText="Opens the existing Live Traffic view."/>
+                    </StackPanel>
+                  </Border>
+                </Grid>
+
+
                 <Expander Header="Layout manager" IsExpanded="False" Visibility="Collapsed" Margin="0,0,0,18">
                   <Border Style="{StaticResource CommandBarSurface}" Padding="14">
                     <StackPanel>
