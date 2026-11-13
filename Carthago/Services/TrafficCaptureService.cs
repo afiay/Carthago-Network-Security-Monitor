@@ -81,6 +81,7 @@ namespace Carthago.Services
 
         private sealed record EnrichmentWork(TrafficRecord Record, CancellationToken RunToken, long EnqueuedAt);
         private readonly EnrichmentWorkerHealth _workerHealth = new();
+        private readonly EnrichmentCoverageHealth _coverageHealth = new();
 
         private readonly Channel<CaptureSessionRecord<TrafficRecord>> _uiChannel =
             Channel.CreateBounded<CaptureSessionRecord<TrafficRecord>>(new BoundedChannelOptions(UiQueueCapacity)
@@ -629,6 +630,7 @@ namespace Carthago.Services
             var now = DateTimeOffset.UtcNow;
             assets?.Observe(record, now);
             assets?.Communications.Observe(record, now);
+            _coverageHealth.ObservePublication(record);
 
             // UI pressure must never suppress rule evaluation.
             if (!_uiChannel.Writer.TryWrite(new CaptureSessionRecord<TrafficRecord>(record, runToken)))
@@ -847,6 +849,8 @@ namespace Carthago.Services
                         rec.ProcessName ??= "Unknown";
                     }
                 }).ConfigureAwait(false);
+
+                _coverageHealth.ObserveProcess(rec);
 
                 // Metadata only: do not count the same packet again, or create a
                 // destination that was not admitted at publication time.
@@ -1245,7 +1249,8 @@ namespace Carthago.Services
             ReputationCacheSize = _reputationCache.Count,
             EnrichmentQueueDepth = _enrichmentChannel.Reader.CanCount ? _enrichmentChannel.Reader.Count : null,
             EnrichmentProviders = _providerHealth.Snapshot(),
-            EnrichmentWorkers = _workerHealth.Snapshot()
+            EnrichmentWorkers = _workerHealth.Snapshot(),
+            EnrichmentCoverage = _coverageHealth.Snapshot()
         };
 
         public CaptureFlowSnapshot GetCaptureFlowSnapshot()
@@ -1352,6 +1357,7 @@ namespace Carthago.Services
             public long ReputationEnriched { get; init; }
             public long EnrichmentFallbacks { get; init; }
             public EnrichmentWorkerSnapshot? EnrichmentWorkers { get; init; }
+            public EnrichmentCoverageSnapshot? EnrichmentCoverage { get; init; }
             public int WhoisCacheSize { get; init; }
             public int ReputationCacheSize { get; init; }
             public int? EnrichmentQueueDepth { get; init; }

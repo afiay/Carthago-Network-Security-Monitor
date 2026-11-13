@@ -29,7 +29,17 @@ internal static class EnrichmentHealthPresentation
             $"Enrichment queue depth: {stats.EnrichmentQueueDepth?.ToString(CultureInfo.InvariantCulture) ?? "unknown"}; " +
             $"fallback records (lifetime): {stats.EnrichmentFallbacks:N0}. " +
             "Provider success is not proof of detection accuracy or endpoint trust. " +
-            WorkerSummary(stats.EnrichmentWorkers), providers);
+            WorkerSummary(stats.EnrichmentWorkers) + " " + CoverageSummary(stats.EnrichmentCoverage), providers);
+    }
+
+    internal static string CoverageSummary(EnrichmentCoverageSnapshot? c)
+    {
+        if (c is null) return "Evidence coverage unavailable.";
+        return $"Published records (lifetime): {c.Published:N0}; both endpoint membership flags known: {c.LocalKnown:N0}/{c.Published:N0}; " +
+            $"verified interface: {c.InterfaceKnown:N0}/{c.Published:N0}; DNS correlated: {c.DnsCorrelated:N0}/{c.Published:N0}; " +
+            $"TLS correlated: {c.TlsCorrelated:N0}/{c.Published:N0}. " +
+            $"Local TCP/UDP records sampled after process stage: {c.ProcessEligible:N0}; capture/TCP attribution: {c.ProcessStrong:N0}; " +
+            $"UDP binding only: {c.ProcessUdpBinding:N0}. Coverage is observed evidence availability, not protocol recall; UDP binding is not remote tuple proof.";
     }
 
     internal static string WorkerSummary(EnrichmentWorkerSnapshot? w)
