@@ -48,8 +48,7 @@ namespace Carthago.Engine.Rules.Expansion
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            var signals = Carthago.Services.RuleEngine.SnapshotR272Signals(
-                context.Record.Source, context.TimestampUtc);
+            var signals = context.GetR272Signals();
             var families = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var rules = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var signal in signals)
