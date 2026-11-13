@@ -201,3 +201,8 @@ Workbook R2768 AN2187; exact RFC1628 UPS reboot scalar, bounded BER, separate fr
 ## R970 — IEC104 STARTDT then double-command OFF execute
 
 Workbook R2708 AN2212; exact same-flow startup and first OFF execution, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_970-970.md). 36 authored cases, zero execution; no safety-critical asset identity, approval or physical effect claim. R482 remains producer-gated. Next ID R971.
+
+
+## R971 — SNMP high-demand GETBULK
+
+Workbook R2744 AN1249; exact one-request operation-level predicate distinct from R771 packet burst. [Batch notes](../03-detection-rules/batches/RULE_BATCH_971-971.md). Candidate/Shadow, 31 authored cases, zero execution; no returned data/authorization claim. Next ID R972.

@@ -14,6 +14,40 @@ namespace Carthago.Services.ProtocolIntelligence
         internal static bool TryInspect(ReadOnlySpan<byte> packet) => TryInspectSet(packet, false);
         internal static bool TryInspectUpsReboot(ReadOnlySpan<byte> packet) => TryInspectSet(packet, true);
 
+        // RFC 3416 GETBULK: narrow, all-repeaters subset. The requested
+        // response cardinality is a demand estimate, never a response outcome.
+        internal static bool TryInspectHighDemandBulk(ReadOnlySpan<byte> packet)
+        {
+            if (packet.Length is < 20 or > 4096) return false;
+            int p = 0;
+            if (!Take(packet, ref p, 0x30, out var message) || p != packet.Length) return false;
+            p = 0;
+            if (!Take(message, ref p, 0x02, out var version) ||
+                version.Length != 1 || version[0] != 1 ||
+                !Take(message, ref p, 0x04, out var community) || community.Length is < 1 or > 255 ||
+                !Take(message, ref p, 0xA5, out var request) || p != message.Length) return false;
+            p = 0;
+            if (!Take(request, ref p, 0x02, out var id) || !Integer(id) ||
+                !Take(request, ref p, 0x02, out var nonRepeaters) || !Zero(nonRepeaters) ||
+                !Take(request, ref p, 0x02, out var maxRepetitions) || !Integer(maxRepetitions) ||
+                (maxRepetitions[0] & 0x80) != 0 || maxRepetitions.Length > 2 ||
+                !Take(request, ref p, 0x30, out var list) || p != request.Length) return false;
+            int repetitions = 0;
+            foreach (byte b in maxRepetitions) repetitions = (repetitions << 8) | b;
+            if (repetitions is < 64 or > 1024) return false;
+            p = 0;
+            int count = 0;
+            while (p < list.Length)
+            {
+                if (++count > 8 || !Take(list, ref p, 0x30, out var binding)) return false;
+                int b = 0;
+                if (!Take(binding, ref b, 0x06, out var oid) || !ValidOid(oid) ||
+                    !Take(binding, ref b, 0x05, out var value) || !value.IsEmpty ||
+                    b != binding.Length) return false;
+            }
+            return count > 0;
+        }
+
         private static bool TryInspectSet(ReadOnlySpan<byte> packet, bool upsReboot)
         {
             if (packet.Length is < 20 or > 4096) return false;

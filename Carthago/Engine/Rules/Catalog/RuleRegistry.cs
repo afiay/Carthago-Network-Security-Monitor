@@ -993,6 +993,7 @@ namespace Carthago.Engine.Rules.Catalog
                 new R968_PublicModbusSameRegisterWriteBurstRule(),
                 new R969_PublicSnmpUpsRebootRequestRule(),
                 new R970_PublicIec104StartupOffExecuteRule(),
+                new R971_PublicSnmpHighDemandGetBulkRule(),
             };
         }
 
