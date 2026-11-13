@@ -107,14 +107,17 @@ internal sealed class ActiveEvidenceStore
     private readonly string _path;
     private readonly int _capacity;
     private readonly Func<DateTimeOffset> _clock;
+    private readonly Action? _beforeObservationCommit;
 
-    internal ActiveEvidenceStore(string? path = null, int capacity = MaxRows, Func<DateTimeOffset>? clock = null)
+    internal ActiveEvidenceStore(string? path = null, int capacity = MaxRows, Func<DateTimeOffset>? clock = null,
+        Action? beforeObservationCommit = null)
     {
         if (capacity is < 1 or > MaxRows) throw new ArgumentOutOfRangeException(nameof(capacity));
         _path = path ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "Carthago", "active-evidence.db");
         _capacity = capacity;
         _clock = clock ?? (() => DateTimeOffset.UtcNow);
+        _beforeObservationCommit = beforeObservationCommit;
     }
 
     private LiteDatabase Open()
@@ -205,7 +208,8 @@ internal sealed class ActiveEvidenceStore
                 if (!Valid(row, now)) return false;
                 using var db = Open();
                 var rows = Collection(db);
-                db.BeginTrans();
+                var findings = Findings(db);
+                if (!db.BeginTrans()) return false;
                 try
                 {
                     // Insert, not upsert: a reused observation ID cannot rewrite history.
@@ -220,7 +224,9 @@ internal sealed class ActiveEvidenceStore
                     Prune(rows, now);
                     // A backdated insert outside the retained newest set is not a successful save.
                     if (rows.FindById(row.Id) is null) { db.Rollback(); return false; }
-                    EvaluateLatest(db, rows, row, now);
+                    EvaluateLatest(db, rows, findings, row, now);
+                    // Test-only failure injection after all writes, before durable commit.
+                    _beforeObservationCommit?.Invoke();
                     if (!db.Commit()) return false;
                     return true;
                 }
@@ -347,9 +353,8 @@ internal sealed class ActiveEvidenceStore
     // Called inside the observation insert transaction. No separate delivery or
     // packet-rule side effect: observation and qualified findings commit together.
     private static void EvaluateLatest(LiteDatabase db, ILiteCollection<ActiveEvidenceRow> rows,
-        ActiveEvidenceRow current, DateTimeOffset now)
+        ILiteCollection<ActiveFindingRow> findings, ActiveEvidenceRow current, DateTimeOffset now)
     {
-        var findings = Findings(db);
         PruneFindings(findings, now);
         var approval = db.GetCollection<Approval>("active_approved_baselines").FindById(ScopeKey(current));
         if (approval is null) return;
@@ -384,7 +389,13 @@ internal sealed class ActiveEvidenceStore
                 using var db = Open();
                 var findings = Findings(db);
                 var now = _clock();
-                PruneFindings(findings, now);
+                if (!db.BeginTrans()) return (Array.Empty<ActiveFindingRow>(), "Active findings transaction unavailable.");
+                try
+                {
+                    PruneFindings(findings, now);
+                    if (!db.Commit()) return (Array.Empty<ActiveFindingRow>(), "Active findings retention failed.");
+                }
+                catch { db.Rollback(); throw; }
                 return (findings.Query().OrderByDescending(x => x.ObservedTicks).Limit(ActiveFindingQualification.MaxFindings)
                     .ToList().Where(r => (sensor is null || r.Sensor == sensor.Value.ToString()) &&
                         (target is null || r.Target == target) && r.ObservedTicks <= now.UtcDateTime.Ticks)

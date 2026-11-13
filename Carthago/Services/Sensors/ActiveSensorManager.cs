@@ -128,6 +128,7 @@ internal sealed class ActiveSensorManager
         {
             token.ThrowIfCancellationRequested();
             var adapter = _resolve(p);
+            token.ThrowIfCancellationRequested();
             if (adapter is null || !adapter.Address.Equals(p.Adapter.Address) ||
                 !adapter.Mask.Equals(p.Adapter.Mask) ||
                 !LocalLanDiscovery.PlanProbeTargets(new[] { adapter }).Contains(p.Target))
@@ -145,6 +146,7 @@ internal sealed class ActiveSensorManager
                 history = "Not saved";
                 if (result.Evidence is not null)
                 {
+                    token.ThrowIfCancellationRequested();
                     try { history = _save(result.Evidence) ? "Saved" : "Storage failed"; }
                     catch (Exception ex) when (ex is not OutOfMemoryException) { history = "Storage failed"; }
                 }
