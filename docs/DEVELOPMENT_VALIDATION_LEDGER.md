@@ -2303,3 +2303,8 @@ Reviewed parent `59b2d177729271e64ca8f55c87c50e412b045add`, WindowsProcessResolv
 ## 2026-11-13 — CLI-006D.6 portable rule capability catalog
 
 **SOURCE CANDIDATE — UNVERIFIED.** Parent `f39e4b877d5b12bc92542cec77b11d0e8c13f1d2`. Co-locate five portable metadata entries and fresh evaluator factories; dispatcher derives support and execution from the same registrations. Offline rules capabilities list/lookup with explicit unsupported numeric IDs, evidence, methods, replay environments, state/cooldown and non-assessed qualification/registration. Nine synthetic cases authored, zero executed. No builds, live capture, Actions or rule promotion. See [architecture](02-architecture/CLI-006D6-PortableRuleCapabilities.md).
+
+
+## 2026-11-13 — CLI-006E.1 pinned synthetic CLI qualification gate
+
+**SOURCE CANDIDATE — UNVERIFIED.** Parent `e9b3ff95651de71f76d8c67329c206c7a28922c6`. Add owner-authorized `scripts/verify-cli-qualification.ps1`: pinned clean branch checkout, portable build/full CLI suite, fresh TRX required class counts, actual CLI capability smoke, optional Windows build and minimum 23 parity cases. Local ignored reports distinguish portable, Windows parity, field, capture and deployment qualification. Zero builds/tests/replays/Actions executed. Existing GA-IQ-01 unchanged. See [architecture](02-architecture/CLI-006E1-QualificationGate.md) for commands and limitations.
