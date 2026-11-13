@@ -228,7 +228,7 @@ internal sealed class ActiveSensorManager
         }
     }
 
-    internal async Task RunAsync(CancellationToken token)
+    internal async Task RunAsync(CancellationToken token, bool stopWhenAllBlocked = false)
     {
         token.ThrowIfCancellationRequested();
         lock (_gate)
@@ -248,6 +248,11 @@ internal sealed class ActiveSensorManager
             while (true)
             {
                 await RunDueCoreAsync(token, fromLoop: true).ConfigureAwait(false);
+                if (stopWhenAllBlocked)
+                {
+                    lock (_gate)
+                        if (_states.Values.All(s => s.ScopeBlocked)) return;
+                }
                 await Task.Delay(TimeSpan.FromSeconds(1), token).ConfigureAwait(false);
             }
         }

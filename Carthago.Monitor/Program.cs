@@ -11,6 +11,7 @@ using System.Windows.Threading;
 using Carthago.Contracts;
 using Carthago.Services;
 using Carthago.Services.Cli;
+using Carthago.Services.Sensors;
 using SharpPcap;
 
 namespace Carthago.Monitor;
@@ -27,10 +28,24 @@ internal static class Program
             output.WriteLine("CARTHAGO foreground monitor (Windows/Npcap)\n" +
                 "  carthago-monitor capture interfaces [--json]\n" +
                 "  carthago-monitor monitor start --interface ID [--filter BPF] [--status-seconds N] [--json] [--enable-cli-ipc] [--allow-cli-stop]\n" +
+                "  carthago-monitor active status [--json]\n" +
+                "  carthago-monitor active run --profile ID [--profile ID ...]\n" +
                 "  carthago-monitor service validate --config ABSOLUTE_PATH [--json]\n" +
                 "  carthago-monitor service run --config ABSOLUTE_PATH (SCM only)\n" +
                 "Ctrl+C stops monitoring. Close the desktop monitor before starting. No remote enrichment or external sinks.");
             return 0;
+        }
+        if (args[0] == "active")
+        {
+            using var cancel = new CancellationTokenSource();
+            ConsoleCancelEventHandler handler = (_, e) => { e.Cancel = true; cancel.Cancel(); };
+            Console.CancelKeyPress += handler;
+            try
+            {
+                return ActiveSensorWorker.ExecuteAsync(args[1..], output, error, cancel.Token)
+                    .GetAwaiter().GetResult();
+            }
+            finally { Console.CancelKeyPress -= handler; }
         }
         if (args is ["service", "validate", "--config", _] or
             ["service", "validate", "--config", _, "--json"])
