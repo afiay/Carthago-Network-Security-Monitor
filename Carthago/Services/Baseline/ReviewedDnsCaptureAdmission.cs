@@ -59,6 +59,7 @@ namespace Carthago.Services.Baseline
         {
             var field = new byte[64];
             int length = 0, fields = 0, recordBytes = 0;
+            string? previousObservation = null;
             int value;
             while ((value = reader.ReadByte()) != -1)
             {
@@ -67,12 +68,24 @@ namespace Carthago.Services.Baseline
                 {
                     if (length != 64 || ++fields > 20001) return false;
                     string digest = Encoding.ASCII.GetString(field);
-                    if (!(fields == 1 ? captures.Add(digest) : existing.Add(digest))) return false;
+                    if (fields == 1)
+                    {
+                        if (!captures.Add(digest)) return false;
+                    }
+                    else
+                    {
+                        // Intake emits sorted unique identities; reject noncanonical records.
+                        if (previousObservation != null &&
+                            string.CompareOrdinal(previousObservation, digest) >= 0) return false;
+                        if (!existing.Add(digest)) return false;
+                        previousObservation = digest;
+                    }
                     length = 0;
                     if (value == 10)
                     {
                         if (fields < 2) return false;
                         fields = 0;
+                        previousObservation = null;
                         recordBytes = 0;
                     }
                 }

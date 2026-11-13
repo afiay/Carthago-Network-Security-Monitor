@@ -192,9 +192,12 @@ public sealed class ReviewedDnsPacketIntakeTests
                 byte[] thirdManifest = RepackManifest(third);
                 byte[] thirdSignature = reviewer.SignData(thirdManifest, HashAlgorithmName.SHA256,
                     DSASignatureFormat.IeeeP1363FixedFieldConcatenation);
-                foreach (string corrupt in new[] { "torn", "\\r\\n", new string('A', 65) + "\\n",
-                    new string('A', 64) + ",," + new string('B', 64) + "\\n",
-                    new string('A', 64) + "," + new string('b', 64) + "\\n" })
+                foreach (string corrupt in new[] { "torn", "\r\n", new string('A', 65) + "\n",
+                    new string('A', 64) + ",," + new string('B', 64) + "\n",
+                    new string('A', 64) + "," + new string('b', 64) + "\n",
+                    new string('A', 64) + "," + new string('C', 64) + "," + new string('B', 64) + "\n",
+                    new string('A', 64) + "," + new string('B', 64) + "," + new string('B', 64) + "\n",
+                    System.Text.Encoding.ASCII.GetString(goodJournal) })
                 {
                     File.WriteAllBytes(journalPath, goodJournal);
                     File.AppendAllText(journalPath, corrupt);
