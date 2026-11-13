@@ -25,3 +25,4 @@ System boundaries, evidence lineage, sensors and architectural constraints.
 - [CLI-006B.3C3B — Portable flow state](CLI-006B3C3B-PortableFlowState.md)
 - [CLI-006B.3C4 — Portable packet processor](CLI-006B3C4-PortablePacketProcessor.md)
 - [CLI-006C.1 — Classic PCAP inspection](CLI-006C1-PortablePcapInspection.md)
+- [CLI-006C.2 — PCAPNG inspection](CLI-006C2-PcapNg.md)

@@ -44,7 +44,7 @@ public static class CliApplication
           carthago rules show <file.csa> <rule-id> [--json]
           carthago rules quality <ledger.md> [--json]
           carthago session inspect <file.csa> [--json]
-          carthago pcap inspect <file.pcap> [--limit N] [--json]
+          carthago pcap inspect <file.pcap|file.pcapng> [--limit N] [--json]
           carthago alerts list <file.csa|--live> [--severity LEVEL] [--source-ip IP] [--offset N] [--limit N] [--json]
           carthago alerts show <file.csa|--live> <event-id> [--json]
           carthago alerts list --live [--date YYYY-MM-DD | --since 1h] [--json]
@@ -89,12 +89,12 @@ public static class CliApplication
             if (command.Length > 0 && command[0] == "pcap")
             {
                 if (!PcapInspectCommand.TryParse(command, out var pcapPath, out var pcapLimit))
-                    return await FailAsync(error, json, UsageError, "invalid_usage", "Expected pcap inspect <file.pcap> [--limit 1-100] [--json].");
+                    return await FailAsync(error, json, UsageError, "invalid_usage", "Expected pcap inspect <file.pcap|file.pcapng> [--limit 1-100] [--json].");
                 var capture = await PcapInspectCommand.InspectAsync(pcapPath, pcapLimit, token);
                 await WriteAsync(output, json, new { schemaVersion = SchemaVersion, provenance = "untrusted_capture",
                     detectionValidation = "not_assessed", capture },
-                    $"Classic PCAP: {capture.PacketsRead} packets; parsed {capture.Parsed}; rejected {capture.Rejected}; capture-truncated {capture.CaptureTruncated}.\n" +
-                    $"Link type: {capture.LinkLayerType}; timestamps: {capture.TimestampResolution}; clock resets: {capture.ClockResets}.\n" +
+                    $"{capture.Format.ToUpperInvariant()}: {capture.PacketsRead} packets; parsed {capture.Parsed}; rejected {capture.Rejected}; capture-truncated {capture.CaptureTruncated}.\n" +
+                    $"Link type: {capture.LinkLayerType?.ToString() ?? "per-interface"}; timestamps: {capture.TimestampResolution}; clock resets: {capture.ClockResets}.\n" +
                     $"Untrusted capture; detection rules not executed. Sample: {capture.Rows.Count}/{capture.Parsed}.\n" +
                     string.Join("\n", capture.Rows.Select(r => $"{r.PacketNumber} {r.TimestampUtc:O} {r.Source}:{r.SourcePort} -> {r.Destination}:{r.DestinationPort} {r.Protocol} {r.ApplicationProtocol}")));
                 return Success;
@@ -131,7 +131,7 @@ public static class CliApplication
                         new Capability("live.rules", "unavailable", "Windows opt-in catalog query; use rules summary to check connectivity."),
                         new Capability("live.incidents", "unavailable", "No live incident connection."),
                         new Capability("capture", "unavailable", "No CLI live capture provider."),
-                        new Capability("pcap.inspect", "available", "Read-only classic PCAP packet telemetry; no rule execution."),
+                        new Capability("pcap.inspect", "available", "Read-only classic PCAP and PCAPNG enhanced-packet telemetry; no rule execution."),
                         new Capability("sensor.control", "unavailable", "No CLI sensor control provider.")
                     };
                     await WriteAsync(output, json, new { schemaVersion = SchemaVersion, capabilities },
