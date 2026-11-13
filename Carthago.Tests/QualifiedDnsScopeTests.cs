@@ -21,6 +21,18 @@ public sealed class QualifiedDnsScopeTests
         Assert.NotEqual("dns.domain", QualifiedDnsScope.ObservationKind);
     }
 
+    [Fact]
+    public void Malformed_Unicode_Cannot_Alias_A_Valid_Identity()
+    {
+        var high = new string((char)0xD800, 1);
+        var low = new string((char)0xDC00, 1);
+        Assert.Throws<ArgumentException>(() => QualifiedDnsScope.Create("192.0.2.1", high, "nic", "network"));
+        Assert.Throws<ArgumentException>(() => QualifiedDnsScope.Create("192.0.2.1", "sensor", low, "network"));
+        Assert.Throws<ArgumentException>(() => QualifiedDnsScope.Create("192.0.2.1", "sensor", "nic", high + "x"));
+        var valid = QualifiedDnsScope.Create("192.0.2.1", "\uFFFD", "nic", "network");
+        Assert.NotEqual(valid, QualifiedDnsScope.Create("192.0.2.1", char.ConvertFromUtf32(0x1F600), "nic", "network"));
+    }
+
     [Theory]
     [InlineData("0.0.0.0", "sensor", "nic", "network")]
     [InlineData("::ffff:0.0.0.0", "sensor", "nic", "network")]

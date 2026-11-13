@@ -14,6 +14,21 @@ namespace Carthago.Services.Baseline
 
         private QualifiedDnsScope(string subject) => Subject = subject;
 
+        // JSON serialization can replace malformed UTF-16 with U+FFFD.
+        // Reject it before serialization so distinct identities cannot alias.
+        private static bool IsWellFormedUtf16(string value)
+        {
+            for (int i = 0; i < value.Length; i++)
+            {
+                if (char.IsHighSurrogate(value[i]))
+                {
+                    if (++i == value.Length || !char.IsLowSurrogate(value[i])) return false;
+                }
+                else if (char.IsLowSurrogate(value[i])) return false;
+            }
+            return true;
+        }
+
         internal static QualifiedDnsScope Create(string source, string captureSource,
             string interfaceId, string networkId)
         {
@@ -22,7 +37,8 @@ namespace Carthago.Services.Baseline
                 throw new ArgumentException("A concrete source IP is required.", nameof(source));
             foreach (var value in new[] { captureSource, interfaceId, networkId })
                 if (string.IsNullOrWhiteSpace(value) || value.Length > 256 ||
-                    !string.Equals(value, value.Trim(), StringComparison.Ordinal))
+                    !string.Equals(value, value.Trim(), StringComparison.Ordinal) ||
+                    !IsWellFormedUtf16(value))
                     throw new ArgumentException("A bounded, exact capture identity is required.");
             if (address.IsIPv4MappedToIPv6) address = address.MapToIPv4();
             if (address.Equals(IPAddress.Any))
