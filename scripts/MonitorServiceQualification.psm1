@@ -92,7 +92,13 @@ function Get-MonitorPreflight {
     try { $n=Get-Service npcap; Check 'npcap' 'pass' ('Registered; state '+$n.Status) }
     catch { Check 'npcap' 'fail' 'Npcap registration unavailable.' }
     try {
-        if (-not $monitor -or -not $config) { throw 'Paths unavailable.' }
+        foreach ($path in @($monitor,$cli,$config,(Split-Path -Parent $monitor),(Split-Path -Parent $cli),(Split-Path -Parent $config),$statusDir,(Join-Path (Split-Path -Parent $monitor) 'rules.json'))) {
+            if (Test-BroadWrite $path) { throw 'Broad write.' }
+        }
+        Check 'acl_screen' 'pass' 'No screened broad write ACE; not effective-access proof.'
+    } catch { Check 'acl_screen' 'fail' 'Broad write grant or inspection unavailable.' }
+    try {
+        if (-not $monitor -or -not $config -or @($checks | Where-Object { $_.name -in @('deployment','acl_screen') -and $_.state -eq 'fail' }).Count -gt 0) { throw 'Deployment or ACL screen failed; executable not invoked.' }
         $r=Invoke-MonitorJson $monitor @('service','validate','--config',$config,'--json')
         if ($r.code -ne 0 -or $r.data.configuration -ne 'valid') { throw 'Invalid config.' }
         $id=$r.data.interfaceId
@@ -108,12 +114,6 @@ function Get-MonitorPreflight {
         Check 'registration' 'pass' 'Exact ImagePath and non-LocalSystem identity.'
         if ($s.StartMode -eq 'Auto') { Check 'startup_mode' 'warn' 'Automatic startup already enabled.' }
     } catch { Check 'registration' 'fail' 'Missing service, mismatched ImagePath or LocalSystem.' }
-    try {
-        foreach ($path in @($monitor,$cli,$config,(Split-Path -Parent $monitor),(Split-Path -Parent $cli),(Split-Path -Parent $config),$statusDir,(Join-Path (Split-Path -Parent $monitor) 'rules.json'))) {
-            if (Test-BroadWrite $path) { throw 'Broad write.' }
-        }
-        Check 'acl_screen' 'pass' 'No screened broad write ACE; not effective-access proof.'
-    } catch { Check 'acl_screen' 'fail' 'Broad write grant or inspection unavailable.' }
     Check 'service_permissions' 'not_assessed' 'Review effective account access, all ancestors and binary provenance manually.'
     return [pscustomobject]@{schemaVersion=1;ready=(@($checks | Where-Object state -eq 'fail').Count -eq 0);checks=$checks.ToArray();hashes=$hashes}
 }
@@ -129,6 +129,10 @@ function Get-JournalEvidence {
         if ($length -lt $Baseline) { return 'journal_shrank' }
         if ($length -eq $Baseline) { return 'no_new_records' }
         if ($length-$Baseline -gt 8388608) { return 'append_exceeds_limit' }
+        if ($Baseline -gt 0) {
+            $null=$fs.Seek($Baseline-1,[IO.SeekOrigin]::Begin)
+            if ($fs.ReadByte() -ne 10) { return 'baseline_not_record_boundary' }
+        }
         $null=$fs.Seek($Baseline,[IO.SeekOrigin]::Begin)
         $bytes=New-Object byte[] ([int]($length-$Baseline))
         $offset=0
@@ -148,8 +152,23 @@ function Get-JournalEvidence {
             $row=ConvertFrom-Json -InputObject $line
             $id=[Guid]::Empty
             if (-not [Guid]::TryParse([string]$row.eventId,[ref]$id) -or $id -eq [Guid]::Empty -or -not $ids.Add($id.ToString('N'))) { return 'invalid_record' }
-            $time=[DateTimeOffset]::Parse([string]$row.timestampUtc,[Globalization.CultureInfo]::InvariantCulture)
-            if ($time.Offset -ne [TimeSpan]::Zero -or $time -lt $StartUtc -or [string]$row.deliveryStatus -cne 'Persisted') { return 'invalid_record' }
+            if ($row.timestampUtc -is [DateTime]) {
+                if ($row.timestampUtc.Kind -ne [DateTimeKind]::Utc) { return 'invalid_record' }
+                $time=[DateTimeOffset]$row.timestampUtc
+            } else {
+                $stamp=[string]$row.timestampUtc
+                if ($stamp -notmatch '(Z|\+00:00) { return 'invalid_record' }
+        }
+        if ($count -eq 0) { return 'no_new_records' }
+        return 'appended_persisted_records_observed'
+    } catch { return 'journal_unavailable_or_invalid' }
+    finally { if ($null -ne $fs) { $fs.Dispose() } }
+}
+Export-ModuleMember -Function Assert-LocalPath,Invoke-MonitorJson,Get-MonitorPreflight,Get-JournalEvidence
+) { return 'invalid_record' }
+                $time=[DateTimeOffset]::Parse($stamp,[Globalization.CultureInfo]::InvariantCulture)
+            }
+            if ($time.Offset -ne [TimeSpan]::Zero -or $time -lt $StartUtc -or $time -gt [DateTimeOffset]::UtcNow -or [string]$row.deliveryStatus -cne 'Persisted') { return 'invalid_record' }
         }
         if ($count -eq 0) { return 'no_new_records' }
         return 'appended_persisted_records_observed'
