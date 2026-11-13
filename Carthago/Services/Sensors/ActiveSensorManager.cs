@@ -57,6 +57,8 @@ internal sealed class ActiveSensorManager
     private readonly Dictionary<Guid, ActiveSensorScheduleState> _states = new();
     private readonly Dictionary<Guid, (ActiveSensorProfileStore Store, Guid GrantId)> _grants = new();
     private readonly Func<DateTimeOffset> _clock;
+    private readonly Func<long> _timestamp;
+    internal static readonly TimeSpan AuthorizationCheckInterval = TimeSpan.FromSeconds(5);
     private readonly Func<ActiveSensorProfile, LocalLanInterface?> _resolve;
     private readonly Func<ActiveSensorProfile, LocalLanInterface, CancellationToken, Task<ActiveSensorRun>> _probe;
     private readonly Func<ActiveEvidenceRow, bool> _save;
@@ -74,9 +76,11 @@ internal sealed class ActiveSensorManager
         Func<ActiveEvidenceRow, bool>? save = null, Func<IDisposable>? acquireReservation = null,
         Func<ActiveSensorProfile, LocalLanInterface, SnmpCredential, CancellationToken, Task<ActiveSensorRun>>? snmpProbe = null,
         Func<ActiveSensorProfile, bool>? gatewayCurrent = null,
-        Func<ActiveSensorProfile, LocalLanInterface, Func<bool>, CancellationToken, Task<ActiveSensorRun>>? gatewayProbe = null)
+        Func<ActiveSensorProfile, LocalLanInterface, Func<bool>, CancellationToken, Task<ActiveSensorRun>>? gatewayProbe = null,
+        Func<long>? timestamp = null)
     {
         _clock = clock ?? (() => DateTimeOffset.UtcNow);
+        _timestamp = timestamp ?? System.Diagnostics.Stopwatch.GetTimestamp;
         _resolve = resolve ?? Resolve;
         _probe = probe ?? ProbeAsync;
         _snmpProbe = snmpProbe ?? ProbeSnmpAsync;
@@ -294,6 +298,34 @@ internal sealed class ActiveSensorManager
         }
     }
 
+    // The reserved loop is the only writer here. Snapshot readers never hold
+    // the state lock during database access; no probe, evidence or retry occurs.
+    private void RecheckIdleAuthorizations(CancellationToken token)
+    {
+        ActiveSensorScheduleState[] candidates;
+        lock (_gate)
+            candidates = _states.Values.Where(s => !s.ScopeBlocked && !s.Running &&
+                _grants.ContainsKey(s.Profile.Id)).ToArray();
+        foreach (var state in candidates)
+        {
+            token.ThrowIfCancellationRequested();
+            if (Authorized(state.Profile)) continue;
+            lock (_gate)
+            {
+                var current = _states[state.Profile.Id];
+                if (current.ScopeBlocked || current.Running) continue;
+                _states[state.Profile.Id] = current with
+                {
+                    ScopeBlocked = true,
+                    NextDueUtc = DateTimeOffset.MaxValue,
+                    LastOutcome = "Authorization expired, revoked or unavailable — remove and reapprove"
+                    // LastRunUtc, history and probe counters describe prior work;
+                    // surveillance must not fabricate a new observation.
+                };
+            }
+        }
+    }
+
     internal async Task RunAsync(CancellationToken token, bool stopWhenAllBlocked = false, Action? ready = null, Action? sample = null, Action? beforeReady = null)
     {
         token.ThrowIfCancellationRequested();
@@ -316,8 +348,16 @@ internal sealed class ActiveSensorManager
             sample?.Invoke();
             token.ThrowIfCancellationRequested();
             ready?.Invoke();
+            long lastAuthorizationCheck = _timestamp();
             while (true)
             {
+                token.ThrowIfCancellationRequested();
+                long timestamp = _timestamp();
+                if (System.Diagnostics.Stopwatch.GetElapsedTime(lastAuthorizationCheck, timestamp) >= AuthorizationCheckInterval)
+                {
+                    RecheckIdleAuthorizations(token);
+                    lastAuthorizationCheck = _timestamp();
+                }
                 await RunDueCoreAsync(token, fromLoop: true).ConfigureAwait(false);
                 sample?.Invoke();
                 if (stopWhenAllBlocked)
