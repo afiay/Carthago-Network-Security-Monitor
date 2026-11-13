@@ -34,13 +34,14 @@ public partial class MainWindow
             return;
         }
         var manager = new ActiveSensorManager();
-        var dialog = new Window { Owner = this, Title = "Active sensor manager — session only", Width = 820, Height = 650,
+        var profileStore = new ActiveSensorProfileStore();
+        var dialog = new Window { Owner = this, Title = "Active sensor manager — session authorization", Width = 900, Height = 760,
             WindowStartupLocation = WindowStartupLocation.CenterOwner, ShowInTaskbar = false };
         var panel = new DockPanel { Margin = new Thickness(16) };
         var inputs = new StackPanel();
         inputs.Children.Add(new TextBlock { Text = $"Approved target: {host.Address} via {adapter.Name} ({adapter.Address})\n" +
             "Add profiles, then explicitly start. One probe at a time; first check immediately, minimum five-minute interval. " +
-            "Closing stops all checks. Profiles are not saved. Gateway and SNMP remain manual-only.",
+            "Closing stops all checks. Saved configurations require fresh approval. Gateway and SNMP remain manual-only.",
             TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 10) });
         inputs.Children.Add(new TextBlock { Text = "Sensor" });
         var kind = new ComboBox { ItemsSource = new[] { ActiveSensorKind.Tcp, ActiveSensorKind.Dns, ActiveSensorKind.Tls, ActiveSensorKind.Http },
@@ -57,6 +58,16 @@ public partial class MainWindow
         var save = new CheckBox { Content = "Save completed observations to local active history", IsChecked = false,
             Margin = new Thickness(0, 0, 0, 8) }; inputs.Children.Add(save);
         var add = new Button { Content = "Approve and add profile", Padding = new Thickness(8, 4, 8, 4) }; inputs.Children.Add(add);
+        inputs.Children.Add(new TextBlock { Text = "Saved configurations (inactive until reapproved)", Margin = new Thickness(0, 8, 0, 4) });
+        var saved = new ComboBox { DisplayMemberPath = "Label", Margin = new Thickness(0, 0, 0, 5) };
+        inputs.Children.Add(saved);
+        var savedActions = new WrapPanel();
+        var remember = new Button { Content = "Save selected session profile", Margin = new Thickness(0, 0, 8, 4) };
+        var restore = new Button { Content = "Reapprove saved profile", Margin = new Thickness(0, 0, 8, 4) };
+        var forget = new Button { Content = "Delete saved profile", Margin = new Thickness(0, 0, 8, 4) };
+        foreach (var button in new[] { remember, restore, forget })
+        { button.Padding = new Thickness(8, 4, 8, 4); savedActions.Children.Add(button); }
+        inputs.Children.Add(savedActions);
         DockPanel.SetDock(inputs, Dock.Top); panel.Children.Add(inputs);
         var actions = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
         var remove = new Button { Content = "Remove selected", Margin = new Thickness(0, 0, 8, 0) };
@@ -87,6 +98,54 @@ public partial class MainWindow
                 if (Equals(selected, p.Id)) list.SelectedItem = row;
             }
         }
+        void RefreshSaved()
+        {
+            var selection = (saved.SelectedItem as SavedActiveSensorProfile)?.Id;
+            var read = profileStore.Read();
+            saved.ItemsSource = read.Rows;
+            saved.SelectedItem = read.Rows.FirstOrDefault(r => r.Id == selection);
+            if (saved.SelectedIndex < 0 && read.Rows.Count > 0) saved.SelectedIndex = 0;
+            if (read.Error is not null) message.Text = read.Error;
+        }
+        RefreshSaved();
+        remember.Click += (_, _) =>
+        {
+            if (active is not null || (list.SelectedItem as ListBoxItem)?.Tag is not Guid profileId) return;
+            var selected = manager.Snapshot().FirstOrDefault(s => s.Profile.Id == profileId);
+            if (selected is null) return;
+            message.Text = profileStore.Save(selected.Profile)
+                ? "Configuration saved. No execution authorization is persisted."
+                : "Could not save configuration (storage unavailable or capacity reached).";
+            RefreshSaved();
+        };
+        restore.Click += (_, _) =>
+        {
+            if (active is not null || saved.SelectedItem is not SavedActiveSensorProfile selected) return;
+            try
+            {
+                // Resolve again, since a saved profile must not inherit the original dialog's scope.
+                var live = LocalLanDiscovery.GetLocalInterfaces(id!.Value).FirstOrDefault(a =>
+                    a.Address.Equals(adapter.Address) && a.Mask.Equals(adapter.Mask) &&
+                    LocalLanDiscovery.PlanProbeTargets(new[] { a }).Contains(host.Address));
+                if (live is null) { message.Text = "Selected live scope has changed. Close and select the current host."; return; }
+                var profile = selected.ApproveForSession(id.Value, live, host.Address);
+                if (MessageBox.Show(dialog, $"Authorize this configuration for this session?\n{selected.Label}\n" +
+                    $"Adapter: {selected.AdapterId}\nNo probes run until Start.",
+                    "Reapprove active profile", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+                manager.Add(profile);
+                message.Text = "Reapproved for this session. Start to enable checks.";
+                Refresh();
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException) { message.Text = ex.Message; }
+        };
+        forget.Click += (_, _) =>
+        {
+            if (active is not null || saved.SelectedItem is not SavedActiveSensorProfile selected) return;
+            if (MessageBox.Show(dialog, "Delete this saved configuration? Any separately approved session profile remains active until removed.",
+                "Delete saved profile", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+            message.Text = profileStore.Delete(selected.Id) ? "Saved configuration deleted." : "Could not delete configuration.";
+            RefreshSaved();
+        };
         var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         timer.Tick += (_, _) => Refresh();
         timer.Start();
@@ -112,7 +171,7 @@ public partial class MainWindow
             if (active is not null || manager.Snapshot().Count == 0) return;
             using var cancellation = new CancellationTokenSource();
             active = cancellation;
-            start.IsEnabled = add.IsEnabled = remove.IsEnabled = false;
+            start.IsEnabled = add.IsEnabled = remove.IsEnabled = remember.IsEnabled = restore.IsEnabled = forget.IsEnabled = false;
             stop.IsEnabled = true;
             message.Text = "Running approved profiles.";
             try { await Task.Run(() => manager.RunAsync(cancellation.Token), cancellation.Token); }
@@ -122,7 +181,7 @@ public partial class MainWindow
             {
                 active = null;
                 stop.IsEnabled = false;
-                start.IsEnabled = add.IsEnabled = remove.IsEnabled = true;
+                start.IsEnabled = add.IsEnabled = remove.IsEnabled = remember.IsEnabled = restore.IsEnabled = forget.IsEnabled = true;
                 if (closeRequested) dialog.Close();
                 else { message.Text = "Stopped — no scheduled network activity."; Refresh(); }
             }
