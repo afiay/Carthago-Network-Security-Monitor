@@ -93,6 +93,12 @@
     <Compile Remove="Services/ProtocolIntelligence/Resp2SimpleReplyInspector.cs" />
     <Compile Remove="Services/ProtocolIntelligence/Smb2CompleteWriteInspector.cs" />
     <Compile Remove="Engine/Rules/Abstractions/SensitiveTelemetryContracts.cs" />
+    <Compile Remove="Models/DetectionEvent.cs" />
+    <Compile Remove="Models/Sensitivity.cs" />
+    <Compile Remove="Engine/Rules/Abstractions/RuleDescriptor.cs" />
+    <Compile Remove="Engine/Rules/Abstractions/RuleEvaluationResult.cs" />
+    <Compile Remove="Engine/Rules/Abstractions/RuleNoMatchReason.cs" />
+    <Compile Remove="Engine/Rules/Abstractions/RuleMode.cs" />
   </ItemGroup>
 
   <!-- Content to copy -->

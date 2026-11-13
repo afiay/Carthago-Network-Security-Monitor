@@ -58,6 +58,12 @@
     <Compile Include="../Carthago/Services/Flow/HandshakeBuffer.cs" Link="Services/Flow/HandshakeBuffer.cs" />
     <Compile Include="../Carthago/Services/Flow/LatencyTracker.cs" Link="Services/Flow/LatencyTracker.cs" />
     <Compile Include="../Carthago/Services/ProtocolIntelligence/EtherNetIpIdentityResetInspector.cs" Link="Services/ProtocolIntelligence/EtherNetIpIdentityResetInspector.cs" />
+    <Compile Include="../Carthago/Models/DetectionEvent.cs" Link="Models/DetectionEvent.cs" />
+    <Compile Include="../Carthago/Models/Sensitivity.cs" Link="Models/Sensitivity.cs" />
+    <Compile Include="../Carthago/Engine/Rules/Abstractions/RuleDescriptor.cs" Link="Engine/Rules/Abstractions/RuleDescriptor.cs" />
+    <Compile Include="../Carthago/Engine/Rules/Abstractions/RuleEvaluationResult.cs" Link="Engine/Rules/Abstractions/RuleEvaluationResult.cs" />
+    <Compile Include="../Carthago/Engine/Rules/Abstractions/RuleNoMatchReason.cs" Link="Engine/Rules/Abstractions/RuleNoMatchReason.cs" />
+    <Compile Include="../Carthago/Engine/Rules/Abstractions/RuleMode.cs" Link="Engine/Rules/Abstractions/RuleMode.cs" />
     <!-- Preserve existing internal access while consumers migrate. -->
     <InternalsVisibleTo Include="Carthago" />
     <InternalsVisibleTo Include="carthago" />

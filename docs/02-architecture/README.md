@@ -26,3 +26,4 @@ System boundaries, evidence lineage, sensors and architectural constraints.
 - [CLI-006B.3C4 — Portable packet processor](CLI-006B3C4-PortablePacketProcessor.md)
 - [CLI-006C.1 — Classic PCAP inspection](CLI-006C1-PortablePcapInspection.md)
 - [CLI-006C.2 — PCAPNG inspection](CLI-006C2-PcapNg.md)
+- [CLI-006D.1 — Portable detection data model](CLI-006D1-PortableDetectionModel.md)
