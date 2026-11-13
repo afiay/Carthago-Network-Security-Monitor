@@ -55,6 +55,68 @@ public sealed class R272AdvancedAccuracyBatchTests
         var r = Sample(); r.HttpUri = "/alerts?rules=R003,R016,R271";
         Assert.False(await Hit(r));
     }
+    // Reuse GA-04 packet semantics, but correlate real post-policy emissions
+    // from three distinct legacy categories on one source.
+    [Fact]
+    public void Engine_Emissions_Correlate_Only_On_The_Observed_Host()
+    {
+        RuleEngine.ResetRuntimeStateForReplay();
+        try
+        {
+            const string host = "10.214.1.20";
+            TrafficRecord Packet(string source, string destination, int port) => new()
+            {
+                Id = Guid.NewGuid(), Source = source, Destination = destination,
+                IpVersion = 4, Protocol = "TCP", IsTcp = true, SourcePort = 50521,
+                DestinationPort = port, Length = 100, ProcessName = "fixture-client.exe",
+                ProcessId = 4242
+            };
+            var ftp = Packet(host, "10.214.1.21", 21);
+            ftp.ApplicationService = "FTP";
+            ftp.Info = "PASS synthetic-test-only-value";
+            Assert.Contains(RuleEngine.Evaluate(ftp, Sensitivity.Balanced), e => e.RuleId == "R014");
+
+            var smb = Packet(host, "8.8.8.8", 445);
+            smb.Flags = "SYN"; smb.TcpFlags = 2;
+            Assert.Contains(RuleEngine.Evaluate(smb, Sensitivity.Balanced), e => e.RuleId == "R026");
+
+            bool dnsEmitted = false;
+            for (int i = 0; i < 15; i++)
+            {
+                var dns = Packet(host, "10.214.1.53", 53);
+                dns.Protocol = "DNS"; dns.IsTcp = false; dns.IsUdp = true;
+                dns.DnsQtype = "TXT"; dns.DnsQname = $"query{i}.synthetic.invalid";
+                dns.DnsIsResponse = false;
+                dnsEmitted |= System.Linq.Enumerable.Any(
+                    RuleEngine.Evaluate(dns, Sensitivity.Balanced), e => e.RuleId == "R031");
+            }
+            Assert.True(dnsEmitted, "The DNS producer must actually emit R031.");
+
+            var other = Packet("10.214.1.99", "10.214.1.21", 443);
+            Assert.DoesNotContain(RuleEngine.Evaluate(other, Sensitivity.Balanced), e => e.RuleId == "R272");
+
+            // Evaluate the real detector against the engine-owned snapshot,
+            // independently of whether an earlier packet consumed alert cooldown.
+            var probe = Packet(host, "10.214.1.21", 443);
+            var now = DateTime.UtcNow;
+            var context = RuleEvaluationContext.CreateForEngine(probe, Sensitivity.Balanced,
+                now, RuleEngineHealthSnapshot.Empty(now));
+            var result = new R272_MultiSignalRuleStackSurgeFromHostRule()
+                .EvaluateAsync(context).AsTask().GetAwaiter().GetResult();
+            Assert.True(result.Matched);
+            Assert.False(new R272_MultiSignalRuleStackSurgeFromHostRule()
+                .EvaluateAsync(new RuleEvaluationContext(probe, Sensitivity.Balanced, now))
+                .AsTask().GetAwaiter().GetResult().Matched);
+
+            RuleEngine.ResetRuntimeStateForReplay();
+            var reset = RuleEvaluationContext.CreateForEngine(probe, Sensitivity.Balanced,
+                now, RuleEngineHealthSnapshot.Empty(now));
+            Assert.False(new R272_MultiSignalRuleStackSurgeFromHostRule()
+                .EvaluateAsync(reset).AsTask().GetAwaiter().GetResult().Matched);
+        }
+        finally { RuleEngine.ResetRuntimeStateForReplay(); }
+    }
+
     [Fact] public void High_Confidence_Mode_And_Threshold_Preserved() {
         var p = new R272_MultiSignalRuleStackSurgeFromHostRule().PrecisionProfile;
         Assert.Equal(82, p.MinimumConfidence); Assert.Equal(3, p.Threshold);
