@@ -730,7 +730,7 @@ namespace Carthago.Services
                     bool returned = false;
                     try
                     {
-                        await EnrichAsync(work.Record, work.RunToken).ConfigureAwait(false);
+                        await EnrichAsync(work.Record, work.RunToken, work.EnqueuedAt).ConfigureAwait(false);
                         returned = true;
                     }
                     finally
@@ -860,7 +860,10 @@ namespace Carthago.Services
         }
 
         // ---- enrichment + rules ---------------------------------------
-        private Task EnrichAsync(TrafficRecord rec, CancellationToken ct)
+        internal static bool IsProcessObservationFresh(long enqueuedAt, long observedAt)
+            => observedAt >= enqueuedAt && Stopwatch.GetElapsedTime(enqueuedAt, observedAt) <= TimeSpan.FromSeconds(2);
+
+        private Task EnrichAsync(TrafficRecord rec, CancellationToken ct, long enqueuedAt)
         {
             void Report(string stage, Exception ex)
                 => Console.Error.WriteLine($"Enrichment {stage} error: {ex.Message}");
@@ -896,11 +899,26 @@ namespace Carthago.Services
                         return;
                     }
 
+                    if (!IsProcessObservationFresh(enqueuedAt, Stopwatch.GetTimestamp()))
+                    {
+                        rec.ProcessAttribution = "ObservationTooOld";
+                        rec.ProcessName = "Unknown";
+                        return;
+                    }
+
                     var process = await Task.Run(() => WindowsProcessResolver.ResolveProcess(
                         rec.Source ?? string.Empty, rec.SourcePort,
                         rec.Destination ?? string.Empty, rec.DestinationPort,
                         rec.Protocol ?? string.Empty,
                         rec.SrcIsLocalHost == true, rec.DstIsLocalHost == true), ct).ConfigureAwait(false);
+
+                    ct.ThrowIfCancellationRequested();
+                    if (!IsProcessObservationFresh(enqueuedAt, Stopwatch.GetTimestamp()))
+                    {
+                        rec.ProcessAttribution = "ObservationTooOld";
+                        rec.ProcessName = "Unknown";
+                        return;
+                    }
 
                     if (process is { ProcessId: > 0 })
                     {

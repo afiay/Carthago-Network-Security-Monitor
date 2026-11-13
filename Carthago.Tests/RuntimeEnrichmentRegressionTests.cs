@@ -194,4 +194,15 @@ public sealed class RuntimeEnrichmentRegressionTests
         Assert.Equal(1, record.SrcLat);
         Assert.Equal(2, record.SrcLon);
     }
+
+    [Fact]
+    public void Process_Observation_Age_Is_Bounded_Using_Monotonic_Time()
+    {
+        long start = System.Diagnostics.Stopwatch.Frequency * 10;
+        long second = System.Diagnostics.Stopwatch.Frequency;
+        Assert.True(TrafficCaptureService.IsProcessObservationFresh(start, start));
+        Assert.True(TrafficCaptureService.IsProcessObservationFresh(start, start + second * 2));
+        Assert.False(TrafficCaptureService.IsProcessObservationFresh(start, start + second * 3));
+        Assert.False(TrafficCaptureService.IsProcessObservationFresh(start, start - 1));
+    }
 }
