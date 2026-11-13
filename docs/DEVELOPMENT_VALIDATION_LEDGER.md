@@ -2318,3 +2318,8 @@ Reviewed parent `59b2d177729271e64ca8f55c87c50e412b045add`, WindowsProcessResolv
 ## 2026-11-13 — Enrichment Phase 13 TCP table ownership ambiguity
 
 Reviewed parent `981d0175af5044281fbfe57048e78563ac46ad39`, native resolver, process tests, ETW capture and VPN inference. TCP IPv4/IPv6 table scans now exclude nonlive states and aggregate matching owners rather than return first row; distinct or unknown owners fail closed using existing owner selection. Eight state cases authored, existing owner-selection regressions cover ambiguity. Zero executed; Windows native integration pending. ETW capture currently publishes no PID; no ETW application ownership claim. Next: cache tuple lifetime and session isolation. No detection changes. Windows: `dotnet test .\\Carthago.Tests\\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~ProcessAttributionEnrichmentTests"`.
+
+
+## 2026-11-13 — CLI-007A portable headless frame session
+
+**SOURCE CANDIDATE — UNVERIFIED.** Parent `a1fe45e07ee420a9c4a131877ac250163e53445b`. CLI-006E execution still pending. Add Core-only ordered single-source frame session using existing processor/dispatcher, bounded input and rule selection, isolated state/clock reset, sanitized findings and long counters. Ten synthetic cases authored, zero executed. No native adapter, live capture, policy changes, build/test/Actions or release qualification. Existing replay and Windows host unchanged. See [architecture](02-architecture/CLI-007A-PortableMonitorSession.md). Next: owner-run qualification then adapter lifecycle.
