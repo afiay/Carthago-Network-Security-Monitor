@@ -15,6 +15,7 @@ public static class WindowsActiveSchedulerReservation
     // Isolated qualification only; production uses the fixed name.
     public static IDisposable AcquireNamed(string name)
     {
+        ArgumentNullException.ThrowIfNull(name);
         if (!name.StartsWith(@"Global\Carthago.Test.ActiveScheduler.", StringComparison.Ordinal) &&
             !string.Equals(name, DefaultName, StringComparison.Ordinal))
             throw new ArgumentException("Invalid active scheduler reservation name.", nameof(name));

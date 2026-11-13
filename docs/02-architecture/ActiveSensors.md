@@ -253,3 +253,7 @@ G5F3 follow-up: rejection hash is computed from the exact bounded bytes parsed b
 ## AS-Q07G6A — Integrated source audit and release gate repair
 
 Rebuilt malformed ActiveServiceQualification.psm1 (duplicated text inside timestamp regex from earlier source edit). Active health schema 2 adds aggregate count of distinct profiles with responsive observations; qualification requires every selected profile, not merely aggregate probe totals. Old schema 1 snapshots are unavailable to updated readers; deploy monitor and scripts together. Standalone test ticks reject any due kind lacking its own injected transport before resolution or state mutation; production adapter resolution now rejects ambiguity. Three new xUnit cases (358 across 27 suites), plus offline contract coverage for aggregate false positives and old schema. Source audit only; Windows execution remains mandatory.
+
+## AS-Q07G6B/F — Release matrix source candidate
+
+Added 34 finding-level cases: ASD001–ASD011 each receives a positive repeated change, unchanged negative, and ambiguous second observation; an additional duplicate-JSON case rejects ambiguity even when comparison is invoked outside the store. 392 expected xUnit cases across 28 suites. Integrated synthetic report now records negative SCM contract success explicitly. Stress fixture projects the actual selected DNS name; named reservation rejects null. No Windows execution claimed; no central journal integration or real-world accuracy claim.

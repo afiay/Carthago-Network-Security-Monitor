@@ -126,7 +126,7 @@ public sealed class ActiveSensorLifecycleStressTests : IDisposable
         var entered = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         int probes = 0;
         var manager = new ActiveSensorManager(() => Initial, _ => Adapter,
-            (_, _, _) => { Interlocked.Increment(ref probes); return Task.FromResult(new ActiveSensorRun("OK", true, Row(Initial))); },
+            (p, _, _) => { Interlocked.Increment(ref probes); return Task.FromResult(new ActiveSensorRun("OK", true, Row(Initial, name: p.HostName))); },
             row => Store(beforeCommit: () =>
             {
                 entered.TrySetResult(true);

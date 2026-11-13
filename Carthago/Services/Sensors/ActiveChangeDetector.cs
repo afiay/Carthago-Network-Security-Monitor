@@ -24,6 +24,7 @@ internal static class ActiveChangeDetector
         {
             using var doc = JsonDocument.Parse(row.EvidenceJson);
             var root = doc.RootElement;
+            if (root.ValueKind != JsonValueKind.Object || !ActiveEvidenceStore.UnambiguousJson(root)) return false;
             return row.Sensor switch
             {
                 "Tcp" => row.Status == "Completed" && Ports(root).Values.Any(DefinitePort),
@@ -57,6 +58,8 @@ internal static class ActiveChangeDetector
             using var oldDoc = JsonDocument.Parse(baseline.EvidenceJson);
             using var newDoc = JsonDocument.Parse(current.EvidenceJson);
             var a = oldDoc.RootElement; var b = newDoc.RootElement;
+            if (b.ValueKind != JsonValueKind.Object || !ActiveEvidenceStore.UnambiguousJson(b))
+                return new("Incomparable", Array.Empty<ActiveChange>(), "Ambiguous or malformed evidence.");
             switch (current.Sensor)
             {
                 case "Tcp":
