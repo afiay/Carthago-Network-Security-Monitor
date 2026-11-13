@@ -133,7 +133,7 @@ public sealed class ActiveSensorWorkerTests : IDisposable
         Assert.Equal(3, await Execute(new[] { "run", "--profile", id }, output, error, cancel.Token, manager: () => manager));
         Assert.Equal(0, calls);
         Assert.False(manager.HasReservation);
-        Assert.Contains("All selected profiles blocked", error.ToString());
+        Assert.Contains("changed before readiness", error.ToString());
     }
 
     [Fact]

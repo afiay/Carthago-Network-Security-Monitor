@@ -91,7 +91,29 @@ public static class ActiveSensorWorker
                 if (pinnedGrants is not null &&
                     (!pinnedGrants.TryGetValue(id, out var pinned) || pinned != grant.GrantId))
                 { error.WriteLine("Selected configuration does not match the pinned grant."); return 3; }
+                if (profile.Kind == ActiveSensorKind.Snmp && store.LoadAuthorizedSnmp(profile, grant.GrantId) is null)
+                { error.WriteLine("Selected SNMP credential cannot be decrypted or authorized."); return 3; }
                 selected.Add((profile, grant));
+            }
+            // Recheck the entire selection after acquiring ownership, before
+            // publishing initial health or signaling SCM readiness. Never
+            // silently replace a pinned grant or accept an implicit subset.
+            void ValidateStartup()
+            {
+                token.ThrowIfCancellationRequested();
+                foreach (var item in selected)
+                {
+                    token.ThrowIfCancellationRequested();
+                    var p = item.Profile;
+                    var matches = resolve(p.AdapterId).Where(a =>
+                        a.Address.Equals(p.Adapter.Address) && a.Mask.Equals(p.Adapter.Mask) &&
+                        LocalLanDiscovery.PlanProbeTargets(new[] { a }).Contains(p.Target)).ToArray();
+                    if (matches.Length != 1 || !store.IsAuthorized(p, item.Grant.GrantId) ||
+                        p.Kind == ActiveSensorKind.Gateway &&
+                            !(gatewayCurrent ?? (q => GatewayIntegritySensor.IsConfiguredGateway(q.AdapterId, q.Adapter, q.Target)))(p) ||
+                        p.Kind == ActiveSensorKind.Snmp && store.LoadAuthorizedSnmp(p, item.Grant.GrantId) is null)
+                        throw new InvalidOperationException("Selected profile scope, grant or credential changed before readiness.");
+                }
             }
             var manager = createManager();
             foreach (var item in selected) manager.AddAuthorized(item.Profile, store, item.Grant.GrantId);
@@ -105,7 +127,7 @@ public static class ActiveSensorWorker
             output.WriteLine($"Starting {selected.Count} grant-bound profile(s); acquiring scheduler reservation. Ctrl+C stops.");
             try
             {
-                await manager.RunAsync(deadline.Token, stopWhenAllBlocked: true, ready: ready,
+                await manager.RunAsync(deadline.Token, stopWhenAllBlocked: true, ready: ready, beforeReady: ValidateStartup,
                     sample: sample is null ? null : () => sample(manager,
                         new DateTimeOffset(selected.Min(x => x.Grant.ExpiresTicks), TimeSpan.Zero),
                         new DateTimeOffset(selected.Max(x => x.Grant.ExpiresTicks), TimeSpan.Zero))).ConfigureAwait(false);

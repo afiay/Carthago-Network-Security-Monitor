@@ -294,7 +294,7 @@ internal sealed class ActiveSensorManager
         }
     }
 
-    internal async Task RunAsync(CancellationToken token, bool stopWhenAllBlocked = false, Action? ready = null, Action? sample = null)
+    internal async Task RunAsync(CancellationToken token, bool stopWhenAllBlocked = false, Action? ready = null, Action? sample = null, Action? beforeReady = null)
     {
         token.ThrowIfCancellationRequested();
         lock (_gate)
@@ -311,7 +311,10 @@ internal sealed class ActiveSensorManager
                 throw new InvalidOperationException("Active scheduler reservation unavailable.");
             lock (_gate) _reserved = true;
             token.ThrowIfCancellationRequested();
+            beforeReady?.Invoke();
+            token.ThrowIfCancellationRequested();
             sample?.Invoke();
+            token.ThrowIfCancellationRequested();
             ready?.Invoke();
             while (true)
             {
