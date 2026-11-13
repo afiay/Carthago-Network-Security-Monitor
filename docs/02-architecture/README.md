@@ -12,3 +12,4 @@ System boundaries, evidence lineage, sensors and architectural constraints.
 - [CarthagoV6Vision](CarthagoV6Vision.md)
 - [EntityGraphAndRisk](EntityGraphAndRisk.md)
 - [SensorFleet](SensorFleet.md)
+- [CLI-006A — Portable Core](CLI-006A-PortableCore.md)

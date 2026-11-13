@@ -42,6 +42,8 @@
   <ItemGroup>
     <Compile Remove="Services\RuleEngine.cs" />
     <Compile Remove="Tests\**\*.cs" />
+    <Compile Remove="Services/SessionFiles/CarthagoSessionSnapshot.cs" />
+    <Compile Remove="Services/SessionFiles/CarthagoSessionArchiveService.cs" />
   </ItemGroup>
 
   <!-- Content to copy -->
@@ -72,5 +74,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../Carthago.Contracts/Carthago.Contracts.csproj" />
+    <ProjectReference Include="../Carthago.Core/Carthago.Core.csproj" />
   </ItemGroup>
 </Project>

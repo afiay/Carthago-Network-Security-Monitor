@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Retain canonical source paths during the incremental extraction.
+         These two files are compiled only by Core, not by either host. -->
+    <Compile Include="../Carthago/Services/SessionFiles/CarthagoSessionSnapshot.cs" Link="SessionFiles/CarthagoSessionSnapshot.cs" />
+    <Compile Include="../Carthago/Services/SessionFiles/CarthagoSessionArchiveService.cs" Link="SessionFiles/CarthagoSessionArchiveService.cs" />
+    <!-- Preserve existing internal access while consumers migrate. -->
+    <InternalsVisibleTo Include="Carthago" />
+    <InternalsVisibleTo Include="carthago" />
+    <InternalsVisibleTo Include="Carthago.Tests" />
+    <InternalsVisibleTo Include="Carthago.Cli.Tests" />
+  </ItemGroup>
+</Project>

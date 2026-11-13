@@ -9,12 +9,7 @@
     <Version>0.1.0</Version>
   </PropertyGroup>
   <ItemGroup>
-    <!-- Reuse the existing portable CSA implementation, not the WPF executable.
-         Extract these sources into a shared library in a later milestone. -->
-    <Compile Include="../Carthago/Services/SessionFiles/CarthagoSessionSnapshot.cs" Link="Shared/CarthagoSessionSnapshot.cs" />
-    <Compile Include="../Carthago/Services/SessionFiles/CarthagoSessionArchiveService.cs" Link="Shared/CarthagoSessionArchiveService.cs" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="../Carthago.Contracts/Carthago.Contracts.csproj" />
+    <ProjectReference Include="../Carthago.Core/Carthago.Core.csproj" />
   </ItemGroup>
 </Project>
