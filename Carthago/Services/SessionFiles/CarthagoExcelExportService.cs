@@ -55,7 +55,7 @@ public sealed class CarthagoExcelExportService
             using (var spreadsheet = SpreadsheetDocument.Create(file, SpreadsheetDocumentType.Workbook))
             {
                 WorkbookPart workbookPart = spreadsheet.AddWorkbookPart();
-                workbookPart.Workbook = new Workbook();
+                workbookPart.Workbook = new Workbook(new BookViews(new WorkbookView()));
                 Sheets sheets = workbookPart.Workbook.AppendChild(new Sheets());
                 uint sheetId = 1;
 
