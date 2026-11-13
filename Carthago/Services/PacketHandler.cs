@@ -51,6 +51,7 @@ namespace Carthago.Services
             public DateTime RedisConfigSetRequestedUtc;
             public Smb2WriteExchange.Pending? Smb2Pending;
             public Smb2WriteTargetContext? Smb2Target;
+            public Iec104StartupOffSequence? Iec104Startup;
         }
 
         private sealed class DirectionState
@@ -411,6 +412,7 @@ namespace Carthago.Services
                                 flow.RedisConfigSetPending = false;
                                 flow.Smb2Pending = null;
                                 flow.Smb2Target = null;
+                                flow.Iec104Startup = null;
                             }
                     }
                 }
@@ -430,6 +432,12 @@ namespace Carthago.Services
                             // only when the captured bytes validate the frame.
                             if (OtProtocolLight.TryIdentifyTcp(normPayload, sport, dport, out var otProtocol))
                                 rec.ApplicationProtocol = otProtocol;
+
+                            // Exact IEC104 STARTDT act/con followed by first OFF execution.
+                            if (isIPv4 && (c2s ? dport == 2404 && sport != 2404 : sport == 2404 && dport != 2404))
+                                ObserveIec104Startup(tcpFlow, rec, c2s, normPayload,
+                                    synAnchoredFirstPayload, tcpFlagsField is 0x10 or 0x18 &&
+                                    completeIpPacket && normPayload.Length == l4Payload.Length, seq, ack);
 
                             // Capture-qualified Modbus function 06 first request.
                             // Keep the existing OT protocol label; only internal point evidence is new.
@@ -972,6 +980,7 @@ namespace Carthago.Services
                 state.RedisConfigSetRequestedUtc = default;
                 state.Smb2Pending = null;
                 state.Smb2Target = null;
+                state.Iec104Startup = null;
             }
         }
 
@@ -984,6 +993,7 @@ namespace Carthago.Services
                     (clientToServer ? state.C2S : state.S2C).TlsActive = true;
                     state.Smb2Pending = null;
                     state.Smb2Target = null;
+                    state.Iec104Startup = null;
                 }
             }
         }
@@ -1004,6 +1014,30 @@ namespace Carthago.Services
                 && replyUtc.Kind == DateTimeKind.Utc
                 && replyUtc >= requestUtc
                 && replyUtc - requestUtc <= RedisReplyMaxAge;
+
+        private void ObserveIec104Startup(FlowKey key, TrafficRecord record, bool client,
+            ReadOnlySpan<byte> data, bool first, bool complete, uint seq, uint ack)
+        {
+            lock (_tcpSync)
+            {
+                if (!_tcp.TryGetValue(key, out var flow)) return;
+                var dir = client ? flow.C2S : flow.S2C;
+                var opposite = client ? flow.S2C : flow.C2S;
+                if (!complete || !dir.SynAnchored || !opposite.SynAnchored ||
+                    dir.Invalid || opposite.Invalid || dir.TlsActive || opposite.TlsActive ||
+                    dir.NextSeq != unchecked(seq + (uint)data.Length) || ack != opposite.NextSeq)
+                { flow.Iec104Startup = null; return; }
+
+                if (flow.Iec104Startup == null && client && first && data.Length == 6)
+                    flow.Iec104Startup = new Iec104StartupOffSequence();
+                if (flow.Iec104Startup != null &&
+                    flow.Iec104Startup.Observe(data, client, first, true, _utcNow()))
+                {
+                    record.Iec104StartupOffExecuteObserved = true;
+                    flow.Iec104Startup = null;
+                }
+            }
+        }
 
         // One outstanding request per existing bounded TCP flow. No raw payload retained.
         private void ObserveSmb2WriteExchange(FlowKey key, bool c2s, TrafficRecord record,
@@ -1070,6 +1104,7 @@ namespace Carthago.Services
                     state.RedisConfigSetPending = false;
                     state.Smb2Pending = null;
                     state.Smb2Target = null;
+                        state.Iec104Startup = null;
                     return false;
                 }
 
@@ -1095,6 +1130,7 @@ namespace Carthago.Services
                         state.RedisConfigSetPending = false;
                         state.Smb2Pending = null;
                         state.Smb2Target = null;
+                        state.Iec104Startup = null;
                         return false; // missing segment
                     }
                     if (diff < 0)
@@ -1105,6 +1141,7 @@ namespace Carthago.Services
                             state.RedisConfigSetPending = false;
                             state.Smb2Pending = null;
                             state.Smb2Target = null;
+                        state.Iec104Startup = null;
                             return false; // retransmission while pending: fail closed
                         }
                         if (overlap64 > 3)
@@ -1113,6 +1150,7 @@ namespace Carthago.Services
                             state.RedisConfigSetPending = false;
                             state.Smb2Pending = null;
                             state.Smb2Target = null;
+                        state.Iec104Startup = null;
                             return false;
                         }
                         overlap = (int)overlap64;

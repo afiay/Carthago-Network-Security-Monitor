@@ -196,3 +196,8 @@ Workbook R2725 AN1870; narrow function 06 first-request burst across distinct po
 ## R969 — capture-qualified SNMP UPS reboot-duration request
 
 Workbook R2768 AN2187; exact RFC1628 UPS reboot scalar, bounded BER, separate from enterprise SET, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_969-969.md). 29 authored cases, zero execution; no power-state/authorization claim. Next ID R970.
+
+
+## R970 — IEC104 STARTDT then double-command OFF execute
+
+Workbook R2708 AN2212; exact same-flow startup and first OFF execution, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_970-970.md). 36 authored cases, zero execution; no safety-critical asset identity, approval or physical effect claim. R482 remains producer-gated. Next ID R971.
