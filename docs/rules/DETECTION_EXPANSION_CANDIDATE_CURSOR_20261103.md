@@ -221,3 +221,8 @@ Workbook R2782 AN2253; capture-qualified same-flow application transport handsha
 ## R974 — Modbus oversized FC03 request and matching exception 03
 
 Workbook R2790 AN2288; capture-qualified same-flow transaction and unit, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_974-974.md). 39 authored cases, zero execution; no exploit intent or impact claim. Next ID R975.
+
+
+## R975 — BACnet ReinitializeDevice coldstart/warmstart
+
+Workbook R2697 AN1933; exact capture-qualified confirmed service 20, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_975-975.md). 37 authored cases, zero execution; no authorized-source, accepted command or device restart outcome claim. Next ID R976.
