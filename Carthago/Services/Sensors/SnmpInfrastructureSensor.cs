@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Formats.Asn1;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -79,11 +80,11 @@ public static class SnmpInfrastructureSensor
         message.Pdu().ErrorStatus.ToInt32() == 0 && message.Pdu().Variables.Count == 1 &&
         message.Pdu().Variables[0].Id.ToString() == "1.3.6.1.6.3.15.1.1.4.0";
 
-    internal static bool ValidResponse(ISnmpMessage response, ISnmpMessage request)
+    internal static bool ValidResponse(ISnmpMessage response, ISnmpMessage request, bool encryptedScope)
     {
         var p = response.Parameters;
         var q = request.Parameters;
-        return response.Version == VersionCode.V3 && response.TypeCode() == SnmpType.ResponsePdu &&
+        return encryptedScope && response.Version == VersionCode.V3 && response.TypeCode() == SnmpType.ResponsePdu &&
             response.MessageId() == request.MessageId() && response.RequestId() == request.RequestId() &&
             (int)response.Header.SecurityLevel == 3 && !p.IsInvalid &&
             p.AuthenticationParameters?.GetRaw().Length == 24 && p.PrivacyParameters?.GetRaw().Length == 8 &&
@@ -97,15 +98,44 @@ public static class SnmpInfrastructureSensor
             Equals(response.Scope.ContextName, request.Scope.ContextName);
     }
 
-    private static async Task<ISnmpMessage?> ExchangeAsync(Socket socket, byte[] bytes, UserRegistry users,
+    // Enforce actual USM wire shape before library decoding: an authPriv flag
+    // alone is not evidence that the scoped PDU is encrypted.
+    internal static bool TryReadEnvelope(ReadOnlyMemory<byte> bytes, out bool encrypted)
+    {
+        encrypted = false;
+        try
+        {
+            var root = new AsnReader(bytes, AsnEncodingRules.BER);
+            var message = root.ReadSequence();
+            if (message.ReadInteger() != 3) return false;
+            var header = message.ReadSequence();
+            header.ReadInteger(); header.ReadInteger();
+            var flags = header.ReadOctetString();
+            if (flags.Length != 1 || (flags[0] & ~7) != 0 || header.ReadInteger() != 3) return false;
+            header.ThrowIfNotEmpty();
+            message.ReadOctetString(); // USM security parameters, parsed by library
+            var tag = message.PeekTag();
+            encrypted = tag.HasSameClassAndValue(Asn1Tag.PrimitiveOctetString) && !tag.IsConstructed;
+            if (encrypted) message.ReadOctetString();
+            else if (tag.HasSameClassAndValue(Asn1Tag.Sequence)) message.ReadEncodedValue();
+            else return false;
+            if (encrypted != ((flags[0] & 2) != 0)) return false;
+            message.ThrowIfNotEmpty();
+            root.ThrowIfNotEmpty();
+            return true;
+        }
+        catch (AsnContentException) { return false; }
+    }
+
+    private static async Task<(ISnmpMessage? Message, bool Encrypted)> ExchangeAsync(Socket socket, byte[] bytes, UserRegistry users,
         CancellationToken token)
     {
         await socket.SendAsync(bytes.AsMemory(), SocketFlags.None, token).ConfigureAwait(false);
         var buffer = new byte[MaxDatagram + 1];
         int length = await socket.ReceiveAsync(buffer.AsMemory(), SocketFlags.None, token).ConfigureAwait(false);
-        if (length <= 0 || length > MaxDatagram) return null;
+        if (length <= 0 || length > MaxDatagram || !TryReadEnvelope(buffer.AsMemory(0, length), out var encrypted)) return (null, false);
         var messages = MessageFactory.ParseMessages(buffer, 0, length, users);
-        return messages.Count == 1 ? messages[0] : null;
+        return (messages.Count == 1 ? messages[0] : null, encrypted);
     }
 
     internal static async Task<SnmpInfrastructureObservation> CheckEndpointAsync(IPAddress source, IPAddress target,
@@ -125,8 +155,8 @@ public static class SnmpInfrastructureSensor
             int discoveryMessage = RandomNumberGenerator.GetInt32(1, int.MaxValue);
             int discoveryRequest = RandomNumberGenerator.GetInt32(1, int.MaxValue);
             var discovery = new Discovery(discoveryMessage, discoveryRequest, MaxDatagram);
-            var report = await ExchangeAsync(socket, discovery.ToBytes(), new UserRegistry(), budget.Token).ConfigureAwait(false);
-            if (report is null || !ValidDiscovery(report, discoveryMessage, discoveryRequest))
+            var (report, discoveryEncrypted) = await ExchangeAsync(socket, discovery.ToBytes(), new UserRegistry(), budget.Token).ConfigureAwait(false);
+            if (discoveryEncrypted || report is null || !ValidDiscovery(report, discoveryMessage, discoveryRequest))
                 return Result(SnmpInfrastructureStatus.InvalidResponse);
             budget.Token.ThrowIfCancellationRequested();
             var username = new OctetString(user);
@@ -136,14 +166,14 @@ public static class SnmpInfrastructureSensor
             var request = new GetRequestMessage(VersionCode.V3, RandomNumberGenerator.GetInt32(1, int.MaxValue),
                 RandomNumberGenerator.GetInt32(1, int.MaxValue), username, OctetString.Empty,
                 BuildVariables(), provider, MaxDatagram, report);
-            var response = await ExchangeAsync(socket, request.ToBytes(), users, budget.Token).ConfigureAwait(false);
+            var (response, encryptedScope) = await ExchangeAsync(socket, request.ToBytes(), users, budget.Token).ConfigureAwait(false);
             token.ThrowIfCancellationRequested();
             if (budget.IsCancellationRequested) return Result(SnmpInfrastructureStatus.TimedOut);
             if (response is null) return Result(SnmpInfrastructureStatus.InvalidResponse);
             // Reports (including wrong credentials/time-window) are not authenticated inventory.
             if (response.TypeCode() == SnmpType.ReportPdu)
                 return Result(SnmpInfrastructureStatus.AgentReport);
-            if (!ValidResponse(response, request)) return Result(SnmpInfrastructureStatus.InvalidResponse);
+            if (!ValidResponse(response, request, encryptedScope)) return Result(SnmpInfrastructureStatus.InvalidResponse);
             if (response.Pdu().ErrorStatus.ToInt32() != 0) return Result(SnmpInfrastructureStatus.AgentError);
             if (!TryProject(response.Pdu().Variables, out var evidence) || evidence is null)
                 return Result(SnmpInfrastructureStatus.InvalidResponse);
