@@ -95,3 +95,30 @@ success, different-user/elevation rejection, remote SMB rejection, timeout,
 restart, pipe squatting and concurrent requests on real Windows. No runtime
 tests executed by publishing environment. Linux offline build also remains
 unverified.
+
+## CLI-003A — offline catalog and qualification-ledger queries
+
+SOURCE CANDIDATE — UNVERIFIED. No changes to live IPC or WPF. Uses existing
+CSA v1 Rules rows and the explicitly supplied qualification resume ledger.
+
+```powershell
+dotnet run --project Carthago.Cli -c Release -- rules list ./session.csa --offset 0 --limit 25 --json
+dotnet run --project Carthago.Cli -c Release -- rules show ./session.csa R001 --json
+dotnet run --project Carthago.Cli -c Release -- rules quality ./docs/rules/RULE_QUALIFICATION_RESUME_LEDGER.md --json
+```
+
+Catalog rows are imported and untrusted; only fixed metadata fields are
+projected. Numeric ordering, duplicate rejection, page size 1–100, default 50,
+missing metadata remains null. Existing archive integrity/size checks apply;
+the reader still materializes the archive, so pagination bounds output, not
+archive memory. No evidence, descriptions or arbitrary metadata are emitted.
+Catalog counts are stored rows, not live registered/active/validated rules.
+
+The ledger command reads at most 4 MiB / 10,000 rows and recognizes the
+specific seven-column markdown table. It counts exact audit-pending labels,
+explicit producer-blocked labels and other/unclassified rows; no execution,
+coverage or validation inference. It rejects malformed or duplicate rows.
+The historical ledger is provisional, not a complete rule inventory.
+A future machine-readable, pinned-SHA execution manifest is required for
+actual qualification counts. Live catalog pagination and sensor health remain
+CLI-003B; no false claim of their implementation. Tests authored, unexecuted.

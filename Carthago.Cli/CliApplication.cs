@@ -31,6 +31,9 @@ public static class CliApplication
           carthago capabilities [--json]
           carthago engine status [--json]
           carthago rules summary [--json]
+          carthago rules list <file.csa> [--offset N --limit N] [--json]
+          carthago rules show <file.csa> <rule-id> [--json]
+          carthago rules quality <ledger.md> [--json]
           carthago session inspect <file.csa> [--json]
 
         status reports this CLI only, not the monitoring engine.
@@ -100,6 +103,26 @@ public static class CliApplication
                 case ["rules", "summary"]:
                     return await LiveAsync(ReadCommand.RulesSummary, output, error, json, token, query);
 
+                case ["rules", "list", var listPath]:
+                    return await ListRulesAsync(listPath, 0, 50, output, error, json, token);
+                case ["rules", "list", var pagePath, "--offset", var offset, "--limit", var limit]:
+                    if (!OfflineRuleQueries.TryPage(offset, limit, out int start, out int size))
+                        return await FailAsync(error, json, UsageError, "invalid_usage", "Offset must be nonnegative; limit must be 1–100.");
+                    return await ListRulesAsync(pagePath, start, size, output, error, json, token);
+                case ["rules", "show", var rulePath, var ruleId]:
+                    if (!IsCsaPath(rulePath) || !OfflineRuleQueries.IsRuleId(ruleId))
+                        return await FailAsync(error, json, UsageError, "invalid_usage", "Expected a .csa file and uppercase numeric rule ID.");
+                    var rule = await OfflineRuleQueries.ShowAsync(rulePath, ruleId, token);
+                    if (rule is null) return await FailAsync(error, json, DataError, "rule_not_found", "Rule not found in the saved catalog.");
+                    await WriteAsync(output, json, new { schemaVersion = SchemaVersion, provenance = "untrusted_import",
+                        validation = "not_assessed", rule }, $"{rule.RuleId} {rule.Name ?? "(name unavailable)"}\\nCategory: {rule.Category ?? "unavailable"}\\nDefault severity: {rule.DefaultSeverity ?? "unavailable"}\\nEnabled by default: {rule.EnabledByDefault?.ToString() ?? "unavailable"}\\nPlanned: {rule.IsPlanned?.ToString() ?? "unavailable"}\\nMaturity: {rule.Maturity ?? "unavailable"}\\nValidation: not assessed (saved catalog)");
+                    return Success;
+                case ["rules", "quality", var ledgerPath] when !string.IsNullOrWhiteSpace(ledgerPath) && !ledgerPath.StartsWith("--", StringComparison.Ordinal):
+                    var quality = await OfflineRuleQueries.QualityAsync(ledgerPath, token);
+                    await WriteAsync(output, json, new { schemaVersion = SchemaVersion, quality },
+                        $"Ledger rows: {quality.LedgerRows}\\nAudit pending: {quality.AuditPending}\\nProducer-blocked labels: {quality.ProducerBlocked}\\nOther/unclassified: {quality.OtherOrUnclassified}\\nValidation: not assessed; provisional ledger, not live coverage.");
+                    return Success;
+
                 case ["session", "inspect", var path] when !string.IsNullOrWhiteSpace(path) && !path.StartsWith("--", StringComparison.Ordinal):
                     if (!string.Equals(Path.GetExtension(path), CarthagoSessionSnapshot.FileExtension,
                         StringComparison.OrdinalIgnoreCase))
@@ -136,7 +159,7 @@ public static class CliApplication
             // Never echo exception details or imported strings (paths, secrets, control characters).
             // Malformed archives may fail in the shared reader in several different ways.
             return await FailAsync(error, json, DataError, "data_or_runtime_error",
-                "Command failed. Check file access and CSA format/integrity.");
+                "Command failed. Check file access and input format/integrity.");
         }
     }
 
@@ -169,6 +192,22 @@ public static class CliApplication
                 observedUtc = response.ObservedUtc, registered = response.Registered,
                 enabledByDefault = response.EnabledByDefault, planned = response.Planned, validation = "not_assessed" },
                 $"Registered: {response.Registered}\\nEnabled by default: {response.EnabledByDefault}\\nPlanned: {response.Planned}\\nValidation: not assessed");
+        return Success;
+    }
+
+    private static bool IsCsaPath(string path) => !string.IsNullOrWhiteSpace(path)
+        && !path.StartsWith("--", StringComparison.Ordinal)
+        && string.Equals(Path.GetExtension(path), ".csa", StringComparison.OrdinalIgnoreCase);
+
+    private static async Task<int> ListRulesAsync(string path, int offset, int limit, TextWriter output,
+        TextWriter error, bool json, CancellationToken token)
+    {
+        if (!IsCsaPath(path)) return await FailAsync(error, json, UsageError, "invalid_usage", "Expected a .csa file.");
+        var page = await OfflineRuleQueries.ListAsync(path, offset, limit, token);
+        await WriteAsync(output, json, new { schemaVersion = SchemaVersion, provenance = "untrusted_import",
+            validation = "not_assessed", page },
+            $"Saved catalog: {page.Total} rows (offset {page.Offset}, limit {page.Limit})\\n" +
+            string.Join("\\n", page.Rules.Select(r => $"{r.RuleId} {r.Name ?? "(name unavailable)"}")));
         return Success;
     }
 
