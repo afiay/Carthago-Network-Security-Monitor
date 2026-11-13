@@ -35,6 +35,23 @@ public sealed class EndpointIpEnrichmentTests
     public void Scope_Is_Conservative(string ip, string scope)
         => Assert.Equal(scope, EndpointIpEnrichment.Classify(ip));
 
+    [Theory]
+    [InlineData("::ffff:8.8.8.8", "8.8.8.8")]
+    [InlineData("8.8.8.8", "8.8.8.8")]
+    [InlineData("2001:4860:4860::8888", "2001:4860:4860::8888")]
+    [InlineData("::ffff:192.168.1.1", null)]
+    [InlineData("100.64.0.1", null)]
+    [InlineData("2001:db8::1", null)]
+    [InlineData("::1", null)]
+    [InlineData("invalid", null)]
+    [InlineData(null, null)]
+    public void Geo_Lookup_Address_Uses_Public_Scope_And_Normalizes_Mapped_IPv4(string? input, string? expected)
+    {
+        bool eligible = Carthago.Services.Geo.GeoIpService.TryGetLookupAddress(input, out var address);
+        Assert.Equal(expected is not null, eligible);
+        if (expected is not null) Assert.Equal(IPAddress.Parse(expected), address);
+    }
+
     [Fact]
     public void Private_Address_Is_Not_Automatically_Local()
     {

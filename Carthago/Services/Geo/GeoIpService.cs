@@ -37,7 +37,7 @@ namespace Carthago.Services.Geo
 
         public GeoInfo? Lookup(string ip)
         {
-            if (string.IsNullOrWhiteSpace(ip) || !IPAddress.TryParse(ip, out var addr)) return null;
+            if (!TryGetLookupAddress(ip, out var addr)) return null;
 
             string? country = null, iso2 = null, city = null, asnOrg = null;
             long? asn = null;
@@ -69,6 +69,18 @@ namespace Carthago.Services.Geo
             }
 
             return CreateResult(country, iso2, city, lat, lon, asn, asnOrg);
+        }
+
+        // Keep the provider boundary consistent with capture endpoint scope.
+        // Mapped IPv4 must query the IPv4 database key, not the IPv6 wrapper.
+        internal static bool TryGetLookupAddress(string? ip, out IPAddress address)
+        {
+            address = IPAddress.None;
+            if (!IPAddress.TryParse(ip, out var parsed)
+                || EndpointIpEnrichment.Classify(ip) != "Public")
+                return false;
+            address = EndpointIpEnrichment.Normalize(parsed);
+            return true;
         }
 
         // Coordinates are optional; ASN-only and country-only results are useful.
