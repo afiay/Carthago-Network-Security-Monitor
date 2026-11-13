@@ -121,3 +121,36 @@ process identity or sample must not interpret this as zero activity.
 Stopped service may leave its previous sample on disk, which is never
 accepted as current. Freshness limit 120 seconds; status interval 1–60s.
 CLI transition polling is bounded, but native SCM calls can block.
+
+## Operator qualification (CLI-005C3A)
+
+Use actual deployed binaries and config:
+
+```powershell
+$monitor = 'C:\Program Files\Carthago\Monitor\carthago-monitor.exe'
+$cli = 'C:\Program Files\Carthago\Cli\carthago.exe'
+$config = 'C:\ProgramData\Carthago\ServiceConfig\monitor.json'
+.\scripts\test-monitor-service-preflight.ps1 -MonitorExe $monitor -CliExe $cli -ConfigPath $config
+```
+
+Preflight is read-only. Review effective service-account permissions,
+all ancestors and binary provenance manually; broad ACL screening is
+not proof of effective access. Interface enumeration uses invoking account.
+
+In a maintenance window, with service stopped and desktop/foreground
+closed, run:
+
+```powershell
+.\scripts\verify-monitor-service.ps1 -MonitorExe $monitor -CliExe $cli -ConfigPath $config -RunLifecycle -ConfirmExclusiveCaptureAndPermissions -ObserveSeconds 60
+```
+
+The harness starts/stops/restarts the registered service, compares fresh
+process-bound samples, inspects bounded appended journal records and
+attempts final stop. Cleanup failure requires manual intervention. No
+traffic injection; provide approved lab traffic yourself if needed.
+Add -RequireJournalEvidence for detection counter delta and observed
+persisted append. No detections is inconclusive, not accuracy proof.
+Shared journal is not session-attributed; avoid UTC midnight. Report
+contains hashes, counter deltas and labels, no raw detection rows.
+Passing only qualifies observed scope, not recovery or full runtime
+correctness. Native Windows qualification remains pending.

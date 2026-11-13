@@ -351,3 +351,17 @@ health, lossless capture, journal delivery or detection accuracy proof.
 Stale/invalid/missing/mismatched/unreadable sample not exposed as current.
 SCM status independent of sample; health/doctor exit 3 if no fresh sample.
 No install/recovery automation, capture validation or Windows tests run.
+
+## CLI-005C3A — deployment preflight and observed-scope qualification
+
+SOURCE CANDIDATE — UNVERIFIED. Read-only preflight checks deployment,
+runtime, Npcap registration, exact interface/config, SCM ImagePath,
+non-LocalSystem identity, broad-write ACL screening and input hashes.
+Explicit lifecycle opt-in requires stopped service and exclusive capture/
+permissions confirmation. Start, check matching fresh samples and actual
+capture/parse counter movement, stop, inspect bounded same-day journal
+append, restart and confirm new session, finally stop. No traffic injection,
+installation, ACL mutation, recovery policy change or service process kill.
+Journal is shared, not session-attributed; no detection is inconclusive.
+RequireJournalEvidence requires observed append and detection counter delta.
+Manual restart is not crash recovery. Windows execution pending.
