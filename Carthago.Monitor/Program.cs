@@ -30,6 +30,9 @@ internal static class Program
                 "  carthago-monitor monitor start --interface ID [--filter BPF] [--status-seconds N] [--json] [--enable-cli-ipc] [--allow-cli-stop]\n" +
                 "  carthago-monitor active status [--json]\n" +
                 "  carthago-monitor active run --profile ID [--profile ID ...]\n" +
+                "  carthago-monitor active-service provision --account-sid SID --adapter GUID --source IPv4 --target IPv4 --sensor KIND --host NAME --port N --interval MIN --history true|false\n" +
+                "  carthago-monitor active-service configure --account-sid SID --profile ID [--profile ID ...]\n" +
+                "  carthago-monitor active-service revoke --account-sid SID --profile ID\n" +
                 "  carthago-monitor active-service validate --config ABSOLUTE_PATH\n" +
                 "  carthago-monitor active-service run --config ABSOLUTE_PATH (SCM only)\n" +
                 "  carthago-monitor service validate --config ABSOLUTE_PATH [--json]\n" +
@@ -49,6 +52,8 @@ internal static class Program
             }
             finally { Console.CancelKeyPress -= handler; }
         }
+        if (args.Length >= 2 && args[0] == "active-service" && args[1] is "provision" or "configure" or "revoke")
+            return ActiveServiceProvisioning.Execute(args[1..]);
         if (args is ["active-service", "validate", "--config", var activeConfig])
         {
             try

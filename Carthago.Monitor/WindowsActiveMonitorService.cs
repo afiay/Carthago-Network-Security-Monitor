@@ -23,8 +23,7 @@ internal sealed class WindowsActiveMonitorService : ServiceBase
         RequestAdditionalTime(45000);
         try
         {
-            var options = ActiveServiceConfiguration.Load(_path);
-            _run = new ActiveServiceRun((token, ready) => ActiveServiceWorker.ExecuteAsync(options, token, ready));
+            _run = new ActiveServiceRun((token, ready) => ActiveServiceWorker.ExecuteAsync(_path, token, ready));
             _run.Started.WaitAsync(TimeSpan.FromSeconds(30)).GetAwaiter().GetResult();
             if (_run.Completion.IsCompleted) throw new InvalidOperationException("Active worker exited at startup.");
             _ = _run.Completion.ContinueWith(t =>
