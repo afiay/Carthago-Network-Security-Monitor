@@ -6039,3 +6039,14 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Ownership:** MainWindow.xaml, DashboardResponsive.cs, ledger. Existing five panel instances, names, contents, bindings and handlers retained; obsolete layout-only wrapper names removed with controller references. No data contracts, telemetry, detection, privacy, ScottPlot 10/120, Events 80/500, Cisco/WebView2, executable CLI, tests or automation changes. CLI minimum 300; capability visibility remains Wide-only.
 
 **Risks / planned unexecuted:** WPF spanning Auto-row measurement, chart minimum usable area, investigation scrolling, CLI content fit, tab order, resizing across 1440/1100/1024 and below, DPI 100/125/150/200%, long titles and empty states. Builds/tests/CI/captures/renders 0. Next GA UI-184: review event-table density and CLI visual balance against the new workspace; no fabricated data.
+
+
+## GA UI-184 — Dense event stream and compact offline terminal companion
+
+**2026-11-14 · SOURCE CANDIDATE — UNVERIFIED.** Approved Library image libfile_b0a34361560c8191b641e432b3e6b15c visually inspected. Baseline `ff35973a0373fb61ccee1a64d836944458d54f88`, tree `c5bba21f4f255996b46cea03282afc214f67af02`; prior GA UI-183.
+
+**Visible before → after:** Event rows 62/56 → 44/48, header 48 → 34, viewport 610/570/500 → 440/420/400 (Wide/Standard/Compact). Compact filter cards, reduced table and header insets, smaller severity badge and endpoint/evidence cell padding preserve two-line provenance and all columns. CLI initial minimum 560 and responsive minimum 300 → 260, tighter terminal header and offline message, smaller prompt glyph. Reference mapping: dense alternating event rows and compact right terminal beneath investigation; no demo values or executable console. Wide shared staggered grid unchanged, Standard/Compact stacking unchanged. Static impact: more records per unit height, less secondary chrome; no render.
+
+**Ownership/static review:** MainWindow.xaml, MainWindow.DashboardResponsive.cs, ledger only. Existing event grid columns, bindings, filters, selection, read-only flags, virtualization, frozen columns, 80/500 limits and CLI unavailable text retained. No shared API, capture, detection, privacy, ScottPlot 10/120, Cisco/WebView2, tests or automation changes. Existing responsive layout consumers retained.
+
+**Risks/planned unexecuted:** two-line cell clipping at 44/48, long IPv6/evidence values, horizontal scrolling, filter wrap, offline terminal capability text and shared Auto row measurement, keyboard focus, widths 1920/1440/1100/1099/1024/1023/640, DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. Next GA UI-185: audit Dashboard masthead and KPI first-screen vertical footprint, then progress to Incidents workspace.

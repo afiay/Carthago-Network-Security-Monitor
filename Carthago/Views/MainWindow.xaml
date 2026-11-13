@@ -1215,7 +1215,7 @@
                     <!-- GA UI-160: compact integrated evidence heading, with real navigation only. -->
                     <Border Grid.Row="0" Background="{StaticResource DashboardLiveEventsHeaderGradient}"
                             BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1"
-                            CornerRadius="12" Padding="16,12">
+                            CornerRadius="12" Padding="10,8">
                       <Grid>
                         <Grid.ColumnDefinitions>
                           <ColumnDefinition Width="Auto"/>
@@ -1256,16 +1256,16 @@
                           </StackPanel>
                         </DockPanel>
                         <UniformGrid x:Name="DashboardLiveFilterCardsGrid" Columns="2">
-                          <Border x:Name="DashboardLiveClassificationCard" MinHeight="128" Margin="0,0,8,0" Padding="16,14"
+                          <Border x:Name="DashboardLiveClassificationCard" MinHeight="0" Margin="0,0,8,0" Padding="9,7"
                                   Background="#102A3B" BorderBrush="{StaticResource CardBorderBrush}"
                                   BorderThickness="1" CornerRadius="12">
                             <StackPanel>
                               <TextBlock Text="01  EVENT CLASSIFICATION" FontSize="14" FontWeight="Bold"
                                          Foreground="{StaticResource AccentBrush}" Margin="0,0,0,6"/>
                               <TextBlock Text="Severity and reported protocol" FontSize="11"
-                                         Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,14"/>
+                                         Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,6"/>
                               <WrapPanel>
-                                <StackPanel Orientation="Horizontal" Height="38" Margin="0,0,10,6">
+                                <StackPanel Orientation="Horizontal" Height="32" Margin="0,0,10,6">
                         <TextBlock x:Name="DashboardLiveSeverityFilterLabel"
                                    Text="Severity"
                                    Foreground="{StaticResource TextMutedBrush}"
@@ -1274,7 +1274,7 @@
                                    Margin="0,0,6,0"/>
                         <ComboBox x:Name="DashboardLiveSeverityFilter"
                                   FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
-                                  Width="142" Height="36"
+                                  Width="142" Height="30"
                                   SelectedIndex="0"
                                   ToolTip="Filter locally observed detection severity"
                                    ToolTipService.ShowsToolTipOnKeyboardFocus="True"
@@ -1290,7 +1290,7 @@
                           <ComboBoxItem Content="Info" Tag="Info"/>
                         </ComboBox>
                       </StackPanel>
-                                <StackPanel Orientation="Horizontal" Height="38" Margin="0,0,10,6">
+                                <StackPanel Orientation="Horizontal" Height="32" Margin="0,0,10,6">
                         <TextBlock x:Name="DashboardLiveProtocolFilterLabel"
                                    Text="Protocol"
                                    Foreground="{StaticResource TextMutedBrush}"
@@ -1299,7 +1299,7 @@
                                    Margin="0,0,6,0"/>
                         <ComboBox x:Name="DashboardLiveProtocolFilter"
                                   FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
-                                  Width="142" Height="36"
+                                  Width="142" Height="30"
                                   SelectedIndex="0"
                                   ToolTip="Filter by observed protocol; other protocols remain available under All"
                                    ToolTipService.ShowsToolTipOnKeyboardFocus="True"
@@ -1316,7 +1316,7 @@
                               </WrapPanel>
                             </StackPanel>
                           </Border>
-                          <Border x:Name="DashboardLiveMetadataCard" MinHeight="128" Margin="8,0,0,0" Padding="16,14"
+                          <Border x:Name="DashboardLiveMetadataCard" MinHeight="0" Margin="8,0,0,0" Padding="9,7"
                                   Background="#0E2534" BorderBrush="{StaticResource CardBorderBrush}"
                                   BorderThickness="1" CornerRadius="12">
                             <StackPanel>
@@ -1324,9 +1324,9 @@
                                          Foreground="{StaticResource AccentBrush}" Margin="0,0,0,6"/>
                               <TextBlock Text="Rule ID and reported endpoints; no evidence payload search"
                                          FontSize="11" TextWrapping="Wrap"
-                                         Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,14"/>
+                                         Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,6"/>
                               <WrapPanel>
-                                <StackPanel Orientation="Horizontal" Height="38" Margin="0,0,10,6">
+                                <StackPanel Orientation="Horizontal" Height="32" Margin="0,0,10,6">
                         <TextBlock x:Name="DashboardLiveRuleFilterLabel"
                                    Text="Rule"
                                    Foreground="{StaticResource TextMutedBrush}"
@@ -1335,7 +1335,7 @@
                                    Margin="0,0,6,0"/>
                         <TextBox x:Name="DashboardLiveRuleFilter"
                                   FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
-                                 Width="116" Height="36"
+                                 Width="116" Height="30"
                                  VerticalContentAlignment="Center"
                                  ToolTip="Filter by exact rule ID or part of a rule ID"
                                   ToolTipService.ShowsToolTipOnKeyboardFocus="True"
@@ -1344,7 +1344,7 @@
                                  AutomationProperties.LabeledBy="{Binding ElementName=DashboardLiveRuleFilterLabel}"
                                  TextChanged="DashboardLiveEventsTextChanged"/>
                       </StackPanel>
-                                <StackPanel Orientation="Horizontal" Height="38" Margin="0,0,10,6">
+                                <StackPanel Orientation="Horizontal" Height="32" Margin="0,0,10,6">
                         <TextBlock x:Name="DashboardLiveSearchFilterLabel"
                                    Text="Search"
                                    Foreground="{StaticResource TextMutedBrush}"
@@ -1353,7 +1353,7 @@
                                    Margin="0,0,6,0"/>
                         <TextBox x:Name="DashboardLiveSearchFilter"
                                   FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
-                                 Width="200" Height="36"
+                                 Width="200" Height="30"
                                  VerticalContentAlignment="Center"
                                  ToolTip="Search visible event source, destination, rule or protocol; no evidence payload search"
                                   ToolTipService.ShowsToolTipOnKeyboardFocus="True"
@@ -1378,7 +1378,7 @@
                     </Border>
 <!-- GA UI-153: cohesive local evidence-stream surface; original read-only grid, columns and consumers retained. -->
                     <Border Grid.Row="2" Background="#081827" BorderBrush="#2B4B60"
-                            BorderThickness="1" CornerRadius="14" Padding="14,14,14,12">
+                            BorderThickness="1" CornerRadius="14" Padding="8">
                       <Grid>
                         <Grid.RowDefinitions>
                           <RowDefinition Height="Auto"/>
@@ -1405,7 +1405,7 @@
                           </StackPanel>
                           <Border Grid.Column="1" Background="#123343" BorderBrush="#2B6372"
                                   BorderThickness="1" CornerRadius="8" Padding="10,6"
-                                  VerticalAlignment="Center" Margin="10,0,0,0">
+                                  VerticalAlignment="Center" Margin="5,0,0,0">
                             <StackPanel Orientation="Horizontal">
                               <TextBlock Text="LOCAL VIEW" Foreground="#69DCEC" FontSize="10"
                                          FontWeight="Bold" Margin="0,0,9,0"/>
@@ -1418,7 +1418,7 @@
                                 BorderThickness="1" CornerRadius="10" Padding="1">
                           <Grid>
                             <DataGrid x:Name="DashboardLiveEventsGrid"
-                                Height="610"
+                                Height="440"
                                 AutoGenerateColumns="False"
                                 IsReadOnly="True"
                                 CanUserAddRows="False"
@@ -1427,9 +1427,9 @@
                                 HeadersVisibility="Column"
                                 GridLinesVisibility="Horizontal"
                                 HorizontalGridLinesBrush="{StaticResource SoftDividerBrush}"
-                                RowHeight="62"
+                                RowHeight="44"
                                 AlternationCount="2"
-                                ColumnHeaderHeight="48"
+                                ColumnHeaderHeight="34"
                                 VirtualizingPanel.IsVirtualizing="True"
                                 VirtualizingPanel.VirtualizationMode="Recycling"
                                 EnableRowVirtualization="True"
@@ -1491,7 +1491,7 @@
                                  <Grid Margin="3,2,8,2">
                                    <Grid.ColumnDefinitions><ColumnDefinition Width="6"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                    <Border Grid.Column="0" Background="#47CFE4" CornerRadius="3" Margin="0,2,0,2"/>
-                                   <Border Grid.Column="1" Style="{StaticResource DashboardLiveEventsSeverityPill}" Margin="9,0,0,0" Padding="10,8">
+                                   <Border Grid.Column="1" Style="{StaticResource DashboardLiveEventsSeverityPill}" Margin="5,0,0,0" Padding="7,3">
                                      <TextBlock Text="{Binding Severity}" FontSize="12" FontWeight="Bold"
                                                 Foreground="{StaticResource TextBrush}" HorizontalAlignment="Center"/>
                                    </Border>
@@ -1512,14 +1512,14 @@
                             <DataGridTemplateColumn.CellTemplate>
                               <DataTemplate>
                                 <Border Background="#112D3E" BorderBrush="#315269" BorderThickness="1"
-                                        CornerRadius="7" Padding="9,3" Margin="2,1,5,1">
+                                        CornerRadius="7" Padding="5,1" Margin="2,1,5,1">
                                   <Grid>
                                     <Grid.ColumnDefinitions>
                                       <ColumnDefinition Width="3"/>
                                       <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <Border Background="#39B6D6" CornerRadius="2"/>
-                                    <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                                    <StackPanel Grid.Column="1" Margin="5,0,0,0">
                                       <TextBlock Text="REPORTED ORIGIN"
                                                  Foreground="#73D4EC"
                                                  FontSize="9" FontWeight="Bold"/>
@@ -1547,14 +1547,14 @@
                             <DataGridTemplateColumn.CellTemplate>
                               <DataTemplate>
                                 <Border Background="#112D3E" BorderBrush="#315269" BorderThickness="1"
-                                        CornerRadius="7" Padding="9,3" Margin="2,1,5,1">
+                                        CornerRadius="7" Padding="5,1" Margin="2,1,5,1">
                                   <Grid>
                                     <Grid.ColumnDefinitions>
                                       <ColumnDefinition Width="3"/>
                                       <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <Border Background="#2E998F" CornerRadius="2"/>
-                                    <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                                    <StackPanel Grid.Column="1" Margin="5,0,0,0">
                                       <TextBlock Text="REPORTED TARGET"
                                                  Foreground="#75CFC4"
                                                  FontSize="9" FontWeight="Bold"/>
@@ -1606,11 +1606,11 @@
                             <DataGridTemplateColumn.CellTemplate>
                               <DataTemplate>
                                 <Border Background="#122C3D" BorderBrush="#345168" BorderThickness="1"
-                                        CornerRadius="7" Padding="8,3" Margin="2,1,4,1">
+                                        CornerRadius="7" Padding="5,1" Margin="2,1,4,1">
                                   <Grid>
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="3"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                     <Border Background="#93B9CB" CornerRadius="2" Margin="0,2,0,2"/>
-                                    <StackPanel Grid.Column="1" Margin="9,0,0,0">
+                                    <StackPanel Grid.Column="1" Margin="5,0,0,0">
                                       <TextBlock Text="REPORTED EVIDENCE" FontSize="9" FontWeight="Bold" Foreground="#93B9CB"/>
                                       <TextBlock Text="{Binding EvidenceSummary}" FontSize="12" FontWeight="SemiBold"
                                                  Foreground="{StaticResource TextBrush}" TextTrimming="CharacterEllipsis"
@@ -1631,11 +1631,11 @@
                             <DataGridTemplateColumn.CellTemplate>
                               <DataTemplate>
                                 <Border Background="#102C34" BorderBrush="#2B5961" BorderThickness="1"
-                                        CornerRadius="7" Padding="8,3" Margin="2,1,4,1">
+                                        CornerRadius="7" Padding="5,1" Margin="2,1,4,1">
                                   <Grid>
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="3"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                     <Border Background="#73C9BD" CornerRadius="2" Margin="0,2,0,2"/>
-                                    <StackPanel Grid.Column="1" Margin="9,0,0,0">
+                                    <StackPanel Grid.Column="1" Margin="5,0,0,0">
                                       <TextBlock Text="TRANSPORT STATUS" FontSize="9" FontWeight="Bold" Foreground="#73C9BD"/>
                                       <TextBlock Text="{Binding DeliveryStatus}" FontSize="12" FontWeight="SemiBold"
                                                  Foreground="{StaticResource TextBrush}" TextTrimming="CharacterEllipsis"
@@ -1687,7 +1687,7 @@
                       </Border>
                           </Grid>
                         </Border>
-                        <Border Grid.Row="2" Margin="4,12,4,0" Padding="10,8"
+                        <Border Grid.Row="2" Margin="4,12,4,0" Padding="7,3"
                                 Background="#102A39" BorderBrush="#2B4E60"
                                 BorderThickness="1" CornerRadius="8">
                           <TextBlock Text="RECORDED METADATA ONLY  ·  No raw payloads or verified capture-health claim"
@@ -1719,8 +1719,8 @@
                        
                         Style="{StaticResource PageSurface}"
                         Background="#0A1928" BorderBrush="#2B4B60" BorderThickness="1"
-                        CornerRadius="14" Padding="16"
-                        MinHeight="560"
+                        CornerRadius="10" Padding="10"
+                        MinHeight="260"
                         HorizontalAlignment="Stretch"
                         AutomationProperties.Name="Carthago CLI companion, unavailable" Grid.Row="2" Grid.Column="2" Grid.RowSpan="1" Grid.ColumnSpan="1" Margin="0">
                   <Grid>
@@ -1730,7 +1730,7 @@
                       <RowDefinition x:Name="DashboardCliCapabilityRow" Height="*"/>
                       <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                    <Grid Grid.Row="0" Margin="0,0,0,16">
+                    <Grid Grid.Row="0" Margin="0,0,0,8">
                       <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
@@ -1768,10 +1768,10 @@
                                        Foreground="{StaticResource TextMutedBrush}"/>
                           </DockPanel>
                         </Border>
-                        <StackPanel Grid.Row="1" Margin="14,20,14,22">
-                          <TextBlock Text="&gt;_" FontFamily="Consolas" FontSize="26"
+                        <StackPanel Grid.Row="1" Margin="10,10,10,12">
+                          <TextBlock Text="&gt;_" FontFamily="Consolas" FontSize="19"
                                      FontWeight="Bold" Foreground="{StaticResource AccentBrush}"
-                                     Margin="0,0,0,14"/>
+                                     Margin="0,0,0,6"/>
                           <TextBlock Text="No CLI session connected" FontFamily="Consolas"
                                      FontSize="13" FontWeight="SemiBold"
                                      Foreground="{StaticResource TextSubtleBrush}"

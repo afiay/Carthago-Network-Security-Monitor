@@ -110,14 +110,14 @@ public partial class MainWindow
         var wideLower = wideFocus;
         // GA UI-171: retain the wider severity-first evidence viewport on Wide and Standard;
         // Compact and below-1024 preserve a shorter readable scan surface.
-        DashboardLiveEventsGrid.Height = mode == ResponsiveLayoutMode.Wide ? 610 :
-            mode == ResponsiveLayoutMode.Standard ? 570 : 500;
-        DashboardLiveEventsGrid.RowHeight = mode == ResponsiveLayoutMode.Compact || narrowKpis ? 56 : 62;
+        DashboardLiveEventsGrid.Height = mode == ResponsiveLayoutMode.Wide ? 440 :
+            mode == ResponsiveLayoutMode.Standard ? 420 : 400;
+        DashboardLiveEventsGrid.RowHeight = mode == ResponsiveLayoutMode.Compact || narrowKpis ? 48 : 44;
 
         // GA UI-162: keep the terminal as a full evidence companion on Wide, but
         // avoid a second 560-unit visual-only slab beneath the live table when stacked.
         // This is presentation-only: the CLI remains unavailable in every mode.
-        DashboardCliCompanionPanel.MinHeight = wideLower ? 300 : 300;
+        DashboardCliCompanionPanel.MinHeight = wideLower ? 260 : 260;
         DashboardCliCapabilityRow.Height = wideLower
             ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
         DashboardCliCapabilityPanel.Visibility = wideLower
