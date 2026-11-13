@@ -230,31 +230,7 @@ public partial class MainWindow
                 t.Category, t.Tags, t.Details
             })));
             snapshot.AddRows("Rules", ruleRows);
-            snapshot.AddRows("Enrichment", traffic.Where(t =>
-                t.ProcessId > 0
-                || !string.IsNullOrWhiteSpace(t.ProcessName)
-                || !string.IsNullOrWhiteSpace(t.NetworkType)
-                || t.IsVpn != null
-                || t.IsProxy != null
-                || !string.IsNullOrWhiteSpace(t.SrcCountry)
-                || !string.IsNullOrWhiteSpace(t.SrcCountryIso2)
-                || t.SrcLat != null
-                || t.SrcLon != null
-                || !string.IsNullOrWhiteSpace(t.DstCountry)
-                || !string.IsNullOrWhiteSpace(t.DstCountryIso2)
-                || t.DstLat != null
-                || t.DstLon != null
-                || !string.IsNullOrWhiteSpace(t.WhoisOrganization)
-                || t.ReputationScore != null)
-                .Select(t => new
-            {
-                t.Id, t.Source, t.Destination,
-                t.ProcessName, t.ProcessId, t.NetworkType, t.IsVpn, t.IsProxy,
-                t.SrcCountry, t.SrcCountryIso2, t.SrcLat, t.SrcLon,
-                t.DstCountry, t.DstCountryIso2, t.DstLat, t.DstLon,
-                t.WhoisRegistrar, t.WhoisOrganization, t.WhoisCountry, t.WhoisASN, t.WhoisAbuseContact,
-                t.ReputationIsMalicious, t.ReputationScore, t.ReputationReports, t.ReputationLastSeen
-            }));
+            snapshot.AddRows("Enrichment", traffic.Select(CarthagoEnrichmentExport.Project));
             return snapshot;
         });
     }
