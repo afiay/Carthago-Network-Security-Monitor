@@ -166,6 +166,7 @@ namespace Carthago.Models
         public bool SnmpHighDemandGetBulkObserved { get; internal set; }
         public bool SnmpSystemFingerprintGetObserved { get; internal set; }
         public bool Iec104StartupOffExecuteObserved { get; internal set; }
+        public bool OpcUaHelloAckObserved { get; internal set; }
         public bool Dnp3UnsolicitedBinaryEventObserved { get; internal set; }
         // Capture-only unit/register key, intentionally excluded from JSON/export.
         internal uint? ModbusSingleRegisterWritePoint { get; set; }

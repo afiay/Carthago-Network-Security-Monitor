@@ -211,3 +211,8 @@ Workbook R2744 AN1249; exact one-request operation-level predicate distinct from
 ## R972 — SNMP exact system fingerprint GET
 
 Workbook R2771 AN2186; three distinct RFC3418 system scalars, exact GET PDU, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_972-972.md). 32 authored cases, zero execution; no returned fingerprint/authorization claim. Next ID R973.
+
+
+## R973 — OPC UA HEL/ACK with public client
+
+Workbook R2782 AN2253; capture-qualified same-flow application transport handshake, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_973-973.md). 36 authored cases, zero execution; no authentication, API execution or asset inventory claim. Next ID R974.

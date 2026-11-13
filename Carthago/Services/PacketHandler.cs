@@ -52,6 +52,7 @@ namespace Carthago.Services
             public Smb2WriteExchange.Pending? Smb2Pending;
             public Smb2WriteTargetContext? Smb2Target;
             public Iec104StartupOffSequence? Iec104Startup;
+            public OpcUaHelloAckInspector.Hello? OpcUaHello;
         }
 
         private sealed class DirectionState
@@ -413,6 +414,7 @@ namespace Carthago.Services
                                 flow.Smb2Pending = null;
                                 flow.Smb2Target = null;
                                 flow.Iec104Startup = null;
+                                flow.OpcUaHello = null;
                             }
                     }
                 }
@@ -437,6 +439,12 @@ namespace Carthago.Services
                             if (isIPv4 && (c2s ? dport == 2404 && sport != 2404 : sport == 2404 && dport != 2404))
                                 ObserveIec104Startup(tcpFlow, rec, c2s, normPayload,
                                     synAnchoredFirstPayload, tcpFlagsField is 0x10 or 0x18 &&
+                                    completeIpPacket && normPayload.Length == l4Payload.Length, seq, ack);
+
+                            // OPC UA HEL/ACK on the same observed TCP connection.
+                            if (isIPv4 && (c2s ? dport == 4840 && sport != 4840 : sport == 4840 && dport != 4840))
+                                ObserveOpcUaHelloAck(tcpFlow, rec, c2s, normPayload,
+                                    synAnchoredFirstPayload, tcpFlagsField == 0x18 &&
                                     completeIpPacket && normPayload.Length == l4Payload.Length, seq, ack);
 
                             // Capture-qualified Modbus function 06 first request.
@@ -991,6 +999,7 @@ namespace Carthago.Services
                 state.Smb2Pending = null;
                 state.Smb2Target = null;
                 state.Iec104Startup = null;
+                state.OpcUaHello = null;
             }
         }
 
@@ -1004,6 +1013,7 @@ namespace Carthago.Services
                     state.Smb2Pending = null;
                     state.Smb2Target = null;
                     state.Iec104Startup = null;
+                    state.OpcUaHello = null;
                 }
             }
         }
@@ -1046,6 +1056,31 @@ namespace Carthago.Services
                     record.Iec104StartupOffExecuteObserved = true;
                     flow.Iec104Startup = null;
                 }
+            }
+        }
+
+        private void ObserveOpcUaHelloAck(FlowKey key, TrafficRecord record, bool client,
+            ReadOnlySpan<byte> data, bool first, bool complete, uint seq, uint ack)
+        {
+            lock (_tcpSync)
+            {
+                if (!_tcp.TryGetValue(key, out var flow)) return;
+                var pending = flow.OpcUaHello;
+                flow.OpcUaHello = null;
+                var dir = client ? flow.C2S : flow.S2C;
+                var opposite = client ? flow.S2C : flow.C2S;
+                if (!first || !complete || !dir.SynAnchored || !opposite.SynAnchored ||
+                    dir.Invalid || opposite.Invalid || dir.TlsActive || opposite.TlsActive ||
+                    dir.NextSeq != unchecked(seq + (uint)data.Length) || ack != opposite.NextSeq)
+                    return;
+                var now = _utcNow();
+                if (client)
+                {
+                    if (OpcUaHelloAckInspector.TryHello(data, now, out var hello))
+                        flow.OpcUaHello = hello;
+                }
+                else if (pending.HasValue && OpcUaHelloAckInspector.IsMatchingAck(data, pending.Value, now))
+                    record.OpcUaHelloAckObserved = true;
             }
         }
 
@@ -1115,6 +1150,7 @@ namespace Carthago.Services
                     state.Smb2Pending = null;
                     state.Smb2Target = null;
                         state.Iec104Startup = null;
+                        state.OpcUaHello = null;
                     return false;
                 }
 
@@ -1141,6 +1177,7 @@ namespace Carthago.Services
                         state.Smb2Pending = null;
                         state.Smb2Target = null;
                         state.Iec104Startup = null;
+                        state.OpcUaHello = null;
                         return false; // missing segment
                     }
                     if (diff < 0)
@@ -1152,6 +1189,7 @@ namespace Carthago.Services
                             state.Smb2Pending = null;
                             state.Smb2Target = null;
                         state.Iec104Startup = null;
+                        state.OpcUaHello = null;
                             return false; // retransmission while pending: fail closed
                         }
                         if (overlap64 > 3)
@@ -1161,6 +1199,7 @@ namespace Carthago.Services
                             state.Smb2Pending = null;
                             state.Smb2Target = null;
                         state.Iec104Startup = null;
+                        state.OpcUaHello = null;
                             return false;
                         }
                         overlap = (int)overlap64;
