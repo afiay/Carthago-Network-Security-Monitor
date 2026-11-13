@@ -170,6 +170,7 @@ namespace Carthago.Models
         public bool OpcUaHelloAckObserved { get; internal set; }
         public bool ModbusOversizedReadExceptionObserved { get; internal set; }
         public bool ModbusBulkFileReadResponseObserved { get; internal set; }
+        public bool ModbusClearMaskWriteObserved { get; internal set; }
         public bool BacnetReinitializeDeviceRequestObserved { get; internal set; }
         public bool BacnetObjectListReadObserved { get; internal set; }
         public bool BacnetEventDisableRequestObserved { get; internal set; }

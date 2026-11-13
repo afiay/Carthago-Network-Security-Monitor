@@ -472,6 +472,14 @@ namespace Carthago.Services
                                 ModbusSingleRegisterWriteInspector.TryInspect(normPayload, out uint modbusPoint))
                                 rec.ModbusSingleRegisterWritePoint = modbusPoint;
 
+                            // Exact FC22 all-zero mask write, first client request only.
+                            if (isIPv4 && c2s && tcpAck && !tcpSyn && synAnchoredFirstPayload &&
+                                dport == 502 && sport is > 0 and <= 65535 && sport != 502 &&
+                                tcpFlagsField == 0x18 && completeIpPacket &&
+                                normPayload.Length == l4Payload.Length && !IsTlsActive(tcpFlow, c2s) &&
+                                ModbusClearMaskWriteInspector.TryInspect(normPayload))
+                                rec.ModbusClearMaskWriteObserved = true;
+
                             // -------- Plaintext LDAP simple BindRequest --------
                             // Strictly complete first client payload on an
                             // observed SYN-anchored TCP/389 flow, not a port,

@@ -256,3 +256,8 @@ Workbook R2697 AN1933; exact CRC-checked master restart command, Candidate/Shado
 ## R981 — DNP3 Disable Unsolicited all event classes
 
 Workbook R2717 AN2216; request-only projection, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_981-981.md). 36 authored cases, zero execution; no reporting loss or continued polling claim. Next ID R982.
+
+
+## R982 — Modbus FC22 all-zero mask write
+
+Workbook R2714 AN1908; exact capture-qualified clear-all mask request, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_982-982.md). 23 authored cases, zero execution; no safe-range, authorization, accepted write or historian drift claim. Next ID R983.

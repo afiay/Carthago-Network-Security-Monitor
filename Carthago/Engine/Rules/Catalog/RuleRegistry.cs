@@ -1004,6 +1004,7 @@ namespace Carthago.Engine.Rules.Catalog
                 new R979_PublicBacnetEventDisableRequestRule(),
                 new R980_PublicDnp3RestartRequestRule(),
                 new R981_PublicDnp3DisableUnsolicitedRule(),
+                new R982_PublicModbusClearMaskWriteRule(),
             };
         }
 

@@ -214,3 +214,4 @@ Historical records describe their own scope and status. A listed record is not e
 - [RULE BATCH 979–979](RULE_BATCH_979-979.md)
 - [RULE BATCH 980–980](RULE_BATCH_980-980.md)
 - [RULE BATCH 981–981](RULE_BATCH_981-981.md)
+- [RULE BATCH 982–982](RULE_BATCH_982-982.md)
