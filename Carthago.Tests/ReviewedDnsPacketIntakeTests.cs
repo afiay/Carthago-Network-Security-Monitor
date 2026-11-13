@@ -74,7 +74,7 @@ public sealed class ReviewedDnsPacketIntakeTests
         });
         using var reviewer = ECDsa.Create(ECCurve.NamedCurves.nistP256);
         byte[] key = reviewer.ExportSubjectPublicKeyInfo();
-        var intake = new ReviewedDnsAuthenticatedIntake(key);
+        var intake = new ReviewedDnsAuthenticatedIntake(key, scope);
         byte[] signature = reviewer.SignData(manifest, HashAlgorithmName.SHA256,
             DSASignatureFormat.IeeeP1363FixedFieldConcatenation);
         Assert.Equal(expected, intake.Matches(manifest, signature, capture,
@@ -96,6 +96,24 @@ public sealed class ReviewedDnsPacketIntakeTests
             changedCapture[^1] ^= 1;
             Assert.False(intake.Matches(manifest, signature, changedCapture,
                 "192.0.2.1", "sensor", "interface", "network"));
+            // Even a correctly signed manifest for another scope is not authorized.
+            var otherScope = QualifiedDnsScope.Create("192.0.2.1", "other", "interface", "network");
+            byte[] otherManifest = JsonSerializer.SerializeToUtf8Bytes(new {
+                version = 1, scope = otherScope.Subject, captureSha256 = Hash(capture),
+                startUtc = start.ToString("O"), endUtc = start.AddMinutes(1).ToString("O"),
+                classification = "reviewed-benign", reviewId = "test-other"
+            });
+            byte[] otherSignature = reviewer.SignData(otherManifest, HashAlgorithmName.SHA256,
+                DSASignatureFormat.IeeeP1363FixedFieldConcatenation);
+            Assert.True(ReviewedDnsPacketIntake.Matches(otherManifest, Hash(otherManifest), capture,
+                "192.0.2.1", "other", "interface", "network"));
+            Assert.False(intake.Matches(otherManifest, otherSignature, capture,
+                "192.0.2.1", "other", "interface", "network"));
+            var otherIntake = new ReviewedDnsAuthenticatedIntake(key, otherScope);
+            Assert.True(otherIntake.Matches(otherManifest, otherSignature, capture,
+                "192.0.2.1", "other", "interface", "network"));
+            Assert.False(intake.Matches(manifest, signature, capture,
+                "192.0.2.1", "sensor", "interface", "other"));
             Array.Clear(key, 0, key.Length);
             Assert.True(intake.Matches(manifest, signature, capture,
                 "192.0.2.1", "sensor", "interface", "network"));

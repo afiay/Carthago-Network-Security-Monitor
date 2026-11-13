@@ -9,11 +9,14 @@ namespace Carthago.Services.Baseline
     internal sealed class ReviewedDnsAuthenticatedIntake
     {
         private readonly byte[] _reviewKey;
+        private readonly QualifiedDnsScope _authorizedScope;
 
-        internal ReviewedDnsAuthenticatedIntake(ReadOnlySpan<byte> provisionedReviewKey)
+        internal ReviewedDnsAuthenticatedIntake(ReadOnlySpan<byte> provisionedReviewKey,
+            QualifiedDnsScope authorizedScope)
         {
             if (provisionedReviewKey.IsEmpty || provisionedReviewKey.Length > 512)
                 throw new ArgumentException("Invalid review key size.", nameof(provisionedReviewKey));
+            _authorizedScope = authorizedScope ?? throw new ArgumentNullException(nameof(authorizedScope));
             _reviewKey = provisionedReviewKey.ToArray();
         }
 
@@ -22,6 +25,11 @@ namespace Carthago.Services.Baseline
         {
             if (manifest.IsEmpty || manifest.Length > 16384 || signature.Length != 64 ||
                 capture.IsEmpty || capture.Length > 32 * 1024 * 1024) return false;
+            QualifiedDnsScope submittedScope;
+            try { submittedScope = QualifiedDnsScope.Create(source, sensor, interfaceId, network); }
+            catch (ArgumentException) { return false; }
+            if (!string.Equals(_authorizedScope.Subject, submittedScope.Subject, StringComparison.Ordinal))
+                return false;
             // Snapshot the signed bytes so verification and parsing use the same data.
             byte[] signedManifest = manifest.ToArray();
             if (!ReviewedDnsReviewSignature.Matches(signedManifest, signature, _reviewKey))
