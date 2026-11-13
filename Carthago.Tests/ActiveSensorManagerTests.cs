@@ -135,6 +135,18 @@ public sealed class ActiveSensorManagerTests
     }
 
     [Fact]
+    public async Task SnmpInjectionCannotEnableStandaloneTcpTransport()
+    {
+        int resolutions = 0, probes = 0;
+        var manager = new ActiveSensorManager(() => Initial, _ => { resolutions++; return Adapter; },
+            snmpProbe: (_, _, _, _) => { probes++; return Task.FromResult(new ActiveSensorRun("Unexpected", true, null)); });
+        manager.Add(Profile());
+        await Assert.ThrowsAsync<InvalidOperationException>(() => manager.RunDueAsync(default));
+        Assert.Equal(0, resolutions); Assert.Equal(0, probes);
+        Assert.Null(Assert.Single(manager.Snapshot()).LastRunUtc);
+    }
+
+    [Fact]
     public async Task MultipleDueProfilesRunSequentially()
     {
         int calls = 0;

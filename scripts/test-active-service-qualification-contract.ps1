@@ -6,9 +6,9 @@ function Reject([scriptblock]$action) { $rejected=$false; try { & $action | Out-
 $now=[DateTimeOffset]::Parse('2026-11-13T12:00:00Z')
 $start=$now.AddMinutes(-1)
 function Sample {
-    [pscustomobject]@{schemaVersion=1;sessionId='02702701-1234-4321-9999-000000000001';processId=123;
+    [pscustomobject]@{schemaVersion=2;sessionId='02702701-1234-4321-9999-000000000001';processId=123;
         processStartedUtc=$start.ToString('o');sampleUtc=$now.ToString('o');schedulerOwned=$true;
-        profiles=2;blockedProfiles=0;pendingProfiles=0;profilesWithFailures=0;completedProbes=2;
+        profiles=2;blockedProfiles=0;pendingProfiles=0;profilesWithFailures=0;responsiveProfiles=2;completedProbes=2;
         responsiveProbes=2;deferredChecks=0;storageFailures=0;lastResponsiveUtc=$now.ToString('o');
         earliestGrantExpiryUtc=$now.AddHours(1).ToString('o');latestGrantExpiryUtc=$now.AddHours(2).ToString('o');
         assessment='ResponsiveObserved'}
@@ -27,7 +27,7 @@ $x=Sample; $x.pendingProfiles=1; Require (-not (Test-ActiveObservedScope $x 2))
 $x=Sample; $x.deferredChecks=1; Require (-not (Test-ActiveObservedScope $x 2))
 $x=Sample; $x.completedProbes=3; $x.responsiveProbes=3
 Assert-ActiveHealthProgress $valid (ConvertTo-ActiveHealthSample $x 123 $start $now) 2
-$x=Sample; $x.completedProbes=1; $x.responsiveProbes=1
+$x=Sample; $x.completedProbes=1; $x.responsiveProbes=1; $x.responsiveProfiles=1
 Reject { Assert-ActiveHealthProgress $valid (ConvertTo-ActiveHealthSample $x 123 $start $now) 2 }
 $x=Sample; $x.sessionId=[Guid]::NewGuid().ToString('D')
 Reject { Assert-ActiveHealthProgress $valid (ConvertTo-ActiveHealthSample $x 123 $start $now) 2 }
@@ -41,4 +41,8 @@ try {
     [IO.File]::WriteAllBytes($fixture,(New-Object byte[] 16385))
     Reject { Read-ActiveHealthFile $fixture }
 } finally { if (Test-Path -LiteralPath $fixture) { Remove-Item -LiteralPath $fixture -Force } }
+$x=Sample; $x.responsiveProfiles=1; $x.completedProbes=10; $x.responsiveProbes=10
+Require (-not (Test-ActiveObservedScope (ConvertTo-ActiveHealthSample $x 123 $start $now) 2))
+Reject { Assert-ActiveHealthProgress $valid (ConvertTo-ActiveHealthSample $x 123 $start $now) 2 }
+$x=Sample; $x.schemaVersion=1; Reject { ConvertTo-ActiveHealthSample $x 123 $start $now }
 Write-Output 'PASS AS-Q07G5E offline lifecycle qualification contract'

@@ -18,7 +18,7 @@ try {
         GatewayIntegritySensorTests = 23
         SnmpInfrastructureSensorTests = 41
         ActiveEvidenceStoreTests = 21
-        ActiveSensorManagerTests = 15
+        ActiveSensorManagerTests = 16
         ActiveChangeDetectorTests = 15
         ActiveFindingQualificationTests = 15
         ActiveSensorPipelineLabTests = 5
@@ -29,12 +29,12 @@ try {
         ActiveExecutionGrantTests = 9
         ActiveSensorWorkerTests = 8
         SnmpCredentialVaultTests = 7
-        ScheduledSnmpAuthorizationTests = 7
+        ScheduledSnmpAuthorizationTests = 8
         ActiveNpcapCoordinationTests = 8
         ScheduledGatewayTests = 7
         ActiveServiceLifecycleTests = 8
         ActiveServiceProvisioningTests = 5
-        ActiveServiceHealthTests = 4
+        ActiveServiceHealthTests = 5
         ActiveServiceNegativeStartupTests = 6
         ActiveAuthorizationSurveillanceTests = 5
         ActiveServiceRejectionTests = 6

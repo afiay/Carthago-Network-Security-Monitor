@@ -116,3 +116,5 @@ causes; establish the intended fixture independently. Hash checks are
 not packet-level proof. After the negative run, explicitly issue/select
 a valid lab grant and configure, then rerun the positive G5E harness to
 establish recovery. No automatic recovery or startup changes.
+
+G6A release audit: update monitor and management scripts together. Health schema 2 requires responsiveProfiles equal to selected profiles for qualification; aggregate probe totals alone are insufficient. Schema 1 is deliberately unavailable to the new reader. The offline lifecycle contract must pass before actual SCM runs.

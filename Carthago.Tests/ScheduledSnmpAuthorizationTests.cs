@@ -149,5 +149,19 @@ public sealed class ScheduledSnmpAuthorizationTests : IDisposable
         Assert.True(Assert.Single(manager.Snapshot()).ScopeBlocked);
     }
 
+    [Fact]
+    public async Task GenericInjectionCannotEnableStandaloneSnmpTransport()
+    {
+        var p = Profile();
+        var grant = Grant(p);
+        int resolutions = 0, probes = 0;
+        var manager = new ActiveSensorManager(() => _now, _ => { resolutions++; return Adapter; },
+            probe: (_, _, _) => { probes++; return Task.FromResult(new ActiveSensorRun("Unexpected", true, null)); });
+        manager.AddAuthorized(p, Store(), grant.GrantId);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => manager.RunDueAsync(default));
+        Assert.Equal(0, resolutions); Assert.Equal(0, probes);
+        Assert.Null(Assert.Single(manager.Snapshot()).LastRunUtc);
+    }
+
     public void Dispose() { if (Directory.Exists(_dir)) Directory.Delete(_dir, true); }
 }

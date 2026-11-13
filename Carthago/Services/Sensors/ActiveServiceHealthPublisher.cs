@@ -8,7 +8,7 @@ namespace Carthago.Services.Sensors;
 
 internal sealed record ActiveServiceHealthSnapshot(int SchemaVersion, Guid SessionId, int ProcessId,
     DateTimeOffset ProcessStartedUtc, DateTimeOffset SampleUtc, bool SchedulerOwned,
-    int Profiles, int BlockedProfiles, int PendingProfiles, int ProfilesWithFailures,
+    int Profiles, int BlockedProfiles, int PendingProfiles, int ProfilesWithFailures, int ResponsiveProfiles,
     long CompletedProbes, long ResponsiveProbes, long DeferredChecks, long StorageFailures,
     DateTimeOffset? LastResponsiveUtc, DateTimeOffset EarliestGrantExpiryUtc, DateTimeOffset LatestGrantExpiryUtc,
     string Assessment);
@@ -31,12 +31,13 @@ internal sealed class ActiveServiceHealthPublisher
     {
         int blocked = states.Count(s => s.ScopeBlocked), pending = states.Count(s => s.LastRunUtc is null);
         int failures = states.Count(s => s.ConsecutiveFailures > 0);
+        int responsiveProfiles = states.Count(s => s.ResponsiveProbes > 0);
         long completed = states.Sum(s => s.CompletedProbes), responsive = states.Sum(s => s.ResponsiveProbes),
             deferred = states.Sum(s => s.DeferredChecks), storage = states.Sum(s => s.StorageFailures);
         string assessment = !owned || states.Length == 0 || blocked == states.Length || now >= latest ? "Unavailable" :
             storage > 0 || blocked > 0 || failures > 0 || states.Any(s => s.LastOutcome == "Capture unavailable — deferred") ||
-            now >= earliest ? "Degraded" : pending > 0 || responsive == 0 ? "Pending" : "ResponsiveObserved";
-        return new(1, session, pid, started, now, owned, states.Length, blocked, pending, failures,
+            now >= earliest ? "Degraded" : pending > 0 || responsiveProfiles != states.Length ? "Pending" : "ResponsiveObserved";
+        return new(2, session, pid, started, now, owned, states.Length, blocked, pending, failures, responsiveProfiles,
             completed, responsive, deferred, storage, states.Select(s => s.LastResponsiveUtc).DefaultIfEmpty(null).Max(), earliest, latest, assessment);
     }
 

@@ -76,5 +76,20 @@ public sealed class ActiveServiceHealthTests : IDisposable
         Assert.DoesNotContain("192.168", raw);
         Assert.Single(Directory.GetFiles(_dir));
     }
+    [Fact]
+    public void AggregateResponsesCannotSubstituteForDistinctResponsiveProfiles()
+    {
+        var a = new ActiveSensorScheduleState(Profile(), Now, Now, "AnswersObserved", 0, false, false, "Saved")
+            { CompletedProbes = 3, ResponsiveProbes = 3, LastResponsiveUtc = Now };
+        var b = new ActiveSensorScheduleState(Profile(), Now, Now, "Not responsive", 0, false, false, "Not requested");
+        var snapshot = Build(a, b);
+        Assert.Equal(2, snapshot.SchemaVersion);
+        Assert.Equal(3, snapshot.ResponsiveProbes);
+        Assert.Equal(1, snapshot.ResponsiveProfiles);
+        Assert.Equal("Pending", snapshot.Assessment);
+        var full = Build(a, b with { CompletedProbes = 1, ResponsiveProbes = 1, LastResponsiveUtc = Now });
+        Assert.Equal(2, full.ResponsiveProfiles);
+        Assert.Equal("ResponsiveObserved", full.Assessment);
+    }
     public void Dispose() { if (Directory.Exists(_dir)) Directory.Delete(_dir, true); }
 }

@@ -66,7 +66,7 @@ internal sealed class ActiveSensorManager
     private readonly Func<IDisposable> _acquireReservation;
     private readonly Func<ActiveSensorProfile, bool> _gatewayCurrent;
     private readonly Func<ActiveSensorProfile, LocalLanInterface, Func<bool>, CancellationToken, Task<ActiveSensorRun>> _gatewayProbe;
-    private readonly bool _allowsTestTick;
+    private readonly bool _allowsTestTick, _hasGenericProbe, _hasSnmpProbe, _hasGatewayProbe;
     private bool _busy;
     private bool _loopActive;
 
@@ -88,7 +88,10 @@ internal sealed class ActiveSensorManager
         _acquireReservation = acquireReservation ?? WindowsActiveSchedulerReservation.Acquire;
         _gatewayCurrent = gatewayCurrent ?? (p => GatewayIntegritySensor.IsConfiguredGateway(p.AdapterId, p.Adapter, p.Target));
         _gatewayProbe = gatewayProbe ?? ProbeGatewayAsync;
-        _allowsTestTick = probe is not null || snmpProbe is not null || gatewayProbe is not null;
+        _hasGenericProbe = probe is not null;
+        _hasSnmpProbe = snmpProbe is not null;
+        _hasGatewayProbe = gatewayProbe is not null;
+        _allowsTestTick = _hasGenericProbe || _hasSnmpProbe || _hasGatewayProbe;
     }
 
     internal void Add(ActiveSensorProfile p) => AddCore(p, null, Guid.Empty);
@@ -171,6 +174,12 @@ internal sealed class ActiveSensorManager
             var due = _states.Values.Where(s => !s.ScopeBlocked && s.NextDueUtc <= now)
                 .OrderBy(s => s.NextDueUtc).ThenBy(s => s.Profile.Id).FirstOrDefault();
             if (due is null) return false;
+            if (!fromLoop && !(due.Profile.Kind switch
+                {
+                    ActiveSensorKind.Snmp => _hasSnmpProbe,
+                    ActiveSensorKind.Gateway => _hasGatewayProbe,
+                    _ => _hasGenericProbe
+                })) throw new InvalidOperationException("Standalone tick requires an injected transport for the due sensor kind.");
             state = due;
             _busy = true;
             _states[state.Profile.Id] = state with { Running = true };
@@ -374,9 +383,12 @@ internal sealed class ActiveSensorManager
         }
     }
 
-    private static LocalLanInterface? Resolve(ActiveSensorProfile p) =>
-        LocalLanDiscovery.GetLocalInterfaces(p.AdapterId).FirstOrDefault(a =>
-            a.Address.Equals(p.Adapter.Address) && a.Mask.Equals(p.Adapter.Mask));
+    private static LocalLanInterface? Resolve(ActiveSensorProfile p)
+    {
+        var matches = LocalLanDiscovery.GetLocalInterfaces(p.AdapterId).Where(a =>
+            a.Address.Equals(p.Adapter.Address) && a.Mask.Equals(p.Adapter.Mask)).ToArray();
+        return matches.Length == 1 ? matches[0] : null;
+    }
 
     private static async Task<ActiveSensorRun> ProbeGatewayAsync(ActiveSensorProfile p, LocalLanInterface adapter,
         Func<bool> authorized, CancellationToken token)
