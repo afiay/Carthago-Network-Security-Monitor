@@ -203,4 +203,45 @@ public sealed class BaselineStoreTests
         }
         finally { Directory.Delete(directory, recursive: true); }
     }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Readiness_Rejects_Invalid_Persisted_Keys(bool snapshot)
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "carthago-baseline-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        try
+        {
+            var options = new BaselineOptions { DirectoryPath = directory, MinimumObservations = 1,
+                MinimumDistinctKeys = 1, MinimumObservationSpan = TimeSpan.Zero };
+            var now = DateTime.UtcNow;
+            var store = new BaselineStore(options);
+            await store.ObserveAsync(new BaselineObservation("dns.domain", "host-a", "one.test", now, ""));
+            if (snapshot)
+            {
+                var entries = new System.Collections.Generic.Dictionary<string, object>
+                {
+                    ["invalid-key"] = new { Count = 100, FirstSeenUtc = now, LastSeenUtc = now }
+                };
+                await File.WriteAllTextAsync(Path.Combine(directory, "baseline.json"),
+                    System.Text.Json.JsonSerializer.Serialize(entries));
+            }
+            else
+            {
+                var record = new { Operation = "observe", Key = "invalid-key", TimestampUtc = now };
+                await File.AppendAllTextAsync(Path.Combine(directory, "baseline-journal.jsonl"),
+                    System.Text.Json.JsonSerializer.Serialize(record) + Environment.NewLine);
+            }
+            var reopened = new BaselineStore(options);
+            var global = await reopened.GetReadinessAsync();
+            Assert.False(global.IsReady);
+            Assert.Equal(1, global.ObservationCount);
+            Assert.Contains("corrupt baseline journal", global.Blockers);
+            var scoped = await reopened.GetScopedReadinessAsync("dns.domain", "host-a");
+            Assert.False(scoped.IsReady);
+            Assert.Equal(1, scoped.ObservationCount);
+        }
+        finally { Directory.Delete(directory, recursive: true); }
+    }
 }

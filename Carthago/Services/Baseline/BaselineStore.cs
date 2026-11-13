@@ -259,6 +259,10 @@ namespace Carthago.Services.Baseline
         private async Task LoadIfNeededAsync(CancellationToken cancellationToken)
         {
             if (_loaded) return;
+            // A previous load may have been interrupted after reading some entries.
+            // Rebuild from disk rather than counting those entries twice on retry.
+            _entries.Clear();
+            _corruptJournal = false;
             if (File.Exists(SnapshotPath))
             {
                 var json = await File.ReadAllTextAsync(SnapshotPath, cancellationToken).ConfigureAwait(false);
@@ -266,7 +270,13 @@ namespace Carthago.Services.Baseline
                 {
                     var saved = JsonSerializer.Deserialize<Dictionary<string, Entry>>(json);
                     if (saved != null)
-                        foreach (var item in saved) _entries[item.Key] = item.Value;
+                        foreach (var item in saved)
+                        {
+                            if (item.Value == null || !IsValidKey(item.Key))
+                                _corruptJournal = true;
+                            else
+                                _entries[item.Key] = item.Value;
+                        }
                     else _corruptJournal = true;
                 }
                 catch (JsonException) { _corruptJournal = true; }
@@ -283,13 +293,26 @@ namespace Carthago.Services.Baseline
                     try { record = JsonSerializer.Deserialize<JournalRecord>(line); }
                     catch (JsonException) { _corruptJournal = true; continue; }
                     if (record?.Operation == "clear") _entries.Clear();
-                    else if (record?.Operation == "observe" && !string.IsNullOrWhiteSpace(record.Key))
-                        AddObservation(record.Key, record.TimestampUtc);
+                    else if (record?.Operation == "observe" && IsValidKey(record.Key))
+                        AddObservation(record.Key!, record.TimestampUtc);
                     else _corruptJournal = true;
                 }
             }
             _loaded = true;
             UpdateReadiness();
+        }
+
+        private static bool IsValidKey(string? key)
+        {
+            if (string.IsNullOrWhiteSpace(key)) return false;
+            try
+            {
+                var parts = JsonSerializer.Deserialize<string[]>(key);
+                return parts != null && parts.Length == 3 &&
+                    parts.All(part => !string.IsNullOrWhiteSpace(part)) &&
+                    string.Equals(key, JsonSerializer.Serialize(parts), StringComparison.Ordinal);
+            }
+            catch (JsonException) { return false; }
         }
 
         private async Task AppendJournalAsync(JournalRecord record, CancellationToken cancellationToken)
