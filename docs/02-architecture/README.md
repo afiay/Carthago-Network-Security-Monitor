@@ -38,3 +38,4 @@ System boundaries, evidence lineage, sensors and architectural constraints.
 - [CLI-006E.2 — Executable replay qualification](CLI-006E2-ExecutableReplayQualification.md)
 - [CLI-007A — Portable headless frame session](CLI-007A-PortableMonitorSession.md)
 - [CLI-007B — Portable capture adapter lifecycle](CLI-007B-PortableCaptureLifecycle.md)
+- [CLI-007C — Bounded portable frame pipeline](CLI-007C-BoundedFramePipeline.md)

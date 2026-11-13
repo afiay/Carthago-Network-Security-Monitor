@@ -183,6 +183,9 @@ try {
         $report.sdkVersion=(Get-Content -LiteralPath (Join-Path $dir 'sdk-version.log') -Raw).Trim()
         Require-Stage 'portable-build' @('build','Carthago.Cli.Tests/Carthago.Cli.Tests.csproj','-c','Release','--no-incremental','--nologo')
         Invoke-TestSuite 'portable-tests' 'Carthago.Cli.Tests/Carthago.Cli.Tests.csproj' '' @{
+            'Carthago.Cli.Tests.PortableMonitorSessionTests'=10
+            'Carthago.Cli.Tests.PortableCaptureRunTests'=10
+            'Carthago.Cli.Tests.PortableBufferedCaptureTests'=12
             'Carthago.Cli.Tests.PortableReplayTests'=12
             'Carthago.Cli.Tests.PortableRuleCapabilityTests'=9
             'Carthago.Cli.Tests.PortableHttpBatchTests'=18

@@ -2328,3 +2328,8 @@ Reviewed parent `981d0175af5044281fbfe57048e78563ac46ad39`, native resolver, pro
 ## 2026-11-13 — CLI-007B portable capture adapter lifecycle
 
 **SOURCE CANDIDATE — UNVERIFIED.** Parent 567663805b668d3a29dfded793cb1ac03083bbcd. Add Core pull source contract and single-owner lifecycle runner with finite/live EOF distinction, cooperative cancellation, partial-start cleanup, independent cleanup failure flags and sanitized phase codes. Ten synthetic cases authored, zero executed. No native capture, queue, build/test/Actions or qualification claim. See [architecture](02-architecture/CLI-007B-PortableCaptureLifecycle.md).
+
+
+## 2026-11-13 — CLI-007C bounded portable frame pipeline
+
+**SOURCE CANDIDATE — UNVERIFIED.** Parent da3ad888208cc4f20434cd4b39dde7367632538a. Add bounded copied handoff and buffered runner, packet/byte limits including in-flight, drop-newest, explicit invalid/capacity/processed/abandoned counters, cancellation drain and failure cleanup. Twelve synthetic cases authored, zero executed; pinned CLI gate now requires CLI-007A/B/C classes. No build/test/live capture/Actions. See [architecture](02-architecture/CLI-007C-BoundedFramePipeline.md).
