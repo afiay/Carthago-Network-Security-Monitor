@@ -2751,7 +2751,7 @@
                     </StackPanel>
                   </Border>
                 </UniformGrid>
-                <!-- GA UI-134: full-width signal policy above balanced Data Sources / Workspace panels on Wide; stacked below. -->
+                <!-- GA UI-172: full-width configuration stages with a responsive three-lane dashboard module matrix. -->
                 <!-- GA UI-132: numbered, full-height operational configuration architecture. -->
                 <Grid x:Name="SettingsOpsLayout">
                   <Grid.ColumnDefinitions>
@@ -2857,7 +2857,7 @@
               </GroupBox>
 
               <!-- Enrichment & Capture -->
-               <GroupBox x:Name="SettingsCaptureGroup" Grid.Row="1" Grid.Column="0"
+               <GroupBox x:Name="SettingsCaptureGroup" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
                          Header="Capture &amp; Enrichment Configuration" Tag="02  /  DATA SOURCES" Style="{StaticResource SettingsOpsGroup}"
                          Margin="0,0,0,14">
                 <Grid Margin="18,20,18,18">
@@ -3016,7 +3016,7 @@
               </GroupBox>
 
 
-              <GroupBox x:Name="SettingsDashboardGroup" Grid.Row="1" Grid.Column="1"
+              <GroupBox x:Name="SettingsDashboardGroup" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
                         Header="Dashboard &amp; Sections" Tag="03  /  WORKSPACE" Style="{StaticResource SettingsOpsGroup}"
                         Margin="0,0,0,14">
                 <Grid Margin="14,16,14,12">
@@ -3046,10 +3046,10 @@
                       <TextBlock Text="Choose which operational modules appear on the dashboard." Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,8" TextWrapping="Wrap"/>
                   <!-- GA UI-63: existing dashboard-section guidance on keyboard focus and via UI Automation; original preference handlers unchanged. -->
                   <!-- GA UI-135: three visible module zones, original named checkboxes and handlers retained. -->
-                  <StackPanel Margin="0,8,0,0">
-                      <Border Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,12">
+                  <UniformGrid x:Name="SettingsDashboardModuleMatrix" Columns="1" Margin="0,12,0,0">
+                      <Border Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,0,0,12">
                         <StackPanel>
-                          <TextBlock Text="01 / OPERATIONAL OVERVIEW" Foreground="{StaticResource AccentBrush}" FontSize="12" FontWeight="Bold"/>
+                          <TextBlock Text="01 / OPERATIONAL OVERVIEW" Foreground="{StaticResource AccentBrush}" FontSize="14" FontWeight="Bold" TextWrapping="Wrap"/>
                           <TextBlock Text="Incidents, anomaly signals, metrics and the event timeline." Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,5,0,12"/>
                           <UniformGrid x:Name="SettingsDashboardCoreSectionsGrid" Columns="2">
                             <UniformGrid.Resources><Style TargetType="{x:Type CheckBox}" BasedOn="{StaticResource SettingsSectionChoice}"/></UniformGrid.Resources>
@@ -3084,9 +3084,9 @@
                           </UniformGrid>
                         </StackPanel>
                       </Border>
-                      <Border Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,12">
+                      <Border Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,0,0,12">
                         <StackPanel>
-                          <TextBlock Text="02 / ANALYSIS &amp; RESPONSE" Foreground="{StaticResource AccentBrush}" FontSize="12" FontWeight="Bold"/>
+                          <TextBlock Text="02 / ANALYSIS &amp; RESPONSE" Foreground="{StaticResource AccentBrush}" FontSize="14" FontWeight="Bold" TextWrapping="Wrap"/>
                           <TextBlock Text="Baseline context, optional scoring, response guidance and forensic shortcuts." Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,5,0,12"/>
                           <UniformGrid x:Name="SettingsDashboardAnalysisSectionsGrid" Columns="2">
                             <UniformGrid.Resources><Style TargetType="{x:Type CheckBox}" BasedOn="{StaticResource SettingsSectionChoice}"/></UniformGrid.Resources>
@@ -3121,9 +3121,9 @@
                           </UniformGrid>
                         </StackPanel>
                       </Border>
-                      <Border Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,12">
+                      <Border Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,0,0,12">
                         <StackPanel>
-                          <TextBlock Text="03 / ADVANCED &amp; INTEGRATIONS" Foreground="{StaticResource AccentBrush}" FontSize="12" FontWeight="Bold"/>
+                          <TextBlock Text="03 / ADVANCED &amp; INTEGRATIONS" Foreground="{StaticResource AccentBrush}" FontSize="14" FontWeight="Bold" TextWrapping="Wrap"/>
                           <TextBlock Text="Raw data, Cisco, external delivery and developer-demo shortcuts." Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,5,0,12"/>
                           <UniformGrid x:Name="SettingsDashboardAdvancedSectionsGrid" Columns="2">
                             <UniformGrid.Resources><Style TargetType="{x:Type CheckBox}" BasedOn="{StaticResource SettingsSectionChoice}"/></UniformGrid.Resources>
@@ -3158,7 +3158,7 @@
                           </UniformGrid>
                         </StackPanel>
                       </Border>
-                  </StackPanel>
+                  </UniformGrid>
                     </StackPanel>
                   </Border>
 

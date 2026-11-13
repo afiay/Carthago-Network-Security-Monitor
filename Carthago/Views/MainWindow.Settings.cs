@@ -17,29 +17,35 @@ namespace Carthago
         private void ApplySettingsResponsiveLayout(ResponsiveLayoutMode mode, bool narrowKpis)
         {
             var wide = mode == ResponsiveLayoutMode.Wide;
-            // GA UI-134: full-width signal policy above two balanced configuration workspaces.
+            // GA UI-172: full-width configuration stages; dashboard modules form a Wide matrix.
             // Preserve existing controls, bindings and all preference/capture handlers.
-            SettingsOpsLeftColumn.Width = new GridLength(wide ? 1.2 : 1, GridUnitType.Star);
-            SettingsOpsRightColumn.Width = wide
-                ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
+            SettingsOpsLeftColumn.Width = new GridLength(1, GridUnitType.Star);
+            SettingsOpsRightColumn.Width = new GridLength(0);
 
             Grid.SetRow(SettingsDetectionGroup, 0);
             Grid.SetColumn(SettingsDetectionGroup, 0);
-            Grid.SetColumnSpan(SettingsDetectionGroup, wide ? 2 : 1);
+            Grid.SetColumnSpan(SettingsDetectionGroup, 1);
             Grid.SetRow(SettingsCaptureGroup, 1);
             Grid.SetColumn(SettingsCaptureGroup, 0);
-            Grid.SetRow(SettingsDashboardGroup, wide ? 1 : 2);
-            Grid.SetColumn(SettingsDashboardGroup, wide ? 1 : 0);
+            Grid.SetColumnSpan(SettingsCaptureGroup, 1);
+            Grid.SetRow(SettingsDashboardGroup, 2);
+            Grid.SetColumn(SettingsDashboardGroup, 0);
             Grid.SetColumnSpan(SettingsDashboardGroup, 1);
-            Grid.SetRow(DemoModeGroup, wide ? 2 : 3);
+            Grid.SetRow(DemoModeGroup, 3);
             Grid.SetColumn(DemoModeGroup, 0);
-            Grid.SetColumnSpan(DemoModeGroup, wide ? 2 : 1);
+            Grid.SetColumnSpan(DemoModeGroup, 1);
 
-            SettingsCaptureGroup.Margin = new Thickness(0, 0, wide ? 16 : 0, 14);
+            SettingsCaptureGroup.Margin = new Thickness(0, 0, 0, 14);
+            SettingsDashboardModuleMatrix.Columns = wide ? 3 : 1;
+            for (var index = 0; index < SettingsDashboardModuleMatrix.Children.Count; index++)
+            {
+                if (SettingsDashboardModuleMatrix.Children[index] is Border module)
+                    module.Margin = wide ? new Thickness(0, 0, index < 2 ? 12 : 0, 0) : new Thickness(0, 0, 0, 12);
+            }
             // GA UI-135: independent module zones retain two-column density except in narrow layouts.
-            SettingsDashboardCoreSectionsGrid.Columns = narrowKpis ? 1 : 2;
-            SettingsDashboardAnalysisSectionsGrid.Columns = narrowKpis ? 1 : 2;
-            SettingsDashboardAdvancedSectionsGrid.Columns = narrowKpis ? 1 : 2;
+            SettingsDashboardCoreSectionsGrid.Columns = wide || narrowKpis ? 1 : 2;
+            SettingsDashboardAnalysisSectionsGrid.Columns = wide || narrowKpis ? 1 : 2;
+            SettingsDashboardAdvancedSectionsGrid.Columns = wide || narrowKpis ? 1 : 2;
             // GA UI-136: defaults cards reflow vertically when the workspace is narrow.
             SettingsWorkspaceDefaultsGrid.Columns = narrowKpis ? 1 : 2;
             // GA UI-137: action surfaces reflow independently of workspace defaults.
