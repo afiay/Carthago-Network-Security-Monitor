@@ -57,6 +57,7 @@ namespace Carthago.Services
             public ModbusBulkFileReadInspector.Pending? ModbusBulkFileRead;
             public FinsNodeNegotiationInspector.Pending? FinsNodeRequest;
             public EtherNetIpRegisterSessionInspector.Pending? EtherNetIpSessionRequest;
+            public EtherNetIpIdentityResetInspector.Session? EtherNetIpResetSession;
             public bool NativeSynAckValid;
             public bool NativeClientSynValid;
         }
@@ -199,6 +200,7 @@ namespace Carthago.Services
                                 flow.ModbusBulkFileRead = null;
                                 flow.FinsNodeRequest = null;
                                 flow.EtherNetIpSessionRequest = null;
+                                flow.EtherNetIpResetSession = null;
                                 flow.NativeSynAckValid = false;
                                 flow.NativeClientSynValid = false;
                             }
@@ -902,6 +904,7 @@ namespace Carthago.Services
                 state.ModbusBulkFileRead = null;
                 state.FinsNodeRequest = null;
                 state.EtherNetIpSessionRequest = null;
+                state.EtherNetIpResetSession = null;
             }
         }
 
@@ -920,6 +923,7 @@ namespace Carthago.Services
                     state.ModbusBulkFileRead = null;
                     state.FinsNodeRequest = null;
                     state.EtherNetIpSessionRequest = null;
+                    state.EtherNetIpResetSession = null;
                 }
             }
         }
@@ -1080,14 +1084,28 @@ namespace Carthago.Services
                 if (!_tcp.TryGetValue(key, out var flow)) return;
                 var pending = flow.EtherNetIpSessionRequest;
                 flow.EtherNetIpSessionRequest = null;
+                var resetSession = flow.EtherNetIpResetSession;
+                flow.EtherNetIpResetSession = null;
                 var dir = client ? flow.C2S : flow.S2C;
                 var opposite = client ? flow.S2C : flow.C2S;
-                if (!flow.NativeSynAckValid || !first || !complete ||
+                if (!flow.NativeSynAckValid || !complete ||
                     !dir.SynAnchored || !opposite.SynAnchored ||
                     dir.Invalid || opposite.Invalid || dir.TlsActive || opposite.TlsActive ||
                     dir.NextSeq != unchecked(seq + (uint)data.Length) || ack != opposite.NextSeq)
                     return;
                 var now = _utcNow();
+                // Exactly the next client payload after the verified response.
+                // First registration is 28 bytes in each direction; no intervening
+                // application data is permitted. State is consumed even on failure.
+                if (client && resetSession.HasValue && !first &&
+                    dir.Collected == 28 + data.Length && opposite.Collected == 28 &&
+                    EtherNetIpIdentityResetInspector.TryInspect(data, resetSession.Value, now))
+                {
+                    record.ApplicationProtocol = "enip.tcp.identity_reset.request";
+                    record.EtherNetIpIdentityResetObserved = true;
+                    return;
+                }
+                if (!first) return;
                 if (client)
                 {
                     if (EtherNetIpRegisterSessionInspector.TryRequest(data, now, out var request))
@@ -1098,6 +1116,8 @@ namespace Carthago.Services
                 {
                     record.ApplicationProtocol = "enip.tcp.register_session.response";
                     record.EtherNetIpRegisterSessionObserved = true;
+                    flow.EtherNetIpResetSession = new EtherNetIpIdentityResetInspector.Session(
+                        BinaryPrimitives.ReadUInt32LittleEndian(data.Slice(4,4)), now);
                 }
             }
         }
@@ -1173,6 +1193,7 @@ namespace Carthago.Services
                         state.ModbusBulkFileRead = null;
                         state.FinsNodeRequest = null;
                         state.EtherNetIpSessionRequest = null;
+                        state.EtherNetIpResetSession = null;
                     return false;
                 }
 
@@ -1204,6 +1225,7 @@ namespace Carthago.Services
                         state.ModbusBulkFileRead = null;
                         state.FinsNodeRequest = null;
                         state.EtherNetIpSessionRequest = null;
+                        state.EtherNetIpResetSession = null;
                         return false; // missing segment
                     }
                     if (diff < 0)
@@ -1220,6 +1242,7 @@ namespace Carthago.Services
                         state.ModbusBulkFileRead = null;
                         state.FinsNodeRequest = null;
                         state.EtherNetIpSessionRequest = null;
+                        state.EtherNetIpResetSession = null;
                             return false; // retransmission while pending: fail closed
                         }
                         if (overlap64 > 3)
@@ -1234,6 +1257,7 @@ namespace Carthago.Services
                         state.ModbusBulkFileRead = null;
                         state.FinsNodeRequest = null;
                         state.EtherNetIpSessionRequest = null;
+                        state.EtherNetIpResetSession = null;
                             return false;
                         }
                         overlap = (int)overlap64;

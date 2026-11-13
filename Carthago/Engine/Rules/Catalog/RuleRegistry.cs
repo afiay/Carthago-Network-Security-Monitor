@@ -1009,6 +1009,7 @@ namespace Carthago.Engine.Rules.Catalog
                 new R984_PublicFinsDataMemoryClearRule(),
                 new R985_PublicFinsControllerStopRequestRule(),
                 new R986_PrivateEtherNetIpRegisterSessionRule(),
+                new R987_PublicEtherNetIpIdentityResetRule(),
             };
         }
 

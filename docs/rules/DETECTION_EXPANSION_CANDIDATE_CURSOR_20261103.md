@@ -281,3 +281,8 @@ Workbook R2721 AN1887; exact request-only mode-change projection, Candidate/Shad
 ## R986 — EtherNet/IP RegisterSession
 
 Workbook R2782 AN2253; exact capture-qualified session registration, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_986-986.md). 40 authored cases, zero executed; no authentication or policy claim. Next R987.
+
+
+## R987 — EtherNet/IP CIP Identity Reset
+
+Workbook R2697 AN1933; exact registered-session reset request, Candidate/Shadow. [Batch notes](../03-detection-rules/batches/RULE_BATCH_987-987.md). 43 authored cases, zero executed; no actual restart or approval claim. Next R988.
