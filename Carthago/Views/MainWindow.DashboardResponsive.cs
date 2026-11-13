@@ -60,7 +60,7 @@ public partial class MainWindow
         // Wide: chart | prioritized queue | investigation.
         // Standard/Compact: chart above the existing responsive triage grid.
         var wideFocus = mode == ResponsiveLayoutMode.Wide;
-        DashboardFocusGrid.Height = wideFocus ? 600 : double.NaN;
+        DashboardFocusGrid.Height = wideFocus ? 540 : double.NaN;
         // GA UI-179: fill the bounded Wide plot row; retain a finite plot on the scrolling stack.
         TrafficPlot.Height = wideFocus ? double.NaN : 300;
         DashboardFocusTrafficColumn.Width = new GridLength(wideFocus ? 2.15 : 1, GridUnitType.Star);
@@ -197,7 +197,7 @@ public partial class MainWindow
             return;
         }
 
-        DashboardTriageGrid.Height = 600;
+        DashboardTriageGrid.Height = 540;
         DashboardTriageTimelineColumn.Width = new GridLength(1.4, GridUnitType.Star);
         DashboardTriageDetailColumn.Width = new GridLength(1.6, GridUnitType.Star);
         DashboardTriagePrimaryRow.Height = new GridLength(1, GridUnitType.Star);

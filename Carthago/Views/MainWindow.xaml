@@ -621,7 +621,7 @@
                 </ItemsControl>
                 <!-- GA UI-90: reference-aligned three-panel operational composition at Wide.
                      Standard and Compact stack chart before triage through the existing responsive partial. -->
-                <Grid x:Name="DashboardFocusGrid" Height="600" Margin="0,0,0,12">
+                <Grid x:Name="DashboardFocusGrid" Height="540" Margin="0,0,0,12">
                   <Grid.RowDefinitions>
                     <RowDefinition x:Name="DashboardFocusPrimaryRow" Height="*"/>
                     <RowDefinition x:Name="DashboardFocusSecondaryRow" Height="0"/>
@@ -770,7 +770,7 @@
                   </Grid>
                 </Border>
                 <!-- Main triage area -->
-                <Grid x:Name="DashboardTriageGrid" Grid.Row="0" Grid.Column="1" Height="600" Margin="0">
+                <Grid x:Name="DashboardTriageGrid" Grid.Row="0" Grid.Column="1" Height="540" Margin="0">
                   <Grid.RowDefinitions>
                     <RowDefinition x:Name="DashboardTriagePrimaryRow" Height="*"/>
                     <RowDefinition x:Name="DashboardTriageSecondaryRow" Height="0"/>
@@ -785,7 +785,7 @@
                           Style="{StaticResource DashboardFocusPanel}"
                           BorderBrush="{StaticResource AccentBrush}"
                           BorderThickness="2,1,1,1"
-                          Padding="20"
+                          Padding="12"
                           Margin="0,0,12,0">
                     <Grid>
                       <Grid.RowDefinitions>
@@ -795,7 +795,7 @@
                         <RowDefinition Height="Auto"/>
                       </Grid.RowDefinitions>
                       <StackPanel>
-                        <TextBlock Text="02  /  PRIORITY QUEUE" Style="{StaticResource MicroLabel}" Foreground="{StaticResource AccentBrush}" Margin="0,0,0,7"/>
+                        <TextBlock Text="02  /  PRIORITY QUEUE" Style="{StaticResource MicroLabel}" Foreground="{StaticResource AccentBrush}" Margin="0,0,0,4"/>
                         <StackPanel Orientation="Horizontal">
                           <TextBlock Text="Recent High-Priority Incidents" Style="{StaticResource DashboardSectionTitle}"/>
                           <TextBlock Text="  &#x24D8;" Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"
@@ -814,7 +814,7 @@
                       </StackPanel>
 
                       <!-- Static source-only queue: no nonfunctional filter or search affordances. -->
-                      <TextBlock Grid.Row="1" Margin="0,9,0,8"
+                      <TextBlock Grid.Row="1" Margin="0,6,0,5"
                                  Text="LOCAL SNAPSHOT  ·  INCIDENTS BY RISK, THEN SIGNALS"
                                  Style="{StaticResource MicroLabel}"
                                  TextWrapping="Wrap"/>
@@ -874,17 +874,17 @@
                             <!-- GA UI-142: severity-rail triage cards with a stable three-tier reading order. -->
                             <Border x:Name="TriageRowCard" Style="{StaticResource SocTimelineItem}"
                                     BorderBrush="{StaticResource CardBorderBrush}"
-                                    MinHeight="104"
-                                    Margin="0,0,0,9"
+                                    MinHeight="82"
+                                    Margin="0,0,0,5"
                                     Padding="0"
                                     ClipToBounds="True">
                               <Grid>
                                 <Grid.ColumnDefinitions>
-                                  <ColumnDefinition Width="6"/>
+                                  <ColumnDefinition Width="4"/>
                                   <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <Border Background="{Binding AccentBrush}" CornerRadius="3,0,0,3"/>
-                                <Grid Grid.Column="1" Margin="16,13,15,12">
+                                <Grid Grid.Column="1" Margin="9,7,8,7">
                                   <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
@@ -906,19 +906,19 @@
                                   </StackPanel>
                                   <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
                                               Margin="10,0,0,0">
-                                    <TextBlock Text="{Binding RiskScore}" FontSize="22" FontWeight="Bold"
+                                    <TextBlock Text="{Binding RiskScore}" FontSize="17" FontWeight="Bold"
                                                Foreground="{Binding AccentBrush}"
                                                ToolTip="Local risk score (0–100); not detection confidence"/>
                                     <TextBlock Text="/100" FontSize="10" Foreground="{StaticResource TextMutedBrush}"
                                                VerticalAlignment="Bottom" Margin="3,0,0,3"/>
                                   </StackPanel>
                                   <TextBlock Grid.Row="1" Grid.ColumnSpan="2"
-                                             Text="{Binding Title}" FontWeight="SemiBold" FontSize="16"
+                                             Text="{Binding Title}" FontWeight="SemiBold" FontSize="14"
                                              TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
-                                             Margin="0,10,0,8" ToolTip="{Binding Title}"/>
+                                             Margin="0,5,0,4" ToolTip="{Binding Title}"/>
                                   <Border Grid.Row="2" Grid.ColumnSpan="2"
                                           BorderBrush="{StaticResource SoftDividerBrush}"
-                                          BorderThickness="0,1,0,0" Padding="0,8,0,0">
+                                          BorderThickness="0,1,0,0" Padding="0,4,0,0">
                                     <Grid>
                                       <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
