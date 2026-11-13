@@ -1,4 +1,4 @@
-# Active sensors — AS-01 through AS-09
+# Active sensors — AS-01 through AS-10
 
 Status: source candidate; Windows build, tests and live smoke pending.
 
@@ -117,3 +117,15 @@ dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQua
 ```
 
 Tests cover explicit approval/replacement/expiry, exact scope, chronology, positive and inconclusive comparisons across six sensors. No test execution claimed.
+
+## AS-10 — Qualified active finding pipeline
+
+Every explicitly saved manual or scheduled observation is evaluated inside the same LiteDB transaction. A retained, explicitly approved reference for the exact sensor/adapter/source/target/probe scope must predate both confirmations; the two newest distinct observations after approval must contain the same AS-09 change (kind, field, before and after), at least one minute apart and within 24 hours. An intervening inconclusive, recovery or different result breaks confirmation; old or future observations cannot qualify. Separate ASD001–ASD011 identifiers (not registered R-series rules), Info/Low/Medium severity, Medium confidence in the observed change only. Deterministic SHA-256 identity over baseline/scope/change deduplicates while retained, even across process restart. New approved baseline or distinct transition has a new identity. Max 1000 findings / 30 days; evidence IDs, projected before/after, timestamps and scope retained; referenced observations can expire or be evicted independently. No packet/flow IDs, no attacker attribution, no passive-rule invocation, external delivery, automatic blocking or incident correlation. Project qualified persisted findings to the existing DetectionEvent contract for the separate Active sensor history inbox; Show qualified active findings applies sensor/target filters. No historical backfill; approve first, then save two new observations. Storage failure rolls back the observation and findings together. Runtime qualification and central incident integration remain separate gates.
+
+Windows verification pending:
+
+```powershell
+dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~ActiveFindingQualificationTests|FullyQualifiedName~ActiveChangeDetectorTests|FullyQualifiedName~ActiveEvidenceStoreTests|FullyQualifiedName~ActiveSensorManagerTests"
+```
+
+Test positive repeat confirmation, distinct IDs, scope, timing, intervening recovery, no approval, retention, replay/deduplication, and DetectionEvent provenance. No runtime execution claimed.

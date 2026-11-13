@@ -9,6 +9,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using LiteDB;
+using Carthago.Engine;
 
 namespace Carthago.Services.Sensors;
 
@@ -184,6 +185,7 @@ internal sealed class ActiveEvidenceStore
                     Prune(rows, now);
                     // A backdated insert outside the retained newest set is not a successful save.
                     if (rows.FindById(row.Id) is null) { db.Rollback(); return false; }
+                    EvaluateLatest(db, rows, row, now);
                     db.Commit();
                     return true;
                 }
@@ -287,6 +289,74 @@ internal sealed class ActiveEvidenceStore
             }
             catch (Exception ex) when (ex is not OutOfMemoryException)
             { return new("Unavailable", Array.Empty<ActiveChange>(), "Active history comparison unavailable."); }
+        }
+    }
+
+    private static ILiteCollection<ActiveFindingRow> Findings(LiteDatabase db)
+    {
+        var findings = db.GetCollection<ActiveFindingRow>("active_findings");
+        findings.EnsureIndex(x => x.ObservedTicks);
+        return findings;
+    }
+
+    private static void PruneFindings(ILiteCollection<ActiveFindingRow> findings, DateTimeOffset now)
+    {
+        long cutoff = (now - Retention).UtcDateTime.Ticks;
+        findings.DeleteMany(x => x.ObservedTicks < cutoff);
+        int excess = findings.Count() - ActiveFindingQualification.MaxFindings;
+        if (excess > 0)
+            foreach (var stale in findings.Query().OrderBy(x => x.ObservedTicks).Limit(excess).ToList())
+                findings.Delete(stale.Id);
+    }
+
+    // Called inside the observation insert transaction. No separate delivery or
+    // packet-rule side effect: observation and qualified findings commit together.
+    private static void EvaluateLatest(LiteDatabase db, ILiteCollection<ActiveEvidenceRow> rows,
+        ActiveEvidenceRow current, DateTimeOffset now)
+    {
+        var findings = Findings(db);
+        PruneFindings(findings, now);
+        var approval = db.GetCollection<Approval>("active_approved_baselines").FindById(ScopeKey(current));
+        if (approval is null) return;
+        var baseline = rows.FindById(approval.ObservationId);
+        if (baseline is null || !Valid(baseline, now) || !ActiveChangeDetector.SameScope(baseline, current)) return;
+        // Use the latest two observations, not the latest two positive matches.
+        // A recovery, malformed/inconclusive observation or intervening result
+        // breaks the confirmation sequence. Equal timestamps are ambiguous.
+        var recent = rows.Find(x => x.Target == current.Target)
+            .Where(r => ActiveChangeDetector.SameScope(current, r) && r.ObservedTicks >= approval.ApprovedTicks &&
+                r.ObservedTicks > baseline.ObservedTicks)
+            .OrderByDescending(r => r.ObservedTicks).ThenBy(r => r.Id).Take(3).ToArray();
+        if (recent.Length < 2 || recent[0].Id != current.Id ||
+            (recent.Length > 2 && recent[1].ObservedTicks == recent[2].ObservedTicks) ||
+            !Valid(recent[1], now)) return;
+        foreach (var finding in ActiveFindingQualification.Qualify(baseline, recent[1], current, approval.ApprovedTicks, now))
+            if (findings.FindById(finding.Id) is null) findings.Insert(finding);
+        PruneFindings(findings, now);
+    }
+
+    internal (IReadOnlyList<ActiveFindingRow> Rows, string? Error) ReadFindings(
+        ActiveSensorKind? sensor = null, string? target = null, int limit = MaxQuery)
+    {
+        if (limit is < 1 or > MaxQuery || (sensor.HasValue && !Enum.IsDefined(sensor.Value)) ||
+            (target is not null && !ValidAddress(target)))
+            return (Array.Empty<ActiveFindingRow>(), "Invalid finding filter.");
+        lock (Gate)
+        {
+            try
+            {
+                if (!File.Exists(_path)) return (Array.Empty<ActiveFindingRow>(), null);
+                using var db = Open();
+                var findings = Findings(db);
+                var now = _clock();
+                PruneFindings(findings, now);
+                return (findings.Query().OrderByDescending(x => x.ObservedTicks).Limit(ActiveFindingQualification.MaxFindings)
+                    .ToList().Where(r => (sensor is null || r.Sensor == sensor.Value.ToString()) &&
+                        (target is null || r.Target == target) && r.ObservedTicks <= now.UtcDateTime.Ticks)
+                    .OrderByDescending(r => r.ObservedTicks).ThenBy(r => r.Id).Take(limit).ToArray(), null);
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            { return (Array.Empty<ActiveFindingRow>(), "Active findings unavailable."); }
         }
     }
 }

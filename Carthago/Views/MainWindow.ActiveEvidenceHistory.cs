@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using Carthago.Services.Sensors;
+using Carthago.Engine;
 
 namespace Carthago;
 
@@ -53,6 +54,8 @@ public partial class MainWindow
         var approve = new Button { Content = "Approve selected baseline", Margin = new Thickness(0, 0, 8, 0) };
         var compare = new Button { Content = "Compare selected with approved baseline" };
         baselineActions.Children.Add(approve); baselineActions.Children.Add(compare); filters.Children.Add(baselineActions);
+        var findings = new Button { Content = "Show qualified active findings", Margin = new Thickness(0, 4, 0, 0) };
+        filters.Children.Add(findings);
         var status = new TextBlock { Margin = new Thickness(0, 8, 0, 8), TextWrapping = TextWrapping.Wrap };
         filters.Children.Add(status);
         DockPanel.SetDock(filters, Dock.Top); panel.Children.Add(filters);
@@ -110,6 +113,31 @@ public partial class MainWindow
                 }
             }
             finally { if (!closed) approve.IsEnabled = compare.IsEnabled = true; }
+        };
+        findings.Click += async (_, _) =>
+        {
+            if (!findings.IsEnabled) return;
+            findings.IsEnabled = false;
+            var kind = sensor.SelectedIndex > 0 && Enum.TryParse<ActiveSensorKind>(sensor.SelectedItem?.ToString(), out var parsed)
+                ? (ActiveSensorKind?)parsed : null;
+            string? ip = string.IsNullOrWhiteSpace(target.Text) ? null : target.Text.Trim();
+            try
+            {
+                var result = await Task.Run(() => new ActiveEvidenceStore().ReadFindings(kind, ip));
+                if (closed) return;
+                status.Text = $"{result.Rows.Count} qualified active finding(s). {result.Error}";
+                output.Text = string.Join("\n\n", result.Rows.Select(r =>
+                {
+                    var evt = ActiveFindingQualification.ToDetection(r);
+                    return $"{evt.TimestampUtc:u} | {evt.RuleId} | {evt.Severity} | {r.Target}\n" +
+                        $"{evt.Description}\n{r.Field}: {r.Before} → {r.After}\n" +
+                        $"Adapter: {r.AdapterId} | Probe: {r.ProbeKey}\n" +
+                        $"Baseline: {r.BaselineId:N} | Confirmations: {r.FirstObservationId:N}, {r.ConfirmingObservationId:N}";
+                }));
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            { if (!closed) status.Text = "Active findings could not be displayed."; }
+            finally { if (!closed) findings.IsEnabled = true; }
         };
         refresh.Click += async (_, _) => await Load();
         dialog.Loaded += async (_, _) => await Load();
