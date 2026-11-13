@@ -1,4 +1,4 @@
-# Active sensors — AS-01 through AS-04
+# Active sensors — AS-01 through AS-05
 
 Status: source candidate; Windows build, tests and live smoke pending.
 
@@ -57,3 +57,15 @@ dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQua
 ```
 
 Unit and isolated loopback tests cover scope, request construction, response framing, selected headers, redirect classification, header budget, timeout and cancellation. Manual Windows smoke: trusted HTTPS endpoint, invalid certificate (no HTTP request), HTTP redirect and HEAD rejection. No test execution claimed.
+
+## AS-05 — Gateway integrity
+
+Select an active Wi-Fi/Ethernet Npcap adapter (or its LAN host filter), stop monitoring, and choose Check gateway integrity. Select a configured IPv4 gateway/source pair in the existing private local /24 intersection; no arbitrary targets or IPv6. Revalidate adapter/address/gateway at execution. Optionally enter an independently verified expected unicast MAC; no automatic baseline acceptance. Read scoped Windows neighbor cache before the probe (missing/error means not established), then send two directed-target Ethernet broadcast ARP requests and collect replies for 350 + 850 ms. Only replies matching gateway IP, local IP, local Ethernet/ARP destination MAC, and consistent unicast Ethernet/ARP source MAC count; one VLAN tag supported. Retain up to 16 distinct claims and overflow indication. No reply, single observation, baseline match/difference and conflicting claims are distinct; cache mismatch separately reported. ARP has no transaction ID or authentication, so these are claims in a probe window, not cryptographic proof of gateway identity or causality. No auto-blocking, persistent baseline, traffic injection or detector promotion. The modal dialog waits for capture cleanup before releasing the main window on cancellation.
+
+Windows validation pending:
+
+```powershell
+dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~GatewayIntegritySensorTests|FullyQualifiedName~NpcapArpDiscoveryTests|FullyQualifiedName~WindowsLanArpResolverTests|FullyQualifiedName~LocalLanDiscoveryTests"
+```
+
+Synthetic frame tests cover strict source/destination matching, VLAN, unrelated frames, cache-only evidence, duplicate versus competing claims, baseline and overflow. Live Npcap smoke required: authorized gateway, selected adapter, cancellation/cleanup, and isolated lab conflicting claims. No execution claimed.
