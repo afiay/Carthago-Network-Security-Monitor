@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 
 [assembly: InternalsVisibleTo("Carthago.Tests")]
+[assembly: InternalsVisibleTo("Carthago.ActiveQualification")]
 // Preserve the former public model location for CLR type resolution.
 [assembly: TypeForwardedTo(typeof(Carthago.Models.TrafficRecord))]
 [assembly: TypeForwardedTo(typeof(Carthago.Models.SeverityLevel))]

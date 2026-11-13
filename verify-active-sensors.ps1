@@ -59,6 +59,8 @@ try {
         monitorBuildExitCode = $null
         monitorHelpExitCode = $null
         monitorInvalidCommandExitCode = $null
+        processQualificationBuildExitCode = $null
+        processQualificationExitCode = $null
         expectedTotal = ($expected.Values | Measure-Object -Sum).Sum
         testExitCode = $null
         total = 0
@@ -116,6 +118,23 @@ try {
         -not (Select-String -LiteralPath (Join-Path $dir 'monitor-invalid.log') -SimpleMatch 'Invalid or duplicate profile ID.' -Quiet)) {
         $report.status = 'HostSmokeFailed'
         $report.blocker = 'Monitor executable help or invalid-command contract failed.'
+        Write-Report
+        exit 1
+    }
+    $processProject = Join-Path $root 'Carthago.ActiveQualification/Carthago.ActiveQualification.csproj'
+    $report.processQualificationBuildExitCode = Invoke-Dotnet @('build', $processProject, '-c', 'Release', '--nologo') (Join-Path $dir 'process-build.log')
+    if ($report.processQualificationBuildExitCode -ne 0) {
+        $report.status = 'BuildFailed'
+        $report.blocker = 'Separate-process qualification executable build failed.'
+        Write-Report
+        exit 1
+    }
+    $report.processQualificationExitCode = Invoke-Dotnet @('run', '--project', $processProject, '-c', 'Release',
+        '--no-build', '--no-restore') (Join-Path $dir 'process-qualification.log')
+    if ($report.processQualificationExitCode -ne 0 -or
+        -not (Select-String -LiteralPath (Join-Path $dir 'process-qualification.log') -SimpleMatch 'PASS AS-Q07G3 4/4 separate-process scenarios' -Quiet)) {
+        $report.status = 'ProcessQualificationFailed'
+        $report.blocker = 'Separate-process ownership or authorization qualification failed.'
         Write-Report
         exit 1
     }
