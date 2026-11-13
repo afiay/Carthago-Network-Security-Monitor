@@ -57,10 +57,10 @@ public sealed class RuntimeEnrichmentRegressionTests
                 Assert.Null(missing.Lookup("192.168.1.1"));
                 Assert.Equal(0L, missing.CityLookupHealth.Attempts);
                 Assert.Equal(0L, missing.AsnLookupHealth.Attempts);
-                var outcome = missing.LookupWithOutcomes("8.8.8.8");
-                Assert.Null(outcome.Info);
-                Assert.Equal(GeoIpService.LookupOutcome.NotAttempted, outcome.City);
-                Assert.Equal(GeoIpService.LookupOutcome.NotAttempted, outcome.Asn);
+                var missingOutcome = missing.LookupWithOutcomes("8.8.8.8");
+                Assert.Null(missingOutcome.Info);
+                Assert.Equal(GeoIpService.LookupOutcome.NotAttempted, missingOutcome.City);
+                Assert.Equal(GeoIpService.LookupOutcome.NotAttempted, missingOutcome.Asn);
             }
 
             File.WriteAllText(Path.Combine(root, "Data", "GeoLite2-City.mmdb"), "not a database");

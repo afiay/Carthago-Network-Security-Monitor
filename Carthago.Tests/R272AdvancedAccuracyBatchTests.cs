@@ -58,7 +58,7 @@ public sealed class R272AdvancedAccuracyBatchTests
     // Reuse GA-04 packet semantics, but correlate real post-policy emissions
     // from three distinct legacy categories on one source.
     [Fact]
-    public void Engine_Emissions_Correlate_Only_On_The_Observed_Host()
+    public async Task Engine_Emissions_Correlate_Only_On_The_Observed_Host()
     {
         RuleEngine.ResetRuntimeStateForReplay();
         try
@@ -102,12 +102,11 @@ public sealed class R272AdvancedAccuracyBatchTests
             var now = DateTime.UtcNow;
             var context = RuleEvaluationContext.CreateForEngine(probe, Sensitivity.Balanced,
                 now, RuleEngineHealthSnapshot.Empty(now));
-            var result = new R272_MultiSignalRuleStackSurgeFromHostRule()
-                .EvaluateAsync(context).AsTask().GetAwaiter().GetResult();
+            var result = await new R272_MultiSignalRuleStackSurgeFromHostRule()
+                .EvaluateAsync(context);
             Assert.True(result.Matched);
-            Assert.False(new R272_MultiSignalRuleStackSurgeFromHostRule()
-                .EvaluateAsync(new RuleEvaluationContext(probe, Sensitivity.Balanced, now))
-                .AsTask().GetAwaiter().GetResult().Matched);
+            Assert.False((await new R272_MultiSignalRuleStackSurgeFromHostRule()
+                .EvaluateAsync(new RuleEvaluationContext(probe, Sensitivity.Balanced, now))).Matched);
 
             // The snapshot is frozen at creation; future and expired observations
             // must not qualify even when the same host has emitted three families.
@@ -116,8 +115,8 @@ public sealed class R272AdvancedAccuracyBatchTests
                 var at = now.Add(offset);
                 var boundary = RuleEvaluationContext.CreateForEngine(probe, Sensitivity.Balanced,
                     at, RuleEngineHealthSnapshot.Empty(at));
-                Assert.False(new R272_MultiSignalRuleStackSurgeFromHostRule()
-                    .EvaluateAsync(boundary).AsTask().GetAwaiter().GetResult().Matched);
+                Assert.False((await new R272_MultiSignalRuleStackSurgeFromHostRule()
+                .EvaluateAsync(boundary)).Matched);
             }
             // The actual emitted event timestamp defines the inclusive boundary.
             var exact = ftpEvent.TimestampUtc.AddMinutes(10);
@@ -130,19 +129,19 @@ public sealed class R272AdvancedAccuracyBatchTests
             mapped.IpVersion = 6;
             var mappedContext = RuleEvaluationContext.CreateForEngine(mapped, Sensitivity.Balanced,
                 now, RuleEngineHealthSnapshot.Empty(now));
-            Assert.True(new R272_MultiSignalRuleStackSurgeFromHostRule()
-                .EvaluateAsync(mappedContext).AsTask().GetAwaiter().GetResult().Matched);
+            Assert.True((await new R272_MultiSignalRuleStackSurgeFromHostRule()
+                .EvaluateAsync(mappedContext)).Matched);
 
             probe.Source = "10.214.1.99";
-            Assert.False(new R272_MultiSignalRuleStackSurgeFromHostRule()
-                .EvaluateAsync(context).AsTask().GetAwaiter().GetResult().Matched);
+            Assert.False((await new R272_MultiSignalRuleStackSurgeFromHostRule()
+                .EvaluateAsync(context)).Matched);
             probe.Source = host;
 
             RuleEngine.ResetRuntimeStateForReplay();
             var reset = RuleEvaluationContext.CreateForEngine(probe, Sensitivity.Balanced,
                 now, RuleEngineHealthSnapshot.Empty(now));
-            Assert.False(new R272_MultiSignalRuleStackSurgeFromHostRule()
-                .EvaluateAsync(reset).AsTask().GetAwaiter().GetResult().Matched);
+            Assert.False((await new R272_MultiSignalRuleStackSurgeFromHostRule()
+                .EvaluateAsync(reset)).Matched);
         }
         finally { RuleEngine.ResetRuntimeStateForReplay(); }
     }
