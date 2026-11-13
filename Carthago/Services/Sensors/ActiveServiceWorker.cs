@@ -27,10 +27,13 @@ public static class ActiveServiceWorker
         using var process = System.Diagnostics.Process.GetCurrentProcess();
         var health = new ActiveServiceHealthPublisher(root, Guid.NewGuid(), process.Id,
             new DateTimeOffset(process.StartTime.ToUniversalTime()));
+        var rejection = new ActiveServiceStartupRejection(root, process.Id,
+            new DateTimeOffset(process.StartTime.ToUniversalTime()),
+            Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(configPath))));
         var pinned = options.Profiles.ToDictionary(p => p.ProfileId, p => p.GrantId, StringComparer.Ordinal);
         var args = new[] { "run" }.Concat(options.Profiles.SelectMany(p => new[] { "--profile", p.ProfileId })).ToArray();
         return ActiveSensorWorker.ExecuteCoreAsync(args, TextWriter.Null, TextWriter.Null, token, store,
             id => LocalLanDiscovery.GetLocalInterfaces(id), () => new ActiveSensorManager(save: evidence.Save),
-            pinnedGrants: pinned, ready: ready, sample: health.Sample);
+            pinnedGrants: pinned, ready: ready, sample: health.Sample, startupRejected: rejection.Publish);
     }
 }

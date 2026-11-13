@@ -85,3 +85,34 @@ Aggregate counters do not prove each individual sensor's protocol accuracy.
 Actual negative SCM grant tests require separately provisioned lab grants;
 this harness does not invalidate existing authorization. Automatic startup
 remains unqualified.
+
+
+## Negative authorization SCM lab (G5F3)
+
+Use a disposable dedicated lab account and service configuration, never
+production grants. First qualify a valid configuration with the positive
+lifecycle harness. Stop the service. For a replacement-grant lab, provision
+the same profile again under the lab account (new grant ID) but do not run
+configure; the existing pinned configuration now refers to the old grant.
+For a revoked-grant lab, use revoke on the lab profile while stopped;
+for expiry, wait for the lab grant to expire. Do not mutate encrypted
+credentials on a production host. A separate corrupt-credential fixture
+is required for SnmpCredentialUnavailable.
+
+Run elevated with the same deployment parameters and the expected negative
+configuration SHA256 from the prepared lab fixture:
+
+~~~powershell
+.\scripts\verify-active-service-negative.ps1 @params -ExpectedReason PinnedGrantMismatch -ExpectedConfigSha256 'REPLACE_WITH_64_HEX' -ConfirmIsolatedNegativeLab
+~~~
+
+The harness starts only the explicitly selected existing service, requires
+Start-Service failure, nonzero SCM exit, stopped state, a fresh typed
+rejection record matching the config hash and reason, and unchanged health
+and evidence file hashes. Unexpected successful start is a failure and
+triggers cleanup; real probes could occur if the fixture was not invalid.
+No grant/configuration changes are made. NoValidGrant groups several
+causes; establish the intended fixture independently. Hash checks are
+not packet-level proof. After the negative run, explicitly issue/select
+a valid lab grant and configure, then rerun the positive G5E harness to
+establish recovery. No automatic recovery or startup changes.

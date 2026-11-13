@@ -25,7 +25,8 @@ public static class ActiveSensorWorker
         Func<Guid, IReadOnlyList<LocalLanInterface>> resolve, Func<ActiveSensorManager> createManager,
         Func<DateTimeOffset>? clock = null, Func<ActiveSensorProfile, bool>? gatewayCurrent = null,
         IReadOnlyDictionary<string, Guid>? pinnedGrants = null, Action? ready = null,
-        Action<ActiveSensorManager, DateTimeOffset, DateTimeOffset>? sample = null)
+        Action<ActiveSensorManager, DateTimeOffset, DateTimeOffset>? sample = null,
+        Action<ActiveServiceRejectionReason>? startupRejected = null)
     {
         bool status = args is ["status"] or ["status", "--json"];
         var ids = new List<string>();
@@ -87,12 +88,12 @@ public static class ActiveSensorWorker
                 if (profile.Kind == ActiveSensorKind.Gateway && !(gatewayCurrent ?? (p => GatewayIntegritySensor.IsConfiguredGateway(p.AdapterId, p.Adapter, p.Target)))(profile))
                 { error.WriteLine("Selected target is no longer the configured gateway."); return 3; }
                 var grant = store.ReadValidGrant(profile);
-                if (grant is null) { error.WriteLine("Selected configuration has no valid durable grant."); return 3; }
+                if (grant is null) { startupRejected?.Invoke(ActiveServiceRejectionReason.NoValidGrant); error.WriteLine("Selected configuration has no valid durable grant."); return 3; }
                 if (pinnedGrants is not null &&
                     (!pinnedGrants.TryGetValue(id, out var pinned) || pinned != grant.GrantId))
-                { error.WriteLine("Selected configuration does not match the pinned grant."); return 3; }
+                { startupRejected?.Invoke(ActiveServiceRejectionReason.PinnedGrantMismatch); error.WriteLine("Selected configuration does not match the pinned grant."); return 3; }
                 if (profile.Kind == ActiveSensorKind.Snmp && store.LoadAuthorizedSnmp(profile, grant.GrantId) is null)
-                { error.WriteLine("Selected SNMP credential cannot be decrypted or authorized."); return 3; }
+                { startupRejected?.Invoke(ActiveServiceRejectionReason.SnmpCredentialUnavailable); error.WriteLine("Selected SNMP credential cannot be decrypted or authorized."); return 3; }
                 selected.Add((profile, grant));
             }
             // Recheck the entire selection after acquiring ownership, before

@@ -37,6 +37,7 @@ try {
         ActiveServiceHealthTests = 4
         ActiveServiceNegativeStartupTests = 6
         ActiveAuthorizationSurveillanceTests = 5
+        ActiveServiceRejectionTests = 4
     }
     $branch = (& git branch --show-current).Trim()
     if ($LASTEXITCODE -ne 0 -or $branch -ne 'feature/carthago-reliability-hardening') {
@@ -174,6 +175,16 @@ try {
     } catch {
         $report.status = 'ServiceLifecycleContractFailed'
         $report.blocker = 'Offline active service lifecycle qualification contract failed.'
+        Write-Report
+        exit 1
+    }
+    try {
+        $negativeOutput = @(& (Join-Path $root 'scripts/test-active-service-negative-contract.ps1'))
+        $negativeOutput | Set-Content -LiteralPath (Join-Path $dir 'service-negative-contract.log') -Encoding UTF8
+        if ($negativeOutput -notcontains 'PASS AS-Q07G5F3 offline negative SCM contract') { throw 'Missing negative SCM contract marker.' }
+    } catch {
+        $report.status = 'NegativeServiceContractFailed'
+        $report.blocker = 'Offline negative SCM contract failed.'
         Write-Report
         exit 1
     }
