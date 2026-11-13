@@ -559,6 +559,23 @@
                                 ItemTemplate="{StaticResource IncidentDetectionLinkCard}"/>
                 </StackPanel>
               </Border>
+              <Border Style="{StaticResource BaselineComparisonCard}" BorderBrush="#31536A"
+                      Margin="0,0,0,12" Padding="20,16">
+                <StackPanel>
+                  <TextBlock Text="ACTIVE SENSOR CONTEXT" Style="{StaticResource IncidentOpsEyebrow}"/>
+                  <TextBlock Text="Qualified infrastructure changes" FontSize="18" FontWeight="SemiBold"
+                             Foreground="{StaticResource TextBrush}" Margin="0,6,0,8"/>
+                  <TextBlock Text="Read-only endpoint and time-range search. Matches do not establish incident membership, device identity or attacker attribution. Risk and attack story are unchanged."
+                             Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                  <Button x:Name="ActiveContextButton" Content="Load active sensor context" Click="LoadActiveContext_Click"
+                          Style="{StaticResource SecondaryButton}" IsEnabled="False" HorizontalAlignment="Left" Margin="0,0,0,8"/>
+                  <TextBlock x:Name="ActiveContextStatus" Text="Select a case." Foreground="{StaticResource TextMutedBrush}"
+                             TextWrapping="Wrap" Margin="0,0,0,8"/>
+                  <TextBox x:Name="ActiveContextOutput" IsReadOnly="True" TextWrapping="Wrap" AcceptsReturn="True"
+                           MaxHeight="360" MinHeight="70" VerticalScrollBarVisibility="Auto"
+                           AutomationProperties.Name="Qualified active sensor context"/>
+                </StackPanel>
+              </Border>
               <TextBlock Text="04 / ATTRIBUTION AND ANALYST NOTES"
                          Style="{StaticResource IncidentOpsEyebrow}" Margin="0,6,0,12"/>
               <Grid Margin="0">

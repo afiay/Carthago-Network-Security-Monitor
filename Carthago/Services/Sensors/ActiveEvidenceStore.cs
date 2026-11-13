@@ -376,10 +376,12 @@ internal sealed class ActiveEvidenceStore
     }
 
     internal (IReadOnlyList<ActiveFindingRow> Rows, string? Error) ReadFindings(
-        ActiveSensorKind? sensor = null, string? target = null, int limit = MaxQuery)
+        ActiveSensorKind? sensor = null, string? target = null, int limit = MaxQuery,
+        DateTimeOffset? fromUtc = null, DateTimeOffset? throughUtc = null)
     {
         if (limit is < 1 or > MaxQuery || (sensor.HasValue && !Enum.IsDefined(sensor.Value)) ||
-            (target is not null && !ValidAddress(target)))
+            (target is not null && !ValidAddress(target)) ||
+            (fromUtc.HasValue && throughUtc.HasValue && fromUtc.Value > throughUtc.Value))
             return (Array.Empty<ActiveFindingRow>(), "Invalid finding filter.");
         lock (Gate)
         {
@@ -398,7 +400,9 @@ internal sealed class ActiveEvidenceStore
                 catch { db.Rollback(); throw; }
                 return (findings.Query().OrderByDescending(x => x.ObservedTicks).Limit(ActiveFindingQualification.MaxFindings)
                     .ToList().Where(r => (sensor is null || r.Sensor == sensor.Value.ToString()) &&
-                        (target is null || r.Target == target) && r.ObservedTicks <= now.UtcDateTime.Ticks)
+                        (target is null || r.Target == target) && r.ObservedTicks <= now.UtcDateTime.Ticks &&
+                        (!fromUtc.HasValue || r.ObservedTicks >= fromUtc.Value.UtcDateTime.Ticks) &&
+                        (!throughUtc.HasValue || r.ObservedTicks <= throughUtc.Value.UtcDateTime.Ticks))
                     .OrderByDescending(r => r.ObservedTicks).ThenBy(r => r.Id).Take(limit).ToArray(), null);
             }
             catch (Exception ex) when (ex is not OutOfMemoryException)

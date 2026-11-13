@@ -18,6 +18,7 @@ using System.Windows.Threading;
 using Carthago.Analytics.Models;
 using Carthago.Analytics.Services;
 using Carthago.Sinks;
+using Carthago.Services.Sensors;
 
 namespace Carthago.Views
 {
@@ -28,6 +29,7 @@ namespace Carthago.Views
         private readonly IncidentsVm _vm;
         private string _timelineFilter = "All activity";
         private string _timelineWindow = "Entire case";
+        private int _activeContextGeneration;
 
         public event Action<string>? NetworkInvestigationRequested;
         public event Action? ExportAnalysisRequested;
@@ -198,6 +200,7 @@ namespace Carthago.Views
 
             Unloaded += (_, __) =>
             {
+                ++_activeContextGeneration;
                 analytics.IncidentCreated -= OnIncidentChanged;
                 analytics.IncidentUpdated -= OnIncidentChanged;
                 analytics.AnalysisProgress -= OnProgress;
@@ -422,8 +425,49 @@ namespace Carthago.Views
             UpdateEmptyStates();
         }
 
+        private async void LoadActiveContext_Click(object sender, RoutedEventArgs e)
+        {
+            var scope = _vm.Selected?.GetActiveContextScope();
+            if (scope is null) return;
+            int generation = ++_activeContextGeneration;
+            ActiveContextButton.IsEnabled = false;
+            ActiveContextStatus.Text = "Loading retained active findings…";
+            ActiveContextOutput.Text = "";
+            try
+            {
+                var result = await System.Threading.Tasks.Task.Run(() =>
+                    ActiveIncidentContext.Read(scope, new ActiveEvidenceStore()));
+                if (generation != _activeContextGeneration || !IsLoaded || _vm.Selected?.Id != scope.IncidentId) return;
+                ActiveContextStatus.Text = result.Error ?? $"{result.Rows.Count} contextual finding(s) (maximum {ActiveIncidentContext.MaxResults}). " +
+                    "Endpoint/time matches only; not incident membership or attack attribution.";
+                ActiveContextOutput.Text = string.Join("\n\n", result.Rows.Select(r =>
+                    $"{new DateTime(r.ObservedTicks, DateTimeKind.Utc):u} | {r.RuleId} | {r.Severity} | {r.Target}\n" +
+                    $"{r.Field}: {r.Before} → {r.After}\n" +
+                    $"Adapter: {r.AdapterId} | Probe source: {r.Source} | Probe: {r.ProbeKey}\n" +
+                    $"Finding: {r.Id}\nBaseline: {r.BaselineId:N} | Observations: {r.FirstObservationId:N}, {r.ConfirmingObservationId:N}"));
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                if (generation == _activeContextGeneration && IsLoaded)
+                    ActiveContextStatus.Text = "Active context unavailable.";
+            }
+            finally
+            {
+                if (generation == _activeContextGeneration && IsLoaded)
+                    ActiveContextButton.IsEnabled = true;
+            }
+        }
+
         private void UpdateSelectionState()
         {
+            ++_activeContextGeneration;
+            ActiveContextOutput.Text = "";
+            var scope = _vm.Selected?.GetActiveContextScope();
+            ActiveContextButton.IsEnabled = scope is not null;
+            ActiveContextStatus.Text = scope is null
+                ? "No eligible recorded IPv4 endpoint and time range."
+                : $"Search retained findings for {string.Join(", ", scope.Targets)} | {scope.FromUtc:u} — {scope.ThroughUtc:u}.";
+
             var hasSelection = _vm.Selected != null;
             DetailsScrollViewer.Visibility = hasSelection ? Visibility.Visible : Visibility.Collapsed;
             DetailsEmptyState.Visibility = hasSelection ? Visibility.Collapsed : Visibility.Visible;
@@ -898,6 +942,9 @@ namespace Carthago.Views
                 OnChanged();
             }
         }
+
+        internal ActiveIncidentScope? GetActiveContextScope() =>
+            _model is null ? null : ActiveIncidentContext.CreateScope(_model);
 
         public static IncidentVm From(Incident incident)
         {
