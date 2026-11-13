@@ -118,4 +118,15 @@ public sealed class PortableMonitorJournalTests
         Assert.True(PortableMonitorCommand.TryParse(args.Concat(new[]{"--journal-directory","evidence"}).ToArray(),out var b));
         Assert.Equal("evidence",b!.JournalDirectory);
     }
+
+    [Fact]
+    public void FailedAppendLatchesWriterAndDisposeCannotReopen()
+    {
+        using var temp=new Temp();var journal=new PortableMonitorJournal(temp.Root,Guid.NewGuid(),256,2);
+        Assert.Throws<InvalidDataException>(()=>journal.Append(new string('x',300)));
+        Assert.Throws<InvalidOperationException>(()=>journal.Append("{}"));
+        journal.Dispose();journal.Dispose();
+        Assert.Throws<InvalidOperationException>(()=>journal.Append("{}"));
+        Assert.Empty(Directory.GetFiles(journal.DirectoryPath));
+    }
 }

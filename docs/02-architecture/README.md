@@ -45,3 +45,4 @@ System boundaries, evidence lineage, sensors and architectural constraints.
 - [CLI-007E.1 — Portable foreground monitor](CLI-007E1-PortableForegroundMonitor.md)
 - [CLI-007E.2 — Portable session control](CLI-007E2-PortableSessionControl.md)
 - [CLI-007E.3 — Portable monitoring journal](CLI-007E3-PortableMonitorJournal.md)
+- [CLI-007E.4 — Journal failure hardening](CLI-007E4-JournalFailureHardening.md)

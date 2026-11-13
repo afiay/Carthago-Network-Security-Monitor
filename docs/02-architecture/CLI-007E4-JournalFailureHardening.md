@@ -1,0 +1,7 @@
+# CLI-007E.4 — Portable journal failure hardening
+
+**SOURCE CANDIDATE — UNVERIFIED.** Reviewed source 72d63d9d038d5dbf8376deff9f1b59cf1f25de92. CLI-006E/native execution pending.
+
+Journal creation precedes capture source construction. Append failure latches the writer and lease, stops normal event delivery through existing lifecycle error paths, and never retries disk writes. Final console record reports journal_failed and exit 3 even when the final append or close fails; capture cleanup flags and counters are retained. A failed nonfinal append can leave a console sequence gap; the final record explicitly reports the failure. Close failure after a successful final append cannot retroactively update that persisted record. Inspect historical evidence as untrusted. No global deletion/retention: per-session bounds remain, operator controls total storage. No production deployment claim.
+
+Six new foreground integration cases (console/journal parity, startup and finding append failures, final append/close failures, provisioning failure), one writer latch case. Seven authored, zero executed. Pinned gate now requires 21 command and 12 journal cases. Owner focused command: dotnet test Carthago.Cli.Tests/Carthago.Cli.Tests.csproj -c Release --filter "FullyQualifiedName~PortableMonitorCommandTests|FullyQualifiedName~PortableMonitorJournalTests". Next: source audit and execution qualification before Linux service deployment.

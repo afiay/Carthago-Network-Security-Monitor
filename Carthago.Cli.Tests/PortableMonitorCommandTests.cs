@@ -123,4 +123,92 @@ public sealed class PortableMonitorCommandTests
         if(failOpen)Assert.DoesNotContain("\"eventType\":\"started\"",output.ToString());
         Assert.Equal(1,api.Closes);Assert.Equal(1,api.Disposals);
     }
+
+    private sealed class Temp:IDisposable
+    {
+        internal string Root=Path.Combine(Path.GetTempPath(),"carthago-journal-integration-"+Guid.NewGuid().ToString("N"));
+        internal Temp()=>Directory.CreateDirectory(Root);
+        public void Dispose()=>Directory.Delete(Root,true);
+    }
+
+    [Fact]
+    public async Task ForegroundJournalMatchesConsoleAndRetainsFinalRecord()
+    {
+        using var temp=new Temp();using var output=new Writer();using var cancel=new CancellationTokenSource();
+        Assert.True(PortableMonitorCommand.TryParse(Args("--journal-directory",temp.Root),out var options));
+        var api=new Api();
+        var run=PortableMonitorCommand.RunAsync(options!,output,true,cancel.Token,id=>new(id,()=>api),TimeSpan.FromMilliseconds(20));
+        try
+        {
+            await Task.WhenAll(output.Health.Task,output.Finding.Task).WaitAsync(TimeSpan.FromSeconds(5));
+            cancel.Cancel();
+            Assert.Equal(130,await run.WaitAsync(TimeSpan.FromSeconds(5)));
+            var dir=Directory.GetDirectories(temp.Root).Single();
+            var persisted=Directory.GetFiles(dir).OrderBy(p=>p,StringComparer.Ordinal).SelectMany(File.ReadAllLines).ToArray();
+            Assert.Equal(output.ToString().Split(Environment.NewLine,StringSplitOptions.RemoveEmptyEntries),persisted);
+            var summary=PortableMonitorJournal.Inspect(dir,10,default);
+            Assert.Equal("shutdown_recorded",summary.Status);Assert.Equal(1L,summary.FindingCount);
+            Assert.Equal("R589",Assert.Single(summary.Findings).RuleId);
+            Assert.DoesNotContain("secret",string.Join("\n",persisted));
+            using var final=JsonDocument.Parse(persisted[^1]);
+            Assert.Equal("recorded",final.RootElement.GetProperty("data").GetProperty("journalStatus").GetString());
+        }
+        finally{cancel.Cancel();}
+    }
+
+    private sealed class BrokenJournal:IPortableMonitorJournal
+    {
+        internal int Appends,Closes,FailAt;
+        internal bool FailClose;
+        public void Append(string line){if(++Appends==FailAt)throw new IOException("private disk error");}
+        public void Dispose(){Closes++;if(FailClose)throw new IOException("private close error");}
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    public async Task JournalFailureStopsCaptureAndDoesNotRetry(int failAt)
+    {
+        using var output=new StringWriter();using var cancel=new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        var journal=new BrokenJournal{FailAt=failAt};
+        Assert.True(PortableMonitorCommand.TryParse(Args("--journal-directory","unused"),out var options));
+        var api=new Api();
+        var code=await PortableMonitorCommand.RunAsync(options!,output,true,cancel.Token,id=>new(id,()=>api),
+            TimeSpan.FromSeconds(60),(_,_)=>journal).WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.Equal(3,code);Assert.Equal(failAt,journal.Appends);Assert.Equal(1,journal.Closes);
+        Assert.Equal(1,api.Closes);Assert.Equal(1,api.Disposals);
+        var lines=output.ToString().Split(Environment.NewLine,StringSplitOptions.RemoveEmptyEntries);
+        using var final=JsonDocument.Parse(lines[^1]);
+        Assert.Equal("stopped",final.RootElement.GetProperty("eventType").GetString());
+        Assert.Equal("journal_failed",final.RootElement.GetProperty("data").GetProperty("failure").GetString());
+        Assert.Equal("failed",final.RootElement.GetProperty("data").GetProperty("journalStatus").GetString());
+        Assert.DoesNotContain("private disk error",output.ToString());
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task FinalAppendOrCloseFailureStillReportsFinalConsoleFailure(bool closeFailure)
+    {
+        using var output=new StringWriter();
+        var journal=new BrokenJournal{FailAt=closeFailure?0:2,FailClose=closeFailure};
+        Assert.True(PortableMonitorCommand.TryParse(Args("--journal-directory","unused"),out var options));
+        var api=new Api{End=true};
+        Assert.Equal(3,await PortableMonitorCommand.RunAsync(options!,output,true,default,id=>new(id,()=>api),
+            createJournal:(_,_)=>journal));
+        Assert.Equal(2,journal.Appends);Assert.Equal(1,journal.Closes);
+        Assert.Equal(1,api.Closes);Assert.Contains("journal_failed",output.ToString());
+        Assert.DoesNotContain("private close error",output.ToString());
+    }
+
+    [Fact]
+    public async Task JournalProvisionFailurePrecedesCaptureSourceCreation()
+    {
+        using var output=new StringWriter();
+        Assert.True(PortableMonitorCommand.TryParse(Args("--journal-directory","unused"),out var options));
+        await Assert.ThrowsAsync<IOException>(()=>PortableMonitorCommand.RunAsync(options!,output,true,default,
+            _=>throw new InvalidOperationException("source must not be created"),createJournal:(_,_)=>throw new IOException()));
+        Assert.Empty(output.ToString());
+    }
+
 }

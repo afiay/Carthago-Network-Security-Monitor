@@ -7,7 +7,12 @@ using Carthago.Engine.Rules;
 namespace Carthago.Cli;
 
 /// <summary>Single writer, session-owned rotating evidence. No raw packets or external log ingestion.</summary>
-internal sealed class PortableMonitorJournal:IDisposable
+internal interface IPortableMonitorJournal:IDisposable
+{
+    void Append(string line);
+}
+
+internal sealed class PortableMonitorJournal:IPortableMonitorJournal
 {
     internal const int DefaultSegmentBytes=1048576,DefaultSegments=4,MaxSegmentBytes=4194304,MaxSegments=8;
     private const int MaxRecordBytes=16384;
@@ -15,6 +20,7 @@ internal sealed class PortableMonitorJournal:IDisposable
     private readonly Queue<string> _owned=new();
     private FileStream? _stream;
     private long _segment;
+    private bool _disposed,_faulted;
     internal string DirectoryPath { get; }
     private static readonly UTF8Encoding Utf8=new(false,true);
     internal sealed record Finding(long Sequence,long PacketNumber,DateTime TimestampUtc,string RuleId,string Method);
@@ -37,7 +43,14 @@ internal sealed class PortableMonitorJournal:IDisposable
         _segmentBytes=segmentBytes;_retain=retain;
     }
 
-    internal void Append(string line)
+    public void Append(string line)
+    {
+        if(_disposed||_faulted)throw new InvalidOperationException("Journal is closed or faulted.");
+        try { AppendCore(line); }
+        catch { _faulted=true;throw; }
+    }
+
+    private void AppendCore(string line)
     {
         var bytes=Utf8.GetBytes(line+"\n");
         if(bytes.Length>MaxRecordBytes||bytes.Length>_segmentBytes)throw new InvalidDataException("Journal record too large.");
@@ -54,7 +67,12 @@ internal sealed class PortableMonitorJournal:IDisposable
         _stream.Flush(flushToDisk:true);
     }
 
-    public void Dispose(){_stream?.Dispose();_stream=null;}
+    public void Dispose()
+    {
+        if(_disposed)return;
+        _disposed=true;
+        var stream=_stream;_stream=null;stream?.Dispose();
+    }
 
     internal static bool TryParse(string[] command,out string directory,out int limit)
     {
@@ -147,5 +165,33 @@ internal sealed class PortableMonitorJournal:IDisposable
         }
         return new(session,partial?"incomplete_tail":stopped?"shutdown_recorded":"shutdown_not_recorded",
             gap,partial,records,findings,first,last,rows.ToArray());
+    }
+}
+
+// One attempt to close; no retry of a failed append or flush. The foreground
+// host can still publish a final console result after evidence persistence fails.
+internal sealed class PortableJournalLease:IDisposable
+{
+    private IPortableMonitorJournal? _journal;
+    internal bool Enabled { get; }
+    internal bool Faulted { get; private set; }
+    internal PortableJournalLease(IPortableMonitorJournal? journal)
+    { _journal=journal;Enabled=journal is not null; }
+
+    internal bool TryAppend(string line)
+    {
+        if(Faulted)return false;
+        if(_journal is null)return !Enabled;
+        try { _journal.Append(line);return true; }
+        catch(Exception ex) when(ex is not OutOfMemoryException)
+        { Faulted=true;return false; }
+    }
+
+    public void Dispose()
+    {
+        var journal=_journal;_journal=null;
+        if(journal is null)return;
+        try { journal.Dispose(); }
+        catch(Exception ex) when(ex is not OutOfMemoryException){Faulted=true;}
     }
 }

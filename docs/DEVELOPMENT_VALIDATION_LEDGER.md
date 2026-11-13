@@ -2368,3 +2368,8 @@ Reviewed live parent `8294185345a8117556016b3a2b7d77ba91658109`, ledger, qualifi
 ## 2026-11-13 — CLI-007E.3 portable monitoring journal
 
 **SOURCE CANDIDATE — UNVERIFIED.** Reviewed source 9bea1f5b44ec3f949a0f1df7506230e47c1386a9. Add opt-in per-session bounded NDJSON journal, rotation, read-only untrusted inspection, partial-tail/retention-gap reporting and projected findings. Eleven synthetic cases authored, zero executed; pinned gate updated. No build/test/native capture/Actions or deployment qualification. See [architecture](02-architecture/CLI-007E3-PortableMonitorJournal.md).
+
+
+## 2026-11-13 — CLI-007E.4 portable journal failure hardening
+
+**SOURCE CANDIDATE — UNVERIFIED.** Reviewed source 72d63d9d038d5dbf8376deff9f1b59cf1f25de92. Latch journal append failures, provision before source creation, no disk retry after failure, final console failure and capture cleanup accounting even on final write/close failure. Seven synthetic integration/writer cases authored, zero executed; pinned gate updated. No global deletion, native capture, builds/tests/Actions or qualification claim. See [architecture](02-architecture/CLI-007E4-JournalFailureHardening.md).

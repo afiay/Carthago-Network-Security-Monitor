@@ -62,27 +62,31 @@ internal static class PortableMonitorCommand
     private static readonly JsonSerializerOptions JsonOptions=new(JsonSerializerDefaults.Web);
 
     internal static async Task<int> RunAsync(Options options,TextWriter output,bool json,CancellationToken token,
-        Func<string,NativePcapCaptureSource>? create=null,TimeSpan? reportInterval=null)
+        Func<string,NativePcapCaptureSource>? create=null,TimeSpan? reportInterval=null,
+        Func<string,Guid,IPortableMonitorJournal>? createJournal=null)
     {
         using var stop=CancellationTokenSource.CreateLinkedTokenSource(token);
         using var reportStop=new CancellationTokenSource();
-        var source=(create??(id=>new NativePcapCaptureSource(id)))(options.InterfaceId);
         var sessionId=Guid.NewGuid();
-        using var journal=options.JournalDirectory is null?null:new PortableMonitorJournal(options.JournalDirectory,sessionId);
+        // Validate/provision evidence before opening or constructing a capture source.
+        using var journal=new PortableJournalLease(options.JournalDirectory is null?null:
+            (createJournal??((root,id)=>new PortableMonitorJournal(root,id)))(options.JournalDirectory,sessionId));
+        var source=(create??(id=>new NativePcapCaptureSource(id)))(options.InterfaceId);
         long sequence=0;
         var outputGate=new object();
         PortableBufferedCaptureRun.Progress? progress=null;
         bool reportingFailed=false,controlFailed=false;
         using var controlStop=new CancellationTokenSource();
         Task controlTask=Task.CompletedTask;
+        string Line<T>(string eventType,T data,long ordinal)=>JsonSerializer.Serialize(new { schemaVersion=1,mode="portable_foreground",
+            eventType,sessionId,sequence=ordinal,observedUtc=DateTime.UtcNow,detectionValidation="not_assessed",
+            sourceHealth="not_assessed",data },JsonOptions);
         void Emit<T>(string eventType,T data,string text)
         {
             lock(outputGate)
             {
-                var line=JsonSerializer.Serialize(new { schemaVersion=1,mode="portable_foreground",
-                    eventType,sessionId,sequence=++sequence,observedUtc=DateTime.UtcNow,detectionValidation="not_assessed",
-                    sourceHealth="not_assessed",data },JsonOptions);
-                journal?.Append(line);
+                var line=Line(eventType,data,++sequence);
+                if(!journal.TryAppend(line))throw new IOException("Portable journal write failed.");
                 output.WriteLine(json?line:text);
                 output.Flush();
             }
@@ -127,7 +131,7 @@ internal static class PortableMonitorCommand
                             stop.Token,()=>stop.Cancel(),controlStop.Token,()=>{controlFailed=true;stop.Cancel();});
                     }
                     Emit("started",new { rules=options.Rules,options.StatusSeconds,options.MaxPackets,options.MaxBytes,
-                        controlEnabled=options.EnableControl,stopAllowed=options.AllowStop,journalEnabled=journal is not null },
+                        controlEnabled=options.EnableControl,stopAllowed=options.AllowStop,journalEnabled=journal.Enabled },
                         $"Portable monitor started: {string.Join(",",options.Rules)}; session={sessionId:D}; control={options.EnableControl}; stopAllowed={options.AllowStop}");
                     Volatile.Write(ref progress,p);
                 })).ConfigureAwait(false);
@@ -139,11 +143,25 @@ internal static class PortableMonitorCommand
             await reporting.ConfigureAwait(false);
             await controlTask.ConfigureAwait(false);
         }
-        string status=reportingFailed||controlFailed||run.Status==PortableCaptureRun.Completion.Failed?"failed":
+        string status=journal.Faulted||reportingFailed||controlFailed||run.Status==PortableCaptureRun.Completion.Failed?"failed":
             token.IsCancellationRequested?"cancelled":"stopped";
-        Emit("stopped",new { status,failure=reportingFailed?"reporting_failed":controlFailed?"control_failed":run.Failure,
-            run.StopFailed,run.DisposeFailed,driver=source.FinalStatistics,pipeline=run.Pipeline,monitor=run.Snapshot },
-            $"Portable monitor {status}: captured={run.Pipeline.Captured}; processed={run.Pipeline.Processed}; abandoned={run.Pipeline.Abandoned}");
+        string? failure=journal.Faulted?"journal_failed":reportingFailed?"reporting_failed":controlFailed?"control_failed":run.Failure;
+        long finalSequence=++sequence;
+        string FinalLine()=>Line("stopped",new { status,failure,run.StopFailed,run.DisposeFailed,
+            journalStatus=journal.Faulted?"failed":journal.Enabled?"recorded":"disabled",
+            driver=source.FinalStatistics,pipeline=run.Pipeline,monitor=run.Snapshot },finalSequence);
+        // Only one final append attempt. On write/close failure the console still
+        // reports the actual outcome and exit 3. A failed journal is never retried.
+        var finalLine=FinalLine();
+        if(!journal.Faulted)journal.TryAppend(finalLine);
+        journal.Dispose();
+        if(journal.Faulted){status="failed";failure="journal_failed";finalLine=FinalLine();}
+        lock(outputGate)
+        {
+            output.WriteLine(json?finalLine:
+                $"Portable monitor {status}: captured={run.Pipeline.Captured}; processed={run.Pipeline.Processed}; abandoned={run.Pipeline.Abandoned}; journal={(journal.Faulted?"failed":journal.Enabled?"recorded":"disabled")}");
+            output.Flush();
+        }
         return status=="failed"?CliApplication.DataError:status=="cancelled"?CliApplication.Cancelled:CliApplication.Success;
     }
 }
