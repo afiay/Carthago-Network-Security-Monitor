@@ -70,4 +70,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Carthago.Contracts/Carthago.Contracts.csproj" />
+  </ItemGroup>
 </Project>

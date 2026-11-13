@@ -14,4 +14,7 @@
     <Compile Include="../Carthago/Services/SessionFiles/CarthagoSessionSnapshot.cs" Link="Shared/CarthagoSessionSnapshot.cs" />
     <Compile Include="../Carthago/Services/SessionFiles/CarthagoSessionArchiveService.cs" Link="Shared/CarthagoSessionArchiveService.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Carthago.Contracts/Carthago.Contracts.csproj" />
+  </ItemGroup>
 </Project>

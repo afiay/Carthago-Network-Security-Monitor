@@ -3,10 +3,11 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using Carthago.Services.SessionFiles;
+using Carthago.Contracts;
 
 namespace Carthago.Cli;
 
-/// <summary>Read-only CLI boundary. No engine start, network access or trusted event ingestion.</summary>
+/// <summary>Read-only CLI boundary. No engine start, remote network access or trusted event ingestion.</summary>
 public static class CliApplication
 {
     public const int SchemaVersion = 1;
@@ -28,16 +29,20 @@ public static class CliApplication
           carthago --version [--json]
           carthago status [--json]
           carthago capabilities [--json]
+          carthago engine status [--json]
+          carthago rules summary [--json]
           carthago session inspect <file.csa> [--json]
 
         status reports this CLI only, not the monitoring engine.
+        Live queries require Windows and a WPF host started with --enable-cli-ipc.
         session inspect verifies an existing CSA archive and reports category counts;
         imported data is untrusted and no raw rows are printed.
         Exit codes: 0 success, 2 usage, 3 data/runtime error, 130 cancelled.
         """;
 
     public static async Task<int> RunAsync(string[] args, TextWriter output, TextWriter error,
-        CancellationToken token = default)
+        CancellationToken token = default,
+        Func<ReadCommand, CancellationToken, Task<ReadResponse>>? query = null)
     {
         // Options are accepted only in the documented trailing position.
         if (args.Length == 0 || args is ["--help"] or ["-h"] or ["help"])
@@ -69,7 +74,7 @@ public static class CliApplication
                         runtime = RuntimeInformation.FrameworkDescription,
                         mode = "offline",
                         engineStatus = "unavailable",
-                        engineReason = "No live engine connection is implemented."
+                        engineReason = "This command does not query the live host; use engine status."
                     }, $"CARTHAGO CLI {Version}\nOS: {OS()} ({RuntimeInformation.ProcessArchitecture})\n" +
                        $"Runtime: {RuntimeInformation.FrameworkDescription}\nMode: offline\n" +
                        "Monitoring engine: unavailable (not connected)");
@@ -79,9 +84,9 @@ public static class CliApplication
                     var capabilities = new[]
                     {
                         new Capability("session.inspect", "available", "Read-only CSA v1 integrity and category summary."),
-                        new Capability("live.status", "unavailable", "No authenticated engine connection."),
+                        new Capability("live.status", "unavailable", "Windows opt-in local query; use engine status to check connectivity."),
                         new Capability("live.events", "unavailable", "No live event transport."),
-                        new Capability("live.rules", "unavailable", "No live rule catalog connection."),
+                        new Capability("live.rules", "unavailable", "Windows opt-in catalog query; use rules summary to check connectivity."),
                         new Capability("live.incidents", "unavailable", "No live incident connection."),
                         new Capability("capture", "unavailable", "No CLI capture provider."),
                         new Capability("sensor.control", "unavailable", "No CLI sensor control provider.")
@@ -89,6 +94,11 @@ public static class CliApplication
                     await WriteAsync(output, json, new { schemaVersion = SchemaVersion, capabilities },
                         string.Join("\n", capabilities.Select(c => $"{c.Name}: {c.State} — {c.Reason}")));
                     return Success;
+
+                case ["engine", "status"]:
+                    return await LiveAsync(ReadCommand.HostStatus, output, error, json, token, query);
+                case ["rules", "summary"]:
+                    return await LiveAsync(ReadCommand.RulesSummary, output, error, json, token, query);
 
                 case ["session", "inspect", var path] when !string.IsNullOrWhiteSpace(path) && !path.StartsWith("--", StringComparison.Ordinal):
                     if (!string.Equals(Path.GetExtension(path), CarthagoSessionSnapshot.FileExtension,
@@ -128,6 +138,38 @@ public static class CliApplication
             return await FailAsync(error, json, DataError, "data_or_runtime_error",
                 "Command failed. Check file access and CSA format/integrity.");
         }
+    }
+
+    private static async Task<int> LiveAsync(ReadCommand command, TextWriter output, TextWriter error,
+        bool json, CancellationToken token, Func<ReadCommand, CancellationToken, Task<ReadResponse>>? query)
+    {
+        if (query is null && !OperatingSystem.IsWindows())
+            return await FailAsync(error, json, DataError, "unsupported_platform", "Live queries require Windows.");
+        ReadResponse response;
+        try
+        {
+            if (query is not null) response = await query(command, token);
+            else if (OperatingSystem.IsWindows()) response = await WindowsLocalReadPipe.QueryAsync(command, token);
+            else return await FailAsync(error, json, DataError, "unsupported_platform", "Live queries require Windows.");
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException && !token.IsCancellationRequested)
+        {
+            return await FailAsync(error, json, DataError, "engine_unavailable",
+                "Local endpoint unavailable. Start WPF with --enable-cli-ipc using the same account and elevation.");
+        }
+        token.ThrowIfCancellationRequested();
+        if (response.State != ReadState.Available)
+            return await FailAsync(error, json, DataError, "source_unavailable", "Host could not provide the requested data.");
+        if (command == ReadCommand.HostStatus)
+            await WriteAsync(output, json, new { schemaVersion = SchemaVersion, hostStatus = "reachable",
+                engineHealth = "not_assessed", provenance = "same_user_local_endpoint", observedUtc = response.ObservedUtc },
+                "Local CARTHAGO host: reachable\\nDetection engine health: not assessed");
+        else
+            await WriteAsync(output, json, new { schemaVersion = SchemaVersion, provenance = "same_user_local_endpoint",
+                observedUtc = response.ObservedUtc, registered = response.Registered,
+                enabledByDefault = response.EnabledByDefault, planned = response.Planned, validation = "not_assessed" },
+                $"Registered: {response.Registered}\\nEnabled by default: {response.EnabledByDefault}\\nPlanned: {response.Planned}\\nValidation: not assessed");
+        return Success;
     }
 
     private static string OS() => OperatingSystem.IsWindows() ? "windows"

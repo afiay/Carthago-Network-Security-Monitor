@@ -58,3 +58,40 @@ The executable is named carthago (carthago.exe on Windows).
 
 The WPF application and its unavailable CLI companion placeholder remain unchanged.
 See [future architecture](CARTHAGO_CLI_AVALONIA_FUTURE_ARCHITECTURE.md).
+
+## CLI-002 — opt-in Windows local read endpoint
+
+SOURCE CANDIDATE — UNVERIFIED. New portable Carthago.Contracts project; fixed
+v1 binary frames (18-byte request, 39-byte response), correlation ID, command
+allowlist, bounded counts, timestamps, no identity claims from the wire.
+Windows named pipe uses a protected current-user SID DACL, first-instance
+creation and PIPE_REJECT_REMOTE_CLIENTS; client uses CurrentUserOnly and local
+"." server name. One request per connection, five-second I/O deadlines.
+Same-account processes are inside the trust boundary: this is not signed
+application attestation or protection against a compromised same-user process.
+
+Explicitly enable the WPF listener (ordinary startup remains unchanged):
+
+```powershell
+dotnet run --project Carthago/Carthago.csproj -c Release -- --enable-cli-ipc
+# In a separate terminal, same account and elevation:
+dotnet run --project Carthago.Cli -c Release -- engine status --json
+dotnet run --project Carthago.Cli -c Release -- rules summary --json
+```
+
+Host reachability is not capture or engine health. Rule summary reads
+RuleCatalog.All (default registered catalog, not all available content packs);
+enabled-by-default and planned counts may overlap. Validation and live
+configuration state are not assessed. A disconnected or unavailable source
+returns error 3, not zero counts. Linux live queries return unsupported_platform.
+Offline commands retain their existing semantics. No sensor/control or event
+ingestion operation is exposed. The existing health Snapshot method consumes
+capture-drop deltas, so it is deliberately not used for a read-only CLI query.
+
+Tests: protocol round trip, bad version/opcode/length, impossible counts,
+correlation mismatch, unavailable source, CLI projection, and Windows loopback
+candidate. Before promoting: run Windows build and tests, verify same-account
+success, different-user/elevation rejection, remote SMB rejection, timeout,
+restart, pipe squatting and concurrent requests on real Windows. No runtime
+tests executed by publishing environment. Linux offline build also remains
+unverified.

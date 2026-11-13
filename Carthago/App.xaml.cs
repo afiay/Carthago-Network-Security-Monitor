@@ -1,6 +1,10 @@
 ﻿// File: App.xaml.cs
 using System;
 using System.Threading;
+using System.Threading.Tasks;
+using System.Linq;
+using Carthago.Contracts;
+using Carthago.Services.Cli;
 using System.Windows;
 using Carthago.Services;
 using DotNetEnv;
@@ -10,6 +14,7 @@ namespace Carthago
     public partial class App : Application
     {
         private CancellationTokenSource? _threatCts;
+        private CancellationTokenSource? _cliCts;
 
         public App()
         {
@@ -24,6 +29,22 @@ namespace Carthago
         protected override async void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
+
+            // Explicit opt-in. Never start a listener during ordinary WPF startup.
+            if (e.Args.Contains("--enable-cli-ipc", StringComparer.Ordinal))
+            {
+                _cliCts = new CancellationTokenSource();
+                var token = _cliCts.Token;
+                _ = Task.Run(async () =>
+                {
+                    try { await WindowsLocalReadPipe.ServeAsync(CliReadHost.Query, token); }
+                    catch (OperationCanceledException) when (token.IsCancellationRequested) { }
+                    catch (Exception ex) when (ex is not OutOfMemoryException)
+                    {
+                        Console.Error.WriteLine("[CLI] Local read endpoint unavailable.");
+                    }
+                });
+            }
 
             // Load .env
             try
@@ -72,6 +93,7 @@ namespace Carthago
 
         protected override void OnExit(ExitEventArgs e)
         {
+            _cliCts?.Cancel();
             _threatCts?.Cancel();
             base.OnExit(e);
         }
