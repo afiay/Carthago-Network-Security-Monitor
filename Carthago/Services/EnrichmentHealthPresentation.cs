@@ -28,6 +28,17 @@ internal static class EnrichmentHealthPresentation
             "Cache hits are lookup-path events, not additional outcomes. No attempts means no rate. " +
             $"Enrichment queue depth: {stats.EnrichmentQueueDepth?.ToString(CultureInfo.InvariantCulture) ?? "unknown"}; " +
             $"fallback records (lifetime): {stats.EnrichmentFallbacks:N0}. " +
-            "Provider success is not proof of detection accuracy or endpoint trust.", providers);
+            "Provider success is not proof of detection accuracy or endpoint trust. " +
+            WorkerSummary(stats.EnrichmentWorkers), providers);
+    }
+
+    internal static string WorkerSummary(EnrichmentWorkerSnapshot? w)
+    {
+        if (w is null) return "Worker metrics unavailable.";
+        string Mean(long sum, long count) => count == 0 ? "—" : ((double)sum / count).ToString("0.0", CultureInfo.InvariantCulture);
+        return $"Workers (lifetime): {w.Started:N0} started, {w.Returned:N0} returned, {w.Cancelled:N0} cancelled, {w.Faulted:N0} faulted; " +
+            $"{w.Skipped:N0} cancelled before processing. Queue wait mean/max ms: {Mean(w.WaitTotalMs, w.Started)} / {w.WaitMaxMs}; " +
+            $"worker elapsed mean/max ms: {Mean(w.ElapsedTotalMs, w.Returned + w.Cancelled + w.Faulted)} / {w.ElapsedMaxMs}. " +
+            "Returned does not imply provider success; worker elapsed includes rule evaluation.";
     }
 }

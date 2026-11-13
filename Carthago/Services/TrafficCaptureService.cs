@@ -79,7 +79,8 @@ namespace Carthago.Services
         private const int EnrichmentQueueCapacity = 4096;
         private const int EnrichmentWorkerCount = 4;
 
-        private sealed record EnrichmentWork(TrafficRecord Record, CancellationToken RunToken);
+        private sealed record EnrichmentWork(TrafficRecord Record, CancellationToken RunToken, long EnqueuedAt);
+        private readonly EnrichmentWorkerHealth _workerHealth = new();
 
         private readonly Channel<CaptureSessionRecord<TrafficRecord>> _uiChannel =
             Channel.CreateBounded<CaptureSessionRecord<TrafficRecord>>(new BoundedChannelOptions(UiQueueCapacity)
@@ -636,7 +637,7 @@ namespace Carthago.Services
                 RuleEngine.ReportCaptureDrops(1);
             }
 
-            if (!_enrichmentChannel.Writer.TryWrite(new EnrichmentWork(record, runToken)))
+            if (!_enrichmentChannel.Writer.TryWrite(new EnrichmentWork(record, runToken, Stopwatch.GetTimestamp())))
             {
                 // An overloaded enrichment queue must not silently suppress
                 // local detections. Evaluate basic rules without remote lookups.
@@ -652,8 +653,24 @@ namespace Carthago.Services
                 await foreach (var work in _enrichmentChannel.Reader.ReadAllAsync(_serviceCts.Token)
                                    .ConfigureAwait(false))
                 {
-                    if (!work.RunToken.IsCancellationRequested)
+                    if (work.RunToken.IsCancellationRequested)
+                    {
+                        _workerHealth.SkipCancelled();
+                        continue;
+                    }
+                    long start = Stopwatch.GetTimestamp();
+                    _workerHealth.Start((long)Stopwatch.GetElapsedTime(work.EnqueuedAt, start).TotalMilliseconds);
+                    bool returned = false;
+                    try
+                    {
                         await EnrichAsync(work.Record, work.RunToken).ConfigureAwait(false);
+                        returned = true;
+                    }
+                    finally
+                    {
+                        _workerHealth.End(returned, work.RunToken.IsCancellationRequested,
+                            (long)Stopwatch.GetElapsedTime(start).TotalMilliseconds);
+                    }
                 }
             }
             catch (OperationCanceledException) { /* service disposed */ }
@@ -1227,7 +1244,8 @@ namespace Carthago.Services
             WhoisCacheSize = _whoisCache.Count,
             ReputationCacheSize = _reputationCache.Count,
             EnrichmentQueueDepth = _enrichmentChannel.Reader.CanCount ? _enrichmentChannel.Reader.Count : null,
-            EnrichmentProviders = _providerHealth.Snapshot()
+            EnrichmentProviders = _providerHealth.Snapshot(),
+            EnrichmentWorkers = _workerHealth.Snapshot()
         };
 
         public CaptureFlowSnapshot GetCaptureFlowSnapshot()
@@ -1333,6 +1351,7 @@ namespace Carthago.Services
             public long WhoisEnriched { get; init; }
             public long ReputationEnriched { get; init; }
             public long EnrichmentFallbacks { get; init; }
+            public EnrichmentWorkerSnapshot? EnrichmentWorkers { get; init; }
             public int WhoisCacheSize { get; init; }
             public int ReputationCacheSize { get; init; }
             public int? EnrichmentQueueDepth { get; init; }
