@@ -1,4 +1,4 @@
-# Active sensors — AS-01 through AS-07
+# Active sensors — AS-01 through AS-08
 
 Status: source candidate; Windows build, tests and live smoke pending.
 
@@ -93,3 +93,15 @@ dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQua
 ```
 
 Tests cover persistence, duplicate IDs, retention, filters, invalid rows, storage failure and all six projections. Manual smoke: opt in/out, reopen history, confirm failure is not reported as saved, verify no secrets or passive detection events. No runtime verification claimed.
+
+## AS-08 — Session-scoped active sensor manager
+
+Select one authorized LAN host, stop monitoring and finish discovery, then open Active sensor manager (session) from the capture-source context menu. Explicitly approve up to 16 distinct TCP/DNS/TLS/HTTP profiles for that target, with adapter GUID/source/mask, endpoint, 5 min–24 h interval and optional history. Start is explicit; first due checks start immediately, one at a time, with a one-second tick between checks. No stored profiles, auto-start, background service, credentials or arbitrary target expansion. Revalidate current adapter/source/mask/local scope on every run; scope change blocks profile until removed and reapproved. Subsequent checks run after completion, no catch-up bursts. Nonresponsive results back off by 2^failures (max factor 32, cap 24 h); responsive results reset failures, not a claim of security or application health. Store completed evidence only when opted in; storage failure separate from probe outcome. Cancel/stop waits for in-flight probe cleanup before dialog closes. Modal manager keeps this window's manual capture controls unavailable; other capture processes may observe active traffic. Gateway and SNMP remain manual-only pending exclusive Npcap ownership and credential lifecycle. No persistent scheduling or detection promotion.
+
+Windows verification pending:
+
+```powershell
+dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~ActiveSensorManagerTests|FullyQualifiedName~ActiveEvidenceStoreTests|FullyQualifiedName~TcpExposureSensorTests|FullyQualifiedName~DnsIntegritySensorTests|FullyQualifiedName~TlsInspectionSensorTests|FullyQualifiedName~HttpHealthSensorTests"
+```
+
+Deterministic clock/transport tests cover explicit start, scope revalidation, single in-flight execution, duplicate/capacity bounds, interval/backoff, cancellation and history opt-in. Manual Windows smoke: approved host, start/stop, close during probe, scope change and persisted history. No runtime verification claimed.

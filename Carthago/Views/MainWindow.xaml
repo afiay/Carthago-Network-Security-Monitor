@@ -319,6 +319,7 @@
                     <MenuItem Header="Check SNMPv3 infrastructure (selected LAN host)" Click="CheckLanSnmpInfrastructure_Click"/>
                     <Separator/>
                     <MenuItem Header="Active sensor history" Click="OpenActiveEvidenceHistory_Click"/>
+                    <MenuItem Header="Active sensor manager (session)" Click="OpenActiveSensorManager_Click"/>
                   </ContextMenu>
                 </ComboBox.ContextMenu>
                 <ComboBox.ItemTemplate>
