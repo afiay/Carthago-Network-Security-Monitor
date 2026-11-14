@@ -22,7 +22,16 @@ namespace Carthago.Services.Baseline
             ReadOnlySpan<byte> capture, string source, string sensor, string interfaceId, string network,
             out string[] observations)
         {
+            return TryGetObservations(manifest, manifestDigest, capture, source, sensor, interfaceId,
+                network, out observations, out _);
+        }
+
+        internal static bool TryGetObservations(ReadOnlySpan<byte> manifest, string manifestDigest,
+            ReadOnlySpan<byte> capture, string source, string sensor, string interfaceId, string network,
+            out string[] observations, out long[] utcTicks)
+        {
             observations = Array.Empty<string>();
+            utcTicks = Array.Empty<long>();
             QualifiedDnsScope scope;
             try { scope = QualifiedDnsScope.Create(source, sensor, interfaceId, network); }
             catch (ArgumentException) { return false; }
@@ -45,7 +54,7 @@ namespace Carthago.Services.Baseline
             if (!ReviewedDnsManifestBinding.Matches(manifest, manifestDigest,
                 capture, scope, new DateTimeOffset(parsed.Frames[0].Utc),
                 new DateTimeOffset(parsed.Frames[^1].Utc))) return false;
-            var unique = new HashSet<string>(StringComparer.Ordinal);
+            var unique = new Dictionary<string, long>(StringComparer.Ordinal);
             foreach (var frame in parsed.Frames)
             {
                 // Ignore PCAP headers, Ethernet addresses/padding and mutable IP headers.
@@ -58,11 +67,13 @@ namespace Carthago.Services.Baseline
                 ipBytes.Slice(20, total - 20).CopyTo(identity.AsSpan(16));
                 // UDP checksum can differ due to capture offload; omit it.
                 identity[22] = 0; identity[23] = 0;
-                unique.Add(Convert.ToHexString(SHA256.HashData(identity)));
+                unique.TryAdd(Convert.ToHexString(SHA256.HashData(identity)), frame.Utc.Ticks);
             }
             observations = new string[unique.Count];
-            unique.CopyTo(observations);
+            unique.Keys.CopyTo(observations, 0);
             Array.Sort(observations, StringComparer.Ordinal);
+            utcTicks = new long[observations.Length];
+            for (int i = 0; i < observations.Length; i++) utcTicks[i] = unique[observations[i]];
             return true;
         }
 

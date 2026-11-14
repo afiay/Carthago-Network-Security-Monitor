@@ -119,6 +119,14 @@ public sealed class ReviewedDnsPacketIntakeTests
             Assert.True(intake.TryValidate(manifest, signature, capture,
                 "192.0.2.1", "sensor", "interface", "network", out var originalDigest, out var originalIds));
             Assert.Single(originalIds);
+            Assert.True(intake.TryValidate(manifest, signature, capture,
+                "192.0.2.1", "sensor", "interface", "network", out _, out var timedIds, out var ticks));
+            Assert.Equal(originalIds, timedIds);
+            Assert.Equal(new[] { start.UtcDateTime.Ticks }, ticks);
+            Assert.False(intake.TryValidate(manifest, wrong, capture,
+                "192.0.2.1", "sensor", "interface", "network", out _, out var rejectedIds, out var rejectedTicks));
+            Assert.Empty(rejectedIds);
+            Assert.Empty(rejectedTicks);
             byte[] repacked = (byte[])capture.Clone();
             repacked[16] = 0xfe; // different snaplen, same packet
             repacked[40] = 0x42; // different Ethernet address
@@ -153,6 +161,11 @@ public sealed class ReviewedDnsPacketIntakeTests
                 "192.0.2.1", "sensor", "interface", "network", out _, out var distinctIds));
             Assert.Equal(2, distinctIds.Length);
             Assert.Contains(originalIds[0], distinctIds);
+            Assert.True(intake.TryValidate(repeatedManifest, repeatedSignature, repeated,
+                "192.0.2.1", "sensor", "interface", "network", out _, out var orderedIds, out var orderedTicks));
+            Assert.Equal(distinctIds, orderedIds);
+            Assert.Equal(start.UtcDateTime.Ticks, orderedTicks[Array.IndexOf(orderedIds, originalIds[0])]);
+            Assert.Contains(start.UtcDateTime.Ticks + 10, orderedTicks);
             string directory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(directory);
             try

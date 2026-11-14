@@ -34,6 +34,15 @@ namespace Carthago.Services.Baseline
             ReadOnlySpan<byte> capture, string source, string sensor, string interfaceId, string network,
             out string captureDigest, out string[] observations)
         {
+            return TryValidate(manifest, signature, capture, source, sensor, interfaceId, network,
+                out captureDigest, out observations, out _);
+        }
+
+        internal bool TryValidate(ReadOnlySpan<byte> manifest, ReadOnlySpan<byte> signature,
+            ReadOnlySpan<byte> capture, string source, string sensor, string interfaceId, string network,
+            out string captureDigest, out string[] observations, out long[] utcTicks)
+        {
+            utcTicks = Array.Empty<long>();
             observations = Array.Empty<string>();
             captureDigest = string.Empty;
             if (manifest.IsEmpty || manifest.Length > 16384 || signature.Length != 64 ||
@@ -51,7 +60,7 @@ namespace Carthago.Services.Baseline
             byte[] boundCapture = capture.ToArray();
             if (!ReviewedDnsPacketIntake.TryGetObservations(signedManifest,
                 Convert.ToHexString(SHA256.HashData(signedManifest)), boundCapture,
-                source, sensor, interfaceId, network, out observations)) return false;
+                source, sensor, interfaceId, network, out observations, out utcTicks)) return false;
             captureDigest = Convert.ToHexString(SHA256.HashData(boundCapture));
             return true;
         }
