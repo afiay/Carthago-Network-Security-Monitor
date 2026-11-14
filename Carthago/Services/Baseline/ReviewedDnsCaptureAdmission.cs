@@ -87,6 +87,7 @@ namespace Carthago.Services.Baseline
         {
             count = 0;
             firstUtcTicks = lastUtcTicks = 0;
+            if (scope == null) return false;
             string wanted = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(scope.Subject)));
             int found = 0;
             long first = long.MaxValue, last = 0;

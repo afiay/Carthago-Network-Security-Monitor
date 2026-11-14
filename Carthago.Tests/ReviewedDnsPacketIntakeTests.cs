@@ -216,6 +216,15 @@ public sealed class ReviewedDnsPacketIntakeTests
                 Assert.Equal(0L, first);
                 Assert.Equal(0L, last);
                 byte[] anchor = SHA256.HashData(goodJournal);
+                Assert.False(reopened.TryReadScopeSummary(null!, out count, out first, out last));
+                Assert.Equal(0, count);
+                Assert.Equal(0L, first);
+                Assert.Equal(0L, last);
+                Assert.False(reopened.TryReadAnchoredScopeSummary(null!, anchor, out count, out first, out last));
+                Assert.Equal(0, count);
+                Assert.Equal(0L, first);
+                Assert.Equal(0L, last);
+                Assert.Equal(goodJournal, File.ReadAllBytes(journalPath));
                 using var authority = ECDsa.Create(ECCurve.NamedCurves.nistP256);
                 byte[] deployment = SHA256.HashData(new byte[] { 42 });
                 byte[] domain = System.Text.Encoding.ASCII.GetBytes("CARTHAGO-DNS-JOURNAL-V2\0");
