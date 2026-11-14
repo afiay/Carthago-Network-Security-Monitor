@@ -223,11 +223,20 @@ namespace Carthago.Services
 
         private static int FindPidTcp(Candidate c)
         {
-            // v4 first, then v6; exact match by local (and remote if available)
-            if (TryFindPidInTcpTable(AddressFamily.InterNetwork, c, out int pid4)) return pid4;
-            if (TryFindPidInTcp6Table(c, out int pid6)) return pid6;
-            return 0;
+            // The complete tuple is normalized before lookup. Do not scan the
+            // unrelated family or fall through after ambiguous ownership.
+            return TcpLookupFamily(c.LocalAddr) switch
+            {
+                AddressFamily.InterNetwork => TryFindPidInTcpTable(AddressFamily.InterNetwork, c, out int pid4) ? pid4 : 0,
+                AddressFamily.InterNetworkV6 => TryFindPidInTcp6Table(c, out int pid6) ? pid6 : 0,
+                _ => 0
+            };
         }
+
+        internal static AddressFamily TcpLookupFamily(string? local)
+            => IPAddress.TryParse(local, out var address)
+                ? EndpointIpEnrichment.Normalize(address).AddressFamily
+                : AddressFamily.Unspecified;
 
         private static int FindPidUdp(Candidate c)
         {

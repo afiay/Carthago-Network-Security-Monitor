@@ -100,4 +100,13 @@ public sealed class ProcessAttributionEnrichmentTests
         Assert.False(WindowsProcessResolver.CanReuseProcessMetadata(cached, 100, start.AddSeconds(1)));
         Assert.False(WindowsProcessResolver.CanReuseProcessMetadata(cached, 100, null));
     }
+
+    [Theory]
+    [InlineData("192.168.1.10", System.Net.Sockets.AddressFamily.InterNetwork)]
+    [InlineData("::ffff:192.168.1.10", System.Net.Sockets.AddressFamily.InterNetwork)]
+    [InlineData("2001:db8::1", System.Net.Sockets.AddressFamily.InterNetworkV6)]
+    [InlineData("invalid", System.Net.Sockets.AddressFamily.Unspecified)]
+    [InlineData(null, System.Net.Sockets.AddressFamily.Unspecified)]
+    public void Tcp_Lookup_Selects_Only_Normalized_Local_Family(string? address, System.Net.Sockets.AddressFamily expected)
+        => Assert.Equal(expected, WindowsProcessResolver.TcpLookupFamily(address));
 }
