@@ -156,7 +156,7 @@ namespace Carthago.Views
             // GA UI-168: a wide chronology lane beside a stacked evidence-review rail.
             // Compact keeps the four source-backed panels in a single readable column.
             bool stackEvidence = mode == ResponsiveLayoutMode.Compact;
-            SupportingWorkspaceFirstColumn.Width = new GridLength(1.35, GridUnitType.Star);
+            SupportingWorkspaceFirstColumn.Width = new GridLength(1.6, GridUnitType.Star);
             SupportingWorkspaceSecondColumn.Width = stackEvidence
                 ? new GridLength(0)
                 : new GridLength(1, GridUnitType.Star);
@@ -175,7 +175,7 @@ namespace Carthago.Views
             Grid.SetColumn(AffectedHostsPanel, stackEvidence ? 0 : 1);
             Grid.SetRow(ResponseChecklistPanel, stackEvidence ? 3 : 2);
             Grid.SetColumn(ResponseChecklistPanel, stackEvidence ? 0 : 1);
-            TimelinePanel.Margin = stackEvidence ? new Thickness(0, 0, 0, 12) : new Thickness(0, 0, 16, 0);
+            TimelinePanel.Margin = stackEvidence ? new Thickness(0, 0, 0, 12) : new Thickness(0, 0, 12, 0);
             RelatedAnomaliesPanel.Margin = new Thickness(0, 0, 0, 12);
             AffectedHostsPanel.Margin = new Thickness(0, 0, 0, 12);
             ResponseChecklistPanel.Margin = new Thickness(0);
