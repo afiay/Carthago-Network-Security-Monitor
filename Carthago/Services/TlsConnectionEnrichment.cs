@@ -23,6 +23,7 @@ internal sealed class TlsConnectionEnrichment
     private sealed class State
     {
         internal long Seen;
+        internal bool Closed;
         internal string? Sni, OfferedAlpn, Version, NegotiatedAlpn, CertHash, CertNames, CertStatus;
     }
 
@@ -44,8 +45,8 @@ internal sealed class TlsConnectionEnrichment
             if ((flags & 0x12) == 0x02)
             {
                 // A delayed SYN must not reset a newer observation in either direction.
-                if ((_flows.TryGetValue(key, out var forward) && now < forward.Seen)
-                    || (_flows.TryGetValue(key.Reverse(), out var reverse) && now < reverse.Seen))
+                if ((_flows.TryGetValue(key, out var forward) && (now < forward.Seen || (forward.Closed && now == forward.Seen)))
+                    || (_flows.TryGetValue(key.Reverse(), out var reverse) && (now < reverse.Seen || (reverse.Closed && now == reverse.Seen))))
                     return;
                 _flows.Remove(key); _flows.Remove(key.Reverse());
                 if (_flows.Count < Capacity) _flows[key] = new State { Seen = now };
@@ -53,10 +54,11 @@ internal sealed class TlsConnectionEnrichment
             }
             bool client = _flows.TryGetValue(key, out var state);
             if (!client && !_flows.TryGetValue(key.Reverse(), out state)) return;
-            if (state is null || now < state.Seen || now - state.Seen >= Lifetime) return;
+            if (state is null || state.Closed || now < state.Seen || now - state.Seen >= Lifetime) return;
             if ((flags & 0x05) != 0)
             {
-                _flows.Remove(client ? key : key.Reverse());
+                // Retain only a bounded termination timestamp; discard all identity evidence.
+                _flows[client ? key : key.Reverse()] = new State { Seen = now, Closed = true };
                 return;
             }
             state.Seen = now;

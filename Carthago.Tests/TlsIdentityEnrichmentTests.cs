@@ -147,4 +147,50 @@ public sealed class TlsIdentityEnrichmentTests
         cache.Observe(after, 600);
         Assert.Null(after.TlsCorrelatedSni);
     }
+    [Theory]
+    [InlineData(false, 1)]
+    [InlineData(true, 4)]
+    public void Terminated_Tuple_Rejects_Older_And_Equal_Syn_But_Allows_Newer_Reuse(bool reverse, ushort flags)
+    {
+        var cache = new TlsConnectionEnrichment();
+        cache.Observe(Flow(flags: 2), 100);
+        cache.Observe(Flow(reverse, flags), 300);
+        foreach (var timestamp in new long[] { 200, 300 })
+        {
+            cache.Observe(Flow(flags: 2), timestamp);
+            cache.Observe(Flow(true, 2), timestamp);
+            var stale = Flow();
+            stale.ApplicationProtocol = "TLS"; stale.TlsJa4 = "client"; stale.Sni = "old.example";
+            cache.Observe(stale, 310);
+            Assert.Null(stale.TlsCorrelatedSni);
+        }
+        cache.Observe(Flow(flags: 2), 400);
+        var fresh = Flow();
+        fresh.ApplicationProtocol = "TLS"; fresh.TlsJa4 = "client"; fresh.Sni = "new.example";
+        cache.Observe(fresh, 410);
+        Assert.Equal("new.example", fresh.TlsCorrelatedSni);
+        var later = Flow(true);
+        cache.Observe(later, 420);
+        Assert.Equal("new.example", later.TlsCorrelatedSni);
+        Assert.Null(later.Sni);
+    }
+
+    [Fact]
+    public void Termination_History_Expires_And_Does_Not_Cross_Instances()
+    {
+        var cache = new TlsConnectionEnrichment();
+        cache.Observe(Flow(flags: 2), 100);
+        cache.Observe(Flow(flags: 4), 200);
+        var other = new TlsConnectionEnrichment();
+        other.Observe(Flow(flags: 2), 100);
+        var hello = Flow();
+        hello.ApplicationProtocol = "TLS"; hello.TlsJa4 = "client"; hello.Sni = "example.com";
+        other.Observe(hello, 150);
+        Assert.Equal("example.com", hello.TlsCorrelatedSni);
+        cache.Observe(Flow(flags: 2), 121200);
+        var fresh = Flow();
+        fresh.ApplicationProtocol = "TLS"; fresh.TlsJa4 = "client"; fresh.Sni = "fresh.example";
+        cache.Observe(fresh, 121201);
+        Assert.Equal("fresh.example", fresh.TlsCorrelatedSni);
+    }
 }
