@@ -670,6 +670,9 @@ namespace Carthago.Services
             }
         }
 
+        internal static bool IsCurrentEnrichmentRun(CancellationToken? current, CancellationToken work)
+            => current.HasValue && current.Value == work && !work.IsCancellationRequested;
+
         private void PublishRecord(TrafficRecord record, CancellationToken runToken)
         {
             if (runToken.IsCancellationRequested || _serviceCts.IsCancellationRequested)
@@ -684,10 +687,10 @@ namespace Carthago.Services
             ObservedAssetRegistry? assets;
             lock (_lifecycleLock)
             {
-                bool current = _runCts is not null && _runCts.Token == runToken;
-                dns = current ? _dnsConnections : null;
-                tls = current ? _tlsConnections : null;
-                assets = current ? _observedAssets : null;
+                if (!IsCurrentEnrichmentRun(_runCts?.Token, runToken)) return;
+                dns = _dnsConnections;
+                tls = _tlsConnections;
+                assets = _observedAssets;
             }
             long observedAt = Environment.TickCount64;
             dns?.Observe(record, observedAt);
@@ -695,7 +698,11 @@ namespace Carthago.Services
             var now = DateTimeOffset.UtcNow;
             assets?.Observe(record, now);
             assets?.Communications.Observe(record, now);
-            _coverageHealth.ObservePublication(record);
+            lock (_lifecycleLock)
+            {
+                if (!IsCurrentEnrichmentRun(_runCts?.Token, runToken)) return;
+                _coverageHealth.ObservePublication(record);
+            }
 
             // UI pressure must never suppress rule evaluation.
             if (!_headless && !_uiChannel.Writer.TryWrite(new CaptureSessionRecord<TrafficRecord>(record, runToken)))
@@ -933,13 +940,15 @@ namespace Carthago.Services
                     }
                 }).ConfigureAwait(false);
 
-                _coverageHealth.ObserveProcess(rec);
-
-                // Metadata only: do not count the same packet again, or create a
-                // destination that was not admitted at publication time.
+                // Count only while the originating run is still current.
+                // Serialize the check and counter update with stop/start.
                 ObservedAssetRegistry? communicationAssets;
                 lock (_lifecycleLock)
-                    communicationAssets = _runCts is not null && _runCts.Token == ct ? _observedAssets : null;
+                {
+                    if (!IsCurrentEnrichmentRun(_runCts?.Token, ct)) return;
+                    _coverageHealth.ObserveProcess(rec);
+                    communicationAssets = _observedAssets;
+                }
                 communicationAssets?.Communications.AddMetadata(rec);
 
                 // Local process hints remain available even if remote classification times out.

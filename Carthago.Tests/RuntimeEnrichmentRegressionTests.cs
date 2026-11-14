@@ -205,4 +205,17 @@ public sealed class RuntimeEnrichmentRegressionTests
         Assert.False(TrafficCaptureService.IsProcessObservationFresh(start, start + second * 3));
         Assert.False(TrafficCaptureService.IsProcessObservationFresh(start, start - 1));
     }
+
+    [Fact]
+    public void Enrichment_Run_Admission_Rejects_Stopped_And_Replaced_Sessions()
+    {
+        using var first = new System.Threading.CancellationTokenSource();
+        using var second = new System.Threading.CancellationTokenSource();
+        Assert.True(TrafficCaptureService.IsCurrentEnrichmentRun(first.Token, first.Token));
+        Assert.False(TrafficCaptureService.IsCurrentEnrichmentRun(null, first.Token));
+        Assert.False(TrafficCaptureService.IsCurrentEnrichmentRun(second.Token, first.Token));
+        first.Cancel();
+        Assert.False(TrafficCaptureService.IsCurrentEnrichmentRun(first.Token, first.Token));
+        Assert.True(TrafficCaptureService.IsCurrentEnrichmentRun(second.Token, second.Token));
+    }
 }
