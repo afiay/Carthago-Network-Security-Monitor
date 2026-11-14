@@ -130,4 +130,32 @@ public sealed class ProcessAttributionEnrichmentTests
         Assert.Equal(0, metrics.Measure("TCP", System.Net.Sockets.AddressFamily.Unspecified,
             () => throw new InvalidOperationException()));
     }
+
+    [Fact]
+    public void Native_Lookup_Concurrency_Tracks_Overlapping_Candidates_And_Exception()
+    {
+        var metrics = new WindowsProcessResolver.ProcessLookupMetrics();
+        var family = System.Net.Sockets.AddressFamily.InterNetwork;
+        Assert.Equal(42, metrics.Measure("TCP", family, () =>
+        {
+            Assert.Equal(1L, metrics.Read("TCP", family).Active);
+            Assert.Throws<InvalidOperationException>(() => metrics.Measure("TCP", family, () =>
+            {
+                var overlap = metrics.Read("TCP", family);
+                Assert.Equal(2L, overlap.Active);
+                Assert.Equal(2L, overlap.PeakActive);
+                Assert.Equal(0L, overlap.Completed);
+                throw new InvalidOperationException();
+            }));
+            Assert.Equal(1L, metrics.Read("TCP", family).Active);
+            return 42;
+        }));
+        var final = metrics.Read("TCP", family);
+        Assert.Equal(0L, final.Active);
+        Assert.Equal(2L, final.PeakActive);
+        Assert.Equal(2L, final.Completed);
+        Assert.Equal(1L, final.Resolved);
+        Assert.Equal(1L, final.Unresolved);
+        Assert.Equal(0L, metrics.Read("UDP", family).PeakActive);
+    }
 }

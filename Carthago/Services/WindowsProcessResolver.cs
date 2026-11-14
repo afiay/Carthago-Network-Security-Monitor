@@ -125,7 +125,7 @@ namespace Carthago.Services
 
         internal sealed class ProcessLookupMetrics
         {
-            internal readonly record struct Snapshot(long Completed, long Resolved, long Unresolved, long ElapsedTicks);
+            internal readonly record struct Snapshot(long Completed, long Resolved, long Unresolved, long ElapsedTicks, long Active = 0, long PeakActive = 0);
             private readonly object _gate = new();
             private readonly Snapshot[] _buckets = new Snapshot[4];
 
@@ -143,6 +143,12 @@ namespace Carthago.Services
             {
                 int bucket = Bucket(protocol, family);
                 if (bucket < 0) return 0;
+                lock (_gate)
+                {
+                    var prior = _buckets[bucket];
+                    var active = prior.Active + 1;
+                    _buckets[bucket] = prior with { Active = active, PeakActive = Math.Max(prior.PeakActive, active) };
+                }
                 long start = Stopwatch.GetTimestamp();
                 int pid = 0;
                 try { return pid = lookup(); }
@@ -155,7 +161,7 @@ namespace Carthago.Services
                         _buckets[bucket] = new Snapshot(prior.Completed + 1,
                             prior.Resolved + (pid > 0 ? 1 : 0),
                             prior.Unresolved + (pid > 0 ? 0 : 1),
-                            prior.ElapsedTicks + elapsed);
+                            prior.ElapsedTicks + elapsed, prior.Active - 1, prior.PeakActive);
                     }
                 }
             }
