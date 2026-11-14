@@ -164,24 +164,12 @@ public sealed class R272AdvancedAccuracyBatchTests
                 Assert.False((await new R272_MultiSignalRuleStackSurgeFromHostRule()
                 .EvaluateAsync(boundary)).Matched);
             }
-            // The actual emitted event timestamp defines the inclusive boundary.
-            var exact = ftpEvent.TimestampUtc.AddMinutes(10);
-            Assert.Contains(RuleEngine.SnapshotR272Signals(host, exact), s => s.RuleId == "R014");
-            Assert.DoesNotContain(RuleEngine.SnapshotR272Signals(host, exact.AddTicks(1)),
-                s => s.RuleId == "R014");
-
-            // Re-submit the exact emitted identity through the private production
-            // ingestion method; a replay must not refresh its retention timestamp.
             var ingest = typeof(RuleEngine).GetMethod("RecordR272EmittedSignal",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
             Assert.NotNull(ingest);
             var descriptor = System.Linq.Enumerable.Single(
                 Carthago.Engine.Rules.Catalog.RuleRegistry.CreateDefaultRules(),
                 rule => rule.Descriptor.RuleId == "R014").Descriptor;
-            ingest!.Invoke(null, new object[] { ftpEvent, descriptor, ftpEvent.TimestampUtc.AddMinutes(1) });
-            Assert.DoesNotContain(RuleEngine.SnapshotR272Signals(host, exact.AddTicks(1)),
-                s => s.RuleId == "R014");
-
             // Mapped IPv6 and IPv4 refer to the same producer host.
             var mapped = Packet("::ffff:" + host, "10.214.1.21", 443);
             mapped.IpVersion = 6;
@@ -205,6 +193,18 @@ public sealed class R272AdvancedAccuracyBatchTests
                 now, RuleEngineHealthSnapshot.Empty(now));
             Assert.False((await new R272_MultiSignalRuleStackSurgeFromHostRule()
                 .EvaluateAsync(reset)).Matched);
+
+            // Isolate the exact identity from later legitimate FTP emissions.
+            // The live host/rule slot may have been refreshed by a different event.
+            RuleEngine.ResetRuntimeStateForReplay();
+            var originalAt = ftpEvent.TimestampUtc;
+            ingest!.Invoke(null, new object[] { ftpEvent, descriptor, originalAt });
+            var exact = originalAt.AddMinutes(10);
+            Assert.Contains(RuleEngine.SnapshotR272Signals(host, exact), x => x.RuleId == "R014");
+            ingest.Invoke(null, new object[] { ftpEvent, descriptor, originalAt.AddMinutes(1) });
+            Assert.DoesNotContain(RuleEngine.SnapshotR272Signals(host, exact.AddTicks(1)),
+                x => x.RuleId == "R014");
+            RuleEngine.ResetRuntimeStateForReplay();
 
             // Replay actual emitted identities in reverse timestamp order after reset.
             // A stale event must not resurrect evidence outside the producer watermark.
