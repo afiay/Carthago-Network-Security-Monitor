@@ -264,6 +264,37 @@ public sealed class IotOtPrecisionRuleTests
         Assert.Contains(evt.StructuredEvidence.Items, item => item.Key == "iot.authenticationOutcome" && item.Value == "not-observed");
     }
 
+    [Theory]
+    [InlineData("HTTP/1.1 200 OK")]
+    [InlineData("HTTP/1.1 401 Unauthorized")]
+    [InlineData("HTTP/1.1 403 Forbidden")]
+    public async Task R118_response_status_text_alone_is_not_a_credential_attempt(string status)
+    {
+        var record = CreateIotRecord("10.40.2.70", "10.40.2.60", 49152,
+            "HTTP", "HTTP", info: status + " camera admin:admin");
+        record.SourcePort = 8080;
+        var result = await new R118_DefaultCredentialIoTAttemptRule()
+            .EvaluateAsync(CreateContext(record));
+        Assert.False(result.Matched);
+    }
+
+    [Fact]
+    public async Task R118_request_with_success_text_does_not_establish_outcome()
+    {
+        var record = CreateIotRecord("10.40.2.61", "10.40.2.71", 8080,
+            "HTTP", "HTTP", host: "camera.internal.local",
+            info: "camera login successful HTTP/1.1 200 OK");
+        record.HttpMethod = "GET";
+        record.HttpUri = "/admin";
+        record.HttpRequestHeaders = "Authorization: Basic YWRtaW46YWRtaW4=";
+        var result = await new R118_DefaultCredentialIoTAttemptRule()
+            .EvaluateAsync(CreateContext(record));
+        var evt = AssertSingleEvent(result, "R118", SeverityLevel.Critical, 0.76);
+        Assert.Contains(evt.StructuredEvidence!.Items,
+            item => item.Key == "iot.authenticationOutcome" && item.Value == "not-observed");
+        Assert.True(evt.ConfidenceScore < 0.86);
+    }
+
     [Fact]
     public async Task R118_ignores_unrelated_default_credential_string_without_device_context()
     {

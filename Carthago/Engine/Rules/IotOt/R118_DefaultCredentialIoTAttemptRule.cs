@@ -13,7 +13,7 @@ namespace Carthago.Engine.Rules.IotOt
             RuleId: "R118",
             Name: "Default-Credential IoT Attempt",
             Category: "IotOt",
-            Description: "Detects default-credential attempts only when the record contains both real authentication context and likely IoT or device-target indicators.",
+            Description: "Detects default-credential request candidates with authentication context and likely IoT target indicators; does not establish authentication outcome or verified asset identity.",
             DefaultSeverity: SeverityLevel.Critical,
             ConfigKey: "Rules.R118.Enabled",
             EnabledByDefault: true);
@@ -24,7 +24,7 @@ namespace Carthago.Engine.Rules.IotOt
             defaultMode: RuleRuntimeMode.Alert,
             requiredTelemetry: new[] { RuleTelemetryKind.OtIcsProtocol, RuleTelemetryKind.Flow, RuleTelemetryKind.Payload },
             requiredFields: new[] { "source", "destination_or_host", "iot_or_ot_context", "device_authentication_attempt" },
-            evidenceFields: new[] { "matched_conditions", "process.name" },
+            evidenceFields: new[] { "matched_conditions", "process.name", "iot.assetIdentity", "iot.authenticationOutcome" },
             positiveConditions: new[]
             {
                 "A Telnet login transcript or decoded HTTP Basic Authorization must contain a known default credential pair.",
@@ -50,7 +50,9 @@ namespace Carthago.Engine.Rules.IotOt
             {
                 "positive default credential sample",
                 "negative unrelated adminadmin string sample",
-                "negative ordinary device administration without observed default credentials"
+                "negative ordinary device administration without observed default credentials",
+                "negative response-only status text without a credential request",
+                "positive request with misleading success text retains unobserved outcome"
             });
 
         public R118_DefaultCredentialIoTAttemptRule()
