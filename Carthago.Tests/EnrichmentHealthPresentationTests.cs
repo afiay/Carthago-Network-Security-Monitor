@@ -97,4 +97,23 @@ public sealed class EnrichmentHealthPresentationTests
         Assert.Contains("retained entries: 2/8", summary);
         Assert.Contains("GeoIP cache metrics unavailable", EnrichmentHealthPresentation.Build(new TrafficCaptureService.StatsSnapshot()).Summary);
     }
+
+    [Fact]
+    public void Native_Process_Summary_Separates_Candidates_And_Empty_Buckets()
+    {
+        var stats = new TrafficCaptureService.StatsSnapshot
+        {
+            NativeProcessLookups = new WindowsProcessResolver.ProcessLookupMetrics.Snapshot[]
+            {
+                new(2, 1, 1, System.Diagnostics.Stopwatch.Frequency), default,
+                new(1, 0, 1, 0), default
+            }
+        };
+        var summary = EnrichmentHealthPresentation.Build(stats).Summary;
+        Assert.Contains("TCP/IPv4: 2 completed, 1 resolved, 1 unresolved, mean ms 500.0", summary);
+        Assert.Contains("TCP/IPv6: 0 completed, 0 resolved, 0 unresolved, mean ms —", summary);
+        Assert.Contains("UDP/IPv4: 1 completed, 0 resolved, 1 unresolved, mean ms 0.0", summary);
+        Assert.Contains("not packets", summary);
+        Assert.Contains("Native process lookup metrics unavailable", EnrichmentHealthPresentation.Build(new TrafficCaptureService.StatsSnapshot()).Summary);
+    }
 }

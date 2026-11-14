@@ -30,7 +30,24 @@ internal static class EnrichmentHealthPresentation
             $"Enrichment queue depth: {stats.EnrichmentQueueDepth?.ToString(CultureInfo.InvariantCulture) ?? "unknown"}; " +
             $"fallback records (lifetime): {stats.EnrichmentFallbacks:N0}. " +
             "Provider success is not proof of detection accuracy or endpoint trust. " +
-            WorkerSummary(stats.EnrichmentWorkers) + " " + CoverageSummary(stats.EnrichmentCoverage) + " " + StorageSummary(stats.EnrichmentStorage) + " " + GeoSummary(stats), providers);
+            WorkerSummary(stats.EnrichmentWorkers) + " " + CoverageSummary(stats.EnrichmentCoverage) + " " + StorageSummary(stats.EnrichmentStorage) + " " + GeoSummary(stats) + " " + NativeProcessSummary(stats.NativeProcessLookups), providers);
+    }
+
+    internal static string NativeProcessSummary(WindowsProcessResolver.ProcessLookupMetrics.Snapshot[]? snapshots)
+    {
+        if (snapshots is not { Length: 4 }) return "Native process lookup metrics unavailable.";
+        var labels = new[] { "TCP/IPv4", "TCP/IPv6", "UDP/IPv4", "UDP/IPv6" };
+        var rows = new List<string>();
+        for (int i = 0; i < labels.Length; i++)
+        {
+            var h = snapshots[i];
+            string mean = h.Completed == 0 ? "—" :
+                (1000.0 * h.ElapsedTicks / System.Diagnostics.Stopwatch.Frequency / h.Completed)
+                    .ToString("0.0", CultureInfo.InvariantCulture);
+            rows.Add($"{labels[i]}: {h.Completed} completed, {h.Resolved} resolved, {h.Unresolved} unresolved, mean ms {mean}");
+        }
+        return "Native process candidate lookups (process lifetime): " + string.Join("; ", rows)
+            + ". Candidate scans are not packets, individual native API calls or verified application identities.";
     }
 
     internal static string GeoSummary(TrafficCaptureService.StatsSnapshot stats)
@@ -74,7 +91,7 @@ internal static class EnrichmentHealthPresentation
         return $"Published records (lifetime): {c.Published:N0}; both endpoint membership flags known: {c.LocalKnown:N0}/{c.Published:N0}; " +
             $"verified interface: {c.InterfaceKnown:N0}/{c.Published:N0}; DNS correlated: {c.DnsCorrelated:N0}/{c.Published:N0}; " +
             $"TLS correlated: {c.TlsCorrelated:N0}/{c.Published:N0}. " +
-            $"Local TCP/UDP records sampled after process stage: {c.ProcessEligible:N0}; capture/TCP attribution: {c.ProcessStrong:N0}; " +
+            $"Local TCP/UDP records sampled after process stage: {c.ProcessEligible:N0}; TCP socket ownership: {c.ProcessStrong:N0}; " +
             $"UDP binding only: {c.ProcessUdpBinding:N0}. Coverage is observed evidence availability, not protocol recall; UDP binding is not remote tuple proof.";
     }
 
