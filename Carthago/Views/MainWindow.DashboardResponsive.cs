@@ -48,6 +48,8 @@ public partial class MainWindow
         DashboardHeroStatusCard.Margin = heroWide
             ? new Thickness(12, 0, 0, 0) : new Thickness(0, 10, 0, 0);
         var heroNavStack = mode == ResponsiveLayoutMode.Compact || narrowKpis;
+        DockPanel.SetDock(DashboardHeroNavigationLabel, heroNavStack ? Dock.Top : Dock.Left);
+        DashboardHeroNavigationLabel.Margin = heroNavStack ? new Thickness(0,0,0,5) : new Thickness(0,0,12,0);
         DashboardHeroNavigationGrid.Columns = heroNavStack ? 1 : 3;
         for (var i = 0; i < DashboardHeroNavigationGrid.Children.Count; i++)
         {

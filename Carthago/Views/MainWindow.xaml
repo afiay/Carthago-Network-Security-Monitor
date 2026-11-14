@@ -84,8 +84,8 @@
       </Style>
       <DataTemplate x:Key="DashboardKpiCardTemplate">
         <!-- GA UI-178: compact reference-aligned metric tile; all values remain source-bound. -->
-        <Border Style="{StaticResource DashboardOverviewKpiCard}" MinHeight="108"
-                Padding="12,10" CornerRadius="10">
+        <Border Style="{StaticResource DashboardOverviewKpiCard}" MinHeight="96"
+                Padding="10,7" CornerRadius="10">
           <Grid>
             <Grid.RowDefinitions>
               <RowDefinition Height="*"/>
@@ -132,7 +132,7 @@
               </TextBlock>
             </StackPanel>
             <Border Grid.Row="1" Grid.ColumnSpan="2" BorderBrush="#29475D"
-                    BorderThickness="0,1,0,0" Margin="0,7,0,0" Padding="0,5,0,0">
+                    BorderThickness="0,1,0,0" Margin="0,4,0,0" Padding="0,3,0,0">
               <TextBlock Text="{Binding TrendText}" FontFamily="Consolas"
                          Foreground="{Binding AccentBrush}" FontSize="11" Opacity="0.95"
                          TextWrapping="Wrap" ToolTip="{Binding TrendText}"/>
@@ -538,7 +538,7 @@
 
               <StackPanel x:Name="SocDashboardWorkspace" Visibility="Collapsed" Margin="0,0,0,4">
                 <!-- GA UI-177: compact operational masthead and read-only navigation rail. -->
-                <Border Style="{StaticResource DashboardHeroCard}" Padding="18,14" Margin="0,0,0,12">
+                <Border Style="{StaticResource DashboardHeroCard}" Padding="12,8" Margin="0,0,0,8">
                   <Grid x:Name="DashboardHeroGrid">
                     <Grid.RowDefinitions>
                       <RowDefinition Height="Auto"/>
@@ -553,7 +553,7 @@
                       <TextBlock Text="CARTHAGO / LOCAL SECURITY OPERATIONS"
                                  Foreground="{StaticResource AccentAltBrush}" FontSize="10"
                                  FontWeight="Bold" TextWrapping="Wrap"/>
-                      <TextBlock Text="Security Overview" FontSize="30" FontWeight="SemiBold"
+                      <TextBlock Text="Security Overview" FontSize="25" FontWeight="SemiBold"
                                  Foreground="{StaticResource TextBrush}" TextWrapping="Wrap"
                                  Margin="0,4,0,0"/>
                       <TextBlock Text="Local packet-rate history, prioritized signals and investigation context."
@@ -564,7 +564,7 @@
                             HorizontalAlignment="Right" VerticalAlignment="Center"
                             Background="{StaticResource PillBgBrush}"
                             BorderBrush="{StaticResource SoftDividerBrush}"
-                            BorderThickness="1" CornerRadius="9" Padding="12,9">
+                            BorderThickness="1" CornerRadius="9" Padding="9,5">
                       <StackPanel>
                         <TextBlock Text="LOCAL CAPTURE STATE"
                                    Foreground="{StaticResource TextMutedBrush}" FontSize="10"
@@ -583,25 +583,25 @@
                         </Grid>
                       </StackPanel>
                     </Border>
-                    <Border Grid.Row="2" Grid.ColumnSpan="2" BorderBrush="{StaticResource SoftDividerBrush}"
-                            BorderThickness="0,1,0,0" Padding="0,10,0,0" Margin="0,12,0,0">
-                      <StackPanel>
-                        <TextBlock Text="OPERATIONAL WORKSPACES" FontSize="10" FontWeight="Bold"
-                                   Foreground="{StaticResource AccentAltBrush}" Margin="0,0,0,7"/>
+                    <Border x:Name="DashboardHeroNavigationRail" Grid.Row="2" Grid.ColumnSpan="2" BorderBrush="{StaticResource SoftDividerBrush}"
+                            BorderThickness="0,1,0,0" Padding="0,6,0,0" Margin="0,6,0,0">
+                      <DockPanel LastChildFill="True">
+                        <TextBlock x:Name="DashboardHeroNavigationLabel" DockPanel.Dock="Left" Text="WORKSPACES" FontSize="10" FontWeight="Bold"
+                                   Foreground="{StaticResource AccentAltBrush}" VerticalAlignment="Center" Margin="0,0,12,0"/>
                         <UniformGrid x:Name="DashboardHeroNavigationGrid" Columns="3">
                           <Button Content="Health details" Style="{StaticResource SecondaryButton}"
-                                  MinHeight="36" Margin="0,0,8,0"
+                                  MinHeight="30" Margin="0,0,8,0"
                                   Click="DashboardOpenMonitoringHealth_Click"
                                   AutomationProperties.Name="Open Monitoring Health details"/>
                           <Button Content="Rule coverage" Style="{StaticResource SecondaryButton}"
-                                  MinHeight="36" Margin="0,0,8,0"
+                                  MinHeight="30" Margin="0,0,8,0"
                                   Click="DashboardOpenDetectionCoverage_Click"
                                   AutomationProperties.Name="Open Detection Coverage Center"/>
                           <Button Content="Workspace settings" Style="{StaticResource SecondaryButton}"
-                                  MinHeight="36" Click="DashboardOpenSettings_Click"
+                                  MinHeight="30" Click="DashboardOpenSettings_Click"
                                   AutomationProperties.Name="Open dashboard workspace settings"/>
                         </UniformGrid>
-                      </StackPanel>
+                      </DockPanel>
                     </Border>
                   </Grid>
                 </Border>

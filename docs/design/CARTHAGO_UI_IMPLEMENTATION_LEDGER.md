@@ -6050,3 +6050,14 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Ownership/static review:** MainWindow.xaml, MainWindow.DashboardResponsive.cs, ledger only. Existing event grid columns, bindings, filters, selection, read-only flags, virtualization, frozen columns, 80/500 limits and CLI unavailable text retained. No shared API, capture, detection, privacy, ScottPlot 10/120, Cisco/WebView2, tests or automation changes. Existing responsive layout consumers retained.
 
 **Risks/planned unexecuted:** two-line cell clipping at 44/48, long IPv6/evidence values, horizontal scrolling, filter wrap, offline terminal capability text and shared Auto row measurement, keyboard focus, widths 1920/1440/1100/1099/1024/1023/640, DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. Next GA UI-185: audit Dashboard masthead and KPI first-screen vertical footprint, then progress to Incidents workspace.
+
+
+## GA UI-185 — Compact masthead and operational metric strip
+
+**2026-11-14 · SOURCE CANDIDATE — UNVERIFIED.** Approved Library image libfile_b0a34361560c8191b641e432b3e6b15c visually inspected. Baseline `24a415983296d8b4c1f00f17d953e9e19350178d`, tree `fe6de49c8163d004595de45cf3a1e5ede76915bd`; prior GA UI-184.
+
+**Visible before → after:** Dashboard masthead inset 18/14 → 12/8, title 30 → 25, capture status inset 12/9 → 9/5. Navigation rail changes from vertically stacked heading and three buttons to inline label plus three compact actions at Wide/Standard; Compact/below-1024 docks label above stacked actions. Rail spacing reduced and buttons 36 → 30 minimum. Shared KPI tile minimum 108 → 96, inset 12/10 → 10/7, tighter divided provenance footer. Reference mapping: compact heading/status and metric strip directly above monitoring; actual status and all KPI values remain source-bound. Static impact: reduced upper chrome, content-driven height retained for long values. No render.
+
+**Ownership:** MainWindow.xaml, MainWindow.DashboardResponsive.cs, ledger only. Existing action handlers, status bindings, KPI template bindings and panel selection retained; new names are UI layout only. No shared shell changes, Engine/Models/Services, telemetry, detection, privacy, ScottPlot 10/120, Events 80/500, Cisco/WebView2, executable CLI, tests or automation changes. 
+
+**Risks/planned unexecuted:** long status and KPI labels, navigation button fit at 1100, keyboard focus, preference changes, widths 1920/1440/1100/1099/1024/1023/640 and DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. Next GA UI-186: dedicated Incidents workspace composition audit and meaningful visible redesign; preserve Dashboard architecture.
