@@ -215,6 +215,31 @@ public sealed class ReviewedDnsPacketIntakeTests
                 Assert.Equal(0, count);
                 Assert.Equal(0L, first);
                 Assert.Equal(0L, last);
+                byte[] anchor = SHA256.HashData(goodJournal);
+                Assert.True(reopened.TryReadAnchoredScopeSummary(scope, anchor, out count, out first, out last));
+                Assert.Equal(2, count);
+                Assert.False(reopened.TryReadAnchoredScopeSummary(scope, new byte[31], out count, out first, out last));
+                Assert.Equal(0, count);
+                Assert.Equal(0L, first);
+                Assert.Equal(0L, last);
+                // A well-formed rollback must fail against the current external digest.
+                File.WriteAllText(journalPath, records[0] + "\n");
+                Assert.True(reopened.TryReadScopeSummary(scope, out count, out _, out _));
+                Assert.Equal(1, count);
+                Assert.False(reopened.TryReadAnchoredScopeSummary(scope, anchor, out count, out first, out last));
+                Assert.Equal(0, count);
+                Assert.Equal(0L, first);
+                Assert.Equal(0L, last);
+                File.WriteAllBytes(journalPath, goodJournal);
+                // A syntactically valid timestamp edit must also fail.
+                File.WriteAllText(journalPath, records[0] + "\n" +
+                    records[1].Replace((start.UtcDateTime.Ticks + 10).ToString("X16"),
+                        (start.UtcDateTime.Ticks + 30).ToString("X16")) + "\n");
+                Assert.True(reopened.TryReadScopeSummary(scope, out count, out _, out last));
+                Assert.Equal(start.UtcDateTime.Ticks + 30, last);
+                Assert.False(reopened.TryReadAnchoredScopeSummary(scope, anchor, out count, out first, out last));
+                Assert.Equal(0, count);
+                File.WriteAllBytes(journalPath, goodJournal);
                 string legacyPath = Path.Combine(directory, "admission.v1");
                 File.WriteAllText(legacyPath, "legacy");
                 Assert.False(reopened.TryReserve(manifest, signature, capture,
@@ -250,6 +275,10 @@ public sealed class ReviewedDnsPacketIntakeTests
                 Assert.True(reopened.TryReserve(thirdManifest, thirdSignature, third,
                     "192.0.2.1", "sensor", "interface", "network"));
                 Assert.True(reopened.TryReadScopeSummary(scope, out count, out first, out last));
+                Assert.Equal(3, count);
+                Assert.False(reopened.TryReadAnchoredScopeSummary(scope, anchor, out _, out _, out _));
+                Assert.True(reopened.TryReadAnchoredScopeSummary(scope, SHA256.HashData(File.ReadAllBytes(journalPath)),
+                    out count, out first, out last));
                 Assert.Equal(3, count);
                 Assert.Equal(start.UtcDateTime.Ticks + 20, last);
                 var missing = new ReviewedDnsCaptureAdmission(Path.Combine(directory, "missing"), intake);

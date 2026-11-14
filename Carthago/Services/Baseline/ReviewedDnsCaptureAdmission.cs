@@ -69,6 +69,21 @@ namespace Carthago.Services.Baseline
         // Publish no partial result on corruption or concurrent writer contention.
         internal bool TryReadScopeSummary(QualifiedDnsScope scope, out int count,
             out long firstUtcTicks, out long lastUtcTicks)
+            => TryReadSummary(scope, null, out count, out firstUtcTicks, out lastUtcTicks);
+
+        // Expected digest must come from an independently controlled current checkpoint.
+        // This verifies exact bytes, not the authority or freshness of that checkpoint.
+        internal bool TryReadAnchoredScopeSummary(QualifiedDnsScope scope,
+            ReadOnlySpan<byte> expectedDigest, out int count, out long firstUtcTicks, out long lastUtcTicks)
+        {
+            count = 0;
+            firstUtcTicks = lastUtcTicks = 0;
+            if (expectedDigest.Length != 32) return false;
+            return TryReadSummary(scope, expectedDigest.ToArray(), out count, out firstUtcTicks, out lastUtcTicks);
+        }
+
+        private bool TryReadSummary(QualifiedDnsScope scope, byte[]? expectedDigest, out int count,
+            out long firstUtcTicks, out long lastUtcTicks)
         {
             count = 0;
             firstUtcTicks = lastUtcTicks = 0;
@@ -83,6 +98,13 @@ namespace Carthago.Services.Baseline
                 using var journal = new FileStream(Path.Combine(_directory, "admission.v2"),
                     FileMode.Open, FileAccess.Read, FileShare.None);
                 if (journal.Length > MaxJournalBytes) return false;
+                if (expectedDigest != null)
+                {
+                    // Parse the same exclusively opened file that was hashed.
+                    if (!CryptographicOperations.FixedTimeEquals(SHA256.HashData(journal), expectedDigest))
+                        return false;
+                    journal.Position = 0;
+                }
                 using var reader = new BufferedStream(journal, 4096);
                 if (!ReadJournal(reader, new HashSet<string>(StringComparer.Ordinal),
                     new HashSet<string>(StringComparer.Ordinal), (scopeDigest, ticks) =>
