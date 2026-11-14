@@ -6127,3 +6127,14 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Ownership/static review:** AnomaliesPage.xaml, AnomaliesPage.xaml.cs responsive constants only, ledger. Reviewed Theme.xaml anomaly styles, ResponsiveLayout, navigation and selection/filter subscriptions; names, bindings and handlers retained. No shared theme edits, VM, analytics, detection, privacy, capture, trust, ScottPlot 10/120, Events 80/500, CLI, Cisco/WebView2 or automation changes. Read-only docs navigation. Independent R163 work preserved.
 
 **Risks/planned unexecuted:** long category/title/IPv6, KPI wrapping, queue menu, pagination, selection and filter reset, empty state, keyboard traversal, 1920/1440/1100/1099/1024/1023/640 widths and DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. Next UI-192: selected anomaly investigation hero and evidence cards, preserve recorded risk and explicit links.
+
+
+## GA UI-192 — Selected anomaly investigation compact evidence hero
+
+**2026-11-14 · SOURCE CANDIDATE — UNVERIFIED.** Approved Library image libfile_b0a34361560c8191b641e432b3e6b15c visually inspected. Baseline `1222ffcd0ad814dfa8ddc65f47bd6596e2b30a65`, tree `10301d1a08397991eaff1210ebb326f497db6919`; prior UI-191. Reference mapping: compact selected-record title, severity rail, numeric score and aligned endpoint metadata. The horizontal severity accent is categorical, not a confidence or proportional risk bar; no demo values.
+
+**Visible before → after:** hero inset 22 → 12, title 27 → 21, severity rail 6 → 3, 104-unit circular score replaced with 28-unit numeric score and thin severity accent, risk inset 15 → 10; narrative/risk ratio 1.5:0.65 → 1.7:0.8. Six evidence tiles retain two-column alignment with inset 18/16 → 10/8, gutter 14 → 8 and vertical gap 12 → 6. Wide/Standard side-by-side hero; Compact and below stack existing named risk card with 8-unit inset. Existing outer scroll, baseline comparison, explanation and analyst actions unchanged. Static impact: reduced hero and metadata vertical footprint; no render.
+
+**Ownership/static review:** AnomaliesPage.xaml, responsive constants in AnomaliesPage.xaml.cs, ledger. Existing named elements, bindings, selection and filter subscriptions, exact incident links and severity converter retained. No shared contracts, analytics, capture, detection, privacy, ScottPlot 10/120, Events 80/500, CLI or automation changes. Independent R118 work preserved.
+
+**Risks/planned unexecuted:** long titles/IPv6, score wrapping, severity contrast, empty selection, exact incident navigation, 1920/1440/1100/1099/1024/1023/640 widths, DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. Next UI-193: baseline comparison and explainable evidence composition.
