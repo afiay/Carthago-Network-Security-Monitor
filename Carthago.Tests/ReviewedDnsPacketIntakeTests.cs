@@ -216,6 +216,48 @@ public sealed class ReviewedDnsPacketIntakeTests
                 Assert.Equal(0L, first);
                 Assert.Equal(0L, last);
                 byte[] anchor = SHA256.HashData(goodJournal);
+                using var authority = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+                byte[] deployment = SHA256.HashData(new byte[] { 42 });
+                byte[] domain = System.Text.Encoding.ASCII.GetBytes("CARTHAGO-DNS-JOURNAL-V2\0");
+                byte[] Checkpoint(byte[] digest, ulong revision, byte[] deploymentId)
+                {
+                    byte[] bytes = new byte[domain.Length + 72];
+                    domain.CopyTo(bytes, 0);
+                    deploymentId.CopyTo(bytes, domain.Length);
+                    BinaryPrimitives.WriteUInt64BigEndian(bytes.AsSpan(domain.Length + 32), revision);
+                    digest.CopyTo(bytes, domain.Length + 40);
+                    return bytes;
+                }
+                byte[] SignCheckpoint(byte[] bytes) => authority.SignData(bytes,
+                    HashAlgorithmName.SHA256, DSASignatureFormat.IeeeP1363FixedFieldConcatenation);
+                var verifier = new ReviewedDnsJournalCheckpoint(authority.ExportSubjectPublicKeyInfo(), deployment, 2);
+                byte[] checkpoint = Checkpoint(anchor, 2, deployment);
+                byte[] checkpointSignature = SignCheckpoint(checkpoint);
+                Assert.True(verifier.TryReadSummary(reopened, scope, checkpoint, checkpointSignature,
+                    out count, out first, out last));
+                Assert.Equal(2, count);
+                Assert.Equal(start.UtcDateTime.Ticks, first);
+                Assert.Equal(start.UtcDateTime.Ticks + 10, last);
+                Assert.True(verifier.TryReadSummary(reopened, otherScope, checkpoint, checkpointSignature,
+                    out count, out first, out last));
+                Assert.Equal(0, count);
+                Assert.Equal(0L, first);
+                Assert.Equal(0L, last);
+                void RejectCheckpoint(byte[] bytes)
+                {
+                    Assert.False(verifier.TryReadSummary(reopened, scope, bytes, SignCheckpoint(bytes),
+                        out int rejectedCount, out long rejectedFirst, out long rejectedLast));
+                    Assert.Equal(0, rejectedCount);
+                    Assert.Equal(0L, rejectedFirst);
+                    Assert.Equal(0L, rejectedLast);
+                }
+                RejectCheckpoint(Checkpoint(anchor, 2, SHA256.HashData(new byte[] { 43 })));
+                RejectCheckpoint(Checkpoint(anchor, 1, deployment));
+                Assert.False(verifier.TryReadSummary(null!, scope, checkpoint, checkpointSignature,
+                    out count, out first, out last));
+                Assert.Equal(0, count);
+                Assert.Equal(0L, first);
+                Assert.Equal(0L, last);
                 Assert.True(reopened.TryReadAnchoredScopeSummary(scope, anchor, out count, out first, out last));
                 Assert.Equal(2, count);
                 Assert.False(reopened.TryReadAnchoredScopeSummary(scope, new byte[31], out count, out first, out last));
@@ -226,6 +268,8 @@ public sealed class ReviewedDnsPacketIntakeTests
                 File.WriteAllText(journalPath, records[0] + "\n");
                 Assert.True(reopened.TryReadScopeSummary(scope, out count, out _, out _));
                 Assert.Equal(1, count);
+                RejectCheckpoint(checkpoint);
+                RejectCheckpoint(Checkpoint(SHA256.HashData(File.ReadAllBytes(journalPath)), 1, deployment));
                 Assert.False(reopened.TryReadAnchoredScopeSummary(scope, anchor, out count, out first, out last));
                 Assert.Equal(0, count);
                 Assert.Equal(0L, first);
@@ -237,6 +281,7 @@ public sealed class ReviewedDnsPacketIntakeTests
                         (start.UtcDateTime.Ticks + 30).ToString("X16")) + "\n");
                 Assert.True(reopened.TryReadScopeSummary(scope, out count, out _, out last));
                 Assert.Equal(start.UtcDateTime.Ticks + 30, last);
+                RejectCheckpoint(checkpoint);
                 Assert.False(reopened.TryReadAnchoredScopeSummary(scope, anchor, out count, out first, out last));
                 Assert.Equal(0, count);
                 File.WriteAllBytes(journalPath, goodJournal);

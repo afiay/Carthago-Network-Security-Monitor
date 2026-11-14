@@ -52,7 +52,8 @@ namespace Carthago.Services.Baseline
         {
             count = 0;
             firstUtcTicks = lastUtcTicks = 0;
-            return TryVerify(checkpoint, signature, out var digest) &&
+            return admission != null && scope != null &&
+                TryVerify(checkpoint, signature, out var digest) &&
                 admission.TryReadAnchoredScopeSummary(scope, digest, out count,
                     out firstUtcTicks, out lastUtcTicks);
         }
