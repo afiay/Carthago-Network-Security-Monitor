@@ -180,8 +180,16 @@ public sealed class R272AdvancedAccuracyBatchTests
 
             // Exercise the same detector instance: canonical aliases share cooldown.
             var cooldownRule = new R272_MultiSignalRuleStackSurgeFromHostRule();
-            Assert.True((await cooldownRule.EvaluateAsync(context)).Matched);
-            Assert.False((await cooldownRule.EvaluateAsync(mappedContext)).Matched);
+            // Cooldown is shared across instances; the engine already emitted
+            // for this canonical host. Suppression is a matched event, not NoMatch.
+            var canonicalRepeat = await cooldownRule.EvaluateAsync(context);
+            var aliasRepeat = await cooldownRule.EvaluateAsync(mappedContext);
+            Assert.True(canonicalRepeat.Matched);
+            Assert.True(aliasRepeat.Matched);
+            Assert.Equal(DetectionSuppressionStatus.Suppressed,
+                Assert.Single(canonicalRepeat.Events).SuppressionStatus);
+            Assert.Equal(DetectionSuppressionStatus.Suppressed,
+                Assert.Single(aliasRepeat.Events).SuppressionStatus);
 
             probe.Source = "10.214.1.99";
             Assert.False((await new R272_MultiSignalRuleStackSurgeFromHostRule()
