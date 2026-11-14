@@ -3,7 +3,7 @@
 
 using System;
 using System.Buffers.Binary;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
@@ -50,7 +50,87 @@ namespace Carthago.Services
         }
 
         // key: proto:localPort:localAddr|*:[remoteAddr|*]:[remotePort|*]
-        private static readonly ConcurrentDictionary<string, CacheEntry> Cache = new();
+        private static readonly BoundedMetadataCache<CacheEntry> Cache = new(MaxCacheEntries);
+
+        // FIFO admission order, not LRU: reads never extend metadata lifetime.
+        // All mutations share a gate; no native process operations run under it.
+        internal sealed class BoundedMetadataCache<T> where T : class
+        {
+            private readonly object _gate = new();
+            private readonly int _capacity;
+            private readonly Dictionary<string, LinkedListNode<(string Key, T Value)>> _entries = new();
+            private readonly LinkedList<(string Key, T Value)> _order = new();
+            private long _evictions;
+
+            internal BoundedMetadataCache(int capacity)
+            {
+                if (capacity <= 0) throw new ArgumentOutOfRangeException(nameof(capacity));
+                _capacity = capacity;
+            }
+
+            internal (int Count, long Evictions) ReadHealth()
+            {
+                lock (_gate) return (_entries.Count, _evictions);
+            }
+
+            internal bool TryGetValue(string key, out T? value)
+            {
+                lock (_gate)
+                {
+                    if (_entries.TryGetValue(key, out var node))
+                    {
+                        value = node.Value.Value;
+                        return true;
+                    }
+                    value = null;
+                    return false;
+                }
+            }
+
+            internal void Set(string key, T value)
+            {
+                lock (_gate)
+                {
+                    if (_entries.TryGetValue(key, out var existing))
+                        RemoveNode(existing);
+                    else if (_entries.Count == _capacity)
+                    {
+                        RemoveNode(_order.First!);
+                        _evictions++;
+                    }
+                    _entries.Add(key, _order.AddLast((key, value)));
+                }
+            }
+
+            private void RemoveNode(LinkedListNode<(string Key, T Value)> node)
+            {
+                _entries.Remove(node.Value.Key);
+                _order.Remove(node);
+            }
+
+            internal bool Remove(string key, T? expected = null)
+            {
+                lock (_gate)
+                {
+                    if (!_entries.TryGetValue(key, out var node)
+                        || (expected != null && !ReferenceEquals(expected, node.Value.Value)))
+                        return false;
+                    RemoveNode(node);
+                    return true;
+                }
+            }
+
+            internal void Clear()
+            {
+                lock (_gate)
+                {
+                    _entries.Clear();
+                    _order.Clear();
+                }
+            }
+        }
+
+        internal static (int Count, long Evictions) GetMetadataCacheCapacityHealth() => Cache.ReadHealth();
 
         /// <summary>
         /// Best-effort resolution for the packet tuple.
@@ -179,7 +259,7 @@ namespace Carthago.Services
         {
             var proto = (protocol ?? "TCP").ToUpperInvariant();
             var key = new Candidate(proto, localAddr, localPort, remoteAddr, remotePort).MakeKey();
-            Cache.TryRemove(key, out _);
+            Cache.Remove(key);
         }
 
         // ---------------- internal ----------------
@@ -198,8 +278,7 @@ namespace Carthago.Services
             }
             if (ce == null) return false;
             // Remove only the entry we inspected; another resolver may replace it.
-            ((System.Collections.Generic.ICollection<System.Collections.Generic.KeyValuePair<string, CacheEntry>>)Cache)
-                .Remove(new(key, ce));
+            Cache.Remove(key, ce);
             return false;
         }
 
@@ -268,12 +347,11 @@ namespace Carthago.Services
             var ttl = CacheTtl;
             if (ttl <= TimeSpan.Zero) return;
             if (ttl > TimeSpan.FromSeconds(2)) ttl = TimeSpan.FromSeconds(2);
-            if (Cache.Count >= MaxCacheEntries) Cache.Clear();
-            Cache[key] = new CacheEntry
+            Cache.Set(key, new CacheEntry
             {
                 Info = info,
                 Expires = DateTimeOffset.UtcNow.Add(ttl)
-            };
+            });
         }
 
         private readonly struct Candidate

@@ -187,4 +187,38 @@ public sealed class ProcessAttributionEnrichmentTests
         Assert.Equal(2L, snapshot.IdentityMismatch);
         Assert.Equal(1L, snapshot.Reused);
     }
+    [Fact]
+    public void Metadata_Cache_Capacity_Evicts_One_And_Protects_Replacement()
+    {
+        var cache = new WindowsProcessResolver.BoundedMetadataCache<object>(2);
+        var old = new object();
+        var replacement = new object();
+        cache.Set("a", old);
+        cache.Set("b", new object());
+        cache.Set("a", replacement);
+        Assert.False(cache.Remove("a", old));
+        Assert.Equal((2, 0L), cache.ReadHealth());
+        cache.Set("c", new object());
+        Assert.Equal((2, 1L), cache.ReadHealth());
+        Assert.False(cache.TryGetValue("b", out _));
+        Assert.True(cache.TryGetValue("a", out var actual));
+        Assert.Same(replacement, actual);
+        Assert.True(cache.Remove("a", replacement));
+        cache.Set("d", new object());
+        Assert.Equal((2, 1L), cache.ReadHealth());
+        cache.Clear();
+        Assert.Equal((0, 1L), cache.ReadHealth());
+    }
+
+    [Fact]
+    public void Metadata_Cache_Concurrent_Admission_Remains_Bounded()
+    {
+        var cache = new WindowsProcessResolver.BoundedMetadataCache<object>(8);
+        System.Threading.Tasks.Parallel.For(0, 256, i =>
+        {
+            cache.Set(i.ToString(), new object());
+            Assert.InRange(cache.ReadHealth().Count, 0, 8);
+        });
+        Assert.Equal((8, 248L), cache.ReadHealth());
+    }
 }
