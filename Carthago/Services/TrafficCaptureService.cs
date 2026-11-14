@@ -954,14 +954,14 @@ namespace Carthago.Services
 
                 // Count only while the originating run is still current.
                 // Serialize the check and counter update with stop/start.
-                ObservedAssetRegistry? communicationAssets;
                 lock (_lifecycleLock)
                 {
                     if (!IsCurrentEnrichmentRun(_runCts?.Token, ct)) return;
                     _coverageHealth.ObserveProcess(rec);
-                    communicationAssets = _observedAssets;
+                    // Keep process coverage and communication metadata on the same
+                    // side of the stop/seal boundary. No provider I/O under this lock.
+                    _observedAssets.Communications.AddMetadata(rec);
                 }
-                communicationAssets?.Communications.AddMetadata(rec);
 
                 // Local process hints remain available even if remote classification times out.
                 rec.LocalVpnProcessHint = rec.ProcessId > 0 && ProcessNameSignal.IsVpnProcess(rec.ProcessName);

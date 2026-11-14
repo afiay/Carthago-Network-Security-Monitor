@@ -276,4 +276,48 @@ public sealed class RuntimeEnrichmentRegressionTests
         Assert.Equal(1L, Assert.Single(registry.Snapshot()).Observations);
         Assert.Equal(1L, Assert.Single(registry.Communications.Snapshot()).Observations);
     }
+
+    [Fact]
+    public void Sealed_Session_Rejects_Delayed_Communication_Metadata()
+    {
+        var oldRegistry = new ObservedAssetRegistry();
+        var newRegistry = new ObservedAssetRegistry();
+        var record = new TrafficRecord
+        {
+            Source = "192.168.1.10", Destination = "8.8.8.8",
+            IsTcp = true, TcpFlags = 2, SourcePort = 50000, DestinationPort = 443,
+            SrcIsLocalHost = true, DstIsLocalHost = false,
+            CaptureInterfaceEvidence = "WindowsInterfaceGuid",
+            CaptureInterfaceId = Guid.NewGuid().ToString("D"),
+            ProcessId = 123, ProcessName = "first", ProcessAttribution = "TcpSocketTable",
+            DstAsn = 64500, DstCountryIso2 = "SE"
+        };
+        var now = DateTimeOffset.UtcNow;
+        oldRegistry.Communications.Observe(record, now);
+        oldRegistry.Communications.AddMetadata(record);
+        oldRegistry.Seal();
+
+        record.ProcessName = "late";
+        record.DstAsn = 64501;
+        record.DstCountryIso2 = "US";
+        oldRegistry.Communications.AddMetadata(record);
+        oldRegistry.Communications.Observe(record, now.AddSeconds(1));
+        // Metadata alone must not create a row in the replacement session.
+        newRegistry.Communications.AddMetadata(record);
+        Assert.Empty(newRegistry.Communications.Snapshot());
+
+        var frozen = Assert.Single(oldRegistry.Communications.Snapshot());
+        Assert.Equal(1L, frozen.Observations);
+        Assert.Equal(now, frozen.LastSeenUtc);
+        Assert.Equal(new[] { "first" }, frozen.Processes);
+        Assert.Equal(new[] { "64500" }, frozen.Asns);
+        Assert.Equal(new[] { "SE" }, frozen.Countries);
+
+        newRegistry.Communications.Observe(record, now.AddSeconds(1));
+        newRegistry.Communications.AddMetadata(record);
+        var fresh = Assert.Single(newRegistry.Communications.Snapshot());
+        Assert.Equal(new[] { "late" }, fresh.Processes);
+        Assert.Equal(new[] { "64501" }, fresh.Asns);
+        Assert.Equal(new[] { "US" }, fresh.Countries);
+    }
 }
