@@ -136,7 +136,11 @@ namespace Carthago.Engine.Rules
                 // contract as live capture. Do not trust a default credential
                 // when multiple Authorization fields could be interpreted
                 // differently by intermediaries or the target device.
-                var authorization = line[(separator + 1)..].Trim();
+                // Whitespace before the colon is invalid HTTP field syntax.
+                // Do not normalize malformed credential headers into valid evidence.
+                if (!line[..separator].Equals("Authorization", StringComparison.OrdinalIgnoreCase))
+                    return false;
+                var authorization = line[(separator + 1)..].Trim(' ', '\t');
                 redactedAuthorizationObserved = authorization.Equals("[REDACTED]", StringComparison.OrdinalIgnoreCase);
                 if (authorization.Length is >= 7 and <= 518
                     && IsKnownDefaultBasicAuthorizationValue(Encoding.ASCII.GetBytes(authorization)))

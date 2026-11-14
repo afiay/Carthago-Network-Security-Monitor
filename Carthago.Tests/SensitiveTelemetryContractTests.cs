@@ -329,6 +329,24 @@ public sealed class SensitiveTelemetryContractTests
             RulePrecisionCatalog.Validate("R118", record).MissingFields);
     }
 
+    [Theory]
+    [InlineData("Authorization : Basic YWRtaW46YWRtaW4=")]
+    [InlineData("Authorization\t: Basic YWRtaW46YWRtaW4=")]
+    [InlineData("Authorization: Basic YWRtaW46YWRtaW4=\u000b")]
+    public async Task R118_Malformed_Authorization_Field_Does_Not_Qualify(string header)
+    {
+        var record = new TrafficRecord
+        {
+            Source = "192.0.2.21", Destination = "192.0.2.50",
+            DestinationPort = 80, Protocol = "HTTP", HttpMethod = "GET",
+            HttpHost = "camera-lab.internal", HttpUri = "/admin",
+            HttpRequestHeaders = header
+        };
+        Assert.False((await new R118_DefaultCredentialIoTAttemptRule()
+            .EvaluateAsync(Context(record))).Matched);
+        Assert.Contains("device_authentication_attempt", RulePrecisionCatalog.Validate("R118", record).MissingFields);
+    }
+
     [Fact]
     public async Task R118_Incomplete_Http_Headers_Cannot_Claim_Default_Basic_Authentication()
     {
