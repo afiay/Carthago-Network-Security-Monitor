@@ -117,6 +117,22 @@ public sealed class EnrichmentHealthPresentationTests
     }
 
     [Fact]
+    public void Metadata_Cache_Capacity_Is_Independent_Of_Probe_Outcomes()
+    {
+        var summary = EnrichmentHealthPresentation.Build(new TrafficCaptureService.StatsSnapshot
+        {
+            ProcessMetadataCacheCapacity = (3, 17)
+        }).Summary;
+        Assert.Contains($"retained entries: 3/{WindowsProcessResolver.MaxCacheEntries}", summary);
+        Assert.Contains("capacity evictions (process lifetime): 17", summary);
+        Assert.Contains("Retained entries may be expired", summary);
+        Assert.Contains("exclude explicit clear and invalidation", summary);
+        Assert.Contains("TCP metadata-cache metrics unavailable", summary);
+        Assert.Contains("capacity evictions (process lifetime): 0", EnrichmentHealthPresentation.Build(new TrafficCaptureService.StatsSnapshot { ProcessMetadataCacheCapacity = (0, 0) }).Summary);
+        Assert.Contains("TCP metadata-cache capacity metrics unavailable", EnrichmentHealthPresentation.Build(new TrafficCaptureService.StatsSnapshot()).Summary);
+    }
+
+    [Fact]
     public void Native_Process_Summary_Separates_Candidates_And_Empty_Buckets()
     {
         var stats = new TrafficCaptureService.StatsSnapshot

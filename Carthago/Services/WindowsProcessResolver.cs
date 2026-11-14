@@ -40,7 +40,7 @@ namespace Carthago.Services
 
         /// <summary>Short TCP metadata cache; socket ownership and PID creation time are revalidated on hits.</summary>
         public static TimeSpan CacheTtl { get; set; } = TimeSpan.FromSeconds(2);
-        private const int MaxCacheEntries = 8192;
+        internal const int MaxCacheEntries = 8192;
 
         private sealed class CacheEntry
         {
