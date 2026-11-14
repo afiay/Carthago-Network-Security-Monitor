@@ -81,6 +81,22 @@ public sealed class R272AdvancedAccuracyBatchTests
             smb.Flags = "SYN"; smb.TcpFlags = 2;
             Assert.Contains(RuleEngine.Evaluate(smb, Sensitivity.Balanced), e => e.RuleId == "R026");
 
+            // Replay the same real FTP packet after two independent emissions.
+            // Neither repeated packet evaluation nor repeated FTP detections may
+            // inflate the retained host/rule cardinality into a third family.
+            for (var replay = 0; replay < 3; replay++)
+            {
+                Assert.DoesNotContain(RuleEngine.Evaluate(ftp, Sensitivity.Balanced),
+                    e => e.RuleId == "R272");
+                var replayAt = DateTime.UtcNow;
+                var replayContext = RuleEvaluationContext.CreateForEngine(ftp,
+                    Sensitivity.Balanced, replayAt, RuleEngineHealthSnapshot.Empty(replayAt));
+                Assert.Single(System.Linq.Enumerable.Where(
+                    replayContext.GetR272Signals(), signal => signal.RuleId == "R014"));
+                Assert.False((await new R272_MultiSignalRuleStackSurgeFromHostRule()
+                    .EvaluateAsync(replayContext)).Matched);
+            }
+
             // Two actual emitted families must not satisfy the three-family threshold.
             var twoProbe = Packet(host, "10.214.1.21", 443);
             var twoAt = DateTime.UtcNow;
