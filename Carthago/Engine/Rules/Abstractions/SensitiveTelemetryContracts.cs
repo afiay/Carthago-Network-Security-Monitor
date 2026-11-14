@@ -94,7 +94,13 @@ namespace Carthago.Engine.Rules
 
             // An actual Telnet connection with a credential-bearing login transcript can be
             // evaluated without HTTP telemetry. Text from unrelated HTTP pages cannot qualify.
-            if (record.DestinationPort == 23 && !string.IsNullOrWhiteSpace(record.Info))
+            if (record.DestinationPort == 23 && !string.IsNullOrWhiteSpace(record.Info)
+                && string.IsNullOrWhiteSpace(record.HttpMethod)
+                && string.IsNullOrWhiteSpace(record.HttpRequestHeaders)
+                && !string.Equals(record.Protocol, "HTTP", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(record.Protocol, "HTTPS", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(record.ApplicationProtocol, "HTTP", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(record.ApplicationProtocol, "HTTPS", StringComparison.OrdinalIgnoreCase))
                 return TelnetLoginWithDefaultPair.IsMatch(record.Info);
 
             if (string.IsNullOrWhiteSpace(record.HttpMethod)

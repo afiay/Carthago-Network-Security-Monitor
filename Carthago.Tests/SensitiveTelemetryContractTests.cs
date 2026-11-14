@@ -172,6 +172,28 @@ public sealed class SensitiveTelemetryContractTests
         Assert.Contains("device_authentication_attempt", RulePrecisionCatalog.Validate("R118", record).MissingFields);
     }
 
+    [Theory]
+    [InlineData("HTTP", null, null)]
+    [InlineData("TCP", "HTTP", null)]
+    [InlineData("TCP", null, "GET")]
+    public async Task R118_Http_On_Telnet_Port_Does_Not_Use_Descriptive_Login_Text(
+        string protocol, string? applicationProtocol, string? method)
+    {
+        var record = new TrafficRecord
+        {
+            Source = "192.0.2.30", Destination = "192.0.2.50",
+            DestinationPort = 23, Protocol = protocol, IsTcp = true,
+            ApplicationProtocol = applicationProtocol, HttpMethod = method,
+            HttpHost = "camera-lab.internal", HttpUri = "/help",
+            Info = "telnet login admin:admin documentation"
+        };
+        Assert.False(SensitiveTelemetryContracts.HasDefaultCredentialAuthenticationAttempt(record));
+        Assert.False((await new R118_DefaultCredentialIoTAttemptRule()
+            .EvaluateAsync(Context(record))).Matched);
+        Assert.Contains("device_authentication_attempt",
+            RulePrecisionCatalog.Validate("R118", record).MissingFields);
+    }
+
     [Fact]
     public async Task R118_Telnet_Provisioning_Candidate_Stays_Shadow_Below_Existing_Precision_Floor()
     {
