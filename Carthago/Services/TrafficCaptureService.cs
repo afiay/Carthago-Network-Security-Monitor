@@ -1343,20 +1343,21 @@ namespace Carthago.Services
             }
         }
 
-        private EnrichmentStorageSnapshot GetEnrichmentStorageHealth()
-        {
-            ObservedAssetRegistry registry;
-            lock (_lifecycleLock) registry = _observedAssets;
-            return new(registry.Communications.CapacitySnapshot(), registry.CapacitySnapshot(), _assetHistory.HealthSnapshot());
-        }
+        internal static (EnrichmentStorageSnapshot Storage, (int Retained, int Closed, long CapacityRejections)? Tls)
+            SnapshotSessionHealth(ObservedAssetRegistry registry, TlsConnectionEnrichment? tls, CheckpointHealthSnapshot checkpoints)
+            => (new(registry.Communications.CapacitySnapshot(), registry.CapacitySnapshot(), checkpoints),
+                tls?.GetDetailedCapacityHealth());
 
-        private (int Retained, int Closed, long CapacityRejections)? GetTlsCapacityHealth()
+        public StatsSnapshot GetStats()
         {
-            lock (_lifecycleLock) return _tlsConnections?.GetDetailedCapacityHealth();
-        }
-
-        public StatsSnapshot GetStats() => new()
-        {
+            // Capture both session-owned sources under one lifecycle boundary.
+            // Checkpoint counters are service-lifetime, not session counters.
+            var checkpoints = _assetHistory.HealthSnapshot();
+            (EnrichmentStorageSnapshot Storage, (int Retained, int Closed, long CapacityRejections)? Tls) session;
+            lock (_lifecycleLock)
+                session = SnapshotSessionHealth(_observedAssets, _tlsConnections, checkpoints);
+            return new()
+            {
             PacketsCaptured = Interlocked.Read(ref _packetsCaptured),
             PacketsParsedOk = Interlocked.Read(ref _packetsParsedOk),
             PacketsParseErrors = Interlocked.Read(ref _packetsParseErrors),
@@ -1374,8 +1375,8 @@ namespace Carthago.Services
             EnrichmentProviders = _providerHealth.Snapshot(),
             EnrichmentWorkers = _workerHealth.Snapshot(),
             EnrichmentCoverage = _coverageHealth.Snapshot(),
-            EnrichmentStorage = GetEnrichmentStorageHealth(),
-            TlsCapacity = GetTlsCapacityHealth(),
+            EnrichmentStorage = session.Storage,
+            TlsCapacity = session.Tls,
             GeoCityDatabaseStatus = _geoIpService.CityDatabaseStatus,
             GeoAsnDatabaseStatus = _geoIpService.AsnDatabaseStatus,
             GeoCityLookupHealth = _geoIpService.CityLookupHealth,
@@ -1389,7 +1390,8 @@ namespace Carthago.Services
                 WindowsProcessResolver.GetNativeLookupHealth("UDP", System.Net.Sockets.AddressFamily.InterNetwork),
                 WindowsProcessResolver.GetNativeLookupHealth("UDP", System.Net.Sockets.AddressFamily.InterNetworkV6)
             }
-        };
+            };
+        }
 
         public CaptureFlowSnapshot GetCaptureFlowSnapshot()
         {

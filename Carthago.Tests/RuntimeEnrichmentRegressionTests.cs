@@ -230,4 +230,20 @@ public sealed class RuntimeEnrichmentRegressionTests
         Assert.False(TrafficCaptureService.IsCurrentEnrichmentRun(newRun.Token, oldRun.Token));
         Assert.True(TrafficCaptureService.IsCurrentEnrichmentRun(newRun.Token, newRun.Token));
     }
+    [Fact]
+    public void Session_Health_Separates_Stopped_And_New_Tls_State_From_Checkpoints()
+    {
+        var registry = new ObservedAssetRegistry();
+        var checkpoints = new CheckpointHealthSnapshot(3, 1, "test");
+        var active = TrafficCaptureService.SnapshotSessionHealth(registry, new TlsConnectionEnrichment(), checkpoints);
+        Assert.NotNull(active.Tls);
+        Assert.Equal(0, active.Tls!.Value.Retained);
+        var stopped = TrafficCaptureService.SnapshotSessionHealth(registry, null, checkpoints);
+        Assert.Null(stopped.Tls);
+        Assert.Equal(active.Storage, stopped.Storage);
+        var next = TrafficCaptureService.SnapshotSessionHealth(new ObservedAssetRegistry(), new TlsConnectionEnrichment(), checkpoints);
+        Assert.NotNull(next.Tls);
+        Assert.Equal(0L, next.Tls!.Value.CapacityRejections);
+        Assert.Equal(checkpoints, next.Storage.Checkpoints);
+    }
 }
