@@ -439,6 +439,38 @@ public sealed class SensitiveTelemetryContractTests
             rule.Descriptor, evt, record, RuleMode.Alert, "Research").EffectiveMode);
     }
 
+    [Theory]
+    [InlineData("GET")]
+    [InlineData("HEAD")]
+    public async Task R163_Same_Process_And_Trace_Header_Do_Not_Prove_Causal_Access_Or_Response(string method)
+    {
+        const string trace = "traceparent: 00-0123456789abcdef0123456789abcdef-0123456789abcdef-01";
+        var inbound = new TrafficRecord
+        {
+            Source = "198.51.100.20", Destination = "10.1.1.30",
+            DestinationPort = 80, Protocol = "HTTP", HttpMethod = "GET",
+            HttpHost = "app.internal", HttpUri = "/health",
+            HttpRequestHeaders = trace, ProcessName = "webapp.exe", ProcessId = 42
+        };
+        var outbound = MetadataRecord("/latest/meta-data/iam/security-credentials/app", "webapp.exe");
+        outbound.ProcessId = 42;
+        outbound.HttpMethod = method;
+        outbound.HttpRequestHeaders = trace;
+        outbound.Info = "HTTP/1.1 200 OK";
+        var rule = new R163_SsrfMetadataServiceProbeRule();
+        var now = DateTime.UtcNow;
+        Assert.False((await rule.EvaluateAsync(new RuleEvaluationContext(inbound, Sensitivity.Balanced, now))).Matched);
+        var result = await rule.EvaluateAsync(new RuleEvaluationContext(outbound, Sensitivity.Balanced, now.AddSeconds(1)));
+        Assert.True(result.Matched);
+        var evt = Assert.Single(result.Events);
+        Assert.Contains(evt.StructuredEvidence!.Items, item =>
+            item.Key == "metadata.causalAssociation" && item.Value == "not-established");
+        Assert.Contains(evt.StructuredEvidence.Items, item =>
+            item.Key == "metadata.responseOutcome" && item.Value == "not-observed");
+        Assert.Equal(RuleMode.Shadow, RulePrecisionRuntimeEvaluator.Evaluate(
+            rule.Descriptor, evt, outbound, RuleMode.Alert, "Research").EffectiveMode);
+    }
+
     [Fact]
     public async Task R163_Does_Not_Mistake_Normal_Azure_Metadata_Lookup_For_Credential_Theft()
     {
