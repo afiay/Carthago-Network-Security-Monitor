@@ -122,6 +122,45 @@ public sealed class AssetHistoryStoreTests : IDisposable
         Assert.Empty(history.Coverage!);
     }
 
+    [Fact]
+    public void Delayed_Periodic_Save_After_Final_Uses_Sealed_Registry_And_Separate_Session()
+    {
+        var store = new AssetHistoryStore(_directory);
+        var original = Registry();
+        Assert.True(store.Save(original));
+        original.Observe(Local(), Now.AddSeconds(1));
+        original.Seal();
+        Assert.True(store.Save(original));
+        var replacement = Registry();
+        Assert.True(store.Save(replacement));
+
+        // Maintenance retains the registry reference, not a prebuilt snapshot.
+        original.Observe(Local(), Now.AddSeconds(2));
+        Assert.True(store.Save(original));
+        var history = new AssetHistoryStore(_directory).Read();
+        Assert.Null(history.Error);
+        Assert.Equal(2, history.SessionCount);
+        Assert.Equal(2L, Assert.Single(history.Rows.Where(r => r.SessionId == original.SessionId.ToString("N"))).Asset.Observations);
+        Assert.Equal(1L, Assert.Single(history.Rows.Where(r => r.SessionId == replacement.SessionId.ToString("N"))).Asset.Observations);
+    }
+
+    [Fact]
+    public void Failed_Checkpoint_Can_Recover_On_Same_Store()
+    {
+        Directory.CreateDirectory(_directory);
+        var blocked = Path.Combine(_directory, "blocked");
+        File.WriteAllText(blocked, "not a directory");
+        var store = new AssetHistoryStore(blocked);
+        var registry = Registry();
+        Assert.False(store.Save(registry));
+        Assert.NotNull(store.LastSaveError);
+        File.Delete(blocked);
+        Assert.True(store.Save(registry));
+        Assert.Null(store.LastSaveError);
+        Assert.Equal(1L, Assert.Single(store.Read().Rows).Asset.Observations);
+        Assert.Empty(Directory.GetFiles(blocked, "*.tmp"));
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_directory)) Directory.Delete(_directory, recursive: true);
