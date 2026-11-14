@@ -43,6 +43,10 @@ internal sealed class TlsConnectionEnrichment
             }
             if ((flags & 0x12) == 0x02)
             {
+                // A delayed SYN must not reset a newer observation in either direction.
+                if ((_flows.TryGetValue(key, out var forward) && now < forward.Seen)
+                    || (_flows.TryGetValue(key.Reverse(), out var reverse) && now < reverse.Seen))
+                    return;
                 _flows.Remove(key); _flows.Remove(key.Reverse());
                 if (_flows.Count < Capacity) _flows[key] = new State { Seen = now };
                 return;

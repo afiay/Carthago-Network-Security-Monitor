@@ -124,4 +124,27 @@ public sealed class TlsIdentityEnrichmentTests
         var next = Flow(); cache.Observe(next, 500);
         Assert.Null(next.TlsCorrelatedSni);
     }
+
+    [Theory]
+    [InlineData(false, 2)]
+    [InlineData(true, 2)]
+    [InlineData(false, 1)]
+    [InlineData(true, 4)]
+    public void Older_Control_Packet_Cannot_Reset_Newer_Tls_Evidence(bool reverse, ushort flags)
+    {
+        var cache = new TlsConnectionEnrichment();
+        cache.Observe(Flow(flags: 2), 100);
+        var hello = Flow();
+        hello.ApplicationProtocol = "TLS"; hello.TlsJa4 = "client"; hello.Sni = "example.com";
+        cache.Observe(hello, 300);
+        cache.Observe(Flow(reverse, flags), 200);
+        var later = Flow();
+        cache.Observe(later, 400);
+        Assert.Equal("example.com", later.TlsCorrelatedSni);
+        Assert.Null(later.Sni);
+        cache.Observe(Flow(reverse, flags), 500);
+        var after = Flow();
+        cache.Observe(after, 600);
+        Assert.Null(after.TlsCorrelatedSni);
+    }
 }
