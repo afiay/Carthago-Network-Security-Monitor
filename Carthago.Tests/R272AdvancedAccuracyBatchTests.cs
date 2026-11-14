@@ -228,6 +228,17 @@ public sealed class R272AdvancedAccuracyBatchTests
             ingest.Invoke(null, new object[] { ftpEvent, descriptor, now });
             Assert.Contains(RuleEngine.SnapshotR272Signals(host, now), s => s.RuleId == "R014");
 
+            // A retained identity cannot advance the global watermark, even
+            // when replayed far into the future. The other real family must
+            // remain available at its original observation time.
+            RuleEngine.ResetRuntimeStateForReplay();
+            ingest.Invoke(null, new object[] { ftpEvent, descriptor, now });
+            ingest.Invoke(null, new object[] { smbEvent, smbDescriptor, now });
+            ingest.Invoke(null, new object[] { ftpEvent, descriptor, now.AddHours(1) });
+            Assert.Contains(RuleEngine.SnapshotR272Signals(host, now), x => x.RuleId == "R026");
+            Assert.Contains(RuleEngine.SnapshotR272Signals(host, now), x => x.RuleId == "R014");
+            Assert.Empty(RuleEngine.SnapshotR272Signals(host, now.AddHours(1)));
+
             // Replay clocks at the representable lower bound must not throw or
             // manufacture a third family. Exercise the actual emitted identity.
             RuleEngine.ResetRuntimeStateForReplay();
