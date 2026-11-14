@@ -381,6 +381,17 @@ public sealed class SensitiveTelemetryContractTests
         Assert.False(RulePrecisionCatalog.Validate("R163", record).CanEvaluate);
     }
 
+    [Theory]
+    [InlineData("/metadata/identity/oauth2/token?api-version=2018-02-01#fragment")]
+    [InlineData("http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01#fragment")]
+    [InlineData("/latest/meta-data/iam/security-credentials/app?x=1#fragment")]
+    public async Task R163_Rejects_Literal_Fragment_After_Query(string target)
+    {
+        var record = MetadataRecord(target, "unapproved-webapp.exe");
+        Assert.False((await new R163_SsrfMetadataServiceProbeRule().EvaluateAsync(Context(record))).Matched);
+        Assert.False(RulePrecisionCatalog.Validate("R163", record).CanEvaluate);
+    }
+
     [Fact]
     public async Task R163_Valid_Azure_Token_Query_Still_Requires_Independent_Causality()
     {

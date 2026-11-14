@@ -372,10 +372,11 @@ namespace Carthago.Engine.Rules
         {
             // Inspect the original request target BEFORE Uri.TryCreate can
             // canonicalize absolute-form dot segments. Never inspect the query
-            // string: Azure's documented credential endpoint needs one.
+            // string for path normalization: Azure's documented credential endpoint needs one.
+            // A literal fragment delimiter is invalid anywhere in an HTTP request target.
             var question = requestTarget.IndexOf('?');
             var rawPath = question < 0 ? requestTarget : requestTarget[..question];
-            if (rawPath.IndexOf('#') >= 0 || rawPath.IndexOf('\\') >= 0
+            if (requestTarget.IndexOf('#') >= 0 || rawPath.IndexOf('\\') >= 0
                 || rawPath.Contains("%2e", StringComparison.OrdinalIgnoreCase)
                 || rawPath.Contains("%2f", StringComparison.OrdinalIgnoreCase)
                 || rawPath.Contains("%5c", StringComparison.OrdinalIgnoreCase)
