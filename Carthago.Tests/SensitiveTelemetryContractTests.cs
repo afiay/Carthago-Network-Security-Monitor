@@ -64,6 +64,22 @@ public sealed class SensitiveTelemetryContractTests
         Assert.False((await new R118_DefaultCredentialIoTAttemptRule().EvaluateAsync(Context(record))).Matched);
     }
 
+    [Theory]
+    [InlineData("Authorization: Basic YWRtaW46YWRtaW4=\r\n extra")]
+    [InlineData("Authorization: Basic YWRtaW46YWRtaW4=\r\n\tAuthorization: Basic other")]
+    [InlineData("Host: camera.internal.local\r\n other\r\nAuthorization: Basic YWRtaW46YWRtaW4=")]
+    public async Task R118_Folded_Header_Text_Does_Not_Qualify(string headers)
+    {
+        var record = new TrafficRecord
+        {
+            Source = "10.1.1.21", Destination = "10.1.1.50", DestinationPort = 8080,
+            Protocol = "HTTP", HttpMethod = "GET", HttpHost = "camera.internal.local",
+            HttpUri = "/admin", HttpRequestHeaders = headers, ProcessName = "curl.exe"
+        };
+        Assert.False((await new R118_DefaultCredentialIoTAttemptRule().EvaluateAsync(Context(record))).Matched);
+        Assert.Contains("device_authentication_attempt", RulePrecisionCatalog.Validate("R118", record).MissingFields);
+    }
+
     [Fact]
     public async Task R118_Malformed_Basic_Authentication_Does_Not_Qualify()
     {

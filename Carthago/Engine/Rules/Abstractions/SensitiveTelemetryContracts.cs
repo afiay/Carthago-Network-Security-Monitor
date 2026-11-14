@@ -116,6 +116,11 @@ namespace Carthago.Engine.Rules
             if (string.IsNullOrWhiteSpace(record.HttpRequestHeaders))
                 return record.HttpBasicDefaultCredentialObserved;
 
+            // Reject obsolete folded header lines: they can change field semantics.
+            if (record.HttpRequestHeaders.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries)
+                .Any(static line => line.StartsWith(' ') || line.StartsWith('\t')))
+                return false;
+
             var authorizationHeaderCount = 0;
             var defaultPairObserved = false;
             var redactedAuthorizationObserved = false;
