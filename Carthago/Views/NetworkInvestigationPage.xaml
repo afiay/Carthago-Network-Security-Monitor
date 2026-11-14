@@ -15,7 +15,7 @@
       </Style.Triggers>
     </Style>
     <DataTemplate x:Key="EvidenceInspectorFieldTemplate">
-      <Grid Margin="0,0,0,8">
+      <Border BorderBrush="#31536A" BorderThickness="3,0,0,1" CornerRadius="4" Margin="0,0,0,4" Padding="8,5"><Grid>
         <Grid.Style>
           <Style TargetType="Grid">
             <Setter Property="Background" Value="Transparent"/>
@@ -30,8 +30,8 @@
           </Style>
         </Grid.Style>
         <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="195"/>
-          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="2*"/>
+          <ColumnDefinition Width="3*"/>
         </Grid.ColumnDefinitions>
         <TextBlock Grid.Column="0" Text="{Binding Key}"
                    FontSize="12" TextWrapping="Wrap" Margin="5,3,12,3">
@@ -55,7 +55,7 @@
                  Background="Transparent" BorderThickness="0" Padding="0"
                  Foreground="{StaticResource TextBrush}" FontSize="12" TextWrapping="Wrap"
                  ToolTip="Read-only recorded value · select text to copy"/>
-      </Grid>
+      </Grid></Border>
     </DataTemplate>
   </UserControl.Resources>
   <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
@@ -143,7 +143,25 @@
             <DataGrid.Columns>
               <DataGridTextColumn Header="Timestamp (UTC)" Binding="{Binding TimestampUtc, StringFormat={}{0:u}}" Width="160"/>
               <DataGridTextColumn Header="Rule" Binding="{Binding RuleId}" Width="90"/>
-              <DataGridTextColumn Header="Severity" Binding="{Binding Severity}" Width="90"/>
+              <DataGridTemplateColumn Header="Severity" SortMemberPath="Severity" Width="108">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <Border CornerRadius="4" Padding="7,3" Margin="3,2" HorizontalAlignment="Left">
+                      <Border.Style>
+                        <Style TargetType="Border">
+                          <Setter Property="Background" Value="#344A5D"/>
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding Severity}" Value="Critical"><Setter Property="Background" Value="#8D303C"/></DataTrigger>
+                            <DataTrigger Binding="{Binding Severity}" Value="High"><Setter Property="Background" Value="#80551E"/></DataTrigger>
+                            <DataTrigger Binding="{Binding Severity}" Value="Medium"><Setter Property="Background" Value="#665D26"/></DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </Border.Style>
+                      <TextBlock Text="{Binding Severity}" Foreground="White" FontWeight="SemiBold" FontSize="12"/>
+                    </Border>
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
               <DataGridTextColumn Header="Source" Binding="{Binding SourceIp}" Width="155"/>
               <DataGridTextColumn Header="Destination" Binding="{Binding DestinationIp}" Width="155"/>
               <DataGridTextColumn Header="Src port" Binding="{Binding SourcePort}" Width="80"/>
@@ -166,22 +184,31 @@
                     AutomationProperties.Name="Selected detection evidence inspector">
             <Border Background="#102D42" BorderBrush="#2B5870" BorderThickness="1" CornerRadius="8" Padding="10">
               <StackPanel>
+                <Border Background="#0B2034" BorderBrush="#31536A" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,10">
+                  <StackPanel>
+                    <TextBlock Text="DETECTION / SELECTED RECORD" Foreground="{StaticResource AccentAltBrush}" FontSize="11" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding SelectedItem.RuleId, ElementName=InvestigationDetectionsGrid}" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                    <TextBlock Text="{Binding SelectedItem.Severity, ElementName=InvestigationDetectionsGrid, StringFormat=Recorded severity: {0}}" Foreground="{StaticResource TextBrush}" Margin="0,4,0,0"/>
+                  </StackPanel>
+                </Border>
                 <TextBlock Text="Search provenance names matching event fields, not evidence of case association. Structured evidence values appear only for approved typed metadata; all unreviewed, legacy and sensitive values are withheld."
                            Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,0,0,12"/>
+                <TextBlock Text="RECORDED FIELDS / SEARCH PROVENANCE" Foreground="{StaticResource AccentAltBrush}" FontSize="11" FontWeight="Bold" Margin="0,0,0,6"/>
+                <Border Background="#0B2034" BorderBrush="#31536A" BorderThickness="1" CornerRadius="6" Padding="6">
                 <ScrollViewer MaxHeight="295" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                   <ItemsControl x:Name="DetectionEvidenceFields" ItemTemplate="{StaticResource EvidenceInspectorFieldTemplate}"/>
-                </ScrollViewer>
+                </ScrollViewer></Border>
                 <TextBlock Text="Confidence score is not a calibrated probability; flow and correlation identifiers do not prove membership in an incident. Free-form/raw evidence is intentionally excluded."
                            Foreground="{StaticResource TextMutedBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,12,0,0"/>
-                <Border x:Name="LinkedCasesPanel" Visibility="Collapsed" BorderBrush="#2B5870" BorderThickness="1,1,0,0"
-                        Margin="0,14,0,0" Padding="0,12,0,0">
+                <Border x:Name="LinkedCasesPanel" Visibility="Collapsed" Background="#0B2034" BorderBrush="#39798A" BorderThickness="1" CornerRadius="6"
+                        Margin="0,10,0,0" Padding="10">
                   <StackPanel>
                     <TextBlock Text="EXACT EVENT-TO-CASE REFERENCES" Foreground="{StaticResource AccentAltBrush}"
                                FontSize="11" FontWeight="Bold"/>
                     <TextBlock x:Name="LinkedCasesStatusText" Text="Select a detection to check actual cached case references."
                                Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,5,0,10"/>
                     <WrapPanel>
-                      <ComboBox x:Name="LinkedCasesCombo" Width="365" Height="34" Margin="0,0,8,8"
+                      <ComboBox x:Name="LinkedCasesCombo" Width="260" Height="34" Margin="0,0,8,8"
                                 DisplayMemberPath="Key" SelectionChanged="LinkedCasesCombo_SelectionChanged"
                                 AutomationProperties.Name="Cases explicitly referencing selected detection event"/>
                       <Button x:Name="OpenLinkedCaseButton" Content="Open linked case" IsEnabled="False"
@@ -238,20 +265,29 @@
                     AutomationProperties.Name="Selected incident case context inspector">
             <Border Background="#102D42" BorderBrush="#2B5870" BorderThickness="1" CornerRadius="8" Padding="10">
               <StackPanel>
+                <Border Background="#0B2034" BorderBrush="#31536A" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,10">
+                  <StackPanel>
+                    <TextBlock Text="CASE / SELECTED RECORD" Foreground="{StaticResource AccentAltBrush}" FontSize="11" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding SelectedItem.Title, ElementName=InvestigationIncidentsGrid}" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                    
+                  </StackPanel>
+                </Border>
                 <TextBlock Text="This is an actual cached incident, not a case inferred from matching IP addresses. Open the selected incident for its authoritative timeline."
                            Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,0,0,12"/>
+                <TextBlock Text="RECORDED FIELDS / SEARCH PROVENANCE" Foreground="{StaticResource AccentAltBrush}" FontSize="11" FontWeight="Bold" Margin="0,0,0,6"/>
+                <Border Background="#0B2034" BorderBrush="#31536A" BorderThickness="1" CornerRadius="6" Padding="6">
                 <ScrollViewer MaxHeight="255" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                   <ItemsControl x:Name="IncidentEvidenceFields" ItemTemplate="{StaticResource EvidenceInspectorFieldTemplate}"/>
-                </ScrollViewer>
-                <Border x:Name="LinkedDetectionsPanel" Visibility="Collapsed" BorderBrush="#2B5870" BorderThickness="1,1,0,0"
-                        Margin="0,14,0,0" Padding="0,12,0,0">
+                </ScrollViewer></Border>
+                <Border x:Name="LinkedDetectionsPanel" Visibility="Collapsed" Background="#0B2034" BorderBrush="#39798A" BorderThickness="1" CornerRadius="6"
+                        Margin="0,10,0,0" Padding="10">
                   <StackPanel>
                     <TextBlock Text="EXPLICITLY RELATED DETECTION EVENTS" Foreground="{StaticResource AccentAltBrush}"
                                FontSize="11" FontWeight="Bold"/>
                     <TextBlock x:Name="LinkedDetectionsStatusText" Text="Select a case to inspect event IDs recorded as related to it."
                                Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,5,0,10"/>
                     <WrapPanel>
-                      <ComboBox x:Name="LinkedDetectionsCombo" Width="365" Height="34" Margin="0,0,8,8"
+                      <ComboBox x:Name="LinkedDetectionsCombo" Width="260" Height="34" Margin="0,0,8,8"
                                 DisplayMemberPath="Key" SelectionChanged="LinkedDetectionsCombo_SelectionChanged"
                                 AutomationProperties.Name="Retained detections explicitly listed in selected case"/>
                       <Button x:Name="InspectLinkedDetectionButton" Content="Inspect linked event" IsEnabled="False"
@@ -311,11 +347,20 @@
                     AutomationProperties.Name="Selected traffic evidence inspector">
             <Border Background="#102D42" BorderBrush="#2B5870" BorderThickness="1" CornerRadius="8" Padding="10">
               <StackPanel>
+                <Border Background="#0B2034" BorderBrush="#31536A" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,10">
+                  <StackPanel>
+                    <TextBlock Text="TRAFFIC / SELECTED RECORD" Foreground="{StaticResource AccentAltBrush}" FontSize="11" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding SelectedItem.Protocol, ElementName=InvestigationTrafficGrid}" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                    
+                  </StackPanel>
+                </Border>
                 <TextBlock Text="Search provenance names the recorded fields matched by the current query; it does not prove linkage. Optional fields say Not recorded when absent. Address scope uses default local ranges, not network inventory."
                            Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,0,0,12"/>
+                <TextBlock Text="RECORDED FIELDS / SEARCH PROVENANCE" Foreground="{StaticResource AccentAltBrush}" FontSize="11" FontWeight="Bold" Margin="0,0,0,6"/>
+                <Border Background="#0B2034" BorderBrush="#31536A" BorderThickness="1" CornerRadius="6" Padding="6">
                 <ScrollViewer MaxHeight="295" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                   <ItemsControl x:Name="TrafficEvidenceFields" ItemTemplate="{StaticResource EvidenceInspectorFieldTemplate}"/>
-                </ScrollViewer>
+                </ScrollViewer></Border>
                 <TextBlock Text="Process names, WHOIS and GeoIP are optional enrichments; an unknown value is not evidence of absence. Raw payloads, HTTP headers and credentials are not displayed."
                            Foreground="{StaticResource TextMutedBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,12,0,0"/>
               </StackPanel>
