@@ -193,4 +193,36 @@ public sealed class TlsIdentityEnrichmentTests
         cache.Observe(fresh, 121201);
         Assert.Equal("fresh.example", fresh.TlsCorrelatedSni);
     }
+    [Fact]
+    public void Tls_Capacity_Counts_Rejected_Syn_And_Releases_Expired_History()
+    {
+        var cache = new TlsConnectionEnrichment();
+        for (int i = 0; i < 4096; i++)
+        {
+            var syn = Flow(flags: 2);
+            syn.SourcePort = 10000 + i;
+            cache.Observe(syn, 100);
+            var close = Flow(flags: 4);
+            close.SourcePort = syn.SourcePort;
+            cache.Observe(close, 200);
+        }
+        Assert.Equal((4096, 0L), cache.GetCapacityHealth());
+        cache.Observe(Flow(flags: 2), 300);
+        Assert.Equal((4096, 1L), cache.GetCapacityHealth());
+        var rejected = Flow();
+        rejected.ApplicationProtocol = "TLS"; rejected.TlsJa4 = "client"; rejected.Sni = "rejected.example";
+        cache.Observe(rejected, 400);
+        Assert.Null(rejected.TlsCorrelatedSni);
+        var reuse = Flow(flags: 2);
+        reuse.SourcePort = 10000;
+        cache.Observe(reuse, 500);
+        Assert.Equal((4096, 1L), cache.GetCapacityHealth());
+        cache.Observe(Flow(flags: 2), 121200);
+        Assert.Equal((1, 1L), cache.GetCapacityHealth());
+        var fresh = Flow();
+        fresh.ApplicationProtocol = "TLS"; fresh.TlsJa4 = "client"; fresh.Sni = "fresh.example";
+        cache.Observe(fresh, 121201);
+        Assert.Equal("fresh.example", fresh.TlsCorrelatedSni);
+        Assert.Equal((0, 0L), new TlsConnectionEnrichment().GetCapacityHealth());
+    }
 }

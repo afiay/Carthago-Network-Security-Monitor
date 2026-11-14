@@ -16,6 +16,12 @@ internal sealed class TlsConnectionEnrichment
     private readonly object _gate = new();
     private readonly Dictionary<Key, State> _flows = new();
     private long _pruneAt;
+    private long _capacityRejections;
+
+    internal (int Retained, long CapacityRejections) GetCapacityHealth()
+    {
+        lock (_gate) return (_flows.Count, _capacityRejections);
+    }
     private readonly record struct Key(string Client, int ClientPort, string Server, int ServerPort)
     {
         internal Key Reverse() => new(Server, ServerPort, Client, ClientPort);
@@ -50,6 +56,7 @@ internal sealed class TlsConnectionEnrichment
                     return;
                 _flows.Remove(key); _flows.Remove(key.Reverse());
                 if (_flows.Count < Capacity) _flows[key] = new State { Seen = now };
+                else _capacityRejections++;
                 return;
             }
             bool client = _flows.TryGetValue(key, out var state);
