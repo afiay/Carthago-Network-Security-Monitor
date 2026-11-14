@@ -227,6 +227,16 @@ public sealed class R272AdvancedAccuracyBatchTests
             RuleEngine.ResetRuntimeStateForReplay();
             ingest.Invoke(null, new object[] { ftpEvent, descriptor, now });
             Assert.Contains(RuleEngine.SnapshotR272Signals(host, now), s => s.RuleId == "R014");
+
+            // Replay clocks at the representable lower bound must not throw or
+            // manufacture a third family. Exercise the actual emitted identity.
+            RuleEngine.ResetRuntimeStateForReplay();
+            var early = DateTime.MinValue.AddMinutes(1);
+            ingest.Invoke(null, new object[] { ftpEvent, descriptor, early });
+            Assert.Contains(RuleEngine.SnapshotR272Signals(host, early), s => s.RuleId == "R014");
+            Assert.Empty(RuleEngine.SnapshotR272Signals(host, DateTime.MinValue));
+            Assert.Contains(RuleEngine.SnapshotR272Signals(host, early.AddMinutes(10)), s => s.RuleId == "R014");
+            Assert.Empty(RuleEngine.SnapshotR272Signals(host, early.AddMinutes(10).AddTicks(1)));
         }
         finally { RuleEngine.ResetRuntimeStateForReplay(); }
     }

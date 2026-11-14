@@ -499,7 +499,7 @@ namespace Carthago.Services
             {
                 if (R272Signals.Any(signal => signal.EventId == evt.EventId)) return;
                 if (now > R272SignalWatermark) R272SignalWatermark = now;
-                var cutoff = R272SignalWatermark.AddMinutes(-10);
+                var cutoff = R272RetentionCutoff(R272SignalWatermark);
                 R272Signals.RemoveAll(signal => signal.Timestamp < cutoff);
                 if (now < cutoff) return;
                 if (R272Signals.Any(signal => signal.Host == host && signal.RuleId == descriptor.RuleId && signal.Timestamp > now)) return;
@@ -512,6 +512,10 @@ namespace Carthago.Services
             }
         }
 
+        // Clamp the lower bound for replay clocks near DateTime.MinValue.
+        private static DateTime R272RetentionCutoff(DateTime now) =>
+            now.Ticks < TimeSpan.FromMinutes(10).Ticks ? DateTime.MinValue : now.AddMinutes(-10);
+
         // Snapshot only engine-owned, post-policy signals; never infer from packet text.
         internal static IReadOnlyList<(string RuleId, string Family)> SnapshotR272Signals(string? source, DateTime now)
         {
@@ -521,7 +525,7 @@ namespace Carthago.Services
             var host = address.ToString();
             lock (R272SignalLock)
             {
-                var cutoff = now.AddMinutes(-10);
+                var cutoff = R272RetentionCutoff(now);
                 return Array.AsReadOnly(R272Signals
                     .Where(signal => signal.Host == host && signal.Timestamp >= cutoff && signal.Timestamp <= now)
                     .Select(signal => (signal.RuleId, signal.Family))
