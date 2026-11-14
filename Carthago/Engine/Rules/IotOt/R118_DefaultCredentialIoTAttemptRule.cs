@@ -69,11 +69,13 @@ namespace Carthago.Engine.Rules.IotOt
             var matchedConditions = new List<string> { "default_credential_token", "authentication_context", "device_target_context" };
             var evidenceItems = new List<DetectionEvidenceItem>
             {
-                new("matched_conditions", string.Join(",", matchedConditions), "rule")
+                new("matched_conditions", string.Join(",", matchedConditions), "rule"),
+                new("iot.assetIdentity", "heuristic-only", "rule"),
+                new("iot.authenticationOutcome", "not-observed", "rule")
             };
             evidenceItems.AddRange(AnalystContext(
                 "The record contains a known default credential pattern directed at a likely IoT or embedded-device target.",
-                "Severity is Critical because default-credential use against IoT or embedded devices strongly suggests insecure provisioning, brute force, or post-reset compromise.",
+                "Severity is Critical for the candidate risk; the request does not establish successful authentication, verified asset identity, or compromise.",
                 "Authorized provisioning or recovery workflows can briefly use vendor-default credentials.",
                 "Validate whether the device was being legitimately provisioned or factory-reset.",
                 "If not expected, isolate the source and rotate credentials on the targeted device family."));

@@ -260,6 +260,8 @@ public sealed class IotOtPrecisionRuleTests
 
         var evt = AssertSingleEvent(result, "R118", SeverityLevel.Critical, 0.76);
         AssertEvidence(evt, "matched_conditions", "iot.protocolFamily");
+        Assert.Contains(evt.StructuredEvidence!.Items, item => item.Key == "iot.assetIdentity" && item.Value == "heuristic-only");
+        Assert.Contains(evt.StructuredEvidence.Items, item => item.Key == "iot.authenticationOutcome" && item.Value == "not-observed");
     }
 
     [Fact]
