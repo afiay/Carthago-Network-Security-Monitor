@@ -158,4 +158,33 @@ public sealed class ProcessAttributionEnrichmentTests
         Assert.Equal(1L, final.Unresolved);
         Assert.Equal(0L, metrics.Read("UDP", family).PeakActive);
     }
+    [Fact]
+    public void Metadata_Cache_Outcomes_Are_Exclusive_And_Require_Current_Identity()
+    {
+        var start = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        var cached = new WindowsProcessResolver.ProcessInfo { ProcessId = 42, StartTime = start };
+        var metrics = new WindowsProcessResolver.MetadataCacheMetrics();
+        DateTime? UnexpectedRead() => throw new InvalidOperationException("Unnecessary identity read");
+        void Check(WindowsProcessResolver.MetadataCacheOutcome expected,
+            WindowsProcessResolver.ProcessInfo? entry, bool fresh, int pid, Func<DateTime?> read)
+        {
+            var outcome = WindowsProcessResolver.ClassifyMetadataCache(entry, fresh, pid, read);
+            Assert.Equal(expected, outcome);
+            metrics.Record(outcome);
+        }
+        Check(WindowsProcessResolver.MetadataCacheOutcome.Absent, null, false, 42, UnexpectedRead);
+        Check(WindowsProcessResolver.MetadataCacheOutcome.Expired, cached, false, 42, UnexpectedRead);
+        Check(WindowsProcessResolver.MetadataCacheOutcome.OwnerMismatch, cached, true, 0, UnexpectedRead);
+        Check(WindowsProcessResolver.MetadataCacheOutcome.OwnerMismatch, cached, true, 43, UnexpectedRead);
+        Check(WindowsProcessResolver.MetadataCacheOutcome.IdentityMismatch, cached, true, 42, () => null);
+        Check(WindowsProcessResolver.MetadataCacheOutcome.IdentityMismatch, cached, true, 42, () => start.AddSeconds(1));
+        Check(WindowsProcessResolver.MetadataCacheOutcome.Reused, cached, true, 42, () => start);
+        var snapshot = metrics.Read();
+        Assert.Equal(7L, snapshot.Completed);
+        Assert.Equal(1L, snapshot.Absent);
+        Assert.Equal(1L, snapshot.Expired);
+        Assert.Equal(2L, snapshot.OwnerMismatch);
+        Assert.Equal(2L, snapshot.IdentityMismatch);
+        Assert.Equal(1L, snapshot.Reused);
+    }
 }

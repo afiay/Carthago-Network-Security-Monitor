@@ -187,16 +187,62 @@ namespace Carthago.Services
         private static bool TryGetFresh(string key, int observedPid, out ProcessInfo? info)
         {
             info = null;
-            if (!Cache.TryGetValue(key, out var ce)) return false;
-            if (ce.Fresh && CanReuseProcessMetadata(ce.Info, observedPid, observedPid > 0 ? ReadProcessStartTime(observedPid) : null))
+            Cache.TryGetValue(key, out var ce);
+            var outcome = ClassifyMetadataCache(ce?.Info, ce?.Fresh == true, observedPid,
+                () => ReadProcessStartTime(observedPid));
+            MetadataCacheHealth.Record(outcome);
+            if (outcome == MetadataCacheOutcome.Reused)
             {
-                info = ce.Info;
+                info = ce!.Info;
                 return true;
             }
+            if (ce == null) return false;
             // Remove only the entry we inspected; another resolver may replace it.
             ((System.Collections.Generic.ICollection<System.Collections.Generic.KeyValuePair<string, CacheEntry>>)Cache)
                 .Remove(new(key, ce));
             return false;
+        }
+
+        internal enum MetadataCacheOutcome { Absent, Expired, OwnerMismatch, IdentityMismatch, Reused }
+
+        private static readonly MetadataCacheMetrics MetadataCacheHealth = new();
+        internal static MetadataCacheMetrics.Snapshot GetMetadataCacheHealth() => MetadataCacheHealth.Read();
+
+        internal sealed class MetadataCacheMetrics
+        {
+            internal readonly record struct Snapshot(long Absent, long Expired, long OwnerMismatch, long IdentityMismatch, long Reused)
+            {
+                internal long Completed => Absent + Expired + OwnerMismatch + IdentityMismatch + Reused;
+            }
+            private readonly object _gate = new();
+            private Snapshot _snapshot;
+            internal void Record(MetadataCacheOutcome outcome)
+            {
+                lock (_gate)
+                {
+                    var s = _snapshot;
+                    _snapshot = outcome switch
+                    {
+                        MetadataCacheOutcome.Absent => s with { Absent = s.Absent + 1 },
+                        MetadataCacheOutcome.Expired => s with { Expired = s.Expired + 1 },
+                        MetadataCacheOutcome.OwnerMismatch => s with { OwnerMismatch = s.OwnerMismatch + 1 },
+                        MetadataCacheOutcome.IdentityMismatch => s with { IdentityMismatch = s.IdentityMismatch + 1 },
+                        MetadataCacheOutcome.Reused => s with { Reused = s.Reused + 1 },
+                        _ => throw new ArgumentOutOfRangeException(nameof(outcome))
+                    };
+                }
+            }
+            internal Snapshot Read() { lock (_gate) return _snapshot; }
+        }
+
+        internal static MetadataCacheOutcome ClassifyMetadataCache(ProcessInfo? cached, bool fresh,
+            int observedPid, Func<DateTime?> readStart)
+        {
+            if (cached == null) return MetadataCacheOutcome.Absent;
+            if (!fresh) return MetadataCacheOutcome.Expired;
+            if (observedPid <= 0 || cached.ProcessId != observedPid) return MetadataCacheOutcome.OwnerMismatch;
+            return CanReuseProcessMetadata(cached, observedPid, readStart())
+                ? MetadataCacheOutcome.Reused : MetadataCacheOutcome.IdentityMismatch;
         }
 
         internal static bool CanReuseProcessMetadata(ProcessInfo cached, int observedPid, DateTime? observedStart)
