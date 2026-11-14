@@ -98,8 +98,11 @@ public sealed class R272AdvancedAccuracyBatchTests
                 dns.Protocol = "DNS"; dns.IsTcp = false; dns.IsUdp = true;
                 dns.DnsQtype = "TXT"; dns.DnsQname = $"query{i}.synthetic.invalid";
                 dns.DnsIsResponse = false;
-                dnsEmitted |= System.Linq.Enumerable.Any(
+                dnsEmitted = System.Linq.Enumerable.Any(
                     RuleEngine.Evaluate(dns, Sensitivity.Balanced), e => e.RuleId == "R031");
+                // Stop at the first qualifying DNS emission. Subsequent packets
+                // could consume the engine-owned R272 cooldown before the probe.
+                if (dnsEmitted) break;
             }
             Assert.True(dnsEmitted, "The DNS producer must actually emit R031.");
 
