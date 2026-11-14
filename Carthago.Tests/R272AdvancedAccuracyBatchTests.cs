@@ -115,6 +115,15 @@ public sealed class R272AdvancedAccuracyBatchTests
             var result = await new R272_MultiSignalRuleStackSurgeFromHostRule()
                 .EvaluateAsync(context);
             Assert.True(result.Matched);
+            Assert.NotEmpty(result.Events);
+            Assert.All(result.Events, e => Assert.True(e.ConfidenceScore >= 82));
+
+            // A context captured before the DNS emission cannot gain evidence
+            // retroactively, even though the live host now has three families.
+            Assert.DoesNotContain(twoContext.GetR272Signals(), s => s.RuleId == "R031");
+            Assert.False((await new R272_MultiSignalRuleStackSurgeFromHostRule()
+                .EvaluateAsync(twoContext)).Matched);
+
             Assert.False((await new R272_MultiSignalRuleStackSurgeFromHostRule()
                 .EvaluateAsync(new RuleEvaluationContext(probe, Sensitivity.Balanced, now))).Matched);
 
