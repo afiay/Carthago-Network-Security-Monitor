@@ -392,6 +392,17 @@ public sealed class SensitiveTelemetryContractTests
         Assert.False(RulePrecisionCatalog.Validate("R163", record).CanEvaluate);
     }
 
+    [Theory]
+    [InlineData("/latest/meta-data/iam/security-credentials/app?x=one two")]
+    [InlineData("/latest/meta-data/iam/security-credentials/app?x=one\ttwo")]
+    [InlineData("/latest/meta-data/iam/security-credentials/app?x=one\u007ftwo")]
+    public async Task R163_Rejects_Invalid_Request_Target_Whitespace_Or_Control(string target)
+    {
+        var record = MetadataRecord(target, "unapproved-webapp.exe");
+        Assert.False((await new R163_SsrfMetadataServiceProbeRule().EvaluateAsync(Context(record))).Matched);
+        Assert.False(RulePrecisionCatalog.Validate("R163", record).CanEvaluate);
+    }
+
     [Fact]
     public async Task R163_Valid_Azure_Token_Query_Still_Requires_Independent_Causality()
     {

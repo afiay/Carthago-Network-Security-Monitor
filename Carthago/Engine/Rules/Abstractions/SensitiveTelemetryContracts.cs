@@ -376,7 +376,8 @@ namespace Carthago.Engine.Rules
             // A literal fragment delimiter is invalid anywhere in an HTTP request target.
             var question = requestTarget.IndexOf('?');
             var rawPath = question < 0 ? requestTarget : requestTarget[..question];
-            if (requestTarget.IndexOf('#') >= 0 || rawPath.IndexOf('\\') >= 0
+            if (requestTarget.Any(static c => c <= ' ' || c == '\u007f')
+                || requestTarget.IndexOf('#') >= 0 || rawPath.IndexOf('\\') >= 0
                 || rawPath.Contains("%2e", StringComparison.OrdinalIgnoreCase)
                 || rawPath.Contains("%2f", StringComparison.OrdinalIgnoreCase)
                 || rawPath.Contains("%5c", StringComparison.OrdinalIgnoreCase)
