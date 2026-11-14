@@ -79,7 +79,8 @@ public sealed class R272AdvancedAccuracyBatchTests
 
             var smb = Packet(host, "8.8.8.8", 445);
             smb.Flags = "SYN"; smb.TcpFlags = 2;
-            Assert.Contains(RuleEngine.Evaluate(smb, Sensitivity.Balanced), e => e.RuleId == "R026");
+            var smbEvent = Assert.Single(System.Linq.Enumerable.Where(
+                RuleEngine.Evaluate(smb, Sensitivity.Balanced), e => e.RuleId == "R026"));
 
             // Replay the same real FTP packet after two independent emissions.
             // Neither repeated packet evaluation nor repeated FTP detections may
@@ -204,6 +205,28 @@ public sealed class R272AdvancedAccuracyBatchTests
                 now, RuleEngineHealthSnapshot.Empty(now));
             Assert.False((await new R272_MultiSignalRuleStackSurgeFromHostRule()
                 .EvaluateAsync(reset)).Matched);
+
+            // Replay actual emitted identities in reverse timestamp order after reset.
+            // A stale event must not resurrect evidence outside the producer watermark.
+            var smbDescriptor = System.Linq.Enumerable.Single(
+                Carthago.Engine.Rules.Catalog.RuleRegistry.CreateDefaultRules(),
+                rule => rule.Descriptor.RuleId == "R026").Descriptor;
+            var latest = now.AddMinutes(20);
+            ingest.Invoke(null, new object[] { smbEvent, smbDescriptor, latest });
+            ingest.Invoke(null, new object[] { ftpEvent, descriptor, latest.AddMinutes(-10).AddTicks(-1) });
+            Assert.DoesNotContain(RuleEngine.SnapshotR272Signals(host, latest), s => s.RuleId == "R014");
+            Assert.Contains(RuleEngine.SnapshotR272Signals(host, latest), s => s.RuleId == "R026");
+            // The exact boundary is admissible, including for delayed arrivals.
+            ingest.Invoke(null, new object[] { ftpEvent, descriptor, latest.AddMinutes(-10) });
+            Assert.Contains(RuleEngine.SnapshotR272Signals(host, latest), s => s.RuleId == "R014");
+            Assert.DoesNotContain(RuleEngine.SnapshotR272Signals(host, latest.AddTicks(1)), s => s.RuleId == "R014");
+            var ordered = RuleEvaluationContext.CreateForEngine(probe, Sensitivity.Balanced,
+                latest, RuleEngineHealthSnapshot.Empty(latest));
+            Assert.False((await new R272_MultiSignalRuleStackSurgeFromHostRule()
+                .EvaluateAsync(ordered)).Matched);
+            RuleEngine.ResetRuntimeStateForReplay();
+            ingest.Invoke(null, new object[] { ftpEvent, descriptor, now });
+            Assert.Contains(RuleEngine.SnapshotR272Signals(host, now), s => s.RuleId == "R014");
         }
         finally { RuleEngine.ResetRuntimeStateForReplay(); }
     }
