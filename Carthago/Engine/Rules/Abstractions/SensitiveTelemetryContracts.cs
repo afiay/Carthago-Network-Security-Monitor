@@ -178,11 +178,12 @@ namespace Carthago.Engine.Rules
                     || !line[..separator].Trim().Equals("Host", StringComparison.OrdinalIgnoreCase))
                     continue;
 
-                if (++hostFields > 1)
+                if (!line[..separator].Equals("Host", StringComparison.OrdinalIgnoreCase)
+                    || ++hostFields > 1)
                     return false;
                 // Do not interpret comma-separated authorities, userinfo,
                 // or ambiguous ports as a single trusted HTTP Host.
-                var observed = line[(separator + 1)..].Trim();
+                var observed = line[(separator + 1)..].Trim(' ', '\t');
                 if (observed.Length == 0 || observed.Contains(',')
                     || !observed.Equals(expectedHost.Trim(), StringComparison.OrdinalIgnoreCase))
                     return false;
@@ -303,10 +304,13 @@ namespace Carthago.Engine.Rules
                     "Host", StringComparison.OrdinalIgnoreCase))
                     continue;
 
-                if (++observedHostFields > 1)
+                if (!line[..separator].Equals("Host", StringComparison.OrdinalIgnoreCase)
+                    || ++observedHostFields > 1)
                     return false;
 
-                if (!TryNormalizeMetadataHost(line[(separator + 1)..].Trim(),
+                var observed = line[(separator + 1)..].Trim(' ', '\t');
+                if (observed.Any(static ch => ch <= ' ' || ch == '\u007f')
+                    || !TryNormalizeMetadataHost(observed,
                         record.DestinationPort, out var headerHost)
                     || !headerHost.Equals(validatedHost, StringComparison.OrdinalIgnoreCase))
                     return false;

@@ -858,6 +858,26 @@ public sealed class SensitiveTelemetryContractTests
         Assert.Equal(expectedMatch, RulePrecisionCatalog.Validate("R163", record).CanEvaluate);
     }
 
+    [Theory]
+    [InlineData("Host : ")]
+    [InlineData("Host\t: ")]
+    public async Task R118_R163_Malformed_Host_Field_Does_Not_Qualify(string prefix)
+    {
+        var device = new TrafficRecord
+        {
+            Source = "10.1.1.21", Destination = "10.1.1.50", DestinationPort = 8080,
+            Protocol = "HTTP", HttpMethod = "GET", HttpHost = "camera.internal.local",
+            HttpUri = "/admin", HttpRequestHeaders = prefix + "camera.internal.local\r\nAuthorization: Basic YWRtaW46YWRtaW4="
+        };
+        Assert.False((await new R118_DefaultCredentialIoTAttemptRule().EvaluateAsync(Context(device))).Matched);
+        Assert.False(RulePrecisionCatalog.Validate("R118", device).CanEvaluate);
+
+        var metadata = MetadataRecord("/latest/meta-data/iam/security-credentials/example-role", "webapp.exe");
+        metadata.HttpRequestHeaders = prefix + "169.254.169.254";
+        Assert.False((await new R163_SsrfMetadataServiceProbeRule().EvaluateAsync(Context(metadata))).Matched);
+        Assert.False(RulePrecisionCatalog.Validate("R163", metadata).CanEvaluate);
+    }
+
     private static TrafficRecord MetadataRecord(string path, string? process) => new()
     {
         Source = "10.1.1.30", Destination = "169.254.169.254", DestinationPort = 80,
