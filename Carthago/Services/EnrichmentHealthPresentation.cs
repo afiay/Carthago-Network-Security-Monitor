@@ -44,10 +44,10 @@ internal static class EnrichmentHealthPresentation
             string mean = h.Completed == 0 ? "—" :
                 (1000.0 * h.ElapsedTicks / System.Diagnostics.Stopwatch.Frequency / h.Completed)
                     .ToString("0.0", CultureInfo.InvariantCulture);
-            rows.Add($"{labels[i]}: {h.Completed} completed, {h.Resolved} resolved, {h.Unresolved} unresolved, mean ms {mean}");
+            rows.Add($"{labels[i]}: {h.Completed} completed, {h.Resolved} resolved, {h.Unresolved} unresolved, mean ms {mean}, {h.Active} active, {h.PeakActive} peak active");
         }
         return "Native process candidate lookups (process lifetime): " + string.Join("; ", rows)
-            + ". Candidate scans are not packets, individual native API calls or verified application identities.";
+            + ". Active and peak are overlapping candidate operations per bucket, not threads; bucket peaks must not be summed. Candidate scans are not packets, individual native API calls or verified application identities.";
     }
 
     internal static string GeoSummary(TrafficCaptureService.StatsSnapshot stats)

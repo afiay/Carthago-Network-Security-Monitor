@@ -105,15 +105,18 @@ public sealed class EnrichmentHealthPresentationTests
         {
             NativeProcessLookups = new WindowsProcessResolver.ProcessLookupMetrics.Snapshot[]
             {
-                new(2, 1, 1, System.Diagnostics.Stopwatch.Frequency), default,
+                new(2, 1, 1, System.Diagnostics.Stopwatch.Frequency, 1, 3),
+                new(0, 0, 0, 0, 2, 2),
                 new(1, 0, 1, 0), default
             }
         };
         var summary = EnrichmentHealthPresentation.Build(stats).Summary;
-        Assert.Contains("TCP/IPv4: 2 completed, 1 resolved, 1 unresolved, mean ms 500.0", summary);
-        Assert.Contains("TCP/IPv6: 0 completed, 0 resolved, 0 unresolved, mean ms —", summary);
+        Assert.Contains("TCP/IPv4: 2 completed, 1 resolved, 1 unresolved, mean ms 500.0, 1 active, 3 peak active", summary);
+        Assert.Contains("TCP/IPv6: 0 completed, 0 resolved, 0 unresolved, mean ms —, 2 active, 2 peak active", summary);
         Assert.Contains("UDP/IPv4: 1 completed, 0 resolved, 1 unresolved, mean ms 0.0", summary);
         Assert.Contains("not packets", summary);
+        Assert.Contains("bucket peaks must not be summed", summary);
+        Assert.Contains("UDP/IPv6: 0 completed, 0 resolved, 0 unresolved, mean ms —, 0 active, 0 peak active", summary);
         Assert.Contains("Native process lookup metrics unavailable", EnrichmentHealthPresentation.Build(new TrafficCaptureService.StatsSnapshot()).Summary);
     }
 }
