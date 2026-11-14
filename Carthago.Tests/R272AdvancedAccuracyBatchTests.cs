@@ -109,6 +109,13 @@ public sealed class R272AdvancedAccuracyBatchTests
             // Evaluate the real detector against the engine-owned snapshot,
             // independently of whether an earlier packet consumed alert cooldown.
             var probe = Packet(host, "10.214.1.21", 443);
+            // Exercise selection, telemetry validation and final post-policy emission.
+            var engineEvent = Assert.Single(System.Linq.Enumerable.Where(
+                RuleEngine.Evaluate(probe, Sensitivity.Balanced), e => e.RuleId == "R272"));
+            Assert.True(engineEvent.ConfidenceScore >= 82);
+            Assert.DoesNotContain(RuleEngine.Evaluate(probe, Sensitivity.Balanced),
+                e => e.RuleId == "R272");
+
             var now = DateTime.UtcNow;
             var context = RuleEvaluationContext.CreateForEngine(probe, Sensitivity.Balanced,
                 now, RuleEngineHealthSnapshot.Empty(now));
