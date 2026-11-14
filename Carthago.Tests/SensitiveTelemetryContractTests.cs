@@ -396,6 +396,10 @@ public sealed class SensitiveTelemetryContractTests
     [InlineData("/latest/meta-data/iam/security-credentials/app?x=one two")]
     [InlineData("/latest/meta-data/iam/security-credentials/app?x=one\ttwo")]
     [InlineData("/latest/meta-data/iam/security-credentials/app?x=one\u007ftwo")]
+    [InlineData(" /latest/meta-data/iam/security-credentials/app")]
+    [InlineData("/latest/meta-data/iam/security-credentials/app ")]
+    [InlineData("/metadata/identity/oauth2/token?api-version=2018-02-01\r\n")]
+    [InlineData("\thttp://169.254.169.254/latest/meta-data/iam/security-credentials/app")]
     public async Task R163_Rejects_Invalid_Request_Target_Whitespace_Or_Control(string target)
     {
         var record = MetadataRecord(target, "unapproved-webapp.exe");

@@ -208,7 +208,8 @@ namespace Carthago.Engine.Rules
             if (!HasConsistentMetadataHostHeader(record, host))
                 return false;
 
-            var uri = record.HttpUri.Trim();
+            // Preserve the original target: trimming would hide invalid leading or trailing whitespace.
+            var uri = record.HttpUri;
             // Credential-path evidence must survive normalization. Dot segments
             // and encoded separators can resolve to a different resource at the
             // metadata server or an intermediary. Do not infer credential access
