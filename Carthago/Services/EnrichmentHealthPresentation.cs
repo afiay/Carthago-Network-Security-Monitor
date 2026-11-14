@@ -30,7 +30,16 @@ internal static class EnrichmentHealthPresentation
             $"Enrichment queue depth: {stats.EnrichmentQueueDepth?.ToString(CultureInfo.InvariantCulture) ?? "unknown"}; " +
             $"fallback records (lifetime): {stats.EnrichmentFallbacks:N0}. " +
             "Provider success is not proof of detection accuracy or endpoint trust. " +
-            WorkerSummary(stats.EnrichmentWorkers) + " " + CoverageSummary(stats.EnrichmentCoverage) + " " + StorageSummary(stats.EnrichmentStorage) + " " + GeoSummary(stats) + " " + NativeProcessSummary(stats.NativeProcessLookups), providers);
+            WorkerSummary(stats.EnrichmentWorkers) + " " + CoverageSummary(stats.EnrichmentCoverage) + " " + StorageSummary(stats.EnrichmentStorage) + " " + GeoSummary(stats) + " " + NativeProcessSummary(stats.NativeProcessLookups) + " " + ProcessMetadataCacheSummary(stats.ProcessMetadataCache), providers);
+    }
+
+    internal static string ProcessMetadataCacheSummary(WindowsProcessResolver.MetadataCacheMetrics.Snapshot? snapshot)
+    {
+        if (snapshot is not { } h) return "TCP metadata-cache metrics unavailable.";
+        string reuse = h.Completed == 0 ? "—" : ((double)h.Reused / h.Completed).ToString("P1", CultureInfo.InvariantCulture);
+        return $"TCP metadata-cache probes (process lifetime): {h.Completed} completed, {h.Absent} absent, {h.Expired} expired, " +
+            $"{h.OwnerMismatch} owner mismatch, {h.IdentityMismatch} identity mismatch, {h.Reused} reused (reuse share {reuse}). " +
+            "Probes are not packets or avoided native ownership scans; fresh ownership remains required.";
     }
 
     internal static string NativeProcessSummary(WindowsProcessResolver.ProcessLookupMetrics.Snapshot[]? snapshots)

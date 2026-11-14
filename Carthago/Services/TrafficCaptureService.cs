@@ -1375,6 +1375,7 @@ namespace Carthago.Services
             GeoCityLookupHealth = _geoIpService.CityLookupHealth,
             GeoAsnLookupHealth = _geoIpService.AsnLookupHealth,
             GeoCacheHealth = _geoIpService.CacheHealth,
+            ProcessMetadataCache = WindowsProcessResolver.GetMetadataCacheHealth(),
             NativeProcessLookups = new[] {
                 WindowsProcessResolver.GetNativeLookupHealth("TCP", System.Net.Sockets.AddressFamily.InterNetwork),
                 WindowsProcessResolver.GetNativeLookupHealth("TCP", System.Net.Sockets.AddressFamily.InterNetworkV6),
@@ -1511,6 +1512,7 @@ namespace Carthago.Services
             public GeoIpService.LookupHealthSnapshot? GeoCityLookupHealth { get; init; }
             public GeoIpService.LookupHealthSnapshot? GeoAsnLookupHealth { get; init; }
             public GeoIpService.CacheHealthSnapshot? GeoCacheHealth { get; init; }
+            internal WindowsProcessResolver.MetadataCacheMetrics.Snapshot? ProcessMetadataCache { get; init; }
             internal WindowsProcessResolver.ProcessLookupMetrics.Snapshot[]? NativeProcessLookups { get; init; }
             public int WhoisCacheSize { get; init; }
             public int ReputationCacheSize { get; init; }

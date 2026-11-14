@@ -99,6 +99,24 @@ public sealed class EnrichmentHealthPresentationTests
     }
 
     [Fact]
+    public void Metadata_Cache_Summary_Uses_Probe_Denominator_And_Distinguishes_Missing()
+    {
+        var summary = EnrichmentHealthPresentation.Build(new TrafficCaptureService.StatsSnapshot
+        {
+            ProcessMetadataCache = new(1, 2, 3, 1, 1)
+        }).Summary;
+        Assert.Contains("8 completed, 1 absent, 2 expired, 3 owner mismatch, 1 identity mismatch, 1 reused", summary);
+        Assert.Contains((1.0 / 8).ToString("P1", System.Globalization.CultureInfo.InvariantCulture), summary);
+        Assert.Contains("not packets or avoided native ownership scans", summary);
+        Assert.Contains("fresh ownership remains required", summary);
+        Assert.Contains("reuse share —", EnrichmentHealthPresentation.Build(new TrafficCaptureService.StatsSnapshot
+        {
+            ProcessMetadataCache = new(0, 0, 0, 0, 0)
+        }).Summary);
+        Assert.Contains("TCP metadata-cache metrics unavailable", EnrichmentHealthPresentation.Build(new TrafficCaptureService.StatsSnapshot()).Summary);
+    }
+
+    [Fact]
     public void Native_Process_Summary_Separates_Candidates_And_Empty_Buckets()
     {
         var stats = new TrafficCaptureService.StatsSnapshot
