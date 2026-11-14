@@ -198,8 +198,20 @@ public sealed class ReviewedDnsPacketIntakeTests
                 Assert.True(reopened.TryReserve(freshManifest, freshSignature, fresh,
                     "192.0.2.1", "sensor", "interface", "network"));
                 Assert.Single(Directory.GetFiles(directory));
-                string journalPath = Path.Combine(directory, "admission.v1");
+                string journalPath = Path.Combine(directory, "admission.v2");
                 byte[] goodJournal = File.ReadAllBytes(journalPath);
+                string scopeDigest = Hash(System.Text.Encoding.UTF8.GetBytes(scope.Subject));
+                string[] records = System.Text.Encoding.ASCII.GetString(goodJournal).Split('\n',
+                    StringSplitOptions.RemoveEmptyEntries);
+                Assert.Equal(2, records.Length);
+                Assert.Equal(originalDigest + "," + scopeDigest + "," + originalIds[0] + ":" +
+                    start.UtcDateTime.Ticks.ToString("X16"), records[0]);
+                Assert.Contains(":" + (start.UtcDateTime.Ticks + 10).ToString("X16"), records[1]);
+                string legacyPath = Path.Combine(directory, "admission.v1");
+                File.WriteAllText(legacyPath, "legacy");
+                Assert.False(reopened.TryReserve(manifest, signature, capture,
+                    "192.0.2.1", "sensor", "interface", "network"));
+                File.Delete(legacyPath);
                 byte[] third = (byte[])capture.Clone();
                 BinaryPrimitives.WriteUInt32LittleEndian(third.AsSpan(28), 2);
                 byte[] thirdManifest = RepackManifest(third);
@@ -210,6 +222,8 @@ public sealed class ReviewedDnsPacketIntakeTests
                     new string('A', 64) + "," + new string('b', 64) + "\n",
                     new string('A', 64) + "," + new string('C', 64) + "," + new string('B', 64) + "\n",
                     new string('A', 64) + "," + new string('B', 64) + "," + new string('B', 64) + "\n",
+                    new string('A', 64) + "," + scopeDigest + "," + new string('B', 64) + ":FFFFFFFFFFFFFFFF\n",
+                    new string('A', 64) + "," + scopeDigest + "," + new string('B', 64) + ":0000000000000000\n",
                     System.Text.Encoding.ASCII.GetString(goodJournal) })
                 {
                     File.WriteAllBytes(journalPath, goodJournal);
