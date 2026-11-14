@@ -169,6 +169,18 @@ public sealed class R272AdvancedAccuracyBatchTests
             Assert.DoesNotContain(RuleEngine.SnapshotR272Signals(host, exact.AddTicks(1)),
                 s => s.RuleId == "R014");
 
+            // Re-submit the exact emitted identity through the private production
+            // ingestion method; a replay must not refresh its retention timestamp.
+            var ingest = typeof(RuleEngine).GetMethod("RecordR272EmittedSignal",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            Assert.NotNull(ingest);
+            var descriptor = System.Linq.Enumerable.Single(
+                Carthago.Engine.Rules.Catalog.RuleRegistry.CreateDefaultRules(),
+                rule => rule.Descriptor.RuleId == "R014").Descriptor;
+            ingest!.Invoke(null, new object[] { ftpEvent, descriptor, ftpEvent.TimestampUtc.AddMinutes(1) });
+            Assert.DoesNotContain(RuleEngine.SnapshotR272Signals(host, exact.AddTicks(1)),
+                s => s.RuleId == "R014");
+
             // Mapped IPv6 and IPv4 refer to the same producer host.
             var mapped = Packet("::ffff:" + host, "10.214.1.21", 443);
             mapped.IpVersion = 6;

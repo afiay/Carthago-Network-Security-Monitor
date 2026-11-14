@@ -481,6 +481,7 @@ namespace Carthago.Services
         private static readonly object R272SignalLock = new();
         private static readonly List<(string Host, string RuleId, string Family, DateTime Timestamp, string EventId)> R272Signals = new();
         private const int R272SignalCapacity = 4096;
+        private static DateTime R272SignalWatermark = DateTime.MinValue;
 
         private static void RecordR272EmittedSignal(DetectionEvent evt, RuleDescriptor descriptor, DateTime now)
         {
@@ -496,9 +497,11 @@ namespace Carthago.Services
             var host = address.ToString();
             lock (R272SignalLock)
             {
-                var cutoff = now.AddMinutes(-10);
-                R272Signals.RemoveAll(signal => signal.Timestamp < cutoff);
                 if (R272Signals.Any(signal => signal.EventId == evt.EventId)) return;
+                if (now > R272SignalWatermark) R272SignalWatermark = now;
+                var cutoff = R272SignalWatermark.AddMinutes(-10);
+                R272Signals.RemoveAll(signal => signal.Timestamp < cutoff);
+                if (now < cutoff) return;
                 if (R272Signals.Any(signal => signal.Host == host && signal.RuleId == descriptor.RuleId && signal.Timestamp > now)) return;
                 // One latest observation per host/rule; repeat emissions cannot inflate cardinality.
                 R272Signals.RemoveAll(signal => signal.Host == host && signal.RuleId == descriptor.RuleId);

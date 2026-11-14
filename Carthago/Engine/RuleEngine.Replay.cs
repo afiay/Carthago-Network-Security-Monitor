@@ -19,7 +19,10 @@ namespace Carthago.Services
             _lastSeenSrc.Clear();
             _entityHits.Clear();
             lock (R272SignalLock)
+            {
                 R272Signals.Clear();
+                R272SignalWatermark = DateTime.MinValue;
+            }
             _lastTrace = null;
 
             Interlocked.Exchange(ref _evalCalls, 0);
