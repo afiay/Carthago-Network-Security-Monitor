@@ -13,6 +13,19 @@ namespace Carthago.Services.ProtocolIntelligence
         private DateTime _observedUtc;
         private bool _invalid;
 
+        // Capture caller still establishes credential classification and SYN anchors.
+        // Restrict this initial producer to complete bodyless GET requests.
+        internal bool TryBeginFramedGet(Guid requestId, uint sequence,
+            ReadOnlySpan<byte> payload, DateTime observedUtc)
+        {
+            if (!HttpAuthenticationRequestInspector.IsCompleteGet(payload))
+            {
+                Invalidate();
+                return false;
+            }
+            return TryBegin(requestId, sequence, payload.Length, observedUtc);
+        }
+
         internal bool TryBegin(Guid requestId, uint sequence, int payloadLength, DateTime observedUtc)
         {
             if (_invalid || _requestId != Guid.Empty || requestId == Guid.Empty ||
