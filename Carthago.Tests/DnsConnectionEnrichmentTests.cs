@@ -115,6 +115,38 @@ public sealed class DnsConnectionEnrichmentTests
     }
 
     [Fact]
+    public void Older_Query_Cannot_Replace_Newer_Pending_Observation()
+    {
+        var cache = new DnsConnectionEnrichment();
+        cache.Observe(Query(), 200);
+        cache.Observe(Query(), 100);
+        cache.Observe(Reply(), 150);
+        var early = Flow();
+        cache.Observe(early, 175);
+        Assert.Null(early.DnsCorrelatedNames);
+        cache.Observe(Reply(), 250);
+        var later = Flow();
+        cache.Observe(later, 300);
+        Assert.Equal("example.com", later.DnsCorrelatedNames);
+    }
+
+    [Fact]
+    public void Older_Response_Cannot_Replace_Newer_Mapping()
+    {
+        var cache = new DnsConnectionEnrichment();
+        cache.Observe(Query(id: 7), 100);
+        cache.Observe(Query(id: 8), 200);
+        cache.Observe(Reply(id: 8, ttl: 10), 400);
+        cache.Observe(Reply(id: 7, ttl: 1), 300);
+        var early = Flow();
+        cache.Observe(early, 350);
+        Assert.Null(early.DnsCorrelatedNames);
+        var later = Flow();
+        cache.Observe(later, 2000);
+        Assert.Equal("example.com", later.DnsCorrelatedNames);
+    }
+
+    [Fact]
     public void Wrong_Resolver_Or_Client_Port_Does_Not_Match()
     {
         var cache = new DnsConnectionEnrichment();

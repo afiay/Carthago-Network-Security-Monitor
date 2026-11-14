@@ -93,7 +93,7 @@ internal sealed class DnsConnectionEnrichment
         var key = new QueryKey(client, resolver, port, id, name, type);
         if (!response)
         {
-            if (_pending.TryGetValue(key, out var previous) && now >= previous && now - previous < QueryLifetimeMs)
+            if (_pending.TryGetValue(key, out var previous) && (now < previous || now - previous < QueryLifetimeMs))
                 return; // retransmit does not extend lifetime
             if (_pending.Count >= MaxPending) return;
             _pending[key] = now;
@@ -121,6 +121,9 @@ internal sealed class DnsConnectionEnrichment
                 if (_answerCount >= MaxAnswers) continue;
                 _answerCount++;
             }
+            // Concurrent capture callbacks can arrive out of observation order.
+            // Never replace a newer mapping with an older response.
+            if (bucket.TryGetValue(name, out var existing) && now < existing.Observed) continue;
             bucket[name] = new Answer(now, now + Math.Min(MaxTtlMs, (long)answer.Ttl * 1000));
         }
     }
