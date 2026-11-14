@@ -66,7 +66,7 @@ namespace Carthago.Engine.Rules
         }
 
         private static readonly Regex TelnetLoginWithDefaultPair = new(
-            @"\b(?:login|username|user)\s*[:=]?\s*(?:admin:admin|admin:password|root:root|root:admin|user:user|guest:guest|ubnt:ubnt|support:support)\b",
+            @"\b(?:login|username|user)\s*[:=]?\s*(?:admin:admin|admin:password|root:root|root:admin|user:user|guest:guest|ubnt:ubnt|support:support)(?=\s|$)",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
         private static readonly HashSet<string> MetadataHosts = new(StringComparer.OrdinalIgnoreCase)

@@ -156,6 +156,22 @@ public sealed class SensitiveTelemetryContractTests
         Assert.False((await new R118_DefaultCredentialIoTAttemptRule().EvaluateAsync(Context(record))).Matched);
     }
 
+    [Theory]
+    [InlineData("admin:admin-extra")]
+    [InlineData("admin:admin!")]
+    [InlineData("root:root.2026")]
+    [InlineData("support:support:extra")]
+    public async Task R118_Telnet_Default_Pair_Prefix_Is_Not_An_Exact_Credential(string pair)
+    {
+        var record = new TrafficRecord
+        {
+            Source = "10.1.1.23", Destination = "10.1.1.50", DestinationPort = 23,
+            Protocol = "TCP", IsTcp = true, Info = "telnet login " + pair
+        };
+        Assert.False((await new R118_DefaultCredentialIoTAttemptRule().EvaluateAsync(Context(record))).Matched);
+        Assert.Contains("device_authentication_attempt", RulePrecisionCatalog.Validate("R118", record).MissingFields);
+    }
+
     [Fact]
     public async Task R118_Telnet_Provisioning_Candidate_Stays_Shadow_Below_Existing_Precision_Floor()
     {
