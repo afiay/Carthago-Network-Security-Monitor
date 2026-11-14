@@ -81,6 +81,16 @@ public sealed class R272AdvancedAccuracyBatchTests
             smb.Flags = "SYN"; smb.TcpFlags = 2;
             Assert.Contains(RuleEngine.Evaluate(smb, Sensitivity.Balanced), e => e.RuleId == "R026");
 
+            // Two actual emitted families must not satisfy the three-family threshold.
+            var twoProbe = Packet(host, "10.214.1.21", 443);
+            var twoAt = DateTime.UtcNow;
+            var twoContext = RuleEvaluationContext.CreateForEngine(twoProbe,
+                Sensitivity.Balanced, twoAt, RuleEngineHealthSnapshot.Empty(twoAt));
+            Assert.Contains(twoContext.GetR272Signals(), signal => signal.RuleId == "R014");
+            Assert.Contains(twoContext.GetR272Signals(), signal => signal.RuleId == "R026");
+            Assert.False((await new R272_MultiSignalRuleStackSurgeFromHostRule()
+                .EvaluateAsync(twoContext)).Matched);
+
             bool dnsEmitted = false;
             for (int i = 0; i < 15; i++)
             {
@@ -131,6 +141,11 @@ public sealed class R272AdvancedAccuracyBatchTests
                 now, RuleEngineHealthSnapshot.Empty(now));
             Assert.True((await new R272_MultiSignalRuleStackSurgeFromHostRule()
                 .EvaluateAsync(mappedContext)).Matched);
+
+            // Exercise the same detector instance: canonical aliases share cooldown.
+            var cooldownRule = new R272_MultiSignalRuleStackSurgeFromHostRule();
+            Assert.True((await cooldownRule.EvaluateAsync(context)).Matched);
+            Assert.False((await cooldownRule.EvaluateAsync(mappedContext)).Matched);
 
             probe.Source = "10.214.1.99";
             Assert.False((await new R272_MultiSignalRuleStackSurgeFromHostRule()
