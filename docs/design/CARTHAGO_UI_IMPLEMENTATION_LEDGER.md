@@ -6072,3 +6072,14 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Ownership/static review:** IncidentsPage.xaml, IncidentsPage.xaml.cs responsive ratio/gutter only, ledger. Reviewed existing selection, filtering, exact-event and endpoint pivots, responsive controller and named controls; no binding, handler, VM, case action, data contract or security changes. Dashboard, other incident queue page, capture, detection, privacy, ScottPlot 10/120, Events 80/500, CLI, Cisco/WebView2 and independent work untouched. Read-only documentation navigation.
 
 **Risks/planned unexecuted:** nested scroll wheel and keyboard reachability, ScrollIntoView selection, long summary/status and KPI wrapping, empty queue, filters, 1920/1440/1100/1099/1024/1023/640 widths and DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. Next GA UI-187: selected-case hero and action/evidence hierarchy in dedicated Incidents workspace; preserve exact-event pivots and analyst actions.
+
+
+## GA UI-187 — Selected-case command and evidence hierarchy
+
+**2026-11-14 · SOURCE CANDIDATE — UNVERIFIED.** Exact approved Library image libfile_b0a34361560c8191b641e432b3e6b15c visually inspected. Baseline `fb852a6dc9ceeccd9114e6af1944b58e0700efc5`, tree `88f8a6b76162a012634071f6c673fd17d2201ed9`; prior UI-186. Dashboard reference adapted to dedicated Incidents: compact severity rail, numeric local risk (not confidence), factual metadata and separate action affordances.
+
+**Visible before → after:** investigation inset 24 → 14; mixed five-action wrap becomes two labeled groups separated by divider (case status vs investigation/export). Hero rail 7 → 4, inset 22/21/20/23 → 12, title 27 → 20, risk column 132 → 100, 98-unit circular score replaced by compact numeric score and severity rail. Six context cards retain two columns with 10/8 insets and tighter gutters; evidence section and reason cards compacted. Static impact: less hero chrome, earlier evidence, clearer distinction between status mutations and read-only navigation. No render. Existing Wide/Standard split and Compact stacking preserved; action wraps remain content-driven.
+
+**Ownership:** IncidentsPage.xaml and ledger only; reviewed code-behind responsive panel consumers, selection visibility and action handlers; no named controls, bindings, handlers, VM or shared contracts changed. Existing exact-event pivots, trust actions, active sensor context, chronology, Dashboard, capture/privacy, detection, ScottPlot, Events, CLI and independent work untouched. Read-only docs navigation.
+
+**Risks/planned unexecuted:** long title/severity and IPv6 wrapping, action group keyboard order, narrow detail width, empty selection, evidence reachability, 1920/1440/1100/1099/1024/1023/640 widths and DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. Next GA UI-188: dedicated Incidents supporting chronology and analyst review composition, preserving exact-event links and trust semantics.
