@@ -65,11 +65,49 @@ namespace Carthago.Services.Baseline
             catch (UnauthorizedAccessException) { return false; }
         }
 
-        private static bool ReadJournal(Stream reader, HashSet<string> captures, HashSet<string> existing)
+        // Diagnostic only: syntactic journal validity is not trusted provenance.
+        // Publish no partial result on corruption or concurrent writer contention.
+        internal bool TryReadScopeSummary(QualifiedDnsScope scope, out int count,
+            out long firstUtcTicks, out long lastUtcTicks)
+        {
+            count = 0;
+            firstUtcTicks = lastUtcTicks = 0;
+            string wanted = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(scope.Subject)));
+            int found = 0;
+            long first = long.MaxValue, last = 0;
+            try
+            {
+                foreach (var legacy in Directory.EnumerateFiles(_directory, "*.reserved"))
+                    return false;
+                if (File.Exists(Path.Combine(_directory, "admission.v1"))) return false;
+                using var journal = new FileStream(Path.Combine(_directory, "admission.v2"),
+                    FileMode.Open, FileAccess.Read, FileShare.None);
+                if (journal.Length > MaxJournalBytes) return false;
+                using var reader = new BufferedStream(journal, 4096);
+                if (!ReadJournal(reader, new HashSet<string>(StringComparer.Ordinal),
+                    new HashSet<string>(StringComparer.Ordinal), (scopeDigest, ticks) =>
+                    {
+                        if (!string.Equals(scopeDigest, wanted, StringComparison.Ordinal)) return;
+                        found++;
+                        first = Math.Min(first, ticks);
+                        last = Math.Max(last, ticks);
+                    })) return false;
+                count = found;
+                firstUtcTicks = found == 0 ? 0 : first;
+                lastUtcTicks = last;
+                return true;
+            }
+            catch (IOException) { return false; }
+            catch (UnauthorizedAccessException) { return false; }
+        }
+
+        private static bool ReadJournal(Stream reader, HashSet<string> captures, HashSet<string> existing,
+            Action<string, long>? observe = null)
         {
             var field = new byte[81];
             int length = 0, fields = 0, recordBytes = 0;
             string? previousObservation = null;
+            string scopeDigest = string.Empty;
             int value;
             while ((value = reader.ReadByte()) != -1)
             {
@@ -82,6 +120,7 @@ namespace Carthago.Services.Baseline
                     {
                         if (!captures.Add(digest)) return false;
                     }
+                    else if (fields == 2) scopeDigest = digest;
                     else if (fields > 2)
                     {
                         if (field[64] != ':' ||
@@ -94,6 +133,7 @@ namespace Carthago.Services.Baseline
                             string.CompareOrdinal(previousObservation, digest) >= 0) return false;
                         if (!existing.Add(digest)) return false;
                         previousObservation = digest;
+                        observe?.Invoke(scopeDigest, ticks);
                     }
                     length = 0;
                     if (value == 10)

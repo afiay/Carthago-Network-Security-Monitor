@@ -207,10 +207,19 @@ public sealed class ReviewedDnsPacketIntakeTests
                 Assert.Equal(originalDigest + "," + scopeDigest + "," + originalIds[0] + ":" +
                     start.UtcDateTime.Ticks.ToString("X16"), records[0]);
                 Assert.Contains(":" + (start.UtcDateTime.Ticks + 10).ToString("X16"), records[1]);
+                Assert.True(reopened.TryReadScopeSummary(scope, out int count, out long first, out long last));
+                Assert.Equal(2, count);
+                Assert.Equal(start.UtcDateTime.Ticks, first);
+                Assert.Equal(start.UtcDateTime.Ticks + 10, last);
+                Assert.True(reopened.TryReadScopeSummary(otherScope, out count, out first, out last));
+                Assert.Equal(0, count);
+                Assert.Equal(0L, first);
+                Assert.Equal(0L, last);
                 string legacyPath = Path.Combine(directory, "admission.v1");
                 File.WriteAllText(legacyPath, "legacy");
                 Assert.False(reopened.TryReserve(manifest, signature, capture,
                     "192.0.2.1", "sensor", "interface", "network"));
+                Assert.False(reopened.TryReadScopeSummary(scope, out _, out _, out _));
                 File.Delete(legacyPath);
                 byte[] third = (byte[])capture.Clone();
                 BinaryPrimitives.WriteUInt32LittleEndian(third.AsSpan(28), 2);
@@ -232,11 +241,19 @@ public sealed class ReviewedDnsPacketIntakeTests
                     Assert.False(reopened.TryReserve(thirdManifest, thirdSignature, third,
                         "192.0.2.1", "sensor", "interface", "network"));
                     Assert.Equal(before, File.ReadAllBytes(journalPath));
+                    Assert.False(reopened.TryReadScopeSummary(scope, out count, out first, out last));
+                    Assert.Equal(0, count);
+                    Assert.Equal(0L, first);
+                    Assert.Equal(0L, last);
                 }
                 File.WriteAllBytes(journalPath, goodJournal);
                 Assert.True(reopened.TryReserve(thirdManifest, thirdSignature, third,
                     "192.0.2.1", "sensor", "interface", "network"));
+                Assert.True(reopened.TryReadScopeSummary(scope, out count, out first, out last));
+                Assert.Equal(3, count);
+                Assert.Equal(start.UtcDateTime.Ticks + 20, last);
                 var missing = new ReviewedDnsCaptureAdmission(Path.Combine(directory, "missing"), intake);
+                Assert.False(missing.TryReadScopeSummary(scope, out _, out _, out _));
                 Assert.False(missing.TryReserve(manifest, signature, capture,
                     "192.0.2.1", "sensor", "interface", "network"));
             }
