@@ -6116,3 +6116,14 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Ownership:** NetworkInvestigationPage.xaml and ledger only. Existing names, handlers, typed evidence fields, selection/history, explicit membership guards, read-only values, privacy disclosures, result virtualization and inventory order retained. No shared contracts, detection, capture, security, ScottPlot 10/120, Events 80/500, CLI, Cisco/WebView2 or automation changes. Reviewed code-behind and prior UI-189 consumer audit.
 
 **Risks/planned unexecuted:** severity enum trigger matching, sorting, selection contrast, empty selection, long IDs/IPv6, copy, exact links, keyboard/history, widths 1920/1440/1100/1099/1024/1023/640 and DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. Next UI-191: Anomalies workspace architecture audit and visible redesign.
+
+
+## GA UI-191 — Anomalies command overview and compact triage queue
+
+**2026-11-14 · SOURCE CANDIDATE — UNVERIFIED.** Approved Library image libfile_b0a34361560c8191b641e432b3e6b15c visually inspected. Baseline `9c6c86dd45f6357ee0724b2e430956682b60dc2c`, tree `8de6f02a0bf7189fafc9a5342e1a34b2f9edb4a8`; prior UI-190. Reference mapping: compact masthead and KPI strip, severity-first priority cards and dominant investigation lane; no demo values.
+
+**Visible before → after:** hero inset 24 → 14/10, title 34 → 25, snapshot minimum 130 → 84 and number 42 → 30. Five KPI cards minimum 124 → 96, inset 17/15 → 10/8, tighter number and footer rhythm. Queue/detail ratio 49/51 → 44/56, gutter 18 → 12; queue inset 12, filter controls 38 → 32, narrower category/severity selectors. Queue card minimum 220 → 148, inset 21/19/20/20 → 10/9/10/9, severity rail 5 → 3, risk tile 76 → 60 minimum, compact entity card and wrapping severity/category header. Existing paged queue, outer scroll and content-driven heights retained. Wide five KPI columns, Standard three, Compact two with stacked workspace; below 1024 existing Compact behavior. Static impact: earlier triage and more investigation width, no render.
+
+**Ownership/static review:** AnomaliesPage.xaml, AnomaliesPage.xaml.cs responsive constants only, ledger. Reviewed Theme.xaml anomaly styles, ResponsiveLayout, navigation and selection/filter subscriptions; names, bindings and handlers retained. No shared theme edits, VM, analytics, detection, privacy, capture, trust, ScottPlot 10/120, Events 80/500, CLI, Cisco/WebView2 or automation changes. Read-only docs navigation. Independent R163 work preserved.
+
+**Risks/planned unexecuted:** long category/title/IPv6, KPI wrapping, queue menu, pagination, selection and filter reset, empty state, keyboard traversal, 1920/1440/1100/1099/1024/1023/640 widths and DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. Next UI-192: selected anomaly investigation hero and evidence cards, preserve recorded risk and explicit links.

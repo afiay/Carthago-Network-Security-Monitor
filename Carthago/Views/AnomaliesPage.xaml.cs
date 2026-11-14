@@ -49,7 +49,7 @@ namespace Carthago.Views
             AnomalyHeroCompactRow.Height = compactHero ? GridLength.Auto : new GridLength(0);
             Grid.SetColumn(AnomalyHeroSnapshotCard, compactHero ? 0 : 1);
             Grid.SetRow(AnomalyHeroSnapshotCard, compactHero ? 1 : 0);
-            AnomalyHeroSnapshotCard.Margin = compactHero ? new Thickness(0, 20, 0, 0) : new Thickness(18, 0, 0, 0);
+            AnomalyHeroSnapshotCard.Margin = compactHero ? new Thickness(0, 12, 0, 0) : new Thickness(12, 0, 0, 0);
 
             KpiGrid.Columns = mode switch
             {
@@ -63,8 +63,8 @@ namespace Carthago.Views
                 new[] { PrimaryWorkspaceQueueColumn, PrimaryWorkspaceDetailColumn },
                 new[] { PrimaryWorkspaceTopRow, PrimaryWorkspaceBottomRow },
                 new FrameworkElement[] { QueuePanel, InvestigationPanel },
-                new[] { 0.49, 0.51 },
-                18);
+                new[] { 0.44, 0.56 },
+                12);
 
             // GA UI-170: selected-signal narrative and risk reflow into full-width lanes in Compact.
             bool compactSelectedSignal = mode == ResponsiveLayoutMode.Compact;
