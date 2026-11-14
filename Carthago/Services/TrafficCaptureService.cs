@@ -698,26 +698,31 @@ namespace Carthago.Services
             var now = DateTimeOffset.UtcNow;
             assets?.Observe(record, now);
             assets?.Communications.Observe(record, now);
+            bool uiDropped;
+            bool fallback;
             lock (_lifecycleLock)
             {
                 if (!IsCurrentEnrichmentRun(_runCts?.Token, runToken)) return;
                 _coverageHealth.ObservePublication(record);
+
+                // Nonblocking channel admission shares the lifecycle boundary.
+                // Do not enqueue detached work or charge its drops to a new run.
+                uiDropped = !_headless && !_uiChannel.Writer.TryWrite(new CaptureSessionRecord<TrafficRecord>(record, runToken));
+                if (uiDropped) Interlocked.Increment(ref _packetsDroppedByQueue);
+                fallback = !_enrichmentChannel.Writer.TryWrite(new EnrichmentWork(record, runToken, Stopwatch.GetTimestamp()));
+                if (fallback) Interlocked.Increment(ref _enrichmentFallbacks);
             }
 
-            // UI pressure must never suppress rule evaluation.
-            if (!_headless && !_uiChannel.Writer.TryWrite(new CaptureSessionRecord<TrafficRecord>(record, runToken)))
-            {
-                Interlocked.Increment(ref _packetsDroppedByQueue);
-                RuleEngine.ReportCaptureDrops(1);
-            }
-
-            if (!_enrichmentChannel.Writer.TryWrite(new EnrichmentWork(record, runToken, Stopwatch.GetTimestamp())))
-            {
-                // An overloaded enrichment queue must not silently suppress
-                // local detections. Evaluate basic rules without remote lookups.
-                Interlocked.Increment(ref _enrichmentFallbacks);
+            // Never call the rule engine while holding the lifecycle lock.
+            if (uiDropped) RuleEngine.ReportCaptureDrops(1);
+            if (fallback && IsEnrichmentRunActive(runToken))
                 EvaluateRules(record);
-            }
+        }
+
+        private bool IsEnrichmentRunActive(CancellationToken token)
+        {
+            lock (_lifecycleLock)
+                return IsCurrentEnrichmentRun(_runCts?.Token, token);
         }
 
         private async Task EnrichmentWorkerLoop()
@@ -727,7 +732,7 @@ namespace Carthago.Services
                 await foreach (var work in _enrichmentChannel.Reader.ReadAllAsync(_serviceCts.Token)
                                    .ConfigureAwait(false))
                 {
-                    if (work.RunToken.IsCancellationRequested)
+                    if (!IsEnrichmentRunActive(work.RunToken))
                     {
                         _workerHealth.SkipCancelled();
                         continue;
@@ -1042,7 +1047,7 @@ namespace Carthago.Services
                     rec.VpnPortHint = classification.VpnPortHint;
                 }).ConfigureAwait(false);
 
-            }, () => EvaluateRules(rec), ex => Report("pipeline", ex), ct);
+            }, () => { if (IsEnrichmentRunActive(ct)) EvaluateRules(rec); }, ex => Report("pipeline", ex), ct);
         }
 
         private async Task<VpnProxyResult?> ClassifyVpnAsync(VpnContext context, CancellationToken ct)

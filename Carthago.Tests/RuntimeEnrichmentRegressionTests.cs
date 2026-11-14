@@ -218,4 +218,16 @@ public sealed class RuntimeEnrichmentRegressionTests
         Assert.False(TrafficCaptureService.IsCurrentEnrichmentRun(first.Token, first.Token));
         Assert.True(TrafficCaptureService.IsCurrentEnrichmentRun(second.Token, second.Token));
     }
+
+    [Fact]
+    public void Detached_Run_Is_Rejected_Before_Cancellation_Is_Signalled()
+    {
+        using var oldRun = new System.Threading.CancellationTokenSource();
+        using var newRun = new System.Threading.CancellationTokenSource();
+        // Stop detaches the run under the lifecycle lock before cancelling it.
+        Assert.False(oldRun.IsCancellationRequested);
+        Assert.False(TrafficCaptureService.IsCurrentEnrichmentRun(null, oldRun.Token));
+        Assert.False(TrafficCaptureService.IsCurrentEnrichmentRun(newRun.Token, oldRun.Token));
+        Assert.True(TrafficCaptureService.IsCurrentEnrichmentRun(newRun.Token, newRun.Token));
+    }
 }
