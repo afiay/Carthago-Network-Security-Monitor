@@ -421,6 +421,21 @@ public sealed class SensitiveTelemetryContractTests
     }
 
     [Fact]
+    public async Task R163_Untrusted_Trace_Header_Does_Not_Establish_Causality()
+    {
+        var record = MetadataRecord("/latest/meta-data/iam/security-credentials/app", "webapp.exe");
+        record.HttpRequestHeaders = "Host: 169.254.169.254\r\ntraceparent: 00-0123456789abcdef0123456789abcdef-0123456789abcdef-01";
+        var rule = new R163_SsrfMetadataServiceProbeRule();
+        var result = await rule.EvaluateAsync(Context(record));
+        Assert.True(result.Matched);
+        var evt = Assert.Single(result.Events);
+        Assert.Contains(evt.StructuredEvidence!.Items, item =>
+            item.Key == "metadata.causalAssociation" && item.Value == "not-established");
+        Assert.Equal(RuleMode.Shadow, RulePrecisionRuntimeEvaluator.Evaluate(
+            rule.Descriptor, evt, record, RuleMode.Alert, "Research").EffectiveMode);
+    }
+
+    [Fact]
     public async Task R163_Does_Not_Mistake_Normal_Azure_Metadata_Lookup_For_Credential_Theft()
     {
         var record = MetadataRecord("/metadata/instance?api-version=2021-02-01", "webapp.exe");

@@ -23,7 +23,7 @@ namespace Carthago.Engine.Rules.Expansion
             defaultMode: RuleRuntimeMode.Alert,
             requiredTelemetry: new[] { RuleTelemetryKind.Http, RuleTelemetryKind.Payload },
             requiredFields: new[] { "source", "destination_or_host", "http_any", "metadata_credential_request", "process.name" },
-            evidenceFields: new[] { "matched_conditions", "http.path", "process.name" },
+            evidenceFields: new[] { "matched_conditions", "http.path", "process.name", "metadata.causalAssociation" },
             positiveConditions: new[]
             {
                 "The HTTP destination and host must identify a cloud metadata service and the path must request credentials.",
@@ -82,7 +82,8 @@ namespace Carthago.Engine.Rules.Expansion
             var evidenceItems = new List<DetectionEvidenceItem>
             {
                 new("matched_conditions", string.Join(",", matchedConditions), "rule"),
-                new("http.routeCategory", "metadata_credential", "http")
+                new("http.routeCategory", "metadata_credential", "http"),
+                new("metadata.causalAssociation", "not-established", "rule")
             };
             evidenceItems.AddRange(AnalystContext(
                 "A non-standard HTTP caller requested a cloud metadata credential path; this alone does not prove SSRF.",
