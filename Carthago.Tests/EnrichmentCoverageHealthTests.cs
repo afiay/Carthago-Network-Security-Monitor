@@ -31,6 +31,17 @@ public sealed class EnrichmentCoverageHealthTests
     }
 
     [Fact]
+    public void Capture_Provided_And_Conflicting_Protocol_Are_Not_Strong_Ownership()
+    {
+        var h = new EnrichmentCoverageHealth();
+        h.ObserveProcess(new TrafficRecord { IsTcp = true, SrcIsLocalHost = true, ProcessId = 42, ProcessAttribution = "CaptureProvided" });
+        h.ObserveProcess(new TrafficRecord { IsUdp = true, SrcIsLocalHost = true, ProcessId = 42, ProcessAttribution = "CaptureProvided" });
+        h.ObserveProcess(new TrafficRecord { IsTcp = true, IsUdp = true, SrcIsLocalHost = true, ProcessId = 42, ProcessAttribution = "TcpSocketTable" });
+        h.ObserveProcess(new TrafficRecord { IsTcp = true, SrcIsLocalHost = true, ProcessId = 42, ProcessAttribution = "TcpSocketTable" });
+        Assert.Equal(new EnrichmentCoverageSnapshot(0,0,0,0,0,4,1,0), h.Snapshot());
+    }
+
+    [Fact]
     public void Missing_Snapshot_Is_Not_Zero_Coverage()
     {
         Assert.Equal("Evidence coverage unavailable.", EnrichmentHealthPresentation.CoverageSummary(null));

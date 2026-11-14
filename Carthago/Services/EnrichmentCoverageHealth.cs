@@ -32,7 +32,8 @@ internal sealed class EnrichmentCoverageHealth
         {
             _eligible++;
             if (r.ProcessId <= 0) return;
-            if (r.ProcessAttribution == "CaptureProvided" || (r.IsTcp && r.ProcessAttribution == "TcpSocketTable")) _strong++;
+            // CaptureProvided describes provenance, not verified socket ownership.
+            if (r.IsTcp && !r.IsUdp && r.ProcessAttribution == "TcpSocketTable") _strong++;
             else if (r.IsUdp && !r.IsTcp && r.ProcessAttribution == "UdpLocalBinding") _udp++;
         }
     }
