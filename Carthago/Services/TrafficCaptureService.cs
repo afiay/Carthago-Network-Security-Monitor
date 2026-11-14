@@ -1350,6 +1350,11 @@ namespace Carthago.Services
             return new(registry.Communications.CapacitySnapshot(), registry.CapacitySnapshot(), _assetHistory.HealthSnapshot());
         }
 
+        private (int Retained, int Closed, long CapacityRejections)? GetTlsCapacityHealth()
+        {
+            lock (_lifecycleLock) return _tlsConnections?.GetDetailedCapacityHealth();
+        }
+
         public StatsSnapshot GetStats() => new()
         {
             PacketsCaptured = Interlocked.Read(ref _packetsCaptured),
@@ -1370,6 +1375,7 @@ namespace Carthago.Services
             EnrichmentWorkers = _workerHealth.Snapshot(),
             EnrichmentCoverage = _coverageHealth.Snapshot(),
             EnrichmentStorage = GetEnrichmentStorageHealth(),
+            TlsCapacity = GetTlsCapacityHealth(),
             GeoCityDatabaseStatus = _geoIpService.CityDatabaseStatus,
             GeoAsnDatabaseStatus = _geoIpService.AsnDatabaseStatus,
             GeoCityLookupHealth = _geoIpService.CityLookupHealth,
@@ -1514,6 +1520,7 @@ namespace Carthago.Services
             public GeoIpService.LookupHealthSnapshot? GeoAsnLookupHealth { get; init; }
             public GeoIpService.CacheHealthSnapshot? GeoCacheHealth { get; init; }
             internal WindowsProcessResolver.MetadataCacheMetrics.Snapshot? ProcessMetadataCache { get; init; }
+            internal (int Retained, int Closed, long CapacityRejections)? TlsCapacity { get; init; }
             internal (int Count, long Evictions)? ProcessMetadataCacheCapacity { get; init; }
             internal WindowsProcessResolver.ProcessLookupMetrics.Snapshot[]? NativeProcessLookups { get; init; }
             public int WhoisCacheSize { get; init; }

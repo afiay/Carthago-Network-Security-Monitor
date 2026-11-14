@@ -30,7 +30,7 @@ internal static class EnrichmentHealthPresentation
             $"Enrichment queue depth: {stats.EnrichmentQueueDepth?.ToString(CultureInfo.InvariantCulture) ?? "unknown"}; " +
             $"fallback records (lifetime): {stats.EnrichmentFallbacks:N0}. " +
             "Provider success is not proof of detection accuracy or endpoint trust. " +
-            WorkerSummary(stats.EnrichmentWorkers) + " " + CoverageSummary(stats.EnrichmentCoverage) + " " + StorageSummary(stats.EnrichmentStorage) + " " + GeoSummary(stats) + " " + NativeProcessSummary(stats.NativeProcessLookups) + " " + ProcessMetadataCacheSummary(stats.ProcessMetadataCache) + " " + ProcessMetadataCacheCapacitySummary(stats.ProcessMetadataCacheCapacity), providers);
+            WorkerSummary(stats.EnrichmentWorkers) + " " + CoverageSummary(stats.EnrichmentCoverage) + " " + StorageSummary(stats.EnrichmentStorage) + " " + GeoSummary(stats) + " " + NativeProcessSummary(stats.NativeProcessLookups) + " " + ProcessMetadataCacheSummary(stats.ProcessMetadataCache) + " " + ProcessMetadataCacheCapacitySummary(stats.ProcessMetadataCacheCapacity) + " " + TlsCapacitySummary(stats.TlsCapacity), providers);
     }
 
     internal static string ProcessMetadataCacheSummary(WindowsProcessResolver.MetadataCacheMetrics.Snapshot? snapshot)
@@ -40,6 +40,12 @@ internal static class EnrichmentHealthPresentation
         return $"TCP metadata-cache probes (process lifetime): {h.Completed} completed, {h.Absent} absent, {h.Expired} expired, " +
             $"{h.OwnerMismatch} owner mismatch, {h.IdentityMismatch} identity mismatch, {h.Reused} reused (reuse share {reuse}). " +
             "Probes are not packets or avoided native ownership scans; fresh ownership remains required.";
+    }
+
+    internal static string TlsCapacitySummary((int Retained, int Closed, long CapacityRejections)? snapshot)
+    {
+        if (snapshot is not { } s) return "TLS capacity metrics unavailable (no capture session).";
+        return $"TLS retained states: {s.Retained:N0}/{TlsConnectionEnrichment.Capacity:N0}; open: {s.Retained - s.Closed:N0}; closed: {s.Closed:N0}; capacity-rejected SYN attempts (session lifetime): {s.CapacityRejections:N0}. Retained states may await expiry pruning; not a count of live connections.";
     }
 
     internal static string ProcessMetadataCacheCapacitySummary((int Count, long Evictions)? snapshot)

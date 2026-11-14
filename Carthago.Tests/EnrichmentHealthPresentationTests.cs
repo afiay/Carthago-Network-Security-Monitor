@@ -153,4 +153,17 @@ public sealed class EnrichmentHealthPresentationTests
         Assert.Contains("UDP/IPv6: 0 completed, 0 resolved, 0 unresolved, mean ms —, 0 active, 0 peak active", summary);
         Assert.Contains("Native process lookup metrics unavailable", EnrichmentHealthPresentation.Build(new TrafficCaptureService.StatsSnapshot()).Summary);
     }
+    [Fact]
+    public void Tls_Capacity_Summary_Distinguishes_Closed_And_Missing_Session()
+    {
+        var summary = EnrichmentHealthPresentation.Build(new TrafficCaptureService.StatsSnapshot
+        {
+            TlsCapacity = (5, 3, 7)
+        }).Summary;
+        Assert.Contains("open: 2; closed: 3", summary);
+        Assert.Contains("capacity-rejected SYN attempts (session lifetime): 7", summary);
+        Assert.Contains("not a count of live connections", summary);
+        Assert.Contains("open: 0; closed: 0", EnrichmentHealthPresentation.Build(new TrafficCaptureService.StatsSnapshot { TlsCapacity = (0, 0, 0) }).Summary);
+        Assert.Contains("TLS capacity metrics unavailable (no capture session)", EnrichmentHealthPresentation.Build(new TrafficCaptureService.StatsSnapshot()).Summary);
+    }
 }

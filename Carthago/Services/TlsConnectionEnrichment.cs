@@ -11,7 +11,7 @@ namespace Carthago.Services;
 // Never copy inferred values into packet-level SNI, JA4 or certificate fields.
 internal sealed class TlsConnectionEnrichment
 {
-    private const int Capacity = 4096;
+    internal const int Capacity = 4096;
     private const long Lifetime = 120_000;
     private readonly object _gate = new();
     private readonly Dictionary<Key, State> _flows = new();
@@ -21,6 +21,10 @@ internal sealed class TlsConnectionEnrichment
     internal (int Retained, long CapacityRejections) GetCapacityHealth()
     {
         lock (_gate) return (_flows.Count, _capacityRejections);
+    }
+    internal (int Retained, int Closed, long CapacityRejections) GetDetailedCapacityHealth()
+    {
+        lock (_gate) return (_flows.Count, _flows.Values.Count(state => state.Closed), _capacityRejections);
     }
     private readonly record struct Key(string Client, int ClientPort, string Server, int ServerPort)
     {
