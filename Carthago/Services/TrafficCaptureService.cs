@@ -673,6 +673,17 @@ namespace Carthago.Services
         internal static bool IsCurrentEnrichmentRun(CancellationToken? current, CancellationToken work)
             => current.HasValue && current.Value == work && !work.IsCancellationRequested;
 
+        // Caller holds the lifecycle lock: registry observations and queue admission
+        // must belong to the same run, even if correlation ran before a restart.
+        internal static bool TryObservePublishedAssets(CancellationToken? current, CancellationToken work,
+            ObservedAssetRegistry registry, TrafficRecord record, DateTimeOffset now)
+        {
+            if (!IsCurrentEnrichmentRun(current, work)) return false;
+            registry.Observe(record, now);
+            registry.Communications.Observe(record, now);
+            return true;
+        }
+
         private void PublishRecord(TrafficRecord record, CancellationToken runToken)
         {
             if (runToken.IsCancellationRequested || _serviceCts.IsCancellationRequested)
@@ -684,25 +695,21 @@ namespace Carthago.Services
             // or queue fallback. The cache belongs to this capture session only.
             DnsConnectionEnrichment? dns;
             TlsConnectionEnrichment? tls;
-            ObservedAssetRegistry? assets;
             lock (_lifecycleLock)
             {
                 if (!IsCurrentEnrichmentRun(_runCts?.Token, runToken)) return;
                 dns = _dnsConnections;
                 tls = _tlsConnections;
-                assets = _observedAssets;
             }
             long observedAt = Environment.TickCount64;
             dns?.Observe(record, observedAt);
             tls?.Observe(record, observedAt);
             var now = DateTimeOffset.UtcNow;
-            assets?.Observe(record, now);
-            assets?.Communications.Observe(record, now);
             bool uiDropped;
             bool fallback;
             lock (_lifecycleLock)
             {
-                if (!IsCurrentEnrichmentRun(_runCts?.Token, runToken)) return;
+                if (!TryObservePublishedAssets(_runCts?.Token, runToken, _observedAssets, record, now)) return;
                 _coverageHealth.ObservePublication(record);
 
                 // Nonblocking channel admission shares the lifecycle boundary.

@@ -246,4 +246,34 @@ public sealed class RuntimeEnrichmentRegressionTests
         Assert.Equal(0L, next.Tls!.Value.CapacityRejections);
         Assert.Equal(checkpoints, next.Storage.Checkpoints);
     }
+
+    [Fact]
+    public void Publication_Registry_Admission_Rejects_Detached_Work_Before_Cancellation()
+    {
+        using var oldRun = new System.Threading.CancellationTokenSource();
+        using var newRun = new System.Threading.CancellationTokenSource();
+        var registry = new ObservedAssetRegistry();
+        var record = new TrafficRecord
+        {
+            Source = "192.168.1.10", Destination = "8.8.8.8",
+            IsTcp = true, TcpFlags = 2, SourcePort = 50000, DestinationPort = 443,
+            SrcIsLocalHost = true, DstIsLocalHost = false,
+            CaptureInterfaceEvidence = "WindowsInterfaceGuid",
+            CaptureInterfaceId = Guid.NewGuid().ToString("D")
+        };
+        var now = DateTimeOffset.UtcNow;
+        Assert.True(TrafficCaptureService.IsCurrentEnrichmentRun(oldRun.Token, oldRun.Token));
+        // Correlation may have started before detachment; final admission must recheck.
+        Assert.False(TrafficCaptureService.TryObservePublishedAssets(null, oldRun.Token, registry, record, now));
+        Assert.False(TrafficCaptureService.TryObservePublishedAssets(newRun.Token, oldRun.Token, registry, record, now));
+        Assert.Empty(registry.Snapshot());
+        Assert.Empty(registry.Communications.Snapshot());
+        Assert.True(TrafficCaptureService.TryObservePublishedAssets(newRun.Token, newRun.Token, registry, record, now));
+        Assert.Single(registry.Snapshot());
+        Assert.Single(registry.Communications.Snapshot());
+        newRun.Cancel();
+        Assert.False(TrafficCaptureService.TryObservePublishedAssets(newRun.Token, newRun.Token, registry, record, now));
+        Assert.Equal(1L, Assert.Single(registry.Snapshot()).Observations);
+        Assert.Equal(1L, Assert.Single(registry.Communications.Snapshot()).Observations);
+    }
 }
