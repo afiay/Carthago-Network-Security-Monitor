@@ -129,8 +129,8 @@ namespace Carthago.Views
                 new[] { PrimaryWorkspaceQueueColumn, PrimaryWorkspaceDetailColumn },
                 new[] { PrimaryWorkspaceTopRow, PrimaryWorkspaceBottomRow },
                 new FrameworkElement[] { QueuePanel, InvestigationPanel },
-                new[] { 0.46, 0.54 },
-                18);
+                new[] { 0.42, 0.58 },
+                12);
 
             // The evidence-review cards must reflow independently of the outer
             // queue/detail workspace; Compact and sub-1024 use full-width rows.

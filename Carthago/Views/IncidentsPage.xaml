@@ -62,7 +62,7 @@
       </Grid.RowDefinitions>
 
       <!-- GA UI-143: responsive incident-command masthead with a distinct live-data case counter. -->
-      <Border Grid.Row="0" Style="{StaticResource IncidentOpsHeroCard}" Margin="0,0,0,18" Padding="24,22">
+      <Border Grid.Row="0" Style="{StaticResource IncidentOpsHeroCard}" Margin="0,0,0,12" Padding="14,10">
         <Grid x:Name="IncidentHeroGrid">
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -74,12 +74,12 @@
           </Grid.ColumnDefinitions>
           <StackPanel x:Name="IncidentHeroNarrative" Grid.Row="0" Grid.Column="0" Margin="0,0,24,0">
             <TextBlock Text="INCIDENT RESPONSE  /  LOCAL CASES" Style="{StaticResource IncidentOpsEyebrow}"/>
-            <TextBlock Text="Incident Command Center" FontSize="30" FontWeight="Bold"
-                       Foreground="{StaticResource TextBrush}" Margin="0,9,0,7" TextWrapping="Wrap"/>
+            <TextBlock Text="Incident Command Center" FontSize="25" FontWeight="Bold"
+                       Foreground="{StaticResource TextBrush}" Margin="0,4,0,4" TextWrapping="Wrap"/>
             <TextBlock Text="Prioritize correlated cases, inspect evidence and record analyst decisions."
                        Foreground="{StaticResource TextSubtleBrush}" FontSize="13"
                        TextWrapping="Wrap" MaxWidth="650" HorizontalAlignment="Left"/>
-            <WrapPanel Margin="0,18,0,0">
+            <WrapPanel Margin="0,8,0,0">
               <Border Background="#103246" BorderBrush="#356D80" BorderThickness="1"
                       CornerRadius="7" Padding="11,7" Margin="0,0,9,7">
                 <TextBlock Text="01  TRIAGE" Foreground="{StaticResource AccentAltBrush}" FontSize="11" FontWeight="SemiBold"/>
@@ -96,13 +96,13 @@
           </StackPanel>
           <Border x:Name="IncidentHeroCountCard" Grid.Row="0" Grid.Column="1"
                   Background="#0A2637" BorderBrush="#39798A" BorderThickness="1"
-                  CornerRadius="12" Padding="22,17" MinWidth="184" VerticalAlignment="Stretch">
+                  CornerRadius="12" Padding="12,8" MinWidth="150" VerticalAlignment="Stretch">
             <StackPanel VerticalAlignment="Center">
               <TextBlock Text="ACTIVE CASES" Style="{StaticResource IncidentOpsEyebrow}"
                          Foreground="{StaticResource AccentAltBrush}"/>
-              <TextBlock Text="{Binding ActiveIncidentCount}" FontSize="36" FontWeight="Bold"
-                         Foreground="{StaticResource TextBrush}" Margin="0,8,0,5"/>
-              <Border Height="3" Background="{StaticResource AccentBrush}" CornerRadius="2" Margin="0,4,0,9"/>
+              <TextBlock Text="{Binding ActiveIncidentCount}" FontSize="28" FontWeight="Bold"
+                         Foreground="{StaticResource TextBrush}" Margin="0,4,0,3"/>
+              <Border Height="3" Background="{StaticResource AccentBrush}" CornerRadius="2" Margin="0,3,0,4"/>
               <TextBlock Text="Current local incident queue" Foreground="{StaticResource TextMutedBrush}"
                          FontSize="11" TextWrapping="Wrap"/>
             </StackPanel>
@@ -113,45 +113,45 @@
       <UniformGrid x:Name="KpiGrid"
                    Grid.Row="1"
                    Columns="5"
-                   Margin="0,0,0,20">
-        <Border Style="{StaticResource IncidentOpsKpiCard}" MinHeight="142" Padding="17,15" Margin="0,0,10,0" BorderBrush="{StaticResource SeverityHighBrush}">
+                   Margin="0,0,0,12">
+        <Border Style="{StaticResource IncidentOpsKpiCard}" MinHeight="100" Padding="10,8" Margin="0,0,10,0" BorderBrush="{StaticResource SeverityHighBrush}">
           <StackPanel>
             <TextBlock Text="Active Incidents" Style="{StaticResource TinyStatusText}"/>
-            <TextBlock Text="{Binding ActiveIncidentCount}" FontSize="28" FontWeight="Bold" Margin="0,8,0,0"/>
-            <TextBlock Text="Correlated cases awaiting closure" Foreground="{StaticResource TextMutedBrush}" FontSize="11.5" Margin="0,5,0,0"/>
-            <Border Height="4" Background="{StaticResource SeverityHighBrush}" CornerRadius="3" Margin="0,10,0,0"/>
+            <TextBlock Text="{Binding ActiveIncidentCount}" FontSize="24" FontWeight="Bold" Margin="0,4,0,0"/>
+            <TextBlock Text="Correlated cases awaiting closure" Foreground="{StaticResource TextMutedBrush}" FontSize="11" Margin="0,3,0,0" TextWrapping="Wrap"/>
+            <Border Height="3" Background="{StaticResource SeverityHighBrush}" CornerRadius="3" Margin="0,5,0,0"/>
           </StackPanel>
         </Border>
-        <Border Style="{StaticResource IncidentOpsKpiCard}" MinHeight="142" Padding="17,15" Margin="0,0,10,0" BorderBrush="{StaticResource SeverityCriticalBrush}">
+        <Border Style="{StaticResource IncidentOpsKpiCard}" MinHeight="100" Padding="10,8" Margin="0,0,10,0" BorderBrush="{StaticResource SeverityCriticalBrush}">
           <StackPanel>
             <TextBlock Text="Critical Incidents" Style="{StaticResource TinyStatusText}"/>
-            <TextBlock Text="{Binding CriticalIncidentCount}" FontSize="28" FontWeight="Bold" Margin="0,8,0,0"/>
-            <TextBlock Text="Highest-risk analyst workload" Foreground="{StaticResource TextMutedBrush}" FontSize="11.5" Margin="0,5,0,0"/>
-            <Border Height="4" Background="{StaticResource SeverityCriticalBrush}" CornerRadius="3" Margin="0,10,0,0"/>
+            <TextBlock Text="{Binding CriticalIncidentCount}" FontSize="24" FontWeight="Bold" Margin="0,4,0,0"/>
+            <TextBlock Text="Highest-risk analyst workload" Foreground="{StaticResource TextMutedBrush}" FontSize="11" Margin="0,3,0,0" TextWrapping="Wrap"/>
+            <Border Height="3" Background="{StaticResource SeverityCriticalBrush}" CornerRadius="3" Margin="0,5,0,0"/>
           </StackPanel>
         </Border>
-        <Border Style="{StaticResource IncidentOpsKpiCard}" MinHeight="142" Padding="17,15" Margin="0,0,10,0" BorderBrush="{StaticResource AccentBrush}">
+        <Border Style="{StaticResource IncidentOpsKpiCard}" MinHeight="100" Padding="10,8" Margin="0,0,10,0" BorderBrush="{StaticResource AccentBrush}">
           <StackPanel>
             <TextBlock Text="New in 1h" Style="{StaticResource TinyStatusText}"/>
-            <TextBlock Text="{Binding NewInHourCount}" FontSize="28" FontWeight="Bold" Margin="0,8,0,0"/>
-            <TextBlock Text="Fresh cases added to response" Foreground="{StaticResource TextMutedBrush}" FontSize="11.5" Margin="0,5,0,0"/>
-            <Border Height="4" Background="{StaticResource AccentBrush}" CornerRadius="3" Margin="0,10,0,0"/>
+            <TextBlock Text="{Binding NewInHourCount}" FontSize="24" FontWeight="Bold" Margin="0,4,0,0"/>
+            <TextBlock Text="Fresh cases added to response" Foreground="{StaticResource TextMutedBrush}" FontSize="11" Margin="0,3,0,0" TextWrapping="Wrap"/>
+            <Border Height="3" Background="{StaticResource AccentBrush}" CornerRadius="3" Margin="0,5,0,0"/>
           </StackPanel>
         </Border>
-        <Border Style="{StaticResource IncidentOpsKpiCard}" MinHeight="142" Padding="17,15" Margin="0,0,10,0" BorderBrush="{StaticResource SeverityMediumBrush}">
+        <Border Style="{StaticResource IncidentOpsKpiCard}" MinHeight="100" Padding="10,8" Margin="0,0,10,0" BorderBrush="{StaticResource SeverityMediumBrush}">
           <StackPanel>
             <TextBlock Text="In Investigation" Style="{StaticResource TinyStatusText}"/>
-            <TextBlock Text="{Binding InInvestigationCount}" FontSize="28" FontWeight="Bold" Margin="0,8,0,0"/>
-            <TextBlock Text="Acknowledged or actively triaged" Foreground="{StaticResource TextMutedBrush}" FontSize="11.5" Margin="0,5,0,0"/>
-            <Border Height="4" Background="{StaticResource SeverityMediumBrush}" CornerRadius="3" Margin="0,10,0,0"/>
+            <TextBlock Text="{Binding InInvestigationCount}" FontSize="24" FontWeight="Bold" Margin="0,4,0,0"/>
+            <TextBlock Text="Acknowledged or actively triaged" Foreground="{StaticResource TextMutedBrush}" FontSize="11" Margin="0,3,0,0" TextWrapping="Wrap"/>
+            <Border Height="3" Background="{StaticResource SeverityMediumBrush}" CornerRadius="3" Margin="0,5,0,0"/>
           </StackPanel>
         </Border>
-        <Border Style="{StaticResource IncidentOpsKpiCard}" MinHeight="142" Padding="17,15" BorderBrush="{StaticResource OkBrush}">
+        <Border Style="{StaticResource IncidentOpsKpiCard}" MinHeight="100" Padding="10,8" BorderBrush="{StaticResource OkBrush}">
           <StackPanel>
             <TextBlock Text="Resolved Today" Style="{StaticResource TinyStatusText}"/>
             <TextBlock Text="{Binding ResolvedTodayCount}" FontSize="28" FontWeight="Bold" Foreground="{StaticResource OkBrush}" Margin="0,8,0,0"/>
-            <TextBlock Text="Completed analyst response flow" Foreground="{StaticResource TextMutedBrush}" FontSize="11.5" Margin="0,5,0,0"/>
-            <Border Height="4" Background="{StaticResource OkBrush}" CornerRadius="3" Margin="0,10,0,0"/>
+            <TextBlock Text="Completed analyst response flow" Foreground="{StaticResource TextMutedBrush}" FontSize="11" Margin="0,3,0,0" TextWrapping="Wrap"/>
+            <Border Height="3" Background="{StaticResource OkBrush}" CornerRadius="3" Margin="0,5,0,0"/>
           </StackPanel>
         </Border>
       </UniformGrid>
@@ -162,13 +162,13 @@
           <RowDefinition x:Name="PrimaryWorkspaceBottomRow" Height="0"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-          <ColumnDefinition x:Name="PrimaryWorkspaceQueueColumn" Width="0.46*"/>
-          <ColumnDefinition x:Name="PrimaryWorkspaceDetailColumn" Width="0.54*"/>
+          <ColumnDefinition x:Name="PrimaryWorkspaceQueueColumn" Width="0.42*"/>
+          <ColumnDefinition x:Name="PrimaryWorkspaceDetailColumn" Width="0.58*"/>
         </Grid.ColumnDefinitions>
 
         <Border x:Name="QueuePanel" Grid.Column="0"
                 Style="{StaticResource IncidentOpsPanel}"
-                Margin="0,0,18,0" Padding="20">
+                Margin="0,0,12,0" Padding="12">
           <Grid>
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto"/>
@@ -206,13 +206,13 @@
                 </StackPanel>
               </StackPanel>
 
-              <Grid Margin="0,14,0,0">
+              <Grid Margin="0,8,0,0">
                 <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="152"/>
+                  <ColumnDefinition Width="116"/>
                   <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <ComboBox x:Name="SeverityFilter"
-                          Height="38"
+                          Height="32"
                           VerticalContentAlignment="Center"
                           ToolTip="Filters this local incident queue by severity. All shows every severity. This selection does not change incident status or detection settings."
                           ToolTipService.ShowsToolTipOnKeyboardFocus="True"
@@ -226,7 +226,7 @@
                 </ComboBox>
                 <TextBox x:Name="SearchBox"
                          Grid.Column="1"
-                         Height="38"
+                         Height="32"
                          Margin="10,0,0,0"
                          Style="{StaticResource SearchBox}"
                          VerticalContentAlignment="Center"
@@ -245,9 +245,10 @@
             </StackPanel>
 
             <Grid Grid.Row="1"
-                  Margin="0,16,0,0">
+                  Margin="0,10,0,0">
               <ListBox x:Name="IncidentsList"
                        ItemsSource="{Binding All}"
+                       MaxHeight="620"
                        SelectionMode="Single"
                        BorderThickness="0"
                        Background="Transparent"
@@ -259,16 +260,16 @@
                 <ListBox.ItemTemplate>
                   <DataTemplate>
                     <!-- GA UI-167: severity-first priority card; source-backed bindings only. -->
-                    <Border Style="{StaticResource IncidentOpsQueueRow}" MinHeight="148" Padding="0" Margin="0,0,0,12"
+                    <Border Style="{StaticResource IncidentOpsQueueRow}" MinHeight="108" Padding="0" Margin="0,0,0,6"
                             BorderThickness="1" BorderBrush="#34566B" CornerRadius="12">
                       <Grid>
                         <Grid.ColumnDefinitions>
-                          <ColumnDefinition Width="6"/>
+                          <ColumnDefinition Width="4"/>
                           <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <Border Grid.Column="0" Background="{Binding Severity, Converter={StaticResource SeverityBrush}}"
                                 CornerRadius="5,0,0,5"/>
-                        <Grid Grid.Column="1" Margin="17,15,16,14">
+                        <Grid Grid.Column="1" Margin="10,8,10,8">
                           <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
@@ -289,22 +290,22 @@
                                          VerticalAlignment="Center"/>
                             </StackPanel>
                             <Border Grid.Column="1" Background="#0A2637" BorderBrush="#35566B" BorderThickness="1"
-                                    CornerRadius="8" Padding="9,5" Margin="8,0,0,0">
+                                    CornerRadius="8" Padding="6,3" Margin="6,0,0,0">
                               <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="RISK " Foreground="{StaticResource TextMutedBrush}" FontSize="10"
                                            VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                <TextBlock Text="{Binding RiskScoreNumber}" FontWeight="Bold" FontSize="17"
+                                <TextBlock Text="{Binding RiskScoreNumber}" FontWeight="Bold" FontSize="15"
                                            Foreground="{StaticResource TextBrush}"/>
                               </StackPanel>
                             </Border>
                           </Grid>
-                          <StackPanel Grid.Row="1" Margin="0,11,0,11">
-                            <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="16"
+                          <StackPanel Grid.Row="1" Margin="0,6,0,6">
+                            <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="14"
                                        Foreground="{StaticResource TextBrush}" TextWrapping="Wrap" ToolTip="{Binding Title}"/>
                             <TextBlock Text="{Binding Summary}" Foreground="{StaticResource TextSubtleBrush}"
-                                       FontSize="12.5" Margin="0,6,0,0" TextWrapping="Wrap" ToolTip="{Binding Summary}"/>
+                                       FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap" ToolTip="{Binding Summary}"/>
                           </StackPanel>
-                          <Border Grid.Row="2" BorderBrush="#28475C" BorderThickness="0,1,0,0" Padding="0,10,0,0">
+                          <Border Grid.Row="2" BorderBrush="#28475C" BorderThickness="0,1,0,0" Padding="0,5,0,0">
                             <Grid>
                               <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
