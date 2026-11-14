@@ -109,4 +109,25 @@ public sealed class ProcessAttributionEnrichmentTests
     [InlineData(null, System.Net.Sockets.AddressFamily.Unspecified)]
     public void Tcp_Lookup_Selects_Only_Normalized_Local_Family(string? address, System.Net.Sockets.AddressFamily expected)
         => Assert.Equal(expected, WindowsProcessResolver.TcpLookupFamily(address));
+
+    [Fact]
+    public void Native_Lookup_Metrics_Count_Completed_Candidates_Not_Packets()
+    {
+        var metrics = new WindowsProcessResolver.ProcessLookupMetrics();
+        var v4 = System.Net.Sockets.AddressFamily.InterNetwork;
+        var v6 = System.Net.Sockets.AddressFamily.InterNetworkV6;
+        Assert.Equal(42, metrics.Measure("TCP", v4, () => 42));
+        Assert.Equal(0, metrics.Measure("TCP", v4, () => 0));
+        Assert.Throws<InvalidOperationException>(() => metrics.Measure("TCP", v4, () => throw new InvalidOperationException()));
+        Assert.Equal(7, metrics.Measure("UDP", v6, () => 7));
+        var tcp = metrics.Read("TCP", v4);
+        Assert.Equal(3L, tcp.Completed);
+        Assert.Equal(1L, tcp.Resolved);
+        Assert.Equal(2L, tcp.Unresolved);
+        Assert.True(tcp.ElapsedTicks >= 0);
+        Assert.Equal(1L, metrics.Read("UDP", v6).Completed);
+        Assert.Equal(0L, metrics.Read("TCP", v6).Completed);
+        Assert.Equal(0, metrics.Measure("TCP", System.Net.Sockets.AddressFamily.Unspecified,
+            () => throw new InvalidOperationException()));
+    }
 }

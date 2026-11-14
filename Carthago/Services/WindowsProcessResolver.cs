@@ -87,8 +87,8 @@ namespace Carthago.Services
                     // binding under a flow key that could outlive the binding.
                     int pid = c.Proto switch
                     {
-                        "TCP" => FindPidTcp(c),
-                        "UDP" => FindPidUdp(c),
+                        "TCP" => NativeLookupHealth.Measure(c.Proto, TcpLookupFamily(c.LocalAddr), () => FindPidTcp(c)),
+                        "UDP" => NativeLookupHealth.Measure(c.Proto, TcpLookupFamily(c.LocalAddr), () => FindPidUdp(c)),
                         _ => 0
                     };
 
@@ -115,6 +115,55 @@ namespace Carthago.Services
             {
                 Debug.WriteLine($"[WindowsProcessResolver] Resolve error: {ex}");
                 return null;
+            }
+        }
+
+        // Service-lifetime candidate scans, not packets or individual P/Invoke calls.
+        private static readonly ProcessLookupMetrics NativeLookupHealth = new();
+        internal static ProcessLookupMetrics.Snapshot GetNativeLookupHealth(string protocol, AddressFamily family)
+            => NativeLookupHealth.Read(protocol, family);
+
+        internal sealed class ProcessLookupMetrics
+        {
+            internal readonly record struct Snapshot(long Completed, long Resolved, long Unresolved, long ElapsedTicks);
+            private readonly object _gate = new();
+            private readonly Snapshot[] _buckets = new Snapshot[4];
+
+            private static int Bucket(string protocol, AddressFamily family)
+                => (protocol, family) switch
+                {
+                    ("TCP", AddressFamily.InterNetwork) => 0,
+                    ("TCP", AddressFamily.InterNetworkV6) => 1,
+                    ("UDP", AddressFamily.InterNetwork) => 2,
+                    ("UDP", AddressFamily.InterNetworkV6) => 3,
+                    _ => -1
+                };
+
+            internal int Measure(string protocol, AddressFamily family, Func<int> lookup)
+            {
+                int bucket = Bucket(protocol, family);
+                if (bucket < 0) return 0;
+                long start = Stopwatch.GetTimestamp();
+                int pid = 0;
+                try { return pid = lookup(); }
+                finally
+                {
+                    long elapsed = Stopwatch.GetTimestamp() - start;
+                    lock (_gate)
+                    {
+                        var prior = _buckets[bucket];
+                        _buckets[bucket] = new Snapshot(prior.Completed + 1,
+                            prior.Resolved + (pid > 0 ? 1 : 0),
+                            prior.Unresolved + (pid > 0 ? 0 : 1),
+                            prior.ElapsedTicks + elapsed);
+                    }
+                }
+            }
+
+            internal Snapshot Read(string protocol, AddressFamily family)
+            {
+                int bucket = Bucket(protocol, family);
+                lock (_gate) return bucket < 0 ? default : _buckets[bucket];
             }
         }
 
