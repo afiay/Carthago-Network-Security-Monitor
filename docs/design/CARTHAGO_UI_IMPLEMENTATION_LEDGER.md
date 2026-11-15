@@ -6138,3 +6138,14 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Ownership/static review:** AnomaliesPage.xaml, responsive constants in AnomaliesPage.xaml.cs, ledger. Existing named elements, bindings, selection and filter subscriptions, exact incident links and severity converter retained. No shared contracts, analytics, capture, detection, privacy, ScottPlot 10/120, Events 80/500, CLI or automation changes. Independent R118 work preserved.
 
 **Risks/planned unexecuted:** long titles/IPv6, score wrapping, severity contrast, empty selection, exact incident navigation, 1920/1440/1100/1099/1024/1023/640 widths, DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. Next UI-193: baseline comparison and explainable evidence composition.
+
+
+## GA UI-193 — Anomaly baseline matrix and explainable evidence
+
+**2026-11-15 · SOURCE CANDIDATE — UNVERIFIED.** Approved Library image libfile_b0a34361560c8191b641e432b3e6b15c visually inspected. Baseline `0bdd9173847fe6b5beeeba29ba0b6c162c977e88`, tree `117a5b6d51b7e2ffd6627b167db7f927f2ceea50`; prior UI-192. Reference mapping: aligned investigation metadata, cyan evidence markers and compact graphite surfaces; no demo values.
+
+**Visible before → after:** independent two-column stacks of four large baseline cards become one four-row 2:3 label/value matrix, current observation first on a cyan-accented surface, baseline/deviation/peer context aligned beneath. Panel inset 20 → 12, headings 19 → 17, explanation cards become compact dot-led evidence rows, recorded feature cards tighten inset and spacing while preserving contribution bars and labels. Static impact: shared row alignment and earlier evidence; no render. Existing Wide/Standard detail lane and Compact stacking retained, proportional columns and wrapped values, no fixed outer width.
+
+**Ownership/static review:** AnomaliesPage.xaml and this ledger only. Existing responsive controller, named controls, bindings (identical multiset), handlers, empty states, selected hero, actions, local data and provenance retained. No shared contracts, detection, capture, privacy, ScottPlot 10/120, Events 80/500, CLI, Cisco/WebView2 or automation changes. Independent R163 work preserved. Read-only docs navigation.
+
+**Risks/planned unexecuted:** long values and peer labels, narrow matrix, feature bar clipping, empty evidence, keyboard and selection, 1920/1440/1100/1099/1024/1023/640 widths and DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. Next UI-194: Anomalies supporting entity history and baseline drift workspace; preserve recorded metrics and actions.
