@@ -302,23 +302,9 @@ public sealed class PortableReplayTests
     [InlineData("GET","/?cmd=connect","Host: example.test\r\n\r\n",false)]
     public async Task R601ReplayRequiresCompleteAnchoredRequest(string method,string uri,string headers,bool expected)
     {
-        byte[] Segment(bool reverse,byte flags,uint seq,uint ack,string payload="")
-        {
-            var data=Encoding.ASCII.GetBytes(payload);
-            var frame=new byte[40+data.Length];
-            frame[0]=0x45;frame[8]=64;frame[9]=6;
-            BinaryPrimitives.WriteUInt16BigEndian(frame.AsSpan(2),(ushort)frame.Length);
-            (reverse?new byte[]{198,51,100,2,192,0,2,1}:new byte[]{192,0,2,1,198,51,100,2}).CopyTo(frame,12);
-            BinaryPrimitives.WriteUInt16BigEndian(frame.AsSpan(20),(ushort)(reverse?80:51000));
-            BinaryPrimitives.WriteUInt16BigEndian(frame.AsSpan(22),(ushort)(reverse?51000:80));
-            BinaryPrimitives.WriteUInt32BigEndian(frame.AsSpan(24),seq);
-            BinaryPrimitives.WriteUInt32BigEndian(frame.AsSpan(28),ack);
-            frame[32]=0x50;frame[33]=flags;data.CopyTo(frame,40);
-            return frame;
-        }
-        var syn=Segment(false,2,100,0);
-        var synAck=Segment(true,0x12,500,101);
-        var request=Segment(false,0x18,101,501,method+" "+uri+" HTTP/1.1\r\n"+headers);
+        var syn=R601Segment(false,2,100,0);
+        var synAck=R601Segment(true,0x12,500,101);
+        var request=R601Segment(false,0x18,101,501,method+" "+uri+" HTTP/1.1\r\n"+headers);
         var bytes=PcapWithSequence(false,(100,syn,null),(101,synAck,null),(102,request,null));
         // Exercise identical raw frames in both capture formats and repeat each
         // invocation to prove dispatcher/capture state is not shared across runs.
@@ -337,4 +323,57 @@ public sealed class PortableReplayTests
         Assert.DoesNotContain("cmd=connect",result.Output);
         }
     }
+    private static byte[] R601Segment(bool reverse,byte flags,uint seq,uint ack,string payload="",ushort clientPort=51000)
+    {
+        var data=Encoding.ASCII.GetBytes(payload);
+        var frame=new byte[40+data.Length];
+        frame[0]=0x45;frame[8]=64;frame[9]=6;
+        BinaryPrimitives.WriteUInt16BigEndian(frame.AsSpan(2),(ushort)frame.Length);
+        (reverse?new byte[]{198,51,100,2,192,0,2,1}:new byte[]{192,0,2,1,198,51,100,2}).CopyTo(frame,12);
+        BinaryPrimitives.WriteUInt16BigEndian(frame.AsSpan(20),(ushort)(reverse?80:clientPort));
+        BinaryPrimitives.WriteUInt16BigEndian(frame.AsSpan(22),(ushort)(reverse?clientPort:80));
+        BinaryPrimitives.WriteUInt32BigEndian(frame.AsSpan(24),seq);
+        BinaryPrimitives.WriteUInt32BigEndian(frame.AsSpan(28),ack);
+        frame[32]=0x50;frame[33]=flags;data.CopyTo(frame,40);
+        return frame;
+    }
+
+    [Fact]
+    public async Task R601ReplayCooldownBoundaryAndCaptureEpochs()
+    {
+        const string request="POST /?cmd=connect HTTP/1.1\r\nHost: example.test\r\n\r\n";
+        byte[][] Flow(ushort port)=>new[]{
+            R601Segment(false,2,100,0,clientPort:port),
+            R601Segment(true,0x12,500,101,clientPort:port),
+            R601Segment(false,0x18,101,501,request,port)};
+        var first=Flow(51000);var near=Flow(51001);var boundary=Flow(51002);
+        // Interleave handshakes to keep capture timestamps monotonic.
+        var bytes=PcapWithSequence(false,
+            (100,first[0],null),(101,first[1],null),(102,first[2],null),
+            (699,near[0],null),(700,near[1],null),(700,boundary[0],null),
+            (701,near[2],null),(701,boundary[1],null),(702,boundary[2],null));
+        var result=await Run(bytes,".pcap","R601");
+        Assert.Equal(0,result.Code);
+        using var json=JsonDocument.Parse(result.Output);
+        var replay=json.RootElement.GetProperty("replay");
+        Assert.Equal(2,replay.GetProperty("matchCount").GetInt32());
+        Assert.Equal(1,replay.GetProperty("suppressedCount").GetInt32());
+        Assert.Equal(0,replay.GetProperty("clockResets").GetInt32());
+
+        var ng=new[]{Section(),Interface(),Interface(),
+            Packet(0,100_000_000,first[0]),Packet(0,101_000_000,first[1]),Packet(0,102_000_000,first[2]),
+            Packet(1,100_000_000,first[0]),Packet(1,101_000_000,first[1]),Packet(1,102_000_000,first[2]),
+            Section(),Interface(),
+            Packet(0,100_000_000,first[0]),Packet(0,101_000_000,first[1]),Packet(0,102_000_000,first[2])}
+            .SelectMany(x=>x).ToArray();
+        var reset=await Run(ng,".pcapng","R601");
+        Assert.Equal(0,reset.Code);
+        using var resetJson=JsonDocument.Parse(reset.Output);
+        var resetReplay=resetJson.RootElement.GetProperty("replay");
+        Assert.Equal(3,resetReplay.GetProperty("matchCount").GetInt32());
+        Assert.Equal(0,resetReplay.GetProperty("suppressedCount").GetInt32());
+        Assert.Equal(1,resetReplay.GetProperty("findings")[1].GetProperty("interfaceId").GetInt32());
+        Assert.Equal(1,resetReplay.GetProperty("findings")[2].GetProperty("section").GetInt32());
+    }
+
 }

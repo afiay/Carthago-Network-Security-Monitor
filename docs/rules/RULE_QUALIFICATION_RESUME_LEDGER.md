@@ -289,3 +289,8 @@ Register the existing capture-bound shared evaluator in PortableRuleCatalog (20 
 ## 2026-11-15 — R601 portable capture-format and invocation isolation
 
 Base `214a6752765e8bfed1c79aa9f051884e811f4a1c`. Extend `Carthago.Cli.Tests/PortableReplayTests.cs` R601ReplayRequiresCompleteAnchoredRequest: all six existing raw-frame positive/negative cases now run in classic PCAP and PCAPNG, twice each with fresh CLI invocations. Expected identical match counts and no query leakage; 24 replay invocations authored, zero executed. No policy or predicate change. R601 remains source candidate; same-capture cooldown/reset and documentation reconciliation pending. Next: R272 runtime policy and R606–R610 portable migration. Catalog remains 20 registered / 980 remaining at last registration checkpoint.
+
+
+## 2026-11-15 — R601 cooldown and capture epochs
+
+Base `dc97a873a4eb423b31126dc4ecce2a607f955302`. Added raw PCAP same-source/destination fresh-flow requests at 599 and 600 seconds after first match (expected suppressed then match), and PCAPNG independent interface/section handshakes (three expected matches). Reused existing raw segment fixture with distinct client ports. One new test authored, zero executed; no predicate or policy changes. R601 remains source candidate pending static CLI documentation reconciliation and owner tests. Next R272 policy review and R606–R610 migration. Portable registration last established 20/1000.
