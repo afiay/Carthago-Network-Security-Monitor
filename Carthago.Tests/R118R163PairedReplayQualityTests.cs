@@ -134,6 +134,17 @@ public sealed class R118R163PairedReplayQualityTests
             Assert.DoesNotContain("R118", r118Router.Profiles[profile].AlertRuleIds);
             Assert.True(Assert.Single(r163Azure.Profiles[profile].RuleDecisions,
                 decision => decision.RuleId == "R163").Confidence < 0.84);
+            // Calibration cannot turn an Azure credential path into causal SSRF.
+            var azureCalibrated = r163Azure.DeploymentStateProfiles["CalibratedConfigured"][profile];
+            var azureCold = Assert.Single(r163Azure.Profiles[profile].RuleDecisions,
+                decision => decision.RuleId == "R163");
+            var azureDecision = Assert.Single(azureCalibrated.RuleDecisions,
+                decision => decision.RuleId == "R163");
+            Assert.Equal(azureCold.Confidence, azureDecision.Confidence, 6);
+            Assert.True(azureDecision.Confidence < 0.84);
+            Assert.DoesNotContain("R163", azureCalibrated.AlertRuleIds);
+            Assert.DoesNotContain("R163", r163Duplicate.DeploymentStateProfiles["CalibratedConfigured"][profile].AlertRuleIds);
+            Assert.DoesNotContain("R163", r163Disagreement.DeploymentStateProfiles["CalibratedConfigured"][profile].AlertRuleIds);
             Assert.True(Assert.Single(r118Router.Profiles[profile].RuleDecisions,
                 decision => decision.RuleId == "R118").Confidence < 0.86);
         }
