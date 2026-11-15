@@ -129,6 +129,9 @@ public sealed class R272AdvancedAccuracyBatchTests
             // Evaluate the real detector against the engine-owned snapshot,
             // independently of whether an earlier packet consumed alert cooldown.
             var probe = Packet(host, "10.214.1.21", 443);
+            probe.ProcessName = null;
+            probe.ProcessId = 0;
+            probe.Info = null;
             // R272 correlates emitted families, not TLS. A plain TCP probe
             // must survive the default selector and required telemetry gate.
             var selectedRule = new R272_MultiSignalRuleStackSurgeFromHostRule();

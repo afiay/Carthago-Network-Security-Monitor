@@ -21,8 +21,8 @@ namespace Carthago.Engine.Rules.Expansion
             ruleId: "R272",
             maturity: RulePrecisionMaturity.Validated,
             defaultMode: RuleRuntimeMode.Alert,
-            requiredTelemetry: new[] { RuleTelemetryKind.Flow, RuleTelemetryKind.Process },
-            requiredFields: new[] { "source", "destination_or_host", "protocol_or_process_or_info" },
+            requiredTelemetry: new[] { RuleTelemetryKind.Flow },
+            requiredFields: new[] { "source", "destination_or_host", "protocol_or_port" },
             evidenceFields: new[] { "network.source", "network.destination", "process.name", "event.info", "matched_conditions" },
             positiveConditions: new[]
             {

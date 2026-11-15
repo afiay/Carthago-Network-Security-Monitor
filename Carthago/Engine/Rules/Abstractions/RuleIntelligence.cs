@@ -292,7 +292,8 @@ namespace Carthago.Engine.Rules
                 reqs.Add(new("iot_ot_protocol_context", true, "MQTT/UPnP/Telnet/Modbus/BACnet/CoAP/Zigbee protocol, port, topic, or segment evidence."));
             if (n is >= 50 and <= 56)
                 reqs.Add(new("engine_health_snapshot", true, "Rule engine health state such as gaps, drops, backpressure, journal failures, config reloads, feed freshness, or clock skew."));
-            if (n is >= 123 and <= 544)
+            // R272 uses engine-owned emitted detections, not packet text or process attribution.
+            if (n is >= 123 and <= 544 && n != 272)
                 reqs.Add(new("traffic_record_text_and_protocol_fields", true, "TrafficRecord Info, HTTP, DNS, TLS, protocol, port, process, WHOIS, and enrichment fields used by expansion heuristics."));
             if (n is >= 293 and <= 312)
                 reqs.Add(new("kubernetes_container_indicators", true, "Kubernetes API, kubelet, container runtime, registry, or workload metadata evidence."));
