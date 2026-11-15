@@ -1,0 +1,246 @@
+{
+  "schemaVersion": 1,
+  "sourceSha": "6346478ebddccdf39797f52019e04e5f3936c659",
+  "records": [
+    {
+      "ruleId": "R903",
+      "registeredClass": "R903_PowershellSmbWriteThenWinRmSynRule",
+      "detector": {
+        "status": "historical-pass",
+        "positiveNegative": "Q7 four scenarios, raw malicious and benign lookalike match; benign port control rejects",
+        "executedSha": "e64e2dfe40a3d087c6369d9aca75264946878d28",
+        "reference": "Carthago.Tests/Smb2PairedAccuracyQualificationTests.cs"
+      },
+      "pairedReplay": "synthetic-lookalike",
+      "captureProvenance": "Raw WRITE; PowerShell identity synthetic",
+      "profileEligibility": "candidate-shadow",
+      "independentValidation": "missing",
+      "limitations": "Q9 process-attribution-unavailable; authenticated process instance and WinRM sequence"
+    },
+    {
+      "ruleId": "R908",
+      "registeredClass": "R908_PublicSmbSynThenParsedWriteRule",
+      "detector": {
+        "status": "historical-pass",
+        "positiveNegative": "Q7 four scenarios, raw malicious and benign lookalike match; source-port control rejects",
+        "executedSha": "e64e2dfe40a3d087c6369d9aca75264946878d28",
+        "reference": "Carthago.Tests/Smb2PairedAccuracyQualificationTests.cs"
+      },
+      "pairedReplay": "synthetic-lookalike",
+      "captureProvenance": "Raw WRITE and SYN; no authorization proof",
+      "profileEligibility": "candidate-shadow",
+      "independentValidation": "missing",
+      "limitations": "Q9 packet-only eligible; independent public-to-private lab cases pending"
+    },
+    {
+      "ruleId": "R910",
+      "registeredClass": "R910_PowershellLdapSynThenSmbWriteRule",
+      "detector": {
+        "status": "historical-pass",
+        "positiveNegative": "Q7 four scenarios, raw malicious and benign lookalike match; LDAP host control rejects",
+        "executedSha": "e64e2dfe40a3d087c6369d9aca75264946878d28",
+        "reference": "Carthago.Tests/Smb2PairedAccuracyQualificationTests.cs"
+      },
+      "pairedReplay": "synthetic-lookalike",
+      "captureProvenance": "Raw WRITE; PowerShell identity synthetic",
+      "profileEligibility": "candidate-shadow",
+      "independentValidation": "missing",
+      "limitations": "Q9 process-attribution-unavailable; independent LDAP/SMB and process evidence"
+    },
+    {
+      "ruleId": "R919",
+      "registeredClass": "R919_PsexecSmbWriteThenRpcSynRule",
+      "detector": {
+        "status": "historical-pass",
+        "positiveNegative": "Q7 four scenarios, raw malicious and benign lookalike match; RPC port control rejects",
+        "executedSha": "e64e2dfe40a3d087c6369d9aca75264946878d28",
+        "reference": "Carthago.Tests/Smb2PairedAccuracyQualificationTests.cs"
+      },
+      "pairedReplay": "synthetic-lookalike",
+      "captureProvenance": "Raw WRITE; PsExec identity synthetic",
+      "profileEligibility": "candidate-shadow",
+      "independentValidation": "missing",
+      "limitations": "Q9 process-attribution-unavailable; authenticated process and RPC evidence"
+    },
+    {
+      "ruleId": "R942",
+      "registeredClass": "R942_PrivateSmbWriteThenModbusSynRule",
+      "detector": {
+        "status": "historical-pass",
+        "positiveNegative": "Q7 four scenarios, raw malicious and benign lookalike match; Modbus source control rejects",
+        "executedSha": "e64e2dfe40a3d087c6369d9aca75264946878d28",
+        "reference": "Carthago.Tests/Smb2PairedAccuracyQualificationTests.cs"
+      },
+      "pairedReplay": "synthetic-lookalike",
+      "captureProvenance": "Raw WRITE and follow-up SYN; no industrial operation proof",
+      "profileEligibility": "candidate-shadow",
+      "independentValidation": "missing",
+      "limitations": "Q9 packet-only eligible; independent three-host lab cases pending"
+    },
+    {
+      "ruleId": "R950",
+      "registeredClass": "R950_PowershellPrivateScriptGetThenSmbWriteRule",
+      "detector": {
+        "status": "historical-pass",
+        "positiveNegative": "Q7 four scenarios, raw malicious and benign lookalike match; non-script control rejects",
+        "executedSha": "e64e2dfe40a3d087c6369d9aca75264946878d28",
+        "reference": "Carthago.Tests/Smb2PairedAccuracyQualificationTests.cs"
+      },
+      "pairedReplay": "synthetic-lookalike",
+      "captureProvenance": "Raw WRITE; HTTP and PowerShell typed synthetic observations",
+      "profileEligibility": "candidate-shadow",
+      "independentValidation": "missing",
+      "limitations": "Q9 process-attribution-unavailable; authenticated process and captured HTTP evidence"
+    },
+    {
+      "ruleId": "R946",
+      "registeredClass": "R946_PrivateTftpRequestThenEphemeralReplyRule",
+      "detector": {
+        "status": "historical-pass",
+        "positiveNegative": "RRQ/DATA1 and WRQ/ACK0; arbitrary UDP, unrelated request reject",
+        "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+        "reference": "Carthago.Tests/TftpCaptureQualificationTests.cs"
+      },
+      "pairedReplay": "synthetic-protocol-controls",
+      "captureProvenance": "Raw IPv4 TFTP exact request GUID; initial exchange only",
+      "profileEligibility": "candidate-shadow",
+      "independentValidation": "missing",
+      "limitations": "Shadow; benign authorized private transfers and independent capture"
+    },
+    {
+      "ruleId": "R947",
+      "registeredClass": "R947_PrivateSshIngressThenPublicTftpRule",
+      "detector": {
+        "status": "historical-pass",
+        "positiveNegative": "SSH then public RRQ; malformed UDP rejects",
+        "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+        "reference": "Carthago.Tests/TftpCaptureQualificationTests.cs"
+      },
+      "pairedReplay": "synthetic-protocol-controls",
+      "captureProvenance": "Raw TFTP; SSH SYN synthetic, no authentication",
+      "profileEligibility": "candidate-shadow",
+      "independentValidation": "missing",
+      "limitations": "Shadow; captured SSH and authorized public transfer controls"
+    },
+    {
+      "ruleId": "R949",
+      "registeredClass": "R949_PrivateFtpStorThenTftpDataRule",
+      "detector": {
+        "status": "historical-pass",
+        "positiveNegative": "FTP STOR then WRQ; malformed UDP rejects",
+        "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+        "reference": "Carthago.Tests/TftpCaptureQualificationTests.cs"
+      },
+      "pairedReplay": "synthetic-protocol-controls",
+      "captureProvenance": "Raw TFTP; FTP STOR synthetic, no file identity",
+      "profileEligibility": "candidate-shadow",
+      "independentValidation": "missing",
+      "limitations": "Shadow; captured FTP and benign file-placement controls"
+    },
+    {
+      "ruleId": "R708",
+      "registeredClass": "R708_PublicClientTftpExchangeToPrivateHostRule",
+      "detector": {
+        "status": "historical-pass",
+        "positiveNegative": "Public-to-private RRQ/WRQ; opposite direction rejects",
+        "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+        "reference": "Carthago.Tests/TftpCaptureQualificationTests.cs"
+      },
+      "pairedReplay": "synthetic-protocol-controls",
+      "captureProvenance": "Raw initial exchange; no transfer completion",
+      "profileEligibility": "candidate-shadow",
+      "independentValidation": "missing",
+      "limitations": "Shadow; authorized inbound transfer controls"
+    },
+    {
+      "ruleId": "R715",
+      "registeredClass": "R715_PrivateClientPublicTftpExchangeRule",
+      "detector": {
+        "status": "historical-pass",
+        "positiveNegative": "Private-to-public RRQ/WRQ; opposite direction rejects",
+        "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+        "reference": "Carthago.Tests/TftpCaptureQualificationTests.cs"
+      },
+      "pairedReplay": "synthetic-protocol-controls",
+      "captureProvenance": "Raw initial exchange; no transfer completion",
+      "profileEligibility": "candidate-shadow",
+      "independentValidation": "missing",
+      "limitations": "Shadow; authorized outbound transfer controls"
+    },
+    {
+      "ruleId": "R792",
+      "registeredClass": "R792_EsxiFtpThenTftpEgressRule",
+      "detector": {
+        "status": "historical-pass",
+        "positiveNegative": "FTP then WRQ; RRQ/malformed reject",
+        "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+        "reference": "Carthago.Tests/TftpCaptureQualificationTests.cs"
+      },
+      "pairedReplay": "synthetic-protocol-controls",
+      "captureProvenance": "Raw TFTP; FTP and hostd PID synthetic",
+      "profileEligibility": "candidate-shadow",
+      "independentValidation": "missing",
+      "limitations": "Shadow; authenticated process and benign ESXi workflow"
+    },
+    {
+      "ruleId": "R819",
+      "registeredClass": "R819_PublicConfigExportGetThenTftpEgressRule",
+      "detector": {
+        "status": "historical-pass",
+        "positiveNegative": "HTTP config GET then WRQ; RRQ/malformed reject",
+        "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+        "reference": "Carthago.Tests/TftpCaptureQualificationTests.cs"
+      },
+      "pairedReplay": "synthetic-protocol-controls",
+      "captureProvenance": "Raw TFTP; HTTP GET synthetic, no export outcome",
+      "profileEligibility": "candidate-shadow",
+      "independentValidation": "missing",
+      "limitations": "Shadow; captured HTTP and authorized config export"
+    },
+    {
+      "ruleId": "R881",
+      "registeredClass": "R881_PublicFtpThenPrivateTftpRule",
+      "detector": {
+        "status": "historical-pass",
+        "positiveNegative": "Public FTP SYN then private WRQ; RRQ/malformed reject",
+        "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+        "reference": "Carthago.Tests/TftpCaptureQualificationTests.cs"
+      },
+      "pairedReplay": "synthetic-protocol-controls",
+      "captureProvenance": "Raw TFTP; FTP SYN synthetic, no causal link",
+      "profileEligibility": "candidate-shadow",
+      "independentValidation": "missing",
+      "limitations": "Shadow; captured FTP and benign maintenance"
+    },
+    {
+      "ruleId": "R916",
+      "registeredClass": "R916_HostdPublicDnsQueryNxdomainReplyRule",
+      "detector": {
+        "status": "historical-pass",
+        "positiveNegative": "Matching NXDOMAIN; wrong transaction and unvalidated fields reject",
+        "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+        "reference": "Carthago.Tests/DnsCaptureQualificationTests.cs"
+      },
+      "pairedReplay": "synthetic-protocol-controls",
+      "captureProvenance": "Raw IPv4 DNS; hostd PID/name synthetic",
+      "profileEligibility": "candidate-shadow",
+      "independentValidation": "missing",
+      "limitations": "Shadow; authenticated process and benign NXDOMAIN controls"
+    },
+    {
+      "ruleId": "R962",
+      "registeredClass": "R962_CliDnsQueryLowTtlReplyChurnRule",
+      "detector": {
+        "status": "historical-pass",
+        "positiveNegative": "Three distinct low-TTL A answers; wrong transaction/PID/port reject",
+        "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+        "reference": "Carthago.Tests/DnsCaptureQualificationTests.cs"
+      },
+      "pairedReplay": "synthetic-protocol-controls",
+      "captureProvenance": "Raw IPv4 DNS; query PID synthetic; normal CDN churn can match",
+      "profileEligibility": "candidate-shadow",
+      "independentValidation": "missing",
+      "limitations": "Shadow; independent CDN/fast-flux controls and process provenance"
+    }
+  ]
+}
