@@ -5,18 +5,19 @@ using Carthago.Models;
 namespace Carthago.Services;
 
 public sealed record EnrichmentCoverageSnapshot(long Published, long LocalKnown, long InterfaceKnown,
-    long DnsCorrelated, long TlsCorrelated, long ProcessEligible, long ProcessStrong, long ProcessUdpBinding);
+    long DnsCorrelated, long TlsCorrelated, long ProcessEligible, long ProcessStrong, long ProcessUdpBinding, long EtwPublished = 0);
 
 // Service lifetime; publication and post-process-stage samples have different denominators.
 internal sealed class EnrichmentCoverageHealth
 {
     private readonly object _gate = new();
-    private long _published, _local, _interface, _dns, _tls, _eligible, _strong, _udp;
+    private long _published, _local, _interface, _dns, _tls, _eligible, _strong, _udp, _etw;
     internal void ObservePublication(TrafficRecord r)
     {
         lock (_gate)
         {
             _published++;
+            if (r.CaptureBackend == "ETW") _etw++;
             if (r.SrcIsLocalHost.HasValue && r.DstIsLocalHost.HasValue) _local++;
             if (r.CaptureInterfaceEvidence == "WindowsInterfaceGuid" &&
                 Guid.TryParse(r.CaptureInterfaceId, out var id) && id != Guid.Empty) _interface++;
@@ -39,6 +40,6 @@ internal sealed class EnrichmentCoverageHealth
     }
     internal EnrichmentCoverageSnapshot Snapshot()
     {
-        lock (_gate) return new(_published, _local, _interface, _dns, _tls, _eligible, _strong, _udp);
+        lock (_gate) return new(_published, _local, _interface, _dns, _tls, _eligible, _strong, _udp, _etw);
     }
 }
