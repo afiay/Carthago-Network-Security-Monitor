@@ -22,3 +22,22 @@ Evidence: [Q7 test](../../Carthago.Tests/Smb2PairedAccuracyQualificationTests.cs
 Only six exact IDs accounted for in this document; do not subtract from historical 965 as if current registry membership were verified. Next: enumerate live registry and join exact IDs to existing qualification inventory, then audit TFTP/DNS Q1–Q3 and priority R102/R118/R163. Keep authored tests, executed tests at exact SHA, synthetic raw producer evidence, policy and independent validation separate. No promotion, holdout edits or threshold changes. GA-08 Windows pending; R102 independent authority/V2, R118 independent identity/outcome, R163 authenticated causal producer remain open.
 
 Windows targeted historical regression rerun: `dotnet test .\\Carthago.Tests\\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~Smb2PairedAccuracyQualificationTests|FullyQualifiedName~Smb2MaintenanceScopeTests|FullyQualifiedName~Smb2LabCaptureRunnerTests"`.
+
+## GA-09bl — Q1–Q3 ten TFTP/DNS IDs
+
+Source snapshot: `283487c189db8c2fffa048c973bcac90bc7b8e8e`. Reviewed current TftpCaptureQualificationTests and DnsCaptureQualificationTests, and Q1–Q3 gate. Historical owner 338/338 targeted and 12,192/12,192 full at 4cc680b; no execution at this snapshot. These are paired synthetic rule/producer controls, not independently labeled accuracy pairs. Candidate/Shadow per gate; no new policy execution.
+
+| ID | Rule-level / paired controls | Producer evidence and limitation | Policy / independent next gate |
+|---|---|---|---|
+| R946 | RRQ/DATA1 and WRQ/ACK0; arbitrary UDP, unrelated request reject | Raw IPv4 TFTP exact request GUID; initial exchange only | Shadow; benign authorized private transfers and independent capture |
+| R947 | SSH then public RRQ; malformed UDP rejects | Raw TFTP; SSH SYN synthetic, no authentication | Shadow; captured SSH and authorized public transfer controls |
+| R949 | FTP STOR then WRQ; malformed UDP rejects | Raw TFTP; FTP STOR synthetic, no file identity | Shadow; captured FTP and benign file-placement controls |
+| R708 | Public-to-private RRQ/WRQ; opposite direction rejects | Raw initial exchange; no transfer completion | Shadow; authorized inbound transfer controls |
+| R715 | Private-to-public RRQ/WRQ; opposite direction rejects | Raw initial exchange; no transfer completion | Shadow; authorized outbound transfer controls |
+| R792 | FTP then WRQ; RRQ/malformed reject | Raw TFTP; FTP and hostd PID synthetic | Shadow; authenticated process and benign ESXi workflow |
+| R819 | HTTP config GET then WRQ; RRQ/malformed reject | Raw TFTP; HTTP GET synthetic, no export outcome | Shadow; captured HTTP and authorized config export |
+| R881 | Public FTP SYN then private WRQ; RRQ/malformed reject | Raw TFTP; FTP SYN synthetic, no causal link | Shadow; captured FTP and benign maintenance |
+| R916 | Matching NXDOMAIN; wrong transaction and unvalidated fields reject | Raw IPv4 DNS; hostd PID/name synthetic | Shadow; authenticated process and benign NXDOMAIN controls |
+| R962 | Three distinct low-TTL A answers; wrong transaction/PID/port reject | Raw IPv4 DNS; query PID synthetic; normal CDN churn can match | Shadow; independent CDN/fast-flux controls and process provenance |
+
+Evidence: [TFTP tests](../../Carthago.Tests/TftpCaptureQualificationTests.cs), [DNS tests](../../Carthago.Tests/DnsCaptureQualificationTests.cs), [Q1–Q3 gate](../rules/DETECTION_QUALIFICATION_GATE_20261112.md). No OACK, full transfer, DNSSEC, TCP/IPv6 DNS or independent field qualification inferred. Total documented distinct IDs now 16; live registry denominator still pending. Next: enumerate registry and audit priority IDs; do not duplicate Q1–Q3 implementation.
