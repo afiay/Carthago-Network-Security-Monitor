@@ -161,6 +161,34 @@ public sealed class AssetHistoryStoreTests : IDisposable
         Assert.Empty(Directory.GetFiles(blocked, "*.tmp"));
     }
 
+    [Fact]
+    public void Retention_Failure_Does_Not_Misreport_Persisted_Checkpoint()
+    {
+        var failCleanup = true;
+        var store = new AssetHistoryStore(_directory, path =>
+        {
+            if (failCleanup) throw new IOException("injected retention failure");
+            File.Delete(path);
+        });
+        for (int i = 0; i < AssetHistoryStore.MaxSessions; i++)
+            Assert.True(store.Save(Registry()));
+
+        var latest = Registry();
+        Assert.True(store.Save(latest));
+        var health = store.HealthSnapshot();
+        Assert.Equal((long)AssetHistoryStore.MaxSessions + 1, health.Writes);
+        Assert.Equal(0L, health.Failures);
+        Assert.Contains("retention cleanup failed", health.LastError);
+        Assert.Equal(AssetHistoryStore.MaxSessions + 1, Directory.GetFiles(_directory, "*.json").Length);
+        Assert.Equal(AssetHistoryStore.MaxSessions, store.Read().SessionCount);
+
+        failCleanup = false;
+        Assert.True(store.Save(latest));
+        Assert.Null(store.HealthSnapshot().LastError);
+        Assert.Equal(AssetHistoryStore.MaxSessions, Directory.GetFiles(_directory, "*.json").Length);
+        Assert.Empty(Directory.GetFiles(_directory, "*.tmp"));
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_directory)) Directory.Delete(_directory, recursive: true);
