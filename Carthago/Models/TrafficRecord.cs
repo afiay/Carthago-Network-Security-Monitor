@@ -247,6 +247,9 @@ namespace Carthago.Models
         // Internal setter prevents arbitrary external record construction from claiming
         // this trusted capture-path observation.
         public bool HttpBasicDefaultCredentialObserved { get; internal set; }
+        // Capture-associated server-reported challenge/rejection; not authenticated identity or success.
+        public Guid? HttpAuthenticationResponseCorrelationId { get; internal set; }
+        public int? HttpAuthenticationResponseStatus { get; internal set; }
 
         // Capture-derived classification only: never retain token bytes.
         public bool HttpGitHubTokenPatternObserved { get; internal set; }

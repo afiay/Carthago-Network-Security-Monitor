@@ -62,6 +62,8 @@ namespace Carthago.Services
             public bool RedisConfigSetPending;
             public DateTime RedisConfigSetRequestedUtc;
             public Smb2WriteExchange.Pending? Smb2Pending;
+            public HttpAuthenticationResponseCorrelation? HttpAuthenticationPending;
+            public bool HttpClientSynValid, HttpSynAckValid;
             public Smb2WriteTargetContext? Smb2Target;
             public Iec104StartupOffSequence? Iec104Startup;
             public OpcUaHelloAckInspector.Hello? OpcUaHello;
@@ -177,6 +179,7 @@ namespace Carthago.Services
                         _handshakes.Remove(tcpFlow);
                         _latency.NoteSyn(tcpFlow, _utcNow());
                         InitSeq(tcpFlow, clientToServer: true, seqPlus1: unchecked(seq + 1),
+                            httpHandshakeEligible: isIPv4 && completeIpPacket && l4Payload.IsEmpty && tcpFlagsField == 0x02,
                             nativeHandshakeEligible: isIPv4 && completeIpPacket && l4Payload.IsEmpty &&
                                 tcpFlagsField == 0x02 && (dport == 9600 || dport == 44818 || dport == 502) && sport != dport);
                     }
@@ -184,7 +187,8 @@ namespace Carthago.Services
                     {
                         _latency.NoteSynAck(tcpFlow, _utcNow());
                         InitSeq(tcpFlow, clientToServer: false, seqPlus1: unchecked(seq + 1),
-                            synAcknowledgment: ack, nativeHandshakeEligible: isIPv4 && completeIpPacket &&
+                            synAcknowledgment: ack, httpHandshakeEligible: isIPv4 && completeIpPacket && l4Payload.IsEmpty && tcpFlagsField == 0x12,
+                            nativeHandshakeEligible: isIPv4 && completeIpPacket &&
                                 l4Payload.IsEmpty && tcpFlagsField == 0x12 && (sport == 9600 || sport == 44818 || sport == 502) && dport != sport);
                     }
 
@@ -197,6 +201,9 @@ namespace Carthago.Services
                             {
                                 flow.RedisConfigSetPending = false;
                                 flow.Smb2Pending = null;
+                                flow.HttpAuthenticationPending = null;
+                                flow.HttpSynAckValid = false;
+                                flow.HttpClientSynValid = false;
                                 flow.Smb2Target = null;
                                 flow.Iec104Startup = null;
                                 flow.OpcUaHello = null;
@@ -453,6 +460,10 @@ namespace Carthago.Services
                                 if (c2s) _latency.NoteFirstDataClient(tcpFlow, _utcNow());
                                 AppendInfo(rec, $"[HTTP host={rec.HttpHost ?? "-"} ua={(rec.HttpUserAgent ?? "-")}]");
                             }
+
+                            ObserveHttpAuthentication(tcpFlow, c2s, rec, normPayload,
+                                isIPv4 && completeIpPacket && normPayload.Length == l4Payload.Length &&
+                                (tcpFlagsField is 0x10 or 0x18) && synAnchoredFirstPayload, seq, ack);
 
                             // -------- Bounded RTSP PLAY request line --------
                             if (NetworkBatch231235Wire.RtspPlay(normPayload, sport, dport))
@@ -884,11 +895,19 @@ namespace Carthago.Services
         }
 
         private void InitSeq(FlowKey key, bool clientToServer, uint seqPlus1,
-            uint synAcknowledgment = 0, bool nativeHandshakeEligible = false)
+            uint synAcknowledgment = 0, bool nativeHandshakeEligible = false, bool httpHandshakeEligible = false)
         {
             lock (_tcpSync)
             {
                 var state = GetOrAddState(key, _utcNow());
+                if (clientToServer)
+                {
+                    state.HttpClientSynValid = httpHandshakeEligible;
+                    state.HttpSynAckValid = false;
+                }
+                else state.HttpSynAckValid = httpHandshakeEligible && state.HttpClientSynValid &&
+                    state.C2S.SynAnchored && state.C2S.Collected == 0 && !state.C2S.Invalid &&
+                    state.C2S.NextSeq == synAcknowledgment;
                 // Native FINS, EtherNet/IP and new Modbus requests require the original complete client SYN
                 // and a matching server SYN-ACK, without changing other rules.
                 if (clientToServer)
@@ -921,6 +940,7 @@ namespace Carthago.Services
                 state.RedisConfigSetPending = false;
                 state.RedisConfigSetRequestedUtc = default;
                 state.Smb2Pending = null;
+                state.HttpAuthenticationPending = null;
                 state.Smb2Target = null;
                 state.Iec104Startup = null;
                 state.OpcUaHello = null;
@@ -940,6 +960,7 @@ namespace Carthago.Services
                 {
                     (clientToServer ? state.C2S : state.S2C).TlsActive = true;
                     state.Smb2Pending = null;
+                    state.HttpAuthenticationPending = null;
                     state.Smb2Target = null;
                     state.Iec104Startup = null;
                     state.OpcUaHello = null;
@@ -1212,6 +1233,36 @@ namespace Carthago.Services
             }
         }
 
+        // First complete request and first complete response only; no stream reassembly.
+        private void ObserveHttpAuthentication(FlowKey key, bool c2s, TrafficRecord record,
+            ReadOnlySpan<byte> payload, bool complete, uint seq, uint ack)
+        {
+            lock (_tcpSync)
+            {
+                if (!_tcp.TryGetValue(key, out var flow)) return;
+                var pending = flow.HttpAuthenticationPending;
+                flow.HttpAuthenticationPending = null;
+                var direction = c2s ? flow.C2S : flow.S2C;
+                if (!complete || !flow.HttpSynAckValid || !flow.C2S.SynAnchored || !flow.S2C.SynAnchored ||
+                    flow.C2S.Invalid || flow.S2C.Invalid || flow.C2S.TlsActive || flow.S2C.TlsActive ||
+                    direction.NextSeq != unchecked(seq + (uint)payload.Length)) return;
+                if (c2s)
+                {
+                    if (pending != null || !record.HttpBasicDefaultCredentialObserved ||
+                        flow.S2C.Collected != 0 || ack != flow.S2C.NextSeq) return;
+                    var candidate = new HttpAuthenticationResponseCorrelation();
+                    if (candidate.TryBeginFramedGet(record.Id, seq, payload, _utcNow()))
+                        flow.HttpAuthenticationPending = candidate;
+                }
+                else if (pending != null && pending.TryObservePayload(true, true, ack, _utcNow(), payload,
+                    out var requestId, out var status))
+                {
+                    record.HttpAuthenticationResponseCorrelationId = requestId;
+                    record.HttpAuthenticationResponseStatus = status;
+                }
+            }
+        }
+
         private bool ShouldAcceptSegment(FlowKey key, bool clientToServer, uint seq,
             ReadOnlySpan<byte> payload, out ReadOnlySpan<byte> normalized,
             out bool synAnchoredFirstPayload)
@@ -1228,6 +1279,7 @@ namespace Carthago.Services
                 {
                     state.RedisConfigSetPending = false;
                     state.Smb2Pending = null;
+                    state.HttpAuthenticationPending = null;
                     state.Smb2Target = null;
                         state.Iec104Startup = null;
                         state.OpcUaHello = null;
@@ -1260,6 +1312,7 @@ namespace Carthago.Services
                         dir.Invalid = true;
                         state.RedisConfigSetPending = false;
                         state.Smb2Pending = null;
+                        state.HttpAuthenticationPending = null;
                         state.Smb2Target = null;
                         state.Iec104Startup = null;
                         state.OpcUaHello = null;
@@ -1277,6 +1330,7 @@ namespace Carthago.Services
                         {
                             state.RedisConfigSetPending = false;
                             state.Smb2Pending = null;
+                            state.HttpAuthenticationPending = null;
                             state.Smb2Target = null;
                         state.Iec104Startup = null;
                         state.OpcUaHello = null;
@@ -1292,6 +1346,7 @@ namespace Carthago.Services
                             dir.Invalid = true;
                             state.RedisConfigSetPending = false;
                             state.Smb2Pending = null;
+                            state.HttpAuthenticationPending = null;
                             state.Smb2Target = null;
                         state.Iec104Startup = null;
                         state.OpcUaHello = null;
