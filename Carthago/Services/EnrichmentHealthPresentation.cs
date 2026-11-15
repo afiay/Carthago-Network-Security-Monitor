@@ -103,7 +103,7 @@ internal static class EnrichmentHealthPresentation
         return $"Current/last session assets: {s.Assets.Count}/{s.Assets.Limit}, capacity-rejected observations: {s.Assets.Rejected}; " +
             $"external destinations: {s.Destinations.Count}/{s.Destinations.Limit}, capacity-rejected observations: {s.Destinations.Rejected}. " +
             $"Checkpoint writes: {s.Checkpoints.Writes}, failures: {s.Checkpoints.Failures}; " +
-            (s.Checkpoints.LastError is not null ? "Last save error: " + s.Checkpoints.LastError : "No save error reported.") +
+            (s.Checkpoints.LastError is not null ? "Last checkpoint diagnostic: " + s.Checkpoints.LastError : "No checkpoint diagnostic reported.") +
             " Retained history may be incomplete; rejection counts are observations, not unique identities.";
     }
 

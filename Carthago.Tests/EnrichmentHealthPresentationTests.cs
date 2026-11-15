@@ -166,4 +166,22 @@ public sealed class EnrichmentHealthPresentationTests
         Assert.Contains("open: 0; closed: 0", EnrichmentHealthPresentation.Build(new TrafficCaptureService.StatsSnapshot { TlsCapacity = (0, 0, 0) }).Summary);
         Assert.Contains("TLS capacity metrics unavailable (no capture session)", EnrichmentHealthPresentation.Build(new TrafficCaptureService.StatsSnapshot()).Summary);
     }
+    [Fact]
+    public void Storage_Summary_Distinguishes_Persisted_Checkpoint_Warning()
+    {
+        var stats = new TrafficCaptureService.StatsSnapshot
+        {
+            EnrichmentStorage = new(new(0, 32, 0), new(0, 32, 0),
+                new(33, 0, "Checkpoint persisted; retention cleanup failed: denied"))
+        };
+        var summary = EnrichmentHealthPresentation.Build(stats).Summary;
+        Assert.Contains("Checkpoint writes: 33, failures: 0", summary);
+        Assert.Contains("Last checkpoint diagnostic: Checkpoint persisted; retention cleanup failed: denied", summary);
+        Assert.DoesNotContain("Last save error", summary);
+        stats = new TrafficCaptureService.StatsSnapshot
+        {
+            EnrichmentStorage = new(new(0, 32, 0), new(0, 32, 0), new(34, 0, null))
+        };
+        Assert.Contains("No checkpoint diagnostic reported", EnrichmentHealthPresentation.Build(stats).Summary);
+    }
 }
