@@ -443,6 +443,19 @@ namespace Carthago.Services
                                 rec.HttpHost = http.Host ?? rec.HttpHost;
                                 rec.HttpUserAgent = http.UserAgent ?? rec.HttpUserAgent;
                                 rec.HttpRequestHeaders = http.JoinedHeaderLines ?? rec.HttpRequestHeaders;
+                                if (c2s && synAnchoredFirstPayload && completeIpPacket &&
+                                    normPayload.Length == l4Payload.Length && tcpFlagsField is 0x10 or 0x18 &&
+                                    !IsTlsActive(tcpFlow, c2s) && http.CompleteRequestHeaders)
+                                {
+                                    rec.HttpCompleteRequestHeadersObserved = true;
+                                    foreach (var name in http.HeaderNames)
+                                    {
+                                        if (string.Equals(name, "User-Agent", StringComparison.OrdinalIgnoreCase))
+                                            rec.HttpUserAgentHeaderObserved = true;
+                                        if (string.Equals(name, "Referer", StringComparison.OrdinalIgnoreCase))
+                                            rec.HttpRefererHeaderObserved = true;
+                                    }
+                                }
                                 rec.HttpBasicDefaultCredentialObserved = c2s && http.ObservedDefaultBasicCredential;
                                 rec.HttpGitHubTokenPatternObserved = c2s && http.ObservedGitHubTokenPattern;
                                 rec.HttpGitLabTokenPatternObserved = c2s && http.ObservedGitLabTokenPattern;
@@ -476,6 +489,9 @@ namespace Carthago.Services
                                 rec.HttpUri = null;
                                 rec.HttpHost = null;
                                 rec.HttpRequestHeaders = null;
+                                rec.HttpCompleteRequestHeadersObserved = false;
+                                rec.HttpUserAgentHeaderObserved = false;
+                                rec.HttpRefererHeaderObserved = false;
                                 rec.HttpUserAgent = null;
                                 rec.HttpJa4h = null;
                                 rec.HttpBasicDefaultCredentialObserved = false;

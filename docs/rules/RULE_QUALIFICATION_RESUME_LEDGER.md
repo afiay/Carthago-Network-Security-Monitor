@@ -267,3 +267,7 @@ Inspected source `a94633003ba3de24ab53a07dace8e42eaaf7c721`. `ThreatFeedService.
 ## Portable R601 checkpoint — 1d810357c0f7e64ff6956dfab4329155ce2c8a85
 
 Parser prerequisite authored/unexecuted: Carthago.Core/PortableApplicationParsers.cs exposes CompleteRequestHeaders only for terminated HTTP/1.x request blocks within 8192 bytes with valid header names and no invalid control bytes. Carthago.Cli.Tests/PortableApplicationParserTests.cs covers complete, truncated, malformed, folded, empty-value and oversized headers. Existing parser flags unchanged. This is parser evidence only, not detector qualification. Next: bind completeness and header presence to captured record in PortablePacketProcessor, share R601 predicate with Windows, add raw replay and parity tests, register only after integration. Portable catalog remains 19; R601 not ready.
+
+## Portable R601 capture evidence checkpoint — 865cfcf6a784de36a3142600dfe5b2b011de864a
+
+Bound complete request headers and case-insensitive User-Agent/Referer name presence to the shared raw-frame processor on complete SYN-anchored first client payloads; clear on TLS classification. Internal setters prevent default JSON restoration. Four raw capture cases authored in Carthago.Tests/R601HeaderCaptureTests.cs (complete absent, empty present, truncated, malformed), zero executed. This is producer evidence only; shared predicate, record-binding review, detector replay/parity and registration remain. Portable count 19. R272 final runtime-policy review and R273–R274 trusted authentication remain open.

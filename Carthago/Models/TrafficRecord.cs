@@ -242,6 +242,11 @@ namespace Carthago.Models
         public string? HttpUserAgent { get; set; }
         public string? HttpRequestHeaders { get; set; }
 
+        // Capture-only first-request header evidence; false completeness means unknown presence.
+        public bool HttpCompleteRequestHeadersObserved { get; internal set; }
+        public bool HttpUserAgentHeaderObserved { get; internal set; }
+        public bool HttpRefererHeaderObserved { get; internal set; }
+
         // Derived from a wire-observed HTTP Authorization header before redaction.
         // The original credential and its Base64 representation are never retained.
         // Internal setter prevents arbitrary external record construction from claiming
