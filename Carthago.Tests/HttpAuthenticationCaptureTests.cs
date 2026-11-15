@@ -152,4 +152,25 @@ public sealed class HttpAuthenticationCaptureTests
         Assert.Equal(exact ? observed.Id : (Guid?)null,response.HttpAuthenticationResponseCorrelationId);
         Assert.Equal(exact ? 401 : (int?)null,response.HttpAuthenticationResponseStatus);
     }
+    [Theory]
+    [InlineData(401)]
+    [InlineData(403)]
+    public void Response_Outcome_Does_Not_Rewrite_Request_Evidence(int status)
+    {
+        var p = new PortablePacketProcessor();
+        Parse(p,false,2,100,0);
+        Parse(p,true,0x12,500,101);
+        const string request = "GET / HTTP/1.1\r\nHost: camera\r\nAuthorization: Basic YWRtaW46YWRtaW4=\r\n\r\n";
+        var observed = Parse(p,false,0x18,101,501,request);
+        Assert.True(observed.HttpBasicDefaultCredentialObserved);
+        Assert.Null(observed.HttpAuthenticationResponseCorrelationId);
+        Assert.Null(observed.HttpAuthenticationResponseStatus);
+        var response = Parse(p,true,0x18,501,101u + (uint)request.Length,
+            $"HTTP/1.1 {status} Rejected\r\nContent-Length: 0\r\n\r\n");
+        Assert.Equal(observed.Id,response.HttpAuthenticationResponseCorrelationId);
+        Assert.Equal(status,response.HttpAuthenticationResponseStatus);
+        Assert.False(response.HttpBasicDefaultCredentialObserved);
+        Assert.Null(observed.HttpAuthenticationResponseCorrelationId);
+        Assert.Null(observed.HttpAuthenticationResponseStatus);
+    }
 }
