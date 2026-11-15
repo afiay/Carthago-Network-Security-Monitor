@@ -46,4 +46,21 @@ public sealed class EnrichmentCoverageHealthTests
     {
         Assert.Equal("Evidence coverage unavailable.", EnrichmentHealthPresentation.CoverageSummary(null));
     }
+    [Fact]
+    public void Etw_Publication_Is_Provenance_Not_Packet_Evidence()
+    {
+        var h = new EnrichmentCoverageHealth();
+        var etw = new TrafficRecord { IsTcp = true, SrcIsLocalHost = true,
+            DstIsLocalHost = false, ProcessId = 42, ProcessAttribution = "CaptureProvided" };
+        CaptureInterfaceEnrichment.Apply(etw, CaptureInterfaceContext.Etw);
+        h.ObservePublication(etw);
+        h.ObserveProcess(etw);
+        h.ObservePublication(new TrafficRecord { CaptureBackend = "Npcap" });
+        h.ObservePublication(new TrafficRecord());
+        var snapshot = h.Snapshot();
+        Assert.Equal(new EnrichmentCoverageSnapshot(3,1,0,0,0,1,0,0,1), snapshot);
+        var summary = EnrichmentHealthPresentation.CoverageSummary(snapshot);
+        Assert.Contains("ETW published records (lifetime): 1/3", summary);
+        Assert.Contains("missing DNS/TLS evidence is not a negative protocol observation", summary);
+    }
 }
