@@ -434,6 +434,32 @@ public sealed class R118R163PairedReplayQualityTests
             Assert.DoesNotContain("R163", cloudInitHomeSpoof.Profiles[profile].AlertRuleIds);
         }
 
+        // Calibration is not independent causal or asset evidence. Check the
+        // same paired controls under every configured deployment profile,
+        // not only the cold profile used above.
+        foreach (var profile in report.ProfileResults.Keys)
+        {
+            foreach (var pair in new[]
+            {
+                (Candidate: supportPair, Control: conflictingHost, RuleId: "R118", Floor: 0.86),
+                (Candidate: cloudInitHomeSpoof, Control: cloudInitHead, RuleId: "R163", Floor: 0.84),
+                (Candidate: wireDefault, Control: forwardedHost, RuleId: "R118", Floor: 0.86),
+                (Candidate: imdsCredentialGet, Control: imdsSession, RuleId: "R163", Floor: 0.84)
+            })
+            {
+                var cold = Assert.Single(pair.Candidate.Profiles[profile].RuleDecisions,
+                    decision => decision.RuleId == pair.RuleId);
+                var calibrated = pair.Candidate.DeploymentStateProfiles["CalibratedConfigured"][profile];
+                var decision = Assert.Single(calibrated.RuleDecisions,
+                    item => item.RuleId == pair.RuleId);
+                Assert.Equal(cold.Confidence, decision.Confidence, 6);
+                Assert.True(decision.Confidence < pair.Floor);
+                Assert.DoesNotContain(pair.RuleId, calibrated.AlertRuleIds);
+                Assert.DoesNotContain(pair.RuleId,
+                    pair.Control.DeploymentStateProfiles["CalibratedConfigured"][profile].AlertRuleIds);
+            }
+        }
+
         // Recommendation heuristics must not override the rule-specific
         // precision floors simply because a raw match exceeded 75%.
         Assert.DoesNotContain("R118", report.Summary.RulesRecommendedForAlert);
