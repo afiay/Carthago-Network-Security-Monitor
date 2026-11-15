@@ -24,6 +24,7 @@ internal sealed class AssetHistoryStore
     private const long MaxBytes = 8 * 1024 * 1024;
     private static readonly object IoGate = new();
     private readonly string _directory;
+    private readonly Action<string> _deleteRetainedFile;
     private string? _lastSaveError;
     private long _writes, _failures;
     private readonly object _healthGate = new();
@@ -35,9 +36,12 @@ internal sealed class AssetHistoryStore
     public sealed record Checkpoint(int Version, Guid SessionId, DateTimeOffset StartedUtc, ObservedAssetRow[] Assets,
         ExternalCommunicationRow[]? Communications = null, long? DestinationRejected = null, long? AssetRejected = null);
 
-    internal AssetHistoryStore(string? directory = null)
-        => _directory = directory ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+    internal AssetHistoryStore(string? directory = null, Action<string>? deleteRetainedFile = null)
+    {
+        _directory = directory ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "Carthago", "asset-history");
+        _deleteRetainedFile = deleteRetainedFile ?? File.Delete;
+    }
 
     internal bool Save(ObservedAssetRegistry registry)
     {
@@ -64,8 +68,19 @@ internal sealed class AssetHistoryStore
                 }
                 File.Move(temp, path, overwrite: true);
                 temp = null;
-                foreach (var old in Files().Skip(MaxSessions)) File.Delete(old);
-                lock (_healthGate) { _writes++; Volatile.Write(ref _lastSaveError, null); }
+                // Replacement is already durable; retention failure must not be
+                // counted as a failed write. Keep the warning visible and retry
+                // cleanup on the next nonempty checkpoint.
+                string? retentionError = null;
+                try
+                {
+                    foreach (var old in Files().Skip(MaxSessions)) _deleteRetainedFile(old);
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    retentionError = "Checkpoint persisted; retention cleanup failed: " + ex.Message;
+                }
+                lock (_healthGate) { _writes++; Volatile.Write(ref _lastSaveError, retentionError); }
                 return true;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or NotSupportedException)
