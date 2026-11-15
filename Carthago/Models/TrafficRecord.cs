@@ -247,6 +247,19 @@ namespace Carthago.Models
         public bool HttpUserAgentHeaderObserved { get; internal set; }
         public bool HttpRefererHeaderObserved { get; internal set; }
 
+        // Bind the capture observation to the exact request and flow fields, not mutable metadata.
+        private (Guid Id, string? Source, string? Destination, int? SourcePort, int? DestinationPort,
+            string? Method, string? Uri, string? Headers, string? Agent, string? Host)? _httpHeaderBinding;
+
+        private (Guid, string?, string?, int?, int?, string?, string?, string?, string?, string?) HttpHeaderBinding()
+            => (Id, Source, Destination, SourcePort, DestinationPort, HttpMethod, HttpUri,
+                HttpRequestHeaders, HttpUserAgent, HttpHost);
+
+        internal void BindCompleteHttpRequestHeaders() => _httpHeaderBinding = HttpHeaderBinding();
+
+        internal bool HasBoundCompleteHttpRequestHeaders => HttpCompleteRequestHeadersObserved
+            && _httpHeaderBinding.HasValue && _httpHeaderBinding.Value.Equals(HttpHeaderBinding());
+
         // Derived from a wire-observed HTTP Authorization header before redaction.
         // The original credential and its Base64 representation are never retained.
         // Internal setter prevents arbitrary external record construction from claiming

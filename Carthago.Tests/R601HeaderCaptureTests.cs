@@ -56,6 +56,32 @@ public sealed class R601HeaderCaptureTests
     }
 
     [Theory]
+    [InlineData("uri")]
+    [InlineData("method")]
+    [InlineData("source")]
+    [InlineData("port")]
+    [InlineData("headers")]
+    [InlineData("id")]
+    public async System.Threading.Tasks.Task Capture_Evidence_Cannot_Be_Reused_For_Changed_Record(string field)
+    {
+        var record = Request("POST", "/tunnel.jsp?cmd=connect", "Host: camera\r\n\r\n");
+        var original = new RuleEvaluationContext(record, Sensitivity.Balanced, DateTime.UnixEpoch);
+        Assert.Equal(WebSignatureObservation.Match, new PortableR601Detector().Evaluate(original.Packet, out _));
+        switch (field)
+        {
+            case "uri": record.HttpUri = "/other?cmd=read"; break;
+            case "method": record.HttpMethod = "GET"; break;
+            case "source": record.Source = "10.0.0.9"; break;
+            case "port": record.SourcePort = 51001; break;
+            case "headers": record.HttpRequestHeaders = "Host: other"; break;
+            case "id": record.Id = Guid.NewGuid(); break;
+        }
+        var changed = new RuleEvaluationContext(record, Sensitivity.Balanced, DateTime.UnixEpoch);
+        Assert.Equal(WebSignatureObservation.None, new PortableR601Detector().Evaluate(changed.Packet, out _));
+        Assert.False((await new R601_ReGeorgHeaderlessControlQueryRequestRule().EvaluateAsync(changed)).Matched);
+    }
+
+    [Theory]
     [InlineData("Host: camera\r\n\r\n", true, false, false)]
     [InlineData("Host: camera\r\nUser-Agent:\r\nReferer:\r\n\r\n", true, true, true)]
     [InlineData("Host: camera\r\nUser-Agent: partial", false, false, false)]

@@ -12,7 +12,7 @@ internal sealed class PortableR601Detector
         var record = context.Record;
         if (!WebSignatureRequestEvidence.TryGet(record, out method, out var uri)
             || method != "POST"
-            || !record.HttpCompleteRequestHeadersObserved
+            || !record.HasBoundCompleteHttpRequestHeaders
             || record.HttpUserAgentHeaderObserved || record.HttpRefererHeaderObserved
             || !string.IsNullOrWhiteSpace(record.HttpUserAgent)
             || string.IsNullOrWhiteSpace(record.HttpRequestHeaders)

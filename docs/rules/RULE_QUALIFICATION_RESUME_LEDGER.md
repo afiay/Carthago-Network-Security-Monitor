@@ -275,3 +275,8 @@ Bound complete request headers and case-insensitive User-Agent/Referer name pres
 ## R601 shared detector checkpoint — df80e065c227d46b2800004e803b95860033a3ad
 
 Implemented Core PortableR601Detector and Windows delegation to the same request-only predicate/cooldown. Requires complete capture-derived headers and rejects present (including empty) User-Agent or Referer, preserving prior query signatures, Shadow policy and confidence floor. Six raw capture-to-Core/Windows parity cases authored; grouped R596–R605 R601 fixtures now use actual capture producer rather than fabricated header absence. Zero tests executed. Catalog registration remains pending review of replay/CLI capability contracts and record mutation binding; portable count remains 19. R272 final policy gate and R273–R274 producer work remain open.
+
+
+## R601 record binding checkpoint — b172db719bd170a9b54025c8bc0ac7ccb279bc2f
+
+Capture producer now binds complete-header evidence to the exact record ID, endpoints, ports, method, URI, header summary, agent and host. Shared detector rejects changed metadata even when capture flags remain true. Six raw-capture mutation cases authored against Core and Windows, zero executed. No new registration or readiness promotion; next inspect CLI catalog and replay registration. R272 policy review and R273–R274 trusted producer remain open.

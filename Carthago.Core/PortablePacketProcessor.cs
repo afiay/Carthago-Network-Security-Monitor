@@ -448,6 +448,7 @@ namespace Carthago.Services
                                     !IsTlsActive(tcpFlow, c2s) && http.CompleteRequestHeaders)
                                 {
                                     rec.HttpCompleteRequestHeadersObserved = true;
+                                    rec.BindCompleteHttpRequestHeaders();
                                     foreach (var name in http.HeaderNames)
                                     {
                                         if (string.Equals(name, "User-Agent", StringComparison.OrdinalIgnoreCase))
