@@ -34,19 +34,35 @@ public sealed class HttpAuthenticationCaptureTests
     [InlineData("fin", false)]
     [InlineData("ordinary", false)]
     [InlineData("success", false)]
+    [InlineData("missing-synack", false)]
+    [InlineData("split-request", false)]
+    [InlineData("pipeline", false)]
+    [InlineData("truncated-response", false)]
+    [InlineData("expired", false)]
+    [InlineData("boundary", true)]
+    [InlineData("reuse", false)]
     public void First_Request_Response_Association(string variant, bool expected)
     {
-        var p = new PortablePacketProcessor(() => new DateTime(2026,11,15,0,0,0,DateTimeKind.Utc));
+        var now = new DateTime(2026,11,15,0,0,0,DateTimeKind.Utc);
+        var p = new PortablePacketProcessor(() => now);
         Parse(p,false,2,100,0);
-        Parse(p,true,0x12,500,variant == "wrong-synack" ? 100u : 101u);
+        if (variant != "missing-synack") Parse(p,true,0x12,500,variant == "wrong-synack" ? 100u : 101u);
         var request = "GET / HTTP/1.1\r\nHost: camera\r\nAuthorization: Basic " +
             (variant == "ordinary" ? "dTpw" : "YWRtaW46YWRtaW4=") + "\r\n\r\n";
-        var observed = Parse(p,false,0x18,101,501,request);
+        if (variant == "pipeline") request += "GET /other HTTP/1.1\r\nHost: camera\r\n\r\n";
+        var observed = variant == "split-request"
+            ? Parse(p,false,0x18,101,501,request[..20])
+            : Parse(p,false,0x18,101,501,request);
+        if (variant == "split-request") Parse(p,false,0x18,121,501,request[20..]);
         uint end = 101u + (uint)request.Length;
         if (variant == "retransmit") Parse(p,false,0x18,101,501,request);
         if (variant == "fin") Parse(p,false,0x11,end,501);
+        if (variant == "reuse") { Parse(p,false,2,900,0); Parse(p,true,0x12,500,901); }
+        if (variant == "expired") now = now.AddSeconds(31);
+        if (variant == "boundary") now = now.AddSeconds(30);
         var response = Parse(p,true,0x18,501,variant == "wrong-ack" ? end-1 : end,
             variant == "success" ? "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n" :
+            variant == "truncated-response" ? "HTTP/1.1 401 Unauthorized\r\nContent-Length: 1\r\n\r\n" :
             "HTTP/1.1 401 Unauthorized\r\nContent-Length: 0\r\n\r\n");
         Assert.Equal(expected ? observed.Id : (Guid?)null, response.HttpAuthenticationResponseCorrelationId);
         Assert.Equal(expected ? 401 : (int?)null, response.HttpAuthenticationResponseStatus);
