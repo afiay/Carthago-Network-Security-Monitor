@@ -9,6 +9,43 @@ namespace Carthago.Tests;
 
 public sealed class RuntimeEnrichmentRegressionTests
 {
+    [Fact]
+    public void Enrichment_Queue_Saturation_Counts_Only_Current_Run_Fallbacks()
+    {
+        using var old = new System.Threading.CancellationTokenSource();
+        using var current = new System.Threading.CancellationTokenSource();
+        var channel = TrafficCaptureService.CreateEnrichmentChannel();
+        long fallbacks = 0;
+        var work = new TrafficCaptureService.EnrichmentWork(new TrafficRecord(), current.Token, 1);
+        var detached = new TrafficCaptureService.EnrichmentWork(new TrafficRecord(), old.Token, 2);
+        int capacity = TrafficCaptureService.EnrichmentQueueCapacity;
+
+        for (int i = 0; i < capacity; i++)
+            Assert.False(TrafficCaptureService.TryAdmitEnrichment(channel.Writer, current.Token, work, ref fallbacks));
+        Assert.Equal(capacity, channel.Reader.Count);
+        Assert.Equal(0L, fallbacks);
+        Assert.True(TrafficCaptureService.TryAdmitEnrichment(channel.Writer, current.Token, work, ref fallbacks));
+        Assert.False(TrafficCaptureService.TryAdmitEnrichment(channel.Writer, current.Token, detached, ref fallbacks));
+        Assert.Equal(1L, fallbacks);
+        Assert.Equal(capacity, channel.Reader.Count);
+
+        Assert.True(channel.Reader.TryRead(out var first));
+        Assert.Same(work, first);
+        Assert.False(TrafficCaptureService.TryAdmitEnrichment(channel.Writer, current.Token, detached, ref fallbacks));
+        Assert.Equal(capacity - 1, channel.Reader.Count);
+        Assert.False(TrafficCaptureService.TryAdmitEnrichment(channel.Writer, current.Token, work, ref fallbacks));
+        Assert.Equal(capacity, channel.Reader.Count);
+        current.Cancel();
+        Assert.False(TrafficCaptureService.TryAdmitEnrichment(channel.Writer, current.Token, work, ref fallbacks));
+        Assert.Equal(1L, fallbacks);
+        for (int i = 0; i < capacity; i++)
+        {
+            Assert.True(channel.Reader.TryRead(out var item));
+            Assert.Same(work, item);
+        }
+        Assert.False(channel.Reader.TryRead(out _));
+    }
+
     [Theory]
     [InlineData("TCP", true, false)]
     [InlineData("UDP", false, true)]

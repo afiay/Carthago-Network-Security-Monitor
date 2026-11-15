@@ -81,10 +81,10 @@ namespace Carthago.Services
 
         private const int UiBatchSize = 100;
         private const int UiQueueCapacity = 5000;
-        private const int EnrichmentQueueCapacity = 4096;
+        internal const int EnrichmentQueueCapacity = 4096;
         private const int EnrichmentWorkerCount = 4;
 
-        private sealed record EnrichmentWork(TrafficRecord Record, CancellationToken RunToken, long EnqueuedAt);
+        internal sealed record EnrichmentWork(TrafficRecord Record, CancellationToken RunToken, long EnqueuedAt);
         private readonly EnrichmentWorkerHealth _workerHealth = new();
         private readonly EnrichmentCoverageHealth _coverageHealth = new();
 
@@ -96,7 +96,9 @@ namespace Carthago.Services
                 SingleWriter = false
             });
 
-        private readonly Channel<EnrichmentWork> _enrichmentChannel =
+        private readonly Channel<EnrichmentWork> _enrichmentChannel = CreateEnrichmentChannel();
+
+        internal static Channel<EnrichmentWork> CreateEnrichmentChannel() =>
             Channel.CreateBounded<EnrichmentWork>(new BoundedChannelOptions(EnrichmentQueueCapacity)
             {
                 FullMode = BoundedChannelFullMode.Wait,
@@ -684,6 +686,17 @@ namespace Carthago.Services
             return true;
         }
 
+        // Caller holds the lifecycle lock. A rejected current-session write
+        // requests fallback; detached work must not charge the fallback counter.
+        internal static bool TryAdmitEnrichment(ChannelWriter<EnrichmentWork> writer,
+            CancellationToken? current, EnrichmentWork work, ref long fallbacks)
+        {
+            if (!IsCurrentEnrichmentRun(current, work.RunToken)) return false;
+            if (writer.TryWrite(work)) return false;
+            Interlocked.Increment(ref fallbacks);
+            return true;
+        }
+
         private void PublishRecord(TrafficRecord record, CancellationToken runToken)
         {
             if (runToken.IsCancellationRequested || _serviceCts.IsCancellationRequested)
@@ -716,8 +729,8 @@ namespace Carthago.Services
                 // Do not enqueue detached work or charge its drops to a new run.
                 uiDropped = !_headless && !_uiChannel.Writer.TryWrite(new CaptureSessionRecord<TrafficRecord>(record, runToken));
                 if (uiDropped) Interlocked.Increment(ref _packetsDroppedByQueue);
-                fallback = !_enrichmentChannel.Writer.TryWrite(new EnrichmentWork(record, runToken, Stopwatch.GetTimestamp()));
-                if (fallback) Interlocked.Increment(ref _enrichmentFallbacks);
+                fallback = TryAdmitEnrichment(_enrichmentChannel.Writer, _runCts?.Token,
+                    new EnrichmentWork(record, runToken, Stopwatch.GetTimestamp()), ref _enrichmentFallbacks);
             }
 
             // Never call the rule engine while holding the lifecycle lock.
