@@ -284,6 +284,40 @@ public sealed class R272AdvancedAccuracyBatchTests
             Assert.Contains(RuleEngine.SnapshotR272Signals(host, now), x => x.RuleId == "R014");
             Assert.Empty(RuleEngine.SnapshotR272Signals(host, now.AddHours(1)));
 
+            // Capacity is a producer-state test, not synthetic detector evidence.
+            // Populate only the identity indexes, never the correlation observations.
+            RuleEngine.ResetRuntimeStateForReplay();
+            var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static;
+            var seen = (System.Collections.Generic.Dictionary<string, DateTime>)
+                typeof(RuleEngine).GetField("R272SeenEvents", flags)!.GetValue(null)!;
+            var expiry = (System.Collections.Generic.PriorityQueue<string, DateTime>)
+                typeof(RuleEngine).GetField("R272SeenExpiry", flags)!.GetValue(null)!;
+            var capacity = (int)typeof(RuleEngine).GetField("R272SeenCapacity", flags)!.GetRawConstantValue()!;
+            for (var i = 0; i < capacity; i++)
+            {
+                var id = "capacity-fixture-" + i;
+                seen.Add(id, now);
+                expiry.Enqueue(id, now);
+            }
+            var fullAt = now.AddMinutes(10);
+            ingest.Invoke(null, new object[] { ftpEvent, descriptor, fullAt });
+            Assert.Equal(capacity, seen.Count);
+            Assert.Equal(capacity, expiry.Count);
+            Assert.Empty(RuleEngine.SnapshotR272Signals(host, fullAt));
+            var fullContext = RuleEvaluationContext.CreateForEngine(probe, Sensitivity.Balanced,
+                fullAt, RuleEngineHealthSnapshot.Empty(fullAt));
+            Assert.False((await new R272_MultiSignalRuleStackSurgeFromHostRule()
+                .EvaluateAsync(fullContext)).Matched);
+            // One tick beyond the inclusive window frees all expired identities.
+            var recoveredAt = fullAt.AddTicks(1);
+            ingest.Invoke(null, new object[] { ftpEvent, descriptor, recoveredAt });
+            Assert.Single(seen);
+            Assert.Equal(1, expiry.Count);
+            Assert.Contains(RuleEngine.SnapshotR272Signals(host, recoveredAt), s => s.RuleId == "R014");
+            RuleEngine.ResetRuntimeStateForReplay();
+            Assert.Empty(seen);
+            Assert.Equal(0, expiry.Count);
+
             // Replay clocks at the representable lower bound must not throw or
             // manufacture a third family. Exercise the actual emitted identity.
             RuleEngine.ResetRuntimeStateForReplay();
