@@ -22,6 +22,7 @@ namespace Carthago.Services
             {
                 R272Signals.Clear();
                 R272SeenEvents.Clear();
+                R272SeenExpiry.Clear();
                 R272SignalWatermark = DateTime.MinValue;
             }
             _lastTrace = null;

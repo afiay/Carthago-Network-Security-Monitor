@@ -259,6 +259,20 @@ public sealed class R272AdvancedAccuracyBatchTests
             ingest.Invoke(null, new object[] { ftpEvent, descriptor, now });
             Assert.Contains(RuleEngine.SnapshotR272Signals(host, now), s => s.RuleId == "R014");
 
+            // Delayed observations must expire by timestamp, not insertion order.
+            RuleEngine.ResetRuntimeStateForReplay();
+            ingest.Invoke(null, new object[] { smbEvent, smbDescriptor, now.AddMinutes(5) });
+            ingest.Invoke(null, new object[] { ftpEvent, descriptor, now });
+            ingest.Invoke(null, new object[] { replacement, descriptor, now.AddMinutes(11) });
+            Assert.Contains(RuleEngine.SnapshotR272Signals(host, now.AddMinutes(11)), s => s.RuleId == "R026");
+            Assert.Contains(RuleEngine.SnapshotR272Signals(host, now.AddMinutes(11)), s => s.RuleId == "R014");
+            // The expired FTP identity can be admitted again; the retained SMB
+            // identity cannot refresh its observation or advance the watermark.
+            ingest.Invoke(null, new object[] { ftpEvent, descriptor, now.AddMinutes(12) });
+            ingest.Invoke(null, new object[] { smbEvent, smbDescriptor, now.AddMinutes(13) });
+            Assert.Contains(RuleEngine.SnapshotR272Signals(host, now.AddMinutes(22)), s => s.RuleId == "R014");
+            Assert.DoesNotContain(RuleEngine.SnapshotR272Signals(host, now.AddMinutes(16)), s => s.RuleId == "R026");
+
             // A retained identity cannot advance the global watermark, even
             // when replayed far into the future. The other real family must
             // remain available at its original observation time.
