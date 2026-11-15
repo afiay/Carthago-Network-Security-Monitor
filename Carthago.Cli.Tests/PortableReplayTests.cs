@@ -320,12 +320,21 @@ public sealed class PortableReplayTests
         var synAck=Segment(true,0x12,500,101);
         var request=Segment(false,0x18,101,501,method+" "+uri+" HTTP/1.1\r\n"+headers);
         var bytes=PcapWithSequence(false,(100,syn,null),(101,synAck,null),(102,request,null));
-        var result=await Run(bytes,".pcap","R601");
+        // Exercise identical raw frames in both capture formats and repeat each
+        // invocation to prove dispatcher/capture state is not shared across runs.
+        var ng=new[]{Section(),Interface(),Packet(0,100_000_000,syn),
+            Packet(0,101_000_000,synAck),Packet(0,102_000_000,request)}
+            .SelectMany(x=>x).ToArray();
+        foreach(var capture in new[]{(Bytes:bytes,Ext:".pcap"),(Bytes:ng,Ext:".pcapng"),
+            (Bytes:bytes,Ext:".pcap"),(Bytes:ng,Ext:".pcapng")})
+        {
+        var result=await Run(capture.Bytes,capture.Ext,"R601");
         Assert.Equal(0,result.Code);
         using var json=JsonDocument.Parse(result.Output);
         var replay=json.RootElement.GetProperty("replay");
         Assert.Equal(expected?1:0,replay.GetProperty("matchCount").GetInt32());
         Assert.Equal("evaluated",replay.GetProperty("rules")[0].GetProperty("status").GetString());
         Assert.DoesNotContain("cmd=connect",result.Output);
+        }
     }
 }

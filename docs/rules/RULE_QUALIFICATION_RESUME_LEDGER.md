@@ -284,3 +284,8 @@ Capture producer now binds complete-header evidence to the exact record ID, endp
 ## R601 portable registration checkpoint — 935f9fbb27f4af8ea7ca07cad7a76b7e226f9dd8
 
 Register the existing capture-bound shared evaluator in PortableRuleCatalog (20 compiled IDs, 980 outside catalog); declare complete header and presence evidence. Update capability tests and existing unanchored replay control; add six actual classic PCAP replay cases with SYN/SYN-ACK and complete, empty-header, incomplete, benign and wrong-method controls. Windows Shadow policy unchanged; replay does not evaluate Windows policy. Authored six cases, executed zero; source candidate, not a passing qualification or field accuracy claim. Next: verify replay state/reset and pcapng parity, reconcile CLI documentation and R272 policy gate; then R606–R610. R270/R273–R274 remain producer work.
+
+
+## 2026-11-15 — R601 portable capture-format and invocation isolation
+
+Base `214a6752765e8bfed1c79aa9f051884e811f4a1c`. Extend `Carthago.Cli.Tests/PortableReplayTests.cs` R601ReplayRequiresCompleteAnchoredRequest: all six existing raw-frame positive/negative cases now run in classic PCAP and PCAPNG, twice each with fresh CLI invocations. Expected identical match counts and no query leakage; 24 replay invocations authored, zero executed. No policy or predicate change. R601 remains source candidate; same-capture cooldown/reset and documentation reconciliation pending. Next: R272 runtime policy and R606–R610 portable migration. Catalog remains 20 registered / 980 remaining at last registration checkpoint.
