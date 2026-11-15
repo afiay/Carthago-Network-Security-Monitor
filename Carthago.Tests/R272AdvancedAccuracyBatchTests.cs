@@ -224,6 +224,19 @@ public sealed class R272AdvancedAccuracyBatchTests
                 x => x.RuleId == "R014");
             RuleEngine.ResetRuntimeStateForReplay();
 
+            // A newer real emission replaces the host/rule slot, but must not
+            // erase the original identity while it is still in the retention window.
+            var replacement = Assert.Single(System.Linq.Enumerable.Where(
+                RuleEngine.Evaluate(ftp, Sensitivity.Balanced), e => e.RuleId == "R014"));
+            Assert.NotEqual(ftpEvent.EventId, replacement.EventId);
+            RuleEngine.ResetRuntimeStateForReplay();
+            ingest.Invoke(null, new object[] { ftpEvent, descriptor, now });
+            ingest.Invoke(null, new object[] { replacement, descriptor, now.AddMinutes(1) });
+            ingest.Invoke(null, new object[] { ftpEvent, descriptor, now.AddMinutes(2) });
+            Assert.Contains(RuleEngine.SnapshotR272Signals(host, now.AddMinutes(11)), s => s.RuleId == "R014");
+            Assert.DoesNotContain(RuleEngine.SnapshotR272Signals(host, now.AddMinutes(11).AddTicks(1)), s => s.RuleId == "R014");
+            RuleEngine.ResetRuntimeStateForReplay();
+
             // Replay actual emitted identities in reverse timestamp order after reset.
             // A stale event must not resurrect evidence outside the producer watermark.
             var smbDescriptor = System.Linq.Enumerable.Single(

@@ -21,6 +21,7 @@ namespace Carthago.Services
             lock (R272SignalLock)
             {
                 R272Signals.Clear();
+                R272SeenEvents.Clear();
                 R272SignalWatermark = DateTime.MinValue;
             }
             _lastTrace = null;

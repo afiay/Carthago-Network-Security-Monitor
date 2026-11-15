@@ -481,6 +481,9 @@ namespace Carthago.Services
         private static readonly object R272SignalLock = new();
         private static readonly List<(string Host, string RuleId, string Family, DateTime Timestamp, string EventId)> R272Signals = new();
         private const int R272SignalCapacity = 4096;
+        // Retain identities independently of the latest host/rule slot.
+        private static readonly Dictionary<string, DateTime> R272SeenEvents = new(StringComparer.Ordinal);
+        private const int R272SeenCapacity = 16384;
         private static DateTime R272SignalWatermark = DateTime.MinValue;
 
         private static void RecordR272EmittedSignal(DetectionEvent evt, RuleDescriptor descriptor, DateTime now)
@@ -497,11 +500,16 @@ namespace Carthago.Services
             var host = address.ToString();
             lock (R272SignalLock)
             {
-                if (R272Signals.Any(signal => signal.EventId == evt.EventId)) return;
+                if (R272SeenEvents.ContainsKey(evt.EventId)) return;
                 if (now > R272SignalWatermark) R272SignalWatermark = now;
                 var cutoff = R272RetentionCutoff(R272SignalWatermark);
                 R272Signals.RemoveAll(signal => signal.Timestamp < cutoff);
                 if (now < cutoff) return;
+                foreach (var expired in R272SeenEvents.Where(pair => pair.Value < cutoff).Select(pair => pair.Key).ToArray())
+                    R272SeenEvents.Remove(expired);
+                // Fail closed at capacity rather than forget an unexpired identity.
+                if (R272SeenEvents.Count >= R272SeenCapacity) return;
+                R272SeenEvents.Add(evt.EventId, now);
                 if (R272Signals.Any(signal => signal.Host == host && signal.RuleId == descriptor.RuleId && signal.Timestamp > now)) return;
                 // One latest observation per host/rule; repeat emissions cannot inflate cardinality.
                 R272Signals.RemoveAll(signal => signal.Host == host && signal.RuleId == descriptor.RuleId);
