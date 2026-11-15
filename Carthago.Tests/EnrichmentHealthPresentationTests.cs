@@ -7,6 +7,33 @@ namespace Carthago.Tests;
 public sealed class EnrichmentHealthPresentationTests
 {
     [Fact]
+    public void Aggregate_Export_Preserves_Counters_And_Omits_Diagnostic_Text()
+    {
+        var stats = new TrafficCaptureService.StatsSnapshot
+        {
+            EnrichmentCoverage = new(10, 5, 2, 1, 0, 4, 2, 1, 3),
+            EnrichmentProviders = new Dictionary<string, EnrichmentProviderSnapshot>
+            {
+                ["whois"] = new(2, 1, 0, 1, 0, 2, 40, 20)
+            },
+            EnrichmentStorage = new(new(0, 32, 0), new(0, 32, 0),
+                new(33, 1, "private-path-marker"))
+        };
+        var time = System.DateTimeOffset.Parse("2026-11-15T12:00:00Z");
+        var json = EnrichmentHealthPresentation.ExportCounters(stats, time, 42, time.AddMinutes(-1));
+        using var doc = System.Text.Json.JsonDocument.Parse(json);
+        var root = doc.RootElement;
+        Assert.Equal(1, root.GetProperty("schemaVersion").GetInt32());
+        Assert.Equal(42, root.GetProperty("processId").GetInt32());
+        Assert.Equal(time, root.GetProperty("sampledUtc").GetDateTimeOffset());
+        Assert.Equal(10, root.GetProperty("coverage").GetProperty("Published").GetInt64());
+        Assert.Equal(2, root.GetProperty("providers").GetProperty("whois").GetProperty("CacheHits").GetInt64());
+        Assert.True(root.GetProperty("storage").GetProperty("checkpointDiagnosticPresent").GetBoolean());
+        Assert.DoesNotContain("private-path-marker", json);
+        Assert.Equal(System.Text.Json.JsonValueKind.Null, root.GetProperty("workers").ValueKind);
+    }
+
+    [Fact]
     public void Missing_Snapshot_Does_Not_Invent_Provider_Health()
     {
         Assert.Empty(EnrichmentHealthPresentation.Build(null).Providers);

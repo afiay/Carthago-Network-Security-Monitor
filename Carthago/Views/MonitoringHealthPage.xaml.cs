@@ -10,6 +10,9 @@ namespace Carthago.Views
 {
     public partial class MonitoringHealthPage : UserControl
     {
+        private TrafficCaptureService.StatsSnapshot? _exportStats;
+        private DateTimeOffset _exportSampledUtc;
+
         public event RoutedEventHandler? RawTrafficRequested;
 
         public MonitoringHealthPage()
@@ -88,9 +91,28 @@ namespace Carthago.Views
             var reportedError = string.IsNullOrWhiteSpace(error) ? source.Error : error;
             CaptureErrorText.Text = string.IsNullOrWhiteSpace(reportedError) ? string.Empty : $"Capture error: {reportedError}";
             SnapshotTimeText.Text = $"Local UI snapshot: {DateTime.Now:yyyy-MM-dd HH:mm:ss}";
+            _exportStats = uiStats;
+            _exportSampledUtc = DateTimeOffset.UtcNow;
+            CopyEnrichmentCountersButton.IsEnabled = uiStats is not null;
             var enrichment = EnrichmentHealthPresentation.Build(uiStats);
             EnrichmentSummaryText.Text = enrichment.Summary;
             EnrichmentProviderGrid.ItemsSource = enrichment.Providers;
+        }
+
+        private void CopyEnrichmentCounters_Click(object sender, RoutedEventArgs e)
+        {
+            if (_exportStats is not { } stats) return;
+            try
+            {
+                using var process = System.Diagnostics.Process.GetCurrentProcess();
+                Clipboard.SetText(EnrichmentHealthPresentation.ExportCounters(stats,
+                    _exportSampledUtc, process.Id, new DateTimeOffset(process.StartTime)));
+                EnrichmentExportStatus.Text = "Aggregate snapshot copied.";
+            }
+            catch (Exception)
+            {
+                EnrichmentExportStatus.Text = "Unable to copy aggregate snapshot.";
+            }
         }
 
         private void OpenRawTraffic_Click(object sender, RoutedEventArgs e)

@@ -102,6 +102,11 @@
           <TextBlock Text="ENRICHMENT HEALTH" Style="{StaticResource DashboardSectionTitle}"/>
           <TextBlock x:Name="EnrichmentSummaryText" Text="No enrichment snapshot available."
                      Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,8,0,12"/>
+          <Button x:Name="CopyEnrichmentCountersButton" Content="Copy aggregate counters (JSON)"
+                  Style="{StaticResource SecondaryButton}" HorizontalAlignment="Left" IsEnabled="False"
+                  Click="CopyEnrichmentCounters_Click" Margin="0,0,0,8"/>
+          <TextBlock x:Name="EnrichmentExportStatus" TextWrapping="Wrap"
+                     Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,8"/>
           <DataGrid x:Name="EnrichmentProviderGrid" AutoGenerateColumns="False" IsReadOnly="True" Height="160"
                     EnableRowVirtualization="True" AutomationProperties.Name="Enrichment provider health">
             <DataGrid.Columns>

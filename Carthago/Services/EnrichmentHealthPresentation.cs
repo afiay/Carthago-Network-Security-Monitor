@@ -11,6 +11,40 @@ internal sealed record EnrichmentHealthDisplay(string Summary, IReadOnlyList<Enr
 
 internal static class EnrichmentHealthPresentation
 {
+    // Explicit aggregate-only export; never serialize the entire StatsSnapshot.
+    internal static string ExportCounters(TrafficCaptureService.StatsSnapshot stats,
+        System.DateTimeOffset sampledUtc, int processId, System.DateTimeOffset processStartedUtc)
+    {
+        var storage = stats.EnrichmentStorage;
+        var providers = new Dictionary<string, EnrichmentProviderSnapshot>();
+        foreach (var name in new[] { "whois", "reputation", "vpn-proxy" })
+            if (stats.EnrichmentProviders.TryGetValue(name, out var value)) providers[name] = value;
+        return System.Text.Json.JsonSerializer.Serialize(new
+        {
+            schemaVersion = 1,
+            sampledUtc = sampledUtc.ToUniversalTime(),
+            processId,
+            processStartedUtc = processStartedUtc.ToUniversalTime(),
+            scope = "service lifetime except queue depth and current/last session registry gauges",
+            queueDepth = stats.EnrichmentQueueDepth,
+            fallbacks = stats.EnrichmentFallbacks,
+            coverage = stats.EnrichmentCoverage,
+            workers = stats.EnrichmentWorkers,
+            providers,
+            geoCity = stats.GeoCityLookupHealth,
+            geoAsn = stats.GeoAsnLookupHealth,
+            geoCache = stats.GeoCacheHealth,
+            storage = storage is null ? null : new
+            {
+                assets = storage.Assets,
+                destinations = storage.Destinations,
+                checkpointWrites = storage.Checkpoints.Writes,
+                checkpointFailures = storage.Checkpoints.Failures,
+                checkpointDiagnosticPresent = storage.Checkpoints.LastError is not null
+            }
+        }, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+    }
+
     internal static EnrichmentHealthDisplay Build(TrafficCaptureService.StatsSnapshot? stats)
     {
         var providers = new List<EnrichmentProviderDisplay>();
