@@ -20,6 +20,8 @@ namespace Carthago.Services
             public string? Host { get; init; }
             public string? UserAgent { get; init; }
             public string? HttpVersion { get; init; }
+            // Absence claims require a bounded, syntactically valid complete request header block.
+            public bool CompleteRequestHeaders { get; init; }
             public List<string> HeaderNames { get; init; } = new();
             public string? JoinedHeaderLines { get; init; }
             public bool ObservedDefaultBasicCredential { get; init; }
@@ -69,6 +71,7 @@ namespace Carthago.Services
             int circleCiHeaderCount = 0;
             int authorizationHeaderCount = 0;
             bool headerSectionComplete = false;
+            bool validRequestHeaders = method != null && (httpVersion == "HTTP/1.0" || httpVersion == "HTTP/1.1");
             int idx = offset;
             var headerNames = new List<string>();
             var sbJoin = new StringBuilder();
@@ -87,6 +90,10 @@ namespace Carthago.Services
                 idx += end + CRLF.Length;
 
                 int colon = line.IndexOf((byte)':');
+                if (idx > 8192 || colon <= 0 || !IsHeaderName(line.Slice(0, colon)))
+                    validRequestHeaders = false;
+                foreach (byte b in line)
+                    if ((b < 32 && b != 9) || b == 127) validRequestHeaders = false;
                 if (colon > 0)
                 {
                     var name = ToAscii(line.Slice(0, colon));
@@ -164,6 +171,7 @@ namespace Carthago.Services
                 Host = host,
                 UserAgent = ua,
                 HttpVersion = httpVersion,
+                CompleteRequestHeaders = headerSectionComplete && validRequestHeaders && idx <= 8190,
                 JoinedHeaderLines = sbJoin.ToString(),
                 ObservedDefaultBasicCredential = headerSectionComplete && defaultBasicObserved && authorizationHeaderCount == 1,
                 ObservedGitHubTokenPattern = headerSectionComplete && authorizationHeaderCount <= 1 && githubTokenObserved,
@@ -177,6 +185,16 @@ namespace Carthago.Services
                 ObservedAwsListSecretsRequest = headerSectionComplete && method != null && awsTargetCount == 1 && awsListSecretsObserved,
                 HeaderNames = headerNames
             };
+        }
+
+        private static bool IsHeaderName(ReadOnlySpan<byte> name)
+        {
+            if (name.IsEmpty) return false;
+            foreach (byte b in name)
+                if (!((b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') ||
+                      (b >= '0' && b <= '9') || "!#$%&'*+-.^_`|~".IndexOf((char)b) >= 0))
+                    return false;
+            return true;
         }
 
         // Token-shaped query values are classified before the retained URI is

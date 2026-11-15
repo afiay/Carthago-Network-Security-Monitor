@@ -53,6 +53,31 @@ public sealed class PortableApplicationParserTests
         Assert.DoesNotContain("YWRtaW46YWRtaW4=",info.JoinedHeaderLines);
     }
 
+    [Theory]
+    [InlineData("Host: example.test\r\n\r\n", true)]
+    [InlineData("Host: example.test\r\n", false)]
+    [InlineData("Host: example.test\r\nUser-Agent", false)]
+    [InlineData("Host: example.test\r\nUser-Agent : client\r\n\r\n", false)]
+    [InlineData("Host: example.test\r\n folded\r\n\r\n", false)]
+    [InlineData("Host: example.test\r\nUser-Agent: \r\n\r\n", true)]
+    public void CompleteRequestHeadersRequiresValidTerminatedBlock(string headers, bool expected)
+    {
+        var wire = Encoding.ASCII.GetBytes("POST /tunnel?cmd=read HTTP/1.1\r\n" + headers);
+        Assert.True(HttpLight.TryParseHttp(wire, out var info));
+        Assert.Equal(expected, info.CompleteRequestHeaders);
+        if (headers.Contains("User-Agent: "))
+            Assert.Contains("User-Agent", info.HeaderNames);
+    }
+
+    [Fact]
+    public void CompleteRequestHeadersRejectsOversizedBlock()
+    {
+        var wire = Encoding.ASCII.GetBytes("POST /tunnel?cmd=read HTTP/1.1\r\nX-Test: " +
+            new string('a', 8192) + "\r\n\r\n");
+        Assert.True(HttpLight.TryParseHttp(wire, out var info));
+        Assert.False(info.CompleteRequestHeaders);
+    }
+
     private static byte[] DnsQuestion() => new byte[]
     {
         0x12,0x34,1,0,0,1,0,0,0,0,0,0,
