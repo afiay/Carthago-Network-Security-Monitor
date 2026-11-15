@@ -44,7 +44,7 @@ try {
         $cpu = [double]$p.TotalProcessorTime.TotalSeconds
         $percent = $null
         if ($null -ne $previousCpu) { $percent = Get-CpuPercent $previousCpu $cpu ($elapsed-$previousElapsed) $report.logicalProcessors }
-        [pscustomobject]@{ utc=[DateTime]::UtcNow.ToString('o'); elapsedSeconds=$elapsed; privateBytes=$p.PrivateMemorySize64; workingSetBytes=$p.WorkingSet64; threads=$p.Threads.Count; cpuSeconds=$cpu; cpuPercent=$percent } | Export-Csv -LiteralPath (Join-Path $dir 'samples.csv') -NoTypeInformation -Append
+        [pscustomobject]@{ utc=[DateTime]::UtcNow.ToString('o'); elapsedSeconds=$elapsed.ToString('R',[Globalization.CultureInfo]::InvariantCulture); privateBytes=$p.PrivateMemorySize64; workingSetBytes=$p.WorkingSet64; threads=$p.Threads.Count; cpuSeconds=$cpu.ToString('R',[Globalization.CultureInfo]::InvariantCulture); cpuPercent=$(if ($null -ne $percent) { $percent.ToString('R',[Globalization.CultureInfo]::InvariantCulture) }) } | Export-Csv -LiteralPath (Join-Path $dir 'samples.csv') -NoTypeInformation -Append
         $report.samples++
         $previousCpu=$cpu
         $previousElapsed=$elapsed
