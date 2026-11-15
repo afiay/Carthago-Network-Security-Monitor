@@ -745,6 +745,12 @@ namespace Carthago.Services
                 return IsCurrentEnrichmentRun(_runCts?.Token, token);
         }
 
+        // Stop detaches the session before signalling its token. Classify the
+        // terminal outcome against the same lifecycle boundary as admission.
+        internal static void RecordEnrichmentWorkerEnd(EnrichmentWorkerHealth health,
+            CancellationToken? current, CancellationToken workToken, bool returned, long elapsedMs)
+            => health.End(returned, !IsCurrentEnrichmentRun(current, workToken), elapsedMs);
+
         private async Task EnrichmentWorkerLoop()
         {
             try
@@ -767,8 +773,12 @@ namespace Carthago.Services
                     }
                     finally
                     {
-                        _workerHealth.End(returned, work.RunToken.IsCancellationRequested,
-                            (long)Stopwatch.GetElapsedTime(start).TotalMilliseconds);
+                        lock (_lifecycleLock)
+                        {
+                            RecordEnrichmentWorkerEnd(_workerHealth, _runCts?.Token,
+                                work.RunToken, returned,
+                                (long)Stopwatch.GetElapsedTime(start).TotalMilliseconds);
+                        }
                     }
                 }
             }

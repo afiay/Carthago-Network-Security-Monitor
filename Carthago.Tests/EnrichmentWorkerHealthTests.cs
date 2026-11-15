@@ -28,6 +28,32 @@ public sealed class EnrichmentWorkerHealthTests
         Assert.Contains("30.0 / 40", display);
     }
     [Fact]
+    public void Detached_Work_Return_Is_Cancelled_Even_Before_Token_Signal()
+    {
+        using var oldRun = new System.Threading.CancellationTokenSource();
+        using var newRun = new System.Threading.CancellationTokenSource();
+        var h = new EnrichmentWorkerHealth();
+        h.Start(1);
+        TrafficCaptureService.RecordEnrichmentWorkerEnd(h, null, oldRun.Token, true, 2);
+        Assert.False(oldRun.IsCancellationRequested);
+        h.Start(3);
+        TrafficCaptureService.RecordEnrichmentWorkerEnd(h, newRun.Token, oldRun.Token, true, 4);
+        h.Start(5);
+        TrafficCaptureService.RecordEnrichmentWorkerEnd(h, newRun.Token, newRun.Token, true, 6);
+        h.Start(7);
+        TrafficCaptureService.RecordEnrichmentWorkerEnd(h, newRun.Token, newRun.Token, false, 8);
+        newRun.Cancel();
+        h.Start(9);
+        TrafficCaptureService.RecordEnrichmentWorkerEnd(h, newRun.Token, newRun.Token, true, 10);
+        var snapshot = h.Snapshot();
+        Assert.Equal(5L, snapshot.Started);
+        Assert.Equal(3L, snapshot.Cancelled);
+        Assert.Equal(1L, snapshot.Returned);
+        Assert.Equal(1L, snapshot.Faulted);
+        Assert.Equal(30L, snapshot.ElapsedTotalMs);
+    }
+
+    [Fact]
     public void Empty_And_Missing_Metrics_Are_Not_Success()
     {
         Assert.Contains("unavailable", EnrichmentHealthPresentation.WorkerSummary(null));
