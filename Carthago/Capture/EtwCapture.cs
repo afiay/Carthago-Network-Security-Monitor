@@ -134,7 +134,8 @@ namespace Carthago.Capture
                         data.saddr.ToString(),
                         data.daddr.ToString(),
                         data.sport,
-                        data.dport);
+                        data.dport,
+                        data.TimeStamp);
 
                 session.Source.Kernel.TcpIpSend += data =>
                     Publish(
@@ -142,7 +143,8 @@ namespace Carthago.Capture
                         data.saddr.ToString(),
                         data.daddr.ToString(),
                         data.sport,
-                        data.dport);
+                        data.dport,
+                        data.TimeStamp);
 
                 session.Source.Kernel.UdpIpRecv += data =>
                     Publish(
@@ -150,7 +152,8 @@ namespace Carthago.Capture
                         data.saddr.ToString(),
                         data.daddr.ToString(),
                         data.sport,
-                        data.dport);
+                        data.dport,
+                        data.TimeStamp);
 
                 session.Source.Kernel.UdpIpSend += data =>
                     Publish(
@@ -158,7 +161,8 @@ namespace Carthago.Capture
                         data.saddr.ToString(),
                         data.daddr.ToString(),
                         data.sport,
-                        data.dport);
+                        data.dport,
+                        data.TimeStamp);
 
                 if (Volatile.Read(
                         ref run.StopRequested) != 0)
@@ -238,23 +242,15 @@ namespace Carthago.Capture
             string source,
             string destination,
             int sourcePort,
-            int destinationPort)
+            int destinationPort,
+            DateTime eventTimestamp)
         {
             Interlocked.Increment(ref _eventsObserved);
 
             try
             {
-                var record = new TrafficRecord
-                {
-                    Timestamp = DateTime.UtcNow.ToString("o"),
-                    Protocol = protocol,
-                    Source = source,
-                    Destination = destination,
-                    SourcePort = sourcePort,
-                    DestinationPort = destinationPort,
-                    IsTcp = protocol == "TCP",
-                    IsUdp = protocol == "UDP"
-                };
+                var record = CreateEventRecord(protocol, source, destination,
+                    sourcePort, destinationPort, eventTimestamp);
 
                 if (_channel.Writer.TryWrite(record))
                 {
@@ -275,6 +271,24 @@ namespace Carthago.Capture
                     ex.Message);
             }
         }
+
+        // TraceEvent TimeStamp is the event time, not callback delivery time.
+        // Keep packet-only evidence unset: kernel send/receive events are not frames.
+        internal static TrafficRecord CreateEventRecord(string protocol, string source,
+            string destination, int sourcePort, int destinationPort, DateTime eventTimestamp)
+            => new()
+            {
+                Timestamp = eventTimestamp.ToUniversalTime().ToString("o"),
+                Protocol = protocol,
+                Source = source,
+                Destination = destination,
+                SourcePort = sourcePort,
+                DestinationPort = destinationPort,
+                IsTcp = protocol == "TCP",
+                IsUdp = protocol == "UDP",
+                CaptureBackend = "ETW",
+                CaptureInterfaceEvidence = "InterfaceNotProvided"
+            };
 
         private void RecordDrop()
         {
