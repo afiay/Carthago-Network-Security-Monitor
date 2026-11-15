@@ -114,7 +114,8 @@ internal static class EnrichmentHealthPresentation
             $"verified interface: {c.InterfaceKnown:N0}/{c.Published:N0}; DNS correlated: {c.DnsCorrelated:N0}/{c.Published:N0}; " +
             $"TLS correlated: {c.TlsCorrelated:N0}/{c.Published:N0}. " +
             $"Local TCP/UDP records sampled after process stage: {c.ProcessEligible:N0}; TCP socket ownership: {c.ProcessStrong:N0}; " +
-            $"UDP binding only: {c.ProcessUdpBinding:N0}. Coverage is observed evidence availability, not protocol recall; UDP binding is not remote tuple proof.";
+            $"UDP binding only: {c.ProcessUdpBinding:N0}. Coverage is observed evidence availability, not protocol recall; UDP binding is not remote tuple proof. " +
+            $"ETW published records (lifetime): {c.EtwPublished:N0}/{c.Published:N0}. ETW kernel records do not supply packet payload or verified capture-interface identity; missing DNS/TLS evidence is not a negative protocol observation.";
     }
 
     internal static string WorkerSummary(EnrichmentWorkerSnapshot? w)
