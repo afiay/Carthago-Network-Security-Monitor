@@ -46,4 +46,29 @@ public sealed class ReviewedDnsJournalCheckpointTests
         if (expected) Assert.Equal(digest, actual);
         else Assert.Empty(actual);
     }
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Pinned_Digest_Rejects_Same_Revision_Equivocation(bool conflicting)
+    {
+        using var authority = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        byte[] deployment = SHA256.HashData(new byte[] { 1 });
+        byte[] digest = SHA256.HashData(new byte[] { 2 });
+        byte[] domain = Encoding.ASCII.GetBytes("CARTHAGO-DNS-JOURNAL-V2\\0");
+        byte[] checkpoint = new byte[domain.Length + 72];
+        domain.CopyTo(checkpoint, 0);
+        deployment.CopyTo(checkpoint, domain.Length);
+        BinaryPrimitives.WriteUInt64BigEndian(checkpoint.AsSpan(domain.Length + 32), 7);
+        digest.CopyTo(checkpoint, domain.Length + 40);
+        var verifier = new ReviewedDnsJournalCheckpoint(
+            authority.ExportSubjectPublicKeyInfo(), deployment, 7, digest);
+        byte[] expected = (byte[])digest.Clone();
+        Array.Clear(digest, 0, digest.Length);
+        if (conflicting) checkpoint[^1] ^= 1;
+        byte[] signature = authority.SignData(checkpoint, HashAlgorithmName.SHA256,
+            DSASignatureFormat.IeeeP1363FixedFieldConcatenation);
+        Assert.Equal(!conflicting, verifier.TryVerify(checkpoint, signature, out var actual));
+        if (conflicting) Assert.Empty(actual);
+        else Assert.Equal(expected, actual);
+    }
 }

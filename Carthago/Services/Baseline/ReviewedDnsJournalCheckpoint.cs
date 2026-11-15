@@ -15,6 +15,7 @@ namespace Carthago.Services.Baseline
         private readonly byte[] _authorityKey;
         private readonly byte[] _deploymentId;
         private readonly ulong _currentRevision;
+        private readonly byte[]? _expectedDigest;
 
         internal ReviewedDnsJournalCheckpoint(ReadOnlySpan<byte> authorityKey,
             ReadOnlySpan<byte> deploymentId, ulong currentRevision)
@@ -25,6 +26,18 @@ namespace Carthago.Services.Baseline
             _authorityKey = authorityKey.ToArray();
             _deploymentId = deploymentId.ToArray();
             _currentRevision = currentRevision;
+        }
+
+        // A separately provisioned digest also rejects equivocation at the same
+        // revision. The revision-only constructor remains diagnostic-only.
+        internal ReviewedDnsJournalCheckpoint(ReadOnlySpan<byte> authorityKey,
+            ReadOnlySpan<byte> deploymentId, ulong currentRevision,
+            ReadOnlySpan<byte> expectedDigest)
+            : this(authorityKey, deploymentId, currentRevision)
+        {
+            if (expectedDigest.Length != 32)
+                throw new ArgumentException("Invalid checkpoint digest.");
+            _expectedDigest = expectedDigest.ToArray();
         }
 
         // Fixed wire format: domain, 32-byte deployment ID, big-endian uint64
@@ -40,6 +53,8 @@ namespace Carthago.Services.Baseline
             if (!bytes.Slice(0, Domain.Length).SequenceEqual(Domain) ||
                 !bytes.Slice(Domain.Length, 32).SequenceEqual(_deploymentId) ||
                 BinaryPrimitives.ReadUInt64BigEndian(bytes.Slice(Domain.Length + 32, 8)) != _currentRevision ||
+                (_expectedDigest != null && !CryptographicOperations.FixedTimeEquals(
+                    bytes.Slice(Domain.Length + 40, 32), _expectedDigest)) ||
                 !ReviewedDnsReviewSignature.Matches(snapshot, signature, _authorityKey))
                 return false;
             journalDigest = bytes.Slice(Domain.Length + 40, 32).ToArray();
