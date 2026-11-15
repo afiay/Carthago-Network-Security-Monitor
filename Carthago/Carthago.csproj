@@ -78,6 +78,9 @@
     <Compile Remove="Services/ProtocolIntelligence/LdapMessageInspector.cs" />
     <Compile Remove="Services/ProtocolIntelligence/TftpRequestInspector.cs" />
     <Compile Remove="Services/ProtocolIntelligence/TftpHandshakeTracker.cs" />
+    <Compile Remove="Services/ProtocolIntelligence/HttpAuthenticationRequestInspector.cs" />
+    <Compile Remove="Services/ProtocolIntelligence/HttpAuthenticationResponseInspector.cs" />
+    <Compile Remove="Services/ProtocolIntelligence/HttpAuthenticationResponseCorrelation.cs" />
     <Compile Remove="Services/ProtocolIntelligence/Smb2WriteExchange.cs" />
     <Compile Remove="Services/ProtocolIntelligence/Smb2WriteTargetContext.cs" />
     <Compile Remove="Services/ProtocolIntelligence/SnmpEnterpriseSetInspector.cs" />

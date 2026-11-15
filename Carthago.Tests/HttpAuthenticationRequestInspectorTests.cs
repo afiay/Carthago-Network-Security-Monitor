@@ -8,6 +8,15 @@ namespace Carthago.Tests;
 
 public sealed class HttpAuthenticationRequestInspectorTests
 {
+    [Fact]
+    public void Authentication_Primitives_Are_Owned_By_Portable_Core()
+    {
+        var core = typeof(Carthago.Models.TrafficRecord).Assembly;
+        Assert.Same(core, typeof(HttpAuthenticationRequestInspector).Assembly);
+        Assert.Same(core, typeof(HttpAuthenticationResponseInspector).Assembly);
+        Assert.Same(core, typeof(HttpAuthenticationResponseCorrelation).Assembly);
+    }
+
     [Theory]
     [InlineData("GET / HTTP/1.1\r\nHost: camera\r\n\r\n", true)]
     [InlineData("GET /login HTTP/1.1\r\nHost: camera\r\nContent-Length: 0\r\n\r\n", true)]

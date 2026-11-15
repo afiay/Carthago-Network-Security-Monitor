@@ -42,6 +42,9 @@
     <Compile Include="../Carthago/Services/ProtocolIntelligence/LdapMessageInspector.cs" Link="Services/ProtocolIntelligence/LdapMessageInspector.cs" />
     <Compile Include="../Carthago/Services/ProtocolIntelligence/TftpRequestInspector.cs" Link="Services/ProtocolIntelligence/TftpRequestInspector.cs" />
     <Compile Include="../Carthago/Services/ProtocolIntelligence/TftpHandshakeTracker.cs" Link="Services/ProtocolIntelligence/TftpHandshakeTracker.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/HttpAuthenticationRequestInspector.cs" Link="Services/ProtocolIntelligence/HttpAuthenticationRequestInspector.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/HttpAuthenticationResponseInspector.cs" Link="Services/ProtocolIntelligence/HttpAuthenticationResponseInspector.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/HttpAuthenticationResponseCorrelation.cs" Link="Services/ProtocolIntelligence/HttpAuthenticationResponseCorrelation.cs" />
     <Compile Include="../Carthago/Services/ProtocolIntelligence/Smb2WriteExchange.cs" Link="Services/ProtocolIntelligence/Smb2WriteExchange.cs" />
     <Compile Include="../Carthago/Services/ProtocolIntelligence/Smb2WriteTargetContext.cs" Link="Services/ProtocolIntelligence/Smb2WriteTargetContext.cs" />
     <Compile Include="../Carthago/Services/NetworkBatch226230Wire.cs" Link="Services/NetworkBatch226230Wire.cs" />
