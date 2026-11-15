@@ -59,4 +59,35 @@ public sealed class EnrichmentWorkerHealthTests
         Assert.Contains("unavailable", EnrichmentHealthPresentation.WorkerSummary(null));
         Assert.Contains("—", EnrichmentHealthPresentation.WorkerSummary(new EnrichmentWorkerHealth().Snapshot()));
     }
+    [Fact]
+    public void Sustained_Concurrent_Worker_Accounting_Reconciles_Exactly()
+    {
+        const int batches = 32, perBatch = 128;
+        var h = new EnrichmentWorkerHealth();
+        using var run = new System.Threading.CancellationTokenSource();
+        using var detached = new System.Threading.CancellationTokenSource();
+        for (int batch = 0; batch < batches; batch++)
+        {
+            System.Threading.Tasks.Parallel.For(0, perBatch, i =>
+            {
+                if (i % 4 == 0) { h.SkipCancelled(); return; }
+                h.Start(2);
+                TrafficCaptureService.RecordEnrichmentWorkerEnd(h, run.Token,
+                    i % 4 == 2 ? detached.Token : run.Token, i % 4 != 3, 5);
+                var interim = h.Snapshot();
+                Assert.InRange(interim.Returned + interim.Cancelled + interim.Faulted, 0L, interim.Started);
+            });
+            var snapshot = h.Snapshot();
+            long each = (batch + 1) * (perBatch / 4);
+            Assert.Equal(each, snapshot.Returned);
+            Assert.Equal(each, snapshot.Cancelled);
+            Assert.Equal(each, snapshot.Faulted);
+            Assert.Equal(each, snapshot.Skipped);
+            Assert.Equal(each * 3, snapshot.Started);
+            Assert.Equal(each * 6, snapshot.WaitTotalMs);
+            Assert.Equal(each * 15, snapshot.ElapsedTotalMs);
+            Assert.Equal(2L, snapshot.WaitMaxMs);
+            Assert.Equal(5L, snapshot.ElapsedMaxMs);
+        }
+    }
 }
