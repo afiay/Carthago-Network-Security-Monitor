@@ -55,6 +55,21 @@ public sealed class R163AdvancedAccuracyBatchTests
         Assert.True(result.Matched);
         Assert.DoesNotContain(Assert.Single(result.Events).StructuredEvidence!.Items,x=>x.Value.Contains("SECRETROLE",StringComparison.Ordinal));
     }
+    [Theory]
+    [InlineData("traceparent: 00-0123456789abcdef0123456789abcdef-0123456789abcdef-01")]
+    [InlineData("X-Request-Id: synthetic-request-123")]
+    public async Task Caller_Supplied_Trace_Headers_Do_Not_Establish_Causality(string header)
+    {
+        var r = Metadata();
+        r.HttpRequestHeaders += "\r\n" + header;
+        var result = await new R163_SsrfMetadataServiceProbeRule()
+            .EvaluateAsync(NetworkBatch156165Context.At(r));
+        Assert.True(result.Matched);
+        var items = Assert.Single(result.Events).StructuredEvidence!.Items;
+        Assert.Contains(items, x => x.Value == "not-established");
+        Assert.Contains(items, x => x.Value == "not-observed");
+        Assert.DoesNotContain(items, x => x.Value.Contains(header, StringComparison.Ordinal));
+    }
     [Fact] public void Policy_And_Confidence_Floor_Are_Preserved()
     {
         var p=new R163_SsrfMetadataServiceProbeRule().PrecisionProfile;
