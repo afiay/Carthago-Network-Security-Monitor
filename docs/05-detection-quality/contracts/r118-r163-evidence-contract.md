@@ -162,6 +162,25 @@ boundary; passive capture cannot manufacture missing causality.
    A passing unit suite is not a substitute for production capture validation
    or a representative field confusion matrix.
 
+## R163 process attribution boundary (GA-09bg)
+
+The current TrafficRecord process fields (ProcessId, ProcessName and
+ProcessAttribution) describe network/process attribution, not application
+request ancestry. Even accurate socket-to-process attribution does not
+identify which inbound request caused an outbound call in a concurrent
+server. A PID alone is reusable and the attribution label is not an
+authenticated span or process-start identity. The R163 evaluator must retain
+not-established causality and not-observed response outcome when only these
+fields are present. Two synthetic rule controls cover socket and ETW-style
+attribution labels; neither is a claim of actual ETW capture.
+
+External dependency: instrumented application/ingress telemetry with
+authenticated producer identity, accepted inbound request and outbound span
+ancestry, process instance and actual socket binding. Until supplied and
+independently validated, keep the 84% floor and existing policy. Proceed
+with R102 and exact-ID qualification rather than treating process attribution
+as a substitute.
+
 ## Known limitations and next implementation gates
 
 - The current lightweight packet parser inspects early TCP payload bytes;
