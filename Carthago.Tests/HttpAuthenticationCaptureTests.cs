@@ -67,4 +67,41 @@ public sealed class HttpAuthenticationCaptureTests
         Assert.Equal(expected ? observed.Id : (Guid?)null, response.HttpAuthenticationResponseCorrelationId);
         Assert.Equal(expected ? 401 : (int?)null, response.HttpAuthenticationResponseStatus);
     }
+
+    [Fact]
+    public void Capture_Outcome_Is_Not_Restored_From_Json()
+    {
+        var p = new PortablePacketProcessor();
+        Parse(p,false,2,100,0);
+        Parse(p,true,0x12,500,101);
+        const string request = "GET / HTTP/1.1\r\nHost: camera\r\nAuthorization: Basic YWRtaW46YWRtaW4=\r\n\r\n";
+        var observed = Parse(p,false,0x18,101,501,request);
+        var response = Parse(p,true,0x18,501,101u + (uint)request.Length,
+            "HTTP/1.1 401 Unauthorized\r\nContent-Length: 0\r\n\r\n");
+        Assert.Equal(observed.Id, response.HttpAuthenticationResponseCorrelationId);
+        Assert.Equal(401, response.HttpAuthenticationResponseStatus);
+        var json = System.Text.Json.JsonSerializer.Serialize(response);
+        Assert.Contains(nameof(TrafficRecord.HttpAuthenticationResponseCorrelationId), json);
+        Assert.Contains(nameof(TrafficRecord.HttpAuthenticationResponseStatus), json);
+        var imported = System.Text.Json.JsonSerializer.Deserialize<TrafficRecord>(json)!;
+        Assert.Null(imported.HttpAuthenticationResponseCorrelationId);
+        Assert.Null(imported.HttpAuthenticationResponseStatus);
+    }
+
+    [Theory]
+    [InlineData(401)]
+    [InlineData(403)]
+    public void External_Json_Cannot_Assert_Capture_Outcome(int status)
+    {
+        var json = System.Text.Json.JsonSerializer.Serialize(new
+        {
+            HttpAuthenticationResponseCorrelationId = Guid.NewGuid(),
+            HttpAuthenticationResponseStatus = status,
+            HttpBasicDefaultCredentialObserved = true
+        });
+        var imported = System.Text.Json.JsonSerializer.Deserialize<TrafficRecord>(json)!;
+        Assert.Null(imported.HttpAuthenticationResponseCorrelationId);
+        Assert.Null(imported.HttpAuthenticationResponseStatus);
+        Assert.False(imported.HttpBasicDefaultCredentialObserved);
+    }
 }
