@@ -4,6 +4,8 @@ using System.Buffers.Binary;
 using System.Net;
 using System.Text;
 using Carthago.Models;
+using Carthago.Engine.Rules;
+using Carthago.Engine.Rules.Expansion;
 using Carthago.Services;
 using Xunit;
 
@@ -24,6 +26,33 @@ public sealed class R601HeaderCaptureTests
         BinaryPrimitives.WriteUInt32BigEndian(frame.AsSpan(28,4), ack);
         frame[32] = 0x50; frame[33] = flags; bytes.CopyTo(frame,40);
         return Assert.IsType<TrafficRecord>(p.ParseFrame(frame,12));
+    }
+
+    internal static TrafficRecord Request(string method, string uri, string headers)
+    {
+        var p = new PortablePacketProcessor(() => DateTime.UtcNow);
+        Parse(p,false,2,100,0);
+        Parse(p,true,0x12,500,101);
+        return Parse(p,false,0x18,101,501,method + " " + uri + " HTTP/1.1\r\n" + headers);
+    }
+
+    [Theory]
+    [InlineData("POST", "/tunnel.jsp?cmd=connect", "Host: camera\r\n\r\n", true)]
+    [InlineData("POST", "/tunnel.jsp?cmd=connect", "Host: camera\r\nUser-Agent:\r\n\r\n", false)]
+    [InlineData("POST", "/tunnel.jsp?cmd=connect", "Host: camera\r\nReferer:\r\n\r\n", false)]
+    [InlineData("POST", "/tunnel.jsp?cmd=connect", "Host: camera\r\n", false)]
+    [InlineData("POST", "/tunnel.jsp?cmd=normal", "Host: camera\r\n\r\n", false)]
+    [InlineData("GET", "/tunnel.jsp?cmd=connect", "Host: camera\r\n\r\n", false)]
+    public async System.Threading.Tasks.Task Capture_To_Windows_And_Core(string method, string uri, string headers, bool expected)
+    {
+        var record = Request(method, uri, headers);
+        var context = new RuleEvaluationContext(record, Sensitivity.Balanced, DateTime.UnixEpoch);
+        var observation = new PortableR601Detector().Evaluate(context.Packet, out _);
+        var actual = await new R601_ReGeorgHeaderlessControlQueryRequestRule().EvaluateAsync(context);
+        Assert.Equal(expected, observation == WebSignatureObservation.Match);
+        Assert.Equal(expected, actual.Matched);
+        if (expected) Assert.Equal("R601", Assert.Single(actual.Events).RuleId);
+        else Assert.Empty(actual.Events);
     }
 
     [Theory]

@@ -271,3 +271,7 @@ Parser prerequisite authored/unexecuted: Carthago.Core/PortableApplicationParser
 ## Portable R601 capture evidence checkpoint — 865cfcf6a784de36a3142600dfe5b2b011de864a
 
 Bound complete request headers and case-insensitive User-Agent/Referer name presence to the shared raw-frame processor on complete SYN-anchored first client payloads; clear on TLS classification. Internal setters prevent default JSON restoration. Four raw capture cases authored in Carthago.Tests/R601HeaderCaptureTests.cs (complete absent, empty present, truncated, malformed), zero executed. This is producer evidence only; shared predicate, record-binding review, detector replay/parity and registration remain. Portable count 19. R272 final runtime-policy review and R273–R274 trusted authentication remain open.
+
+## R601 shared detector checkpoint — df80e065c227d46b2800004e803b95860033a3ad
+
+Implemented Core PortableR601Detector and Windows delegation to the same request-only predicate/cooldown. Requires complete capture-derived headers and rejects present (including empty) User-Agent or Referer, preserving prior query signatures, Shadow policy and confidence floor. Six raw capture-to-Core/Windows parity cases authored; grouped R596–R605 R601 fixtures now use actual capture producer rather than fabricated header absence. Zero tests executed. Catalog registration remains pending review of replay/CLI capability contracts and record mutation binding; portable count remains 19. R272 final policy gate and R273–R274 producer work remain open.

@@ -33,7 +33,9 @@ public sealed class R596R605AdvancedAccuracyBatchTests
     };
 
     private static TrafficRecord Request(string method, string uri, string agent, string headers)
-        => new()
+        => uri.StartsWith("/tunnel.jsp?", StringComparison.Ordinal)
+            ? R601HeaderCaptureTests.Request(method, uri, headers + "\r\n" + (string.IsNullOrEmpty(agent) ? "" : "User-Agent: " + agent + "\r\n") + "\r\n")
+            : new()
         {
             Id = Guid.NewGuid(), Source = "10.10.1.20", Destination = "10.10.1.30",
             IpVersion = 4, Protocol = "TCP", IsTcp = true, IsUdp = false,

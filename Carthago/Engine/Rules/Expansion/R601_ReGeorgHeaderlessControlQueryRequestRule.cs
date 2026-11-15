@@ -12,7 +12,7 @@ namespace Carthago.Engine.Rules.Expansion
             RuleId: "R601",
             Name: "ReGeorg-like headerless control query POST",
             Category: "HttpApi",
-            Description: "POST with known ReGeorg command parameters, absent User-Agent and captured header summary without Referer; not proof of a webshell.",
+            Description: "POST with known ReGeorg command parameters, capture-confirmed absent User-Agent and Referer; not proof of a webshell.",
             DefaultSeverity: SeverityLevel.High,
             ConfigKey: "Rules.R601.Enabled",
             EnabledByDefault: true);
@@ -20,7 +20,7 @@ namespace Carthago.Engine.Rules.Expansion
         private static readonly RulePrecisionProfile Profile = CreateEvidenceDrivenProfile(new PrecisionRuleSpec
         {
             RuleId = "R601", Name = "ReGeorg-like headerless control query POST", Category = "HttpApi",
-            Description = "POST with known ReGeorg command parameters, absent User-Agent and captured header summary without Referer; not proof of a webshell.", Severity = SeverityLevel.High,
+            Description = "POST with known ReGeorg command parameters, capture-confirmed absent User-Agent and Referer; not proof of a webshell.", Severity = SeverityLevel.High,
             Maturity = RulePrecisionMaturity.Candidate,
             RuntimeMode = RuleRuntimeMode.Shadow,
             RequiredTelemetry = new[] { RuleTelemetryKind.Flow, RuleTelemetryKind.Http },
@@ -53,17 +53,12 @@ namespace Carthago.Engine.Rules.Expansion
             }
         });
 
-        private readonly WebSignatureCooldown _cooldown = new();
+        private readonly PortableR601Detector _detector = new();
         public R601_ReGeorgHeaderlessControlQueryRequestRule() : base(Rule, Profile) { }
 
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            var record = context.Record;
-            if (!WebSignatureRequestEvidence.TryGet(record, out var method, out var uri)
-                || !SignatureMatches(method, uri, record.HttpUserAgent, record.HttpRequestHeaders))
-                return NoMatch();
-
-            var observed = _cooldown.Observe(record.Source!, record.Destination!, record.Id, context.TimestampUtc);
+            var observed = _detector.Evaluate(context.Packet, out var method);
             if (observed == WebSignatureObservation.None) return NoMatch();
             if (observed == WebSignatureObservation.Suppressed)
                 return RuleEvaluationResult.SuppressedMatch(Descriptor.RuleId);
@@ -86,20 +81,5 @@ namespace Carthago.Engine.Rules.Expansion
             return RuleEvaluationResult.Match(Descriptor.RuleId, evt);
         }
 
-        private static bool SignatureMatches(string method, string uri, string? userAgent, string? headers)
-        {
-            var mark = uri.IndexOf('?');
-            var path = mark >= 0 ? uri.Substring(0, mark) : uri;
-            var query = mark >= 0 ? uri.Substring(mark + 1) : string.Empty;
-            if (!string.Equals(method, "POST", StringComparison.OrdinalIgnoreCase)
-                || !string.IsNullOrWhiteSpace(userAgent)
-                || string.IsNullOrWhiteSpace(headers)
-                || headers.Contains("Referer:", StringComparison.OrdinalIgnoreCase)) return false;
-            return query.Contains("cmd=read", StringComparison.OrdinalIgnoreCase)
-                || query.Contains("connect&target", StringComparison.OrdinalIgnoreCase)
-                || query.Contains("cmd=connect", StringComparison.OrdinalIgnoreCase)
-                || query.Contains("cmd=disconnect", StringComparison.OrdinalIgnoreCase)
-                || query.Contains("cmd=forward", StringComparison.OrdinalIgnoreCase);
-        }
     }
 }
