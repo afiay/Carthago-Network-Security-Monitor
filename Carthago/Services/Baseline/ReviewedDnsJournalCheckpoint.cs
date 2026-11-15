@@ -67,7 +67,9 @@ namespace Carthago.Services.Baseline
         {
             count = 0;
             firstUtcTicks = lastUtcTicks = 0;
-            return admission != null && scope != null &&
+            // Revision-only verification is diagnostic; summary admission requires
+            // an independently provisioned digest, not one supplied by the checkpoint.
+            return _expectedDigest != null && admission != null && scope != null &&
                 TryVerify(checkpoint, signature, out var digest) &&
                 admission.TryReadAnchoredScopeSummary(scope, digest, out count,
                     out firstUtcTicks, out lastUtcTicks);

@@ -242,6 +242,15 @@ public sealed class ReviewedDnsPacketIntakeTests
                 var verifier = new ReviewedDnsJournalCheckpoint(authority.ExportSubjectPublicKeyInfo(), deployment, 2, anchor);
                 byte[] checkpoint = Checkpoint(anchor, 2, deployment);
                 byte[] checkpointSignature = SignCheckpoint(checkpoint);
+                var diagnosticVerifier = new ReviewedDnsJournalCheckpoint(
+                    authority.ExportSubjectPublicKeyInfo(), deployment, 2);
+                Assert.True(diagnosticVerifier.TryVerify(checkpoint, checkpointSignature, out var diagnosticDigest));
+                Assert.Equal(anchor, diagnosticDigest);
+                Assert.False(diagnosticVerifier.TryReadSummary(reopened, scope, checkpoint, checkpointSignature,
+                    out count, out first, out last));
+                Assert.Equal(0, count);
+                Assert.Equal(0L, first);
+                Assert.Equal(0L, last);
                 Assert.True(verifier.TryReadSummary(reopened, scope, checkpoint, checkpointSignature,
                     out count, out first, out last));
                 Assert.Equal(2, count);
