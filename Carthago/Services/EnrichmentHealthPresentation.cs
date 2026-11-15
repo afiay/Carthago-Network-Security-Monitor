@@ -36,6 +36,7 @@ internal static class EnrichmentHealthPresentation
             geoCache = stats.GeoCacheHealth,
             storage = storage is null ? null : new
             {
+                registrySessionId = stats.RegistrySessionId,
                 assets = storage.Assets,
                 destinations = storage.Destinations,
                 checkpointWrites = storage.Checkpoints.Writes,

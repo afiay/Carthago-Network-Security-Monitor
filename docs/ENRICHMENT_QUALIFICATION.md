@@ -42,3 +42,8 @@ City and ASN completed database attempts are derived separately from found/not-f
 ### Phase 16.5c — invariant runtime evidence
 
 Sampler writes floating-point CSV values using invariant round-trip formatting. Analyzer parses decimal strings with invariant Float style (no grouping), rejects boolean and nonfinite values, and accepts typed UTC/offset timestamps returned by newer PowerShell JSON readers. Offsetless strings and unspecified DateTime values reject. Added Swedish-culture decimal and malformed-value fixtures; run both sampler and analyzer -SelfTest in Windows PowerShell 5.1 and PowerShell 7. Existing locale-dependent CSV evidence may require recollection. Execution pending.
+
+
+### Phase 16.6a — Registry identity
+
+Aggregate schema 1 adds optional `storage.registrySessionId`, the GUID of the current/last observed-asset registry, captured under the lifecycle lock with its capacity snapshots. This is registry identity, not proof of active capture. The analyzer emits registry rejection deltas only when both snapshots have the same nonempty GUID; legacy, missing or changed identities yield null. Ending counts and limits are gauges. Same-registry rejection decreases reject evidence. Run `analyze-enrichment-runtime.ps1 -SelfTest` and the `EnrichmentHealthPresentationTests` group; Windows execution pending.

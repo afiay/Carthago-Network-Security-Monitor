@@ -11,6 +11,7 @@ public sealed class EnrichmentHealthPresentationTests
     {
         var stats = new TrafficCaptureService.StatsSnapshot
         {
+            RegistrySessionId = System.Guid.Parse("12345678-1234-1234-1234-123456789abc"),
             EnrichmentCoverage = new(10, 5, 2, 1, 0, 4, 2, 1, 3),
             EnrichmentProviders = new Dictionary<string, EnrichmentProviderSnapshot>
             {
@@ -29,8 +30,17 @@ public sealed class EnrichmentHealthPresentationTests
         Assert.Equal(10, root.GetProperty("coverage").GetProperty("Published").GetInt64());
         Assert.Equal(2, root.GetProperty("providers").GetProperty("whois").GetProperty("CacheHits").GetInt64());
         Assert.True(root.GetProperty("storage").GetProperty("checkpointDiagnosticPresent").GetBoolean());
+        Assert.Equal(stats.RegistrySessionId.Value, root.GetProperty("storage").GetProperty("registrySessionId").GetGuid());
         Assert.DoesNotContain("private-path-marker", json);
         Assert.Equal(System.Text.Json.JsonValueKind.Null, root.GetProperty("workers").ValueKind);
+    }
+
+    [Fact]
+    public void Aggregate_Export_Without_Registry_Identity_Does_Not_Invent_One()
+    {
+        var stats = new TrafficCaptureService.StatsSnapshot { EnrichmentStorage = new(new(0, 32, 0), new(0, 32, 0), new(0, 0, null)) };
+        using var doc = System.Text.Json.JsonDocument.Parse(EnrichmentHealthPresentation.ExportCounters(stats, System.DateTimeOffset.UtcNow, 42, System.DateTimeOffset.UtcNow));
+        Assert.Equal(System.Text.Json.JsonValueKind.Null, doc.RootElement.GetProperty("storage").GetProperty("registrySessionId").ValueKind);
     }
 
     [Fact]

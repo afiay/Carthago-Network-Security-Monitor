@@ -1403,8 +1403,12 @@ namespace Carthago.Services
             // Checkpoint counters are service-lifetime, not session counters.
             var checkpoints = _assetHistory.HealthSnapshot();
             (EnrichmentStorageSnapshot Storage, (int Retained, int Closed, long CapacityRejections)? Tls) session;
+            Guid registrySessionId;
             lock (_lifecycleLock)
+            {
+                registrySessionId = _observedAssets.SessionId;
                 session = SnapshotSessionHealth(_observedAssets, _tlsConnections, checkpoints);
+            }
             return new()
             {
             PacketsCaptured = Interlocked.Read(ref _packetsCaptured),
@@ -1425,6 +1429,7 @@ namespace Carthago.Services
             EnrichmentWorkers = _workerHealth.Snapshot(),
             EnrichmentCoverage = _coverageHealth.Snapshot(),
             EnrichmentStorage = session.Storage,
+            RegistrySessionId = registrySessionId,
             TlsCapacity = session.Tls,
             GeoCityDatabaseStatus = _geoIpService.CityDatabaseStatus,
             GeoAsnDatabaseStatus = _geoIpService.AsnDatabaseStatus,
@@ -1565,6 +1570,7 @@ namespace Carthago.Services
             public EnrichmentWorkerSnapshot? EnrichmentWorkers { get; init; }
             public EnrichmentCoverageSnapshot? EnrichmentCoverage { get; init; }
             public EnrichmentStorageSnapshot? EnrichmentStorage { get; init; }
+            public Guid? RegistrySessionId { get; init; }
             public GeoIpService.DatabaseAvailability? GeoCityDatabaseStatus { get; init; }
             public GeoIpService.DatabaseAvailability? GeoAsnDatabaseStatus { get; init; }
             public GeoIpService.LookupHealthSnapshot? GeoCityLookupHealth { get; init; }

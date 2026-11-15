@@ -80,6 +80,21 @@ function Get-CheckpointInterval($a,$b) {
     if ($null -eq $a -or $null -eq $b) { return $null }
     return [pscustomobject]@{writes=(Get-Delta $a.checkpointWrites $b.checkpointWrites);failures=(Get-Delta $a.checkpointFailures $b.checkpointFailures);diagnosticPresent=$b.checkpointDiagnosticPresent}
 }
+function Get-RegistryInterval($a,$b) {
+    $idA=Get-OptionalEvidence $a 'registrySessionId'
+    $idB=Get-OptionalEvidence $b 'registrySessionId'
+    $ga=[Guid]::Empty; $gb=[Guid]::Empty
+    if (-not [Guid]::TryParse([string]$idA,[ref]$ga) -or -not [Guid]::TryParse([string]$idB,[ref]$gb) -or $ga -eq [Guid]::Empty -or $ga -ne $gb) { return $null }
+    $result=[ordered]@{registrySessionId=$gb.ToString('D')}
+    foreach ($name in @('assets','destinations')) {
+        $x=Get-OptionalEvidence $a $name; $y=Get-OptionalEvidence $b $name
+        $result[$name]=$null
+        if ($null -ne $x -and $null -ne $y) {
+            $result[$name]=[pscustomobject]@{rejected=(Get-Delta $x.Rejected $y.Rejected);count=(Read-Number $y.Count);limit=(Read-Number $y.Limit)}
+        }
+    }
+    return [pscustomobject]$result
+}
 function Analyze($meta,$rows,$health) {
     if ($meta.status -ne 'sampling-completed' -or $rows.Count -lt 2 -or $rows.Count -ne $meta.samples) { throw 'Incomplete process evidence' }
     $start=Read-Time $meta.processStartUtc
@@ -120,7 +135,7 @@ function Analyze($meta,$rows,$health) {
                 $ms=Get-Delta $prev.workers.ElapsedTotalMs $h.workers.ElapsedTotalMs
                 if ($terminal -gt 0) { $mean=$ms/$terminal }
             }
-            $intervals+= [pscustomobject]@{fromUtc=$prev.sampledUtc;toUtc=$h.sampledUtc;seconds=$seconds;published=$published;publishedPerSecond=$rate;fallbackRequests=$fallback;fallbackPerPublished=$ratio;workerMeanElapsedMs=$mean;providers=(Get-ProviderIntervals $prev.providers $h.providers);geoCity=(Get-GeoLookupInterval (Get-OptionalEvidence $prev 'geoCity') (Get-OptionalEvidence $h 'geoCity'));geoAsn=(Get-GeoLookupInterval (Get-OptionalEvidence $prev 'geoAsn') (Get-OptionalEvidence $h 'geoAsn'));geoCache=(Get-GeoCacheInterval (Get-OptionalEvidence $prev 'geoCache') (Get-OptionalEvidence $h 'geoCache'));checkpoints=(Get-CheckpointInterval (Get-OptionalEvidence $prev 'storage') (Get-OptionalEvidence $h 'storage'))}
+            $intervals+= [pscustomobject]@{fromUtc=$prev.sampledUtc;toUtc=$h.sampledUtc;seconds=$seconds;published=$published;publishedPerSecond=$rate;fallbackRequests=$fallback;fallbackPerPublished=$ratio;workerMeanElapsedMs=$mean;providers=(Get-ProviderIntervals $prev.providers $h.providers);geoCity=(Get-GeoLookupInterval (Get-OptionalEvidence $prev 'geoCity') (Get-OptionalEvidence $h 'geoCity'));geoAsn=(Get-GeoLookupInterval (Get-OptionalEvidence $prev 'geoAsn') (Get-OptionalEvidence $h 'geoAsn'));geoCache=(Get-GeoCacheInterval (Get-OptionalEvidence $prev 'geoCache') (Get-OptionalEvidence $h 'geoCache'));checkpoints=(Get-CheckpointInterval (Get-OptionalEvidence $prev 'storage') (Get-OptionalEvidence $h 'storage'));registries=(Get-RegistryInterval (Get-OptionalEvidence $prev 'storage') (Get-OptionalEvidence $h 'storage'))}
         }
         $prev=$h
     }
@@ -172,6 +187,15 @@ if ($SelfTest) {
     $rejected=$false
     try { Get-GeoLookupInterval $gb $ga | Out-Null } catch { $rejected=$true }
     if (-not $rejected) { throw 'Geo reset accepted' }
+    $ra=[pscustomobject]@{registrySessionId='12345678-1234-1234-1234-123456789abc';assets=[pscustomobject]@{Rejected=2;Count=5;Limit=8}}
+    $rb=[pscustomobject]@{registrySessionId=$ra.registrySessionId;assets=[pscustomobject]@{Rejected=4;Count=4;Limit=8}}
+    $d=Get-RegistryInterval $ra $rb
+    if ($d.assets.rejected -ne 2 -or $d.assets.count -ne 4 -or $null -ne $d.destinations) { throw 'Registry interval fixture failed' }
+    $rejected=$false
+    try { Get-RegistryInterval $rb $ra | Out-Null } catch { $rejected=$true }
+    if (-not $rejected) { throw 'Same registry counter reset accepted' }
+    $rb.registrySessionId='22345678-1234-1234-1234-123456789abc'
+    if ($null -ne (Get-RegistryInterval $ra $rb) -or $null -ne (Get-RegistryInterval $null $rb)) { throw 'Cross-session or missing identity accepted' }
     $oldCulture=[Threading.Thread]::CurrentThread.CurrentCulture
     try {
         [Threading.Thread]::CurrentThread.CurrentCulture=[Globalization.CultureInfo]::GetCultureInfo('sv-SE')
