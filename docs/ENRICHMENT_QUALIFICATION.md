@@ -23,3 +23,8 @@ Run after starting the desired capture and warming up for five minutes. Supply t
 ## Phase 16.3 — aggregate application counter snapshots
 
 During the runtime sampler, open Monitoring Health and click Copy aggregate counters (JSON) at the beginning, every five minutes, and at the end. Save each clipboard value to a separate local JSON file. Match processId and processStartedUtc to runtime.json and sampledUtc to samples.csv; do not combine different process identities. Snapshot time is the UI refresh time, not clipboard time. Service-lifetime counters may span capture restarts; registry gauges are current/last session and must not be differenced across sessions. Export contains only selected aggregate counters, no packet payloads or checkpoint diagnostic text. Missing snapshots remain null; absent provider rows are omitted. No automatic polling or file writes added. UI and Windows test execution pending.
+
+
+## Phase 16.4 — runtime evidence correlation
+
+Run ` .\analyze-enrichment-runtime.ps1 -SelfTest ` then ` .\analyze-enrichment-runtime.ps1 -RuntimeDirectory <runtime-dir> -HealthPaths <first.json>,<second.json> `. Supply snapshots in chronological order within the process sampling window. Output JSON reports measured CPU, private memory change and per-interval publication/fallback/worker elapsed metrics; null means unavailable. No performance acceptance, binary provenance or native capture accuracy is inferred. Four synthetic fixtures authored; execution pending. Registry gauges and provider/checkpoint deltas are not analyzed in this increment.
