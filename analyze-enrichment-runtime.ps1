@@ -18,6 +18,28 @@ function Get-Delta($a,$b) {
     if ($d -lt 0) { throw 'Lifetime counter decreased' }
     return $d
 }
+function Get-ProviderIntervals($before,$after) {
+    $result=[ordered]@{}
+    foreach ($name in @('whois','reputation','vpn-proxy')) {
+        if ($null -eq $before -or $null -eq $after) { continue }
+        $a=$before.PSObject.Properties[$name]; $b=$after.PSObject.Properties[$name]
+        if ($null -eq $a -or $null -eq $b) { continue }
+        $d=[ordered]@{}
+        $total=0
+        foreach ($field in @('Success','Unavailable','Failed','TimedOut','Cancelled')) {
+            $d[$field]=Get-Delta $a.Value.$field $b.Value.$field
+            $total+=$d[$field]
+        }
+        $d['CacheHits']=Get-Delta $a.Value.CacheHits $b.Value.CacheHits
+        $ms=Get-Delta $a.Value.TotalElapsedMs $b.Value.TotalElapsedMs
+        $d['outcomes']=$total
+        $d['meanElapsedMs']=$null
+        $d['successShare']=$null
+        if ($total -gt 0) { $d['meanElapsedMs']=$ms/$total; $d['successShare']=$d['Success']/$total }
+        $result[$name]=[pscustomobject]$d
+    }
+    return [pscustomobject]$result
+}
 function Analyze($meta,$rows,$health) {
     if ($meta.status -ne 'sampling-completed' -or $rows.Count -lt 2 -or $rows.Count -ne $meta.samples) { throw 'Incomplete process evidence' }
     $start=Read-Time $meta.processStartUtc
@@ -58,7 +80,7 @@ function Analyze($meta,$rows,$health) {
                 $ms=Get-Delta $prev.workers.ElapsedTotalMs $h.workers.ElapsedTotalMs
                 if ($terminal -gt 0) { $mean=$ms/$terminal }
             }
-            $intervals+= [pscustomobject]@{fromUtc=$prev.sampledUtc;toUtc=$h.sampledUtc;seconds=$seconds;published=$published;publishedPerSecond=$rate;fallbackRequests=$fallback;fallbackPerPublished=$ratio;workerMeanElapsedMs=$mean}
+            $intervals+= [pscustomobject]@{fromUtc=$prev.sampledUtc;toUtc=$h.sampledUtc;seconds=$seconds;published=$published;publishedPerSecond=$rate;fallbackRequests=$fallback;fallbackPerPublished=$ratio;workerMeanElapsedMs=$mean;providers=(Get-ProviderIntervals $prev.providers $h.providers)}
         }
         $prev=$h
     }
@@ -71,8 +93,8 @@ if ($SelfTest) {
         [pscustomobject]@{utc='2026-01-01T00:00:01Z';elapsedSeconds=1;privateBytes=100;workingSetBytes=80;threads=2;cpuSeconds=1},
         [pscustomobject]@{utc='2026-01-01T00:00:03Z';elapsedSeconds=3;privateBytes=120;workingSetBytes=90;threads=2;cpuSeconds=3})
     $h=@(
-        [pscustomobject]@{schemaVersion=1;processId=42;processStartedUtc=$m.processStartUtc;sampledUtc=$rows[0].utc;fallbacks=0;coverage=[pscustomobject]@{Published=10};workers=$null},
-        [pscustomobject]@{schemaVersion=1;processId=42;processStartedUtc=$m.processStartUtc;sampledUtc=$rows[1].utc;fallbacks=1;coverage=[pscustomobject]@{Published=14};workers=$null})
+        [pscustomobject]@{schemaVersion=1;processId=42;processStartedUtc=$m.processStartUtc;sampledUtc=$rows[0].utc;fallbacks=0;coverage=[pscustomobject]@{Published=10};workers=$null;providers=$null},
+        [pscustomobject]@{schemaVersion=1;processId=42;processStartedUtc=$m.processStartUtc;sampledUtc=$rows[1].utc;fallbacks=1;coverage=[pscustomobject]@{Published=14};workers=$null;providers=$null})
     $r=Analyze $m $rows $h
     if ($r.cpuPercent -ne 25 -or $r.privateBytesChange -ne 20 -or $r.healthIntervals[0].publishedPerSecond -ne 2 -or $r.healthIntervals[0].fallbackPerPublished -ne 0.25) { throw 'Valid fixture failed' }
     $h[1].coverage.Published=10
@@ -85,7 +107,16 @@ if ($SelfTest) {
     $rejected=$false
     try { Analyze $m $rows $h | Out-Null } catch { $rejected=$true }
     if (-not $rejected) { throw 'Identity mismatch accepted' }
-    Write-Host 'PASS: four analyzer fixtures'
+    $p=[pscustomobject]@{whois=[pscustomobject]@{Success=1;Unavailable=0;Failed=0;TimedOut=0;Cancelled=0;CacheHits=2;TotalElapsedMs=10}}
+    $q=[pscustomobject]@{whois=[pscustomobject]@{Success=2;Unavailable=0;Failed=0;TimedOut=0;Cancelled=1;CacheHits=5;TotalElapsedMs=30}}
+    $d=(Get-ProviderIntervals $p $q).whois
+    if ($d.outcomes -ne 2 -or $d.meanElapsedMs -ne 10 -or $d.successShare -ne 0.5 -or $d.CacheHits -ne 3) { throw 'Provider denominator fixture failed' }
+    $d=(Get-ProviderIntervals $p $p).whois
+    if ($null -ne $d.meanElapsedMs -or $null -ne $d.successShare) { throw 'Provider zero denominator fixture failed' }
+    $rejected=$false
+    try { Get-ProviderIntervals $q $p | Out-Null } catch { $rejected=$true }
+    if (-not $rejected) { throw 'Provider reset accepted' }
+    Write-Host 'PASS: seven analyzer fixtures'
     return
 }
 if (-not $RuntimeDirectory -or $HealthPaths.Count -lt 2) { throw 'Specify RuntimeDirectory and at least two chronological HealthPaths' }

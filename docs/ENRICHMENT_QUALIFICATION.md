@@ -28,3 +28,7 @@ During the runtime sampler, open Monitoring Health and click Copy aggregate coun
 ## Phase 16.4 — runtime evidence correlation
 
 Run ` .\analyze-enrichment-runtime.ps1 -SelfTest ` then ` .\analyze-enrichment-runtime.ps1 -RuntimeDirectory <runtime-dir> -HealthPaths <first.json>,<second.json> `. Supply snapshots in chronological order within the process sampling window. Output JSON reports measured CPU, private memory change and per-interval publication/fallback/worker elapsed metrics; null means unavailable. No performance acceptance, binary provenance or native capture accuracy is inferred. Four synthetic fixtures authored; execution pending. Registry gauges and provider/checkpoint deltas are not analyzed in this increment.
+
+### Provider interval evidence (Phase 16.5a)
+
+The analyzer reports per-provider outcome deltas, cache-hit deltas, success share and mean elapsed milliseconds. The denominator includes all five terminal outcomes, including cancellation; cache hits are separate path events. Missing provider rows are omitted and zero outcomes yield null ratios. Counter decreases reject the evidence. Run `./analyze-enrichment-runtime.ps1 -SelfTest` (seven fixtures). Windows execution remains pending.
