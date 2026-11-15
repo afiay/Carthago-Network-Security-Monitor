@@ -90,4 +90,49 @@ public sealed class EnrichmentWorkerHealthTests
             Assert.Equal(5L, snapshot.ElapsedMaxMs);
         }
     }
+
+    [Fact]
+    public async System.Threading.Tasks.Task Worker_Drain_Continues_After_Item_Fault_Without_Retry()
+    {
+        var channel = System.Threading.Channels.Channel.CreateBounded<int>(3);
+        Assert.True(channel.Writer.TryWrite(1));
+        Assert.True(channel.Writer.TryWrite(2));
+        Assert.True(channel.Writer.TryWrite(3));
+        channel.Writer.Complete();
+        var seen = new System.Collections.Generic.List<int>();
+        var errors = new System.Collections.Generic.List<System.Exception>();
+        await TrafficCaptureService.DrainEnrichmentItemsAsync(channel.Reader, item =>
+        {
+            seen.Add(item);
+            if (item == 1) throw new System.InvalidOperationException("item fault");
+            if (item == 2) throw new System.OperationCanceledException("item cancellation");
+            return System.Threading.Tasks.Task.CompletedTask;
+        }, errors.Add, System.Threading.CancellationToken.None);
+        Assert.Equal(new[] { 1, 2, 3 }, seen);
+        Assert.Collection(errors,
+            ex => Assert.IsType<System.InvalidOperationException>(ex),
+            ex => Assert.IsType<System.OperationCanceledException>(ex));
+    }
+
+    [Fact]
+    public async System.Threading.Tasks.Task Worker_Drain_Stops_On_Service_Cancellation()
+    {
+        using var stop = new System.Threading.CancellationTokenSource();
+        var channel = System.Threading.Channels.Channel.CreateBounded<int>(2);
+        Assert.True(channel.Writer.TryWrite(1));
+        Assert.True(channel.Writer.TryWrite(2));
+        channel.Writer.Complete();
+        var seen = new System.Collections.Generic.List<int>();
+        var errors = new System.Collections.Generic.List<System.Exception>();
+        await Assert.ThrowsAnyAsync<System.OperationCanceledException>(() =>
+            TrafficCaptureService.DrainEnrichmentItemsAsync(channel.Reader, item =>
+            {
+                seen.Add(item);
+                stop.Cancel();
+                stop.Token.ThrowIfCancellationRequested();
+                return System.Threading.Tasks.Task.CompletedTask;
+            }, errors.Add, stop.Token));
+        Assert.Equal(new[] { 1 }, seen);
+        Assert.Empty(errors);
+    }
 }

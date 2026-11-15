@@ -751,17 +751,36 @@ namespace Carthago.Services
             CancellationToken? current, CancellationToken workToken, bool returned, long elapsedMs)
             => health.End(returned, !IsCurrentEnrichmentRun(current, workToken), elapsedMs);
 
+        internal static async Task DrainEnrichmentItemsAsync<T>(
+            ChannelReader<T> reader, Func<T, Task> process,
+            Action<Exception> reportFault, CancellationToken serviceToken)
+        {
+            await foreach (var work in reader.ReadAllAsync(serviceToken).ConfigureAwait(false))
+            {
+                serviceToken.ThrowIfCancellationRequested();
+                try
+                {
+                    await process(work).ConfigureAwait(false);
+                }
+                catch (Exception ex) when (!serviceToken.IsCancellationRequested)
+                {
+                    // A failed record must not permanently remove a worker.
+                    // Do not retry: evaluation may already have had side effects.
+                    reportFault(ex);
+                }
+            }
+        }
+
         private async Task EnrichmentWorkerLoop()
         {
             try
             {
-                await foreach (var work in _enrichmentChannel.Reader.ReadAllAsync(_serviceCts.Token)
-                                   .ConfigureAwait(false))
+                await DrainEnrichmentItemsAsync(_enrichmentChannel.Reader, async work =>
                 {
                     if (!IsEnrichmentRunActive(work.RunToken))
                     {
                         _workerHealth.SkipCancelled();
-                        continue;
+                        return;
                     }
                     long start = Stopwatch.GetTimestamp();
                     _workerHealth.Start((long)Stopwatch.GetElapsedTime(work.EnqueuedAt, start).TotalMilliseconds);
@@ -780,9 +799,9 @@ namespace Carthago.Services
                                 (long)Stopwatch.GetElapsedTime(start).TotalMilliseconds);
                         }
                     }
-                }
+                }, Log, _serviceCts.Token).ConfigureAwait(false);
             }
-            catch (OperationCanceledException) { /* service disposed */ }
+            catch (OperationCanceledException) when (_serviceCts.IsCancellationRequested) { /* service disposed */ }
             catch (Exception ex) { Log(ex); }
         }
 
