@@ -27,6 +27,11 @@ public sealed class HttpAuthenticationRequestInspectorTests
     [InlineData("GET / HTTP/1.1\r\nHost: camera\r\nHost: other\r\n\r\n", false)]
     [InlineData("GET / HTTP/1.1\r\nHost: camera\r\nContent-Length: 0\r\nContent-Length: 0\r\n\r\n", false)]
     [InlineData("GET / HTTP/1.1\r\nHost: camera\r\n", false)]
+    [InlineData("GET / HTTP/1.1\r\nHost: camera local\r\n\r\n", false)]
+    [InlineData("GET / HTTP/1.1\r\nHost: camera\tlocal\r\n\r\n", false)]
+    [InlineData("GET / HTTP/1.1\r\nHost: camera\r\nAuthorization: Basic YWRtaW46YWRtaW4=\r\nauthorization: Basic dTpw\r\n\r\n", false)]
+    [InlineData("GET / HTTP/1.1\r\nHost: camera\r\nAuthorization: \t\r\n\r\n", false)]
+    [InlineData("GET / HTTP/1.1\r\nHost: camera\r\nAuthorization: Basic YWRtaW46YWRtaW4=\r\n\r\n", true)]
     public void Framing_Gates_Association(string request, bool expected)
     {
         var payload = Encoding.ASCII.GetBytes(request);

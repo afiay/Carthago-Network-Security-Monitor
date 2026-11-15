@@ -20,7 +20,7 @@ namespace Carthago.Services.ProtocolIntelligence
             foreach (byte c in target)
                 if (c <= 32 || c >= 127) return false;
             int offset = first + 2;
-            bool host = false, length = false;
+            bool host = false, length = false, authorization = false;
             while (offset < end)
             {
                 int next = payload[offset..].IndexOf("\r\n"u8);
@@ -47,7 +47,14 @@ namespace Carthago.Services.ProtocolIntelligence
                 if (Equal(name, "Host"u8))
                 {
                     if (host || value.IsEmpty) return false;
+                    foreach (byte c in value)
+                        if (c <= 32 || c >= 127) return false;
                     host = true;
+                }
+                if (Equal(name, "Authorization"u8))
+                {
+                    if (authorization || value.IsEmpty) return false;
+                    authorization = true;
                 }
                 offset += next + 2;
             }
