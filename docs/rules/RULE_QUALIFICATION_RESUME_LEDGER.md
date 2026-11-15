@@ -280,3 +280,7 @@ Implemented Core PortableR601Detector and Windows delegation to the same request
 ## R601 record binding checkpoint — b172db719bd170a9b54025c8bc0ac7ccb279bc2f
 
 Capture producer now binds complete-header evidence to the exact record ID, endpoints, ports, method, URI, header summary, agent and host. Shared detector rejects changed metadata even when capture flags remain true. Six raw-capture mutation cases authored against Core and Windows, zero executed. No new registration or readiness promotion; next inspect CLI catalog and replay registration. R272 policy review and R273–R274 trusted producer remain open.
+
+## R601 portable registration checkpoint — 935f9fbb27f4af8ea7ca07cad7a76b7e226f9dd8
+
+Register the existing capture-bound shared evaluator in PortableRuleCatalog (20 compiled IDs, 980 outside catalog); declare complete header and presence evidence. Update capability tests and existing unanchored replay control; add six actual classic PCAP replay cases with SYN/SYN-ACK and complete, empty-header, incomplete, benign and wrong-method controls. Windows Shadow policy unchanged; replay does not evaluate Windows policy. Authored six cases, executed zero; source candidate, not a passing qualification or field accuracy claim. Next: verify replay state/reset and pcapng parity, reconcile CLI documentation and R272 policy gate; then R606–R610. R270/R273–R274 remain producer work.

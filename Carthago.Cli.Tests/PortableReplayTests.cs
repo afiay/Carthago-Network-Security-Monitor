@@ -274,7 +274,7 @@ public sealed class PortableReplayTests
     }
 
     [Fact]
-    public async Task FourMigratedRulesReplayAndHeaderAbsenceRemainsUnsupported()
+    public async Task FourMigratedRulesReplayAndUnanchoredHeaderAbsenceDoesNotMatch()
     {
         var bytes=Pcap((100,Frame("/SolarWinds/api/WebResource.axd","GET"),null),
             (101,Frame("/?handle=com.bea.console.handles.JndiBindingHandle&ref=ldap://example.test&server=AdminServer","GET"),null),
@@ -288,8 +288,44 @@ public sealed class PortableReplayTests
         Assert.Equal(1,replay.GetProperty("suppressedCount").GetInt32());
         Assert.Equal(new[]{"R602","R603","R604","R605"},replay.GetProperty("findings").EnumerateArray()
             .Select(f=>f.GetProperty("ruleId").GetString()).ToArray());
-        Assert.Equal("unsupported_detector",replay.GetProperty("rules")[0].GetProperty("status").GetString());
-        Assert.Equal(0,replay.GetProperty("rules")[0].GetProperty("evaluated").GetInt32());
+        Assert.Equal("evaluated",replay.GetProperty("rules")[0].GetProperty("status").GetString());
+        Assert.Equal(6,replay.GetProperty("rules")[0].GetProperty("evaluated").GetInt32());
         Assert.DoesNotContain("ldap://",r.Output);
+    }
+
+    [Theory]
+    [InlineData("POST","/?cmd=connect","Host: example.test\r\n\r\n",true)]
+    [InlineData("POST","/?cmd=connect","Host: example.test\r\nUser-Agent:\r\n\r\n",false)]
+    [InlineData("POST","/?cmd=connect","Host: example.test\r\nReferer:\r\n\r\n",false)]
+    [InlineData("POST","/?cmd=connect","Host: example.test\r\n",false)]
+    [InlineData("POST","/?cmd=normal","Host: example.test\r\n\r\n",false)]
+    [InlineData("GET","/?cmd=connect","Host: example.test\r\n\r\n",false)]
+    public async Task R601ReplayRequiresCompleteAnchoredRequest(string method,string uri,string headers,bool expected)
+    {
+        byte[] Segment(bool reverse,byte flags,uint seq,uint ack,string payload="")
+        {
+            var data=Encoding.ASCII.GetBytes(payload);
+            var frame=new byte[40+data.Length];
+            frame[0]=0x45;frame[8]=64;frame[9]=6;
+            BinaryPrimitives.WriteUInt16BigEndian(frame.AsSpan(2),(ushort)frame.Length);
+            (reverse?new byte[]{198,51,100,2,192,0,2,1}:new byte[]{192,0,2,1,198,51,100,2}).CopyTo(frame,12);
+            BinaryPrimitives.WriteUInt16BigEndian(frame.AsSpan(20),(ushort)(reverse?80:51000));
+            BinaryPrimitives.WriteUInt16BigEndian(frame.AsSpan(22),(ushort)(reverse?51000:80));
+            BinaryPrimitives.WriteUInt32BigEndian(frame.AsSpan(24),seq);
+            BinaryPrimitives.WriteUInt32BigEndian(frame.AsSpan(28),ack);
+            frame[32]=0x50;frame[33]=flags;data.CopyTo(frame,40);
+            return frame;
+        }
+        var syn=Segment(false,2,100,0);
+        var synAck=Segment(true,0x12,500,101);
+        var request=Segment(false,0x18,101,501,method+" "+uri+" HTTP/1.1\r\n"+headers);
+        var bytes=PcapWithSequence(false,(100,syn,null),(101,synAck,null),(102,request,null));
+        var result=await Run(bytes,".pcap","R601");
+        Assert.Equal(0,result.Code);
+        using var json=JsonDocument.Parse(result.Output);
+        var replay=json.RootElement.GetProperty("replay");
+        Assert.Equal(expected?1:0,replay.GetProperty("matchCount").GetInt32());
+        Assert.Equal("evaluated",replay.GetProperty("rules")[0].GetProperty("status").GetString());
+        Assert.DoesNotContain("cmd=connect",result.Output);
     }
 }

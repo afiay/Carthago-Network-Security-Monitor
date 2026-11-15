@@ -25,9 +25,9 @@ public sealed class PortableRuleCapabilityTests
         using var json=JsonDocument.Parse(result.Out);var root=json.RootElement;
         Assert.Equal("compiled_portable_catalog",root.GetProperty("scope").GetString());
         Assert.Equal("not_assessed",root.GetProperty("registration").GetString());
-        Assert.Equal(19,root.GetProperty("supportedCount").GetInt32());
+        Assert.Equal(20,root.GetProperty("supportedCount").GetInt32());
         var rows=root.GetProperty("rules").EnumerateArray().ToArray();
-        Assert.Equal(new[]{"R586","R587","R588","R589","R590","R591","R592","R593","R594","R595","R596","R597","R598","R599","R600","R602","R603","R604","R605"},rows.Select(r=>r.GetProperty("ruleId").GetString()).ToArray());
+        Assert.Equal(new[]{"R586","R587","R588","R589","R590","R591","R592","R593","R594","R595","R596","R597","R598","R599","R600","R601","R602","R603","R604","R605"},rows.Select(r=>r.GetProperty("ruleId").GetString()).ToArray());
         foreach(var r in rows)
         {
             Assert.Equal("supported",r.GetProperty("status").GetString());
@@ -101,8 +101,8 @@ public sealed class PortableRuleCapabilityTests
             ["R604"]="/ecp/test?__VIEWSTATE=example",
             ["R605"]="/upload.action?filename=../../../../example"};
         var first=new PortableReplayDispatcher();var second=new PortableReplayDispatcher();
-        Assert.Equal(paths.Keys.OrderBy(x=>x).ToArray(),PortableRuleCatalog.All.Select(x=>x.RuleId).ToArray());
-        foreach(var capability in PortableRuleCatalog.All)
+        Assert.Equal(paths.Keys.OrderBy(x=>x).ToArray(),PortableRuleCatalog.All.Where(x=>x.RuleId!="R601").Select(x=>x.RuleId).ToArray());
+        foreach(var capability in PortableRuleCatalog.All.Where(x=>x.RuleId!="R601"))
         {
             var id=capability.RuleId;
             Assert.True(PortableReplayDispatcher.Supports(id));
@@ -131,14 +131,16 @@ public sealed class PortableRuleCapabilityTests
     }
 
     [Fact]
-    public async Task HeaderAbsenceRuleRemainsUnsupportedWithExplicitReason()
+    public async Task HeaderAbsenceRuleRequiresCaptureEvidence()
     {
         var result=await Run("rules","capabilities","R601","--json");
         Assert.Equal(0,result.Code);
         using var json=JsonDocument.Parse(result.Out);
         var row=json.RootElement.GetProperty("rules")[0];
-        Assert.Equal("unsupported_detector",row.GetProperty("status").GetString());
-        Assert.Equal("complete_http_header_evidence_required",row.GetProperty("reason").GetString());
-        Assert.False(PortableReplayDispatcher.Supports("R601"));
+        Assert.Equal("supported",row.GetProperty("status").GetString());
+        Assert.Contains("http.complete_request_headers",row.GetProperty("requiredEvidence").EnumerateArray().Select(x=>x.GetString()));
+        Assert.True(PortableReplayDispatcher.Supports("R601"));
+        var record=new TrafficRecord{Source="192.0.2.1",Destination="198.51.100.2",SourcePort=51000,DestinationPort=80,Protocol="TCP",IsTcp=true,Length=128,L4Len=88,ApplicationProtocol="HTTP",HttpMethod="POST",HttpUri="/?cmd=read"};
+        Assert.Equal(WebSignatureObservation.None,new PortableReplayDispatcher().Evaluate("R601",new PacketEvaluationContext(record,Sensitivity.Balanced,DateTime.UnixEpoch),out _));
     }
 }
