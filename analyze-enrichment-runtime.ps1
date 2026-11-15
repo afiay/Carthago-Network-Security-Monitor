@@ -40,6 +40,36 @@ function Get-ProviderIntervals($before,$after) {
     }
     return [pscustomobject]$result
 }
+function Get-OptionalEvidence($snapshot,$name) {
+    if ($null -eq $snapshot) { return $null }
+    $p=$snapshot.PSObject.Properties[$name]
+    if ($null -ne $p) { return $p.Value }
+    return $null
+}
+function Get-GeoLookupInterval($a,$b) {
+    if ($null -eq $a -or $null -eq $b) { return $null }
+    $found=Get-Delta $a.Found $b.Found
+    $notFound=Get-Delta $a.NotFound $b.NotFound
+    $failed=Get-Delta $a.Failed $b.Failed
+    $attempts=$found+$notFound+$failed
+    $share=$null
+    if ($attempts -gt 0) { $share=$failed/$attempts }
+    return [pscustomobject]@{attempts=$attempts;found=$found;notFound=$notFound;failed=$failed;failureShare=$share}
+}
+function Get-GeoCacheInterval($a,$b) {
+    if ($null -eq $a -or $null -eq $b) { return $null }
+    $positive=Get-Delta $a.PositiveHits $b.PositiveHits
+    $negative=Get-Delta $a.NegativeHits $b.NegativeHits
+    $misses=Get-Delta $a.Misses $b.Misses
+    $requests=$positive+$negative+$misses
+    $share=$null
+    if ($requests -gt 0) { $share=($positive+$negative)/$requests }
+    return [pscustomobject]@{requests=$requests;positiveHits=$positive;negativeHits=$negative;misses=$misses;hitShare=$share;expired=(Get-Delta $a.Expired $b.Expired);evicted=(Get-Delta $a.Evicted $b.Evicted);occupancy=(Read-Number $b.Occupancy);capacity=(Read-Number $b.Capacity)}
+}
+function Get-CheckpointInterval($a,$b) {
+    if ($null -eq $a -or $null -eq $b) { return $null }
+    return [pscustomobject]@{writes=(Get-Delta $a.checkpointWrites $b.checkpointWrites);failures=(Get-Delta $a.checkpointFailures $b.checkpointFailures);diagnosticPresent=$b.checkpointDiagnosticPresent}
+}
 function Analyze($meta,$rows,$health) {
     if ($meta.status -ne 'sampling-completed' -or $rows.Count -lt 2 -or $rows.Count -ne $meta.samples) { throw 'Incomplete process evidence' }
     $start=Read-Time $meta.processStartUtc
@@ -80,7 +110,7 @@ function Analyze($meta,$rows,$health) {
                 $ms=Get-Delta $prev.workers.ElapsedTotalMs $h.workers.ElapsedTotalMs
                 if ($terminal -gt 0) { $mean=$ms/$terminal }
             }
-            $intervals+= [pscustomobject]@{fromUtc=$prev.sampledUtc;toUtc=$h.sampledUtc;seconds=$seconds;published=$published;publishedPerSecond=$rate;fallbackRequests=$fallback;fallbackPerPublished=$ratio;workerMeanElapsedMs=$mean;providers=(Get-ProviderIntervals $prev.providers $h.providers)}
+            $intervals+= [pscustomobject]@{fromUtc=$prev.sampledUtc;toUtc=$h.sampledUtc;seconds=$seconds;published=$published;publishedPerSecond=$rate;fallbackRequests=$fallback;fallbackPerPublished=$ratio;workerMeanElapsedMs=$mean;providers=(Get-ProviderIntervals $prev.providers $h.providers);geoCity=(Get-GeoLookupInterval (Get-OptionalEvidence $prev 'geoCity') (Get-OptionalEvidence $h 'geoCity'));geoAsn=(Get-GeoLookupInterval (Get-OptionalEvidence $prev 'geoAsn') (Get-OptionalEvidence $h 'geoAsn'));geoCache=(Get-GeoCacheInterval (Get-OptionalEvidence $prev 'geoCache') (Get-OptionalEvidence $h 'geoCache'));checkpoints=(Get-CheckpointInterval (Get-OptionalEvidence $prev 'storage') (Get-OptionalEvidence $h 'storage'))}
         }
         $prev=$h
     }
@@ -116,7 +146,23 @@ if ($SelfTest) {
     $rejected=$false
     try { Get-ProviderIntervals $q $p | Out-Null } catch { $rejected=$true }
     if (-not $rejected) { throw 'Provider reset accepted' }
-    Write-Host 'PASS: seven analyzer fixtures'
+    $ga=[pscustomobject]@{Found=1;NotFound=2;Failed=0}
+    $gb=[pscustomobject]@{Found=3;NotFound=3;Failed=1}
+    $d=Get-GeoLookupInterval $ga $gb
+    if ($d.attempts -ne 4 -or $d.failureShare -ne 0.25) { throw 'Geo lookup denominator fixture failed' }
+    if ($null -ne (Get-GeoLookupInterval $ga $ga).failureShare -or $null -ne (Get-GeoLookupInterval $null $gb)) { throw 'Geo missing/zero fixture failed' }
+    $ca=[pscustomobject]@{PositiveHits=1;NegativeHits=2;Misses=3;Expired=0;Evicted=0;Occupancy=5;Capacity=8}
+    $cb=[pscustomobject]@{PositiveHits=3;NegativeHits=3;Misses=4;Expired=1;Evicted=2;Occupancy=4;Capacity=8}
+    $d=Get-GeoCacheInterval $ca $cb
+    if ($d.requests -ne 4 -or $d.hitShare -ne 0.75 -or $d.occupancy -ne 4 -or $d.evicted -ne 2) { throw 'Geo cache fixture failed' }
+    $sa=[pscustomobject]@{checkpointWrites=10;checkpointFailures=1;checkpointDiagnosticPresent=$false}
+    $sb=[pscustomobject]@{checkpointWrites=11;checkpointFailures=1;checkpointDiagnosticPresent=$true}
+    $d=Get-CheckpointInterval $sa $sb
+    if ($d.writes -ne 1 -or $d.failures -ne 0 -or -not $d.diagnosticPresent) { throw 'Checkpoint diagnostic fixture failed' }
+    $rejected=$false
+    try { Get-GeoLookupInterval $gb $ga | Out-Null } catch { $rejected=$true }
+    if (-not $rejected) { throw 'Geo reset accepted' }
+    Write-Host 'PASS: twelve analyzer fixtures'
     return
 }
 if (-not $RuntimeDirectory -or $HealthPaths.Count -lt 2) { throw 'Specify RuntimeDirectory and at least two chronological HealthPaths' }

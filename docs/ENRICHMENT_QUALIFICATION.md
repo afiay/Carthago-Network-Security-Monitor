@@ -32,3 +32,8 @@ Run ` .\analyze-enrichment-runtime.ps1 -SelfTest ` then ` .\analyze-enrichment-r
 ### Provider interval evidence (Phase 16.5a)
 
 The analyzer reports per-provider outcome deltas, cache-hit deltas, success share and mean elapsed milliseconds. The denominator includes all five terminal outcomes, including cancellation; cache hits are separate path events. Missing provider rows are omitted and zero outcomes yield null ratios. Counter decreases reject the evidence. Run `./analyze-enrichment-runtime.ps1 -SelfTest` (seven fixtures). Windows execution remains pending.
+
+
+### Phase 16.5b — GeoIP and checkpoint intervals
+
+City and ASN completed database attempts are derived separately from found/not-found/failed deltas. Cache eligible requests are derived from positive/negative hits and misses, not database attempts; occupancy is an ending gauge, not a delta. Checkpoint writes and failures are independent of the ending diagnostic flag, which is not a warning count. Missing snapshots yield null; decreasing lifetime counters reject. Session registry deltas remain unavailable without session identity. Five additional synthetic fixtures authored (twelve total); execution pending. Run `./analyze-enrichment-runtime.ps1 -SelfTest`.
