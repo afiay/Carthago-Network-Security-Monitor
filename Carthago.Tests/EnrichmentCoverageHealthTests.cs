@@ -63,4 +63,29 @@ public sealed class EnrichmentCoverageHealthTests
         Assert.Contains("ETW published records (lifetime): 1/3", summary);
         Assert.Contains("missing DNS/TLS evidence is not a negative protocol observation", summary);
     }
+
+    [Fact]
+    public void Concurrent_Coverage_Samples_Retain_Exact_Denominators()
+    {
+        var h = new EnrichmentCoverageHealth();
+        const int count = 4096;
+        System.Threading.Tasks.Parallel.For(0, count, i =>
+        {
+            var r = new TrafficRecord
+            {
+                IsTcp = true, SrcIsLocalHost = true, DstIsLocalHost = false,
+                CaptureBackend = i % 2 == 0 ? "ETW" : "Npcap",
+                ProcessId = 42,
+                ProcessAttribution = i % 2 == 0 ? "CaptureProvided" : "TcpSocketTable"
+            };
+            h.ObservePublication(r);
+            h.ObserveProcess(r);
+            var snapshot = h.Snapshot();
+            Assert.InRange(snapshot.EtwPublished, 0L, snapshot.Published);
+            Assert.InRange(snapshot.ProcessStrong, 0L, snapshot.ProcessEligible);
+            Assert.InRange(snapshot.ProcessEligible, 0L, snapshot.Published);
+        });
+        Assert.Equal(new EnrichmentCoverageSnapshot(count, count, 0, 0, 0,
+            count, count / 2, 0, count / 2), h.Snapshot());
+    }
 }
