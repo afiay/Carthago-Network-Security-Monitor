@@ -15,9 +15,9 @@ public sealed class AssetHistoryStoreTests : IDisposable
         IsTcp = true, TcpFlags = 0x12, Source = "192.168.1.10", Destination = "8.8.8.8",
         SourcePort = 443, DestinationPort = 50000, SrcIsLocalHost = true, CaptureBackend = "ETW"
     };
-    private static ObservedAssetRegistry Registry()
+    private static ObservedAssetRegistry Registry(DateTimeOffset? started = null)
     {
-        var registry = new ObservedAssetRegistry();
+        var registry = started.HasValue ? new ObservedAssetRegistry(started.Value) : new ObservedAssetRegistry();
         registry.Observe(Local(), Now);
         return registry;
     }
@@ -79,7 +79,7 @@ public sealed class AssetHistoryStoreTests : IDisposable
         Assert.True(store.Save(new ObservedAssetRegistry()));
         Assert.Equal(0, store.Read().SessionCount);
         for (int i = 0; i < AssetHistoryStore.MaxSessions + 2; i++)
-            Assert.True(store.Save(Registry()));
+            Assert.True(store.Save(Registry(Now.AddSeconds(i))));
         Assert.Equal(AssetHistoryStore.MaxSessions, Directory.GetFiles(_directory, "*.json").Length);
         Assert.Equal(AssetHistoryStore.MaxSessions, store.Read().SessionCount);
     }
@@ -171,9 +171,9 @@ public sealed class AssetHistoryStoreTests : IDisposable
             File.Delete(path);
         });
         for (int i = 0; i < AssetHistoryStore.MaxSessions; i++)
-            Assert.True(store.Save(Registry()));
+            Assert.True(store.Save(Registry(Now.AddSeconds(i))));
 
-        var latest = Registry();
+        var latest = Registry(Now.AddMinutes(1));
         Assert.True(store.Save(latest));
         var health = store.HealthSnapshot();
         Assert.Equal((long)AssetHistoryStore.MaxSessions + 1, health.Writes);
@@ -199,12 +199,12 @@ public sealed class AssetHistoryStoreTests : IDisposable
             File.Delete(path);
         });
         for (int i = 0; i < AssetHistoryStore.MaxSessions; i++)
-            Assert.True(store.Save(Registry()));
-        var existing = Registry();
+            Assert.True(store.Save(Registry(Now.AddSeconds(i))));
+        var existing = Registry(Now.AddMinutes(1));
         Assert.True(store.Save(existing));
         var before = Directory.GetFiles(_directory, "*.json").OrderBy(p => p).ToArray();
         Assert.Equal(AssetHistoryStore.MaxSessions + 1, before.Length);
-        var rejected = Registry();
+        var rejected = Registry(Now.AddMinutes(2));
         for (int i = 0; i < 3; i++)
         {
             Assert.False(store.Save(rejected));
@@ -219,6 +219,25 @@ public sealed class AssetHistoryStoreTests : IDisposable
         Assert.True(store.Save(rejected));
         Assert.Equal(AssetHistoryStore.MaxSessions, Directory.GetFiles(_directory, "*.json").Length);
         Assert.Null(store.LastSaveError);
+        Assert.Empty(Directory.GetFiles(_directory, "*.tmp"));
+    }
+
+    [Fact]
+    public void Delayed_Session_Outside_Retention_Window_Is_Rejected_Without_Changing_History()
+    {
+        var store = new AssetHistoryStore(_directory);
+        var old = Registry(Now.AddMinutes(-1));
+        Assert.True(store.Save(old));
+        for (int i = 0; i < AssetHistoryStore.MaxSessions; i++)
+            Assert.True(store.Save(Registry(Now.AddMinutes(i))));
+        var before = Directory.GetFiles(_directory, "*.json").OrderBy(p => p).ToArray();
+        Assert.Equal(AssetHistoryStore.MaxSessions, before.Length);
+        Assert.False(store.Save(old));
+        Assert.Contains("outside history retention window", store.LastSaveError);
+        Assert.Equal(before, Directory.GetFiles(_directory, "*.json").OrderBy(p => p).ToArray());
+        Assert.Equal(1L, store.HealthSnapshot().Failures);
+        Assert.Equal(33L, store.HealthSnapshot().Writes);
+        Assert.DoesNotContain(store.Read().Rows, r => r.SessionId == old.SessionId.ToString("N"));
         Assert.Empty(Directory.GetFiles(_directory, "*.tmp"));
     }
 

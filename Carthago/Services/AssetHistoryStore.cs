@@ -59,6 +59,13 @@ internal sealed class AssetHistoryStore
                 var checkpoint = new Checkpoint(3, registry.SessionId, registry.SessionStartedUtc, rows.ToArray(), communications.ToArray(),
                     registry.Communications.CapacitySnapshot().Rejected, registry.CapacitySnapshot().Rejected);
                 string path = Path.Combine(_directory, FileName(checkpoint));
+                // A delayed session outside the retained window would be
+                // immediately pruned even if its replacement succeeded.
+                // Use the same ordinal filename ordering as retention.
+                var name = Path.GetFileName(path);
+                if (Files().Take(MaxSessions).Count(existing =>
+                    StringComparer.Ordinal.Compare(Path.GetFileName(existing), name) > 0) == MaxSessions)
+                    throw new IOException("Checkpoint outside history retention window; save rejected.");
                 // Allow one replacement-before-prune overflow, but never grow
                 // indefinitely when retention deletion is persistently denied.
                 // Existing checkpoints can still be refreshed in place.

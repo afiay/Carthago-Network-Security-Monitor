@@ -24,7 +24,12 @@ internal sealed class ObservedAssetRegistry
     internal RegistryCapacitySnapshot CapacitySnapshot()
     { lock (_gate) return new(_entries.Count, Capacity, _capacityRejected); }
     internal Guid SessionId { get; } = Guid.NewGuid();
-    internal DateTimeOffset SessionStartedUtc { get; } = DateTimeOffset.UtcNow;
+    internal DateTimeOffset SessionStartedUtc { get; }
+    internal ObservedAssetRegistry() : this(DateTimeOffset.UtcNow) { }
+    internal ObservedAssetRegistry(DateTimeOffset sessionStartedUtc)
+    {
+        SessionStartedUtc = sessionStartedUtc;
+    }
     internal ExternalCommunicationRegistry Communications { get; } = new();
     internal void Seal() { lock (_gate) { _sealed = true; Communications.Seal(); } }
     private readonly Dictionary<Key, Entry> _entries = new();
