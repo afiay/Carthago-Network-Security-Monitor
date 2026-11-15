@@ -9,6 +9,33 @@ namespace Carthago.Tests;
 
 public sealed class RuntimeEnrichmentRegressionTests
 {
+    [Theory]
+    [InlineData("TCP", true, false)]
+    [InlineData("UDP", false, true)]
+    public void Etw_Event_Record_Preserves_Event_Time_Without_Packet_Evidence(
+        string protocol, bool tcp, bool udp)
+    {
+        var observed = new DateTime(2026, 1, 2, 3, 4, 5, DateTimeKind.Utc);
+        var record = Carthago.Capture.EtwCapture.CreateEventRecord(
+            protocol, "192.168.1.10", "8.8.8.8", 53000, 443, observed);
+        Assert.Equal(observed.ToString("o"), record.Timestamp);
+        Assert.Equal(protocol, record.Protocol);
+        Assert.Equal(tcp, record.IsTcp);
+        Assert.Equal(udp, record.IsUdp);
+        Assert.Equal("192.168.1.10", record.Source);
+        Assert.Equal("8.8.8.8", record.Destination);
+        Assert.Equal(53000, record.SourcePort);
+        Assert.Equal(443, record.DestinationPort);
+        Assert.Equal("ETW", record.CaptureBackend);
+        Assert.Equal("InterfaceNotProvided", record.CaptureInterfaceEvidence);
+        Assert.Null(record.CaptureInterfaceId);
+        Assert.Null(record.TcpFlags);
+        Assert.Null(record.L4Len);
+        Assert.Null(record.DnsCorrelationEvidence);
+        Assert.Null(record.TlsCorrelationEvidence);
+        Assert.Null(record.ProcessAttribution);
+    }
+
     [Fact]
     public void Geo_Lookup_Health_Counts_Completed_Attempts_Independently()
     {
