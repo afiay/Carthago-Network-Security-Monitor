@@ -129,6 +129,13 @@ public sealed class R272AdvancedAccuracyBatchTests
             // Evaluate the real detector against the engine-owned snapshot,
             // independently of whether an earlier packet consumed alert cooldown.
             var probe = Packet(host, "10.214.1.21", 443);
+            // R272 correlates emitted families, not TLS. A plain TCP probe
+            // must survive the default selector and required telemetry gate.
+            var selectedRule = new R272_MultiSignalRuleStackSurgeFromHostRule();
+            var plan = new Carthago.Engine.Rules.Execution.RuleCandidateSelector()
+                .CreatePlan(new IDetectionRule[] { selectedRule }, probe);
+            Assert.True(plan.SelectedCount == 1);
+            Assert.True(RuleTelemetryValidator.Validate(selectedRule, probe).CanRunSafely);
             // Exercise selection, telemetry validation and final post-policy emission.
             var engineEvent = Assert.Single(System.Linq.Enumerable.Where(
                 RuleEngine.Evaluate(probe, Sensitivity.Balanced), e => e.RuleId == "R272"));
