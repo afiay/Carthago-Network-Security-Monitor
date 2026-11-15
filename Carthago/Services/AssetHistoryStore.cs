@@ -59,6 +59,23 @@ internal sealed class AssetHistoryStore
                 var checkpoint = new Checkpoint(3, registry.SessionId, registry.SessionStartedUtc, rows.ToArray(), communications.ToArray(),
                     registry.Communications.CapacitySnapshot().Rejected, registry.CapacitySnapshot().Rejected);
                 string path = Path.Combine(_directory, FileName(checkpoint));
+                // Allow one replacement-before-prune overflow, but never grow
+                // indefinitely when retention deletion is persistently denied.
+                // Existing checkpoints can still be refreshed in place.
+                if (!File.Exists(path))
+                {
+                    try
+                    {
+                        foreach (var old in Files().Skip(MaxSessions))
+                            _deleteRetainedFile(old);
+                    }
+                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                    {
+                        throw new IOException("History retention capacity exhausted; new checkpoint rejected.", ex);
+                    }
+                    if (Files().Skip(MaxSessions).Any())
+                        throw new IOException("History retention capacity exhausted; new checkpoint rejected.");
+                }
                 temp = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
                 using (var stream = new FileStream(temp, FileMode.CreateNew, FileAccess.Write, FileShare.None))
                 {

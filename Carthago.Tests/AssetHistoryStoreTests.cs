@@ -189,6 +189,39 @@ public sealed class AssetHistoryStoreTests : IDisposable
         Assert.Empty(Directory.GetFiles(_directory, "*.tmp"));
     }
 
+    [Fact]
+    public void Persistent_Retention_Failure_Bounds_New_Sessions_And_Recovers()
+    {
+        bool blocked = true;
+        var store = new AssetHistoryStore(_directory, path =>
+        {
+            if (blocked) throw new IOException("injected deletion denial");
+            File.Delete(path);
+        });
+        for (int i = 0; i < AssetHistoryStore.MaxSessions; i++)
+            Assert.True(store.Save(Registry()));
+        var existing = Registry();
+        Assert.True(store.Save(existing));
+        var before = Directory.GetFiles(_directory, "*.json").OrderBy(p => p).ToArray();
+        Assert.Equal(AssetHistoryStore.MaxSessions + 1, before.Length);
+        var rejected = Registry();
+        for (int i = 0; i < 3; i++)
+        {
+            Assert.False(store.Save(rejected));
+            Assert.Equal(before, Directory.GetFiles(_directory, "*.json").OrderBy(p => p).ToArray());
+            Assert.Contains("capacity exhausted", store.LastSaveError);
+        }
+        existing.Observe(Local(), Now.AddSeconds(1));
+        Assert.True(store.Save(existing));
+        Assert.Equal(2L, Assert.Single(store.Read().Rows.Where(r => r.SessionId == existing.SessionId.ToString("N"))).Asset.Observations);
+        Assert.Equal(3L, store.HealthSnapshot().Failures);
+        blocked = false;
+        Assert.True(store.Save(rejected));
+        Assert.Equal(AssetHistoryStore.MaxSessions, Directory.GetFiles(_directory, "*.json").Length);
+        Assert.Null(store.LastSaveError);
+        Assert.Empty(Directory.GetFiles(_directory, "*.tmp"));
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_directory)) Directory.Delete(_directory, recursive: true);
