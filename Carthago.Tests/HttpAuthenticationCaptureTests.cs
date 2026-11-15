@@ -132,4 +132,24 @@ public sealed class HttpAuthenticationCaptureTests
         Assert.Null(duplicate.HttpAuthenticationResponseCorrelationId);
         Assert.Null(duplicate.HttpAuthenticationResponseStatus);
     }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Wrapped_Request_Sequence_Requires_Exact_Acknowledgment(bool exact)
+    {
+        var p = new PortablePacketProcessor();
+        const uint syn = uint.MaxValue - 20;
+        const uint start = syn + 1;
+        const string request = "GET / HTTP/1.1\r\nHost: camera\r\nAuthorization: Basic YWRtaW46YWRtaW4=\r\n\r\n";
+        Parse(p,false,2,syn,0);
+        Parse(p,true,0x12,500,start);
+        var observed = Parse(p,false,0x18,start,501,request);
+        uint end = unchecked(start + (uint)request.Length);
+        Assert.True(end < start);
+        var response = Parse(p,true,0x18,501,exact ? end : end-1,
+            "HTTP/1.1 401 Unauthorized\r\nContent-Length: 0\r\n\r\n");
+        Assert.Equal(exact ? observed.Id : (Guid?)null,response.HttpAuthenticationResponseCorrelationId);
+        Assert.Equal(exact ? 401 : (int?)null,response.HttpAuthenticationResponseStatus);
+    }
 }
