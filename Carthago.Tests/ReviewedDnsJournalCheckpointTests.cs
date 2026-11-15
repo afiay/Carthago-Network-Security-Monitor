@@ -54,7 +54,7 @@ public sealed class ReviewedDnsJournalCheckpointTests
         using var authority = ECDsa.Create(ECCurve.NamedCurves.nistP256);
         byte[] deployment = SHA256.HashData(new byte[] { 1 });
         byte[] digest = SHA256.HashData(new byte[] { 2 });
-        byte[] domain = Encoding.ASCII.GetBytes("CARTHAGO-DNS-JOURNAL-V2\\0");
+        byte[] domain = Encoding.ASCII.GetBytes("CARTHAGO-DNS-JOURNAL-V2\0");
         byte[] checkpoint = new byte[domain.Length + 72];
         domain.CopyTo(checkpoint, 0);
         deployment.CopyTo(checkpoint, domain.Length);

@@ -2862,3 +2862,8 @@ Reviewed live parent `aec10a6fd49eb2f641b55c0c2d3baaf63a52f537`, ledger, qualifi
 ## 2026-11-15 — Enrichment Phase 16.5a provider interval evidence
 
 Reviewed live parent `3d3ec8024a2dcf8c46964772caa300c03078eb97`, tree `0985c55e05fa5f231c9ee8c2db7b325d425e54a5`, analyzer, aggregate export, presentation tests and ledger. Add provider outcome/cache deltas and correct terminal-outcome latency and success denominators; omit absent rows, reject decreases, null zero denominators. Three self-test fixtures authored, zero executed; Windows pending. Next: GeoIP and checkpoint intervals, locale and timestamp hardening. No rule or Actions changes.
+
+
+## 2026-11-15 — GA-09bi R102/R103 pinned checkpoint regression correction
+
+Reviewed live parent `b3d775919425d31ea57d85e85e0c8f8258204dcf`, ledger, qualification gate, checkpoint verifier and packet intake tests; preserve enrichment 16.5a. Correct GA-09bh fixture domain from literal backslash-zero to NUL (positive case would reject on wire length). Exercise independently pinned digest in existing raw capture journal integration and reject a correctly signed rolled-back journal at the same revision. Two existing test methods corrected/strengthened; expected pass, executed zero; Windows pending. Candidate SHA is commit containing this entry. No production promotion, floor or frozen holdout changes; six producer gaps unchanged. GA-08, R118 identity/outcome, R163 causal producer, durable independent R102 authority/V2 and exact-ID audit remain open. Next: exact-ID audit while external authority pending. Windows: `dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~ReviewedDnsJournalCheckpointTests|FullyQualifiedName~ReviewedDnsPacketIntakeTests"`.

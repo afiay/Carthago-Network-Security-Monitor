@@ -239,7 +239,7 @@ public sealed class ReviewedDnsPacketIntakeTests
                 }
                 byte[] SignCheckpoint(byte[] bytes) => authority.SignData(bytes,
                     HashAlgorithmName.SHA256, DSASignatureFormat.IeeeP1363FixedFieldConcatenation);
-                var verifier = new ReviewedDnsJournalCheckpoint(authority.ExportSubjectPublicKeyInfo(), deployment, 2);
+                var verifier = new ReviewedDnsJournalCheckpoint(authority.ExportSubjectPublicKeyInfo(), deployment, 2, anchor);
                 byte[] checkpoint = Checkpoint(anchor, 2, deployment);
                 byte[] checkpointSignature = SignCheckpoint(checkpoint);
                 Assert.True(verifier.TryReadSummary(reopened, scope, checkpoint, checkpointSignature,
@@ -279,6 +279,8 @@ public sealed class ReviewedDnsPacketIntakeTests
                 Assert.Equal(1, count);
                 RejectCheckpoint(checkpoint);
                 RejectCheckpoint(Checkpoint(SHA256.HashData(File.ReadAllBytes(journalPath)), 1, deployment));
+                // A valid signature at the current revision cannot authorize a different journal.
+                RejectCheckpoint(Checkpoint(SHA256.HashData(File.ReadAllBytes(journalPath)), 2, deployment));
                 Assert.False(reopened.TryReadAnchoredScopeSummary(scope, anchor, out count, out first, out last));
                 Assert.Equal(0, count);
                 Assert.Equal(0L, first);
