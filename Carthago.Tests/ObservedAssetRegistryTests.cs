@@ -95,4 +95,23 @@ public sealed class ObservedAssetRegistryTests
         Assert.Equal(2048, registry.Snapshot().Count);
         Assert.Empty(new ObservedAssetRegistry().Snapshot());
     }
+
+    [Fact]
+    public void Reassigned_Address_Remains_Conflicting_Passive_Claims_Not_Verified_Identity()
+    {
+        var registry = new ObservedAssetRegistry();
+        registry.Observe(Arp(), Now);
+        registry.Observe(Arp(mac: "02:11:22:33:44:66"), Now.AddHours(1));
+        var rows = registry.Snapshot();
+        Assert.Equal(2, rows.Count);
+        Assert.All(rows, row =>
+        {
+            Assert.Equal("ARP sender claim", row.Evidence);
+            Assert.Equal("192.168.1.10", row.Addresses);
+            Assert.Equal(Adapter, row.InterfaceScope);
+        });
+        Assert.NotEqual(rows[0].Mac, rows[1].Mac);
+        Assert.NotEqual(rows[0].LastSeenUtc, rows[1].LastSeenUtc);
+        Assert.Equal("02:11:22:33:44:66", rows[0].Mac);
+    }
 }
