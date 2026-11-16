@@ -66,6 +66,14 @@ namespace Carthago.Tests.ProtocolIntelligence
             other[1] = 8;
             Assert.False(Check(other, pair.Response));
         }
+        [Fact] public void NonUnicastSourceAndServerFailClosed()
+        {
+            var pair = Pair();
+            Assert.False(Check(pair.Request, pair.Response, client: "224.0.0.1"));
+            Assert.False(Check(pair.Request, pair.Response, server: "255.255.255.255"));
+            Assert.False(Check(pair.Request, pair.Response, client: "::ffff:224.0.0.1"));
+            Assert.False(Check(pair.Request, pair.Response, server: "ff02::1"));
+        }
         [Fact] public void UnsupportedResponseAndMessageAuthenticatorFailClosed()
         {
             var pair = Pair();

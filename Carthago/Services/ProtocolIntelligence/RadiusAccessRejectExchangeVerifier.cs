@@ -68,7 +68,9 @@ namespace Carthago.Services.ProtocolIntelligence
             if (b.IsIPv4MappedToIPv6) b = b.MapToIPv4();
             return a.Equals(b) && !IPAddress.IsLoopback(a) &&
                 !a.Equals(IPAddress.Any) && !a.Equals(IPAddress.IPv6Any) &&
-                !a.IsIPv6Multicast;
+                !a.Equals(IPAddress.Broadcast) && !a.IsIPv6Multicast &&
+                !(a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork &&
+                  (a.GetAddressBytes()[0] & 0xF0) == 0xE0);
         }
     }
 }
