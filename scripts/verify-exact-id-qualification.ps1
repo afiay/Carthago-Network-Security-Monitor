@@ -9,7 +9,26 @@ $root = Split-Path $PSScriptRoot -Parent
 function Assert-Qualification($condition, [string]$message) {
     if (-not $condition) { throw $message }
 }
-function Test-Qualification($document, $inventory, [string]$currentSha) {
+function Get-ReviewedExecutionMap($manifest, $registryMap) {
+    Assert-Qualification ($manifest.schemaVersion -eq 1) 'Unsupported execution manifest schema'
+    $entries = @{}
+    foreach ($entry in $manifest.records) {
+        foreach ($field in @('ruleId','executedSha','outcome','testReference','scope','reviewReference')) {
+            Assert-Qualification ($null -ne $entry.PSObject.Properties[$field] -and -not [string]::IsNullOrWhiteSpace([string]$entry.$field)) "Missing execution field: $field"
+        }
+        Assert-Qualification ($entry.ruleId -cmatch '^R[0-9]+$' -and $registryMap.ContainsKey($entry.ruleId)) 'Unknown execution rule'
+        Assert-Qualification ($entry.executedSha -cmatch '^[a-f0-9]{40}$') 'Invalid reviewed SHA'
+        Assert-Qualification ($entry.outcome -cin @('pass','fail')) 'Unknown execution outcome'
+        Assert-Qualification ($entry.scope -ceq 'synthetic-detector-regression') 'Unsupported execution scope'
+        Assert-Qualification ($entry.testReference -cmatch '^Carthago\.Tests/[A-Za-z0-9_/.-]+\.cs$' -and $entry.testReference -notmatch '\.\.') 'Invalid test reference'
+        Assert-Qualification ($entry.reviewReference -cin @('docs/rules/DETECTION_QUALIFICATION_GATE_20261112.md','docs/DEVELOPMENT_VALIDATION_LEDGER.md')) 'Invalid review reference'
+        $key = "$($entry.ruleId):$($entry.executedSha)"
+        Assert-Qualification (-not $entries.ContainsKey($key)) 'Duplicate reviewed execution'
+        $entries[$key] = $entry
+    }
+    return $entries
+}
+function Test-Qualification($document, $inventory, [string]$currentSha, $manifest) {
     Assert-Qualification ($document.schemaVersion -eq 1) 'Unsupported schema'
     Assert-Qualification ($document.sourceSha -cmatch '^[a-f0-9]{40}$') 'Invalid source SHA'
     Assert-Qualification ($currentSha -cmatch '^[a-f0-9]{40}$') 'Invalid current SHA'
@@ -19,6 +38,7 @@ function Test-Qualification($document, $inventory, [string]$currentSha) {
         $map[$rule.ruleId] = $rule.registeredClass
     }
     Assert-Qualification (@($inventory.diagnostics | Where-Object { $_.code -in @('DUPLICATE_CORE_ID','NONCANONICAL_CORE_ID','UNRESOLVED_REGISTRATION') }).Count -eq 0) 'Unresolved registry identity'
+    $reviewed = Get-ReviewedExecutionMap $manifest $map
     $seen = @{}
     $producerGaps = @('R275','R295','R343','R437','R508','R516')
     $unsupported = 0
@@ -56,9 +76,11 @@ function Test-Qualification($document, $inventory, [string]$currentSha) {
         }
         if ($d.status -in @('historical-pass','failed')) {
             Assert-Qualification ($d.executedSha -cmatch '^[a-f0-9]{40}$') "Missing execution SHA: $id"
-            # Only the reviewed historical checkpoints in the gate are admitted in v1.
-            $expected = if ($id -in @('R903','R908','R910','R919','R942','R950')) { 'e64e2dfe40a3d087c6369d9aca75264946878d28' } else { '4cc680bc8353e0bb04d2824843f84ace8f59f28e' }
-            Assert-Qualification ($d.status -ceq 'historical-pass' -and $d.executedSha -ceq $expected -and $id -in @('R903','R908','R910','R919','R942','R950','R946','R947','R949','R708','R715','R792','R819','R881','R916','R962')) "Unreviewed execution claim: $id"
+            $key = "$($id):$($d.executedSha)"
+            Assert-Qualification ($reviewed.ContainsKey($key)) "Unreviewed execution claim: $id"
+            $entry = $reviewed[$key]
+            $expectedOutcome = if ($d.status -ceq 'failed') { 'fail' } else { 'pass' }
+            Assert-Qualification ($entry.outcome -ceq $expectedOutcome -and $entry.testReference -ceq $d.reference) "Execution evidence mismatch: $id"
             if ($d.executedSha -ceq $currentSha) { $current++ } else { $historical++ }
         } else {
             Assert-Qualification ($null -eq $d.executedSha) "Unexecuted evidence has SHA: $id"
@@ -73,12 +95,14 @@ $registry = Get-Content -Raw (Join-Path $root 'Carthago/Engine/Rules/Catalog/Rul
 $inventory = Get-RuleSourceInventory -RegistrySource $registry -Sources @{} -SourceSha $sha
 $file = Join-Path $root 'docs/05-detection-quality/exact-id-qualification.json'
 $doc = Get-Content -Raw $file | ConvertFrom-Json
-$result = Test-Qualification $doc $inventory $sha
+$manifestFile = Join-Path $root 'docs/05-detection-quality/reviewed-execution-evidence.json'
+$manifest = Get-Content -Raw $manifestFile | ConvertFrom-Json
+$result = Test-Qualification $doc $inventory $sha $manifest
 if ($SelfTest) {
     function Copy-Document { Get-Content -Raw $file | ConvertFrom-Json }
     function Expect-Rejection($candidate) {
         $rejected = $false
-        try { $null = Test-Qualification $candidate $inventory $sha } catch { $rejected = $true }
+        try { $null = Test-Qualification $candidate $inventory $sha $manifest } catch { $rejected = $true }
         Assert-Qualification $rejected 'Invalid fixture accepted'
     }
     $bad = Copy-Document; $bad.records += $bad.records[0]; Expect-Rejection $bad
@@ -93,7 +117,18 @@ if ($SelfTest) {
     $bad = Copy-Document; ($bad.records | Where-Object ruleId -ceq 'R343').detector.status = 'failed'; Expect-Rejection $bad
     $bad = Copy-Document; $bad.records[0] | Add-Member -NotePropertyName producerQualification -NotePropertyValue 'unsupported-benchmark-scenario'; Expect-Rejection $bad
     Assert-Qualification ($result.unsupportedProducerRecords -eq 6) 'Producer gap count mismatch'
-    $historical = Test-Qualification $doc $inventory ('a' * 40)
+    function Copy-Manifest { Get-Content -Raw $manifestFile | ConvertFrom-Json }
+    function Expect-ManifestRejection($candidate) {
+        $rejected = $false
+        try { $null = Test-Qualification $doc $inventory $sha $candidate } catch { $rejected = $true }
+        Assert-Qualification $rejected 'Invalid execution manifest accepted'
+    }
+    $badManifest = Copy-Manifest; $badManifest.records += $badManifest.records[0]; Expect-ManifestRejection $badManifest
+    $badManifest = Copy-Manifest; $badManifest.records[0].outcome = 'fail'; Expect-ManifestRejection $badManifest
+    $badManifest = Copy-Manifest; $badManifest.records[0].testReference = 'Carthago.Tests/Unreviewed.cs'; Expect-ManifestRejection $badManifest
+    $badManifest = Copy-Manifest; $badManifest.records[0].scope = 'field'; Expect-ManifestRejection $badManifest
+    $badManifest = Copy-Manifest; $badManifest.records[0].PSObject.Properties.Remove('reviewReference'); Expect-ManifestRejection $badManifest
+    $historical = Test-Qualification $doc $inventory ('a' * 40) $manifest
     Assert-Qualification ($historical.currentExecutionRecords -eq 0 -and $historical.historicalExecutionRecords -eq 16) 'Historical evidence misclassified'
 }
 $result | ConvertTo-Json

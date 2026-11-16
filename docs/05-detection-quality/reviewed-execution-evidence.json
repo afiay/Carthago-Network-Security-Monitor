@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 1,
+  "records": [
+    {
+      "ruleId": "R903",
+      "executedSha": "e64e2dfe40a3d087c6369d9aca75264946878d28",
+      "outcome": "pass",
+      "testReference": "Carthago.Tests/Smb2PairedAccuracyQualificationTests.cs",
+      "scope": "synthetic-detector-regression",
+      "reviewReference": "docs/rules/DETECTION_QUALIFICATION_GATE_20261112.md"
+    },
+    {
+      "ruleId": "R908",
+      "executedSha": "e64e2dfe40a3d087c6369d9aca75264946878d28",
+      "outcome": "pass",
+      "testReference": "Carthago.Tests/Smb2PairedAccuracyQualificationTests.cs",
+      "scope": "synthetic-detector-regression",
+      "reviewReference": "docs/rules/DETECTION_QUALIFICATION_GATE_20261112.md"
+    },
+    {
+      "ruleId": "R910",
+      "executedSha": "e64e2dfe40a3d087c6369d9aca75264946878d28",
+      "outcome": "pass",
+      "testReference": "Carthago.Tests/Smb2PairedAccuracyQualificationTests.cs",
+      "scope": "synthetic-detector-regression",
+      "reviewReference": "docs/rules/DETECTION_QUALIFICATION_GATE_20261112.md"
+    },
+    {
+      "ruleId": "R919",
+      "executedSha": "e64e2dfe40a3d087c6369d9aca75264946878d28",
+      "outcome": "pass",
+      "testReference": "Carthago.Tests/Smb2PairedAccuracyQualificationTests.cs",
+      "scope": "synthetic-detector-regression",
+      "reviewReference": "docs/rules/DETECTION_QUALIFICATION_GATE_20261112.md"
+    },
+    {
+      "ruleId": "R942",
+      "executedSha": "e64e2dfe40a3d087c6369d9aca75264946878d28",
+      "outcome": "pass",
+      "testReference": "Carthago.Tests/Smb2PairedAccuracyQualificationTests.cs",
+      "scope": "synthetic-detector-regression",
+      "reviewReference": "docs/rules/DETECTION_QUALIFICATION_GATE_20261112.md"
+    },
+    {
+      "ruleId": "R950",
+      "executedSha": "e64e2dfe40a3d087c6369d9aca75264946878d28",
+      "outcome": "pass",
+      "testReference": "Carthago.Tests/Smb2PairedAccuracyQualificationTests.cs",
+      "scope": "synthetic-detector-regression",
+      "reviewReference": "docs/rules/DETECTION_QUALIFICATION_GATE_20261112.md"
+    },
+    {
+      "ruleId": "R946",
+      "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+      "outcome": "pass",
+      "testReference": "Carthago.Tests/TftpCaptureQualificationTests.cs",
+      "scope": "synthetic-detector-regression",
+      "reviewReference": "docs/rules/DETECTION_QUALIFICATION_GATE_20261112.md"
+    },
+    {
+      "ruleId": "R947",
+      "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+      "outcome": "pass",
+      "testReference": "Carthago.Tests/TftpCaptureQualificationTests.cs",
+      "scope": "synthetic-detector-regression",
+      "reviewReference": "docs/rules/DETECTION_QUALIFICATION_GATE_20261112.md"
+    },
+    {
+      "ruleId": "R949",
+      "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+      "outcome": "pass",
+      "testReference": "Carthago.Tests/TftpCaptureQualificationTests.cs",
+      "scope": "synthetic-detector-regression",
+      "reviewReference": "docs/rules/DETECTION_QUALIFICATION_GATE_20261112.md"
+    },
+    {
+      "ruleId": "R708",
+      "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+      "outcome": "pass",
+      "testReference": "Carthago.Tests/TftpCaptureQualificationTests.cs",
+      "scope": "synthetic-detector-regression",
+      "reviewReference": "docs/rules/DETECTION_QUALIFICATION_GATE_20261112.md"
+    },
+    {
+      "ruleId": "R715",
+      "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+      "outcome": "pass",
+      "testReference": "Carthago.Tests/TftpCaptureQualificationTests.cs",
+      "scope": "synthetic-detector-regression",
+      "reviewReference": "docs/rules/DETECTION_QUALIFICATION_GATE_20261112.md"
+    },
+    {
+      "ruleId": "R792",
+      "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+      "outcome": "pass",
+      "testReference": "Carthago.Tests/TftpCaptureQualificationTests.cs",
+      "scope": "synthetic-detector-regression",
+      "reviewReference": "docs/rules/DETECTION_QUALIFICATION_GATE_20261112.md"
+    },
+    {
+      "ruleId": "R819",
+      "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+      "outcome": "pass",
+      "testReference": "Carthago.Tests/TftpCaptureQualificationTests.cs",
+      "scope": "synthetic-detector-regression",
+      "reviewReference": "docs/rules/DETECTION_QUALIFICATION_GATE_20261112.md"
+    },
+    {
+      "ruleId": "R881",
+      "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+      "outcome": "pass",
+      "testReference": "Carthago.Tests/TftpCaptureQualificationTests.cs",
+      "scope": "synthetic-detector-regression",
+      "reviewReference": "docs/rules/DETECTION_QUALIFICATION_GATE_20261112.md"
+    },
+    {
+      "ruleId": "R916",
+      "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+      "outcome": "pass",
+      "testReference": "Carthago.Tests/DnsCaptureQualificationTests.cs",
+      "scope": "synthetic-detector-regression",
+      "reviewReference": "docs/rules/DETECTION_QUALIFICATION_GATE_20261112.md"
+    },
+    {
+      "ruleId": "R962",
+      "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+      "outcome": "pass",
+      "testReference": "Carthago.Tests/DnsCaptureQualificationTests.cs",
+      "scope": "synthetic-detector-regression",
+      "reviewReference": "docs/rules/DETECTION_QUALIFICATION_GATE_20261112.md"
+    }
+  ]
+}
