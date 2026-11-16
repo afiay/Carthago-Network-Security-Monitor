@@ -7,7 +7,7 @@ Import-Module (Join-Path $PSScriptRoot 'SocWorkspaceCompletion.psm1') -Force
 
 # Parse the production verifier without invoking it. This catches syntax
 # errors on Windows PowerShell 5.1 and protects final-check-before-publish order.
-foreach ($fileName in @('SocWorkspaceCompletion.psm1','verify-soc-workspace.ps1','test-soc-completion-contract.ps1')) {
+foreach ($fileName in @('SocWorkspaceCompletion.psm1','verify-soc-workspace.ps1','verify-soc-completion-artifacts.ps1','test-soc-completion-contract.ps1')) {
     $sourceFile = Join-Path $PSScriptRoot $fileName
     $tokens = $null
     $errors = $null
