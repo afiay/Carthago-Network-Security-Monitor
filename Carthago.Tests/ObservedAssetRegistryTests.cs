@@ -169,6 +169,23 @@ public sealed class ObservedAssetRegistryTests
         Assert.Equal(new(replacement.Communications.CapacitySnapshot(),
             replacement.CapacitySnapshot(), checkpoints), activeHealth.Storage);
         Assert.Equal((0, 0, 0L), activeHealth.Tls);
+
+        // A replacement session may accumulate new observations without resurrecting
+        // or modifying the sealed predecessor's capacity and health evidence.
+        replacement.Observe(Arp(mac: "02:11:22:33:AA:01"), Now.AddSeconds(3));
+        var replacementOutbound = Local();
+        replacementOutbound.TcpFlags = 2;
+        replacementOutbound.DstIsLocalHost = false;
+        replacementOutbound.CaptureInterfaceId = Adapter;
+        replacementOutbound.CaptureInterfaceEvidence = "WindowsInterfaceGuid";
+        replacementOutbound.Destination = "8.8.9.2";
+        replacement.Communications.Observe(replacementOutbound, Now.AddSeconds(3));
+        var replacementHealth = TrafficCaptureService.SnapshotSessionHealth(replacement, null, checkpoints);
+        Assert.Equal(new RegistryCapacitySnapshot(1, 2048, 0), replacementHealth.Storage.Assets);
+        Assert.Equal(new RegistryCapacitySnapshot(1, 2048, 0), replacementHealth.Storage.Destinations);
+        Assert.Equal(checkpoints, replacementHealth.Storage.Checkpoints);
+        Assert.Equal(new EnrichmentStorageSnapshot(finalCommunications, finalCapacity, checkpoints),
+            TrafficCaptureService.SnapshotSessionHealth(previous, null, checkpoints).Storage);
     }
     [Fact]
     public async System.Threading.Tasks.Task Concurrent_Sealing_And_Health_Projection_Preserve_Final_Capacity()
