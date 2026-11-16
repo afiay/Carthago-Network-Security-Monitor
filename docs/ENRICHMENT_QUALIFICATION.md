@@ -52,3 +52,8 @@ Aggregate schema 1 adds optional `storage.registrySessionId`, the GUID of the cu
 ### Phase 16.6b — Registry lifecycle token presence
 
 Schema 1 storage adds nullable `registryRunPresent`, sampled under the same lifecycle lock as registry identity and capacity. True means a non-cancelled run token exists, not that native capture is delivering packets; false includes initial/stopped retained registries; null means unavailable. Registry rejection deltas remain registry-scoped, including retained final counters. Three export theory cases authored; Windows execution pending. Run `dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter FullyQualifiedName~EnrichmentHealthPresentationTests`.
+
+
+### Phase 16.6c — Analyzer repair and lifecycle integration
+
+Removed a duplicated trailing script fragment and repaired the unterminated timestamp regex in the live analyzer. Same-registry intervals expose nullable fromRunPresent/toRunPresent without inferring native capture activity. Three full Analyze JSON-roundtrip scenarios cover retained stopped registry, replacement and missing lifecycle flag; Windows execution pending. Run `./analyze-enrichment-runtime.ps1 -SelfTest` in Windows PowerShell 5.1 and PowerShell 7. Production lifecycle concurrency remains pending.
