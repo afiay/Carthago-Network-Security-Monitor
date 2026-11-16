@@ -22,6 +22,25 @@ public sealed class DetectionCoverageKpiProjectionTests
         => Assert.Equal("0/20", DetectionCoverageKpiProjection.FromCounts(25, 20, 0, 0).Value);
 
     [Fact]
+    public void ZeroAlertModeRulesNeverDisplayZeroOverZero()
+    {
+        var sample = DetectionCoverageKpiProjection.FromCounts(55, 0, 0, 2);
+        Assert.Equal("—", sample.Value);
+        Assert.Contains("No alert-mode rules", sample.Caption);
+        Assert.Contains("55 registered", sample.Caption);
+        Assert.Contains("2 catalog errors", sample.Caption);
+    }
+
+    [Fact]
+    public void FullyEvaluatedAlertModeStillReportsRuntimeReachNotAccuracy()
+    {
+        var sample = DetectionCoverageKpiProjection.FromCounts(10, 8, 8, 0);
+        Assert.Equal("8/8", sample.Value);
+        Assert.Contains("in process", sample.Caption);
+        Assert.DoesNotContain("validated", sample.Caption);
+    }
+
+    [Fact]
     public void EmptyCatalogDoesNotInventCoverage()
         => Assert.Equal("—", DetectionCoverageKpiProjection.FromCounts(0, 0, 0, 0).Value);
 
