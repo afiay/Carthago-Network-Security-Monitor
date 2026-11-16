@@ -258,6 +258,37 @@ public sealed class ObservedAssetRegistryTests
 
 
     [Fact]
+    public async System.Threading.Tasks.Task Headless_Idle_Service_Stats_Keep_Registry_Identity_And_Empty_Capacity()
+    {
+        // Exercise the real service GetStats path without opening a capture device.
+        // An idle headless instance must not manufacture a running capture session.
+        using var service = new TrafficCaptureService(null,
+            System.Windows.Threading.Dispatcher.CurrentDispatcher, headless: true);
+        var session = service.GetObservedAssetSession();
+        Assert.NotEqual(Guid.Empty, session.SessionId);
+        Assert.Empty(session.Rows);
+        Assert.Empty(session.Communications);
+
+        var readers = System.Linq.Enumerable.Range(0, 4).Select(_ =>
+            System.Threading.Tasks.Task.Run(() =>
+            {
+                for (int i = 0; i < 50; i++)
+                {
+                    var stats = service.GetStats();
+                    Assert.Equal(session.SessionId, stats.RegistrySessionId);
+                    Assert.False(stats.RegistryRunPresent);
+                    Assert.Equal(new RegistryCapacitySnapshot(0, 2048, 0),
+                        stats.EnrichmentStorage.Assets);
+                    Assert.Equal(new RegistryCapacitySnapshot(0, 2048, 0),
+                        stats.EnrichmentStorage.Destinations);
+                    Assert.Null(stats.TlsCapacity);
+                }
+            }));
+        await System.Threading.Tasks.Task.WhenAll(readers);
+        Assert.Equal(session.SessionId, service.GetObservedAssetSession().SessionId);
+    }
+
+    [Fact]
     public void Full_Registries_Still_Update_Existing_Evidence_Without_Inflating_Rejections()
     {
         // Capacity limits distinct identities, not subsequent evidence for retained identities.
