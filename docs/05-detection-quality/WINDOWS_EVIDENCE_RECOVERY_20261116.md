@@ -396,3 +396,24 @@ Cause under investigation: the original parser selected SOC ownership from `Test
 **Pending Windows verification:** `scripts/test-soc-completion-contract.ps1`, then read-only `Get-SocWorkspaceTrxEvidence` against `TestResults/soc-workspace-20261116-200338-13980-b214b937/soc-workspace-tests.trx`, then a **new** clean pinned SOC verifier run. The old failed-completion run cannot retroactively acquire a final source SHA attestation. Detailed commands and guardrails: `docs/05-detection-quality/SOC_WORKSPACE_COMPLETION_PROVENANCE_V1.md`.
 
 Historical source-link count remains **6/42**, with 36 unlinked, until distinct original evidence gates pass. This documentation change runs no tests or captures.
+
+
+## SOC completion post-fix verified by owner console (2026-11-16)
+
+The owner ran the corrected SOC completion flow and shared the terminal record, superseding the previously documented **class-only grouping gate failure** for **new runs**.
+
+| SOC gate | Owner-reported result |
+| --- | --- |
+| Offline completion contract | **27 assertions PASS** |
+| Read-only old-TRX reparse | **70/70 passed**, 29 NetworkInvestigation, 36 IncidentTimeline, 5 IncidentDetectionLinkVm, 5 method-scoped |
+| New run restore | PASS |
+| New run Release build | PASS, 0 errors; 9 xUnit1026 warnings |
+| New SOC unit-test execution | **70/70 passed**, 0 failed/skipped |
+| New verifier final source/build/test completion | **PASS printed** |
+| New completion report | **Publication path printed**; original JSON content not yet independently inspected |
+| Manual WPF / physical network validation | Not assessed |
+| Exact rule qualification admissions | 0 new |
+
+The new run is `TestResults/soc-workspace-20261116-201947-13980-fc218b2a/` with `soc-workspace-tests.trx` and `completion.json`. The previous read-only preflight's TRX ID and SHA-256 refer to **the old blocked run**, not to the new successful run. An independent inspection of the *new* report and referenced original artifacts is needed to confirm its exact executed SHA, run ID and hashes. The newly produced run is **not part of the frozen 42 recovered TRX originals**, so the historical cohort count **remains 6/42 runner-linked, 36 unlinked**, including November 11's pre-test-source-correlated SOC TRX.
+
+The subsequent acceptance requirements and original run preservation instructions are maintained in `docs/05-detection-quality/SOC_WORKSPACE_COMPLETION_PROVENANCE_V1.md`. This documentation update does not modify any original evidence, detectors, rule-classification manifests or quality-admission thresholds.
