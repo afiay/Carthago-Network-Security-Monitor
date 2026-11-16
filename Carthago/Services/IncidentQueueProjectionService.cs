@@ -10,6 +10,30 @@ namespace Carthago.Services
 {
     public static class IncidentQueueProjectionService
     {
+        /// <summary>
+        /// Recorded rule references only. Never infer a detector match from a host, title,
+        /// risk score or nearby incident. Persisted cases may retain IDs without events.
+        /// </summary>
+        public static IReadOnlyList<string> GetRecordedRuleIds(Incident? incident, int maxResults = 8)
+        {
+            if (incident is null || maxResults <= 0)
+                return Array.Empty<string>();
+
+            var ids = new[] { incident.PrimaryRuleId }
+                .Concat(incident.RelatedRuleIds ?? new List<string>())
+                .Concat((incident.RelatedEvents ?? new List<Carthago.Models.DetectionEvent>())
+                    .Where(static evt => evt != null).Select(static evt => evt.RuleId))
+                .Concat((incident.RelatedAnomalies ?? new List<AnomalySignal>())
+                    .Where(static anomaly => anomaly != null)
+                    .SelectMany(static anomaly => anomaly.RelatedRuleIds ?? new List<string>()));
+
+            return ids.Where(static rule => !string.IsNullOrWhiteSpace(rule))
+                .Select(static rule => rule!.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Take(maxResults)
+                .ToArray();
+        }
+
         public static IncidentQueueStats BuildStats(IEnumerable<Incident> incidents, DateTime utcNow)
         {
             var list = incidents?.ToArray() ?? Array.Empty<Incident>();
