@@ -85,8 +85,8 @@ function Get-SocWorkspaceTrxEvidence {
         # VSTest FullyQualifiedName~ selects both class and method matches.
         # Prefer the owning test class; only use method-name matching when the
         # class itself has no SOC marker. Do not count the same test twice.
-        $className = [string]$owners[$id]['className']
-        $methodName = [string]$owners[$id]['methodName']
+        $className = [string]($owners[$id]['className'])
+        $methodName = [string]($owners[$id]['methodName'])
         if (-not $className.StartsWith('Carthago.Tests.', [StringComparison]::Ordinal) -or
             [string]::IsNullOrWhiteSpace($methodName)) {
             throw "SOC TRX test lacks a valid owner: $className.$methodName"
