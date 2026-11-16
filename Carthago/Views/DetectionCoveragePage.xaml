@@ -22,6 +22,9 @@
                     Style="{StaticResource SecondaryButton}" Click="OpenDetections_Click"/>
             <Button Content="Sensitivity settings" MinWidth="152" Height="36" Margin="0,0,8,8"
                     Style="{StaticResource SecondaryButton}" Click="OpenSettings_Click"/>
+            <Button Content="Copy diagnostics" MinWidth="148" Height="36" Margin="0,0,8,8"
+                    Style="{StaticResource SecondaryButton}" Click="CopyDiagnostics_Click"
+                    ToolTip="Copies bounded process-local counters and rule IDs, not raw traffic"/>
           </WrapPanel>
           <TextBlock x:Name="SnapshotStatusText" Text="No catalog snapshot loaded"
                      Foreground="{StaticResource TextMutedBrush}" Margin="0,5,0,0"
@@ -35,6 +38,14 @@
                      Foreground="{StaticResource AccentAltBrush}" Margin="0,8,0,0"
                      FontWeight="SemiBold" TextWrapping="Wrap"
                      AutomationProperties.LiveSetting="Polite"/>
+          <TextBlock x:Name="RuntimeProgressText"
+                     Text="Refresh twice after capturing traffic to check whether evaluations increase."
+                     Foreground="{StaticResource TextSubtleBrush}" Margin="0,6,0,0"
+                     TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/>
+          <TextBlock x:Name="CopyDiagnosticsStatusText"
+                     Text="Copy diagnostics excludes raw packet and host data."
+                     Foreground="{StaticResource TextMutedBrush}" Margin="0,6,0,0"
+                     TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/>
         </StackPanel>
       </Border>
 
