@@ -85,6 +85,27 @@ public sealed class R163AdvancedAccuracyBatchTests
         Assert.Contains(items, x => x.Value == "not-established");
         Assert.Contains(items, x => x.Value == "not-observed");
     }
+    [Theory]
+    [InlineData("local-tcp-socket")]
+    [InlineData("etw")]
+    public async Task Combined_Untrusted_Trace_And_Protocol_Headers_Cannot_Qualify_Ssrf(string attribution)
+    {
+        var r = Metadata();
+        r.ProcessId = 4242;
+        r.ProcessAttribution = attribution;
+        r.HttpRequestHeaders += "\r\ntraceparent: 00-0123456789abcdef0123456789abcdef-0123456789abcdef-01"
+            + "\r\nX-Request-Id: synthetic-request-123"
+            + "\r\nX-aws-ec2-metadata-token: synthetic-token-not-a-secret";
+        var result = await new R163_SsrfMetadataServiceProbeRule()
+            .EvaluateAsync(NetworkBatch156165Context.At(r));
+        Assert.True(result.Matched);
+        var evt = Assert.Single(result.Events);
+        Assert.True(evt.ConfidenceScore < 0.84);
+        var items = evt.StructuredEvidence!.Items;
+        Assert.Contains(items, x => x.Value == "not-established");
+        Assert.Contains(items, x => x.Value == "not-observed");
+        Assert.DoesNotContain(items, x => x.Value.Contains("synthetic-token-not-a-secret", StringComparison.Ordinal));
+    }
     [Fact] public void Policy_And_Confidence_Floor_Are_Preserved()
     {
         var p=new R163_SsrfMetadataServiceProbeRule().PrecisionProfile;
