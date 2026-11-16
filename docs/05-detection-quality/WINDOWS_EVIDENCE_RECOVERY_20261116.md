@@ -79,3 +79,29 @@ $destination = Join-Path $env:USERPROFILE ('Documents\Carthago-Evidence-' + (Get
 ```
 
 After a successful copy, `recovery-manifest.json` contains per-file original/copy SHA-256, source path, size and timestamps, while `executionSha` and `evidenceAdmitted` deliberately remain null/false. Run the existing read-only inventory separately over the new `originals` directory. Review confidential logs or captures before transferring them outside the machine. **No original TRX or evidence files should be committed to the Git repository.**
+
+
+## Recovered-manifest audit and large TRX continuation (2026-11-16)
+
+A user's read-only Windows byte-recovery run reported 359 artifacts / 974,948,690 bytes, 0 admitted results, 0 detector tests executed, on the inspection checkout at `319d058262b4d239d6226a7b8077674e7be9b02b`. Independent analysis of the uploaded JSON manifests showed:
+
+- 357 inventory entries agree on original/recovered SHA-256 and size; two extra copied `.txt` files (`source-sha.txt` and `sdk-version.txt`) were outside the inventory file-type filter. The manifest did not include their text.
+- 42 TRX files, with 22 parsed without duplicate names, 8 parsed with an R603 abbreviated-name collision, 12 rejected **solely due to the earlier 16 MiB parser ceiling**. None of the 12 should be described as corrupt or test failures based on size alone.
+- For the 30 parsed TRX: 35,665 historical result occurrences (35,646 pass, 19 fail) across files, including a repeated 189-test TRX byte-copy; after collapsing **identical TRX hashes only**, 35,476 occurrences (35,457 pass, 19 fail). These are not distinct tests or current-SHA results.
+- 583 canonical R001–R1000 IDs appear in parsed test names; **this is name mention coverage only**, not exact-ID or positive/negative qualification. Other 417 may have unparsed evidence in oversized runs.
+- 80 positive/negative pcap/pcapng file-and-log filename pairs exist for R586–R605; the filenames alone do not attest replay success.
+- Original Windows qualification result count 14,361, as reported by earlier console output, requires parsing its >16 MiB original TRX before exact per-test reconciliation. No execution SHA was admitted.
+
+To parse large files **from the local, recovered copies**, update the working branch without discarding changes and invoke the existing read-only inventory with explicit higher bounds; defaults remain 16 MiB:
+
+```powershell
+$evidenceBundle = 'C:\Users\afiay\Documents\Carthago-Evidence-20261116-190505'
+.\scripts\inventory-windows-evidence-artifacts.ps1 `
+    -EvidenceRoot (Join-Path $evidenceBundle 'originals') `
+    -MaximumTrxBytes 33554432 `
+    -MaximumTrxXmlCharacters 67108864 `
+    -IncludeTestNames |
+    Set-Content -LiteralPath (Join-Path $evidenceBundle 'trx-inventory-expanded.json') -Encoding UTF8
+```
+
+This operation hashes and parses local copies. It neither runs the detector/tests nor changes original bytes or admission flags. Review the resulting JSON and upload the expanded inventory only; preserve the original recovery manifest and all TRXs unchanged. The eight R603 collided display names remain ambiguous until the corresponding original test definitions/parameter identities are reviewed, even if their separate test IDs and execution IDs are recorded.
