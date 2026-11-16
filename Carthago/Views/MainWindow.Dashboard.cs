@@ -7,6 +7,7 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Text.Json;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
@@ -14,6 +15,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using Carthago.Analytics.Models;
+using Carthago.Engine.Rules.Catalog;
 using Carthago.Models;
 using Carthago.Services;
 using Carthago.Services.Sensors;
@@ -41,6 +43,9 @@ namespace Carthago
         private IReadOnlyList<AnomalySignal> _dashboardAnomalySnapshot = Array.Empty<AnomalySignal>();
         private BaselineStatus _dashboardBaselineStatus = new();
         private readonly DispatcherTimer _dashboardHeaderTimer = new() { Interval = TimeSpan.FromSeconds(5) };
+        private readonly DispatcherTimer _dashboardCoverageTimer = new() { Interval = TimeSpan.FromSeconds(60) };
+        private DetectionCoverageKpiSnapshot _dashboardCoverage = DetectionCoverageKpiProjection.Unavailable();
+        private bool _dashboardCoverageBusy;
         private readonly DispatcherTimer _dashboardAnalyticsRefreshTimer = new(DispatcherPriority.Background);
         private readonly DashboardCallbackGate _dashboardCallbackGate = new();
         private readonly DashboardAnalyticsRefreshCoalescer _dashboardAnalyticsRefresh = new();
@@ -97,6 +102,10 @@ namespace Carthago
                     UpdateDashboardOverviewSensors();
             };
             _dashboardHeaderTimer.Start();
+            _dashboardCoverageTimer.Tick += DashboardCoverageTimerTick;
+            _dashboardCoverageTimer.Start();
+            InitializeDashboardCli();
+            DashboardCoverageTimerTick(this, EventArgs.Empty);
 
             RefreshDashboardIncidents();
             RefreshDashboardAnomalies();
@@ -1101,8 +1110,8 @@ namespace Carthago
             yield return new SocKpiVm
             {
                 Title = "Detection Coverage",
-                Value = "—",
-                TrendText = "No validated denominator",
+                Value = _dashboardCoverage.Value,
+                TrendText = _dashboardCoverage.Caption,
                 Icon = "◇",
                 AccentBrush = Brushes.SlateGray
             };
@@ -1151,6 +1160,41 @@ namespace Carthago
             var sensors = ReadDashboardActiveSensorKpi();
             card.Value = sensors.Value;
             card.TrendText = sensors.Caption;
+        }
+
+        private async void DashboardCoverageTimerTick(object? sender, EventArgs e)
+        {
+            if (_dashboardCoverageBusy || !_dashboardCallbackGate.IsOpen ||
+                DashboardView.Visibility != Visibility.Visible)
+                return;
+            _dashboardCoverageBusy = true;
+            try
+            {
+                // Same source as Detection Coverage Center. Catalog validation,
+                // runtime counters and telemetry snapshots remain off the UI thread.
+                var observed = await Task.Run(() =>
+                    DetectionCoverageKpiProjection.FromSnapshots(RuleCatalog.HealthSnapshots()));
+                if (!_dashboardCallbackGate.IsOpen) return;
+                _dashboardCoverage = observed;
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                if (!_dashboardCallbackGate.IsOpen) return;
+                _dashboardCoverage = DetectionCoverageKpiProjection.Unavailable();
+            }
+            finally
+            {
+                _dashboardCoverageBusy = false;
+                if (_dashboardCallbackGate.IsOpen)
+                {
+                    var card = _dashboardOverviewKpis.FirstOrDefault(kpi => kpi.Title == "Detection Coverage");
+                    if (card is not null)
+                    {
+                        card.Value = _dashboardCoverage.Value;
+                        card.TrendText = _dashboardCoverage.Caption;
+                    }
+                }
+            }
         }
 
         private void UpdateDashboardOverviewThroughput(string status)
@@ -1835,6 +1879,9 @@ namespace Carthago
             PreferencesService.PreferencesChanged -= DashboardPreferencesChanged;
             DeviceComboBox.SelectionChanged -= DeviceComboBox_SelectionChanged;
             _dashboardHeaderTimer.Stop();
+            _dashboardCoverageTimer.Stop();
+            _dashboardCoverageTimer.Tick -= DashboardCoverageTimerTick;
+            CleanupDashboardCli();
             CleanupDashboardLiveEvents();
 
             if (_sinkHost != null)
@@ -1886,7 +1933,7 @@ namespace Carthago
                 "Network Throughput" => "Latest local throughput sample when capture reports monitoring or degraded. This is not the local PPS chart, an inbound/outbound breakdown, or proof of capture health.",
                 "Active Sensors" => "While the GUI holds the active-sensor scheduler reservation, the value is its non-blocked scheduled-profile count (not simultaneously probing sensors). Otherwise the value is unknown and the caption shows only locally saved profile configurations; foreground and service workers are not assessed.",
                 "Open Incidents" => "Unresolved correlated incidents from the bounded recent local snapshot (maximum 150); not a global count. Demo detections may be included when demo mode is enabled.",
-                "Detection Coverage" => "No validated active-rule denominator is available; detection coverage is not established.",
+                "Detection Coverage" => "Numerator: currently alert-mode rules evaluated at least once in this process. Denominator: currently alert-mode rules in the registered runtime catalog. Updates every 60 seconds while Overview is visible. Catalog errors appear separately. This is not positive/negative replay qualification, detection accuracy, or fleet-wide coverage.",
                 "Active Incidents" => "Unresolved correlated incidents from a bounded local snapshot. The 15-minute change uses creation timestamps; activity bars are relative, not throughput.",
                 "High Risk Hosts" => "Distinct source hosts in unresolved correlated incidents with local risk at least 50. This is not a complete host inventory or verified detection confidence.",
                 "New Anomalies (15m)" => "Shows the 15-minute anomaly count when nonzero; otherwise falls back to the bounded local anomaly snapshot total. Activity bars use creation timestamps.",
