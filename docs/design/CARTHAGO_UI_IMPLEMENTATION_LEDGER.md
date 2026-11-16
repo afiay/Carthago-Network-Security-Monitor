@@ -6149,3 +6149,14 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Ownership/static review:** AnomaliesPage.xaml and this ledger only. Existing responsive controller, named controls, bindings (identical multiset), handlers, empty states, selected hero, actions, local data and provenance retained. No shared contracts, detection, capture, privacy, ScottPlot 10/120, Events 80/500, CLI, Cisco/WebView2 or automation changes. Independent R163 work preserved. Read-only docs navigation.
 
 **Risks/planned unexecuted:** long values and peer labels, narrow matrix, feature bar clipping, empty evidence, keyboard and selection, 1920/1440/1100/1099/1024/1023/640 widths and DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. Next UI-194: Anomalies supporting entity history and baseline drift workspace; preserve recorded metrics and actions.
+
+
+## GA UI-194 — Entity history and baseline drift compact comparison workspace
+
+**2026-11-16 · SOURCE CANDIDATE — UNVERIFIED.** Exact approved Library image libfile_b0a34361560c8191b641e432b3e6b15c visually inspected. Baseline `c2b0545d63305bdb6ae3b20a816c8c0d507625c3`, tree `4fe3695a14fac0cf4401fbd6e583b8c589c99425`; prior UI-193. Reference mapping: compact graphite evidence cards, cyan observation hierarchy and aligned comparison metadata; no demo values.
+
+**Visible before → after:** both supporting panels gain compact 12-unit insets, 19-unit headings and tighter divided headers; large metric cards become compact comparison rows with 3-unit cyan rails, 6-unit gutters and a distinct shaded observed/baseline comparison band. Deviation and trend remain below in aligned columns; timestamp/trend header now uses proportional columns instead of unbounded Auto. Existing Wide/Standard two-lane and Compact/below-1024 stacked controller unchanged. Static impact: more recorded metrics per viewport and clearer comparison grouping; no render.
+
+**Ownership/static review:** AnomaliesPage.xaml and this ledger only. Reviewed supporting grid controller and existing page resources; binding multiset unchanged, named panels, analyst actions and handlers retained. No shared contracts, analytics, capture, detection, privacy, ScottPlot 10/120, Events 80/500, CLI, Cisco/WebView2 or automation changes. Independent GA-09bn preserved.
+
+**Risks/planned unexecuted:** long metric/time/trend values, empty history, narrow columns, selection changes, keyboard actions, widths 1920/1440/1100/1099/1024/1023/640 and DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. Next UI-195: Anomalies analyst action and recorded-link workspace composition; preserve permissions and exact navigation.
