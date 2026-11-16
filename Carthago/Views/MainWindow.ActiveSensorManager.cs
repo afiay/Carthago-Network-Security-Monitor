@@ -102,6 +102,7 @@ public partial class MainWindow
                 list.Items.Add(row);
                 if (Equals(selected, p.Id)) list.SelectedItem = row;
             }
+            UpdateDashboardOverviewSensors();
         }
         void RefreshSaved()
         {
@@ -111,6 +112,7 @@ public partial class MainWindow
             saved.SelectedItem = read.Rows.FirstOrDefault(r => r.Id == selection);
             if (saved.SelectedIndex < 0 && read.Rows.Count > 0) saved.SelectedIndex = 0;
             if (read.Error is not null) message.Text = read.Error;
+            UpdateDashboardOverviewSensors();
         }
         RefreshSaved();
         remember.Click += (_, _) =>
@@ -272,7 +274,15 @@ public partial class MainWindow
             args.Cancel = true; closeRequested = true; active.Cancel();
             message.Text = "Stopping; waiting for current probe cleanup…";
         };
-        dialog.Closed += (_, _) => timer.Stop();
+        dialog.Closed += (_, _) =>
+        {
+            timer.Stop();
+            if (ReferenceEquals(_dashboardActiveSensorSession, manager))
+                _dashboardActiveSensorSession = null;
+            UpdateDashboardOverviewSensors();
+        };
+        _dashboardActiveSensorSession = manager;
+        UpdateDashboardOverviewSensors();
         dialog.ShowDialog();
     }
 }
