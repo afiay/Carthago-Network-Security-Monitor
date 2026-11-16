@@ -58,6 +58,18 @@ namespace Carthago.Views
                 EvaluatedCount.Text = _rows.Count(row => row.Snapshot.RuntimeStats.Evaluations > 0).ToString("N0");
                 ValidationErrorCount.Text = _rows.Count(row => row.Snapshot.HasValidationErrors).ToString("N0");
 
+                // These are in-process counters, not packet-capture totals or a quality PASS.
+                var engineCounters = RuleEngineHealthState.ReadLifetimeCounters();
+                RuntimeFunnelText.Text =
+                    $"Engine record evaluations: {engineCounters.Evaluations:N0}  •  " +
+                    $"Rule evaluations: {_rows.Sum(row => row.Snapshot.RuntimeStats.Evaluations):N0}  •  " +
+                    $"Rule matches: {_rows.Sum(row => row.Snapshot.RuntimeStats.Matches):N0}  •  " +
+                    $"Rule skips: {_rows.Sum(row => row.Snapshot.RuntimeStats.Skipped):N0}  •  " +
+                    $"Rule failures: {_rows.Sum(row => row.Snapshot.RuntimeStats.Failed):N0}  •  " +
+                    $"Journal failures: {engineCounters.JournalFailures:N0}. " +
+                    "Counts are since process start; matched does not mean alerted. " +
+                    "Refresh while capture is active to diagnose the detection path.";
+
                 var unobserved = _rows.Count(row => row.Snapshot.TelemetryCoverage.MissingRequiredTelemetry.Count > 0);
                 SnapshotStatusText.Text = $"Catalog read at {capturedAt:yyyy-MM-dd HH:mm:ss} UTC • " +
                     $"{unobserved:N0} rules have required telemetry kinds not yet observed in this process. " +
@@ -149,11 +161,26 @@ namespace Carthago.Views
                 : string.Join("; ", snapshot.ValidationFindings.Take(5).Select(finding =>
                     $"{finding.Severity} {finding.Code}: {finding.Message}"));
 
+            var dominant = snapshot.NoMatchStats.DominantReason;
+            var noMatchExplanation = dominant == null
+                ? (runtime.Evaluations == 0
+                    ? "No evaluation yet; inspect selector skips, policy, and required telemetry."
+                    : "No recorded no-match reason; a match, suppression or instrumentation gap may explain this.")
+                : $"{dominant.Code} ({dominant.Category}, {dominant.Count:N0} observations): {dominant.Message}";
+            // This catalog view has no attached replay execution result by default.
+            // A historical replay PASS is not independently labelled field accuracy.
+            var replay = snapshot.ReplayCoverage;
+            var replayExplanation = replay.SampleCount == 0
+                ? "No replay evidence loaded in this view (does not mean no historical tests exist)."
+                : $"{replay.Status}  •  {replay.BenignSampleCount} benign / {replay.MaliciousSampleCount} malicious cases  •  {replay.FailedSampleCount} failed; not independent field certification.";
+
             RuleDetailHeading.Text = $"{snapshot.RuleId}  /  {snapshot.Name}";
             RuleDetailText.Text =
                 $"Policy: {snapshot.CurrentMode}  •  Default enabled: {snapshot.Descriptor.EnabledByDefault}\n" +
                 $"Evaluations: {runtime.Evaluations:N0}  •  Matches: {runtime.Matches:N0}  •  " +
                 $"Skipped: {runtime.Skipped:N0}  •  Failures: {runtime.Failed:N0}\n" +
+                $"No-match / skipped reason: {noMatchExplanation}\\n" +
+                $"Replay qualification: {replayExplanation}\\n" +
                 $"Last evaluated (UTC): {runtime.LastEvaluatedUtc?.ToString("u") ?? "Not observed"}\n" +
                 $"Required telemetry kinds: {requirements}\n" +
                 $"Required telemetry kinds not yet observed: {missing}\n" +
@@ -178,6 +205,9 @@ namespace Carthago.Views
             public string Mode => Snapshot.CurrentMode.ToString();
             public long Evaluations => Snapshot.RuntimeStats.Evaluations;
             public long Matches => Snapshot.RuntimeStats.Matches;
+            public long Skipped => Snapshot.RuntimeStats.Skipped;
+            public string NoMatchReason => Snapshot.NoMatchStats.DominantReason?.Code ??
+                (Snapshot.RuntimeStats.Evaluations == 0 ? "Not evaluated" : "Not recorded");
             public string TelemetryStatus
             {
                 get
