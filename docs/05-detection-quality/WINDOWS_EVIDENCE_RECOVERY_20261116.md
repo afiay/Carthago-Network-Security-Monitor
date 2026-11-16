@@ -221,3 +221,33 @@ C:\Users\afiay\Documents\Carthago-Evidence-20261116-190505\original-integration-
 ```
 
 After inspecting that report, document the per-run proof chain (report SHA-256, TRX SHA-256, runner-declared source SHA, final verifier PASS, counter/time checks), exact blocked gates, and whether the original 14,361/14,361 regression obtained a valid same-run link. Until then, the 80/80 historical synthetic paired replay controls R586–R605 remain separately established at the historical pinned portable source SHA, and current-SHA/field qualifications remain unadmitted. No tests or captures were initiated in this documentation update.
+
+
+## Original integration report reconciliation v1 — detailed owner output, 2026-11-16
+
+The owner supplied the complete derived `original-integration-reconciliation-v1.json` produced read-only on recovered originals. Its summary confirms **six reports inspected, two new exact source-run links, cumulative five of 42 source-run links, 37 still without runner link, no tests or captures executed, and zero new formal admissions**.
+
+The only fully successful integration report is:
+
+- Report: `originals/root-002/integration/20261113-233654-ff35973a0373-afba12c9/integration.json`; recovered SHA-256 `7ca38fbaf02b90565112d2b4efafc172474a65b2834ef9a6dddf5f88f6e688e9`
+- Runner-declared source SHA: `ff35973a0373fb61ccee1a64d836944458d54f88`
+- Original verifier log: SHA-256-verified and contains final `PASS: local build, tests and replay validation.`
+- CLI: `originals/root-002/integration/20261113-233654-ff35973a0373-afba12c9/cli.trx`, SHA-256 `732cec57f8ef05faa4a19ffbe773501bf47e37174544ad49e7fc6dcd3414d654`, TRX run ID `8964302d-af93-4bfa-89fc-d540f938b3e7`. **653 executed, 653 passed, zero failed.**
+- Windows: `originals/root-002/integration/20261113-233654-ff35973a0373-afba12c9/windows-tests/carthago-tests.trx`, SHA-256 `f51f3aa997d70581dc5702056916ef3c16becd31245ad6046f0bd9c0ab18ac6f`, TRX run ID `16887fab-9bf8-4e22-92a1-d62346378dd9`. **14,186 executed, 14,186 passed, zero failed.**
+- For both TRX, original copies are hash verified, report counters match, stage codes indicate success, and timestamps are within runner bounds. Both are linked **historical execution evidence**, not current-HEAD validation or field-accuracy acceptance.
+
+Five integration reports did **not** meet complete report/verifier PASS gates:
+
+| Runner-declared SHA | Original verifier-log status | Final verifier PASS |
+| --- | --- | --- |
+| `a4c01f86a4aa13b8b4dce9047da8334b51856f07` | missing in recovered manifest | no |
+| `390a5801e2e2cb9049f79a26aa5515624925e8a5` | missing in recovered manifest | no |
+| `0861e45c832337b5815ae195e0d58812652bfb63` | missing in recovered manifest | no |
+| `637f42b1a9547ddb134775d5b88d43afd740787b` | missing in recovered manifest | no |
+| `717596f7349804b4d00aea950e28e790cca502fe` | recovered SHA-256 verified | no |
+
+These failures do not establish a test failure or corruption by themselves. The detailed source report intentionally stops at its combined report/verifier gate, so no exact additional failure cause is claimed. Do not attribute the adjacent standalone CLI TRX to these SHAs.
+
+**Important non-inheritance:** The separate recovered **14,361/14,361** Windows TRX remains SHA-256 verified but execution-SHA unlinked; the now-proven **14,186/14,186** Windows integration TRX is a different earlier run at `ff35973a...`. Counting these two together or assigning the later run the earlier SHA would be incorrect.
+
+The 80/80 original synthetic replay controls for R586–R605 remain verified at historical portable SHA `dc43933775cb95a4685ecc860f93fa60b2ad3d1a`. Formal per-rule admissions, real-world precision/recall, and current-source validation remain at **zero newly admitted** in this read-only recovery work. Next candidates are the co-located 392/392 active-sensor report/TRX and any contemporaneous SOC-workspace source record; both need their own strict proof contracts.
