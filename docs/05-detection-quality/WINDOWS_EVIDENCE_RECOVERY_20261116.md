@@ -166,3 +166,29 @@ The owner uploaded the read-only derived file `source-and-replay-reconciliation-
 **Do not conflate these evidence levels.** The 80 controls prove historical *synthetic positive/negative executable replay behavior* for the 20 named rules at the reported source SHA, not their production accuracy, field recall, false-positive rate, physical network readiness, current branch readiness, or formal exact-ID qualification admission. The runner-declared SHA is a contemporaneous report-linked claim corroborated by stage counters and hashes, not external hardware-backed attestation. The v3 checker explicitly records `fieldDetectionQualityEstablished=false`, `artifactsAdmitted=0`, `testsExecutedByAudit=0`. No registry, reviewed-evidence manifest, frozen holdout, or current validation status is promoted as a result.
 
 Further work requires independent source attestation for unbound runs and the separate rule-quality decision rubric, plus explicitly authorized current-SHA and operational testing.
+
+
+## Original integration report reconciliation — pending local execution
+
+Follow-up inspection of the original 359-file recovery manifest identified **six** \`integration.json\` reports. **Four** of the previously 39 unlinked TRX files have a matching directory-level or nested original integration-report candidate:
+
+- \`originals/root-002/integration/20261113-232136-637f42b1a954-8f7ec341/cli.trx\`
+- \`originals/root-002/integration/20261113-232405-717596f73498-e6cf3605/cli.trx\`
+- \`originals/root-002/integration/20261113-233654-ff35973a0373-afba12c9/cli.trx\`
+- \`originals/root-002/integration/20261113-233654-ff35973a0373-afba12c9/windows-tests/carthago-tests.trx\`
+
+The respective SHA prefixes refer to existing GitHub commits, but this is **not sufficient to attest any of those four runs**. The historical \`scripts/verify-integration.ps1\` at \`ff35973a...\` asserted \`-SourceSha\` and clean, correct branch before and after stages and recorded both CLI and nested Windows result counters; the older \`717596f...\` version did not record nested Windows counters.
+
+The new \`scripts/reconcile-original-integration-evidence.py\` is read-only and **has not run against the original Windows bundle**. Its fail-closed gates are: recovered report/TRX/log SHA-256 and lengths match the original manifest; report declares a canonical 40-character source SHA and \`SyntheticIntegrationPassed\`; zero return codes for \`solution-build\`, \`cli-tests\` and \`windows-verification\`; original verifier log includes the final \`PASS: local build, tests and replay validation.\` line; exact per-suite TRX counters and XML results all pass; test execution timestamps fall inside the report's run period (2-minute allowance); and if an earlier 42-TRX reconciliation is supplied, original TRX digest matches that baseline. No SHA propagates across sibling runs or from filename hints. A source link is runner-report corroboration, not external hardware attestation or field-accuracy qualification.
+
+From the CARTHAGO repository working directory, after safe fast-forward:
+
+\`\`\`powershell
+$bundle = 'C:\Users\afiay\Documents\Carthago-Evidence-20261116-190505'
+python .\scripts\reconcile-original-integration-evidence.py \`
+  --bundle $bundle \`
+  --previous (Join-Path $bundle 'source-and-replay-reconciliation-v3.json') \`
+  --output (Join-Path $bundle 'original-integration-reconciliation-v1.json')
+\`\`\`
+
+This generates a new derived report without executing any tests, builds, captures or modifying the recovered originals. Do not promote formal qualification based on its output alone. The standalone 14,361/14,361 Windows TRX remains unbound unless contemporaneous evidence linking its exact hash/run ID and executed SHA can be independently recovered.
