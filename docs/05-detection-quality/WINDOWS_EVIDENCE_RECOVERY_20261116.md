@@ -251,3 +251,22 @@ These failures do not establish a test failure or corruption by themselves. The 
 **Important non-inheritance:** The separate recovered **14,361/14,361** Windows TRX remains SHA-256 verified but execution-SHA unlinked; the now-proven **14,186/14,186** Windows integration TRX is a different earlier run at `ff35973a...`. Counting these two together or assigning the later run the earlier SHA would be incorrect.
 
 The 80/80 original synthetic replay controls for R586–R605 remain verified at historical portable SHA `dc43933775cb95a4685ecc860f93fa60b2ad3d1a`. Formal per-rule admissions, real-world precision/recall, and current-source validation remain at **zero newly admitted** in this read-only recovery work. Next candidates are the co-located 392/392 active-sensor report/TRX and any contemporaneous SOC-workspace source record; both need their own strict proof contracts.
+
+
+## Active-sensor original 392-case qualification: next local read-only check
+
+The original `verify-active-sensors.ps1` at historical commit `ff35973a0373fb61ccee1a64d836944458d54f88` captures branch, clean `git rev-parse HEAD` at start, checks checkout identity again after the TRX, and stores an original `qualification.json` containing `trxSha256`, 28 per-suite count records, source SHA, stage results, and pass status. This schema is **not** the same as the CLI qualification report's dictionary-shaped suites.
+
+A dedicated fail-closed inspector, `scripts/reconcile-original-active-sensor-evidence.py`, is now committed. It checks the original 359-file recovery manifest, original `qualification.json` and `active-sensors.trx` SHA-256 and sizes; 28 exact test-suite identifiers/counts from the historical source (392 total); uniquely mapped TRX tests, successful outcomes and runner stage/status checks; source SHA and branch; exact TRX digest inside the report; and run timestamps. It optionally cross-checks the previous v3 TRX digest. It emits a **new derived JSON only**; no original files, services, captures or tests are touched.
+
+Run on the Windows original evidence directory after safe fast-forward (do not overwrite reports):
+
+```powershell
+$bundle = 'C:\Users\afiay\Documents\Carthago-Evidence-20261116-190505'
+python .\scripts\reconcile-original-active-sensor-evidence.py `
+    --bundle $bundle `
+    --previous (Join-Path $bundle 'source-and-replay-reconciliation-v3.json') `
+    --output (Join-Path $bundle 'original-active-sensor-reconciliation-v1.json')
+```
+
+The report must be reviewed before attributing this **additional** 392/392 historical active-sensor TRX to a pinned source. It is not yet counted among the five runner-linked TRX files, and it can never establish live physical-network accuracy, unattended operation or current-source qualification on its own. No new evidence admission is authorized.
