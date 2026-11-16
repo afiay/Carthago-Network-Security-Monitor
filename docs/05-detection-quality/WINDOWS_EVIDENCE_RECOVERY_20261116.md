@@ -342,3 +342,31 @@ python .\scripts\reconcile-original-soc-workspace-evidence.py `
 ```
 
 The script has **not** run against the owner's original Windows copies in this documentation turn; there is no new test, capture, registry change, or formal admission. Do not share the original stage logs or raw traffic outside the machine when a derived report is sufficient.
+
+
+## SOC original stage-log correlation — owner execution result (2026-11-16)
+
+The owner ran `scripts/reconcile-original-soc-workspace-evidence.py` with the previously reconciled v4 report and shared the resulting Windows console output (screenshot). The script's local derived report was written to `C:\Users\afiay\Documents\Carthago-Evidence-20261116-190505\original-soc-workspace-reconciliation-v1.json`; its full JSON contents were **not** separately uploaded in this review.
+
+The printed output establishes:
+
+| Original SOC correlation gate | Reported result |
+| --- | --- |
+| `sourceShaFromOriginalPreTestFile` | `245bcce291abf06dc6b660221f48d3d6dc1962bb` |
+| `sourceFileCorrelatedToHistoricalSocTrx` | `true` |
+| All six original files SHA-256 verified | `true` |
+| Source contents match prior v4 audit | `true` |
+| Original SOC TRX digest matches prior v4 audit | `true` |
+| All 69 TRX tests and three SOC groups passed | `true` |
+| Source file timestamp precedes TRX | `true` |
+| Original stage logs readable | `true` |
+| Build log reports success | `true` |
+| Test log reports success | `true` |
+| Persisted post-test source recheck observed | **`false`** |
+| `strictRunnerLinkEstablished` | **`false`** |
+
+This verifies a high-confidence **pre-test source-file correlation** to the historical SOC 69/69 run. The original source-file commit exists in GitHub. Crucially, the historical script prints its final clean-checkout verification to the PowerShell console without persisting the outcome to the six recovered artifacts. Do **not** infer its outcome from the passing TRX or stage logs. The console screenshot is the **reconciliation checker output**, not an original November 11 post-run verifier transcript.
+
+**Strict status remains 6/42 runner-report-linked TRX and 36 unlinked**, with SOC separately marked `original-pretest-source-file-correlated`. The 14,361/14,361 standalone full regression remains SHA-unlinked. No historical field qualification, current-SHA qualification or evidence admission changed.
+
+Future remedy (not retroactive): amend `scripts/verify-soc-workspace.ps1` to write a sealed, successful **post-run** completion report only after it checks the checkout SHA, clean state, runner-stage exit codes and the final TRX digest/run identity, then validate that format in a focused test. For the already completed original run, only an authentic contemporaneous final success transcript or report can fill that missing gate.
