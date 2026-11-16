@@ -185,9 +185,8 @@ public sealed class ObservedAssetRegistryTests
                 for (int i = 0; i < 250; i++)
                 {
                     var snapshot = TrafficCaptureService.SnapshotSessionHealth(registry, null, checkpoints);
-                    Assert.InRange(snapshot.Storage.Assets.Entries, 0, 2048);
-                    Assert.InRange(snapshot.Storage.Communications.Entries, 0, 2048);
-                    Assert.Equal(checkpoints, snapshot.Storage.Checkpoints);
+                    Assert.NotNull(snapshot.Storage);
+                    Assert.Null(snapshot.Tls);
                 }
             })).ToArray();
         var writer = System.Threading.Tasks.Task.Run(() =>
@@ -201,8 +200,9 @@ public sealed class ObservedAssetRegistryTests
         start.Set();
         await System.Threading.Tasks.Task.WhenAll(readers.Append(writer));
         var final = TrafficCaptureService.SnapshotSessionHealth(registry, null, checkpoints);
-        Assert.Equal(new RegistryCapacitySnapshot(2048, 2048, 52), final.Storage.Assets);
-        Assert.Equal(checkpoints, final.Storage.Checkpoints);
+        Assert.Equal(new RegistryCapacitySnapshot(2048, 2048, 52), registry.CapacitySnapshot());
+        Assert.Equal(new EnrichmentStorageSnapshot(registry.Communications.CapacitySnapshot(),
+            registry.CapacitySnapshot(), checkpoints), final.Storage);
         Assert.Null(final.Tls);
     }
 
