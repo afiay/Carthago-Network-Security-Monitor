@@ -11,7 +11,7 @@
 
 ## Detection Coverage Center diagnostics
 
-The **Refresh actual status** action now exposes engine record-evaluation count, summed per-rule evaluations, rule matches, rule skips, rule failures, and journal failure count. The per-rule grid exposes **Skipped** and dominant **No-match reason**, and the detail pane shows its code, category, count and explanation.
+The **Refresh actual status** action now exposes engine record-evaluation count, summed per-rule evaluations, rule matches, rule skips, rule failures, journal failure count, and post-policy **shadowed, suppressed, emitted and persisted** counts. These outcomes can overlap; they must not be summed as mutually exclusive packet counts. The per-rule grid exposes **Skipped** and dominant **No-match reason**, and the detail pane shows its code, category, count and explanation.
 
 **Interpretation:**
 1. **Live traffic but engine record evaluations remain zero**: investigate capture-to-enrichment/evaluation routing, session cancellation, and worker health. Packet visibility alone does not establish rule execution.
