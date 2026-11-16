@@ -6246,3 +6246,14 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Ownership/static review:** MainWindow.xaml and ledger only. Reviewed Settings responsive controller, Dashboard apply/reset handlers and Theme.xaml PresetCard/PrimaryButton/SecondaryButton. Named controls, handlers, tooltips and accessibility attributes unchanged. Selection alone unchanged; Apply fallback and Reset empty-minimal behavior unchanged. No capture, detection, privacy, shared APIs, ScottPlot 10/120, Events 80/500, CLI, Cisco/WebView2 or independent R163 changes.
 
 **Risks/planned unexecuted:** primary contrast, long preset names, narrow action wrapping, keyboard focus, immediate replacement and retained evidence, widths 1920/1440/1100/1099/1024/1023/640 and DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. Next UI-203: Settings Save/Reset footer composition, preserve preference lifecycle.
+
+
+## GA UI-203 — Compact Settings persistence action footer
+
+**2026-11-16 · SOURCE CANDIDATE — UNVERIFIED.** Exact approved Library image libfile_b0a34361560c8191b641e432b3e6b15c visually inspected. Baseline `6e5ab24c29030bddb83bed07cfa5097c87398e03`, tree `9d29b3713143e6fc804d116c9a39d16ee0491f72`. Reference mapping: compact graphite panels, cyan primary action, restrained secondary action and thin evidence separators; no demo telemetry.
+
+**Visible before → after:** footer inset 24/22 → 12, title 26 bold → 20 semibold, Save/Reset cards 18 → 10 inset and 12 → 8 radius, headings 23/21 → 18, lifecycle rows 14 → 8 inset and headings 16 → 14. Dividers separate lifecycle/scope disclosures from the existing primary Save and secondary Reset actions, both minimum height 36. Wide retains dominant Save lane and adjacent Reset; Standard/Compact/below 1024 stack Reset below with existing scroll and wrapped disclosures. No fixed outer width.
+
+**Ownership/static review:** MainWindow.xaml and ledger only. Reviewed Settings responsive placement, SaveSettings_Click, ResetSettings_Click, SettingsWorkspaceJump and Theme.xaml SettingsOpsHero/PrimaryButton/SecondaryButton. Named controls, Click, Content, ToolTip and accessibility attributes unchanged. Save persists staged preferences and reapplies runtime settings; Reset remains immediate without confirmation; session credential remains separate. No changes to capture, detection, privacy, shared APIs, ScottPlot 10/120, Events 80/500, CLI, Cisco/WebView2 or independent detection work.
+
+**Risks/planned unexecuted:** long disclosures, button contrast/focus, Save/Reset scope and runtime filter application, session override, widths 1920/1440/1100/1099/1024/1023/640 and DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. Next UI-204: compact developer demonstration Settings section, preserve demo gating and explicit synthetic provenance.

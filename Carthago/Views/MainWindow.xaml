@@ -3254,22 +3254,23 @@
               </GroupBox>
                 </Grid>
                 <!-- GA UI-175: persistence command workspace; existing handlers unchanged. -->
-                <Border Style="{StaticResource SettingsOpsHero}" Margin="0,12,0,16" Padding="24,22">
+                <Border Style="{StaticResource SettingsOpsHero}" Margin="0,8,0,12" Padding="12">
                   <StackPanel>
                     <TextBlock Text="APPLICATION PREFERENCES / COMMAND CENTER" FontSize="11" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" Margin="0,0,0,8"/>
-                    <TextBlock Text="Apply or restore your workspace" FontSize="26" FontWeight="Bold" Foreground="{StaticResource TextBrush}" TextWrapping="Wrap" Margin="0,0,0,14"/>
+                    <TextBlock Text="Apply or restore your workspace" FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" TextWrapping="Wrap" Margin="0,0,0,8"/>
                     <Grid x:Name="SettingsFooterActionsGrid">
                       <Grid.ColumnDefinitions><ColumnDefinition Width="1.7*"/><ColumnDefinition x:Name="SettingsFooterSecondaryColumn" Width="*"/></Grid.ColumnDefinitions>
                       <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                      <Border x:Name="SettingsFooterSaveCard" Background="#102C3C" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1" CornerRadius="12" Padding="18" Margin="0,0,12,0">
+                      <Border x:Name="SettingsFooterSaveCard" Background="#102C3C" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,12,0">
                         <StackPanel>
                           <TextBlock Text="01 / APPLY SAVED PREFERENCES" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentBrush}"/>
-                          <TextBlock Text="Save configuration" FontSize="23" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,6,0,12" TextWrapping="Wrap"/>
-                          <Border Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,8"><StackPanel><TextBlock Text="ON SAVE" Foreground="{StaticResource AccentBrush}" FontSize="11" FontWeight="Bold"/><TextBlock Text="Detection and capture" Foreground="{StaticResource TextBrush}" FontSize="16" FontWeight="SemiBold" Margin="0,5,0,4" TextWrapping="Wrap"/><TextBlock Text="Applies sensitivity, launch preferences, default BPF, enrichment and anomaly presentation. Active Npcap filtering may change." Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap"/></StackPanel></Border>
-                          <Border Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,8"><StackPanel><TextBlock Text="IMMEDIATE" Foreground="{StaticResource AccentBrush}" FontSize="11" FontWeight="Bold"/><TextBlock Text="Dashboard composition" Foreground="{StaticResource TextBrush}" FontSize="16" FontWeight="SemiBold" Margin="0,5,0,4" TextWrapping="Wrap"/><TextBlock Text="Dashboard section toggles and layout actions persist separately when used. Save also includes the current dashboard preferences." Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap"/></StackPanel></Border>
-                          <Border Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,8"><StackPanel><TextBlock Text="SESSION ONLY" Foreground="{StaticResource AccentBrush}" FontSize="11" FontWeight="Bold"/><TextBlock Text="API credential" Foreground="{StaticResource TextBrush}" FontSize="16" FontWeight="SemiBold" Margin="0,5,0,4" TextWrapping="Wrap"/><TextBlock Text="Use the credential action in Capture &amp; Enrichment. Save does not persist the session override." Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap"/></StackPanel></Border>
+                          <TextBlock Text="Save configuration" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,4,0,8" TextWrapping="Wrap"/>
+                          <Border Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="8" Margin="0,0,0,8"><StackPanel><TextBlock Text="ON SAVE" Foreground="{StaticResource AccentBrush}" FontSize="11" FontWeight="Bold"/><TextBlock Text="Detection and capture" Foreground="{StaticResource TextBrush}" FontSize="14" FontWeight="SemiBold" Margin="0,3,0,2" TextWrapping="Wrap"/><TextBlock Text="Applies sensitivity, launch preferences, default BPF, enrichment and anomaly presentation. Active Npcap filtering may change." Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap"/></StackPanel></Border>
+                          <Border Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="8" Margin="0,0,0,8"><StackPanel><TextBlock Text="IMMEDIATE" Foreground="{StaticResource AccentBrush}" FontSize="11" FontWeight="Bold"/><TextBlock Text="Dashboard composition" Foreground="{StaticResource TextBrush}" FontSize="14" FontWeight="SemiBold" Margin="0,3,0,2" TextWrapping="Wrap"/><TextBlock Text="Dashboard section toggles and layout actions persist separately when used. Save also includes the current dashboard preferences." Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap"/></StackPanel></Border>
+                          <Border Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="8" Margin="0,0,0,8"><StackPanel><TextBlock Text="SESSION ONLY" Foreground="{StaticResource AccentBrush}" FontSize="11" FontWeight="Bold"/><TextBlock Text="API credential" Foreground="{StaticResource TextBrush}" FontSize="14" FontWeight="SemiBold" Margin="0,3,0,2" TextWrapping="Wrap"/><TextBlock Text="Use the credential action in Capture &amp; Enrichment. Save does not persist the session override." Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap"/></StackPanel></Border>
+                          <Border Height="1" Background="{StaticResource CardBorderBrush}" Margin="0,2,0,8"/>
                           <Button Content="Save all settings"
-                                                  MinHeight="44" Margin="0"
+                                                  MinHeight="36" Margin="0"
                                                   Style="{StaticResource PrimaryButton}"
                                                   ToolTip="Save sensitivity, capture auto-start, default BPF filter, WHOIS, reputation, anomaly presentation and dashboard section preferences. Runtime preferences are reapplied, including the active Npcap filter when applicable."
                                                   ToolTipService.ShowsToolTipOnKeyboardFocus="True"
@@ -3278,18 +3279,19 @@
                                                   Click="SaveSettings_Click"/>
                         </StackPanel>
                       </Border>
-                      <Border x:Name="SettingsFooterResetCard" Grid.Column="1" Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="18">
+                      <Border x:Name="SettingsFooterResetCard" Grid.Column="1" Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="10">
                         <StackPanel>
                           <TextBlock Text="02 / RESTORE DEFAULTS" FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextSubtleBrush}"/>
-                          <TextBlock Text="Reset application preferences" FontSize="21" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,6,0,12" TextWrapping="Wrap"/>
-                          <Border Background="{StaticResource PillBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,14">
+                          <TextBlock Text="Reset application preferences" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,4,0,8" TextWrapping="Wrap"/>
+                          <Border Background="{StaticResource PillBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="8" Margin="0,0,0,8">
                             <StackPanel>
                               <TextBlock Text="Scope: all application defaults" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" TextWrapping="Wrap"/>
                               <TextBlock Text="Applies immediately without a confirmation prompt. Runtime preferences are reapplied, including the active Npcap filter when applicable." Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap" Margin="0,8,0,0"/>
                             </StackPanel>
                           </Border>
+                          <Border Height="1" Background="{StaticResource CardBorderBrush}" Margin="0,2,0,8"/>
                           <Button Content="Reset all preferences"
-                                                  MinHeight="40"
+                                                  MinHeight="36"
                                                   Margin="0"
                                                   ToolTip="Reset all application preferences to defaults, not only sensitivity. Applies without a confirmation prompt and reapplies runtime preferences, including the active Npcap filter when applicable."
                                                   ToolTipService.ShowsToolTipOnKeyboardFocus="True"
