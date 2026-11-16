@@ -382,3 +382,14 @@ Implemented on `feature/carthago-reliability-hardening`:
 - Full schema, immutable-evidence limitations and owner commands are described in `docs/05-detection-quality/SOC_WORKSPACE_COMPLETION_PROVENANCE_V1.md`.
 
 **Execution classification:** The PowerShell contract tests and new end-to-end Windows verifier **have not been executed** in this authoring session. They must be run by the owner against a pinned clean source. The historical November 11 SOC result remains only `original-pretest-source-file-correlated`, and strict source links remain **6/42** pending authentic pre-existing post-run evidence. This new code does not retroactively attest earlier runs or qualify any detection rule.
+
+
+## 2026-11-16 — New SOC verifier: Windows execution observed, completion blocked by scope gate
+
+Owner executed the new SOC verifier at prior checkout `aec661a6...`. Original `dotnet test --filter FullyQualifiedName~NetworkInvestigation|FullyQualifiedName~IncidentTimeline|FullyQualifiedName~IncidentDetectionLinkVm` produced **70/70 Passed**, zero failed or skipped. Release build succeeded with nine xUnit1026 warnings (R988–R990, R995–R1000). The source-completion module then threw `SOC TRX has an unrelated or overlapping test group` and did **not** write a successful completion report. This is **not** a new detector test failure or source-run admission.
+
+Cause under investigation: the original parser selected SOC ownership from `TestMethod.className` alone, while the actual VSTest filter also matches **method names** in the fully qualified test name (case-insensitive). A narrowly scoped correction now prefers unique class-marker ownership and otherwise requires exactly one method-marker match; it records `methodScopedCases`, verifies total group counts, and continues rejecting ambiguous/extra/failing cases. The offline test adds method-scoped positive and ambiguous/unrelated negative examples. The precise class responsible in the original 70-case TRX is not asserted until local reparse.
+
+**Pending Windows verification:** `scripts/test-soc-completion-contract.ps1`, then read-only `Get-SocWorkspaceTrxEvidence` against `TestResults/soc-workspace-20261116-200338-13980-b214b937/soc-workspace-tests.trx`, then a **new** clean pinned SOC verifier run. The old failed-completion run cannot retroactively acquire a final source SHA attestation. Detailed commands and guardrails: `docs/05-detection-quality/SOC_WORKSPACE_COMPLETION_PROVENANCE_V1.md`.
+
+Historical source-link count remains **6/42**, with 36 unlinked, until distinct original evidence gates pass. This documentation change runs no tests or captures.
