@@ -59,6 +59,26 @@ public sealed class R118AdvancedAccuracyBatchTests
         Assert.False((await _rule.EvaluateAsync(NetworkBatch116120Context.Context(record))).Matched);
     }
 
+    [Theory]
+    [InlineData("Authorization : Basic YWRtaW46YWRtaW4=")]
+    [InlineData("Authorization\t: Basic YWRtaW46YWRtaW4=")]
+    public async Task Malformed_Authorization_Field_Name_Cannot_Qualify(string malformedHeader)
+    {
+        var record = NetworkBatch116120Context.Basic(NetworkBatch116120Context.Source());
+        record.HttpRequestHeaders = "Host: " + record.HttpHost + "\r\n" + malformedHeader;
+        Assert.False((await _rule.EvaluateAsync(NetworkBatch116120Context.Context(record))).Matched);
+    }
+
+    [Fact]
+    public async Task Trusted_Default_Pair_Flag_Cannot_Override_Contradictory_Wire_Authorization()
+    {
+        var record = NetworkBatch116120Context.Basic(NetworkBatch116120Context.Source());
+        record.HttpRequestHeaders = "Host: " + record.HttpHost
+            + "\r\nAuthorization: Basic dXNlcjpwYXNz";
+        Assert.True(record.HttpBasicDefaultCredentialObserved);
+        Assert.False((await _rule.EvaluateAsync(NetworkBatch116120Context.Context(record))).Matched);
+    }
+
     [Fact] public async Task Unattributed_Device_Host_Cannot_Qualify()
     {
         var record = NetworkBatch116120Context.Basic(NetworkBatch116120Context.Source());
