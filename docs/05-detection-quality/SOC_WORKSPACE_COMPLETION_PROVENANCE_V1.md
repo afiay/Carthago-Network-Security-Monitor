@@ -114,3 +114,22 @@ Get-FileHash -LiteralPath (Join-Path $dir 'completion.json') -Algorithm SHA256
 Preserve `completion.json`, the corresponding original `soc-workspace-tests.trx`, `source-sha.txt` and four stage logs together in that run folder. Inspect the completion file and verify its recorded TRX and stage hashes against their original bytes before accepting its source-evidence claim. Uploading `completion.json` is sufficient for the first field-level schema and source SHA review; original artifacts would be needed for an independent hash recheck. No code change or new test execution occurred as part of documenting the supplied console transcript.
 
 **Warning follow-up (separate):** nine xUnit1026 unused-`name`-parameter warnings in R988–R990 and R995–R1000 remain open and should be fixed with rule-test semantics preserved rather than suppressed.
+
+
+## Final disposition — verifier bug CLOSED, artifact audit separate
+
+The Windows SOC verifier classification/completion defect is **CLOSED** based on the successful owner-run end-to-end validation at source SHA `971892ef4d18e18cbb2d8317c23c0ada64c2dc19`: 27 offline assertions PASS, Release build PASS (nine separate xUnit1026 warnings), 70 SOC tests PASS, successful post-check completion publication, and user-provided `completion.json` with 5 identical pre/post/local/remote source SHAs, four zero-exit stages, valid TRX timing and test-group totals.
+
+The uploaded completion JSON is 2,935 bytes; SHA-256 `577edf65e6be209e1908600ea94a9af22b189ea56f8938afaaf84e371d6ac252`. It specifies TRX run ID `36333bc5-2f34-472e-9e8c-0afbe7463041` with reported TRX SHA-256 `121f68fc32e94d42f4ccc8a424f2a34582cba797cbb904e123b8c8dd4cefe1af`. Its runner and test interval are internally consistent. The exact closure rubric, trace and exclusions are in [SOC_VERIFIER_BUG_CLOSURE_20261116.md](SOC_VERIFIER_BUG_CLOSURE_20261116.md).
+
+**This supersedes prior pending/unverified *verifier implementation* status for the corrected run; it does not rewrite earlier historical failures.** The original November 11 SOC still lacks persisted post-test proof, and the frozen 42-original-file cohort stays 6 runner-report-linked / 36 unlinked.
+
+**Remaining separate evidence check:** `scripts/verify-soc-completion-artifacts.ps1` compares `completion.json` against the six original sibling artifacts (source SHA file, TRX and four logs), including original TRX identity, counts and hash. The utility is read-only and committed, but was **not yet executed on Windows**, so original-file rehash verification is still pending. This is not a blocker to closing the now reproducibly corrected classifier bug, and it is not automatic WPF, capture, field accuracy or detection rule acceptance.
+
+Run without rebuild/retest:
+
+```powershell
+.\scripts\test-soc-completion-contract.ps1
+.\scripts\verify-soc-completion-artifacts.ps1 `
+    -RunDirectory '.\TestResults\soc-workspace-20261116-201947-13980-fc218b2a'
+```
