@@ -1021,11 +1021,9 @@ namespace Carthago.Views
             ReplaceCollection(Tags, incident.Tags.Count == 0
                 ? BuildDefaultTags(incident)
                 : incident.Tags.Select(HumanizeToken).Distinct(StringComparer.OrdinalIgnoreCase));
-            ReplaceCollection(RuleIds, incident.RelatedEvents
-                .Select(evt => evt.RuleId)
-                .Where(value => !string.IsNullOrWhiteSpace(value))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .DefaultIfEmpty("No rule IDs"));
+            ReplaceCollection(RuleIds,
+                IncidentQueueProjectionService.GetRecordedRuleIds(incident)
+                    .DefaultIfEmpty("No recorded rule IDs"));
             ReplaceCollection(ChecklistItems, BuildChecklist(incident));
 
             IsAnalyzing = incident.IsAnalyzing;
@@ -1200,6 +1198,18 @@ namespace Carthago.Views
                 Summary = incident.Summary,
                 IsAnalyzing = incident.IsAnalyzing,
                 OccurrenceCount = incident.OccurrenceCount,
+                PrimaryRuleId = incident.PrimaryRuleId,
+                RelatedRuleIds = (incident.RelatedRuleIds ?? new List<string>()).ToList(),
+                RelatedEventIds = (incident.RelatedEventIds ?? new List<string>()).ToList(),
+                CorrelationReason = incident.CorrelationReason,
+                EvidenceSummary = incident.EvidenceSummary,
+                StoryType = incident.StoryType,
+                ConfidenceScore = incident.ConfidenceScore,
+                CorrelationStrengthScore = incident.CorrelationStrengthScore,
+                CorrelationVersion = incident.CorrelationVersion,
+                RelatedEntities = (incident.RelatedEntities ?? new List<string>()).ToList(),
+                CorrelationReasons = (incident.CorrelationReasons ?? new List<IncidentCorrelationReason>()).ToList(),
+                ReasonGraph = incident.ReasonGraph,
                 RelatedEvents = incident.RelatedEvents.ToList(),
                 RelatedAnomalies = incident.RelatedAnomalies.ToList(),
                 Evidence = incident.Evidence.ToList(),
