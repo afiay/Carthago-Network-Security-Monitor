@@ -141,5 +141,6 @@
   <ItemGroup>
     <ProjectReference Include="../Carthago.Contracts/Carthago.Contracts.csproj" />
     <ProjectReference Include="../Carthago.Core/Carthago.Core.csproj" />
+    <ProjectReference Include="../Carthago.Cli/Carthago.Cli.csproj" />
   </ItemGroup>
 </Project>
