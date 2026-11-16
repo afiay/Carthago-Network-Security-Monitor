@@ -288,3 +288,23 @@ The owner uploaded `original-active-sensor-reconciliation-v1.json` (derived repo
 The separate 14,361/14,361 Windows regression remains original-hash verified but unlinked to its execution SHA, despite an earlier pinned 14,186/14,186 Windows integration regression now being linked. Active sensor tests here do **not** establish physical/network protocol correctness, unattended SCM or Linux service lifecycle, production precision/recall, or current-HEAD qualification. **No original artifacts, registry rows, holdouts, rule-quality thresholds, or formal evidence admissions were changed.**
 
 The next defensible provenance step is inspecting the original SOC-workspace `source-sha.txt` (the v3 derived inspector found no canonical 40-hex SHA token), any original companion logs, and the matching 69-result `soc-workspace-tests.trx`. Do not infer a 40-character executed SHA from an abbreviated filename, a current checkout or a neighboring run.
+
+
+## SOC-workspace source-sha UTF-16 recovery — investigation, no new link
+
+The previous v3 derived report found `sourceShaTextArtifacts[0]` at `originals/root-001/soc-workspace-20261111-131828-20736/source-sha.txt` but returned an empty list of canonical 40-character SHA tokens. The original recovery manifest shows the SHA file is **86 bytes**, with a SHA-256-verified original copy, next to a passing **69/69** `soc-workspace-tests.trx`, plus build/restore/test logs.
+
+Historical `scripts/verify-soc-workspace.ps1` writes `git rev-parse HEAD` to `source-sha.txt` via PowerShell `Out-File` after checking the expected branch, clean checkout and local tracking reference. Windows PowerShell 5.1 `Out-File` can write UTF-16LE with a BOM: a 40-character SHA followed by CRLF would occupy exactly **86 bytes**. That is a **plausible explanation**, not yet a verified source identity, because the original file contents were not uploaded.
+
+The read-only `scripts/reconcile-recovered-source-and-replays.py` now detects UTF-16 BOM or UTF-8 text for `source-sha.txt` and emits a canonical `sourceSha40` only if the decoded **entire trimmed file** is a 40-character hex SHA; it marks this as `original-source-file-only-unbound`. No TRX runner link or evidence admission follows automatically. Only after analyzing the original text, exact SOC 69-case TRX, adjacent logs, source verifier contract and run timing may an additional SOC attribution be considered.
+
+Run locally after safe branch update with a fresh output name:
+
+```powershell
+$bundle = 'C:\Users\afiay\Documents\Carthago-Evidence-20261116-190505'
+python .\scripts\reconcile-recovered-source-and-replays.py `
+  --bundle $bundle `
+  --output (Join-Path $bundle 'source-and-replay-reconciliation-v4.json')
+```
+
+The historical source-run count remains **6/42** until a separate SOC proof-chain review. No tests/builds/captures, original artifact mutations or evidence admissions are performed.
