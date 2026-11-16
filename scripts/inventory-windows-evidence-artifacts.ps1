@@ -136,7 +136,7 @@ foreach ($a in $artifacts) {
         $byHash[$a.sha256] = [Collections.Generic.List[object]]::new()
     }
     $byHash[$a.sha256].Add($a)
-    if ($null -ne $a.trx -and -not [string]::IsNullOrWhiteSpace($a.trx.runId)) {
+    if ($null -ne $a.trx -and $null -ne $a.trx.PSObject.Properties['runId'] -and -not [string]::IsNullOrWhiteSpace($a.trx.runId)) {
         $runId = [string]$a.trx.runId
         if (-not $byRun.ContainsKey($runId)) {
             $byRun[$runId] = [Collections.Generic.List[object]]::new()
@@ -146,7 +146,7 @@ foreach ($a in $artifacts) {
 }
 foreach ($a in $artifacts) {
     $a.duplicateContent = ($byHash[$a.sha256].Count -gt 1)
-    if ($null -ne $a.trx -and -not [string]::IsNullOrWhiteSpace($a.trx.runId)) {
+    if ($null -ne $a.trx -and $null -ne $a.trx.PSObject.Properties['runId'] -and -not [string]::IsNullOrWhiteSpace($a.trx.runId)) {
         $sameRun = $byRun[[string]$a.trx.runId]
         $a.conflictingTrxRunId = (@($sameRun | Select-Object -ExpandProperty sha256 -Unique).Count -gt 1)
     }
