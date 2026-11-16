@@ -58,16 +58,44 @@ def git(command: list[str]) -> str:
     return result.stdout.strip()
 
 
-def pin_checkout() -> dict:
+def pin_checkout(expected_sha=None) -> dict:
+    """At init require origin parity; later require unchanged clean pinned HEAD.
+
+    A separate automation can advance origin after manual observations begin.
+    That does not change the application source being observed. Never silently
+    switch to a newer checkout: it invalidates the recorded acceptance run.
+    """
     branch = git(["symbolic-ref", "--short", "HEAD"])
     sha = git(["rev-parse", "HEAD"]).lower()
     origin = git(["rev-parse", "refs/remotes/origin/" + BRANCH]).lower()
-    clean = git(["status", "--porcelain", "--untracked-files=all"]) == ""
-    if branch != BRANCH or not HEX40.fullmatch(sha) or not HEX40.fullmatch(origin):
-        raise ValueError("Wrong branch or unavailable full source identity")
-    if sha != origin or not clean:
-        raise ValueError("Working tree unclean or local HEAD differs from origin tracking ref")
-    return {"branch": branch, "sourceSha": sha, "originSha": origin, "clean": clean}
+    status = git(["status", "--porcelain", "--untracked-files=all"])
+    if branch != BRANCH:
+        raise ValueError("Wrong Git branch: expected " + BRANCH + ", got " + branch)
+    if not HEX40.fullmatch(sha) or not HEX40.fullmatch(origin):
+        raise ValueError("Full local HEAD or origin tracking SHA unavailable")
+    if status:
+        files = [line.strip() for line in status.splitlines()[:5]]
+        raise ValueError(
+            "Working tree has local modified/untracked files (first five): " +
+            "; ".join(files) + ". Inspect git status --short; do not discard original work."
+        )
+    if expected_sha is None:
+        if sha != origin:
+            raise ValueError(
+                "Local HEAD " + sha + " does not match fetched origin/" + BRANCH +
+                " " + origin + ". Inspect git status -sb and use git pull --ff-only " +
+                "only after preserving local changes."
+            )
+    else:
+        if not isinstance(expected_sha, str) or not HEX40.fullmatch(expected_sha):
+            raise ValueError("Invalid historical WPF acceptance source pin")
+        if sha != expected_sha:
+            raise ValueError(
+                "Local HEAD changed during manual WPF acceptance: expected " +
+                expected_sha + ", got " + sha + ". Start a new run for the new checkout."
+            )
+    return {"branch": branch, "sourceSha": sha, "originSha": origin,
+            "clean": True, "originMovedPastPinned": origin != sha}
 
 
 def new_file(path: Path, data: dict) -> None:
@@ -157,7 +185,7 @@ def record_observation(run: Path, case_id: str, status: str,
     if info.get("purpose") != PURPOSE or info.get("schemaVersion") != 1 or \
        info.get("sourceSha") != info.get("originSha"):
         raise ValueError("Original run-info identity invalid")
-    pin = pin_checkout()
+    pin = pin_checkout(expected_sha=info.get("sourceSha"))
     if pin["sourceSha"] != info.get("sourceSha"):
         raise ValueError("Checkout changed since manual acceptance initialization")
     if status != "not_run" and len(notes.strip()) < 15:
@@ -203,9 +231,10 @@ def assess(run: Path, output: Path) -> dict:
     if [x.get("id") for x in all_rows if isinstance(x, dict)] != list(expected):
         raise ValueError("Response order, IDs or record shape changed")
     try:
-        current = pin_checkout()
+        current = pin_checkout(expected_sha=info["sourceSha"])
         source_consistent = current["sourceSha"] == info["sourceSha"]
     except ValueError:
+        current = None
         source_consistent = False
     results = []
     for item in all_rows:
@@ -239,7 +268,10 @@ def assess(run: Path, output: Path) -> dict:
     assessment = {
         "schemaVersion": 1, "purpose": PURPOSE + "-assessment",
         "assessedUtc": now(), "sourceSha": info["sourceSha"],
-        "checkoutConsistent": source_consistent, "gates": by_gate,
+        "checkoutConsistent": source_consistent,
+        "originMovedSinceInit": bool(current and current.get("originSha") != info["originSha"]),
+        "currentOriginShaAtAssessment": current.get("originSha") if current else None,
+        "gates": by_gate,
         "releaseDecision": "CANDIDATE_ONLY" if all(x == "PASS" for x in by_gate.values()) else "NO_GO",
         "manualEvidenceAccepted": sum(r["verifiedHumanEvidence"] for r in results),
         "manualEvidenceRequired": len(CASES), "results": results,
@@ -247,7 +279,8 @@ def assess(run: Path, output: Path) -> dict:
         "warnings": [
             "Human-submitted evidence is not a machine-verifiable observation of the rendered WPF UI.",
             "Do not equate G5/G6 CANDIDATE_ONLY with full CARTHAGO release, field accuracy or exact-rule qualification.",
-            "Source SHA must match a clean unchanged local and tracking checkout when assessing."
+            "At init local source must match the fetched origin; later acceptance requires the same clean pinned local source even if origin advances.",
+            "If originMovedSinceInit is true, any manual PASS applies only to the pinned historical SHA, not to latest remote HEAD."
         ],
     }
     new_file(output, assessment)
