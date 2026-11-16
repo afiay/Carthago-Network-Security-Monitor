@@ -192,3 +192,32 @@ python .\scripts\reconcile-original-integration-evidence.py \`
 \`\`\`
 
 This generates a new derived report without executing any tests, builds, captures or modifying the recovered originals. Do not promote formal qualification based on its output alone. The standalone 14,361/14,361 Windows TRX remains unbound unless contemporaneous evidence linking its exact hash/run ID and executed SHA can be independently recovered.
+
+
+## Owner-run original integration reconciliation — 2026-11-16 (console summary)
+
+The owner executed `scripts/reconcile-original-integration-evidence.py` on the Windows recovery bundle `C:\Users\afiay\Documents\Carthago-Evidence-20261116-190505`, supplying the existing v3 source/replay reconciliation as `--previous`. The completed PowerShell console output reports:
+
+| Audit measure | Reported result |
+| --- | ---: |
+| Recovery manifest artifacts | 359 |
+| Original `integration.json` reports inspected | 6 |
+| Integration TRX files now runner-report linked | 2 |
+| Previously linked historical TRX runs | 3 |
+| **Additional source links** | **2** |
+| **Cumulative runner-report-linked TRX** | **5 of 42** |
+| **TRX still lacking a qualifying runner link** | **37 of 42** |
+| Detector tests executed in reconciliation | 0 |
+| Capture operations | 0 |
+| Evidence admissions | 0 |
+| Field-accuracy qualification | false |
+
+**Evidence status and review limits:** These counts are transcribed from the owner's completed local console summary, not yet independently cross-checked against the detailed generated `original-integration-reconciliation-v1.json`. In particular, *which* two integration TRXs linked, their exact 40-character source SHAs, which candidates were blocked and why, and whether the complete Windows TRX was one of the two cannot be inferred from the summary and remain pending the detailed report. Do not assign any new source SHA to a specific run based on its folder name, and do not convert these links into formal rule acceptance.
+
+The locally generated report is at:
+
+```text
+C:\Users\afiay\Documents\Carthago-Evidence-20261116-190505\original-integration-reconciliation-v1.json
+```
+
+After inspecting that report, document the per-run proof chain (report SHA-256, TRX SHA-256, runner-declared source SHA, final verifier PASS, counter/time checks), exact blocked gates, and whether the original 14,361/14,361 regression obtained a valid same-run link. Until then, the 80/80 historical synthetic paired replay controls R586–R605 remain separately established at the historical pinned portable source SHA, and current-SHA/field qualifications remain unadmitted. No tests or captures were initiated in this documentation update.
