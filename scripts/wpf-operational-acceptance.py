@@ -145,6 +145,47 @@ def initialize(output_root: Path) -> Path:
     return run
 
 
+
+def record_observation(run: Path, case_id: str, status: str,
+                       notes: str, evidence: list[str]) -> dict:
+    """Store a human-entered observation; never infer or synthesize a PASS."""
+    if case_id not in {cid for cid, _, _ in CASES} or status not in ALLOWED:
+        raise ValueError("Unknown case ID or status")
+    if len(evidence) > 8:
+        raise ValueError("Too many evidence files for one case")
+    info = load(run / "run-info.json")
+    if info.get("purpose") != PURPOSE or info.get("schemaVersion") != 1 or \
+       info.get("sourceSha") != info.get("originSha"):
+        raise ValueError("Original run-info identity invalid")
+    pin = pin_checkout()
+    if pin["sourceSha"] != info.get("sourceSha"):
+        raise ValueError("Checkout changed since manual acceptance initialization")
+    if status != "not_run" and len(notes.strip()) < 15:
+        raise ValueError("Record a factual observation of at least 15 characters")
+    files, errors = verify_evidence(run, evidence)
+    if errors or (status == "pass" and (not files or len(files) != len(evidence))):
+        raise ValueError("Missing or unsafe original evidence: " + "; ".join(errors))
+    responses_path = run / "responses.json"
+    responses = load(responses_path)
+    all_rows = responses.get("responses")
+    if not isinstance(all_rows, list) or [r.get("id") for r in all_rows] != [cid for cid, _, _ in CASES]:
+        raise ValueError("Original response case identities changed")
+    chosen = next(row for row in all_rows if row["id"] == case_id)
+    chosen.update({
+        "status": status, "notes": notes.strip(),
+        "observedAtUtc": now() if status != "not_run" else None,
+        "evidence": evidence
+    })
+    tmp = run / (".responses-" + uuid.uuid4().hex + ".tmp")
+    try:
+        new_file(tmp, responses)
+        os.replace(tmp, responses_path)
+    finally:
+        if tmp.exists():
+            tmp.unlink()
+    return {"case": case_id, "status": status, "hashVerifiedEvidenceFiles": len(files),
+            "sourceSha": pin["sourceSha"], "acceptanceGranted": False}
+
 def assess(run: Path, output: Path) -> dict:
     info = load(run / "run-info.json")
     responses = load(run / "responses.json")
@@ -218,6 +259,12 @@ def main() -> int:
     sub = parser.add_subparsers(dest="command", required=True)
     init = sub.add_parser("init")
     init.add_argument("--output-root", type=Path, default=Path("TestResults"))
+    recorder = sub.add_parser("record", help="Record one observed GUI/capture case, without opening the app")
+    recorder.add_argument("--run-dir", type=Path, required=True)
+    recorder.add_argument("--case", required=True)
+    recorder.add_argument("--status", choices=sorted(ALLOWED), required=True)
+    recorder.add_argument("--notes", default="")
+    recorder.add_argument("--evidence", action="append", default=[], help="Relative evidence/ file path")
     finalize = sub.add_parser("assess")
     finalize.add_argument("--run-dir", type=Path, required=True)
     args = parser.parse_args()
@@ -228,6 +275,9 @@ def main() -> int:
         run = args.run_dir.resolve()
         if not run.is_dir() or run.is_symlink():
             raise ValueError("Run directory absent or is a symlink")
+        if args.command == "record":
+            print(json.dumps(record_observation(run, args.case, args.status, args.notes, args.evidence), indent=2))
+            return 0
         assessment_path = run / ("assessment-" + dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid.uuid4().hex[:8] + ".json")
         report = assess(run, assessment_path)
         print(json.dumps({"assessment": str(assessment_path),
