@@ -23,6 +23,21 @@ public sealed class GuiCliInProcessIntegrationTests
     }
 
     [Fact]
+    public async Task VersionQueryUsesRealCliWithoutLiveHostOrProcessLaunch()
+    {
+        Assert.True(GuiCliCommandPolicy.TryParse("--version", out var args, out var action));
+        Assert.Equal(GuiCliLocalAction.None, action);
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = await CliApplication.RunAsync(args, output, error, CancellationToken.None);
+
+        Assert.Equal(0, exitCode);
+        Assert.Contains("carthago ", output.ToString());
+        Assert.Equal(string.Empty, error.ToString());
+    }
+
+    [Fact]
     public async Task ReadOnlyRuleSummaryCallsRealCliApplicationWithoutNamedPipe()
     {
         Assert.True(GuiCliCommandPolicy.TryParse("rules summary", out var args, out var local));
