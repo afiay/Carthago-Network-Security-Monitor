@@ -50,7 +50,7 @@ def load_linkage(ledger: Path, v4: dict, integration: dict, active: dict) -> dic
         raise ValueError("Expected six exact linked TRX rows; do not silently change baseline")
     direct = {r["relativeCopy"]: r for r in v4["trxRuns"]}
     integrated = {r["trxRelativeCopy"]: r for r in integration["sourceShaBindings"]}
-    if integration.get("purpose") != "read-only-original-integration-evidence-reconciliation":
+    if integration.get("purpose") != "read-only-historical-Windows-integration-provenance-reconciliation":
         raise ValueError("Integration report purpose mismatch")
     if active.get("purpose") != "read-only-original-active-sensor-evidence-reconciliation":
         raise ValueError("Active-sensor report purpose mismatch")
