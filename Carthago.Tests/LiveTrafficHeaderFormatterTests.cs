@@ -55,9 +55,9 @@ public sealed class LiveTrafficHeaderFormatterTests
     [InlineData("ICMPv6", 0x8000, "128", "0")]
     [InlineData("ICMP", 0x0303, "3", "3")]
     [InlineData("icmpv6", 0x8100, "129", "0")]
-    public void IcmpCombinedWireValueIsSplitIntoTypeAndCode(string protocol, ushort wire, string type, string code)
+    public void IcmpCombinedWireValueIsSplitIntoTypeAndCode(string protocol, int wire, string type, string code)
     {
-        var record = new TrafficRecord { Protocol = protocol, IcmpTypeCode = wire };
+        var record = new TrafficRecord { Protocol = protocol, IcmpTypeCode = checked((ushort)wire) };
         Assert.Equal(type, LiveTrafficHeaderFormatter.Format(record, LiveTrafficHeaderFormatter.IcmpType));
         Assert.Equal(code, LiveTrafficHeaderFormatter.Format(record, LiveTrafficHeaderFormatter.IcmpCode));
         Assert.Equal("N/A", LiveTrafficHeaderFormatter.Format(record, LiveTrafficHeaderFormatter.TcpText));
