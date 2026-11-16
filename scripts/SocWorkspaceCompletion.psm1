@@ -197,10 +197,15 @@ function Assert-SocWorkspaceCompletionRecord {
         throw 'SOC completion method-scoped count invalid.'
     }
     if ($requiredGroups -isnot [System.Collections.IDictionary]) { throw 'SOC completion groups missing.' }
+    $verifiedGroupTotal = 0
     foreach ($name in @('NetworkInvestigation','IncidentTimeline','IncidentDetectionLinkVm')) {
         if ($requiredGroups[$name] -isnot [int] -or $requiredGroups[$name] -le 0) {
             throw "SOC completion missing group $name."
         }
+        $verifiedGroupTotal += $requiredGroups[$name]
+    }
+    if ($requiredGroups.Count -ne 3 -or $verifiedGroupTotal -ne $results['total']) {
+        throw 'SOC completion group counts must partition all executed tests.'
     }
     $stages = $Record['stages']
     $expected = @('sdk-version','restore','build-release','soc-tests')
