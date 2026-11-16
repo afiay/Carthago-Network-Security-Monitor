@@ -44,6 +44,19 @@ dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release `
 
 Record the exact checkout SHA, TRX hash, runner identity and success/failure numbers. Then start a controlled live-capture session, record Detection Coverage snapshots at two points in time, and inspect representative rule no-match reasons and any persisted events.
 
+## Diagnostic interpretation enhancement (2026-11-16, source only)
+
+**Status: SOURCE CANDIDATE — UNVERIFIED**, extending the initial visibility changes. This enhancement does not affect detection policy, rule selection, packet capture, enrichment timing, suppression, or event delivery.
+
+- Added `Services/Diagnostics/DetectionActivityDiagnosis.cs`: a pure, read-only classifier of runtime observations, not a detector accuracy judgement. It distinguishes *Not observed*, *Telemetry not observed*, *Skipped before evaluation*, *Evaluated without a match*, *Matched without emission*, *Emitted*, *Evaluation failures*, and *Currently disabled*. The explanation and next action are derived only from process-local counters, no-match metadata, and current policy.
+- The Detection Coverage Center now displays an overall pipeline interpretation and per-rule runtime diagnosis. New filters narrow the catalog to matched-but-not-emitted, evaluated-no-match, skipped/telemetry gap, and execution-failure rules. Existing policy and source counters remain visible.
+- A second successful refresh reports **new engine evaluations since the previous snapshot**, rather than relying on a lifetime total. It explicitly handles an initial snapshot, zero growth, increasing counters and reset/decreasing counters. Zero growth alone does not establish failure when traffic is idle or enrichment is delayed.
+- **Copy diagnostics** exports only a bounded set of rule IDs, counts and reason codes (at most 30 active/skipped rules), plus the timestamp and process-local diagnostic summary. It intentionally omits packet payloads and host/IP metadata. Users should pin the installed build SHA separately.
+- Source snapshots are sampled sequentially rather than atomically; counters can be reset or advanced between reads. Their totals must not be algebraically treated as a lossless per-packet funnel. Emitted does not establish that the GUI displayed or an operator acknowledged the alert.
+- `Carthago.Tests/DetectionActivityDiagnosisTests.cs` adds deterministic tests for all diagnostic categories, pipeline stages and progress/reset logic. These are **authored, not executed** as of this update.
+
+Run the earlier Windows verification filter **with** `FullyQualifiedName~DetectionActivityDiagnosisTests`. Test output and exact SHA-linked evidence remain pending. No positive/negative detection quality classifications were promoted.
+
 ## Explicitly pending qualification
 
 These UI and evidence-preservation changes do **not** qualify R001–R1000. Exact-ID paired positive/negative coverage, independent benign/malicious labels, real producer evidence, R102/R118/R163 dependencies, Windows live-capture verification, and later manual WPF acceptance remain independent gates. No rule threshold, mode, suppressor or trust decision was modified.
