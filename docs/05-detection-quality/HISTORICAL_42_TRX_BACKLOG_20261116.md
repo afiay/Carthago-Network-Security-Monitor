@@ -38,6 +38,10 @@ Other historical failing TRXs are the two `root-002/investigation-results/redis-
 
 The recovery manifest includes original `root-001/Verification/20261116-113455/local-logs/tests.log`, `build-tests.log`, `benchmark.log`, and diagnostic host/data-collector logs. Their existence is **not** a verified executed SHA. Review the source and specific run chronology before any promotion.
 
+## Git commit candidate confirmed, source-run attribution still withheld
+
+GitHub verifies that full commit `3b54c742b5b1d2bfafc2d25840a7dfa34ee46f65` exists (commit timestamp `2026-11-16T10:04:31Z`, message: `test: exercise R272 emission under explicit Research profile [skip ci]`). The first eight characters match the **filename prefix only** of the original 14,361/14,361 Windows and 667/667 CLI TRXs listed above. This narrows the manual provenance investigation but **does not link either TRX to a runner checkout**; no original post-run success/source record, original per-stage source identity or TRX/hash binding was supplied for those two files. Their `sourceSha` fields remain **null** in the strict 42-TRX backlog until that proof is recovered. An earlier owner-reported source label is useful context, not an original-artifact execution proof.
+
 ## Read-only reconciliation tools — no tests or artifact edits
 
 Generate a strictly checked 42-run source/backlog report from the existing **derived** JSON files:
