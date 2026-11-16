@@ -6160,3 +6160,14 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Ownership/static review:** AnomaliesPage.xaml and this ledger only. Reviewed supporting grid controller and existing page resources; binding multiset unchanged, named panels, analyst actions and handlers retained. No shared contracts, analytics, capture, detection, privacy, ScottPlot 10/120, Events 80/500, CLI, Cisco/WebView2 or automation changes. Independent GA-09bn preserved.
 
 **Risks/planned unexecuted:** long metric/time/trend values, empty history, narrow columns, selection changes, keyboard actions, widths 1920/1440/1100/1099/1024/1023/640 and DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. Next UI-195: Anomalies analyst action and recorded-link workspace composition; preserve permissions and exact navigation.
+
+
+## GA UI-195 — Recorded context and analyst action hierarchy
+
+**2026-11-16 · SOURCE CANDIDATE — UNVERIFIED.** Exact approved Library image libfile_b0a34361560c8191b641e432b3e6b15c visually inspected. Baseline `d9b0700d119edac0bc67b8ceef0abf86f3b8930f`, tree `242a3bf8b01f747e51f2a4006382ea7e9ba8eb84`; prior UI-194. Reference mapping: compact graphite evidence surfaces, cyan rule identifiers and separated investigation action affordances; no demo telemetry.
+
+**Visible before → after:** classification and related-rule surfaces use compact 12-unit outer and 8-unit inner insets, smaller chips and tighter gaps. Review controls split into record review and evidence navigation bands with a divider, 32-unit action minimums. Supporting shortcut panel uses 19-unit title, 12-unit inset and 54-unit tile minimums with wrapped titles. Existing responsive supporting grid and two-column shortcut layout retained; Compact/below-1024 stack supporting panels, action bands wrap. Static impact: clearer distinction between record mutation and navigation, less repetitive chrome; no render.
+
+**Ownership/static review:** AnomaliesPage.xaml and this ledger only. Reviewed Theme.xaml AnalystActionTile and AnomaliesPage.xaml.cs supporting panel placement and action handlers. Binding, Click and x:Name multisets unchanged. Existing permissions, exact navigation, recorded IDs, privacy, detection, capture, ScottPlot 10/120, Events 80/500, CLI and independent GA-09bp preserved.
+
+**Risks/planned unexecuted:** long tags/rule IDs, narrow shortcut columns, keyboard order, disabled actions, empty selection, exact incident links, widths 1920/1440/1100/1099/1024/1023/640 and DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. Next UI-196: Live Events workspace composition audit and visible slice, preserve read-only local data and retention.

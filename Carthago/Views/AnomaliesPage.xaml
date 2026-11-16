@@ -624,10 +624,10 @@
 
                 <!-- GA UI-151: cohesive context and response workspace, recorded data only. -->
                 <Border Background="#0D2232" BorderBrush="#27485B" BorderThickness="1"
-                        CornerRadius="12" Padding="18" Margin="0,0,0,16">
+                        CornerRadius="8" Padding="12" Margin="0,0,0,10">
                   <StackPanel>
-                    <Border BorderBrush="{StaticResource AccentBrush}" BorderThickness="4,0,0,0"
-                            Padding="12,2,0,2" Margin="0,0,0,16">
+                    <Border BorderBrush="{StaticResource AccentBrush}" BorderThickness="3,0,0,0"
+                            Padding="8,2,0,2" Margin="0,0,0,8">
                       <StackPanel>
                         <TextBlock Text="EVIDENCE CONTEXT / RECORDED LINKS" Style="{StaticResource AnomalyOpsEyebrow}"/>
                         <TextBlock Text="Classification &amp; related detections" FontSize="19"
@@ -638,7 +638,7 @@
                       </StackPanel>
                     </Border>
                     <Border Background="#142C3D" BorderBrush="#2B4859" BorderThickness="1"
-                            CornerRadius="9" Padding="16" Margin="0,0,0,12">
+                            CornerRadius="6" Padding="8" Margin="0,0,0,6">
                       <StackPanel>
                         <TextBlock Text="CLASSIFICATION TAGS" Style="{StaticResource AnomalyFieldLabel}"/>
                         <ItemsControl ItemsSource="{Binding Selected.Tags}">
@@ -646,7 +646,7 @@
                           <ItemsControl.ItemTemplate>
                             <DataTemplate>
                               <Border Background="#183649" BorderBrush="#31566A" BorderThickness="1"
-                                      CornerRadius="6" Padding="11,7" Margin="0,4,8,4">
+                                      CornerRadius="6" Padding="7,4" Margin="0,2,5,2">
                                 <TextBlock Text="{Binding}" Foreground="{StaticResource TextBrush}"
                                            FontSize="12" TextWrapping="Wrap"/>
                               </Border>
@@ -656,7 +656,7 @@
                       </StackPanel>
                     </Border>
                     <Border Background="#142C3D" BorderBrush="#2B4859" BorderThickness="1"
-                            CornerRadius="9" Padding="16">
+                            CornerRadius="6" Padding="8">
                       <StackPanel>
                         <TextBlock Text="RELATED DETECTION RULES" Style="{StaticResource AnomalyFieldLabel}"/>
                         <ItemsControl x:Name="RelatedRulesItems" ItemsSource="{Binding Selected.RelatedRuleIds}">
@@ -664,7 +664,7 @@
                           <ItemsControl.ItemTemplate>
                             <DataTemplate>
                               <Border Background="#103247" BorderBrush="#39758A" BorderThickness="1"
-                                      CornerRadius="7" Padding="12,8" Margin="0,4,8,4">
+                                      CornerRadius="7" Padding="8,4" Margin="0,2,5,2">
                                 <TextBlock Text="{Binding}" Foreground="{StaticResource AccentBrush}"
                                            FontFamily="Consolas" FontSize="13" FontWeight="SemiBold"/>
                               </Border>
@@ -690,10 +690,10 @@
                 </Border>
 
                 <Border Background="#102B3B" BorderBrush="#376477" BorderThickness="1"
-                        CornerRadius="12" Padding="20">
+                        CornerRadius="8" Padding="12">
                   <StackPanel>
-                    <Border BorderBrush="{StaticResource AccentBrush}" BorderThickness="4,0,0,0"
-                            Padding="12,2,0,2" Margin="0,0,0,16">
+                    <Border BorderBrush="{StaticResource AccentBrush}" BorderThickness="3,0,0,0"
+                            Padding="8,2,0,2" Margin="0,0,0,8">
                       <StackPanel>
                         <TextBlock Text="ANALYST RESPONSE / EXISTING WORKFLOWS" Style="{StaticResource AnomalyOpsEyebrow}"/>
                         <TextBlock Text="Review &amp; respond" FontSize="19" FontWeight="SemiBold"
@@ -702,20 +702,27 @@
                                    Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap" FontSize="12"/>
                       </StackPanel>
                     </Border>
+                    <StackPanel>
+                    <TextBlock Text="RECORD REVIEW" Style="{StaticResource AnomalyFieldLabel}"/>
                     <WrapPanel>
                       <Button Content="Mark Expected" Style="{StaticResource SecondaryButton}"
                               Click="MarkExpected_Click" IsEnabled="{Binding CanMarkExpected}"
-                              MinHeight="38" Margin="0,0,10,10"/>
+                              MinHeight="32" Margin="0,0,6,6"/>
+                    </WrapPanel>
+                    <Border Height="1" Background="{StaticResource SoftDividerBrush}" Margin="0,2,0,8"/>
+                    <TextBlock Text="EVIDENCE NAVIGATION" Style="{StaticResource AnomalyFieldLabel}"/>
+                    <WrapPanel>
                       <Button Content="{Binding IncidentActionLabel}" Style="{StaticResource SecondaryButton}"
                               Click="ViewIncident_Click" IsEnabled="{Binding CanOpenIncident}"
-                              MinHeight="38" Margin="0,0,10,10"/>
+                              MinHeight="32" Margin="0,0,6,6"/>
                       <Button Content="Open Raw Traffic" Style="{StaticResource SecondaryButton}"
                               Click="OpenRawTraffic_Click" IsEnabled="{Binding CanOpenRawTraffic}"
-                              MinHeight="38" Margin="0,0,10,10"/>
-                      <Button Content="⋯" Width="44" MinHeight="38" Style="{StaticResource SecondaryButton}"
+                              MinHeight="32" Margin="0,0,6,6"/>
+                      <Button Content="⋯" Width="36" MinHeight="32" Style="{StaticResource SecondaryButton}"
                               Click="MoreActions_Click" IsEnabled="{Binding CanOpenIncident}"
-                              Margin="0,0,0,10"/>
+                              Margin="0,0,0,6"/>
                     </WrapPanel>
+                    </StackPanel>
                   </StackPanel>
                 </Border>
               </StackPanel>
@@ -850,16 +857,16 @@
           </StackPanel>
         </Border>
 
-        <Border x:Name="ModelSummaryPanel" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource AnomalyOpsPanel}" BorderBrush="#31576B" BorderThickness="1.5">
+        <Border x:Name="ModelSummaryPanel" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource AnomalyOpsPanel}" BorderBrush="#31576B" BorderThickness="1" Padding="12">
           <Grid>
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto"/>
               <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <StackPanel Grid.Row="0" Margin="0,0,0,10">
+            <StackPanel Grid.Row="0" Margin="0,0,0,8">
               <TextBlock Text="WORKFLOW / EXISTING ACTIONS" Style="{StaticResource AnomalyOpsEyebrow}" Margin="0,0,0,6"/>
-              <TextBlock Text="Analyst Actions &amp; Shortcuts" Style="{StaticResource AnomalyOpsPanelTitle}" FontSize="23"/>
+              <TextBlock Text="Analyst Actions &amp; Shortcuts" Style="{StaticResource AnomalyOpsPanelTitle}" FontSize="19"/>
               <TextBlock Text="Use the shell for deeper evidence and the closest live workspace for each action." Style="{StaticResource AnomalySectionMeta}"/>
             </StackPanel>
 
@@ -874,44 +881,44 @@
                 <RowDefinition Height="Auto"/>
               </Grid.RowDefinitions>
 
-              <Button Grid.Row="0" Grid.Column="0" Style="{StaticResource AnalystActionTile}" Click="PivotToHost_Click" IsEnabled="{Binding CanPivotToHost}">
+              <Button Grid.Row="0" Grid.Column="0" Style="{StaticResource AnalystActionTile}" MinHeight="54" Padding="9,7" Click="PivotToHost_Click" IsEnabled="{Binding CanPivotToHost}">
                 <StackPanel>
-                  <TextBlock Text="Pivot to Host" FontWeight="SemiBold"/>
+                  <TextBlock Text="Pivot to Host" FontWeight="SemiBold" TextWrapping="Wrap"/>
                   <TextBlock Text="Open the host-focused workspace for this entity." Style="{StaticResource AnomalySectionMeta}" Margin="0,4,0,0"/>
                 </StackPanel>
               </Button>
 
-              <Button Grid.Row="0" Grid.Column="1" Style="{StaticResource AnalystActionTile}" Click="OpenRawDetections_Click" IsEnabled="{Binding CanOpenRawDetections}" Margin="0,0,0,8">
+              <Button Grid.Row="0" Grid.Column="1" Style="{StaticResource AnalystActionTile}" MinHeight="54" Padding="9,7" Click="OpenRawDetections_Click" IsEnabled="{Binding CanOpenRawDetections}" Margin="0,0,0,8">
                 <StackPanel>
-                  <TextBlock Text="Query detections" FontWeight="SemiBold"/>
+                  <TextBlock Text="Query detections" FontWeight="SemiBold" TextWrapping="Wrap"/>
                   <TextBlock Text="Inspect rule hits and related detection evidence." Style="{StaticResource AnomalySectionMeta}" Margin="0,4,0,0"/>
                 </StackPanel>
               </Button>
 
-              <Button Grid.Row="1" Grid.Column="0" Style="{StaticResource AnalystActionTile}" Click="OpenRawTraffic_Click" IsEnabled="{Binding CanOpenRawTraffic}">
+              <Button Grid.Row="1" Grid.Column="0" Style="{StaticResource AnalystActionTile}" MinHeight="54" Padding="9,7" Click="OpenRawTraffic_Click" IsEnabled="{Binding CanOpenRawTraffic}">
                 <StackPanel>
-                  <TextBlock Text="Search in Raw Traffic" FontWeight="SemiBold"/>
+                  <TextBlock Text="Search in Raw Traffic" FontWeight="SemiBold" TextWrapping="Wrap"/>
                   <TextBlock Text="Move into packets and flows for the selected signal." Style="{StaticResource AnomalySectionMeta}" Margin="0,4,0,0"/>
                 </StackPanel>
               </Button>
 
-              <Button Grid.Row="1" Grid.Column="1" Style="{StaticResource AnalystActionTile}" Click="CreateDetectionRule_Click" IsEnabled="{Binding CanOpenDetectionRules}" Margin="0,0,0,8">
+              <Button Grid.Row="1" Grid.Column="1" Style="{StaticResource AnalystActionTile}" MinHeight="54" Padding="9,7" Click="CreateDetectionRule_Click" IsEnabled="{Binding CanOpenDetectionRules}" Margin="0,0,0,8">
                 <StackPanel>
-                  <TextBlock Text="Create Detection Rule" FontWeight="SemiBold"/>
+                  <TextBlock Text="Create Detection Rule" FontWeight="SemiBold" TextWrapping="Wrap"/>
                   <TextBlock Text="Open governance and detection settings for rule tuning." Style="{StaticResource AnomalySectionMeta}" Margin="0,4,0,0"/>
                 </StackPanel>
               </Button>
 
-              <Button Grid.Row="2" Grid.Column="0" Style="{StaticResource AnalystActionTile}" Click="AddToWatchlist_Click" IsEnabled="{Binding CanAddToWatchlist}">
+              <Button Grid.Row="2" Grid.Column="0" Style="{StaticResource AnalystActionTile}" MinHeight="54" Padding="9,7" Click="AddToWatchlist_Click" IsEnabled="{Binding CanAddToWatchlist}">
                 <StackPanel>
-                  <TextBlock Text="Add to Watchlist" FontWeight="SemiBold"/>
+                  <TextBlock Text="Add to Watchlist" FontWeight="SemiBold" TextWrapping="Wrap"/>
                   <TextBlock Text="Use the closest available suppression or watch workflow honestly." Style="{StaticResource AnomalySectionMeta}" Margin="0,4,0,0"/>
                 </StackPanel>
               </Button>
 
-              <Button Grid.Row="2" Grid.Column="1" Style="{StaticResource AnalystActionTile}" Click="CopyJson_Click" IsEnabled="{Binding CanCopyEvidence}" Margin="0,0,0,8">
+              <Button Grid.Row="2" Grid.Column="1" Style="{StaticResource AnalystActionTile}" MinHeight="54" Padding="9,7" Click="CopyJson_Click" IsEnabled="{Binding CanCopyEvidence}" Margin="0,0,0,8">
                 <StackPanel>
-                  <TextBlock Text="Export Evidence Pack" FontWeight="SemiBold"/>
+                  <TextBlock Text="Export Evidence Pack" FontWeight="SemiBold" TextWrapping="Wrap"/>
                   <TextBlock Text="Copy structured anomaly evidence for reporting or handoff." Style="{StaticResource AnomalySectionMeta}" Margin="0,4,0,0"/>
                 </StackPanel>
               </Button>
