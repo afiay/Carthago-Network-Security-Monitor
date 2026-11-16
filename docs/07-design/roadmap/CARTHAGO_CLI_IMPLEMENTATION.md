@@ -1,5 +1,8 @@
 # CARTHAGO CLI — CLI-001
 
+> **Current-status overlay (2026-11-16):** The CLI-001 'not a headless detection engine' claim below applies only to that original version. Later portable foreground capture, detection, journal and control have bounded qualifications: 667/667 CLI tests on Windows and Linux at `3b54c742`; 80 paired replay cases on each platform at `dc439337`. Full service, field and moving-HEAD acceptance remain pending. [Current status](../../CURRENT_STATUS.md).
+
+
 2026-11-13 · SOURCE CANDIDATE — UNVERIFIED · Tests authored, not executed by the publishing environment.
 
 The owner authorized initial CLI development. This implementation is an isolated,

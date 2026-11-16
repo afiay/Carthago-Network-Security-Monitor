@@ -1,5 +1,8 @@
 # Carthago accuracy batch 01 — R001–R005
 
+> **Historical batch gate (2026-11-16 reconciliation):** The original R006 stop order and 544-rule-era acceptance wording below are not live prohibitions. The core registry now contains R001–R1000, but full-suite test passes do not establish fresh exact-ID positive/negative qualification. Preserve original measurements and instructions. [Current status](../../CURRENT_STATUS.md) · [Exact-ID audit](../../05-detection-quality/EXACT_ID_QUALIFICATION_AUDIT.md).
+
+
 **State:** Candidate implementation; **Windows build, expanded advanced test suite, full 544-rule regression and isolated synthetic holdout pending**. No rule has been promoted to Alert, no precision floor lowered, and R006–R010 must not begin until this batch is verified and reviewed.
 
 The first Windows run of the expanded 62-test targeted suite compiled successfully but reported **52 passed, 10 failed, 0 skipped**. All ten failures were in the advanced R001/R004 fixtures: those cases incorrectly expected detection after five observations, even though the checked-in `rules.json` sets `PortScanThreshold=8` and `BruteForceThreshold=25` (12 observed failures after the existing authentication-port half-threshold rule at Balanced sensitivity). The advanced fixtures now exercise those configured boundaries explicitly, including negative assertions before the threshold. **This correction changes tests only; no production thresholds or policy modes were changed.** A fresh Windows run is required before marking the correction verified.

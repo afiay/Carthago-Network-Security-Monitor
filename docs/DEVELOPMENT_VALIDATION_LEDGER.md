@@ -1,5 +1,8 @@
 # Carthago Development and Deferred Validation Ledger
 
+> **Current-status overlay (2026-11-16):** [Reconciled current status](CURRENT_STATUS.md) supersedes this file's October 29–30 *summary*, not its historical evidence. Later owner-authorized Windows, Linux, CLI, sensor, V2 synthetic and Stage 8 tests supersede original PARKED/NOT RUN wording only for their own scopes. Compiler-guarded DNS Stages 2–4, R102 V2 external capture, SCM/release and exact rule qualification remain open.
+
+
 **Current execution policy (2026-10-30):** Individual GA validation checks have already
 been owner-authorized, run on CARTHAGE and recorded GREEN where stated below.
 **New or repeated** builds, .NET/xUnit, benchmarks, replay, capture/source
@@ -33,10 +36,11 @@ feature, observe GREEN, then remove that stage's guard in a separate commit
 so all subsequent normal regression runs include its tests. Do not report
 tests as passing merely because they were preprocessor-excluded.
 
-## Current GA verification snapshot — 2026-10-30
+## Historical GA verification snapshot — 2026-10-30 (see later results)
 
-This section is the **current status**. Later dated entries below are an
-append-only audit trail of what was known **at that earlier time**.
+This section shows the **October 30 status**, not the latest branch state.
+Later dated entries contain newer outcomes. Consult [current status](CURRENT_STATUS.md)
+for cross-stream evidence and remaining gates.
 Historical statements such as "PARKED", "module missing", "RED" and
 "NOT RUN" must not be read as today's status unless the current table
 independently confirms them. Original source/test SHAs are retained.

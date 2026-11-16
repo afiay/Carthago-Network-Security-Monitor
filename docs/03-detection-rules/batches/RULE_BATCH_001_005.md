@@ -1,5 +1,8 @@
 # Rule quality: R001–R005
 
+> **Historical batch gate (2026-11-16 reconciliation):** The original R006 stop order and 544-rule-era acceptance wording below are not live prohibitions. The core registry now contains R001–R1000, but full-suite test passes do not establish fresh exact-ID positive/negative qualification. Preserve original measurements and instructions. [Current status](../../CURRENT_STATUS.md) · [Exact-ID audit](../../05-detection-quality/EXACT_ID_QUALIFICATION_AUDIT.md).
+
+
 Status: dedicated test sources committed; Windows verification is still required.
 Do not begin R006–R010 until both focused testing and complete regression pass.
 

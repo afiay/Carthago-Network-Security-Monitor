@@ -1,5 +1,8 @@
 # CARTHAGO active Windows service deployment
 
+> **Deployment-status interpretation (2026-11-16):** The original SOURCE CANDIDATE/UNVERIFIED label below applies to **native Windows SCM service acceptance**, not an assertion that no CLI or sensor tests ever ran. Owner authorization and bounded synthetic test results do not prove dedicated-identity SCM startup/stop, journal/crash recovery, coexistence, unattended runtime or automatic-start approval. [Current status](../../CURRENT_STATUS.md).
+
+
 SOURCE CANDIDATE — UNVERIFIED. Manual startup only. This is a separate service
 from CarthagoMonitor; the installer never changes the passive service.
 

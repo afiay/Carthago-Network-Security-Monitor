@@ -4,7 +4,7 @@
 
 This is the **single central navigation catalog** for registered detection rules. Metadata is extracted from each rule's actual C# `RuleDescriptor` at the cited snapshot. Source registration is not proof that telemetry can reach the predicate, an alert is emitted, tests passed, or detection quality was field-validated.
 
-**Verification column:** a candidate or zero-execution label is quoted from the linked batch's opening record; otherwise consult the dated batch and [development verification ledger](../DEVELOPMENT_VALIDATION_LEDGER.md). No application tests were run to generate this catalog. The original batch reports remain the authoritative historical evidence.
+**Verification column (HISTORICAL batch declaration, NOT latest qualification):** a candidate or zero-execution label is quoted from the linked batch's opening record; otherwise consult the dated batch and [development verification ledger](../DEVELOPMENT_VALIDATION_LEDGER.md). See [current status](../CURRENT_STATUS.md) and [exact-ID qualification](../05-detection-quality/EXACT_ID_QUALIFICATION_AUDIT.md); do not treat these dated batch labels as the latest execution state. No application tests were run to generate this catalog. The original batch reports remain the authoritative historical evidence.
 
 [All detection documentation](README.md) · [Rule documentation standard](../rules/RULE_DOCUMENTATION_STANDARD.md) · [Rule hardening progress](../RULE_HARDENING_PROGRESS.md) · [Research backlog](../rules/PROTOCOL_INFORMED_THREAT_BACKLOG.md)
 

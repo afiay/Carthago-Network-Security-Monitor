@@ -1,5 +1,8 @@
 # Detection-rule hardening progress
 
+> **Current-status overlay (2026-11-16):** Append-only batch entries and ZERO EXECUTED labels describe their **original revisions**. R001–R1000 are now registered, and later full Windows regressions have run; aggregate test counts do not qualify every exact rule ID's positive/negative cases or field accuracy. [Current status](CURRENT_STATUS.md) · [Registry reconciliation](05-detection-quality/REGISTRY_RECONCILIATION_20261116.md).
+
+
 This ledger records both historical and current rule engineering on
 `feature/carthago-reliability-hardening`. Batches through R356–R360 were
 developed in five-rule units; starting with R361–R370, the recurring

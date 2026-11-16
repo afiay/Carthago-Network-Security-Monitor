@@ -1,5 +1,8 @@
 # Holdout v2 — packet-attributed, separately frozen synthetic evaluation
 
+> **Current-status distinction (2026-11-16):** Bounded synthetic V2 auditor, provenance, writer/reader and replay-contract gates passed in later owner sessions. This does **not** approve the four independent external R102 source/label pairs, import, freeze, field accuracy or compile-guarded DNS Stages 2–4. V2 `PENDING_EXTERNAL_CAPTURE_AND_REVIEW` with **0/4** remains the correct state. [Current status](../../CURRENT_STATUS.md).
+
+
 ## Status and scope
 
 **Status: PENDING_EXTERNAL_CAPTURE_AND_REVIEW.** No valid v2 observations

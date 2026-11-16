@@ -1,5 +1,8 @@
 # Windows evidence recovery — static reconciliation (2026-11-16)
 
+> **Reading guide (2026-11-16):** Early 'pending local execution' sections are preserved historical checkpoints. Later sections document owner-performed original integration and SOC read-only reconciliation. The recovered 14,361/14,361 Windows TRX is hash-verified but **still missing strict same-run execution-SHA linkage**; the separate 14,186-test integration is source-linked. [Current status](../CURRENT_STATUS.md).
+
+
 Inspection source: `c40b87617267e898088d76fcd9e92e56f9985053`, `feature/carthago-reliability-hardening`. This document records a **read-only GitHub inspection**, not a fresh Windows execution or an accepted baseline. Subsequent commits must not inherit this SHA's evidence.
 
 ## What was actually inspected
@@ -168,7 +171,7 @@ The owner uploaded the read-only derived file `source-and-replay-reconciliation-
 Further work requires independent source attestation for unbound runs and the separate rule-quality decision rubric, plus explicitly authorized current-SHA and operational testing.
 
 
-## Original integration report reconciliation — pending local execution
+## Original integration report reconciliation — historical pending checkpoint (superseded below)
 
 Follow-up inspection of the original 359-file recovery manifest identified **six** \`integration.json\` reports. **Four** of the previously 39 unlinked TRX files have a matching directory-level or nested original integration-report candidate:
 
@@ -325,7 +328,7 @@ The owner uploaded read-only `source-and-replay-reconciliation-v4.json` (SHA-256
 Next step: verify the three original stage logs and SOC TRX against the pinned historical verifier contract, while distinguishing a pre-test recorded SHA from a missing persisted final checkout/PASS statement. Never retroactively infer successful post-run Git verification from an earlier SHA file or from the current repository HEAD.
 
 
-## SOC original stage-log provenance check — pending owner execution
+## SOC original stage-log provenance check — historical pending checkpoint (superseded below)
 
 The new read-only `scripts/reconcile-original-soc-workspace-evidence.py` is committed to inspect **all six recovered SOC artifacts** from the same session: `source-sha.txt`, `sdk-version.txt`, `restore.log`, `build-release.log`, `soc-tests.log`, and `soc-workspace-tests.trx`. Each original file is size and SHA-256 checked against `recovery-manifest.json`. The script cross-checks the canonical full SHA against the previous v4 recovery, the original TRX digest against v4, UTC chronology, all 69 uniquely mapped passing cases, and the three source-required groups `NetworkInvestigation`, `IncidentTimeline`, and `IncidentDetectionLinkVm`. The prior expanded TRX inventory records 29, 35 and 5 results respectively (69 total), but original group definitions and stage-log contents must still be read on Windows.
 

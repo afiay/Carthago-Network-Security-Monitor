@@ -146,7 +146,7 @@ HOME_PATHS = [
     "| Question | Authoritative record |",
     "| --- | --- |",
     "| What rules are registered? | [Master rule catalog](03-detection-rules/MASTER_RULE_CATALOG.md); the registry source is linked there. |",
-    "| What has actually been verified? | [Validation ledger](DEVELOPMENT_VALIDATION_LEDGER.md) and [detection quality](05-detection-quality/README.md); check the exact SHA, scope and outcome. |",
+    "| What has actually been verified? | [Current status](CURRENT_STATUS.md) → [Validation ledger](DEVELOPMENT_VALIDATION_LEDGER.md) and [detection quality](05-detection-quality/README.md); check the exact SHA, scope and outcome. |",
     "| What is still being researched? | [Protocol research ledger](protocols/PROTOCOL_EXPANSION_PROGRESS.md) and [unified rule admission cursor](rules/UNIFIED_2500_RULE_ADMISSION_CURSOR.md). |",
     "| What is being designed or implemented? | [Development records](06-development/README.md) and [UI ledger](design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md). |",
     "| How should documentation be maintained? | [Documentation maintenance standard](10-reference/DOCUMENTATION_MAINTENANCE.md) and [stable paths](10-reference/WORKFLOW_ANCHORS.md). |",
@@ -246,6 +246,7 @@ def main():
         "# Carthago documentation", "",
         "Canonical navigation for users, contributors, security analysts, detection engineers and UI developers.", "",
         "> **Status convention:** Historical GA notes, authored xUnit scenarios and research inventories document what was written or observed at that time. They do **not** imply a fresh successful test run, field validation or production readiness. Read the live ledgers for precise verification state.", "",
+        "**Current verification status:** [Reconciled evidence and remaining gates](CURRENT_STATUS.md). Dated historical claims do not certify a moving HEAD.", "",
     ]
     lines.extend(HOME_PATHS)
     lines.extend(["## Browse by topic", "", "| Area | Contents |", "| --- | --- |"])

@@ -1,6 +1,6 @@
 # Documentation maintenance standard
 
-[Documentation home](../README.md) · [Reference](README.md)
+[Documentation home](../README.md) · [Current status](../CURRENT_STATUS.md) · [Reference](README.md)
 
 ## 1. Document types and authority
 
@@ -19,6 +19,8 @@
 - For a new engineering or verification record, record date, scope, commit SHA (when applicable), status, evidence links, limitations and next actions. Use the exact result: authored, executed-pass, executed-fail, blocked or not run; do not infer execution from source presence.
 - Keep registered rule counts distinct from tested rules, externally validated rules and protocol research candidates. Preserve the exact test command and observed result when reporting execution.
 - Prefer one authoritative document per subject; link to it rather than copying volatile counts or claims into multiple guides.
+- Keep [CURRENT_STATUS.md](../CURRENT_STATUS.md) as the cross-stream status entry point, with exact tested SHA, scope, provenance and outstanding gates. Add a dated overlay above superseded PARKED/PENDING labels; never rewrite original historical results.
+- Distinguish owner authorization, source authored, test execution, original artifact admission, exact-ID positive/negative evidence and production release.
 - Keep filenames stable for automation inputs, source contracts, holdout assets and evidence; do not rename them casually. Record any deliberate migration in the [legacy path map](LEGACY_DOCUMENTATION_PATHS.md).
 - Keep historical evidence and frozen holdout V1 immutable except for clearly identified, traceable corrections that do not rewrite observed outcomes.
 
@@ -30,10 +32,13 @@ Run from the repository root after updating documentation:
 python scripts/build_docs_index.py
 python scripts/build_docs_index.py --check
 python scripts/check_docs_links.py
+python scripts/check_docs_status.py
 git diff --check
 ```
 
 For a rule or registry change, run `python scripts/build_rule_catalog.py` before the index generator. Use `--check` to detect stale generated indexes without modifying files. Review the generated changes and check that new evidence and links are visible. These checks are documentation-only; run the applicable Windows build and tests separately before claiming product validation.
+
+The static status checker audits navigation and supersession overlays, not code execution. It does not change the existing manually authorized test workflow triggers.
 
 The documentation home, numbered topic indexes, batch/research indexes and stable-path register are generated. Update `scripts/build_docs_index.py` rather than hand-editing generated navigation. Narrative guides and evidence files are authored separately.
 

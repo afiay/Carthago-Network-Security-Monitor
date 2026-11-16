@@ -1,6 +1,6 @@
 # Active sensors — AS-01 through AS-10
 
-Status: source candidate; Windows build, tests and live smoke pending.
+**Current-status overlay (2026-11-16):** These original per-stage pending claims are historical. Later owner evidence records 392/392 synthetic/loopback cases and seven bounded gateway/SNMP physical cases PASSED at `ff35973a0373fb61ccee1a64d836944458d54f88`. General live acceptance, Windows service and release/soak remain PENDING. [Current status](../CURRENT_STATUS.md).
 
 ## Existing capability
 LocalLanDiscovery and NpcapArpDiscovery already implement bounded local IPv4 ARP and ICMP discovery. SensorIdentity/SensorRegistry are fleet identity and heartbeat primitives, not active scanning.
