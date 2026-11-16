@@ -50,16 +50,15 @@ def matching_counters(suite: object, trx: dict) -> bool:
     except (TypeError, ValueError, KeyError):
         return False
 
-def read_json(path: Path) -> dict:
-    # Windows PowerShell 5.1 redirects native stdout as UTF-16LE with BOM;
-    # PowerShell 7 and other hosts commonly use UTF-8. Neither encoding is
-    # proof of a replay result: JSON and its contract are verified separately.
+def read_original_text(path: Path) -> str:
+    """Decode original PowerShell UTF-16 BOM files and UTF-8 without altering bytes."""
     raw = path.read_bytes()
     if raw[:2] in (bytes((255, 254)), bytes((254, 255))):
-        decoded = raw.decode("utf-16")
-    else:
-        decoded = raw.decode("utf-8-sig")
-    data = json.loads(decoded)
+        return raw.decode("utf-16")
+    return raw.decode("utf-8-sig")
+
+def read_json(path: Path) -> dict:
+    data = json.loads(read_original_text(path))
     if not isinstance(data, dict):
         raise ValueError("JSON object required")
     return data
@@ -328,8 +327,19 @@ def main() -> int:
         if sha256(path) != item["sha256"].lower():
             workspace.append({"path": rel, "status": "hash-mismatch"})
             continue
-        decoded = path.read_text(encoding="utf-8-sig", errors="replace")
-        workspace.append({"path": rel, "status": "original-content-read", "sha40Tokens": re.findall(r"\b[0-9a-f]{40}\b", decoded)})
+        try:
+            decoded = read_original_text(path)
+        except UnicodeError:
+            workspace.append({"path": rel, "status": "unreadable-encoding", "sourceSha40": None})
+            continue
+        candidate = decoded.strip().lower()
+        source_sha = candidate if SHA40.fullmatch(candidate) else None
+        workspace.append({
+            "path": rel, "status": "original-content-read",
+            "sourceSha40": source_sha,
+            "sourceIdentityLevel": "original-source-file-only-unbound",
+            "sha40Tokens": re.findall(r"\b[0-9a-f]{40}\b", decoded.lower()),
+        })
     controls = [v for r in reports.values() for v in r.get("replays", [])]
     summary = {
         "recoveredManifestFileCount": len(artifacts),
