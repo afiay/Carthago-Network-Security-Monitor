@@ -26,6 +26,10 @@
           <TextBlock x:Name="SnapshotStatusText" Text="No catalog snapshot loaded"
                      Foreground="{StaticResource TextMutedBrush}" Margin="0,5,0,0"
                      TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/>
+          <TextBlock x:Name="RuntimeFunnelText"
+                     Text="Engine-to-rule evaluation counters will appear after refresh."
+                     Foreground="{StaticResource TextSubtleBrush}" Margin="0,8,0,0"
+                     TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/>
         </StackPanel>
       </Border>
 
@@ -98,6 +102,8 @@
               <DataGridTextColumn Header="Mode" Binding="{Binding Mode}" Width="90"/>
               <DataGridTextColumn Header="Evaluations" Binding="{Binding Evaluations}" Width="100"/>
               <DataGridTextColumn Header="Matches" Binding="{Binding Matches}" Width="85"/>
+              <DataGridTextColumn Header="Skipped" Binding="{Binding Skipped}" Width="85"/>
+              <DataGridTextColumn Header="No-match reason" Binding="{Binding NoMatchReason}" Width="190"/>
               <DataGridTextColumn Header="Telemetry seen" Binding="{Binding TelemetryStatus}" Width="155"/>
               <DataGridTextColumn Header="Catalog findings" Binding="{Binding FindingStatus}" Width="155"/>
             </DataGrid.Columns>
