@@ -23,6 +23,14 @@
         <ResourceDictionary Source="pack://application:,,,/Views/Theme.xaml"/>
       </ResourceDictionary.MergedDictionaries>
       <views:SeverityToBrushConverter x:Key="SeverityBrush"/>
+      <views:LiveTrafficHeaderConverter x:Key="LiveTrafficHeaderConverter"/>
+      <!-- Protocol-aware read-only header cells; reveal complete formatted values on hover. -->
+      <Style x:Key="LiveTrafficHeaderCellText" TargetType="{x:Type TextBlock}"
+             BasedOn="{StaticResource {x:Type TextBlock}}">
+        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+        <Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+        <Setter Property="AutomationProperties.HelpText" Value="N/A means this header does not apply to the protocol. An em dash means header evidence is unavailable."/>
+      </Style>
       <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
       <ItemsPanelTemplate x:Key="DashboardKpiWidePanel">
         <UniformGrid IsItemsHost="True" Columns="5"/>
@@ -2213,15 +2221,24 @@
                 <DataGridTextColumn Header="Protocol Version"
                                     Binding="{Binding ProtocolVersion}"
                                     Width="120"/>
-                <DataGridTextColumn Header="ICMP t/c"
-                                    Binding="{Binding IcmpTypeCode}"
-                                    Width="100"/>
-                <DataGridTextColumn Header="Flags"
-                                    Binding="{Binding Flags}"
-                                    Width="120"/>
-                <DataGridTextColumn Header="TCP Flags (raw)"
-                                    Binding="{Binding TcpFlags}"
-                                    Width="110"/>
+                <!-- ICMP packed type/code is preserved in TrafficRecord for rules and exports;
+                     the grid decodes it only for display, without modifying evidence. -->
+                <DataGridTextColumn Header="ICMP Type"
+                                    Binding="{Binding Converter={StaticResource LiveTrafficHeaderConverter}, ConverterParameter=icmp-type}"
+                                    ElementStyle="{StaticResource LiveTrafficHeaderCellText}"
+                                    Width="94"/>
+                <DataGridTextColumn Header="ICMP Code"
+                                    Binding="{Binding Converter={StaticResource LiveTrafficHeaderConverter}, ConverterParameter=icmp-code}"
+                                    ElementStyle="{StaticResource LiveTrafficHeaderCellText}"
+                                    Width="94"/>
+                <DataGridTextColumn Header="TCP Flags"
+                                    Binding="{Binding Converter={StaticResource LiveTrafficHeaderConverter}, ConverterParameter=tcp-text}"
+                                    ElementStyle="{StaticResource LiveTrafficHeaderCellText}"
+                                    Width="150"/>
+                <DataGridTextColumn Header="TCP Flags (hex/dec)"
+                                    Binding="{Binding Converter={StaticResource LiveTrafficHeaderConverter}, ConverterParameter=tcp-raw}"
+                                    ElementStyle="{StaticResource LiveTrafficHeaderCellText}"
+                                    Width="142"/>
                 <DataGridTextColumn Header="TTL"
                                     Binding="{Binding TTL}"
                                     Width="60"/>
