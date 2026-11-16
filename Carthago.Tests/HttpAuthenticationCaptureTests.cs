@@ -71,7 +71,7 @@ public sealed class HttpAuthenticationCaptureTests
     [Fact]
     public void Capture_Outcome_Is_Not_Restored_From_Json()
     {
-        var p = new PortablePacketProcessor();
+        var p = new PortablePacketProcessor(() => new DateTime(2026, 11, 15, 0, 0, 0, DateTimeKind.Utc));
         Parse(p,false,2,100,0);
         Parse(p,true,0x12,500,101);
         const string request = "GET / HTTP/1.1\r\nHost: camera\r\nAuthorization: Basic YWRtaW46YWRtaW4=\r\n\r\n";
@@ -110,7 +110,7 @@ public sealed class HttpAuthenticationCaptureTests
     [InlineData(403)]
     public void Parallel_Flows_Do_Not_Exchange_Request_Identity(int status)
     {
-        var p = new PortablePacketProcessor();
+        var p = new PortablePacketProcessor(() => new DateTime(2026, 11, 15, 0, 0, 0, DateTimeKind.Utc));
         const string request = "GET / HTTP/1.1\r\nHost: camera\r\nAuthorization: Basic YWRtaW46YWRtaW4=\r\n\r\n";
         const ushort other = 51001;
         Parse(p,false,2,100,0);
@@ -138,7 +138,7 @@ public sealed class HttpAuthenticationCaptureTests
     [InlineData(false)]
     public void Wrapped_Request_Sequence_Requires_Exact_Acknowledgment(bool exact)
     {
-        var p = new PortablePacketProcessor();
+        var p = new PortablePacketProcessor(() => new DateTime(2026, 11, 15, 0, 0, 0, DateTimeKind.Utc));
         const uint syn = uint.MaxValue - 20;
         const uint start = syn + 1;
         const string request = "GET / HTTP/1.1\r\nHost: camera\r\nAuthorization: Basic YWRtaW46YWRtaW4=\r\n\r\n";
@@ -157,7 +157,7 @@ public sealed class HttpAuthenticationCaptureTests
     [InlineData(403)]
     public void Response_Outcome_Does_Not_Rewrite_Request_Evidence(int status)
     {
-        var p = new PortablePacketProcessor();
+        var p = new PortablePacketProcessor(() => new DateTime(2026, 11, 15, 0, 0, 0, DateTimeKind.Utc));
         Parse(p,false,2,100,0);
         Parse(p,true,0x12,500,101);
         const string request = "GET / HTTP/1.1\r\nHost: camera\r\nAuthorization: Basic YWRtaW46YWRtaW4=\r\n\r\n";
