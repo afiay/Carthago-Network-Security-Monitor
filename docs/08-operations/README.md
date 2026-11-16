@@ -17,5 +17,6 @@ Runtime storage, journaling, evidence export and investigation workflows.
 - [AutonomousTriage](guides/AutonomousTriage.md)
 - [HuntingQueries](guides/HuntingQueries.md)
 - [InvestigationCopilot](guides/InvestigationCopilot.md)
+- [Manual Windows WPF G5/G6 operational acceptance — source-pinned runbook](guides/WPF_OPERATIONAL_ACCEPTANCE_G5_G6.md)
 - [ResponsePlaybooks](guides/ResponsePlaybooks.md)
 - [TimelineAndEvidenceExport](guides/TimelineAndEvidenceExport.md)
