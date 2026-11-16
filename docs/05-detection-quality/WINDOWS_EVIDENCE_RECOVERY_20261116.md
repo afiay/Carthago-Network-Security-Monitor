@@ -370,3 +370,15 @@ This verifies a high-confidence **pre-test source-file correlation** to the hist
 **Strict status remains 6/42 runner-report-linked TRX and 36 unlinked**, with SOC separately marked `original-pretest-source-file-correlated`. The 14,361/14,361 standalone full regression remains SHA-unlinked. No historical field qualification, current-SHA qualification or evidence admission changed.
 
 Future remedy (not retroactive): amend `scripts/verify-soc-workspace.ps1` to write a sealed, successful **post-run** completion report only after it checks the checkout SHA, clean state, runner-stage exit codes and the final TRX digest/run identity, then validate that format in a focused test. For the already completed original run, only an authentic contemporaneous final success transcript or report can fill that missing gate.
+
+
+## Future SOC verifier durable final completion record — authored, pending Windows contract execution
+
+Implemented on `feature/carthago-reliability-hardening`:
+
+- `scripts/SocWorkspaceCompletion.psm1` validates the original bounded TRX, test identity, run GUID, all-passing counters, offset-aware timestamps and required SOC test groups. It validates a success-only completion schema with matching pre/post checkout and tracking SHAs, four stages, SHA-256 hashes and explicit non-admission flags, and atomically publishes `completion.json` without overwrite.
+- `scripts/verify-soc-workspace.ps1` now records pre/post clean-source and tracking SHAs, actual stage return codes and SHA-256 for `sdk-version`, `restore`, `build-release`, `soc-tests`, original source-SHA file hash, and original TRX hash/run ID. It writes the completion record **only after** a successful final checkout recheck.
+- `scripts/test-soc-completion-contract.ps1` provides offline positive/negative fixture tests, deliberately without invoking dotnet tests, any capture or the real SOC verifier.
+- Full schema, immutable-evidence limitations and owner commands are described in `docs/05-detection-quality/SOC_WORKSPACE_COMPLETION_PROVENANCE_V1.md`.
+
+**Execution classification:** The PowerShell contract tests and new end-to-end Windows verifier **have not been executed** in this authoring session. They must be run by the owner against a pinned clean source. The historical November 11 SOC result remains only `original-pretest-source-file-correlated`, and strict source links remain **6/42** pending authentic pre-existing post-run evidence. This new code does not retroactively attest earlier runs or qualify any detection rule.
