@@ -63,6 +63,19 @@ try {
     Require ($e['requiredGroups']['NetworkInvestigation'] -eq 1 -and
              $e['requiredGroups']['IncidentTimeline'] -eq 1 -and
              $e['requiredGroups']['IncidentDetectionLinkVm'] -eq 1) 'group coverage'
+    Require ($e['methodScopedCases'] -eq 0) 'original class-scoped fixture'
+
+    # FullyQualifiedName~ can match a method even when the class lacks the SOC
+    # keyword. This is selected by the existing verifier and must not be
+    # erroneously classified as unrelated.
+    $methodOnly = $fixture.Replace(
+        'className="Carthago.Tests.NetworkInvestigationTests" name="Positive"',
+        'className="Carthago.Tests.GeneralSocTests" name="NetworkInvestigation_Positive"')
+    [IO.File]::WriteAllText($trxPath, $methodOnly, [Text.UTF8Encoding]::new($false))
+    $methodEvidence = Get-SocWorkspaceTrxEvidence -Path $trxPath
+    Require ($methodEvidence['methodScopedCases'] -eq 1 -and
+             $methodEvidence['requiredGroups']['NetworkInvestigation'] -eq 1) 'method-scoped SOC match'
+    [IO.File]::WriteAllText($trxPath, $fixture, [Text.UTF8Encoding]::new($false))
 
     $stages = [ordered]@{}
     foreach ($name in @('sdk-version','restore','build-release','soc-tests')) {
@@ -93,6 +106,7 @@ try {
         trxFinishedUtc = $e['trxFinishedUtc']
         testResults = $e['testResults']
         requiredGroups = $e['requiredGroups']
+        methodScopedCases = $e['methodScopedCases']
         stages = $stages
         evidenceAdmitted = $false
         fieldAccuracyQualified = $false
@@ -107,6 +121,10 @@ try {
     Require ($written.sourceSha -ceq $sha -and $written.postRunSha -ceq $sha -and
              $written.trxSha256 -ceq $e['trxSha256'] -and $written.status -ceq 'SyntheticSocPassed') 'published JSON roundtrip'
     Reject { Publish-SocWorkspaceCompletionRecord -Record $record -Path $output } 'reject overwrite of completed run'
+
+    $record['methodScopedCases'] = -1
+    Reject { Assert-SocWorkspaceCompletionRecord -Record $record } 'reject invalid method-scoped count'
+    $record['methodScopedCases'] = 0
 
     $record['postRunSha'] = 'd' * 40
     Reject { Assert-SocWorkspaceCompletionRecord -Record $record } 'reject changing checkout SHA'
@@ -156,6 +174,18 @@ try {
 
     [IO.File]::WriteAllText($trxPath, $fixture.Replace('Carthago.Tests.NetworkInvestigationTests', 'Carthago.Tests.NetworkInvestigationIncidentTimelineTests'), [Text.UTF8Encoding]::new($false))
     Reject { Get-SocWorkspaceTrxEvidence -Path $trxPath } 'reject overlapping test group ownership'
+
+    $unrelatedMethod = $fixture.Replace(
+        'className="Carthago.Tests.NetworkInvestigationTests" name="Positive"',
+        'className="Carthago.Tests.GeneralSocTests" name="UnrelatedMethod"')
+    [IO.File]::WriteAllText($trxPath, $unrelatedMethod, [Text.UTF8Encoding]::new($false))
+    Reject { Get-SocWorkspaceTrxEvidence -Path $trxPath } 'reject unrelated class and method'
+
+    $ambiguousMethod = $fixture.Replace(
+        'className="Carthago.Tests.NetworkInvestigationTests" name="Positive"',
+        'className="Carthago.Tests.GeneralSocTests" name="NetworkInvestigationIncidentTimeline_Test"')
+    [IO.File]::WriteAllText($trxPath, $ambiguousMethod, [Text.UTF8Encoding]::new($false))
+    Reject { Get-SocWorkspaceTrxEvidence -Path $trxPath } 'reject ambiguous method-only group'
 
     [IO.File]::WriteAllText($trxPath, $fixture.Replace('IncidentDetectionLinkVmTests', 'UnrelatedGroupTests'), [Text.UTF8Encoding]::new($false))
     Reject { Get-SocWorkspaceTrxEvidence -Path $trxPath } 'reject missing required test group'
