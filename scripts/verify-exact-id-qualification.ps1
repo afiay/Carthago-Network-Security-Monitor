@@ -20,6 +20,8 @@ function Test-Qualification($document, $inventory, [string]$currentSha) {
     }
     Assert-Qualification (@($inventory.diagnostics | Where-Object { $_.code -in @('DUPLICATE_CORE_ID','NONCANONICAL_CORE_ID','UNRESOLVED_REGISTRATION') }).Count -eq 0) 'Unresolved registry identity'
     $seen = @{}
+    $producerGaps = @('R275','R295','R343','R437','R508','R516')
+    $unsupported = 0
     $current = 0
     $historical = 0
     foreach ($row in $document.records) {
@@ -33,7 +35,15 @@ function Test-Qualification($document, $inventory, [string]$currentSha) {
         Assert-Qualification ($row.pairedReplay -cin @('synthetic-lookalike','synthetic-protocol-controls','missing')) "Unknown replay claim: $id"
         # These four established rules declare Alert by default; runtime gates
         # still apply. This is source policy, not a measured effective alert.
-        $expectedPolicy = if ($id -cin @('R102','R103','R118','R163')) { 'alert-default-gated' } else { 'candidate-shadow' }
+        $isGap = $id -cin $producerGaps
+        $gapField = $row.PSObject.Properties['producerQualification']
+        if ($isGap) {
+            Assert-Qualification ($null -ne $gapField -and $gapField.Value -ceq 'unsupported-benchmark-scenario') "Missing producer gap classification: $id"
+            $unsupported++
+        } else {
+            Assert-Qualification ($null -eq $gapField) "Unreviewed producer gap claim: $id"
+        }
+        $expectedPolicy = if ($isGap) { 'producer-limited-policy-unreviewed' } elseif ($id -cin @('R102','R103','R118','R163')) { 'alert-default-gated' } else { 'candidate-shadow' }
         Assert-Qualification ($row.profileEligibility -ceq $expectedPolicy) "Unreviewed policy claim: $id"
         Assert-Qualification ($row.independentValidation -ceq 'missing') "Unreviewed independent claim: $id"
         $d = $row.detector
@@ -41,6 +51,9 @@ function Test-Qualification($document, $inventory, [string]$currentSha) {
             Assert-Qualification ($null -ne $d.PSObject.Properties[$field]) "Missing detector field: $field"
         }
         Assert-Qualification ($d.status -cin @('historical-pass','authored-unexecuted','missing','failed')) "Unknown detector status: $id"
+        if ($isGap) {
+            Assert-Qualification ($d.status -ceq 'missing' -and $row.pairedReplay -ceq 'missing') "Unreviewed producer-gap detector or replay claim: $id"
+        }
         if ($d.status -in @('historical-pass','failed')) {
             Assert-Qualification ($d.executedSha -cmatch '^[a-f0-9]{40}$') "Missing execution SHA: $id"
             # Only the reviewed historical checkpoints in the gate are admitted in v1.
@@ -52,7 +65,7 @@ function Test-Qualification($document, $inventory, [string]$currentSha) {
         }
         Assert-Qualification (-not [string]::IsNullOrWhiteSpace($d.positiveNegative) -and -not [string]::IsNullOrWhiteSpace($d.reference)) "Missing evidence description: $id"
     }
-    [pscustomobject]@{ registeredCount=$map.Count; auditedCount=$seen.Count; missingCount=$map.Count-$seen.Count; historicalExecutionRecords=$historical; currentExecutionRecords=$current; testsExecuted=0 }
+    [pscustomobject]@{ registeredCount=$map.Count; auditedCount=$seen.Count; missingCount=$map.Count-$seen.Count; historicalExecutionRecords=$historical; currentExecutionRecords=$current; unsupportedProducerRecords=$unsupported; testsExecuted=0 }
 }
 $sha = (git -C $root rev-parse HEAD).Trim()
 if ($LASTEXITCODE -ne 0) { throw 'Cannot resolve checkout HEAD' }
@@ -76,6 +89,10 @@ if ($SelfTest) {
     $bad = Copy-Document; ($bad.records | Where-Object ruleId -ceq 'R102').profileEligibility = 'candidate-shadow'; Expect-Rejection $bad
     $bad = Copy-Document; ($bad.records | Where-Object ruleId -ceq 'R118').detector.executedSha = $sha; Expect-Rejection $bad
     $bad = Copy-Document; $bad.records[0].profileEligibility = 'alert-default-gated'; Expect-Rejection $bad
+    $bad = Copy-Document; ($bad.records | Where-Object ruleId -ceq 'R295').PSObject.Properties.Remove('producerQualification'); Expect-Rejection $bad
+    $bad = Copy-Document; ($bad.records | Where-Object ruleId -ceq 'R343').detector.status = 'failed'; Expect-Rejection $bad
+    $bad = Copy-Document; $bad.records[0] | Add-Member -NotePropertyName producerQualification -NotePropertyValue 'unsupported-benchmark-scenario'; Expect-Rejection $bad
+    Assert-Qualification ($result.unsupportedProducerRecords -eq 6) 'Producer gap count mismatch'
     $historical = Test-Qualification $doc $inventory ('a' * 40)
     Assert-Qualification ($historical.currentExecutionRecords -eq 0 -and $historical.historicalExecutionRecords -eq 16) 'Historical evidence misclassified'
 }

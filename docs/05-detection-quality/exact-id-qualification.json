@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceSha": "987f8ccf703f23a9dc39de44163fa426d5971b59",
+  "sourceSha": "d8e4abda4d7a7c61e5f2f5d3a93077975678e079",
   "records": [
     {
       "ruleId": "R903",
@@ -301,6 +301,102 @@
       "profileEligibility": "alert-default-gated",
       "independentValidation": "missing",
       "limitations": "84% floor; authenticated application instrumentation and independent benign controls pending"
+    },
+    {
+      "ruleId": "R275",
+      "registeredClass": "R275_OAuthDeviceCodePhishingIndicatorRule",
+      "detector": {
+        "status": "missing",
+        "positiveNegative": "Current exact execution evidence not admitted; historical aggregate producer-gap isolation 55/55 at b546081 is not supported malicious recognition.",
+        "executedSha": null,
+        "reference": "docs/DEVELOPMENT_VALIDATION_LEDGER.md"
+      },
+      "pairedReplay": "missing",
+      "captureProvenance": "Trusted IdP capability and promotion authorization exist; ordinary device-code HTTP is insufficient.",
+      "profileEligibility": "producer-limited-policy-unreviewed",
+      "independentValidation": "missing",
+      "limitations": "Independent issuer audit and exact flow/time binding.",
+      "producerQualification": "unsupported-benchmark-scenario"
+    },
+    {
+      "ruleId": "R295",
+      "registeredClass": "R295_KubernetesExecIntoPodOverAPIRule",
+      "detector": {
+        "status": "missing",
+        "positiveNegative": "Current exact execution evidence not admitted; historical aggregate producer-gap isolation 55/55 at b546081 is not supported malicious recognition.",
+        "executedSha": null,
+        "reference": "docs/DEVELOPMENT_VALIDATION_LEDGER.md"
+      },
+      "pairedReplay": "missing",
+      "captureProvenance": "Explicit fail-closed K8S_POD_EXEC_AUDIT_UNAVAILABLE.",
+      "profileEligibility": "producer-limited-policy-unreviewed",
+      "independentValidation": "missing",
+      "limitations": "Authenticated API identity, authorization and exec outcome.",
+      "producerQualification": "unsupported-benchmark-scenario"
+    },
+    {
+      "ruleId": "R343",
+      "registeredClass": "R343_PowerShellRemotingEncodedCommandRule",
+      "detector": {
+        "status": "missing",
+        "positiveNegative": "Current exact execution evidence not admitted; historical aggregate producer-gap isolation 55/55 at b546081 is not supported malicious recognition.",
+        "executedSha": null,
+        "reference": "docs/DEVELOPMENT_VALIDATION_LEDGER.md"
+      },
+      "pairedReplay": "missing",
+      "captureProvenance": "Explicit fail-closed WINRM_COMMAND_AUDIT_UNAVAILABLE.",
+      "profileEligibility": "producer-limited-policy-unreviewed",
+      "independentValidation": "missing",
+      "limitations": "Trusted WinRM operation and process command-line audit.",
+      "producerQualification": "unsupported-benchmark-scenario"
+    },
+    {
+      "ruleId": "R437",
+      "registeredClass": "R437_RedisCONFIGSETIndicatorRule",
+      "detector": {
+        "status": "missing",
+        "positiveNegative": "Current exact execution evidence not admitted; historical aggregate producer-gap isolation 55/55 at b546081 is not supported malicious recognition.",
+        "executedSha": null,
+        "reference": "docs/DEVELOPMENT_VALIDATION_LEDGER.md"
+      },
+      "pairedReplay": "missing",
+      "captureProvenance": "Partial correlated RESP2 OK/error and client policy; wire OK unauthenticated.",
+      "profileEligibility": "producer-limited-policy-unreviewed",
+      "independentValidation": "missing",
+      "limitations": "Authenticated configuration outcome and authorized admin controls.",
+      "producerQualification": "unsupported-benchmark-scenario"
+    },
+    {
+      "ruleId": "R508",
+      "registeredClass": "R508_RcloneUserAgentEgressRule",
+      "detector": {
+        "status": "missing",
+        "positiveNegative": "Current exact execution evidence not admitted; historical aggregate producer-gap isolation 55/55 at b546081 is not supported malicious recognition.",
+        "executedSha": null,
+        "reference": "docs/DEVELOPMENT_VALIDATION_LEDGER.md"
+      },
+      "pairedReplay": "missing",
+      "captureProvenance": "Generic EvaluateSpec indicators lack authenticated transfer provenance.",
+      "profileEligibility": "producer-limited-policy-unreviewed",
+      "independentValidation": "missing",
+      "limitations": "Trusted process and transfer context; approved backup controls.",
+      "producerQualification": "unsupported-benchmark-scenario"
+    },
+    {
+      "ruleId": "R516",
+      "registeredClass": "R516_CloudflaredTunnelHandshakeRule",
+      "detector": {
+        "status": "missing",
+        "positiveNegative": "Current exact execution evidence not admitted; historical aggregate producer-gap isolation 55/55 at b546081 is not supported malicious recognition.",
+        "executedSha": null,
+        "reference": "docs/DEVELOPMENT_VALIDATION_LEDGER.md"
+      },
+      "pairedReplay": "missing",
+      "captureProvenance": "TLS/process/endpoint hints do not authenticate connector session.",
+      "profileEligibility": "producer-limited-policy-unreviewed",
+      "independentValidation": "missing",
+      "limitations": "Authenticated connector/session and authorized tunnel controls.",
+      "producerQualification": "unsupported-benchmark-scenario"
     }
   ]
 }
