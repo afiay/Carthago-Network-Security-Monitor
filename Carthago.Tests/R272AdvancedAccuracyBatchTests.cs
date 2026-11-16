@@ -139,12 +139,30 @@ public sealed class R272AdvancedAccuracyBatchTests
                 .CreatePlan(new IDetectionRule[] { selectedRule }, probe);
             Assert.True(plan.SelectedCount == 1);
             Assert.True(RuleTelemetryValidator.Validate(selectedRule, probe).CanRunSafely);
-            // Exercise selection, telemetry validation and final post-policy emission.
-            var engineEvent = Assert.Single(System.Linq.Enumerable.Where(
-                RuleEngine.Evaluate(probe, Sensitivity.Balanced), e => e.RuleId == "R272"));
-            Assert.True(engineEvent.ConfidenceScore >= 82);
-            Assert.DoesNotContain(RuleEngine.Evaluate(probe, Sensitivity.Balanced),
-                e => e.RuleId == "R272");
+            // R272 is ShadowFirst in production tuning, independently of its
+            // detector precision profile. Exercise actual alert delivery only in
+            // the explicit Research profile; never promote production defaults.
+            Assert.Equal(RuleMode.Shadow,
+                Carthago.Engine.Rules.Tuning.RuleTuningCatalog.ResolveProfileMode(
+                    "SmallBusiness", selectedRule.Descriptor));
+            Assert.Equal(RuleMode.Alert,
+                Carthago.Engine.Rules.Tuning.RuleTuningCatalog.ResolveProfileMode(
+                    "Research", selectedRule.Descriptor));
+            var cfg = typeof(RuleEngine).GetField("_cfg",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!
+                .GetValue(null)!;
+            var profileProperty = cfg.GetType().GetProperty("Profile")!;
+            var previousProfile = profileProperty.GetValue(cfg);
+            try
+            {
+                profileProperty.SetValue(cfg, "Research");
+                var engineEvent = Assert.Single(System.Linq.Enumerable.Where(
+                    RuleEngine.Evaluate(probe, Sensitivity.Balanced), e => e.RuleId == "R272"));
+                Assert.True(engineEvent.ConfidenceScore >= 0.82);
+                Assert.DoesNotContain(RuleEngine.Evaluate(probe, Sensitivity.Balanced),
+                    e => e.RuleId == "R272");
+            }
+            finally { profileProperty.SetValue(cfg, previousProfile); }
 
             var now = DateTime.UtcNow;
             var context = RuleEvaluationContext.CreateForEngine(probe, Sensitivity.Balanced,
@@ -153,7 +171,7 @@ public sealed class R272AdvancedAccuracyBatchTests
                 .EvaluateAsync(context);
             Assert.True(result.Matched);
             Assert.NotEmpty(result.Events);
-            Assert.All(result.Events, e => Assert.True(e.ConfidenceScore >= 82));
+            Assert.All(result.Events, e => Assert.True(e.ConfidenceScore >= 0.82));
 
             // A context captured before the DNS emission cannot gain evidence
             // retroactively, even though the live host now has three families.
