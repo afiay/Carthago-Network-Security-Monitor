@@ -114,7 +114,7 @@ public partial class MainWindow
         // Compact and below-1024 preserve a shorter readable scan surface.
         DashboardLiveEventsGrid.Height = mode == ResponsiveLayoutMode.Wide ? 440 :
             mode == ResponsiveLayoutMode.Standard ? 420 : 400;
-        DashboardLiveEventsGrid.RowHeight = mode == ResponsiveLayoutMode.Compact || narrowKpis ? 48 : 44;
+        DashboardLiveEventsGrid.RowHeight = mode == ResponsiveLayoutMode.Compact || narrowKpis ? 42 : 38;
 
         // GA UI-162: keep the terminal as a full evidence companion on Wide, but
         // avoid a second 560-unit visual-only slab beneath the live table when stacked.

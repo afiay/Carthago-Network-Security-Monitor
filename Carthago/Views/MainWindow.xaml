@@ -1202,7 +1202,7 @@
                     </Grid>
                   </Border>
                   <Border x:Name="DashboardLiveEventsPanel"
-                        Style="{StaticResource DashboardLiveEventsSurface}"
+                        Style="{StaticResource DashboardLiveEventsSurface}" Padding="10"
                        
                         Grid.Row="1" Grid.Column="0" Grid.RowSpan="2" Grid.ColumnSpan="2" Margin="0,0,12,0">
                   <Grid>
@@ -1215,7 +1215,7 @@
                     <!-- GA UI-160: compact integrated evidence heading, with real navigation only. -->
                     <Border Grid.Row="0" Background="{StaticResource DashboardLiveEventsHeaderGradient}"
                             BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1"
-                            CornerRadius="12" Padding="10,8">
+                            CornerRadius="8" Padding="10,8">
                       <Grid>
                         <Grid.ColumnDefinitions>
                           <ColumnDefinition Width="Auto"/>
@@ -1246,26 +1246,26 @@
                       </Grid>
                     </Border>
                     <!-- GA UI-159: responsive two-lane filter workspace; original controls and handlers preserved. -->
-                    <Border Grid.Row="1" Margin="0,8,0,10" Style="{StaticResource DashboardLiveEventsToolbar}">
+                    <Border Grid.Row="1" Margin="0,6,0,6" Padding="8,6" Style="{StaticResource DashboardLiveEventsToolbar}">
                       <StackPanel>
-                        <DockPanel Margin="0,0,0,10">
+                        <DockPanel Margin="0,0,0,5">
                           <Border DockPanel.Dock="Left" Width="4" Background="{StaticResource AccentBrush}" CornerRadius="2" Margin="0,0,12,0"/>
                           <StackPanel>
-                            <TextBlock Text="REFINE EVENT STREAM" Foreground="{StaticResource TextSubtleBrush}" FontSize="13" FontWeight="Bold"/>
-                            <TextBlock Text="Classify signals or narrow reported event metadata" Foreground="{StaticResource TextMutedBrush}" FontSize="11" Margin="0,5,0,0"/>
+                            <TextBlock Text="EVENT FILTERS" Foreground="{StaticResource TextSubtleBrush}" FontSize="13" FontWeight="Bold"/>
+                            <TextBlock Text="Filter reported metadata only" Foreground="{StaticResource TextMutedBrush}" FontSize="11" Margin="0,2,0,0"/>
                           </StackPanel>
                         </DockPanel>
                         <UniformGrid x:Name="DashboardLiveFilterCardsGrid" Columns="2">
-                          <Border x:Name="DashboardLiveClassificationCard" MinHeight="0" Margin="0,0,8,0" Padding="9,7"
+                          <Border x:Name="DashboardLiveClassificationCard" MinHeight="0" Margin="0,0,8,0" Padding="6,4"
                                   Background="#102A3B" BorderBrush="{StaticResource CardBorderBrush}"
-                                  BorderThickness="1" CornerRadius="12">
+                                  BorderThickness="1" CornerRadius="8">
                             <StackPanel>
-                              <TextBlock Text="01  EVENT CLASSIFICATION" FontSize="14" FontWeight="Bold"
-                                         Foreground="{StaticResource AccentBrush}" Margin="0,0,0,6"/>
+                              <TextBlock Text="Classification" FontSize="12" FontWeight="SemiBold"
+                                         Foreground="{StaticResource AccentBrush}" Margin="0,0,0,3"/>
                               <TextBlock Text="Severity and reported protocol" FontSize="11"
-                                         Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,6"/>
+                                         Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,3"/>
                               <WrapPanel>
-                                <StackPanel Orientation="Horizontal" Height="32" Margin="0,0,10,6">
+                                <StackPanel Orientation="Horizontal" Height="30" Margin="0,0,6,3">
                         <TextBlock x:Name="DashboardLiveSeverityFilterLabel"
                                    Text="Severity"
                                    Foreground="{StaticResource TextMutedBrush}"
@@ -1274,7 +1274,7 @@
                                    Margin="0,0,6,0"/>
                         <ComboBox x:Name="DashboardLiveSeverityFilter"
                                   FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
-                                  Width="142" Height="30"
+                                  Width="122" Height="28"
                                   SelectedIndex="0"
                                   ToolTip="Filter locally observed detection severity"
                                    ToolTipService.ShowsToolTipOnKeyboardFocus="True"
@@ -1290,7 +1290,7 @@
                           <ComboBoxItem Content="Info" Tag="Info"/>
                         </ComboBox>
                       </StackPanel>
-                                <StackPanel Orientation="Horizontal" Height="32" Margin="0,0,10,6">
+                                <StackPanel Orientation="Horizontal" Height="30" Margin="0,0,6,3">
                         <TextBlock x:Name="DashboardLiveProtocolFilterLabel"
                                    Text="Protocol"
                                    Foreground="{StaticResource TextMutedBrush}"
@@ -1299,7 +1299,7 @@
                                    Margin="0,0,6,0"/>
                         <ComboBox x:Name="DashboardLiveProtocolFilter"
                                   FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
-                                  Width="142" Height="30"
+                                  Width="122" Height="28"
                                   SelectedIndex="0"
                                   ToolTip="Filter by observed protocol; other protocols remain available under All"
                                    ToolTipService.ShowsToolTipOnKeyboardFocus="True"
@@ -1316,17 +1316,17 @@
                               </WrapPanel>
                             </StackPanel>
                           </Border>
-                          <Border x:Name="DashboardLiveMetadataCard" MinHeight="0" Margin="8,0,0,0" Padding="9,7"
+                          <Border x:Name="DashboardLiveMetadataCard" MinHeight="0" Margin="8,0,0,0" Padding="6,4"
                                   Background="#0E2534" BorderBrush="{StaticResource CardBorderBrush}"
-                                  BorderThickness="1" CornerRadius="12">
+                                  BorderThickness="1" CornerRadius="8">
                             <StackPanel>
-                              <TextBlock Text="02  INVESTIGATE METADATA" FontSize="14" FontWeight="Bold"
-                                         Foreground="{StaticResource AccentBrush}" Margin="0,0,0,6"/>
+                              <TextBlock Text="Rule and endpoints" FontSize="12" FontWeight="SemiBold"
+                                         Foreground="{StaticResource AccentBrush}" Margin="0,0,0,3"/>
                               <TextBlock Text="Rule ID and reported endpoints; no evidence payload search"
                                          FontSize="11" TextWrapping="Wrap"
-                                         Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,6"/>
+                                         Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,3"/>
                               <WrapPanel>
-                                <StackPanel Orientation="Horizontal" Height="32" Margin="0,0,10,6">
+                                <StackPanel Orientation="Horizontal" Height="30" Margin="0,0,6,3">
                         <TextBlock x:Name="DashboardLiveRuleFilterLabel"
                                    Text="Rule"
                                    Foreground="{StaticResource TextMutedBrush}"
@@ -1335,7 +1335,7 @@
                                    Margin="0,0,6,0"/>
                         <TextBox x:Name="DashboardLiveRuleFilter"
                                   FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
-                                 Width="116" Height="30"
+                                 Width="96" Height="28"
                                  VerticalContentAlignment="Center"
                                  ToolTip="Filter by exact rule ID or part of a rule ID"
                                   ToolTipService.ShowsToolTipOnKeyboardFocus="True"
@@ -1344,7 +1344,7 @@
                                  AutomationProperties.LabeledBy="{Binding ElementName=DashboardLiveRuleFilterLabel}"
                                  TextChanged="DashboardLiveEventsTextChanged"/>
                       </StackPanel>
-                                <StackPanel Orientation="Horizontal" Height="32" Margin="0,0,10,6">
+                                <StackPanel Orientation="Horizontal" Height="30" Margin="0,0,6,3">
                         <TextBlock x:Name="DashboardLiveSearchFilterLabel"
                                    Text="Search"
                                    Foreground="{StaticResource TextMutedBrush}"
@@ -1353,7 +1353,7 @@
                                    Margin="0,0,6,0"/>
                         <TextBox x:Name="DashboardLiveSearchFilter"
                                   FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
-                                 Width="200" Height="30"
+                                 Width="168" Height="28"
                                  VerticalContentAlignment="Center"
                                  ToolTip="Search visible event source, destination, rule or protocol; no evidence payload search"
                                   ToolTipService.ShowsToolTipOnKeyboardFocus="True"
@@ -1366,8 +1366,8 @@
                       ToolTip="Reset only the four dashboard Live Events filters. Retained local detection events and filters in other views are not cleared."
                       ToolTipService.ShowsToolTipOnKeyboardFocus="True"
                       AutomationProperties.HelpText="Reset only the four dashboard Live Events filters. Retained detection events and other views are not cleared."
-                              Height="30" MinWidth="104"
-                              Margin="0,0,0,6"
+                              Height="28" MinWidth="94"
+                              Margin="0,0,0,3"
                               Style="{StaticResource SecondaryButton}"
                               Click="DashboardLiveEventsClearFilters_Click"/>
                               </WrapPanel>
@@ -1427,9 +1427,9 @@
                                 HeadersVisibility="Column"
                                 GridLinesVisibility="Horizontal"
                                 HorizontalGridLinesBrush="{StaticResource SoftDividerBrush}"
-                                RowHeight="44"
+                                RowHeight="38"
                                 AlternationCount="2"
-                                ColumnHeaderHeight="34"
+                                ColumnHeaderHeight="30"
                                 VirtualizingPanel.IsVirtualizing="True"
                                 VirtualizingPanel.VirtualizationMode="Recycling"
                                 EnableRowVirtualization="True"
@@ -1485,7 +1485,7 @@
                               </Style>
                             </DataGridTextColumn.HeaderStyle>
                           </DataGridTextColumn>
-                          <DataGridTemplateColumn Header="SEVERITY" Width="148">
+                          <DataGridTemplateColumn Header="SEVERITY" Width="116">
                              <DataGridTemplateColumn.CellTemplate>
                                <DataTemplate>
                                  <Grid Margin="3,2,8,2">
@@ -1508,7 +1508,7 @@
                                </Style>
                              </DataGridTemplateColumn.HeaderStyle>
                            </DataGridTemplateColumn>
-                          <DataGridTemplateColumn Header="SOURCE" Width="2*" MinWidth="178">
+                          <DataGridTemplateColumn Header="SOURCE" Width="2*" MinWidth="156">
                             <DataGridTemplateColumn.CellTemplate>
                               <DataTemplate>
                                 <Border Background="#112D3E" BorderBrush="#315269" BorderThickness="1"
@@ -1543,7 +1543,7 @@
                               </Style>
                             </DataGridTemplateColumn.HeaderStyle>
                           </DataGridTemplateColumn>
-                          <DataGridTemplateColumn Header="DESTINATION" Width="2*" MinWidth="178">
+                          <DataGridTemplateColumn Header="DESTINATION" Width="2*" MinWidth="156">
                             <DataGridTemplateColumn.CellTemplate>
                               <DataTemplate>
                                 <Border Background="#112D3E" BorderBrush="#315269" BorderThickness="1"

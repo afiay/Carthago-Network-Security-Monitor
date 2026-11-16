@@ -6171,3 +6171,14 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Ownership/static review:** AnomaliesPage.xaml and this ledger only. Reviewed Theme.xaml AnalystActionTile and AnomaliesPage.xaml.cs supporting panel placement and action handlers. Binding, Click and x:Name multisets unchanged. Existing permissions, exact navigation, recorded IDs, privacy, detection, capture, ScottPlot 10/120, Events 80/500, CLI and independent GA-09bp preserved.
 
 **Risks/planned unexecuted:** long tags/rule IDs, narrow shortcut columns, keyboard order, disabled actions, empty selection, exact incident links, widths 1920/1440/1100/1099/1024/1023/640 and DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. Next UI-196: Live Events workspace composition audit and visible slice, preserve read-only local data and retention.
+
+
+## GA UI-196 — Live Events compact filter and record workspace
+
+**2026-11-16 · SOURCE CANDIDATE — UNVERIFIED.** Exact approved Library image libfile_b0a34361560c8191b641e432b3e6b15c visually inspected. Baseline `b62abadaed8a34099d1360cfcbbd86abcfefc29d`, tree `5e4f4e4d2ca94bbb2919f56389cddfd4c88c1f8c`; prior UI-195. Reference mapping: compact filter strip and dense read-only event table; no demo telemetry.
+
+**Visible before → after:** outer inset 18 → 10, toolbar 20/18/20/12 → 8/6, compact classification and metadata headings, tighter card insets and controls, reduced gaps. Table rows 44 → 38 (Compact/below-1024 48 → 42), header 34 → 30, severity width 148 → 116, endpoint minima 178 → 156. Existing two filter lanes Wide and stacked Standard/Compact retained, wrapping controls and horizontal table scroll retained. Static impact: earlier table and more records per viewport; no render.
+
+**Ownership/static review:** MainWindow.xaml, MainWindow.DashboardResponsive.cs and this ledger only. Reviewed DashboardEvents projection/handlers, responsive controller and Theme.xaml event styles. Filter binding/name/handler multiset unchanged; read-only grid, frozen time/severity, virtualization, actual metadata, 80 displayed/500 retained, evidence presence/count and delivery semantics unchanged. No capture, detection, privacy, shared APIs, ScottPlot, CLI, Cisco/WebView2 or independent work changes.
+
+**Risks/planned unexecuted:** two-line endpoint cell fit, severity pill width, long IPv6 and horizontal scroll, filter wrap, keyboard selection, empty/demo states, 1920/1440/1100/1099/1024/1023/640 widths and DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. Next UI-197: Live Events table provenance/footer and narrow-width composition.
