@@ -85,6 +85,23 @@ class AcceptanceContract(unittest.TestCase):
         }):
             self.assertEqual(WPF.assess(run, run / "assessment-c.json")["releaseDecision"], "NO_GO")
 
+    def test_record_only_with_real_evidence_and_checkout(self):
+        run = WPF.initialize(self.dir)
+        with self.assertRaises(ValueError):
+            WPF.record_observation(run, "G5-01", "pass", "Observed real UI navigation", ["evidence/missing.png"])
+        with self.assertRaises(ValueError):
+            WPF.record_observation(run, "G5-99", "pass", "Observed real UI navigation", [])
+        actual = run / "evidence" / "G5-01-observed.txt"
+        actual.write_text("Redacted observation, actual WPF operator notes", encoding="utf-8")
+        status = WPF.record_observation(run, "G5-01", "pass",
+                                        "Actual WPF opened and key controls rendered correctly",
+                                        ["evidence/G5-01-observed.txt"])
+        self.assertEqual(status["hashVerifiedEvidenceFiles"], 1)
+        self.assertFalse(status["acceptanceGranted"])
+        updated = WPF.load(run / "responses.json")
+        self.assertEqual(updated["responses"][0]["status"], "pass")
+        self.assertEqual(WPF.assess(run, run / "assessment-record.json")["releaseDecision"], "NO_GO")
+
     def test_rejects_unknown_case_id(self):
         run = WPF.initialize(self.dir)
         data = WPF.load(run / "responses.json")
