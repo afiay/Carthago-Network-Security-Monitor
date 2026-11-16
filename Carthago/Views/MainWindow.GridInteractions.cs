@@ -105,7 +105,10 @@ namespace Carthago
             AddKV(g, "Protocol", Safe(r.Protocol));
             AddKV(g, "Protocol Version", Safe(r.ProtocolVersion));
             AddKV(g, "Service", Safe(r.ApplicationService));
-            AddKV(g, "Flags", Safe(r.Flags));
+            AddKV(g, "TCP Flags", LiveTrafficHeaderFormatter.Format(r, LiveTrafficHeaderFormatter.TcpText));
+            AddKV(g, "TCP Flags (hex/dec)", LiveTrafficHeaderFormatter.Format(r, LiveTrafficHeaderFormatter.TcpRaw));
+            AddKV(g, "ICMP Type", LiveTrafficHeaderFormatter.Format(r, LiveTrafficHeaderFormatter.IcmpType));
+            AddKV(g, "ICMP Code", LiveTrafficHeaderFormatter.Format(r, LiveTrafficHeaderFormatter.IcmpCode));
             AddKV(g, "Length", r.Length.ToString());
             AddKV(g, "TTL", Safe(r.TTL));
             AddKV(g, "Process", $"{Safe(r.ProcessName)} (PID {SafeInt(r.ProcessId)})");
