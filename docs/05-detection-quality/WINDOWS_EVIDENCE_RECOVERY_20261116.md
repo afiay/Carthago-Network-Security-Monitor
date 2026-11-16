@@ -105,3 +105,24 @@ $evidenceBundle = 'C:\Users\afiay\Documents\Carthago-Evidence-20261116-190505'
 ```
 
 This operation hashes and parses local copies. It neither runs the detector/tests nor changes original bytes or admission flags. Review the resulting JSON and upload the expanded inventory only; preserve the original recovery manifest and all TRXs unchanged. The eight R603 collided display names remain ambiguous until the corresponding original test definitions/parameter identities are reviewed, even if their separate test IDs and execution IDs are recorded.
+
+
+## Source SHA and original replay binding — next local read-only pass
+
+The expanded TRX inventory is **not** sufficient to attest actual execution SHAs. It contains 42 parsed TRX results, a sha256 digest for each, but leaves `executionSha` null and `evidenceAdmitted` false. In particular, a 14,361/14,361 passing TRX without a contemporaneous invocation/pinned-checkout record is still unbound. Commit prefixes in filenames and the SHA of the *later recovery checkout* cannot fix that gap.
+
+The source at commit `dc43933775cb95a4685ecc860f93fa60b2ad3d1a` contains `scripts/verify-cli-qualification.ps1`, which asserts clean checkout HEAD against `-SourceSha` before and after each stage and records `sourceSha`, test-suite counters, per-rule replay `fixtureSha256` / `outputSha256` in its `qualification.json`. This creates a **runner-declared synthetic qualification** provenance route, provided the **original** qualification report, TRX, captures, and logs all match their recovered hashes and stage contracts. It is not independent cryptographic attestation or live-traffic detection validation.
+
+A newly authored read-only tool `scripts/reconcile-recovered-source-and-replays.py` is provided to inspect **original recovered copies on the Windows machine**. It checks the original recovery manifest digest, parses TRX `TestDefinitions` to link test IDs to declaring classes, reads original `qualification.json` source declarations, matches TRX counters and stage codes, and verifies original paired PCAP/PCAPNG and replay log hashes against the report hashes and the observed JSON contract. It reports direct owner-class cases and parameter display collisions without promoting rules. It does not run dotnet, change data, or inspect a capture device. No claim is made that this script has executed on the Windows host.
+
+```powershell
+# From the CARTHAGO repository directory, after a safe fast-forward pull:
+$bundle = 'C:\Users\afiay\Documents\Carthago-Evidence-20261116-190505'
+python .\scripts\reconcile-recovered-source-and-replays.py `
+  --bundle $bundle `
+  --output (Join-Path $bundle 'source-and-replay-reconciliation.json')
+```
+
+The generated JSON distinguishes `sourceShaDeclaredInSameDirectoryReport`, `sourceShaRunnerLinkedToTrx`, and `pathShaHintsUnverified`. Upload only that derived JSON first. To establish unbound Windows 14,361-test run identity, further locate a *contemporaneous* `git rev-parse HEAD` result, clean-working-tree attestation and stage log with exact TRX hash/run ID; without these, the exact source SHA must remain unknown. Do not alter or overwrite recovered original TRXs.
+
+**Code-level example:** `Carthago.Cli.Tests/PortableHttp602605Tests.cs` at the named historical SHA defines 20 explicit `[InlineData]` predicate scenarios: R602 2 positive/4 negative; R603 1/4; R604 2/3; R605 1/3. Their 20 source-defined cases are present as passed in the recovered 667-test portable TRX, but the R603 abbreviated test display names do not faithfully identify every original parameter. Successful synthetic predicate tests alone cannot establish field false-positive / recall performance.
