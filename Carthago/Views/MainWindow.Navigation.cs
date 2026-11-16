@@ -53,6 +53,9 @@ namespace Carthago
             // No filters in sidebar for dashboard
             SidebarPanel?.HideAllFilters();
             RequestDashboardAnalyticsRefresh(DashboardAnalyticsRefreshKind.All);
+            // The periodic coverage timer is idle while another workspace is shown.
+            // Resample immediately when returning to Overview, not up to 60 seconds later.
+            DashboardCoverageTimerTick(this, System.EventArgs.Empty);
             UpdateMonitoringHeader();
         }
 
