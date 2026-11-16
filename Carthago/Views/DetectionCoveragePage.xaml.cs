@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -20,6 +21,8 @@ namespace Carthago.Views
         private IReadOnlyList<CoverageRow> _rows = Array.Empty<CoverageRow>();
         private bool _hasLoaded;
         private bool _refreshing;
+        private long? _previousEngineEvaluations;
+        private DateTime? _lastSuccessfulRefreshUtc;
 
         public event EventHandler? DetectionsRequested;
         public event EventHandler? SettingsRequested;
@@ -89,6 +92,10 @@ namespace Carthago.Views
                     CountMetric(RuleMetricNames.RuleSuppressedTotal),
                     CountMetric(RuleMetricNames.RuleEmittedTotal),
                     engineCounters.JournalFailures);
+                RuntimeProgressText.Text = DetectionActivityDiagnosis.ForProgress(
+                    _previousEngineEvaluations, engineCounters.Evaluations);
+                _previousEngineEvaluations = engineCounters.Evaluations;
+                _lastSuccessfulRefreshUtc = capturedAt;
 
                 var unobserved = _rows.Count(row => row.Snapshot.TelemetryCoverage.MissingRequiredTelemetry.Count > 0);
                 SnapshotStatusText.Text = $"Catalog read at {capturedAt:yyyy-MM-dd HH:mm:ss} UTC • " +
@@ -105,6 +112,54 @@ namespace Carthago.Views
             {
                 _refreshing = false;
                 RefreshCoverageButton.IsEnabled = true;
+            }
+        }
+
+        private void CopyDiagnostics_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_hasLoaded || !_lastSuccessfulRefreshUtc.HasValue)
+            {
+                CopyDiagnosticsStatusText.Text = "Refresh actual status before copying diagnostics.";
+                return;
+            }
+
+            // Bounded, source-observed diagnostic metadata only; no raw packets,
+            // payloads, host addresses or inferred rule qualification.
+            try
+            {
+                var report = new StringBuilder()
+                    .AppendLine("CARTHAGO DETECTION DIAGNOSTICS — SOURCE-OBSERVED, NOT ACCURACY CERTIFIED")
+                    .AppendLine($"Snapshot UTC: {_lastSuccessfulRefreshUtc.Value:O}")
+                    .AppendLine("Counters: local to the process; sampled non-atomically; no packet counts.")
+                    .AppendLine(RuntimeDiagnosisText.Text)
+                    .AppendLine(RuntimeProgressText.Text)
+                    .AppendLine(RuntimeFunnelText.Text)
+                    .AppendLine($"Catalog rules: {_rows.Count:N0}")
+                    .AppendLine("Active or skipped rules (up to 30, prioritizing failures):");
+
+                var active = _rows
+                    .Where(row => row.Snapshot.RuntimeStats.Evaluations > 0 ||
+                                  row.Snapshot.RuntimeStats.Skipped > 0 ||
+                                  row.Snapshot.RuntimeStats.Failed > 0)
+                    .OrderByDescending(row => row.Snapshot.RuntimeStats.Failed)
+                    .ThenByDescending(row => row.Snapshot.RuntimeStats.Skipped)
+                    .ThenBy(row => row.RuleId, StringComparer.Ordinal)
+                    .Take(30)
+                    .ToArray();
+                if (active.Length == 0)
+                    report.AppendLine("No per-rule execution or selector-skip counters observed.");
+                foreach (var row in active)
+                    report.AppendLine(
+                        $"{row.RuleId}: {row.ActivityStatus} | evaluated={row.Evaluations} " +
+                        $"matches={row.Matches} skipped={row.Skipped} failures={row.Snapshot.RuntimeStats.Failed} " +
+                        $"emitted={row.Emitted} reason={row.NoMatchReason}");
+
+                Clipboard.SetText(report.ToString());
+                CopyDiagnosticsStatusText.Text = $"Copied bounded diagnostic metadata for {active.Length} rules.";
+            }
+            catch (Exception ex)
+            {
+                CopyDiagnosticsStatusText.Text = $"Copy unavailable: {ex.GetType().Name}: {ex.Message}";
             }
         }
 
