@@ -51,7 +51,15 @@ def matching_counters(suite: object, trx: dict) -> bool:
         return False
 
 def read_json(path: Path) -> dict:
-    data = json.loads(path.read_text(encoding="utf-8-sig"))
+    # Windows PowerShell 5.1 redirects native stdout as UTF-16LE with BOM;
+    # PowerShell 7 and other hosts commonly use UTF-8. Neither encoding is
+    # proof of a replay result: JSON and its contract are verified separately.
+    raw = path.read_bytes()
+    if raw.startswith((b"\\xff\\xfe", b"\\xfe\\xff")):
+        decoded = raw.decode("utf-16")
+    else:
+        decoded = raw.decode("utf-8-sig")
+    data = json.loads(decoded)
     if not isinstance(data, dict):
         raise ValueError("JSON object required")
     return data
@@ -196,8 +204,12 @@ def replay_control(bundle: Path, index: dict, parent: str, fmt: str, key: str, e
         result["checks"] = ["paired-copy-and-report-sha256-verified", "replay-json-contract-checked"]
         result["matches"] = replay.get("matchCount")
         result["packets"] = replay.get("packetsRead")
-    except (OSError, ValueError, KeyError, TypeError, IndexError, json.JSONDecodeError):
-        result["status"] = "unreadable-log"
+    except (UnicodeError, json.JSONDecodeError) as exc:
+        result["status"] = "log-text-or-json-decode-failed"
+        result["errorType"] = type(exc).__name__
+    except (OSError, ValueError, KeyError, TypeError, IndexError, AttributeError) as exc:
+        result["status"] = "replay-contract-unreadable-or-invalid"
+        result["errorType"] = type(exc).__name__
     return result
 
 def main() -> int:
