@@ -6225,3 +6225,14 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Ownership/static review:** MainWindow.xaml and ledger only. Reviewed Settings responsive controller, Save/Reset, ApplyApiKey and status producer, SettingsOpsGroup theme. Named controls, bindings, click handlers, text, content and tooltips unchanged. No preference, Npcap/ETW, external lookup consent, masked credential, session override, privacy, capture, detection, ScottPlot 10/120, Events 80/500, CLI, Cisco/WebView2 or independent R272 changes.
 
 **Risks/planned unexecuted:** long BPF and provider labels, masked input and keyboard focus, session status wrapping, Save/Reset and session-only action, widths 1920/1440/1100/1099/1024/1023/640 and DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. Next UI-201: Settings Dashboard section visibility and workspace defaults composition; preserve immediate versus saved preference semantics.
+
+
+## GA UI-201 — Compact Dashboard visibility and startup defaults
+
+**2026-11-16 · SOURCE CANDIDATE — UNVERIFIED.** Exact approved Library image libfile_b0a34361560c8191b641e432b3e6b15c visually inspected. Baseline `8ee065d65d47ec9266b4e52b17eddefcffb0972c`, tree `d1b96a607eb8a873f2a6ce14859f3d474135a651`. Reference mapping: compact graphite operational panels and cyan section hierarchy; no demo telemetry.
+
+**Visible before → after:** remove redundant workspace inset; title 24 → 20, visibility card inset 14 → 10, three module cards 16 → 10 with tighter headings/gaps; local checkbox styles reduce minimum height 45 → 36, padding 12/10 → 8/6 and gutters 9 → 6. Startup defaults card inset 20/18 → 10, title 19 → 17, inner cards 16 → 10. Existing layout preset actions untouched. Wide three module lanes, Standard/Compact stacked modules with two inner columns, below 1024 single inner column; existing defaults two columns except narrow. No fixed heights added.
+
+**Ownership/static review:** MainWindow.xaml and ledger only. Reviewed Settings responsive controller, immediate preference handler and theme SettingsSectionChoice/SettingsOpsGroup/PresetCard. Named controls, content, tooltips and handlers unchanged; no shared contracts, capture, detection, privacy, ScottPlot 10/120, Events 80/500, CLI, Cisco/WebView2 or independent R163 changes.
+
+**Risks/planned unexecuted:** long checkbox labels, keyboard focus, narrow wrapping, startup flags and immediate persistence, widths 1920/1440/1100/1099/1024/1023/640 and DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. Next UI-202: Settings layout presets and explicit replacement actions.

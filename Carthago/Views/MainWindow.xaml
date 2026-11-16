@@ -2942,8 +2942,8 @@
 
               <GroupBox x:Name="SettingsDashboardGroup" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
                         Header="Dashboard &amp; Sections" Tag="03  /  WORKSPACE" Style="{StaticResource SettingsOpsGroup}"
-                        Margin="0,0,0,14">
-                <Grid Margin="14,16,14,12">
+                        Margin="0,0,0,8">
+                <Grid Margin="0">
                   <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
@@ -2955,7 +2955,7 @@
 
                   <StackPanel Margin="0,0,0,10">
                     <TextBlock Text="DASHBOARD COMPOSITION" Foreground="{StaticResource TextMutedBrush}" FontSize="11" FontWeight="Bold"/>
-                    <TextBlock Text="Shape your operational workspace" FontSize="24" FontWeight="SemiBold" Margin="0,5,0,4"/>
+                    <TextBlock Text="Shape your operational workspace" FontSize="20" FontWeight="SemiBold" Margin="0,5,0,4"/>
                     <TextBlock Text="Section visibility, workspace defaults and layout presets are separate controls." Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap"/>
                     <Button Content="Manage saved investigation searches" Height="33" MinWidth="226"
                             HorizontalAlignment="Left" Margin="0,11,0,0" Style="{StaticResource SecondaryButton}"
@@ -2964,19 +2964,19 @@
                   </StackPanel>
 
                   <!-- GA UI-119: section selection becomes a visually distinct composition card. -->
-                  <Border Grid.Row="1" Style="{StaticResource PresetCard}" Margin="0,14,0,0" Padding="14">
+                  <Border Grid.Row="1" Style="{StaticResource PresetCard}" Margin="0,8,0,0" Padding="10">
                     <StackPanel>
                       <TextBlock Text="01  VISIBLE SECTIONS" FontWeight="Bold" FontSize="14"/>
                       <TextBlock Text="Choose which operational modules appear on the dashboard." Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,8" TextWrapping="Wrap"/>
                   <!-- GA UI-63: existing dashboard-section guidance on keyboard focus and via UI Automation; original preference handlers unchanged. -->
                   <!-- GA UI-135: three visible module zones, original named checkboxes and handlers retained. -->
-                  <UniformGrid x:Name="SettingsDashboardModuleMatrix" Columns="1" Margin="0,12,0,0">
-                      <Border Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,0,0,12">
+                  <UniformGrid x:Name="SettingsDashboardModuleMatrix" Columns="1" Margin="0,6,0,0">
+                      <Border Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,0,12">
                         <StackPanel>
                           <TextBlock Text="01 / OPERATIONAL OVERVIEW" Foreground="{StaticResource AccentBrush}" FontSize="14" FontWeight="Bold" TextWrapping="Wrap"/>
-                          <TextBlock Text="Incidents, anomaly signals, metrics and the event timeline." Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,5,0,12"/>
+                          <TextBlock Text="Incidents, anomaly signals, metrics and the event timeline." Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,4,0,6"/>
                           <UniformGrid x:Name="SettingsDashboardCoreSectionsGrid" Columns="2">
-                            <UniformGrid.Resources><Style TargetType="{x:Type CheckBox}" BasedOn="{StaticResource SettingsSectionChoice}"/></UniformGrid.Resources>
+                            <UniformGrid.Resources><Style TargetType="{x:Type CheckBox}" BasedOn="{StaticResource SettingsSectionChoice}"><Setter Property="Padding" Value="8,6"/><Setter Property="Margin" Value="0,0,6,6"/><Setter Property="MinHeight" Value="36"/></Style></UniformGrid.Resources>
                     <CheckBox x:Name="DashboardShowIncidentsCheck"
                               Content="Show Incidents"
                               ToolTip="Display correlated security incidents on the dashboard."
@@ -3008,12 +3008,12 @@
                           </UniformGrid>
                         </StackPanel>
                       </Border>
-                      <Border Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,0,0,12">
+                      <Border Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,0,12">
                         <StackPanel>
                           <TextBlock Text="02 / ANALYSIS &amp; RESPONSE" Foreground="{StaticResource AccentBrush}" FontSize="14" FontWeight="Bold" TextWrapping="Wrap"/>
-                          <TextBlock Text="Baseline context, optional scoring, response guidance and forensic shortcuts." Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,5,0,12"/>
+                          <TextBlock Text="Baseline context, optional scoring, response guidance and forensic shortcuts." Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,4,0,6"/>
                           <UniformGrid x:Name="SettingsDashboardAnalysisSectionsGrid" Columns="2">
-                            <UniformGrid.Resources><Style TargetType="{x:Type CheckBox}" BasedOn="{StaticResource SettingsSectionChoice}"/></UniformGrid.Resources>
+                            <UniformGrid.Resources><Style TargetType="{x:Type CheckBox}" BasedOn="{StaticResource SettingsSectionChoice}"><Setter Property="Padding" Value="8,6"/><Setter Property="Margin" Value="0,0,6,6"/><Setter Property="MinHeight" Value="36"/></Style></UniformGrid.Resources>
                     <CheckBox x:Name="DashboardShowBaselineCheck"
                               Content="Show Baseline learning"
                               ToolTip="Display deterministic baseline learning status."
@@ -3045,12 +3045,12 @@
                           </UniformGrid>
                         </StackPanel>
                       </Border>
-                      <Border Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,0,0,12">
+                      <Border Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,0,12">
                         <StackPanel>
                           <TextBlock Text="03 / ADVANCED &amp; INTEGRATIONS" Foreground="{StaticResource AccentBrush}" FontSize="14" FontWeight="Bold" TextWrapping="Wrap"/>
-                          <TextBlock Text="Raw data, Cisco, external delivery and developer-demo shortcuts." Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,5,0,12"/>
+                          <TextBlock Text="Raw data, Cisco, external delivery and developer-demo shortcuts." Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,4,0,6"/>
                           <UniformGrid x:Name="SettingsDashboardAdvancedSectionsGrid" Columns="2">
-                            <UniformGrid.Resources><Style TargetType="{x:Type CheckBox}" BasedOn="{StaticResource SettingsSectionChoice}"/></UniformGrid.Resources>
+                            <UniformGrid.Resources><Style TargetType="{x:Type CheckBox}" BasedOn="{StaticResource SettingsSectionChoice}"><Setter Property="Padding" Value="8,6"/><Setter Property="Margin" Value="0,0,6,6"/><Setter Property="MinHeight" Value="36"/></Style></UniformGrid.Resources>
                     <CheckBox x:Name="DashboardShowRawSummaryCheck"
                               Content="Show Raw/Advanced shortcuts"
                               ToolTip="Show quick links to raw forensic data. Raw data remains available from navigation even if this is disabled."
@@ -3087,15 +3087,15 @@
                   </Border>
 
                   <!-- GA UI-136: visually separate passive saved workspace flags from immediate layout-replacement actions. -->
-                  <Border Grid.Row="2" Style="{StaticResource PresetCard}" Margin="0,16,0,0" Padding="20,18">
+                  <Border Grid.Row="2" Style="{StaticResource PresetCard}" Margin="0,8,0,0" Padding="10">
                     <StackPanel>
                       <TextBlock Text="02 / WORKSPACE DEFAULTS" Foreground="{StaticResource AccentBrush}" FontSize="12" FontWeight="Bold"/>
-                      <TextBlock Text="Startup presentation" FontSize="19" FontWeight="SemiBold" Margin="0,7,0,4"/>
+                      <TextBlock Text="Startup presentation" FontSize="17" FontWeight="SemiBold" Margin="0,7,0,4"/>
                       <TextBlock Text="Saved display preferences; existing configured widgets and retained evidence remain intact."
                                  Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,0,0,14"/>
                       <UniformGrid x:Name="SettingsWorkspaceDefaultsGrid" Columns="2">
                         <Border Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}"
-                                BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,10,0">
+                                BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,10,0">
                           <StackPanel>
                             <TextBlock Text="MINIMAL PRESENTATION" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,10"/>
                             <CheckBox x:Name="DashboardMinimalModeCheck"
@@ -3108,7 +3108,7 @@
                           </StackPanel>
                         </Border>
                         <Border Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}"
-                                BorderThickness="1" CornerRadius="8" Padding="16">
+                                BorderThickness="1" CornerRadius="8" Padding="10">
                           <StackPanel>
                             <TextBlock Text="EMPTY-START PREFERENCE" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,10"/>
                             <CheckBox x:Name="DashboardEmptyByDefaultCheck"
