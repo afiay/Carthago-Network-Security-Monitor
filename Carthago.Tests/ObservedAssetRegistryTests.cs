@@ -193,14 +193,31 @@ public sealed class ObservedAssetRegistryTests
         {
             start.Wait();
             for (int i = 0; i < 2100; i++)
+            {
                 registry.Observe(Arp(mac: $"02:11:22:33:{i >> 8:X2}:{i & 255:X2}"), Now);
+                var outbound = Local();
+                outbound.TcpFlags = 2;
+                outbound.DstIsLocalHost = false;
+                outbound.CaptureInterfaceId = Adapter;
+                outbound.CaptureInterfaceEvidence = "WindowsInterfaceGuid";
+                outbound.Destination = $"8.8.{i >> 8}.{i & 255}";
+                registry.Communications.Observe(outbound, Now);
+            }
             registry.Seal();
             registry.Observe(Arp(mac: "02:11:22:33:FF:FF"), Now.AddSeconds(1));
+            var late = Local();
+            late.TcpFlags = 2;
+            late.DstIsLocalHost = false;
+            late.CaptureInterfaceId = Adapter;
+            late.CaptureInterfaceEvidence = "WindowsInterfaceGuid";
+            late.Destination = "8.8.9.1";
+            registry.Communications.Observe(late, Now.AddSeconds(1));
         });
         start.Set();
         await System.Threading.Tasks.Task.WhenAll(readers.Append(writer));
         var final = TrafficCaptureService.SnapshotSessionHealth(registry, null, checkpoints);
         Assert.Equal(new RegistryCapacitySnapshot(2048, 2048, 52), registry.CapacitySnapshot());
+        Assert.Equal(new RegistryCapacitySnapshot(2048, 2048, 52), registry.Communications.CapacitySnapshot());
         Assert.Equal(new EnrichmentStorageSnapshot(registry.Communications.CapacitySnapshot(),
             registry.CapacitySnapshot(), checkpoints), final.Storage);
         Assert.Null(final.Tls);
