@@ -71,7 +71,7 @@ namespace Carthago.Views
                     $"Rule matches: {_rows.Sum(row => row.Snapshot.RuntimeStats.Matches):N0}  •  " +
                     $"Rule skips: {_rows.Sum(row => row.Snapshot.RuntimeStats.Skipped):N0}  •  " +
                     $"Rule failures: {_rows.Sum(row => row.Snapshot.RuntimeStats.Failed):N0}  •  " +
-                    $"Journal failures: {engineCounters.JournalFailures:N0}.\\n" +
+                    $"Journal failures: {engineCounters.JournalFailures:N0}.\n" +
                     $"Post-policy outcomes: shadowed {CountMetric(RuleMetricNames.RuleShadowedTotal):N0}  •  " +
                     $"suppressed {CountMetric(RuleMetricNames.RuleSuppressedTotal):N0}  •  " +
                     $"emitted {CountMetric(RuleMetricNames.RuleEmittedTotal):N0}  •  " +
