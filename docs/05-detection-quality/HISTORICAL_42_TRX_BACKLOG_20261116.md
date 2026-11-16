@@ -55,6 +55,14 @@ GitHub verifies that full commit `3b54c742b5b1d2bfafc2d25840a7dfa34ee46f65` exis
 
 ## Read-only reconciliation tools — no tests or artifact edits
 
+Before using the new derived inspectors, run the **offline source-contract tests** (synthetic fixtures only; no original artifacts, tests or captures are executed):
+
+```powershell
+python .\scripts\test-wpf-historical-acceptance-contracts.py
+```
+
+The test includes a synthetic 42-run/six-link corpus with tampered SHA negative controls and log-proximity checks. It is **authored but not yet executed by the author**; review its actual result before treating a new audit report as established.
+
 Generate a strictly checked 42-run source/backlog report from the existing **derived** JSON files:
 
 ```powershell
