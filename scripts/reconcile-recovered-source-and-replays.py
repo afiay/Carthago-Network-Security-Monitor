@@ -55,7 +55,7 @@ def read_json(path: Path) -> dict:
     # PowerShell 7 and other hosts commonly use UTF-8. Neither encoding is
     # proof of a replay result: JSON and its contract are verified separately.
     raw = path.read_bytes()
-    if raw.startswith((b"\\xff\\xfe", b"\\xfe\\xff")):
+    if raw[:2] in (bytes((255, 254)), bytes((254, 255))):
         decoded = raw.decode("utf-16")
     else:
         decoded = raw.decode("utf-8-sig")
