@@ -105,7 +105,11 @@ def verify_evidence(run: Path, names: list[str]) -> tuple[list[dict], list[str]]
                 raise ValueError("evidence escapes run folder")
             if not target.is_file() or not 0 < target.stat().st_size <= 20 * 1024 * 1024:
                 raise ValueError("missing, empty or oversized evidence")
-            digest = hashlib.file_digest(target.open("rb"), "sha256").hexdigest()
+            hash_state = hashlib.sha256()
+            with target.open("rb") as evidence_stream:
+                for chunk in iter(lambda: evidence_stream.read(1048576), b""):
+                    hash_state.update(chunk)
+            digest = hash_state.hexdigest()
             found.append({"path": name, "sha256": digest, "bytes": target.stat().st_size})
         except (OSError, ValueError) as exc:
             failures.append(name + ": " + str(exc))
