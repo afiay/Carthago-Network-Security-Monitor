@@ -126,3 +126,27 @@ python .\scripts\reconcile-recovered-source-and-replays.py `
 The generated JSON distinguishes `sourceShaDeclaredInSameDirectoryReport`, `sourceShaRunnerLinkedToTrx`, and `pathShaHintsUnverified`. Upload only that derived JSON first. To establish unbound Windows 14,361-test run identity, further locate a *contemporaneous* `git rev-parse HEAD` result, clean-working-tree attestation and stage log with exact TRX hash/run ID; without these, the exact source SHA must remain unknown. Do not alter or overwrite recovered original TRXs.
 
 **Code-level example:** `Carthago.Cli.Tests/PortableHttp602605Tests.cs` at the named historical SHA defines 20 explicit `[InlineData]` predicate scenarios: R602 2 positive/4 negative; R603 1/4; R604 2/3; R605 1/3. Their 20 source-defined cases are present as passed in the recovered 667-test portable TRX, but the R603 abbreviated test display names do not faithfully identify every original parameter. Successful synthetic predicate tests alone cannot establish field false-positive / recall performance.
+
+
+## Original source/report reconciliation v2 — inspected 2026-11-16
+
+A Windows owner-run original-artifact reconciliation output (`source-and-replay-reconciliation-v2.json`) was reviewed as **read-only historical evidence**. The original bundle remains on the owner's machine, not in the repository.
+
+- Original copies: 359 recovered artifacts, 42 parsed TRX, three hashed `qualification.json` reports.
+- Three runner-linked original TRX satisfy the local report's matching SHA-256/counter/stage-code gates: `ff35973a0373fb61ccee1a64d836944458d54f88` portable 653/653, same SHA Windows parity 87/87; `dc43933775cb95a4685ecc860f93fa60b2ad3d1a` portable 667/667.
+- A fourth TRX (active sensors, 392/392) shares a directory with a hash-verified report declaring `ff35973a0373fb61ccee1a64d836944458d54f88`, but that report has a list-shaped `suites` field. No runner-link admission for this TRX is made by the generic checker.
+- The 14,361/14,361 Windows regression TRX is original-hash verified but still lacks a contemporaneous same-run source SHA attestation; do not equate it to a filename prefix or a present-day Git HEAD.
+- R586–R605: all 80 original positive/negative PCAP/PCAPNG stages have recorded exit code 0; their capture and log hashes match both original recovery and runner report. The v2 checker called every log `unreadable-log`; that is **not** 80 failed detector controls.
+- Windows PowerShell 5.1 redirection commonly emits UTF-16LE files with BOM, whereas the original checker accepted UTF-8 only. The script has been updated to decode BOM-marked UTF-16 or UTF-8 and categorize any remaining parsing/contract errors separately. This diagnosis is plausible but requires a new **read-only** check against local originals to confirm.
+- Exact rule positive/negative field qualification, production accuracy, current-source validation, and all artifact admissions remain **unverified**.
+
+After pulling the patched branch, rerun without overwriting prior outputs:
+
+```powershell
+$bundle = 'C:\Users\afiay\Documents\Carthago-Evidence-20261116-190505'
+python .\scripts\reconcile-recovered-source-and-replays.py `
+  --bundle $bundle `
+  --output (Join-Path $bundle 'source-and-replay-reconciliation-v3.json')
+```
+
+This only reads original recovered copies and writes a new derived JSON report. No original tests, captures, holdouts, or rule manifests are modified.
