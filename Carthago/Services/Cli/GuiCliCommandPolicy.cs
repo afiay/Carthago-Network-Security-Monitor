@@ -43,16 +43,16 @@ internal static class GuiCliCommandPolicy
             ["rules", "summary"] => true,
             ["rules", "validate"] => true,
             ["rules", "list", "--live"] => true,
-            ["rules", "list", "--live", "--offset", var o, "--limit", var n]
-                when int.TryParse(o, out var offset) && offset >= 0 &&
-                     int.TryParse(n, out var limit) && limit is >= 1 and <= 100 => true,
+            ["rules", "list", "--live", "--offset", var ruleOffsetText, "--limit", var ruleLimitText]
+                when int.TryParse(ruleOffsetText, out var ruleOffset) && ruleOffset >= 0 &&
+                     int.TryParse(ruleLimitText, out var ruleLimit) && ruleLimit is >= 1 and <= 100 => true,
             ["rules", "show", var id, "--live"]
                 when id.Length is >= 4 and <= 6 && id[0] == 'R' &&
-                     id.AsSpan(1).IndexOfAnyExceptInRange('0', '9') == -1 => true,
+                     id.Skip(1).All(c => c is >= '0' and <= '9') => true,
             ["sensors", "list"] => true,
-            ["sensors", "list", "--offset", var o, "--limit", var n]
-                when int.TryParse(o, out var offset) && offset >= 0 &&
-                     int.TryParse(n, out var limit) && limit is >= 1 and <= 100 => true,
+            ["sensors", "list", "--offset", var sensorOffsetText, "--limit", var sensorLimitText]
+                when int.TryParse(sensorOffsetText, out var sensorOffset) && sensorOffset >= 0 &&
+                     int.TryParse(sensorLimitText, out var sensorLimit) && sensorLimit is >= 1 and <= 100 => true,
             ["sensors", "health"] => true,
             ["alerts", "list", "--live"] => true,
             ["incidents", "list", "--live"] => true,
