@@ -20,6 +20,14 @@ The Overview **Detection Coverage** KPI consumes `RuleCatalog.HealthSnapshots()`
 - A background refresh starts when Overview initializes and repeats at most every 60 seconds while Overview is visible, without blocking the UI thread. Failed or empty catalog reads show **—** rather than an invented zero.
 - The Coverage Center retains detailed per-rule statuses including observed telemetry and catalog findings. Rule quality, positive/negative replay completeness, real-world recall and precision **cannot** be inferred from this KPI.
 
+## Windows assembly identity and qualification update (2026-11-16)
+
+The first combined GUI+CLI Windows test run restored and built successfully, but two CLI integration tests failed to load `Carthago.Cli.CliApplication`: WPF `Carthago` and CLI `carthago` differ only in case, and MSBuild reported MSB3243 before `TypeLoadException`. A distinct `PackageId` fixed NuGet restore, **not** the compiled assembly collision. CLI now declares `<AssemblyName>Carthago.Cli</AssemblyName>` in addition to `<PackageId>Carthago.Cli</PackageId>`. The original `RootNamespace` and public CLI command syntax are unchanged.
+
+Build outputs have a distinct `Carthago.Cli.dll` (and platform apphost when generated), rather than `carthago.dll`. Any direct binary-path consumers must use the new artifact path. `dotnet run --project .\\Carthago.Cli\\Carthago.Cli.csproj -- --help` remains supported. The GUI continues to call the CLI assembly in-process, without spawning a shell.
+
+A new regression test asserts the GUI and CLI assembly identities are different under case-insensitive comparison. Windows re-run of the failing tests and full app smoke test are still required before declaring the integration verified. Previous evidence: Release GUI build passed; 22 of 24 focused tests passed, 2 CLI load tests failed. Do not treat that pre-fix run as acceptance.
+
 ## Validation on Windows
 
 ```powershell
