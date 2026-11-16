@@ -114,4 +114,23 @@ public sealed class ObservedAssetRegistryTests
         Assert.NotEqual(rows[0].LastSeenUtc, rows[1].LastSeenUtc);
         Assert.Equal("02:11:22:33:44:66", rows[0].Mac);
     }
+
+    [Fact]
+    public void Sealed_Registry_Retains_Capacity_Evidence_And_Replacement_Starts_Empty()
+    {
+        var previous = new ObservedAssetRegistry(Now);
+        for (int i = 0; i < 2049; i++)
+            previous.Observe(Arp(mac: $"02:11:22:33:{i >> 8:X2}:{i & 255:X2}"), Now);
+        var finalCapacity = previous.CapacitySnapshot();
+        Assert.Equal(2048, previous.Snapshot().Count);
+        previous.Seal();
+        previous.Observe(Arp(mac: "02:11:22:33:FF:FF"), Now.AddSeconds(1));
+        Assert.Equal(finalCapacity, previous.CapacitySnapshot());
+
+        var replacement = new ObservedAssetRegistry(Now.AddSeconds(2));
+        Assert.NotEqual(previous.SessionId, replacement.SessionId);
+        Assert.Empty(replacement.Snapshot());
+        Assert.Equal(new RegistryCapacitySnapshot(0, 2048, 0), replacement.CapacitySnapshot());
+        Assert.Equal(finalCapacity, previous.CapacitySnapshot());
+    }
 }
