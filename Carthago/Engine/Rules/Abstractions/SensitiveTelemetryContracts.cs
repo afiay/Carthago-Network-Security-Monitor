@@ -116,6 +116,13 @@ namespace Carthago.Engine.Rules
             if (string.IsNullOrWhiteSpace(record.HttpRequestHeaders))
                 return record.HttpBasicDefaultCredentialObserved;
 
+            // Control bytes cannot be trusted as HTTP field syntax. In particular,
+            // NUL may truncate a header in a downstream parser while our managed
+            // string parser continues to an apparently valid credential field.
+            if (record.HttpRequestHeaders.Any(static c =>
+                c == '\0' || (c < ' ' && c != '\r' && c != '\n' && c != '\t') || c == '\u007f'))
+                return false;
+
             // Reject bare CR before interpreting singleton Authorization fields.
             // Otherwise an unrelated header can conceal a second credential field.
             for (var i = 0; i < record.HttpRequestHeaders.Length; i++)
