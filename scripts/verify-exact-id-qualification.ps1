@@ -31,7 +31,10 @@ function Test-Qualification($document, $inventory, [string]$currentSha) {
         $seen[$id] = $true
         Assert-Qualification ($map.ContainsKey($id) -and $map[$id] -ceq $row.registeredClass) "Unknown registry identity: $id"
         Assert-Qualification ($row.pairedReplay -cin @('synthetic-lookalike','synthetic-protocol-controls','missing')) "Unknown replay claim: $id"
-        Assert-Qualification ($row.profileEligibility -ceq 'candidate-shadow') "Unreviewed policy claim: $id"
+        # These four established rules declare Alert by default; runtime gates
+        # still apply. This is source policy, not a measured effective alert.
+        $expectedPolicy = if ($id -cin @('R102','R103','R118','R163')) { 'alert-default-gated' } else { 'candidate-shadow' }
+        Assert-Qualification ($row.profileEligibility -ceq $expectedPolicy) "Unreviewed policy claim: $id"
         Assert-Qualification ($row.independentValidation -ceq 'missing') "Unreviewed independent claim: $id"
         $d = $row.detector
         foreach ($field in @('status','positiveNegative','executedSha','reference')) {
@@ -70,6 +73,9 @@ if ($SelfTest) {
     $bad = Copy-Document; $bad.records[0].registeredClass = 'Unknown'; Expect-Rejection $bad
     $bad = Copy-Document; $bad.records[0].detector.executedSha = 'a' * 40; Expect-Rejection $bad
     $bad = Copy-Document; $bad.records[0].independentValidation = 'passed'; Expect-Rejection $bad
+    $bad = Copy-Document; ($bad.records | Where-Object ruleId -ceq 'R102').profileEligibility = 'candidate-shadow'; Expect-Rejection $bad
+    $bad = Copy-Document; ($bad.records | Where-Object ruleId -ceq 'R118').detector.executedSha = $sha; Expect-Rejection $bad
+    $bad = Copy-Document; $bad.records[0].profileEligibility = 'alert-default-gated'; Expect-Rejection $bad
     $historical = Test-Qualification $doc $inventory ('a' * 40)
     Assert-Qualification ($historical.currentExecutionRecords -eq 0 -and $historical.historicalExecutionRecords -eq 16) 'Historical evidence misclassified'
 }

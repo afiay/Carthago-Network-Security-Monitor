@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceSha": "6346478ebddccdf39797f52019e04e5f3936c659",
+  "sourceSha": "987f8ccf703f23a9dc39de44163fa426d5971b59",
   "records": [
     {
       "ruleId": "R903",
@@ -241,6 +241,66 @@
       "profileEligibility": "candidate-shadow",
       "independentValidation": "missing",
       "limitations": "Shadow; independent CDN/fast-flux controls and process provenance"
+    },
+    {
+      "ruleId": "R102",
+      "registeredClass": "R102_DNSTunnelingViaLongLabelsRule",
+      "detector": {
+        "status": "authored-unexecuted",
+        "positiveNegative": "Structured long high-entropy TXT matches; short benign queries, missing transport and invalid labels reject",
+        "executedSha": null,
+        "reference": "Carthago.Tests/R102AdvancedAccuracyBatchTests.cs"
+      },
+      "pairedReplay": "synthetic-protocol-controls",
+      "captureProvenance": "Synthetic structured DNS; reviewed raw capture journal intake is separate from live baseline authority",
+      "profileEligibility": "alert-default-gated",
+      "independentValidation": "missing",
+      "limitations": "80% floor; V1 frozen failed 4/6; V2 independent capture/review and durable authority pending"
+    },
+    {
+      "ruleId": "R103",
+      "registeredClass": "R103_DNSBeaconingWithStableIntervalRule",
+      "detector": {
+        "status": "authored-unexecuted",
+        "positiveNegative": "Six stable observations match; rotating names and high jitter reject",
+        "executedSha": null,
+        "reference": "Carthago.Tests/R103AdvancedAccuracyBatchTests.cs"
+      },
+      "pairedReplay": "synthetic-protocol-controls",
+      "captureProvenance": "Synthetic DNS cadence; live source/interface baseline gate fails closed",
+      "profileEligibility": "alert-default-gated",
+      "independentValidation": "missing",
+      "limitations": "80% floor; independent benign periodic polling and qualified live baseline pending"
+    },
+    {
+      "ruleId": "R118",
+      "registeredClass": "R118_DefaultCredentialIoTAttemptRule",
+      "detector": {
+        "status": "authored-unexecuted",
+        "positiveNegative": "Default Basic pair matches; duplicate authorization and missing device host reject",
+        "executedSha": null,
+        "reference": "Carthago.Tests/R118AdvancedAccuracyBatchTests.cs"
+      },
+      "pairedReplay": "synthetic-protocol-controls",
+      "captureProvenance": "Synthetic HTTP/Telnet records; parser-derived redacted Basic replay is separate from authenticated asset identity",
+      "profileEligibility": "alert-default-gated",
+      "independentValidation": "missing",
+      "limitations": "86% floor; independent IoT asset authority and authentication outcome consumption pending"
+    },
+    {
+      "ruleId": "R163",
+      "registeredClass": "R163_SsrfMetadataServiceProbeRule",
+      "detector": {
+        "status": "authored-unexecuted",
+        "positiveNegative": "Metadata credential path matches; guest agent, forged destination and ordinary metadata reject; caller trace and PID do not establish causality",
+        "executedSha": null,
+        "reference": "Carthago.Tests/R163AdvancedAccuracyBatchTests.cs"
+      },
+      "pairedReplay": "synthetic-protocol-controls",
+      "captureProvenance": "Synthetic HTTP records; no authenticated inbound-to-outbound request ancestry or response outcome",
+      "profileEligibility": "alert-default-gated",
+      "independentValidation": "missing",
+      "limitations": "84% floor; authenticated application instrumentation and independent benign controls pending"
     }
   ]
 }
