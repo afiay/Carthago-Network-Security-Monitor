@@ -2936,3 +2936,6 @@ Reviewed live parent `5766dbfac50184ea968d6f039736c872ae2e097b`, actual tree `be
 ## 2026-11-16 — GA-09bq exact-ID execution accounting
 
 Reviewed live parent `a1b542ec06be1448d6385191484289e4197405b1`, actual tree `3dd55704817738f58b6710eab282c6cd8b840ef8`, qualification gate, exact-ID audit and validator/module. Fix case-insensitive registry lookup accepting lowercase inventory IDs; require canonical case and class prefix. Report failed admitted executions separately; remove fixed 16-record historical self-test assumption. Two focused fixtures authored (lowercase rejection and synthetic failed execution/current SHA accounting), zero executed; Windows pending. No actual failure admitted, no changed detector IDs, no policy/floor/holdout changes. Candidate SHA is commit containing entry. GA-08 owner result still pending; next: artifact-bound evidence admission and remaining exact IDs. Windows: powershell -NoProfile -File .\scripts\verify-exact-id-qualification.ps1 -SelfTest.
+
+
+GA-09bq correction: parent `9c914905ee9f1bb84623bcd5e4ef2c654dd02a52`, tree `dadf937028e9cd77e81e1815bcc5172450294337`. Readback exposed malformed replacement expansion in validator; remove duplicated suffix and restore exact-ID assertion. Source inspection only, Windows pending. No detector IDs changed. Same self-test command.
