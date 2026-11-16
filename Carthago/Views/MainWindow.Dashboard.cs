@@ -16,6 +16,7 @@ using System.Windows.Threading;
 using Carthago.Analytics.Models;
 using Carthago.Models;
 using Carthago.Services;
+using Carthago.Services.Sensors;
 using Carthago.Views;
 
 namespace Carthago
@@ -25,6 +26,7 @@ namespace Carthago
         private readonly ObservableCollection<DashboardWidgetVm> _dashboardWidgets = new();
         private readonly ObservableCollection<SocKpiVm> _dashboardKpis = new();
         private readonly ObservableCollection<SocKpiVm> _dashboardOverviewKpis = new();
+        private ActiveSensorManager? _dashboardActiveSensorSession;
         private readonly ObservableCollection<SocAnomalyVm> _dashboardAnomalyItems = new();
         private readonly ObservableCollection<SocHostVm> _dashboardHostRows = new();
         private readonly ObservableCollection<SocActionVm> _dashboardActionRows = new();
@@ -88,7 +90,12 @@ namespace Carthago
             DeviceComboBox.SelectionChanged += DeviceComboBox_SelectionChanged;
 
             _dashboardAnalyticsRefreshTimer.Tick += DashboardAnalyticsRefreshTimerTick;
-            _dashboardHeaderTimer.Tick += (_, __) => UpdateMonitoringHeader();
+            _dashboardHeaderTimer.Tick += (_, __) =>
+            {
+                UpdateMonitoringHeader();
+                if (DashboardView.Visibility == Visibility.Visible)
+                    UpdateDashboardOverviewSensors();
+            };
             _dashboardHeaderTimer.Start();
 
             RefreshDashboardIncidents();
@@ -1052,8 +1059,8 @@ namespace Carthago
             UpdateSocSignalDetails();
         }
 
-        // GA UI-03: these four cards reflect only observed local capture and recent analytics.
-        // Sensor inventory and rule-coverage denominators have no validated producer here.
+        // Sensor KPI observes the GUI scheduler only; saved profiles are not a live count.
+        // The rule-coverage denominator remains unvalidated.
         private IEnumerable<SocKpiVm> BuildSocOverviewKpis()
         {
             var throughput = GetObservedDashboardThroughput(CaptureStatusText.Text);
@@ -1066,13 +1073,16 @@ namespace Carthago
                 AccentBrush = (Brush)(TryFindResource("AccentBrush") ?? Brushes.DeepSkyBlue)
             };
 
+            var sensors = ReadDashboardActiveSensorKpi();
             yield return new SocKpiVm
             {
                 Title = "Active Sensors",
-                Value = "—",
-                TrendText = "Inventory unavailable",
+                Value = sensors.Value,
+                TrendText = sensors.Caption,
                 Icon = "▣",
-                AccentBrush = Brushes.SlateGray
+                AccentBrush = _dashboardActiveSensorSession?.HasReservation == true
+                    ? (Brush)(TryFindResource("AccentBrush") ?? Brushes.DeepSkyBlue)
+                    : Brushes.SlateGray
             };
 
             // The analytics snapshot is bounded to 150 recent incidents, not a global count.
@@ -1111,6 +1121,36 @@ namespace Carthago
 
             return (FormatThroughput(_mbpsSeries[^1]), degraded
                 ? "Local capture · degraded" : "Local capture · observed");
+        }
+
+        private ActiveSensorKpiSnapshot ReadDashboardActiveSensorKpi()
+        {
+            var gui = _dashboardActiveSensorSession;
+            if (gui?.HasReservation == true)
+            {
+                var states = gui.Snapshot();
+                return ActiveSensorKpiProjection.FromGuiScheduler(
+                    states.Count, states.Count(state => state.ScopeBlocked));
+            }
+
+            try
+            {
+                var saved = new ActiveSensorProfileStore().Read();
+                return ActiveSensorKpiProjection.FromStoredProfiles(saved.Rows.Count, saved.Error);
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                return ActiveSensorKpiProjection.FromStoredProfiles(0, "Storage unavailable");
+            }
+        }
+
+        private void UpdateDashboardOverviewSensors()
+        {
+            var card = _dashboardOverviewKpis.FirstOrDefault(kpi => kpi.Title == "Active Sensors");
+            if (card is null) return;
+            var sensors = ReadDashboardActiveSensorKpi();
+            card.Value = sensors.Value;
+            card.TrendText = sensors.Caption;
         }
 
         private void UpdateDashboardOverviewThroughput(string status)
@@ -1844,7 +1884,7 @@ namespace Carthago
             public string InformationText => Title switch
             {
                 "Network Throughput" => "Latest local throughput sample when capture reports monitoring or degraded. This is not the local PPS chart, an inbound/outbound breakdown, or proof of capture health.",
-                "Active Sensors" => "Sensor inventory is unavailable; this card does not establish a live sensor count.",
+                "Active Sensors" => "While the GUI holds the active-sensor scheduler reservation, the value is its non-blocked scheduled-profile count (not simultaneously probing sensors). Otherwise the value is unknown and the caption shows only locally saved profile configurations; foreground and service workers are not assessed.",
                 "Open Incidents" => "Unresolved correlated incidents from the bounded recent local snapshot (maximum 150); not a global count. Demo detections may be included when demo mode is enabled.",
                 "Detection Coverage" => "No validated active-rule denominator is available; detection coverage is not established.",
                 "Active Incidents" => "Unresolved correlated incidents from a bounded local snapshot. The 15-minute change uses creation timestamps; activity bars are relative, not throughput.",
