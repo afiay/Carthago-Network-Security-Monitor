@@ -7,8 +7,13 @@ import importlib.util
 import json
 import tempfile
 import unittest
+import sys
 from pathlib import Path
 from unittest.mock import patch
+
+# This source-contract test must not dirty its own Git checkout by emitting
+# scripts/__pycache__/*.pyc while importing the sibling tool modules.
+sys.dont_write_bytecode = True
 
 ROOT = Path(__file__).resolve().parent
 
