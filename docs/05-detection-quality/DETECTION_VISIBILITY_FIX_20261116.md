@@ -37,7 +37,7 @@ git pull --ff-only origin feature/carthago-reliability-hardening
 git rev-parse HEAD
 
 dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release `
-  --filter "FullyQualifiedName~IncidentRuleVisibilityRegressionTests|FullyQualifiedName~IncidentDetectionLinkVmTests|FullyQualifiedName~RuleHealthDiagnosticsServiceTests|FullyQualifiedName~RuleTelemetryFieldContractTests" `
+  --filter "FullyQualifiedName~DetectionActivityDiagnosisTests|FullyQualifiedName~IncidentRuleVisibilityRegressionTests|FullyQualifiedName~IncidentDetectionLinkVmTests|FullyQualifiedName~RuleHealthDiagnosticsServiceTests|FullyQualifiedName~RuleTelemetryFieldContractTests" `
   --logger "trx;LogFileName=detection-visibility-regression.trx" `
   --results-directory .\TestResults\DetectionQuality
 ```
