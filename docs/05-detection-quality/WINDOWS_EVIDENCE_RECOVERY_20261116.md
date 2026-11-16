@@ -323,3 +323,22 @@ The owner uploaded read-only `source-and-replay-reconciliation-v4.json` (SHA-256
 **Status:** `source-file-correlated candidate`, *not yet historical runner-report-linked*. The original v4 checker itself records `sourceIdentityLevel=original-source-file-only-unbound` and `sourceShaRunnerLinkedToTrx=null` for the SOC TRX. Accordingly the strict runner-linked count **stays 6/42 (36 unlinked)**. Neither synthetic rule quality nor production detection accuracy is newly admitted. The 80/80 historical paired replays R586–R605 remain unchanged.
 
 Next step: verify the three original stage logs and SOC TRX against the pinned historical verifier contract, while distinguishing a pre-test recorded SHA from a missing persisted final checkout/PASS statement. Never retroactively infer successful post-run Git verification from an earlier SHA file or from the current repository HEAD.
+
+
+## SOC original stage-log provenance check — pending owner execution
+
+The new read-only `scripts/reconcile-original-soc-workspace-evidence.py` is committed to inspect **all six recovered SOC artifacts** from the same session: `source-sha.txt`, `sdk-version.txt`, `restore.log`, `build-release.log`, `soc-tests.log`, and `soc-workspace-tests.trx`. Each original file is size and SHA-256 checked against `recovery-manifest.json`. The script cross-checks the canonical full SHA against the previous v4 recovery, the original TRX digest against v4, UTC chronology, all 69 uniquely mapped passing cases, and the three source-required groups `NetworkInvestigation`, `IncidentTimeline`, and `IncidentDetectionLinkVm`. The prior expanded TRX inventory records 29, 35 and 5 results respectively (69 total), but original group definitions and stage-log contents must still be read on Windows.
+
+This is a **correlation checker**, not a means to fabricate a post-test SHA attestation. The historical SOC verifier writes the SHA file **before** running restore/build/tests; the final post-test clean-checkout assertion and success message are printed to the host console, not persisted in the six recovery files. Even if all six originals are consistent and the stage logs report success, the checker deliberately returns `strictRunnerLinkEstablished=false` and `sourceShaRunnerLinkedToTrx=null` until an original contemporaneous post-run verifier record is found. The SOC candidate must not increase the strict runner-linked count (currently **6 of 42**). Its distinct evidence level is `original-pretest-source-file-correlated`.
+
+To generate a **new** derived report from the original Windows bundle after pulling the branch:
+
+```powershell
+$bundle = 'C:\Users\afiay\Documents\Carthago-Evidence-20261116-190505'
+python .\scripts\reconcile-original-soc-workspace-evidence.py `
+  --bundle $bundle `
+  --previous (Join-Path $bundle 'source-and-replay-reconciliation-v4.json') `
+  --output (Join-Path $bundle 'original-soc-workspace-reconciliation-v1.json')
+```
+
+The script has **not** run against the owner's original Windows copies in this documentation turn; there is no new test, capture, registry change, or formal admission. Do not share the original stage logs or raw traffic outside the machine when a derived report is sufficient.
