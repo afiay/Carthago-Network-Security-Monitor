@@ -9,6 +9,8 @@ Accuracy strategy, replay coverage, holdout methodology and verification evidenc
 - [Current development verification ledger](../DEVELOPMENT_VALIDATION_LEDGER.md)
 - [1,000-rule registry reconciliation and execution accounting](REGISTRY_RECONCILIATION_20261116.md)
 - [Windows evidence recovery and read-only TRX inventory](WINDOWS_EVIDENCE_RECOVERY_20261116.md)
+- [Historical 42-TRX source-proof backlog (6 linked, 36 unlinked)](HISTORICAL_42_TRX_BACKLOG_20261116.md)
+- [SOC verifier bug closure — original TRX/log hash verification complete](SOC_VERIFIER_BUG_CLOSURE_20261116.md)
 - [Per-ID registry reconciliation CSV](registry-reconciliation.csv)
 - [Exact-ID qualification audit](EXACT_ID_QUALIFICATION_AUDIT.md)
 - [Frozen V1 manifest](../holdout-evaluation-manifest.json)
