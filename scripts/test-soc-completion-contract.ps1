@@ -5,6 +5,24 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'SocWorkspaceCompletion.psm1') -Force
 
+# Parse the production verifier without invoking it. This catches syntax
+# errors on Windows PowerShell 5.1 and protects final-check-before-publish order.
+foreach ($fileName in @('SocWorkspaceCompletion.psm1','verify-soc-workspace.ps1','test-soc-completion-contract.ps1')) {
+    $sourceFile = Join-Path $PSScriptRoot $fileName
+    $tokens = $null
+    $errors = $null
+    $null = [System.Management.Automation.Language.Parser]::ParseFile(
+        $sourceFile, [ref]$tokens, [ref]$errors)
+    if ($errors.Count -gt 0) { throw "PowerShell source parse failed: $fileName" }
+}
+$verificationSource = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'verify-soc-workspace.ps1') -Raw
+$preCheckPos = $verificationSource.IndexOf('$preRun = Get-SocCheckout')
+$postCheckPos = $verificationSource.IndexOf('$postRun = Get-SocCheckout')
+$publishPos = $verificationSource.IndexOf('Publish-SocWorkspaceCompletionRecord -Record')
+if ($preCheckPos -lt 0 -or $postCheckPos -le $preCheckPos -or $publishPos -le $postCheckPos) {
+    throw 'Verifier must publish completion only after the final source checkout check.'
+}
+
 $asserts = 0
 function Require([bool]$condition, [string]$message) {
     $script:asserts++
