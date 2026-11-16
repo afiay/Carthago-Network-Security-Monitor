@@ -147,6 +147,7 @@ def replay_control(bundle: Path, index: dict, parent: str, fmt: str, key: str, e
             replay.get("rejected") == 0,
             replay.get("captureTruncated") == 0,
             replay.get("clockResets") == 0,
+            replay.get("rules") is not None,
             replay.get("matchCount") == required,
             replay.get("suppressedCount") == 0,
             replay.get("findingsTruncated") is False,
@@ -227,6 +228,10 @@ def main() -> int:
                 for fmt, scenarios in report["perRuleReplay"].items():
                     for key, expected in scenarios.items():
                         evidence = replay_control(bundle, index, parent, fmt, key, expected)
+                        stage = "cli-paired-%s-%s" % (fmt, key)
+                        evidence["runnerStageExitCode"] = report.get("stages", {}).get(stage)
+                        if evidence["status"] == "synthetic-control-observed" and evidence["runnerStageExitCode"] != 0:
+                            evidence["status"] = "stage-code-not-zero-or-missing"
                         reports[parent]["replays"].append(evidence)
         except (ValueError, UnicodeError, OSError):
             reports[rel.rsplit("/", 1)[0]] = {"status": "unreadable-report"}
@@ -245,11 +250,25 @@ def main() -> int:
         report = find_report_for_trx(rel, reports)
         hints = sorted(set(RUN_SHA_HINT.findall(rel)))
         source = report.get("sourceSha") if report and report.get("status") == "original-report-hash-verified" else None
+        suite = (report.get("suites") or {}).get(path.stem, {}) if report else {}
+        counts = suite.get("counters", {}) if isinstance(suite, dict) else {}
+        counter_match = detail.get("status") == "parsed" and bool(counts) and all(
+            int(counts.get(field, -1)) == detail.get(field) for field in ("total", "passed", "failed")
+        )
+        completed = report and report.get("qualificationStatus") in (
+            "SyntheticPortablePassed", "SyntheticPortableAndWindowsParityPassed"
+        )
+        runner_linked = bool(source and status == "original-hash-verified" and
+                             counter_match and completed and
+                             report.get("stageCodes", {}).get(path.stem) == 0)
         runs.append({
             "relativeCopy": item["relativeCopy"],
             "trxSha256": item["sha256"],
-            "sourceShaFromSameDirectoryReport": source,
-            "sourceAttribution": "runner-declared-report" if source else "unknown",
+            "sourceShaDeclaredInSameDirectoryReport": source,
+            "sourceShaRunnerLinkedToTrx": source if runner_linked else None,
+            "reportCountersMatchOriginalTrx": bool(counter_match),
+            "sourceAttribution": ("pinned-runner-report-matching-original-trx" if runner_linked
+                                  else "unverified-report-claim" if source else "unknown"),
             "pathShaHintsUnverified": hints,
             "originalArtifactStatus": status,
             "originalTrxDefinitions": detail
@@ -269,8 +288,9 @@ def main() -> int:
         "recoveredManifestFileCount": len(artifacts),
         "originalTrxCount": len(runs),
         "originalReportsHashVerified": sum(x.get("status") == "original-report-hash-verified" for x in reports.values()),
-        "runSourceShaFromSameDirectoryReport": sum(bool(x["sourceShaFromSameDirectoryReport"]) for x in runs),
-        "runsWithoutSameDirectoryReport": sum(not x["sourceShaFromSameDirectoryReport"] for x in runs),
+        "runSourceShaFromSameDirectoryReport": sum(bool(x["sourceShaDeclaredInSameDirectoryReport"]) for x in runs),
+        "runSourceShaRunnerLinkedToTrx": sum(bool(x["sourceShaRunnerLinkedToTrx"]) for x in runs),
+        "runsWithoutSameDirectoryReport": sum(not x["sourceShaDeclaredInSameDirectoryReport"] for x in runs),
         "originalTrxDefinitionParseCount": sum(x["originalTrxDefinitions"].get("status") == "parsed" for x in runs),
         "syntheticReplayControlsChecked": len(controls),
         "syntheticReplayControlsObserved": sum(x["status"] == "synthetic-control-observed" for x in controls),
