@@ -2939,3 +2939,8 @@ Reviewed live parent `a1b542ec06be1448d6385191484289e4197405b1`, actual tree `3d
 
 
 GA-09bq correction: parent `9c914905ee9f1bb84623bcd5e4ef2c654dd02a52`, tree `dadf937028e9cd77e81e1815bcc5172450294337`. Readback exposed malformed replacement expansion in validator; remove duplicated suffix and restore exact-ID assertion. Source inspection only, Windows pending. No detector IDs changed. Same self-test command.
+
+
+## 2026-11-16 — GA-09br restore execution accounting contract
+
+Live parent `fb5b19626633aa9ed6ffb728efc1738a9fdb4a90`, actual tree `c6238e9d81fa30c80f168bddaf223beb5c162686`; reviewed gate, audit, validator, manifest and registry module. Readback of GA-09bq correction revealed missing failed counter increment/output, missing lowercase and failure fixtures, and stale fixed historical count. Restore these in validator, no detector IDs changed; in-memory R903 failure fixture only, no admitted outcomes changed. Expected self-test rejection of lowercase ID and correct historical/current/failed counts; zero PowerShell or detector tests executed. Candidate SHA is commit containing entry. Preserve UI-196. Next: artifact-bound TRX admission, GA-08 owner result, remaining exact IDs. Windows: powershell -NoProfile -File .\scripts\verify-exact-id-qualification.ps1 -SelfTest.

@@ -82,13 +82,14 @@ function Test-Qualification($document, $inventory, [string]$currentSha, $manifes
             $entry = $reviewed[$key]
             $expectedOutcome = if ($d.status -ceq 'failed') { 'fail' } else { 'pass' }
             Assert-Qualification ($entry.outcome -ceq $expectedOutcome -and $entry.testReference -ceq $d.reference) "Execution evidence mismatch: $id"
+            if ($d.status -ceq 'failed') { $failed++ }
             if ($d.executedSha -ceq $currentSha) { $current++ } else { $historical++ }
         } else {
             Assert-Qualification ($null -eq $d.executedSha) "Unexecuted evidence has SHA: $id"
         }
         Assert-Qualification (-not [string]::IsNullOrWhiteSpace($d.positiveNegative) -and -not [string]::IsNullOrWhiteSpace($d.reference)) "Missing evidence description: $id"
     }
-    [pscustomobject]@{ registeredCount=$map.Count; auditedCount=$seen.Count; missingCount=$map.Count-$seen.Count; historicalExecutionRecords=$historical; currentExecutionRecords=$current; unsupportedProducerRecords=$unsupported; testsExecuted=0 }
+    [pscustomobject]@{ registeredCount=$map.Count; auditedCount=$seen.Count; missingCount=$map.Count-$seen.Count; historicalExecutionRecords=$historical; currentExecutionRecords=$current; unsupportedProducerRecords=$unsupported; failedExecutionRecords=$failed; testsExecuted=0 }
 }
 $sha = (git -C $root rev-parse HEAD).Trim()
 if ($LASTEXITCODE -ne 0) { throw 'Cannot resolve checkout HEAD' }
@@ -129,7 +130,24 @@ if ($SelfTest) {
     $badManifest = Copy-Manifest; $badManifest.records[0].testReference = 'Carthago.Tests/Unreviewed.cs'; Expect-ManifestRejection $badManifest
     $badManifest = Copy-Manifest; $badManifest.records[0].scope = 'field'; Expect-ManifestRejection $badManifest
     $badManifest = Copy-Manifest; $badManifest.records[0].PSObject.Properties.Remove('reviewReference'); Expect-ManifestRejection $badManifest
-    $historical = Test-Qualification $doc $inventory ('a' * 40) $manifest
-    Assert-Qualification ($historical.currentExecutionRecords -eq 0 -and $historical.historicalExecutionRecords -eq 16) 'Historical evidence misclassified'
+    $bad = Copy-Document; $bad.records[0].ruleId = $bad.records[0].ruleId.ToLowerInvariant(); Expect-Rejection $bad
+    $historicalSha = 'a' * 40
+    Assert-Qualification (@($manifest.records | Where-Object executedSha -ceq $historicalSha).Count -eq 0) 'Fixture SHA collides with reviewed evidence'
+    $historical = Test-Qualification $doc $inventory $historicalSha $manifest
+    $executedCount = @($doc.records | Where-Object { $_.detector.status -cin @('historical-pass','failed') }).Count
+    Assert-Qualification ($historical.currentExecutionRecords -eq 0 -and $historical.historicalExecutionRecords -eq $executedCount) 'Historical evidence misclassified'
+    # In-memory only: exercise an admitted failure without writing fake evidence.
+    $failureDoc = Copy-Document
+    $failureManifest = Copy-Manifest
+    $failureRow = $failureDoc.records[0]
+    $failureEntry = $failureManifest.records | Where-Object { $_.ruleId -ceq $failureRow.ruleId -and $_.executedSha -ceq $failureRow.detector.executedSha }
+    Assert-Qualification (@($failureEntry).Count -eq 1) 'Missing failure fixture evidence'
+    $failureRow.detector.status = 'failed'
+    $failureRow.detector.executedSha = $historicalSha
+    $failureEntry.outcome = 'fail'
+    $failureEntry.executedSha = $historicalSha
+    $failureResult = Test-Qualification $failureDoc $inventory $historicalSha $failureManifest
+    $expectedFailures = @($failureDoc.records | Where-Object { $_.detector.status -ceq 'failed' }).Count
+    Assert-Qualification ($failureResult.failedExecutionRecords -eq $expectedFailures -and $failureResult.currentExecutionRecords -eq 1) 'Failed execution misclassified'
 }
 $result | ConvertTo-Json
