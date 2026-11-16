@@ -28,6 +28,32 @@ Build outputs have a distinct `Carthago.Cli.dll` (and platform apphost when gene
 
 A new regression test asserts the GUI and CLI assembly identities are different under case-insensitive comparison. Windows re-run of the failing tests and full app smoke test are still required before declaring the integration verified. Previous evidence: Release GUI build passed; 22 of 24 focused tests passed, 2 CLI load tests failed. Do not treat that pre-fix run as acceptance.
 
+## Windows build and focused integration evidence
+
+Owner-run Windows .NET 9.0.321, targeting .NET 8, on 2026-11-16:
+- `dotnet build .\\Carthago\\Carthago.csproj -c Release`: **PASS** (35.6s).
+- Focused `GuiCliCommandPolicyTests | GuiCliInProcessIntegrationTests | DetectionCoverageKpiProjectionTests`: **25/25 passed**, **0 failed**, **0 skipped**.
+- Nine remaining `xUnit1026` warnings refer to unused parameters in unrelated rule-quality tests; no assembly identity conflict remains in this run.
+- This evidence verifies compile-time integration and unit/in-process CLI contracts, **not** that the WPF terminal has rendered and accepted a command in a live desktop session.
+
+Subsequent follow-up source changes:
+- The KPI now displays `—` (rather than `0/0`) if there are no alert-mode rules, while preserving registered/catalog-error context.
+- Re-entering Overview triggers a background coverage refresh immediately instead of waiting for the 60-second periodic tick.
+- The GUI read-only CLI allowlist now includes `--version` and `capabilities` (and their optional `--json` variants). It still rejects service/monitor mutation and shell commands.
+- Regression tests cover the zero denominator, the complete alert-mode runtime-ratio case, and actual in-process version output.
+
+**After these additional commits, the original 25/25 pass is a previous checkpoint, not verification of the latest HEAD.** Run the focused filter again and complete the manual GUI smoke steps below.
+
+## GUI operational acceptance checks
+
+1. On the target Windows host, run the Release GUI (use the normal app startup or `dotnet run --project .\\Carthago\\Carthago.csproj -c Release`).
+2. In the Overview terminal enter `help`, `--version`, `capabilities`, `rules summary` and `rules list --live --offset 0 --limit 10`. Confirm real output, a completion/exit status, no UI freeze, and bounded history.
+3. Run `sensors health --json` and `alerts list --live`. The sensor journal report must explicitly say health is not assessed; missing data must be labeled unavailable rather than zero.
+4. Verify `service stop`, `monitor stop` and `powershell` are rejected without side effects. Verify Run, Enter, Clear, Cancel and closing the GUI during an in-flight command.
+5. Open Detection Coverage Center and compare the actual registered and alert-mode counts to Overview's reported numerator/denominator. The KPI measures the number of alert-mode rules evaluated at least once in this process; it is **not** a detection-quality acceptance rate.
+6. Navigate away and back to Overview and confirm the coverage refresh begins promptly. With no alert-mode rules, the KPI must display `—` (not `0/0`).
+7. Capture a reproducible screenshot and console log / test TRX of failures; do not claim WPF operational acceptance until the live GUI checks pass.
+
 ## Validation on Windows
 
 ```powershell
