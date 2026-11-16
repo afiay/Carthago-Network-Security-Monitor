@@ -47,3 +47,8 @@ Sampler writes floating-point CSV values using invariant round-trip formatting. 
 ### Phase 16.6a — Registry identity
 
 Aggregate schema 1 adds optional `storage.registrySessionId`, the GUID of the current/last observed-asset registry, captured under the lifecycle lock with its capacity snapshots. This is registry identity, not proof of active capture. The analyzer emits registry rejection deltas only when both snapshots have the same nonempty GUID; legacy, missing or changed identities yield null. Ending counts and limits are gauges. Same-registry rejection decreases reject evidence. Run `analyze-enrichment-runtime.ps1 -SelfTest` and the `EnrichmentHealthPresentationTests` group; Windows execution pending.
+
+
+### Phase 16.6b — Registry lifecycle token presence
+
+Schema 1 storage adds nullable `registryRunPresent`, sampled under the same lifecycle lock as registry identity and capacity. True means a non-cancelled run token exists, not that native capture is delivering packets; false includes initial/stopped retained registries; null means unavailable. Registry rejection deltas remain registry-scoped, including retained final counters. Three export theory cases authored; Windows execution pending. Run `dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter FullyQualifiedName~EnrichmentHealthPresentationTests`.

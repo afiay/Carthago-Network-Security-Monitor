@@ -43,6 +43,26 @@ public sealed class EnrichmentHealthPresentationTests
         Assert.Equal(System.Text.Json.JsonValueKind.Null, doc.RootElement.GetProperty("storage").GetProperty("registrySessionId").ValueKind);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    [InlineData(null)]
+    public void Aggregate_Export_Preserves_Registry_Run_Presence(bool? present)
+    {
+        var stats = new TrafficCaptureService.StatsSnapshot
+        {
+            RegistrySessionId = System.Guid.NewGuid(), RegistryRunPresent = present,
+            EnrichmentStorage = new(new(0, 32, 0), new(0, 32, 0), new(0, 0, null))
+        };
+        var now = System.DateTimeOffset.UtcNow;
+        using var doc = System.Text.Json.JsonDocument.Parse(EnrichmentHealthPresentation.ExportCounters(stats, now, 42, now));
+        var storage = doc.RootElement.GetProperty("storage");
+        Assert.Equal(stats.RegistrySessionId.Value, storage.GetProperty("registrySessionId").GetGuid());
+        var value = storage.GetProperty("registryRunPresent");
+        if (present.HasValue) Assert.Equal(present.Value, value.GetBoolean());
+        else Assert.Equal(System.Text.Json.JsonValueKind.Null, value.ValueKind);
+    }
+
     [Fact]
     public void Missing_Snapshot_Does_Not_Invent_Provider_Health()
     {

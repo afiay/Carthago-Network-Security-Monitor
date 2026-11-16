@@ -1404,9 +1404,11 @@ namespace Carthago.Services
             var checkpoints = _assetHistory.HealthSnapshot();
             (EnrichmentStorageSnapshot Storage, (int Retained, int Closed, long CapacityRejections)? Tls) session;
             Guid registrySessionId;
+            bool registryRunPresent;
             lock (_lifecycleLock)
             {
                 registrySessionId = _observedAssets.SessionId;
+                registryRunPresent = _runCts is { IsCancellationRequested: false };
                 session = SnapshotSessionHealth(_observedAssets, _tlsConnections, checkpoints);
             }
             return new()
@@ -1430,6 +1432,7 @@ namespace Carthago.Services
             EnrichmentCoverage = _coverageHealth.Snapshot(),
             EnrichmentStorage = session.Storage,
             RegistrySessionId = registrySessionId,
+            RegistryRunPresent = registryRunPresent,
             TlsCapacity = session.Tls,
             GeoCityDatabaseStatus = _geoIpService.CityDatabaseStatus,
             GeoAsnDatabaseStatus = _geoIpService.AsnDatabaseStatus,
@@ -1571,6 +1574,8 @@ namespace Carthago.Services
             public EnrichmentCoverageSnapshot? EnrichmentCoverage { get; init; }
             public EnrichmentStorageSnapshot? EnrichmentStorage { get; init; }
             public Guid? RegistrySessionId { get; init; }
+            // Lifecycle token presence, not proof of native capture delivery.
+            public bool? RegistryRunPresent { get; init; }
             public GeoIpService.DatabaseAvailability? GeoCityDatabaseStatus { get; init; }
             public GeoIpService.DatabaseAvailability? GeoAsnDatabaseStatus { get; init; }
             public GeoIpService.LookupHealthSnapshot? GeoCityLookupHealth { get; init; }

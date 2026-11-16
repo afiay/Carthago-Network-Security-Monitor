@@ -37,6 +37,7 @@ internal static class EnrichmentHealthPresentation
             storage = storage is null ? null : new
             {
                 registrySessionId = stats.RegistrySessionId,
+                registryRunPresent = stats.RegistryRunPresent,
                 assets = storage.Assets,
                 destinations = storage.Destinations,
                 checkpointWrites = storage.Checkpoints.Writes,
