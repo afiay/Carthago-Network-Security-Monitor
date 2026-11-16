@@ -48,3 +48,34 @@ Current-SHA operational evidence is **not established** by this inspection for S
 **No builds, test suites, captures, runtime qualifications or PowerShell inventory execution were performed in this documentation change.** Running the current-SHA suites, service exercises and captures requires explicit authorization under the project's validation policy.
 
 Next step: run the read-only inventory on the Windows evidence archive; preserve immutable source hashes; map each original TRX test identity and polarity to reviewed exact IDs; admit only unambiguous artifacts. Request authorization before new execution and validate the selected isolated worktree SHA separately.
+
+
+## Located original Windows artifact paths (log-backed, bytes pending)
+
+A previously recorded Windows console transcript from November 16 identifies these on-disk locations; original binary files were **not** transferred through GitHub or attached to this reconciliation:
+
+- `TestResults/Verification/20261116-113455/diagnostic/crash-20261116-113511-666-8def431e/carthago-tests.trx` — log-reported run: 14,361 passed, 0 failed, 0 skipped, at 11:35–11:38 local. An execution SHA was **not** attested by the transcript; it must not be inferred from the current checkout.
+- `build-verify/test-results/carthago-tests.trx` — earlier test artifact, copied to a separate `TestResults/Verification/<timestamp>/` directory **before** the subsequent run; preserve both versions rather than overwriting them.
+- `build-verify/tuning-benchmark.json`, `build-verify/local-logs/` — paired benchmark and build/test log sources; review run identity and timestamps before relating them to any TRX.
+- `TestResults/DetectionQuality/ga09bu-priority.trx` — attempted named output for priority tests, but the saved command output shows compilation errors; file presence and successful execution are **not** established.
+- Separate Windows checkout `Carthago-PortableQualification/build-verify/cli-qualification/20261116-112518-dc43933775cb-09617e1b/` — its printed `qualification.json` declares source `dc43933775cb95a4685ecc860f93fa60b2ad3d1a` and 667/667 portable tests; this is a distinct synthetic-portable scope and not an inherited core-Windows verification result. Recover the original `qualification.json`, `portable-tests.trx`, and `cli-paired-*.log` files separately.
+
+The repository now includes `scripts/recover-original-windows-evidence.ps1`, which **has been authored but not executed on Windows**. It copies original bytes to a *new*, externally selected local archive, refuses an existing destination, verifies before/copy/after SHA-256 hashes, and emits a non-admitting manifest. It does not build, test, capture, or modify the source directories. It excludes diagnostic dumps unless explicitly selected.
+
+From the core Windows repository checkout, with the portable qualification checkout alongside it, first pull the updated branch (without discarding local work), then use a **new** destination name and run:
+
+```powershell
+$parent = Split-Path (Get-Location).Path -Parent
+$portable = Join-Path $parent 'Carthago-PortableQualification'
+$roots = @(
+    '.\TestResults'
+    '.\build-verify'
+    (Join-Path $portable 'TestResults')
+    (Join-Path $portable 'build-verify')
+) | Where-Object { Test-Path -LiteralPath $_ -PathType Container }
+if (-not $roots) { throw 'No original evidence roots found' }
+$destination = Join-Path $env:USERPROFILE ('Documents\Carthago-Evidence-' + (Get-Date -Format 'yyyyMMdd-HHmmss'))
+.\scripts\recover-original-windows-evidence.ps1 -EvidenceRoot $roots -Destination $destination
+```
+
+After a successful copy, `recovery-manifest.json` contains per-file original/copy SHA-256, source path, size and timestamps, while `executionSha` and `evidenceAdmitted` deliberately remain null/false. Run the existing read-only inventory separately over the new `originals` directory. Review confidential logs or captures before transferring them outside the machine. **No original TRX or evidence files should be committed to the Git repository.**
