@@ -256,4 +256,50 @@ public sealed class ObservedAssetRegistryTests
         Assert.Null(final.Tls);
     }
 
+
+    [Fact]
+    public void Full_Registries_Still_Update_Existing_Evidence_Without_Inflating_Rejections()
+    {
+        // Capacity limits distinct identities, not subsequent evidence for retained identities.
+        var registry = new ObservedAssetRegistry(Now);
+        for (int i = 0; i < 2048; i++)
+        {
+            registry.Observe(Arp(mac: $"02:11:22:33:{i >> 8:X2}:{i & 255:X2}"), Now);
+            var outbound = Local();
+            outbound.TcpFlags = 2;
+            outbound.DstIsLocalHost = false;
+            outbound.CaptureInterfaceId = Adapter;
+            outbound.CaptureInterfaceEvidence = "WindowsInterfaceGuid";
+            outbound.Destination = $"8.8.{i >> 8}.{i & 255}";
+            registry.Communications.Observe(outbound, Now);
+        }
+
+        var existingOutbound = Local();
+        existingOutbound.TcpFlags = 2;
+        existingOutbound.DstIsLocalHost = false;
+        existingOutbound.CaptureInterfaceId = Adapter;
+        existingOutbound.CaptureInterfaceEvidence = "WindowsInterfaceGuid";
+        existingOutbound.Destination = "8.8.0.0";
+        registry.Observe(Arp(mac: "02:11:22:33:00:00"), Now.AddMinutes(1));
+        registry.Communications.Observe(existingOutbound, Now.AddMinutes(1));
+        Assert.Equal(2L, Assert.Single(registry.Snapshot(), row => row.Mac == "02:11:22:33:00:00").Observations);
+        Assert.Equal(2L, Assert.Single(registry.Communications.Snapshot(),
+            row => row.Destination == "8.8.0.0").Observations);
+        Assert.Equal(new RegistryCapacitySnapshot(2048, 2048, 0), registry.CapacitySnapshot());
+        Assert.Equal(new RegistryCapacitySnapshot(2048, 2048, 0), registry.Communications.CapacitySnapshot());
+
+        registry.Observe(Arp(mac: "02:11:22:33:08:00"), Now.AddMinutes(2));
+        existingOutbound.Destination = "8.8.8.0";
+        registry.Communications.Observe(existingOutbound, Now.AddMinutes(2));
+        var final = TrafficCaptureService.SnapshotSessionHealth(registry, null,
+            new CheckpointHealthSnapshot(0, 0, null));
+        Assert.Equal(new RegistryCapacitySnapshot(2048, 2048, 1), final.Storage.Assets);
+        Assert.Equal(new RegistryCapacitySnapshot(2048, 2048, 1), final.Storage.Destinations);
+        registry.Seal();
+        registry.Observe(Arp(mac: "02:11:22:33:08:01"), Now.AddMinutes(3));
+        existingOutbound.Destination = "8.8.8.1";
+        registry.Communications.Observe(existingOutbound, Now.AddMinutes(3));
+        Assert.Equal(final.Storage, TrafficCaptureService.SnapshotSessionHealth(registry, null,
+            new CheckpointHealthSnapshot(0, 0, null)).Storage);
+    }
 }
