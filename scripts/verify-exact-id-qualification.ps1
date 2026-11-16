@@ -177,5 +177,40 @@ if ($SelfTest) {
     $failureResult = Test-Qualification $failureDoc $inventory $historicalSha $failureManifest
     $expectedFailures = @($failureDoc.records | Where-Object { $_.detector.status -ceq 'failed' }).Count
     Assert-Qualification ($failureResult.failedExecutionRecords -eq $expectedFailures -and $failureResult.currentExecutionRecords -eq 1) 'Failed execution misclassified'
+
+    # Exercise the actual manifest-to-TRX path with isolated temporary evidence.
+    # No fixture is persisted in the reviewed manifest.
+    $savedArtifactDirectory = $ArtifactDirectory
+    $fixtureDirectory = Join-Path ([IO.Path]::GetTempPath()) ('carthago-qualification-' + [Guid]::NewGuid().ToString('N'))
+    try {
+        $null = New-Item -ItemType Directory -Path $fixtureDirectory
+        $ArtifactDirectory = $fixtureDirectory
+        $fixturePath = Join-Path $fixtureDirectory 'fixture.trx'
+        $fixtureXml = '<TestRun xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010"><Results><UnitTestResult testName="Exact.Test" outcome="Passed"/></Results><ResultSummary outcome="Completed"/></TestRun>'
+        [IO.File]::WriteAllBytes($fixturePath, [Text.Encoding]::UTF8.GetBytes($fixtureXml))
+        $fixtureManifest = Copy-Manifest
+        $fixtureEntry = $fixtureManifest.records[0]
+        Assert-Qualification ($fixtureEntry.outcome -ceq 'pass') 'Expected passing fixture source'
+        $fixtureEntry | Add-Member -Force -NotePropertyName artifact -NotePropertyValue ([pscustomobject]@{
+            file='fixture.trx'
+            sha256=(Get-FileHash -LiteralPath $fixturePath -Algorithm SHA256).Hash.ToLowerInvariant()
+            testNames=@('Exact.Test')
+            checkoutSha=$fixtureEntry.executedSha
+            checkoutReview='Synthetic integration fixture only'
+        })
+        $fixtureResult = Test-Qualification $doc $inventory $sha $fixtureManifest
+        Assert-Qualification ($fixtureResult.auditedCount -eq $result.auditedCount -and $fixtureResult.historicalExecutionRecords -eq $result.historicalExecutionRecords -and $fixtureResult.currentExecutionRecords -eq $result.currentExecutionRecords) 'Artifact integration changed evidence accounting'
+        $fixtureEntry.artifact.sha256 = '0' * 64
+        Expect-ManifestRejection $fixtureManifest
+        $fixtureEntry.artifact.sha256 = (Get-FileHash -LiteralPath $fixturePath -Algorithm SHA256).Hash.ToLowerInvariant()
+        $fixtureEntry.artifact.testNames = @('exact.test')
+        Expect-ManifestRejection $fixtureManifest
+        $fixtureEntry.artifact.testNames = @('Exact.Test')
+        Remove-Item -LiteralPath $fixturePath
+        Expect-ManifestRejection $fixtureManifest
+    } finally {
+        $ArtifactDirectory = $savedArtifactDirectory
+        if (Test-Path -LiteralPath $fixtureDirectory) { Remove-Item -LiteralPath $fixtureDirectory -Recurse -Force }
+    }
 }
 $result | ConvertTo-Json
