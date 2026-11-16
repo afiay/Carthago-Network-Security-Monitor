@@ -65,7 +65,7 @@ namespace Carthago
             Grid.SetRow(SettingsHeroGuidance, wide ? 0 : 1);
             Grid.SetColumn(SettingsHeroGuidance, wide ? 1 : 0);
             SettingsHeroIntro.Margin = wide ? new Thickness(0, 0, 16, 0) : new Thickness(0, 0, 0, 12);
-            SettingsWorkspaceMap.Columns = narrowKpis ? 1 : 2;
+            SettingsWorkspaceMap.Columns = wide ? 4 : narrowKpis ? 1 : 2;
             SettingsSensitivityProfiles.Columns = wide ? 3 : 1;
             for (var index = 0; index < SettingsSensitivityProfiles.Children.Count; index++)
             {
@@ -75,7 +75,7 @@ namespace Carthago
             for (var index = 0; index < SettingsWorkspaceMap.Children.Count; index++)
             {
                 if (SettingsWorkspaceMap.Children[index] is Border tile)
-                    tile.Margin = new Thickness(0, 0, !narrowKpis && index % 2 == 0 ? 12 : 0, 12);
+                    tile.Margin = new Thickness(0, 0, wide ? (index < 3 ? 8 : 0) : !narrowKpis && index % 2 == 0 ? 8 : 0, 8);
             }
             SettingsSensitivityLabelColumn.Width = new GridLength(narrowKpis ? 130 : 160);
             SettingsCaptureExternalColumn.Width = wide ? new GridLength(1, GridUnitType.Star) : new GridLength(0);

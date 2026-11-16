@@ -6193,3 +6193,14 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Ownership/static review:** MainWindow.xaml and this ledger only. Reviewed DashboardEvents dynamic status/demo provenance, DashboardResponsive and Theme.xaml footer style. Binding, named control and handler multisets unchanged. No capture, detection, privacy, shared API, ScottPlot 10/120, Events 80/500, CLI, Cisco/WebView2 or independent GA-09br changes.
 
 **Risks/planned unexecuted:** narrow metadata wrap, long session status and demo disclosure, empty/filter states, horizontal scroll, keyboard selection, widths 1920/1440/1100/1099/1024/1023/640 and DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. Next UI-198: Settings workspace composition audit and visible section; preserve all existing settings semantics.
+
+
+## GA UI-198 — Settings compact command navigation
+
+**2026-11-16 · SOURCE CANDIDATE — UNVERIFIED.** Exact approved Library image libfile_b0a34361560c8191b641e432b3e6b15c visually inspected. Baseline `0b6aaec4d5e5e6a1a08e6238be0b6f8515f22fdb`, tree `5ddf3c4383dd6ba428a621fe1626dad3437e6281`; prior UI-197. Reference mapping: compact masthead and aligned operational strip, cyan hierarchy, graphite surfaces; no demo data.
+
+**Visible before → after:** Settings hero inset 20 → 12, title 34 → 25, guidance inset 12 → 8. Four navigation tiles move from two columns at Wide to a single four-column command strip; remove redundant navigation captions, retain descriptive labels, reduce nested padding and minimum height 84 → 54. Standard/Compact retain two columns, below 1024 one; gutters 8. Existing scroll and guidance stacking retained. Static impact: configuration controls appear earlier, less nested chrome; no render.
+
+**Ownership/static review:** MainWindow.xaml, MainWindow.Settings.cs responsive constants only, ledger. Reviewed SettingsOpsHero theme, responsive shell and SettingsWorkspaceJump handler; binding/name/Click/Tag multisets unchanged. No preference, credential, capture, detection, privacy, ScottPlot 10/120, Events 80/500, CLI, Cisco/WebView2 or independent work changes.
+
+**Risks/planned unexecuted:** long navigation labels, four-column fit at 1440, keyboard focus and jump targets, preference lifecycle guidance, widths 1920/1440/1100/1099/1024/1023/640 and DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. Next UI-199: Settings detection sensitivity configuration section, preserve policy semantics.

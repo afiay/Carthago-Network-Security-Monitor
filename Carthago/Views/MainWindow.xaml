@@ -2671,9 +2671,9 @@
                           HorizontalContentAlignment="Stretch">
               <StackPanel>
                 <!-- GA UI-176: unified configuration command header and in-page navigation. -->
-                <Border Style="{StaticResource SettingsOpsHero}" Margin="0,0,0,18" Padding="20" BorderBrush="#27718B" BorderThickness="1">
+                <Border Style="{StaticResource SettingsOpsHero}" Margin="0,0,0,12" Padding="12" BorderBrush="#27718B" BorderThickness="1">
                   <StackPanel>
-                    <Grid x:Name="SettingsHeroLayout" Margin="0,0,0,16">
+                    <Grid x:Name="SettingsHeroLayout" Margin="0,0,0,10">
                       <Grid.ColumnDefinitions>
                         <ColumnDefinition x:Name="SettingsHeroPrimaryColumn" Width="1.65*"/>
                         <ColumnDefinition x:Name="SettingsHeroSecondaryColumn" Width="*"/>
@@ -2682,11 +2682,11 @@
                       <Border x:Name="SettingsHeroIntro" Grid.Row="0" Grid.Column="0" Background="Transparent" Margin="0,0,16,0">
                         <StackPanel>
                           <TextBlock Text="CARTHAGO / CONFIGURATION" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentBrush}"/>
-                          <TextBlock Text="Settings" FontSize="34" FontWeight="Bold" Foreground="{StaticResource TextBrush}" Margin="0,6,0,6"/>
+                          <TextBlock Text="Settings" FontSize="25" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,6,0,6"/>
                           <TextBlock Text="Configure detection, local capture and the analyst workspace." FontSize="14" Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap"/>
                         </StackPanel>
                       </Border>
-                      <Border x:Name="SettingsHeroGuidance" Grid.Row="0" Grid.Column="1" Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12">
+                      <Border x:Name="SettingsHeroGuidance" Grid.Row="0" Grid.Column="1" Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="8">
                         <StackPanel>
                           <TextBlock Text="PREFERENCE LIFECYCLE" FontSize="11" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" Margin="0,0,0,6"/>
                           <TextBlock Text="Save: detection and capture preferences" Foreground="{StaticResource TextBrush}" TextWrapping="Wrap"/>
@@ -2695,42 +2695,38 @@
                         </StackPanel>
                       </Border>
                     </Grid>
-                    <Border Height="1" Background="{StaticResource CardBorderBrush}" Margin="0,0,0,12"/>
-                    <TextBlock Text="CONFIGURATION SECTIONS" FontSize="11" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" Margin="0,0,0,10"/>
+                    <Border Height="1" Background="{StaticResource CardBorderBrush}" Margin="0,0,0,8"/>
+                    <TextBlock Text="CONFIGURATION SECTIONS" FontSize="11" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" Margin="0,0,0,6"/>
                     <UniformGrid x:Name="SettingsWorkspaceMap" Columns="2">
-                    <Border Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12">
-                      <Button Style="{StaticResource SecondaryButton}" Tag="Detection" Click="SettingsWorkspaceJump_Click" HorizontalContentAlignment="Stretch" Padding="10,12" MinHeight="84" AutomationProperties.Name="Go to Detection sensitivity">
+                    <Border Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="0">
+                      <Button Style="{StaticResource SecondaryButton}" Tag="Detection" Click="SettingsWorkspaceJump_Click" HorizontalContentAlignment="Stretch" Padding="8,6" MinHeight="54" AutomationProperties.Name="Go to Detection sensitivity">
                         <StackPanel>
                           <TextBlock Text="01 / Signal policy" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" TextWrapping="Wrap"/>
-                          <TextBlock Text="Detection sensitivity" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" TextWrapping="Wrap" Margin="0,6,0,0"/>
-                          <TextBlock Text="Go to section  →" FontSize="11" Foreground="{StaticResource TextSubtleBrush}" Margin="0,6,0,0"/>
+                          <TextBlock Text="Detection sensitivity" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" TextWrapping="Wrap" Margin="0,3,0,0"/>
                         </StackPanel>
                       </Button>
                     </Border>
-                    <Border Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12">
-                      <Button Style="{StaticResource SecondaryButton}" Tag="Capture" Click="SettingsWorkspaceJump_Click" HorizontalContentAlignment="Stretch" Padding="10,12" MinHeight="84" AutomationProperties.Name="Go to Capture &amp; enrichment">
+                    <Border Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="0">
+                      <Button Style="{StaticResource SecondaryButton}" Tag="Capture" Click="SettingsWorkspaceJump_Click" HorizontalContentAlignment="Stretch" Padding="8,6" MinHeight="54" AutomationProperties.Name="Go to Capture &amp; enrichment">
                         <StackPanel>
                           <TextBlock Text="02 / Data sources" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" TextWrapping="Wrap"/>
-                          <TextBlock Text="Capture &amp; enrichment" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" TextWrapping="Wrap" Margin="0,6,0,0"/>
-                          <TextBlock Text="Go to section  →" FontSize="11" Foreground="{StaticResource TextSubtleBrush}" Margin="0,6,0,0"/>
+                          <TextBlock Text="Capture &amp; enrichment" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" TextWrapping="Wrap" Margin="0,3,0,0"/>
                         </StackPanel>
                       </Button>
                     </Border>
-                    <Border Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12">
-                      <Button Style="{StaticResource SecondaryButton}" Tag="Dashboard" Click="SettingsWorkspaceJump_Click" HorizontalContentAlignment="Stretch" Padding="10,12" MinHeight="84" AutomationProperties.Name="Go to Dashboard composition">
+                    <Border Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="0">
+                      <Button Style="{StaticResource SecondaryButton}" Tag="Dashboard" Click="SettingsWorkspaceJump_Click" HorizontalContentAlignment="Stretch" Padding="8,6" MinHeight="54" AutomationProperties.Name="Go to Dashboard composition">
                         <StackPanel>
                           <TextBlock Text="03 / Workspace" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" TextWrapping="Wrap"/>
-                          <TextBlock Text="Dashboard composition" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" TextWrapping="Wrap" Margin="0,6,0,0"/>
-                          <TextBlock Text="Go to section  →" FontSize="11" Foreground="{StaticResource TextSubtleBrush}" Margin="0,6,0,0"/>
+                          <TextBlock Text="Dashboard composition" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" TextWrapping="Wrap" Margin="0,3,0,0"/>
                         </StackPanel>
                       </Button>
                     </Border>
-                    <Border Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12">
-                      <Button Style="{StaticResource SecondaryButton}" Tag="Actions" Click="SettingsWorkspaceJump_Click" HorizontalContentAlignment="Stretch" Padding="10,12" MinHeight="84" AutomationProperties.Name="Go to Save or restore defaults">
+                    <Border Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="0">
+                      <Button Style="{StaticResource SecondaryButton}" Tag="Actions" Click="SettingsWorkspaceJump_Click" HorizontalContentAlignment="Stretch" Padding="8,6" MinHeight="54" AutomationProperties.Name="Go to Save or restore defaults">
                         <StackPanel>
                           <TextBlock Text="04 / Apply preferences" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" TextWrapping="Wrap"/>
-                          <TextBlock Text="Save or restore defaults" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" TextWrapping="Wrap" Margin="0,6,0,0"/>
-                          <TextBlock Text="Go to section  →" FontSize="11" Foreground="{StaticResource TextSubtleBrush}" Margin="0,6,0,0"/>
+                          <TextBlock Text="Save or restore defaults" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" TextWrapping="Wrap" Margin="0,3,0,0"/>
                         </StackPanel>
                       </Button>
                     </Border>
