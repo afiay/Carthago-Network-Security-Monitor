@@ -8,20 +8,24 @@ param(
     [string[]]$EvidenceRoot,
     [ValidateRange(1, 50000)]
     [int]$MaximumFiles = 10000,
+    [ValidateRange(1, 67108864)]
+    [long]$MaximumTrxBytes = 16777216,
+    [ValidateRange(1, 134217728)]
+    [long]$MaximumTrxXmlCharacters = 16777216,
     [switch]$IncludeTestNames
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-function Read-TrxMetadata([IO.FileInfo]$file, [bool]$includeNames) {
-    if ($file.Length -eq 0 -or $file.Length -gt 16777216) {
-        return [pscustomobject]@{ status = 'rejected-size'; reason = 'TRX size outside 1..16777216 bytes' }
+function Read-TrxMetadata([IO.FileInfo]$file, [bool]$includeNames, [long]$maxTrxBytes, [long]$maxXmlCharacters) {
+    if ($file.Length -eq 0 -or $file.Length -gt $maxTrxBytes) {
+        return [pscustomobject]@{ status = 'rejected-size'; reason = "TRX size outside 1..$maxTrxBytes bytes" }
     }
     $settings = New-Object System.Xml.XmlReaderSettings
     $settings.DtdProcessing = [System.Xml.DtdProcessing]::Prohibit
     $settings.XmlResolver = $null
-    $settings.MaxCharactersInDocument = 16777216
+    $settings.MaxCharactersInDocument = $maxXmlCharacters
     $stream = [IO.File]::OpenRead($file.FullName)
     $reader = $null
     try {
@@ -114,7 +118,7 @@ foreach ($f in ($files.Values | Sort-Object -Property FullName)) {
     $digest = (Get-FileHash -LiteralPath $f.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
     $trx = $null
     if ($f.Extension -ieq '.trx') {
-        $trx = Read-TrxMetadata $f $IncludeTestNames.IsPresent
+        $trx = Read-TrxMetadata $f $IncludeTestNames.IsPresent $MaximumTrxBytes $MaximumTrxXmlCharacters
     }
     $artifacts.Add([pscustomobject]@{
         path = $f.FullName
