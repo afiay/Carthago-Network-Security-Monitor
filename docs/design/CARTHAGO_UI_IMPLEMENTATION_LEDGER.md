@@ -6182,3 +6182,14 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Ownership/static review:** MainWindow.xaml, MainWindow.DashboardResponsive.cs and this ledger only. Reviewed DashboardEvents projection/handlers, responsive controller and Theme.xaml event styles. Filter binding/name/handler multiset unchanged; read-only grid, frozen time/severity, virtualization, actual metadata, 80 displayed/500 retained, evidence presence/count and delivery semantics unchanged. No capture, detection, privacy, shared APIs, ScottPlot, CLI, Cisco/WebView2 or independent work changes.
 
 **Risks/planned unexecuted:** two-line endpoint cell fit, severity pill width, long IPv6 and horizontal scroll, filter wrap, keyboard selection, empty/demo states, 1920/1440/1100/1099/1024/1023/640 widths and DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. Next UI-197: Live Events table provenance/footer and narrow-width composition.
+
+
+## GA UI-197 — Live Events provenance and narrow-width record frame
+
+**2026-11-16 · SOURCE CANDIDATE — UNVERIFIED.** Exact approved Library image libfile_b0a34361560c8191b641e432b3e6b15c visually inspected. Baseline `8088410fb310897adcfbfec88a6e39932265e7df`, tree `c6b640b5334b3ec0f2e195bc929dad6405487361`; prior UI-196. Reference mapping: compact dark event table frame and cyan section hierarchy; no demo telemetry.
+
+**Visible before → after:** fixed two-column table masthead with nonwrapping retention badge becomes a full-width graphite header with cyan rail and wrapping metadata/retention strip. Recorded-metadata disclaimer becomes a labeled compact band; session footer inset 18/14 → 8/6 and gap 14 → 6, with distinct session status and divided evidence/delivery limits. Existing dynamic status/provenance text and empty overlay retained. Static impact: less horizontal competition at narrow widths and clearer separation of retention, session state and evidence limitations; no render. Existing Wide/Standard/Compact and below-1024 controller, grid viewport, frozen columns and horizontal scroll unchanged.
+
+**Ownership/static review:** MainWindow.xaml and this ledger only. Reviewed DashboardEvents dynamic status/demo provenance, DashboardResponsive and Theme.xaml footer style. Binding, named control and handler multisets unchanged. No capture, detection, privacy, shared API, ScottPlot 10/120, Events 80/500, CLI, Cisco/WebView2 or independent GA-09br changes.
+
+**Risks/planned unexecuted:** narrow metadata wrap, long session status and demo disclosure, empty/filter states, horizontal scroll, keyboard selection, widths 1920/1440/1100/1099/1024/1023/640 and DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. Next UI-198: Settings workspace composition audit and visible section; preserve all existing settings semantics.

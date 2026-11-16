@@ -1387,33 +1387,28 @@
                         </Grid.RowDefinitions>
                         <!-- GA UI-171: severity-first record scanning with a larger evidence viewport; all displayed values remain source-backed. -->
                         <!-- GA UI-160: evidence table and provenance occupy one compact scan line. -->
-                        <Grid Grid.Row="0" Margin="4,0,4,9">
-                          <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                          </Grid.ColumnDefinitions>
-                          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Border Width="3" Background="#4AC8DB" CornerRadius="2"
-                                    Margin="0,2,10,2"/>
-                            <StackPanel>
-                              <TextBlock Text="OBSERVED DETECTION RECORDS" FontSize="12"
-                                         FontWeight="Bold" Foreground="{StaticResource TextBrush}"/>
+                        <Border Grid.Row="0" Margin="0,0,0,6" Padding="8,6"
+                                Background="#102A39" BorderBrush="#2B4E60" BorderThickness="1" CornerRadius="8">
+                          <StackPanel>
+                            <DockPanel LastChildFill="True">
+                              <Border DockPanel.Dock="Left" Width="3" Background="#4AC8DB" CornerRadius="2" Margin="0,2,8,2"/>
+                              <TextBlock Text="OBSERVED DETECTION RECORDS" FontSize="12" FontWeight="Bold"
+                                         Foreground="{StaticResource TextBrush}" TextWrapping="Wrap"/>
+                            </DockPanel>
+                            <WrapPanel Margin="11,4,0,0">
+                              <Border Background="#123343" BorderBrush="#2B6372" BorderThickness="1"
+                                      CornerRadius="4" Padding="6,2" Margin="0,0,8,3">
+                                <TextBlock Text="LOCAL VIEW" Foreground="#69DCEC" FontSize="10" FontWeight="Bold"/>
+                              </Border>
                               <TextBlock Text="Local metadata · read-only · received order"
-                                         Foreground="{StaticResource TextMutedBrush}" FontSize="10"
-                                         Margin="0,3,0,0"/>
-                            </StackPanel>
-                          </StackPanel>
-                          <Border Grid.Column="1" Background="#123343" BorderBrush="#2B6372"
-                                  BorderThickness="1" CornerRadius="8" Padding="10,6"
-                                  VerticalAlignment="Center" Margin="5,0,0,0">
-                            <StackPanel Orientation="Horizontal">
-                              <TextBlock Text="LOCAL VIEW" Foreground="#69DCEC" FontSize="10"
-                                         FontWeight="Bold" Margin="0,0,9,0"/>
+                                         Foreground="{StaticResource TextMutedBrush}" FontSize="11"
+                                         VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,8,3"/>
                               <TextBlock Text="80 displayed / 500 retained max"
-                                         Foreground="{StaticResource TextSubtleBrush}" FontSize="10"/>
-                            </StackPanel>
-                          </Border>
-                        </Grid>
+                                         Foreground="{StaticResource TextSubtleBrush}" FontSize="11"
+                                         VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,0,3"/>
+                            </WrapPanel>
+                          </StackPanel>
+                        </Border>
                         <Border Grid.Row="1" Background="#0C2031" BorderBrush="#25445B"
                                 BorderThickness="1" CornerRadius="10" Padding="1">
                           <Grid>
@@ -1687,30 +1682,38 @@
                       </Border>
                           </Grid>
                         </Border>
-                        <Border Grid.Row="2" Margin="4,12,4,0" Padding="7,3"
+                        <Border Grid.Row="2" Margin="0,6,0,0" Padding="8,6"
                                 Background="#102A39" BorderBrush="#2B4E60"
                                 BorderThickness="1" CornerRadius="8">
-                          <TextBlock Text="RECORDED METADATA ONLY  ·  No raw payloads or verified capture-health claim"
-                                     Foreground="{StaticResource TextMutedBrush}" FontSize="11"
-                                     TextWrapping="Wrap"/>
+                          <StackPanel>
+                            <TextBlock Text="RECORDED METADATA ONLY" Foreground="{StaticResource AccentBrush}"
+                                       FontSize="10" FontWeight="SemiBold" Margin="0,0,0,3"/>
+                            <TextBlock Text="No raw payloads or verified capture-health claim"
+                                       Foreground="{StaticResource TextMutedBrush}" FontSize="11" TextWrapping="Wrap"/>
+                          </StackPanel>
                         </Border>
                       </Grid>
                     </Border>
-                    <!-- GA UI-79: keep local event status and provenance together in a subdued, non-interactive footer. -->
-                    <Border Grid.Row="3" Margin="0,14,0,0" Style="{StaticResource DashboardLiveEventsFooter}">
+                    <Border Grid.Row="3" Margin="0,6,0,0" Padding="8,6" Style="{StaticResource DashboardLiveEventsFooter}">
                       <StackPanel>
+                        <TextBlock Text="SESSION STATUS" Foreground="{StaticResource AccentBrush}" FontSize="10"
+                                   FontWeight="SemiBold" Margin="0,0,0,3"/>
                         <TextBlock x:Name="DashboardLiveEventsStatusText"
                                    Text="Waiting for local detection events."
                                    AutomationProperties.LiveSetting="Off"
                                    Foreground="{StaticResource TextSubtleBrush}"
-                                   FontSize="11"
-                                   TextWrapping="Wrap"/>
-                        <TextBlock x:Name="DashboardLiveEventsProvenanceText"
-                                   Text="Evidence column reports presence/count only; delivery is not incident resolution."
-                                   Foreground="{StaticResource TextMutedBrush}"
-                                   FontSize="11"
-                                   Margin="0,3,0,0"
-                                   TextWrapping="Wrap"/>
+                                   FontSize="12" TextWrapping="Wrap"/>
+                        <Border BorderBrush="{StaticResource SoftDividerBrush}" BorderThickness="0,1,0,0"
+                                Margin="0,6,0,0" Padding="0,5,0,0">
+                          <StackPanel>
+                            <TextBlock Text="EVIDENCE &amp; DELIVERY LIMITS" Foreground="{StaticResource TextMutedBrush}"
+                                       FontSize="10" FontWeight="SemiBold" Margin="0,0,0,3"/>
+                            <TextBlock x:Name="DashboardLiveEventsProvenanceText"
+                                       Text="Evidence column reports presence/count only; delivery is not incident resolution."
+                                       Foreground="{StaticResource TextMutedBrush}"
+                                       FontSize="11" TextWrapping="Wrap"/>
+                          </StackPanel>
+                        </Border>
                       </StackPanel>
                     </Border>
                   </Grid>
