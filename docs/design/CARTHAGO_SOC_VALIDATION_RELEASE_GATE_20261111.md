@@ -1,5 +1,14 @@
 # CARTHAGO SOC workspace — Validation and release gate (V1)
 
+## 2026-11-16 — source-pinned verifier closure; G5/G6 still NO-GO
+
+This dated overlay supersedes the V1 table's **old 69/69 focused SOC** and **unverified verifier implementation** descriptions only in those exact scopes. Windows owner execution at `971892ef4d18e18cbb2d8317c23c0ada64c2dc19` passed 27/27 offline contract assertions, Windows Release build (9 separate xUnit1026 warnings), **70/70 SOC xUnit cases**, final clean-checkout/source report publication, and subsequent original TRX/source-file/four-log SHA-256 verification. Exact [closure/evidence](../05-detection-quality/SOC_VERIFIER_BUG_CLOSURE_20261116.md).
+
+**G5 MANUAL WPF and G6 LIVE OPERATIONS remain NOT EXECUTED / NO-GO**, regardless of G0/G2/G3 synthetic pass. Use the new 16-case source-pinned [operator runbook](../08-operations/guides/WPF_OPERATIONAL_ACCEPTANCE_G5_G6.md) and `scripts/wpf-operational-acceptance.py` to record actual human screenshots/observations and authorized capture diagnostics, then assess the evidence with strict source identity and SHA-256 gates. This new work is a workflow and documentation candidate, not a claim that any of the 16 checks has passed. Do not rerun the already successful 70-case SOC verifier to create a manual UI result.
+
+Separately, historical Windows evidence source reconciliation remains [6/42 source-linked with 36 unlinked](../05-detection-quality/HISTORICAL_42_TRX_BACKLOG_20261116.md); the newly completed SOC 70-case run is **outside** that frozen historical cohort.
+
+
 Status: **LOCAL AUTOMATED GATES PASSED; OPERATIONAL RELEASE STILL PENDING**.
 Windows results were reported by the owner on 2026-11-11. The full local
 verifier passed at source commit `d65321f29c144b7e2068d1124f20d91e42f7a5f7`;
