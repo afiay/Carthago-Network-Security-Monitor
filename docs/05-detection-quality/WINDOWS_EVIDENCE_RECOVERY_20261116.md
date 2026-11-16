@@ -308,3 +308,18 @@ python .\scripts\reconcile-recovered-source-and-replays.py `
 ```
 
 The historical source-run count remains **6/42** until a separate SOC proof-chain review. No tests/builds/captures, original artifact mutations or evidence admissions are performed.
+
+
+## V4 SOC original source-sha recovered — 2026-11-16
+
+The owner uploaded read-only `source-and-replay-reconciliation-v4.json` (SHA-256 `1916eaafeeec9407481f04764344c8f6c82598091bd5de2c573709f2dd6d5cef`). Unlike v3, v4 decodes the original Windows PowerShell UTF-16LE SHA text correctly.
+
+- File `originals/root-001/soc-workspace-20261111-131828-20736/source-sha.txt`, recovered SHA-256 `8d2bae670ee33c7845d4e55cda783c32a6cd8a4c759fb20cc80ad6f1c86061b3`, 86 bytes. The full trimmed contents are exactly **`245bcce291abf06dc6b660221f48d3d6dc1962bb`**.
+- That full SHA exists as a GitHub commit dated 2026-11-11, containing historical `scripts/verify-soc-workspace.ps1`. The script checks the clean branch and `origin` tracking ref, writes `source-sha.txt` before the restore/build/test stages, and checks unchanged checkout after the tests, but the file alone does **not** prove that the post-test assertion executed successfully.
+- The original SHA file's recorded last-write timestamp is `2026-11-11T12:18:29.7139782Z`, before the recovered `soc-workspace-tests.trx` last-write `2026-11-11T12:20:00.6365139Z`.
+- The corresponding TRX has original SHA-256 `55622ce6b07d89bcd4e2364c5623fba21f9bbacb70102c5196b56c4fe6a213e8` and **69/69 passed**, zero failed, all 69 mapped to original test definitions.
+- Three companion recovered logs exist in the manifest: `restore.log` (580 bytes), `build-release.log` (17,400 bytes), `soc-tests.log` (1,030 bytes). Their actual contents and stage completion claims were **not** present in the uploaded v4 file and are not yet verified for source attribution.
+
+**Status:** `source-file-correlated candidate`, *not yet historical runner-report-linked*. The original v4 checker itself records `sourceIdentityLevel=original-source-file-only-unbound` and `sourceShaRunnerLinkedToTrx=null` for the SOC TRX. Accordingly the strict runner-linked count **stays 6/42 (36 unlinked)**. Neither synthetic rule quality nor production detection accuracy is newly admitted. The 80/80 historical paired replays R586–R605 remain unchanged.
+
+Next step: verify the three original stage logs and SOC TRX against the pinned historical verifier contract, while distinguishing a pre-test recorded SHA from a missing persisted final checkout/PASS statement. Never retroactively infer successful post-run Git verification from an earlier SHA file or from the current repository HEAD.
