@@ -128,6 +128,14 @@
       "testReference": "Carthago.Tests/DnsCaptureQualificationTests.cs",
       "scope": "synthetic-detector-regression",
       "reviewReference": "docs/rules/DETECTION_QUALIFICATION_GATE_20261112.md"
+    },
+    {
+      "ruleId": "R272",
+      "executedSha": "3b54c742b5b1d2bfafc2d25840a7dfa34ee46f65",
+      "outcome": "pass",
+      "testReference": "Carthago.Tests/R272AdvancedAccuracyBatchTests.cs",
+      "scope": "synthetic-detector-regression",
+      "reviewReference": "docs/DEVELOPMENT_VALIDATION_LEDGER.md"
     }
   ]
 }

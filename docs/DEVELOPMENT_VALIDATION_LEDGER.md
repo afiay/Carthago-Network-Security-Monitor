@@ -2976,3 +2976,7 @@ Parent `41044b0daaa58cdfe640d298d508a98cf22b38c7`, tree `a53a98c0cadfc5a904882d2
 
 Next: preserve the tested SHA and original TRX; review artifacts for eligible exact-ID evidence, then continue qualification and separately verify CLI/runtime/UI gates. No production source or policy change in this documentation update.
 
+
+## 2026-11-16 — GA-09bw R272 exact-ID reconciliation
+
+Live parent `6c0269e77b51f388db50b1327a7b4a7ad18b6ad9`, tree `450176a090d0ea98fd2f8da6d1be9aef77809332`. Add R272 exact registry identity and reviewed historical owner 12/12 at `3b54c742b5b1d2bfafc2d25840a7dfa34ee46f65` (full 14361/14361), synthetic engine positive/negative controls, explicit SmallBusiness Shadow / Research Alert eligibility; original TRX not reviewed, independent validation missing. No detector or production policy changes. Expected inventory +1 historical record, no current execution; zero tests executed in this run. Windows: powershell -NoProfile -File .\scripts\verify-exact-id-qualification.ps1 -SelfTest. Next: R163 causal producer and R118/R102 independent evidence.

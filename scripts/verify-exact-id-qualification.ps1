@@ -82,7 +82,7 @@ function Test-Qualification($document, $inventory, [string]$currentSha, $manifes
         } else {
             Assert-Qualification ($null -eq $gapField) "Unreviewed producer gap claim: $id"
         }
-        $expectedPolicy = if ($isGap) { 'producer-limited-policy-unreviewed' } elseif ($id -cin @('R102','R103','R118','R163')) { 'alert-default-gated' } else { 'candidate-shadow' }
+        $expectedPolicy = if ($isGap) { 'producer-limited-policy-unreviewed' } elseif ($id -ceq 'R272') { 'shadowfirst-research-alert' } elseif ($id -cin @('R102','R103','R118','R163')) { 'alert-default-gated' } else { 'candidate-shadow' }
         Assert-Qualification ($row.profileEligibility -ceq $expectedPolicy) "Unreviewed policy claim: $id"
         Assert-Qualification ($row.independentValidation -ceq 'missing') "Unreviewed independent claim: $id"
         $d = $row.detector

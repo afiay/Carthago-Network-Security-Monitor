@@ -397,6 +397,21 @@
       "independentValidation": "missing",
       "limitations": "Authenticated connector/session and authorized tunnel controls.",
       "producerQualification": "unsupported-benchmark-scenario"
+    },
+    {
+      "ruleId": "R272",
+      "registeredClass": "R272_MultiSignalRuleStackSurgeFromHostRule",
+      "detector": {
+        "status": "historical-pass",
+        "positiveNegative": "Owner 12/12: actual three-family same-host Research emission; duplicate, other-host, missing provenance and retention controls.",
+        "executedSha": "3b54c742b5b1d2bfafc2d25840a7dfa34ee46f65",
+        "reference": "Carthago.Tests/R272AdvancedAccuracyBatchTests.cs"
+      },
+      "pairedReplay": "synthetic-protocol-controls",
+      "captureProvenance": "Synthetic TrafficRecord inputs and real engine post-policy emissions; no independent packet capture.",
+      "profileEligibility": "shadowfirst-research-alert",
+      "independentValidation": "missing",
+      "limitations": "Owner transcript only; original TRX not reviewed. No field accuracy or production promotion; SmallBusiness Shadow."
     }
   ]
 }
