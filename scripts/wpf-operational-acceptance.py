@@ -228,8 +228,9 @@ def main() -> int:
         run = args.run_dir.resolve()
         if not run.is_dir() or run.is_symlink():
             raise ValueError("Run directory absent or is a symlink")
-        report = assess(run, run / "assessment.json")
-        print(json.dumps({"assessment": str(run / "assessment.json"),
+        assessment_path = run / ("assessment-" + dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid.uuid4().hex[:8] + ".json")
+        report = assess(run, assessment_path)
+        print(json.dumps({"assessment": str(assessment_path),
                           "sourceSha": report["sourceSha"],
                           "gates": report["gates"],
                           "releaseDecision": report["releaseDecision"],
