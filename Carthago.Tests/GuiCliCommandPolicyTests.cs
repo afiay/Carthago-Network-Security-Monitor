@@ -7,6 +7,8 @@ namespace Carthago.Tests;
 public sealed class GuiCliCommandPolicyTests
 {
     [Theory]
+    [InlineData("--version")]
+    [InlineData("capabilities --json")]
     [InlineData("rules summary")]
     [InlineData("carthago rules list --live --offset 10 --limit 30 --json")]
     [InlineData("rules show R1000 --live")]
