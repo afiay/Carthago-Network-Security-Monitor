@@ -248,6 +248,23 @@ public sealed class R272AdvancedAccuracyBatchTests
             Assert.Contains(RuleEngine.SnapshotR272Signals(host, now), s => s.RuleId == "R014");
             RuleEngine.ResetRuntimeStateForReplay();
 
+            // Non-unicast source addresses cannot identify a correlated host.
+            var originalSource = ftpEvent.SourceIp;
+            try
+            {
+                foreach (var invalidSource in new[] { "255.255.255.255", "224.0.0.1",
+                    "::ffff:224.0.0.1", "ff02::1" })
+                {
+                    ftpEvent.SourceIp = invalidSource;
+                    ingest!.Invoke(null, new object[] { ftpEvent, descriptor, now });
+                    Assert.Empty(RuleEngine.SnapshotR272Signals(invalidSource, now));
+                }
+            }
+            finally { ftpEvent.SourceIp = originalSource; }
+            ingest!.Invoke(null, new object[] { ftpEvent, descriptor, now });
+            Assert.Contains(RuleEngine.SnapshotR272Signals(host, now), s => s.RuleId == "R014");
+            RuleEngine.ResetRuntimeStateForReplay();
+
             // Isolate the exact identity from later legitimate FTP emissions.
             // The live host/rule slot may have been refreshed by a different event.
             RuleEngine.ResetRuntimeStateForReplay();

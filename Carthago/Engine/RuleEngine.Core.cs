@@ -504,7 +504,10 @@ namespace Carthago.Services
                 return;
 
             if (address.IsIPv4MappedToIPv6) address = address.MapToIPv4();
-            if (IPAddress.IsLoopback(address) || address.Equals(IPAddress.Any)) return;
+            if (IPAddress.IsLoopback(address) || address.Equals(IPAddress.Any) ||
+                address.Equals(IPAddress.Broadcast) || address.IsIPv6Multicast ||
+                (address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork &&
+                 (address.GetAddressBytes()[0] & 0xF0) == 0xE0)) return;
             var host = address.ToString();
             lock (R272SignalLock)
             {
