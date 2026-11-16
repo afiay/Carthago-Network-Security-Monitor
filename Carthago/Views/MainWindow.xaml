@@ -3314,14 +3314,17 @@
             <TextBlock Text="LOCAL CAPTURE" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSubtleBrush}"/>
           </StackPanel>
 
-          <StackPanel Grid.Row="1"
-                      Orientation="Horizontal"
-                      HorizontalAlignment="Left"
-                      VerticalAlignment="Center"
-                      Margin="13,4,0,0">
-            <TextBlock Text="STATE" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,6,0"/>
+          <Grid Grid.Row="1"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Center"
+                Margin="13,4,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto"/>
+              <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="STATE" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,6,0"/>
             <!-- GA UI-60: expose the existing local capture-state projection, not a global health verdict. -->
-            <TextBlock x:Name="FooterTelemetryStateText"
+            <TextBlock Grid.Column="1" x:Name="FooterTelemetryStateText"
                        Text="Unknown"
                        Foreground="{StaticResource TextMutedBrush}"
                        Margin="0"
@@ -3329,7 +3332,7 @@
                        ToolTip="Current local capture-state projection at the last monitoring-header refresh. On does not prove packet flow; Paused, Degraded, Error and Offline are local capture states. Unknown before refresh. Not overall system, database or sensor health."
                        AutomationProperties.Name="{Binding Text, RelativeSource={RelativeSource Self}}"
                        AutomationProperties.HelpText="Current local capture state, refreshed by the existing monitoring header. On is the Monitoring projection, not proof of received packets. Paused, Degraded, Error and Offline reflect local capture and flow conditions. Unknown before refresh. No overall system, database or sensor-health claim."/>
-          </StackPanel>
+          </Grid>
 
           <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="13,4,0,0">
             <!-- GA UI-59: expose the sampled UTC clock's current text and its provenance without altering the producer. -->
