@@ -27,6 +27,27 @@ public sealed class R118AdvancedAccuracyBatchTests
         Assert.False((await _rule.EvaluateAsync(NetworkBatch116120Context.Context(record))).Matched);
     }
 
+    [Theory]
+    [InlineData("X-Request-Id: trace\rAuthorization: Basic dXNlcjpwYXNz")]
+    [InlineData("X-Request-Id: trace\rHost: unrelated.example")]
+    [InlineData("X-Request-Id: trace\r")]
+    public async Task Bare_Carriage_Return_Cannot_Hide_Authentication_Header(string header)
+    {
+        var record = NetworkBatch116120Context.Basic(NetworkBatch116120Context.Source());
+        record.HttpRequestHeaders += "\r\n" + header;
+        Assert.False((await _rule.EvaluateAsync(NetworkBatch116120Context.Context(record))).Matched);
+    }
+
+    [Theory]
+    [InlineData("\r\n")]
+    [InlineData("\n")]
+    public async Task Valid_Header_Delimiters_Preserve_Default_Credential_Attempt(string delimiter)
+    {
+        var record = NetworkBatch116120Context.Basic(NetworkBatch116120Context.Source());
+        record.HttpRequestHeaders += delimiter + "X-Request-Id: trace";
+        Assert.True((await _rule.EvaluateAsync(NetworkBatch116120Context.Context(record))).Matched);
+    }
+
     [Fact] public async Task Unattributed_Device_Host_Cannot_Qualify()
     {
         var record = NetworkBatch116120Context.Basic(NetworkBatch116120Context.Source());

@@ -116,6 +116,13 @@ namespace Carthago.Engine.Rules
             if (string.IsNullOrWhiteSpace(record.HttpRequestHeaders))
                 return record.HttpBasicDefaultCredentialObserved;
 
+            // Reject bare CR before interpreting singleton Authorization fields.
+            // Otherwise an unrelated header can conceal a second credential field.
+            for (var i = 0; i < record.HttpRequestHeaders.Length; i++)
+                if (record.HttpRequestHeaders[i] == '\r' &&
+                    (i + 1 == record.HttpRequestHeaders.Length || record.HttpRequestHeaders[i + 1] != '\n'))
+                    return false;
+
             // Reject obsolete folded header lines: they can change field semantics.
             if (record.HttpRequestHeaders.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries)
                 .Any(static line => line.StartsWith(' ') || line.StartsWith('\t')))
