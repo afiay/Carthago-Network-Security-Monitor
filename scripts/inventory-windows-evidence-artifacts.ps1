@@ -48,6 +48,9 @@ function Read-TrxMetadata([IO.FileInfo]$file, [bool]$includeNames) {
         return [pscustomobject]@{ status = 'rejected-incomplete'; reason = 'Missing or incomplete ResultSummary' }
     }
     $results = $run.SelectNodes('t:Results/t:UnitTestResult', $ns)
+    if ($results.Count -eq 0) {
+        return [pscustomobject]@{ status = 'rejected-incomplete'; reason = 'TRX contains no UnitTestResult elements' }
+    }
     $byOutcome = @{}
     $names = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
     $duplicateNames = [Collections.Generic.List[string]]::new()
