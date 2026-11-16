@@ -20,7 +20,11 @@ namespace Carthago.Services.ProtocolIntelligence
 
         private readonly object _sync = new();
         private readonly List<Observation> _observations = new();
+        // Retain replay identities beyond the counting window so an old
+        // authenticated exchange cannot be replayed as a fresh observation.
+        private readonly Dictionary<string, DateTime> _seen = new(StringComparer.Ordinal);
         private DateTime _watermark = DateTime.MinValue;
+        public static readonly TimeSpan ReplayRetention = TimeSpan.FromHours(24);
 
         private readonly record struct Observation(
             string Client, string Server, string Identity, DateTime AtUtc);
@@ -64,12 +68,19 @@ namespace Carthago.Services.ProtocolIntelligence
                 DateTime expiry = _watermark.Ticks < Window.Ticks
                     ? DateTime.MinValue : _watermark - Window;
                 _observations.RemoveAll(item => item.AtUtc < expiry);
+                DateTime replayExpiry = _watermark.Ticks < ReplayRetention.Ticks
+                    ? DateTime.MinValue : _watermark - ReplayRetention;
+                foreach (var key in _seen.Where(item => item.Value < replayExpiry)
+                    .Select(item => item.Key).ToArray())
+                    _seen.Remove(key);
                 if (observedUtc < expiry ||
-                    _observations.Any(item => item.Identity == identity) ||
-                    _observations.Count >= MaximumObservations)
+                    _seen.ContainsKey(identity) ||
+                    _observations.Count >= MaximumObservations ||
+                    _seen.Count >= MaximumObservations)
                     return false;
 
                 _observations.Add(new Observation(client, server, identity, observedUtc));
+                _seen.Add(identity, observedUtc);
                 DateTime lower = observedUtc.Ticks < Window.Ticks
                     ? DateTime.MinValue : observedUtc - Window;
                 int count = _observations.Count(item =>
@@ -86,6 +97,7 @@ namespace Carthago.Services.ProtocolIntelligence
             lock (_sync)
             {
                 _observations.Clear();
+                _seen.Clear();
                 _watermark = DateTime.MinValue;
             }
         }

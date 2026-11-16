@@ -97,7 +97,11 @@ namespace Carthago.Tests.ProtocolIntelligence
             for (int i = 0; i < RadiusVerifiedRejectWindow.MaximumObservations; i++)
                 Assert.True(Observe(window, i, Epoch, out _));
             Assert.False(Observe(window, 5000, Epoch.AddMinutes(10), out _));
-            Assert.True(Observe(window, 5000, Epoch.AddMinutes(10).AddTicks(1),
+            // The 10-minute counting window expires, but the bounded replay
+            // cache remains saturated rather than evicting trusted identities.
+            Assert.False(Observe(window, 5000, Epoch.AddMinutes(10).AddTicks(1), out _));
+            Assert.False(Observe(window, 0, Epoch.AddMinutes(10).AddTicks(1), out _));
+            Assert.True(Observe(window, 5000, Epoch.AddHours(24).AddTicks(1),
                 out var recovered));
             Assert.Equal(1, recovered.DistinctProtocolRejects);
         }
@@ -136,6 +140,17 @@ namespace Carthago.Tests.ProtocolIntelligence
             Assert.True(Observe(window, 2, Epoch, out var result,
                 client: "::ffff:192.0.2.10", server: "::ffff:192.0.2.53"));
             Assert.Equal(2, result.DistinctProtocolRejects);
+        }
+
+        [Fact] public void ExpiredCountDoesNotPermitReplayWithinRetention()
+        {
+            var window = new RadiusVerifiedRejectWindow();
+            Assert.True(Observe(window, 9, Epoch, out _));
+            Assert.True(Observe(window, 10, Epoch.AddMinutes(11), out var fresh));
+            Assert.Equal(1, fresh.DistinctProtocolRejects);
+            Assert.False(Observe(window, 9, Epoch.AddMinutes(11), out _));
+            Assert.True(Observe(window, 11, Epoch.AddMinutes(11), out var second));
+            Assert.Equal(2, second.DistinctProtocolRejects);
         }
 
         [Fact] public void UnspecifiedTimeZoneIsNotTrusted()
