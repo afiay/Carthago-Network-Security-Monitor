@@ -11,6 +11,7 @@ using Carthago.Engine.Rules;
 using Carthago.Engine.Rules.Catalog;
 using Carthago.Engine.Rules.Health;
 using Carthago.Services;
+using Carthago.Services.Diagnostics;
 
 namespace Carthago.Views
 {
@@ -52,7 +53,10 @@ namespace Carthago.Views
                 var snapshots = await Task.Run(RuleCatalog.HealthSnapshots);
                 var capturedAt = DateTime.UtcNow;
 
-                _rows = snapshots.Select(snapshot => new CoverageRow(snapshot)).ToArray();
+                // Snapshot the policy/counters into the same projection as the displayed rows.
+                // These independent stores are sampled sequentially, not atomically.
+                var metricCounts = RuleEngineMetrics.Snapshot();
+                _rows = snapshots.Select(snapshot => new CoverageRow(snapshot, metricCounts)).ToArray();
                 _hasLoaded = true;
                 RegisteredCount.Text = _rows.Count.ToString("N0");
                 AlertModeCount.Text = _rows.Count(row => row.Snapshot.CurrentMode == RuleMode.Alert).ToString("N0");
@@ -61,7 +65,6 @@ namespace Carthago.Views
 
                 // These are in-process counters, not packet-capture totals or a quality PASS.
                 var engineCounters = RuleEngineHealthState.ReadLifetimeCounters();
-                var metricCounts = RuleEngineMetrics.Snapshot();
                 long CountMetric(string name) => metricCounts
                     .Where(pair => pair.Key == name || pair.Key.EndsWith(":" + name, StringComparison.Ordinal))
                     .Sum(pair => pair.Value);
@@ -78,6 +81,14 @@ namespace Carthago.Views
                     $"persisted {CountMetric(RuleMetricNames.RulePersistedTotal):N0}. " +
                     "Counts are since process start; categories can overlap and are not packet totals. " +
                     "Refresh while capture is active to diagnose the detection path.";
+                RuntimeDiagnosisText.Text = DetectionActivityDiagnosis.ForPipeline(
+                    engineCounters.Evaluations,
+                    _rows.Sum(row => row.Snapshot.RuntimeStats.Evaluations),
+                    _rows.Sum(row => row.Snapshot.RuntimeStats.Matches),
+                    CountMetric(RuleMetricNames.RuleShadowedTotal),
+                    CountMetric(RuleMetricNames.RuleSuppressedTotal),
+                    CountMetric(RuleMetricNames.RuleEmittedTotal),
+                    engineCounters.JournalFailures);
 
                 var unobserved = _rows.Count(row => row.Snapshot.TelemetryCoverage.MissingRequiredTelemetry.Count > 0);
                 SnapshotStatusText.Text = $"Catalog read at {capturedAt:yyyy-MM-dd HH:mm:ss} UTC • " +
@@ -130,6 +141,10 @@ namespace Carthago.Views
                         2 => row.Snapshot.HasValidationErrors,
                         3 => row.Snapshot.TelemetryCoverage.MissingRequiredTelemetry.Count > 0,
                         4 => row.Snapshot.CurrentMode != RuleMode.Alert,
+                        5 => row.Diagnosis.State == RuleActivityState.MatchedNotEmitted,
+                        6 => row.Diagnosis.State == RuleActivityState.EvaluatedNoMatch,
+                        7 => row.Diagnosis.State is RuleActivityState.SkippedBeforeEvaluation or RuleActivityState.TelemetryUnobserved,
+                        8 => row.Snapshot.RuntimeStats.Failed > 0,
                         _ => true
                     }))
                 .ToArray();
@@ -170,6 +185,7 @@ namespace Carthago.Views
                 : string.Join("; ", snapshot.ValidationFindings.Take(5).Select(finding =>
                     $"{finding.Severity} {finding.Code}: {finding.Message}"));
 
+            var diagnosis = row.Diagnosis;
             var dominant = snapshot.NoMatchStats.DominantReason;
             var noMatchExplanation = dominant == null
                 ? (runtime.Evaluations == 0
@@ -188,10 +204,12 @@ namespace Carthago.Views
                 $"Policy: {snapshot.CurrentMode}  •  Default enabled: {snapshot.Descriptor.EnabledByDefault}\n" +
                 $"Evaluations: {runtime.Evaluations:N0}  •  Matches: {runtime.Matches:N0}  •  " +
                 $"Skipped: {runtime.Skipped:N0}  •  Failures: {runtime.Failed:N0}\n" +
-                $"Post-policy: shadowed {RuleEngineMetrics.Get(snapshot.RuleId, RuleMetricNames.RuleShadowedTotal):N0}  •  " +
-                $"suppressed {RuleEngineMetrics.Get(snapshot.RuleId, RuleMetricNames.RuleSuppressedTotal):N0}  •  " +
-                $"emitted {RuleEngineMetrics.Get(snapshot.RuleId, RuleMetricNames.RuleEmittedTotal):N0}  •  " +
-                $"persisted {RuleEngineMetrics.Get(snapshot.RuleId, RuleMetricNames.RulePersistedTotal):N0}\n" +
+                $"Runtime interpretation: {diagnosis.Label} — {diagnosis.Explanation}\n" +
+                $"Next diagnostic check: {diagnosis.NextCheck}\n" +
+                $"Post-policy: shadowed {row.Shadowed:N0}  •  " +
+                $"suppressed {row.Suppressed:N0}  •  " +
+                $"emitted {row.Emitted:N0}  •  " +
+                $"persisted {row.Persisted:N0}\n" +
                 $"No-match / skipped reason: {noMatchExplanation}\n" +
                 $"Replay qualification: {replayExplanation}\n" +
                 $"Last evaluated (UTC): {runtime.LastEvaluatedUtc?.ToString("u") ?? "Not observed"}\n" +
@@ -209,9 +227,29 @@ namespace Carthago.Views
 
         private sealed class CoverageRow
         {
-            public CoverageRow(RuleHealthSnapshot snapshot) => Snapshot = snapshot;
+            public CoverageRow(RuleHealthSnapshot snapshot, IReadOnlyDictionary<string, long> metrics)
+            {
+                Snapshot = snapshot;
+                long Count(string name) => metrics.TryGetValue(snapshot.RuleId + ":" + name, out var count) ? count : 0;
+                Shadowed = Count(RuleMetricNames.RuleShadowedTotal);
+                Suppressed = Count(RuleMetricNames.RuleSuppressedTotal);
+                Emitted = Count(RuleMetricNames.RuleEmittedTotal);
+                Persisted = Count(RuleMetricNames.RulePersistedTotal);
+                Diagnosis = DetectionActivityDiagnosis.ForRule(
+                    snapshot.RuntimeStats,
+                    snapshot.CurrentMode,
+                    snapshot.NoMatchStats,
+                    snapshot.TelemetryCoverage.MissingRequiredTelemetry.Count,
+                    Shadowed, Suppressed, Emitted);
+            }
 
             public RuleHealthSnapshot Snapshot { get; }
+            public long Shadowed { get; }
+            public long Suppressed { get; }
+            public long Emitted { get; }
+            public long Persisted { get; }
+            public RuleActivityDiagnosis Diagnosis { get; }
+            public string ActivityStatus => Diagnosis.Label;
             public string RuleId => Snapshot.RuleId;
             public string Name => Snapshot.Name;
             public string Category => Snapshot.Category;
