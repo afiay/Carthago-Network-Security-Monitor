@@ -2,6 +2,9 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
+    <!-- Distinct NuGet restore identity: the WPF app is Carthago (case-insensitive collision). -->
+    <!-- Preserve AssemblyName so the command-line executable remains carthago. -->
+    <PackageId>Carthago.Cli</PackageId>
     <AssemblyName>carthago</AssemblyName>
     <RootNamespace>Carthago.Cli</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
