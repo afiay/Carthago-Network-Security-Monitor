@@ -28,6 +28,28 @@ def sha256(path: Path) -> str:
             digest.update(data)
     return digest.hexdigest()
 
+def mapping(value: object) -> dict:
+    """Some historical qualification formats use lists, nulls or dictionaries."""
+    return value if isinstance(value, dict) else {}
+
+def valid_zero_stage(stages: object, name: str) -> bool:
+    code = mapping(stages).get(name)
+    return type(code) is int and code == 0
+
+def matching_counters(suite: object, trx: dict) -> bool:
+    if trx.get("status") != "parsed":
+        return False
+    counters = mapping(mapping(suite).get("counters"))
+    try:
+        return all(
+            isinstance(counters.get(key), (int, str))
+            and not isinstance(counters.get(key), bool)
+            and int(counters[key]) == trx.get(key)
+            for key in ("total", "passed", "failed")
+        )
+    except (TypeError, ValueError, KeyError):
+        return False
+
 def read_json(path: Path) -> dict:
     data = json.loads(path.read_text(encoding="utf-8-sig"))
     if not isinstance(data, dict):
@@ -113,6 +135,9 @@ def replay_control(bundle: Path, index: dict, parent: str, fmt: str, key: str, e
     result = {"format": fmt, "key": key, "status": "unverified", "checks": []}
     if not match:
         result["status"] = "invalid-control"
+        return result
+    if not isinstance(expected, dict):
+        result["status"] = "invalid-control-metadata"
         return result
     rid, polarity = match.groups()
     stem = "cli-paired-%s-%s-%s" % (fmt, rid, polarity)
@@ -207,6 +232,9 @@ def main() -> int:
         try:
             report = read_json(path)
             source = str(report.get("sourceSha", "")).lower()
+            suite_data = mapping(report.get("suites"))
+            stage_data = mapping(report.get("stages"))
+            replay_data = mapping(report.get("perRuleReplay"))
             reports[rel.rsplit("/", 1)[0]] = {
                 "status": "original-report-hash-verified",
                 "sha256": item["sha256"],
@@ -219,18 +247,28 @@ def main() -> int:
                 "portableSyntheticQualified": report.get("portableSyntheticQualified"),
                 "windowsParityQualified": report.get("windowsParityQualified"),
                 "fieldAccuracyQualified": report.get("fieldAccuracyQualified"),
-                "suites": report.get("suites", {}),
-                "stageCodes": report.get("stages", {}),
+                "suites": suite_data,
+                "stageCodes": stage_data,
+                "reportFieldTypes": {
+                    "suites": type(report.get("suites")).__name__,
+                    "stages": type(report.get("stages")).__name__,
+                    "perRuleReplay": type(report.get("perRuleReplay")).__name__
+                },
                 "replays": [],
             }
-            if report.get("perRuleReplay"):
+            if replay_data:
                 parent = rel.rsplit("/", 1)[0]
-                for fmt, scenarios in report["perRuleReplay"].items():
+                for fmt, scenarios in replay_data.items():
+                    if fmt not in ("pcap", "pcapng") or not isinstance(scenarios, dict):
+                        reports[parent]["replays"].append({
+                            "format": str(fmt), "status": "invalid-replay-report-shape"
+                        })
+                        continue
                     for key, expected in scenarios.items():
                         evidence = replay_control(bundle, index, parent, fmt, key, expected)
                         stage = "cli-paired-%s-%s" % (fmt, key)
-                        evidence["runnerStageExitCode"] = report.get("stages", {}).get(stage)
-                        if evidence["status"] == "synthetic-control-observed" and evidence["runnerStageExitCode"] != 0:
+                        evidence["runnerStageExitCode"] = stage_data.get(stage)
+                        if evidence["status"] == "synthetic-control-observed" and not valid_zero_stage(stage_data, stage):
                             evidence["status"] = "stage-code-not-zero-or-missing"
                         reports[parent]["replays"].append(evidence)
         except (ValueError, UnicodeError, OSError):
@@ -250,17 +288,14 @@ def main() -> int:
         report = find_report_for_trx(rel, reports)
         hints = sorted(set(RUN_SHA_HINT.findall(rel)))
         source = report.get("sourceSha") if report and report.get("status") == "original-report-hash-verified" else None
-        suite = (report.get("suites") or {}).get(path.stem, {}) if report else {}
-        counts = suite.get("counters", {}) if isinstance(suite, dict) else {}
-        counter_match = detail.get("status") == "parsed" and bool(counts) and all(
-            int(counts.get(field, -1)) == detail.get(field) for field in ("total", "passed", "failed")
-        )
+        suite = mapping(mapping(report.get("suites")).get(path.stem)) if report else {}
+        counter_match = matching_counters(suite, detail)
         completed = report and report.get("qualificationStatus") in (
             "SyntheticPortablePassed", "SyntheticPortableAndWindowsParityPassed"
         )
         runner_linked = bool(source and status == "original-hash-verified" and
                              counter_match and completed and
-                             report.get("stageCodes", {}).get(path.stem) == 0)
+                             valid_zero_stage(report.get("stageCodes"), path.stem))
         runs.append({
             "relativeCopy": item["relativeCopy"],
             "trxSha256": item["sha256"],
