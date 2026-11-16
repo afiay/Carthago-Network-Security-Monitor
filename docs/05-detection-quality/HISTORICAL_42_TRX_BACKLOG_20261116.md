@@ -20,6 +20,17 @@ Source: owner-supplied `source-and-replay-reconciliation-v4.json`, `original-int
 
 The additional 80/80 historical PCAP/PCAPNG paired synthetic replay controls for R586–R605 are separately tracked, with 40 positive and 40 negative fixtures at historical SHA `dc43933775cb95a4685ecc860f93fa60b2ad3d1a`. These do not establish field accuracy or qualify the other 980 rules.
 
+## Original byte-level deduplication — 41 unique TRX digests
+
+The uploaded v4 original-TRX audit shows **42 separate recovered TRX file copies, but only 41 distinct SHA-256 file digests**. The following two original copies contain **identical bytes** (SHA-256 `13813608c454d6b4a355b437973358f4830ebcc1e5ad7db52de616c735039b75`; 189/189 passed in each location):
+
+- `originals/root-001/Verification/20261116-113455/carthago-tests.trx`
+- `originals/root-002/test-results/carthago-tests.trx`
+
+They are **not two independent demonstrated executions**. The six runner-report-linked files have six distinct TRX hashes. Therefore, in **unique file-digest accounting**, **6 of 41 distinct historical TRX digests are runner-linked and 35 distinct original digests remain unlinked**. In **original file-copy accounting**, the durable legacy metric is still **6 of 42 linked and 36 unlinked file copies**. Neither metric is the count of verified independent test executions: a genuinely separate run could produce identical bytes in theory, and distinct files may also reflect overlapping tests; source/run proof governs execution identity.
+
+The read-only backlog script now emits `distinctOriginalTrxDigests`, `distinctUnlinkedTrxDigests` and the exact duplicate-copy paths. The two 189-result copies are prioritized as **one original digest needing source-run attribution**, not as two separate passed test suites.
+
 ## Immediate original-source investigations (actual evidence, no inference)
 
 | Target | Original outcome | Required next proof |
