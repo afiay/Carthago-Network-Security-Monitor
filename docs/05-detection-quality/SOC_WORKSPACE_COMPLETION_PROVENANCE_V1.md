@@ -133,3 +133,17 @@ Run without rebuild/retest:
 .\scripts\verify-soc-completion-artifacts.ps1 `
     -RunDirectory '.\TestResults\soc-workspace-20261116-201947-13980-fc218b2a'
 ```
+
+
+## Final original-artifact rehash — completed on Windows (2026-11-16)
+
+Owner Windows transcript reports the read-only command below **PASS** against the successfully source-pinned run, after the offline contract's 27 assertions passed:
+
+```powershell
+.\scripts\verify-soc-completion-artifacts.ps1 `
+  -RunDirectory '.\TestResults\soc-workspace-20261116-201947-13980-fc218b2a'
+```
+
+The utility returned `all-original-artifact-hashes-matched`, matching `sourceSha=971892ef4d18e18cbb2d8317c23c0ada64c2dc19`, `trxRunId=36333bc5-2f34-472e-9e8c-0afbe7463041`, original TRX SHA-256 `121f68fc32e94d42f4ccc8a424f2a34582cba797cbb904e123b8c8dd4cefe1af`, and completion SHA-256 `577edf65e6be209e1908600ea94a9af22b189ea56f8938afaaf84e371d6ac252`. Results: 70/70 passed, 5 method-scoped, four of four original stage logs SHA-256 matched. The checker executed zero tests and recorded no admission or field qualification.
+
+**Final defect disposition:** SOC verifier **CLOSED**, original-artifact hash check **COMPLETED (owner-run PASS)**; closure details in [SOC_VERIFIER_BUG_CLOSURE_20261116.md](SOC_VERIFIER_BUG_CLOSURE_20261116.md). Prior pending/unverified language above describes the state **before** this new owner-reported execution and should not be read as current. This fresh run is outside the frozen 42 historical original TRX cohort (6/42 source-linked, 36 unlinked). The remaining manual WPF and field accuracy work does not block this specific closure.
