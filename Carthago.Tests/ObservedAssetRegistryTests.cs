@@ -156,5 +156,18 @@ public sealed class ObservedAssetRegistryTests
         Assert.Equal(finalCommunications, previous.Communications.CapacitySnapshot());
         Assert.Equal(new RegistryCapacitySnapshot(0, 2048, 0), replacement.CapacitySnapshot());
         Assert.Equal(finalCapacity, previous.CapacitySnapshot());
+
+        // Exercise the production health projection, not a synthetic StatsSnapshot.
+        // Checkpoints are service-lifetime evidence and survive registry replacement.
+        var checkpoints = new CheckpointHealthSnapshot(3, 1, "test diagnostic");
+        var stoppedHealth = TrafficCaptureService.SnapshotSessionHealth(previous, null, checkpoints);
+        Assert.Equal(new(finalCommunications, finalCapacity, checkpoints), stoppedHealth.Storage);
+        Assert.Null(stoppedHealth.Tls);
+
+        var activeHealth = TrafficCaptureService.SnapshotSessionHealth(
+            replacement, new TlsConnectionEnrichment(), checkpoints);
+        Assert.Equal(new(replacement.Communications.CapacitySnapshot(),
+            replacement.CapacitySnapshot(), checkpoints), activeHealth.Storage);
+        Assert.Equal((0, 0, 0L), activeHealth.Tls);
     }
 }
