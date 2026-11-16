@@ -165,13 +165,21 @@ def zero_stage(stages: object, key: str) -> bool:
 def audit_bundle(bundle: Path, max_trx_bytes: int, baseline: dict | None) -> dict:
     manifest, index = manifest_index(bundle)
     old_runs = {}
-    if baseline:
+    if baseline is not None:
         if baseline.get("purpose") != "read-only-original-source-and-synthetic-replay-reconciliation":
             raise ValueError("Unexpected baseline audit purpose")
-        old_runs = {x["relativeCopy"].lower(): x for x in baseline.get("trxRuns", [])}
-        for key in old_runs:
-            if key not in index:
-                raise ValueError("Baseline contains TRX absent from original manifest")
+        prior = baseline.get("trxRuns")
+        if not isinstance(prior, list) or not all(isinstance(x, dict) for x in prior):
+            raise ValueError("Baseline TRX ledger missing or invalid")
+        if not all(isinstance(x.get("relativeCopy"), str) for x in prior):
+            raise ValueError("Baseline TRX path missing")
+        old_runs = {x["relativeCopy"].lower().replace("\\", "/"): x for x in prior}
+        original_trx = {key for key in index if key.endswith(".trx")}
+        if len(old_runs) != len(prior) or set(old_runs) != original_trx:
+            raise ValueError("Baseline does not exactly cover the original TRX set")
+        for key, previous in old_runs.items():
+            if str(previous.get("trxSha256", "")).lower() != str(index[key]["sha256"]).lower():
+                raise ValueError("Baseline original TRX digest mismatch")
     reports = []
     bindings = []
     for rel, row in sorted(index.items()):
