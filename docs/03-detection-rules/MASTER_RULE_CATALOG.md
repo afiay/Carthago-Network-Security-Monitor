@@ -1,6 +1,6 @@
 # Carthago — master detection-rule catalog
 
-**Source-content digest:** `fcfc920472d1b6c4d748` · **Registered:** 965 unique R-series rules (`R001`–`R965`)
+**Source-blob digest:** `60ccf2c094393535b3ab` · **Registered:** 1000 unique R-series rules (`R001`–`R1000`)
 
 This is the **single central navigation catalog** for registered detection rules. Metadata is extracted from each rule's actual C# `RuleDescriptor` at the cited snapshot. Source registration is not proof that telemetry can reach the predicate, an alert is emitted, tests passed, or detection quality was field-validated.
 
@@ -54,7 +54,7 @@ This is the **single central navigation catalog** for registered detection rules
 | [Industrial](#industrial-1-rules) | 1 |
 | [InitialAccess](#initialaccess-7-rules) | 7 |
 | [IotOt](#iotot-17-rules) | 17 |
-| [IotOtAdvanced](#iototadvanced-57-rules) | 57 |
+| [IotOtAdvanced](#iototadvanced-92-rules) | 92 |
 | [IPv6](#ipv6-6-rules) | 6 |
 | [KubernetesContainer](#kubernetescontainer-20-rules) | 20 |
 | [Lateral Movement](#lateral-movement-1-rules) | 1 |
@@ -7382,7 +7382,7 @@ Select a category below, then expand any rule to view its documentation **on thi
 <details>
 <summary><strong>R601 — ReGeorg-like headerless control query POST</strong> · High</summary>
 
-- **Description:** POST with known ReGeorg command parameters, absent User-Agent and captured header summary without Referer; not proof of a webshell.
+- **Description:** POST with known ReGeorg command parameters, capture-confirmed absent User-Agent and Referer; not proof of a webshell.
 - **Category:** HttpApi
 - **Severity:** High
 - **Enabled by default:** true
@@ -8933,7 +8933,7 @@ Select a category below, then expand any rule to view its documentation **on thi
 <details>
 <summary><strong>R118 — Default-Credential IoT Attempt</strong> · Critical</summary>
 
-- **Description:** Detects default-credential attempts only when the record contains both real authentication context and likely IoT or device-target indicators.
+- **Description:** Detects default-credential request candidates with authentication context and likely IoT target indicators; does not establish authentication outcome or verified asset identity.
 - **Category:** IotOt
 - **Severity:** Critical
 - **Enabled by default:** true
@@ -9088,10 +9088,10 @@ Select a category below, then expand any rule to view its documentation **on thi
 
 </details>
 
-### IotOtAdvanced: 57 rules
+### IotOtAdvanced: 92 rules
 
 <details>
-<summary>Choose a rule from 57 IotOtAdvanced entries</summary>
+<summary>Choose a rule from 92 IotOtAdvanced entries</summary>
 
 <details>
 <summary><strong>R223 — ICS Protocol To Internet</strong> · Critical</summary>
@@ -9830,6 +9830,461 @@ Select a category below, then expand any rule to view its documentation **on thi
 - **Enabled by default:** true
 - **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R961_PublicProxyIngressThenPrivateModbusSynRule.cs)
 - **Detailed evidence and test scenarios:** [946-965](batches/RULE_BATCH_946-965.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R966 — Public-source SNMP enterprise SET request</strong> · Medium</summary>
+
+- **Description:** Public IPv4 source sends a capture-validated SNMPv1/v2c SET to a private device on UDP/161 with an enterprise OID. Authorization, vendor OID semantics and device modification are unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R966_PublicSnmpEnterpriseSetRequestRule.cs)
+- **Detailed evidence and test scenarios:** [966-966](batches/RULE_BATCH_966-966.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R967 — Public-source DNP3 unsolicited binary event response</strong> · Medium</summary>
+
+- **Description:** Public IPv4 source sends a capture-validated DNP3 unsolicited binary-input event response to a private UDP/20000 peer. Device enrollment, authenticity, point identity and spoofing are unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R967_PublicDnp3UnsolicitedBinaryEventRule.cs)
+- **Detailed evidence and test scenarios:** [967-967](batches/RULE_BATCH_967-967.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R968 — Public Modbus repeated same-register write requests</strong> · Medium</summary>
+
+- **Description:** Five distinct client source ports deliver capture-qualified Modbus TCP function 06 first requests to the same private peer, unit and register within ten seconds. Scan-cycle deviation, authorization and write outcome are unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R968_PublicModbusSameRegisterWriteBurstRule.cs)
+- **Detailed evidence and test scenarios:** [968-968](batches/RULE_BATCH_968-968.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R969 — Public SNMP UPS reboot-duration SET request</strong> · Medium</summary>
+
+- **Description:** Public IPv4 source sends a complete SNMPv1/v2c SET for UPS-MIB upsRebootWithDuration.0 with a valid nonnegative Integer32 duration to private UDP/161. Request only; authorization and UPS reboot are unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R969_PublicSnmpUpsRebootRequestRule.cs)
+- **Detailed evidence and test scenarios:** [969-969](batches/RULE_BATCH_969-969.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R970 — Public IEC104 startup followed by double-command OFF execution</strong> · Medium</summary>
+
+- **Description:** Public IPv4 TCP/2404 client sends an exact IEC104 double-command OFF execute request after observed STARTDT activation/confirmation. Asset role, approval and physical outcome unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R970_PublicIec104StartupOffExecuteRule.cs)
+- **Detailed evidence and test scenarios:** [970-970](batches/RULE_BATCH_970-970.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R971 — Public SNMP high-demand GETBULK request</strong> · Medium</summary>
+
+- **Description:** Public IPv4 source sends a capture-validated SNMPv2c GETBULK request with 64–1024 max-repetitions, zero non-repeaters and one to eight valid OIDs to private UDP/161. Authorization and returned data unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R971_PublicSnmpHighDemandGetBulkRule.cs)
+- **Detailed evidence and test scenarios:** [971-971](batches/RULE_BATCH_971-971.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R972 — Public SNMP system fingerprint GET request</strong> · Medium</summary>
+
+- **Description:** Public IPv4 source sends a capture-validated SNMPv1/v2c GET containing exactly sysDescr.0, sysObjectID.0 and sysName.0 to private UDP/161. Authorization and returned data unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R972_PublicSnmpSystemFingerprintGetRule.cs)
+- **Detailed evidence and test scenarios:** [972-972](batches/RULE_BATCH_972-972.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R973 — Private OPC UA server HEL/ACK exchange with public client</strong> · Medium</summary>
+
+- **Description:** Private IPv4 TCP/4840 server sends an exact OPC UA ACK after a complete same-connection public client HEL. Asset role, approval, authentication and API execution unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R973_PrivateOpcUaHelloAckToPublicClientRule.cs)
+- **Detailed evidence and test scenarios:** [973-973](batches/RULE_BATCH_973-973.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R974 — Modbus oversized FC03 read rejected by private server</strong> · Medium</summary>
+
+- **Description:** Private IPv4 TCP/502 server returns exact Illegal Data Value exception to a complete same-connection public client function 03 request exceeding 125 registers. Authorization, exploit intent and device impact unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R974_PrivateModbusOversizedReadExceptionRule.cs)
+- **Detailed evidence and test scenarios:** [974-974](batches/RULE_BATCH_974-974.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R975 — Public BACnet coldstart or warmstart request</strong> · Medium</summary>
+
+- **Description:** Public IPv4 source sends a capture-validated BACnet/IP unsegmented ReinitializeDevice coldstart/warmstart request to private UDP/47808. Approval, authentication and restart outcome unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R975_PublicBacnetReinitializeDeviceRequestRule.cs)
+- **Detailed evidence and test scenarios:** [975-975](batches/RULE_BATCH_975-975.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R976 — Public SNMP connection-table GETNEXT request</strong> · Medium</summary>
+
+- **Description:** Public IPv4 client sends a capture-validated SNMPv1/v2c GETNEXT for exactly legacy tcpConnTable and udpTable roots to private UDP/161. Authorization and returned entries unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R976_PublicSnmpConnectionTableGetNextRule.cs)
+- **Detailed evidence and test scenarios:** [976-976](batches/RULE_BATCH_976-976.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R977 — Public BACnet Device Object_List read request</strong> · Medium</summary>
+
+- **Description:** Public IPv4 client sends an exact BACnet/IP Device Object_List ReadProperty request without array index to private UDP/47808. Returned directory, source authorization and baseline deviation unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R977_PublicBacnetObjectListReadRule.cs)
+- **Detailed evidence and test scenarios:** [977-977](batches/RULE_BATCH_977-977.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R978 — Modbus bulk file-record response to public client</strong> · Medium</summary>
+
+- **Description:** Private IPv4 TCP/502 server returns a transaction-matched FC20 file-record response of 100–120 registers to a public client. Content sensitivity, authorization and operational baseline unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R978_PrivateModbusBulkFileReadResponseRule.cs)
+- **Detailed evidence and test scenarios:** [978-978](batches/RULE_BATCH_978-978.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R979 — Public BACnet Event_Enable all-transition disable request</strong> · Medium</summary>
+
+- **Description:** Public IPv4 client sends exact BACnet WriteProperty Event_Enable all-zero three-bit request to a private Analog Input or Binary Input object. Authorization, acceptance and alarm-state impact unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R979_PublicBacnetEventDisableRequestRule.cs)
+- **Detailed evidence and test scenarios:** [979-979](batches/RULE_BATCH_979-979.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R980 — Public DNP3 cold or warm restart request</strong> · Medium</summary>
+
+- **Description:** Public IPv4 master sends a capture-validated DNP3 cold/warm restart request to a private outstation on UDP/20000. Authorization, device identity and restart outcome unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R980_PublicDnp3RestartRequestRule.cs)
+- **Detailed evidence and test scenarios:** [980-980](batches/RULE_BATCH_980-980.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R981 — Public DNP3 all-event-class Disable Unsolicited request</strong> · Medium</summary>
+
+- **Description:** Public IPv4 master sends an exact DNP3 Disable Unsolicited request for event classes 1, 2 and 3 to private UDP/20000. Approval, acceptance and reporting loss unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R981_PublicDnp3DisableUnsolicitedRule.cs)
+- **Detailed evidence and test scenarios:** [981-981](batches/RULE_BATCH_981-981.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R982 — Public Modbus all-zero mask register write request</strong> · Medium</summary>
+
+- **Description:** Public IPv4 client sends a capture-validated first Modbus TCP FC22 Mask Write Register request with both masks zero to private TCP/502. Authorization, register semantics and write outcome unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R982_PublicModbusClearMaskWriteRule.cs)
+- **Detailed evidence and test scenarios:** [982-982](batches/RULE_BATCH_982-982.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R983 — Private FINS/TCP node negotiation with public client</strong> · Medium</summary>
+
+- **Description:** Private IPv4 TCP/9600 server returns a capture-correlated successful FINS/TCP node-address response to a public client. Asset role and authorization unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R983_PrivateFinsNodeNegotiationToPublicClientRule.cs)
+- **Detailed evidence and test scenarios:** [983-983](batches/RULE_BATCH_983-983.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R984 — Public FINS sixteen-word Data Memory clear request</strong> · Medium</summary>
+
+- **Description:** Public IPv4 client sends an exact FINS/UDP Memory Area Write request clearing sixteen Data Memory words on a private CPU unit. Authorization, register semantics and write outcome unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R984_PublicFinsDataMemoryClearRule.cs)
+- **Detailed evidence and test scenarios:** [984-984](batches/RULE_BATCH_984-984.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R985 — Public FINS controller STOP request</strong> · Medium</summary>
+
+- **Description:** Public IPv4 client sends an exact FINS/UDP STOP request to a private CPU unit. Approval, acceptance and controller mode unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R985_PublicFinsControllerStopRequestRule.cs)
+- **Detailed evidence and test scenarios:** [985-985](batches/RULE_BATCH_985-985.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R986 — Private EtherNet/IP RegisterSession with public client</strong> · Medium</summary>
+
+- **Description:** Private IPv4 TCP/44818 server returns a capture-correlated successful EtherNet/IP RegisterSession response to a public client. Asset role and authorization unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R986_PrivateEtherNetIpRegisterSessionRule.cs)
+- **Detailed evidence and test scenarios:** [986-986](batches/RULE_BATCH_986-986.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R987 — Public EtherNet/IP CIP Identity Reset request</strong> · Medium</summary>
+
+- **Description:** Public IPv4 client issues an exact unconnected CIP Identity Object type-zero Reset after capture-qualified EtherNet/IP RegisterSession to private TCP/44818. Authorization, acceptance and restart unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R987_PublicEtherNetIpIdentityResetRule.cs)
+- **Detailed evidence and test scenarios:** [987-987](batches/RULE_BATCH_987-987.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R988 — Public BACnet Device System_Status read</strong> · Medium</summary>
+
+- **Description:** Exact Device ReadProperty System_Status (112), no array index; no returned operating mode. Public-to-private request only; authorization, acceptance and effect unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R988_PublicBacnetDeviceSystemStatusReadRule.cs)
+- **Detailed evidence and test scenarios:** [988-1000](batches/RULE_BATCH_988-1000.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R989 — Public BACnet Device all-properties read</strong> · Medium</summary>
+
+- **Description:** Exact Device ReadPropertyMultiple, one device and property ALL (8), no index or additional selectors. Public-to-private request only; authorization, acceptance and effect unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R989_PublicBacnetDeviceAllPropertiesReadRule.cs)
+- **Detailed evidence and test scenarios:** [988-1000](batches/RULE_BATCH_988-1000.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R990 — Public BACnet input Out_Of_Service true</strong> · Medium</summary>
+
+- **Description:** Exact WriteProperty Out_Of_Service (81), Boolean true, Analog Input or Binary Input, no priority/index. Public-to-private request only; authorization, acceptance and effect unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R990_PublicBacnetInputOutOfServiceRule.cs)
+- **Detailed evidence and test scenarios:** [988-1000](batches/RULE_BATCH_988-1000.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R991 — Public BACnet AtomicReadFile 512-byte stream request</strong> · Medium</summary>
+
+- **Description:** Exact File object AtomicReadFile stream offset zero, requested count 512 bytes; no returned content. Public-to-private request only; authorization, acceptance and effect unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R991_PublicBacnetAtomicFileReadRule.cs)
+- **Detailed evidence and test scenarios:** [988-1000](batches/RULE_BATCH_988-1000.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R992 — Public BACnet AtomicWriteFile 256-byte stream request</strong> · Medium</summary>
+
+- **Description:** Exact File object AtomicWriteFile stream offset zero, canonical 256-byte octet-string payload; no content classification. Public-to-private request only; authorization, acceptance and effect unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R992_PublicBacnetAtomicFileWriteRule.cs)
+- **Detailed evidence and test scenarios:** [988-1000](batches/RULE_BATCH_988-1000.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R993 — Public FINS CPU Unit Status Read</strong> · Medium</summary>
+
+- **Description:** Exact local CPU FINS/UDP command 0601 without parameters; no returned mode. Public-to-private request only; authorization, acceptance and effect unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R993_PublicFinsCpuStatusReadRule.cs)
+- **Detailed evidence and test scenarios:** [988-1000](batches/RULE_BATCH_988-1000.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R994 — Public FINS 256-word Data Memory read</strong> · Medium</summary>
+
+- **Description:** Exact FINS Memory Area Read 0101, DM word area 82, 256 words, start 0–32512, bit offset zero. Public-to-private request only; authorization, acceptance and effect unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R994_PublicFinsBulkDataMemoryReadRule.cs)
+- **Detailed evidence and test scenarios:** [988-1000](batches/RULE_BATCH_988-1000.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R995 — Public DNP3 four-class integrity read</strong> · Medium</summary>
+
+- **Description:** Exact master unconfirmed DNP3 READ, group 60 variations 1–4 once each with qualifier 06, both CRCs valid. Public-to-private request only; authorization, acceptance and effect unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R995_PublicDnp3IntegrityReadRule.cs)
+- **Detailed evidence and test scenarios:** [988-1000](batches/RULE_BATCH_988-1000.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R996 — Public DNP3 absolute time write</strong> · Medium</summary>
+
+- **Description:** Exact master DNP3 WRITE, group 50 variation 1, qualifier 07 count 1, one 48-bit absolute time. Public-to-private request only; authorization, acceptance and effect unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R996_PublicDnp3AbsoluteTimeWriteRule.cs)
+- **Detailed evidence and test scenarios:** [988-1000](batches/RULE_BATCH_988-1000.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R997 — Public Modbus FC23 same-pair zero write/read</strong> · Medium</summary>
+
+- **Description:** Exact FC23 read/write same two consecutive holding registers, two zero write words, full first client payload, verified TCP handshake. Public-to-private request only; authorization, acceptance and effect unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R997_PublicModbusReadWriteSamePairZeroRule.cs)
+- **Detailed evidence and test scenarios:** [988-1000](batches/RULE_BATCH_988-1000.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R998 — Public Modbus FC21 bulk file-record write</strong> · Medium</summary>
+
+- **Description:** Exact FC21 one reference-6 file-record subrequest, 100–120 registers, bounded record range and exact byte counts, verified TCP handshake. Public-to-private request only; authorization, acceptance and effect unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R998_PublicModbusBulkFileWriteRule.cs)
+- **Detailed evidence and test scenarios:** [988-1000](batches/RULE_BATCH_988-1000.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R999 — Public SNMP ifAdminStatus down SET</strong> · Medium</summary>
+
+- **Description:** Exact SNMPv1/v2c SET single ifAdminStatus.&lt;positive canonical ifIndex&gt; Integer32 down(2), zero error/index. Public-to-private request only; authorization, acceptance and effect unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R999_PublicSnmpInterfaceAdminDownRule.cs)
+- **Detailed evidence and test scenarios:** [988-1000](batches/RULE_BATCH_988-1000.md)
+- **Verification record:** Candidate — unverified (reported)
+
+</details>
+
+<details>
+<summary><strong>R1000 — Public SNMP ipForwarding not-forwarding SET</strong> · Medium</summary>
+
+- **Description:** Exact SNMPv1/v2c SET single ipForwarding.0 Integer32 not-forwarding(2), zero error/index. Public-to-private request only; authorization, acceptance and effect unknown.
+- **Category:** IotOtAdvanced
+- **Severity:** Medium
+- **Enabled by default:** true
+- **Implementation:** [C# source](../../Carthago/Engine/Rules/Expansion/R1000_PublicSnmpIpv4ForwardingDisableRule.cs)
+- **Detailed evidence and test scenarios:** [988-1000](batches/RULE_BATCH_988-1000.md)
 - **Verification record:** Candidate — unverified (reported)
 
 </details>

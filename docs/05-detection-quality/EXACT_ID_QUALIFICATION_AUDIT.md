@@ -1,5 +1,7 @@
 # Exact-ID detection qualification audit — GA-09bk
 
+**Current denominator (2026-11-16): 1,000 registered core rules.** The [registry reconciliation](REGISTRY_RECONCILIATION_20261116.md) and [per-ID CSV](registry-reconciliation.csv) now cover every source ID. This historical audit remains bounded; the machine-readable Windows exact-ID inventory has 27 records (17 reviewed historical passes, 4 authored-unexecuted, 6 missing). The 20 portable paired rules are accounted separately. Do not infer current-SHA executions or independent accuracy from the historical rows below.
+
 Evidence snapshot: `b7e12d829df243cb40b6612af140bcd42f7d3712` (2026-11-15). This is a bounded audit, not the complete registry inventory. A row is not a promotion or a new verification result. The rule qualification stream owns Q4–Q9 implementation; this audit consumes its evidence without duplicating its tests.
 
 ## First six IDs: SMB2 Q7/Q9

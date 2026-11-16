@@ -1,5 +1,7 @@
 # Rule qualification resume ledger
 
+**Current registry reconciliation (2026-11-16): 1,000 registered core IDs.** See [current reconciliation](../05-detection-quality/REGISTRY_RECONCILIATION_20261116.md) and [all 1,000 exact IDs](../05-detection-quality/registry-reconciliation.csv). The following 965-rule baseline and associated 717/248/35 totals are historical, not current readiness or execution counts.
+
 Baseline audit: `6a677b73a1db687961413ba440e4eb283e822d89` (965 registered, 717 historical covered, 248 gaps, 35 remaining). Historical Windows regression 12,354/12,354; not a claim about new source. Catalog/source review pinned to `6eca564e4681d70c1a6d03a1e074545c9dd8c2f6`. All rows inherit this source SHA; update individual rows with a new SHA when inspected. Initial membership is provisional, not a verified live coverage count. No tests executed.
 
 Columns: rule, catalog implementation path, required producer, positive evidence/test path, negative evidence/test path, boundary evidence/test path, status/blocker. Pending means not yet independently inspected, not absent. Do not promote a row without actual detector tests and supported producer evidence.
@@ -294,3 +296,8 @@ Base `214a6752765e8bfed1c79aa9f051884e811f4a1c`. Extend `Carthago.Cli.Tests/Port
 ## 2026-11-15 — R601 cooldown and capture epochs
 
 Base `dc97a873a4eb423b31126dc4ecce2a607f955302`. Added raw PCAP same-source/destination fresh-flow requests at 599 and 600 seconds after first match (expected suppressed then match), and PCAPNG independent interface/section handshakes (three expected matches). Reused existing raw segment fixture with distinct client ports. One new test authored, zero executed; no predicate or policy changes. R601 remains source candidate pending static CLI documentation reconciliation and owner tests. Next R272 policy review and R606–R610 migration. Portable registration last established 20/1000.
+
+
+## 2026-11-16 — 1,000-rule registry reconciliation
+
+Current source snapshot `c54b87b4b6c6a7d82e64d7226f7c5899778d9313`: 1,000 canonical unique registered core IDs R001–R1000, no duplicates or gaps, exactly one implementation path each. Master catalog refreshed to 1,000; all 35 new rules have dedicated quality-test files, not execution proof. Current Windows exact-ID inventory: 27 records (17 historical-pass, 4 authored-unexecuted, 6 missing); 973 IDs not yet represented. Reviewed historical pass manifest: 17, original artifacts not admitted. Portable R586–R605: 40 distinct positive and 40 distinct negative replay cases, each executed on Windows and WSL2 at dc43933775cb95a4685ecc860f93fa60b2ad3d1a (80 positive + 80 negative executions, all expected outcomes). No new executions or promotion; full 1,000-rule positive/negative Windows totals remain unknown until exact artifact mapping. R601 portable milestone already reached; no additional portable IDs inferred. Next: artifact-backed case mapping and exact-ID admission; preserve R272/producer backlog and current-SHA execution authorization.

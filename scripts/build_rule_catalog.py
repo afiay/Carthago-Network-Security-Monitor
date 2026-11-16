@@ -167,7 +167,7 @@ def generate(rules: list[Rule], source_revision: str) -> str:
         by_category[rule.category].append(rule)
     lines = [
         "# Carthago — master detection-rule catalog", "",
-        f"**Source-content digest:** `{source_revision}` · **Registered:** {len(rules)} unique R-series rules (`{rules[0].identifier}`–`{rules[-1].identifier}`)", "",
+        f"**Source-blob digest:** `{source_revision}` · **Registered:** {len(rules)} unique R-series rules (`{rules[0].identifier}`–`{rules[-1].identifier}`)", "",
         "This is the **single central navigation catalog** for registered detection rules. Metadata is extracted from each rule's actual C# `RuleDescriptor` at the cited snapshot. Source registration is not proof that telemetry can reach the predicate, an alert is emitted, tests passed, or detection quality was field-validated.", "",
         "**Verification column:** a candidate or zero-execution label is quoted from the linked batch's opening record; otherwise consult the dated batch and [development verification ledger](../DEVELOPMENT_VALIDATION_LEDGER.md). No application tests were run to generate this catalog. The original batch reports remain the authoritative historical evidence.", "",
         "[All detection documentation](README.md) · [Rule documentation standard](../rules/RULE_DOCUMENTATION_STANDARD.md) · [Rule hardening progress](../RULE_HARDENING_PROGRESS.md) · [Research backlog](../rules/PROTOCOL_INFORMED_THREAT_BACKLOG.md)", "",
@@ -220,7 +220,10 @@ def main() -> int:
     for file in [REGISTRY, *(rule.source for rule in rules)]:
         digest.update(file.relative_to(ROOT).as_posix().encode("utf-8"))
         digest.update(b"\0")
-        digest.update(file.read_bytes())
+        data = file.read_bytes()
+        # Hash the Git blob identity of each source file (Git SHA-1 repository).
+        blob = hashlib.sha1(b"blob " + str(len(data)).encode("ascii") + b"\0" + data).hexdigest()
+        digest.update(blob.encode("ascii"))
         digest.update(b"\0")
     revision = digest.hexdigest()[:20]
     text = generate(rules, revision)
