@@ -167,8 +167,17 @@ def main() -> int:
     linked = load_linkage(a.linked_ledger, v4, integration, active)
     runs = triage(v4, linked)
     count = collections.Counter(r["priority"] for r in runs)
+    digest_copies = collections.defaultdict(list)
+    for row in runs:
+        digest_copies[row["trxSha256"]].append(row["originalTrx"])
+    duplicate_groups = [
+        {"trxSha256": sha, "originalCopies": sorted(paths)}
+        for sha, paths in sorted(digest_copies.items()) if len(paths) > 1
+    ]
     if len(runs) != 42 or len(linked) != 6 or sum(r["sourceSha"] is None for r in runs) != 36:
         raise ValueError("Historical TRX inventory/link counts changed without proof")
+    if len(digest_copies) != 41 or len(duplicate_groups) != 1 or        len(duplicate_groups[0]["originalCopies"]) != 2:
+        raise ValueError("Historical original-copy digest grouping changed; requires review")
     result = {
         "schemaVersion": 1, "purpose": "historical-windows-42-trx-backlog-readonly",
         "branch": BRANCH, "inputs": {
@@ -176,12 +185,17 @@ def main() -> int:
             "activeSha256": digest(a.active), "linkedLedgerSha256": digest(a.linked_ledger)
         }, "summary": {
             "frozenOriginalTrx": 42, "runnerReportLinked": 6, "stillUnlinked": 36,
+            "distinctOriginalTrxDigests": len(digest_copies),
+            "distinctUnlinkedTrxDigests": len({r["trxSha256"] for r in runs if r["sourceSha"] is None}),
+            "duplicateFileCopyGroups": len(duplicate_groups),
             "unlinkedHistoricalFailedRuns": sum(r["failed"] > 0 and r["sourceSha"] is None for r in runs),
             "priorityCounts": dict(sorted(count.items())),
             "testsExecutedByAudit": 0, "capturesExecutedByAudit": 0,
             "fieldQualified": False, "newEvidenceAdmissions": 0
         },
+        "duplicateOriginalCopies": duplicate_groups,
         "warnings": [
+            "42 recovered TRX files contain 41 unique original TRX SHA-256 digests; duplicate copies are not independent test executions.",
             "A short SHA-like filename, Git HEAD today, or neighboring runner cannot attest a historical run.",
             "Result counts are test executions, not distinct rules nor positive/negative field accuracy.",
             "The newer successful SOC completion belongs outside this frozen historical 42-TRX inventory.",
