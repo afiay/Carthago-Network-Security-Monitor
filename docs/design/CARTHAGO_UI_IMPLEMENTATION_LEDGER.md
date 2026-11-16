@@ -6236,3 +6236,13 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Ownership/static review:** MainWindow.xaml and ledger only. Reviewed Settings responsive controller, immediate preference handler and theme SettingsSectionChoice/SettingsOpsGroup/PresetCard. Named controls, content, tooltips and handlers unchanged; no shared contracts, capture, detection, privacy, ScottPlot 10/120, Events 80/500, CLI, Cisco/WebView2 or independent R163 changes.
 
 **Risks/planned unexecuted:** long checkbox labels, keyboard focus, narrow wrapping, startup flags and immediate persistence, widths 1920/1440/1100/1099/1024/1023/640 and DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. Next UI-202: Settings layout presets and explicit replacement actions.
+
+## GA UI-202 — Compact layout preset and replacement actions
+
+**2026-11-16 · SOURCE CANDIDATE — UNVERIFIED.** Exact approved Library image libfile_b0a34361560c8191b641e432b3e6b15c visually inspected. Baseline `b2005bf068f02c946c1c6a4404cc4f88841a0a7e`, tree `e808040a7508a2e377782899cf04a77028500c6a`. Reference mapping: compact graphite panels, cyan primary action and restrained secondary action; no demo telemetry.
+
+**Visible before → after:** outer inset 20/18 → 10, selector inset 16 → 10, title 19 → 17, smaller gaps and selector minimum 180 → 120. Divided replacement action band, Apply uses existing primary style, Reset remains secondary; both retain wrapping and 32-unit minimum height. Visible disclosure explains immediate replacement without confirmation and retained evidence. Wide/Standard/Compact and below-1024 retain existing full-width Settings stage, vertical scroll and wrapping actions; no fixed outer width.
+
+**Ownership/static review:** MainWindow.xaml and ledger only. Reviewed Settings responsive controller, Dashboard apply/reset handlers and Theme.xaml PresetCard/PrimaryButton/SecondaryButton. Named controls, handlers, tooltips and accessibility attributes unchanged. Selection alone unchanged; Apply fallback and Reset empty-minimal behavior unchanged. No capture, detection, privacy, shared APIs, ScottPlot 10/120, Events 80/500, CLI, Cisco/WebView2 or independent R163 changes.
+
+**Risks/planned unexecuted:** primary contrast, long preset names, narrow action wrapping, keyboard focus, immediate replacement and retained evidence, widths 1920/1440/1100/1099/1024/1023/640 and DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. Next UI-203: Settings Save/Reset footer composition, preserve preference lifecycle.

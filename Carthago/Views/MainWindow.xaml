@@ -3124,33 +3124,35 @@
                     </StackPanel>
                   </Border>
 
-                  <Border Grid.Row="3" Style="{StaticResource PresetCard}" Margin="0,16,0,0" Padding="20,18">
+                  <Border Grid.Row="3" Style="{StaticResource PresetCard}" Margin="0,8,0,0" Padding="10">
                     <StackPanel>
                       <TextBlock Text="03 / LAYOUT PRESETS" Foreground="{StaticResource AccentBrush}" FontSize="12" FontWeight="Bold"/>
-                      <TextBlock Text="Apply a workspace layout" FontSize="19" FontWeight="SemiBold" Margin="0,7,0,4"/>
+                      <TextBlock Text="Apply a workspace layout" FontSize="17" FontWeight="SemiBold" Margin="0,4,0,4"/>
                       <TextBlock Text="Applying a preset replaces current layout preferences; selecting alone makes no change."
-                                 Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,0,0,16"/>
+                                 Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,0,0,6"/>
                       <Border Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource CardBorderBrush}"
-                              BorderThickness="1" CornerRadius="8" Padding="16">
+                              BorderThickness="1" CornerRadius="8" Padding="10">
                         <StackPanel>
                           <TextBlock x:Name="DashboardPresetsLabel" Text="Recommended layouts" FontWeight="SemiBold" Margin="0,0,0,8"/>
                           <ComboBox x:Name="DashboardPresetCombo"
-                                  MinWidth="180" HorizontalAlignment="Stretch"
+                                  MinWidth="120" HorizontalAlignment="Stretch"
                                   DisplayMemberPath="Name"
                                   ToolTip="Select a dashboard layout preset. Selection alone does not change the dashboard; Apply preset replaces the current dashboard layout preferences."
                                   ToolTipService.ShowsToolTipOnKeyboardFocus="True"
                                   AutomationProperties.LabeledBy="{Binding ElementName=DashboardPresetsLabel}"
                                   AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
                           <TextBlock Text="Choose a layout, then apply it. You can customize widgets afterwards."
-                                     Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap" Margin="0,9,0,0"/>
+                                     Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap" Margin="0,6,0,0"/>
                         </StackPanel>
                       </Border>
-                      <TextBlock Text="LAYOUT ACTIONS" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" Margin="0,16,0,10"/>
+                      <Border BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="0,1,0,0" Margin="0,8,0,0" Padding="0,8,0,0">
+                      <StackPanel>
+                      <TextBlock Text="LAYOUT ACTIONS" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,6"/>
                       <WrapPanel HorizontalAlignment="Left">
                         <Button Content="Apply preset"
-                                MinWidth="140"
-                                Margin="0,0,10,8"
-                                Style="{StaticResource SecondaryButton}"
+                                MinWidth="120" MinHeight="32"
+                                Margin="0,0,8,6"
+                                Style="{StaticResource PrimaryButton}"
                                 ToolTip="Replace current dashboard layout and section visibility with the selected preset, or the minimal Security Overview if none is selected. Applies without confirmation; does not start capture or delete incidents or retained events."
                                 ToolTipService.ShowsToolTipOnKeyboardFocus="True"
                                 AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
@@ -3164,6 +3166,10 @@
                                 AutomationProperties.HelpText="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                                 Click="DashboardResetLayout_Click"/>
                       </WrapPanel>
+                      <TextBlock Text="Both actions replace layout preferences immediately, without confirmation. Retained events and incidents are not deleted."
+                                 Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                      </StackPanel>
+                      </Border>
                     </StackPanel>
                   </Border>
 
