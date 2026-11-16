@@ -97,6 +97,24 @@ namespace Carthago.Services.Diagnostics
                 "Confirm capture and rule-engine calls are increasing, then inspect rule applicability.");
         }
 
+        /// <summary>
+        /// Compare two successful read-only refreshes. This is a delta of engine
+        /// invocation counters, not proof of packet delivery, match, or accuracy.
+        /// </summary>
+        public static string ForProgress(long? previousEngineEvaluations, long currentEngineEvaluations)
+        {
+            if (!previousEngineEvaluations.HasValue)
+                return "FIRST SNAPSHOT — Refresh again after capturing traffic to measure new engine evaluations.";
+
+            if (currentEngineEvaluations < previousEngineEvaluations.Value)
+                return "COUNTERS RESET OR CHANGED — Start a new baseline; snapshots are process-local.";
+
+            if (currentEngineEvaluations == previousEngineEvaluations.Value)
+                return "NO NEW ENGINE EVALUATIONS BETWEEN REFRESHES — Traffic may be idle or evaluation delayed; if capture was active, inspect enrichment workers and queue health.";
+
+            return $"ENGINE EVALUATIONS INCREASED — {currentEngineEvaluations - previousEngineEvaluations.Value:N0} new calls between refreshes. This does not prove rule matches or accuracy.";
+        }
+
         public static string ForPipeline(
             long engineRecordEvaluations,
             long ruleEvaluations,
