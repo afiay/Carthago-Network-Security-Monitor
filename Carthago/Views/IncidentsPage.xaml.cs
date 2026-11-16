@@ -1022,7 +1022,7 @@ namespace Carthago.Views
                 ? BuildDefaultTags(incident)
                 : incident.Tags.Select(HumanizeToken).Distinct(StringComparer.OrdinalIgnoreCase));
             ReplaceCollection(RuleIds,
-                IncidentQueueProjectionService.GetRecordedRuleIds(incident)
+                Carthago.Services.IncidentQueueProjectionService.GetRecordedRuleIds(incident)
                     .DefaultIfEmpty("No recorded rule IDs"));
             ReplaceCollection(ChecklistItems, BuildChecklist(incident));
 
