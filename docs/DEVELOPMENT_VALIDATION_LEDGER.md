@@ -3241,3 +3241,8 @@ Pinned source HEAD 1bc8f94c539cb39d699b8fdb987729d71c58b7f4. Extended Sealed_Reg
 ## 2026-11-16 — Enrichment Phase 16.6j: capacity saturation retains existing evidence
 
 Pinned source HEAD b49352397af87908435ce72b4d4df18251823f16. Added `Full_Registries_Still_Update_Existing_Evidence_Without_Inflating_Rejections` to ObservedAssetRegistryTests. At exact 2048-entry saturation for both passive asset and external communication registries, an existing identity is observed again and must increment its observation count without incrementing capacity rejections. A new identity must increment each rejection count once, while subsequent observations after sealing must not change the production SnapshotSessionHealth storage projection. Synthetic test authored only: Windows compilation/execution, full capture lifecycle and native integration remain pending. No detection rules changed.
+
+
+## 2026-11-16 — GA-09ce R118 redacted Authorization evidence boundary
+
+Source parent c48fc19ad7aebb4b7ed83f1438283a38641f08f9, actual tree 3850a41bf38bd0d6b9a5765aff605860f074437a. Added two parameterized R118 cases: redacted Authorization without capture-derived default credential observation must reject; redacted Authorization with that observation remains eligible under existing host and singleton-header checks. Expected no-match/match respectively. Authored-unexecuted, no Windows build or TRX and no independent IoT identity/authentication outcome established. No threshold, registry, holdout, or policy change. Next Windows: `dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~R118AdvancedAccuracyBatchTests"`. Do not admit as executed exact-ID evidence before SHA-bound result review.

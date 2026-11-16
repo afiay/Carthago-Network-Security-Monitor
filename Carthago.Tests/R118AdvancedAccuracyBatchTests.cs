@@ -79,6 +79,20 @@ public sealed class R118AdvancedAccuracyBatchTests
         Assert.False((await _rule.EvaluateAsync(NetworkBatch116120Context.Context(record))).Matched);
     }
 
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Redacted_Authorization_Requires_Capture_Observation(bool observed)
+    {
+        var record = NetworkBatch116120Context.Basic(NetworkBatch116120Context.Source());
+        record.HttpRequestHeaders = "Host: " + record.HttpHost
+            + "\r\nAuthorization: [REDACTED]";
+        record.HttpBasicDefaultCredentialObserved = observed;
+        var result = await _rule.EvaluateAsync(NetworkBatch116120Context.Context(record));
+        Assert.Equal(observed, result.Matched);
+    }
+
     [Fact] public async Task Unattributed_Device_Host_Cannot_Qualify()
     {
         var record = NetworkBatch116120Context.Basic(NetworkBatch116120Context.Source());
