@@ -49,13 +49,13 @@ public sealed class R118AdvancedAccuracyBatchTests
     }
 
     [Theory]
-    [InlineData("X-Request-Id: trace\\0Authorization: Basic dXNlcjpwYXNz")]
-    [InlineData("X-Request-Id: trace\\u0001Authorization: Basic dXNlcjpwYXNz")]
-    [InlineData("X-Request-Id: trace\\u007fAuthorization: Basic dXNlcjpwYXNz")]
+    [InlineData("X-Request-Id: trace\0Authorization: Basic dXNlcjpwYXNz")]
+    [InlineData("X-Request-Id: trace\u0001Authorization: Basic dXNlcjpwYXNz")]
+    [InlineData("X-Request-Id: trace\u007fAuthorization: Basic dXNlcjpwYXNz")]
     public async Task Control_Bytes_Cannot_Qualify_Authentication_Headers(string header)
     {
         var record = NetworkBatch116120Context.Basic(NetworkBatch116120Context.Source());
-        record.HttpRequestHeaders += "\\r\\n" + header;
+        record.HttpRequestHeaders += "\r\n" + header;
         Assert.False((await _rule.EvaluateAsync(NetworkBatch116120Context.Context(record))).Matched);
     }
 
