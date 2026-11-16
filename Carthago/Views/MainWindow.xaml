@@ -2750,17 +2750,17 @@
               <!-- Sensitivity -->
               <GroupBox x:Name="SettingsDetectionGroup" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
                         Header="Detection Sensitivity" Tag="01  /  SIGNAL POLICY" Style="{StaticResource SettingsOpsGroup}"
-                        Margin="0,0,0,14">
-                <Grid Margin="14,16,14,12">
+                        Margin="0,0,0,8">
+                <Grid Margin="0,0,0,0">
                   <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                   </Grid.RowDefinitions>
-                  <Border Background="#17283A" BorderBrush="#34536B" BorderThickness="1" CornerRadius="12" Padding="18" Margin="0,0,0,12">
+                  <Border Background="#17283A" BorderBrush="#34536B" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,0,8">
                     <Grid>
                       <Grid.ColumnDefinitions>
-                        <ColumnDefinition x:Name="SettingsSensitivityLabelColumn" Width="160"/>
+                        <ColumnDefinition x:Name="SettingsSensitivityLabelColumn" Width="130"/>
                         <ColumnDefinition Width="*"/>
                       </Grid.ColumnDefinitions>
                       <Grid.RowDefinitions>
@@ -2768,8 +2768,8 @@
                         <RowDefinition Height="Auto"/>
                       </Grid.RowDefinitions>
                       <StackPanel Grid.ColumnSpan="2" Margin="0,0,0,14">
-                        <TextBlock Text="01 / POLICY SELECTION" Foreground="#49A9CC" FontWeight="Bold" FontSize="12"/>
-                        <TextBlock Text="Choose a detection profile" FontSize="21" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,5,0,0"/>
+                        <TextBlock Text="01 / POLICY SELECTION" Foreground="#49A9CC" FontWeight="Bold" FontSize="12" TextWrapping="Wrap"/>
+                        <TextBlock Text="Choose a detection profile" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,5,0,0"/>
                         <TextBlock Text="Selection is staged until Save. The cards below compare profile parameters, not live detection results." Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap" Margin="0,5,0,0"/>
                       </StackPanel>
                   <!-- GA UI-65: clarify staged sensitivity selection and the scope of Save/Reset without changing preference handlers. -->
@@ -2792,8 +2792,8 @@
                   </Border>
 
                   <!-- GA UI-118: substantial three-profile visual comparison, no new preference or detection behavior. -->
-                  <UniformGrid x:Name="SettingsSensitivityProfiles" Grid.Row="1" Columns="3" Margin="0,0,0,12">
-                    <Border CornerRadius="12" Padding="18" Margin="0,0,10,0" MinHeight="156">
+                  <UniformGrid x:Name="SettingsSensitivityProfiles" Grid.Row="1" Columns="3" Margin="0,0,0,8">
+                    <Border CornerRadius="8" Padding="10" Margin="0,0,10,0" MinHeight="112">
                       <Border.Style>
                         <Style TargetType="Border">
                           <Setter Property="Background" Value="#101D2D"/>
@@ -2809,16 +2809,16 @@
                         </Style>
                       </Border.Style>
                       <StackPanel>
-                        <TextBlock Text="RELAXED" Foreground="#49A9CC" FontWeight="Bold" FontSize="12"/>
-                        <TextBlock Text="0.50" FontSize="26" FontWeight="Bold" Foreground="{StaticResource TextBrush}" Margin="0,8,0,0"/>
+                        <TextBlock Text="RELAXED" Foreground="#49A9CC" FontWeight="Bold" FontSize="12" TextWrapping="Wrap"/>
+                        <TextBlock Text="0.50" FontSize="22" FontWeight="Bold" Foreground="{StaticResource TextBrush}" Margin="0,4,0,0"/>
                         <TextBlock Text="Threshold factor" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
-                        <Border Background="#17283A" CornerRadius="5" Padding="8,5" Margin="0,10,0,0">
-                          <TextBlock Text="AbuseIPDB cutoff: ≥ 90" Foreground="{StaticResource TextSubtleBrush}" FontSize="12"/>
+                        <Border Background="#17283A" CornerRadius="5" Padding="6,4" Margin="0,6,0,0">
+                          <TextBlock Text="AbuseIPDB cutoff: ≥ 90" Foreground="{StaticResource TextSubtleBrush}" FontSize="12" TextWrapping="Wrap"/>
                         </Border>
-                        <TextBlock Text="Higher reputation cutoff; less sensitive thresholds." Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap" FontSize="11" Margin="0,9,0,0"/>
+                        <TextBlock Text="Higher reputation cutoff; less sensitive thresholds." Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap" FontSize="11" Margin="0,5,0,0"/>
                       </StackPanel>
                     </Border>
-                    <Border CornerRadius="12" Padding="18" Margin="0,0,10,0" MinHeight="156">
+                    <Border CornerRadius="8" Padding="10" Margin="0,0,10,0" MinHeight="112">
                       <Border.Style>
                         <Style TargetType="Border">
                           <Setter Property="Background" Value="#101D2D"/>
@@ -2834,16 +2834,16 @@
                         </Style>
                       </Border.Style>
                       <StackPanel>
-                        <TextBlock Text="BALANCED" Foreground="#34C9C0" FontWeight="Bold" FontSize="12"/>
-                        <TextBlock Text="1.00" FontSize="26" FontWeight="Bold" Foreground="{StaticResource TextBrush}" Margin="0,8,0,0"/>
+                        <TextBlock Text="BALANCED" Foreground="#34C9C0" FontWeight="Bold" FontSize="12" TextWrapping="Wrap"/>
+                        <TextBlock Text="1.00" FontSize="22" FontWeight="Bold" Foreground="{StaticResource TextBrush}" Margin="0,4,0,0"/>
                         <TextBlock Text="Threshold factor" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
-                        <Border Background="#17283A" CornerRadius="5" Padding="8,5" Margin="0,10,0,0">
-                          <TextBlock Text="AbuseIPDB cutoff: ≥ 75" Foreground="{StaticResource TextSubtleBrush}" FontSize="12"/>
+                        <Border Background="#17283A" CornerRadius="5" Padding="6,4" Margin="0,6,0,0">
+                          <TextBlock Text="AbuseIPDB cutoff: ≥ 75" Foreground="{StaticResource TextSubtleBrush}" FontSize="12" TextWrapping="Wrap"/>
                         </Border>
-                        <TextBlock Text="Default reference threshold profile." Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap" FontSize="11" Margin="0,9,0,0"/>
+                        <TextBlock Text="Default reference threshold profile." Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap" FontSize="11" Margin="0,5,0,0"/>
                       </StackPanel>
                     </Border>
-                    <Border CornerRadius="12" Padding="18" Margin="0,0,10,0" MinHeight="156">
+                    <Border CornerRadius="8" Padding="10" Margin="0,0,10,0" MinHeight="112">
                       <Border.Style>
                         <Style TargetType="Border">
                           <Setter Property="Background" Value="#101D2D"/>
@@ -2859,26 +2859,27 @@
                         </Style>
                       </Border.Style>
                       <StackPanel>
-                        <TextBlock Text="AGGRESSIVE" Foreground="#E8AC55" FontWeight="Bold" FontSize="12"/>
-                        <TextBlock Text="1.50" FontSize="26" FontWeight="Bold" Foreground="{StaticResource TextBrush}" Margin="0,8,0,0"/>
+                        <TextBlock Text="AGGRESSIVE" Foreground="#E8AC55" FontWeight="Bold" FontSize="12" TextWrapping="Wrap"/>
+                        <TextBlock Text="1.50" FontSize="22" FontWeight="Bold" Foreground="{StaticResource TextBrush}" Margin="0,4,0,0"/>
                         <TextBlock Text="Threshold factor" Foreground="{StaticResource TextMutedBrush}" FontSize="11"/>
-                        <Border Background="#17283A" CornerRadius="5" Padding="8,5" Margin="0,10,0,0">
-                          <TextBlock Text="AbuseIPDB cutoff: ≥ 50" Foreground="{StaticResource TextSubtleBrush}" FontSize="12"/>
+                        <Border Background="#17283A" CornerRadius="5" Padding="6,4" Margin="0,6,0,0">
+                          <TextBlock Text="AbuseIPDB cutoff: ≥ 50" Foreground="{StaticResource TextSubtleBrush}" FontSize="12" TextWrapping="Wrap"/>
                         </Border>
-                        <TextBlock Text="Lower trigger thresholds; more sensitive alerts." Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap" FontSize="11" Margin="0,9,0,0"/>
+                        <TextBlock Text="Lower trigger thresholds; more sensitive alerts." Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap" FontSize="11" Margin="0,5,0,0"/>
                       </StackPanel>
                     </Border>
                   </UniformGrid>
 
-                  <Border Grid.Row="2" Background="#101D2D" BorderBrush="#34536B" BorderThickness="1" CornerRadius="12" Padding="18">
+                  <Border Grid.Row="2" Background="#101D2D" BorderBrush="#34536B" BorderThickness="1" CornerRadius="8" Padding="10">
                     <StackPanel>
-                      <TextBlock Text="02 / POLICY EVIDENCE" Foreground="#49A9CC" FontWeight="Bold" FontSize="12"/>
-                      <TextBlock Text="Inspect detection coverage" FontSize="21" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,5,0,0"/>
-                      <TextBlock Foreground="{StaticResource TextSubtleBrush}" Margin="0,8,0,12" Text="Higher sensitivity lowers rule thresholds (e.g., fewer packets/bytes needed to trigger) and flags lower reputation scores." TextWrapping="Wrap"/>
-                      <Button Content="Open Detection Coverage Center" HorizontalAlignment="Left" MinWidth="220" Height="36"
+                      <TextBlock Text="02 / POLICY EVIDENCE" Foreground="#49A9CC" FontWeight="Bold" FontSize="12" TextWrapping="Wrap"/>
+                      <TextBlock Text="Inspect detection coverage" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,5,0,0"/>
+                      <TextBlock Foreground="{StaticResource TextSubtleBrush}" Margin="0,6,0,8" Text="Higher sensitivity lowers rule thresholds (e.g., fewer packets/bytes needed to trigger) and flags lower reputation scores." TextWrapping="Wrap"/>
+                      <Border Background="#17283A" CornerRadius="6" Padding="8" BorderBrush="#34536B" BorderThickness="1"><StackPanel><Button Content="Open Detection Coverage Center" HorizontalAlignment="Left" MinWidth="0" MinHeight="32"
                               Style="{StaticResource SecondaryButton}" Click="SettingsOpenDetectionCoverage_Click"
                               AutomationProperties.Name="Inspect registered rules, evaluations and telemetry coverage"/>
-                      <TextBlock Text="Read-only rule status and catalog diagnostics; does not change sensitivity." Foreground="{StaticResource TextMutedBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                      <TextBlock Text="Read-only rule status and catalog diagnostics; does not change sensitivity." Foreground="{StaticResource TextMutedBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                    </StackPanel></Border>
                     </StackPanel>
                   </Border>
 

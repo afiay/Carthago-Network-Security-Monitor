@@ -70,14 +70,14 @@ namespace Carthago
             for (var index = 0; index < SettingsSensitivityProfiles.Children.Count; index++)
             {
                 if (SettingsSensitivityProfiles.Children[index] is Border card)
-                    card.Margin = wide ? new Thickness(0, 0, index < 2 ? 12 : 0, 0) : new Thickness(0, 0, 0, index < 2 ? 12 : 0);
+                    card.Margin = wide ? new Thickness(0, 0, index < 2 ? 8 : 0, 0) : new Thickness(0, 0, 0, index < 2 ? 8 : 0);
             }
             for (var index = 0; index < SettingsWorkspaceMap.Children.Count; index++)
             {
                 if (SettingsWorkspaceMap.Children[index] is Border tile)
                     tile.Margin = new Thickness(0, 0, wide ? (index < 3 ? 8 : 0) : !narrowKpis && index % 2 == 0 ? 8 : 0, 8);
             }
-            SettingsSensitivityLabelColumn.Width = new GridLength(narrowKpis ? 130 : 160);
+            SettingsSensitivityLabelColumn.Width = new GridLength(narrowKpis ? 100 : 130);
             SettingsCaptureExternalColumn.Width = wide ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
             Grid.SetRow(SettingsCaptureExternalCard, wide ? 0 : 1);
             Grid.SetColumn(SettingsCaptureExternalCard, wide ? 1 : 0);

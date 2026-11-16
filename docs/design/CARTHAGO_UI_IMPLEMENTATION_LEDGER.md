@@ -6204,3 +6204,14 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Ownership/static review:** MainWindow.xaml, MainWindow.Settings.cs responsive constants only, ledger. Reviewed SettingsOpsHero theme, responsive shell and SettingsWorkspaceJump handler; binding/name/Click/Tag multisets unchanged. No preference, credential, capture, detection, privacy, ScottPlot 10/120, Events 80/500, CLI, Cisco/WebView2 or independent work changes.
 
 **Risks/planned unexecuted:** long navigation labels, four-column fit at 1440, keyboard focus and jump targets, preference lifecycle guidance, widths 1920/1440/1100/1099/1024/1023/640 and DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. Next UI-199: Settings detection sensitivity configuration section, preserve policy semantics.
+
+
+## GA UI-199 — Settings compact detection profile comparison
+
+**2026-11-16 · SOURCE CANDIDATE — UNVERIFIED.** Exact approved Library image libfile_b0a34361560c8191b641e432b3e6b15c visually inspected. Baseline `01a002586c509864d30f60f07d9365a0435068e0`, tree `b740f28e36e2168791b2544d80b6c9a12cd68ed2`; prior UI-198. Reference mapping: compact graphite KPI-like comparison cards, cyan hierarchy and distinct investigation action surface; no demo telemetry.
+
+**Visible before → after:** remove redundant inner grid inset, selection and evidence panels 18 → 10 padding, headings 21 → 18, profile cards 156 → 112 minimum, numeric values 26 → 22, tighter comparison bands and wrapped cutoff labels. Coverage navigation and its read-only explanation grouped in a bordered action band. Responsive controller retains three Wide cards and one column otherwise; gaps 12 → 8 and selector label width 160/130 → 130/100. Static impact: earlier comparison and less nested chrome; no render.
+
+**Ownership/static review:** MainWindow.xaml, MainWindow.Settings.cs responsive constants and ledger only. Reviewed SettingsOpsGroup theme, selection no-op, Save/Reset and existing coverage navigation wiring. Binding/name/handler/content identity preserved; all three profile values, selection triggers, staged Save and read-only coverage semantics unchanged. No capture, detection, privacy, shared APIs, ScottPlot 10/120, Events 80/500, CLI, Cisco/WebView2 or independent GA-09bt changes.
+
+**Risks/planned unexecuted:** narrow selector and cutoff wrapping, selected profile contrast, keyboard focus, coverage navigation, Save/Reset, widths 1920/1440/1100/1099/1024/1023/640 and DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. Next UI-200: Settings capture and enrichment configuration composition, preserve credential lifecycle and external lookup consent.
