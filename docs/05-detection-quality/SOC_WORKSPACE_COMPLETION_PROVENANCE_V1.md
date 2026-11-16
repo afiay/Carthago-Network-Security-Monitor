@@ -89,3 +89,28 @@ Get-SocWorkspaceTrxEvidence -Path $oldTrx | ConvertTo-Json -Depth 6
 The returned `methodScopedCases` and three group counts expose how all cases were classified. **This is only a parser preflight**: do not create a completion report retroactively for the failed old run. Once the preflight passes, execute `.\scripts\verify-soc-workspace.ps1` on a new clean checkout; a successful **new** run will publish its own complete `completion.json`.
 
 **Status:** Correction committed; runtime validation of the corrected parser and final completion record remains **unverified** until owner execution. Historical 2026-11-11 SOC run remains pre-test source-correlated; strict historical source-run count remains 6/42.
+
+
+## Corrected verifier acceptance — Windows owner execution, 2026-11-16
+
+The owner provided the Windows console transcript from the **new verification pass after the method-scoped grouping correction** on `feature/carthago-reliability-hardening`:
+
+- `scripts/test-soc-completion-contract.ps1`: **PASS (27 offline assertions)**; zero detector tests and captures executed by the contract fixture.
+- Reparse of **the older, blocked-completion TRX** `TestResults/soc-workspace-20261116-200338-13980-b214b937/soc-workspace-tests.trx`: original TRX run ID `d29e4dad-46aa-4fe9-be0a-c44707940d29`, original TRX SHA-256 `58eb6dce7cb8aca83eedac60799a922cf3c0713b5827ed4b4c66b65ea8d6a834`; 70 executed, 70 passed, 0 failed. Unique SOC group partition: **NetworkInvestigation 29, IncidentTimeline 36, IncidentDetectionLinkVm 5**, with **5 method-scoped tests**. These figures describe **the older, retrospectively parsed TRX**, not the new run's artifact identity; the old failed completion cannot be reclassified.
+- New owner-run `scripts/verify-soc-workspace.ps1`: `sdk-version` reports **9.0.321**; restore succeeded; Release build succeeded **with 0 errors and 9 xUnit1026 warnings**; all **70 SOC tests passed**, with zero failed or skipped.
+- **New successful run directory:** `TestResults/soc-workspace-20261116-201947-13980-fc218b2a/`. Original new test-result file `soc-workspace-tests.trx`; run completion is printed as `SOURCE BUILD AND SOC TEST STAGES PASSED`, followed by `SOC source-pinned completion report: .../completion.json`.
+- Since the current verifier prints this final message only after `Publish-SocWorkspaceCompletionRecord` returns, the console output supports **successful owner-side publication of a new completion report**. However, the *content of that report*, its exact source SHA and its original TRX/stage-log SHA-256 values were **not uploaded in the transcript**, so no independent second-reader attestation of the contents is asserted.
+
+**Classification:** New Windows SOC synthetic test and local provenance *runner reported PASS*; **external hash/content review pending**. Do **not** copy the older TRX run ID or SHA-256 into the new record. Do **not** count the new TRX among the prior 42 recovered historical files, because the new run was produced **after** the 359-artifact recovery inventory. Within that frozen historical cohort the status remains **6/42 strict source links, 36 unlinked**. The November 11 SOC record remains `original-pretest-source-file-correlated`. All manual WPF acceptance, real capture quality, field precision/recall and rule admissions remain unverified.
+
+For audit of the **new** run without executing another build or test:
+
+```powershell
+$dir = '.\TestResults\soc-workspace-20261116-201947-13980-fc218b2a'
+Get-Content -LiteralPath (Join-Path $dir 'completion.json') -Raw
+Get-FileHash -LiteralPath (Join-Path $dir 'completion.json') -Algorithm SHA256
+```
+
+Preserve `completion.json`, the corresponding original `soc-workspace-tests.trx`, `source-sha.txt` and four stage logs together in that run folder. Inspect the completion file and verify its recorded TRX and stage hashes against their original bytes before accepting its source-evidence claim. Uploading `completion.json` is sufficient for the first field-level schema and source SHA review; original artifacts would be needed for an independent hash recheck. No code change or new test execution occurred as part of documenting the supplied console transcript.
+
+**Warning follow-up (separate):** nine xUnit1026 unused-`name`-parameter warnings in R988–R990 and R995–R1000 remain open and should be fixed with rule-test semantics preserved rather than suppressed.
