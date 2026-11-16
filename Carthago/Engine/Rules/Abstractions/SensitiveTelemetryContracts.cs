@@ -103,6 +103,13 @@ namespace Carthago.Engine.Rules
                 && !string.Equals(record.ApplicationProtocol, "HTTPS", StringComparison.OrdinalIgnoreCase))
                 return TelnetLoginWithDefaultPair.IsMatch(record.Info);
 
+            // A response status line is not an HTTP request method. Imported or
+            // replayed records must not turn response-only authentication text
+            // into evidence of a credential-bearing request.
+            if (!string.IsNullOrWhiteSpace(record.HttpMethod)
+                && record.HttpMethod.StartsWith("HTTP/", StringComparison.OrdinalIgnoreCase))
+                return false;
+
             if (string.IsNullOrWhiteSpace(record.HttpMethod)
                 || string.IsNullOrWhiteSpace(record.HttpHost)
                 || !IsDeviceHost(record.HttpHost, record.DestinationPort)

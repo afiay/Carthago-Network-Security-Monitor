@@ -20,6 +20,24 @@ public sealed class R118AdvancedAccuracyBatchTests
             item => item.Key == "matched_conditions");
     }
 
+    [Theory]
+    [InlineData("HTTP/1.1 401 Unauthorized")]
+    [InlineData("HTTP/2 200")]
+    [InlineData("http/3 403")]
+    public async Task Response_Status_Line_Cannot_Qualify_As_Authentication_Request(string statusLine)
+    {
+        var record = NetworkBatch116120Context.Basic(NetworkBatch116120Context.Source());
+        record.HttpMethod = statusLine;
+        Assert.False((await _rule.EvaluateAsync(NetworkBatch116120Context.Context(record))).Matched);
+    }
+
+    [Fact] public async Task Post_Request_With_Default_Pair_Remains_Candidate()
+    {
+        var record = NetworkBatch116120Context.Basic(NetworkBatch116120Context.Source());
+        record.HttpMethod = "POST";
+        Assert.True((await _rule.EvaluateAsync(NetworkBatch116120Context.Context(record))).Matched);
+    }
+
     [Fact] public async Task Duplicate_Authorization_Is_Ambiguous_Not_A_Login()
     {
         var record = NetworkBatch116120Context.Basic(NetworkBatch116120Context.Source());
