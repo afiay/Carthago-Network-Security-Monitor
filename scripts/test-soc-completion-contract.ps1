@@ -154,6 +154,9 @@ try {
     [IO.File]::WriteAllText($trxPath, $fixture.Replace('executed="3"', 'executed="2"'), [Text.UTF8Encoding]::new($false))
     Reject { Get-SocWorkspaceTrxEvidence -Path $trxPath } 'reject skipped/incomplete TRX'
 
+    [IO.File]::WriteAllText($trxPath, $fixture.Replace('Carthago.Tests.NetworkInvestigationTests', 'Carthago.Tests.NetworkInvestigationIncidentTimelineTests'), [Text.UTF8Encoding]::new($false))
+    Reject { Get-SocWorkspaceTrxEvidence -Path $trxPath } 'reject overlapping test group ownership'
+
     [IO.File]::WriteAllText($trxPath, $fixture.Replace('IncidentDetectionLinkVmTests', 'UnrelatedGroupTests'), [Text.UTF8Encoding]::new($false))
     Reject { Get-SocWorkspaceTrxEvidence -Path $trxPath } 'reject missing required test group'
 
