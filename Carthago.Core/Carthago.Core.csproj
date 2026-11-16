@@ -76,7 +76,7 @@
     <Compile Include="../Carthago/Engine/Rules/Expansion/WebSignatureRequestEvidence.cs" Link="Engine/Rules/Expansion/WebSignatureRequestEvidence.cs" />
     <!-- Preserve existing internal access while consumers migrate. -->
     <InternalsVisibleTo Include="Carthago" />
-    <InternalsVisibleTo Include="carthago" />
+    <InternalsVisibleTo Include="Carthago.Cli" />
     <InternalsVisibleTo Include="Carthago.Tests" />
     <InternalsVisibleTo Include="Carthago.Cli.Tests" />
   </ItemGroup>
