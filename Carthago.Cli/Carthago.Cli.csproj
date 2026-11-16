@@ -3,7 +3,7 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <!-- NuGet and CLR must both distinguish the CLI from Carthago WPF on Windows. -->
-    <!-- Command invocation through dotnet run --project remains unchanged. -->
+    <!-- CLI project invocation remains unchanged; the compiled assembly identity is distinct. -->
     <PackageId>Carthago.Cli</PackageId>
     <AssemblyName>Carthago.Cli</AssemblyName>
     <RootNamespace>Carthago.Cli</RootNamespace>
