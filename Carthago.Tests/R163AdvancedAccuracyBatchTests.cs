@@ -106,6 +106,18 @@ public sealed class R163AdvancedAccuracyBatchTests
         Assert.Contains(items, x => x.Value == "not-observed");
         Assert.DoesNotContain(items, x => x.Value.Contains("synthetic-token-not-a-secret", StringComparison.Ordinal));
     }
+    [Theory]
+    [InlineData("Host: 169.254.169.254\r\n evil.example")]
+    [InlineData("Host: 169.254.169.254\r\n\t:80")]
+    [InlineData("Host: 169.254.169.254\r\nX-Request-Id: trace\r\n continuation")]
+    public async Task Folded_Header_Block_Cannot_Qualify_Metadata_Request(string headers)
+    {
+        var r = Metadata();
+        r.HttpRequestHeaders = headers;
+        Assert.False((await new R163_SsrfMetadataServiceProbeRule()
+            .EvaluateAsync(NetworkBatch156165Context.At(r))).Matched);
+    }
+
     [Fact] public void Policy_And_Confidence_Floor_Are_Preserved()
     {
         var p=new R163_SsrfMetadataServiceProbeRule().PrecisionProfile;

@@ -295,6 +295,12 @@ namespace Carthago.Engine.Rules
             if (string.IsNullOrWhiteSpace(record.HttpRequestHeaders))
                 return true;
 
+            // Obsolete folding can change the effective Host authority. Reject
+            // ambiguous header blocks rather than trusting the normalized field.
+            if (record.HttpRequestHeaders.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries)
+                .Any(static line => line.StartsWith(' ') || line.StartsWith('\t')))
+                return false;
+
             var observedHostFields = 0;
             foreach (var line in record.HttpRequestHeaders.Split(
                 new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))
