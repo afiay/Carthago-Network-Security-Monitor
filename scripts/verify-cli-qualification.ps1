@@ -323,13 +323,14 @@ try {
         $report.portableSyntheticQualified=$true
         if ($IncludeWindowsParity) {
             Require-Stage 'windows-build' @('build','Carthago.Tests/Carthago.Tests.csproj','-c','Release','--no-incremental','--nologo')
-            Invoke-TestSuite 'windows-parity' 'Carthago.Tests/Carthago.Tests.csproj' 'FullyQualifiedName~PortableR587ParityTests|FullyQualifiedName~PortableR589ParityTests|FullyQualifiedName~PortableHttpBatchParityTests|FullyQualifiedName~PortableHttp591595ParityTests|FullyQualifiedName~PortableHttp596600ParityTests|FullyQualifiedName~PortableHttp602605ParityTests' @{
+            Invoke-TestSuite 'windows-parity' 'Carthago.Tests/Carthago.Tests.csproj' 'FullyQualifiedName~PortableR587ParityTests|FullyQualifiedName~PortableR589ParityTests|FullyQualifiedName~PortableHttpBatchParityTests|FullyQualifiedName~PortableHttp591595ParityTests|FullyQualifiedName~PortableHttp596600ParityTests|FullyQualifiedName~PortableHttp602605ParityTests|FullyQualifiedName~R601HeaderCaptureTests' @{
                 'Carthago.Tests.PortableR587ParityTests'=4
                 'Carthago.Tests.PortableR589ParityTests'=4
                 'Carthago.Tests.PortableHttpBatchParityTests'=15
                 'Carthago.Tests.PortableHttp591595ParityTests'=20
                 'Carthago.Tests.PortableHttp596600ParityTests'=24
                 'Carthago.Tests.PortableHttp602605ParityTests'=20
+                'Carthago.Tests.R601HeaderCaptureTests'=16
             }
             $report.windowsParityQualified=$true
         }
