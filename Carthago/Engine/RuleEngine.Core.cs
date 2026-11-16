@@ -415,6 +415,10 @@ namespace Carthago.Services
             foreach (var evt in ruleResult.Events ?? Array.Empty<DetectionEvent>())
             {
                 if (evt == null) continue;
+                // R272's rule-owned cooldown is authoritative even when event preparation
+                // and runtime tuning normalize suppression state for legacy detectors.
+                var r272CooldownSuppressed = descriptor.RuleId == "R272" &&
+                    evt.SuppressionStatus == DetectionSuppressionStatus.Suppressed;
                 PrepareDetectionEvent(evt, descriptor, record, sensitivity, now);
                 var tuningDecision = ResolveRuntimeTuningDecision(
                     rule,
@@ -425,6 +429,8 @@ namespace Carthago.Services
                 ApplyTuningDecisionToEvent(evt, tuningDecision);
                 ApplyNoiseBudget(evt, descriptor, tuningDecision, now);
                 ApplySuppressionPolicy(evt, descriptor, record, now);
+                if (r272CooldownSuppressed)
+                    evt.SuppressionStatus = DetectionSuppressionStatus.Suppressed;
                 var effectiveMode = evt.SuppressionStatus switch
                 {
                     DetectionSuppressionStatus.None => tuningDecision.EffectiveMode,
