@@ -102,6 +102,18 @@ class AcceptanceContract(unittest.TestCase):
         self.assertEqual(updated["responses"][0]["status"], "pass")
         self.assertEqual(WPF.assess(run, run / "assessment-record.json")["releaseDecision"], "NO_GO")
 
+    def test_remote_tracking_drift_does_not_invalidate_pinned_wpf_evidence(self):
+        run = WPF.initialize(self.dir)
+        self._fill(run)
+        self.pin_patch.return_value = {"branch": WPF.BRANCH,
+            "sourceSha": GOOD_SHA, "originSha": OTHER_SHA, "clean": True,
+            "originMovedPastPinned": True}
+        result = WPF.assess(run, run / "assessment-advanced-remote.json")
+        self.assertEqual(result["releaseDecision"], "CANDIDATE_ONLY")
+        self.assertTrue(result["originMovedSinceInit"])
+        self.assertEqual(result["sourceSha"], GOOD_SHA)
+        self.assertEqual(result["currentOriginShaAtAssessment"], OTHER_SHA)
+
     def test_rejects_unknown_case_id(self):
         run = WPF.initialize(self.dir)
         data = WPF.load(run / "responses.json")
@@ -109,6 +121,50 @@ class AcceptanceContract(unittest.TestCase):
         (run / "responses.json").write_text(json.dumps(data), encoding="utf-8")
         with self.assertRaises(ValueError):
             WPF.assess(run, run / "assessment-d.json")
+
+
+class GitSourcePinContract(unittest.TestCase):
+    """No network access; simulated dirty trees and independent remote movement."""
+
+    def _git_returns(self, head, origin, status="", branch=None):
+        values = {
+            ("symbolic-ref", "--short", "HEAD"): branch or WPF.BRANCH,
+            ("rev-parse", "HEAD"): head,
+            ("rev-parse", "refs/remotes/origin/" + WPF.BRANCH): origin,
+            ("status", "--porcelain", "--untracked-files=all"): status,
+        }
+        return lambda args: values[tuple(args)]
+
+    def test_clean_matching_checkout_initializes(self):
+        with patch.object(WPF, "git", side_effect=self._git_returns(GOOD_SHA, GOOD_SHA)):
+            pin = WPF.pin_checkout()
+            self.assertEqual(pin["sourceSha"], GOOD_SHA)
+            self.assertFalse(pin["originMovedPastPinned"])
+
+    def test_remote_may_advance_after_init_but_not_before(self):
+        with patch.object(WPF, "git", side_effect=self._git_returns(GOOD_SHA, OTHER_SHA)):
+            with self.assertRaisesRegex(ValueError, "Local HEAD .* does not match fetched origin"):
+                WPF.pin_checkout()
+            unchanged = WPF.pin_checkout(expected_sha=GOOD_SHA)
+            self.assertEqual(unchanged["sourceSha"], GOOD_SHA)
+            self.assertTrue(unchanged["originMovedPastPinned"])
+
+    def test_dirty_worktree_rejected_with_specific_reason(self):
+        with patch.object(WPF, "git", side_effect=self._git_returns(
+            GOOD_SHA, GOOD_SHA, "?? scripts/__pycache__/wpf-operational-acceptance.cpython-313.pyc")):
+            with self.assertRaisesRegex(ValueError, "Working tree has local modified/untracked files"):
+                WPF.pin_checkout(expected_sha=GOOD_SHA)
+
+    def test_changed_local_source_is_rejected(self):
+        with patch.object(WPF, "git", side_effect=self._git_returns(OTHER_SHA, OTHER_SHA)):
+            with self.assertRaisesRegex(ValueError, "Local HEAD changed during manual WPF acceptance"):
+                WPF.pin_checkout(expected_sha=GOOD_SHA)
+
+    def test_wrong_branch_is_rejected(self):
+        with patch.object(WPF, "git", side_effect=self._git_returns(
+            GOOD_SHA, GOOD_SHA, branch="main")):
+            with self.assertRaisesRegex(ValueError, "Wrong Git branch"):
+                WPF.pin_checkout(expected_sha=GOOD_SHA)
 
 
 class HistoricalContract(unittest.TestCase):
