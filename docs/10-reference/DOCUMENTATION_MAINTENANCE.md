@@ -33,12 +33,13 @@ python scripts/build_docs_index.py
 python scripts/build_docs_index.py --check
 python scripts/check_docs_links.py
 python scripts/check_docs_status.py
+python scripts/check_readme_metadata.py
 git diff --check
 ```
 
 For a rule or registry change, run `python scripts/build_rule_catalog.py` before the index generator. Use `--check` to detect stale generated indexes without modifying files. Review the generated changes and check that new evidence and links are visible. These checks are documentation-only; run the applicable Windows build and tests separately before claiming product validation.
 
-The static status checker audits navigation and supersession overlays, not code execution. It does not change the existing manually authorized test workflow triggers.
+The static status checker audits navigation and supersession overlays, not code execution. The README metadata checker validates the root version badges against project metadata and the registered rule catalog; it does not execute application tests. It does not change the existing manually authorized test workflow triggers.
 
 The documentation home, numbered topic indexes, batch/research indexes and stable-path register are generated. Update `scripts/build_docs_index.py` rather than hand-editing generated navigation. Narrative guides and evidence files are authored separately.
 

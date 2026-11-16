@@ -1,74 +1,73 @@
-# Carthago
+# Carthago — Network Security Monitor
 
-### Network Security Monitor
+**Local-first network detection, security operations and evidence-led investigations.**
 
-**Windows · C# · .NET 8 · WPF · Local-first security operations**
+[![Status](https://img.shields.io/badge/status-active%20development-F59E0B)](docs/CURRENT_STATUS.md)
+[![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet&logoColor=white)](Carthago/Carthago.csproj)
+[![Windows WPF](https://img.shields.io/badge/WPF-Windows%2010%2B-0078D4?logo=windows)](Carthago/Carthago.csproj)
+[![CLI](https://img.shields.io/badge/CLI-v0.1.0-2563EB)](Carthago.Cli/Carthago.Cli.csproj)
+[![SharpPcap](https://img.shields.io/badge/SharpPcap-6.3.1-0F766E)](Carthago/Carthago.csproj)
+[![Registry](https://img.shields.io/badge/rules-1000%20registered-64748B)](docs/03-detection-rules/MASTER_RULE_CATALOG.md)
+[![CI](https://img.shields.io/badge/CI-manual%20owner--gated-F59E0B)](.github/workflows/carthago-detection-quality.yml)
+[![License](https://img.shields.io/badge/license-MIT-22C55E)](LICENSE)
 
-**[Browse the complete documentation](docs/README.md)** — audience-based reading paths, architecture, detection rules, protocol research, verification, development, design, operations and integrations.
+Carthago combines a **Windows WPF monitoring desktop**, a **portable .NET CLI**, a growing rule registry, local evidence journals, investigation workspaces and optional SIEM destinations. The desktop performs capture and detection; the CLI also supports bounded portable capture/replay for an explicitly supported rule subset.
 
-**[Master detection-rule catalog](docs/03-detection-rules/MASTER_RULE_CATALOG.md)** — one searchable index of every registered R-series rule, with source metadata and evidence links.
+> **Development build — not a production release.** The badges show checked-in versions and targets, not live CI results or certification. **1000 registered IDs does not mean 1000 qualified detections.** See [current verification, tested SHAs and pending release gates](docs/CURRENT_STATUS.md).
 
-Carthago is a Windows desktop application for observing network traffic, detecting suspicious behavior, and turning security signals into evidence-led investigations. It combines live packet analysis, a configurable detection engine, local event journaling, incident correlation, and optional forwarding to security and observability platforms.
+**Documentation:** [Overview](docs/README.md) · [Rule catalog](docs/03-detection-rules/MASTER_RULE_CATALOG.md) · [Architecture](docs/02-architecture/README.md) · [Operations](docs/08-operations/README.md)
 
-Built for security labs, detection engineering, and hands-on network operations, Carthago keeps the original evidence separate from dashboards, recommendations, and external integrations.
+![Carthago Windows security dashboard](https://github.com/user-attachments/assets/e9932225-ea5f-4a68-be5c-25aacf11f25c)
 
-> **Project status:** Active development and experimentation. The repository includes a substantial detection catalog and newer security-operations foundations; the presence of a rule or module does not guarantee production validation, complete telemetry coverage, or a finished UI for every capability.
+## Contents
 
-**Historical GA verification snapshot (October 30, 2026; see the live ledger for current status):** Targeted owner-run Windows **synthetic** checks are GREEN for GA 6D (26/26), GA 6E (18/18), GA 6F (recovery 15/15; writer contention 3/3), GA 6H (6/6), GA 6G (3/6/12 bounded reader rounds), GA 7 (binary DNS/TShark and V2 frame/question/source binding), and GA 8 (read-only, lossless wire-to-legacy compatibility). These are **not** whole-product certification or field detection-accuracy results. Frozen V1 remains FAILED 4/6; V2 remains `PENDING_EXTERNAL_CAPTURE_AND_REVIEW` with **0/4 external R102 sources approved**. For exact tested commits, negative-case counts, current open GA items and the historical audit trail, see [Current GA verification snapshot](docs/DEVELOPMENT_VALIDATION_LEDGER.md#current-ga-verification-snapshot--2026-10-30).
-<img width="1893" height="982" alt="image" src="https://github.com/user-attachments/assets/e9932225-ea5f-4a68-be5c-25aacf11f25c" />
-
-## Explore
-
+- [Versions, platforms and status flags](#versions-platforms-and-status-flags)
 - [Capabilities](#capabilities)
-- [Architecture](#architecture)
 - [Quick start](#quick-start)
+- [CLI options and flags](#cli-options-and-flags)
+- [Architecture](#architecture)
 - [Configuration](#configuration)
 - [Detection engineering](#detection-engineering)
 - [Integrations](#integrations)
 - [Testing and demo](#testing-and-demo)
 - [Security and limitations](#security-and-limitations)
 - [Project layout and documentation](#project-layout-and-documentation)
+- [License](#license)
+
+
+## Versions, platforms and status flags
+
+These values come from checked-in project files on the working branch. The **WPF desktop has no explicitly declared product version**; the illustrative minimum `0.1.0` in `VersionHealthService` is a health baseline, **not** a published desktop release. Do not equate it to the separately versioned CLI.
+
+| Component | Version or target | Supported scope / status |
+| --- | --- | --- |
+| **Desktop (WPF)** | `net8.0-windows10.0.19041.0`; **release version not declared** | Windows desktop; project declares `win-x64` and `win-arm64` runtime targets, but runtime targets alone do not prove both architectures were tested |
+| **CLI** | **v0.1.0**, `net8.0` | Windows and Linux CLI tested in bounded historical runs; portable detection currently supports an explicit subset |
+| **Windows monitor service** | `net8.0-windows10.0.19041.0`; no separate product version | Source candidate; native SCM recovery and unattended acceptance pending |
+| **Capture library** | SharpPcap **6.3.1** | Windows packet-driver capture; separate ETW option where available |
+| **Test framework** | xUnit **2.5.3** | Test outcomes must be attributed to a particular checkout SHA and evidence |
+| **Detection registry** | **1000** registered R001–R1000 | Not a count of independently positive/negative-qualified rules |
+| **CI** | **Manual** GitHub Actions profiles | Owner-authorized workflow dispatch; no automatic green build badge |
+| **License** | MIT | [License file](LICENSE) |
+
+**Status flag glossary:** **Implemented** means code is present; **Synthetic PASS** means a bounded test passed at a recorded SHA; **Pending** means an identified evidence or deployment gate remains open; **Field-qualified** and **Release-approved** require their own proof and must not be inferred from badges.
+
+The Windows target `10.0.19041.0` is a project API baseline. The in-app health checker recommends Windows build **10.0.19044** or later; that recommendation is separate from the target framework. All current project targets above are **.NET 8** even if a newer SDK is installed.
+
 
 ## Capabilities
 
 | Area | What Carthago provides |
 | --- | --- |
 | **Capture and visibility** | Windows network capture using SharpPcap or an ETW capture option; IPv4/IPv6, transport-layer, and selected DNS, HTTP, TLS, and QUIC metadata parsing. |
-| **Detection engineering** | An expanding R-series rule catalog covering reconnaissance, identity, lateral movement, DNS, TLS, web/API activity, exfiltration, IoT/OT, cloud and development tooling, and platform health. See the live rule registry for the current count. |
+| **Detection engineering** | An expanding R-series rule catalog covering reconnaissance, identity, lateral movement, DNS, TLS, web/API activity, exfiltration, IoT/OT, cloud and development tooling, and platform health. The current source registry has 1000 R-series IDs; exact rule qualification is incomplete. |
 | **Context and enrichment** | Process association where available, service identification, WHOIS/RDAP, threat intelligence, reputation, and optional geolocation data. |
 | **Evidence and investigations** | Durable JSONL detection journal, outbox, incident correlation, entity-risk context, investigation timelines, and analyst feedback foundations. |
 | **Analyst experience** | WPF dashboards and workspaces for live traffic, alerts, anomalies, incidents, threat feeds, host integrity, integrations, and sink-delivery events. |
 | **Interoperability** | Optional forwarding to OTLP, Azure Monitor, Splunk HEC, Elasticsearch, Kafka, CEF Syslog, GELF HTTP, JSONL files, and webhooks. |
 | **Validation** | xUnit tests, deterministic rule/replay fixtures, a benchmark project, and rule-catalog precision/health checks. |
 
-The catalog describes registered rules, **not guaranteed detections**. Rules depend on available telemetry, configuration, thresholds, and validation maturity. See the [rule registry](Carthago/Engine/Rules/Catalog/RuleRegistry.cs) and [detection engineering model](docs/03-detection-rules/guides/DetectionEngineeringModel.md).
-
-## Architecture
-
-```mermaid
-flowchart TD
-    A["Packet capture: SharpPcap or ETW"] --> B["Parse and enrich traffic"]
-    B --> C["Evaluate rules and evidence"]
-    C --> D[("Local JSONL detection journal")]
-    D --> E["Correlation, risk and triage"]
-    E --> F["WPF security workspaces"]
-    D --> G["Durable outbox and sink delivery"]
-    G --> H["SIEM and telemetry platforms"]
-```
-
-The **local detection journal is the authoritative record**. UI views, incidents, risk scores, summaries, exports, and sink deliveries are derived from detection evidence; they must not replace or silently discard the original events. This design makes replay, review, and fault investigation possible even when an external destination is unavailable.
-
-Key implementation entry points:
-
-| Concern | Source |
-| --- | --- |
-| Capture orchestration | [`TrafficCaptureService`](Carthago/Services/TrafficCaptureService.cs) |
-| Packet parsing | [`PacketHandler`](Carthago/Services/PacketHandler.cs) |
-| Rule registration | [`RuleRegistry`](Carthago/Engine/Rules/Catalog/RuleRegistry.cs) |
-| Rule evaluation | [`RuleEngine`](Carthago/Engine/RuleEngine.Core.cs) |
-| Durable evidence | [`DetectionJournal`](Carthago/Services/Journaling/DetectionJournal.cs) and [`DetectionOutbox`](Carthago/Services/Journaling/DetectionOutbox.cs) |
-| Incident correlation | [`IncidentCorrelationEngine`](Carthago/Analytics/Services/IncidentCorrelationEngine.cs) |
-| External delivery | [`SinkManager`](Carthago/Sinks/SinkManager.cs) |
+The catalog describes **registered rules, not guaranteed detections**. Rules depend on available telemetry, configuration, thresholds, and validation maturity. See the [rule registry](Carthago/Engine/Rules/Catalog/RuleRegistry.cs) and [detection engineering model](docs/03-detection-rules/guides/DetectionEngineeringModel.md).
 
 ## Quick start
 
@@ -84,18 +83,82 @@ Key implementation entry points:
 Open **PowerShell** on Windows:
 
 ```powershell
-git clone https://github.com/afiay/Carthago-Network-Security-Monitor.git
+git clone --branch feature/carthago-reliability-hardening https://github.com/afiay/Carthago-Network-Security-Monitor.git
 Set-Location Carthago-Network-Security-Monitor
 
+dotnet --version
 dotnet restore DOTNET.sln
-dotnet build DOTNET.sln --no-restore
-dotnet test DOTNET.sln --no-build
-dotnet run --project Carthago/Carthago.csproj
+dotnet build DOTNET.sln -c Release --no-restore
+dotnet run --project Carthago/Carthago.csproj -c Release
 ```
 
 In the application, choose a capture device or the available ETW source, then start capture. Begin with a controlled test network and verify incoming records before enabling detection forwarding.
 
 The repository also provides [`scripts/ci-build.ps1`](scripts/ci-build.ps1) and [`scripts/ci-test.ps1`](scripts/ci-test.ps1) for the solution-level build and test workflow.
+
+### Portable CLI on Windows or Linux
+
+The CLI is a separate `net8.0` executable. These commands are read-only and **do not launch live monitoring**:
+
+```bash
+dotnet restore Carthago.Cli/Carthago.Cli.csproj
+dotnet run --project Carthago.Cli/Carthago.Cli.csproj -c Release -- --version --json
+dotnet run --project Carthago.Cli/Carthago.Cli.csproj -c Release -- capabilities --json
+dotnet run --project Carthago.Cli/Carthago.Cli.csproj -c Release -- rules capabilities --portable --json
+dotnet run --project Carthago.Cli/Carthago.Cli.csproj -c Release -- capture doctor --json
+```
+
+The `--version` result is the **CLI v0.1.0** version, not a global desktop or service release version. Linux CLI regression and bounded WSL2 capture/replay evidence exist, but Linux unattended service hosting remains unqualified.
+
+
+## CLI options and flags
+
+The following command shapes are defined by [`CliApplication.cs`](Carthago.Cli/CliApplication.cs). Flags must be passed in the documented position; **`--json` must be last**.
+
+| Option or command | Effect | Boundary |
+| --- | --- | --- |
+| `--help` | Show commands and syntax | Read-only |
+| `--version [--json]` | Report the CLI version (**v0.1.0**) | Does not version the desktop |
+| `--json` | Structured response for supported commands | Final argument |
+| `rules capabilities --portable` | Show supported portable detectors | Not the full 1000-ID Windows registry |
+| `capture doctor --json` | Inspect capture prerequisites | Not a live capture test |
+| `capture interfaces --json` | Enumerate interfaces | Discovery, not authorization |
+| `pcap inspect <file.pcap|file.pcapng>` | Read existing capture metadata | Imported evidence remains untrusted |
+| `pcap detect <file> --rules R586[,R...]` | Offline replay with selected portable rules | Rule IDs must be supported |
+| `capture qualify --interface ID --seconds 1-60 --authorized-test-time` | Bounded live capture qualification | Requires specific owner authorization and capture privileges |
+| `monitor run --interface ID --rules R586[,R...] --authorized-test-time` | Foreground capture and portable detection | Explicit authorization; not an installed service |
+| `monitor journal <session-directory> --json` | Inspect a locally recorded monitor session | Inspection is not proof of event authenticity |
+| `service status|health|start|stop|doctor` | Windows service management | Service deployment acceptance still pending |
+
+See [CLI implementation](docs/07-design/roadmap/CARTHAGO_CLI_IMPLEMENTATION.md) and [current qualification gates](docs/CURRENT_STATUS.md) before performing capture or service operations.
+
+
+## Architecture
+
+```mermaid
+flowchart TD
+    A["Packet capture: SharpPcap or ETW"] --> B["Parse and enrich traffic"]
+    B --> C["Evaluate rules and evidence"]
+    C --> D[("Local JSONL detection journal")]
+    D --> E["Correlation, risk and triage"]
+    E --> F["WPF security workspaces"]
+    D --> G["Durable outbox and sink delivery"]
+    G --> H["SIEM and telemetry platforms"]
+```
+
+The **local detection journal is the authoritative Windows detection record**; the portable monitor also has its own explicitly scoped session journal. UI views, incidents, risk scores, summaries, exports, and sink deliveries are derived from detection evidence; they must not replace or silently discard the original events. This design makes replay, review, and fault investigation possible even when an external destination is unavailable.
+
+Key implementation entry points:
+
+| Concern | Source |
+| --- | --- |
+| Capture orchestration | [`TrafficCaptureService`](Carthago/Services/TrafficCaptureService.cs) |
+| Packet parsing | [`PacketHandler`](Carthago/Services/PacketHandler.cs) |
+| Rule registration | [`RuleRegistry`](Carthago/Engine/Rules/Catalog/RuleRegistry.cs) |
+| Rule evaluation | [`RuleEngine`](Carthago/Engine/RuleEngine.Core.cs) |
+| Durable evidence | [`DetectionJournal`](Carthago/Services/Journaling/DetectionJournal.cs) and [`DetectionOutbox`](Carthago/Services/Journaling/DetectionOutbox.cs) |
+| Incident correlation | [`IncidentCorrelationEngine`](Carthago/Analytics/Services/IncidentCorrelationEngine.cs) |
+| External delivery | [`SinkManager`](Carthago/Sinks/SinkManager.cs) |
 
 ## Configuration
 
@@ -119,7 +182,7 @@ Configuration and generated runtime state are described in [Runtime Data](docs/0
 
 ## Detection engineering
 
-The built-in catalog spans the expanding R-series IDs. Examples of covered signal families include:
+The built-in catalog registers **1000 IDs (R001–R1000)**, but the independently qualified positive/negative coverage is not yet established for all of them. Examples of covered signal families include:
 
 - **Network behavior:** scanning, service exposure, lateral-movement patterns, novel destinations, and abnormal traffic volumes.
 - **Identity and web:** unusual authentication behavior, credential exposure indicators, suspicious HTTP/API requests, and TLS anomalies.
@@ -143,6 +206,8 @@ Incident correlation, entity scoring, analyst feedback, and investigation contex
 
 The v6 foundation also contains interfaces and models for response playbooks, sensors, content packs, hunting, and automation. **Full enforcement adapters, cloud fleet management, and some richer UI capabilities remain future work**, as noted in the [v6 vision](docs/02-architecture/CarthagoV6Vision.md).
 
+**Current evidence:** [Exact registry reconciliation](docs/05-detection-quality/REGISTRY_RECONCILIATION_20261116.md) · [Exact-ID audit](docs/05-detection-quality/EXACT_ID_QUALIFICATION_AUDIT.md) · [Current overall status](docs/CURRENT_STATUS.md). The portable synthetic replay matrix covers R586–R605 specifically; it is not a certificate for all R-series IDs.
+
 ## Integrations
 
 Optional detection destinations live in [`Carthago/Sinks`](Carthago/Sinks):
@@ -165,10 +230,10 @@ Sink delivery is handled through a fan-out manager with bounded queues, batching
 
 The solution includes unit and integration-oriented tests under [`Carthago.Tests`](Carthago.Tests), a separate [rule-architecture test harness](Carthago/Tests), and replay samples under [`Tests/RuleReplaySamples`](Tests/RuleReplaySamples).
 
-Run tests:
+Run the primary Windows test project **only in an authorized test session**:
 
 ```powershell
-dotnet test DOTNET.sln
+dotnet test Carthago.Tests/Carthago.Tests.csproj -c Release
 ```
 
 Run the replay benchmark (after restoring dependencies):
@@ -179,7 +244,18 @@ Run the replay benchmark (after restoring dependencies):
 
 The [demo scenario](docs/01-getting-started/demo-scenario.md) walks through an evolving suspicious host, correlated detections, incident evidence, and analyst feedback. See [Replay Testing](docs/05-detection-quality/guides/ReplayTesting.md) for sample expectations.
 
-These commands describe the intended Windows workflow; **this README update does not claim a fresh successful build, test run, or production certification**.
+### Documentation-only quality checks
+
+```powershell
+python scripts/build_docs_index.py --check
+python scripts/check_docs_links.py
+python scripts/check_docs_status.py
+python scripts/check_readme_metadata.py
+```
+
+**Recorded, not re-run here:** a historical Windows full xUnit 14,361/14,361 PASS, portable paired replay R586–R605 on both platforms, and bounded active-sensor tests. The original full-suite TRX still lacks strict contemporaneous execution-SHA artifact linkage; source- and artifact-qualified gates are documented separately. R102 V1 historically FAILED 4/6, V2 remains 0/4 approved external R102 pairs, and DNS wire Stages 2–4 remain compiler-guarded. **Neither this README update nor a static badge is new verification.** [Evidence matrix](docs/CURRENT_STATUS.md).
+
+The centralized GitHub Actions validation workflow is [manual and owner-gated](.github/workflows/carthago-detection-quality.yml); a CI-passing badge would be misleading.
 
 ## Security and limitations
 
@@ -188,20 +264,28 @@ These commands describe the intended Windows workflow; **this README update does
 - **Evidence boundaries:** the JSONL journal is the source of truth. Derived incident views, local summaries, and sink deliveries must not be treated as replacements for raw evidence.
 - **Detection accuracy:** rules are heuristic or telemetry-dependent and can produce false positives or miss activity. Establish environment baselines and review precision profiles before relying on alerts.
 - **Controlled response:** containment recommendations are not automatic authorization to execute disruptive actions. Response integrations require deliberate review and safeguards.
-- **Platform scope:** this is a Windows desktop project. Current v6 foundations do not imply a production-ready, managed multi-sensor SaaS platform.
+- **Platform scope:** WPF remains Windows-specific, while the separate `net8.0` CLI has bounded Windows/Linux qualification. A cross-platform CLI does not mean Linux GUI or daemon production support. Current v6 foundations do not imply a production-ready, managed multi-sensor SaaS platform.
 
 For the documented architectural constraints, read [Architecture Safety Rules](docs/02-architecture/ArchitectureSafetyRules.md).
+- **Current release gates:** Windows SCM recovery, Linux L8C unattended service hosting, full UI visual/operational acceptance, field detection accuracy and individually reconciled rule tests remain open. [Current status](docs/CURRENT_STATUS.md).
 
 ## Project layout and documentation
 
 ```text
 Carthago/               WPF application, capture, detection engine, services, and sinks
-Carthago.Tests/         xUnit test suite
+Carthago.Contracts/     Shared .NET 8 contracts
+Carthago.Core/          Portable .NET 8 detection/session components
+Carthago.Cli/           Versioned CLI (v0.1.0)
+Carthago.Cli.Tests/     Portable CLI xUnit suite
+Carthago.Monitor/       Windows monitor-service candidate
+Carthago.ActiveQualification/  Active-sensor qualification harness
+Carthago.Tests/         Main Windows xUnit test suite
 Carthago.Benchmarks/    Replay and benchmarking console project
 Carthago/Tests/         Additional rule-architecture test harness
 Tests/                  Replay and other testing fixtures
 config/samples/         Example content-pack configurations
 docs/README.md          Complete categorized documentation navigation
+docs/CURRENT_STATUS.md  Evidence-linked status and outstanding gates
 docs/01-*/ ... 10-*/    Getting started through reference, organized by topic
 docs/archive/           Historical UI implementation notes
 docs/rules/, docs/design/  Path-stable work contracts and current progress ledgers
@@ -211,7 +295,7 @@ DOTNET.sln              Solution entry point
 
 Useful starting points:
 
-- [All documentation](docs/README.md) · [legacy path map](docs/10-reference/LEGACY_DOCUMENTATION_PATHS.md)
+- [All documentation](docs/README.md) · [current status](docs/CURRENT_STATUS.md) · [legacy path map](docs/10-reference/LEGACY_DOCUMENTATION_PATHS.md)
 - [Architecture and safety](docs/02-architecture/ArchitectureSafetyRules.md)
 - [Content packs](docs/03-detection-rules/guides/ContentPacks.md) · [pack examples](docs/03-detection-rules/content-packs/README.md)
 - [Investigation copilot](docs/08-operations/guides/InvestigationCopilot.md) · [response playbooks](docs/08-operations/guides/ResponsePlaybooks.md)
