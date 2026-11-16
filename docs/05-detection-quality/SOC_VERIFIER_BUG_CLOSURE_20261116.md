@@ -40,7 +40,7 @@ The completion file is an owner-supplied runner-generated report, **not an exter
 
 ## Follow-up separated from CLOSED bug
 
-1. **Independent original-artifact integrity:** Run the read-only `scripts/verify-soc-completion-artifacts.ps1 -RunDirectory <run-folder>` against the new run folder. It compares the original source SHA file, TRX ID/counters/groups/digest and four log digests with `completion.json`, without rebuilding or rerunning SOC. **Not yet executed on the owner's Windows system.** Retain the output and originals for operational evidence acceptance; do not reopen the closed classification defect solely due to this archival step.
+1. **Independent original-artifact integrity: COMPLETED — owner Windows execution.** The owner ran `scripts/verify-soc-completion-artifacts.ps1 -RunDirectory '.\TestResults\soc-workspace-20261116-201947-13980-fc218b2a'` and supplied the exact resulting console JSON: `status=all-original-artifact-hashes-matched`. It verified the original source SHA file, TRX GUID/hash/counters/groups and all four original stage-log SHA-256 values against `completion.json`, without rebuilding, rerunning detector tests or capturing traffic. Retain the original bundle and terminal output as local proof. This is owner-run byte verification reported to the auditor, not a claim the original sibling files were separately uploaded here.
 2. **Rule test warnings:** Nine xUnit1026 unused `name` parameter warnings in R988–R990 and R995–R1000. Separate rule-test hygiene work, preserving theory-case coverage and semantics.
 3. **SOC operational acceptance:** Manual WPF UI/navigation/export/accessibility and physical/capture path evidence remain pending; not part of this defect.
 
@@ -49,3 +49,21 @@ The completion file is an owner-supplied runner-generated report, **not an exter
 The successful **new** 2026-11-16 SOC TRX is **not** part of the frozen 359-artifact / 42-TRX historical recovery cohort. That separate inventory stays **6/42 runner-report-linked, 36 without runner links**. The original 2026-11-11 SOC source-file-correlated run remains historically unlinked; do not retroactively attach this new completion report. No rule or benchmark was promoted by this closure.
 
 **Disposition basis:** Reproduction, narrow fix, 27 offline contract assertions, actual corrected Windows end-to-end test pass, final report publication, and independent inspection of the uploaded completion JSON. No open GitHub issue matching this defect was present at closure inspection; this Markdown file is the authoritative **engineering defect closure record**, not a claim that an issue was programmatically closed.
+
+
+## Final owner-run artifact verification — PASS (2026-11-16)
+
+The owner executed the dedicated **read-only** `scripts/verify-soc-completion-artifacts.ps1` against the **new** run `TestResults/soc-workspace-20261116-201947-13980-fc218b2a/`, after rerunning the offline contract (27 assertions PASS). The terminal result reports `status=all-original-artifact-hashes-matched`:
+
+| Field from Windows checker | Verified reported result |
+| --- | --- |
+| `sourceSha` | `971892ef4d18e18cbb2d8317c23c0ada64c2dc19` |
+| `trxRunId` | `36333bc5-2f34-472e-9e8c-0afbe7463041` |
+| `trxSha256` | `121f68fc32e94d42f4ccc8a424f2a34582cba797cbb904e123b8c8dd4cefe1af` |
+| `completionSha256` | `577edf65e6be209e1908600ea94a9af22b189ea56f8938afaaf84e371d6ac252` |
+| Original TRX | 70 executed, 70 passed, 5 method-scoped |
+| `sdk-version`, `restore`, `build-release`, `soc-tests` logs | `sha256-matched` for each |
+| `fieldQualified`, `evidenceAdmitted` | `false`, `false` |
+| `verifierTestsExecuted` | 0 |
+
+This closes the *separately tracked independent original-file hash-check follow-up* as **owner-executed PASS**. The local original files were hashed by the Windows utility; their bytes were not separately uploaded to this conversation. The frozen historical 42-TRX reconciliation remains **6 source-run-linked, 36 unlinked**, because the new source-pinned SOC run is not in that historical cohort. Manual WPF operational acceptance and detection accuracy remain **pending**. The nine xUnit1026 warnings remain a separate issue. No rules, benchmark thresholds, or original evidence files were changed by this documentation.
