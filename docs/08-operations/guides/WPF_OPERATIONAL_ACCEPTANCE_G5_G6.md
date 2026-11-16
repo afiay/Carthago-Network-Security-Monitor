@@ -38,7 +38,23 @@ dotnet run --project .\Carthago\Carthago.csproj -c Release
 
 Diagnostics are **source instrumentation**, not automatic proof of correct UI rendering. Use `scripts/watch-ui-pipeline.ps1` and `scripts/summarize-ui-operations.ps1` as diagnostic aids and retain their outputs. If external dependencies or traffic are unavailable, mark that case **blocked**, not passed. Use traffic on a network/lab you administer or are authorized to test. Do not send raw personal traffic or credentials in screenshots or logs.
 
-While the actual application is running, work through the matrix below. For **each case** edit the matching row in `responses.json`:
+While the actual application is running, work through the matrix below. For **each case**, use the built-in **owner observation recorder** rather than editing JSON by hand:
+
+```powershell
+$run = '.\TestResults\wpf-g5-g6-<YOUR-RUN-FOLDER>'
+# Save a real redacted screenshot first under $run\evidence\G5-02-nav.png.
+python .\scripts\wpf-operational-acceptance.py record `
+  --run-dir $run --case G5-02 --status pass `
+  --notes 'Overview to Monitoring Health to Live Traffic remained in MainWindow' `
+  --evidence 'evidence/G5-02-nav.png'
+
+# If the source, hardware or observation is unavailable, record a blocker honestly:
+python .\scripts\wpf-operational-acceptance.py record `
+  --run-dir $run --case G6-01 --status blocked `
+  --notes 'No authorized Npcap or ETW source was available for this window'
+```
+
+The recorder checks the same branch SHA and clean checkout, verifies that any cited evidence files really exist, and stamps the observation time. It **does not open CARTHAGO or invent a PASS**. You may alternatively edit the matching `responses.json` row manually with the fields below:
 
 - `status`: one of `not_run`, `pass`, `fail`, `blocked`. Never turn missing evidence into a pass.
 - `notes`: a factual observation with at least 15 characters for a pass; mention what happened and any deviation.
