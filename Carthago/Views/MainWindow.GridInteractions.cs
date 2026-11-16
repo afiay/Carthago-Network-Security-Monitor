@@ -11,6 +11,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using Carthago.Models;
+using Carthago.Views;
 
 namespace Carthago
 {
