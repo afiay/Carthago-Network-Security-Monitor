@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: MIT
+using System;
+using System.Globalization;
 using Carthago.Models;
 using Carthago.Views;
 using Xunit;
@@ -7,6 +9,22 @@ namespace Carthago.Tests;
 
 public sealed class LiveTrafficHeaderFormatterTests
 {
+    [Fact]
+    public void WpfConverterUsesTheSameObservedHeaderValuesAsThePacketDetail()
+    {
+        var record = new TrafficRecord { Protocol = "TCP", TcpFlags = 0x12 };
+        var converter = new LiveTrafficHeaderConverter();
+        Assert.Equal("0x012 (18)", converter.Convert(record, typeof(string),
+            LiveTrafficHeaderFormatter.TcpRaw, CultureInfo.InvariantCulture));
+        Assert.Equal("SYN, ACK", converter.Convert(record, typeof(string),
+            LiveTrafficHeaderFormatter.TcpText, CultureInfo.InvariantCulture));
+        Assert.Equal("N/A", converter.Convert(record, typeof(string),
+            LiveTrafficHeaderFormatter.IcmpCode, CultureInfo.InvariantCulture));
+        Assert.Throws<NotSupportedException>(() =>
+            converter.ConvertBack("2", typeof(string), LiveTrafficHeaderFormatter.TcpRaw,
+                CultureInfo.InvariantCulture));
+    }
+
     [Fact]
     public void TcpSynAckHasReadableAndHexadecimalFlags()
     {
