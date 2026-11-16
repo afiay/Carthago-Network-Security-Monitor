@@ -4,6 +4,16 @@
 
 Source branch: `feature/carthago-reliability-hardening`. Any newer commit creates a **new** candidate; do not copy acceptance from an earlier source SHA.
 
+## Source-only contract preflight (does not open WPF)
+
+Run the new offline Python contract before relying on the acceptance scripts:
+
+```powershell
+python .\scripts\test-wpf-historical-acceptance-contracts.py
+```
+
+It checks safe default NO-GO, accepted hashed observations, refusal of unsafe evidence paths, source SHA changes, 42-TRX exact-link count and historical log proximity behavior using synthetic fixtures. It does **not** run the Windows app, perform detector tests or create capture traffic. **The authoring session has not executed this new contract**; record the actual Windows output before trusting the toolchain.
+
 ## How to operate the acceptance workflow
 
 From an interactive Windows session in the CARTHAGO repository, after saving local edits and doing a safe fast-forward:
@@ -42,7 +52,7 @@ python .\scripts\wpf-operational-acceptance.py assess `
     --run-dir '.\TestResults\wpf-g5-g6-<YOUR-RUN-FOLDER>'
 ```
 
-This produces a **new** `assessment.json`. It hashes each evidence file and returns `NO_GO` until **all 16 required manual cases** have complete, source-consistent, real submitted observations. A complete `CANDIDATE_ONLY` outcome is still operator-submitted evidence, **not independent proof** that the WPF rendered correctly, and **not** detection-rule accuracy or full release approval. Exit code 2 indicates NO-GO; 3 indicates malformed/unsafe input.
+This produces a **new immutable** `assessment-<UTC>-<ID>.json` on each invocation; a NO-GO assessment never overwrites earlier evidence, so the operator can add observations and assess again. It hashes each evidence file and returns `NO_GO` until **all 16 required manual cases** have complete, source-consistent, real submitted observations. A complete `CANDIDATE_ONLY` outcome is still operator-submitted evidence, **not independent proof** that the WPF rendered correctly, and **not** detection-rule accuracy or full release approval. Exit code 2 indicates NO-GO; 3 indicates malformed/unsafe input.
 
 ## G5 manual visual/navigation checks
 
