@@ -87,9 +87,268 @@ function Get-SocWorkspaceTrxEvidence {
     }
     $started = [DateTimeOffset]::MinValue
     $finished = [DateTimeOffset]::MinValue
-    if (-not [DateTimeOffset]::TryParse($times.GetAttribute('start'), [ref]$started) -or
-        -not [DateTimeOffset]::TryParse($times.GetAttribute('finish'), [ref]$finished) -or
-        $started.Offset -ne [TimeSpan]::Zero -or $finished.Offset -ne [TimeSpan]::Zero -or
+    $timeStart = $times.GetAttribute('start')
+    $timeFinish = $times.GetAttribute('finish')
+    if ($timeStart -cnotmatch '(?:Z|[+-][0-9]{2}:[0-9]{2})
+
+    return [ordered]@{
+        trxRunId = $runId.ToString('D')
+        trxSha256 = (Get-FileHash -LiteralPath $item.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+        trxStartedUtc = $started.ToUniversalTime().ToString('o')
+        trxFinishedUtc = $finished.ToUniversalTime().ToString('o')
+        testResults = [ordered]@{
+            total = $number['total']; executed = $number['executed']
+            passed = $number['passed']; failed = $number['failed']
+        }
+        requiredGroups = $groups
+    }
+}
+
+function Assert-SocWorkspaceCompletionRecord {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][System.Collections.IDictionary]$Record)
+
+    if ($Record['schemaVersion'] -ne 1 -or
+        $Record['purpose'] -cne 'soc-workspace-final-provenance-v1' -or
+        $Record['status'] -cne 'SyntheticSocPassed' -or
+        $Record['branch'] -cne 'feature/carthago-reliability-hardening' -or
+        $Record['postRunBranch'] -cne $Record['branch']) {
+        throw 'SOC completion record status, schema or branch invalid.'
+    }
+    foreach ($name in @('sourceSha','preRunSha','postRunSha','preRunOriginSha','postRunOriginSha')) {
+        if ($Record[$name] -isnot [string] -or $Record[$name] -cnotmatch '^[a-f0-9]{40}$') {
+            throw "SOC completion record invalid $name."
+        }
+    }
+    if ($Record['sourceSha'] -cne $Record['preRunSha'] -or
+        $Record['sourceSha'] -cne $Record['postRunSha'] -or
+        $Record['sourceSha'] -cne $Record['preRunOriginSha'] -or
+        $Record['sourceSha'] -cne $Record['postRunOriginSha']) {
+        throw 'SOC completion record pre/post source and tracking SHA differ.'
+    }
+    foreach ($name in @('trxSha256','sourceShaFileSha256')) {
+        if ($Record[$name] -isnot [string] -or $Record[$name] -cnotmatch '^[a-f0-9]{64}$') {
+            throw "SOC completion record invalid $name."
+        }
+    }
+    $runId = [guid]::Empty
+    if ($Record['trxRunId'] -isnot [string] -or
+        -not [guid]::TryParse($Record['trxRunId'], [ref]$runId) -or
+        $runId -eq [guid]::Empty) { throw 'SOC completion record invalid TRX run ID.' }
+    $start = [DateTimeOffset]::MinValue
+    $finish = [DateTimeOffset]::MinValue
+    $trxStart = [DateTimeOffset]::MinValue
+    $trxFinish = [DateTimeOffset]::MinValue
+    if (-not [DateTimeOffset]::TryParse([string]$Record['startedUtc'], [ref]$start) -or
+        -not [DateTimeOffset]::TryParse([string]$Record['finishedUtc'], [ref]$finish) -or
+        -not [DateTimeOffset]::TryParse([string]$Record['trxStartedUtc'], [ref]$trxStart) -or
+        -not [DateTimeOffset]::TryParse([string]$Record['trxFinishedUtc'], [ref]$trxFinish) -or
+        $start.Offset -ne [TimeSpan]::Zero -or $finish.Offset -ne [TimeSpan]::Zero -or
+        $trxStart.Offset -ne [TimeSpan]::Zero -or $trxFinish.Offset -ne [TimeSpan]::Zero -or
+        $start -gt $finish -or
+        $trxStart -lt $start.AddMinutes(-2) -or $trxFinish -gt $finish.AddMinutes(2) -or
+        $trxStart -gt $trxFinish) {
+        throw 'SOC completion record timestamps are inconsistent.'
+    }
+    $results = $Record['testResults']
+    if ($results -isnot [System.Collections.IDictionary] -or
+        $results['total'] -isnot [int] -or $results['total'] -le 0 -or
+        $results['total'] -ne $results['executed'] -or
+        $results['total'] -ne $results['passed'] -or $results['failed'] -ne 0) {
+        throw 'SOC completion record counters incomplete.'
+    }
+    $requiredGroups = $Record['requiredGroups']
+    if ($requiredGroups -isnot [System.Collections.IDictionary]) { throw 'SOC completion groups missing.' }
+    foreach ($name in @('NetworkInvestigation','IncidentTimeline','IncidentDetectionLinkVm')) {
+        if ($requiredGroups[$name] -isnot [int] -or $requiredGroups[$name] -le 0) {
+            throw "SOC completion missing group $name."
+        }
+    }
+    $stages = $Record['stages']
+    $expected = @('sdk-version','restore','build-release','soc-tests')
+    if ($stages -isnot [System.Collections.IDictionary] -or $stages.Count -ne $expected.Count) {
+        throw 'SOC completion has missing or unexpected stages.'
+    }
+    foreach ($stage in $expected) {
+        if (-not $stages.Contains($stage)) { throw "SOC completion missing stage $stage." }
+        $entry = $stages[$stage]
+        if ($entry -isnot [System.Collections.IDictionary] -or
+            $entry['exitCode'] -isnot [int] -or $entry['exitCode'] -ne 0 -or
+            $entry['logSha256'] -isnot [string] -or
+            $entry['logSha256'] -cnotmatch '^[a-f0-9]{64}$' -or
+            $entry['logFileName'] -cne ($stage + '.log')) {
+            throw "SOC completion stage $stage did not pass."
+        }
+    }
+    if ($Record['evidenceAdmitted'] -cne $false -or
+        $Record['fieldAccuracyQualified'] -cne $false -or
+        $Record['manualWpfValidated'] -cne $false) {
+        throw 'SOC completion must not claim production, field or manual UI acceptance.'
+    }
+}
+
+function Publish-SocWorkspaceCompletionRecord {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][System.Collections.IDictionary]$Record,
+        [Parameter(Mandatory)][string]$Path
+    )
+    Assert-SocWorkspaceCompletionRecord -Record $Record
+    $target = [IO.Path]::GetFullPath($Path)
+    $directory = [IO.Path]::GetDirectoryName($target)
+    if (-not [IO.Directory]::Exists($directory) -or [IO.File]::Exists($target) -or
+        [IO.Directory]::Exists($target)) { throw 'SOC completion target missing directory or already exists.' }
+    $temporary = Join-Path $directory ('.completion-' + [guid]::NewGuid().ToString('N') + '.tmp')
+    try {
+        $payload = $Record | ConvertTo-Json -Depth 8
+        $bytes = [Text.UTF8Encoding]::new($false).GetBytes($payload + [Environment]::NewLine)
+        $stream = [IO.File]::Open($temporary, [IO.FileMode]::CreateNew,
+                                   [IO.FileAccess]::Write, [IO.FileShare]::None)
+        try {
+            $stream.Write($bytes, 0, $bytes.Length)
+            $stream.Flush()
+        } finally {
+            $stream.Dispose()
+        }
+        [IO.File]::Move($temporary, $target)
+    } finally {
+        if ([IO.File]::Exists($temporary)) { [IO.File]::Delete($temporary) }
+    }
+}
+
+Export-ModuleMember -Function Get-SocWorkspaceTrxEvidence,Assert-SocWorkspaceCompletionRecord,Publish-SocWorkspaceCompletionRecord
+ -or
+        $timeFinish -cnotmatch '(?:Z|[+-][0-9]{2}:[0-9]{2})
+
+    return [ordered]@{
+        trxRunId = $runId.ToString('D')
+        trxSha256 = (Get-FileHash -LiteralPath $item.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+        trxStartedUtc = $started.ToUniversalTime().ToString('o')
+        trxFinishedUtc = $finished.ToUniversalTime().ToString('o')
+        testResults = [ordered]@{
+            total = $number['total']; executed = $number['executed']
+            passed = $number['passed']; failed = $number['failed']
+        }
+        requiredGroups = $groups
+    }
+}
+
+function Assert-SocWorkspaceCompletionRecord {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][System.Collections.IDictionary]$Record)
+
+    if ($Record['schemaVersion'] -ne 1 -or
+        $Record['purpose'] -cne 'soc-workspace-final-provenance-v1' -or
+        $Record['status'] -cne 'SyntheticSocPassed' -or
+        $Record['branch'] -cne 'feature/carthago-reliability-hardening' -or
+        $Record['postRunBranch'] -cne $Record['branch']) {
+        throw 'SOC completion record status, schema or branch invalid.'
+    }
+    foreach ($name in @('sourceSha','preRunSha','postRunSha','preRunOriginSha','postRunOriginSha')) {
+        if ($Record[$name] -isnot [string] -or $Record[$name] -cnotmatch '^[a-f0-9]{40}$') {
+            throw "SOC completion record invalid $name."
+        }
+    }
+    if ($Record['sourceSha'] -cne $Record['preRunSha'] -or
+        $Record['sourceSha'] -cne $Record['postRunSha'] -or
+        $Record['sourceSha'] -cne $Record['preRunOriginSha'] -or
+        $Record['sourceSha'] -cne $Record['postRunOriginSha']) {
+        throw 'SOC completion record pre/post source and tracking SHA differ.'
+    }
+    foreach ($name in @('trxSha256','sourceShaFileSha256')) {
+        if ($Record[$name] -isnot [string] -or $Record[$name] -cnotmatch '^[a-f0-9]{64}$') {
+            throw "SOC completion record invalid $name."
+        }
+    }
+    $runId = [guid]::Empty
+    if ($Record['trxRunId'] -isnot [string] -or
+        -not [guid]::TryParse($Record['trxRunId'], [ref]$runId) -or
+        $runId -eq [guid]::Empty) { throw 'SOC completion record invalid TRX run ID.' }
+    $start = [DateTimeOffset]::MinValue
+    $finish = [DateTimeOffset]::MinValue
+    $trxStart = [DateTimeOffset]::MinValue
+    $trxFinish = [DateTimeOffset]::MinValue
+    if (-not [DateTimeOffset]::TryParse([string]$Record['startedUtc'], [ref]$start) -or
+        -not [DateTimeOffset]::TryParse([string]$Record['finishedUtc'], [ref]$finish) -or
+        -not [DateTimeOffset]::TryParse([string]$Record['trxStartedUtc'], [ref]$trxStart) -or
+        -not [DateTimeOffset]::TryParse([string]$Record['trxFinishedUtc'], [ref]$trxFinish) -or
+        $start.Offset -ne [TimeSpan]::Zero -or $finish.Offset -ne [TimeSpan]::Zero -or
+        $trxStart.Offset -ne [TimeSpan]::Zero -or $trxFinish.Offset -ne [TimeSpan]::Zero -or
+        $start -gt $finish -or
+        $trxStart -lt $start.AddMinutes(-2) -or $trxFinish -gt $finish.AddMinutes(2) -or
+        $trxStart -gt $trxFinish) {
+        throw 'SOC completion record timestamps are inconsistent.'
+    }
+    $results = $Record['testResults']
+    if ($results -isnot [System.Collections.IDictionary] -or
+        $results['total'] -isnot [int] -or $results['total'] -le 0 -or
+        $results['total'] -ne $results['executed'] -or
+        $results['total'] -ne $results['passed'] -or $results['failed'] -ne 0) {
+        throw 'SOC completion record counters incomplete.'
+    }
+    $requiredGroups = $Record['requiredGroups']
+    if ($requiredGroups -isnot [System.Collections.IDictionary]) { throw 'SOC completion groups missing.' }
+    foreach ($name in @('NetworkInvestigation','IncidentTimeline','IncidentDetectionLinkVm')) {
+        if ($requiredGroups[$name] -isnot [int] -or $requiredGroups[$name] -le 0) {
+            throw "SOC completion missing group $name."
+        }
+    }
+    $stages = $Record['stages']
+    $expected = @('sdk-version','restore','build-release','soc-tests')
+    if ($stages -isnot [System.Collections.IDictionary] -or $stages.Count -ne $expected.Count) {
+        throw 'SOC completion has missing or unexpected stages.'
+    }
+    foreach ($stage in $expected) {
+        if (-not $stages.Contains($stage)) { throw "SOC completion missing stage $stage." }
+        $entry = $stages[$stage]
+        if ($entry -isnot [System.Collections.IDictionary] -or
+            $entry['exitCode'] -isnot [int] -or $entry['exitCode'] -ne 0 -or
+            $entry['logSha256'] -isnot [string] -or
+            $entry['logSha256'] -cnotmatch '^[a-f0-9]{64}$' -or
+            $entry['logFileName'] -cne ($stage + '.log')) {
+            throw "SOC completion stage $stage did not pass."
+        }
+    }
+    if ($Record['evidenceAdmitted'] -cne $false -or
+        $Record['fieldAccuracyQualified'] -cne $false -or
+        $Record['manualWpfValidated'] -cne $false) {
+        throw 'SOC completion must not claim production, field or manual UI acceptance.'
+    }
+}
+
+function Publish-SocWorkspaceCompletionRecord {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][System.Collections.IDictionary]$Record,
+        [Parameter(Mandatory)][string]$Path
+    )
+    Assert-SocWorkspaceCompletionRecord -Record $Record
+    $target = [IO.Path]::GetFullPath($Path)
+    $directory = [IO.Path]::GetDirectoryName($target)
+    if (-not [IO.Directory]::Exists($directory) -or [IO.File]::Exists($target) -or
+        [IO.Directory]::Exists($target)) { throw 'SOC completion target missing directory or already exists.' }
+    $temporary = Join-Path $directory ('.completion-' + [guid]::NewGuid().ToString('N') + '.tmp')
+    try {
+        $payload = $Record | ConvertTo-Json -Depth 8
+        $bytes = [Text.UTF8Encoding]::new($false).GetBytes($payload + [Environment]::NewLine)
+        $stream = [IO.File]::Open($temporary, [IO.FileMode]::CreateNew,
+                                   [IO.FileAccess]::Write, [IO.FileShare]::None)
+        try {
+            $stream.Write($bytes, 0, $bytes.Length)
+            $stream.Flush()
+        } finally {
+            $stream.Dispose()
+        }
+        [IO.File]::Move($temporary, $target)
+    } finally {
+        if ([IO.File]::Exists($temporary)) { [IO.File]::Delete($temporary) }
+    }
+}
+
+Export-ModuleMember -Function Get-SocWorkspaceTrxEvidence,Assert-SocWorkspaceCompletionRecord,Publish-SocWorkspaceCompletionRecord
+ -or
+        -not [DateTimeOffset]::TryParse($timeStart, [ref]$started) -or
+        -not [DateTimeOffset]::TryParse($timeFinish, [ref]$finished) -or
         $finished -lt $started) { throw 'SOC TRX start and finish times are invalid.' }
 
     return [ordered]@{
