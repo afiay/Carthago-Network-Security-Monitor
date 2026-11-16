@@ -212,6 +212,8 @@ def audit(bundle: Path, max_trx_bytes: int, prior: dict | None) -> dict:
                 entry["status"] = "ambiguous-reported-suite"
                 break
             suites[s["name"]] = s
+        if entry["status"] == "ambiguous-reported-suite":
+            continue
         if len(suites) != len(EXPECTED):
             entry["status"] = "incomplete-reported-suites"
             continue
