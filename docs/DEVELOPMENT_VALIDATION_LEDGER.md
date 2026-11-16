@@ -2931,3 +2931,8 @@ Reviewed live parent `bec915a057eae83b6c04264b9b9d71b19312fbee`, actual tree `32
 ## 2026-11-16 — Enrichment Phase 16.6d tool source integrity
 
 Reviewed live parent `5766dbfac50184ea968d6f039736c872ae2e097b`, actual tree `be1b5cd58e6a23eb6e384ec3e0ce4a138dae9590`, sampler, verification runner, analyzer source and ledger. Add parser and duplicate top-level function preflight for all three tools before build, report toolSourceIntegrity, and three synthetic source fixtures. Preserve concurrent UI-195 and rule qualification changes. No tests executed; Windows pending. Candidate SHA is commit containing this entry. Next: production lifecycle replacement/concurrency regression and actual tool execution.
+
+
+## 2026-11-16 — GA-09bq exact-ID execution accounting
+
+Reviewed live parent `a1b542ec06be1448d6385191484289e4197405b1`, actual tree `3dd55704817738f58b6710eab282c6cd8b840ef8`, qualification gate, exact-ID audit and validator/module. Fix case-insensitive registry lookup accepting lowercase inventory IDs; require canonical case and class prefix. Report failed admitted executions separately; remove fixed 16-record historical self-test assumption. Two focused fixtures authored (lowercase rejection and synthetic failed execution/current SHA accounting), zero executed; Windows pending. No actual failure admitted, no changed detector IDs, no policy/floor/holdout changes. Candidate SHA is commit containing entry. GA-08 owner result still pending; next: artifact-bound evidence admission and remaining exact IDs. Windows: powershell -NoProfile -File .\scripts\verify-exact-id-qualification.ps1 -SelfTest.
