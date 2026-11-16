@@ -117,6 +117,19 @@ public sealed class DetectionActivityDiagnosisTests
     }
 
     [Theory]
+    [InlineData(null, 5, "FIRST SNAPSHOT")]
+    [InlineData(5, 5, "NO NEW ENGINE EVALUATIONS")]
+    [InlineData(5, 7, "2 new calls")]
+    [InlineData(7, 1, "COUNTERS RESET")]
+    public void Progress_Uses_Two_Snapshots_Without_Claiming_Rule_Matches(
+        long? prior, long current, string expected)
+    {
+        var progress = DetectionActivityDiagnosis.ForProgress(prior, current);
+        Assert.Contains(expected, progress);
+        Assert.DoesNotContain("confirmed malicious", progress, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Theory]
     [InlineData(0, 0, 0, 0, 0, 0, 0, "NO ENGINE EVALUATIONS")]
     [InlineData(1, 0, 0, 0, 0, 0, 0, "NO RULE EVALUATIONS")]
     [InlineData(1, 1, 0, 0, 0, 0, 0, "NO MATCHES")]
