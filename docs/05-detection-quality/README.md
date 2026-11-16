@@ -13,6 +13,7 @@ Accuracy strategy, replay coverage, holdout methodology and verification evidenc
 - [SOC verifier bug closure — original TRX/log hash verification complete](SOC_VERIFIER_BUG_CLOSURE_20261116.md)
 - [Per-ID registry reconciliation CSV](registry-reconciliation.csv)
 - [Exact-ID qualification audit](EXACT_ID_QUALIFICATION_AUDIT.md)
+- [Detection visibility source fix and Windows qualification plan (2026-11-16)](DETECTION_VISIBILITY_FIX_20261116.md)
 - [Frozen V1 manifest](../holdout-evaluation-manifest.json)
 - [V2 manifest](../holdout-evaluation-v2-manifest.json)
 - [R102 frozen holdout telemetry audit](../development/R102_FROZEN_HOLDOUT_TELEMETRY_AUDIT_20261029.md)
