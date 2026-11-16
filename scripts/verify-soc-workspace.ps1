@@ -152,6 +152,7 @@ try {
         trxFinishedUtc = $trxEvidence['trxFinishedUtc']
         testResults = $trxEvidence['testResults']
         requiredGroups = $trxEvidence['requiredGroups']
+        methodScopedCases = $trxEvidence['methodScopedCases']
         stages = $stageRecords
         evidenceAdmitted = $false
         fieldAccuracyQualified = $false
