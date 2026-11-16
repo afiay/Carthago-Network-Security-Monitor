@@ -295,12 +295,8 @@ namespace Carthago.Views
             ReplaceCollection(_vm.SelectedRuleIds,
                 selected == null
                     ? Array.Empty<string>()
-                    : selected.ToModel().RelatedEvents.Select(evt => evt.RuleId)
-                        .Concat(selected.ToModel().RelatedAnomalies.SelectMany(anomaly => anomaly.RelatedRuleIds))
-                        .Where(rule => !string.IsNullOrWhiteSpace(rule))
-                        .Distinct(StringComparer.OrdinalIgnoreCase)
-                        .Take(8)
-                        .DefaultIfEmpty("No related rules"));
+                    : IncidentQueueProjectionService.GetRecordedRuleIds(selected.ToModel())
+                        .DefaultIfEmpty("No recorded rule IDs in this incident"));
 
             var incidents = _vm.All.Select(item => item.ToModel()).ToArray();
             ReplaceCollection(_vm.AffectedHosts,
