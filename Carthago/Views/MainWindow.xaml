@@ -3280,10 +3280,10 @@
               Padding="10,7"
               Margin="0,8,0,0">
         <Grid>
-          <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition Width="*"/>
-          </Grid.ColumnDefinitions>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+          </Grid.RowDefinitions>
 
           <StackPanel Orientation="Horizontal"
                       HorizontalAlignment="Left"
@@ -3296,10 +3296,11 @@
             <TextBlock Text="LOCAL CAPTURE" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSubtleBrush}"/>
           </StackPanel>
 
-          <StackPanel Grid.Column="1"
+          <StackPanel Grid.Row="1"
                       Orientation="Horizontal"
-                      HorizontalAlignment="Right"
-                      VerticalAlignment="Center">
+                      HorizontalAlignment="Left"
+                      VerticalAlignment="Center"
+                      Margin="13,4,0,0">
             <TextBlock Text="STATE" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,6,0"/>
             <!-- GA UI-60: expose the existing local capture-state projection, not a global health verdict. -->
             <TextBlock x:Name="FooterTelemetryStateText"
