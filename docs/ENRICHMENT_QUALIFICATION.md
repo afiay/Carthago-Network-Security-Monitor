@@ -57,3 +57,8 @@ Schema 1 storage adds nullable `registryRunPresent`, sampled under the same life
 ### Phase 16.6c — Analyzer repair and lifecycle integration
 
 Removed a duplicated trailing script fragment and repaired the unterminated timestamp regex in the live analyzer. Same-registry intervals expose nullable fromRunPresent/toRunPresent without inferring native capture activity. Three full Analyze JSON-roundtrip scenarios cover retained stopped registry, replacement and missing lifecycle flag; Windows execution pending. Run `./analyze-enrichment-runtime.ps1 -SelfTest` in Windows PowerShell 5.1 and PowerShell 7. Production lifecycle concurrency remains pending.
+
+
+### Tool source integrity preflight (Phase 16.6d)
+
+The qualification runner parses all three enrichment PowerShell tools before building, and rejects duplicate top-level function names (case insensitive). Its self-test also checks valid, malformed and duplicate-function fixtures. `toolSourceIntegrity` in qualification.json records passed/failed/not-run. This is a syntax and structural check, not proof of runtime correctness; run each tool's self-test separately. Windows execution remains pending.

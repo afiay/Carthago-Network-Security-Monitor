@@ -4,6 +4,20 @@
 param([switch]$LiveOutput, [switch]$SelfTest)
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
+function Assert-ToolSource([string]$Path) {
+    $tokens = $null
+    $errors = $null
+    $ast = [System.Management.Automation.Language.Parser]::ParseFile($Path, [ref]$tokens, [ref]$errors)
+    if (@($errors).Count -gt 0) { throw "PowerShell parser rejected ${Path}: $($errors[0].Message)" }
+    $functions = @($ast.EndBlock.Statements | Where-Object { $_ -is [System.Management.Automation.Language.FunctionDefinitionAst] })
+    $duplicates = @($functions | Group-Object Name | Where-Object { $_.Count -gt 1 })
+    if ($duplicates.Count -gt 0) { throw "Duplicate top-level function in ${Path}: $($duplicates[0].Name)" }
+}
+function Assert-QualificationToolSources {
+    foreach ($name in @('verify-enrichment.ps1','measure-enrichment-runtime.ps1','analyze-enrichment-runtime.ps1')) {
+        Assert-ToolSource (Join-Path $root $name)
+    }
+}
 function Read-QualificationTrx([string]$Path) {
     if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { throw 'Missing TRX evidence' }
     [xml]$xml = Get-Content -LiteralPath $Path -Raw
@@ -27,6 +41,20 @@ function Read-QualificationTrx([string]$Path) {
     return [pscustomobject]$values
 }
 if ($SelfTest) {
+    Assert-QualificationToolSources
+    $sourceFixture = Join-Path ([IO.Path]::GetTempPath()) ([Guid]::NewGuid().ToString('N') + '.ps1')
+    try {
+        foreach ($case in @(
+            @{ source='function Test-One { 1 }'; rejected=$false },
+            @{ source='function Test-One {'; rejected=$true },
+            @{ source='function Test-One { 1 }; function test-one { 2 }'; rejected=$true }
+        )) {
+            Set-Content -LiteralPath $sourceFixture -Value $case.source -Encoding UTF8
+            $rejected = $false
+            try { Assert-ToolSource $sourceFixture } catch { $rejected = $true }
+            if ($rejected -ne $case.rejected) { throw 'Tool source integrity fixture failed' }
+        }
+    } finally { Remove-Item -LiteralPath $sourceFixture -Force -ErrorAction SilentlyContinue }
     $tmp = Join-Path ([IO.Path]::GetTempPath()) ([Guid]::NewGuid().ToString('N') + '.trx')
     try {
         foreach ($case in @(
@@ -43,7 +71,7 @@ if ($SelfTest) {
         $rejected = $false
         try { Read-QualificationTrx $tmp | Out-Null } catch { $rejected = $true }
         if (-not $rejected) { throw 'Missing evidence was accepted' }
-        Write-Host 'PASS: five TRX evidence fixtures'
+        Write-Host 'PASS: five TRX evidence fixtures and three tool source integrity fixtures'
     } finally { Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue }
     return
 }
@@ -56,7 +84,7 @@ try {
     $runId = (Get-Date -Format 'yyyyMMdd-HHmmss-fff') + '-' + [Guid]::NewGuid().ToString('N')
     $dir = Join-Path $root ('build-verify/enrichment/' + $runId)
     New-Item -ItemType Directory -Path $dir -Force | Out-Null
-    $report = [ordered]@{ head=$head; startedUtc=[DateTime]::UtcNow.ToString('o'); build='not-run';
+    $report = [ordered]@{ head=$head; startedUtc=[DateTime]::UtcNow.ToString('o'); build='not-run'; toolSourceIntegrity='not-run';
         groups=@(); runtime='not-run'; visual='not-run'; performance='not-run'; qualified=$false }
     function Invoke-LocalDotnet([string]$Name, [string[]]$Arguments) {
         $log = Join-Path $dir ($Name + '.log')
@@ -69,6 +97,8 @@ try {
         } finally { $ErrorActionPreference = $previous }
     }
     try {
+        try { Assert-QualificationToolSources; $report.toolSourceIntegrity = 'passed' }
+        catch { $report.toolSourceIntegrity = 'failed'; throw }
         $project = 'Carthago.Tests/Carthago.Tests.csproj'
         $buildExit = Invoke-LocalDotnet 'build' @('build',$project,'-c','Release','--nologo')
         $report.build = if ($buildExit -eq 0) { 'passed' } else { 'failed' }
