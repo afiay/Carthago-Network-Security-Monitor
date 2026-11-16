@@ -170,4 +170,40 @@ public sealed class ObservedAssetRegistryTests
             replacement.CapacitySnapshot(), checkpoints), activeHealth.Storage);
         Assert.Equal((0, 0, 0L), activeHealth.Tls);
     }
+    [Fact]
+    public async System.Threading.Tasks.Task Concurrent_Sealing_And_Health_Projection_Preserve_Final_Capacity()
+    {
+        // Exercise production registry synchronization and the service's health projection
+        // without requiring a native capture device or assuming worker scheduling order.
+        var registry = new ObservedAssetRegistry(Now);
+        var checkpoints = new CheckpointHealthSnapshot(2, 1, "retained");
+        var start = new System.Threading.ManualResetEventSlim(false);
+        var readers = System.Linq.Enumerable.Range(0, 4).Select(_ =>
+            System.Threading.Tasks.Task.Run(() =>
+            {
+                start.Wait();
+                for (int i = 0; i < 250; i++)
+                {
+                    var snapshot = TrafficCaptureService.SnapshotSessionHealth(registry, null, checkpoints);
+                    Assert.InRange(snapshot.Storage.Assets.Entries, 0, 2048);
+                    Assert.InRange(snapshot.Storage.Communications.Entries, 0, 2048);
+                    Assert.Equal(checkpoints, snapshot.Storage.Checkpoints);
+                }
+            })).ToArray();
+        var writer = System.Threading.Tasks.Task.Run(() =>
+        {
+            start.Wait();
+            for (int i = 0; i < 2100; i++)
+                registry.Observe(Arp(mac: $"02:11:22:33:{i >> 8:X2}:{i & 255:X2}"), Now);
+            registry.Seal();
+            registry.Observe(Arp(mac: "02:11:22:33:FF:FF"), Now.AddSeconds(1));
+        });
+        start.Set();
+        await System.Threading.Tasks.Task.WhenAll(readers.Append(writer));
+        var final = TrafficCaptureService.SnapshotSessionHealth(registry, null, checkpoints);
+        Assert.Equal(new RegistryCapacitySnapshot(2048, 2048, 52), final.Storage.Assets);
+        Assert.Equal(checkpoints, final.Storage.Checkpoints);
+        Assert.Null(final.Tls);
+    }
+
 }
