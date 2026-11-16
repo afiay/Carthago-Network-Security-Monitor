@@ -13,6 +13,16 @@ namespace Carthago.Tests;
 public sealed class GuiCliInProcessIntegrationTests
 {
     [Fact]
+    public void DesktopAndCliHaveDistinctCaseInsensitiveAssemblyIdentities()
+    {
+        var desktopName = typeof(Carthago.MainWindow).Assembly.GetName().Name;
+        var cliName = typeof(CliApplication).Assembly.GetName().Name;
+        Assert.False(string.Equals(desktopName, cliName, StringComparison.OrdinalIgnoreCase),
+            "Desktop and CLI assemblies must not collide in Windows assembly resolution.");
+        Assert.Equal("Carthago.Cli", cliName);
+    }
+
+    [Fact]
     public async Task ReadOnlyRuleSummaryCallsRealCliApplicationWithoutNamedPipe()
     {
         Assert.True(GuiCliCommandPolicy.TryParse("rules summary", out var args, out var local));
