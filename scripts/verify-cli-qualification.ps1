@@ -17,7 +17,7 @@ try {
         $head = (& git rev-parse HEAD)
         if ($LASTEXITCODE -ne 0 -or $head -cne $SourceSha) { throw 'HEAD differs from selected SHA.' }
         $branch = (& git branch --show-current)
-        if ($LASTEXITCODE -ne 0 -or $branch -cne 'feature/carthago-reliability-hardening') { throw 'Unexpected branch.' }
+        if ($LASTEXITCODE -ne 0 -or ($branch -cne 'feature/carthago-reliability-hardening' -and ($branch -or $IncludeWindowsParity))) { throw 'Unexpected branch.' }
         $dirty = @(& git status --porcelain --untracked-files=all)
         if ($LASTEXITCODE -ne 0 -or $dirty.Count -ne 0) { throw 'Clean checkout required; preserve local edits before testing.' }
     }
@@ -29,7 +29,7 @@ try {
         schemaVersion=1; sourceSha=$SourceSha; startedUtc=[DateTime]::UtcNow.ToString('o')
         finishedUtc=$null; status='NotCompleted'; sdkVersion=$null
         platform=[System.Environment]::OSVersion.VersionString
-        windowsParityRequested=[bool]$IncludeWindowsParity; stages=[ordered]@{}; suites=[ordered]@{}; replaySmoke=[ordered]@{}
+        windowsParityRequested=[bool]$IncludeWindowsParity; stages=[ordered]@{}; suites=[ordered]@{}; replaySmoke=[ordered]@{}; perRuleReplay=[ordered]@{}
         portableSyntheticQualified=$false; windowsParityQualified=$false
         fieldAccuracyQualified=$false; liveCaptureQualified=$false; deploymentQualified=$false
         blocker=$null
@@ -89,20 +89,30 @@ try {
         }
     }
     # Synthetic raw IPv4/TCP fixtures only. No capture device or real traffic.
-    function New-SmokeFrame([string]$Uri,[uint32]$Sequence) {
-        $payload=[Text.Encoding]::ASCII.GetBytes("GET $Uri HTTP/1.1`r`nHost: example.test`r`n`r`n")
+    function New-SmokeFrame([string]$Uri,[uint32]$Sequence,[string]$Method='GET',
+        [string]$Agent='', [bool]$Reverse=$false,[byte]$Flags=0x18,[uint32]$Ack=0,[uint16]$ServerPort=7001) {
+        $headers="Host: example.test`r`n"
+        if ($Agent -ne '') { $headers+="User-Agent: $Agent`r`n" }
+        [byte[]]$payload=@()
+        if ($Uri -ne '') { $payload=[Text.Encoding]::ASCII.GetBytes("$Method $Uri HTTP/1.1`r`n$headers`r`n") }
         [byte[]]$frame=New-Object byte[] (40+$payload.Length)
         $frame[0]=0x45; $frame[8]=64; $frame[9]=6
         $frame[2]=[byte]($frame.Length -shr 8); $frame[3]=[byte]($frame.Length -band 255)
-        [byte[]]$addresses=@(192,0,2,1,198,51,100,2)
+        [byte[]]$addresses=if ($Reverse) { @(198,51,100,2,192,0,2,1) } else { @(192,0,2,1,198,51,100,2) }
         [Array]::Copy($addresses,0,$frame,12,8)
-        $frame[20]=0xc7; $frame[21]=0x38 # 51000
-        $frame[22]=0x1b; $frame[23]=0x59 # 7001
+        $src=if ($Reverse) { $ServerPort } else { 51000 }
+        $dst=if ($Reverse) { 51000 } else { $ServerPort }
+        $frame[20]=[byte]($src -shr 8); $frame[21]=[byte]($src -band 255)
+        $frame[22]=[byte]($dst -shr 8); $frame[23]=[byte]($dst -band 255)
         $frame[24]=[byte](($Sequence -shr 24) -band 255)
         $frame[25]=[byte](($Sequence -shr 16) -band 255)
         $frame[26]=[byte](($Sequence -shr 8) -band 255)
         $frame[27]=[byte]($Sequence -band 255)
-        $frame[32]=0x50; $frame[33]=0x18
+        $frame[28]=[byte](($Ack -shr 24) -band 255)
+        $frame[29]=[byte](($Ack -shr 16) -band 255)
+        $frame[30]=[byte](($Ack -shr 8) -band 255)
+        $frame[31]=[byte]($Ack -band 255)
+        $frame[32]=0x50; $frame[33]=$Flags
         [Array]::Copy($payload,0,$frame,40,$payload.Length)
         return ,$frame
     }
@@ -111,6 +121,16 @@ try {
             '/LogoImageHandler.ashx?clazz=example','/config/keystore/test.jsp',
             '/?search=%00{.cmd.exe','/wp-content/plugins/wp2shell_test/file.php',
             '/LogoImageHandler.ashx?class=example')
+        $frames=[System.Collections.Generic.List[byte[]]]::new()
+        [uint32]$sequence=0
+        foreach ($uri in $uris) {
+            [byte[]]$frame=New-SmokeFrame $uri $sequence
+            $frames.Add($frame)
+            $sequence += [uint32]($frame.Length-40)
+        }
+        Write-SmokeCapture $Path $Ng $frames
+    }
+    function Write-SmokeCapture([string]$Path,[bool]$Ng,[System.Collections.Generic.List[byte[]]]$Frames) {
         $stream=[IO.File]::Open($Path,[IO.FileMode]::CreateNew,[IO.FileAccess]::Write,[IO.FileShare]::None)
         $writer=[IO.BinaryWriter]::new($stream)
         try {
@@ -126,10 +146,8 @@ try {
                 $writer.Write([uint32]2712847316);$writer.Write([uint16]2);$writer.Write([uint16]4)
                 $writer.Write([uint32]0);$writer.Write([uint32]0);$writer.Write([uint32]65535);$writer.Write([uint32]101)
             }
-            [uint32]$sequence=0
-            for ($i=0;$i -lt $uris.Count;$i++) {
-                [byte[]]$frame=New-SmokeFrame $uris[$i] $sequence
-                $sequence += [uint32]($frame.Length-40)
+            for ($i=0;$i -lt $Frames.Count;$i++) {
+                [byte[]]$frame=$Frames[$i]
                 $seconds=[uint32](100+$i)
                 if ($Ng) {
                     $padding=(4-($frame.Length % 4)) % 4
@@ -184,6 +202,79 @@ try {
             suppressed=$replay.suppressedCount; supportedRuleIds=$ids; unsupportedRuleId='R1000'
         }
     }
+    # Independent positive and near-miss fixtures, selected from existing detector tests.
+    # Each invocation has a fresh replay dispatcher; R601 requires SYN/SYN-ACK provenance.
+    function Invoke-PerRuleReplay([string]$Cli,[string]$Format) {
+        $cases=@(
+            ,@('R586','GET','/wp-content/plugins/wp2shell_test/file.php','/wp-content/plugins/wp2shell/file.php','','')
+            ,@('R587','GET','/SetupWizard.aspx/next','/SetupWizard.aspx','','')
+            ,@('R588','GET','/LogoImageHandler.ashx?clazz=example','/LogoImageHandler.ashx?class=example','','')
+            ,@('R589','GET','/config/keystore/test.jsp','/config/keystore/test.txt','','')
+            ,@('R590','GET','/?search=%00{.cmd.exe','/?search=%00{.example','','')
+            ,@('R591','GET','/ServletApi/../RestApi/LogonCustomization','/ServletApi/RestApi/LogonCustomization','','')
+            ,@('R592','GET','/test.html?dwn=example&fn=sample','/test.html?dwn=example','','')
+            ,@('R593','GET','/?doAs=`example`','/?doAs=example','','')
+            ,@('R594','GET','/rest/api/latest/projects/test?prefix=%00--exec','/rest/api/latest/projects/test?prefix=example','','')
+            ,@('R595','GET','/public/plugins/graph/../../../../example','/public/plugins/graph/../../../example','','')
+            ,@('R596','GET','/cgi-bin/jarrewrite.sh','/cgi-bin/jarrewrite.sh','() { example','Mozilla')
+            ,@('R597','GET','/manager/controllers/default/resource/tvs.php?class_key=../windows/win.ini%00','/manager/controllers/default/resource/tvs.php?class_key=../windows/win.ini','','')
+            ,@('R598','GET','/?file=C:/Users/example','/?file=D:/Users/example','','')
+            ,@('R599','GET','/apply_abstract.cgi?file=..%2fexample','/images/apply_abstract.cgi?file=..%2fexample','','')
+            ,@('R600','POST','/owa/auth/Current/themes/resources/example','/owa/auth/Current/themes/other/example','','')
+            ,@('R601','POST','/?cmd=connect','/?cmd=connect','','Mozilla')
+            ,@('R602','GET','/SolarWinds/api/WebResource.axd','/SolarWinds/api/css.i18n.ashx','','')
+            ,@('R603','GET','/?handle=com.bea.console.handles.JndiBindingHandle&ref=ldap://example.test&server=AdminServer','/?handle=com.bea.console.handles.JndiBindingHandle&ref=ldap://example.test','','')
+            ,@('R604','GET','/ecp/test?__VIEWSTATE=example','/ecp/test?viewstate=example','','')
+            ,@('R605','POST','/upload.action?filename=../../../../example','/upload.action?filename=../../../example','','')
+        )
+        $report.perRuleReplay[$Format]=[ordered]@{}
+        foreach ($case in $cases) {
+            $id=$case[0]; $method=$case[1]
+            foreach ($kind in @('positive','negative')) {
+                $positive=$kind -ceq 'positive'
+                $uri=if ($positive) { $case[2] } else { $case[3] }
+                $agent=if ($positive) { $case[4] } else { $case[5] }
+                $frames=[System.Collections.Generic.List[byte[]]]::new()
+                if ($id -ceq 'R601') {
+                    $frames.Add((New-SmokeFrame '' 100 -Flags 2 -ServerPort 80))
+                    $frames.Add((New-SmokeFrame '' 500 -Reverse $true -Flags 0x12 -Ack 101 -ServerPort 80))
+                    $frames.Add((New-SmokeFrame $uri 101 -Method $method -Agent $agent -Ack 501 -ServerPort 80))
+                } else {
+                    $frames.Add((New-SmokeFrame $uri 0 -Method $method -Agent $agent))
+                }
+                $stage="cli-paired-$Format-$id-$kind"
+                $fixture=Join-Path $dir ($stage+'.'+$Format)
+                Write-SmokeCapture $fixture ($Format -ceq 'pcapng') $frames
+                Require-Stage $stage @($Cli,'pcap','detect',$fixture,'--rules',$id,'--limit','10','--json')
+                $raw=Get-Content -LiteralPath (Join-Path $dir ($stage+'.log')) -Raw
+                $json=$raw | ConvertFrom-Json
+                $replay=$json.replay
+                $expectedMatches=if ($positive) { 1 } else { 0 }
+                if ($json.schemaVersion -ne 1 -or $json.mode -cne 'offline_replay' -or
+                    $json.provenance -cne 'untrusted_capture' -or $json.detectionValidation -cne 'not_assessed' -or
+                    $replay.format -cne $Format -or $replay.packetsRead -ne $frames.Count -or
+                    $replay.parsed -ne $frames.Count -or $replay.rejected -ne 0 -or
+                    $replay.captureTruncated -ne 0 -or $replay.clockResets -ne 0 -or
+                    $replay.matchCount -ne $expectedMatches -or $replay.suppressedCount -ne 0 -or
+                    $replay.findingsTruncated -ne $false -or @($replay.findings).Count -ne $expectedMatches -or
+                    @($replay.rules).Count -ne 1 -or $replay.rules[0].ruleId -cne $id -or
+                    $replay.rules[0].status -cne 'evaluated' -or $replay.rules[0].evaluated -ne $frames.Count -or
+                    $replay.rules[0].matches -ne $expectedMatches -or $replay.rules[0].suppressed -ne 0) {
+                    throw "Per-rule executable replay mismatch: $Format $id $kind."
+                }
+                if ($positive -and ($replay.findings[0].ruleId -cne $id -or
+                    $replay.findings[0].method -cne $method -or $replay.findings[0].packetNumber -ne $frames.Count)) {
+                    throw "Per-rule executable finding mismatch: $Format $id."
+                }
+                $report.perRuleReplay[$Format]["$id-$kind"]=[ordered]@{
+                    fixtureSha256=(Get-FileHash -LiteralPath $fixture -Algorithm SHA256).Hash.ToLowerInvariant()
+                    outputSha256=(Get-FileHash -LiteralPath (Join-Path $dir ($stage+'.log')) -Algorithm SHA256).Hash.ToLowerInvariant()
+                    ruleId=$id; control=$kind; packets=$frames.Count; matches=$replay.matchCount; suppressed=$replay.suppressedCount
+                }
+            }
+        }
+        if ($report.perRuleReplay[$Format].Count -ne 40) { throw "Incomplete paired matrix: $Format." }
+    }
     try {
         Require-Stage 'sdk-version' @('--version')
         $report.sdkVersion=(Get-Content -LiteralPath (Join-Path $dir 'sdk-version.log') -Raw).Trim()
@@ -215,7 +306,7 @@ try {
         if (-not (Test-Path -LiteralPath $cli -PathType Leaf)) { throw 'Built CLI assembly missing.' }
         Require-Stage 'cli-capabilities' @($cli,'rules','capabilities','--json')
         $catalog=Get-Content -LiteralPath (Join-Path $dir 'cli-capabilities.log') -Raw | ConvertFrom-Json
-        $expected=@('R586','R587','R588','R589','R590','R591','R592','R593','R594','R595','R596','R597','R598','R599','R600','R602','R603','R604','R605')
+        $expected=@('R586','R587','R588','R589','R590','R591','R592','R593','R594','R595','R596','R597','R598','R599','R600','R601','R602','R603','R604','R605')
         $actual=@($catalog.rules | ForEach-Object { $_.ruleId })
         if ($catalog.schemaVersion -ne 1 -or $catalog.scope -cne 'compiled_portable_catalog' -or
             $catalog.detectionValidation -cne 'not_assessed' -or $catalog.supportedCount -ne $expected.Count -or
@@ -227,6 +318,8 @@ try {
             $unsupported.rules[0].registration -cne 'not_assessed') { throw 'CLI unsupported smoke contract mismatch.' }
         Invoke-ReplaySmoke $cli 'pcap'
         Invoke-ReplaySmoke $cli 'pcapng'
+        Invoke-PerRuleReplay $cli 'pcap'
+        Invoke-PerRuleReplay $cli 'pcapng'
         $report.portableSyntheticQualified=$true
         if ($IncludeWindowsParity) {
             Require-Stage 'windows-build' @('build','Carthago.Tests/Carthago.Tests.csproj','-c','Release','--no-incremental','--nologo')
