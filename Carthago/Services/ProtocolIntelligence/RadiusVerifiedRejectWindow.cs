@@ -62,8 +62,11 @@ namespace Carthago.Services.ProtocolIntelligence
                 // Out-of-order authenticated captures cannot backfill a
                 // historical burst after newer evidence has been observed.
                 // Refuse them before mutating the retention watermark or state.
-                if (observedUtc < _watermark)
+                if (observedUtc < _watermark || _seen.ContainsKey(identity))
                     return false;
+                // A duplicate exchange is not a new observation and must not
+                // advance the clock or expire other replay identities.
+                // Capacity checks below remain fail-closed for new identities.
                 _watermark = observedUtc;
                 DateTime expiry = _watermark.Ticks < Window.Ticks
                     ? DateTime.MinValue : _watermark - Window;

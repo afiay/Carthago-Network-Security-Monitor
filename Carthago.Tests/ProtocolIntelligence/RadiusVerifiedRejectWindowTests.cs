@@ -153,6 +153,19 @@ namespace Carthago.Tests.ProtocolIntelligence
             Assert.Equal(2, second.DistinctProtocolRejects);
         }
 
+        [Fact] public void ReplayedExchangeCannotAdvanceRetentionWatermark()
+        {
+            var window = new RadiusVerifiedRejectWindow();
+            Assert.True(Observe(window, 1, Epoch, out _));
+            // Replayed evidence with an attacker-controlled future capture
+            // timestamp must not expire the existing replay identity.
+            Assert.False(Observe(window, 1, Epoch.AddDays(2), out _));
+            Assert.False(Observe(window, 1, Epoch.AddHours(1), out _));
+            Assert.True(Observe(window, 2, Epoch.AddHours(1), out var fresh));
+            Assert.Equal(1, fresh.DistinctProtocolRejects);
+            Assert.False(Observe(window, 1, Epoch.AddHours(1), out _));
+        }
+
         [Fact] public void UnspecifiedTimeZoneIsNotTrusted()
         {
             var window = new RadiusVerifiedRejectWindow();
