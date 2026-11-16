@@ -282,6 +282,13 @@ public sealed class ObservedAssetRegistryTests
                     Assert.Equal(new RegistryCapacitySnapshot(0, 2048, 0),
                         stats.EnrichmentStorage.Destinations);
                     Assert.Null(stats.TlsCapacity);
+                    // Snapshot and statistics must agree on the idle session identity.
+                    // This also checks that concurrent read paths do not publish
+                    // phantom asset or communication observations.
+                    var observed = service.GetObservedAssetSession();
+                    Assert.Equal(stats.RegistrySessionId, observed.SessionId);
+                    Assert.Empty(observed.Rows);
+                    Assert.Empty(observed.Communications);
                 }
             }));
         await System.Threading.Tasks.Task.WhenAll(readers);
