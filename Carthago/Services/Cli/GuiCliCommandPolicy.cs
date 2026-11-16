@@ -39,6 +39,8 @@ internal static class GuiCliCommandPolicy
         var command = json ? parts[..^1] : parts;
         var permitted = command switch
         {
+            ["--version"] => true,
+            ["capabilities"] => true,
             ["engine", "status"] => true,
             ["rules", "summary"] => true,
             ["rules", "validate"] => true,
@@ -69,6 +71,7 @@ internal static class GuiCliCommandPolicy
 
     internal const string HelpText =
         "Read-only CARTHAGO commands (optional prefix: carthago):\n" +
+        "  --version | capabilities\n" +
         "  engine status | rules summary | rules validate\n" +
         "  rules list --live [--offset N --limit N]\n" +
         "  rules show R123 --live\n" +
