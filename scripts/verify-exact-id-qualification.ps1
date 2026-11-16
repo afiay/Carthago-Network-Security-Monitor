@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Read-only qualification evidence validator; does not execute detectors.
 [CmdletBinding()]
-param([switch]$SelfTest)
+param([switch]$SelfTest, [string]$ArtifactDirectory)
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'RuleSourceInventory.psm1') -Force
@@ -22,6 +22,24 @@ function Get-ReviewedExecutionMap($manifest, $registryMap) {
         Assert-Qualification ($entry.scope -ceq 'synthetic-detector-regression') 'Unsupported execution scope'
         Assert-Qualification ($entry.testReference -cmatch '^Carthago\.Tests/[A-Za-z0-9_/.-]+\.cs$' -and $entry.testReference -notmatch '\.\.') 'Invalid test reference'
         Assert-Qualification ($entry.reviewReference -cin @('docs/rules/DETECTION_QUALIFICATION_GATE_20261112.md','docs/DEVELOPMENT_VALIDATION_LEDGER.md')) 'Invalid review reference'
+        # Legacy records are reviewed ledger attestations, not artifact proof.
+        $artifact = $entry.PSObject.Properties['artifact']
+        if ($null -ne $artifact) {
+            Assert-Qualification ($null -ne $artifact.Value) 'Missing artifact metadata'
+            $a = $artifact.Value
+            foreach ($field in @('file','sha256','testNames','checkoutSha','checkoutReview')) {
+                Assert-Qualification ($null -ne $a.PSObject.Properties[$field] -and $null -ne $a.$field) "Missing artifact field: $field"
+            }
+            Assert-Qualification ($a.file -cmatch '^[A-Za-z0-9_-][A-Za-z0-9_.-]*\.trx$' -and $a.file -notmatch '\.\.') 'Invalid artifact filename'
+            Assert-Qualification ($a.sha256 -cmatch '^[a-f0-9]{64}$') 'Invalid artifact digest'
+            Assert-Qualification ($a.checkoutSha -ceq $entry.executedSha -and -not [string]::IsNullOrWhiteSpace($a.checkoutReview)) 'Missing or mismatched checkout review'
+            Assert-Qualification ($a.testNames -is [array] -and $a.testNames.Count -gt 0) 'Missing exact test selection'
+            Assert-Qualification (-not [string]::IsNullOrWhiteSpace($ArtifactDirectory)) 'Artifact directory required'
+            $artifactPath = Join-Path $ArtifactDirectory $a.file
+            $expected = if ($entry.outcome -ceq 'pass') { 'Passed' } else { 'Failed' }
+            $verified = & (Join-Path $PSScriptRoot 'verify-qualification-trx.ps1') -Artifact $artifactPath -ExpectedSha256 $a.sha256 -TestName $a.testNames -Outcome $expected | ConvertFrom-Json
+            Assert-Qualification ($verified.artifactSha256 -ceq $a.sha256 -and $verified.matchedTests -eq $a.testNames.Count -and $verified.outcome -ceq $expected) 'Artifact verification mismatch'
+        }
         $key = "$($entry.ruleId):$($entry.executedSha)"
         Assert-Qualification (-not $entries.ContainsKey($key)) 'Duplicate reviewed execution'
         $entries[$key] = $entry
@@ -129,6 +147,16 @@ if ($SelfTest) {
     $badManifest = Copy-Manifest; $badManifest.records[0].outcome = 'fail'; Expect-ManifestRejection $badManifest
     $badManifest = Copy-Manifest; $badManifest.records[0].testReference = 'Carthago.Tests/Unreviewed.cs'; Expect-ManifestRejection $badManifest
     $badManifest = Copy-Manifest; $badManifest.records[0].scope = 'field'; Expect-ManifestRejection $badManifest
+    # No real execution is admitted by these in-memory negative fixtures.
+    $badManifest = Copy-Manifest
+    $badManifest.records[0] | Add-Member -NotePropertyName artifact -NotePropertyValue ([pscustomobject]@{file='fixture.trx'})
+    Expect-ManifestRejection $badManifest
+    $badManifest = Copy-Manifest
+    $badManifest.records[0] | Add-Member -NotePropertyName artifact -NotePropertyValue ([pscustomobject]@{file='../fixture.trx';sha256=('0'*64);testNames=@('Exact.Test');checkoutSha=$badManifest.records[0].executedSha;checkoutReview='fixture only'})
+    Expect-ManifestRejection $badManifest
+    $badManifest = Copy-Manifest
+    $badManifest.records[0] | Add-Member -NotePropertyName artifact -NotePropertyValue ([pscustomobject]@{file='fixture.trx';sha256=('0'*64);testNames=@('Exact.Test');checkoutSha=('0'*40);checkoutReview='fixture only'})
+    Expect-ManifestRejection $badManifest
     $badManifest = Copy-Manifest; $badManifest.records[0].PSObject.Properties.Remove('reviewReference'); Expect-ManifestRejection $badManifest
     $bad = Copy-Document; $bad.records[0].ruleId = $bad.records[0].ruleId.ToLowerInvariant(); Expect-Rejection $bad
     $historicalSha = 'a' * 40
