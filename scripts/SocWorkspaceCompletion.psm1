@@ -62,13 +62,17 @@ function Get-SocWorkspaceTrxEvidence {
         if ([string]::IsNullOrWhiteSpace($id) -or $owners.ContainsKey($id) -or $null -eq $method) {
             throw 'SOC TRX test definitions are ambiguous.'
         }
-        $owners[$id] = ($method.GetAttribute('className').Split(',')[0]).Trim()
+        $owners[$id] = [ordered]@{
+            className = ($method.GetAttribute('className').Split(',')[0]).Trim()
+            methodName = $method.GetAttribute('name').Trim()
+        }
     }
     $required = @('NetworkInvestigation','IncidentTimeline','IncidentDetectionLinkVm')
     $groups = [ordered]@{}
     foreach ($marker in $required) { $groups[$marker] = 0 }
     $seenExecutions = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
     $seenTests = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+    $methodScopedCases = 0
     foreach ($result in $results) {
         $id = $result.GetAttribute('testId')
         $executionId = $result.GetAttribute('executionId')
@@ -78,16 +82,33 @@ function Get-SocWorkspaceTrxEvidence {
             $result.GetAttribute('outcome') -cne 'Passed') {
             throw 'SOC TRX contains duplicate, unknown, failed or unexecuted tests.'
         }
-        $assignedGroups = 0
-        foreach ($marker in $required) {
-            if ($owners[$id].Contains($marker)) {
-                $groups[$marker]++
-                $assignedGroups++
+        # VSTest FullyQualifiedName~ selects both class and method matches.
+        # Prefer the owning test class; only use method-name matching when the
+        # class itself has no SOC marker. Do not count the same test twice.
+        $className = [string]$owners[$id]['className']
+        $methodName = [string]$owners[$id]['methodName']
+        if (-not $className.StartsWith('Carthago.Tests.', [StringComparison]::Ordinal) -or
+            [string]::IsNullOrWhiteSpace($methodName)) {
+            throw "SOC TRX test lacks a valid owner: $className.$methodName"
+        }
+        $classGroups = @($required | Where-Object {
+            $className.IndexOf($_, [StringComparison]::OrdinalIgnoreCase) -ge 0
+        })
+        if ($classGroups.Count -eq 1) {
+            $group = $classGroups[0]
+        } elseif ($classGroups.Count -eq 0) {
+            $methodGroups = @($required | Where-Object {
+                $methodName.IndexOf($_, [StringComparison]::OrdinalIgnoreCase) -ge 0
+            })
+            if ($methodGroups.Count -ne 1) {
+                throw "SOC TRX method-scoped test has no unique SOC group: $className.$methodName"
             }
+            $group = $methodGroups[0]
+            $methodScopedCases++
+        } else {
+            throw "SOC TRX class matches multiple SOC groups: $className.$methodName"
         }
-        if (-not $owners[$id].StartsWith('Carthago.Tests.') -or $assignedGroups -ne 1) {
-            throw 'SOC TRX has an unrelated or overlapping test group.'
-        }
+        $groups[$group]++
     }
     foreach ($marker in $required) {
         if ($groups[$marker] -lt 1) { throw "SOC TRX missing required test group $marker." }
@@ -112,6 +133,7 @@ function Get-SocWorkspaceTrxEvidence {
             passed = $number['passed']; failed = $number['failed']
         }
         requiredGroups = $groups
+        methodScopedCases = $methodScopedCases
     }
 }
 
@@ -169,6 +191,11 @@ function Assert-SocWorkspaceCompletionRecord {
         throw 'SOC completion record counters incomplete.'
     }
     $requiredGroups = $Record['requiredGroups']
+    if ($Record['methodScopedCases'] -isnot [int] -or
+        $Record['methodScopedCases'] -lt 0 -or
+        $Record['methodScopedCases'] -gt $results['total']) {
+        throw 'SOC completion method-scoped count invalid.'
+    }
     if ($requiredGroups -isnot [System.Collections.IDictionary]) { throw 'SOC completion groups missing.' }
     foreach ($name in @('NetworkInvestigation','IncidentTimeline','IncidentDetectionLinkVm')) {
         if ($requiredGroups[$name] -isnot [int] -or $requiredGroups[$name] -le 0) {
