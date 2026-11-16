@@ -270,3 +270,21 @@ python .\scripts\reconcile-original-active-sensor-evidence.py `
 ```
 
 The report must be reviewed before attributing this **additional** 392/392 historical active-sensor TRX to a pinned source. It is not yet counted among the five runner-linked TRX files, and it can never establish live physical-network accuracy, unattended operation or current-source qualification on its own. No new evidence admission is authorized.
+
+
+## Original 392/392 active-sensor source link — owner v1 report confirmed, 2026-11-16
+
+The owner uploaded `original-active-sensor-reconciliation-v1.json` (derived report SHA-256 `30485bd516442a6a2ff8130c221996b45faf36ee6043c7b916ca5cfff249ad39`), produced by the previously committed read-only checker on the original Windows evidence bundle. The complete report independently confirms the earlier source-run candidate's local contract:
+
+- Original report: `originals/root-002/active-sensors/20261113-234235-ff35973a0373-a604eff5/qualification.json`; SHA-256 `0f356bfa70bbaae7b306a1c5a8ecc25cd92188f94f48a6247b7f757ab8602011`.
+- Original TRX: `originals/root-002/active-sensors/20261113-234235-ff35973a0373-a604eff5/active-sensors.trx`; SHA-256 `5432e008127aae94f18df2f65c55f72604a3814ca759b89c2b04687efa4950d4`; run ID `ad7ee5c9-1578-473a-9696-aea8c5a7e5ef`.
+- Runner-declared historical source SHA: `ff35973a0373fb61ccee1a64d836944458d54f88`.
+- TRX interval UTC: `2026-11-13T23:43:18.031234Z` to `2026-11-13T23:43:35.854169Z`.
+- Counts: **392/392 executed and passed, zero failed**, across **28 original synthetic/loopback active-sensor suites**. Original report/TRX length and SHA-256 verification, exact historical source-suite matrix, report's embedded TRX digest, time enclosure, and full suite outcomes all passed.
+- The derived report explicitly states: `historicalActiveTrxRunnerLinked=1`, `newFieldQualifications=0`, `newEvidenceAdmissions=0`, `testsExecutedByAudit=0`, `capturesExecutedByAudit=0`.
+
+**Updated source-attribution status: 6 of 42 historical TRX files linked to runner-declared source SHAs; 36 remain unlinked.** These six are listed by exact original TRX digest and source SHA in `docs/05-detection-quality/HISTORICAL_WINDOWS_SOURCE_LINKED_TRX_20261116.csv`. The ledger counts six distinct TRX files, not distinct detectors or 16,638 unique tests (test-result occurrences are shared/overlapping across historical runs). Two historical source SHAs are represented: `ff35973a...` and `dc439337...`.
+
+The separate 14,361/14,361 Windows regression remains original-hash verified but unlinked to its execution SHA, despite an earlier pinned 14,186/14,186 Windows integration regression now being linked. Active sensor tests here do **not** establish physical/network protocol correctness, unattended SCM or Linux service lifecycle, production precision/recall, or current-HEAD qualification. **No original artifacts, registry rows, holdouts, rule-quality thresholds, or formal evidence admissions were changed.**
+
+The next defensible provenance step is inspecting the original SOC-workspace `source-sha.txt` (the v3 derived inspector found no canonical 40-hex SHA token), any original companion logs, and the matching 69-result `soc-workspace-tests.trx`. Do not infer a 40-character executed SHA from an abbreviated filename, a current checkout or a neighboring run.
