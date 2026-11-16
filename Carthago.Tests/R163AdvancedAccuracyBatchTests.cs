@@ -118,6 +118,29 @@ public sealed class R163AdvancedAccuracyBatchTests
             .EvaluateAsync(NetworkBatch156165Context.At(r))).Matched);
     }
 
+    [Theory]
+    [InlineData("Host: 169.254.169.254\r\nX-Request-Id: trace\rHost: evil.example")]
+    [InlineData("X-Request-Id: trace\rHost: evil.example")]
+    [InlineData("Host: 169.254.169.254\r\nX-Request-Id: trace\r")]
+    public async Task Bare_Carriage_Return_Cannot_Hide_Metadata_Header(string headers)
+    {
+        var r = Metadata();
+        r.HttpRequestHeaders = headers;
+        Assert.False((await new R163_SsrfMetadataServiceProbeRule()
+            .EvaluateAsync(NetworkBatch156165Context.At(r))).Matched);
+    }
+
+    [Theory]
+    [InlineData("\r\n")]
+    [InlineData("\n")]
+    public async Task Valid_Header_Delimiters_Preserve_Metadata_Observation(string delimiter)
+    {
+        var r = Metadata();
+        r.HttpRequestHeaders += delimiter + "X-Request-Id: trace";
+        Assert.True((await new R163_SsrfMetadataServiceProbeRule()
+            .EvaluateAsync(NetworkBatch156165Context.At(r))).Matched);
+    }
+
     [Fact] public void Policy_And_Confidence_Floor_Are_Preserved()
     {
         var p=new R163_SsrfMetadataServiceProbeRule().PrecisionProfile;

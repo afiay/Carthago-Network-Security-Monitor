@@ -3183,3 +3183,8 @@ Source parent f1bcef2c73ae31f7f1cd29f87acbba9b65135ac1, tree 345a1aef0d2f9107cf8
 ## 2026-11-16 — Enrichment Phase 16.6e: production health projection
 
 Test commit 8f5b9626a5a7eba04d005c620dc07eec755567a4 extends ObservedAssetRegistryTests to call TrafficCaptureService.SnapshotSessionHealth on sealed and replacement registries. Asserts retained versus empty capacity evidence, unchanged service-lifetime checkpoint evidence, absent stopped TLS versus empty replacement TLS. This exercises the production projection helper, not actual service start/stop or concurrent locking. No compilation or tests executed; Windows focused regression pending. Expected blob SHA contents update; no force push. Next: service lifecycle integration and concurrent snapshots.
+
+
+## 2026-11-16 — GA-09bz R163 bare CR header boundary
+
+Source parent 810cc34099f897a755a1c7838e690f76ad1e2e60, tree 9c697f8c781aedd758deb8a34179c17bdd83da10. Reject bare carriage returns in metadata header blocks before LF/CRLF splitting: an unrelated field could conceal a contradictory Host. Three negative and two valid-delimiter positive detector cases authored. Expected all pass; no execution in this run. No causal producer, confidence, policy, registry or holdout changes. Next Windows: dotnet test .\\Carthago.Tests\\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~R163AdvancedAccuracyBatchTests|FullyQualifiedName~SensitiveTelemetry". Historical evidence unchanged.

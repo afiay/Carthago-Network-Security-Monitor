@@ -295,6 +295,14 @@ namespace Carthago.Engine.Rules
             if (string.IsNullOrWhiteSpace(record.HttpRequestHeaders))
                 return true;
 
+            // A bare CR is not a valid header delimiter. Reject it even in
+            // unrelated fields: otherwise a hidden Host line can escape the
+            // LF/CRLF split below.
+            for (var i = 0; i < record.HttpRequestHeaders.Length; i++)
+                if (record.HttpRequestHeaders[i] == '\r' &&
+                    (i + 1 == record.HttpRequestHeaders.Length || record.HttpRequestHeaders[i + 1] != '\n'))
+                    return false;
+
             // Obsolete folding can change the effective Host authority. Reject
             // ambiguous header blocks rather than trusting the normalized field.
             if (record.HttpRequestHeaders.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries)
