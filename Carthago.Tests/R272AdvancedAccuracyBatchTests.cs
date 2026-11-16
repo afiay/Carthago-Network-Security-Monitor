@@ -212,6 +212,24 @@ public sealed class R272AdvancedAccuracyBatchTests
             Assert.False((await new R272_MultiSignalRuleStackSurgeFromHostRule()
                 .EvaluateAsync(reset)).Matched);
 
+            // Defense in depth: the producer must reject a non-emitted policy
+            // disposition even if a future caller bypasses the emission gate.
+            var originalStatus = ftpEvent.SuppressionStatus;
+            try
+            {
+                foreach (var status in new[] { DetectionSuppressionStatus.Suppressed,
+                    DetectionSuppressionStatus.Shadowed })
+                {
+                    ftpEvent.SuppressionStatus = status;
+                    ingest!.Invoke(null, new object[] { ftpEvent, descriptor, now });
+                    Assert.Empty(RuleEngine.SnapshotR272Signals(host, now));
+                }
+            }
+            finally { ftpEvent.SuppressionStatus = originalStatus; }
+            ingest!.Invoke(null, new object[] { ftpEvent, descriptor, now });
+            Assert.Contains(RuleEngine.SnapshotR272Signals(host, now), s => s.RuleId == "R014");
+            RuleEngine.ResetRuntimeStateForReplay();
+
             // Isolate the exact identity from later legitimate FTP emissions.
             // The live host/rule slot may have been refreshed by a different event.
             RuleEngine.ResetRuntimeStateForReplay();

@@ -495,7 +495,8 @@ namespace Carthago.Services
 
         private static void RecordR272EmittedSignal(DetectionEvent evt, RuleDescriptor descriptor, DateTime now)
         {
-            if (descriptor.RuleId == "R272" || evt.RuleId != descriptor.RuleId ||
+            if (evt.SuppressionStatus != DetectionSuppressionStatus.None ||
+                descriptor.RuleId == "R272" || evt.RuleId != descriptor.RuleId ||
                 string.IsNullOrWhiteSpace(descriptor.Category) || string.IsNullOrWhiteSpace(evt.EventId) ||
                 !IPAddress.TryParse(evt.SourceIp, out var address) ||
                 IPAddress.IsLoopback(address) || address.Equals(IPAddress.Any) ||
