@@ -27,7 +27,7 @@ git pull --ff-only origin feature/carthago-reliability-hardening
 
 dotnet build .\Carthago\Carthago.csproj -c Release
 
-dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~GuiCliCommandPolicyTests|FullyQualifiedName~DetectionCoverageKpiProjectionTests"
+dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~GuiCliCommandPolicyTests|FullyQualifiedName~DetectionCoverageKpiProjectionTests|FullyQualifiedName~GuiCliInProcessIntegrationTests"
 ```
 
 Launch the GUI, enter `help`, `rules summary`, `rules list --live --offset 0 --limit 10`, `sensors health --json` and `alerts list --live`. Verify live output, cancellation and that `monitor stop` / `service stop` are rejected. Observe the Detection Coverage metric both before and after a bounded local rule evaluation, then inspect the detailed Coverage Center; do not interpret this as detector qualification.
