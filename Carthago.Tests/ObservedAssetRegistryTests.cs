@@ -121,15 +121,39 @@ public sealed class ObservedAssetRegistryTests
         var previous = new ObservedAssetRegistry(Now);
         for (int i = 0; i < 2049; i++)
             previous.Observe(Arp(mac: $"02:11:22:33:{i >> 8:X2}:{i & 255:X2}"), Now);
+        for (int i = 0; i < 2049; i++)
+        {
+            var outbound = Local();
+            outbound.TcpFlags = 2;
+            outbound.DstIsLocalHost = false;
+            outbound.CaptureInterfaceId = Adapter;
+            outbound.CaptureInterfaceEvidence = "WindowsInterfaceGuid";
+            outbound.Destination = $"8.8.{i >> 8}.{i & 255}";
+            previous.Communications.Observe(outbound, Now);
+        }
+        var finalCommunications = previous.Communications.CapacitySnapshot();
+        Assert.Equal(new RegistryCapacitySnapshot(2048, 2048, 1), finalCommunications);
         var finalCapacity = previous.CapacitySnapshot();
+        Assert.Equal(new RegistryCapacitySnapshot(2048, 2048, 1), finalCapacity);
         Assert.Equal(2048, previous.Snapshot().Count);
         previous.Seal();
+        var late = Local();
+        late.TcpFlags = 2;
+        late.DstIsLocalHost = false;
+        late.CaptureInterfaceId = Adapter;
+        late.CaptureInterfaceEvidence = "WindowsInterfaceGuid";
+        late.Destination = "8.8.9.1";
+        previous.Communications.Observe(late, Now.AddSeconds(1));
+        Assert.Equal(finalCommunications, previous.Communications.CapacitySnapshot());
         previous.Observe(Arp(mac: "02:11:22:33:FF:FF"), Now.AddSeconds(1));
         Assert.Equal(finalCapacity, previous.CapacitySnapshot());
 
         var replacement = new ObservedAssetRegistry(Now.AddSeconds(2));
         Assert.NotEqual(previous.SessionId, replacement.SessionId);
         Assert.Empty(replacement.Snapshot());
+        Assert.Empty(replacement.Communications.Snapshot());
+        Assert.Equal(new RegistryCapacitySnapshot(0, 2048, 0), replacement.Communications.CapacitySnapshot());
+        Assert.Equal(finalCommunications, previous.Communications.CapacitySnapshot());
         Assert.Equal(new RegistryCapacitySnapshot(0, 2048, 0), replacement.CapacitySnapshot());
         Assert.Equal(finalCapacity, previous.CapacitySnapshot());
     }
