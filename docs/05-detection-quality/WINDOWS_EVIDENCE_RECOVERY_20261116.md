@@ -150,3 +150,19 @@ python .\scripts\reconcile-recovered-source-and-replays.py `
 ```
 
 This only reads original recovered copies and writes a new derived JSON report. No original tests, captures, holdouts, or rule manifests are modified.
+
+
+## V3 verified original PCAP and PCAPNG replay controls — 2026-11-16
+
+The owner uploaded the read-only derived file `source-and-replay-reconciliation-v3.json` (SHA-256: `43be44f8da2d0d48dfeda1ba2e24aa8046c301c44740b65649f085b05bd91b0d`). The report records the **historical** `dc43933775cb95a4685ecc860f93fa60b2ad3d1a` portable Windows run:
+
+- **80/80 synthetic replay controls observed**, with zero blocked: for each R586–R605 exactly one positive and one negative for `pcap`, and one positive and one negative for `pcapng`. Thus 40 positive and 40 negative format-specific controls.
+- Each control's original capture and output-log SHA-256 matches both the original recovered copy and the hash recorded in the original `qualification.json`. All 80 runner-stage exit codes are 0. The decoded output satisfies the replay contract: a positive test produced one rule match, a negative test produced none; the parser reported no rejected, truncated, or clock-reset packets and no unexpected suppression.
+- R601 uses a three-packet synthetic handshake context for each control; the other 19 rules use a one-packet fixture per control.
+- The pinned runner's qualification report declares `sourceSha=dc43933775cb95a4685ecc860f93fa60b2ad3d1a` and `status=SyntheticPortablePassed` (Windows NT 10.0.26300.0), with 667/667 portable tests. Its original report digest in the recovered manifest is `265b8a1bf50258afebcc8488b6432e2c87583496e02b06007922eada4ddfb245`.
+- Another runner-linked historical SHA `ff35973a0373fb61ccee1a64d836944458d54f88` records portable 653/653 and Windows parity 87/87. Total runner-linked TRX runs **3 of 42**, with 39 unlinked. A 392/392 active-sensor TRX shares a directory with a source-declaring report, but its `suites` is list-shaped and did not pass the generic runner-link gate.
+- The original, recovered 14,361/14,361 Windows full regression is TRX-hash verified but its **execution SHA is still unknown**. A Git SHA prefix in a filename is an unverified clue only.
+
+**Do not conflate these evidence levels.** The 80 controls prove historical *synthetic positive/negative executable replay behavior* for the 20 named rules at the reported source SHA, not their production accuracy, field recall, false-positive rate, physical network readiness, current branch readiness, or formal exact-ID qualification admission. The runner-declared SHA is a contemporaneous report-linked claim corroborated by stage counters and hashes, not external hardware-backed attestation. The v3 checker explicitly records `fieldDetectionQualityEstablished=false`, `artifactsAdmitted=0`, `testsExecutedByAudit=0`. No registry, reviewed-evidence manifest, frozen holdout, or current validation status is promoted as a result.
+
+Further work requires independent source attestation for unbound runs and the separate rule-quality decision rubric, plus explicitly authorized current-SHA and operational testing.
