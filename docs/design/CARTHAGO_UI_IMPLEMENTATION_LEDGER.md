@@ -6215,3 +6215,13 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Ownership/static review:** MainWindow.xaml, MainWindow.Settings.cs responsive constants and ledger only. Reviewed SettingsOpsGroup theme, selection no-op, Save/Reset and existing coverage navigation wiring. Binding/name/handler/content identity preserved; all three profile values, selection triggers, staged Save and read-only coverage semantics unchanged. No capture, detection, privacy, shared APIs, ScottPlot 10/120, Events 80/500, CLI, Cisco/WebView2 or independent GA-09bt changes.
 
 **Risks/planned unexecuted:** narrow selector and cutoff wrapping, selected profile contrast, keyboard focus, coverage navigation, Save/Reset, widths 1920/1440/1100/1099/1024/1023/640 and DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. Next UI-200: Settings capture and enrichment configuration composition, preserve credential lifecycle and external lookup consent.
+
+## GA UI-200 — Settings compact capture and enrichment configuration
+
+**2026-11-16 · SOURCE CANDIDATE — UNVERIFIED.** Exact approved Library image libfile_b0a34361560c8191b641e432b3e6b15c visually inspected. Baseline `49134f05f41b55671cd9d504f5c69517af4f8b17`, tree `dea08e7fd93d59fedf9344145e87905b3fddf2b5`; prior UI-199. Reference mapping: compact graphite panels and cyan-accented distinct operational surface; no demo data.
+
+**Visible before → after:** remove redundant 18/20/18/18 inner grid inset; three cards 18 → 10 padding, headings 21 → 18, description gaps 16 → 8, nested toggle rows 12 → 8 padding and 12 → 6 gaps. Session-only credential card gains a distinct blue surface and left border, with tighter masked-input/action/status spacing. Existing Wide two-column local/external cards and full-width credential card, Standard/Compact stacked cards and below-1024 scroll retained. No fixed heights added.
+
+**Ownership/static review:** MainWindow.xaml and ledger only. Reviewed Settings responsive controller, Save/Reset, ApplyApiKey and status producer, SettingsOpsGroup theme. Named controls, bindings, click handlers, text, content and tooltips unchanged. No preference, Npcap/ETW, external lookup consent, masked credential, session override, privacy, capture, detection, ScottPlot 10/120, Events 80/500, CLI, Cisco/WebView2 or independent R272 changes.
+
+**Risks/planned unexecuted:** long BPF and provider labels, masked input and keyboard focus, session status wrapping, Save/Reset and session-only action, widths 1920/1440/1100/1099/1024/1023/640 and DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. Next UI-201: Settings Dashboard section visibility and workspace defaults composition; preserve immediate versus saved preference semantics.
