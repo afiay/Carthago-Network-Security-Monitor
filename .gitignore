@@ -55,6 +55,13 @@ _ReSharper*/
 *.ncrunchsolution
 *.ncrunchproject
 
+# ----- Python generated files (offline validation scripts) -----
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
 # ----- Cache / generated -----
 *.pidb
 *.svclog
