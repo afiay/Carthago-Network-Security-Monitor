@@ -34,11 +34,17 @@ internal static class DetectionCoverageKpiProjection
         if (registered == 0)
             return new DetectionCoverageKpiSnapshot("—", "No rule catalog loaded · coverage unknown");
 
+        if (alertMode == 0)
+        {
+            var noDenominator = $"No alert-mode rules · {registered} registered";
+            if (catalogErrors > 0)
+                noDenominator += $" · {catalogErrors} catalog errors";
+            return new DetectionCoverageKpiSnapshot("—", noDenominator);
+        }
+
         var value = evaluatedInProcess.ToString(CultureInfo.InvariantCulture) + "/" +
                     alertMode.ToString(CultureInfo.InvariantCulture);
-        var caption = alertMode == 0
-            ? $"No alert-mode rules · {registered} registered"
-            : $"Alert-mode rules evaluated in process · {registered} registered";
+        var caption = $"Alert-mode rules evaluated in process · {registered} registered";
         if (catalogErrors > 0)
             caption += $" · {catalogErrors} catalog errors";
         return new DetectionCoverageKpiSnapshot(value, caption);
