@@ -182,11 +182,27 @@ public sealed class ObservedAssetRegistryTests
             System.Threading.Tasks.Task.Run(() =>
             {
                 start.Wait();
+                var lastAssetCount = 0;
+                var lastDestinationCount = 0;
+                long lastAssetRejected = 0;
+                long lastDestinationRejected = 0;
                 for (int i = 0; i < 250; i++)
                 {
                     var snapshot = TrafficCaptureService.SnapshotSessionHealth(registry, null, checkpoints);
-                    Assert.NotNull(snapshot.Storage);
+                    var assets = snapshot.Storage.Assets;
+                    var destinations = snapshot.Storage.Destinations;
+                    Assert.Equal(2048, assets.Limit);
+                    Assert.Equal(2048, destinations.Limit);
+                    Assert.InRange(assets.Count, lastAssetCount, 2048);
+                    Assert.InRange(destinations.Count, lastDestinationCount, 2048);
+                    Assert.True(assets.Rejected >= lastAssetRejected);
+                    Assert.True(destinations.Rejected >= lastDestinationRejected);
+                    Assert.Equal(checkpoints, snapshot.Storage.Checkpoints);
                     Assert.Null(snapshot.Tls);
+                    lastAssetCount = assets.Count;
+                    lastDestinationCount = destinations.Count;
+                    lastAssetRejected = assets.Rejected;
+                    lastDestinationRejected = destinations.Rejected;
                 }
             })).ToArray();
         var writer = System.Threading.Tasks.Task.Run(() =>
