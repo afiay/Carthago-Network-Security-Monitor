@@ -102,6 +102,42 @@ namespace Carthago.Tests.ProtocolIntelligence
             Assert.Equal(1, recovered.DistinctProtocolRejects);
         }
 
+        [Fact] public void OutOfOrderVerifiedCaptureCannotBackfillThreshold()
+        {
+            var window = new RadiusVerifiedRejectWindow();
+            Assert.True(Observe(window, 1, Epoch.AddSeconds(30), out var first));
+            Assert.Equal(1, first.DistinctProtocolRejects);
+            Assert.False(Observe(window, 2, Epoch.AddSeconds(10), out var rejected));
+            Assert.Equal(default, rejected);
+            Assert.True(Observe(window, 3, Epoch.AddSeconds(30), out var second));
+            Assert.Equal(2, second.DistinctProtocolRejects);
+            Assert.False(Observe(window, 2, Epoch.AddSeconds(10), out _));
+            Assert.True(Observe(window, 4, Epoch.AddSeconds(31), out var third));
+            Assert.Equal(3, third.DistinctProtocolRejects);
+            Assert.False(third.HasFourDistinctRejects);
+        }
+
+        [Fact] public void EqualTimestampDistinctExchangesRemainEligible()
+        {
+            var window = new RadiusVerifiedRejectWindow();
+            for (int i = 0; i < 4; i++)
+            {
+                Assert.True(Observe(window, i, Epoch, out var observation));
+                Assert.Equal(i == 3, observation.HasFourDistinctRejects);
+            }
+        }
+
+        [Fact] public void MappedAddressFormsAreCanonicalizedForReplay()
+        {
+            var window = new RadiusVerifiedRejectWindow();
+            Assert.True(Observe(window, 1, Epoch, out _));
+            Assert.False(Observe(window, 1, Epoch, out _,
+                client: "::ffff:192.0.2.10", server: "::ffff:192.0.2.53"));
+            Assert.True(Observe(window, 2, Epoch, out var result,
+                client: "::ffff:192.0.2.10", server: "::ffff:192.0.2.53"));
+            Assert.Equal(2, result.DistinctProtocolRejects);
+        }
+
         [Fact] public void UnspecifiedTimeZoneIsNotTrusted()
         {
             var window = new RadiusVerifiedRejectWindow();

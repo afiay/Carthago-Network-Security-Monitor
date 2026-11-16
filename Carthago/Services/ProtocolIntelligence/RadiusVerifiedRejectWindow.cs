@@ -55,8 +55,12 @@ namespace Carthago.Services.ProtocolIntelligence
 
             lock (_sync)
             {
-                if (observedUtc > _watermark)
-                    _watermark = observedUtc;
+                // Out-of-order authenticated captures cannot backfill a
+                // historical burst after newer evidence has been observed.
+                // Refuse them before mutating the retention watermark or state.
+                if (observedUtc < _watermark)
+                    return false;
+                _watermark = observedUtc;
                 DateTime expiry = _watermark.Ticks < Window.Ticks
                     ? DateTime.MinValue : _watermark - Window;
                 _observations.RemoveAll(item => item.AtUtc < expiry);
