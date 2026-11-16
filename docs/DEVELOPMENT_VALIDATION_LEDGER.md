@@ -3178,3 +3178,8 @@ Test commit b76fb2b09f0466433018e25b5fc30a92b16c6b16 extends the existing regist
 ## 2026-11-16 — GA-09by R163 ambiguous HTTP header rejection
 
 Source parent f1bcef2c73ae31f7f1cd29f87acbba9b65135ac1, tree 345a1aef0d2f9107cf8388f43be4e64737bff066. Shared SensitiveTelemetryContracts metadata Host validation now rejects obsolete folded header lines, including continuation of Host and unrelated fields, rather than accepting a normalized authority despite ambiguous wire semantics. Three R163 detector theory cases authored; expected no match. Existing ordinary singleton Host positive retained. No confidence, registry, policy, holdout or trusted causal producer changes; causal association remains not-established and response outcome not-observed. No Windows execution; next: dotnet test .\\Carthago.Tests\\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~R163AdvancedAccuracyBatchTests|FullyQualifiedName~SensitiveTelemetry". Historical evidence unchanged. RFC 9112 section 5.2: https://www.rfc-editor.org/rfc/rfc9112.html#section-5.2 .
+
+
+## 2026-11-16 — Enrichment Phase 16.6e: production health projection
+
+Test commit 8f5b9626a5a7eba04d005c620dc07eec755567a4 extends ObservedAssetRegistryTests to call TrafficCaptureService.SnapshotSessionHealth on sealed and replacement registries. Asserts retained versus empty capacity evidence, unchanged service-lifetime checkpoint evidence, absent stopped TLS versus empty replacement TLS. This exercises the production projection helper, not actual service start/stop or concurrent locking. No compilation or tests executed; Windows focused regression pending. Expected blob SHA contents update; no force push. Next: service lifecycle integration and concurrent snapshots.
