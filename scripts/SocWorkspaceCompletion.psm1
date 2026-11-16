@@ -78,8 +78,15 @@ function Get-SocWorkspaceTrxEvidence {
             $result.GetAttribute('outcome') -cne 'Passed') {
             throw 'SOC TRX contains duplicate, unknown, failed or unexecuted tests.'
         }
+        $assignedGroups = 0
         foreach ($marker in $required) {
-            if ($owners[$id].Contains($marker)) { $groups[$marker]++ }
+            if ($owners[$id].Contains($marker)) {
+                $groups[$marker]++
+                $assignedGroups++
+            }
+        }
+        if (-not $owners[$id].StartsWith('Carthago.Tests.') -or $assignedGroups -ne 1) {
+            throw 'SOC TRX has an unrelated or overlapping test group.'
         }
     }
     foreach ($marker in $required) {
