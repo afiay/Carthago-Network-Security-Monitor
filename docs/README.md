@@ -50,6 +50,8 @@ Canonical navigation for users, contributors, security analysts, detection engin
 - **[All registered detection rules — master catalog](03-detection-rules/MASTER_RULE_CATALOG.md)**
 - [Protocol research](protocols/PROTOCOL_EXPANSION_PROGRESS.md)
 - [Verification and validation ledger](DEVELOPMENT_VALIDATION_LEDGER.md)
+- [Manual WPF G5/G6 operational acceptance](08-operations/guides/WPF_OPERATIONAL_ACCEPTANCE_G5_G6.md) — human-rendered UI and physical network gates remain NO-GO until observed
+- [Historical 42-TRX source-proof backlog](05-detection-quality/HISTORICAL_42_TRX_BACKLOG_20261116.md) — 6 source-linked, 36 unlinked
 - [UI implementation ledger](design/CARTHAGO_UI_IMPLEMENTATION_LEDGER.md)
 - [Path-stable work documents](10-reference/WORKFLOW_ANCHORS.md) and [previous locations](10-reference/LEGACY_DOCUMENTATION_PATHS.md)
 
