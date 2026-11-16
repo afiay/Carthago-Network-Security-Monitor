@@ -10,6 +10,7 @@ using System.Windows.Input;
 using Carthago.Engine.Rules;
 using Carthago.Engine.Rules.Catalog;
 using Carthago.Engine.Rules.Health;
+using Carthago.Services;
 
 namespace Carthago.Views
 {
@@ -60,14 +61,22 @@ namespace Carthago.Views
 
                 // These are in-process counters, not packet-capture totals or a quality PASS.
                 var engineCounters = RuleEngineHealthState.ReadLifetimeCounters();
+                var metricCounts = RuleEngineMetrics.Snapshot();
+                long CountMetric(string name) => metricCounts
+                    .Where(pair => pair.Key == name || pair.Key.EndsWith(":" + name, StringComparison.Ordinal))
+                    .Sum(pair => pair.Value);
                 RuntimeFunnelText.Text =
                     $"Engine record evaluations: {engineCounters.Evaluations:N0}  •  " +
                     $"Rule evaluations: {_rows.Sum(row => row.Snapshot.RuntimeStats.Evaluations):N0}  •  " +
                     $"Rule matches: {_rows.Sum(row => row.Snapshot.RuntimeStats.Matches):N0}  •  " +
                     $"Rule skips: {_rows.Sum(row => row.Snapshot.RuntimeStats.Skipped):N0}  •  " +
                     $"Rule failures: {_rows.Sum(row => row.Snapshot.RuntimeStats.Failed):N0}  •  " +
-                    $"Journal failures: {engineCounters.JournalFailures:N0}. " +
-                    "Counts are since process start; matched does not mean alerted. " +
+                    $"Journal failures: {engineCounters.JournalFailures:N0}.\\n" +
+                    $"Post-policy outcomes: shadowed {CountMetric(RuleMetricNames.RuleShadowedTotal):N0}  •  " +
+                    $"suppressed {CountMetric(RuleMetricNames.RuleSuppressedTotal):N0}  •  " +
+                    $"emitted {CountMetric(RuleMetricNames.RuleEmittedTotal):N0}  •  " +
+                    $"persisted {CountMetric(RuleMetricNames.RulePersistedTotal):N0}. " +
+                    "Counts are since process start; categories can overlap and are not packet totals. " +
                     "Refresh while capture is active to diagnose the detection path.";
 
                 var unobserved = _rows.Count(row => row.Snapshot.TelemetryCoverage.MissingRequiredTelemetry.Count > 0);
@@ -179,6 +188,10 @@ namespace Carthago.Views
                 $"Policy: {snapshot.CurrentMode}  •  Default enabled: {snapshot.Descriptor.EnabledByDefault}\n" +
                 $"Evaluations: {runtime.Evaluations:N0}  •  Matches: {runtime.Matches:N0}  •  " +
                 $"Skipped: {runtime.Skipped:N0}  •  Failures: {runtime.Failed:N0}\n" +
+                $"Post-policy: shadowed {RuleEngineMetrics.Get(snapshot.RuleId, RuleMetricNames.RuleShadowedTotal):N0}  •  " +
+                $"suppressed {RuleEngineMetrics.Get(snapshot.RuleId, RuleMetricNames.RuleSuppressedTotal):N0}  •  " +
+                $"emitted {RuleEngineMetrics.Get(snapshot.RuleId, RuleMetricNames.RuleEmittedTotal):N0}  •  " +
+                $"persisted {RuleEngineMetrics.Get(snapshot.RuleId, RuleMetricNames.RulePersistedTotal):N0}\n" +
                 $"No-match / skipped reason: {noMatchExplanation}\n" +
                 $"Replay qualification: {replayExplanation}\n" +
                 $"Last evaluated (UTC): {runtime.LastEvaluatedUtc?.ToString("u") ?? "Not observed"}\n" +
