@@ -179,8 +179,8 @@ namespace Carthago.Views
                 $"Policy: {snapshot.CurrentMode}  •  Default enabled: {snapshot.Descriptor.EnabledByDefault}\n" +
                 $"Evaluations: {runtime.Evaluations:N0}  •  Matches: {runtime.Matches:N0}  •  " +
                 $"Skipped: {runtime.Skipped:N0}  •  Failures: {runtime.Failed:N0}\n" +
-                $"No-match / skipped reason: {noMatchExplanation}\\n" +
-                $"Replay qualification: {replayExplanation}\\n" +
+                $"No-match / skipped reason: {noMatchExplanation}\n" +
+                $"Replay qualification: {replayExplanation}\n" +
                 $"Last evaluated (UTC): {runtime.LastEvaluatedUtc?.ToString("u") ?? "Not observed"}\n" +
                 $"Required telemetry kinds: {requirements}\n" +
                 $"Required telemetry kinds not yet observed: {missing}\n" +
