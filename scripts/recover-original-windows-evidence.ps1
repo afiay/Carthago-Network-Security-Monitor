@@ -28,11 +28,15 @@ if ($EvidenceRoot.Count -eq 0) {
 if ($EvidenceRoot.Count -eq 0) { throw 'No evidence roots found; supply -EvidenceRoot explicitly.' }
 $separator = [IO.Path]::DirectorySeparatorChar
 function Normalize-Directory([string]$path) {
-    return [IO.Path]::GetFullPath($path).TrimEnd([char[]]@('\', '/'))
+    $full = [IO.Path]::GetFullPath($path)
+    $root = [IO.Path]::GetPathRoot($full)
+    if ($full.Length -eq $root.Length) { return $full }
+    return $full.TrimEnd([char[]]@([char]92, [char]47))
 }
 function Test-WithinDirectory([string]$candidate, [string]$directory) {
-    return $candidate.Equals($directory, [StringComparison]::OrdinalIgnoreCase) -or
-           $candidate.StartsWith($directory + $separator, [StringComparison]::OrdinalIgnoreCase)
+    if ($candidate.Equals($directory, [StringComparison]::OrdinalIgnoreCase)) { return $true }
+    $prefix = if ($directory.EndsWith([string]$separator)) { $directory } else { $directory + $separator }
+    return $candidate.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase)
 }
 $rootPaths = [Collections.Generic.List[string]]::new()
 $rootSeen = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
