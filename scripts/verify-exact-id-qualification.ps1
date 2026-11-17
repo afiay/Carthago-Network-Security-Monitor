@@ -80,6 +80,8 @@ function Test-Qualification($document, $inventory, [string]$currentSha, $manifes
     $current = 0
     $historical = 0
     $failed = 0
+    $authored = 0
+    $missing = 0
     $referencedExecutions = @{}
     foreach ($row in $document.records) {
         foreach ($field in @('ruleId','registeredClass','detector','pairedReplay','captureProvenance','profileEligibility','independentValidation','limitations')) {
@@ -123,11 +125,12 @@ function Test-Qualification($document, $inventory, [string]$currentSha, $manifes
             if ($d.executedSha -ceq $currentSha) { $current++ } else { $historical++ }
         } else {
             Assert-Qualification ($null -eq $d.executedSha) "Unexecuted evidence has SHA: $id"
+            if ($d.status -ceq 'authored-unexecuted') { $authored++ } else { $missing++ }
         }
         Assert-Qualification (-not [string]::IsNullOrWhiteSpace($d.positiveNegative) -and -not [string]::IsNullOrWhiteSpace($d.reference)) "Missing evidence description: $id"
     }
     Assert-Qualification ($referencedExecutions.Count -eq $reviewed.Count) 'Orphaned reviewed execution manifest record'
-    [pscustomobject]@{ registeredCount=$map.Count; auditedCount=$seen.Count; missingCount=$map.Count-$seen.Count; historicalExecutionRecords=$historical; currentExecutionRecords=$current; unsupportedProducerRecords=$unsupported; failedExecutionRecords=$failed; testsExecuted=0 }
+    [pscustomobject]@{ registeredCount=$map.Count; auditedCount=$seen.Count; missingCount=$map.Count-$seen.Count; historicalExecutionRecords=$historical; currentExecutionRecords=$current; unsupportedProducerRecords=$unsupported; failedExecutionRecords=$failed; authoredUnexecutedRecords=$authored; missingDetectorRecords=$missing; testsExecuted=0 }
 }
 $sha = (git -C $root rev-parse HEAD).Trim()
 if ($LASTEXITCODE -ne 0) { throw 'Cannot resolve checkout HEAD' }
@@ -161,6 +164,7 @@ if ($SelfTest) {
     $bad = Copy-Document; ($bad.records | Where-Object ruleId -ceq 'R343').detector.status = 'failed'; Expect-Rejection $bad
     $bad = Copy-Document; $bad.records[0] | Add-Member -NotePropertyName producerQualification -NotePropertyValue 'unsupported-benchmark-scenario'; Expect-Rejection $bad
     Assert-Qualification ($result.unsupportedProducerRecords -eq 6) 'Producer gap count mismatch'
+    Assert-Qualification ($result.authoredUnexecutedRecords + $result.missingDetectorRecords + $result.historicalExecutionRecords + $result.currentExecutionRecords -eq $result.auditedCount) 'Detector status partition mismatch'
     function Copy-Manifest { Get-Content -Raw $manifestFile | ConvertFrom-Json }
     function Expect-ManifestRejection($candidate) {
         $rejected = $false
