@@ -71,14 +71,17 @@ internal static class EnrichmentHealthPresentation
             if (!stats.EnrichmentProviders.TryGetValue(name, out var p)) continue;
             invalidProviderCounters |= p.Success < 0 || p.Unavailable < 0 || p.Failed < 0 ||
                 p.TimedOut < 0 || p.Cancelled < 0 || p.CacheHits < 0 ||
-                p.TotalElapsedMs < 0 || p.MaxElapsedMs < 0;
+                p.TotalElapsedMs < 0 || p.MaxElapsedMs < 0 ||
+                (p.Success + (decimal)p.Unavailable + p.Failed + p.TimedOut + p.Cancelled == 0 &&
+                 (p.TotalElapsedMs != 0 || p.MaxElapsedMs != 0)) ||
+                (p.TotalElapsedMs >= 0 && p.MaxElapsedMs > p.TotalElapsedMs);
         }
         return new("Provider outcomes: capture-service lifetime; success share includes cancelled outcomes. " +
             "Cache hits are lookup-path events, not additional outcomes. No attempts means no rate. " +
             $"Enrichment queue depth: {stats.EnrichmentQueueDepth?.ToString(CultureInfo.InvariantCulture) ?? "unknown"}; " +
             $"fallback records (lifetime): {stats.EnrichmentFallbacks:N0}. " +
             "Provider success is not proof of detection accuracy or endpoint trust. " +
-            (invalidProviderCounters ? "WARNING: negative provider outcome, cache-path or latency counters; investigate provider accounting. " : string.Empty) +
+            (invalidProviderCounters ? "WARNING: invalid provider outcome, cache-path or latency counters; investigate provider accounting. " : string.Empty) +
             WorkerSummary(stats.EnrichmentWorkers) + " " + CoverageSummary(stats.EnrichmentCoverage) + " " + StorageSummary(stats.EnrichmentStorage) + " " + GeoSummary(stats) + " " + NativeProcessSummary(stats.NativeProcessLookups) + " " + ProcessMetadataCacheSummary(stats.ProcessMetadataCache) + " " + ProcessMetadataCacheCapacitySummary(stats.ProcessMetadataCacheCapacity) + " " + TlsCapacitySummary(stats.TlsCapacity), providers);
     }
 

@@ -150,11 +150,32 @@ public sealed class EnrichmentHealthPresentationTests
             }
         };
         var display = EnrichmentHealthPresentation.Build(stats);
-        Assert.Contains("WARNING: negative provider outcome, cache-path or latency counters", display.Summary);
+        Assert.Contains("WARNING: invalid provider outcome, cache-path or latency counters", display.Summary);
         Assert.Equal(success, display.Providers.Single(p => p.Provider == "whois").Success);
         Assert.Equal(cacheHits, display.Providers.Single(p => p.Provider == "whois").CacheHits);
-        Assert.DoesNotContain("WARNING: negative provider outcome", EnrichmentHealthPresentation.Build(
+        Assert.DoesNotContain("WARNING: invalid provider outcome", EnrichmentHealthPresentation.Build(
             new TrafficCaptureService.StatsSnapshot()).Summary);
+    }
+
+    [Theory]
+    [InlineData(0, 0, 5, 5)]
+    [InlineData(0, 0, 0, 5)]
+    [InlineData(1, 0, 1, 2)]
+    public void Provider_Latency_Inconsistency_Is_Flagged_Without_Fabricating_Outcomes(
+        long success, long unavailable, long elapsed, long maxElapsed)
+    {
+        var stats = new TrafficCaptureService.StatsSnapshot
+        {
+            EnrichmentProviders = new Dictionary<string, EnrichmentProviderSnapshot>
+            {
+                ["whois"] = new(success, unavailable, 0, 0, 0, 0, elapsed, maxElapsed)
+            }
+        };
+        var display = EnrichmentHealthPresentation.Build(stats);
+        Assert.Contains("WARNING: invalid provider outcome, cache-path or latency counters", display.Summary);
+        var row = display.Providers.Single(p => p.Provider == "whois");
+        Assert.Equal(success, row.Success);
+        Assert.Equal(success == 0 ? "—" : "100.0%", row.SuccessShare);
     }
 
     [Fact]
