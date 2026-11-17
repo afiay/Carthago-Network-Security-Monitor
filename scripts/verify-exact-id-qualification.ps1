@@ -30,12 +30,14 @@ function Get-ReviewedExecutionMap($manifest, $registryMap) {
         if ($null -ne $artifact) {
             Assert-Qualification ($null -ne $artifact.Value) 'Missing artifact metadata'
             $a = $artifact.Value
-            foreach ($field in @('file','sha256','testNames','checkoutSha','checkoutReview')) {
+            foreach ($field in @('file','sha256','testNames','checkoutSha','checkoutReview','casePolarity')) {
                 Assert-Qualification ($null -ne $a.PSObject.Properties[$field] -and $null -ne $a.$field) "Missing artifact field: $field"
             }
             Assert-Qualification ($a.file -cmatch '^[A-Za-z0-9_-][A-Za-z0-9_.-]*\.trx$' -and $a.file -notmatch '\.\.') 'Invalid artifact filename'
             Assert-Qualification ($a.sha256 -cmatch '^[a-f0-9]{64}$') 'Invalid artifact digest'
             Assert-Qualification ($a.checkoutSha -ceq $entry.executedSha -and -not [string]::IsNullOrWhiteSpace($a.checkoutReview)) 'Missing or mismatched checkout review'
+            # Test pass/fail is not detector positive/negative polarity. Require an explicit reviewed case designation.
+            Assert-Qualification ($a.casePolarity -cin @('positive-detector','negative-detector')) 'Missing or unreviewed detector case polarity'
             Assert-Qualification ($a.testNames -is [array] -and $a.testNames.Count -gt 0 -and $a.testNames.Count -le 1000) 'Invalid exact test selection size'
             Assert-Qualification (@($a.testNames | Where-Object { $_ -isnot [string] -or [string]::IsNullOrWhiteSpace($_) }).Count -eq 0) 'Invalid exact test name'
             # Bound manifest selections before opening any TRX.
@@ -184,7 +186,7 @@ if ($SelfTest) {
     $badManifest.records[0] | Add-Member -NotePropertyName artifact -NotePropertyValue ([pscustomobject]@{file='fixture.trx'})
     Expect-ManifestRejection $badManifest
     $badManifest = Copy-Manifest
-    $badManifest.records[0] | Add-Member -NotePropertyName artifact -NotePropertyValue ([pscustomobject]@{file='../fixture.trx';sha256=('0'*64);testNames=@('Exact.Test');checkoutSha=$badManifest.records[0].executedSha;checkoutReview='fixture only'})
+    $badManifest.records[0] | Add-Member -NotePropertyName artifact -NotePropertyValue ([pscustomobject]@{file='../fixture.trx';sha256=('0'*64);testNames=@('Exact.Test');checkoutSha=$badManifest.records[0].executedSha;checkoutReview='fixture only';casePolarity='positive-detector'})
     Expect-ManifestRejection $badManifest
     $badManifest = Copy-Manifest
     $badManifest.records[0] | Add-Member -NotePropertyName artifact -NotePropertyValue ([pscustomobject]@{file='fixture.trx';sha256=('0'*64);testNames=@('Exact.Test');checkoutSha=('0'*40);checkoutReview='fixture only'})
@@ -229,9 +231,18 @@ if ($SelfTest) {
             testNames=@('Exact.Test')
             checkoutSha=$fixtureEntry.executedSha
             checkoutReview='Synthetic integration fixture only'
+            casePolarity='positive-detector'
         })
         $fixtureResult = Test-Qualification $doc $inventory $sha $fixtureManifest
         Assert-Qualification ($fixtureResult.auditedCount -eq $result.auditedCount -and $fixtureResult.historicalExecutionRecords -eq $result.historicalExecutionRecords -and $fixtureResult.currentExecutionRecords -eq $result.currentExecutionRecords) 'Artifact integration changed evidence accounting'
+        $fixtureEntry.artifact.casePolarity = 'unknown'
+        Expect-ManifestRejection $fixtureManifest
+        $fixtureEntry.artifact.casePolarity = 'negative-detector'
+        $negativeFixture = Test-Qualification $doc $inventory $sha $fixtureManifest
+        Assert-Qualification ($negativeFixture.auditedCount -eq $result.auditedCount) 'Explicit negative polarity fixture rejected'
+        $fixtureEntry.artifact.PSObject.Properties.Remove('casePolarity')
+        Expect-ManifestRejection $fixtureManifest
+        $fixtureEntry | Add-Member -Force -NotePropertyName artifact -NotePropertyValue ([pscustomobject]@{file='fixture.trx';sha256=(Get-FileHash -LiteralPath $fixturePath -Algorithm SHA256).Hash.ToLowerInvariant();testNames=@('Exact.Test');checkoutSha=$fixtureEntry.executedSha;checkoutReview='Synthetic integration fixture only';casePolarity='positive-detector'})
         $fixtureEntry.artifact.sha256 = '0' * 64
         Expect-ManifestRejection $fixtureManifest
         $fixtureEntry.artifact.sha256 = (Get-FileHash -LiteralPath $fixturePath -Algorithm SHA256).Hash.ToLowerInvariant()
@@ -241,7 +252,7 @@ if ($SelfTest) {
         Assert-Qualification ($null -ne $second) 'Missing second reviewed-pass fixture'
         $second | Add-Member -Force -NotePropertyName artifact -NotePropertyValue ([pscustomobject]@{
             file='fixture.trx';sha256=$fixtureEntry.artifact.sha256;testNames=@('Exact.Test')
-            checkoutSha=$second.executedSha;checkoutReview='Synthetic duplicate-claim fixture'
+            checkoutSha=$second.executedSha;checkoutReview='Synthetic duplicate-claim fixture';casePolarity='positive-detector'
         })
         Expect-ManifestRejection $duplicateClaim
         $fixtureEntry.artifact.testNames = @('Exact.Test','Exact.Test')
