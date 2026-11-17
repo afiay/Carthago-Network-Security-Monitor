@@ -45,6 +45,25 @@ namespace Carthago.Tests
         }
 
         [Fact]
+        public void RejectsCounterRollbackBetweenDisjointWindowsEvenWithSameEpoch()
+        {
+            Assert.False(ParserFailureRateWindow.TryDetect(
+                S(0, 0, 0), S(5, 1000, 10), S(6, 900, 10), S(11, 1100, 50),
+                100, 10, 0.05, 3, out _));
+            Assert.False(ParserFailureRateWindow.TryDetect(
+                S(0, 0, 0), S(5, 1000, 10), S(6, 1000, 5), S(11, 1200, 45),
+                100, 10, 0.05, 3, out _));
+        }
+
+        [Fact]
+        public void RejectsImpossibleUnobservedGapBetweenWindows()
+        {
+            Assert.False(ParserFailureRateWindow.TryDetect(
+                S(0, 0, 0), S(5, 1000, 10), S(6, 1001, 12), S(11, 1201, 52),
+                100, 10, 0.05, 3, out _));
+        }
+
+        [Fact]
         public void RejectsOrdinaryBaselineRate()
         {
             Assert.False(ParserFailureRateWindow.TryDetect(
