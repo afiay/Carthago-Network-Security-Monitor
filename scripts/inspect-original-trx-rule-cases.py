@@ -68,6 +68,18 @@ def inspect(path: Path) -> dict:
             "results": rows}
 
 
+def parse_review_json(data: bytes) -> dict:
+    """Reject ambiguous duplicate keys rather than silently overriding review claims."""
+    def unique_pairs(pairs):
+        obj = {}
+        for key, value in pairs:
+            if key in obj:
+                raise ValueError("Duplicate reviewed-map JSON key")
+            obj[key] = value
+        return obj
+    return json.loads(data.decode("utf-8"), object_pairs_hook=unique_pairs)
+
+
 def reconcile_reviewed_cases(report: dict, review: dict) -> dict:
     """Join exact reviewed declarations; never attest independent qualification."""
     if not isinstance(review, dict) or review.get("schemaVersion") != 1:
@@ -118,6 +130,15 @@ def self_test() -> None:
         review = {"schemaVersion": 1, "originalTrxSha256": r["originalTrxSha256"],
                   "cases": [{"testId": "a", "exactTestName": "R102.Positive",
                              "exactRuleId": "R102", "casePolarity": "positive-detector"}]}
+        assert parse_review_json(json.dumps(review).encode("utf-8")) == review
+        for malformed in (b'{"schemaVersion":1,"schemaVersion":2}',
+                          b'{"cases":[{"testId":"a","testId":"b"}]}'):
+            try:
+                parse_review_json(malformed)
+            except ValueError:
+                pass
+            else:
+                raise AssertionError("Duplicate reviewed-map key accepted")
         joined = reconcile_reviewed_cases(r, review)
         assert len(joined["reviewedCases"]) == 1 and joined["unreviewedCount"] == 1
         assert not joined["evidenceAdmitted"]
@@ -171,8 +192,10 @@ def main() -> None:
     if args.reviewed_map is not None:
         if not args.reviewed_map.is_file() or not 0 < args.reviewed_map.stat().st_size <= MAX_BYTES:
             raise ValueError("Missing or oversized review map")
-        review = json.loads(args.reviewed_map.read_text(encoding="utf-8"))
+        review_bytes = args.reviewed_map.read_bytes()
+        review = parse_review_json(review_bytes)
         report["reviewedCaseReconciliation"] = reconcile_reviewed_cases(report, review)
+        report["reviewedCaseReconciliation"]["reviewedMapSha256"] = hashlib.sha256(review_bytes).hexdigest()
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with args.output.open("x", encoding="utf-8") as f:
         json.dump(report, f, indent=2)
