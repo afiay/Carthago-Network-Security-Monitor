@@ -27,6 +27,15 @@ namespace Carthago.Services
         public DetectionJournal(DetectionJournalOptions options) => _options = options ?? throw new ArgumentNullException(nameof(options));
         public static DetectionJournal Current => _current.Value;
 
+        /// <summary>
+        /// Read OS-reported capacity for this journal instance's configured directory.
+        /// No directory is created, no packet input is accepted, and this is not
+        /// evidence of a failed write or permission to emit an R531 alert.
+        /// </summary>
+        public bool TryReadConfiguredVolumeCapacity(out long availableBytes, out long totalBytes)
+            => ProtocolIntelligence.JournalVolumeCapacityProbe.TryRead(
+                _options.DirectoryPath, out availableBytes, out totalBytes);
+
         public string GetJournalPath(DateTime timestampUtc)
         {
             var utc = timestampUtc.Kind == DateTimeKind.Utc ? timestampUtc : timestampUtc.ToUniversalTime();
