@@ -344,6 +344,26 @@ public sealed class ObservedAssetRegistryTests
         Assert.Equal(new RegistryCapacitySnapshot(0, 2048, 0), surviving.EnrichmentStorage.Assets);
         Assert.Equal(new RegistryCapacitySnapshot(0, 2048, 0), surviving.EnrichmentStorage.Destinations);
         Assert.Equal(secondSession.SessionId, second.GetObservedAssetSession().SessionId);
+
+        // Verify that stopping the first instance does not destabilize concurrent
+        // statistics and registry reads on the still-live second instance.
+        var readers = System.Linq.Enumerable.Range(0, 4).Select(_ =>
+            System.Threading.Tasks.Task.Run(() =>
+            {
+                for (int i = 0; i < 50; i++)
+                {
+                    var stats = second.GetStats();
+                    var observed = second.GetObservedAssetSession();
+                    Assert.Equal(secondSession.SessionId, stats.RegistrySessionId);
+                    Assert.Equal(stats.RegistrySessionId, observed.SessionId);
+                    Assert.False(stats.RegistryRunPresent);
+                    Assert.Equal(new RegistryCapacitySnapshot(0, 2048, 0), stats.EnrichmentStorage.Assets);
+                    Assert.Equal(new RegistryCapacitySnapshot(0, 2048, 0), stats.EnrichmentStorage.Destinations);
+                    Assert.Empty(observed.Rows);
+                    Assert.Empty(observed.Communications);
+                }
+            }));
+        await System.Threading.Tasks.Task.WhenAll(readers);
         await second.StopHeadlessAsync(timeout.Token);
     }
 
