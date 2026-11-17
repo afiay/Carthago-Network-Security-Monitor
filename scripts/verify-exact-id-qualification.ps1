@@ -65,6 +65,7 @@ function Test-Qualification($document, $inventory, [string]$currentSha, $manifes
     $current = 0
     $historical = 0
     $failed = 0
+    $referencedExecutions = @{}
     foreach ($row in $document.records) {
         foreach ($field in @('ruleId','registeredClass','detector','pairedReplay','captureProvenance','profileEligibility','independentValidation','limitations')) {
             Assert-Qualification ($null -ne $row.PSObject.Properties[$field] -and $null -ne $row.$field -and -not [string]::IsNullOrWhiteSpace([string]$row.$field)) "Missing field: $field"
@@ -100,6 +101,7 @@ function Test-Qualification($document, $inventory, [string]$currentSha, $manifes
             $key = "$($id):$($d.executedSha)"
             Assert-Qualification ($reviewed.ContainsKey($key)) "Unreviewed execution claim: $id"
             $entry = $reviewed[$key]
+            $referencedExecutions[$key] = $true
             $expectedOutcome = if ($d.status -ceq 'failed') { 'fail' } else { 'pass' }
             Assert-Qualification ($entry.outcome -ceq $expectedOutcome -and $entry.testReference -ceq $d.reference) "Execution evidence mismatch: $id"
             if ($d.status -ceq 'failed') { $failed++ }
@@ -109,6 +111,7 @@ function Test-Qualification($document, $inventory, [string]$currentSha, $manifes
         }
         Assert-Qualification (-not [string]::IsNullOrWhiteSpace($d.positiveNegative) -and -not [string]::IsNullOrWhiteSpace($d.reference)) "Missing evidence description: $id"
     }
+    Assert-Qualification ($referencedExecutions.Count -eq $reviewed.Count) 'Orphaned reviewed execution manifest record'
     [pscustomobject]@{ registeredCount=$map.Count; auditedCount=$seen.Count; missingCount=$map.Count-$seen.Count; historicalExecutionRecords=$historical; currentExecutionRecords=$current; unsupportedProducerRecords=$unsupported; failedExecutionRecords=$failed; testsExecuted=0 }
 }
 $sha = (git -C $root rev-parse HEAD).Trim()
@@ -146,6 +149,7 @@ if ($SelfTest) {
         Assert-Qualification $rejected 'Invalid execution manifest accepted'
     }
     $badManifest = Copy-Manifest; $badManifest.records += $badManifest.records[0]; Expect-ManifestRejection $badManifest
+    $badManifest = Copy-Manifest; $badManifest.records[0].ruleId = 'R001'; Expect-ManifestRejection $badManifest
     $badManifest = Copy-Manifest; $badManifest.records[0].outcome = 'fail'; Expect-ManifestRejection $badManifest
     $badManifest = Copy-Manifest; $badManifest.records[0].testReference = 'Carthago.Tests/Unreviewed.cs'; Expect-ManifestRejection $badManifest
     $badManifest = Copy-Manifest; $badManifest.records[0].scope = 'field'; Expect-ManifestRejection $badManifest
