@@ -29,7 +29,7 @@ def inspect(path: Path) -> dict:
     if results is None or summary is None or summary.get("outcome") not in {"Completed", "Passed", "Failed"}:
         raise ValueError("Incomplete TRX")
     nodes = list(results)
-    if len(nodes) > MAX_RESULTS or any(node.tag != NS + "UnitTestResult" for node in nodes):
+    if not nodes or len(nodes) > MAX_RESULTS or any(node.tag != NS + "UnitTestResult" for node in nodes):
         raise ValueError("Unsupported or excessive result nodes")
     rows = []
     for node in nodes:
@@ -45,6 +45,8 @@ def inspect(path: Path) -> dict:
         raise ValueError("Missing or oversized testId")
     if len({r["testId"] for r in rows}) != len(rows):
         raise ValueError("Duplicate testId across original results")
+    if len({r["exactTestName"] for r in rows}) != len(rows):
+        raise ValueError("Duplicate exact test name across original results")
     counters = summary.find(NS + "Counters")
     if counters is not None:
         actual = {"total": len(rows),
@@ -81,6 +83,8 @@ def self_test() -> None:
         for bad in (xml.replace('outcome="Passed"', 'outcome="Unknown"'),
                     '<!DOCTYPE TestRun>' + xml,
                     xml.replace('testId="b"', 'testId="a"'),
+                    xml.replace('testName="Benign.Control"', 'testName="R102.Positive"'),
+                    xml.replace('<UnitTestResult testName="R102.Positive" testId="a" outcome="Passed"/>', '').replace('<UnitTestResult testName="Benign.Control" testId="b" outcome="Failed"/>', ''),
                     xml.replace('<ResultSummary outcome="Completed"/>',
                                 '<ResultSummary outcome="Completed"><Counters total="3" passed="1" failed="1"/></ResultSummary>'),
                     xml.replace('outcome="Completed"', 'outcome="Passed"'),
