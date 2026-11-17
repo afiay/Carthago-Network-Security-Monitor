@@ -28,6 +28,31 @@ public sealed class EnrichmentWorkerHealthTests
         Assert.Contains("30.0 / 40", display);
     }
     [Fact]
+    public void Worker_Summary_Separates_InFlight_From_Completed_And_Skipped()
+    {
+        var h = new EnrichmentWorkerHealth();
+        h.SkipCancelled();
+        h.Start(4); h.End(true, false, 20);
+        h.Start(8);
+        var active = EnrichmentHealthPresentation.WorkerSummary(h.Snapshot());
+        Assert.Contains("in flight at snapshot: 1", active);
+        Assert.Contains("started workers: 2", active);
+        Assert.Contains("completed workers: 1", active);
+        Assert.Contains("6.0 / 8", active);
+        Assert.Contains("20.0 / 20", active);
+        h.End(false, false, 30);
+        var drained = EnrichmentHealthPresentation.WorkerSummary(h.Snapshot());
+        Assert.Contains("in flight at snapshot: 0", drained);
+        Assert.Contains("completed workers: 2", drained);
+        Assert.Contains("25.0 / 30", drained);
+        var empty = EnrichmentHealthPresentation.WorkerSummary(new EnrichmentWorkerHealth().Snapshot());
+        Assert.Contains("in flight at snapshot: 0", empty);
+        Assert.Contains("started workers: 0", empty);
+        Assert.Contains("completed workers: 0", empty);
+        Assert.Contains("—", empty);
+    }
+
+    [Fact]
     public void Detached_Work_Return_Is_Cancelled_Even_Before_Token_Signal()
     {
         using var oldRun = new System.Threading.CancellationTokenSource();
