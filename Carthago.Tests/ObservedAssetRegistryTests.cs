@@ -310,7 +310,7 @@ public sealed class ObservedAssetRegistryTests
     }
 
     [Fact]
-    public void Independent_Headless_Services_Do_Not_Share_Registry_Sessions()
+    public async System.Threading.Tasks.Task Independent_Headless_Services_Do_Not_Share_Registry_Sessions()
     {
         // A new service must own its own registry, even when neither instance
         // has started native capture. This guards against accidental static
@@ -333,6 +333,18 @@ public sealed class ObservedAssetRegistryTests
         Assert.Empty(secondSession.Rows);
         Assert.Empty(firstSession.Communications);
         Assert.Empty(secondSession.Communications);
+
+        // Stopping one instance must not invalidate another instance's idle
+        // registry, statistics path, or ability to stop independently.
+        using var timeout = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(10));
+        await first.StopHeadlessAsync(timeout.Token);
+        var surviving = second.GetStats();
+        Assert.Equal(secondSession.SessionId, surviving.RegistrySessionId);
+        Assert.False(surviving.RegistryRunPresent);
+        Assert.Equal(new RegistryCapacitySnapshot(0, 2048, 0), surviving.EnrichmentStorage.Assets);
+        Assert.Equal(new RegistryCapacitySnapshot(0, 2048, 0), surviving.EnrichmentStorage.Destinations);
+        Assert.Equal(secondSession.SessionId, second.GetObservedAssetSession().SessionId);
+        await second.StopHeadlessAsync(timeout.Token);
     }
 
     [Fact]
