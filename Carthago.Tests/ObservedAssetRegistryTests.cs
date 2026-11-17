@@ -364,6 +364,19 @@ public sealed class ObservedAssetRegistryTests
                 }
             }));
         await System.Threading.Tasks.Task.WhenAll(readers);
+        // A newly constructed monitor after peer shutdown must receive a
+        // fresh registry identity without altering the surviving monitor.
+        using (var replacement = new TrafficCaptureService(null,
+            System.Windows.Threading.Dispatcher.CurrentDispatcher, headless: true))
+        {
+            var replacementSession = replacement.GetObservedAssetSession();
+            Assert.NotEqual(firstSession.SessionId, replacementSession.SessionId);
+            Assert.NotEqual(secondSession.SessionId, replacementSession.SessionId);
+            Assert.Equal(replacementSession.SessionId, replacement.GetStats().RegistrySessionId);
+            Assert.Empty(replacementSession.Rows);
+            Assert.Empty(replacementSession.Communications);
+            Assert.Equal(secondSession.SessionId, second.GetStats().RegistrySessionId);
+        }
         await second.StopHeadlessAsync(timeout.Token);
     }
 
