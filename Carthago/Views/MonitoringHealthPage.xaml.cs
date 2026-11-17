@@ -91,6 +91,9 @@ namespace Carthago.Views
             var reportedError = string.IsNullOrWhiteSpace(error) ? source.Error : error;
             CaptureErrorText.Text = string.IsNullOrWhiteSpace(reportedError) ? string.Empty : $"Capture error: {reportedError}";
             SnapshotTimeText.Text = $"Local UI snapshot: {DateTime.Now:yyyy-MM-dd HH:mm:ss}";
+            // A previous copy acknowledgement must not describe a newer snapshot.
+            // In particular, unavailable stats must not leave a stale success visible.
+            EnrichmentExportStatus.Text = string.Empty;
             _exportStats = uiStats;
             _exportSampledUtc = DateTimeOffset.UtcNow;
             CopyEnrichmentCountersButton.IsEnabled = uiStats is not null;

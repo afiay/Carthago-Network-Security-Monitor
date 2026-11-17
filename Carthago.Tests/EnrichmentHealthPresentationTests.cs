@@ -36,6 +36,34 @@ public sealed class EnrichmentHealthPresentationTests
     }
 
     [Fact]
+    public void Aggregate_Export_Excludes_Unrecognized_Providers_And_Diagnostic_Payloads()
+    {
+        const string secret = "sensitive-endpoint-and-provider-diagnostic";
+        var stats = new TrafficCaptureService.StatsSnapshot
+        {
+            EnrichmentProviders = new Dictionary<string, EnrichmentProviderSnapshot>
+            {
+                ["whois"] = new(1, 0, 0, 0, 0, 0, 5, 5),
+                [secret] = new(1, 0, 0, 0, 0, 0, 5, 5)
+            },
+            EnrichmentStorage = new(new(1, 32, 0), new(2, 32, 1),
+                new(1, 1, secret))
+        };
+        var now = System.DateTimeOffset.Parse("2026-11-17T05:00:00Z");
+        var json = EnrichmentHealthPresentation.ExportCounters(stats, now, 42, now);
+        using var doc = System.Text.Json.JsonDocument.Parse(json);
+        var providers = doc.RootElement.GetProperty("providers");
+        Assert.Equal(1, providers.EnumerateObject().Count());
+        Assert.Equal(1, providers.GetProperty("whois").GetProperty("Success").GetInt64());
+        Assert.False(providers.TryGetProperty(secret, out _));
+        Assert.DoesNotContain(secret, json);
+        var storage = doc.RootElement.GetProperty("storage");
+        Assert.Equal(1, storage.GetProperty("checkpointFailures").GetInt64());
+        Assert.True(storage.GetProperty("checkpointDiagnosticPresent").GetBoolean());
+        Assert.Equal(1, storage.GetProperty("destinations").GetProperty("Rejected").GetInt64());
+    }
+
+    [Fact]
     public void Aggregate_Export_Without_Registry_Identity_Does_Not_Invent_One()
     {
         var stats = new TrafficCaptureService.StatsSnapshot { EnrichmentStorage = new(new(0, 32, 0), new(0, 32, 0), new(0, 0, null)) };
