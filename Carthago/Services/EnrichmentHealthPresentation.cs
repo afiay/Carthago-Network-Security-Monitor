@@ -125,7 +125,7 @@ internal static class EnrichmentHealthPresentation
     {
         if (snapshot is not { } h) return "GeoIP cache metrics unavailable.";
         string rate = h.Requests == 0 ? "—" : ((double)(h.PositiveHits + h.NegativeHits) / h.Requests).ToString("P1", CultureInfo.InvariantCulture);
-        return $"GeoIP cache (service lifetime): {h.Requests} eligible requests, {h.PositiveHits} positive hits, {h.NegativeHits} negative hits, {h.Misses} misses (hit share {rate}); " +
+        return $"GeoIP cache (service lifetime): {h.Requests} eligible requests, {h.PositiveHits} positive hits, {h.NegativeHits} negative hits, {h.Misses} misses (hit share {rate} of {h.Requests} eligible requests); " +
             $"expired on access: {h.Expired}, capacity-evicted entries: {h.Evicted}, retained entries: {h.Occupancy}/{h.Capacity}. Cache requests are not database attempts.";
     }
 

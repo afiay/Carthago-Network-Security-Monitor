@@ -195,6 +195,7 @@ public sealed class EnrichmentHealthPresentationTests
         };
         var summary = EnrichmentHealthPresentation.Build(stats).Summary;
         Assert.Contains("8 eligible requests, 3 positive hits, 1 negative hits, 4 misses", summary);
+        Assert.Contains("hit share 50.0% of 8 eligible requests", summary);
         Assert.Contains("City: 3 attempts", summary);
         Assert.Contains("retained entries: 2/8", summary);
         Assert.Contains("GeoIP cache metrics unavailable", EnrichmentHealthPresentation.Build(new TrafficCaptureService.StatsSnapshot()).Summary);
@@ -286,4 +287,15 @@ public sealed class EnrichmentHealthPresentationTests
         };
         Assert.Contains("No checkpoint diagnostic reported", EnrichmentHealthPresentation.Build(stats).Summary);
     }
+    [Fact]
+    public void Geo_Cache_Zero_Eligible_Requests_Has_No_Hit_Rate()
+    {
+        var summary = EnrichmentHealthPresentation.Build(new TrafficCaptureService.StatsSnapshot
+        {
+            GeoCacheHealth = new(0, 0, 0, 0, 0, 0, 8)
+        }).Summary;
+        Assert.Contains("0 eligible requests", summary);
+        Assert.Contains("hit share — of 0 eligible requests", summary);
+    }
+
 }
