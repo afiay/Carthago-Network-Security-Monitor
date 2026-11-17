@@ -34,6 +34,13 @@ function Test-QualificationTrx([byte[]]$bytes, [string]$digest, [string[]]$names
     $results = $run.SelectNodes('t:Results/t:UnitTestResult',$ns)
     $summary = $run.SelectNodes('t:ResultSummary',$ns)
     if ($summary.Count -ne 1 -or $summary[0].GetAttribute('outcome') -cnotin @('Completed','Passed','Failed')) { throw 'Incomplete TRX run' }
+    # A terminal summary must not contradict the actual result outcomes. Completed
+    # remains neutral because older TRX producers use it for both pass and fail.
+    $observedFailures = @($results | Where-Object { $_.GetAttribute('outcome') -ceq 'Failed' }).Count
+    if (($summary[0].GetAttribute('outcome') -ceq 'Passed' -and $observedFailures -gt 0) -or
+        ($summary[0].GetAttribute('outcome') -ceq 'Failed' -and $observedFailures -eq 0)) {
+        throw 'TRX summary outcome contradicts result nodes'
+    }
     # When a producer supplies TRX counters, reconcile them with the actual
     # result nodes. A selected passing test cannot override a contradictory
     # run summary. Older minimal fixtures without counters remain supported.
@@ -93,8 +100,14 @@ if ($SelfTest) {
     Reject-Fixture { Invoke-Fixture ($counted.Replace('passed="1"','passed="0"')) @('Exact.Test') 'Passed' }
     Reject-Fixture { Invoke-Fixture ($counted.Replace('total="1"','total="2"')) @('Exact.Test') 'Passed' }
     Reject-Fixture { Invoke-Fixture ($counted.Replace('failed="0"','failed="1"')) @('Exact.Test') 'Passed' }
+    # Selected success must not override an inconsistent terminal run outcome.
+    Reject-Fixture { Invoke-Fixture ($xml.Replace('outcome="Completed"','outcome="Failed"')) @('Exact.Test') 'Passed' }
+    $mixed = $xml.Replace('</Results>','<UnitTestResult testName="Other.Failed" outcome="Failed"/></Results>')
+    Reject-Fixture { Invoke-Fixture ($mixed.Replace('outcome="Completed"','outcome="Passed"')) @('Exact.Test') 'Passed' }
+    $mixedOk = Invoke-Fixture $mixed @('Exact.Test') 'Passed'
+    if ($mixedOk.matchedTests -ne 1) { throw 'Completed mixed-result control failed' }
     Reject-Fixture { Invoke-Fixture ('<!DOCTYPE TestRun [<!ENTITY x "bad">]>' + $xml) @('Exact.Test') 'Passed' }
-    [pscustomobject]@{ selfTestsPassed=16; detectorTestsExecuted=0 } | ConvertTo-Json
+    [pscustomobject]@{ selfTestsPassed=19; detectorTestsExecuted=0 } | ConvertTo-Json
 } else {
     $item = Get-Item -LiteralPath $Artifact
     if ($item.PSIsContainer -or $item.Length -gt 16777216) { throw 'Invalid artifact size or type' }
