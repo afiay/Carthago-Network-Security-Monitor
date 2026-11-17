@@ -142,7 +142,7 @@ internal static class EnrichmentHealthPresentation
         return $"Current/last session assets: {s.Assets.Count}/{s.Assets.Limit}, capacity-rejected observations: {s.Assets.Rejected}; " +
             $"external destinations: {s.Destinations.Count}/{s.Destinations.Limit}, capacity-rejected observations: {s.Destinations.Rejected}. " +
             $"Checkpoint writes: {s.Checkpoints.Writes}, failures: {s.Checkpoints.Failures}; " +
-            (s.Checkpoints.LastError is not null ? "Last checkpoint diagnostic: " + s.Checkpoints.LastError : "No checkpoint diagnostic reported.") +
+            (s.Checkpoints.LastError is not null ? "Checkpoint diagnostic present (details withheld; inspect restricted local logs)." : "No checkpoint diagnostic reported.") +
             " Retained history may be incomplete; rejection counts are observations, not unique identities.";
     }
 
