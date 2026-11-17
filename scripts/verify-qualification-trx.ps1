@@ -34,6 +34,23 @@ function Test-QualificationTrx([byte[]]$bytes, [string]$digest, [string[]]$names
     $results = $run.SelectNodes('t:Results/t:UnitTestResult',$ns)
     $summary = $run.SelectNodes('t:ResultSummary',$ns)
     if ($summary.Count -ne 1 -or $summary[0].GetAttribute('outcome') -cnotin @('Completed','Passed','Failed')) { throw 'Incomplete TRX run' }
+    # When a producer supplies TRX counters, reconcile them with the actual
+    # result nodes. A selected passing test cannot override a contradictory
+    # run summary. Older minimal fixtures without counters remain supported.
+    $counters = $summary[0].SelectSingleNode('t:Counters',$ns)
+    if ($null -ne $counters) {
+        $observed = @($results)
+        $passed = @($observed | Where-Object { $_.GetAttribute('outcome') -ceq 'Passed' }).Count
+        $failed = @($observed | Where-Object { $_.GetAttribute('outcome') -ceq 'Failed' }).Count
+        foreach ($pair in @(@('total',$observed.Count),@('passed',$passed),@('failed',$failed))) {
+            $value = $counters.GetAttribute($pair[0])
+            $parsed = 0
+            if (-not [int]::TryParse($value,[ref]$parsed) -or $parsed -ne $pair[1]) {
+                throw "TRX counter mismatch: $($pair[0])"
+            }
+        }
+        if ($passed + $failed -gt $observed.Count) { throw 'Invalid TRX result accounting' }
+    }
     if ($names.Count -eq 0 -or $names.Count -gt 1000) { throw 'Invalid selection size' }
     $seen = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
     foreach ($name in $names) {
@@ -70,8 +87,14 @@ if ($SelfTest) {
     Reject-Fixture { Invoke-Fixture $xml @("Exact.`nTest") 'Passed' }
     Reject-Fixture { Invoke-Fixture ($xml.Replace('</Results>','<UnitTestResult testName="Exact.Test" outcome="Passed"/></Results>')) @('Exact.Test') 'Passed' }
     Reject-Fixture { Invoke-Fixture ($xml.Replace('Completed','Aborted')) @('Exact.Test') 'Passed' }
+    $counted = $xml.Replace('<ResultSummary outcome="Completed"/>','<ResultSummary outcome="Completed"><Counters total="1" passed="1" failed="0"/></ResultSummary>')
+    $countedOk = Invoke-Fixture $counted @('Exact.Test') 'Passed'
+    if ($countedOk.matchedTests -ne 1) { throw 'Counted positive fixture failed' }
+    Reject-Fixture { Invoke-Fixture ($counted.Replace('passed="1"','passed="0"')) @('Exact.Test') 'Passed' }
+    Reject-Fixture { Invoke-Fixture ($counted.Replace('total="1"','total="2"')) @('Exact.Test') 'Passed' }
+    Reject-Fixture { Invoke-Fixture ($counted.Replace('failed="0"','failed="1"')) @('Exact.Test') 'Passed' }
     Reject-Fixture { Invoke-Fixture ('<!DOCTYPE TestRun [<!ENTITY x "bad">]>' + $xml) @('Exact.Test') 'Passed' }
-    [pscustomobject]@{ selfTestsPassed=12; detectorTestsExecuted=0 } | ConvertTo-Json
+    [pscustomobject]@{ selfTestsPassed=16; detectorTestsExecuted=0 } | ConvertTo-Json
 } else {
     $item = Get-Item -LiteralPath $Artifact
     if ($item.PSIsContainer -or $item.Length -gt 16777216) { throw 'Invalid artifact size or type' }
