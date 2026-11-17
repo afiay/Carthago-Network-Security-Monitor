@@ -390,3 +390,25 @@ Each hourly run:
 **R513 source increment:** `Carthago/Services/ProtocolIntelligence/Socks5ConnectExchangeInspector.cs` (commit `6d818afe6e5727c2f490d61999383d4403fb2dae`) strictly parses bounded complete plaintext same-session SOCKS5 no-auth greeting, method selection, CONNECT request and reply, including IPv4/IPv6/domain framing. It returns only server acceptance and address type, not SSH tunnel attribution or unauthorized behavior. `Carthago.Tests/ProtocolIntelligence/Socks5ConnectExchangeInspectorTests.cs` (commit `9c73fb954cba424743136de0e47f7c5b1f0b6937`) authors four xUnit methods for valid/rejected, partial, malformed and untrusted exchanges. **Tests authored, NOT executed.** No local Windows runner, build, native capture, CI, Actions or invasive tests. No engine alerts enabled, precision floors or holdout modified. All ten IDs retained in carryover. Earlier source candidates remain unverified.
 
 **Next exact cursor:** R514–R523. This batch is a parser prerequisite, not ten implemented detectors. Ledger publication SHA is the commit containing this section.
+
+
+## Batch 17 — R514–R523 (2026-11-17; source-only)
+
+**Ten exact rule classes inspected:** R514 Chisel handshake; R515 FRP handshake; R516 Cloudflared handshake; R517 ngrok handshake; R518 reverse SSH tunnel; R519 DNS-over-QUIC resolver; R520 MASQUE CONNECT-UDP; R521 HTTP CONNECT non-proxy port; R522 WebSocket to IP literal; R523 domain-fronting Host/SNI mismatch. All remain incomplete. **Functional detector completions: 0.** No Windows runner, dotnet build, xUnit execution, native capture, CI or live network test.
+
+| ID | Status | Exact missing trusted source / blocker |
+| --- | --- | --- |
+| R514 | PRODUCER-BLOCKED | Authenticated Chisel agent/process identity, decoded completed tunnel establishment and approved tunnel policy; string or port hints insufficient |
+| R515 | PRODUCER-BLOCKED | Authenticated frpc/frps session control and remote proxy registration, host identity and approved tunnel inventory |
+| R516 | PRODUCER-BLOCKED | Existing process-name/SNI prefilter is not authenticated connector identity; needs OS-attested process and verified Cloudflare Tunnel session/control-plane audit and authorization |
+| R517 | PRODUCER-BLOCKED | Verified ngrok agent identity and authenticated tunnel session/API registration plus approved developer tunnel baseline |
+| R518 | PRODUCER-BLOCKED | OS-attested SSH process command/socket forwarding mapping and remote listener establishment with authorization |
+| R519 | PRODUCER-BLOCKED | Validated QUIC/DoQ protocol and resolver identity, authenticated DNS query evidence and approved resolver inventory |
+| R520 | PRODUCER-BLOCKED | Decrypted HTTP/3 extended CONNECT-UDP request/response, capsule/session correlation and approved MASQUE proxy identity |
+| R521 | IN-PROGRESS, PRODUCER-BLOCKED | Strict HTTP/1.1 CONNECT framing prerequisite authored; still needs trusted stream reassembly, proxy response status, policy-defined approved proxy ports, endpoint identity, correlation and RuleEngine integration |
+| R522 | PRODUCER-BLOCKED | Complete WebSocket upgrade response with verified IP-literal authority and bidirectional tunnel behavior, trusted capture and approved application baseline |
+| R523 | PRODUCER-BLOCKED | Same-session authenticated TLS SNI and decrypted HTTP Host provenance, proxy/CDN exception policy and verified mismatch outcome; separate flow labels are not proof |
+
+**Source increment:** `Carthago/Services/ProtocolIntelligence/HttpConnectRequestInspector.cs` (commit `35139e16318c21a56cdca76b93cddc3b030ea19d`) parses bounded complete HTTP/1.1 CONNECT request framing, strict authority/port, matching single Host header, and rejects ambiguous request bodies/partial plaintext. This is a prerequisite only; caller-provided completeness is NOT authenticated provenance. `Carthago.Tests/ProtocolIntelligence/HttpConnectRequestInspectorTests.cs` (commit `bf46c57ba7ed355af8bf2d7adcb4f47a6a327aec`) authors three xUnit methods including a five-case theory. **Tests authored, not executed.** No engine alerts enabled. Preserve R102/R118/R163 floors and frozen holdout.
+
+**Carryover:** all ten IDs unresolved, along with previous producer-blocked rules and unverified source candidates. **Next exact ten:** R524–R533. Ledger publication SHA is the commit containing this section.
