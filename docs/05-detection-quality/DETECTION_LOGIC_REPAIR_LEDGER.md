@@ -241,3 +241,32 @@ Each hourly run:
 **R451 status:** IN-PROGRESS, PRODUCER-BLOCKED. Still requires trusted complete same-flow TCP reassembly, verified broker identity, policy context, runtime RuleEngine binding and detector-level tests. No alert enabled. No Windows runner, Actions, invasive capture or CI changes.
 
 **Ordered cursor unchanged:** R454–R463 are the next ten *unprocessed* IDs; this continuation did not inspect or falsely advance them. **Carryover:** all previously reviewed 100 IDs remain unresolved. Revisit blocked IDs without counting a parser as a functional repair.
+
+## Batch 11 — R454–R463 (2026-11-17; user-directed continuation)
+
+**Source starting HEAD:** `4ae75d09afe644c75c8aca0a4bfc6efbf57f0aa5`.
+**Scope:** ten local-discovery/network rules. Compared their actual `EvaluatePrecision` sources, the `LocalDiscoveryEvidenceBoundary` gate, PacketHandler/PortablePacketProcessor ARP decoding and internal provenance fields, rule precision telemetry, engine selector, window/cooldown helpers, and existing ARP frame tests. No live capture, Windows build, xUnit execution, or GitHub Actions was run.
+
+| Rule | Source-development state | Missing integration / exact behavior |
+| --- | --- | --- |
+| R454 SSDP M-SEARCH external answer | PRODUCER-BLOCKED | Decoded M-SEARCH request, correlated external-direction SSDP response, verified UDP datagram source/target and approved service-discovery topology; mere UDP/1900 and Info string insufficient |
+| R455 AirPlay discovery from non-media host | PRODUCER-BLOCKED | Parsed AirPlay service queries plus authoritative, stable asset-role inventory proving the sender is not a media host |
+| R456 Chromecast discovery burst | PRODUCER-BLOCKED | Parsed service-query identities, unique frame-level observations, per-host discovery baseline and meaningful burst discriminator |
+| R457 Printer JetDirect external access | PRODUCER-BLOCKED | Verified printer identity, actual JetDirect/RAW/IPP exchange and authorized external-source policy; TCP port alone insufficient |
+| R458 IPP printing from external host | PRODUCER-BLOCKED | Complete IPP operation and correlated response with verified print service, target identity and external-source authorization |
+| R459 SMB browser election anomaly | PRODUCER-BLOCKED | Validated legacy browser-election datagram/NetBIOS message, source and election-state transition; SMB/NetBIOS ports insufficient |
+| R460 NetBIOS name query sweep | PRODUCER-BLOCKED | Captured and parsed NBNS encoded name questions, deduplicated distinct-name per-source monotonic time window and normal-query baseline |
+| R461 DHCP starvation candidate | PRODUCER-BLOCKED | Complete DHCP DISCOVER/REQUEST client IDs, distinct clients per sender with lease-exhaustion context and approved network topology |
+| R462 Rogue DHCP offer | PRODUCER-BLOCKED | Complete capture-decoded DHCP OFFER, verified/approved DHCP server inventory (with relay/failover distinction), valid transaction and origin; packet port and text insufficient |
+| R463 Gratuitous ARP storm | **SOURCE IMPLEMENTED — CANDIDATE, UNVERIFIED** | New wire-derived Ethernet/IPv4 gratuitous-ARP broadcast observation from `PortablePacketProcessor.ParseArp` through internal `ArpSenderMacMatchesFrame`, source==target IP, RFC1918, per-host+MAC 16 distinct packet IDs within 60s, bounded monotonic window, ten-minute cooldown, Candidate/Shadow with unchanged 76% confidence floor; not an authenticated spoofing verdict or field-confirmed anomaly |
+
+**R463 code changes published:**
+- `Carthago/Engine/Rules/Expansion/R463_ARPGratuitousStormRule.cs` — real predicate and candidate-mode profile instead of generic `EvaluateSpec` fail-closed stub; commit `4a6d66c58600502d30ad6624949770cca4f20450`.
+- `Carthago.Tests/R463CaptureBoundBurstTests.cs` — **nine authored, unexecuted** xUnit facts using real in-memory ARP Ethernet frame parsing plus benign, forged-label, MAC mismatch, wrong destination, duplicate packet ID, multi-identity separation, out-of-order, expiry, cooldown and selector guards; commit `423a63cdace19239087b83bb8e25d78be1f4eb08`.
+- `Carthago/Engine/Rules/Expansion/LocalDiscoveryEvidenceBoundary.cs` — removed the superseded generic R463 missing-producer declaration; other R454–R462 guards unchanged; commit `4665b36128dda38f889a6a67d4e0d20473302fa5`.
+
+**No false promotion:** R463 has a source-level reachable detector path using existing parsed Ethernet data, but Windows/CLI compilation, test execution, native capture, false-positive calibration, engine trace/journal and SOC rendering remain unverified. It is explicitly **Candidate/Shadow**, not a high-confidence attack alert or operationally accepted repair. Its 16/60s threshold is deliberately more conservative than the previous nonfunctional 4/5-minute descriptor; operator policy tuning and benign burst evaluation remain follow-ups. Do not count authored tests as executed or source candidate as operational acceptance.
+
+**Status:** 110/187 queued IDs have now been source-reviewed. Of them **one** (R463) has an actual source-level positive detector implementation; the other **109** remain incomplete producer-bound candidates. **77 IDs remain unreviewed in the ordered queue.** Conservatively, **187 operationally completed rules are not established**; if counting source-only functional implementations, the *known remaining implementation backlog* is **186**, pending R463 compilation/runtime review. Preserve 109 producer blockers as carryover; future batches should prioritize producer-to-engine integration rather than mere parser-only standalones.
+
+**Next ten unprocessed IDs:** `R464`, `R465`, `R466`, `R467`, `R468`, `R469`, `R470`, `R471`, `R472`, `R473`. Carryover work for R454–R462, earlier 100 blocked rules, and R463 current-SHA verification is explicit and not silently closed.
