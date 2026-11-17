@@ -485,3 +485,12 @@ The actual `DetectionJournal` now exposes `TryReadConfiguredVolumeCapacity`, rea
 **Outstanding R531 blockers:** owned periodic sampling lifecycle; explicit minimum-byte and percent policy; maintenance exclusions; typed trusted health-event transport; RuleEngine dispatch and benign/positive integration tests. Do not infer successful journal writes from free space. **R536** still needs authenticated parser attempt/failure counters and a runtime connection.
 
 **Next cursor:** ordered queue exhausted at R540; continue unresolved carryover IDs without treating review or partial prerequisites as completion.
+
+## Carryover — R531 owned threshold evaluation (2026-11-17)
+
+**Status:** IN-PROGRESS / PRODUCER-BLOCKED; **functional detector completions: 0**. The ordered R270–R540 inspection queue was already exhausted. This pass adds a fail-closed policy evaluation to the actual `DetectionJournal` owner: `TryEvaluateConfiguredVolumeCapacity` validates explicit byte and percent thresholds, samples its configured directory via the existing OS-backed probe, and only returns a low-space *prerequisite* when both limits are breached. Invalid policy or unavailable capacity returns unknown (false method result), never a low-space finding. This does not publish events or enable R531 alerts.
+
+**Source change:** `Carthago/Services/Journaling/DetectionJournal.cs` commit `6613f0676039f4faa7836b41628c6f36f512882b`.
+**Tests authored:** 3 xUnit methods in `Carthago.Tests/DetectionJournalCapacityOwnershipTests.cs` commit `3f8b140d3bb4cf94f73b3e81d68166a6e5bb3c48`, covering invalid thresholds, missing owned directory and non-mutating evaluation of an existing directory. **Tests executed: 0**; no Windows runner, build, native capture, GitHub Actions or invasive test. Commits are sequential SHA-guarded content updates, not atomic.
+**Outstanding:** configured production policy and periodic sampling ownership, maintenance exclusion, trusted typed health-event delivery, RuleEngine dispatch and positive/benign integration verification. R536 still needs authenticated parser counters and integration. No R102/R118/R163 precision-floor, holdout or alert-gate changes.
+**Next:** unresolved carryover producer-to-RuleEngine integration; no new ordered cursor and no blocked ID marked complete.
