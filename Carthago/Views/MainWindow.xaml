@@ -3314,10 +3314,15 @@
             <TextBlock Text="LOCAL CAPTURE" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSubtleBrush}"/>
           </StackPanel>
 
-          <Grid Grid.Row="1"
-                HorizontalAlignment="Stretch"
-                VerticalAlignment="Center"
-                Margin="13,4,0,0">
+          <Border Grid.Row="1"
+                  Background="{StaticResource AppFooterSurface}"
+                  BorderBrush="{StaticResource CardBorderBrush}"
+                  BorderThickness="1"
+                  CornerRadius="4"
+                  Padding="8,6"
+                  Margin="0,6,0,0">
+          <Grid HorizontalAlignment="Stretch"
+                VerticalAlignment="Center">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="Auto"/>
               <ColumnDefinition Width="*"/>
@@ -3333,6 +3338,7 @@
                        AutomationProperties.Name="{Binding Text, RelativeSource={RelativeSource Self}}"
                        AutomationProperties.HelpText="Current local capture state, refreshed by the existing monitoring header. On is the Monitoring projection, not proof of received packets. Paused, Degraded, Error and Offline reflect local capture and flow conditions. Unknown before refresh. No overall system, database or sensor-health claim."/>
           </Grid>
+          </Border>
 
           <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="13,4,0,0">
             <!-- GA UI-59: expose the sampled UTC clock's current text and its provenance without altering the producer. -->

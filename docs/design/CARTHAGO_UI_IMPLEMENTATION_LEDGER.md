@@ -6308,3 +6308,14 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Ownership/static review:** Carthago/Views/MainWindow.xaml and this ledger only. FooterTelemetryStateText, FooterUtcText, tooltips, automation help text and runtime producers unchanged. No Engine/Models/Services, rules, capture, telemetry, security, privacy, ScottPlot 10/120, Events 80/500, CLI, Cisco/WebView2 or independent changes.
 
 **Static risks/unexecuted acceptance:** long localized status may increase footer height; grid minimum sizing, keyboard/screen-reader order and DPI need verification at widths 1920/1440/1100/1099/1024/1023/640 and DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. **Next UI-209:** select next independent visible UI slice from live ledger.
+
+
+## GA UI-209 — Framed local capture-state lane
+
+**2026-11-17 · SOURCE CANDIDATE — UNVERIFIED.** Approved Library image libfile_b0a34361560c8191b641e432b3e6b15c visually inspected. Source baseline fd02fb1c2d00a6430dded3f88a124080b4d80899, actual tree 4946aa8e2064e0c94e46b7b16e7fa699c9f14986; UI-208 last completed. Reference mapping: graphite bordered status surfaces and compact neutral/cyan hierarchy; example DEMO DATA excluded from real telemetry.
+
+**Visible before → after:** previously the bounded STATE label and dynamic capture-state projection sat directly on the footer surface with a 13-unit left indent. The state lane now occupies its own subtly bordered graphite inset with 8/6 padding, radius 4 and 6-unit separation from the identity row, distinguishing operational state from the separate UTC clock. Existing Auto/* grid columns remain inside the framed lane, so text wraps in the bounded star column. Wide >=1440 and Standard 1100–1439 retain a compact horizontal label/value lane; Compact 1024–1099 and below 1024 wrap long state descriptions without horizontal clipping, subject to runtime acceptance.
+
+**Ownership/static review:** Carthago/Views/MainWindow.xaml and this ledger only. FooterTelemetryStateText and FooterUtcText bindings, tooltips, automation descriptions, and runtime producers unchanged. No Engine/Models/Services, rules, capture, telemetry, security, privacy, ScottPlot 10/120, Events 80/500, CLI, Cisco/WebView2 or independent work changed.
+
+**Static risks/unexecuted acceptance:** increased footer height, border contrast, keyboard/screen-reader order, long localization, widths 1920/1440/1100/1099/1024/1023/640 and DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. **Next UI-210:** inspect live ledger and select next independent visible UI slice.
