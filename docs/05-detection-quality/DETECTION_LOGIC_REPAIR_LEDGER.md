@@ -170,3 +170,24 @@ Each hourly run:
 | R343 | PRODUCER-BLOCKED | trusted WinRM command/process audit, authenticated actor and encoded-command execution outcome |
 
 **Changed files:** `Carthago/Services/ProtocolIntelligence/Smb2SigningNegotiationInspector.cs`, `Carthago.Tests/ProtocolIntelligence/Smb2SigningNegotiationInspectorTests.cs`, this ledger. **Functional detector repairs: 0.** Carryover: all 70 inspected IDs unresolved. **Next cursor:** R344–R350, R431–R433. Commit SHA: inspect atomic commit containing this ledger.
+
+
+## Batch 08 — R344–R350, R431–R433 (2026-11-17)
+**Source review:** inspected all ten expansion rule classes on the active branch. No rule was promoted to functional detection; runtime/engine binding is absent for the newly authored protocol prerequisite. All ten remain carryover.
+
+| ID | State | Missing trustworthy source |
+| --- | --- | --- |
+| R344 | PRODUCER-BLOCKED | Windows WMI event-subscription creation result, actor, target and remote execution attribution |
+| R345 | PRODUCER-BLOCKED | Authenticated DCOM MMC20 method invocation/outcome and remote principal/host |
+| R346 | PRODUCER-BLOCKED | SQL Server audit of successful xp_cmdshell invocation and principal/authorization context |
+| R347 | PRODUCER-BLOCKED | SQL Server audit of completed linked-server enumeration and result set |
+| R348 | PRODUCER-BLOCKED | Authenticated LDAP query/response with AdminSDHolder object identity and actor |
+| R349 | PRODUCER-BLOCKED | Authenticated LDAP SPN search result, caller and bounded enumeration correlation |
+| R350 | PRODUCER-BLOCKED | Authenticated LDAP policy query response and approved administrative baseline |
+| R431 | PRODUCER-BLOCKED | Verified Airflow service identity, complete HTTP admin response and authorization context |
+| R432 | PRODUCER-BLOCKED | Verified Consul/Nomad service identity, complete admin response and management approval |
+| R433 | IN-PROGRESS, PRODUCER-BLOCKED | Strict PostgreSQL protocol-3 startup-frame inspector authored; requires trusted complete capture, verified server identity, authentication outcome, external-source classification and engine integration |
+
+**Actual source changes:** `Carthago/Services/ProtocolIntelligence/PostgreSqlStartupInspector.cs` (commit `8de31bc53a4c64695001d7663bc7ea1caffeccb0`) and `Carthago.Tests/ProtocolIntelligence/PostgreSqlStartupInspectorTests.cs` (commit `0038a20a8791e70fb1a0b1d092f9ae85e536d6cc`). Four test methods **AUTHORED, UNEXECUTED**. Startup-frame evidence alone is not proof of login, outcome, authorization or attack. No detector alert enabled. No Windows tests, Actions, CI changes or native capture performed.
+
+**Carryover:** 80 reviewed IDs remain unresolved. **Next cursor:** R434–R443. Continue source/producer integration rather than qualification counting.
