@@ -1177,7 +1177,7 @@
                               </StackPanel>
                             </Border>
 
-                            <Border x:Name="DashboardEvidenceCard3" Grid.Row="3" Grid.Column="0" Style="{StaticResource DetailGridCard}" Background="{StaticResource CardElevatedBg}" BorderBrush="{StaticResource AccentBrush}" BorderThickness="2,1,1,1" CornerRadius="9" Margin="0,0,0,8" Padding="10,8">
+                            <Border x:Name="DashboardEvidenceCard3" Grid.Row="4" Grid.Column="0" Style="{StaticResource DetailGridCard}" Background="{StaticResource CardElevatedBg}" BorderBrush="{StaticResource AccentBrush}" BorderThickness="2,1,1,1" CornerRadius="9" Margin="0,0,0,8" Padding="10,8">
                               <StackPanel>
                                 <TextBlock Text="Recommended actions" Style="{StaticResource SocSubHeader}"/>
                                 <!-- GA UI-219: primary investigation action has a dedicated row; secondary navigation wraps below. -->
@@ -1214,7 +1214,7 @@
                               </StackPanel>
                             </Border>
 
-                            <Border x:Name="DashboardEvidenceCard4" Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="1" Style="{StaticResource DetailGridCard}" Margin="0,0,0,0" Padding="10,8">
+                            <Border x:Name="DashboardEvidenceCard4" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="1" Style="{StaticResource DetailGridCard}" Margin="0,0,0,0" Padding="10,8">
                               <!-- GA UI-73: decorative provenance keyline distinguishes reported context from incident facts. -->
                               <Grid>
                                 <Grid.ColumnDefinitions>
@@ -1228,6 +1228,7 @@
                                         IsHitTestVisible="False"
                                         Focusable="False"
                                         SnapsToDevicePixels="True"/>
+                                <!-- GA UI-221: reported provenance precedes actions in the investigation reading order. -->
                                 <!-- GA UI-220: distinct provenance heading and readable reported-context body. -->
                                 <Grid Grid.Column="1" Margin="10,0,0,0">
                                   <Grid.RowDefinitions>
