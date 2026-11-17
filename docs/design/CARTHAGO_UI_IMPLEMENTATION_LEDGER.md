@@ -6423,3 +6423,14 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Ownership/static review:** Only `Carthago/Views/MainWindow.xaml` and this ledger. Existing names, click handlers, tooltips, accessibility labels, disabled-state behavior, incident selection and telemetry bindings are preserved. No Engine/Models/Services, rules, capture, telemetry, privacy/security, ScottPlot 10/120, local Events 80/500, visual-only CLI, Cisco/WebView2 or independent work changed.
 
 **Static risks/unexecuted acceptance:** increased action panel height; confirm navigation, disabled-state tooltips, tab order, keyboard/screen reader, scrolling and widths 1920/1440/1100/1099/1024/1023/640 at DPI 100/125/150/200%. Builds/tests/CI/capture/render 0. **Next UI-220:** select the next substantive Dashboard or Incidents visible composition slice from live ledger.
+
+
+## GA UI-220 — Separated reported-evidence provenance body
+
+**2026-11-17 · SOURCE CANDIDATE — UNVERIFIED.** Exact approved Library image `libfile_b0a34361560c8191b641e432b3e6b15c` visually inspected. Source baseline `771438b88a17afdab601517dee054637997e66d2`, actual commit tree `877c6d3f795f4cf8baa5988838f0c63f90310dc7`; UI-219 last recorded. Reference mapping: the investigation area distinguishes evidence context from action controls through a clear section heading and a readable dark inset panel; screenshot DEMO DATA is illustrative and is not imported as telemetry.
+
+**Visible before → after:** the Dashboard selected-finding provenance summary previously appeared as a small 11px text line directly below its heading in one StackPanel. The existing reported-context text now sits in a separate bordered graphite inset with 10px horizontal/8px vertical padding, 12px type, 18px line height, and an 8px heading gap. The existing cyan left keyline remains a decorative marker, not a verified evidence-chain indicator. Wide >=1440 preserves the panel's distinct hierarchy; Standard 1100–1439 and Compact 1024–1099 wrap the heading and body within the star-width column; below 1024 both remain content-driven within the existing scroll area.
+
+**Ownership/static review:** `Carthago/Views/MainWindow.xaml` and this existing ledger only. Original `DashboardDetailEvidenceSummaryLabel` and `DashboardDetailEvidenceSummaryText` names, text updates, `AutomationProperties.LabeledBy`, provenance disclaimer, and data ownership preserved. No Engine/Models/Services, rule/capture/telemetry/security, ScottPlot 10/120, local Events 80/500, visual-only CLI, Cisco/WebView2, or unrelated paths changed.
+
+**Static risks/unexecuted acceptance:** the inset increases vertical height; long reported context may increase scrolling. Verify wrapping, label relationship, screen-reader order, keyboard navigation, widths 1920/1440/1100/1099/1024/1023/640, and DPI 100/125/150/200%. Builds/tests/CI/capture/render 0. **Next UI-221:** next substantive Dashboard or Incidents composition slice from the live ledger.
