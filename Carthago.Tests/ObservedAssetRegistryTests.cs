@@ -310,6 +310,32 @@ public sealed class ObservedAssetRegistryTests
     }
 
     [Fact]
+    public void Independent_Headless_Services_Do_Not_Share_Registry_Sessions()
+    {
+        // A new service must own its own registry, even when neither instance
+        // has started native capture. This guards against accidental static
+        // session state leaking between headless monitors.
+        using var first = new TrafficCaptureService(null,
+            System.Windows.Threading.Dispatcher.CurrentDispatcher, headless: true);
+        using var second = new TrafficCaptureService(null,
+            System.Windows.Threading.Dispatcher.CurrentDispatcher, headless: true);
+
+        var firstSession = first.GetObservedAssetSession();
+        var secondSession = second.GetObservedAssetSession();
+        Assert.NotEqual(Guid.Empty, firstSession.SessionId);
+        Assert.NotEqual(Guid.Empty, secondSession.SessionId);
+        Assert.NotEqual(firstSession.SessionId, secondSession.SessionId);
+        Assert.Equal(firstSession.SessionId, first.GetStats().RegistrySessionId);
+        Assert.Equal(secondSession.SessionId, second.GetStats().RegistrySessionId);
+        Assert.False(first.GetStats().RegistryRunPresent);
+        Assert.False(second.GetStats().RegistryRunPresent);
+        Assert.Empty(firstSession.Rows);
+        Assert.Empty(secondSession.Rows);
+        Assert.Empty(firstSession.Communications);
+        Assert.Empty(secondSession.Communications);
+    }
+
+    [Fact]
     public void Full_Registries_Still_Update_Existing_Evidence_Without_Inflating_Rejections()
     {
         // Capacity limits distinct identities, not subsequent evidence for retained identities.
