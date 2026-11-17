@@ -434,3 +434,22 @@ Each hourly run:
 **Concrete source increment:** `Carthago/Services/ProtocolIntelligence/JournalVolumeCapacityProbe.cs` (commit `e46cba5b1afc7990e7dc6c112f463715725dc6f4`) reads OS-reported available/total bytes only for an existing local directory and rejects invalid capacity/threshold data; it provides an explicit both-limits predicate. It does not authenticate caller-selected paths, infer journal ownership, or emit a detection. `Carthago.Tests/ProtocolIntelligence/JournalVolumeCapacityProbeTests.cs` (commit `2a3d4626cc26d9b2fba8f9199f1a9b77eb7d91df`) authors three methods including a five-case theory. **Tests authored, NOT executed.** No local Windows runner, build, live capture, GitHub Actions, force push, precision-floor or frozen-holdout changes.
 
 **Carryover:** all ten IDs remain incomplete. Existing previous producer-blocked IDs and source candidates remain unresolved. **Next exact cursor:** R534–R540 (final seven IDs); then revisit the carryover queue. The ledger publication commit is the commit containing this section.
+
+
+## Batch 19 — R534–R540 (2026-11-17; source-only)
+
+**Exact ordered cursor:** final seven IDs R534, R535, R536, R537, R538, R539, R540. All seven rule classes and `PlatformHealthProducerEvidenceBoundary` inspected on the existing branch. They already contain guarded `EvaluatePrecision` candidates, but the boundary explicitly returns missing-producer reasons before mutable `TrafficRecord` text can create an alert. None is operationally complete. **Functional completions: 0.**
+
+| Rule | Status | Missing authenticated integration |
+| --- | --- | --- |
+| R534 | SOURCE CANDIDATE, PRODUCER-BLOCKED | Expected eligible traffic and per-rule match baseline, enablement/suppression/maintenance state, authenticated health decision |
+| R535 | SOURCE CANDIDATE, PRODUCER-BLOCKED | Comparable typed per-field coverage samples with expected population, parser/version/source scope and trusted producer |
+| R536 | IN-PROGRESS, PRODUCER-BLOCKED | Typed bounded parser failure-rate comparison added; requires authenticated per-parser monotonic counters, stable epoch, expected exposure baseline, replay exclusions, periodic sampling and RuleEngine health-event integration |
+| R537 | SOURCE CANDIDATE, PRODUCER-BLOCKED | Eligible public-IP GeoIP lookup attempts and explicit failure outcomes, provider enablement and authenticated bounded windows |
+| R538 | SOURCE CANDIDATE, PRODUCER-BLOCKED | Authenticated eligible reputation lookup attempts/outcomes and provider-specific rate baseline with disabled/rate-limit exclusions |
+| R539 | SOURCE CANDIDATE, PRODUCER-BLOCKED | Typed baseline persistence attempt/failure outcome from owned store with read-only/maintenance policy |
+| R540 | SOURCE CANDIDATE, PRODUCER-BLOCKED | Typed analyst-feedback persistence attempt/failure outcome from owned store with cancellation/validation exclusion |
+
+**Engineering increment:** `Carthago/Services/Diagnostics/ParserFailureRateWindow.cs` (source commit `c5d751e6da08ffd09a061ebd4bd6212b9ed534c3`) adds a pure typed comparison of cumulative per-parser counters across baseline and current UTC windows. It requires stable parser/epoch, monotonic plausible counters, nonoverlapping windows, denominators and both absolute and relative increases. It does **not** authenticate its caller or enable alerts. `Carthago.Tests/ParserFailureRateWindowTests.cs` (test commit `cccdc9683c79321574d7b24ab0381fda6f3d11ee`) authors four xUnit tests for rate increase, resets, invalid counters and benign rate. **Tests authored: 4. Tests executed: 0.** No local Windows runner, dotnet build, native capture, GitHub Actions, force push, floor or holdout changes. The R536 producer boundary remains fail-closed.
+
+**Next cursor:** ordered queue exhausted; do not mark it implemented. Revisit the unresolved per-ID carryover queue starting with previously authored typed protocol/health prerequisites, prioritizing real trusted producer-to-RuleEngine wiring. All seven remain unresolved. Ledger publication SHA is the commit containing this section.
