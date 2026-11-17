@@ -110,6 +110,14 @@ namespace Carthago.Engine.Rules
                 && record.HttpMethod.StartsWith("HTTP/", StringComparison.OrdinalIgnoreCase))
                 return false;
 
+            // Imported records must provide a single RFC HTTP token as method.
+            if (!string.IsNullOrWhiteSpace(record.HttpMethod)
+                && record.HttpMethod.Any(static c =>
+                    !((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')
+                      || (c >= '0' && c <= '9')
+                      || "!#$%&'*+-.^_`|~".Contains(c))))
+                return false;
+
             if (string.IsNullOrWhiteSpace(record.HttpMethod)
                 || string.IsNullOrWhiteSpace(record.HttpHost)
                 || !IsDeviceHost(record.HttpHost, record.DestinationPort)

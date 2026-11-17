@@ -31,6 +31,25 @@ public sealed class R118AdvancedAccuracyBatchTests
         Assert.False((await _rule.EvaluateAsync(NetworkBatch116120Context.Context(record))).Matched);
     }
 
+    [Theory]
+    [InlineData("GET /admin HTTP/1.1")]
+    [InlineData("POST\\t")]
+    [InlineData("POST\\u0000")]
+    [InlineData("POST/ADMIN")]
+    public async Task Malformed_Http_Method_Cannot_Qualify_Default_Credentials(string method)
+    {
+        var record = NetworkBatch116120Context.Basic(NetworkBatch116120Context.Source());
+        record.HttpMethod = method;
+        Assert.False((await _rule.EvaluateAsync(NetworkBatch116120Context.Context(record))).Matched);
+    }
+
+    [Fact] public async Task Extension_Token_Method_Remains_Eligible()
+    {
+        var record = NetworkBatch116120Context.Basic(NetworkBatch116120Context.Source());
+        record.HttpMethod = "M-SEARCH";
+        Assert.True((await _rule.EvaluateAsync(NetworkBatch116120Context.Context(record))).Matched);
+    }
+
     [Fact] public async Task Post_Request_With_Default_Pair_Remains_Candidate()
     {
         var record = NetworkBatch116120Context.Basic(NetworkBatch116120Context.Source());
