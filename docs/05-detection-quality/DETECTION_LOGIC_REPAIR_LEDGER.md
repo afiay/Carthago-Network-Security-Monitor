@@ -51,3 +51,24 @@ Each hourly run:
 3. Implement **real** source/producer/predicate functionality where possible; write narrowly scoped source test guards and preserve safety contracts. If a trusted audit/physical producer is missing, document its exact integration blocker and continue instead of introducing speculative alerts.
 4. Mark each ID **REPAIR COMPLETE** only for real functionality, not merely examination/reason-code updates. Maintain a carryover list for blocked IDs and revisit it after progressing through all 187.
 5. Append an exact changed-file/commit record, tests authored versus executed and next cursor. Do not invent run results.
+
+## Batch 02 — R283, R284, R285, R287–R293 (2026-11-17)
+
+**Source snapshot:** `ea593727513faf71ce112999b29b2c0a98c712e8`. Ten IDs inspected, **zero functionally repaired**. All detector EvaluatePrecision methods remain unconditional NoMatch. No runtime promotion, alert, Windows test or capture performed.
+
+| ID | Required producer and blocker | State |
+| --- | --- | --- |
+| R283 | Authenticated SAML validation audit plus decoded RelayState and IdP rejection outcome; HTTP parameter alone spoofable | PRODUCER-BLOCKED |
+| R284 | OIDC code issuance, trusted recipient attribution, outbound leakage proof and intended callback allowlist; URL text insufficient | PRODUCER-BLOCKED |
+| R285 | Signed SCIM principal/API response and returned object counts with authorized administrative baseline | PRODUCER-BLOCKED |
+| R287 | KDC 4771 or equivalent authenticated preauth-failure events, source/account/realm correlation and dedup | PRODUCER-BLOCKED |
+| R288 | Complete NTLMSSP type-3 wire capture and server-side negotiation/auth outcome; new strict legacy-shape inspector is NOT version or success proof | IN-PROGRESS, PRODUCER-BLOCKED |
+| R289 | Verified Access-Reject request/response window exists but no engine capture binding or trusted account/NAS outcome | PRODUCER-BLOCKED |
+| R290 | Validated Citrix exploit-specific byte signature plus target product/version or authenticated appliance audit | PRODUCER-BLOCKED |
+| R291 | Validated Fortinet exploit-specific byte signature plus target version or authenticated appliance audit | PRODUCER-BLOCKED |
+| R292 | Validated GlobalProtect exploit-specific byte signature plus affected PAN-OS target context or appliance audit | PRODUCER-BLOCKED |
+| R293 | Authenticated Kubernetes API-server audit decision with anonymous principal and target identity, not HTTP path | PRODUCER-BLOCKED |
+
+**Concrete source increment:** `Carthago/Services/ProtocolIntelligence/NtlmV1AuthenticateInspector.cs` strict complete-message NTLMSSP type-3 legacy response-shape inspector; rejects truncated/overlapping buffers, extended-session security, NTLM2-session LM-zero tail, empty responses and untrusted partial messages. Does not expose response bytes, infer successful authentication, or feed R288. `Carthago.Tests/ProtocolIntelligence/NtlmV1AuthenticateInspectorTests.cs` six regression tests **AUTHORED, UNEXECUTED**. This is a parser prerequisite, not a positive detector. Exact commit is the atomic publication containing this ledger (inspect git log); no functional rule counted complete.
+
+**Cursor:** Batch 03 = R294,R295,R296,R297,R298,R299,R300,R301,R302,R303. Carryover remains all 20 Batch 01/02 IDs; revisit after ordered queue. Preserve R102/R118/R163 precision floors and frozen holdouts.
