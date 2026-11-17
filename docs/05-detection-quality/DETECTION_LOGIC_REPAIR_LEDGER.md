@@ -212,3 +212,23 @@ Each hourly run:
 **Actual changes:** `Carthago/Services/ProtocolIntelligence/MemcachedStatsExchangeInspector.cs` (commit `5c94cf28dea6aa072693201b20553b7ce17c7726`) and `Carthago.Tests/ProtocolIntelligence/MemcachedStatsExchangeInspectorTests.cs` (commit `63fb19aa957053aaf40f910e879ed6bbaaba2ce6`). Four test methods including parameterized negative cases **AUTHORED, UNEXECUTED**. Inspector validates complete bounded ASCII STATS exchange and returns a count only; boolean caller attestations do not establish runtime capture provenance, authenticated server identity, authorization or malicious intent. No detector alert enabled. No Windows tests, native capture, GitHub Actions or CI changes deliberately performed.
 
 **Carryover:** all 90 reviewed IDs remain unresolved. **Next cursor:** R444–R453. Revisit blockers after ordered queue; never mark parser-only work complete.
+
+
+## Batch 10 — R444–R453 (2026-11-17)
+
+**Inspected source HEAD:** `9776f4fdefd3b2eda6d086c8c7eea405e555fe0b`. Ten rule EvaluatePrecision paths use `EvaluateSpec` and generic profiles; no rule-specific trusted producer-to-engine positive path established. **Zero functionally repaired.** Source-only work, no Windows tests, native capture or Actions. All ten remain unresolved carryover.
+
+| ID | Status | Missing trustworthy source / integration |
+| --- | --- | --- |
+| R444 | PRODUCER-BLOCKED | InfluxDB verified endpoint and authenticated query response, source approval |
+| R445 | PRODUCER-BLOCKED | ClickHouse complete HTTP SQL request/response, verified cluster and approved client |
+| R446 | PRODUCER-BLOCKED | Neo4j browser endpoint identity and complete response plus authorized management baseline |
+| R447 | PRODUCER-BLOCKED | RabbitMQ management API verified broker, authenticated response and admin policy |
+| R448 | PRODUCER-BLOCKED | Kafka broker protocol handshake, endpoint identity, external ingress and policy |
+| R449 | PRODUCER-BLOCKED | ZooKeeper four-letter request/response reassembly, server attribution and admin baseline |
+| R450 | PRODUCER-BLOCKED | NATS broker INFO/CONNECT exchange, verified server identity and accepted session |
+| R451 | IN-PROGRESS, PRODUCER-BLOCKED | MQTT complete same-flow plaintext CONNECT/CONNACK, verified broker identity, authorization policy and runtime capture binding |
+| R452 | PRODUCER-BLOCKED | Trusted database query result sizes and completed export/delivery outcomes with actor authorization |
+| R453 | PRODUCER-BLOCKED | DNS decoded mDNS questions, distinct service/window correlation and approved discovery baseline |
+
+**Actual source increment:** `Carthago/Services/ProtocolIntelligence/MqttAnonymousConnectInspector.cs` and `Carthago.Tests/ProtocolIntelligence/MqttAnonymousConnectInspectorTests.cs` (five test methods **AUTHORED, UNEXECUTED**). MQTT 3.1.1 CONNECT/CONNACK parsing is isolated and explicitly requires independent same-flow plaintext completeness; caller booleans are not trusted runtime evidence. No rule predicate or alert enabled. **Carryover:** 100 reviewed IDs remain unresolved. **Next cursor:** R454–R463. Commit: see publication of this ledger.
