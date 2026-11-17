@@ -471,3 +471,17 @@ Each hourly run:
 **Changed files / publication:** `Carthago/Services/ProtocolIntelligence/JournalVolumeCapacityProbe.cs` commit `35d1380367316a2f63bb74371e41724a516a0056`; `Carthago.Tests/ProtocolIntelligence/JournalVolumeCapacityProbeTests.cs` commit `e3ad17485de370e70bb39e4cf81f5be13d8ab915`. **Tests authored:** one symlink-path regression method, conditionally bypassing unsupported symlink creation. **Tests executed:** 0. No local Windows build/runner, CI, native capture or live invasive tests. Sequential SHA-guarded file writes, not atomic. No change to R102/R118/R163 floors, frozen holdout, or RuleEngine alert gates.
 
 **Remaining producer/engine blocker:** obtain the actual configured journal directory from the owned journal service (not user traffic), bind it to a trusted periodic capacity sampler with stable storage identity and maintenance state, and feed typed verified health events to R531 through RuleEngine. The existing mutable-text rule must remain fail-closed. **Next:** continue carryover integration, prioritizing real producer-to-engine wiring for R531 and R536; do not advance a fictitious ten-ID cursor or mark producer-blocked IDs complete.
+
+## Carryover — R531 configured journal capacity ownership (2026-11-17)
+
+**Source snapshot before change:** `ad5f55eb5d225d77292a3aaa469256344500f12e`.
+**Status:** R531 IN-PROGRESS / PRODUCER-BLOCKED; **zero functional detector completions**.
+
+The actual `DetectionJournal` now exposes `TryReadConfiguredVolumeCapacity`, reading OS-reported volume capacity through `JournalVolumeCapacityProbe` using the instance's `DetectionJournalOptions.DirectoryPath`, not an arbitrary packet-provided path. It does not create a missing directory or publish a health event. This is a concrete journal-owner-to-probe connection, **not** R531 RuleEngine integration.
+
+**Changed source:** `Carthago/Services/Journaling/DetectionJournal.cs` (commit `859549924422c50c28295f8f9620da8cd12e5a34`).
+**Tests authored:** `Carthago.Tests/DetectionJournalCapacityOwnershipTests.cs` (two xUnit tests; commit `3a2f6d06379f8c040a75ad2571a23985f1703038`).
+**Tests executed:** none; no Windows runner, compilation, native capture or CI.
+**Outstanding R531 blockers:** owned periodic sampling lifecycle; explicit minimum-byte and percent policy; maintenance exclusions; typed trusted health-event transport; RuleEngine dispatch and benign/positive integration tests. Do not infer successful journal writes from free space. **R536** still needs authenticated parser attempt/failure counters and a runtime connection.
+
+**Next cursor:** ordered queue exhausted at R540; continue unresolved carryover IDs without treating review or partial prerequisites as completion.
