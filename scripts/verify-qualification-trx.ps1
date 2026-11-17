@@ -36,8 +36,16 @@ function Test-QualificationTrx([byte[]]$bytes, [string]$digest, [string[]]$names
     if ($summary.Count -ne 1 -or $summary[0].GetAttribute('outcome') -cnotin @('Completed','Passed','Failed')) { throw 'Incomplete TRX run' }
     # A terminal summary must not contradict the actual result outcomes. Completed
     # remains neutral because older TRX producers use it for both pass and fail.
-    $observedFailures = @($results | Where-Object { $_.GetAttribute('outcome') -ceq 'Failed' }).Count
-    if (($summary[0].GetAttribute('outcome') -ceq 'Passed' -and $observedFailures -gt 0) -or
+    # A terminal pass cannot hide aborted, timed-out, errored, or otherwise
+    # non-passing results. Keep mixed Completed runs readable, but never
+    # accept an unrecognized outcome as qualification evidence.
+    $terminalOutcomes = @('Passed','Failed','Error','Timeout','Aborted','Inconclusive','NotExecuted','Pending')
+    foreach ($resultNode in $results) {
+        if ($resultNode.GetAttribute('outcome') -cnotin $terminalOutcomes) { throw 'Unknown TRX test outcome' }
+    }
+    $nonPassing = @($results | Where-Object { $_.GetAttribute('outcome') -cne 'Passed' }).Count
+    $observedFailures = @($results | Where-Object { $_.GetAttribute('outcome') -cin @('Failed','Error','Timeout','Aborted') }).Count
+    if (($summary[0].GetAttribute('outcome') -ceq 'Passed' -and $nonPassing -gt 0) -or
         ($summary[0].GetAttribute('outcome') -ceq 'Failed' -and $observedFailures -eq 0)) {
         throw 'TRX summary outcome contradicts result nodes'
     }
@@ -106,8 +114,14 @@ if ($SelfTest) {
     Reject-Fixture { Invoke-Fixture ($mixed.Replace('outcome="Completed"','outcome="Passed"')) @('Exact.Test') 'Passed' }
     $mixedOk = Invoke-Fixture $mixed @('Exact.Test') 'Passed'
     if ($mixedOk.matchedTests -ne 1) { throw 'Completed mixed-result control failed' }
+    # Terminal Passed must not conceal error/timeout/non-executed nodes.
+    foreach ($outcome in @('Error','Timeout','Aborted','Inconclusive','NotExecuted')) {
+        $withOther = $xml.Replace('</Results>',('<UnitTestResult testName="Other.Case" outcome="' + $outcome + '"/></Results>'))
+        Reject-Fixture { Invoke-Fixture ($withOther.Replace('outcome="Completed"','outcome="Passed"')) @('Exact.Test') 'Passed' }
+    }
+    Reject-Fixture { Invoke-Fixture ($xml.Replace('outcome="Passed"/></Results>','outcome="Unknown"/></Results>')) @('Exact.Test') 'Passed' }
     Reject-Fixture { Invoke-Fixture ('<!DOCTYPE TestRun [<!ENTITY x "bad">]>' + $xml) @('Exact.Test') 'Passed' }
-    [pscustomobject]@{ selfTestsPassed=19; detectorTestsExecuted=0 } | ConvertTo-Json
+    [pscustomobject]@{ selfTestsPassed=25; detectorTestsExecuted=0 } | ConvertTo-Json
 } else {
     $item = Get-Item -LiteralPath $Artifact
     if ($item.PSIsContainer -or $item.Length -gt 16777216) { throw 'Invalid artifact size or type' }
