@@ -52,7 +52,11 @@ namespace Carthago.Engine.Rules.Expansion
             // attest to changes in the sensor/journal/rule-engine control plane.
             // No trusted typed pipeline-tamper producer is connected to TrafficRecord.
             // Fail closed rather than emit an unsupported Critical tamper finding.
-            return NoMatch();
+            // Expose the actual producer gap to rule-diagnostics consumers instead
+            // of the generic NO_MATCH code, which obscures missing capability.
+            return NoMatch(RuleNoMatchReasonCategory.InsufficientEvidence,
+                "TRUSTED_PIPELINE_CONTROL_PLANE_AUDIT_UNAVAILABLE",
+                "An authenticated control-plane change event, actor/maintenance authorization, and verified state-change outcome are required; packet text, process labels, and local flow data cannot establish tampering.");
         }
     }
 }
