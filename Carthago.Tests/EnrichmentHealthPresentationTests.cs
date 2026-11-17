@@ -298,4 +298,10 @@ public sealed class EnrichmentHealthPresentationTests
         Assert.Contains("hit share — of 0 eligible requests", summary);
     }
 
+    [Fact]
+    public void Worker_Summary_Without_Snapshot_Does_Not_Invent_Denominators()
+    {
+        Assert.Equal("Worker metrics unavailable.", EnrichmentHealthPresentation.WorkerSummary(null));
+    }
+
 }
