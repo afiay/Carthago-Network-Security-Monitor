@@ -72,3 +72,23 @@ Each hourly run:
 **Concrete source increment:** `Carthago/Services/ProtocolIntelligence/NtlmV1AuthenticateInspector.cs` strict complete-message NTLMSSP type-3 legacy response-shape inspector; rejects truncated/overlapping buffers, extended-session security, NTLM2-session LM-zero tail, empty responses and untrusted partial messages. Does not expose response bytes, infer successful authentication, or feed R288. `Carthago.Tests/ProtocolIntelligence/NtlmV1AuthenticateInspectorTests.cs` six regression tests **AUTHORED, UNEXECUTED**. This is a parser prerequisite, not a positive detector. Exact commit is the atomic publication containing this ledger (inspect git log); no functional rule counted complete.
 
 **Cursor:** Batch 03 = R294,R295,R296,R297,R298,R299,R300,R301,R302,R303. Carryover remains all 20 Batch 01/02 IDs; revisit after ordered queue. Preserve R102/R118/R163 precision floors and frozen holdouts.
+
+
+## Batch 03 — R294–R303 (2026-11-17)
+
+**Source snapshot:** `634ee8125c38e4d6d7ce25e936aef3832352dd18`. All ten detector classes inspected; all ten EvaluatePrecision implementations still return unconditional NoMatch. **Zero functional repairs**. No runtime producer promotion or tests executed.
+
+| ID | Status | Required trustworthy integration |
+| --- | --- | --- |
+| R294 | IN-PROGRESS, PRODUCER-BLOCKED | Authenticated Kubernetes API-server audit of secrets get/list, response decision, verified cluster identity and authorization context; isolated signed terminal-audit admission added, not engine-connected |
+| R295 | IN-PROGRESS, PRODUCER-BLOCKED | API-server pods/exec audit plus upgraded session/command outcome; isolated signed audit request admission added, no session proof |
+| R296 | IN-PROGRESS, PRODUCER-BLOCKED | API-server pods/portforward audit, principal and session outcome plus approved-session baseline; isolated signed audit request admission added |
+| R297 | PRODUCER-BLOCKED | Service-account token-read provenance joined to independent external delivery, not a TokenRequest or bearer header |
+| R298 | PRODUCER-BLOCKED | Host-verified Docker/containerd socket exposure inventory and endpoint identity, not port 2375 |
+| R299 | PRODUCER-BLOCKED | Trusted Docker Engine container-create result, engine identity and principal, not HTTP POST |
+| R300 | PRODUCER-BLOCKED | Verified etcd endpoint identity, trust boundary and authenticated client outcome |
+| R301 | PRODUCER-BLOCKED | Verified Kubelet read-only listener and sensitive response outcome, not path/port |
+| R302 | PRODUCER-BLOCKED | Verified Kubelet exec operation and session outcome, not path/POST |
+| R303 | PRODUCER-BLOCKED | Trusted registry response inventory, distinct manifest results and authorized-client baseline |
+
+**Source increment:** `Carthago/Services/ProtocolIntelligence/KubernetesAuditAdmission.cs` bounded (4096 identities), length-delimited HMAC-SHA256 isolated admission of Kubernetes audit terminal responses with typed secrets-read, pod-exec-request and port-forward-request operations. A shared key is NOT proof of exporter identity. No runtime ingestion or R294–R296 detector connectivity; never treat audit allow as proof of command success, exfiltration or unauthorized activity. `Carthago.Tests/ProtocolIntelligence/KubernetesAuditAdmissionTests.cs` regression source authored, **UNEXECUTED**: signed terminal observations, denied outcome, invalid signature, nonterminal, replay, stale and malformed events. This is a prerequisite only, **not a functional detector repair**. Commit SHA: see atomic git commit containing this ledger. Carryover: all 30 processed IDs unresolved. **Next cursor:** R304–R313.
