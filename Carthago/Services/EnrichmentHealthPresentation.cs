@@ -155,8 +155,11 @@ internal static class EnrichmentHealthPresentation
             $"Local TCP/UDP records sampled after process stage: {c.ProcessEligible:N0}; TCP socket ownership: {c.ProcessStrong:N0}/{c.ProcessEligible:N0} eligible; " +
             $"UDP binding only: {c.ProcessUdpBinding:N0}/{c.ProcessEligible:N0} eligible. Process-eligible records are a subset of published records, not a second publication count. " +
             "Coverage is observed evidence availability, not protocol recall; UDP binding is not remote tuple proof. " +
-            (c.LocalKnown > c.Published || c.InterfaceKnown > c.Published || c.DnsCorrelated > c.Published || c.TlsCorrelated > c.Published || c.EtwPublished > c.Published || c.ProcessEligible > c.Published || c.ProcessStrong > c.ProcessEligible || c.ProcessUdpBinding > c.ProcessEligible
-                ? "WARNING: evidence coverage counters exceed their eligible publication or process-stage population; investigate snapshot accounting. "
+            (c.LocalKnown > c.Published || c.InterfaceKnown > c.Published || c.DnsCorrelated > c.Published || c.TlsCorrelated > c.Published || c.EtwPublished > c.Published || c.ProcessEligible > c.Published || c.ProcessStrong > c.ProcessEligible || c.ProcessUdpBinding > c.ProcessEligible ||
+             c.Published < 0 || c.LocalKnown < 0 || c.InterfaceKnown < 0 || c.DnsCorrelated < 0 ||
+             c.TlsCorrelated < 0 || c.ProcessEligible < 0 || c.ProcessStrong < 0 ||
+             c.ProcessUdpBinding < 0 || c.EtwPublished < 0
+                ? "WARNING: evidence coverage counters are negative or exceed their eligible publication or process-stage population; investigate snapshot accounting. "
                 : string.Empty) +
             $"ETW published records (lifetime): {c.EtwPublished:N0}/{c.Published:N0}. ETW kernel records do not supply packet payload or verified capture-interface identity; missing DNS/TLS evidence is not a negative protocol observation.";
     }
