@@ -23,8 +23,8 @@ namespace Carthago.Engine.Rules.Expansion
                     "HTTP POST on port 631 is not a decoded IPP operation, verified printer identity, successful print job or authenticated external-host policy."),
                 "R459" => ("SMB_BROWSER_ELECTION_MESSAGE_UNAVAILABLE",
                     "SMB/NetBIOS ports and generic SMB traffic do not prove a parsed browser-election datagram or anomalous election state."),
-                "R460" => ("NBNS_DISTINCT_NAME_SWEEP_UNAVAILABLE",
-                    "UDP/137 and descriptive text cannot establish decoded NetBIOS name questions, distinct names/targets, or a per-source sweep window."),
+                // R460 now uses capture-derived complete NBNS questions through its
+                // own bounded Shadow-only distinct-name window, not generic text scoring.
                 "R461" => ("DHCP_DISTINCT_CLIENT_LEASE_EXHAUSTION_UNAVAILABLE",
                     "UDP/67-68 and DHCP labels do not prove distinct client identifiers, server lease exhaustion, or a source-attributed request burst."),
                 "R462" => ("DHCP_OFFER_SERVER_AUTHORITY_UNAVAILABLE",

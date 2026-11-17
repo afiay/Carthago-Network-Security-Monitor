@@ -11,6 +11,7 @@
     <Compile Include="../Carthago/Services/SessionFiles/CarthagoSessionArchiveService.cs" Link="SessionFiles/CarthagoSessionArchiveService.cs" />
     <Compile Include="../Carthago/Services/DnsWireNameCodec.cs" Link="Services/DnsWireNameCodec.cs" />
     <Compile Include="../Carthago/Services/ProtocolIntelligence/DnsAddressObservationInspector.cs" Link="Services/ProtocolIntelligence/DnsAddressObservationInspector.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/NbnsNameQueryInspector.cs" Link="Services/ProtocolIntelligence/NbnsNameQueryInspector.cs" />
     <Compile Include="../Carthago/Services/ProtocolIntelligence/BacnetEventDisableInspector.cs" Link="Services/ProtocolIntelligence/BacnetEventDisableInspector.cs" />
     <Compile Include="../Carthago/Models/TrafficRecord.cs" Link="Models/TrafficRecord.cs" />
     <Compile Include="../Carthago/Engine/Rules/Abstractions/SensitiveTelemetryContracts.cs" Link="Engine/Rules/Abstractions/SensitiveTelemetryContracts.cs" />

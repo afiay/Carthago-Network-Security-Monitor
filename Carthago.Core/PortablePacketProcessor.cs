@@ -166,6 +166,12 @@ namespace Carthago.Services
                 // Service guess from ports
                 rec.ApplicationService = ResolveService(protoLabel, sport, dport);
 
+                // Complete capture-derived NBNS name questions only; user-editable Info,
+                // DNS fields and UDP/137 ports cannot fabricate a distinct query identity.
+                if (isIPv4 && completeIpPacket && isUdp && dport == 137
+                    && NbnsNameQueryInspector.TryInspect(l4Payload, out var nbnsNameDigest))
+                    rec.NbnsQueryNameDigest = nbnsNameDigest;
+
                 // ====== TCP flow identity, direction and latency ======
                 FlowKey tcpFlow = default;
                 bool clientToServer = true;

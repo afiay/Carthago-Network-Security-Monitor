@@ -112,6 +112,9 @@ namespace Carthago.Models
 
         // Capture observation point, not proof of an application's route or remote VPN ownership.
         internal bool ArpSenderMacMatchesFrame { get; set; }
+        // Packet-processor-only NetBIOS first-level question identity. Never imported or exported.
+        // Hash is transient and used only by bounded in-process distinct-name windows.
+        internal string? NbnsQueryNameDigest { get; set; }
         public string? CaptureBackend { get; set; }
         public string? CaptureInterfaceId { get; set; }
         public string? CaptureInterfaceName { get; set; }
