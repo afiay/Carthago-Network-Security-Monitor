@@ -9,7 +9,8 @@ public partial class MainWindow
     partial void ApplyDashboardResponsiveLayout(ResponsiveLayoutMode mode, bool narrowKpis)
     {
         // GA UI-180: the investigation lane is narrow even in Wide mode.
-        DashboardDetailFactsGrid.Columns = 2;
+        // DashboardDetailFactsGrid is a WPF Grid (not UniformGrid).
+        // Its two ColumnDefinitions are already declared in MainWindow.xaml.
         DashboardDetailDestinationCard.Margin = new Thickness(0, 0, 0, 6);
         DashboardDetailProtocolCard.Margin = new Thickness(0, 0, 6, 6);
         DashboardDetailCategoryCard.Margin = new Thickness(0, 0, 0, 6);
