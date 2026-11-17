@@ -279,7 +279,8 @@ public sealed class EnrichmentHealthPresentationTests
         };
         var summary = EnrichmentHealthPresentation.Build(stats).Summary;
         Assert.Contains("Checkpoint writes: 33, failures: 0", summary);
-        Assert.Contains("Last checkpoint diagnostic: Checkpoint persisted; retention cleanup failed: denied", summary);
+        Assert.Contains("Checkpoint diagnostic present (details withheld; inspect restricted local logs).", summary);
+        Assert.DoesNotContain("Checkpoint persisted; retention cleanup failed: denied", summary);
         Assert.DoesNotContain("Last save error", summary);
         stats = new TrafficCaptureService.StatsSnapshot
         {
