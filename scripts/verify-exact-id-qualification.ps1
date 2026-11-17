@@ -57,6 +57,7 @@ function Get-ReviewedExecutionMap($manifest, $registryMap) {
 function Test-Qualification($document, $inventory, [string]$currentSha, $manifest) {
     Assert-Qualification ($document.schemaVersion -eq 1) 'Unsupported schema'
     Assert-Qualification ($document.sourceSha -cmatch '^[a-f0-9]{40}$') 'Invalid source SHA'
+    Assert-Qualification ($null -ne $document.PSObject.Properties['records'] -and $document.records -is [array] -and $document.records.Count -gt 0 -and $document.records.Count -le 1000) 'Invalid exact-ID inventory record collection'
     Assert-Qualification ($currentSha -cmatch '^[a-f0-9]{40}$') 'Invalid current SHA'
     $map = @{}
     foreach ($rule in $inventory.rules) {
@@ -137,6 +138,10 @@ if ($SelfTest) {
         Assert-Qualification $rejected 'Invalid fixture accepted'
     }
     $bad = Copy-Document; $bad.records += $bad.records[0]; Expect-Rejection $bad
+    $bad = Copy-Document; $bad.PSObject.Properties.Remove('records'); Expect-Rejection $bad
+    $bad = Copy-Document; $bad.records = $null; Expect-Rejection $bad
+    $bad = Copy-Document; $bad.records = @(); Expect-Rejection $bad
+    $bad = Copy-Document; $bad.records = @(1..1001 | ForEach-Object { $bad.records[0] }); Expect-Rejection $bad
     $bad = Copy-Document; $bad.records[0].PSObject.Properties.Remove('limitations'); Expect-Rejection $bad
     $bad = Copy-Document; $bad.records[0].registeredClass = 'Unknown'; Expect-Rejection $bad
     $bad = Copy-Document; $bad.records[0].detector.executedSha = 'a' * 40; Expect-Rejection $bad

@@ -3346,3 +3346,8 @@ Source parent `1dc2d3ae969f775973af0bd417634afc9e1cc65b` (actual parent tree ret
 ## 2026-11-17 — Enrichment worker mean denominator visibility
 
 Pinned source HEAD 8fe78e342daf2baa80f3cd087198137084a82b34. The MonitoringHealthPage worker summary now labels queue-wait means with started-worker count and elapsed means with returned+cancelled+faulted completed-worker count. Skipped-before-processing workers remain excluded. Added a null-snapshot regression to guard against fabricated metrics. Presentation only: no worker accounting, detection rule, or evidence admission changes. Authored but not compiled or run. Windows pending: dotnet test .\\Carthago.Tests\\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~EnrichmentHealthPresentationTests". Next: inspect actual worker counter construction and add nonzero/zero denominator regression before Windows dashboard and active capture verification.
+
+
+## 2026-11-17 — GA-09co exact-ID inventory collection integrity
+
+Source parent `44bb0085eb6b3ecd7c60d4f754080fea8498c051` (tree `5f14eaddb3150b66cea2b54aa804847f795effa0`). Validator rejects missing, null, empty, non-array or more than 1,000 exact-ID inventory records before per-ID review. Four in-memory negative self-tests cover missing, null, empty and 1,001 records. Expected: four rejections; existing inventory accepted. Executed: none; Windows PowerShell pending. Classification: AUTHORED/UNEXECUTED; no rule, registry, producer, confidence floor, holdout or policy changes. Windows: `powershell -NoProfile -File .\scripts\verify-exact-id-qualification.ps1 -SelfTest`. Next: TRX-to-ID/polarity reconciliation, R118/R163 trusted producers, R102 independent capture and GA-08.
