@@ -346,3 +346,25 @@ Each hourly run:
 **Concrete source increment:** `Carthago/Services/ProtocolIntelligence/EtherNetIpListIdentityInspector.cs` adds strict complete 24-byte EtherNet/IP encapsulation ListIdentity request validation (command 0x0063, zero body length/session/status/options, opaque sender context). This deliberately does not establish an inventory response, burst, scan, unauthorized behavior or trusted capture. `Carthago.Tests/ProtocolIntelligence/EtherNetIpListIdentityInspectorTests.cs` adds three xUnit methods (including a five-case theory) for valid, incomplete, coalesced and invalid-header requests. Source commit `195afcf375fc7a9e02f0725e80e0dc67557d3669`; test commit `fa262a9792bec14b82e0e77c0e18c8c464af8ac6`. **Tests authored, NOT executed.** No Windows runner, build, live capture or CI. R488 remains fail-closed with no engine integration. No precision floors or frozen holdout changed.
 
 **Next exact cursor:** R494–R503. Keep R484/R487–R493 and R488 producer work in carryover; R485/R486 remain source candidates pending build/runtime acceptance. Earlier R460/R463/R474 candidate statuses are unchanged. No rule was operationally promoted in this batch.
+
+
+## Batch 15 — R494–R503 (2026-11-17; source-only)
+
+**Ten exact expansion rule classes inspected on the existing branch.** All ten retain generic `EvaluateSpec(context, Spec)` and have no demonstrated trusted source-to-detector predicate. Their descriptive TextIndicators, ProcessIndicators, paths, and ports do not establish a sensitive-file transfer or authorization violation. **Functional detector completions: 0.**
+
+| ID | State | Required trusted producer / blocker |
+| --- | --- | --- |
+| R494 | PRODUCER-BLOCKED | Endpoint-confirmed SSH private key file identity/read, process identity, destination and completed upload join; never inspect/store secret bytes |
+| R495 | PRODUCER-BLOCKED | Endpoint-confirmed KeePass database file identity/read and correlated completed external transfer with backup policy |
+| R496 | PRODUCER-BLOCKED | Endpoint-confirmed VPN configuration file identity/read, trusted external transfer outcome and authorized configuration distribution policy |
+| R497 | PRODUCER-BLOCKED | Endpoint-confirmed browser cookie database file identity/read and completed outbound transfer; privacy-safe metadata only |
+| R498 | PRODUCER-BLOCKED | Trusted clipboard sync operation with byte count, actor/session identity, remote sync endpoint and approved policy |
+| R499 | PRODUCER-BLOCKED | Authenticated remote-desktop virtual-channel file-transfer outcomes, session identity, distinct transfer count and authorized remote-support baseline |
+| R500 | PRODUCER-BLOCKED | Endpoint archive creation with file identity followed by correlated authenticated cloud upload outcome and backup baseline |
+| R501 | IN-PROGRESS, PRODUCER-BLOCKED | Strict bounded multipart filename entropy prerequisite authored; still requires trusted HTTP body provenance, authenticated upload outcome, real multipart body completion/closing-boundary validation, deduplicated per-session threshold, authorization baseline and RuleEngine wiring |
+| R502 | PRODUCER-BLOCKED | Trusted decrypted complete HTTP POST body with verified data URI/base64 payload length, transfer outcome and destination authorization |
+| R503 | PRODUCER-BLOCKED | Authenticated HTTP POST request/response and verified paste-service identity, transferred byte count, distinct completed requests and allowlist |
+
+**Concrete source changes:** `Carthago/Services/ProtocolIntelligence/MultipartFilenameEntropyInspector.cs` (commit `6615915ef886c35bdbc49420d4a7a2a1b364c099`) adds a bounded, strict first-part multipart header filename entropy prerequisite, gated on explicitly complete plaintext body input. It does **not** verify upload success, trust the caller, validate the full multipart body, retain content, or emit alerts. `Carthago.Tests/ProtocolIntelligence/MultipartFilenameEntropyInspectorTests.cs` (commit `af439d2d2f8ba1a01dd311f7594d9b480beadc13`) authors three xUnit methods including a theory; **tests NOT executed**. The parser is isolated and has no RuleEngine integration. No local Windows runner, dotnet build, native capture, GitHub Actions, precision floor or holdout changes.
+
+**Carryover:** all ten remain incomplete. Existing R460/R463/R474/R485/R486 source candidates remain unverified; all previous producer-blocked IDs remain in carryover. **Next exact ten:** R504–R513. Ledger publication SHA is the commit containing this section.
