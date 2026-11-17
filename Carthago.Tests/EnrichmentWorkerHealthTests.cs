@@ -140,6 +140,23 @@ public sealed class EnrichmentWorkerHealthTests
         Assert.DoesNotContain("WARNING:", EnrichmentHealthPresentation.WorkerSummary(valid.Snapshot()));
     }
 
+    [Theory]
+    [InlineData(-1, 0, 0, 0, 0, 0, 0, 0, 0)]
+    [InlineData(1, -1, 0, 0, 0, 0, 0, 0, 0)]
+    [InlineData(1, 0, 0, 0, -1, 0, 0, 0, 0)]
+    [InlineData(1, 0, 0, 0, 0, -1, 0, 0, 0)]
+    [InlineData(1, 0, 0, 0, 0, 0, 0, -1, 0)]
+    public void Worker_Summary_Flags_Negative_Counters_Without_Rewriting_Snapshot(
+        long started, long returned, long cancelled, long faulted, long skipped,
+        long waitTotal, long waitMax, long elapsedTotal, long elapsedMax)
+    {
+        var snapshot = new EnrichmentWorkerSnapshot(started, returned, cancelled, faulted,
+            skipped, waitTotal, waitMax, elapsedTotal, elapsedMax);
+        var summary = EnrichmentHealthPresentation.WorkerSummary(snapshot);
+        Assert.Contains("WARNING: negative worker counters or durations", summary);
+        Assert.Contains("-1", summary);
+    }
+
     [Fact]
     public void Detached_Work_Return_Is_Cancelled_Even_Before_Token_Signal()
     {
