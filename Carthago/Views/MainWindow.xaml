@@ -927,15 +927,17 @@
                                           BorderBrush="{StaticResource SoftDividerBrush}"
                                           BorderThickness="0,1,0,0" Padding="0,4,0,0">
                                     <Grid>
-                                      <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                      </Grid.ColumnDefinitions>
-                                      <TextBlock Text="{Binding Subtitle}" FontSize="12"
+                                      <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                      </Grid.RowDefinitions>
+                                      <TextBlock Grid.Row="0" Text="{Binding Subtitle}" FontSize="12"
                                                  Foreground="{StaticResource TextMutedBrush}"
-                                                 TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"
-                                                 ToolTip="{Binding Subtitle}" Margin="0,0,10,0"/>
-                                      <TextBlock Grid.Column="1" Text="{Binding TimeText}" FontSize="10"
+                                                 TextWrapping="Wrap" TextTrimming="CharacterEllipsis"
+                                                 MaxHeight="36" LineHeight="17"
+                                                 ToolTip="{Binding Subtitle}"/>
+                                      <TextBlock Grid.Row="1" Text="{Binding TimeText}" FontSize="10"
+                                                 HorizontalAlignment="Right" Margin="0,3,0,0"
                                                  Foreground="{StaticResource TextMutedBrush}"
                                                  ToolTip="Local HH:mm:ss. Incidents: last update; signals: creation. Not a capture timestamp."/>
                                     </Grid>
