@@ -305,4 +305,19 @@ public sealed class EnrichmentHealthPresentationTests
         Assert.Equal("Worker metrics unavailable.", EnrichmentHealthPresentation.WorkerSummary(null));
     }
 
+    [Fact]
+    public void Process_Coverage_Uses_Eligible_Record_Denominator_Not_All_Publications()
+    {
+        var stats = new TrafficCaptureService.StatsSnapshot
+        {
+            EnrichmentCoverage = new(100, 40, 20, 10, 5, 8, 3, 2, 7)
+        };
+        var summary = EnrichmentHealthPresentation.Build(stats).Summary;
+        Assert.Contains("Local TCP/UDP records sampled after process stage: 8", summary);
+        Assert.Contains("TCP socket ownership: 3/8 eligible", summary);
+        Assert.Contains("UDP binding only: 2/8 eligible", summary);
+        Assert.Contains("subset of published records", summary);
+        Assert.DoesNotContain("TCP socket ownership: 3/100", summary);
+    }
+
 }

@@ -152,8 +152,9 @@ internal static class EnrichmentHealthPresentation
         return $"Published records (lifetime): {c.Published:N0}; both endpoint membership flags known: {c.LocalKnown:N0}/{c.Published:N0}; " +
             $"verified interface: {c.InterfaceKnown:N0}/{c.Published:N0}; DNS correlated: {c.DnsCorrelated:N0}/{c.Published:N0}; " +
             $"TLS correlated: {c.TlsCorrelated:N0}/{c.Published:N0}. " +
-            $"Local TCP/UDP records sampled after process stage: {c.ProcessEligible:N0}; TCP socket ownership: {c.ProcessStrong:N0}; " +
-            $"UDP binding only: {c.ProcessUdpBinding:N0}. Coverage is observed evidence availability, not protocol recall; UDP binding is not remote tuple proof. " +
+            $"Local TCP/UDP records sampled after process stage: {c.ProcessEligible:N0}; TCP socket ownership: {c.ProcessStrong:N0}/{c.ProcessEligible:N0} eligible; " +
+            $"UDP binding only: {c.ProcessUdpBinding:N0}/{c.ProcessEligible:N0} eligible. Process-eligible records are a subset of published records, not a second publication count. " +
+            "Coverage is observed evidence availability, not protocol recall; UDP binding is not remote tuple proof. " +
             $"ETW published records (lifetime): {c.EtwPublished:N0}/{c.Published:N0}. ETW kernel records do not supply packet payload or verified capture-interface identity; missing DNS/TLS evidence is not a negative protocol observation.";
     }
 
