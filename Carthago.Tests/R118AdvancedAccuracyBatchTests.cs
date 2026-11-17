@@ -33,8 +33,8 @@ public sealed class R118AdvancedAccuracyBatchTests
 
     [Theory]
     [InlineData("GET /admin HTTP/1.1")]
-    [InlineData("POST\\t")]
-    [InlineData("POST\\u0000")]
+    [InlineData("POST\t")]
+    [InlineData("POST\u0000")]
     [InlineData("POST/ADMIN")]
     public async Task Malformed_Http_Method_Cannot_Qualify_Default_Credentials(string method)
     {
