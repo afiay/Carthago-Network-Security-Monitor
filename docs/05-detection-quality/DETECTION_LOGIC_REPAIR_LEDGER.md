@@ -113,3 +113,23 @@ Each hourly run:
 **Actual increment:** `Carthago/Services/ProtocolIntelligence/RegistryOperationAuditAdmission.cs` adds length-delimited signed registry-operation response admission with bounded 4096-event replay identities, monotonic timestamp checks and explicit accepted/denied/authenticated/unauthenticated distinctions. It is an isolated contract; shared HMAC key is not exporter identity, authorization, user role or proof of image transfer. `Carthago.Tests/ProtocolIntelligence/RegistryOperationAuditAdmissionTests.cs` adds four test methods (one theory with three data cases) for accepted operations, denied outcomes, signature tampering/invalid semantics and replay/expiry. **AUTHORED, UNEXECUTED.** No runtime/engine integration and no detector positives. Commit SHA: inspect atomic commit containing this ledger.
 
 **Carryover:** all 40 processed IDs unresolved. **Next cursor:** R314,R315,R316,R317,R318,R319,R320,R321,R322,R323. Do not promote any rule until verified producer identity and detector positive/benign negative exist.
+
+
+## Batch 05 — R314–R323 (2026-11-17)
+
+**Source snapshot:** `6b192443f1a020ea72f4c5e5759546f03edd3ec5`. Inspected all ten detector EvaluatePrecision implementations; each remains unconditional NoMatch. **Zero functional repairs**, ten unresolved producer dependencies. No runtime or detector alert promotion.
+
+| ID | State | Required trusted producer / integration |
+| --- | --- | --- |
+| R314 | PRODUCER-BLOCKED | Authenticated SMTP server failure responses and account-linked AUTH exchange, deduplicated burst |
+| R315 | PRODUCER-BLOCKED | Authenticated IMAP server failure outcomes and stable distinct-account correlation |
+| R316 | IN-PROGRESS, PRODUCER-BLOCKED | Complete plaintext POP3 command capture, independent TLS/STLS state and TCP stream reassembly; isolated redacted command inspector added, not wired to capture or rule engine |
+| R317 | PRODUCER-BLOCKED | Verified Exchange Autodiscover endpoint and server-side distinct-account failure outcomes |
+| R318 | PRODUCER-BLOCKED | Authenticated EWS operation/result and mailbox authorization context |
+| R319 | PRODUCER-BLOCKED | Verified OWA/ECP endpoint identity, admin authorization and response |
+| R320 | PRODUCER-BLOCKED | Authenticated Microsoft Graph mail-export audit and delivered result evidence |
+| R321 | PRODUCER-BLOCKED | Authenticated Gmail message-read audit and result counts |
+| R322 | PRODUCER-BLOCKED | Trusted mailbox-rule mutation audit with accepted outcome |
+| R323 | PRODUCER-BLOCKED | Authenticated attachment retrieval results, delivered bytes and actor context |
+
+**Actual source increment:** `Carthago/Services/ProtocolIntelligence/Pop3CleartextCommandInspector.cs` strictly inspects complete attested plaintext USER/PASS command lines, rejects partial/encrypted/malformed/overlong input, and emits only redacted command kind. `Carthago.Tests/ProtocolIntelligence/Pop3CleartextCommandInspectorTests.cs` contains four test methods with parameterized cases. **AUTHORED, UNEXECUTED**. Not a detector positive; independent TLS state and capture provenance remain absent. Commit SHA is the atomic commit containing this ledger; verify git log. **Carryover:** all 50 inspected IDs unresolved. **Next cursor:** R324–R333. No Windows tests, GitHub Actions or native capture.
