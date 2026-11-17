@@ -43,6 +43,13 @@ public sealed class R270AdvancedAccuracyBatchTests
     [Fact] public async Task Contradictory_Protocol_Still_Fails_Closed() {
         var r = Sample(); r.IsUdp = true; r.IsTcp = true; Assert.False(await Hit(r));
     }
+    [Fact] public async Task Missing_Control_Plane_Producer_Is_Explicit_Not_A_Generic_NoMatch() {
+        var result = await new R270_DetectionPipelineTamperingIndicatorRule().EvaluateAsync(At(Sample()));
+        Assert.False(result.Matched);
+        var reason = Assert.Single(result.NoMatchReasons);
+        Assert.Equal(RuleNoMatchReasonCategory.InsufficientEvidence, reason.Category);
+        Assert.Equal("TRUSTED_PIPELINE_CONTROL_PLANE_AUDIT_UNAVAILABLE", reason.Code);
+    }
     [Fact] public void Critical_Floor_Mode_And_Threshold_Are_Unchanged() {
         var p = new R270_DetectionPipelineTamperingIndicatorRule().PrecisionProfile;
         Assert.Equal(88, p.MinimumConfidence); Assert.Equal(1, p.Threshold);
