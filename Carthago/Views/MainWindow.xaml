@@ -900,16 +900,22 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                   </Grid.ColumnDefinitions>
-                                  <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                  <!-- GA UI-215: constrain the kind label independently of the severity badge and score. -->
+                                  <Grid VerticalAlignment="Center" MinWidth="0">
+                                    <Grid.ColumnDefinitions>
+                                      <ColumnDefinition Width="Auto"/>
+                                      <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
                                     <Border Style="{StaticResource RiskBadge}" BorderBrush="{Binding AccentBrush}"
                                             Background="#0B1728" Margin="0,0,9,0">
                                       <TextBlock Text="{Binding Severity}" FontSize="10" FontWeight="Bold"
                                                  Foreground="{Binding AccentBrush}"/>
                                     </Border>
-                                    <TextBlock Text="{Binding Kind}" FontSize="10" FontWeight="SemiBold"
+                                    <TextBlock Grid.Column="1" Text="{Binding Kind}" FontSize="10" FontWeight="SemiBold"
                                                Foreground="{StaticResource TextSubtleBrush}"
-                                               VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                                  </StackPanel>
+                                               VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                                               ToolTip="{Binding Kind}"/>
+                                  </Grid>
                                   <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
                                               Margin="10,0,0,0">
                                     <TextBlock Text="{Binding RiskScore}" FontSize="17" FontWeight="Bold"
