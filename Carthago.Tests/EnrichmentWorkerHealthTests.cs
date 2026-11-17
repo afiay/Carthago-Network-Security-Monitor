@@ -124,6 +124,23 @@ public sealed class EnrichmentWorkerHealthTests
     }
 
     [Fact]
+    public void Worker_Summary_Flags_Overcompleted_Accounting_Without_Inventing_InFlight_Work()
+    {
+        // Deliberately invalid synthetic snapshot: this is an observability guard,
+        // not evidence that a production worker has over-completed.
+        var invalid = new EnrichmentWorkerSnapshot(1, 1, 1, 0, 0, 5, 5, 10, 10);
+        var summary = EnrichmentHealthPresentation.WorkerSummary(invalid);
+        Assert.Contains("in flight at snapshot: 0", summary);
+        Assert.Contains("WARNING: completed outcomes exceed started workers by 1", summary);
+        Assert.Contains("completed workers: 2", summary);
+
+        var valid = new EnrichmentWorkerHealth();
+        valid.Start(2);
+        valid.End(true, false, 3);
+        Assert.DoesNotContain("WARNING:", EnrichmentHealthPresentation.WorkerSummary(valid.Snapshot()));
+    }
+
+    [Fact]
     public void Detached_Work_Return_Is_Cancelled_Even_Before_Token_Signal()
     {
         using var oldRun = new System.Threading.CancellationTokenSource();
