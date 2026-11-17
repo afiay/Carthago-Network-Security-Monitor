@@ -41,8 +41,23 @@ def inspect(path: Path) -> dict:
                      "outcome": outcome, "candidateRuleIds": ids,
                      "casePolarity": "unreviewed", "sourceSha": None,
                      "qualificationStatus": "not-admitted"})
-    if len({(r["exactTestName"], r["testId"]) for r in rows}) != len(rows):
-        raise ValueError("Ambiguous duplicate test identities")
+    if any(not r["testId"] or len(r["testId"]) > 256 for r in rows):
+        raise ValueError("Missing or oversized testId")
+    if len({r["testId"] for r in rows}) != len(rows):
+        raise ValueError("Duplicate testId across original results")
+    counters = summary.find(NS + "Counters")
+    if counters is not None:
+        actual = {"total": len(rows),
+                  "passed": sum(r["outcome"] == "Passed" for r in rows),
+                  "failed": sum(r["outcome"] == "Failed" for r in rows)}
+        for key, expected in actual.items():
+            raw = counters.get(key)
+            if raw is not None and (not raw.isdecimal() or int(raw) != expected):
+                raise ValueError("TRX summary counter mismatch: " + key)
+    if summary.get("outcome") == "Passed" and any(r["outcome"] != "Passed" for r in rows):
+        raise ValueError("Passed run contains non-passing result")
+    if summary.get("outcome") == "Failed" and not any(r["outcome"] in {"Failed", "Error", "Timeout", "Aborted"} for r in rows):
+        raise ValueError("Failed run contains no failing result")
     return {"schemaVersion": 1, "purpose": "original-trx-candidate-only",
             "originalTrxSha256": hashlib.sha256(data).hexdigest(),
             "originalResultCount": len(rows), "testsExecutedByInspector": 0,
@@ -65,7 +80,11 @@ def self_test() -> None:
         assert all(x["casePolarity"] == "unreviewed" and x["sourceSha"] is None for x in r["results"])
         for bad in (xml.replace('outcome="Passed"', 'outcome="Unknown"'),
                     '<!DOCTYPE TestRun>' + xml,
-                    xml.replace('testId="b"', 'testId="a"').replace('Benign.Control', 'R102.Positive')):
+                    xml.replace('testId="b"', 'testId="a"'),
+                    xml.replace('<ResultSummary outcome="Completed"/>',
+                                '<ResultSummary outcome="Completed"><Counters total="3" passed="1" failed="1"/></ResultSummary>'),
+                    xml.replace('outcome="Completed"', 'outcome="Passed"'),
+                    xml.replace('outcome="Completed"', 'outcome="Failed"').replace('outcome="Failed"/></Results>', 'outcome="Passed"/></Results>')):
             p.write_text(bad, encoding="utf-8")
             try:
                 inspect(p)
