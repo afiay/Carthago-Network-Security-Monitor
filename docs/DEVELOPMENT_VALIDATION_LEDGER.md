@@ -3381,3 +3381,12 @@ Pinned source parent `b85ec0ca13cb05b65f5b96436866a24b94b2945e`, actual tree `62
 ## 2026-11-17 — GA-09cs TRX summary counter reconciliation
 
 Source parent `eac7193220385fc3ec210298246a09577a284a2d`. The direct read-only TRX verifier now cross-checks explicit total/passed/failed summary counters against actual UnitTestResult nodes when those counters are supplied. Contradictory totals cannot substantiate a selected passing test. Four fixtures authored: consistent counters accepted; incorrect passed, total, and failed counters rejected. Expected: four new assertions pass and previous fixtures remain accepted/rejected as before. Executed: none (Windows PowerShell pending); evidence classification AUTHORED/UNEXECUTED, no current-SHA detector or independent capture claim. This is TRX evidence integrity only; R102/R118/R163 floors, frozen holdouts, registry, policy, and producer gaps unchanged. Next Windows: `powershell -NoProfile -File .\\scripts\\verify-qualification-trx.ps1 -SelfTest`; then `powershell -NoProfile -File .\\scripts\\verify-exact-id-qualification.ps1 -SelfTest`. Next: ingest owner original TRX with exact ID/polarity and resolve R118/R163 trusted producers, R102 capture baseline and GA-08 Windows outcomes.
+
+
+### 2026-11-17 — Enrichment checkpoint diagnostic display redaction
+
+- Source baseline inspected: `f8c6d9a2ad654d3a9f7fcba2a731e66db3f67ba3` on `feature/carthago-reliability-hardening`.
+- Production change `89f30a6d5ed9a3abec987b8a8b12364ffe47c1c1`: `EnrichmentHealthPresentation.StorageSummary` no longer embeds unrestricted checkpoint error strings in the MonitoringHealthPage summary; the UI retains write/failure counts and a diagnostic-presence indicator. This prevents local file paths or provider details from appearing in the general monitoring display. Restricted diagnostic retrieval is a separate operational concern.
+- Regression `a29810cebd5c6b1a91a8f32e04a7f60ab0262065`: updated `Storage_Summary_Distinguishes_Persisted_Checkpoint_Warning` to assert diagnostic presence without raw payload disclosure, while preserving no-diagnostic behavior.
+- **Not executed:** Windows build/xUnit, UI visual verification, runtime capture, and checkpoint-failure integration. Suggested authorized command: `dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter FullyQualifiedName~EnrichmentHealthPresentationTests`.
+- Next gate: actual Windows capture-connected counter reconciliation and restricted diagnostic access review; do not claim runtime acceptance from authored assertions.
