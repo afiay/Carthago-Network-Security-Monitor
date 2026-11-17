@@ -232,3 +232,12 @@ Each hourly run:
 | R453 | PRODUCER-BLOCKED | DNS decoded mDNS questions, distinct service/window correlation and approved discovery baseline |
 
 **Actual source increment:** `Carthago/Services/ProtocolIntelligence/MqttAnonymousConnectInspector.cs` and `Carthago.Tests/ProtocolIntelligence/MqttAnonymousConnectInspectorTests.cs` (five test methods **AUTHORED, UNEXECUTED**). MQTT 3.1.1 CONNECT/CONNACK parsing is isolated and explicitly requires independent same-flow plaintext completeness; caller booleans are not trusted runtime evidence. No rule predicate or alert enabled. **Carryover:** 100 reviewed IDs remain unresolved. **Next cursor:** R454–R463. Commit: see publication of this ledger.
+
+
+## Continuation — R451 carryover hardening (2026-11-17)
+
+**Work completed:** tightened the existing MQTT 3.1.1 CONNECT/CONNACK inspector against contradictory Session Present evidence (reserved CONNACK flags, resumed session with CleanSession=true, or rejected session with Session Present), and rejected malformed UTF-8 or NUL ClientId. This is protocol-evidence correctness, not a producer or detector completion. Source: `Carthago/Services/ProtocolIntelligence/MqttAnonymousConnectInspector.cs`; regression source: `Carthago.Tests/ProtocolIntelligence/MqttAnonymousConnectInspectorTests.cs`. Two additional xUnit test methods **AUTHORED, NOT EXECUTED**. Source commit `92152fe0f2834a4cdc8c6634db98aefcf8a75efb`; tests commit `76ce6b4f9ff1af3e25e29c5b6c4964e7ac3b75b4`.
+
+**R451 status:** IN-PROGRESS, PRODUCER-BLOCKED. Still requires trusted complete same-flow TCP reassembly, verified broker identity, policy context, runtime RuleEngine binding and detector-level tests. No alert enabled. No Windows runner, Actions, invasive capture or CI changes.
+
+**Ordered cursor unchanged:** R454–R463 are the next ten *unprocessed* IDs; this continuation did not inspect or falsely advance them. **Carryover:** all previously reviewed 100 IDs remain unresolved. Revisit blocked IDs without counting a parser as a functional repair.
