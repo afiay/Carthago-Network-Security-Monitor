@@ -321,6 +321,29 @@ public sealed class EnrichmentHealthPresentationTests
     }
 
     [Fact]
+    public void Evidence_Coverage_Flags_Negative_Counters_Without_Clamping_Them()
+    {
+        var negativePublished = new TrafficCaptureService.StatsSnapshot
+        {
+            EnrichmentCoverage = new(-1, 0, 0, 0, 0, 0, 0, 0, 0)
+        };
+        var negativeDns = new TrafficCaptureService.StatsSnapshot
+        {
+            EnrichmentCoverage = new(10, 0, 0, -1, 0, 0, 0, 0, 0)
+        };
+        var negativeProcess = new TrafficCaptureService.StatsSnapshot
+        {
+            EnrichmentCoverage = new(10, 0, 0, 0, 0, 5, -1, 0, 0)
+        };
+        foreach (var stats in new[] { negativePublished, negativeDns, negativeProcess })
+        {
+            var summary = EnrichmentHealthPresentation.Build(stats).Summary;
+            Assert.Contains("WARNING: evidence coverage counters are negative or exceed", summary);
+            Assert.Contains("-1", summary);
+        }
+    }
+
+    [Fact]
     public void Evidence_Coverage_Flags_Impossible_Publication_And_Process_Denominators()
     {
         var valid = new TrafficCaptureService.StatsSnapshot
