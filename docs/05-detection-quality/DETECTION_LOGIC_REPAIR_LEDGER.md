@@ -325,3 +325,24 @@ Each hourly run:
 **Cumulative source inventory:** 130 / 187 IDs reviewed, **3 source-only reachable candidate detectors (R460, R463, R474)**, 127 reviewed producer-blocked, 57 not yet reviewed. Thus 184 of the 187 initially identified rules lack a source-connected candidate predicate; **0 of these three newly authored candidate source paths have been demonstrated operationally accepted in this ledger**. Carry over all 127 blocked IDs and source-build/run review of R460/R463/R474.
 
 **Next ten unprocessed IDs:** `R484`, `R485`, `R486`, `R487`, `R488`, `R489`, `R490`, `R491`, `R492`, `R493`. The hourly automation must select from this cursor, avoid redoing this batch and revisit blocked items after ordered traversal.
+
+## Batch 14 — R484–R493 (2026-11-17; source-only)
+
+**Rule-class inspection:** R484–R493 fetched from the existing branch. R485 and R486 ALREADY have reachable capture-bound Candidate/Shadow predicates and must not be misclassified as generic EvaluateSpec stubs. Their build, runtime, provenance, policy, and benign validation are not established by this inspection. The remaining eight rules use generic EvaluateSpec without demonstrated producer-specific positive detection. No operational completion claimed.
+
+| Rule | State | Concrete missing integration |
+| --- | --- | --- |
+| R484 OPC UA Write | PRODUCER-BLOCKED | Authenticated/decrypted OPC UA Write service request and correlated response, node identity and approved engineering actor |
+| R485 BACnet WriteProperty | SOURCE CANDIDATE, UNVERIFIED | Existing typed BACnet capture flag and Shadow rule; verify native decode, boundary policy, controller identity and benign write maintenance baseline |
+| R486 BACnet DeviceCommunicationControl | SOURCE CANDIDATE, UNVERIFIED | Existing typed BACnet capture flag and Shadow rule; verify native decode, controller identity, approved maintenance and device response |
+| R487 Profinet DCP SetName | PRODUCER-BLOCKED | Validated Ethernet DCP Set NameOfStation operation, target identity, topology and approved engineering source |
+| R488 EtherNet/IP ListIdentity burst | IN-PROGRESS, PRODUCER-BLOCKED | Isolated strict encapsulation request inspector authored; requires actual capture/reassembly integration, correlated replies, unique target/window dedup, approved scanner baseline and RuleEngine wiring |
+| R489 EtherNet/IP ForwardOpen external | PRODUCER-BLOCKED | Decoded CIP ForwardOpen service with session/path, target/controller identity, source boundary and response outcome |
+| R490 IEC61850 MMS Write | PRODUCER-BLOCKED | Complete decoded MMS Write operation and response, authenticated IED identity and maintenance authorization |
+| R491 GOOSE multicast outside substation | PRODUCER-BLOCKED | Ethernet GOOSE APDU decode, trusted interface/VLAN/substation boundary topology and publisher identity |
+| R492 Historian bulk query | PRODUCER-BLOCKED | Authenticated historian query audit, returned volume, stable workstation identity and authorized job baseline |
+| R493 Browser password store upload | PRODUCER-BLOCKED | Endpoint file identity/read and verified outbound upload join, destination identity, outcome and privacy-safe provenance |
+
+**Concrete source increment:** `Carthago/Services/ProtocolIntelligence/EtherNetIpListIdentityInspector.cs` adds strict complete 24-byte EtherNet/IP encapsulation ListIdentity request validation (command 0x0063, zero body length/session/status/options, opaque sender context). This deliberately does not establish an inventory response, burst, scan, unauthorized behavior or trusted capture. `Carthago.Tests/ProtocolIntelligence/EtherNetIpListIdentityInspectorTests.cs` adds three xUnit methods (including a five-case theory) for valid, incomplete, coalesced and invalid-header requests. Source commit `195afcf375fc7a9e02f0725e80e0dc67557d3669`; test commit `fa262a9792bec14b82e0e77c0e18c8c464af8ac6`. **Tests authored, NOT executed.** No Windows runner, build, live capture or CI. R488 remains fail-closed with no engine integration. No precision floors or frozen holdout changed.
+
+**Next exact cursor:** R494–R503. Keep R484/R487–R493 and R488 producer work in carryover; R485/R486 remain source candidates pending build/runtime acceptance. Earlier R460/R463/R474 candidate statuses are unchanged. No rule was operationally promoted in this batch.
