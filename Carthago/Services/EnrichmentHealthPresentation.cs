@@ -172,6 +172,9 @@ internal static class EnrichmentHealthPresentation
         string accounting = completed > w.Started
             ? $" WARNING: completed outcomes exceed started workers by {completed - w.Started:N0}; inspect worker lifecycle accounting."
             : string.Empty;
+        if (w.Started < 0 || w.Returned < 0 || w.Cancelled < 0 || w.Faulted < 0 || w.Skipped < 0 ||
+            w.WaitTotalMs < 0 || w.WaitMaxMs < 0 || w.ElapsedTotalMs < 0 || w.ElapsedMaxMs < 0)
+            accounting += " WARNING: negative worker counters or durations; inspect worker lifecycle accounting.";
         return $"Workers (lifetime): {w.Started:N0} started, {w.Returned:N0} returned, {w.Cancelled:N0} cancelled, {w.Faulted:N0} faulted; " +
             $"in flight at snapshot: {System.Math.Max(0L, w.Started - w.Returned - w.Cancelled - w.Faulted):N0}; " +
             $"{w.Skipped:N0} cancelled before processing. Queue wait mean/max ms (started workers: {w.Started:N0}): {Mean(w.WaitTotalMs, w.Started)} / {w.WaitMaxMs}; " +
