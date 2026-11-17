@@ -368,3 +368,25 @@ Each hourly run:
 **Concrete source changes:** `Carthago/Services/ProtocolIntelligence/MultipartFilenameEntropyInspector.cs` (commit `6615915ef886c35bdbc49420d4a7a2a1b364c099`) adds a bounded, strict first-part multipart header filename entropy prerequisite, gated on explicitly complete plaintext body input. It does **not** verify upload success, trust the caller, validate the full multipart body, retain content, or emit alerts. `Carthago.Tests/ProtocolIntelligence/MultipartFilenameEntropyInspectorTests.cs` (commit `af439d2d2f8ba1a01dd311f7594d9b480beadc13`) authors three xUnit methods including a theory; **tests NOT executed**. The parser is isolated and has no RuleEngine integration. No local Windows runner, dotnet build, native capture, GitHub Actions, precision floor or holdout changes.
 
 **Carryover:** all ten remain incomplete. Existing R460/R463/R474/R485/R486 source candidates remain unverified; all previous producer-blocked IDs remain in carryover. **Next exact ten:** R504–R513. Ledger publication SHA is the commit containing this section.
+
+
+## Batch 16 — R504–R513 (2026-11-17; source-only)
+
+**Scope:** inspected all ten exact expansion classes at the live branch. All retain generic `EvaluateSpec(context, Spec)` with no demonstrated trusted producer-specific positive predicate. TextIndicators, host, process and path labels are not evidence of a completed unauthorized upload or SSH dynamic tunnel. **Functional detector completions: 0.**
+
+| ID | State | Required trusted producer / blocker |
+| --- | --- | --- |
+| R504 | PRODUCER-BLOCKED | Authenticated GitHub Gist creation audit/API response, confirmed secret-classification event, actor and authorization policy; hostname or URL alone insufficient |
+| R505 | PRODUCER-BLOCKED | Authenticated Discord attachment upload outcome, byte count, stable actor/session, deduplicated burst window and approved use policy |
+| R506 | PRODUCER-BLOCKED | Authenticated Telegram sendDocument API outcome, verified bot/account, file metadata and burst threshold; encrypted traffic alone insufficient |
+| R507 | PRODUCER-BLOCKED | Authenticated MEGA upload completion or signed endpoint transfer event, bytes, actor and approved sync policy |
+| R508 | PRODUCER-BLOCKED | OS-attested rclone process identity plus verified outbound transfer completion, destination classification and backup authorization; user-agent string spoofable |
+| R509 | PRODUCER-BLOCKED | Trusted rsync process/command direction and completed external push, endpoint identity and backup authorization |
+| R510 | PRODUCER-BLOCKED | Authenticated S3-compatible PutObject/multipart completion, verified destination identity, asset inventory and approved bucket policy |
+| R511 | PRODUCER-BLOCKED | Endpoint/database export completion joined by file identity to authenticated HTTP upload outcome and actor/authorization |
+| R512 | PRODUCER-BLOCKED | Verified sensitive-file classification, authenticated mail attachment send/delivery and recipient classification/approved business workflow |
+| R513 | IN-PROGRESS, PRODUCER-BLOCKED | Strict SOCKS5 exchange prerequisite added; needs trusted bidirectional stream reassembly, OS-attested SSH process and dynamic-forward listener mapping, remote endpoint, authorized tunnel policy and RuleEngine wiring |
+
+**R513 source increment:** `Carthago/Services/ProtocolIntelligence/Socks5ConnectExchangeInspector.cs` (commit `6d818afe6e5727c2f490d61999383d4403fb2dae`) strictly parses bounded complete plaintext same-session SOCKS5 no-auth greeting, method selection, CONNECT request and reply, including IPv4/IPv6/domain framing. It returns only server acceptance and address type, not SSH tunnel attribution or unauthorized behavior. `Carthago.Tests/ProtocolIntelligence/Socks5ConnectExchangeInspectorTests.cs` (commit `9c73fb954cba424743136de0e47f7c5b1f0b6937`) authors four xUnit methods for valid/rejected, partial, malformed and untrusted exchanges. **Tests authored, NOT executed.** No local Windows runner, build, native capture, CI, Actions or invasive tests. No engine alerts enabled, precision floors or holdout modified. All ten IDs retained in carryover. Earlier source candidates remain unverified.
+
+**Next exact cursor:** R514–R523. This batch is a parser prerequisite, not ten implemented detectors. Ledger publication SHA is the commit containing this section.
