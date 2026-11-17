@@ -46,5 +46,27 @@ namespace Carthago.Tests.ProtocolIntelligence
             Assert.False(MqttAnonymousConnectInspector.TryInspect(Connect, new byte[] { 0x20, 2, 1, 0 }, true, out _));
             Assert.False(MqttAnonymousConnectInspector.TryInspect(Connect, new byte[] { 0x20, 2, 0, 6 }, true, out _));
         }
+        [Fact]
+        public void SessionPresentMustAgreeWithCleanSessionAndSuccessfulConnack()
+        {
+            Assert.False(MqttAnonymousConnectInspector.TryInspect(Connect, new byte[] { 0x20, 2, 1, 0 }, true, out _));
+            Assert.False(MqttAnonymousConnectInspector.TryInspect(Connect, new byte[] { 0x20, 2, 1, 5 }, true, out _));
+            Assert.False(MqttAnonymousConnectInspector.TryInspect(Connect, new byte[] { 0x20, 2, 2, 0 }, true, out _));
+            var persistent = (byte[])Connect.Clone();
+            persistent[9] = 0; // clean-session=false; existing session may be resumed
+            Assert.True(MqttAnonymousConnectInspector.TryInspect(persistent, new byte[] { 0x20, 2, 1, 0 }, true, out var result));
+            Assert.True(result.BrokerAccepted);
+        }
+
+        [Fact]
+        public void InvalidUtf8OrNulClientIdCannotBeAccepted()
+        {
+            var invalidUtf8 = (byte[])Connect.Clone();
+            invalidUtf8[14] = 0xff;
+            Assert.False(MqttAnonymousConnectInspector.TryInspect(invalidUtf8, Accepted, true, out _));
+            var nul = (byte[])Connect.Clone();
+            nul[14] = 0;
+            Assert.False(MqttAnonymousConnectInspector.TryInspect(nul, Accepted, true, out _));
+        }
     }
 }
