@@ -3440,3 +3440,13 @@ Pinned parent `59dde87f71c5aba008d90fb74bb6e3b24dfd3285`, actual parent tree `66
 ## 2026-11-17 — GA-09cy original TRX intake integrity alignment
 
 Source parent `26c9794b58a9877aa73a9ea6c86678db660a4bc5`, actual tree `3d2a498bef21d23e4cee8ddcc5d4420915d4e2c3`. Exact-ID scope: candidate-only original TRX inspector, no registry or rule predicate changes. Python intake now rejects missing/duplicate testId values, contradictory optional TRX total/passed/failed counters, terminal Passed with non-passing results, and terminal Failed without failure outcomes. Four additional malformed synthetic fixtures authored. Expected: `python scripts/inspect-original-trx-rule-cases.py --self-test` passes; original TRX reports remain unreviewed/not-admitted with null source SHA. Executed: none; Windows original TRX and independent capture pending. Next: run self-test and inspect preserved original TRX; reconcile reviewed exact-ID polarity/provenance against the machine-readable inventory. R102/R118/R163 confidence floors and frozen holdouts unchanged.
+
+
+### 2026-11-17 — Enrichment provider snapshot accounting guard (source candidate, not executed)
+
+- Branch: `feature/carthago-reliability-hardening`. Production commit `5da202e1a3f8bcfb9c4c0d5e0aa5fb23ba8e82cd`; regression commit `c755199c4b9571e342a8c3a3e0ec3d01f640ff7b`.
+- Changed `Carthago/Services/EnrichmentHealthPresentation.cs` to warn on negative outcome, cache-hit or elapsed-latency counters for the three supported providers. Raw counts remain unchanged; this is a presentation-integrity guard, not evidence of provider correctness or a detection change.
+- Added `Invalid_Provider_Counters_Are_Flagged_Without_Hiding_Raw_Evidence` with negative success, cache-hit and elapsed-duration cases, plus a valid empty baseline.
+- **Execution:** NOT RUN in this environment; Windows owner build, focused xUnit, live dashboard review and capture-connected reconciliation remain pending. No new GREEN claim.
+- Owner command: `dotnet test .\\Carthago.Tests\\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~EnrichmentHealthPresentationTests"`.
+- Next gate: prioritize live process/DNS/TLS/interface provenance, worker lifecycle reconciliation and bounded runtime/performance acceptance.
