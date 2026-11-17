@@ -22,6 +22,14 @@ namespace Carthago.Services.ProtocolIntelligence
                 var fullPath = Path.GetFullPath(journalDirectory);
                 if (!Directory.Exists(fullPath))
                     return false;
+                // Reject a caller-supplied journal directory that redirects through a
+                // junction or symbolic link. A capacity reading for a redirected path
+                // cannot establish which volume owns the durable journal.
+                for (var directory = new DirectoryInfo(fullPath); directory != null; directory = directory.Parent)
+                {
+                    if ((directory.Attributes & FileAttributes.ReparsePoint) != 0)
+                        return false;
+                }
                 var root = Path.GetPathRoot(fullPath);
                 if (string.IsNullOrEmpty(root))
                     return false;
