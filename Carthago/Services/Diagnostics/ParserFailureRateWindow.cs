@@ -32,7 +32,11 @@ namespace Carthago.Services.Diagnostics
                 !ValidWindow(currentStart, currentEnd) ||
                 !string.Equals(baselineStart.ParserId, currentStart.ParserId, StringComparison.Ordinal) ||
                 !string.Equals(baselineStart.EpochId, currentStart.EpochId, StringComparison.Ordinal) ||
-                baselineEnd.TimestampUtc > currentStart.TimestampUtc)
+                baselineEnd.TimestampUtc > currentStart.TimestampUtc ||
+                currentStart.AttemptedRecords < baselineEnd.AttemptedRecords ||
+                currentStart.FailedRecords < baselineEnd.FailedRecords ||
+                currentStart.FailedRecords - baselineEnd.FailedRecords >
+                    currentStart.AttemptedRecords - baselineEnd.AttemptedRecords)
                 return false;
 
             long baseAttempts = baselineEnd.AttemptedRecords - baselineStart.AttemptedRecords;
