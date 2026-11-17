@@ -151,3 +151,22 @@ Each hourly run:
 | R333 | IN-PROGRESS, PRODUCER-BLOCKED | Strict complete SMB2 SESSION_SETUP server-declared null response inspector added; still needs authenticated server identity, correlated IPC$ tree connect and enumeration outcome, stream reassembly and engine integration |
 
 **Actual source increment:** `Carthago/Services/ProtocolIntelligence/Smb2NullSessionResponseInspector.cs` and `Carthago.Tests/ProtocolIntelligence/Smb2NullSessionResponseInspectorTests.cs` (five regression methods **AUTHORED, UNEXECUTED**). Complete SMB2 null session response parsing is not proof of enumeration, server authenticity or a detector-positive; R333 remains NoMatch. No Windows runner, native capture, GitHub Actions or CI changes. **Carryover:** all 60 inspected IDs unresolved. **Next cursor:** R334–R343. Commit SHA: inspect atomic git commit containing this ledger.
+
+
+## Batch 07 — R334–R343 (2026-11-17)
+**Inspected source HEAD:** dc03381141a6d223c7bf9e5f3dc4bf48ebaf983c. All ten EvaluatePrecision methods are unconditional NoMatch; none is functionally repaired. Source increment for R339: strict complete-frame SMB2 NEGOTIATE response inspector, reports server-advertised signing enabled/required flags without inferring unsigned session, authenticated server, or sensitive host. Regression source covers positive wire flags and negative malformed/partial/contradictory evidence. **Tests authored, not executed.** Inspector not yet wired into capture or RuleEngine. No Windows runner or Actions used.
+
+| ID | Status | Missing trusted integration |
+| --- | --- | --- |
+| R334 | PRODUCER-BLOCKED | SMB named-pipe opens, per-session server outcomes and bounded distinct operations |
+| R335 | PRODUCER-BLOCKED | authenticated SAMR/LSARPC interface, operation and returned enumeration result |
+| R336 | PRODUCER-BLOCKED | authenticated DRSUAPI request, DC identity, principal and replication outcome |
+| R337 | PRODUCER-BLOCKED | KDC-issued S4U delegation result and approved service-delegation policy |
+| R338 | PRODUCER-BLOCKED | trusted KDC ticket enctype plus supported encryption policy and downgrade baseline |
+| R339 | IN-PROGRESS, PRODUCER-BLOCKED | verified SMB2 server identity, negotiated session signing, sensitive-host classification and asset policy |
+| R340 | PRODUCER-BLOCKED | trusted winreg RPC bind, operation result, principal and host approval |
+| R341 | PRODUCER-BLOCKED | authenticated remote Task Scheduler create result and principal |
+| R342 | PRODUCER-BLOCKED | verified WAC gateway, external ingress and complete request/response |
+| R343 | PRODUCER-BLOCKED | trusted WinRM command/process audit, authenticated actor and encoded-command execution outcome |
+
+**Changed files:** `Carthago/Services/ProtocolIntelligence/Smb2SigningNegotiationInspector.cs`, `Carthago.Tests/ProtocolIntelligence/Smb2SigningNegotiationInspectorTests.cs`, this ledger. **Functional detector repairs: 0.** Carryover: all 70 inspected IDs unresolved. **Next cursor:** R344–R350, R431–R433. Commit SHA: inspect atomic commit containing this ledger.
