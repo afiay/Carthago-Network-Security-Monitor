@@ -6390,3 +6390,14 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Ownership/static review:** Only `Carthago/Views/MainWindow.xaml` and this ledger. Existing source/destination bindings, labels, automation relationships, selection, severity, local risk estimates and actual data ownership are unchanged. No Engine/Models/Services, rules, capture, telemetry, security/privacy, ScottPlot 10/120, Events 80/500, visual-only CLI, Cisco/WebView2 or independent work changed.
 
 **Static risks/unexecuted acceptance:** long IPv6 addresses and unbroken hostnames may still ellipsize; verify two-line clipping, fact-card row alignment, tooltip, keyboard/screen reader, widths 1920/1440/1100/1099/1024/1023/640 and DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. **Next UI-217:** select next substantive Dashboard or Incidents composition slice from live ledger.
+
+
+## GA UI-217 — Full-width network identities in Dashboard investigation
+
+**2026-11-17 · SOURCE CANDIDATE — UNVERIFIED.** Approved Library image `libfile_b0a34361560c8191b641e432b3e6b15c` visually inspected. Source baseline `7a3f2d61a95fa63957e60c2b8c06d732a9466862`, actual commit tree `b0e92ae61542b3fa0a09a17199850e91d3737ef0`; UI-216 last completed. Reference mapping: investigation prioritizes source and destination network identities above compact secondary attributes; reference DEMO DATA is not real telemetry.
+
+**Visible before → after:** six investigation facts previously shared a two-column UniformGrid, restricting source and destination identities to half-width cells. A four-row Grid gives source and destination their own full-width rows, while protocol/category and detected/related incident remain paired in two columns. Wide >=1440 keeps compact secondary facts; Standard 1100–1439 and Compact 1024–1099 provide full available width to endpoint identities; below 1024 existing scrolling and two-line text caps bound growth. All original labels, names, bindings, tooltips, selection, risk and evidence are preserved.
+
+**Ownership/static review:** Only `Carthago/Views/MainWindow.xaml` and this ledger. No Engine/Models/Services, rules, capture, telemetry, privacy/security, ScottPlot 10/120, Events 80/500, visual-only CLI, Cisco/WebView2 or independent work changed. Reconciled a disjoint detection-quality ledger commit before publication.
+
+**Static risks/unexecuted acceptance:** increased facts height; verify long IPv6 and hostname wrapping, secondary row alignment, evidence scrolling, keyboard/screen reader, widths 1920/1440/1100/1099/1024/1023/640, DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. **Next UI-218:** next substantive Dashboard or Incidents visible slice from live ledger.
