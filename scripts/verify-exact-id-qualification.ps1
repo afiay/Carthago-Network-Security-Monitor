@@ -33,8 +33,10 @@ function Get-ReviewedExecutionMap($manifest, $registryMap) {
             Assert-Qualification ($a.file -cmatch '^[A-Za-z0-9_-][A-Za-z0-9_.-]*\.trx$' -and $a.file -notmatch '\.\.') 'Invalid artifact filename'
             Assert-Qualification ($a.sha256 -cmatch '^[a-f0-9]{64}$') 'Invalid artifact digest'
             Assert-Qualification ($a.checkoutSha -ceq $entry.executedSha -and -not [string]::IsNullOrWhiteSpace($a.checkoutReview)) 'Missing or mismatched checkout review'
-            Assert-Qualification ($a.testNames -is [array] -and $a.testNames.Count -gt 0) 'Missing exact test selection'
+            Assert-Qualification ($a.testNames -is [array] -and $a.testNames.Count -gt 0 -and $a.testNames.Count -le 1000) 'Invalid exact test selection size'
             Assert-Qualification (@($a.testNames | Where-Object { $_ -isnot [string] -or [string]::IsNullOrWhiteSpace($_) }).Count -eq 0) 'Invalid exact test name'
+            # Bound manifest selections before opening any TRX.
+            Assert-Qualification (@($a.testNames | Where-Object { $_.Length -gt 4096 -or $_ -match '[\x00-\x1f\x7f]' }).Count -eq 0) 'Oversized or control-bearing exact test name'
             Assert-Qualification (@($a.testNames | Select-Object -Unique).Count -eq $a.testNames.Count) 'Duplicate exact test selection'
             # Wildcards are not exact TRX test identities; reject them before artifact admission.
             Assert-Qualification (@($a.testNames | Where-Object { $_ -match '[*?]' }).Count -eq 0) 'Wildcard exact test selection'
@@ -220,6 +222,12 @@ if ($SelfTest) {
         $fixtureEntry.artifact.testNames = @('Exact.*')
         Expect-ManifestRejection $fixtureManifest
         $fixtureEntry.artifact.testNames = @('Exact.Te?t')
+        Expect-ManifestRejection $fixtureManifest
+        $fixtureEntry.artifact.testNames = @(1..1001 | ForEach-Object { 'Exact.Test.' + $_ })
+        Expect-ManifestRejection $fixtureManifest
+        $fixtureEntry.artifact.testNames = @('X' * 4097)
+        Expect-ManifestRejection $fixtureManifest
+        $fixtureEntry.artifact.testNames = @("Exact.`nTest")
         Expect-ManifestRejection $fixtureManifest
         $fixtureEntry.artifact.testNames = @('Exact.Test')
         Remove-Item -LiteralPath $fixturePath
