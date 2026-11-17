@@ -36,6 +36,31 @@ namespace Carthago.Services
             => ProtocolIntelligence.JournalVolumeCapacityProbe.TryRead(
                 _options.DirectoryPath, out availableBytes, out totalBytes);
 
+        /// <summary>
+        /// Evaluate configured low-space policy against this journal's own OS-backed
+        /// directory. Failure to sample is unknown, never a low-space finding.
+        /// This is a synchronous health prerequisite, not an R531 alert.
+        /// </summary>
+        public bool TryEvaluateConfiguredVolumeCapacity(
+            long minimumFreeBytes, double minimumFreePercent,
+            out bool belowBothLimits, out long availableBytes, out long totalBytes)
+        {
+            belowBothLimits = false;
+            availableBytes = 0;
+            totalBytes = 0;
+            if (minimumFreeBytes <= 0 || minimumFreePercent <= 0
+                || minimumFreePercent > 100 || double.IsNaN(minimumFreePercent)
+                || double.IsInfinity(minimumFreePercent))
+                return false;
+
+            if (!TryReadConfiguredVolumeCapacity(out availableBytes, out totalBytes))
+                return false;
+
+            belowBothLimits = ProtocolIntelligence.JournalVolumeCapacityProbe.IsBelowBothConfiguredLimits(
+                availableBytes, totalBytes, minimumFreeBytes, minimumFreePercent);
+            return true;
+        }
+
         public string GetJournalPath(DateTime timestampUtc)
         {
             var utc = timestampUtc.Kind == DateTimeKind.Utc ? timestampUtc : timestampUtc.ToUniversalTime();
