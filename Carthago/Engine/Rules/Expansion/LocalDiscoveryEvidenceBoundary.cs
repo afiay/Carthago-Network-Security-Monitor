@@ -29,8 +29,8 @@ namespace Carthago.Engine.Rules.Expansion
                     "UDP/67-68 and DHCP labels do not prove distinct client identifiers, server lease exhaustion, or a source-attributed request burst."),
                 "R462" => ("DHCP_OFFER_SERVER_AUTHORITY_UNAVAILABLE",
                     "A DHCP OFFER label does not prove a decoded server offer, trusted server identity, or a violation of approved DHCP server inventory."),
-                "R463" => ("ARP_GRATUITOUS_RATE_BASELINE_UNAVAILABLE",
-                    "ARP labels and repeated packets do not establish decoded gratuitous ARP announcements, unique observations, or a calibrated storm baseline."),
+                // R463 bypasses generic signal scoring: capture-decoded, Ethernet-source-consistent
+                // gratuitous ARP frames now enter a bounded Shadow-only burst detector.
                 "R464" => ("ARP_IP_MAC_BINDING_TRANSITIONS_UNAVAILABLE",
                     "ARP labels and MAC fields do not establish time-ordered conflicting IP-to-MAC bindings or exclude approved failover and mobility."),
                 "R465" => ("IPV6_ROUTER_ADVERTISEMENT_PREFIX_HISTORY_UNAVAILABLE",
