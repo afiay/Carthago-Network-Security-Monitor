@@ -57,6 +57,25 @@ public sealed class R118AdvancedAccuracyBatchTests
         Assert.True((await _rule.EvaluateAsync(NetworkBatch116120Context.Context(record))).Matched);
     }
 
+    [Theory]
+    [InlineData("HTTP/1.1 401 Unauthorized")]
+    [InlineData("GET /admin HTTP/1.1")]
+    [InlineData("X Trace: value")]
+    [InlineData("X-Trace")]
+    public async Task Non_Field_Header_Lines_Cannot_Qualify_Default_Credentials(string line)
+    {
+        var record = NetworkBatch116120Context.Basic(NetworkBatch116120Context.Source());
+        record.HttpRequestHeaders += "\r\n" + line;
+        Assert.False((await _rule.EvaluateAsync(NetworkBatch116120Context.Context(record))).Matched);
+    }
+
+    [Fact] public async Task Valid_Extension_Header_Preserves_Default_Credential_Attempt()
+    {
+        var record = NetworkBatch116120Context.Basic(NetworkBatch116120Context.Source());
+        record.HttpRequestHeaders += "\r\nX-Trace_2: benign";
+        Assert.True((await _rule.EvaluateAsync(NetworkBatch116120Context.Context(record))).Matched);
+    }
+
     [Fact] public async Task Duplicate_Authorization_Is_Ambiguous_Not_A_Login()
     {
         var record = NetworkBatch116120Context.Basic(NetworkBatch116120Context.Source());

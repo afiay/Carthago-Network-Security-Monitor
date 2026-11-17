@@ -145,9 +145,18 @@ namespace Carthago.Engine.Rules
                     (i + 1 == record.HttpRequestHeaders.Length || record.HttpRequestHeaders[i + 1] != '\n'))
                     return false;
 
-            // Reject obsolete folded header lines: they can change field semantics.
+            // A replayed header block containing a response status line, request
+            // line, or malformed field cannot be treated as parsed request evidence.
+            // Fail closed before interpreting the Authorization flag or wire value.
             if (record.HttpRequestHeaders.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries)
-                .Any(static line => line.StartsWith(' ') || line.StartsWith('\t')))
+                .Any(static line =>
+                {
+                    var colon = line.IndexOf(':');
+                    return colon <= 0 || line[..colon].Any(static c =>
+                        !((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')
+                          || (c >= '0' && c <= '9')
+                          || "!#$%&'*+-.^_`|~".Contains(c)));
+                }))
                 return false;
 
             var authorizationHeaderCount = 0;
