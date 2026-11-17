@@ -34,6 +34,8 @@ function Get-ReviewedExecutionMap($manifest, $registryMap) {
             Assert-Qualification ($a.sha256 -cmatch '^[a-f0-9]{64}$') 'Invalid artifact digest'
             Assert-Qualification ($a.checkoutSha -ceq $entry.executedSha -and -not [string]::IsNullOrWhiteSpace($a.checkoutReview)) 'Missing or mismatched checkout review'
             Assert-Qualification ($a.testNames -is [array] -and $a.testNames.Count -gt 0) 'Missing exact test selection'
+            Assert-Qualification (@($a.testNames | Where-Object { $_ -isnot [string] -or [string]::IsNullOrWhiteSpace($_) }).Count -eq 0) 'Invalid exact test name'
+            Assert-Qualification (@($a.testNames | Select-Object -Unique).Count -eq $a.testNames.Count) 'Duplicate exact test selection'
             Assert-Qualification (-not [string]::IsNullOrWhiteSpace($ArtifactDirectory)) 'Artifact directory required'
             $artifactPath = Join-Path $ArtifactDirectory $a.file
             $expected = if ($entry.outcome -ceq 'pass') { 'Passed' } else { 'Failed' }
@@ -203,6 +205,10 @@ if ($SelfTest) {
         $fixtureEntry.artifact.sha256 = '0' * 64
         Expect-ManifestRejection $fixtureManifest
         $fixtureEntry.artifact.sha256 = (Get-FileHash -LiteralPath $fixturePath -Algorithm SHA256).Hash.ToLowerInvariant()
+        $fixtureEntry.artifact.testNames = @('Exact.Test','Exact.Test')
+        Expect-ManifestRejection $fixtureManifest
+        $fixtureEntry.artifact.testNames = @('Exact.Test','')
+        Expect-ManifestRejection $fixtureManifest
         $fixtureEntry.artifact.testNames = @('exact.test')
         Expect-ManifestRejection $fixtureManifest
         $fixtureEntry.artifact.testNames = @('Exact.Test')
