@@ -3400,3 +3400,10 @@ Pinned source parent `b3fca2ea241817e1e5399c400b4c83c6c9f6235f` (tree `6924ba2b7
 ## 2026-11-17 — GA-09cu terminal TRX outcome consistency (authored, unexecuted)
 
 Pinned source parent 024c93f747432f70e072ca019f87ea58f54dc211, actual tree 84603a0bd52656673bd7bd7a71244950960756bd. Direct TRX evidence verifier now rejects terminal Passed when any UnitTestResult failed and terminal Failed when no UnitTestResult failed; Completed remains neutral for mixed runs. Added two negative fixtures and one positive mixed-run control. Expected: all three new checks pass with previous 16 checks; executed: none (Windows PowerShell unavailable). Evidence remains authored-unexecuted, no TRX admission or exact-ID promotion. Next Windows: `powershell -NoProfile -File .\scripts\verify-qualification-trx.ps1 -SelfTest`; then `powershell -NoProfile -File .\scripts\verify-exact-id-qualification.ps1 -SelfTest`. Next: original TRX exact-ID/polarity reconciliation, R118/R163 trusted producers, R102 independent DNS baseline, GA-08 Windows result.
+
+
+### 2026-11-17 — Enrichment evidence coverage accounting guard
+
+- Production `f98fdc24f5814b3c7fafa89fab4681c6d8e191b1`: MonitoringHealthPage coverage summary now warns when a coverage counter exceeds published records, or a process attribution count exceeds process-eligible records. This flags impossible aggregate snapshots without silently normalizing counters or treating evidence availability as detection accuracy.
+- Regression `0c9fda0dc5821efd9263e2de3fd3678caa6a3cf1`: authored valid, impossible-publication, impossible-process, and empty-snapshot assertions in `EnrichmentHealthPresentationTests`.
+- **Executed:** none in this connector-only run. **Pending:** Windows `dotnet test .\\Carthago.Tests\\Carthago.Tests.csproj -c Release --filter FullyQualifiedName~EnrichmentHealthPresentationTests`, capture-connected counter reconciliation, GUI review, accuracy/performance acceptance. This is a diagnostic guard, not a verified runtime accounting defect or detector qualification.
