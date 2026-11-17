@@ -6401,3 +6401,14 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Ownership/static review:** Only `Carthago/Views/MainWindow.xaml` and this ledger. No Engine/Models/Services, rules, capture, telemetry, privacy/security, ScottPlot 10/120, Events 80/500, visual-only CLI, Cisco/WebView2 or independent work changed. Reconciled a disjoint detection-quality ledger commit before publication.
 
 **Static risks/unexecuted acceptance:** increased facts height; verify long IPv6 and hostname wrapping, secondary row alignment, evidence scrolling, keyboard/screen reader, widths 1920/1440/1100/1099/1024/1023/640, DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. **Next UI-218:** next substantive Dashboard or Incidents visible slice from live ledger.
+
+
+## GA UI-218 — Structured reasons in Dashboard investigation
+
+**2026-11-17 · SOURCE CANDIDATE — UNVERIFIED.** Approved Library image `libfile_b0a34361560c8191b641e432b3e6b15c` visually inspected. Source baseline `fa7973058585f68799de6a1ad1579b30007574c0`, actual commit tree `4e70a15e5615bed322200074a1d5d6ae7006f6cb`; UI-217 last completed. Reference mapping: the screenshot's investigation evidence chain uses distinct cyan markers and legible stacked explanatory rows; screenshot DEMO DATA is not operational telemetry.
+
+**Visible before → after:** the selected finding's Reasons panel previously rendered each local triage explanation as undifferentiated text with 4px bottom spacing. Each existing bound reason now occupies a two-column Grid with a restrained 3px cyan vertical accent, 10px text inset, 18px line height and 8px row spacing. This creates scannable separation between reasons without implying an independently verified evidence chain. Wide >=1440 retains the right-panel rhythm; Standard 1100–1439 and Compact 1024–1099 wrap explanation text inside the available star column; below 1024 the text remains content-driven and scrollable, without horizontal overflow from the marker.
+
+**Ownership/static review:** Only `Carthago/Views/MainWindow.xaml` and this existing ledger. The original ItemsControl, item binding, accessible label and local explanatory provenance remain unchanged. No producer, event handler, Engine/Models/Services, rules, capture, telemetry, security/privacy, ScottPlot 10/120, Events 80/500, visual-only CLI, Cisco/WebView2 or independent work changed.
+
+**Static risks/unexecuted acceptance:** additional reason spacing may increase panel scroll height; cyan markers could resemble evidence chronology unless Reasons heading and local triage help text are retained. Verify long and empty reason text, keyboard/screen-reader reading, scroll and widths 1920/1440/1100/1099/1024/1023/640 at DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. **Next UI-219:** select next substantive Dashboard or Incidents visible slice from live ledger.

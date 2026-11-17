@@ -1120,7 +1120,16 @@
                                               AutomationProperties.HelpText="Local triage explanations for the selected incident or anomaly signal; not independently verified evidence.">
                                   <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                      <TextBlock Text="{Binding}" Foreground="{StaticResource TextSubtleBrush}" TextWrapping="Wrap" Margin="0,0,0,4"/>
+                                      <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                          <ColumnDefinition Width="3"/>
+                                          <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Border Grid.Column="0" Background="{StaticResource AccentBrush}" CornerRadius="1" Margin="0,2,0,2"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding}" Foreground="{StaticResource TextSubtleBrush}"
+                                                   TextWrapping="Wrap" Margin="10,0,0,0" LineHeight="18"
+                                                   ToolTip="{Binding}"/>
+                                      </Grid>
                                     </DataTemplate>
                                   </ItemsControl.ItemTemplate>
                                 </ItemsControl>
