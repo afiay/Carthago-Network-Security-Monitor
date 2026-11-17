@@ -14,6 +14,7 @@ function Get-ReviewedExecutionMap($manifest, $registryMap) {
     # Fail closed on absent or unbounded reviewed manifests before iterating entries.
     Assert-Qualification ($null -ne $manifest.PSObject.Properties['records'] -and $manifest.records -is [array] -and $manifest.records.Count -le 10000) 'Invalid reviewed execution record collection'
     $entries = @{}
+    $claimedArtifactTests = @{}
     foreach ($entry in $manifest.records) {
         foreach ($field in @('ruleId','executedSha','outcome','testReference','scope','reviewReference')) {
             Assert-Qualification ($null -ne $entry.PSObject.Properties[$field] -and -not [string]::IsNullOrWhiteSpace([string]$entry.$field)) "Missing execution field: $field"
@@ -43,6 +44,13 @@ function Get-ReviewedExecutionMap($manifest, $registryMap) {
             # Wildcards are not exact TRX test identities; reject them before artifact admission.
             Assert-Qualification (@($a.testNames | Where-Object { $_ -match '[*?]' }).Count -eq 0) 'Wildcard exact test selection'
             Assert-Qualification (-not [string]::IsNullOrWhiteSpace($ArtifactDirectory)) 'Artifact directory required'
+            # A single TRX test result cannot substantiate two distinct rule/SHA claims.
+            # Key by artifact digest and exact test identity; do not trust filenames alone.
+            foreach ($testName in $a.testNames) {
+                $claimKey = "$($a.sha256):$testName"
+                Assert-Qualification (-not $claimedArtifactTests.ContainsKey($claimKey)) 'TRX test identity claimed by multiple execution records'
+                $claimedArtifactTests[$claimKey] = $entry.ruleId
+            }
             $artifactPath = Join-Path $ArtifactDirectory $a.file
             $expected = if ($entry.outcome -ceq 'pass') { 'Passed' } else { 'Failed' }
             $verified = & (Join-Path $PSScriptRoot 'verify-qualification-trx.ps1') -Artifact $artifactPath -ExpectedSha256 $a.sha256 -TestName $a.testNames -Outcome $expected | ConvertFrom-Json
@@ -223,6 +231,15 @@ if ($SelfTest) {
         $fixtureEntry.artifact.sha256 = '0' * 64
         Expect-ManifestRejection $fixtureManifest
         $fixtureEntry.artifact.sha256 = (Get-FileHash -LiteralPath $fixturePath -Algorithm SHA256).Hash.ToLowerInvariant()
+        # The same exact test in one artifact must not qualify another rule.
+        $duplicateClaim = Copy-Manifest
+        $second = @($duplicateClaim.records | Where-Object { $_.ruleId -cne $fixtureEntry.ruleId -and $_.outcome -ceq 'pass' })[0]
+        Assert-Qualification ($null -ne $second) 'Missing second reviewed-pass fixture'
+        $second | Add-Member -Force -NotePropertyName artifact -NotePropertyValue ([pscustomobject]@{
+            file='fixture.trx';sha256=$fixtureEntry.artifact.sha256;testNames=@('Exact.Test')
+            checkoutSha=$second.executedSha;checkoutReview='Synthetic duplicate-claim fixture'
+        })
+        Expect-ManifestRejection $duplicateClaim
         $fixtureEntry.artifact.testNames = @('Exact.Test','Exact.Test')
         Expect-ManifestRejection $fixtureManifest
         $fixtureEntry.artifact.testNames = @('Exact.Test','')
