@@ -115,6 +115,33 @@ def reconcile_reviewed_cases(report: dict, review: dict) -> dict:
             "reviewedCases": joined, "unreviewedCount": len(original)-len(joined),
             "sourceShaAttested": False, "evidenceAdmitted": False}
 
+def reconcile_inventory(joined: dict, inventory: dict) -> dict:
+    """Cross-check reviewed cases against the bounded exact-ID audit, not the registry."""
+    if not isinstance(inventory, dict) or inventory.get("schemaVersion") != 1:
+        raise ValueError("Unsupported exact-ID inventory schema")
+    records = inventory.get("records")
+    if not isinstance(records, list) or not 0 < len(records) <= 1000:
+        raise ValueError("Invalid exact-ID inventory records")
+    known = {}
+    for record in records:
+        if not isinstance(record, dict):
+            raise ValueError("Invalid exact-ID inventory entry")
+        rid, cls = record.get("ruleId"), record.get("registeredClass")
+        if not isinstance(rid, str) or not re.fullmatch(r"R[0-9]{3,4}", rid):
+            raise ValueError("Invalid inventory rule ID")
+        if not isinstance(cls, str) or not cls.startswith(rid + "_"):
+            raise ValueError("Invalid registered class in inventory")
+        if rid in known:
+            raise ValueError("Duplicate exact-ID inventory entry")
+        known[rid] = cls
+    for case in joined["reviewedCases"]:
+        if case["exactRuleId"] not in known:
+            raise ValueError("Reviewed TRX rule not present in exact-ID inventory")
+    return {"inventorySourceSha": inventory.get("sourceSha"),
+            "inventoryRecordCount": len(known),
+            "matchedReviewedCases": len(joined["reviewedCases"]),
+            "evidenceAdmitted": False, "independentValidation": "missing"}
+
 def self_test() -> None:
     import tempfile
     xml = ('<TestRun xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">'
@@ -142,6 +169,23 @@ def self_test() -> None:
         joined = reconcile_reviewed_cases(r, review)
         assert len(joined["reviewedCases"]) == 1 and joined["unreviewedCount"] == 1
         assert not joined["evidenceAdmitted"]
+        inventory = {"schemaVersion": 1, "sourceSha": "a" * 40,
+                     "records": [{"ruleId": "R102", "registeredClass": "R102_TestRule"}]}
+        matched = reconcile_inventory(joined, inventory)
+        assert matched["matchedReviewedCases"] == 1 and not matched["evidenceAdmitted"]
+        for bad_inventory in (
+            {**inventory, "records": inventory["records"] * 2},
+            {**inventory, "records": []},
+            {**inventory, "records": [{"ruleId": "R163", "registeredClass": "R163_TestRule"}]},
+            {**inventory, "records": [{"ruleId": "R102", "registeredClass": "R163_TestRule"}]},
+            {**inventory, "schemaVersion": 2},
+        ):
+            try:
+                reconcile_inventory(joined, bad_inventory)
+            except ValueError:
+                pass
+            else:
+                raise AssertionError("Invalid inventory reconciliation accepted")
         for bad in (
             {**review, "originalTrxSha256": "0" * 64},
             {**review, "cases": review["cases"] * 2},
@@ -180,6 +224,7 @@ def main() -> None:
     parser.add_argument("--output", type=Path)
     parser.add_argument("--self-test", action="store_true")
     parser.add_argument("--reviewed-map", type=Path)
+    parser.add_argument("--inventory", type=Path)
     args = parser.parse_args()
     if args.self_test:
         self_test()
@@ -188,6 +233,8 @@ def main() -> None:
         parser.error("--trx and --output required")
     if args.output.exists() or args.output.resolve() == args.trx.resolve():
         parser.error("Refusing overwrite")
+    if args.inventory is not None and args.reviewed_map is None:
+        parser.error("--inventory requires --reviewed-map")
     report = inspect(args.trx)
     if args.reviewed_map is not None:
         if not args.reviewed_map.is_file() or not 0 < args.reviewed_map.stat().st_size <= MAX_BYTES:
@@ -196,6 +243,14 @@ def main() -> None:
         review = parse_review_json(review_bytes)
         report["reviewedCaseReconciliation"] = reconcile_reviewed_cases(report, review)
         report["reviewedCaseReconciliation"]["reviewedMapSha256"] = hashlib.sha256(review_bytes).hexdigest()
+        if args.inventory is not None:
+            if not args.inventory.is_file() or not 0 < args.inventory.stat().st_size <= MAX_BYTES:
+                raise ValueError("Missing or oversized exact-ID inventory")
+            inventory_bytes = args.inventory.read_bytes()
+            inventory = parse_review_json(inventory_bytes)
+            report["exactIdInventoryReconciliation"] = reconcile_inventory(
+                report["reviewedCaseReconciliation"], inventory)
+            report["exactIdInventoryReconciliation"]["inventorySha256"] = hashlib.sha256(inventory_bytes).hexdigest()
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with args.output.open("x", encoding="utf-8") as f:
         json.dump(report, f, indent=2)
