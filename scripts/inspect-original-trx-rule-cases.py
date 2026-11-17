@@ -67,6 +67,42 @@ def inspect(path: Path) -> dict:
             "warning": "Rule IDs parsed from names are hints, not detector polarity or execution-source proof.",
             "results": rows}
 
+
+def reconcile_reviewed_cases(report: dict, review: dict) -> dict:
+    """Join exact reviewed declarations; never attest independent qualification."""
+    if not isinstance(review, dict) or review.get("schemaVersion") != 1:
+        raise ValueError("Unsupported review schema")
+    if review.get("originalTrxSha256") != report["originalTrxSha256"]:
+        raise ValueError("Original TRX digest mismatch")
+    cases = review.get("cases")
+    if not isinstance(cases, list) or len(cases) > MAX_RESULTS:
+        raise ValueError("Invalid review cases")
+    original = {(x["testId"], x["exactTestName"]): x for x in report["results"]}
+    seen = set()
+    joined = []
+    for case in cases:
+        if not isinstance(case, dict):
+            raise ValueError("Invalid review entry")
+        key = (case.get("testId"), case.get("exactTestName"))
+        if key in seen or key not in original:
+            raise ValueError("Duplicate or unmatched test identity")
+        seen.add(key)
+        rid = case.get("exactRuleId")
+        polarity = case.get("casePolarity")
+        if not isinstance(rid, str) or not re.fullmatch(r"R[0-9]{3,4}", rid):
+            raise ValueError("Invalid exact rule ID")
+        if rid not in original[key]["candidateRuleIds"]:
+            raise ValueError("Rule ID not in test identity candidates")
+        if polarity not in ("positive-detector", "negative-detector"):
+            raise ValueError("Invalid detector polarity")
+        joined.append({"testId": key[0], "exactTestName": key[1],
+                       "exactRuleId": rid, "casePolarity": polarity,
+                       "outcome": original[key]["outcome"],
+                       "qualificationStatus": "not-admitted"})
+    return {"originalTrxSha256": report["originalTrxSha256"],
+            "reviewedCases": joined, "unreviewedCount": len(original)-len(joined),
+            "sourceShaAttested": False, "evidenceAdmitted": False}
+
 def self_test() -> None:
     import tempfile
     xml = ('<TestRun xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">'
@@ -79,6 +115,25 @@ def self_test() -> None:
         r = inspect(p)
         assert r["results"][0]["candidateRuleIds"] == ["R102"]
         assert r["results"][1]["candidateRuleIds"] == []
+        review = {"schemaVersion": 1, "originalTrxSha256": r["originalTrxSha256"],
+                  "cases": [{"testId": "a", "exactTestName": "R102.Positive",
+                             "exactRuleId": "R102", "casePolarity": "positive-detector"}]}
+        joined = reconcile_reviewed_cases(r, review)
+        assert len(joined["reviewedCases"]) == 1 and joined["unreviewedCount"] == 1
+        assert not joined["evidenceAdmitted"]
+        for bad in (
+            {**review, "originalTrxSha256": "0" * 64},
+            {**review, "cases": review["cases"] * 2},
+            {**review, "cases": [{**review["cases"][0], "casePolarity": "unknown"}]},
+            {**review, "cases": [{**review["cases"][0], "exactRuleId": "R163"}]},
+            {**review, "cases": [{**review["cases"][0], "testId": "missing"}]},
+        ):
+            try:
+                reconcile_reviewed_cases(r, bad)
+            except ValueError:
+                pass
+            else:
+                raise AssertionError("Invalid review mapping accepted")
         assert all(x["casePolarity"] == "unreviewed" and x["sourceSha"] is None for x in r["results"])
         for bad in (xml.replace('outcome="Passed"', 'outcome="Unknown"'),
                     '<!DOCTYPE TestRun>' + xml,
@@ -103,6 +158,7 @@ def main() -> None:
     parser.add_argument("--trx", type=Path)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--self-test", action="store_true")
+    parser.add_argument("--reviewed-map", type=Path)
     args = parser.parse_args()
     if args.self_test:
         self_test()
@@ -112,6 +168,11 @@ def main() -> None:
     if args.output.exists() or args.output.resolve() == args.trx.resolve():
         parser.error("Refusing overwrite")
     report = inspect(args.trx)
+    if args.reviewed_map is not None:
+        if not args.reviewed_map.is_file() or not 0 < args.reviewed_map.stat().st_size <= MAX_BYTES:
+            raise ValueError("Missing or oversized review map")
+        review = json.loads(args.reviewed_map.read_text(encoding="utf-8"))
+        report["reviewedCaseReconciliation"] = reconcile_reviewed_cases(report, review)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with args.output.open("x", encoding="utf-8") as f:
         json.dump(report, f, indent=2)
