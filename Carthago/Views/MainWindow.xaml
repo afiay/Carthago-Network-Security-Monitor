@@ -1180,7 +1180,8 @@
                             <Border x:Name="DashboardEvidenceCard3" Grid.Row="3" Grid.Column="0" Style="{StaticResource DetailGridCard}" Background="{StaticResource CardElevatedBg}" BorderBrush="{StaticResource AccentBrush}" BorderThickness="2,1,1,1" CornerRadius="9" Margin="0,0,0,8" Padding="10,8">
                               <StackPanel>
                                 <TextBlock Text="Recommended actions" Style="{StaticResource SocSubHeader}"/>
-                                <WrapPanel>
+                                <!-- GA UI-219: primary investigation action has a dedicated row; secondary navigation wraps below. -->
+                                <StackPanel>
                                   <Button x:Name="DashboardInvestigateHostButton"
                                            Content="Review finding"
                                            MinWidth="126" Height="30"
@@ -1188,7 +1189,8 @@
                                            ToolTip="Opens a correlated incident workspace when available; otherwise opens Anomalies."
                                            AutomationProperties.Name="Review local finding"
                                            AutomationProperties.HelpText="Opens a correlated incident workspace when available; otherwise opens the Anomalies view. Does not isolate a host."
-                                           Click="DashboardInvestigateHost_Click" Margin="0,0,0,6"/>
+                                           Click="DashboardInvestigateHost_Click" HorizontalAlignment="Left" Margin="0,4,0,8"/>
+                                  <WrapPanel>
                                   <!-- GA UI-52: existing linked-incident navigation; explain its conditional availability without changing the handler. -->
                                   <Button x:Name="DashboardViewRelatedIncidentButton"
                                           Content="View Related Incident"
@@ -1207,7 +1209,8 @@
                                           AutomationProperties.Name="Open signal investigation detail"
                                           AutomationProperties.HelpText="Opens a modal detail view of the current local incident or anomaly context. The dialog can copy a summary or offer navigation to incident or anomaly views; opening it does not capture traffic, export raw evidence or remediate."
                                           MinWidth="96" Height="30" Style="{StaticResource SecondaryButton}" Click="DashboardOpenSignalDetail_Click" Margin="0,0,0,6"/>
-                                </WrapPanel>
+                                  </WrapPanel>
+                                </StackPanel>
                               </StackPanel>
                             </Border>
 

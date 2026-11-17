@@ -6412,3 +6412,14 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Ownership/static review:** Only `Carthago/Views/MainWindow.xaml` and this existing ledger. The original ItemsControl, item binding, accessible label and local explanatory provenance remain unchanged. No producer, event handler, Engine/Models/Services, rules, capture, telemetry, security/privacy, ScottPlot 10/120, Events 80/500, visual-only CLI, Cisco/WebView2 or independent work changed.
 
 **Static risks/unexecuted acceptance:** additional reason spacing may increase panel scroll height; cyan markers could resemble evidence chronology unless Reasons heading and local triage help text are retained. Verify long and empty reason text, keyboard/screen-reader reading, scroll and widths 1920/1440/1100/1099/1024/1023/640 at DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. **Next UI-219:** select next substantive Dashboard or Incidents visible slice from live ledger.
+
+
+## GA UI-219 — Primary investigation action separated from secondary navigation
+
+**2026-11-17 · SOURCE CANDIDATE — UNVERIFIED.** Approved Library image `libfile_b0a34361560c8191b641e432b3e6b15c` visually inspected. Source baseline `b75e76b7a7154f2ead3d5d5f12633dfaf1798839`, actual commit tree `a61b2f2e5f8531238739b25cbd47f6835ae09dcb`; UI-218 last recorded. Reference mapping: investigation has a visually prominent primary Investigate action, with secondary evidence/navigation actions grouped separately; screenshot DEMO DATA is not operational telemetry.
+
+**Visible before → after:** all three Dashboard investigation actions previously shared a single WrapPanel, allowing the primary Review finding control to compete horizontally with conditional incident navigation and Full Detail. A vertical StackPanel now gives Review finding its own left-aligned primary row, with a separate wrapping row for the two secondary actions. Wide >=1440 has a clear primary-to-secondary hierarchy; Standard 1100–1439 and Compact 1024–1099 keep the primary action independent of secondary wrapping; below 1024 secondary controls wrap without widening the panel. The primary button has 4px top and 8px bottom separation.
+
+**Ownership/static review:** Only `Carthago/Views/MainWindow.xaml` and this ledger. Existing names, click handlers, tooltips, accessibility labels, disabled-state behavior, incident selection and telemetry bindings are preserved. No Engine/Models/Services, rules, capture, telemetry, privacy/security, ScottPlot 10/120, local Events 80/500, visual-only CLI, Cisco/WebView2 or independent work changed.
+
+**Static risks/unexecuted acceptance:** increased action panel height; confirm navigation, disabled-state tooltips, tab order, keyboard/screen reader, scrolling and widths 1920/1440/1100/1099/1024/1023/640 at DPI 100/125/150/200%. Builds/tests/CI/capture/render 0. **Next UI-220:** select the next substantive Dashboard or Incidents visible composition slice from live ledger.
