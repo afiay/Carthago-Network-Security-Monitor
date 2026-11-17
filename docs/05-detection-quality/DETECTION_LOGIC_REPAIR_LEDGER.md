@@ -412,3 +412,25 @@ Each hourly run:
 **Source increment:** `Carthago/Services/ProtocolIntelligence/HttpConnectRequestInspector.cs` (commit `35139e16318c21a56cdca76b93cddc3b030ea19d`) parses bounded complete HTTP/1.1 CONNECT request framing, strict authority/port, matching single Host header, and rejects ambiguous request bodies/partial plaintext. This is a prerequisite only; caller-provided completeness is NOT authenticated provenance. `Carthago.Tests/ProtocolIntelligence/HttpConnectRequestInspectorTests.cs` (commit `bf46c57ba7ed355af8bf2d7adcb4f47a6a327aec`) authors three xUnit methods including a five-case theory. **Tests authored, not executed.** No engine alerts enabled. Preserve R102/R118/R163 floors and frozen holdout.
 
 **Carryover:** all ten IDs unresolved, along with previous producer-blocked rules and unverified source candidates. **Next exact ten:** R524–R533. Ledger publication SHA is the commit containing this section.
+
+
+## Batch 18 — R524–R533 (2026-11-17; source-only)
+
+**Source inspection:** all ten expansion rule classes inspected on the existing branch. R524–R528 retain generic EvasionTunnel EvaluateSpec descriptions without demonstrated protocol-specific positive evidence. R529–R530 already have guarded health-source candidates; R531–R533 have guarded platform-health candidates, but their source boundary intentionally fails closed. No RuleEngine alert promoted. **Functional detector completions: 0.**
+
+| ID | Status | Exact trusted producer / remaining integration |
+| --- | --- | --- |
+| R524 | PRODUCER-BLOCKED | Verified TLS ClientHello ECH extension from a complete capture, approved ECH provider inventory, independently authenticated provider/endpoint identity and policy decision |
+| R525 | PRODUCER-BLOCKED | QUIC packet-number-space and connection-ID lifecycle with validated NEW_CONNECTION_ID/RETIRE_CONNECTION_ID frames, stable connection identity, migration exclusions and bounded distinct rotation rate |
+| R526 | PRODUCER-BLOCKED | Capture-origin per-flow packet-length/time series, calibrated benign application baseline and independent beacon correlation; equal-sized packets alone are not malicious |
+| R527 | PRODUCER-BLOCKED | Trusted long-lived flow/session continuity and monotonic timestamps, multi-interval recurrence, known scheduler/maintenance baseline and bounded gaps |
+| R528 | PRODUCER-BLOCKED | Decrypted complete HTTP requests with source/session identity, privacy-safe distinct User-Agent counts and benign browser/automation baseline |
+| R529 | SOURCE CANDIDATE, PRODUCER-BLOCKED | Authenticated sensor registry, expected heartbeat schedule, grace/maintenance state and verified missing-heartbeat decision; mutable record text cannot establish absence |
+| R530 | SOURCE CANDIDATE, PRODUCER-BLOCKED | Sensor-clock monotonic/wall-clock measurements, trusted clock reference, multiple samples and drift decision with sleep/NTP recovery exclusions |
+| R531 | IN-PROGRESS, PRODUCER-BLOCKED | New local OS volume-capacity probe prerequisite exists; still requires configured journal path ownership, periodic trusted sampling, policy thresholds, maintenance handling and typed RuleEngine health-event path. The existing textual rule remains fail-closed |
+| R532 | SOURCE CANDIDATE, PRODUCER-BLOCKED | Authenticated per-sink outbox retry outcomes, queue depth, rate denominator, bounded window and maintenance policy; generic network retries insufficient |
+| R533 | SOURCE CANDIDATE, PRODUCER-BLOCKED | Trusted per-rule match counters, comparable exposure-normalized baseline, replay/load-test exclusion, calibrated anomaly decision and engine integration |
+
+**Concrete source increment:** `Carthago/Services/ProtocolIntelligence/JournalVolumeCapacityProbe.cs` (commit `e46cba5b1afc7990e7dc6c112f463715725dc6f4`) reads OS-reported available/total bytes only for an existing local directory and rejects invalid capacity/threshold data; it provides an explicit both-limits predicate. It does not authenticate caller-selected paths, infer journal ownership, or emit a detection. `Carthago.Tests/ProtocolIntelligence/JournalVolumeCapacityProbeTests.cs` (commit `2a3d4626cc26d9b2fba8f9199f1a9b77eb7d91df`) authors three methods including a five-case theory. **Tests authored, NOT executed.** No local Windows runner, build, live capture, GitHub Actions, force push, precision-floor or frozen-holdout changes.
+
+**Carryover:** all ten IDs remain incomplete. Existing previous producer-blocked IDs and source candidates remain unresolved. **Next exact cursor:** R534–R540 (final seven IDs); then revisit the carryover queue. The ledger publication commit is the commit containing this section.
