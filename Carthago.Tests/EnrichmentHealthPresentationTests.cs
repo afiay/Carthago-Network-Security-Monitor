@@ -135,6 +135,28 @@ public sealed class EnrichmentHealthPresentationTests
         Assert.Equal(50L, row.CacheHits);
     }
 
+    [Theory]
+    [InlineData(-1, 0, 0)]
+    [InlineData(0, -1, 0)]
+    [InlineData(0, 0, -1)]
+    public void Invalid_Provider_Counters_Are_Flagged_Without_Hiding_Raw_Evidence(
+        long success, long cacheHits, long elapsed)
+    {
+        var stats = new TrafficCaptureService.StatsSnapshot
+        {
+            EnrichmentProviders = new Dictionary<string, EnrichmentProviderSnapshot>
+            {
+                ["whois"] = new(success, 0, 0, 0, 0, cacheHits, elapsed, 0)
+            }
+        };
+        var display = EnrichmentHealthPresentation.Build(stats);
+        Assert.Contains("WARNING: negative provider outcome, cache-path or latency counters", display.Summary);
+        Assert.Equal(success, display.Providers.Single(p => p.Provider == "whois").Success);
+        Assert.Equal(cacheHits, display.Providers.Single(p => p.Provider == "whois").CacheHits);
+        Assert.DoesNotContain("WARNING: negative provider outcome", EnrichmentHealthPresentation.Build(
+            new TrafficCaptureService.StatsSnapshot()).Summary);
+    }
+
     [Fact]
     public void Cache_Only_Provider_Activity_Does_Not_Create_Outcome_Or_Latency_Samples()
     {
