@@ -191,3 +191,24 @@ Each hourly run:
 **Actual source changes:** `Carthago/Services/ProtocolIntelligence/PostgreSqlStartupInspector.cs` (commit `8de31bc53a4c64695001d7663bc7ea1caffeccb0`) and `Carthago.Tests/ProtocolIntelligence/PostgreSqlStartupInspectorTests.cs` (commit `0038a20a8791e70fb1a0b1d092f9ae85e536d6cc`). Four test methods **AUTHORED, UNEXECUTED**. Startup-frame evidence alone is not proof of login, outcome, authorization or attack. No detector alert enabled. No Windows tests, Actions, CI changes or native capture performed.
 
 **Carryover:** 80 reviewed IDs remain unresolved. **Next cursor:** R434–R443. Continue source/producer integration rather than qualification counting.
+
+## Batch 09 — R434–R443 (2026-11-17)
+
+**Source starting HEAD:** `0dcff503b15dbc5dcd3a193a0e00c467b5168083` (read before this batch's writes; concurrent branch writers may advance HEAD). **Scope:** ten database-exposure rules. No rule promoted to functional detection. Existing rule predicates and precision/Shadow policy unchanged. All ten remain unresolved carryover.
+
+| ID | Status | Required trusted integration |
+| --- | --- | --- |
+| R434 | PRODUCER-BLOCKED | Complete MySQL client handshake plus authenticated server login outcome, verified server identity and external-source classification |
+| R435 | PRODUCER-BLOCKED | TDS login exchange and authenticated SQL Server login audit outcome, server identity and approved DBA context |
+| R436 | PRODUCER-BLOCKED | Complete MongoDB hello/command response, verified service and external exposure inventory; port/banner alone insufficient |
+| R437 | PRODUCER-BLOCKED | Authenticated Redis command audit, CONFIG SET accepted outcome, verified server and approved-admin policy; do not weaken existing Redis precision tests |
+| R438 | PRODUCER-BLOCKED | Redis REPLICAOF/SLAVEOF accepted server outcome, approved replication topology and trusted audit |
+| R439 | IN-PROGRESS, PRODUCER-BLOCKED | Bounded memcached ASCII STATS request/response inspector authored; still needs trusted bidirectional TCP reassembly/flow provenance, verified service identity, approved monitoring baseline, threshold correlation and RuleEngine binding |
+| R440 | PRODUCER-BLOCKED | Verified Elasticsearch cluster and complete snapshot repository API response, authorization and source attribution |
+| R441 | PRODUCER-BLOCKED | Complete Cassandra native protocol startup/query response, verified node identity and external-source policy |
+| R442 | PRODUCER-BLOCKED | Oracle TNS listener response with verified endpoint and multiple distinct service enumeration outcomes |
+| R443 | PRODUCER-BLOCKED | Verified CouchDB service, complete admin API response, authorization context and external-source classification |
+
+**Actual changes:** `Carthago/Services/ProtocolIntelligence/MemcachedStatsExchangeInspector.cs` (commit `5c94cf28dea6aa072693201b20553b7ce17c7726`) and `Carthago.Tests/ProtocolIntelligence/MemcachedStatsExchangeInspectorTests.cs` (commit `63fb19aa957053aaf40f910e879ed6bbaaba2ce6`). Four test methods including parameterized negative cases **AUTHORED, UNEXECUTED**. Inspector validates complete bounded ASCII STATS exchange and returns a count only; boolean caller attestations do not establish runtime capture provenance, authenticated server identity, authorization or malicious intent. No detector alert enabled. No Windows tests, native capture, GitHub Actions or CI changes deliberately performed.
+
+**Carryover:** all 90 reviewed IDs remain unresolved. **Next cursor:** R444–R453. Revisit blockers after ordered queue; never mark parser-only work complete.
