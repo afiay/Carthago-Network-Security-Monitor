@@ -85,6 +85,11 @@ function Test-Qualification($document, $inventory, [string]$currentSha, $manifes
     $authored = 0
     $missing = 0
     $referencedExecutions = @{}
+    # These counters distinguish reviewed ledger attestations from actual
+    # digest-verified TRX evidence, without promoting either to field accuracy.
+    $artifactPositive = 0
+    $artifactNegative = 0
+    $legacyAttestations = 0
     foreach ($row in $document.records) {
         foreach ($field in @('ruleId','registeredClass','detector','pairedReplay','captureProvenance','profileEligibility','independentValidation','limitations')) {
             Assert-Qualification ($null -ne $row.PSObject.Properties[$field] -and $null -ne $row.$field -and -not [string]::IsNullOrWhiteSpace([string]$row.$field)) "Missing field: $field"
@@ -121,6 +126,13 @@ function Test-Qualification($document, $inventory, [string]$currentSha, $manifes
             Assert-Qualification ($reviewed.ContainsKey($key)) "Unreviewed execution claim: $id"
             $entry = $reviewed[$key]
             $referencedExecutions[$key] = $true
+            if ($null -ne $entry.PSObject.Properties['artifact']) {
+                if ($entry.artifact.casePolarity -ceq 'positive-detector') { $artifactPositive++ }
+                elseif ($entry.artifact.casePolarity -ceq 'negative-detector') { $artifactNegative++ }
+                else { throw "Unreviewed TRX case polarity: $id" }
+            } else {
+                $legacyAttestations++
+            }
             $expectedOutcome = if ($d.status -ceq 'failed') { 'fail' } else { 'pass' }
             Assert-Qualification ($entry.outcome -ceq $expectedOutcome -and $entry.testReference -ceq $d.reference) "Execution evidence mismatch: $id"
             if ($d.status -ceq 'failed') { $failed++ }
@@ -132,7 +144,8 @@ function Test-Qualification($document, $inventory, [string]$currentSha, $manifes
         Assert-Qualification (-not [string]::IsNullOrWhiteSpace($d.positiveNegative) -and -not [string]::IsNullOrWhiteSpace($d.reference)) "Missing evidence description: $id"
     }
     Assert-Qualification ($referencedExecutions.Count -eq $reviewed.Count) 'Orphaned reviewed execution manifest record'
-    [pscustomobject]@{ registeredCount=$map.Count; auditedCount=$seen.Count; missingCount=$map.Count-$seen.Count; historicalExecutionRecords=$historical; currentExecutionRecords=$current; unsupportedProducerRecords=$unsupported; failedExecutionRecords=$failed; authoredUnexecutedRecords=$authored; missingDetectorRecords=$missing; testsExecuted=0 }
+    Assert-Qualification ($artifactPositive + $artifactNegative + $legacyAttestations -eq $historical + $current) 'Evidence provenance partition mismatch'
+    [pscustomobject]@{ registeredCount=$map.Count; auditedCount=$seen.Count; missingCount=$map.Count-$seen.Count; historicalExecutionRecords=$historical; currentExecutionRecords=$current; unsupportedProducerRecords=$unsupported; failedExecutionRecords=$failed; authoredUnexecutedRecords=$authored; missingDetectorRecords=$missing; artifactPositiveCases=$artifactPositive; artifactNegativeCases=$artifactNegative; legacyExecutionAttestations=$legacyAttestations; testsExecuted=0 }
 }
 $sha = (git -C $root rev-parse HEAD).Trim()
 if ($LASTEXITCODE -ne 0) { throw 'Cannot resolve checkout HEAD' }
@@ -166,6 +179,7 @@ if ($SelfTest) {
     $bad = Copy-Document; ($bad.records | Where-Object ruleId -ceq 'R343').detector.status = 'failed'; Expect-Rejection $bad
     $bad = Copy-Document; $bad.records[0] | Add-Member -NotePropertyName producerQualification -NotePropertyValue 'unsupported-benchmark-scenario'; Expect-Rejection $bad
     Assert-Qualification ($result.unsupportedProducerRecords -eq 6) 'Producer gap count mismatch'
+    Assert-Qualification ($result.artifactPositiveCases -eq 0 -and $result.artifactNegativeCases -eq 0 -and $result.legacyExecutionAttestations -eq ($result.historicalExecutionRecords + $result.currentExecutionRecords)) 'Historical attestations misreported as TRX evidence'
     Assert-Qualification ($result.authoredUnexecutedRecords + $result.missingDetectorRecords + $result.historicalExecutionRecords + $result.currentExecutionRecords -eq $result.auditedCount) 'Detector status partition mismatch'
     function Copy-Manifest { Get-Content -Raw $manifestFile | ConvertFrom-Json }
     function Expect-ManifestRejection($candidate) {
@@ -234,12 +248,13 @@ if ($SelfTest) {
             casePolarity='positive-detector'
         })
         $fixtureResult = Test-Qualification $doc $inventory $sha $fixtureManifest
+        Assert-Qualification ($fixtureResult.artifactPositiveCases -eq 1 -and $fixtureResult.artifactNegativeCases -eq 0 -and $fixtureResult.legacyExecutionAttestations -eq ($result.legacyExecutionAttestations - 1)) 'Positive TRX provenance count mismatch'
         Assert-Qualification ($fixtureResult.auditedCount -eq $result.auditedCount -and $fixtureResult.historicalExecutionRecords -eq $result.historicalExecutionRecords -and $fixtureResult.currentExecutionRecords -eq $result.currentExecutionRecords) 'Artifact integration changed evidence accounting'
         $fixtureEntry.artifact.casePolarity = 'unknown'
         Expect-ManifestRejection $fixtureManifest
         $fixtureEntry.artifact.casePolarity = 'negative-detector'
         $negativeFixture = Test-Qualification $doc $inventory $sha $fixtureManifest
-        Assert-Qualification ($negativeFixture.auditedCount -eq $result.auditedCount) 'Explicit negative polarity fixture rejected'
+        Assert-Qualification ($negativeFixture.auditedCount -eq $result.auditedCount -and $negativeFixture.artifactNegativeCases -eq 1 -and $negativeFixture.artifactPositiveCases -eq 0) 'Negative TRX provenance count mismatch'
         $fixtureEntry.artifact.PSObject.Properties.Remove('casePolarity')
         Expect-ManifestRejection $fixtureManifest
         $fixtureEntry | Add-Member -Force -NotePropertyName artifact -NotePropertyValue ([pscustomobject]@{file='fixture.trx';sha256=(Get-FileHash -LiteralPath $fixturePath -Algorithm SHA256).Hash.ToLowerInvariant();testNames=@('Exact.Test');checkoutSha=$fixtureEntry.executedSha;checkoutReview='Synthetic integration fixture only';casePolarity='positive-detector'})

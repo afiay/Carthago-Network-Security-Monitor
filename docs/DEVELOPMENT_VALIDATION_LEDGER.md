@@ -3407,3 +3407,14 @@ Pinned source parent 024c93f747432f70e072ca019f87ea58f54dc211, actual tree 84603
 - Production `f98fdc24f5814b3c7fafa89fab4681c6d8e191b1`: MonitoringHealthPage coverage summary now warns when a coverage counter exceeds published records, or a process attribution count exceeds process-eligible records. This flags impossible aggregate snapshots without silently normalizing counters or treating evidence availability as detection accuracy.
 - Regression `0c9fda0dc5821efd9263e2de3fd3678caa6a3cf1`: authored valid, impossible-publication, impossible-process, and empty-snapshot assertions in `EnrichmentHealthPresentationTests`.
 - **Executed:** none in this connector-only run. **Pending:** Windows `dotnet test .\\Carthago.Tests\\Carthago.Tests.csproj -c Release --filter FullyQualifiedName~EnrichmentHealthPresentationTests`, capture-connected counter reconciliation, GUI review, accuracy/performance acceptance. This is a diagnostic guard, not a verified runtime accounting defect or detector qualification.
+
+
+#### 2026-11-17 — GA-09cv: separate original TRX case polarity from historical ledger attestations
+
+**Source baseline:** `7abe2317a75dcd5f29ed32e052f310bd3fe20cbb` (tree `bfe791d1627741b7181bd056bb486613e300f920`). Exact-ID scope: existing reviewed inventory, including R102/R118/R163 and the six separately classified producer-gap IDs; no rule predicates or registry changed.
+
+**Implementation:** `scripts/verify-exact-id-qualification.ps1` reports `artifactPositiveCases`, `artifactNegativeCases` and `legacyExecutionAttestations` separately. A reviewed execution with no digest-verified TRX remains a legacy attestation; a TRX-backed case is counted by its explicitly reviewed positive/negative detector polarity. An invariant partitions all historical/current execution claims without confusing TRX `Passed` with detector positive-case evidence. Self-tests cover the original legacy-only manifest and temporary positive/negative artifact cases.
+
+**Expected:** legacy manifest reports zero artifact-backed cases; temporary digest-bound positive/negative fixtures each report one in the appropriate category. **Executed:** none (authored-unexecuted; Windows PowerShell and detector tests not authorized in this environment). No original Windows TRX ingested, no independent capture, no rule promotion or accuracy claims.
+
+**Next owner command:** `powershell -NoProfile -File .\\scripts\\verify-exact-id-qualification.ps1 -SelfTest` at the published commit, followed by separately authorized original TRX intake/review. Preserve R102 80%, R118 86%, R163 84% floors, frozen holdouts and GA-08 reconciliation.
