@@ -92,3 +92,24 @@ Each hourly run:
 | R303 | PRODUCER-BLOCKED | Trusted registry response inventory, distinct manifest results and authorized-client baseline |
 
 **Source increment:** `Carthago/Services/ProtocolIntelligence/KubernetesAuditAdmission.cs` bounded (4096 identities), length-delimited HMAC-SHA256 isolated admission of Kubernetes audit terminal responses with typed secrets-read, pod-exec-request and port-forward-request operations. A shared key is NOT proof of exporter identity. No runtime ingestion or R294–R296 detector connectivity; never treat audit allow as proof of command success, exfiltration or unauthorized activity. `Carthago.Tests/ProtocolIntelligence/KubernetesAuditAdmissionTests.cs` regression source authored, **UNEXECUTED**: signed terminal observations, denied outcome, invalid signature, nonterminal, replay, stale and malformed events. This is a prerequisite only, **not a functional detector repair**. Commit SHA: see atomic git commit containing this ledger. Carryover: all 30 processed IDs unresolved. **Next cursor:** R304–R313.
+
+## Batch 04 — R304–R313 (2026-11-17)
+
+**Inspected source snapshot:** `ad36d6f540ee3e0bcc2aaf67726a8df29d3e5bc5`. All ten EvaluatePrecision methods remain unconditional NoMatch. No rule is functionally repaired. No Windows or native test executed.
+
+| ID | State | Exact producer / missing runtime trust |
+| --- | --- | --- |
+| R304 | IN-PROGRESS, PRODUCER-BLOCKED | Registry-exporter authenticated response and explicit anonymous principal, distinct completed pulls; isolated signed operation admission added but no trusted exporter binding, runtime connection or burst predicate |
+| R305 | IN-PROGRESS, PRODUCER-BLOCKED | Registry push result plus trusted workstation asset classification, approval baseline and signed exporter identity; isolated admission only |
+| R306 | IN-PROGRESS, PRODUCER-BLOCKED | Docker build endpoint identity, complete context upload outcome and verified archive content/size; isolated admission does not prove content |
+| R307 | PRODUCER-BLOCKED | Authenticated Kubernetes Dashboard endpoint identity, external exposure and actual response, not path/port |
+| R308 | PRODUCER-BLOCKED | Verified Helm Tiller listener identity, boundary/authorization inventory and reachable response, not TCP/44134 |
+| R309 | PRODUCER-BLOCKED | Verified Envoy admin listener inventory, ingress exposure and admin response, not URL |
+| R310 | PRODUCER-BLOCKED | Sidecar inventory, effective mesh mTLS policy, route and independently confirmed bypass decision |
+| R311 | PRODUCER-BLOCKED | Cloud workload identity plus trusted metadata service token response, not request alone |
+| R312 | PRODUCER-BLOCKED | Versioned Kubernetes NetworkPolicy, CNI enforcement decision and authorized pod identities |
+| R313 | PRODUCER-BLOCKED | Host-verified workstation role, DNS MX resolution attribution, external SMTP session and approved relay policy |
+
+**Actual increment:** `Carthago/Services/ProtocolIntelligence/RegistryOperationAuditAdmission.cs` adds length-delimited signed registry-operation response admission with bounded 4096-event replay identities, monotonic timestamp checks and explicit accepted/denied/authenticated/unauthenticated distinctions. It is an isolated contract; shared HMAC key is not exporter identity, authorization, user role or proof of image transfer. `Carthago.Tests/ProtocolIntelligence/RegistryOperationAuditAdmissionTests.cs` adds four test methods (one theory with three data cases) for accepted operations, denied outcomes, signature tampering/invalid semantics and replay/expiry. **AUTHORED, UNEXECUTED.** No runtime/engine integration and no detector positives. Commit SHA: inspect atomic commit containing this ledger.
+
+**Carryover:** all 40 processed IDs unresolved. **Next cursor:** R314,R315,R316,R317,R318,R319,R320,R321,R322,R323. Do not promote any rule until verified producer identity and detector positive/benign negative exist.
