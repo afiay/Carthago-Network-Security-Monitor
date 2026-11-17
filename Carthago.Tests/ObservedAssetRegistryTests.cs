@@ -296,6 +296,20 @@ public sealed class ObservedAssetRegistryTests
     }
 
     [Fact]
+    public async System.Threading.Tasks.Task Headless_Stop_Completes_Without_Capture_And_Rejects_Restart()
+    {
+        // Exercise production shutdown without native capture. Cancellation bounds
+        // the wait for background enrichment workers to terminate.
+        using var service = new TrafficCaptureService(null,
+            System.Windows.Threading.Dispatcher.CurrentDispatcher, headless: true);
+        var before = service.GetStats();
+        Assert.False(before.RegistryRunPresent);
+        using var timeout = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(10));
+        await service.StopHeadlessAsync(timeout.Token);
+        Assert.Throws<ObjectDisposedException>(() => service.StartHeadlessNpcap(null!));
+    }
+
+    [Fact]
     public void Full_Registries_Still_Update_Existing_Evidence_Without_Inflating_Rejections()
     {
         // Capacity limits distinct identities, not subsequent evidence for retained identities.
