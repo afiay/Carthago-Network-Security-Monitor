@@ -273,9 +273,9 @@ public sealed class EnrichmentWorkerHealthTests
         var snapshot = new EnrichmentWorkerSnapshot(
             long.MaxValue, long.MaxValue, long.MaxValue, 0, 0, 0, 0, 0, 0);
         var summary = EnrichmentHealthPresentation.WorkerSummary(snapshot);
-        Assert.Contains("completed workers: 18,446,744,073,709,551,614", summary);
+        Assert.Contains("completed workers: " + (2m * long.MaxValue).ToString("N0"), summary);
         Assert.Contains("in flight at snapshot: 0", summary);
-        Assert.Contains("completed outcomes exceed started workers by 9,223,372,036,854,775,807", summary);
+        Assert.Contains("completed outcomes exceed started workers by " + long.MaxValue.ToString("N0"), summary);
         Assert.Contains("worker elapsed mean/max ms (completed workers:", summary);
     }
 }
