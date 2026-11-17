@@ -115,9 +115,26 @@ public sealed class EnrichmentHealthPresentationTests
         };
         var row = EnrichmentHealthPresentation.Build(stats).Providers.Single(p => p.Provider == "whois");
         Assert.Equal(50.0, double.Parse(row.SuccessShare.Replace("%", "").Trim(), System.Globalization.CultureInfo.InvariantCulture));
-        Assert.Equal("10.0 / 20", row.Latency);
+        Assert.Equal("10.0 / 20 ms (4 outcomes)", row.Latency);
         Assert.Equal(2L, row.CacheHits);
     }
+    [Fact]
+    public void Provider_Latency_Uses_Completed_Outcomes_Not_Cache_Hits_Or_Published_Records()
+    {
+        var stats = new TrafficCaptureService.StatsSnapshot
+        {
+            EnrichmentCoverage = new(100, 0, 0, 0, 0, 0, 0, 0, 0),
+            EnrichmentProviders = new Dictionary<string, EnrichmentProviderSnapshot>
+            {
+                ["whois"] = new(1, 0, 0, 1, 1, 50, 90, 60)
+            }
+        };
+        var row = EnrichmentHealthPresentation.Build(stats).Providers.Single(p => p.Provider == "whois");
+        Assert.Equal("33.3%", row.SuccessShare);
+        Assert.Equal("30.0 / 60 ms (3 outcomes)", row.Latency);
+        Assert.Equal(50L, row.CacheHits);
+    }
+
     [Fact]
     public void Geo_Database_States_Are_Independent_And_Not_Lookup_Outcomes()
     {
