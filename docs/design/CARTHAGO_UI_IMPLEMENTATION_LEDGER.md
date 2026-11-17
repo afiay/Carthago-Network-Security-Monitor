@@ -6319,3 +6319,14 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Ownership/static review:** Carthago/Views/MainWindow.xaml and this ledger only. FooterTelemetryStateText and FooterUtcText bindings, tooltips, automation descriptions, and runtime producers unchanged. No Engine/Models/Services, rules, capture, telemetry, security, privacy, ScottPlot 10/120, Events 80/500, CLI, Cisco/WebView2 or independent work changed.
 
 **Static risks/unexecuted acceptance:** increased footer height, border contrast, keyboard/screen-reader order, long localization, widths 1920/1440/1100/1099/1024/1023/640 and DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. **Next UI-210:** inspect live ledger and select next independent visible UI slice.
+
+
+## GA UI-210 — Explicit sampled UTC clock panel
+
+**2026-11-17 · SOURCE CANDIDATE — UNVERIFIED.** Approved Library image libfile_b0a34361560c8191b641e432b3e6b15c visually inspected. Source baseline `6fc9bceebbb2e18690896326ed51d1c48f62b928`, actual commit tree `e8edcffff7e7d6d61be5889846d0518fcd4baef9`; UI-209 last completed. Reference mapping: subdued graphite micro-panels, thin dividers and clear secondary metadata hierarchy. Reference DEMO DATA is not operational telemetry.
+
+**Visible before → after:** previously the UTC text sat unframed in a right-aligned horizontal StackPanel, separated only by a 4-unit top margin and 13-unit left inset. The sampled UTC clock now occupies a right-aligned graphite bordered panel (radius 4, padding 8/5, top margin 6), with an explicit CLOCK caption and existing UTC readout in a two-column Auto/Auto Grid. This visually distinguishes sampled system-clock metadata from the capture-state panel without suggesting an event timestamp or clock synchronization. Wide >=1440, Standard 1100–1439 and Compact 1024–1099 preserve a content-sized right-aligned clock panel; below 1024, the existing three-row footer prevents collision with the bounded capture-state lane. No fixed width or height is introduced.
+
+**Ownership/static review:** Carthago/Views/MainWindow.xaml and this existing ledger only. FooterUtcText name, current text, tooltip, automation name/help text and producer remain unchanged. FooterTelemetryStateText and all capture-state bindings remain unchanged. No Engine/Models/Services, rules, capture, telemetry, security, privacy, ScottPlot 10/120, Events 80/500, CLI, Cisco/WebView2 or independent work changed.
+
+**Static risks/unexecuted acceptance:** clock caption contrast, increased footer height, long localization, widths 1920/1440/1100/1099/1024/1023/640, DPI 100/125/150/200%, keyboard/screen-reader reading order and sampled clock provenance. Builds/tests/CI/captures/renders 0. **Next UI-211:** inspect live ledger for the next independent visible slice, prioritizing core Dashboard or Incidents composition rather than further footer micro-adjustments.
