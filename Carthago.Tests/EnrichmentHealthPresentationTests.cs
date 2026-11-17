@@ -179,6 +179,23 @@ public sealed class EnrichmentHealthPresentationTests
     }
 
     [Fact]
+    public void Provider_Outcome_Denominator_Does_Not_Overflow_Long_Lifetime_Counters()
+    {
+        var stats = new TrafficCaptureService.StatsSnapshot
+        {
+            EnrichmentProviders = new Dictionary<string, EnrichmentProviderSnapshot>
+            {
+                ["whois"] = new(long.MaxValue, long.MaxValue, 0, 0, 0, 0, 0, 0)
+            }
+        };
+        var display = EnrichmentHealthPresentation.Build(stats);
+        var whois = display.Providers.Single(p => p.Provider == "whois");
+        Assert.Equal("50.0%", whois.SuccessShare);
+        Assert.Contains("outcomes)", whois.Latency);
+        Assert.DoesNotContain("WARNING: invalid provider outcome", display.Summary);
+    }
+
+    [Fact]
     public void Cache_Only_Provider_Activity_Does_Not_Create_Outcome_Or_Latency_Samples()
     {
         // Cache path activity is not an attempted provider lookup. In particular,
