@@ -11,6 +11,8 @@ function Assert-Qualification($condition, [string]$message) {
 }
 function Get-ReviewedExecutionMap($manifest, $registryMap) {
     Assert-Qualification ($manifest.schemaVersion -eq 1) 'Unsupported execution manifest schema'
+    # Fail closed on absent or unbounded reviewed manifests before iterating entries.
+    Assert-Qualification ($null -ne $manifest.PSObject.Properties['records'] -and $manifest.records -is [array] -and $manifest.records.Count -le 10000) 'Invalid reviewed execution record collection'
     $entries = @{}
     foreach ($entry in $manifest.records) {
         foreach ($field in @('ruleId','executedSha','outcome','testReference','scope','reviewReference')) {
@@ -153,6 +155,9 @@ if ($SelfTest) {
         Assert-Qualification $rejected 'Invalid execution manifest accepted'
     }
     $badManifest = Copy-Manifest; $badManifest.records += $badManifest.records[0]; Expect-ManifestRejection $badManifest
+    $badManifest = Copy-Manifest; $badManifest.PSObject.Properties.Remove('records'); Expect-ManifestRejection $badManifest
+    $badManifest = Copy-Manifest; $badManifest.records = $null; Expect-ManifestRejection $badManifest
+    $badManifest = Copy-Manifest; $badManifest.records = @(1..10001 | ForEach-Object { $badManifest.records[0] }); Expect-ManifestRejection $badManifest
     $badManifest = Copy-Manifest; $badManifest.records[0].ruleId = 'R001'; Expect-ManifestRejection $badManifest
     $badManifest = Copy-Manifest; $badManifest.records[0].outcome = 'fail'; Expect-ManifestRejection $badManifest
     $badManifest = Copy-Manifest; $badManifest.records[0].testReference = 'Carthago.Tests/Unreviewed.cs'; Expect-ManifestRejection $badManifest
