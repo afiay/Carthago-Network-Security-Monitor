@@ -54,7 +54,8 @@ internal static class EnrichmentHealthPresentation
         foreach (string name in new[] { "whois", "reputation", "vpn-proxy" })
         {
             if (!stats.EnrichmentProviders.TryGetValue(name, out var p)) p = new(0,0,0,0,0,0,0,0);
-            long total = p.Success + p.Unavailable + p.Failed + p.TimedOut + p.Cancelled;
+            // Use a widened denominator: lifetime counters may sum beyond Int64 even when each is valid.
+            decimal total = (decimal)p.Success + p.Unavailable + p.Failed + p.TimedOut + p.Cancelled;
             string share = total > 0 ? ((double)p.Success / total).ToString("P1", CultureInfo.InvariantCulture) : "—";
             // Cache hits are path events, not completed provider outcomes.
             // Keep the denominator visible so a mean is not mistaken for
