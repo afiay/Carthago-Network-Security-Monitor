@@ -356,13 +356,13 @@ public sealed class EnrichmentHealthPresentationTests
         {
             EnrichmentCoverage = new(10, 11, 2, 1, 0, 4, 2, 1, 3)
         };
-        Assert.Contains("WARNING: evidence coverage counters exceed", EnrichmentHealthPresentation.Build(impossiblePublication).Summary);
+        Assert.Contains("WARNING: evidence coverage counters are negative or exceed", EnrichmentHealthPresentation.Build(impossiblePublication).Summary);
 
         var impossibleProcess = new TrafficCaptureService.StatsSnapshot
         {
             EnrichmentCoverage = new(100, 40, 20, 10, 5, 8, 9, 2, 7)
         };
-        Assert.Contains("WARNING: evidence coverage counters exceed", EnrichmentHealthPresentation.Build(impossibleProcess).Summary);
+        Assert.Contains("WARNING: evidence coverage counters are negative or exceed", EnrichmentHealthPresentation.Build(impossibleProcess).Summary);
 
         var empty = new TrafficCaptureService.StatsSnapshot
         {
