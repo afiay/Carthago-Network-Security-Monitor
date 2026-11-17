@@ -375,6 +375,18 @@ public sealed class EnrichmentHealthPresentationTests
         Assert.Contains("No checkpoint diagnostic reported", EnrichmentHealthPresentation.Build(stats).Summary);
     }
     [Fact]
+    public void Geo_Cache_Hit_Rate_Widens_Lifetime_Counters()
+    {
+        // Two individually valid lifetime hit counters exceed Int64 when combined.
+        // The denominator is the full eligible request population, not DB attempts.
+        var summary = EnrichmentHealthPresentation.Build(new TrafficCaptureService.StatsSnapshot
+        {
+            GeoCacheHealth = new(long.MaxValue, long.MaxValue, 0, 0, 0, 0, 8)
+        }).Summary;
+        Assert.Contains("hit share 200.0%", summary);
+    }
+
+    [Fact]
     public void Geo_Cache_Zero_Eligible_Requests_Has_No_Hit_Rate()
     {
         var summary = EnrichmentHealthPresentation.Build(new TrafficCaptureService.StatsSnapshot
