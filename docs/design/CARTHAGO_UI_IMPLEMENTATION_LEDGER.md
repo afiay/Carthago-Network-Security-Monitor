@@ -6359,3 +6359,14 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Ownership/static review:** Only `Carthago/Views/MainWindow.xaml` and this existing ledger. Existing Subtitle and TimeText bindings, title, risk score, severity, queue order, selection and timestamp provenance tooltip unchanged. No Engine/Models/Services, rules, capture, telemetry, security/privacy, ScottPlot 10/120, Events 80/500, CLI, Cisco/WebView2 or independent work changed.
 
 **Static risks/unexecuted acceptance:** taller cards reduce visible queue density; very long context can truncate at 36px; verify text wrapping, selection borders, scroll, keyboard/screen reader and widths 1920/1440/1100/1099/1024/1023/640 at DPI 100/125/150/200%. Builds/tests/CI/captures/renders 0. **Next UI-214:** select the next substantive Dashboard or Incidents composition slice from the live ledger.
+
+
+## GA UI-214 — Bounded selected-finding investigation heading
+
+**2026-11-17 · SOURCE CANDIDATE — UNVERIFIED.** Exact approved Library image `libfile_b0a34361560c8191b641e432b3e6b15c` visually inspected. Source baseline `6acde34c6a8fe84fd8f83a97ad8a5fae508294ec`, actual commit tree `d43a8f211993ad64a82a013e178845c3d9e1b612`; UI-213 last completed. Reference mapping: strong Incident Investigation heading with a separate restrained information affordance in the right-hand dashboard panel; screenshot DEMO DATA excluded from operational telemetry.
+
+**Visible before → after:** the investigation heading previously used a horizontal StackPanel containing an unbounded title and an info glyph, which could crowd the adjacent independent risk-score column. The heading now uses a bounded two-column Grid with a star-sized wrapping title and an auto-width, keyboard-focusable info glyph separated by 8 units. Wide >=1440 generally retains one line; Standard 1100–1439 and Compact 1024–1099 can wrap the heading; below 1024 the content-driven header grows vertically instead of forcing horizontal overflow. The risk-score lane, selected-finding subtitle and existing detail panel remain unchanged.
+
+**Ownership/static review:** `Carthago/Views/MainWindow.xaml` and this existing ledger only. No new UI producers, handlers or fabricated values. Existing investigation selection, detail button, risk score, accessibility text, incident queue, ScottPlot 10/120, local Events 80/500, CLI visual-only, Cisco/WebView2 and security/privacy boundaries remain unchanged. No Engine/Models/Services, rules, capture, tests, workflows or shared indexes edited.
+
+**Static risks/unexecuted acceptance:** long localization may increase header height; risk-column squeeze, glyph alignment, screen-reader focus, widths 1920/1440/1100/1099/1024/1023/640 and DPI 100/125/150/200% need runtime review. Builds/tests/CI/captures/renders 0. **Next UI-215:** choose the next substantive Dashboard or Incidents visible slice from the live ledger.
