@@ -136,6 +136,32 @@ public sealed class EnrichmentHealthPresentationTests
     }
 
     [Fact]
+    public void Cache_Only_Provider_Activity_Does_Not_Create_Outcome_Or_Latency_Samples()
+    {
+        // Cache path activity is not an attempted provider lookup. In particular,
+        // an empty outcome population must never produce a 0% success rate.
+        var stats = new TrafficCaptureService.StatsSnapshot
+        {
+            EnrichmentCoverage = new(250, 0, 0, 0, 0, 0, 0, 0, 0),
+            EnrichmentProviders = new Dictionary<string, EnrichmentProviderSnapshot>
+            {
+                ["whois"] = new(0, 0, 0, 0, 0, 75, 0, 0),
+                ["reputation"] = new(0, 0, 0, 0, 0, 0, 0, 0)
+            }
+        };
+        var display = EnrichmentHealthPresentation.Build(stats);
+        var whois = display.Providers.Single(p => p.Provider == "whois");
+        Assert.Equal(75L, whois.CacheHits);
+        Assert.Equal("—", whois.SuccessShare);
+        Assert.Equal("—", whois.Latency);
+        Assert.Equal(0L, whois.Success + whois.Unavailable + whois.Failed + whois.TimedOut + whois.Cancelled);
+        Assert.Contains("Cache hits are lookup-path events, not additional outcomes", display.Summary);
+        var reputation = display.Providers.Single(p => p.Provider == "reputation");
+        Assert.Equal("—", reputation.SuccessShare);
+        Assert.Equal("—", reputation.Latency);
+    }
+
+    [Fact]
     public void Geo_Database_States_Are_Independent_And_Not_Lookup_Outcomes()
     {
         var stats = new TrafficCaptureService.StatsSnapshot
