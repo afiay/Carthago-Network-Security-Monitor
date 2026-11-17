@@ -16,7 +16,6 @@ namespace Carthago.Services.ProtocolIntelligence
         private const int MaxEvents = 4096;
         private readonly object _gate = new();
         private readonly HashSet<string> _seen = new(StringComparer.Ordinal);
-        private readonly Queue<string> _order = new();
         private DateTime _latest = DateTime.MinValue;
 
         public bool TryAdmit(KubernetesAuditCandidate candidate,
@@ -73,14 +72,13 @@ namespace Carthago.Services.ProtocolIntelligence
 
             lock (_gate)
             {
-                if (candidate.TimestampUtc < _latest.AddMinutes(-10) ||
+                if ((_latest != DateTime.MinValue && candidate.TimestampUtc < _latest.AddMinutes(-10)) ||
                     _seen.Contains(candidate.Cluster + "|" + candidate.AuditId) ||
                     _seen.Count >= MaxEvents)
                     return false;
                 if (candidate.TimestampUtc > _latest) _latest = candidate.TimestampUtc;
                 string key = candidate.Cluster + "|" + candidate.AuditId;
                 _seen.Add(key);
-                _order.Enqueue(key);
             }
 
             // A completed audit response is not proof of a successful exec
@@ -92,7 +90,7 @@ namespace Carthago.Services.ProtocolIntelligence
 
         public void Reset()
         {
-            lock (_gate) { _seen.Clear(); _order.Clear(); _latest = DateTime.MinValue; }
+            lock (_gate) { _seen.Clear(); _latest = DateTime.MinValue; }
         }
 
         private static bool Safe(string? s, int max, bool allowEmpty = false)
