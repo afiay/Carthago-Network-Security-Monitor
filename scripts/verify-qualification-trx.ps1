@@ -37,7 +37,7 @@ function Test-QualificationTrx([byte[]]$bytes, [string]$digest, [string[]]$names
     if ($names.Count -eq 0 -or $names.Count -gt 1000) { throw 'Invalid selection size' }
     $seen = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
     foreach ($name in $names) {
-        if ([string]::IsNullOrWhiteSpace($name) -or -not $seen.Add($name)) { throw 'Invalid or duplicate requested test' }
+        if ([string]::IsNullOrWhiteSpace($name) -or $name.Length -gt 4096 -or $name -match '[\x00-\x1f\x7f*?]' -or -not $seen.Add($name)) { throw 'Invalid, wildcard, oversized or duplicate requested test' }
         $matches = @($results | Where-Object { $_.GetAttribute('testName') -ceq $name })
         if ($matches.Count -ne 1) { throw "Missing or ambiguous test: $name" }
         if ($matches[0].GetAttribute('outcome') -cne $expected) { throw "Unexpected test outcome: $name" }
@@ -64,10 +64,14 @@ if ($SelfTest) {
     Reject-Fixture { Invoke-Fixture $xml @('exact.test') 'Passed' }
     Reject-Fixture { Invoke-Fixture $xml @('Exact.Test') 'Failed' }
     Reject-Fixture { Invoke-Fixture $xml @('Exact.Test','Exact.Test') 'Passed' }
+    Reject-Fixture { Invoke-Fixture $xml @('Exact.*') 'Passed' }
+    Reject-Fixture { Invoke-Fixture $xml @('Exact.Te?t') 'Passed' }
+    Reject-Fixture { Invoke-Fixture $xml @('Exact.' + ('A' * 4097)) 'Passed' }
+    Reject-Fixture { Invoke-Fixture $xml @("Exact.`nTest") 'Passed' }
     Reject-Fixture { Invoke-Fixture ($xml.Replace('</Results>','<UnitTestResult testName="Exact.Test" outcome="Passed"/></Results>')) @('Exact.Test') 'Passed' }
     Reject-Fixture { Invoke-Fixture ($xml.Replace('Completed','Aborted')) @('Exact.Test') 'Passed' }
     Reject-Fixture { Invoke-Fixture ('<!DOCTYPE TestRun [<!ENTITY x "bad">]>' + $xml) @('Exact.Test') 'Passed' }
-    [pscustomobject]@{ selfTestsPassed=8; detectorTestsExecuted=0 } | ConvertTo-Json
+    [pscustomobject]@{ selfTestsPassed=12; detectorTestsExecuted=0 } | ConvertTo-Json
 } else {
     $item = Get-Item -LiteralPath $Artifact
     if ($item.PSIsContainer -or $item.Length -gt 16777216) { throw 'Invalid artifact size or type' }
