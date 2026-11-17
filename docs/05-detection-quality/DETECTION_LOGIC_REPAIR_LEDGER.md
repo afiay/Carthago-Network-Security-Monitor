@@ -293,3 +293,35 @@ Each hourly run:
 | R473 | IN-PROGRESS, PRODUCER-BLOCKED | Complete Modbus/TCP request/response reassembly, trusted ICS asset and approved engineering-workstation policy, transaction correlation and RuleEngine integration |
 
 **Source increment for R473:** `Carthago/Services/ProtocolIntelligence/ModbusDeviceIdentificationRequestInspector.cs` (commit `ec0526a6d003b1edca2881b6ba5666a8d419a5ca`) parses only complete MBAP-framed function 0x2B/MEI 0x0E Read Device Identification requests. No success, maliciousness or authorization is inferred. `Carthago.Tests/ProtocolIntelligence/ModbusDeviceIdentificationRequestInspectorTests.cs` (commit `fadbaf744a97293375cf778bfd273d96837e3619`) has four xUnit methods with malformed-frame cases **AUTHORED, NOT EXECUTED**. The parser is not wired to trusted capture or RuleEngine. **Functional detector repairs: 0.** No local Windows runner, CI, Actions or live invasive tests used. **Carryover:** all ten remain incomplete. **Next cursor:** R474–R483. Ledger publication commit is the commit containing this section.
+
+## Batch 13 — R474–R483 (2026-11-17; user-directed continuation)
+
+**Source review starting SHA:** `7f439be5a8c2647a2406e3ef72e2fba1016bdfba`. The ten exact detector classes and relevant capture producers/OT evidence gates were reviewed. No Windows/Linux build, native capture, xUnit or CI run in this environment. Do not count a reviewed ID or authored test as a repaired detector.
+
+| Rule | Source state | Missing evidence / implementation note |
+| --- | --- | --- |
+| R474 Modbus Force Listen Only Mode Attempt | **SOURCE IMPLEMENTED — CANDIDATE/SHADOW, NOT BUILT** | Dedicated first-client-payload Modbus/TCP MBAP FC08 subfunction 0x0004 decoder, SYN/SYN-ACK/sequence/ACK/complete-IP/TLS guards inherited from the existing native Modbus pipeline, internal capture-derived observation, Shadow-only exact request-attempt detector with cooldown. Does not prove device impact, success or unauthorized engineering work |
+| R475 Modbus Diagnostics Function Abuse | PRODUCER-BLOCKED | Needs protocol-validated diagnostics subfunctions, repeated distinct transaction correlation, request/response where applicable, controller role/allowlist and benign maintenance baseline; FC08 port/name or any diagnostics request is not automatically abuse |
+| R476 Modbus Coil Write Burst | PRODUCER-BLOCKED | Need exact FC05/FC15 request identity/targets, safely bounded multiple-write correlation, dedup across TCP connections, controller and approved engineering policy; ports/flow bytes insufficient |
+| R477 S7 Start/Stop CPU Command | PRODUCER-BLOCKED | Needs complete TPKT/COTP/S7Comm start-stop job decoding, controller/session identity and request outcome; TCP/102 alone insufficient |
+| R478 S7 Upload/Download Block Transfer | PRODUCER-BLOCKED | Needs correlated complete S7 block upload/download transactions, controller identity, user authorization and execution direction |
+| R479 S7 PLC Identification Probe | PRODUCER-BLOCKED | Needs actual protocol-validated S7 identification query/response, distinct targets and engineering baseline |
+| R480 DNP3 Control Relay Output Block | PRODUCER-BLOCKED | Needs decoded CRC-validated DNP3 function and CROB objects, request/response and authorized master identity |
+| R481 DNP3 Freeze Counter Command | PRODUCER-BLOCKED | Needs decoded DNP3 freeze application operation, target counter objects and approved-master context; shared `OtDeepOperationEvidenceBoundary` remains fail-closed |
+| R482 IEC-104 External Control Command | PRODUCER-BLOCKED | Needs validated IEC104 ASDU control and cause-of-transmission plus external/authorized master policy; TCP/2404 or generic IEC label insufficient |
+| R483 OPC UA Browse Node Burst | PRODUCER-BLOCKED | Needs decrypted authenticated OPC UA Browse services, bounded distinct nodes/session/window and calibrated benign browse baseline |
+
+**R474 source-level engineering change (atomic publication):**
+- `Carthago/Services/ProtocolIntelligence/ModbusForceListenOnlyModeInspector.cs` — strict complete 12-byte FC08/subfunction 0x0004 request, protocol ID zero, MBAP length six, nonzero valid unit and data field zero. No response/success semantics fabricated.
+- `Carthago.Core/PortablePacketProcessor.cs` — integrates the inspector inside **existing** native Modbus initial-capture path with verified TCP SYN/SYN-ACK, matching sequence/ACK, both directions not TLS, nonfragmented exact first request, and no duplicate second payload; sets a typed `TrafficRecord.ModbusForceListenOnlyModeAttemptObserved` flag and exact application-protocol marker.
+- `Carthago/Models/TrafficRecord.cs` — capture-owned internal setter on attempt flag; user-imported Info text cannot set the flag.
+- `Carthago/Engine/Rules/Expansion/R474_ModbusForceListenOnlyModeAttemptRule.cs` — source-level reachable positive predicate and event with precise request-only evidence, same **86% minimum confidence**, Candidate/Shadow runtime policy; per-instance bounded cooldown.
+- `Carthago/Engine/Rules/Execution/RuleCandidateSelector.cs` — considers typed Modbus attempt field when deciding OT selectability; no loose word-based override.
+- `Carthago.Core/Carthago.Core.csproj` and `Carthago/Carthago.csproj` — compile parser once in Core and avoid duplicate host compilation.
+- `Carthago.Tests/R474CaptureModbusForceListenOnlyTests.cs` — **8 authored xUnit methods** (6 facts + 2 parameterized theories), not executed. Includes full raw-frame TCP three-way handshake, malformed MBAP/function/subfunction, partial/coalesced requests, wrong ACK/port/flags, missing SYN/SYN-ACK, forged text, duplicate packet ID, cooldown, source isolation, engine selectability and telemetry gating.
+
+**Verification status:** STATIC SOURCE REVIEW ONLY. Exact commit SHA is the single Git commit containing this Batch-13 section. R474 remains **SOURCE CANDIDATE UNVERIFIED** until native compile/replay and false-positive/operational review. No other batch rule is marked functionally repaired. Preserve all other control/provenance gates; do not change critical alert policy globally.
+
+**Cumulative source inventory:** 130 / 187 IDs reviewed, **3 source-only reachable candidate detectors (R460, R463, R474)**, 127 reviewed producer-blocked, 57 not yet reviewed. Thus 184 of the 187 initially identified rules lack a source-connected candidate predicate; **0 of these three newly authored candidate source paths have been demonstrated operationally accepted in this ledger**. Carry over all 127 blocked IDs and source-build/run review of R460/R463/R474.
+
+**Next ten unprocessed IDs:** `R484`, `R485`, `R486`, `R487`, `R488`, `R489`, `R490`, `R491`, `R492`, `R493`. The hourly automation must select from this cursor, avoid redoing this batch and revisit blocked items after ordered traversal.

@@ -1155,6 +1155,15 @@ namespace Carthago.Services
                     flow.C2S.Collected != data.Length || flow.S2C.Collected != 0 ||
                     flow.C2S.NextSeq != unchecked(seq + (uint)data.Length) || ack != flow.S2C.NextSeq)
                     return;
+                // R474: the first SYN/SYN-ACK-anchored, complete, non-TLS Modbus/TCP
+                // request is already proven above. A FC08/0x0004 attempt has no
+                // successful-response guarantee (listen-only may silence replies).
+                if (ModbusForceListenOnlyModeInspector.TryInspect(data))
+                {
+                    record.ModbusForceListenOnlyModeAttemptObserved = true;
+                    record.ApplicationProtocol = "modbus.tcp.force_listen_only.attempt";
+                    return;
+                }
                 var operation = IndustrialBatchInspector.InspectModbus(data);
                 if (operation == IndustrialBatchOperation.None) return;
                 record.IndustrialOperation = operation;

@@ -195,6 +195,8 @@ namespace Carthago.Models
         public bool ModbusOversizedReadExceptionObserved { get; internal set; }
         public bool ModbusBulkFileReadResponseObserved { get; internal set; }
         public bool ModbusClearMaskWriteObserved { get; internal set; }
+        // Capture-owned, strict MBAP FC08/subfunction 04 request. Not an execution outcome.
+        public bool ModbusForceListenOnlyModeAttemptObserved { get; internal set; }
         public bool FinsNodeNegotiationObserved { get; internal set; }
         public bool FinsDataMemoryClearObserved { get; internal set; }
         public bool FinsControllerStopObserved { get; internal set; }

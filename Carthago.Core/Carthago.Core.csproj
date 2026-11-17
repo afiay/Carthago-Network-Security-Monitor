@@ -33,6 +33,7 @@
     <Compile Include="../Carthago/Services/ProtocolIntelligence/Dnp3RestartRequestInspector.cs" Link="Services/ProtocolIntelligence/Dnp3RestartRequestInspector.cs" />
     <Compile Include="../Carthago/Services/ProtocolIntelligence/Dnp3UnsolicitedBinaryEventInspector.cs" Link="Services/ProtocolIntelligence/Dnp3UnsolicitedBinaryEventInspector.cs" />
     <Compile Include="../Carthago/Services/ProtocolIntelligence/ModbusSingleRegisterWriteInspector.cs" Link="Services/ProtocolIntelligence/ModbusSingleRegisterWriteInspector.cs" />
+    <Compile Include="../Carthago/Services/ProtocolIntelligence/ModbusForceListenOnlyModeInspector.cs" Link="Services/ProtocolIntelligence/ModbusForceListenOnlyModeInspector.cs" />
     <Compile Include="../Carthago/Services/ProtocolIntelligence/ModbusClearMaskWriteInspector.cs" Link="Services/ProtocolIntelligence/ModbusClearMaskWriteInspector.cs" />
     <Compile Include="../Carthago/Services/ProtocolIntelligence/Iec104ApduInspector.cs" Link="Services/ProtocolIntelligence/Iec104ApduInspector.cs" />
     <Compile Include="../Carthago/Services/ProtocolIntelligence/Iec104StartupOffSequence.cs" Link="Services/ProtocolIntelligence/Iec104StartupOffSequence.cs" />

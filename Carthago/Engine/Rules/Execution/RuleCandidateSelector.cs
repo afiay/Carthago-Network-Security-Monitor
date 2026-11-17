@@ -105,7 +105,8 @@ namespace Carthago.Engine.Rules.Execution
                || !string.IsNullOrWhiteSpace(record.CertSubject);
 
         private static bool LooksIoTOrOt(TrafficRecord record)
-            => ContainsAny(record.Info, "mqtt", "bacnet", "modbus", "dnp3", "opc ua", "opcua", "profinet", "coap", "zigbee", "camera", "nvr", "telnet", "upnp")
+            => record.ModbusForceListenOnlyModeAttemptObserved
+               || ContainsAny(record.Info, "mqtt", "bacnet", "modbus", "dnp3", "opc ua", "opcua", "profinet", "coap", "zigbee", "camera", "nvr", "telnet", "upnp")
                || ContainsAny(record.ApplicationProtocol, "mqtt", "bacnet", "modbus", "dnp3", "opc", "coap", "zigbee")
                || ContainsAny(record.ApplicationService, "mqtt", "bacnet", "modbus", "dnp3", "opc", "coap", "zigbee");
 

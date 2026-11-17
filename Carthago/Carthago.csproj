@@ -94,6 +94,7 @@
     <Compile Remove="Services/ProtocolIntelligence/Dnp3RestartRequestInspector.cs" />
     <Compile Remove="Services/ProtocolIntelligence/Dnp3UnsolicitedBinaryEventInspector.cs" />
     <Compile Remove="Services/ProtocolIntelligence/ModbusSingleRegisterWriteInspector.cs" />
+    <Compile Remove="Services/ProtocolIntelligence/ModbusForceListenOnlyModeInspector.cs" />
     <Compile Remove="Services/ProtocolIntelligence/ModbusClearMaskWriteInspector.cs" />
     <Compile Remove="Services/Fingerprints/HttpJa4H.cs" />
     <Compile Remove="Services/Fingerprints/TlsJa4.cs" />
