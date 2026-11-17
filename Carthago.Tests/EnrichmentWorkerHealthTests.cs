@@ -53,6 +53,34 @@ public sealed class EnrichmentWorkerHealthTests
     }
 
     [Fact]
+    public void Worker_Durations_Clamp_Negative_Values_Without_Changing_Outcome_Denominators()
+    {
+        var health = new EnrichmentWorkerHealth();
+        health.Start(-100);
+        health.End(true, false, -200);
+        health.Start(12);
+        health.End(true, true, 15);
+        health.Start(-1);
+        health.End(false, false, -1);
+
+        var snapshot = health.Snapshot();
+        Assert.Equal(3L, snapshot.Started);
+        Assert.Equal(1L, snapshot.Returned);
+        Assert.Equal(1L, snapshot.Cancelled);
+        Assert.Equal(1L, snapshot.Faulted);
+        Assert.Equal(12L, snapshot.WaitTotalMs);
+        Assert.Equal(12L, snapshot.WaitMaxMs);
+        Assert.Equal(15L, snapshot.ElapsedTotalMs);
+        Assert.Equal(15L, snapshot.ElapsedMaxMs);
+        var summary = EnrichmentHealthPresentation.WorkerSummary(snapshot);
+        Assert.Contains("started workers: 3", summary);
+        Assert.Contains("completed workers: 3", summary);
+        Assert.Contains("4.0 / 12", summary);
+        Assert.Contains("5.0 / 15", summary);
+        Assert.Contains("in flight at snapshot: 0", summary);
+    }
+
+    [Fact]
     public void Detached_Work_Return_Is_Cancelled_Even_Before_Token_Signal()
     {
         using var oldRun = new System.Threading.CancellationTokenSource();
