@@ -119,6 +119,9 @@ def reconcile_inventory(joined: dict, inventory: dict) -> dict:
     """Cross-check reviewed cases against the bounded exact-ID audit, not the registry."""
     if not isinstance(inventory, dict) or inventory.get("schemaVersion") != 1:
         raise ValueError("Unsupported exact-ID inventory schema")
+    source_sha = inventory.get("sourceSha")
+    if not isinstance(source_sha, str) or not re.fullmatch(r"[0-9a-f]{40}", source_sha):
+        raise ValueError("Missing or invalid inventory source SHA")
     records = inventory.get("records")
     if not isinstance(records, list) or not 0 < len(records) <= 1000:
         raise ValueError("Invalid exact-ID inventory records")
@@ -179,6 +182,9 @@ def self_test() -> None:
             {**inventory, "records": [{"ruleId": "R163", "registeredClass": "R163_TestRule"}]},
             {**inventory, "records": [{"ruleId": "R102", "registeredClass": "R163_TestRule"}]},
             {**inventory, "schemaVersion": 2},
+            {**inventory, "sourceSha": None},
+            {**inventory, "sourceSha": "unknown"},
+            {**inventory, "sourceSha": "A" * 40},
         ):
             try:
                 reconcile_inventory(joined, bad_inventory)
