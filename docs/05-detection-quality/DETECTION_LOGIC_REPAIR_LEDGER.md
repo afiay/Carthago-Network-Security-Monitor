@@ -273,3 +273,23 @@ Each hourly run:
 **R460 additional atomic source publication:** `2d488d070f6f31dfeb50acca38382ece446e7d1a` updates the actual `R460_NetBIOSNameQuerySweepRule` predicate, `Carthago.Core/PortablePacketProcessor.cs`, internal `TrafficRecord.NbnsQueryNameDigest`, `NbnsNameQueryInspector`, `Carthago.Core.csproj`/WPF compile-link split, and the shared local-discovery evidence boundary. Eight narrowly targeted regression facts in `Carthago.Tests/R460CaptureBoundNetbiosSweepTests.cs` are **AUTHORED, NOT EXECUTED**. The binary decoder is limited to complete single-question first-level NBNS IPv4 UDP/137 payloads: QR/opcode/TC, length, A–P encoding, NetBIOS name, QTYPE NB and IN class checks; it does not parse compressed name scopes, multi-question traffic, retransmitted fragments or arbitrary DNS, nor provide asset authorization. The only exported detection evidence is a bounded distinct-name count and wire-decoder provenance. Rule remains **Candidate/Shadow, original 76% minimum confidence preserved**. Source-level predicate/producer are integrated, but runtime throughput, source authorization, 8/60s benign baseline, build, replay and SOC display are unverified. Other nine Batch-11 IDs remain blocked. **Queue cursor remains R464–R473**.
 
 **Next ten unprocessed IDs:** `R464`, `R465`, `R466`, `R467`, `R468`, `R469`, `R470`, `R471`, `R472`, `R473`. Carryover work for R454–R462, earlier 100 blocked rules, and R463 current-SHA verification is explicit and not silently closed.
+
+
+## Batch 12 — R464–R473 (2026-11-17; source-only)
+
+**Inspected:** the ten expansion rule classes and the prior batch ledger. Their generic precision descriptors are not trusted detector-positive proof. This batch does not claim an operationally completed rule. Earlier R460/R463 source candidates remain unverified and in carryover.
+
+| Rule | State | Missing authenticated producer or engine integration |
+| --- | --- | --- |
+| R464 | PRODUCER-BLOCKED | Complete ARP observations, per-IP conflicting MAC identity correlation, authoritative DHCP/asset inventory and failover baseline |
+| R465 | PRODUCER-BLOCKED | Verified IPv6 ICMPv6 router advertisements and prefix information, trusted router inventory and change baseline |
+| R466 | PRODUCER-BLOCKED | Verified Wi-Fi controller endpoint, complete admin request/response, authenticated actor and approval policy |
+| R467 | PRODUCER-BLOCKED | Decoded CAPWAP discovery/join transactions, authenticated controller identity and external-origin policy |
+| R468 | PRODUCER-BLOCKED | OS Bluetooth PAN/gateway attribution and correlated outbound flow plus authorized device policy |
+| R469 | PRODUCER-BLOCKED | Valid ADB transport/authentication handshake, verified device identity and allowed developer endpoints |
+| R470 | PRODUCER-BLOCKED | Signed MDM enrollment outcomes, stable distinct device identities and approved enrollment window |
+| R471 | PRODUCER-BLOCKED | Authenticated RDP virtual-channel clipboard/file-copy event with session and transfer outcome |
+| R472 | PRODUCER-BLOCKED | Signed endpoint process/remote-support session event, verified tool identity and authorized session baseline |
+| R473 | IN-PROGRESS, PRODUCER-BLOCKED | Complete Modbus/TCP request/response reassembly, trusted ICS asset and approved engineering-workstation policy, transaction correlation and RuleEngine integration |
+
+**Source increment for R473:** `Carthago/Services/ProtocolIntelligence/ModbusDeviceIdentificationRequestInspector.cs` (commit `ec0526a6d003b1edca2881b6ba5666a8d419a5ca`) parses only complete MBAP-framed function 0x2B/MEI 0x0E Read Device Identification requests. No success, maliciousness or authorization is inferred. `Carthago.Tests/ProtocolIntelligence/ModbusDeviceIdentificationRequestInspectorTests.cs` (commit `fadbaf744a97293375cf778bfd273d96837e3619`) has four xUnit methods with malformed-frame cases **AUTHORED, NOT EXECUTED**. The parser is not wired to trusted capture or RuleEngine. **Functional detector repairs: 0.** No local Windows runner, CI, Actions or live invasive tests used. **Carryover:** all ten remain incomplete. **Next cursor:** R474–R483. Ledger publication commit is the commit containing this section.
