@@ -133,3 +133,21 @@ Each hourly run:
 | R323 | PRODUCER-BLOCKED | Authenticated attachment retrieval results, delivered bytes and actor context |
 
 **Actual source increment:** `Carthago/Services/ProtocolIntelligence/Pop3CleartextCommandInspector.cs` strictly inspects complete attested plaintext USER/PASS command lines, rejects partial/encrypted/malformed/overlong input, and emits only redacted command kind. `Carthago.Tests/ProtocolIntelligence/Pop3CleartextCommandInspectorTests.cs` contains four test methods with parameterized cases. **AUTHORED, UNEXECUTED**. Not a detector positive; independent TLS state and capture provenance remain absent. Commit SHA is the atomic commit containing this ledger; verify git log. **Carryover:** all 50 inspected IDs unresolved. **Next cursor:** R324–R333. No Windows tests, GitHub Actions or native capture.
+
+
+## Batch 06 — R324–R333 (2026-11-17)
+**Inspected snapshot:** `20c92f06bcccdacfd33a861909a83ce805855844`. All ten EvaluatePrecision methods return unconditional NoMatch; **zero functional detector repairs**, no runtime promotion. Statuses below remain unresolved and carry over. 
+| ID | State | Required producer / blocker |
+| --- | --- | --- |
+| R324 | PRODUCER-BLOCKED | Authenticated web-content response and validated phishing-kit signature plus destination ownership; login URI insufficient |
+| R325 | PRODUCER-BLOCKED | Authenticated sender identity and protected-domain policy plus actual delivery/contact outcome; DNS alone insufficient |
+| R326 | PRODUCER-BLOCKED | Trusted resolver query attribution, mail-policy baseline and approved source context; policy lookups alone not recon |
+| R327 | PRODUCER-BLOCKED | Authenticated Slack workspace app-install audit and successful install decision |
+| R328 | PRODUCER-BLOCKED | Authenticated Teams connector delivery audit, accepted message and authorization context |
+| R329 | PRODUCER-BLOCKED | Authenticated SharePoint completed file-download audit, distinct files, user and authorization baseline |
+| R330 | PRODUCER-BLOCKED | Authenticated OneDrive anonymous share permissions, completed file access and distinct link identity |
+| R331 | PRODUCER-BLOCKED | Authenticated calendar invitation delivery and validated malicious link verdict |
+| R332 | PRODUCER-BLOCKED | Authenticated mail archive export result plus independently confirmed delivered bytes |
+| R333 | IN-PROGRESS, PRODUCER-BLOCKED | Strict complete SMB2 SESSION_SETUP server-declared null response inspector added; still needs authenticated server identity, correlated IPC$ tree connect and enumeration outcome, stream reassembly and engine integration |
+
+**Actual source increment:** `Carthago/Services/ProtocolIntelligence/Smb2NullSessionResponseInspector.cs` and `Carthago.Tests/ProtocolIntelligence/Smb2NullSessionResponseInspectorTests.cs` (five regression methods **AUTHORED, UNEXECUTED**). Complete SMB2 null session response parsing is not proof of enumeration, server authenticity or a detector-positive; R333 remains NoMatch. No Windows runner, native capture, GitHub Actions or CI changes. **Carryover:** all 60 inspected IDs unresolved. **Next cursor:** R334–R343. Commit SHA: inspect atomic git commit containing this ledger.
