@@ -796,9 +796,15 @@
                       </Grid.RowDefinitions>
                       <StackPanel>
                         <TextBlock Text="02  /  PRIORITY QUEUE" Style="{StaticResource MicroLabel}" Foreground="{StaticResource AccentBrush}" Margin="0,0,0,4"/>
-                        <StackPanel Orientation="Horizontal">
-                          <TextBlock Text="Recent High-Priority Incidents" Style="{StaticResource DashboardSectionTitle}"/>
-                          <TextBlock Text="  &#x24D8;" Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"
+                        <Grid>
+                          <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                          </Grid.ColumnDefinitions>
+                          <TextBlock Grid.Column="0" Text="Recent High-Priority Incidents"
+                                     Style="{StaticResource DashboardSectionTitle}" TextWrapping="Wrap"/>
+                          <TextBlock Grid.Column="1" Text="&#x24D8;" Margin="8,0,0,0"
+                                     Style="{StaticResource SocInfoGlyph}" VerticalAlignment="Center"
                                      Focusable="True"
                                      KeyboardNavigation.IsTabStop="True"
                                      FocusVisualStyle="{StaticResource KeyboardFocusVisual}"
@@ -806,7 +812,7 @@
                                      ToolTip="Local snapshot: unresolved correlated incidents are prioritized before anomaly signals. Risk scores are local ranking estimates, not detection confidence or verified impact."
                                      AutomationProperties.Name="About prioritized incidents"
                                      AutomationProperties.HelpText="The queue prioritizes unresolved correlated incidents and then anomaly signals. Risk scores are local estimates, not detection confidence or verified impact."/>
-                        </StackPanel>
+                        </Grid>
                         <TextBlock Text="Prioritized local findings · select a card to inspect its context."
                                    Foreground="{StaticResource TextMutedBrush}"
                                    FontSize="12"
