@@ -81,6 +81,49 @@ public sealed class EnrichmentWorkerHealthTests
     }
 
     [Fact]
+    public async System.Threading.Tasks.Task Worker_Snapshot_During_Concurrent_InFlight_Work_Reconciles_After_Drain()
+    {
+        const int workers = 16;
+        var health = new EnrichmentWorkerHealth();
+        using var started = new System.Threading.CountdownEvent(workers);
+        using var release = new System.Threading.ManualResetEventSlim(false);
+        var tasks = System.Linq.Enumerable.Range(0, workers).Select(i =>
+            System.Threading.Tasks.Task.Factory.StartNew(() =>
+            {
+                health.Start(i + 1);
+                started.Signal();
+                release.Wait();
+                health.End(i % 2 == 0, false, 2 * (i + 1));
+            }, System.Threading.CancellationToken.None,
+                System.Threading.Tasks.TaskCreationOptions.LongRunning,
+                System.Threading.Tasks.TaskScheduler.Default)).ToArray();
+        try
+        {
+            Assert.True(started.Wait(System.TimeSpan.FromSeconds(15)), "All workers must reach the in-flight barrier");
+            var inFlight = health.Snapshot();
+            Assert.Equal(workers, inFlight.Started);
+            Assert.Equal(0L, inFlight.Returned + inFlight.Cancelled + inFlight.Faulted);
+            Assert.Equal(136L, inFlight.WaitTotalMs);
+            Assert.Equal(16L, inFlight.WaitMaxMs);
+            Assert.Equal(0L, inFlight.ElapsedTotalMs);
+            Assert.Contains("in flight at snapshot: 16", EnrichmentHealthPresentation.WorkerSummary(inFlight));
+        }
+        finally
+        {
+            release.Set();
+            await System.Threading.Tasks.Task.WhenAll(tasks).WaitAsync(System.TimeSpan.FromSeconds(15));
+        }
+        var drained = health.Snapshot();
+        Assert.Equal(workers, drained.Started);
+        Assert.Equal(8L, drained.Returned);
+        Assert.Equal(8L, drained.Faulted);
+        Assert.Equal(0L, drained.Cancelled);
+        Assert.Equal(272L, drained.ElapsedTotalMs);
+        Assert.Equal(32L, drained.ElapsedMaxMs);
+        Assert.Contains("in flight at snapshot: 0", EnrichmentHealthPresentation.WorkerSummary(drained));
+    }
+
+    [Fact]
     public void Detached_Work_Return_Is_Cancelled_Even_Before_Token_Signal()
     {
         using var oldRun = new System.Threading.CancellationTokenSource();
