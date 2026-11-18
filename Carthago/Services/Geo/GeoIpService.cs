@@ -24,7 +24,12 @@ namespace Carthago.Services.Geo
         public readonly record struct CacheHealthSnapshot(long PositiveHits, long NegativeHits, long Misses,
             long Expired, long Evicted, int Occupancy, int Capacity)
         {
-            public long Requests => PositiveHits + NegativeHits + Misses;
+            // Keep the legacy Int64 API monotonic rather than allowing wraparound.
+            // RequestsExact preserves the full accounted population for diagnostics.
+            public decimal RequestsExact => (decimal)PositiveHits + NegativeHits + Misses;
+            public bool RequestsOverflowed => RequestsExact > long.MaxValue || RequestsExact < long.MinValue;
+            public long Requests => RequestsExact > long.MaxValue ? long.MaxValue
+                : RequestsExact < long.MinValue ? long.MinValue : (long)RequestsExact;
         }
         public CacheHealthSnapshot CacheHealth
         {
