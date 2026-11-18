@@ -56,7 +56,7 @@ def finish(repo: Path, before: Path, trx: Path, output: Path) -> None:
     current = snapshot(repo)
     if any(record.get(key) != value for key, value in current.items()):
         raise ValueError("Checkout changed between before/after snapshots")
-    if not trx.is_file() or not 0 < trx.stat().st_size <= MAX_TRX_BYTES:
+    # A symlink may redirect intake outside the reviewed artifact location.\n    if trx.is_symlink():\n        raise ValueError("Symlink TRX artifacts are not accepted")\n    if not trx.is_file() or not 0 < trx.stat().st_size <= MAX_TRX_BYTES:
         raise ValueError("Missing, empty or oversized TRX")
     # Bound the actual read as well as the initial stat: the file may grow concurrently.
     # A same-size replacement during intake must not be accepted as a stable artifact.
@@ -125,6 +125,21 @@ def self_test() -> None:
                 else:
                     raise AssertionError("Concurrent checkout mutation accepted")
             assert not race_output.exists(), "Manifest written after checkout race"
+            # Reject a redirected TRX artifact even when its bytes are otherwise valid.
+            link = root.parent / (root.name + "-linked.trx")
+            try:
+                link.symlink_to(trx)
+            except (OSError, NotImplementedError):
+                pass  # Windows may disallow creating symlinks without developer mode.
+            else:
+                try:
+                    finish(root, before, link, root.parent / (root.name + "-link-rejected.json"))
+                except ValueError as error:
+                    assert "Symlink TRX" in str(error)
+                else:
+                    raise AssertionError("Symlink TRX accepted")
+                finally:
+                    link.unlink(missing_ok=True)
             # Reject empty and oversized TRX inputs before any manifest is written.
             trx.write_bytes(b"")
             try:
