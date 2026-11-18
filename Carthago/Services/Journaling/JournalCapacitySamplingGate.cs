@@ -10,6 +10,7 @@ namespace Carthago.Services
     public sealed class JournalCapacitySamplingGate
     {
         private readonly DetectionJournal _journal;
+        private readonly object _sampleSync = new();
         private readonly long _minimumFreeBytes;
         private readonly double _minimumFreePercent;
         private readonly TimeSpan _minimumInterval;
@@ -43,41 +44,52 @@ namespace Carthago.Services
         public bool TrySample(DateTime sampledAtUtc, bool maintenance,
             out bool confirmedLow, out long availableBytes, out long totalBytes)
         {
-            confirmedLow = false;
-            availableBytes = 0;
-            totalBytes = 0;
-            if (sampledAtUtc.Kind != DateTimeKind.Utc || sampledAtUtc == default ||
-                maintenance || (_previousUtc.HasValue && sampledAtUtc <= _previousUtc.Value))
+            // The journal can be shared by GUI, CLI and service monitoring callers.
+            // Serialize both OS sampling and state transitions: concurrent samples
+            // must never combine into a fabricated two-reading confirmation.
+            lock (_sampleSync)
             {
-                Reset();
-                return false;
-            }
-
-            if (_previousUtc.HasValue)
-            {
-                var elapsed = sampledAtUtc - _previousUtc.Value;
-                if (elapsed < _minimumInterval)
+                confirmedLow = false;
+                availableBytes = 0;
+                totalBytes = 0;
+                if (sampledAtUtc.Kind != DateTimeKind.Utc || sampledAtUtc == default ||
+                    maintenance || (_previousUtc.HasValue && sampledAtUtc <= _previousUtc.Value))
+                {
+                    ResetCore();
                     return false;
-                // A stale first sample cannot confirm a fresh low-space condition.
-                if (elapsed > _maximumInterval)
-                    Reset();
-            }
+                }
 
-            if (!_journal.TryEvaluateConfiguredVolumeCapacity(
-                _minimumFreeBytes, _minimumFreePercent,
-                out var low, out availableBytes, out totalBytes))
-            {
-                Reset();
-                return false;
-            }
+                if (_previousUtc.HasValue)
+                {
+                    var elapsed = sampledAtUtc - _previousUtc.Value;
+                    if (elapsed < _minimumInterval)
+                        return false;
+                    if (elapsed > _maximumInterval)
+                        ResetCore();
+                }
 
-            _previousUtc = sampledAtUtc;
-            _consecutiveLow = low ? Math.Min(2, _consecutiveLow + 1) : 0;
-            confirmedLow = _consecutiveLow == 2;
-            return true;
+                if (!_journal.TryEvaluateConfiguredVolumeCapacity(
+                    _minimumFreeBytes, _minimumFreePercent,
+                    out var low, out availableBytes, out totalBytes))
+                {
+                    ResetCore();
+                    return false;
+                }
+
+                _previousUtc = sampledAtUtc;
+                _consecutiveLow = low ? Math.Min(2, _consecutiveLow + 1) : 0;
+                confirmedLow = _consecutiveLow == 2;
+                return true;
+            }
         }
 
         public void Reset()
+        {
+            lock (_sampleSync)
+                ResetCore();
+        }
+
+        private void ResetCore()
         {
             _previousUtc = null;
             _consecutiveLow = 0;
