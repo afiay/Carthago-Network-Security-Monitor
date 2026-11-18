@@ -413,6 +413,18 @@ public sealed class EnrichmentHealthPresentationTests
         Assert.Contains("TCP metadata-cache capacity metrics unavailable", EnrichmentHealthPresentation.Build(new TrafficCaptureService.StatsSnapshot()).Summary);
     }
 
+    [Theory]
+    [InlineData(-1, 0L)]
+    [InlineData(0, -1L)]
+    [InlineData(int.MaxValue, 0L)]
+    public void Metadata_Cache_Invalid_Capacity_Counters_Are_Flagged(int count, long evictions)
+    {
+        var summary = EnrichmentHealthPresentation.ProcessMetadataCacheCapacitySummary((count, evictions));
+        Assert.Contains("WARNING: TCP metadata-cache capacity counters inconsistent", summary);
+        Assert.Contains($"retained entries: {count}/{WindowsProcessResolver.MaxCacheEntries}", summary);
+        Assert.Contains($"capacity evictions (process lifetime): {evictions}", summary);
+    }
+
     [Fact]
     public void Native_Process_Summary_Separates_Candidates_And_Empty_Buckets()
     {
