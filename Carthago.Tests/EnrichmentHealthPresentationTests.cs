@@ -257,6 +257,19 @@ public sealed class EnrichmentHealthPresentationTests
     }
 
     [Fact]
+    public void Geo_Lookup_Failure_Share_Uses_Exact_Overflowing_Attempt_Population()
+    {
+        var stats = new TrafficCaptureService.StatsSnapshot
+        {
+            GeoCityLookupHealth = new(long.MaxValue, 0, long.MaxValue)
+        };
+        var summary = EnrichmentHealthPresentation.Build(stats).Summary;
+        Assert.Contains("City: 18446744073709551614 attempts", summary);
+        Assert.Contains("failure share 50.0%", summary);
+        Assert.Contains("WARNING: GeoIP lookup outcome counters invalid or exceed Int64", summary);
+    }
+
+    [Fact]
     public void Cancellation_Remains_A_Distinct_Outcome()
     {
         var stats = new TrafficCaptureService.StatsSnapshot
@@ -280,8 +293,8 @@ public sealed class EnrichmentHealthPresentationTests
             GeoCityLookupHealth = new(1, 2, 0)
         };
         var summary = EnrichmentHealthPresentation.Build(stats).Summary;
-        Assert.Contains("8 eligible requests, 3 positive hits, 1 negative hits, 4 misses", summary);
-        Assert.Contains("hit share 50.0% of 8 eligible requests", summary);
+        Assert.Contains("8 accounted eligible requests (reported Int64 total 8), 3 positive hits, 1 negative hits, 4 misses", summary);
+        Assert.Contains("hit share 50.0% of 8 accounted eligible requests", summary);
         Assert.Contains("City: 3 attempts", summary);
         Assert.Contains("retained entries: 2/8", summary);
         Assert.Contains("GeoIP cache metrics unavailable", EnrichmentHealthPresentation.Build(new TrafficCaptureService.StatsSnapshot()).Summary);
