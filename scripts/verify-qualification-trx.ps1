@@ -64,6 +64,15 @@ function Test-QualificationTrx([byte[]]$bytes, [string]$digest, [string[]]$names
                 throw "TRX counter mismatch: $($pair[0])"
             }
         }
+        # Optional terminal error counter must agree with observed error nodes.
+        # A forged zero cannot conceal a failing unrelated test in a reviewed run.
+        if ($counters.HasAttribute('error')) {
+            $errors = @($observed | Where-Object { $_.GetAttribute('outcome') -ceq 'Error' }).Count
+            $reportedErrors = 0
+            if (-not [int]::TryParse($counters.GetAttribute('error'),[ref]$reportedErrors) -or $reportedErrors -ne $errors) {
+                throw 'TRX counter mismatch: error'
+            }
+        }
         if ($passed + $failed -gt $observed.Count) { throw 'Invalid TRX result accounting' }
     }
     if ($names.Count -eq 0 -or $names.Count -gt 1000) { throw 'Invalid selection size' }
@@ -108,6 +117,14 @@ if ($SelfTest) {
     Reject-Fixture { Invoke-Fixture ($counted.Replace('passed="1"','passed="0"')) @('Exact.Test') 'Passed' }
     Reject-Fixture { Invoke-Fixture ($counted.Replace('total="1"','total="2"')) @('Exact.Test') 'Passed' }
     Reject-Fixture { Invoke-Fixture ($counted.Replace('failed="0"','failed="1"')) @('Exact.Test') 'Passed' }
+    # Optional error counter is independently reconciled; absent counter stays compatible.
+    $withError = $counted.Replace('</Results>','<UnitTestResult testName="Other.Error" outcome="Error"/></Results>').Replace('total="1"','total="2"')
+    $withError = $withError.Replace('failed="0"','failed="0"').Replace('passed="1"','passed="1"').Replace('failed="0"','failed="0"')
+    $errorCounted = $withError.Replace('failed="0"','failed="0" error="1"')
+    $errorOk = Invoke-Fixture $errorCounted @('Exact.Test') 'Passed'
+    if ($errorOk.matchedTests -ne 1) { throw 'Error-counter positive fixture failed' }
+    Reject-Fixture { Invoke-Fixture ($errorCounted.Replace('error="1"','error="0"')) @('Exact.Test') 'Passed' }
+    Reject-Fixture { Invoke-Fixture ($errorCounted.Replace('error="1"','error="invalid"')) @('Exact.Test') 'Passed' }
     # Selected success must not override an inconsistent terminal run outcome.
     Reject-Fixture { Invoke-Fixture ($xml.Replace('outcome="Completed"','outcome="Failed"')) @('Exact.Test') 'Passed' }
     $mixed = $xml.Replace('</Results>','<UnitTestResult testName="Other.Failed" outcome="Failed"/></Results>')
@@ -121,7 +138,7 @@ if ($SelfTest) {
     }
     Reject-Fixture { Invoke-Fixture ($xml.Replace('outcome="Passed"/></Results>','outcome="Unknown"/></Results>')) @('Exact.Test') 'Passed' }
     Reject-Fixture { Invoke-Fixture ('<!DOCTYPE TestRun [<!ENTITY x "bad">]>' + $xml) @('Exact.Test') 'Passed' }
-    [pscustomobject]@{ selfTestsPassed=25; detectorTestsExecuted=0 } | ConvertTo-Json
+    [pscustomobject]@{ selfTestsPassed=28; detectorTestsExecuted=0 } | ConvertTo-Json
 } else {
     $item = Get-Item -LiteralPath $Artifact
     if ($item.PSIsContainer -or $item.Length -gt 16777216) { throw 'Invalid artifact size or type' }
