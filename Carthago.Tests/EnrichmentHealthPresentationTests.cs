@@ -469,6 +469,24 @@ public sealed class EnrichmentHealthPresentationTests
         Assert.Contains("hit share — of 0 accounted eligible requests", summary);
     }
 
+    [Theory]
+    [InlineData(1, 1, 0, 0, 0, 5, 6, 8, 4)]
+    [InlineData(0, 0, 0, 0, 0, 5, 5, 0, 0)]
+    [InlineData(1, 0, 0, 0, 0, 0, 0, 3, 3)]
+    public void Worker_Summary_Suppresses_Inconsistent_Duration_Means(
+        long started, long returned, long cancelled, long faulted, long skipped,
+        long waitTotal, long waitMax, long elapsedTotal, long elapsedMax)
+    {
+        var snapshot = new EnrichmentWorkerSnapshot(started, returned, cancelled, faulted,
+            skipped, waitTotal, waitMax, elapsedTotal, elapsedMax);
+        var summary = EnrichmentHealthPresentation.WorkerSummary(snapshot);
+        Assert.Contains("WARNING: invalid worker counters or duration accounting", summary);
+        if (waitMax > waitTotal || started == 0)
+            Assert.Contains("Queue wait mean/max ms (started workers: " + started + "): —", summary);
+        if (elapsedMax > elapsedTotal || returned + cancelled + faulted == 0)
+            Assert.Contains("worker elapsed mean/max ms (completed workers: ", summary);
+    }
+
     [Fact]
     public void Worker_Summary_Without_Snapshot_Does_Not_Invent_Denominators()
     {
