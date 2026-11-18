@@ -1470,21 +1470,24 @@
                           <StackPanel>
                             <DockPanel LastChildFill="True">
                               <Border DockPanel.Dock="Left" Width="3" Background="#4AC8DB" CornerRadius="2" Margin="0,2,8,2"/>
-                              <TextBlock Text="OBSERVED DETECTION RECORDS" FontSize="12" FontWeight="Bold"
-                                         Foreground="{StaticResource TextBrush}" TextWrapping="Wrap"/>
+                              <TextBlock Text="Observed detection records" FontSize="16" FontWeight="SemiBold"
+                                         Foreground="{StaticResource TextBrush}" TextWrapping="Wrap"
+                                         AutomationProperties.HeadingLevel="Level4"/>
                             </DockPanel>
-                            <WrapPanel Margin="11,4,0,0">
-                              <Border Background="#123343" BorderBrush="#2B6372" BorderThickness="1"
-                                      CornerRadius="4" Padding="6,2" Margin="0,0,8,3">
-                                <TextBlock Text="LOCAL VIEW" Foreground="#69DCEC" FontSize="10" FontWeight="Bold"/>
-                              </Border>
-                              <TextBlock Text="Local metadata · read-only · received order"
-                                         Foreground="{StaticResource TextMutedBrush}" FontSize="11"
-                                         VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,8,3"/>
+                            <StackPanel Margin="11,6,0,0">
+                              <WrapPanel>
+                                <Border Background="#123343" BorderBrush="#2B6372" BorderThickness="1"
+                                        CornerRadius="4" Padding="6,2" Margin="0,0,8,4">
+                                  <TextBlock Text="LOCAL VIEW" Foreground="#69DCEC" FontSize="10" FontWeight="Bold"/>
+                                </Border>
+                                <TextBlock Text="Local metadata · read-only · received order"
+                                           Foreground="{StaticResource TextMutedBrush}" FontSize="12"
+                                           VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,0,4"/>
+                              </WrapPanel>
                               <TextBlock Text="80 displayed / 500 retained max"
                                          Foreground="{StaticResource TextSubtleBrush}" FontSize="11"
-                                         VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,0,3"/>
-                            </WrapPanel>
+                                         TextWrapping="Wrap" Margin="0,1,0,0"/>
+                            </StackPanel>
                           </StackPanel>
                         </Border>
                         <Border Grid.Row="1" Background="#0C2031" BorderBrush="#25445B"
