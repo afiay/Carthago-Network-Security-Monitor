@@ -196,8 +196,7 @@ internal static class EnrichmentHealthPresentation
         bool invalid = s.Assets.Count < 0 || s.Assets.Limit < 0 || s.Assets.Count > s.Assets.Limit ||
             s.Assets.Rejected < 0 || s.Destinations.Count < 0 || s.Destinations.Limit < 0 ||
             s.Destinations.Count > s.Destinations.Limit || s.Destinations.Rejected < 0 ||
-            s.Checkpoints.Writes < 0 || s.Checkpoints.Failures < 0 ||
-            s.Checkpoints.Failures > s.Checkpoints.Writes;
+            s.Checkpoints.Writes < 0 || s.Checkpoints.Failures < 0;
         return (invalid ? "WARNING: enrichment registry capacity or checkpoint counters inconsistent; inspect storage accounting. " : string.Empty) +
             $"Current/last session assets: {s.Assets.Count}/{s.Assets.Limit}, capacity-rejected observations: {s.Assets.Rejected}; " +
             $"external destinations: {s.Destinations.Count}/{s.Destinations.Limit}, capacity-rejected observations: {s.Destinations.Rejected}. " +
