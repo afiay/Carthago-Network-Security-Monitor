@@ -204,6 +204,9 @@ internal static class EnrichmentHealthPresentation
         // Lifetime outcome counters can collectively exceed Int64 without any individual
         // counter overflowing. Keep lifecycle reconciliation in a widened domain.
         decimal completed = (decimal)w.Returned + w.Cancelled + w.Faulted;
+        bool invalidLifecycle = w.Started < 0 || w.Returned < 0 || w.Cancelled < 0 || w.Faulted < 0 || completed > w.Started;
+        // Do not silently clamp impossible lifecycle populations to zero in flight.
+        string inFlight = invalidLifecycle ? "—" : (w.Started - completed).ToString("N0", CultureInfo.InvariantCulture);
         string accounting = completed > w.Started
             ? $" WARNING: completed outcomes exceed started workers by {completed - w.Started:N0}; inspect worker lifecycle accounting."
             : string.Empty;
@@ -214,7 +217,7 @@ internal static class EnrichmentHealthPresentation
             (completed == 0 && (w.ElapsedTotalMs != 0 || w.ElapsedMaxMs != 0)))
             accounting += " WARNING: invalid worker counters or duration accounting; inspect worker lifecycle accounting.";
         return $"Workers (lifetime): {w.Started:N0} started, {w.Returned:N0} returned, {w.Cancelled:N0} cancelled, {w.Faulted:N0} faulted; " +
-            $"in flight at snapshot: {System.Math.Max(0m, (decimal)w.Started - completed):N0}; " +
+            $"in flight at snapshot: {inFlight}; " +
             $"{w.Skipped:N0} cancelled before processing. Queue wait mean/max ms (started workers: {w.Started:N0}): {Mean(w.WaitTotalMs, w.Started, w.WaitMaxMs)} / {w.WaitMaxMs}; " +
             $"worker elapsed mean/max ms (completed workers: {completed:N0}): {Mean(w.ElapsedTotalMs, completed > w.Started ? 0 : completed, w.ElapsedMaxMs)} / {w.ElapsedMaxMs}. " +
             "Returned does not imply provider success; worker elapsed includes rule evaluation." + accounting;
