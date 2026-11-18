@@ -583,6 +583,29 @@ public sealed class EnrichmentHealthPresentationTests
     }
 
 
+    [Theory]
+    [InlineData(1, 2, 0, 0)]
+    [InlineData(-1, 0, 0, 0)]
+    [InlineData(1, -1, 0, 0)]
+    public void Worker_Invalid_Lifecycle_Does_Not_Fabricate_InFlight_Count(
+        long started, long returned, long cancelled, long faulted)
+    {
+        var summary = EnrichmentHealthPresentation.WorkerSummary(
+            new EnrichmentWorkerSnapshot(started, returned, cancelled, faulted, 0, 0, 0, 0, 0));
+        Assert.Contains("in flight at snapshot: —;", summary);
+        Assert.Contains("WARNING:", summary);
+        Assert.Contains($"{returned} returned", summary);
+    }
+
+    [Fact]
+    public void Worker_Valid_Lifecycle_Reports_Exact_InFlight_Count()
+    {
+        var summary = EnrichmentHealthPresentation.WorkerSummary(
+            new EnrichmentWorkerSnapshot(5, 2, 1, 0, 0, 0, 0, 0, 0));
+        Assert.Contains("in flight at snapshot: 2;", summary);
+        Assert.DoesNotContain("WARNING: completed outcomes exceed started workers", summary);
+    }
+
     [Fact]
     public void Worker_Completed_Exceeding_Started_Does_Not_Report_Elapsed_Mean()
     {
