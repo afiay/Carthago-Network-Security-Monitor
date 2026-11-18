@@ -13,22 +13,25 @@ namespace Carthago.Services
         private readonly long _minimumFreeBytes;
         private readonly double _minimumFreePercent;
         private readonly TimeSpan _minimumInterval;
+        private readonly TimeSpan _maximumInterval;
         private DateTime? _previousUtc;
         private int _consecutiveLow;
 
         public JournalCapacitySamplingGate(
             DetectionJournal journal, long minimumFreeBytes,
-            double minimumFreePercent, TimeSpan minimumInterval)
+            double minimumFreePercent, TimeSpan minimumInterval, TimeSpan? maximumInterval = null)
         {
             _journal = journal ?? throw new ArgumentNullException(nameof(journal));
             if (minimumFreeBytes <= 0 || minimumFreePercent <= 0 ||
                 minimumFreePercent > 100 || double.IsNaN(minimumFreePercent) ||
-                double.IsInfinity(minimumFreePercent) || minimumInterval <= TimeSpan.Zero)
+                double.IsInfinity(minimumFreePercent) || minimumInterval <= TimeSpan.Zero ||
+                (maximumInterval.HasValue && maximumInterval.Value < minimumInterval))
                 throw new ArgumentOutOfRangeException(nameof(minimumFreeBytes),
                     "Valid byte, percent and sampling-interval policy is required.");
             _minimumFreeBytes = minimumFreeBytes;
             _minimumFreePercent = minimumFreePercent;
             _minimumInterval = minimumInterval;
+            _maximumInterval = maximumInterval ?? TimeSpan.FromTicks(checked(minimumInterval.Ticks * 3));
         }
 
         /// <summary>
@@ -49,8 +52,15 @@ namespace Carthago.Services
                 return false;
             }
 
-            if (_previousUtc.HasValue && sampledAtUtc - _previousUtc.Value < _minimumInterval)
-                return false;
+            if (_previousUtc.HasValue)
+            {
+                var elapsed = sampledAtUtc - _previousUtc.Value;
+                if (elapsed < _minimumInterval)
+                    return false;
+                // A stale first sample cannot confirm a fresh low-space condition.
+                if (elapsed > _maximumInterval)
+                    Reset();
+            }
 
             if (!_journal.TryEvaluateConfiguredVolumeCapacity(
                 _minimumFreeBytes, _minimumFreePercent,
