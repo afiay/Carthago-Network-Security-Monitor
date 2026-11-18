@@ -10,7 +10,7 @@ function Assert-Qualification($condition, [string]$message) {
     if (-not $condition) { throw $message }
 }
 function Get-ReviewedExecutionMap($manifest, $registryMap) {
-    Assert-Qualification ($manifest.schemaVersion -eq 1) 'Unsupported execution manifest schema'
+    Assert-Qualification ($manifest.schemaVersion -is [int] -and $manifest.schemaVersion -eq 1) 'Unsupported execution manifest schema'
     # Fail closed on absent or unbounded reviewed manifests before iterating entries.
     Assert-Qualification ($null -ne $manifest.PSObject.Properties['records'] -and $manifest.records -is [array] -and $manifest.records.Count -le 10000) 'Invalid reviewed execution record collection'
     $entries = @{}
@@ -65,7 +65,7 @@ function Get-ReviewedExecutionMap($manifest, $registryMap) {
     return $entries
 }
 function Test-Qualification($document, $inventory, [string]$currentSha, $manifest) {
-    Assert-Qualification ($document.schemaVersion -eq 1) 'Unsupported schema'
+    Assert-Qualification ($document.schemaVersion -is [int] -and $document.schemaVersion -eq 1) 'Unsupported schema'
     Assert-Qualification ($document.sourceSha -cmatch '^[a-f0-9]{40}$') 'Invalid source SHA'
     Assert-Qualification ($null -ne $document.PSObject.Properties['records'] -and $document.records -is [array] -and $document.records.Count -gt 0 -and $document.records.Count -le 1000) 'Invalid exact-ID inventory record collection'
     Assert-Qualification ($currentSha -cmatch '^[a-f0-9]{40}$') 'Invalid current SHA'
