@@ -91,9 +91,19 @@ namespace Carthago.Services
                     ResetCore();
                     return false;
                 }
+                // Never let a reader's claimed classification override the actual
+                // capacity measurements and the configured two-threshold policy.
+                // Inconsistent producer output is unknown, not a low-space event.
+                var expectedLow = sample.Available < _minimumFreeBytes &&
+                    (double)sample.Available / sample.Total * 100 < _minimumFreePercent;
+                if (sample.Low != expectedLow)
+                {
+                    ResetCore();
+                    return false;
+                }
                 availableBytes = sample.Available;
                 totalBytes = sample.Total;
-                var low = sample.Low;
+                var low = expectedLow;
 
                 _previousUtc = sampledAtUtc;
                 _consecutiveLow = low ? Math.Min(2, _consecutiveLow + 1) : 0;
