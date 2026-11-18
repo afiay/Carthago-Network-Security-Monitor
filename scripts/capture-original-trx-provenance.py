@@ -56,7 +56,10 @@ def finish(repo: Path, before: Path, trx: Path, output: Path) -> None:
     current = snapshot(repo)
     if any(record.get(key) != value for key, value in current.items()):
         raise ValueError("Checkout changed between before/after snapshots")
-    # A symlink may redirect intake outside the reviewed artifact location.\n    if trx.is_symlink():\n        raise ValueError("Symlink TRX artifacts are not accepted")\n    if not trx.is_file() or not 0 < trx.stat().st_size <= MAX_TRX_BYTES:
+    # A symlink may redirect intake outside the reviewed artifact location.
+    if trx.is_symlink():
+        raise ValueError("Symlink TRX artifacts are not accepted")
+    if not trx.is_file() or not 0 < trx.stat().st_size <= MAX_TRX_BYTES:
         raise ValueError("Missing, empty or oversized TRX")
     # Bound the actual read as well as the initial stat: the file may grow concurrently.
     # A same-size replacement during intake must not be accepted as a stable artifact.
