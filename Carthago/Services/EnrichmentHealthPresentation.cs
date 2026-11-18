@@ -85,6 +85,7 @@ internal static class EnrichmentHealthPresentation
             $"Enrichment queue depth: {stats.EnrichmentQueueDepth?.ToString(CultureInfo.InvariantCulture) ?? "unknown"}; " +
             $"fallback records (lifetime): {stats.EnrichmentFallbacks:N0}. " +
             "Provider success is not proof of detection accuracy or endpoint trust. " +
+            (stats.EnrichmentQueueDepth < 0 || stats.EnrichmentFallbacks < 0 ? "WARNING: invalid enrichment queue depth or fallback counters; inspect queue accounting. " : string.Empty) +
             (invalidProviderCounters ? "WARNING: invalid provider outcome, cache-path or latency counters; investigate provider accounting. " : string.Empty) +
             WorkerSummary(stats.EnrichmentWorkers) + " " + CoverageSummary(stats.EnrichmentCoverage) + " " + StorageSummary(stats.EnrichmentStorage) + " " + GeoSummary(stats) + " " + NativeProcessSummary(stats.NativeProcessLookups) + " " + ProcessMetadataCacheSummary(stats.ProcessMetadataCache) + " " + ProcessMetadataCacheCapacitySummary(stats.ProcessMetadataCacheCapacity) + " " + TlsCapacitySummary(stats.TlsCapacity), providers);
     }
