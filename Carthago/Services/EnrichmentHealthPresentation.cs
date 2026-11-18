@@ -218,8 +218,8 @@ internal static class EnrichmentHealthPresentation
             accounting += " WARNING: invalid worker counters or duration accounting; inspect worker lifecycle accounting.";
         return $"Workers (lifetime): {w.Started:N0} started, {w.Returned:N0} returned, {w.Cancelled:N0} cancelled, {w.Faulted:N0} faulted; " +
             $"in flight at snapshot: {inFlight}; " +
-            $"{w.Skipped:N0} cancelled before processing. Queue wait mean/max ms (started workers: {w.Started:N0}): {Mean(w.WaitTotalMs, w.Started, w.WaitMaxMs)} / {w.WaitMaxMs}; " +
-            $"worker elapsed mean/max ms (completed workers: {completed:N0}): {Mean(w.ElapsedTotalMs, completed > w.Started ? 0 : completed, w.ElapsedMaxMs)} / {w.ElapsedMaxMs}. " +
+            $"{w.Skipped:N0} cancelled before processing. Queue wait mean/max ms (started workers: {w.Started:N0}): {Mean(w.WaitTotalMs, invalidLifecycle ? 0 : w.Started, w.WaitMaxMs)} / {w.WaitMaxMs}; " +
+            $"worker elapsed mean/max ms (completed workers: {completed:N0}): {Mean(w.ElapsedTotalMs, invalidLifecycle ? 0 : completed, w.ElapsedMaxMs)} / {w.ElapsedMaxMs}. " +
             "Returned does not imply provider success; worker elapsed includes rule evaluation." + accounting;
     }
 }
