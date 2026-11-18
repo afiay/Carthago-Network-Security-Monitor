@@ -57,7 +57,14 @@ def finish(repo: Path, before: Path, trx: Path, output: Path) -> None:
         raise ValueError("Checkout changed between before/after snapshots")
     if not trx.is_file() or not 0 < trx.stat().st_size <= MAX_TRX_BYTES:
         raise ValueError("Missing, empty or oversized TRX")
-    # Bound the actual read as well as the initial stat: the file may grow concurrently.\n    with trx.open("rb") as stream:\n        payload = stream.read(MAX_TRX_BYTES + 1)\n        if not payload or len(payload) > MAX_TRX_BYTES or stream.read(1):\n            raise ValueError("TRX changed size or exceeds bounded intake")\n    if len(payload) != trx.stat().st_size:\n        raise ValueError("TRX changed during intake")\n    digest = hashlib.sha256(payload).hexdigest()
+    # Bound the actual read as well as the initial stat: the file may grow concurrently.
+    with trx.open("rb") as stream:
+        payload = stream.read(MAX_TRX_BYTES + 1)
+        if not payload or len(payload) > MAX_TRX_BYTES or stream.read(1):
+            raise ValueError("TRX changed size or exceeds bounded intake")
+    if len(payload) != trx.stat().st_size:
+        raise ValueError("TRX changed during intake")
+    digest = hashlib.sha256(payload).hexdigest()
     # Compatible with inspect-original-trx-rule-cases.py --execution-manifest.
     manifest = {"schemaVersion": 1, "originalTrxSha256": digest,
                 "executionSourceSha": current["executionSourceSha"]}
@@ -82,7 +89,24 @@ def self_test() -> None:
             trx.write_bytes(b"<TestRun/>")
             finish(root, before, trx, after)
             assert unique_json(after)["originalTrxSha256"] == hashlib.sha256(trx.read_bytes()).hexdigest()
-            # Reject empty and oversized TRX inputs before any manifest is written.\n            trx.write_bytes(b"")\n            try:\n                finish(root, before, trx, root.parent / (root.name + "-empty-rejected.json"))\n            except ValueError:\n                pass\n            else:\n                raise AssertionError("Empty TRX accepted")\n            with trx.open("wb") as stream:\n                stream.truncate(MAX_TRX_BYTES + 1)\n            try:\n                finish(root, before, trx, root.parent / (root.name + "-oversized-rejected.json"))\n            except ValueError:\n                pass\n            else:\n                raise AssertionError("Oversized TRX accepted")\n            trx.write_bytes(b"<TestRun/>")\n            # JSON booleans compare equal to 1 in Python; schema versions must be integers.
+            # Reject empty and oversized TRX inputs before any manifest is written.
+            trx.write_bytes(b"")
+            try:
+                finish(root, before, trx, root.parent / (root.name + "-empty-rejected.json"))
+            except ValueError:
+                pass
+            else:
+                raise AssertionError("Empty TRX accepted")
+            with trx.open("wb") as stream:
+                stream.truncate(MAX_TRX_BYTES + 1)
+            try:
+                finish(root, before, trx, root.parent / (root.name + "-oversized-rejected.json"))
+            except ValueError:
+                pass
+            else:
+                raise AssertionError("Oversized TRX accepted")
+            trx.write_bytes(b"<TestRun/>")
+            # JSON booleans compare equal to 1 in Python; schema versions must be integers.
             malformed = unique_json(before)
             malformed["schemaVersion"] = True
             before.write_text(json.dumps(malformed), encoding="utf-8")
