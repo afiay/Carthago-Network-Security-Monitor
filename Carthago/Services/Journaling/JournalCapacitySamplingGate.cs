@@ -84,7 +84,20 @@ namespace Carthago.Services
                         ResetCore();
                 }
 
-                var sample = _capacityReader(_minimumFreeBytes, _minimumFreePercent);
+                (bool Sampled, bool Low, long Available, long Total) sample;
+                try
+                {
+                    sample = _capacityReader(_minimumFreeBytes, _minimumFreePercent);
+                }
+                catch (Exception ex) when (ex is System.IO.IOException ||
+                                           ex is UnauthorizedAccessException ||
+                                           ex is System.Security.SecurityException)
+                {
+                    // An inaccessible or failing journal volume is unknown capacity,
+                    // never evidence of low free space. Discard any pending episode.
+                    ResetCore();
+                    return false;
+                }
                 if (!sample.Sampled || sample.Total <= 0 || sample.Available < 0 ||
                     sample.Available > sample.Total)
                 {
