@@ -10,6 +10,7 @@ namespace Carthago.Services
     public sealed class JournalCapacitySamplingGate
     {
         private readonly DetectionJournal _journal;
+        private readonly Func<long, double, (bool Sampled, bool Low, long Available, long Total)> _capacityReader;
         private readonly object _sampleSync = new();
         private readonly long _minimumFreeBytes;
         private readonly double _minimumFreePercent;
@@ -21,9 +22,18 @@ namespace Carthago.Services
 
         public JournalCapacitySamplingGate(
             DetectionJournal journal, long minimumFreeBytes,
-            double minimumFreePercent, TimeSpan minimumInterval, TimeSpan? maximumInterval = null)
+            double minimumFreePercent, TimeSpan minimumInterval, TimeSpan? maximumInterval = null,
+            Func<long, double, (bool Sampled, bool Low, long Available, long Total)>? capacityReader = null)
         {
             _journal = journal ?? throw new ArgumentNullException(nameof(journal));
+            // The default remains journal-owned OS sampling. Injection is for deterministic
+            // tests; callers must not treat externally supplied readings as trusted events.
+            _capacityReader = capacityReader ?? ((bytes, percent) =>
+            {
+                var sampled = _journal.TryEvaluateConfiguredVolumeCapacity(bytes, percent,
+                    out var low, out var available, out var total);
+                return (sampled, low, available, total);
+            });
             if (minimumFreeBytes <= 0 || minimumFreePercent <= 0 ||
                 minimumFreePercent > 100 || double.IsNaN(minimumFreePercent) ||
                 double.IsInfinity(minimumFreePercent) || minimumInterval <= TimeSpan.Zero ||
@@ -74,13 +84,16 @@ namespace Carthago.Services
                         ResetCore();
                 }
 
-                if (!_journal.TryEvaluateConfiguredVolumeCapacity(
-                    _minimumFreeBytes, _minimumFreePercent,
-                    out var low, out availableBytes, out totalBytes))
+                var sample = _capacityReader(_minimumFreeBytes, _minimumFreePercent);
+                if (!sample.Sampled || sample.Total <= 0 || sample.Available < 0 ||
+                    sample.Available > sample.Total)
                 {
                     ResetCore();
                     return false;
                 }
+                availableBytes = sample.Available;
+                totalBytes = sample.Total;
+                var low = sample.Low;
 
                 _previousUtc = sampledAtUtc;
                 _consecutiveLow = low ? Math.Min(2, _consecutiveLow + 1) : 0;
