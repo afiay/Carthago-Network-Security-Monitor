@@ -31,7 +31,8 @@ namespace Carthago.Services
             _minimumFreeBytes = minimumFreeBytes;
             _minimumFreePercent = minimumFreePercent;
             _minimumInterval = minimumInterval;
-            _maximumInterval = maximumInterval ?? TimeSpan.FromTicks(checked(minimumInterval.Ticks * 3));
+            _maximumInterval = maximumInterval ?? TimeSpan.FromTicks(minimumInterval.Ticks > TimeSpan.MaxValue.Ticks / 3
+                ? TimeSpan.MaxValue.Ticks : minimumInterval.Ticks * 3);
         }
 
         /// <summary>
