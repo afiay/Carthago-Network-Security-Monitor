@@ -1324,11 +1324,13 @@
                     <!-- GA UI-159: responsive two-lane filter workspace; original controls and handlers preserved. -->
                     <Border Grid.Row="1" Margin="0,6,0,6" Padding="8,6" Style="{StaticResource DashboardLiveEventsToolbar}">
                       <StackPanel>
-                        <DockPanel Margin="0,0,0,5">
+                        <DockPanel Margin="0,0,0,9">
                           <Border DockPanel.Dock="Left" Width="4" Background="{StaticResource AccentBrush}" CornerRadius="2" Margin="0,0,12,0"/>
                           <StackPanel>
-                            <TextBlock Text="EVENT FILTERS" Foreground="{StaticResource TextSubtleBrush}" FontSize="13" FontWeight="Bold"/>
-                            <TextBlock Text="Filter reported metadata only" Foreground="{StaticResource TextMutedBrush}" FontSize="11" Margin="0,2,0,0"/>
+                            <TextBlock Text="Event filters" Foreground="{StaticResource TextBrush}" FontSize="16" FontWeight="SemiBold"
+                                       AutomationProperties.HeadingLevel="Level4"/>
+                            <TextBlock Text="Filter reported metadata only" Foreground="{StaticResource TextMutedBrush}" FontSize="12"
+                                       TextWrapping="Wrap" Margin="0,3,0,0"/>
                           </StackPanel>
                         </DockPanel>
                         <UniformGrid x:Name="DashboardLiveFilterCardsGrid" Columns="2">
