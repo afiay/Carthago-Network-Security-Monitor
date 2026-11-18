@@ -582,4 +582,17 @@ public sealed class EnrichmentHealthPresentationTests
         Assert.Contains("WARNING: invalid provider outcome, cache-path or latency counters", display.Summary);
     }
 
+
+    [Fact]
+    public void Worker_Completed_Exceeding_Started_Does_Not_Report_Elapsed_Mean()
+    {
+        // An impossible lifecycle denominator must not yield a plausible average.
+        // Preserve the raw elapsed maximum and outcome counters for diagnostics.
+        var summary = EnrichmentHealthPresentation.WorkerSummary(
+            new EnrichmentWorkerSnapshot(1, 2, 0, 0, 0, 10, 10, 40, 30));
+        Assert.Contains("WARNING: completed outcomes exceed started workers by 1", summary);
+        Assert.Contains("worker elapsed mean/max ms (completed workers: 2): — / 30", summary);
+        Assert.Contains("2 returned", summary);
+    }
+
 }
