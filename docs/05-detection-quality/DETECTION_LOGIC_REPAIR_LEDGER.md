@@ -543,3 +543,13 @@ The actual `DetectionJournal` now exposes `TryReadConfiguredVolumeCapacity`, rea
 **Regression authored:** `Carthago.Tests/JournalCapacitySamplingGateTests.cs` adds `DuplicateTickDoesNotRearmConfirmedLowSpaceEpisode`, commit `1a28f82e5da8300978f6cb47ba2662208baa9b38`. **Tests executed: 0.** No local Windows runner or build, native capture, GitHub Actions, invasive tests or force push. Compilation unverified. No change to R102/R118/R163 floors or frozen holdout.
 
 **Outstanding R531:** production-owned scheduler, trusted clock/maintenance context, threshold policy, typed authenticated health-event delivery and actual RuleEngine admission. **R536:** owned parser counters and engine binding. **Next cursor:** unresolved carryover R531/R536 and remaining blocked IDs; no new ordered IDs. This is a sampling integrity fix, not a functional detector completion.
+
+
+## Carryover engineering increment — 2026-11-18 (R531)
+- **Status:** IN-PROGRESS / PRODUCER-BLOCKED; **functional detector repairs: 0**. The fixed 187-ID review cursor remains exhausted; this work revisits R531 and does not claim a new ten-ID batch.
+- **Production source:** `Carthago/Services/Journaling/JournalCapacitySamplingGate.cs` now accepts an optional capacity-reader delegate for deterministic testing; default production behavior remains OS capacity sampling via its owned `DetectionJournal`. Rejects impossible samples (negative free, zero total, free greater than total), resetting confirmation state. This is **not** a trusted event admission mechanism; external delegates must not be accepted as authenticated health telemetry.
+- **Tests authored:** `Carthago.Tests/JournalCapacitySamplingGateTests.cs` adds deterministic low/healthy/recovery episode coverage and invalid-capacity fail-closed coverage, avoiding host-disk-dependent early returns. **Tests executed: none; compilation unverified** (no Windows runner).
+- **Commits:** production `eb13b62bbe3279028758114238d605cfa156a418`; tests `02b923f0aa534bc85234ca9e01efc4e476867214`; ledger commit is the commit containing this entry.
+- **Still required R531:** lifecycle-owned periodic sampling, configured policy/maintenance ownership, authenticated typed local-health event and RuleEngine admission; do not infer detection from a test-injected capacity delegate or packet text.
+- **Still required R536:** owned parser counters with trusted provenance, runtime producer and RuleEngine connectivity.
+- **Next cursor:** ordered 187-ID review exhausted; revisit producer-blocked carryover, beginning with R531 and R536. No blocked ID counted complete.
