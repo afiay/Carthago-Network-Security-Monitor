@@ -566,3 +566,16 @@ The actual `DetectionJournal` now exposes `TryReadConfiguredVolumeCapacity`, rea
 **Still missing:** R531 lifecycle-owned scheduler, trusted maintenance/clock policy, production threshold configuration, typed authenticated local-health event admission and RuleEngine integration. R536 requires owned parser-failure numerator/denominator metrics, stable parser attribution, bounded rate baseline and RuleEngine connectivity. Neither is functionally complete. No precision floors or frozen holdout modified.
 
 **Next cursor:** carryover R531/R536 and other producer-blocked IDs; no new ordered IDs. 
+
+
+## Carryover R531 — journal probe IO/access failure boundary (2026-11-18)
+
+**Status:** IN-PROGRESS / PRODUCER-BLOCKED. Functional detector completions: **0**. The ordered 187-ID inspection cursor is exhausted; this is a carryover repair, not a new ten-ID batch.
+
+**Production source:** `Carthago/Services/Journaling/JournalCapacitySamplingGate.cs` now treats IO, unauthorized access and security exceptions from the capacity probe as unknown capacity and resets pending confirmation rather than allowing the exception to escape the sampling gate or retaining stale evidence. This does not treat a failed journal probe as proof of low disk. Production commit `e90013c3bd0ec9452e91295a556769540f47a1f1`.
+
+**Regression source authored:** `Carthago.Tests/JournalCapacitySamplingGateTests.cs` adds `JournalProbeIOExceptionResetsPendingLowSpaceEpisode`, requiring a fresh pair of readings after an IO failure. Test-source commit `caebb690c9924be31f2090e737c7bf326dddd342`. **Tests executed: 0; compilation unverified.** No local Windows runner, GitHub Actions or live invasive tests used.
+
+**Unresolved:** R531 still requires lifecycle-owned periodic sampling, authenticated maintenance/clock context, configured thresholds, typed health-event admission and RuleEngine integration. R536 still requires owned parser numerator/denominator counters, trusted parser attribution and engine admission. Neither is functionally complete. No precision floors or frozen holdout modified.
+
+**Next cursor:** carryover R531/R536 and other producer-blocked IDs; no new ordered IDs. Ledger update commit is the commit containing this entry.
