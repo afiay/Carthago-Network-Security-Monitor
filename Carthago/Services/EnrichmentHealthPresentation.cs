@@ -193,7 +193,13 @@ internal static class EnrichmentHealthPresentation
     internal static string StorageSummary(EnrichmentStorageSnapshot? s)
     {
         if (s is null) return "Storage diagnostics unavailable.";
-        return $"Current/last session assets: {s.Assets.Count}/{s.Assets.Limit}, capacity-rejected observations: {s.Assets.Rejected}; " +
+        bool invalid = s.Assets.Count < 0 || s.Assets.Limit < 0 || s.Assets.Count > s.Assets.Limit ||
+            s.Assets.Rejected < 0 || s.Destinations.Count < 0 || s.Destinations.Limit < 0 ||
+            s.Destinations.Count > s.Destinations.Limit || s.Destinations.Rejected < 0 ||
+            s.Checkpoints.Writes < 0 || s.Checkpoints.Failures < 0 ||
+            s.Checkpoints.Failures > s.Checkpoints.Writes;
+        return (invalid ? "WARNING: enrichment registry capacity or checkpoint counters inconsistent; inspect storage accounting. " : string.Empty) +
+            $"Current/last session assets: {s.Assets.Count}/{s.Assets.Limit}, capacity-rejected observations: {s.Assets.Rejected}; " +
             $"external destinations: {s.Destinations.Count}/{s.Destinations.Limit}, capacity-rejected observations: {s.Destinations.Rejected}. " +
             $"Checkpoint writes: {s.Checkpoints.Writes}, failures: {s.Checkpoints.Failures}; " +
             (s.Checkpoints.LastError is not null ? "Checkpoint diagnostic present (details withheld; inspect restricted local logs)." : "No checkpoint diagnostic reported.") +
