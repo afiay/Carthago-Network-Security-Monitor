@@ -154,17 +154,24 @@ def reconcile_inventory(joined: dict, inventory: dict) -> dict:
                                          "negative-detector": {"passed": 0, "failed": 0, "unexecuted-or-inconclusive": 0}})
         bucket[case["casePolarity"]][case["executionClassification"]] += 1
     counts = dict(sorted(counts.items(), key=lambda item: int(item[0][1:])))
-    # Absence of reviewed cases is a gap, never an implicit passing negative.
+    # A reviewed failing or unexecuted test is not equivalent to a passing candidate.
+    # These are diagnostic outcomes only, not independent detector qualification.
+    def candidate_state(bucket: dict | None, polarity: str) -> str:
+        if bucket is None or sum(bucket[polarity].values()) == 0:
+            return "missing-reviewed-case"
+        outcomes = bucket[polarity]
+        if outcomes["failed"]:
+            return "reviewed-failed"
+        if outcomes["unexecuted-or-inconclusive"]:
+            return "reviewed-unexecuted-or-inconclusive"
+        return "reviewed-passed-candidate-only"
+
     gaps = {}
     for rid in sorted(known, key=lambda value: int(value[1:])):
         bucket = counts.get(rid)
         gaps[rid] = {
-            "positive": ("missing-reviewed-case" if bucket is None or
-                         sum(bucket["positive-detector"].values()) == 0 else
-                         "reviewed-candidate-only"),
-            "negative": ("missing-reviewed-case" if bucket is None or
-                         sum(bucket["negative-detector"].values()) == 0 else
-                         "reviewed-candidate-only"),
+            "positive": candidate_state(bucket, "positive-detector"),
+            "negative": candidate_state(bucket, "negative-detector"),
         }
     return {"inventorySourceSha": inventory.get("sourceSha"),
             "inventoryRecordCount": len(known),
@@ -247,7 +254,7 @@ def self_test() -> None:
         assert matched["reviewedOutcomeCountsByExactId"]["R102"]["negative-detector"]["passed"] == 0
         assert matched["independentValidation"] == "missing"
         assert matched["reviewedCaseGapsByExactId"]["R102"] == {
-            "positive": "reviewed-candidate-only", "negative": "missing-reviewed-case"}
+            "positive": "reviewed-passed-candidate-only", "negative": "missing-reviewed-case"}
         expanded_inventory = {**inventory, "records": inventory["records"] + [
             {"ruleId": "R163", "registeredClass": "R163_TestRule"}]}
         expanded = reconcile_inventory(joined, expanded_inventory)
@@ -260,6 +267,16 @@ def self_test() -> None:
         assert mixed_counts["positive-detector"]["passed"] == 1
         assert mixed_counts["negative-detector"]["failed"] == 1
         assert mixed_counts["negative-detector"]["passed"] == 0
+        mixed_gaps = reconcile_inventory(mixed, inventory)["reviewedCaseGapsByExactId"]["R102"]
+        assert mixed_gaps["negative"] == "reviewed-failed"
+        inconclusive = {**joined, "reviewedCases": [
+            {**joined["reviewedCases"][0], "executionClassification": "unexecuted-or-inconclusive"}]}
+        assert reconcile_inventory(inconclusive, inventory)["reviewedCaseGapsByExactId"]["R102"]["positive"] == "reviewed-unexecuted-or-inconclusive"
+        # Mixed passing/failing evidence must not hide a failing reviewed case.
+        mixed_positive = {**joined, "reviewedCases": joined["reviewedCases"] + [
+            {**joined["reviewedCases"][0], "executionClassification": "failed"}]}
+        assert reconcile_inventory(mixed_positive, inventory)["reviewedCaseGapsByExactId"]["R102"]["positive"] == "reviewed-failed"
+
 
         for bad_inventory in (
             {**inventory, "records": inventory["records"] * 2},
