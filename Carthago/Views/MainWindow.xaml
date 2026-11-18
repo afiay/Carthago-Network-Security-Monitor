@@ -1059,6 +1059,11 @@
                                     HorizontalScrollBarVisibility="Disabled"
                                     Padding="0,0,4,0">
                         <StackPanel>
+                        <!-- GA UI-225: identify the observed network path before its endpoint facts. -->
+                        <TextBlock Text="Network path"
+                                   Style="{StaticResource SocSubHeader}"
+                                   Margin="0,2,0,8"
+                                   AutomationProperties.HeadingLevel="Level3"/>
                         <Grid x:Name="DashboardDetailFactsGrid" Margin="0,0,0,8">
                           <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                           <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>

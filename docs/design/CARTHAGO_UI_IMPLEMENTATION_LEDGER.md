@@ -6478,3 +6478,14 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Ownership/static review:** only `Carthago/Views/MainWindow.xaml` and this ledger. No ViewModels, Engine/Models/Services, rules, capture, telemetry, privacy/security, local PPS ScottPlot 10/120, Events 80/500, visual-only CLI, Cisco/WebView2 or unrelated files changed.
 
 **Static risks/unexecuted acceptance:** 3px less width per paired cell may increase wrapping for long tokens; verify card boundaries, text overflow, keyboard/screen readers, widths 1920/1440/1100/1099/1024/1023/640 and DPI 100/125/150/200%. Builds/tests/CI/capture/render 0. **Next UI-225:** select the next substantive Dashboard or Incidents composition slice from live ledger.
+
+
+## GA UI-225 — Network-path hierarchy in Dashboard investigation
+
+**2026-11-18 · SOURCE CANDIDATE — UNVERIFIED.** Exact approved Library image `libfile_b0a34361560c8191b641e432b3e6b15c` visually inspected. Source baseline HEAD `baeaba0f88bf460b123428556c62d4c475e083b6`, actual baseline commit TREE `6d417ef505b037e5e8b6620058ba38df90d5959e`; UI-224 last recorded. Reference mapping: the approved Incident Investigation surface groups source/destination and protocol facts into a recognizable network-path section. Its DEMO DATA is illustrative, never real telemetry.
+
+**Visible before → after:** The Dashboard selected-finding facts grid previously began immediately with the Source host card without a named grouping, blending network endpoints into the surrounding investigation narrative. Added a visible “Network path” subsection heading immediately before the existing facts grid, using the existing SOC subheader typography and an 8px separation. The Source host, Destination, Protocol / port, Category, Detected and Related incident cards remain unchanged, including their live values and labels. This is a composition and scan-hierarchy change, not a tooltip or telemetry change.
+
+**Responsive behavior:** Wide >=1440, Standard 1100–1439, Compact 1024–1099 and below 1024 use the same content-width heading and existing vertical ScrollViewer; no fixed width, new column, breakpoint or horizontal scroll introduced. Heading adds content height only. **Ownership:** `Carthago/Views/MainWindow.xaml` and this ledger only. Existing bindings, handlers, named controls, severity colors, privacy/security, local PPS ScottPlot 10/120, local Events 80/500, visual-only CLI, Cisco/WebView2 and all Engine/Models/Services untouched.
+
+**Static risks and unexecuted acceptance:** Verify WPF heading automation support and hierarchy, section spacing, focus/reading order, long endpoint wrapping, scrolling at 1920/1440/1100/1099/1024/1023/640 and DPI 100/125/150/200%. Builds/tests/CI/capture/render: zero; no runtime claims. **Next UI-226:** select the next substantive Dashboard or Incidents visible composition slice from the live ledger.
