@@ -157,6 +157,22 @@ public sealed class EnrichmentHealthPresentationTests
             new TrafficCaptureService.StatsSnapshot()).Summary);
     }
 
+    [Fact]
+    public void Negative_Provider_Outcome_Does_Not_Display_Misleading_Success_Percentage()
+    {
+        var stats = new TrafficCaptureService.StatsSnapshot
+        {
+            EnrichmentProviders = new Dictionary<string, EnrichmentProviderSnapshot>
+            {
+                ["whois"] = new(5, -1, 0, 0, 0, 0, 10, 10)
+            }
+        };
+        var display = EnrichmentHealthPresentation.Build(stats);
+        Assert.Equal("—", display.Providers.Single(p => p.Provider == "whois").SuccessShare);
+        Assert.Contains("WARNING: invalid provider outcome", display.Summary);
+        Assert.Equal(-1L, display.Providers.Single(p => p.Provider == "whois").Unavailable);
+    }
+
     [Theory]
     [InlineData(0, 0, 5, 5)]
     [InlineData(0, 0, 0, 5)]
