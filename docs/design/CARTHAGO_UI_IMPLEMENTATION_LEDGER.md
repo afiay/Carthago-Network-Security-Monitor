@@ -6467,3 +6467,14 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Ownership/static review:** only `Carthago/Views/MainWindow.xaml` and this ledger. No ViewModels, Engine/Models/Services, rules, capture, telemetry, privacy/security, local PPS ScottPlot 10/120, Events 80/500, visual-only CLI, Cisco/WebView2 or independent work changed.
 
 **Static risks/unexecuted acceptance:** long unbroken tokens may still clip; paired rows may grow to two lines and require DPI review. Verify tooltip access, actual values, keyboard/screen reader, widths 1920/1440/1100/1099/1024/1023/640 and DPI 100/125/150/200%. Builds/tests/CI/capture/render 0. **Next UI-224:** next substantive Dashboard or Incidents visible composition slice from live ledger.
+
+
+## GA UI-224 — Separate paired Dashboard investigation facts
+
+**2026-11-18 · SOURCE CANDIDATE — UNVERIFIED.** Exact approved Library image `libfile_b0a34361560c8191b641e432b3e6b15c` visually inspected. Source baseline HEAD `dbbfa74c35a0f95bad7a83ea85ff8e9a81fdbe6f`, actual commit tree `1374b42879e6d4bf89bf4c42ee677fe1612dc1c9`; UI-223 last recorded. Reference mapping: the approved investigation area separates compact fact cells with visible gutters and keeps the source/destination identity rows full width; screenshot DEMO DATA remains illustrative, not operational telemetry.
+
+**Visible before → after:** the paired Protocol/Category and Detected/Related incident cards previously met edge-to-edge across the two equal columns. Added a 6px visual gutter by assigning 3px inside margins to each side of the shared column boundary on both paired rows. Full-width Source/Destination cards, text bindings, accessible labels and tooltips remain untouched. Wide >=1440 retains balanced two-column cards; Standard 1100–1439 and Compact 1024–1099 gain clearer separation with 3px less available width per cell; below 1024 remains bounded by the existing scroll layout.
+
+**Ownership/static review:** only `Carthago/Views/MainWindow.xaml` and this ledger. No ViewModels, Engine/Models/Services, rules, capture, telemetry, privacy/security, local PPS ScottPlot 10/120, Events 80/500, visual-only CLI, Cisco/WebView2 or unrelated files changed.
+
+**Static risks/unexecuted acceptance:** 3px less width per paired cell may increase wrapping for long tokens; verify card boundaries, text overflow, keyboard/screen readers, widths 1920/1440/1100/1099/1024/1023/640 and DPI 100/125/150/200%. Builds/tests/CI/capture/render 0. **Next UI-225:** select the next substantive Dashboard or Incidents composition slice from live ledger.
