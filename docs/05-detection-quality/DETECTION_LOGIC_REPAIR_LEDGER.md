@@ -510,3 +510,14 @@ The actual `DetectionJournal` now exposes `TryReadConfiguredVolumeCapacity`, rea
 **Production file:** `Carthago/Services/Journaling/JournalCapacitySamplingGate.cs` (commits `0199622af7c7f476574b8d2545e146e7671ca96e`, `cb4d5c0b2f4bf21323c491d0254b54061ed657dc`). **Tests authored:** two xUnit methods in `Carthago.Tests/JournalCapacitySamplingGateTests.cs` (commit `cb2111a3c3a1cbba320d0a0af92593c072875611`). **Tests executed:** 0. No Windows runner, build, live capture, CI, invasive tests, force push, or changes to R102/R118/R163 floors and frozen holdout. Sequential SHA-guarded writes, not atomic.
 
 **Remaining:** no owned periodic scheduler or trusted clock/maintenance context, no production threshold configuration, no typed health-event dispatch or R531 RuleEngine predicate integration. R536 still lacks owned parser counters and RuleEngine wiring. No detector promoted and no carryover rule marked complete. **Next:** prioritize authenticated local health producer dispatch and runtime integration rather than further isolated sampling helpers.
+
+
+## Carryover — R531 concurrent sampling serialization (2026-11-18)
+
+**Source snapshot:** branch HEAD `524b80f8903ef154f5731dbccd8327b45679b5a6` at start of pass. **State:** IN-PROGRESS / PRODUCER-BLOCKED; **functional completions: 0**. Ordered 187-ID review cursor remains exhausted; no rule promoted.
+
+**Actual source change:** `Carthago/Services/Journaling/JournalCapacitySamplingGate.cs` now serializes sampling and reset state under a private lock. Concurrent GUI/CLI/service callers cannot race on `_previousUtc` and `_consecutiveLow` to fabricate a two-sample confirmation. Commit `8c4fe08a336440fd79d82901f949ae38852364c1`.
+
+**Regression test source:** `Carthago.Tests/JournalCapacitySamplingGateTests.cs` adds a parallel same-timestamp sampling test that requires zero confirmations and a later distinct sample for confirmation. Commits `098d711f7621f2ef754598fe9ad2028030215be2`, `628ec7c22f6fdac2022597a58f7c8605744570b1`. **Tests authored: 1. Tests executed: 0.** No local Windows runner or build; compilation unverified. No CI, live invasive tests, force push, precision floor or frozen holdout changes.
+
+**Remaining R531:** trusted owned periodic scheduler and clock/maintenance provenance, production threshold policy, typed health-event transport, R531 RuleEngine integration and positive/benign runtime verification. **R536:** trusted parser-counter producer and RuleEngine integration. All blocked IDs remain carryover; no new ordered cursor. Next engineering pass must prioritize actual producer-to-engine integration, not further isolated helpers.
