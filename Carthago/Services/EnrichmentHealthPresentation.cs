@@ -130,10 +130,19 @@ internal static class EnrichmentHealthPresentation
         for (int i = 0; i < labels.Length; i++)
         {
             var h = snapshots[i];
-            string mean = h.Completed == 0 ? "—" :
-                (1000.0 * h.ElapsedTicks / System.Diagnostics.Stopwatch.Frequency / h.Completed)
+            // Candidate outcomes must reconcile before publishing a latency mean.
+            // Active operations are independent of completed outcomes and may be
+            // nonzero even when no candidate has completed yet.
+            bool invalid = h.Completed < 0 || h.Resolved < 0 || h.Unresolved < 0 ||
+                h.ElapsedTicks < 0 || h.Active < 0 || h.PeakActive < 0 ||
+                h.Active > h.PeakActive ||
+                (decimal)h.Resolved + h.Unresolved != h.Completed ||
+                (h.Completed == 0 && h.ElapsedTicks != 0);
+            string mean = invalid || h.Completed == 0 ? "—" :
+                ((decimal)1000 * h.ElapsedTicks / System.Diagnostics.Stopwatch.Frequency / h.Completed)
                     .ToString("0.0", CultureInfo.InvariantCulture);
-            rows.Add($"{labels[i]}: {h.Completed} completed, {h.Resolved} resolved, {h.Unresolved} unresolved, mean ms {mean}, {h.Active} active, {h.PeakActive} peak active");
+            rows.Add((invalid ? "WARNING: native process candidate lookup accounting inconsistent; " : string.Empty) +
+                $"{labels[i]}: {h.Completed} completed, {h.Resolved} resolved, {h.Unresolved} unresolved, mean ms {mean}, {h.Active} active, {h.PeakActive} peak active");
         }
         return "Native process candidate lookups (process lifetime): " + string.Join("; ", rows)
             + ". Active and peak are overlapping candidate operations per bucket, not threads; bucket peaks must not be summed. Candidate scans are not packets, individual native API calls or verified application identities.";
