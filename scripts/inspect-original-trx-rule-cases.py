@@ -146,9 +146,18 @@ def reconcile_inventory(joined: dict, inventory: dict) -> dict:
     for case in joined["reviewedCases"]:
         if case["exactRuleId"] not in known:
             raise ValueError("Reviewed TRX rule not present in exact-ID inventory")
+    # Candidate counts are diagnostic only: reviewed polarity is not independent proof.
+    counts = {}
+    for case in joined["reviewedCases"]:
+        rid = case["exactRuleId"]
+        bucket = counts.setdefault(rid, {"positive-detector": {"passed": 0, "failed": 0, "unexecuted-or-inconclusive": 0},
+                                         "negative-detector": {"passed": 0, "failed": 0, "unexecuted-or-inconclusive": 0}})
+        bucket[case["casePolarity"]][case["executionClassification"]] += 1
+    counts = dict(sorted(counts.items(), key=lambda item: int(item[0][1:])))
     return {"inventorySourceSha": inventory.get("sourceSha"),
             "inventoryRecordCount": len(known),
             "matchedReviewedCases": len(joined["reviewedCases"]),
+            "reviewedOutcomeCountsByExactId": counts,
             "evidenceAdmitted": False, "independentValidation": "missing"}
 
 def reconcile_execution_manifest(report: dict, manifest: dict) -> dict:
@@ -221,6 +230,17 @@ def self_test() -> None:
                      "records": [{"ruleId": "R102", "registeredClass": "R102_TestRule"}]}
         matched = reconcile_inventory(joined, inventory)
         assert matched["matchedReviewedCases"] == 1 and not matched["evidenceAdmitted"]
+        assert matched["reviewedOutcomeCountsByExactId"]["R102"]["positive-detector"]["passed"] == 1
+        assert matched["reviewedOutcomeCountsByExactId"]["R102"]["negative-detector"]["passed"] == 0
+        assert matched["independentValidation"] == "missing"
+        mixed = {**joined, "reviewedCases": joined["reviewedCases"] + [
+            {**joined["reviewedCases"][0], "casePolarity": "negative-detector",
+             "executionClassification": "failed"}]}
+        mixed_counts = reconcile_inventory(mixed, inventory)["reviewedOutcomeCountsByExactId"]["R102"]
+        assert mixed_counts["positive-detector"]["passed"] == 1
+        assert mixed_counts["negative-detector"]["failed"] == 1
+        assert mixed_counts["negative-detector"]["passed"] == 0
+
         for bad_inventory in (
             {**inventory, "records": inventory["records"] * 2},
             {**inventory, "records": []},
