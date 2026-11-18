@@ -1104,6 +1104,11 @@
                           </StackPanel>
                         </Border>
                       </Grid>
+                        <!-- GA UI-226: separate observed path facts from reported triage context. -->
+                        <TextBlock Text="Reported context"
+                                   Style="{StaticResource SocSubHeader}"
+                                   Margin="0,10,0,8"
+                                   AutomationProperties.HeadingLevel="Level3"/>
                         <Grid x:Name="DashboardDetailEvidenceGrid">
                             <Grid.ColumnDefinitions>
                               <ColumnDefinition x:Name="DashboardEvidencePrimaryColumn" Width="*"/>
