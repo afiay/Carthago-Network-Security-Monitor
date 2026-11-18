@@ -56,7 +56,8 @@ internal static class EnrichmentHealthPresentation
             if (!stats.EnrichmentProviders.TryGetValue(name, out var p)) p = new(0,0,0,0,0,0,0,0);
             // Use a widened denominator: lifetime counters may sum beyond Int64 even when each is valid.
             decimal total = (decimal)p.Success + p.Unavailable + p.Failed + p.TimedOut + p.Cancelled;
-            string share = total > 0 ? ((decimal)p.Success / total).ToString("P1", CultureInfo.InvariantCulture) : "—";
+            string share = total > 0 && p.Success >= 0 && p.Unavailable >= 0 && p.Failed >= 0 && p.TimedOut >= 0 && p.Cancelled >= 0
+                ? ((decimal)p.Success / total).ToString("P1", CultureInfo.InvariantCulture) : "—";
             // Cache hits are path events, not completed provider outcomes.
             // Keep the denominator visible so a mean is not mistaken for
             // latency per published packet or per cache access.
