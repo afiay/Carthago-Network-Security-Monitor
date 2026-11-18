@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 using System;
 using System.IO;
+using System.Threading.Tasks;
 using Carthago.Services;
 using Xunit;
 
@@ -80,5 +81,31 @@ namespace Carthago.Tests
             Assert.Throws<ArgumentOutOfRangeException>(() => new JournalCapacitySamplingGate(
                 journal, 1024, 10, TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(1)));
         }
+        [Fact]
+        public void ConcurrentIdenticalSamplesCannotConfirmLowSpace()
+        {
+            var directory = Path.Combine(Path.GetTempPath(), "carthago-gate-race-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(directory);
+            try
+            {
+                var journal = new DetectionJournal(new DetectionJournalOptions { DirectoryPath = directory });
+                if (!journal.TryReadConfiguredVolumeCapacity(out var free, out var total) || free <= 0 || free >= total)
+                    return;
+                var gate = new JournalCapacitySamplingGate(journal, long.MaxValue, 100,
+                    TimeSpan.FromMinutes(1));
+                var at = new DateTime(2026, 11, 18, 0, 0, 0, DateTimeKind.Utc);
+                var confirmations = 0;
+                Parallel.For(0, 16, _ =>
+                {
+                    if (gate.TrySample(at, false, out var confirmed, out _, out _) && confirmed)
+                        System.Threading.Interlocked.Increment(ref confirmations);
+                });
+                Assert.Equal(0, confirmations);
+                Assert.True(gate.TrySample(at.AddMinutes(1), false, out var second, out _, out _));
+                Assert.True(second);
+            }
+            finally { Directory.Delete(directory); }
+        }
+
     }
 }
