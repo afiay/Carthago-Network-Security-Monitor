@@ -519,4 +519,27 @@ public sealed class EnrichmentHealthPresentationTests
         Assert.DoesNotContain("WARNING: evidence coverage counters", EnrichmentHealthPresentation.Build(empty).Summary);
     }
 
+
+    [Theory]
+    [InlineData(1, 0, 0, 0, 0, -1, 0)]
+    [InlineData(1, 0, 0, 0, 0, 5, -1)]
+    [InlineData(1, 0, 0, 0, 0, 5, 6)]
+    [InlineData(1, -1, 0, 0, 0, 5, 5)]
+    public void Invalid_Provider_Accounting_Does_Not_Publish_Latency_Average(
+        long success, long unavailable, long failed, long timedOut, long cancelled,
+        long elapsedMs, long maxElapsedMs)
+    {
+        var stats = new TrafficCaptureService.StatsSnapshot
+        {
+            EnrichmentProviders = new Dictionary<string, EnrichmentProviderSnapshot>
+            {
+                ["whois"] = new(success, unavailable, failed, timedOut, cancelled, 0, elapsedMs, maxElapsedMs)
+            }
+        };
+        var display = EnrichmentHealthPresentation.Build(stats);
+        var provider = display.Providers.Single(p => p.Provider == "whois");
+        Assert.Equal("—", provider.Latency);
+        Assert.Contains("WARNING: invalid provider outcome, cache-path or latency counters", display.Summary);
+    }
+
 }
