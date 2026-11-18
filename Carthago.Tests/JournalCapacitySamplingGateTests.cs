@@ -158,5 +158,51 @@ namespace Carthago.Tests
             finally { Directory.Delete(directory); }
         }
 
+        [Fact]
+        public void DeterministicCapacitySourceConfirmsOnceAndRearmsAfterRecovery()
+        {
+            var journal = new DetectionJournal(new DetectionJournalOptions());
+            var low = true;
+            var gate = new JournalCapacitySamplingGate(journal, 1000, 10,
+                TimeSpan.FromMinutes(1), capacityReader: (bytes, percent) =>
+                    (true, low, low ? 50L : 5000L, 10000L));
+            var at = new DateTime(2026, 11, 18, 0, 0, 0, DateTimeKind.Utc);
+            Assert.True(gate.TrySample(at, false, out var first, out _, out _));
+            Assert.False(first);
+            Assert.True(gate.TrySample(at.AddMinutes(1), false, out var confirmed, out _, out _));
+            Assert.True(confirmed);
+            Assert.True(gate.TrySample(at.AddMinutes(2), false, out var repeated, out _, out _));
+            Assert.False(repeated);
+            low = false;
+            Assert.True(gate.TrySample(at.AddMinutes(3), false, out var recovered, out _, out _));
+            Assert.False(recovered);
+            low = true;
+            Assert.True(gate.TrySample(at.AddMinutes(4), false, out var rearmFirst, out _, out _));
+            Assert.False(rearmFirst);
+            Assert.True(gate.TrySample(at.AddMinutes(5), false, out var rearmConfirmed, out _, out _));
+            Assert.True(rearmConfirmed);
+        }
+
+        [Fact]
+        public void InvalidInjectedCapacityResetsPendingConfirmation()
+        {
+            var journal = new DetectionJournal(new DetectionJournalOptions());
+            var invalid = false;
+            var gate = new JournalCapacitySamplingGate(journal, 1000, 10,
+                TimeSpan.FromMinutes(1), capacityReader: (bytes, percent) =>
+                    (true, true, invalid ? 11000L : 50L, 10000L));
+            var at = new DateTime(2026, 11, 18, 0, 0, 0, DateTimeKind.Utc);
+            Assert.True(gate.TrySample(at, false, out var first, out _, out _));
+            Assert.False(first);
+            invalid = true;
+            Assert.False(gate.TrySample(at.AddMinutes(1), false, out var rejected, out _, out _));
+            Assert.False(rejected);
+            invalid = false;
+            Assert.True(gate.TrySample(at.AddMinutes(2), false, out var freshFirst, out _, out _));
+            Assert.False(freshFirst);
+            Assert.True(gate.TrySample(at.AddMinutes(3), false, out var confirmed, out _, out _));
+            Assert.True(confirmed);
+        }
+
     }
 }
