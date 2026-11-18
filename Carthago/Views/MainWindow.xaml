@@ -1177,6 +1177,51 @@
                               </StackPanel>
                             </Border>
 
+                            <Border x:Name="DashboardEvidenceCard4" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="1" Style="{StaticResource DetailGridCard}" Margin="0,0,0,0" Padding="10,8">
+                              <!-- GA UI-73: decorative provenance keyline distinguishes reported context from incident facts. -->
+                              <Grid>
+                                <Grid.ColumnDefinitions>
+                                  <ColumnDefinition Width="3"/>
+                                  <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0"
+                                        Background="{StaticResource AccentBrush}"
+                                        Opacity="0.65"
+                                        CornerRadius="2"
+                                        IsHitTestVisible="False"
+                                        Focusable="False"
+                                        SnapsToDevicePixels="True"/>
+                                <!-- GA UI-222: declaration order now matches evidence-first visual and keyboard traversal order. -->
+                                <!-- GA UI-220: distinct provenance heading and readable reported-context body. -->
+                                <Grid Grid.Column="1" Margin="10,0,0,0">
+                                  <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                  </Grid.RowDefinitions>
+                                  <TextBlock x:Name="DashboardDetailEvidenceSummaryLabel"
+                                             Grid.Row="0"
+                                             Text="Evidence provenance (reported, not verified)"
+                                             Style="{StaticResource SocSubHeader}"
+                                             TextWrapping="Wrap"
+                                             Margin="0,0,0,8"/>
+                                  <Border Grid.Row="1"
+                                          Background="{StaticResource CardElevatedBg}"
+                                          BorderBrush="{StaticResource CardBorderBrush}"
+                                          BorderThickness="1"
+                                          CornerRadius="6"
+                                          Padding="10,8">
+                                    <TextBlock x:Name="DashboardDetailEvidenceSummaryText"
+                                               AutomationProperties.LabeledBy="{Binding ElementName=DashboardDetailEvidenceSummaryLabel}"
+                                               Text="No directly selected incident evidence."
+                                               Foreground="{StaticResource TextSubtleBrush}"
+                                               FontSize="12"
+                                               LineHeight="18"
+                                               TextWrapping="Wrap"/>
+                                  </Border>
+                                </Grid>
+                              </Grid>
+                            </Border>
+
                             <Border x:Name="DashboardEvidenceCard3" Grid.Row="4" Grid.Column="0" Style="{StaticResource DetailGridCard}" Background="{StaticResource CardElevatedBg}" BorderBrush="{StaticResource AccentBrush}" BorderThickness="2,1,1,1" CornerRadius="9" Margin="0,0,0,8" Padding="10,8">
                               <StackPanel>
                                 <TextBlock Text="Recommended actions" Style="{StaticResource SocSubHeader}"/>
@@ -1214,50 +1259,7 @@
                               </StackPanel>
                             </Border>
 
-                            <Border x:Name="DashboardEvidenceCard4" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="1" Style="{StaticResource DetailGridCard}" Margin="0,0,0,0" Padding="10,8">
-                              <!-- GA UI-73: decorative provenance keyline distinguishes reported context from incident facts. -->
-                              <Grid>
-                                <Grid.ColumnDefinitions>
-                                  <ColumnDefinition Width="3"/>
-                                  <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <Border Grid.Column="0"
-                                        Background="{StaticResource AccentBrush}"
-                                        Opacity="0.65"
-                                        CornerRadius="2"
-                                        IsHitTestVisible="False"
-                                        Focusable="False"
-                                        SnapsToDevicePixels="True"/>
-                                <!-- GA UI-221: reported provenance precedes actions in the investigation reading order. -->
-                                <!-- GA UI-220: distinct provenance heading and readable reported-context body. -->
-                                <Grid Grid.Column="1" Margin="10,0,0,0">
-                                  <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                  </Grid.RowDefinitions>
-                                  <TextBlock x:Name="DashboardDetailEvidenceSummaryLabel"
-                                             Grid.Row="0"
-                                             Text="Evidence provenance (reported, not verified)"
-                                             Style="{StaticResource SocSubHeader}"
-                                             TextWrapping="Wrap"
-                                             Margin="0,0,0,8"/>
-                                  <Border Grid.Row="1"
-                                          Background="{StaticResource CardElevatedBg}"
-                                          BorderBrush="{StaticResource CardBorderBrush}"
-                                          BorderThickness="1"
-                                          CornerRadius="6"
-                                          Padding="10,8">
-                                    <TextBlock x:Name="DashboardDetailEvidenceSummaryText"
-                                               AutomationProperties.LabeledBy="{Binding ElementName=DashboardDetailEvidenceSummaryLabel}"
-                                               Text="No directly selected incident evidence."
-                                               Foreground="{StaticResource TextSubtleBrush}"
-                                               FontSize="12"
-                                               LineHeight="18"
-                                               TextWrapping="Wrap"/>
-                                  </Border>
-                                </Grid>
-                              </Grid>
-                            </Border>
+                            
                         </Grid>
                         </StackPanel>
                       </ScrollViewer>

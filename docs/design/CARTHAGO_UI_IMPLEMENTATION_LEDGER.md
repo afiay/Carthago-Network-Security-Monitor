@@ -6445,3 +6445,14 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Ownership/static review:** `Carthago/Views/MainWindow.xaml` and this ledger only. No UI ViewModels, Engine/Models/Services, rules, capture, telemetry, security/privacy, local PPS ScottPlot 10/120, Events 80/500, visual-only CLI or Cisco/WebView2 changes. No demo data presented as live.
 
 **Static risks/unexecuted acceptance:** the XAML declaration order of the two cards remains actions then provenance, while their Grid.Row display order is provenance then actions; keyboard traversal and screen-reader reading order therefore require explicit runtime review. Confirm visual order, tab navigation, screen readers, scrolling, widths 1920/1440/1100/1099/1024/1023/640 and DPI 100/125/150/200%. Builds/tests/CI/capture/render 0. **Next UI-222:** reconcile investigation visual and keyboard reading order with a source-only layout-safe change, then continue the next substantive Dashboard/Incidents slice.
+
+
+## GA UI-222 — Align Dashboard evidence-first visual and keyboard reading order
+
+**2026-11-18 · SOURCE CANDIDATE — UNVERIFIED.** Exact approved Library image `libfile_b0a34361560c8191b641e432b3e6b15c` visually inspected. Source baseline HEAD `e22c623d3ed71af4d5bb6c7a57eb264f7ce2f14e`, actual commit tree `18ea140d535ecb7e1bec942b317842491e15f68f`; UI-221 last recorded. Reference mapping: reported evidence context is visually above investigation actions; reference DEMO DATA is illustrative, not operational telemetry.
+
+**Visible before → after:** the Dashboard investigation provenance card occupied Grid.Row 3 but appeared after the actions card (Grid.Row 4) in XAML declaration order. Reordered the existing two complete Border elements so provenance is declared before recommended actions, matching their existing visible positions. No row geometry, sizing, typography, colors, named controls, bindings or handlers changed. Wide >=1440, Standard 1100–1439, Compact 1024–1099 and below 1024 retain their current Auto-sized rows and scroll behavior; the change targets keyboard/screen-reader traversal coherence rather than new telemetry.
+
+**Ownership/static review:** only `Carthago/Views/MainWindow.xaml` and this ledger. Existing incident navigation, evidence qualifiers, ScottPlot local PPS 10-sample average/120 history, local Events 80/500, visual-only CLI, Cisco/WebView2 and security/privacy unchanged. No Engine/Models/Services, rules, capture, telemetry, tests or workflows modified.
+
+**Static risks/unexecuted acceptance:** WPF tab traversal and screen-reader order depend on runtime focus behavior and must be verified; confirm provenance before actions, keyboard tab order, accessible labels, scroll, widths 1920/1440/1100/1099/1024/1023/640 and DPI 100/125/150/200%. Builds/tests/CI/capture/render 0. **Next UI-223:** next substantive Dashboard or Incidents composition slice from the live ledger.
