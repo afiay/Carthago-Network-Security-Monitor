@@ -1187,7 +1187,7 @@
                               </StackPanel>
                             </Border>
 
-                            <Border x:Name="DashboardEvidenceCard4" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="1" Style="{StaticResource DetailGridCard}" Margin="0,0,0,0" Padding="10,8">
+                            <Border x:Name="DashboardEvidenceCard4" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="1" Style="{StaticResource DetailGridCard}" Margin="0,0,0,8" Padding="10,8">
                               <!-- GA UI-73: decorative provenance keyline distinguishes reported context from incident facts. -->
                               <Grid>
                                 <Grid.ColumnDefinitions>
