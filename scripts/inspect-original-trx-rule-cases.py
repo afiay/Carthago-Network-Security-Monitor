@@ -51,7 +51,13 @@ def inspect(path: Path) -> dict:
     if counters is not None:
         actual = {"total": len(rows),
                   "passed": sum(r["outcome"] == "Passed" for r in rows),
-                  "failed": sum(r["outcome"] == "Failed" for r in rows)}
+                  "failed": sum(r["outcome"] == "Failed" for r in rows),
+                  "error": sum(r["outcome"] == "Error" for r in rows),
+                  "timeout": sum(r["outcome"] == "Timeout" for r in rows),
+                  "aborted": sum(r["outcome"] == "Aborted" for r in rows),
+                  "inconclusive": sum(r["outcome"] == "Inconclusive" for r in rows),
+                  "notExecuted": sum(r["outcome"] == "NotExecuted" for r in rows),
+                  "pending": sum(r["outcome"] == "Pending" for r in rows)}
         for key, expected in actual.items():
             raw = counters.get(key)
             if raw is not None and (not raw.isdecimal() or int(raw) != expected):
@@ -366,6 +372,10 @@ def self_test() -> None:
                     xml.replace('<UnitTestResult testName="R102.Positive" testId="a" outcome="Passed"/>', '').replace('<UnitTestResult testName="Benign.Control" testId="b" outcome="Failed"/>', ''),
                     xml.replace('<ResultSummary outcome="Completed"/>',
                                 '<ResultSummary outcome="Completed"><Counters total="3" passed="1" failed="1"/></ResultSummary>'),
+                    xml.replace('<ResultSummary outcome="Completed"/>',
+                                '<ResultSummary outcome="Completed"><Counters total="2" passed="1" failed="1" error="1"/></ResultSummary>'),
+                    xml.replace('<ResultSummary outcome="Completed"/>',
+                                '<ResultSummary outcome="Completed"><Counters total="2" passed="1" failed="1" notExecuted="1"/></ResultSummary>'),
                     xml.replace('outcome="Completed"', 'outcome="Passed"'),
                     xml.replace('outcome="Completed"', 'outcome="Failed"').replace('outcome="Failed"/></Results>', 'outcome="Passed"/></Results>')):
             p.write_text(bad, encoding="utf-8")
