@@ -165,7 +165,8 @@ internal static class EnrichmentHealthPresentation
     {
         if (snapshot is not { } h) return "GeoIP cache metrics unavailable.";
         decimal accountedRequests = (decimal)h.PositiveHits + h.NegativeHits + h.Misses;
-        string rate = accountedRequests <= 0 || h.PositiveHits < 0 || h.NegativeHits < 0 || h.Misses < 0
+        string rate = accountedRequests <= 0 || h.PositiveHits < 0 || h.NegativeHits < 0 || h.Misses < 0 ||
+            accountedRequests > long.MaxValue
             ? "—"
             : (((decimal)h.PositiveHits + h.NegativeHits) / accountedRequests).ToString("P1", CultureInfo.InvariantCulture);
         // Each eligible request follows exactly one cache path: positive hit,
