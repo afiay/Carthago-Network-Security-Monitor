@@ -82,6 +82,33 @@ namespace Carthago.Tests
                 journal, 1024, 10, TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(1)));
         }
         [Fact]
+        public void SustainedLowSpaceConfirmsOnceUntilGateIsReset()
+        {
+            var directory = Path.Combine(Path.GetTempPath(), "carthago-gate-episode-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(directory);
+            try
+            {
+                var journal = new DetectionJournal(new DetectionJournalOptions { DirectoryPath = directory });
+                if (!journal.TryReadConfiguredVolumeCapacity(out var free, out var total) || free <= 0 || free >= total)
+                    return;
+                var gate = new JournalCapacitySamplingGate(journal, long.MaxValue, 100, TimeSpan.FromMinutes(1));
+                var at = new DateTime(2026, 11, 18, 0, 0, 0, DateTimeKind.Utc);
+                Assert.True(gate.TrySample(at, false, out var first, out _, out _));
+                Assert.False(first);
+                Assert.True(gate.TrySample(at.AddMinutes(1), false, out var confirmed, out _, out _));
+                Assert.True(confirmed);
+                Assert.True(gate.TrySample(at.AddMinutes(2), false, out var repeated, out _, out _));
+                Assert.False(repeated);
+                gate.Reset();
+                Assert.True(gate.TrySample(at.AddMinutes(3), false, out var rearmedFirst, out _, out _));
+                Assert.False(rearmedFirst);
+                Assert.True(gate.TrySample(at.AddMinutes(4), false, out var rearmedConfirmation, out _, out _));
+                Assert.True(rearmedConfirmation);
+            }
+            finally { Directory.Delete(directory); }
+        }
+
+        [Fact]
         public void ConcurrentIdenticalSamplesCannotConfirmLowSpace()
         {
             var directory = Path.Combine(Path.GetTempPath(), "carthago-gate-race-" + Guid.NewGuid().ToString("N"));
