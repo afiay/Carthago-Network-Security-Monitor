@@ -61,7 +61,9 @@ internal static class EnrichmentHealthPresentation
             // Cache hits are path events, not completed provider outcomes.
             // Keep the denominator visible so a mean is not mistaken for
             // latency per published packet or per cache access.
-            string latency = total > 0
+            string latency = total > 0 && p.Success >= 0 && p.Unavailable >= 0 &&
+                p.Failed >= 0 && p.TimedOut >= 0 && p.Cancelled >= 0 &&
+                p.TotalElapsedMs >= 0 && p.MaxElapsedMs >= 0 && p.MaxElapsedMs <= p.TotalElapsedMs
                 ? ((decimal)p.TotalElapsedMs / total).ToString("0.0", CultureInfo.InvariantCulture) + " / " + p.MaxElapsedMs.ToString(CultureInfo.InvariantCulture) + " ms (" + total.ToString(CultureInfo.InvariantCulture) + " outcomes)"
                 : "—";
             providers.Add(new(name, p.Success, p.Unavailable, p.Failed, p.TimedOut, p.Cancelled, p.CacheHits, share, latency));
