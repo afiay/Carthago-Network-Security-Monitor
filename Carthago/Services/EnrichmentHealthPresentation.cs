@@ -199,7 +199,8 @@ internal static class EnrichmentHealthPresentation
     internal static string WorkerSummary(EnrichmentWorkerSnapshot? w)
     {
         if (w is null) return "Worker metrics unavailable.";
-        string Mean(long sum, decimal count) => count == 0 ? "—" : ((decimal)sum / count).ToString("0.0", CultureInfo.InvariantCulture);
+        string Mean(long sum, decimal count, long maximum) => count <= 0 || sum < 0 || maximum < 0 || maximum > sum
+            ? "—" : ((decimal)sum / count).ToString("0.0", CultureInfo.InvariantCulture);
         // Lifetime outcome counters can collectively exceed Int64 without any individual
         // counter overflowing. Keep lifecycle reconciliation in a widened domain.
         decimal completed = (decimal)w.Returned + w.Cancelled + w.Faulted;
@@ -207,12 +208,15 @@ internal static class EnrichmentHealthPresentation
             ? $" WARNING: completed outcomes exceed started workers by {completed - w.Started:N0}; inspect worker lifecycle accounting."
             : string.Empty;
         if (w.Started < 0 || w.Returned < 0 || w.Cancelled < 0 || w.Faulted < 0 || w.Skipped < 0 ||
-            w.WaitTotalMs < 0 || w.WaitMaxMs < 0 || w.ElapsedTotalMs < 0 || w.ElapsedMaxMs < 0)
-            accounting += " WARNING: negative worker counters or durations; inspect worker lifecycle accounting.";
+            w.WaitTotalMs < 0 || w.WaitMaxMs < 0 || w.ElapsedTotalMs < 0 || w.ElapsedMaxMs < 0 ||
+            w.WaitMaxMs > w.WaitTotalMs || w.ElapsedMaxMs > w.ElapsedTotalMs ||
+            (w.Started == 0 && (w.WaitTotalMs != 0 || w.WaitMaxMs != 0)) ||
+            (completed == 0 && (w.ElapsedTotalMs != 0 || w.ElapsedMaxMs != 0)))
+            accounting += " WARNING: invalid worker counters or duration accounting; inspect worker lifecycle accounting.";
         return $"Workers (lifetime): {w.Started:N0} started, {w.Returned:N0} returned, {w.Cancelled:N0} cancelled, {w.Faulted:N0} faulted; " +
             $"in flight at snapshot: {System.Math.Max(0m, (decimal)w.Started - completed):N0}; " +
-            $"{w.Skipped:N0} cancelled before processing. Queue wait mean/max ms (started workers: {w.Started:N0}): {Mean(w.WaitTotalMs, w.Started)} / {w.WaitMaxMs}; " +
-            $"worker elapsed mean/max ms (completed workers: {completed:N0}): {Mean(w.ElapsedTotalMs, completed)} / {w.ElapsedMaxMs}. " +
+            $"{w.Skipped:N0} cancelled before processing. Queue wait mean/max ms (started workers: {w.Started:N0}): {Mean(w.WaitTotalMs, w.Started, w.WaitMaxMs)} / {w.WaitMaxMs}; " +
+            $"worker elapsed mean/max ms (completed workers: {completed:N0}): {Mean(w.ElapsedTotalMs, completed, w.ElapsedMaxMs)} / {w.ElapsedMaxMs}. " +
             "Returned does not imply provider success; worker elapsed includes rule evaluation." + accounting;
     }
 }
