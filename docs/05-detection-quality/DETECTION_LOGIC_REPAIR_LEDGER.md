@@ -521,3 +521,14 @@ The actual `DetectionJournal` now exposes `TryReadConfiguredVolumeCapacity`, rea
 **Regression test source:** `Carthago.Tests/JournalCapacitySamplingGateTests.cs` adds a parallel same-timestamp sampling test that requires zero confirmations and a later distinct sample for confirmation. Commits `098d711f7621f2ef754598fe9ad2028030215be2`, `628ec7c22f6fdac2022597a58f7c8605744570b1`. **Tests authored: 1. Tests executed: 0.** No local Windows runner or build; compilation unverified. No CI, live invasive tests, force push, precision floor or frozen holdout changes.
 
 **Remaining R531:** trusted owned periodic scheduler and clock/maintenance provenance, production threshold policy, typed health-event transport, R531 RuleEngine integration and positive/benign runtime verification. **R536:** trusted parser-counter producer and RuleEngine integration. All blocked IDs remain carryover; no new ordered cursor. Next engineering pass must prioritize actual producer-to-engine integration, not further isolated helpers.
+
+
+## Carryover R531 — bounded low-space episode confirmation (2026-11-18)
+
+**Status:** IN-PROGRESS / PRODUCER-BLOCKED, not functional detector completion. Ordered queue cursor remains exhausted; do not count this as an additional reviewed rule or advance the cursor. R536 remains producer-blocked.
+
+**Production change:** `Carthago/Services/Journaling/JournalCapacitySamplingGate.cs` now emits the two-reading low-space confirmation once per sustained episode instead of on every later low sample; recovery, stale/unknown sampling, maintenance and explicit reset re-arm it. This reduces duplicate downstream notifications if a trusted dispatcher is connected. Commit `a6cf232ace96c8a0bf571f06021511b67818b849`.
+
+**Test authored:** `Carthago.Tests/JournalCapacitySamplingGateTests.cs`, `SustainedLowSpaceConfirmsOnceUntilGateIsReset`, commit `17d4c9e560fc87b43395c90d2988f5e896f4f124`. **Tests executed: none.** No Windows runner/build, live capture, replay or qualification performed; compilation unverified.
+
+**Unresolved integration:** R531 still requires a lifecycle-owned periodic scheduler, trusted clock and maintenance context, configured production thresholds, typed authenticated local-health admission, and actual RuleEngine predicate/event integration. R536 requires owned parser-counter producer, trusted attribution and engine binding. Packet text and journal write failures are not substitutes for OS-backed low-space evidence. **Functional repairs this run: zero.** Next cursor: carryover R531/R536 and remaining blocked IDs; no new ordered IDs.
