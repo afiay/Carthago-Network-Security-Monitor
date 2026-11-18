@@ -151,6 +151,22 @@ def reconcile_inventory(joined: dict, inventory: dict) -> dict:
             "matchedReviewedCases": len(joined["reviewedCases"]),
             "evidenceAdmitted": False, "independentValidation": "missing"}
 
+def reconcile_execution_manifest(report: dict, manifest: dict) -> dict:
+    """Bind declared source to original TRX bytes without attesting checkout."""
+    if not isinstance(manifest, dict) or manifest.get("schemaVersion") != 1:
+        raise ValueError("Unsupported execution manifest")
+    digest, sha = manifest.get("originalTrxSha256"), manifest.get("executionSourceSha")
+    if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
+        raise ValueError("Invalid manifest TRX digest")
+    if digest != report["originalTrxSha256"]:
+        raise ValueError("Execution manifest TRX digest mismatch")
+    if not isinstance(sha, str) or not re.fullmatch(r"[0-9a-f]{40}", sha):
+        raise ValueError("Invalid declared execution SHA")
+    if set(manifest) != {"schemaVersion", "originalTrxSha256", "executionSourceSha"}:
+        raise ValueError("Unexpected execution manifest claims")
+    return {"executionSourceShaDeclared": sha, "sourceShaAttested": False,
+            "evidenceAdmitted": False, "provenanceStatus": "declared-unverified"}
+
 def self_test() -> None:
     import tempfile
     xml = ('<TestRun xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">'
@@ -163,6 +179,21 @@ def self_test() -> None:
         r = inspect(p)
         assert r["results"][0]["candidateRuleIds"] == ["R102"]
         assert r["results"][1]["candidateRuleIds"] == []
+        manifest = {"schemaVersion": 1, "originalTrxSha256": r["originalTrxSha256"],
+                    "executionSourceSha": "a" * 40}
+        declared = reconcile_execution_manifest(r, manifest)
+        assert not declared["sourceShaAttested"] and not declared["evidenceAdmitted"]
+        for invalid in ({**manifest, "executionSourceSha": None},
+                        {**manifest, "executionSourceSha": "A" * 40},
+                        {**manifest, "originalTrxSha256": "0" * 64},
+                        {**manifest, "extra": "verified"},
+                        {**manifest, "schemaVersion": 2}):
+            try:
+                reconcile_execution_manifest(r, invalid)
+            except ValueError:
+                pass
+            else:
+                raise AssertionError("Invalid execution manifest accepted")
         review = {"schemaVersion": 1, "originalTrxSha256": r["originalTrxSha256"],
                   "cases": [{"testId": "a", "exactTestName": "R102.Positive",
                              "exactRuleId": "R102", "casePolarity": "positive-detector"}]}
@@ -248,6 +279,7 @@ def main() -> None:
     parser.add_argument("--self-test", action="store_true")
     parser.add_argument("--reviewed-map", type=Path)
     parser.add_argument("--inventory", type=Path)
+    parser.add_argument("--execution-manifest", type=Path)
     args = parser.parse_args()
     if args.self_test:
         self_test()
@@ -259,6 +291,12 @@ def main() -> None:
     if args.inventory is not None and args.reviewed_map is None:
         parser.error("--inventory requires --reviewed-map")
     report = inspect(args.trx)
+    if args.execution_manifest is not None:
+        if not args.execution_manifest.is_file() or not 0 < args.execution_manifest.stat().st_size <= MAX_BYTES:
+            raise ValueError("Missing or oversized execution manifest")
+        manifest_bytes = args.execution_manifest.read_bytes()
+        report["executionSourceDeclaration"] = reconcile_execution_manifest(report, parse_review_json(manifest_bytes))
+        report["executionSourceDeclaration"]["manifestSha256"] = hashlib.sha256(manifest_bytes).hexdigest()
     if args.reviewed_map is not None:
         if not args.reviewed_map.is_file() or not 0 < args.reviewed_map.stat().st_size <= MAX_BYTES:
             raise ValueError("Missing or oversized review map")
