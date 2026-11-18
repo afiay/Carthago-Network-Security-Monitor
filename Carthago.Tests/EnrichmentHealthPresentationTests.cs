@@ -357,6 +357,23 @@ public sealed class EnrichmentHealthPresentationTests
         Assert.Contains($"retained entries: {occupancy}/{capacity}", summary);
     }
 
+    [Theory]
+    [InlineData(3, 1, 4, -1, 0, 2, 8)]
+    [InlineData(3, 1, 4, 0, -1, 2, 8)]
+    [InlineData(3, 1, 4, 0, 0, 9, 8)]
+    public void Geo_Cache_Invalid_Independent_Health_Counters_Suppress_Hit_Share(
+        long positive, long negative, long misses, long expired, long evicted,
+        int occupancy, int capacity)
+    {
+        var summary = EnrichmentHealthPresentation.Build(new TrafficCaptureService.StatsSnapshot
+        {
+            GeoCacheHealth = new(positive, negative, misses, expired, evicted, occupancy, capacity)
+        }).Summary;
+        Assert.Contains("8 accounted eligible requests", summary);
+        Assert.Contains("hit share — of 8 accounted eligible requests", summary);
+        Assert.Contains("WARNING: GeoIP cache request-path or capacity counters inconsistent", summary);
+    }
+
     [Fact]
     public void Metadata_Cache_Summary_Uses_Probe_Denominator_And_Distinguishes_Missing()
     {
