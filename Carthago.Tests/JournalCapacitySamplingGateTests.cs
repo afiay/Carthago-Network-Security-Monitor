@@ -49,5 +49,36 @@ namespace Carthago.Tests
             Assert.False(low);
             Assert.False(Directory.Exists(missing));
         }
+
+        [Fact]
+        public void StaleFirstSampleRequiresTwoNewFreshSamples()
+        {
+            var directory = Path.Combine(Path.GetTempPath(), "carthago-gate-gap-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(directory);
+            try
+            {
+                var journal = new DetectionJournal(new DetectionJournalOptions { DirectoryPath = directory });
+                if (!journal.TryReadConfiguredVolumeCapacity(out var free, out var total) || free <= 0 || free >= total)
+                    return;
+                var gate = new JournalCapacitySamplingGate(journal, long.MaxValue, 100,
+                    TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(2));
+                var start = new DateTime(2026, 11, 18, 0, 0, 0, DateTimeKind.Utc);
+                Assert.True(gate.TrySample(start, false, out var low, out _, out _));
+                Assert.False(low);
+                Assert.True(gate.TrySample(start.AddMinutes(10), false, out low, out _, out _));
+                Assert.False(low);
+                Assert.True(gate.TrySample(start.AddMinutes(11), false, out low, out _, out _));
+                Assert.True(low);
+            }
+            finally { Directory.Delete(directory); }
+        }
+
+        [Fact]
+        public void MaximumSamplingIntervalMustNotPrecedeMinimum()
+        {
+            var journal = new DetectionJournal(new DetectionJournalOptions());
+            Assert.Throws<ArgumentOutOfRangeException>(() => new JournalCapacitySamplingGate(
+                journal, 1024, 10, TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(1)));
+        }
     }
 }
