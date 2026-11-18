@@ -138,17 +138,19 @@ internal static class EnrichmentHealthPresentation
     private static string GeoCacheSummary(GeoIpService.CacheHealthSnapshot? snapshot)
     {
         if (snapshot is not { } h) return "GeoIP cache metrics unavailable.";
-        string rate = h.Requests == 0 ? "—" : (((decimal)h.PositiveHits + h.NegativeHits) / h.Requests).ToString("P1", CultureInfo.InvariantCulture);
+        decimal accountedRequests = (decimal)h.PositiveHits + h.NegativeHits + h.Misses;
+        string rate = accountedRequests <= 0 || h.PositiveHits < 0 || h.NegativeHits < 0 || h.Misses < 0
+            ? "—"
+            : (((decimal)h.PositiveHits + h.NegativeHits) / accountedRequests).ToString("P1", CultureInfo.InvariantCulture);
         // Each eligible request follows exactly one cache path: positive hit,
         // negative hit or miss. Requests is a derived Int64 sum that can overflow;
         // expiry/eviction are separate events.
-        decimal accountedRequests = (decimal)h.PositiveHits + h.NegativeHits + h.Misses;
         bool invalid = h.Requests < 0 || h.PositiveHits < 0 || h.NegativeHits < 0 ||
             h.Misses < 0 || h.Expired < 0 || h.Evicted < 0 ||
             h.Occupancy < 0 || h.Capacity < 0 || h.Occupancy > h.Capacity ||
-            accountedRequests > long.MaxValue || accountedRequests < 0;
+            accountedRequests > long.MaxValue || accountedRequests < 0 || (decimal)h.Requests != accountedRequests;
         return (invalid ? "WARNING: GeoIP cache request-path or capacity counters inconsistent; inspect cache accounting. " : string.Empty) +
-            $"GeoIP cache (service lifetime): {h.Requests} eligible requests, {h.PositiveHits} positive hits, {h.NegativeHits} negative hits, {h.Misses} misses (hit share {rate} of {h.Requests} eligible requests); " +
+            $"GeoIP cache (service lifetime): {accountedRequests.ToString(CultureInfo.InvariantCulture)} accounted eligible requests (reported Int64 total {h.Requests}), {h.PositiveHits} positive hits, {h.NegativeHits} negative hits, {h.Misses} misses (hit share {rate} of {accountedRequests.ToString(CultureInfo.InvariantCulture)} accounted eligible requests); " +
             $"expired on access: {h.Expired}, capacity-evicted entries: {h.Evicted}, retained entries: {h.Occupancy}/{h.Capacity}. Cache requests are not database attempts.";
     }
 
