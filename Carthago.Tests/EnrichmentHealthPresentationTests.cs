@@ -376,6 +376,28 @@ public sealed class EnrichmentHealthPresentationTests
     }
 
     [Fact]
+    public void Metadata_Cache_Overflow_Uses_Exact_Probe_Population()
+    {
+        var summary = EnrichmentHealthPresentation.ProcessMetadataCacheSummary(
+            new WindowsProcessResolver.MetadataCacheMetrics.Snapshot(
+                long.MaxValue, 0, 0, 0, long.MaxValue));
+        Assert.Contains("18446744073709551614 completed", summary);
+        Assert.Contains("reuse share —", summary);
+        Assert.Contains("WARNING: TCP metadata-cache outcome counters invalid or exceed Int64", summary);
+    }
+
+    [Fact]
+    public void Metadata_Cache_Negative_Outcome_Does_Not_Publish_Reuse_Rate()
+    {
+        var summary = EnrichmentHealthPresentation.ProcessMetadataCacheSummary(
+            new WindowsProcessResolver.MetadataCacheMetrics.Snapshot(-1, 0, 0, 0, 3));
+        Assert.Contains("2 completed", summary);
+        Assert.Contains("-1 absent", summary);
+        Assert.Contains("reuse share —", summary);
+        Assert.Contains("WARNING: TCP metadata-cache outcome counters invalid", summary);
+    }
+
+    [Fact]
     public void Metadata_Cache_Capacity_Is_Independent_Of_Probe_Outcomes()
     {
         var summary = EnrichmentHealthPresentation.Build(new TrafficCaptureService.StatsSnapshot
