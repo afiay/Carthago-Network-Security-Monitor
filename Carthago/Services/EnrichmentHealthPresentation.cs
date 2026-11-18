@@ -118,7 +118,9 @@ internal static class EnrichmentHealthPresentation
     internal static string ProcessMetadataCacheCapacitySummary((int Count, long Evictions)? snapshot)
     {
         if (snapshot is not { } h) return "TCP metadata-cache capacity metrics unavailable.";
-        return $"TCP metadata-cache retained entries: {h.Count}/{WindowsProcessResolver.MaxCacheEntries}; capacity evictions (process lifetime): {h.Evictions}. " +
+        bool invalid = h.Count < 0 || h.Count > WindowsProcessResolver.MaxCacheEntries || h.Evictions < 0;
+        return (invalid ? "WARNING: TCP metadata-cache capacity counters inconsistent; inspect cache accounting. " : string.Empty) +
+            $"TCP metadata-cache retained entries: {h.Count}/{WindowsProcessResolver.MaxCacheEntries}; capacity evictions (process lifetime): {h.Evictions}. " +
             "Retained entries may be expired; capacity evictions exclude explicit clear and invalidation.";
     }
 
