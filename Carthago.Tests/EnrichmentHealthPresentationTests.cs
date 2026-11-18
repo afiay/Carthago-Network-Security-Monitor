@@ -412,6 +412,21 @@ public sealed class EnrichmentHealthPresentationTests
         Assert.Contains("UDP/IPv6: 0 completed, 0 resolved, 0 unresolved, mean ms —, 0 active, 0 peak active", summary);
         Assert.Contains("Native process lookup metrics unavailable", EnrichmentHealthPresentation.Build(new TrafficCaptureService.StatsSnapshot()).Summary);
     }
+    [Theory]
+    [InlineData(-1, 0, 0)]
+    [InlineData(2, -1, 0)]
+    [InlineData(2, 3, 0)]
+    [InlineData(2, 1, -1)]
+    public void Tls_Invalid_Capacity_Gauges_Do_Not_Fabricate_Open_Connections(
+        int retained, int closed, long rejected)
+    {
+        var summary = EnrichmentHealthPresentation.TlsCapacitySummary((retained, closed, rejected));
+        Assert.Contains("WARNING: TLS retained, closed or capacity rejection counters inconsistent", summary);
+        Assert.Contains("open: —", summary);
+        Assert.Contains($"closed: {closed:N0}", summary);
+        Assert.Contains($"capacity-rejected SYN attempts (session lifetime): {rejected:N0}", summary);
+    }
+
     [Fact]
     public void Tls_Capacity_Summary_Distinguishes_Closed_And_Missing_Session()
     {
