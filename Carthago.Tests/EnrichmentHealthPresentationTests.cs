@@ -289,22 +289,21 @@ public sealed class EnrichmentHealthPresentationTests
 
     [Theory]
     [InlineData(3, 1, 4, 1, 2, 2, 8, false)]
-    [InlineData(3, 1, 4, 1, 2, 2, 7, true)]
     [InlineData(3, 1, 4, 1, 2, 9, 8, true)]
     [InlineData(-1, 1, 4, 1, 2, 2, 8, true)]
     [InlineData(long.MaxValue, long.MaxValue, 0, 0, 0, 0, 8, true)]
-    public void Geo_Cache_Flags_Inconsistent_Paths_Without_Clamping_Counters(
+    public void Geo_Cache_Flags_Invalid_Counters_Without_Clamping(
         long positive, long negative, long misses, long expired, long evicted,
-        long occupancy, long requests, bool warning)
+        int occupancy, int capacity, bool warning)
     {
         var stats = new TrafficCaptureService.StatsSnapshot
         {
-            GeoCacheHealth = new(positive, negative, misses, expired, evicted, occupancy, requests)
+            GeoCacheHealth = new(positive, negative, misses, expired, evicted, occupancy, capacity)
         };
         var summary = EnrichmentHealthPresentation.Build(stats).Summary;
         Assert.Equal(warning, summary.Contains("WARNING: GeoIP cache request-path or capacity counters inconsistent"));
-        Assert.Contains($"{requests} eligible requests", summary);
         Assert.Contains($"{positive} positive hits", summary);
+        Assert.Contains($"retained entries: {occupancy}/{capacity}", summary);
     }
 
     [Fact]
