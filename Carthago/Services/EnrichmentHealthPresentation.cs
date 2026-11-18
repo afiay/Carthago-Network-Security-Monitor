@@ -157,8 +157,12 @@ internal static class EnrichmentHealthPresentation
     private static string GeoLookupSummary(string name, GeoIpService.LookupHealthSnapshot? snapshot)
     {
         if (snapshot is not { } h) return name + " unknown";
-        string rate = h.Attempts == 0 ? "—" : ((double)h.Failed / h.Attempts).ToString("P1", CultureInfo.InvariantCulture);
-        return $"{name}: {h.Attempts} attempts, {h.Found} found, {h.NotFound} not found, {h.Failed} failed (failure share {rate})";
+        decimal attempts = h.AttemptsExact;
+        bool invalid = h.Found < 0 || h.NotFound < 0 || h.Failed < 0 || h.AttemptsOverflowed;
+        string rate = attempts <= 0 || h.Failed < 0 || h.Found < 0 || h.NotFound < 0
+            ? "—" : ((decimal)h.Failed / attempts).ToString("P1", CultureInfo.InvariantCulture);
+        return (invalid ? "WARNING: GeoIP lookup outcome counters invalid or exceed Int64; inspect lookup accounting. " : string.Empty) +
+            $"{name}: {attempts.ToString(CultureInfo.InvariantCulture)} attempts, {h.Found} found, {h.NotFound} not found, {h.Failed} failed (failure share {rate})";
     }
 
     internal static string StorageSummary(EnrichmentStorageSnapshot? s)
