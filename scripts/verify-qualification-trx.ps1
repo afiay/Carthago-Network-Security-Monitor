@@ -125,6 +125,19 @@ if ($SelfTest) {
 } else {
     $item = Get-Item -LiteralPath $Artifact
     if ($item.PSIsContainer -or $item.Length -gt 16777216) { throw 'Invalid artifact size or type' }
-    $bytes = [IO.File]::ReadAllBytes($item.FullName)
+    # Enforce the 16 MiB limit on the read itself, not only on a racy pre-read stat.
+    $limit = 16777216
+    $stream = [IO.File]::Open($item.FullName, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read)
+    try {
+        $buffer = New-Object byte[] 65536
+        $output = [IO.MemoryStream]::new()
+        try {
+            while (($count = $stream.Read($buffer, 0, $buffer.Length)) -gt 0) {
+                if ($output.Length + $count -gt $limit) { throw 'TRX size outside bounds during read' }
+                $output.Write($buffer, 0, $count)
+            }
+            $bytes = $output.ToArray()
+        } finally { $output.Dispose() }
+    } finally { $stream.Dispose() }
     Test-QualificationTrx $bytes $ExpectedSha256 $TestName $Outcome | ConvertTo-Json
 }
