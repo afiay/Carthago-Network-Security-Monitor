@@ -502,7 +502,7 @@ public sealed class EnrichmentHealthPresentationTests
         {
             GeoCacheHealth = new(long.MaxValue, long.MaxValue, 0, 0, 0, 0, 8)
         }).Summary;
-        Assert.Contains("hit share 100.0%", summary);
+        Assert.Contains("hit share — of 18446744073709551614 accounted eligible requests", summary);
         Assert.Contains("18446744073709551614 accounted eligible requests", summary);
         Assert.Contains("WARNING: GeoIP cache request-path or capacity counters inconsistent", summary);
     }
