@@ -17,6 +17,7 @@ namespace Carthago.Services
         private readonly TimeSpan _maximumInterval;
         private DateTime? _previousUtc;
         private int _consecutiveLow;
+        private bool _confirmationEmitted;
 
         public JournalCapacitySamplingGate(
             DetectionJournal journal, long minimumFreeBytes,
@@ -78,7 +79,13 @@ namespace Carthago.Services
 
                 _previousUtc = sampledAtUtc;
                 _consecutiveLow = low ? Math.Min(2, _consecutiveLow + 1) : 0;
-                confirmedLow = _consecutiveLow == 2;
+                // Emit once per sustained low-space episode. A healthy sample,
+                // maintenance, unknown evidence or stale cadence re-arms the gate.
+                confirmedLow = _consecutiveLow == 2 && !_confirmationEmitted;
+                if (confirmedLow)
+                    _confirmationEmitted = true;
+                if (!low)
+                    _confirmationEmitted = false;
                 return true;
             }
         }
@@ -93,6 +100,7 @@ namespace Carthago.Services
         {
             _previousUtc = null;
             _consecutiveLow = 0;
+            _confirmationEmitted = false;
         }
     }
 }
