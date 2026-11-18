@@ -618,4 +618,17 @@ public sealed class EnrichmentHealthPresentationTests
         Assert.Contains("2 returned", summary);
     }
 
+    [Fact]
+    public void Worker_Negative_Outcome_Does_Not_Publish_Plausible_Duration_Means()
+    {
+        // A negative returned count can leave a positive derived completed total.
+        // Neither queue wait nor elapsed averages should appear valid in that state.
+        var summary = EnrichmentHealthPresentation.WorkerSummary(
+            new EnrichmentWorkerSnapshot(3, -1, 2, 0, 0, 12, 8, 20, 10));
+        Assert.Contains("in flight at snapshot: —;", summary);
+        Assert.Contains("Queue wait mean/max ms (started workers: 3): — / 8", summary);
+        Assert.Contains("worker elapsed mean/max ms (completed workers: 1): — / 10", summary);
+        Assert.Contains("WARNING: invalid worker counters", summary);
+    }
+
 }
