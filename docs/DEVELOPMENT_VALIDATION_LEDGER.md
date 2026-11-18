@@ -3595,3 +3595,9 @@ Source parent `62147cbbfbaa8025d8879d4c9acc35fc2e15c3af`. Scope: `scripts/captur
 ## 2026-11-18 — GA-09dw exact-ID schema boolean rejection
 
 Source parent `b4865d5dd67742a90d1563a076e7f7f79a8299e0`. GA-09bm machine-readable inventory validator now requires integer schemaVersion for both inventory and reviewed execution manifest. PowerShell numeric coercion could otherwise treat JSON `true` as schema 1. Expected: schema 1 accepted, boolean true rejected; Windows self-test pending, no detector execution or independent accuracy claimed. Changed only `scripts/verify-exact-id-qualification.ps1` and this ledger. Next owner Windows: `powershell -NoProfile -File .\scripts\verify-exact-id-qualification.ps1 -SelfTest`; then separately authorized GA-08 original TRX and R163/R118/R102 evidence reconciliation. No rule promotion or threshold/holdout change.
+
+
+### 2026-11-18 — Enrichment storage health accounting guard
+- Source commits `73ea4f820d9f091dbfe73459043d7dff84398741`, `9eff6472f3f71a376b1649c1d88bc012bb495193`: flag negative or over-capacity retained asset/destination counts, negative rejection counters, and negative checkpoint success/failure counters in `StorageSummary`; preserve raw values. Checkpoint writes and failures are independent counters; failures may legitimately exceed successful writes.
+- Regression commits `1732bff073c1ec0b2949b66f3485767c7ee92c7e`, `603f25bbe660688cd34e2421bef359217cc62bf3`: five invalid snapshots and one valid snapshot. **Authored, not executed.** No rule or evidence admission changed.
+- Windows gate: `dotnet build .\Carthago.sln -c Release`; `dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~EnrichmentHealthPresentationTests"`. Follow with live registry/checkpoint integration and sustained-capacity qualification; do not claim passing tests without execution evidence.
