@@ -225,5 +225,30 @@ namespace Carthago.Tests
             Assert.True(gate.TrySample(at.AddMinutes(3), false, out var confirmed, out _, out _));
             Assert.True(confirmed);
         }
+
+        [Fact]
+        public void JournalProbeIOExceptionResetsPendingLowSpaceEpisode()
+        {
+            var journal = new DetectionJournal(new DetectionJournalOptions());
+            var failProbe = false;
+            var gate = new JournalCapacitySamplingGate(journal, 1000, 10,
+                TimeSpan.FromMinutes(1), capacityReader: (_, _) =>
+                {
+                    if (failProbe)
+                        throw new IOException("Journal volume temporarily unavailable");
+                    return (true, true, 50L, 10000L);
+                });
+            var at = new DateTime(2026, 11, 18, 0, 0, 0, DateTimeKind.Utc);
+            Assert.True(gate.TrySample(at, false, out var first, out _, out _));
+            Assert.False(first);
+            failProbe = true;
+            Assert.False(gate.TrySample(at.AddMinutes(1), false, out var unknown, out _, out _));
+            Assert.False(unknown);
+            failProbe = false;
+            Assert.True(gate.TrySample(at.AddMinutes(2), false, out var restarted, out _, out _));
+            Assert.False(restarted);
+            Assert.True(gate.TrySample(at.AddMinutes(3), false, out var confirmed, out _, out _));
+            Assert.True(confirmed);
+        }
     }
 }
