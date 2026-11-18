@@ -110,6 +110,9 @@ def reconcile_reviewed_cases(report: dict, review: dict) -> dict:
         joined.append({"testId": key[0], "exactTestName": key[1],
                        "exactRuleId": rid, "casePolarity": polarity,
                        "outcome": original[key]["outcome"],
+                       "executionClassification": ("passed" if original[key]["outcome"] == "Passed" else
+                                                   "failed" if original[key]["outcome"] in {"Failed", "Error", "Timeout", "Aborted"} else
+                                                   "unexecuted-or-inconclusive"),
                        "qualificationStatus": "not-admitted"})
     return {"originalTrxSha256": report["originalTrxSha256"],
             "reviewedCases": joined, "unreviewedCount": len(original)-len(joined),
@@ -171,6 +174,14 @@ def self_test() -> None:
                 raise AssertionError("Duplicate reviewed-map key accepted")
         joined = reconcile_reviewed_cases(r, review)
         assert len(joined["reviewedCases"]) == 1 and joined["unreviewedCount"] == 1
+        assert joined["reviewedCases"][0]["executionClassification"] == "passed"
+        for outcome, expected in (("Failed", "failed"), ("Error", "failed"), ("Timeout", "failed"),
+                                  ("Aborted", "failed"), ("Inconclusive", "unexecuted-or-inconclusive"),
+                                  ("NotExecuted", "unexecuted-or-inconclusive")):
+            altered = {**r, "results": [{**r["results"][0], "outcome": outcome}, r["results"][1]]}
+            case = reconcile_reviewed_cases(altered, review)["reviewedCases"][0]
+            assert case["executionClassification"] == expected
+            assert case["qualificationStatus"] == "not-admitted"
         assert not joined["evidenceAdmitted"]
         inventory = {"schemaVersion": 1, "sourceSha": "a" * 40,
                      "records": [{"ruleId": "R102", "registeredClass": "R102_TestRule"}]}
