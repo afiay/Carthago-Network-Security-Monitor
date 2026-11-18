@@ -50,7 +50,7 @@ def finish(repo: Path, before: Path, trx: Path, output: Path) -> None:
     record = unique_json(before)
     if not isinstance(record, dict) or set(record) != {
         "schemaVersion", "phase", "executionSourceSha", "executionTreeSha", "sourceShaAttested"
-    } or record["schemaVersion"] != 1 or record["phase"] != "before-execution" or record["sourceShaAttested"] is not False:
+    } or type(record["schemaVersion"]) is not int or record["schemaVersion"] != 1 or record["phase"] != "before-execution" or record["sourceShaAttested"] is not False or any(not isinstance(record[key], str) or not SHA.fullmatch(record[key]) for key in ("executionSourceSha", "executionTreeSha")):
         raise ValueError("Invalid before-execution record")
     current = snapshot(repo)
     if any(record.get(key) != value for key, value in current.items()):
@@ -82,6 +82,27 @@ def self_test() -> None:
             trx.write_bytes(b"<TestRun/>")
             finish(root, before, trx, after)
             assert unique_json(after)["originalTrxSha256"] == hashlib.sha256(trx.read_bytes()).hexdigest()
+            # JSON booleans compare equal to 1 in Python; schema versions must be integers.
+            malformed = unique_json(before)
+            malformed["schemaVersion"] = True
+            before.write_text(json.dumps(malformed), encoding="utf-8")
+            try:
+                finish(root, before, trx, root.parent / (root.name + "-schema-rejected.json"))
+            except ValueError:
+                pass
+            else:
+                raise AssertionError("Boolean schema version accepted")
+            malformed["schemaVersion"] = 1
+            malformed["executionTreeSha"] = "not-a-git-sha"
+            before.write_text(json.dumps(malformed), encoding="utf-8")
+            try:
+                finish(root, before, trx, root.parent / (root.name + "-sha-rejected.json"))
+            except ValueError:
+                pass
+            else:
+                raise AssertionError("Malformed before-tree SHA accepted")
+            malformed["executionTreeSha"] = snapshot(root)["executionTreeSha"]
+            before.write_text(json.dumps(malformed), encoding="utf-8")
             (root / "tracked.txt").write_text("changed", encoding="utf-8")
             try:
                 finish(root, before, trx, root.parent / (root.name + "-rejected.json"))
