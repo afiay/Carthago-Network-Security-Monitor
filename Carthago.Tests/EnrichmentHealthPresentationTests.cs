@@ -721,7 +721,7 @@ public sealed class EnrichmentHealthPresentationTests
     [InlineData(0, 32, -1, 0, 32, 0, 1, 0)]
     [InlineData(0, 32, 0, -1, 32, 0, 1, 0)]
     [InlineData(0, 32, 0, 0, 32, -1, 1, 0)]
-    [InlineData(0, 32, 0, 0, 32, 0, 1, 2)]
+    [InlineData(0, 32, 0, 0, 32, 0, -1, 0)]
     public void Storage_Invalid_Capacity_Or_Checkpoint_Counters_Are_Flagged(
         int assetCount, int assetLimit, long assetRejected,
         int destinationCount, int destinationLimit, long destinationRejected,
