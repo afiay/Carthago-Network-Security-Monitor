@@ -84,7 +84,10 @@ def reconcile_reviewed_cases(report: dict, review: dict) -> dict:
     """Join exact reviewed declarations; never attest independent qualification."""
     if not isinstance(review, dict) or review.get("schemaVersion") != 1:
         raise ValueError("Unsupported review schema")
-    if review.get("originalTrxSha256") != report["originalTrxSha256"]:
+    digest = review.get("originalTrxSha256")
+    if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
+        raise ValueError("Missing or malformed original TRX digest")
+    if digest != report["originalTrxSha256"]:
         raise ValueError("Original TRX digest mismatch")
     cases = review.get("cases")
     if not isinstance(cases, list) or len(cases) > MAX_RESULTS:
@@ -205,6 +208,9 @@ def self_test() -> None:
                 raise AssertionError("Invalid inventory reconciliation accepted")
         for bad in (
             {**review, "originalTrxSha256": "0" * 64},
+            {**review, "originalTrxSha256": None},
+            {**review, "originalTrxSha256": "not-a-digest"},
+            {**review, "originalTrxSha256": "A" * 64},
             {**review, "cases": review["cases"] * 2},
             {**review, "cases": [{**review["cases"][0], "casePolarity": "unknown"}]},
             {**review, "cases": [{**review["cases"][0], "exactRuleId": "R163"}]},
