@@ -54,11 +54,16 @@ namespace Carthago.Services
                 availableBytes = 0;
                 totalBytes = 0;
                 if (sampledAtUtc.Kind != DateTimeKind.Utc || sampledAtUtc == default ||
-                    maintenance || (_previousUtc.HasValue && sampledAtUtc <= _previousUtc.Value))
+                    maintenance || (_previousUtc.HasValue && sampledAtUtc < _previousUtc.Value))
                 {
                     ResetCore();
                     return false;
                 }
+
+                // A duplicate scheduler tick is not a new measurement and must not
+                // re-arm an already confirmed low-space episode.
+                if (_previousUtc.HasValue && sampledAtUtc == _previousUtc.Value)
+                    return false;
 
                 if (_previousUtc.HasValue)
                 {
