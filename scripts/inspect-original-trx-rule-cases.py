@@ -154,10 +154,23 @@ def reconcile_inventory(joined: dict, inventory: dict) -> dict:
                                          "negative-detector": {"passed": 0, "failed": 0, "unexecuted-or-inconclusive": 0}})
         bucket[case["casePolarity"]][case["executionClassification"]] += 1
     counts = dict(sorted(counts.items(), key=lambda item: int(item[0][1:])))
+    # Absence of reviewed cases is a gap, never an implicit passing negative.
+    gaps = {}
+    for rid in sorted(known, key=lambda value: int(value[1:])):
+        bucket = counts.get(rid)
+        gaps[rid] = {
+            "positive": ("missing-reviewed-case" if bucket is None or
+                         sum(bucket["positive-detector"].values()) == 0 else
+                         "reviewed-candidate-only"),
+            "negative": ("missing-reviewed-case" if bucket is None or
+                         sum(bucket["negative-detector"].values()) == 0 else
+                         "reviewed-candidate-only"),
+        }
     return {"inventorySourceSha": inventory.get("sourceSha"),
             "inventoryRecordCount": len(known),
             "matchedReviewedCases": len(joined["reviewedCases"]),
             "reviewedOutcomeCountsByExactId": counts,
+            "reviewedCaseGapsByExactId": gaps,
             "evidenceAdmitted": False, "independentValidation": "missing"}
 
 def reconcile_execution_manifest(report: dict, manifest: dict) -> dict:
@@ -233,6 +246,13 @@ def self_test() -> None:
         assert matched["reviewedOutcomeCountsByExactId"]["R102"]["positive-detector"]["passed"] == 1
         assert matched["reviewedOutcomeCountsByExactId"]["R102"]["negative-detector"]["passed"] == 0
         assert matched["independentValidation"] == "missing"
+        assert matched["reviewedCaseGapsByExactId"]["R102"] == {
+            "positive": "reviewed-candidate-only", "negative": "missing-reviewed-case"}
+        expanded_inventory = {**inventory, "records": inventory["records"] + [
+            {"ruleId": "R163", "registeredClass": "R163_TestRule"}]}
+        expanded = reconcile_inventory(joined, expanded_inventory)
+        assert expanded["reviewedCaseGapsByExactId"]["R163"] == {
+            "positive": "missing-reviewed-case", "negative": "missing-reviewed-case"}
         mixed = {**joined, "reviewedCases": joined["reviewedCases"] + [
             {**joined["reviewedCases"][0], "casePolarity": "negative-detector",
              "executionClassification": "failed"}]}
