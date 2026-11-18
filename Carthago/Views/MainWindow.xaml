@@ -1301,13 +1301,15 @@
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                           <TextBlock Text="LOCAL DETECTION STREAM" FontSize="10" FontWeight="Bold"
                                      Foreground="{StaticResource AccentBrush}" Margin="0,0,0,3"/>
-                          <WrapPanel>
+                          <!-- GA UI-230: keep the stream title distinct from its operational scope. -->
+                          <StackPanel>
                             <TextBlock Text="Live Events" Style="{StaticResource DashboardSectionTitle}"
-                                       FontSize="21" FontWeight="Bold" Margin="0,0,14,0"/>
+                                       FontSize="21" FontWeight="Bold" Margin="0,0,0,3"
+                                       AutomationProperties.HeadingLevel="Level3"/>
                             <TextBlock Text="Read-only  ·  newest received first  ·  up to 80 displayed"
                                        Foreground="{StaticResource TextMutedBrush}" FontSize="11"
-                                       VerticalAlignment="Center" Margin="0,4,8,0"/>
-                          </WrapPanel>
+                                       TextWrapping="Wrap" Margin="0,0,8,0"/>
+                          </StackPanel>
                         </StackPanel>
                         <Button Grid.Column="2" Content="All detections &#x2192;"
                                 VerticalAlignment="Center" Margin="12,0,0,0"
