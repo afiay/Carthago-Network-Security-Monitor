@@ -89,6 +89,8 @@ def reconcile_reviewed_cases(report: dict, review: dict) -> dict:
         raise ValueError("Missing or malformed original TRX digest")
     if digest != report["originalTrxSha256"]:
         raise ValueError("Original TRX digest mismatch")
+    if set(review) != {"schemaVersion", "originalTrxSha256", "cases"}:
+        raise ValueError("Unexpected reviewed-map claims")
     cases = review.get("cases")
     if not isinstance(cases, list) or len(cases) > MAX_RESULTS:
         raise ValueError("Invalid review cases")
@@ -98,6 +100,8 @@ def reconcile_reviewed_cases(report: dict, review: dict) -> dict:
     for case in cases:
         if not isinstance(case, dict):
             raise ValueError("Invalid review entry")
+        if set(case) != {"testId", "exactTestName", "exactRuleId", "casePolarity"}:
+            raise ValueError("Unexpected reviewed-case claims")
         key = (case.get("testId"), case.get("exactTestName"))
         if key in seen or key not in original:
             raise ValueError("Duplicate or unmatched test identity")
@@ -341,6 +345,9 @@ def self_test() -> None:
             {**review, "originalTrxSha256": "not-a-digest"},
             {**review, "originalTrxSha256": "A" * 64},
             {**review, "cases": review["cases"] * 2},
+            {**review, "independentlyVerified": True},
+            {**review, "cases": [{**review["cases"][0], "qualificationStatus": "admitted"}]},
+            {**review, "cases": [{key: value for key, value in review["cases"][0].items() if key != "casePolarity"}]},
             {**review, "cases": [{**review["cases"][0], "casePolarity": "unknown"}]},
             {**review, "cases": [{**review["cases"][0], "exactRuleId": "R163"}]},
             {**review, "cases": [{**review["cases"][0], "testId": "missing"}]},
