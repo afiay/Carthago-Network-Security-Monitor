@@ -755,4 +755,30 @@ public sealed class EnrichmentHealthPresentationTests
         Assert.DoesNotContain("WARNING: enrichment registry capacity or checkpoint counters inconsistent", summary);
     }
 
+
+    [Theory]
+    [InlineData(-1, 0)]
+    [InlineData(0, -1)]
+    [InlineData(-1, -1)]
+    public void Invalid_Queue_Or_Fallback_Counters_Are_Flagged(int depth, long fallbacks)
+    {
+        var summary = EnrichmentHealthPresentation.Build(new TrafficCaptureService.StatsSnapshot
+        {
+            EnrichmentQueueDepth = depth,
+            EnrichmentFallbacks = fallbacks
+        }).Summary;
+        Assert.Contains("WARNING: invalid enrichment queue depth or fallback counters", summary);
+        Assert.Contains($"fallback records (lifetime): {fallbacks:N0}", summary);
+    }
+
+    [Fact]
+    public void Valid_Queue_And_Fallback_Counters_Are_Not_Flagged()
+    {
+        var summary = EnrichmentHealthPresentation.Build(new TrafficCaptureService.StatsSnapshot
+        {
+            EnrichmentQueueDepth = 0,
+            EnrichmentFallbacks = 1
+        }).Summary;
+        Assert.DoesNotContain("WARNING: invalid enrichment queue depth or fallback counters", summary);
+    }
 }
