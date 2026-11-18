@@ -737,6 +737,17 @@ public sealed class EnrichmentHealthPresentationTests
     }
 
     [Fact]
+    public void Storage_Checkpoint_Failures_Can_Exceed_Successful_Writes()
+    {
+        // A failed checkpoint attempt is not a subset of successful writes.
+        // Keep these independent lifetime counters visible without a false warning.
+        var summary = EnrichmentHealthPresentation.StorageSummary(new(
+            new(0, 32, 0), new(0, 32, 0), new(1, 9, null)));
+        Assert.Contains("Checkpoint writes: 1, failures: 9", summary);
+        Assert.DoesNotContain("WARNING: enrichment registry capacity or checkpoint counters inconsistent", summary);
+    }
+
+    [Fact]
     public void Storage_Valid_Counters_Do_Not_Raise_Accounting_Warning()
     {
         var summary = EnrichmentHealthPresentation.StorageSummary(new(
