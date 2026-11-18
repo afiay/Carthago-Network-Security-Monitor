@@ -92,8 +92,15 @@ internal static class EnrichmentHealthPresentation
     internal static string ProcessMetadataCacheSummary(WindowsProcessResolver.MetadataCacheMetrics.Snapshot? snapshot)
     {
         if (snapshot is not { } h) return "TCP metadata-cache metrics unavailable.";
-        string reuse = h.Completed == 0 ? "—" : ((double)h.Reused / h.Completed).ToString("P1", CultureInfo.InvariantCulture);
-        return $"TCP metadata-cache probes (process lifetime): {h.Completed} completed, {h.Absent} absent, {h.Expired} expired, " +
+        // Snapshot.Completed is an Int64 sum and can overflow even when every
+        // individual outcome is nonnegative. Use exact widened arithmetic.
+        decimal completed = (decimal)h.Absent + h.Expired + h.OwnerMismatch + h.IdentityMismatch + h.Reused;
+        bool invalid = h.Absent < 0 || h.Expired < 0 || h.OwnerMismatch < 0 ||
+            h.IdentityMismatch < 0 || h.Reused < 0 || completed > long.MaxValue;
+        string reuse = completed <= 0 || invalid ? "—" :
+            ((decimal)h.Reused / completed).ToString("P1", CultureInfo.InvariantCulture);
+        return (invalid ? "WARNING: TCP metadata-cache outcome counters invalid or exceed Int64; inspect probe accounting. " : string.Empty) +
+            $"TCP metadata-cache probes (process lifetime): {completed.ToString(CultureInfo.InvariantCulture)} completed, {h.Absent} absent, {h.Expired} expired, " +
             $"{h.OwnerMismatch} owner mismatch, {h.IdentityMismatch} identity mismatch, {h.Reused} reused (reuse share {reuse}). " +
             "Probes are not packets or avoided native ownership scans; fresh ownership remains required.";
     }
