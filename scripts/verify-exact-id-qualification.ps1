@@ -163,6 +163,10 @@ if ($SelfTest) {
         try { $null = Test-Qualification $candidate $inventory $sha $manifest } catch { $rejected = $true }
         Assert-Qualification $rejected 'Invalid fixture accepted'
     }
+    # JSON booleans must not coerce to schema version 1 (PowerShell comparison pitfall).
+    $bad = Copy-Document; $bad.schemaVersion = $true; Expect-Rejection $bad
+    $bad = Copy-Document; $bad.schemaVersion = '1'; Expect-Rejection $bad
+    $bad = Copy-Document; $bad.schemaVersion = 1.0; Expect-Rejection $bad
     $bad = Copy-Document; $bad.records += $bad.records[0]; Expect-Rejection $bad
     $bad = Copy-Document; $bad.PSObject.Properties.Remove('records'); Expect-Rejection $bad
     $bad = Copy-Document; $bad.records = $null; Expect-Rejection $bad
@@ -187,6 +191,9 @@ if ($SelfTest) {
         try { $null = Test-Qualification $doc $inventory $sha $candidate } catch { $rejected = $true }
         Assert-Qualification $rejected 'Invalid execution manifest accepted'
     }
+    $badManifest = Copy-Manifest; $badManifest.schemaVersion = $true; Expect-ManifestRejection $badManifest
+    $badManifest = Copy-Manifest; $badManifest.schemaVersion = '1'; Expect-ManifestRejection $badManifest
+    $badManifest = Copy-Manifest; $badManifest.schemaVersion = 1.0; Expect-ManifestRejection $badManifest
     $badManifest = Copy-Manifest; $badManifest.records += $badManifest.records[0]; Expect-ManifestRejection $badManifest
     $badManifest = Copy-Manifest; $badManifest.PSObject.Properties.Remove('records'); Expect-ManifestRejection $badManifest
     $badManifest = Copy-Manifest; $badManifest.records = $null; Expect-ManifestRejection $badManifest
