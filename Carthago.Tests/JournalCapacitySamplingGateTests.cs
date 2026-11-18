@@ -95,7 +95,7 @@ namespace Carthago.Tests
                     TimeSpan.FromMinutes(1));
                 var at = new DateTime(2026, 11, 18, 0, 0, 0, DateTimeKind.Utc);
                 var confirmations = 0;
-                Parallel.For(0, 16, _ =>
+                Parallel.For(0, 16, index =>
                 {
                     if (gate.TrySample(at, false, out var confirmed, out _, out _) && confirmed)
                         System.Threading.Interlocked.Increment(ref confirmations);
