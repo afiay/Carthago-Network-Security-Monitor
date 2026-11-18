@@ -42,4 +42,32 @@ public sealed class GeoIpCacheHealthArithmeticTests
         Assert.Equal(long.MaxValue, root.GetProperty("NegativeHits").GetInt64());
     }
 
+
+    [Fact]
+    public void Lookup_Attempts_Use_Exact_Total_And_Saturate_Legacy_Int64()
+    {
+        var snapshot = new GeoIpService.LookupHealthSnapshot(long.MaxValue, long.MaxValue, 1);
+
+        Assert.Equal((decimal)long.MaxValue * 2 + 1, snapshot.AttemptsExact);
+        Assert.True(snapshot.AttemptsOverflowed);
+        Assert.Equal(long.MaxValue, snapshot.Attempts);
+    }
+
+    [Fact]
+    public void Lookup_Attempts_Preserve_Ordinary_Counts_And_Json_Provenance()
+    {
+        var snapshot = new GeoIpService.LookupHealthSnapshot(7, 3, 2);
+
+        Assert.Equal(12m, snapshot.AttemptsExact);
+        Assert.False(snapshot.AttemptsOverflowed);
+        Assert.Equal(12L, snapshot.Attempts);
+
+        using var document = System.Text.Json.JsonDocument.Parse(
+            System.Text.Json.JsonSerializer.Serialize(
+                new GeoIpService.LookupHealthSnapshot(long.MaxValue, long.MaxValue, 1)));
+        var root = document.RootElement;
+        Assert.Equal((decimal)long.MaxValue * 2 + 1, root.GetProperty("AttemptsExact").GetDecimal());
+        Assert.True(root.GetProperty("AttemptsOverflowed").GetBoolean());
+        Assert.Equal(long.MaxValue, root.GetProperty("Attempts").GetInt64());
+    }
 }
