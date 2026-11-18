@@ -204,5 +204,26 @@ namespace Carthago.Tests
             Assert.True(confirmed);
         }
 
+
+        [Fact]
+        public void ContradictoryLowFlagCannotConfirmOrPreservePendingEpisode()
+        {
+            var journal = new DetectionJournal(new DetectionJournalOptions());
+            var contradictory = false;
+            var gate = new JournalCapacitySamplingGate(journal, 1000, 10,
+                TimeSpan.FromMinutes(1), capacityReader: (_, _) =>
+                    (true, true, contradictory ? 5000L : 50L, 10000L));
+            var at = new DateTime(2026, 11, 18, 0, 0, 0, DateTimeKind.Utc);
+            Assert.True(gate.TrySample(at, false, out var first, out _, out _));
+            Assert.False(first);
+            contradictory = true;
+            Assert.False(gate.TrySample(at.AddMinutes(1), false, out var invalid, out _, out _));
+            Assert.False(invalid);
+            contradictory = false;
+            Assert.True(gate.TrySample(at.AddMinutes(2), false, out var restarted, out _, out _));
+            Assert.False(restarted);
+            Assert.True(gate.TrySample(at.AddMinutes(3), false, out var confirmed, out _, out _));
+            Assert.True(confirmed);
+        }
     }
 }
