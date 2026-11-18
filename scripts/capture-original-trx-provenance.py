@@ -75,6 +75,10 @@ def finish(repo: Path, before: Path, trx: Path, output: Path) -> None:
     if fingerprint(before_stat) != fingerprint(after_stat) or fingerprint(before_stat) != fingerprint(path_before) or fingerprint(before_stat) != fingerprint(path_after) or len(payload) != before_stat.st_size:
         raise ValueError("TRX changed during intake")
     digest = hashlib.sha256(payload).hexdigest()
+    # Recheck the checkout after intake: a concurrent edit after the first
+    # snapshot must not be attributed to the original execution source.
+    if snapshot(repo) != current:
+        raise ValueError("Checkout changed during TRX intake")
     # Compatible with inspect-original-trx-rule-cases.py --execution-manifest.
     manifest = {"schemaVersion": 1, "originalTrxSha256": digest,
                 "executionSourceSha": current["executionSourceSha"]}
@@ -102,6 +106,25 @@ def self_test() -> None:
             finish(root, before, trx, after)
             assert unique_json(after)["schemaVersion"] == 1, "Manifest JSON invalid"
             assert unique_json(after)["originalTrxSha256"] == hashlib.sha256(trx.read_bytes()).hexdigest()
+            # Simulate a checkout mutation during intake; never emit a manifest.
+            from unittest.mock import patch
+            actual_snapshot = snapshot(root)
+            call_count = 0
+            def changing_snapshot(repo):
+                nonlocal call_count
+                call_count += 1
+                if call_count == 2:
+                    return {**actual_snapshot, "executionTreeSha": "0" * 40}
+                return actual_snapshot
+            race_output = root.parent / (root.name + "-race-rejected.json")
+            with patch.object(sys.modules[__name__], "snapshot", side_effect=changing_snapshot):
+                try:
+                    finish(root, before, trx, race_output)
+                except ValueError as error:
+                    assert "Checkout changed during TRX intake" in str(error)
+                else:
+                    raise AssertionError("Concurrent checkout mutation accepted")
+            assert not race_output.exists(), "Manifest written after checkout race"
             # Reject empty and oversized TRX inputs before any manifest is written.
             trx.write_bytes(b"")
             try:
