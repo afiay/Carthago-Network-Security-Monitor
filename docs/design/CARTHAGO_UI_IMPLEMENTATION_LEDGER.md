@@ -6555,3 +6555,14 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Responsive behavior:** Wide >=1440, Standard 1100–1439, Compact 1024–1099 and below retain the existing filter grid and scroll behavior; the scope can wrap vertically without new fixed widths, breakpoints or horizontal scrolling. **Ownership:** `Carthago/Views/MainWindow.xaml` and this ledger only. Existing navy/graphite/cyan/teal theme, severity, local PPS ScottPlot 10/120, read-only Events 80 displayed/500 retained, visual-only CLI, Cisco/WebView2, privacy/security and all non-UI paths untouched.
 
 **Static risks and unexecuted acceptance:** header height can reduce immediately visible filter area. Verify heading semantics, reading order, filter reachability and clipping at 1920/1440/1100/1099/1024/1023/640 and DPI 100/125/150/200%. Zero builds/tests/CI/capture/renders; runtime acceptance unexecuted. **Next UI-232:** next substantive Dashboard or Incidents visible composition slice from live ledger.
+
+
+## GA UI-232 — Clarify Live Events filter-card hierarchy
+
+**2026-11-18 · SOURCE CANDIDATE — UNVERIFIED.** Approved Library image `libfile_b0a34361560c8191b641e432b3e6b15c` visually inspected. Source baseline HEAD `b026364e7cc421425fed050d2016603b44cd44c1`, actual commit TREE `97ac18f7d93ee76c36266812d793d91d238c0722`; UI-231 latest recorded. Reference mapping: the approved dark SOC screenshot groups Live Events filters into clearly differentiated readable controls; screenshot DEMO DATA is illustrative only.
+
+**Before → after:** both Dashboard Live Events filter cards used tight 6x4 padding, 12px group labels and 11px descriptions with 3px separation. Increased both card paddings to 10x8, group headings to 14px, scope descriptions to 12px, and description-to-control gutters to 7px; classification description now wraps. Preserved the existing two-card grouping, real controls, focus semantics, bindings and handlers. No data, filtering logic or event retention changes.
+
+**Responsive behavior:** Wide >=1440 retains two clearly delineated filter groups; Standard 1100–1439 and Compact 1024–1099 may wrap controls in existing WrapPanels; below 1024 existing responsive card stacking remains in effect, with no new fixed widths. **Ownership:** only `Carthago/Views/MainWindow.xaml` and this ledger; no VMs, Engine/Models/Services, telemetry, rules, capture, security, ScottPlot PPS 10/120, local Events 80/500, visual-only CLI or Cisco/WebView2 changes.
+
+**Static risks/unexecuted acceptance:** increased card padding/description height can reduce visible rows and potentially crowd narrow filter controls. Verify card clipping, keyboard focus, wrapping and scroll reachability at 1920/1440/1100/1099/1024/1023/640 and DPI 100/125/150/200%. Zero builds/tests/CI/capture/renders; runtime acceptance unexecuted. **Next UI-233:** next substantive Dashboard or Incidents visible composition slice from the live ledger.

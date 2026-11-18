@@ -1334,14 +1334,14 @@
                           </StackPanel>
                         </DockPanel>
                         <UniformGrid x:Name="DashboardLiveFilterCardsGrid" Columns="2">
-                          <Border x:Name="DashboardLiveClassificationCard" MinHeight="0" Margin="0,0,8,0" Padding="6,4"
+                          <Border x:Name="DashboardLiveClassificationCard" MinHeight="0" Margin="0,0,8,0" Padding="10,8"
                                   Background="#102A3B" BorderBrush="{StaticResource CardBorderBrush}"
                                   BorderThickness="1" CornerRadius="8">
                             <StackPanel>
-                              <TextBlock Text="Classification" FontSize="12" FontWeight="SemiBold"
-                                         Foreground="{StaticResource AccentBrush}" Margin="0,0,0,3"/>
-                              <TextBlock Text="Severity and reported protocol" FontSize="11"
-                                         Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,3"/>
+                              <TextBlock Text="Classification" FontSize="14" FontWeight="SemiBold"
+                                         Foreground="{StaticResource AccentBrush}" Margin="0,0,0,7"/>
+                              <TextBlock Text="Severity and reported protocol" FontSize="12" TextWrapping="Wrap"
+                                         Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,7"/>
                               <WrapPanel>
                                 <StackPanel Orientation="Horizontal" Height="30" Margin="0,0,6,3">
                         <TextBlock x:Name="DashboardLiveSeverityFilterLabel"
@@ -1394,15 +1394,15 @@
                               </WrapPanel>
                             </StackPanel>
                           </Border>
-                          <Border x:Name="DashboardLiveMetadataCard" MinHeight="0" Margin="8,0,0,0" Padding="6,4"
+                          <Border x:Name="DashboardLiveMetadataCard" MinHeight="0" Margin="8,0,0,0" Padding="10,8"
                                   Background="#0E2534" BorderBrush="{StaticResource CardBorderBrush}"
                                   BorderThickness="1" CornerRadius="8">
                             <StackPanel>
-                              <TextBlock Text="Rule and endpoints" FontSize="12" FontWeight="SemiBold"
-                                         Foreground="{StaticResource AccentBrush}" Margin="0,0,0,3"/>
+                              <TextBlock Text="Rule and endpoints" FontSize="14" FontWeight="SemiBold"
+                                         Foreground="{StaticResource AccentBrush}" Margin="0,0,0,7"/>
                               <TextBlock Text="Rule ID and reported endpoints; no evidence payload search"
-                                         FontSize="11" TextWrapping="Wrap"
-                                         Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,3"/>
+                                         FontSize="12" TextWrapping="Wrap"
+                                         Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,7"/>
                               <WrapPanel>
                                 <StackPanel Orientation="Horizontal" Height="30" Margin="0,0,6,3">
                         <TextBlock x:Name="DashboardLiveRuleFilterLabel"
