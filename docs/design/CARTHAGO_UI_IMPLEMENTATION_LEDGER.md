@@ -6456,3 +6456,14 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Ownership/static review:** only `Carthago/Views/MainWindow.xaml` and this ledger. Existing incident navigation, evidence qualifiers, ScottPlot local PPS 10-sample average/120 history, local Events 80/500, visual-only CLI, Cisco/WebView2 and security/privacy unchanged. No Engine/Models/Services, rules, capture, telemetry, tests or workflows modified.
 
 **Static risks/unexecuted acceptance:** WPF tab traversal and screen-reader order depend on runtime focus behavior and must be verified; confirm provenance before actions, keyboard tab order, accessible labels, scroll, widths 1920/1440/1100/1099/1024/1023/640 and DPI 100/125/150/200%. Builds/tests/CI/capture/render 0. **Next UI-223:** next substantive Dashboard or Incidents composition slice from the live ledger.
+
+
+## GA UI-223 — Readable secondary investigation facts
+
+**2026-11-18 · SOURCE CANDIDATE — UNVERIFIED.** Exact approved Library image `libfile_b0a34361560c8191b641e432b3e6b15c` visually inspected. Source baseline HEAD `328a98e38bd6575471c07c6ba3b8343160cb7cec`, actual commit tree `1a559f54443660f7f4a62a52fcb6b11032a00cad`; UI-222 last recorded. Reference mapping: the approved investigation panel presents legible multi-line fact values in a compact right-hand column; screenshot DEMO DATA is illustrative, not live telemetry.
+
+**Visible before → after:** Dashboard investigation Protocol, Category, Detected and Related incident fact values previously forced one-line ellipsis, obscuring long reported values in the narrow investigation column. These four secondary values now wrap up to two 18px lines within a 36px cap, preserving original labels, values, tooltips, monospace styling and bindings. Source and destination full-width identity rows remain unchanged. Wide >=1440 keeps compact two-column secondary facts; Standard 1100–1439 and Compact 1024–1099 permit two lines within their existing cells; below 1024 retains bounded heights and scrolling. No demo telemetry introduced.
+
+**Ownership/static review:** only `Carthago/Views/MainWindow.xaml` and this ledger. No ViewModels, Engine/Models/Services, rules, capture, telemetry, privacy/security, local PPS ScottPlot 10/120, Events 80/500, visual-only CLI, Cisco/WebView2 or independent work changed.
+
+**Static risks/unexecuted acceptance:** long unbroken tokens may still clip; paired rows may grow to two lines and require DPI review. Verify tooltip access, actual values, keyboard/screen reader, widths 1920/1440/1100/1099/1024/1023/640 and DPI 100/125/150/200%. Builds/tests/CI/capture/render 0. **Next UI-224:** next substantive Dashboard or Incidents visible composition slice from live ledger.

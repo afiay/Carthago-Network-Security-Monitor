@@ -1077,25 +1077,25 @@
                         <Border Grid.Row="2" Grid.Column="0" x:Name="DashboardDetailProtocolCard" Style="{StaticResource DetailGridCard}" Margin="0,0,0,6" Background="{StaticResource CardElevatedBg}" Padding="8,6">
                           <StackPanel>
                             <TextBlock x:Name="DashboardDetailProtocolLabel" Text="Protocol / port" Style="{StaticResource MicroLabel}"/>
-                            <TextBlock x:Name="DashboardDetailProtocolText" AutomationProperties.LabeledBy="{Binding ElementName=DashboardDetailProtocolLabel}" Text="&#x2014;" Style="{StaticResource MonoValue}" Margin="0,4,0,0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                            <TextBlock x:Name="DashboardDetailProtocolText" AutomationProperties.LabeledBy="{Binding ElementName=DashboardDetailProtocolLabel}" Text="&#x2014;" Style="{StaticResource MonoValue}" Margin="0,4,0,0" TextWrapping="Wrap" LineHeight="18" MaxHeight="36" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                           </StackPanel>
                         </Border>
                         <Border Grid.Row="2" Grid.Column="1" x:Name="DashboardDetailCategoryCard" Style="{StaticResource DetailGridCard}" Margin="0,0,0,6">
                           <StackPanel>
                             <TextBlock x:Name="DashboardDetailCategoryLabel" Text="Category" Style="{StaticResource MicroLabel}"/>
-                            <TextBlock x:Name="DashboardDetailCategoryText" AutomationProperties.LabeledBy="{Binding ElementName=DashboardDetailCategoryLabel}" Text="&#x2014;" Style="{StaticResource MonoValue}" Margin="0,4,0,0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                            <TextBlock x:Name="DashboardDetailCategoryText" AutomationProperties.LabeledBy="{Binding ElementName=DashboardDetailCategoryLabel}" Text="&#x2014;" Style="{StaticResource MonoValue}" Margin="0,4,0,0" TextWrapping="Wrap" LineHeight="18" MaxHeight="36" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                           </StackPanel>
                         </Border>
                         <Border Grid.Row="3" Grid.Column="0" Style="{StaticResource DetailGridCard}" Margin="0,0,0,6">
                           <StackPanel>
                             <TextBlock x:Name="DashboardDetailDetectedLabel" Text="Detected" Style="{StaticResource MicroLabel}"/>
-                            <TextBlock x:Name="DashboardDetailDetectedText" AutomationProperties.LabeledBy="{Binding ElementName=DashboardDetailDetectedLabel}" Text="&#x2014;" Style="{StaticResource MonoValue}" Margin="0,4,0,0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                            <TextBlock x:Name="DashboardDetailDetectedText" AutomationProperties.LabeledBy="{Binding ElementName=DashboardDetailDetectedLabel}" Text="&#x2014;" Style="{StaticResource MonoValue}" Margin="0,4,0,0" TextWrapping="Wrap" LineHeight="18" MaxHeight="36" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                           </StackPanel>
                         </Border>
                         <Border Grid.Row="3" Grid.Column="1" Style="{StaticResource DetailGridCard}">
                           <StackPanel>
                             <TextBlock x:Name="DashboardDetailRelatedIncidentLabel" Text="Related incident" Style="{StaticResource MicroLabel}"/>
-                            <TextBlock x:Name="DashboardDetailRelatedIncidentText" AutomationProperties.LabeledBy="{Binding ElementName=DashboardDetailRelatedIncidentLabel}" Text="&#x2014;" Style="{StaticResource MonoValue}" Margin="0,4,0,0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                            <TextBlock x:Name="DashboardDetailRelatedIncidentText" AutomationProperties.LabeledBy="{Binding ElementName=DashboardDetailRelatedIncidentLabel}" Text="&#x2014;" Style="{StaticResource MonoValue}" Margin="0,4,0,0" TextWrapping="Wrap" LineHeight="18" MaxHeight="36" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                           </StackPanel>
                         </Border>
                       </Grid>
