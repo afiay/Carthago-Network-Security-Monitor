@@ -716,4 +716,32 @@ public sealed class EnrichmentHealthPresentationTests
         Assert.DoesNotContain("WARNING: native process candidate lookup accounting inconsistent", summary);
     }
 
+    [Theory]
+    [InlineData(33, 32, 0, 0, 32, 0, 1, 0)]
+    [InlineData(0, 32, -1, 0, 32, 0, 1, 0)]
+    [InlineData(0, 32, 0, -1, 32, 0, 1, 0)]
+    [InlineData(0, 32, 0, 0, 32, -1, 1, 0)]
+    [InlineData(0, 32, 0, 0, 32, 0, 1, 2)]
+    public void Storage_Invalid_Capacity_Or_Checkpoint_Counters_Are_Flagged(
+        int assetCount, int assetLimit, long assetRejected,
+        int destinationCount, int destinationLimit, long destinationRejected,
+        long writes, long failures)
+    {
+        var summary = EnrichmentHealthPresentation.StorageSummary(new(
+            new(assetCount, assetLimit, assetRejected),
+            new(destinationCount, destinationLimit, destinationRejected),
+            new(writes, failures, null)));
+        Assert.Contains("WARNING: enrichment registry capacity or checkpoint counters inconsistent", summary);
+        Assert.Contains($"Current/last session assets: {assetCount}/{assetLimit}", summary);
+        Assert.Contains($"Checkpoint writes: {writes}, failures: {failures}", summary);
+    }
+
+    [Fact]
+    public void Storage_Valid_Counters_Do_Not_Raise_Accounting_Warning()
+    {
+        var summary = EnrichmentHealthPresentation.StorageSummary(new(
+            new(2, 32, 1), new(3, 32, 2), new(4, 1, null)));
+        Assert.DoesNotContain("WARNING: enrichment registry capacity or checkpoint counters inconsistent", summary);
+    }
+
 }
