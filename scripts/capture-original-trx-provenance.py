@@ -12,7 +12,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-SHA = re.compile(r"[0-9a-f]{40}\\Z")
+SHA = re.compile(r"[0-9a-f]{40}\Z")
 MAX_TRX_BYTES = 16 * 1024 * 1024
 
 def git(repo: Path, *args: str) -> str:
@@ -44,7 +44,7 @@ def begin(repo: Path, output: Path) -> None:
               **snapshot(repo), "sourceShaAttested": False}
     with output.open("x", encoding="utf-8") as stream:
         json.dump(record, stream, indent=2)
-        stream.write("\\n")
+        stream.write("\n")
 
 def finish(repo: Path, before: Path, trx: Path, output: Path) -> None:
     record = unique_json(before)
@@ -70,7 +70,7 @@ def finish(repo: Path, before: Path, trx: Path, output: Path) -> None:
                 "executionSourceSha": current["executionSourceSha"]}
     with output.open("x", encoding="utf-8") as stream:
         json.dump(manifest, stream, indent=2)
-        stream.write("\\n")
+        stream.write("\n")
 
 def self_test() -> None:
     import tempfile
@@ -86,8 +86,11 @@ def self_test() -> None:
         trx = root.parent / (root.name + "-original.trx")
         try:
             begin(root, before)
+            assert SHA.fullmatch(snapshot(root)["executionSourceSha"]), "Canonical Git SHA rejected"
+            assert unique_json(before)["phase"] == "before-execution", "Before JSON invalid"
             trx.write_bytes(b"<TestRun/>")
             finish(root, before, trx, after)
+            assert unique_json(after)["schemaVersion"] == 1, "Manifest JSON invalid"
             assert unique_json(after)["originalTrxSha256"] == hashlib.sha256(trx.read_bytes()).hexdigest()
             # Reject empty and oversized TRX inputs before any manifest is written.
             trx.write_bytes(b"")
