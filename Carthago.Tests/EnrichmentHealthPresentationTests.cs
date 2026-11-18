@@ -287,6 +287,26 @@ public sealed class EnrichmentHealthPresentationTests
         Assert.Contains("GeoIP cache metrics unavailable", EnrichmentHealthPresentation.Build(new TrafficCaptureService.StatsSnapshot()).Summary);
     }
 
+    [Theory]
+    [InlineData(3, 1, 4, 1, 2, 2, 8, false)]
+    [InlineData(3, 1, 4, 1, 2, 2, 7, true)]
+    [InlineData(3, 1, 4, 1, 2, 9, 8, true)]
+    [InlineData(-1, 1, 4, 1, 2, 2, 8, true)]
+    [InlineData(long.MaxValue, long.MaxValue, 0, 0, 0, 0, 8, true)]
+    public void Geo_Cache_Flags_Inconsistent_Paths_Without_Clamping_Counters(
+        long positive, long negative, long misses, long expired, long evicted,
+        long occupancy, long requests, bool warning)
+    {
+        var stats = new TrafficCaptureService.StatsSnapshot
+        {
+            GeoCacheHealth = new(positive, negative, misses, expired, evicted, occupancy, requests)
+        };
+        var summary = EnrichmentHealthPresentation.Build(stats).Summary;
+        Assert.Equal(warning, summary.Contains("WARNING: GeoIP cache request-path or capacity counters inconsistent"));
+        Assert.Contains($"{requests} eligible requests", summary);
+        Assert.Contains($"{positive} positive hits", summary);
+    }
+
     [Fact]
     public void Metadata_Cache_Summary_Uses_Probe_Denominator_And_Distinguishes_Missing()
     {
