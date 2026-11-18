@@ -7,6 +7,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 import subprocess
 import sys
@@ -58,11 +59,20 @@ def finish(repo: Path, before: Path, trx: Path, output: Path) -> None:
     if not trx.is_file() or not 0 < trx.stat().st_size <= MAX_TRX_BYTES:
         raise ValueError("Missing, empty or oversized TRX")
     # Bound the actual read as well as the initial stat: the file may grow concurrently.
+    # A same-size replacement during intake must not be accepted as a stable artifact.
+    # Compare descriptor identity/timestamps to the path both before and after reading.
     with trx.open("rb") as stream:
+        before_stat = os.fstat(stream.fileno())
+        path_before = trx.stat()
+        if (before_stat.st_dev, before_stat.st_ino) != (path_before.st_dev, path_before.st_ino):
+            raise ValueError("TRX path changed before intake")
         payload = stream.read(MAX_TRX_BYTES + 1)
         if not payload or len(payload) > MAX_TRX_BYTES or stream.read(1):
             raise ValueError("TRX changed size or exceeds bounded intake")
-    if len(payload) != trx.stat().st_size:
+        after_stat = os.fstat(stream.fileno())
+    path_after = trx.stat()
+    fingerprint = lambda st: (st.st_dev, st.st_ino, st.st_size, st.st_mtime_ns, st.st_ctime_ns)
+    if fingerprint(before_stat) != fingerprint(after_stat) or fingerprint(before_stat) != fingerprint(path_before) or fingerprint(before_stat) != fingerprint(path_after) or len(payload) != before_stat.st_size:
         raise ValueError("TRX changed during intake")
     digest = hashlib.sha256(payload).hexdigest()
     # Compatible with inspect-original-trx-rule-cases.py --execution-manifest.
