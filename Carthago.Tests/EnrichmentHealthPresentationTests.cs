@@ -668,4 +668,40 @@ public sealed class EnrichmentHealthPresentationTests
         Assert.Contains("WARNING: invalid worker counters", summary);
     }
 
+    [Theory]
+    [InlineData(2, 2, 1, 100, 0, 0)]
+    [InlineData(2, -1, 3, 100, 0, 0)]
+    [InlineData(1, 1, 0, -1, 0, 0)]
+    [InlineData(0, 0, 0, 10, 0, 0)]
+    [InlineData(1, 1, 0, 10, 2, 1)]
+    public void Native_Process_Invalid_Candidate_Accounting_Suppresses_Mean(
+        long completed, long resolved, long unresolved, long elapsedTicks, long active, long peak)
+    {
+        var summary = EnrichmentHealthPresentation.NativeProcessSummary(new[]
+        {
+            new WindowsProcessResolver.ProcessLookupMetrics.Snapshot(
+                completed, resolved, unresolved, elapsedTicks, active, peak),
+            default(WindowsProcessResolver.ProcessLookupMetrics.Snapshot),
+            default(WindowsProcessResolver.ProcessLookupMetrics.Snapshot),
+            default(WindowsProcessResolver.ProcessLookupMetrics.Snapshot)
+        });
+        Assert.Contains("WARNING: native process candidate lookup accounting inconsistent", summary);
+        Assert.Contains($"TCP/IPv4: {completed} completed, {resolved} resolved, {unresolved} unresolved, mean ms —", summary);
+        Assert.Contains($"{active} active, {peak} peak active", summary);
+    }
+
+    [Fact]
+    public void Native_Process_Active_Without_Completed_Is_Not_Invalid()
+    {
+        var summary = EnrichmentHealthPresentation.NativeProcessSummary(new[]
+        {
+            new WindowsProcessResolver.ProcessLookupMetrics.Snapshot(0, 0, 0, 0, 1, 1),
+            default(WindowsProcessResolver.ProcessLookupMetrics.Snapshot),
+            default(WindowsProcessResolver.ProcessLookupMetrics.Snapshot),
+            default(WindowsProcessResolver.ProcessLookupMetrics.Snapshot)
+        });
+        Assert.Contains("TCP/IPv4: 0 completed, 0 resolved, 0 unresolved, mean ms —, 1 active, 1 peak active", summary);
+        Assert.DoesNotContain("WARNING: native process candidate lookup accounting inconsistent", summary);
+    }
+
 }
