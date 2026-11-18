@@ -553,3 +553,16 @@ The actual `DetectionJournal` now exposes `TryReadConfiguredVolumeCapacity`, rea
 - **Still required R531:** lifecycle-owned periodic sampling, configured policy/maintenance ownership, authenticated typed local-health event and RuleEngine admission; do not infer detection from a test-injected capacity delegate or packet text.
 - **Still required R536:** owned parser counters with trusted provenance, runtime producer and RuleEngine connectivity.
 - **Next cursor:** ordered 187-ID review exhausted; revisit producer-blocked carryover, beginning with R531 and R536. No blocked ID counted complete.
+
+
+## Carryover R531 — capacity classification integrity (2026-11-18)
+
+**Status:** IN-PROGRESS / PRODUCER-BLOCKED; **functional detector completions: 0**. The ordered 187-ID review cursor is exhausted, not the implementation backlog. No new ordered ten-ID batch was selected; revisit R531/R536 and remaining producer-blocked IDs.
+
+**Source change:** `Carthago/Services/Journaling/JournalCapacitySamplingGate.cs` now independently recomputes the configured two-threshold low-space classification from the sampled available/total bytes, and resets fail-closed if a capacity reader's claimed Low flag disagrees. This prevents a contradictory reading from advancing a two-sample confirmation episode. The default production reader remains the OS-backed journal-volume probe; no packet-derived telemetry or detector promotion. Commit `d7668595818e40cff9026d5bd12f08631774637f`.
+
+**Regression authored:** `Carthago.Tests/JournalCapacitySamplingGateTests.cs`, `ContradictoryLowFlagCannotConfirmOrPreservePendingEpisode` covers contradiction, reset and fresh two-reading confirmation. Commit `7d01501d8be3e56728878b11bde2bfe197cfd4e1`. **Tests executed: none.** No Windows runner/build available in this execution; compilation unverified. Ledger commit: the commit containing this entry.
+
+**Still missing:** R531 lifecycle-owned scheduler, trusted maintenance/clock policy, production threshold configuration, typed authenticated local-health event admission and RuleEngine integration. R536 requires owned parser-failure numerator/denominator metrics, stable parser attribution, bounded rate baseline and RuleEngine connectivity. Neither is functionally complete. No precision floors or frozen holdout modified.
+
+**Next cursor:** carryover R531/R536 and other producer-blocked IDs; no new ordered IDs. 
