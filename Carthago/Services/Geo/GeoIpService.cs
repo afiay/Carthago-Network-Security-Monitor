@@ -91,7 +91,11 @@ namespace Carthago.Services.Geo
         // Service-lifetime completed database attempts; skipped requests are excluded.
         public readonly record struct LookupHealthSnapshot(long Found, long NotFound, long Failed)
         {
-            public long Attempts => Found + NotFound + Failed;
+            // Preserve exact lifetime accounting without wrapping the legacy Int64 field.
+            public decimal AttemptsExact => (decimal)Found + NotFound + Failed;
+            public bool AttemptsOverflowed => AttemptsExact > long.MaxValue || AttemptsExact < long.MinValue;
+            public long Attempts => AttemptsExact > long.MaxValue ? long.MaxValue
+                : AttemptsExact < long.MinValue ? long.MinValue : (long)AttemptsExact;
         }
 
         internal sealed class LookupHealthCounter
