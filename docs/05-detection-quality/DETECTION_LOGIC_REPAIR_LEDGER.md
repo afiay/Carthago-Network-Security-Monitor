@@ -532,3 +532,14 @@ The actual `DetectionJournal` now exposes `TryReadConfiguredVolumeCapacity`, rea
 **Test authored:** `Carthago.Tests/JournalCapacitySamplingGateTests.cs`, `SustainedLowSpaceConfirmsOnceUntilGateIsReset`, commit `17d4c9e560fc87b43395c90d2988f5e896f4f124`. **Tests executed: none.** No Windows runner/build, live capture, replay or qualification performed; compilation unverified.
 
 **Unresolved integration:** R531 still requires a lifecycle-owned periodic scheduler, trusted clock and maintenance context, configured production thresholds, typed authenticated local-health admission, and actual RuleEngine predicate/event integration. R536 requires owned parser-counter producer, trusted attribution and engine binding. Packet text and journal write failures are not substitutes for OS-backed low-space evidence. **Functional repairs this run: zero.** Next cursor: carryover R531/R536 and remaining blocked IDs; no new ordered IDs.
+
+
+## Carryover R531 — duplicate scheduler-tick suppression (2026-11-18)
+
+**Status:** IN-PROGRESS / PRODUCER-BLOCKED; **functional detector completions: 0**. Ordered review cursor exhausted; no new ten-ID batch and no carryover item marked implemented.
+
+**Actual production fix:** `JournalCapacitySamplingGate.TrySample` previously called `ResetCore` when an otherwise valid scheduler tick repeated the last accepted UTC timestamp. That reset cleared the one-shot low-space episode flag, allowing a later pair of low readings to emit a duplicate confirmation without recovery. Identical timestamps now return no sample without modifying the existing confirmation state; strictly backward clocks still reset fail-closed, and maintenance still resets. Commit `4e9201822d3de40f00acea1f6f06fcd904c7b124`.
+
+**Regression authored:** `Carthago.Tests/JournalCapacitySamplingGateTests.cs` adds `DuplicateTickDoesNotRearmConfirmedLowSpaceEpisode`, commit `1a28f82e5da8300978f6cb47ba2662208baa9b38`. **Tests executed: 0.** No local Windows runner or build, native capture, GitHub Actions, invasive tests or force push. Compilation unverified. No change to R102/R118/R163 floors or frozen holdout.
+
+**Outstanding R531:** production-owned scheduler, trusted clock/maintenance context, threshold policy, typed authenticated health-event delivery and actual RuleEngine admission. **R536:** owned parser counters and engine binding. **Next cursor:** unresolved carryover R531/R536 and remaining blocked IDs; no new ordered IDs. This is a sampling integrity fix, not a functional detector completion.
