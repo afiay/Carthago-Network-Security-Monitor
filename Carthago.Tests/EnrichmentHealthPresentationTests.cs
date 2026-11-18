@@ -64,6 +64,28 @@ public sealed class EnrichmentHealthPresentationTests
     }
 
     [Fact]
+    public void Aggregate_Export_Preserves_Exact_GeoIp_Lifetime_Totals()
+    {
+        var stats = new TrafficCaptureService.StatsSnapshot
+        {
+            GeoCityLookupHealth = new(long.MaxValue, 0, long.MaxValue),
+            GeoCacheHealth = new(long.MaxValue, long.MaxValue, 0, 0, 0, 0, 32)
+        };
+        var sampled = System.DateTimeOffset.Parse("2026-11-18T10:00:00Z");
+        using var doc = System.Text.Json.JsonDocument.Parse(
+            EnrichmentHealthPresentation.ExportCounters(stats, sampled, 42, sampled));
+        var root = doc.RootElement;
+        var city = root.GetProperty("geoCity");
+        Assert.Equal(18446744073709551614m, city.GetProperty("AttemptsExact").GetDecimal());
+        Assert.True(city.GetProperty("AttemptsOverflowed").GetBoolean());
+        Assert.Equal(long.MaxValue, city.GetProperty("Attempts").GetInt64());
+        var cache = root.GetProperty("geoCache");
+        Assert.Equal(18446744073709551614m, cache.GetProperty("RequestsExact").GetDecimal());
+        Assert.True(cache.GetProperty("RequestsOverflowed").GetBoolean());
+        Assert.Equal(long.MaxValue, cache.GetProperty("Requests").GetInt64());
+    }
+
+    [Fact]
     public void Aggregate_Export_Without_Registry_Identity_Does_Not_Invent_One()
     {
         var stats = new TrafficCaptureService.StatsSnapshot { EnrichmentStorage = new(new(0, 32, 0), new(0, 32, 0), new(0, 0, null)) };
