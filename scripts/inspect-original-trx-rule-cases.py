@@ -196,6 +196,24 @@ def reconcile_execution_manifest(report: dict, manifest: dict) -> dict:
     return {"executionSourceShaDeclared": sha, "sourceShaAttested": False,
             "evidenceAdmitted": False, "provenanceStatus": "declared-unverified"}
 
+def reconcile_source_provenance(inventory: dict, declaration: dict | None) -> dict:
+    """Compare historical inventory and declared TRX checkout; never attest either."""
+    historical = inventory.get("sourceSha")
+    if not isinstance(historical, str) or not re.fullmatch(r"[0-9a-f]{40}", historical):
+        raise ValueError("Invalid historical inventory source SHA")
+    if declaration is None:
+        return {"inventorySourceSha": historical, "executionSourceShaDeclared": None,
+                "relationship": "execution-source-undeclared", "sourceShaAttested": False,
+                "evidenceAdmitted": False}
+    executed = declaration.get("executionSourceShaDeclared")
+    if not isinstance(executed, str) or not re.fullmatch(r"[0-9a-f]{40}", executed):
+        raise ValueError("Invalid declared execution source SHA")
+    return {"inventorySourceSha": historical, "executionSourceShaDeclared": executed,
+            "relationship": ("same-declared-source" if executed == historical
+                             else "historical-source-differs-from-declared-execution"),
+            "sourceShaAttested": False, "evidenceAdmitted": False}
+
+
 def self_test() -> None:
     import tempfile
     xml = ('<TestRun xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">'
@@ -248,6 +266,29 @@ def self_test() -> None:
         assert not joined["evidenceAdmitted"]
         inventory = {"schemaVersion": 1, "sourceSha": "a" * 40,
                      "records": [{"ruleId": "R102", "registeredClass": "R102_TestRule"}]}
+        missing_source = reconcile_source_provenance(inventory, None)
+        assert missing_source["relationship"] == "execution-source-undeclared"
+        assert missing_source["executionSourceShaDeclared"] is None
+        same_source = reconcile_source_provenance(inventory, declared)
+        assert same_source["relationship"] == "same-declared-source"
+        different_source = reconcile_source_provenance(
+            inventory, {**declared, "executionSourceShaDeclared": "b" * 40})
+        assert different_source["relationship"] == "historical-source-differs-from-declared-execution"
+        assert all(not item["sourceShaAttested"] and not item["evidenceAdmitted"]
+                   for item in (missing_source, same_source, different_source))
+        for invalid_source in ({"sourceSha": "invalid"}, {"sourceSha": None}):
+            try:
+                reconcile_source_provenance(invalid_source, declared)
+            except ValueError:
+                pass
+            else:
+                raise AssertionError("Invalid historical source SHA accepted")
+        try:
+            reconcile_source_provenance(inventory, {"executionSourceShaDeclared": "INVALID"})
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("Invalid execution source declaration accepted")
         matched = reconcile_inventory(joined, inventory)
         assert matched["matchedReviewedCases"] == 1 and not matched["evidenceAdmitted"]
         assert matched["reviewedOutcomeCountsByExactId"]["R102"]["positive-detector"]["passed"] == 1
@@ -369,6 +410,8 @@ def main() -> None:
             report["exactIdInventoryReconciliation"] = reconcile_inventory(
                 report["reviewedCaseReconciliation"], inventory)
             report["exactIdInventoryReconciliation"]["inventorySha256"] = hashlib.sha256(inventory_bytes).hexdigest()
+            report["sourceProvenanceComparison"] = reconcile_source_provenance(
+                inventory, report.get("executionSourceDeclaration"))
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with args.output.open("x", encoding="utf-8") as f:
         json.dump(report, f, indent=2)
