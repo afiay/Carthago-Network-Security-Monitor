@@ -101,7 +101,11 @@ internal static class EnrichmentHealthPresentation
     internal static string TlsCapacitySummary((int Retained, int Closed, long CapacityRejections)? snapshot)
     {
         if (snapshot is not { } s) return "TLS capacity metrics unavailable (no capture session).";
-        return $"TLS retained states: {s.Retained:N0}/{TlsConnectionEnrichment.Capacity:N0}; open: {s.Retained - s.Closed:N0}; closed: {s.Closed:N0}; capacity-rejected SYN attempts (session lifetime): {s.CapacityRejections:N0}. Retained states may await expiry pruning; not a count of live connections.";
+        bool invalid = s.Retained < 0 || s.Closed < 0 || s.Closed > s.Retained ||
+            s.Retained > TlsConnectionEnrichment.Capacity || s.CapacityRejections < 0;
+        string open = invalid ? "—" : (s.Retained - s.Closed).ToString("N0", CultureInfo.InvariantCulture);
+        return (invalid ? "WARNING: TLS retained, closed or capacity rejection counters inconsistent; inspect session accounting. " : string.Empty) +
+            $"TLS retained states: {s.Retained:N0}/{TlsConnectionEnrichment.Capacity:N0}; open: {open}; closed: {s.Closed:N0}; capacity-rejected SYN attempts (session lifetime): {s.CapacityRejections:N0}. Retained states may await expiry pruning; not a count of live connections.";
     }
 
     internal static string ProcessMetadataCacheCapacitySummary((int Count, long Evictions)? snapshot)
