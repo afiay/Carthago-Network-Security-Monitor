@@ -98,7 +98,7 @@ function Test-QualificationTrx([byte[]]$bytes, [string]$digest, [string[]]$names
             $pendingCount = @($observed | Where-Object { $_.GetAttribute('outcome') -ceq 'Pending' }).Count
             $reportedPending = 0
             $pendingValue = $counters.GetAttribute('pending')
-            if (-not [regex]::IsMatch($pendingValue, '\\A(?:0|[1-9][0-9]*)\\z') -or
+            if (-not [regex]::IsMatch($pendingValue, '\A(?:0|[1-9][0-9]*)\z') -or
                 -not [int]::TryParse($pendingValue, [ref]$reportedPending) -or
                 $reportedPending -ne $pendingCount) { throw 'TRX pending counter mismatch or invalid syntax' }
         }
