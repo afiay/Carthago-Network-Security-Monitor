@@ -195,7 +195,7 @@ internal static class EnrichmentHealthPresentation
         if (snapshot is not { } h) return name + " unknown";
         decimal attempts = h.AttemptsExact;
         bool invalid = h.Found < 0 || h.NotFound < 0 || h.Failed < 0 || h.AttemptsOverflowed;
-        string rate = attempts <= 0 || h.Failed < 0 || h.Found < 0 || h.NotFound < 0
+        string rate = attempts <= 0 || invalid
             ? "—" : ((decimal)h.Failed / attempts).ToString("P1", CultureInfo.InvariantCulture);
         return (invalid ? "WARNING: GeoIP lookup outcome counters invalid or exceed Int64; inspect lookup accounting. " : string.Empty) +
             $"{name}: {attempts.ToString(CultureInfo.InvariantCulture)} attempts, {h.Found} found, {h.NotFound} not found, {h.Failed} failed (failure share {rate})";
