@@ -15,6 +15,7 @@ namespace Carthago
     {
         private CancellationTokenSource? _threatCts;
         private CancellationTokenSource? _cliCts;
+        private JournalCapacityMonitorHost? _journalCapacityMonitorHost;
 
         public App()
         {
@@ -86,6 +87,17 @@ namespace Carthago
                     "Configuration Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
 
+            // Start the R531 producer only when the operator has explicitly supplied
+            // thresholds, an interval and a non-maintenance policy in the environment.
+            try
+            {
+                _journalCapacityMonitorHost = JournalCapacityMonitorHost.TryStartFromEnvironment();
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                Console.Error.WriteLine("[R531] Journal capacity monitor was not started: " + ex.GetType().Name);
+            }
+
             // Warm the bundled IANA service registry locally before packet capture.
             // This never performs network I/O; remote IANA updates are explicit only.
             try
@@ -111,6 +123,7 @@ namespace Carthago
 
         protected override void OnExit(ExitEventArgs e)
         {
+            _journalCapacityMonitorHost?.Stop();
             _cliCts?.Cancel();
             _threatCts?.Cancel();
             base.OnExit(e);
