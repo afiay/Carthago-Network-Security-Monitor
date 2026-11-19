@@ -1,6 +1,6 @@
 {
-  "schemaVersion": 1,
-  "sourceSha": "d8e4abda4d7a7c61e5f2f5d3a93077975678e079",
+  "schemaVersion": 2,
+  "sourceSha": "1bf479292de18798fb1f0a5319c8bcd8b0ae943a",
   "records": [
     {
       "ruleId": "R903",
@@ -15,7 +15,23 @@
       "captureProvenance": "Raw WRITE; PowerShell identity synthetic",
       "profileEligibility": "candidate-shadow",
       "independentValidation": "missing",
-      "limitations": "Q9 process-attribution-unavailable; authenticated process instance and WinRM sequence"
+      "limitations": "Q9 process-attribution-unavailable; authenticated process instance and WinRM sequence",
+      "positiveEvidence": {
+        "status": "executed-pass",
+        "outcome": "matched",
+        "executedSha": "e64e2dfe40a3d087c6369d9aca75264946878d28",
+        "reference": "Carthago.Tests/Smb2PairedAccuracyQualificationTests.cs",
+        "provenance": "reviewed-ledger-attestation-no-trx-artifact",
+        "description": "Raw malicious SMB2 WRITE scenarios matched in frozen synthetic Q7 (TP=6, FN=0 across six rules); not field validation."
+      },
+      "negativeEvidence": {
+        "status": "executed-fail",
+        "outcome": "false-positive",
+        "executedSha": "e64e2dfe40a3d087c6369d9aca75264946878d28",
+        "reference": "Carthago.Tests/Smb2PairedAccuracyQualificationTests.cs",
+        "provenance": "reviewed-ledger-attestation-no-trx-artifact",
+        "description": "A benign lookalike also matched the raw predicate (FP=6 across six rules); separate benign port controls rejected and Shadow alerting remained suppressed."
+      }
     },
     {
       "ruleId": "R908",
@@ -30,7 +46,23 @@
       "captureProvenance": "Raw WRITE and SYN; no authorization proof",
       "profileEligibility": "candidate-shadow",
       "independentValidation": "missing",
-      "limitations": "Q9 packet-only eligible; independent public-to-private lab cases pending"
+      "limitations": "Q9 packet-only eligible; independent public-to-private lab cases pending",
+      "positiveEvidence": {
+        "status": "executed-pass",
+        "outcome": "matched",
+        "executedSha": "e64e2dfe40a3d087c6369d9aca75264946878d28",
+        "reference": "Carthago.Tests/Smb2PairedAccuracyQualificationTests.cs",
+        "provenance": "reviewed-ledger-attestation-no-trx-artifact",
+        "description": "Raw malicious SMB2 WRITE scenarios matched in frozen synthetic Q7 (TP=6, FN=0 across six rules); not field validation."
+      },
+      "negativeEvidence": {
+        "status": "executed-fail",
+        "outcome": "false-positive",
+        "executedSha": "e64e2dfe40a3d087c6369d9aca75264946878d28",
+        "reference": "Carthago.Tests/Smb2PairedAccuracyQualificationTests.cs",
+        "provenance": "reviewed-ledger-attestation-no-trx-artifact",
+        "description": "A benign lookalike also matched the raw predicate (FP=6 across six rules); separate source-port controls rejected and Shadow alerting remained suppressed."
+      }
     },
     {
       "ruleId": "R910",
@@ -45,7 +77,23 @@
       "captureProvenance": "Raw WRITE; PowerShell identity synthetic",
       "profileEligibility": "candidate-shadow",
       "independentValidation": "missing",
-      "limitations": "Q9 process-attribution-unavailable; independent LDAP/SMB and process evidence"
+      "limitations": "Q9 process-attribution-unavailable; independent LDAP/SMB and process evidence",
+      "positiveEvidence": {
+        "status": "executed-pass",
+        "outcome": "matched",
+        "executedSha": "e64e2dfe40a3d087c6369d9aca75264946878d28",
+        "reference": "Carthago.Tests/Smb2PairedAccuracyQualificationTests.cs",
+        "provenance": "reviewed-ledger-attestation-no-trx-artifact",
+        "description": "Raw malicious SMB2 WRITE scenarios matched in frozen synthetic Q7 (TP=6, FN=0 across six rules); not field validation."
+      },
+      "negativeEvidence": {
+        "status": "executed-fail",
+        "outcome": "false-positive",
+        "executedSha": "e64e2dfe40a3d087c6369d9aca75264946878d28",
+        "reference": "Carthago.Tests/Smb2PairedAccuracyQualificationTests.cs",
+        "provenance": "reviewed-ledger-attestation-no-trx-artifact",
+        "description": "A benign lookalike also matched the raw predicate (FP=6 across six rules); separate LDAP-host controls rejected and Shadow alerting remained suppressed."
+      }
     },
     {
       "ruleId": "R919",
@@ -60,7 +108,23 @@
       "captureProvenance": "Raw WRITE; PsExec identity synthetic",
       "profileEligibility": "candidate-shadow",
       "independentValidation": "missing",
-      "limitations": "Q9 process-attribution-unavailable; authenticated process and RPC evidence"
+      "limitations": "Q9 process-attribution-unavailable; authenticated process and RPC evidence",
+      "positiveEvidence": {
+        "status": "executed-pass",
+        "outcome": "matched",
+        "executedSha": "e64e2dfe40a3d087c6369d9aca75264946878d28",
+        "reference": "Carthago.Tests/Smb2PairedAccuracyQualificationTests.cs",
+        "provenance": "reviewed-ledger-attestation-no-trx-artifact",
+        "description": "Raw malicious SMB2 WRITE scenarios matched in frozen synthetic Q7 (TP=6, FN=0 across six rules); not field validation."
+      },
+      "negativeEvidence": {
+        "status": "executed-fail",
+        "outcome": "false-positive",
+        "executedSha": "e64e2dfe40a3d087c6369d9aca75264946878d28",
+        "reference": "Carthago.Tests/Smb2PairedAccuracyQualificationTests.cs",
+        "provenance": "reviewed-ledger-attestation-no-trx-artifact",
+        "description": "A benign lookalike also matched the raw predicate (FP=6 across six rules); separate RPC-port controls rejected and Shadow alerting remained suppressed."
+      }
     },
     {
       "ruleId": "R942",
@@ -75,7 +139,23 @@
       "captureProvenance": "Raw WRITE and follow-up SYN; no industrial operation proof",
       "profileEligibility": "candidate-shadow",
       "independentValidation": "missing",
-      "limitations": "Q9 packet-only eligible; independent three-host lab cases pending"
+      "limitations": "Q9 packet-only eligible; independent three-host lab cases pending",
+      "positiveEvidence": {
+        "status": "executed-pass",
+        "outcome": "matched",
+        "executedSha": "e64e2dfe40a3d087c6369d9aca75264946878d28",
+        "reference": "Carthago.Tests/Smb2PairedAccuracyQualificationTests.cs",
+        "provenance": "reviewed-ledger-attestation-no-trx-artifact",
+        "description": "Raw malicious SMB2 WRITE scenarios matched in frozen synthetic Q7 (TP=6, FN=0 across six rules); not field validation."
+      },
+      "negativeEvidence": {
+        "status": "executed-fail",
+        "outcome": "false-positive",
+        "executedSha": "e64e2dfe40a3d087c6369d9aca75264946878d28",
+        "reference": "Carthago.Tests/Smb2PairedAccuracyQualificationTests.cs",
+        "provenance": "reviewed-ledger-attestation-no-trx-artifact",
+        "description": "A benign lookalike also matched the raw predicate (FP=6 across six rules); separate Modbus-source controls rejected and Shadow alerting remained suppressed."
+      }
     },
     {
       "ruleId": "R950",
@@ -90,7 +170,23 @@
       "captureProvenance": "Raw WRITE; HTTP and PowerShell typed synthetic observations",
       "profileEligibility": "candidate-shadow",
       "independentValidation": "missing",
-      "limitations": "Q9 process-attribution-unavailable; authenticated process and captured HTTP evidence"
+      "limitations": "Q9 process-attribution-unavailable; authenticated process and captured HTTP evidence",
+      "positiveEvidence": {
+        "status": "executed-pass",
+        "outcome": "matched",
+        "executedSha": "e64e2dfe40a3d087c6369d9aca75264946878d28",
+        "reference": "Carthago.Tests/Smb2PairedAccuracyQualificationTests.cs",
+        "provenance": "reviewed-ledger-attestation-no-trx-artifact",
+        "description": "Raw malicious SMB2 WRITE scenarios matched in frozen synthetic Q7 (TP=6, FN=0 across six rules); not field validation."
+      },
+      "negativeEvidence": {
+        "status": "executed-fail",
+        "outcome": "false-positive",
+        "executedSha": "e64e2dfe40a3d087c6369d9aca75264946878d28",
+        "reference": "Carthago.Tests/Smb2PairedAccuracyQualificationTests.cs",
+        "provenance": "reviewed-ledger-attestation-no-trx-artifact",
+        "description": "A benign lookalike also matched the raw predicate (FP=6 across six rules); separate non-script controls rejected and Shadow alerting remained suppressed."
+      }
     },
     {
       "ruleId": "R946",
@@ -105,7 +201,23 @@
       "captureProvenance": "Raw IPv4 TFTP exact request GUID; initial exchange only",
       "profileEligibility": "candidate-shadow",
       "independentValidation": "missing",
-      "limitations": "Shadow; benign authorized private transfers and independent capture"
+      "limitations": "Shadow; benign authorized private transfers and independent capture",
+      "positiveEvidence": {
+        "status": "executed-pass",
+        "outcome": "matched",
+        "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+        "reference": "Carthago.Tests/TftpCaptureQualificationTests.cs",
+        "provenance": "reviewed-ledger-attestation-no-trx-artifact",
+        "description": "Valid RRQ-to-DATA1 and WRQ-to-ACK0 initial exchanges matched."
+      },
+      "negativeEvidence": {
+        "status": "executed-pass",
+        "outcome": "rejected",
+        "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+        "reference": "Carthago.Tests/TftpCaptureQualificationTests.cs",
+        "provenance": "reviewed-ledger-attestation-no-trx-artifact",
+        "description": "Arbitrary UDP/69 payloads and unrelated request/response pairs were rejected."
+      }
     },
     {
       "ruleId": "R947",
@@ -120,7 +232,23 @@
       "captureProvenance": "Raw TFTP; SSH SYN synthetic, no authentication",
       "profileEligibility": "candidate-shadow",
       "independentValidation": "missing",
-      "limitations": "Shadow; captured SSH and authorized public transfer controls"
+      "limitations": "Shadow; captured SSH and authorized public transfer controls",
+      "positiveEvidence": {
+        "status": "executed-pass",
+        "outcome": "matched",
+        "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+        "reference": "Carthago.Tests/TftpCaptureQualificationTests.cs",
+        "provenance": "reviewed-ledger-attestation-no-trx-artifact",
+        "description": "SSH SYN followed by a public TFTP RRQ matched; SSH identity/authentication remains synthetic."
+      },
+      "negativeEvidence": {
+        "status": "executed-pass",
+        "outcome": "rejected",
+        "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+        "reference": "Carthago.Tests/TftpCaptureQualificationTests.cs",
+        "provenance": "reviewed-ledger-attestation-no-trx-artifact",
+        "description": "Malformed TFTP payloads were rejected."
+      }
     },
     {
       "ruleId": "R949",
@@ -135,7 +263,23 @@
       "captureProvenance": "Raw TFTP; FTP STOR synthetic, no file identity",
       "profileEligibility": "candidate-shadow",
       "independentValidation": "missing",
-      "limitations": "Shadow; captured FTP and benign file-placement controls"
+      "limitations": "Shadow; captured FTP and benign file-placement controls",
+      "positiveEvidence": {
+        "status": "executed-pass",
+        "outcome": "matched",
+        "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+        "reference": "Carthago.Tests/TftpCaptureQualificationTests.cs",
+        "provenance": "reviewed-ledger-attestation-no-trx-artifact",
+        "description": "FTP STOR followed by a TFTP WRQ matched; file identity remains unavailable."
+      },
+      "negativeEvidence": {
+        "status": "executed-pass",
+        "outcome": "rejected",
+        "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+        "reference": "Carthago.Tests/TftpCaptureQualificationTests.cs",
+        "provenance": "reviewed-ledger-attestation-no-trx-artifact",
+        "description": "Malformed TFTP payloads were rejected."
+      }
     },
     {
       "ruleId": "R708",
@@ -150,7 +294,23 @@
       "captureProvenance": "Raw initial exchange; no transfer completion",
       "profileEligibility": "candidate-shadow",
       "independentValidation": "missing",
-      "limitations": "Shadow; authorized inbound transfer controls"
+      "limitations": "Shadow; authorized inbound transfer controls",
+      "positiveEvidence": {
+        "status": "executed-pass",
+        "outcome": "matched",
+        "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+        "reference": "Carthago.Tests/TftpCaptureQualificationTests.cs",
+        "provenance": "reviewed-ledger-attestation-no-trx-artifact",
+        "description": "Public-to-private RRQ/WRQ direction matched."
+      },
+      "negativeEvidence": {
+        "status": "executed-pass",
+        "outcome": "rejected",
+        "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+        "reference": "Carthago.Tests/TftpCaptureQualificationTests.cs",
+        "provenance": "reviewed-ledger-attestation-no-trx-artifact",
+        "description": "The opposite direction was rejected."
+      }
     },
     {
       "ruleId": "R715",
@@ -165,7 +325,23 @@
       "captureProvenance": "Raw initial exchange; no transfer completion",
       "profileEligibility": "candidate-shadow",
       "independentValidation": "missing",
-      "limitations": "Shadow; authorized outbound transfer controls"
+      "limitations": "Shadow; authorized outbound transfer controls",
+      "positiveEvidence": {
+        "status": "executed-pass",
+        "outcome": "matched",
+        "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+        "reference": "Carthago.Tests/TftpCaptureQualificationTests.cs",
+        "provenance": "reviewed-ledger-attestation-no-trx-artifact",
+        "description": "Private-to-public RRQ/WRQ direction matched."
+      },
+      "negativeEvidence": {
+        "status": "executed-pass",
+        "outcome": "rejected",
+        "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+        "reference": "Carthago.Tests/TftpCaptureQualificationTests.cs",
+        "provenance": "reviewed-ledger-attestation-no-trx-artifact",
+        "description": "The opposite direction was rejected."
+      }
     },
     {
       "ruleId": "R792",
@@ -180,7 +356,23 @@
       "captureProvenance": "Raw TFTP; FTP and hostd PID synthetic",
       "profileEligibility": "candidate-shadow",
       "independentValidation": "missing",
-      "limitations": "Shadow; authenticated process and benign ESXi workflow"
+      "limitations": "Shadow; authenticated process and benign ESXi workflow",
+      "positiveEvidence": {
+        "status": "executed-pass",
+        "outcome": "matched",
+        "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+        "reference": "Carthago.Tests/TftpCaptureQualificationTests.cs",
+        "provenance": "reviewed-ledger-attestation-no-trx-artifact",
+        "description": "FTP followed by a TFTP WRQ matched."
+      },
+      "negativeEvidence": {
+        "status": "executed-pass",
+        "outcome": "rejected",
+        "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+        "reference": "Carthago.Tests/TftpCaptureQualificationTests.cs",
+        "provenance": "reviewed-ledger-attestation-no-trx-artifact",
+        "description": "RRQ and malformed TFTP request controls were rejected."
+      }
     },
     {
       "ruleId": "R819",
@@ -195,7 +387,23 @@
       "captureProvenance": "Raw TFTP; HTTP GET synthetic, no export outcome",
       "profileEligibility": "candidate-shadow",
       "independentValidation": "missing",
-      "limitations": "Shadow; captured HTTP and authorized config export"
+      "limitations": "Shadow; captured HTTP and authorized config export",
+      "positiveEvidence": {
+        "status": "executed-pass",
+        "outcome": "matched",
+        "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+        "reference": "Carthago.Tests/TftpCaptureQualificationTests.cs",
+        "provenance": "reviewed-ledger-attestation-no-trx-artifact",
+        "description": "HTTP configuration GET followed by a TFTP WRQ matched."
+      },
+      "negativeEvidence": {
+        "status": "executed-pass",
+        "outcome": "rejected",
+        "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+        "reference": "Carthago.Tests/TftpCaptureQualificationTests.cs",
+        "provenance": "reviewed-ledger-attestation-no-trx-artifact",
+        "description": "RRQ and malformed TFTP request controls were rejected."
+      }
     },
     {
       "ruleId": "R881",
@@ -210,7 +418,23 @@
       "captureProvenance": "Raw TFTP; FTP SYN synthetic, no causal link",
       "profileEligibility": "candidate-shadow",
       "independentValidation": "missing",
-      "limitations": "Shadow; captured FTP and benign maintenance"
+      "limitations": "Shadow; captured FTP and benign maintenance",
+      "positiveEvidence": {
+        "status": "executed-pass",
+        "outcome": "matched",
+        "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+        "reference": "Carthago.Tests/TftpCaptureQualificationTests.cs",
+        "provenance": "reviewed-ledger-attestation-no-trx-artifact",
+        "description": "Public FTP SYN followed by private TFTP WRQ matched."
+      },
+      "negativeEvidence": {
+        "status": "executed-pass",
+        "outcome": "rejected",
+        "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+        "reference": "Carthago.Tests/TftpCaptureQualificationTests.cs",
+        "provenance": "reviewed-ledger-attestation-no-trx-artifact",
+        "description": "RRQ and malformed TFTP request controls were rejected."
+      }
     },
     {
       "ruleId": "R916",
@@ -225,7 +449,23 @@
       "captureProvenance": "Raw IPv4 DNS; hostd PID/name synthetic",
       "profileEligibility": "candidate-shadow",
       "independentValidation": "missing",
-      "limitations": "Shadow; authenticated process and benign NXDOMAIN controls"
+      "limitations": "Shadow; authenticated process and benign NXDOMAIN controls",
+      "positiveEvidence": {
+        "status": "executed-pass",
+        "outcome": "matched",
+        "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+        "reference": "Carthago.Tests/DnsCaptureQualificationTests.cs",
+        "provenance": "reviewed-ledger-attestation-no-trx-artifact",
+        "description": "A matching DNS NXDOMAIN transaction matched."
+      },
+      "negativeEvidence": {
+        "status": "executed-pass",
+        "outcome": "rejected",
+        "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+        "reference": "Carthago.Tests/DnsCaptureQualificationTests.cs",
+        "provenance": "reviewed-ledger-attestation-no-trx-artifact",
+        "description": "Wrong transaction identity and unvalidated DNS fields were rejected."
+      }
     },
     {
       "ruleId": "R962",
@@ -240,7 +480,23 @@
       "captureProvenance": "Raw IPv4 DNS; query PID synthetic; normal CDN churn can match",
       "profileEligibility": "candidate-shadow",
       "independentValidation": "missing",
-      "limitations": "Shadow; independent CDN/fast-flux controls and process provenance"
+      "limitations": "Shadow; independent CDN/fast-flux controls and process provenance",
+      "positiveEvidence": {
+        "status": "executed-pass",
+        "outcome": "matched",
+        "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+        "reference": "Carthago.Tests/DnsCaptureQualificationTests.cs",
+        "provenance": "reviewed-ledger-attestation-no-trx-artifact",
+        "description": "Three distinct low-TTL A answers matched."
+      },
+      "negativeEvidence": {
+        "status": "executed-pass",
+        "outcome": "rejected",
+        "executedSha": "4cc680bc8353e0bb04d2824843f84ace8f59f28e",
+        "reference": "Carthago.Tests/DnsCaptureQualificationTests.cs",
+        "provenance": "reviewed-ledger-attestation-no-trx-artifact",
+        "description": "Wrong transaction, PID and port controls were rejected."
+      }
     },
     {
       "ruleId": "R102",
@@ -255,7 +511,23 @@
       "captureProvenance": "Synthetic structured DNS; reviewed raw capture journal intake is separate from live baseline authority",
       "profileEligibility": "alert-default-gated",
       "independentValidation": "missing",
-      "limitations": "80% floor; V1 frozen failed 4/6; V2 independent capture/review and durable authority pending"
+      "limitations": "80% floor; V1 frozen failed 4/6; V2 independent capture/review and durable authority pending",
+      "positiveEvidence": {
+        "status": "authored-unexecuted",
+        "outcome": null,
+        "executedSha": null,
+        "reference": "Carthago.Tests/R102AdvancedAccuracyBatchTests.cs",
+        "provenance": "authored-test-source-only",
+        "description": "Structured long high-entropy TXT candidate is authored only; no executed detector-positive result."
+      },
+      "negativeEvidence": {
+        "status": "authored-unexecuted",
+        "outcome": null,
+        "executedSha": null,
+        "reference": "Carthago.Tests/R102AdvancedAccuracyBatchTests.cs",
+        "provenance": "authored-test-source-only",
+        "description": "Short benign queries, missing transport and invalid-label controls are authored only; no executed negative result."
+      }
     },
     {
       "ruleId": "R103",
@@ -270,7 +542,23 @@
       "captureProvenance": "Synthetic DNS cadence; live source/interface baseline gate fails closed",
       "profileEligibility": "alert-default-gated",
       "independentValidation": "missing",
-      "limitations": "80% floor; independent benign periodic polling and qualified live baseline pending"
+      "limitations": "80% floor; independent benign periodic polling and qualified live baseline pending",
+      "positiveEvidence": {
+        "status": "authored-unexecuted",
+        "outcome": null,
+        "executedSha": null,
+        "reference": "Carthago.Tests/R103AdvancedAccuracyBatchTests.cs",
+        "provenance": "authored-test-source-only",
+        "description": "Six stable observations candidate is authored only; no executed detector-positive result."
+      },
+      "negativeEvidence": {
+        "status": "authored-unexecuted",
+        "outcome": null,
+        "executedSha": null,
+        "reference": "Carthago.Tests/R103AdvancedAccuracyBatchTests.cs",
+        "provenance": "authored-test-source-only",
+        "description": "Rotating-name and high-jitter controls are authored only; no executed negative result."
+      }
     },
     {
       "ruleId": "R118",
@@ -285,7 +573,23 @@
       "captureProvenance": "Synthetic HTTP/Telnet records; parser-derived redacted Basic replay is separate from authenticated asset identity",
       "profileEligibility": "alert-default-gated",
       "independentValidation": "missing",
-      "limitations": "86% floor; independent IoT asset authority and authentication outcome consumption pending"
+      "limitations": "86% floor; independent IoT asset authority and authentication outcome consumption pending",
+      "positiveEvidence": {
+        "status": "authored-unexecuted",
+        "outcome": null,
+        "executedSha": null,
+        "reference": "Carthago.Tests/R118AdvancedAccuracyBatchTests.cs",
+        "provenance": "authored-test-source-only",
+        "description": "Default Basic pair candidate is authored only; synthetic HTTP/Telnet records do not establish trusted device identity or authentication outcome."
+      },
+      "negativeEvidence": {
+        "status": "authored-unexecuted",
+        "outcome": null,
+        "executedSha": null,
+        "reference": "Carthago.Tests/R118AdvancedAccuracyBatchTests.cs",
+        "provenance": "authored-test-source-only",
+        "description": "Duplicate-authorization and missing-device-host controls are authored only; no executed negative result."
+      }
     },
     {
       "ruleId": "R163",
@@ -300,7 +604,23 @@
       "captureProvenance": "Synthetic HTTP records; no authenticated inbound-to-outbound request ancestry or response outcome",
       "profileEligibility": "alert-default-gated",
       "independentValidation": "missing",
-      "limitations": "84% floor; authenticated application instrumentation and independent benign controls pending"
+      "limitations": "84% floor; authenticated application instrumentation and independent benign controls pending",
+      "positiveEvidence": {
+        "status": "authored-unexecuted",
+        "outcome": null,
+        "executedSha": null,
+        "reference": "Carthago.Tests/R163AdvancedAccuracyBatchTests.cs",
+        "provenance": "authored-test-source-only",
+        "description": "Metadata credential-path candidate is authored only; no authenticated inbound-to-outbound request ancestry or response outcome."
+      },
+      "negativeEvidence": {
+        "status": "authored-unexecuted",
+        "outcome": null,
+        "executedSha": null,
+        "reference": "Carthago.Tests/R163AdvancedAccuracyBatchTests.cs",
+        "provenance": "authored-test-source-only",
+        "description": "Guest-agent, forged-destination and ordinary-metadata controls are authored only; caller trace/PID do not establish causality."
+      }
     },
     {
       "ruleId": "R275",
@@ -316,7 +636,23 @@
       "profileEligibility": "producer-limited-policy-unreviewed",
       "independentValidation": "missing",
       "limitations": "Independent issuer audit and exact flow/time binding.",
-      "producerQualification": "unsupported-benchmark-scenario"
+      "producerQualification": "unsupported-benchmark-scenario",
+      "positiveEvidence": {
+        "status": "missing",
+        "outcome": null,
+        "executedSha": null,
+        "reference": "docs/DEVELOPMENT_VALIDATION_LEDGER.md",
+        "provenance": "not-admitted",
+        "description": "No exact-ID positive detector evidence admitted; trusted IdP capability/promotion authorization is not an observed malicious flow."
+      },
+      "negativeEvidence": {
+        "status": "missing",
+        "outcome": null,
+        "executedSha": null,
+        "reference": "docs/DEVELOPMENT_VALIDATION_LEDGER.md",
+        "provenance": "not-admitted",
+        "description": "No exact-ID negative detector evidence admitted; ordinary device-code HTTP is insufficient and is not counted as a detector failure."
+      }
     },
     {
       "ruleId": "R295",
@@ -332,7 +668,23 @@
       "profileEligibility": "producer-limited-policy-unreviewed",
       "independentValidation": "missing",
       "limitations": "Authenticated API identity, authorization and exec outcome.",
-      "producerQualification": "unsupported-benchmark-scenario"
+      "producerQualification": "unsupported-benchmark-scenario",
+      "positiveEvidence": {
+        "status": "missing",
+        "outcome": null,
+        "executedSha": null,
+        "reference": "docs/DEVELOPMENT_VALIDATION_LEDGER.md",
+        "provenance": "not-admitted",
+        "description": "No exact-ID positive detector evidence admitted; authenticated Kubernetes exec identity/outcome producer is unavailable."
+      },
+      "negativeEvidence": {
+        "status": "missing",
+        "outcome": null,
+        "executedSha": null,
+        "reference": "docs/DEVELOPMENT_VALIDATION_LEDGER.md",
+        "provenance": "not-admitted",
+        "description": "No exact-ID negative detector evidence admitted; unsupported producer is not counted as a detector failure."
+      }
     },
     {
       "ruleId": "R343",
@@ -348,7 +700,23 @@
       "profileEligibility": "producer-limited-policy-unreviewed",
       "independentValidation": "missing",
       "limitations": "Trusted WinRM operation and process command-line audit.",
-      "producerQualification": "unsupported-benchmark-scenario"
+      "producerQualification": "unsupported-benchmark-scenario",
+      "positiveEvidence": {
+        "status": "missing",
+        "outcome": null,
+        "executedSha": null,
+        "reference": "docs/DEVELOPMENT_VALIDATION_LEDGER.md",
+        "provenance": "not-admitted",
+        "description": "No exact-ID positive detector evidence admitted; trusted WinRM operation/process command-line audit is unavailable."
+      },
+      "negativeEvidence": {
+        "status": "missing",
+        "outcome": null,
+        "executedSha": null,
+        "reference": "docs/DEVELOPMENT_VALIDATION_LEDGER.md",
+        "provenance": "not-admitted",
+        "description": "No exact-ID negative detector evidence admitted; unsupported producer is not counted as a detector failure."
+      }
     },
     {
       "ruleId": "R437",
@@ -364,7 +732,23 @@
       "profileEligibility": "producer-limited-policy-unreviewed",
       "independentValidation": "missing",
       "limitations": "Authenticated configuration outcome and authorized admin controls.",
-      "producerQualification": "unsupported-benchmark-scenario"
+      "producerQualification": "unsupported-benchmark-scenario",
+      "positiveEvidence": {
+        "status": "missing",
+        "outcome": null,
+        "executedSha": null,
+        "reference": "docs/DEVELOPMENT_VALIDATION_LEDGER.md",
+        "provenance": "not-admitted",
+        "description": "No exact-ID positive detector evidence admitted; authenticated Redis configuration outcome is unavailable."
+      },
+      "negativeEvidence": {
+        "status": "missing",
+        "outcome": null,
+        "executedSha": null,
+        "reference": "docs/DEVELOPMENT_VALIDATION_LEDGER.md",
+        "provenance": "not-admitted",
+        "description": "No exact-ID negative detector evidence admitted; unauthenticated wire OK is not treated as an outcome and is not counted as a detector failure."
+      }
     },
     {
       "ruleId": "R508",
@@ -380,7 +764,23 @@
       "profileEligibility": "producer-limited-policy-unreviewed",
       "independentValidation": "missing",
       "limitations": "Trusted process and transfer context; approved backup controls.",
-      "producerQualification": "unsupported-benchmark-scenario"
+      "producerQualification": "unsupported-benchmark-scenario",
+      "positiveEvidence": {
+        "status": "missing",
+        "outcome": null,
+        "executedSha": null,
+        "reference": "docs/DEVELOPMENT_VALIDATION_LEDGER.md",
+        "provenance": "not-admitted",
+        "description": "No exact-ID positive detector evidence admitted; trusted rclone user/age producer is unavailable."
+      },
+      "negativeEvidence": {
+        "status": "missing",
+        "outcome": null,
+        "executedSha": null,
+        "reference": "docs/DEVELOPMENT_VALIDATION_LEDGER.md",
+        "provenance": "not-admitted",
+        "description": "No exact-ID negative detector evidence admitted; unsupported producer is not counted as a detector failure."
+      }
     },
     {
       "ruleId": "R516",
@@ -396,7 +796,23 @@
       "profileEligibility": "producer-limited-policy-unreviewed",
       "independentValidation": "missing",
       "limitations": "Authenticated connector/session and authorized tunnel controls.",
-      "producerQualification": "unsupported-benchmark-scenario"
+      "producerQualification": "unsupported-benchmark-scenario",
+      "positiveEvidence": {
+        "status": "missing",
+        "outcome": null,
+        "executedSha": null,
+        "reference": "docs/DEVELOPMENT_VALIDATION_LEDGER.md",
+        "provenance": "not-admitted",
+        "description": "No exact-ID positive detector evidence admitted; authenticated cloudflared tunnel handshake evidence is unavailable."
+      },
+      "negativeEvidence": {
+        "status": "missing",
+        "outcome": null,
+        "executedSha": null,
+        "reference": "docs/DEVELOPMENT_VALIDATION_LEDGER.md",
+        "provenance": "not-admitted",
+        "description": "No exact-ID negative detector evidence admitted; unsupported producer is not counted as a detector failure."
+      }
     },
     {
       "ruleId": "R272",
@@ -411,7 +827,24 @@
       "captureProvenance": "Synthetic TrafficRecord inputs and real engine post-policy emissions; no independent packet capture.",
       "profileEligibility": "shadowfirst-research-alert",
       "independentValidation": "missing",
-      "limitations": "Owner transcript only; original TRX not reviewed. No field accuracy or production promotion; SmallBusiness Shadow."
+      "limitations": "Owner transcript only; original TRX not reviewed. No field accuracy or production promotion; SmallBusiness Shadow.",
+      "positiveEvidence": {
+        "status": "executed-pass",
+        "outcome": "matched",
+        "executedSha": "3b54c742b5b1d2bfafc2d25840a7dfa34ee46f65",
+        "reference": "Carthago.Tests/R272AdvancedAccuracyBatchTests.cs",
+        "provenance": "reviewed-ledger-attestation-no-trx-artifact",
+        "description": "Three distinct same-host engine-emitted rule families correlated in the owner-reported synthetic run."
+      },
+      "negativeEvidence": {
+        "status": "executed-pass",
+        "outcome": "rejected",
+        "executedSha": "3b54c742b5b1d2bfafc2d25840a7dfa34ee46f65",
+        "reference": "Carthago.Tests/R272AdvancedAccuracyBatchTests.cs",
+        "provenance": "reviewed-ledger-attestation-no-trx-artifact",
+        "description": "Duplicate replay, other-host, missing-provenance and retention controls were rejected."
+      }
     }
-  ]
+  ],
+  "polarityEvidenceSemantics": "status-is-detector-outcome-for-one-polarity; executedSha-is-a-reviewed-test-run-source-sha-not-artifact-integrity-or-independent-field-proof"
 }

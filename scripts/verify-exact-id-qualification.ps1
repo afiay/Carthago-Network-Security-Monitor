@@ -65,7 +65,8 @@ function Get-ReviewedExecutionMap($manifest, $registryMap) {
     return $entries
 }
 function Test-Qualification($document, $inventory, [string]$currentSha, $manifest) {
-    Assert-Qualification ($document.schemaVersion -is [int] -and $document.schemaVersion -eq 1) 'Unsupported schema'
+    Assert-Qualification ($document.schemaVersion -is [int] -and $document.schemaVersion -eq 2) 'Unsupported schema'
+    Assert-Qualification ($document.polarityEvidenceSemantics -ceq 'status-is-detector-outcome-for-one-polarity; executedSha-is-a-reviewed-test-run-source-sha-not-artifact-integrity-or-independent-field-proof') 'Unknown polarity evidence semantics'
     Assert-Qualification ($document.sourceSha -cmatch '^[a-f0-9]{40}$') 'Invalid source SHA'
     Assert-Qualification ($null -ne $document.PSObject.Properties['records'] -and $document.records -is [array] -and $document.records.Count -gt 0 -and $document.records.Count -le 1000) 'Invalid exact-ID inventory record collection'
     Assert-Qualification ($currentSha -cmatch '^[a-f0-9]{40}$') 'Invalid current SHA'
@@ -90,8 +91,10 @@ function Test-Qualification($document, $inventory, [string]$currentSha, $manifes
     $artifactPositive = 0
     $artifactNegative = 0
     $legacyAttestations = 0
+    $positiveHistorical = 0; $positiveCurrent = 0; $positiveFailed = 0; $positiveAuthored = 0; $positiveMissing = 0
+    $negativeHistorical = 0; $negativeCurrent = 0; $negativeFailed = 0; $negativeAuthored = 0; $negativeMissing = 0
     foreach ($row in $document.records) {
-        foreach ($field in @('ruleId','registeredClass','detector','pairedReplay','captureProvenance','profileEligibility','independentValidation','limitations')) {
+        foreach ($field in @('ruleId','registeredClass','detector','pairedReplay','captureProvenance','profileEligibility','independentValidation','limitations','positiveEvidence','negativeEvidence')) {
             Assert-Qualification ($null -ne $row.PSObject.Properties[$field] -and $null -ne $row.$field -and -not [string]::IsNullOrWhiteSpace([string]$row.$field)) "Missing field: $field"
         }
         $id = $row.ruleId
@@ -142,10 +145,55 @@ function Test-Qualification($document, $inventory, [string]$currentSha, $manifes
             if ($d.status -ceq 'authored-unexecuted') { $authored++ } else { $missing++ }
         }
         Assert-Qualification (-not [string]::IsNullOrWhiteSpace($d.positiveNegative) -and -not [string]::IsNullOrWhiteSpace($d.reference)) "Missing evidence description: $id"
+        foreach ($polarity in @('positiveEvidence','negativeEvidence')) {
+            $e = $row.$polarity
+            foreach ($field in @('status','outcome','executedSha','reference','provenance','description')) {
+                Assert-Qualification ($null -ne $e.PSObject.Properties[$field]) "Missing $polarity field: $field"
+            }
+            Assert-Qualification ($e.status -cin @('executed-pass','executed-fail','authored-unexecuted','missing')) "Unknown $polarity status: $id"
+            Assert-Qualification (-not [string]::IsNullOrWhiteSpace([string]$e.description) -and $e.description.Length -le 2048 -and $e.description -notmatch '[\x00-\x1f\x7f]') "Invalid $polarity description: $id"
+            Assert-Qualification ($e.reference -ceq $d.reference -and $e.reference -cmatch '^(Carthago\.Tests/[A-Za-z0-9_/.-]+\.cs|docs/[A-Za-z0-9_./-]+\.md)$' -and $e.reference -notmatch '\.\.') "Unverified $polarity reference: $id"
+            $isPositive = $polarity -ceq 'positiveEvidence'
+            if ($e.status -cin @('executed-pass','executed-fail')) {
+                Assert-Qualification ($e.executedSha -cmatch '^[a-f0-9]{40}$' -and $e.executedSha -ceq $d.executedSha) "Missing or mismatched $polarity execution SHA: $id"
+                Assert-Qualification ($d.status -cin @('historical-pass','failed')) "Executed $polarity claim without executed detector record: $id"
+                $key = "$($id):$($e.executedSha)"
+                Assert-Qualification ($reviewed.ContainsKey($key)) "Unreviewed $polarity execution: $id"
+                $evidenceEntry = $reviewed[$key]
+                Assert-Qualification ($evidenceEntry.testReference -ceq $e.reference) "Unreviewed $polarity test reference: $id"
+                if ($isPositive) {
+                    $expectedOutcome = if ($e.status -ceq 'executed-pass') { 'matched' } else { 'missed' }
+                    $artifactPolarity = 'positive-detector'
+                } else {
+                    $expectedOutcome = if ($e.status -ceq 'executed-pass') { 'rejected' } else { 'false-positive' }
+                    $artifactPolarity = 'negative-detector'
+                }
+                Assert-Qualification ($e.outcome -ceq $expectedOutcome) "Unverified $polarity outcome: $id"
+                $artifact = $evidenceEntry.PSObject.Properties['artifact']
+                $expectedProvenance = 'reviewed-ledger-attestation-no-trx-artifact'
+                if ($null -ne $artifact -and $artifact.Value.casePolarity -ceq $artifactPolarity) {
+                    $expectedProvenance = 'sha256-verified-trx'
+                }
+                Assert-Qualification ($e.provenance -ceq $expectedProvenance) "Unverified $polarity provenance: $id"
+                if ($isPositive) {
+                    if ($e.executedSha -ceq $currentSha) { $positiveCurrent++ } else { $positiveHistorical++ }
+                    if ($e.status -ceq 'executed-fail') { $positiveFailed++ }
+                } else {
+                    if ($e.executedSha -ceq $currentSha) { $negativeCurrent++ } else { $negativeHistorical++ }
+                    if ($e.status -ceq 'executed-fail') { $negativeFailed++ }
+                }
+            } elseif ($e.status -ceq 'authored-unexecuted') {
+                Assert-Qualification ($d.status -ceq 'authored-unexecuted' -and $null -eq $e.executedSha -and $null -eq $e.outcome -and $e.provenance -ceq 'authored-test-source-only') "Unexecuted $polarity claim is inconsistent: $id"
+                if ($isPositive) { $positiveAuthored++ } else { $negativeAuthored++ }
+            } else {
+                Assert-Qualification ($d.status -cin @('missing','authored-unexecuted') -and $null -eq $e.executedSha -and $null -eq $e.outcome -and $e.provenance -ceq 'not-admitted') "Missing $polarity claim is inconsistent: $id"
+                if ($isPositive) { $positiveMissing++ } else { $negativeMissing++ }
+            }
+        }
     }
     Assert-Qualification ($referencedExecutions.Count -eq $reviewed.Count) 'Orphaned reviewed execution manifest record'
     Assert-Qualification ($artifactPositive + $artifactNegative + $legacyAttestations -eq $historical + $current) 'Evidence provenance partition mismatch'
-    [pscustomobject]@{ registeredCount=$map.Count; auditedCount=$seen.Count; missingCount=$map.Count-$seen.Count; historicalExecutionRecords=$historical; currentExecutionRecords=$current; unsupportedProducerRecords=$unsupported; failedExecutionRecords=$failed; authoredUnexecutedRecords=$authored; missingDetectorRecords=$missing; artifactPositiveCases=$artifactPositive; artifactNegativeCases=$artifactNegative; legacyExecutionAttestations=$legacyAttestations; testsExecuted=0 }
+    [pscustomobject]@{ registeredCount=$map.Count; auditedCount=$seen.Count; missingCount=$map.Count-$seen.Count; historicalExecutionRecords=$historical; currentExecutionRecords=$current; unsupportedProducerRecords=$unsupported; failedExecutionRecords=$failed; authoredUnexecutedRecords=$authored; missingDetectorRecords=$missing; artifactPositiveCases=$artifactPositive; artifactNegativeCases=$artifactNegative; legacyExecutionAttestations=$legacyAttestations; positiveHistoricalEvidence=$positiveHistorical; positiveCurrentEvidence=$positiveCurrent; positiveFailedEvidence=$positiveFailed; positiveAuthoredUnexecutedEvidence=$positiveAuthored; positiveMissingEvidence=$positiveMissing; negativeHistoricalEvidence=$negativeHistorical; negativeCurrentEvidence=$negativeCurrent; negativeFailedEvidence=$negativeFailed; negativeAuthoredUnexecutedEvidence=$negativeAuthored; negativeMissingEvidence=$negativeMissing; testsExecuted=0 }
 }
 $sha = (git -C $root rev-parse HEAD).Trim()
 if ($LASTEXITCODE -ne 0) { throw 'Cannot resolve checkout HEAD' }
@@ -163,16 +211,23 @@ if ($SelfTest) {
         try { $null = Test-Qualification $candidate $inventory $sha $manifest } catch { $rejected = $true }
         Assert-Qualification $rejected 'Invalid fixture accepted'
     }
-    # JSON booleans must not coerce to schema version 1 (PowerShell comparison pitfall).
+    # JSON booleans, old schema versions and strings must not coerce to schema version 2.
     $bad = Copy-Document; $bad.schemaVersion = $true; Expect-Rejection $bad
-    $bad = Copy-Document; $bad.schemaVersion = '1'; Expect-Rejection $bad
-    $bad = Copy-Document; $bad.schemaVersion = 1.0; Expect-Rejection $bad
+    $bad = Copy-Document; $bad.schemaVersion = '2'; Expect-Rejection $bad
+    $bad = Copy-Document; $bad.schemaVersion = 2.0; Expect-Rejection $bad
+    $bad = Copy-Document; $bad.schemaVersion = 1; Expect-Rejection $bad
     $bad = Copy-Document; $bad.records += $bad.records[0]; Expect-Rejection $bad
     $bad = Copy-Document; $bad.PSObject.Properties.Remove('records'); Expect-Rejection $bad
     $bad = Copy-Document; $bad.records = $null; Expect-Rejection $bad
     $bad = Copy-Document; $bad.records = @(); Expect-Rejection $bad
     $bad = Copy-Document; $bad.records = @(1..1001 | ForEach-Object { $bad.records[0] }); Expect-Rejection $bad
     $bad = Copy-Document; $bad.records[0].PSObject.Properties.Remove('limitations'); Expect-Rejection $bad
+    $bad = Copy-Document; $bad.records[0].PSObject.Properties.Remove('positiveEvidence'); Expect-Rejection $bad
+    $bad = Copy-Document; $bad.records[0].PSObject.Properties.Remove('negativeEvidence'); Expect-Rejection $bad
+    $bad = Copy-Document; $bad.records[0].positiveEvidence.status = 'independent-field-verified'; Expect-Rejection $bad
+    $bad = Copy-Document; $bad.records[0].negativeEvidence.outcome = 'independent-accuracy'; Expect-Rejection $bad
+    $bad = Copy-Document; $bad.records[0].positiveEvidence.executedSha = ('a' * 40); Expect-Rejection $bad
+    $bad = Copy-Document; $bad.records[0].negativeEvidence.provenance = 'independent-capture'; Expect-Rejection $bad
     $bad = Copy-Document; $bad.records[0].registeredClass = 'Unknown'; Expect-Rejection $bad
     $bad = Copy-Document; $bad.records[0].detector.executedSha = 'a' * 40; Expect-Rejection $bad
     $bad = Copy-Document; $bad.records[0].independentValidation = 'passed'; Expect-Rejection $bad
@@ -219,6 +274,12 @@ if ($SelfTest) {
     $historical = Test-Qualification $doc $inventory $historicalSha $manifest
     $executedCount = @($doc.records | Where-Object { $_.detector.status -cin @('historical-pass','failed') }).Count
     Assert-Qualification ($historical.currentExecutionRecords -eq 0 -and $historical.historicalExecutionRecords -eq $executedCount) 'Historical evidence misclassified'
+    Assert-Qualification ($historical.positiveCurrentEvidence -eq 0 -and $historical.positiveHistoricalEvidence -eq 17 -and $historical.negativeCurrentEvidence -eq 0 -and $historical.negativeHistoricalEvidence -eq 17) 'Historical polarity evidence misclassified'
+    Assert-Qualification ($historical.negativeFailedEvidence -eq 6 -and $historical.positiveAuthoredUnexecutedEvidence -eq 4 -and $historical.negativeAuthoredUnexecutedEvidence -eq 4 -and $historical.positiveMissingEvidence -eq 6 -and $historical.negativeMissingEvidence -eq 6) 'Polarity evidence status partition mismatch'
+    $currentEvidenceSha = $doc.records[0].detector.executedSha
+    $currentEvidence = Test-Qualification $doc $inventory $currentEvidenceSha $manifest
+    Assert-Qualification ($currentEvidence.currentExecutionRecords -eq 6 -and $currentEvidence.historicalExecutionRecords -eq 11) 'Current versus historical test-run records misclassified'
+    Assert-Qualification ($currentEvidence.positiveCurrentEvidence -eq 6 -and $currentEvidence.positiveHistoricalEvidence -eq 11 -and $currentEvidence.negativeCurrentEvidence -eq 6 -and $currentEvidence.negativeHistoricalEvidence -eq 11 -and $currentEvidence.negativeFailedEvidence -eq 6) 'Current versus historical polarity evidence misclassified'
     # In-memory only: exercise an admitted failure without writing fake evidence.
     $failureDoc = Copy-Document
     $failureManifest = Copy-Manifest

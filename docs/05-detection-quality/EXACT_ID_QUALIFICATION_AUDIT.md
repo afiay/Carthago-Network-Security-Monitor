@@ -1,8 +1,12 @@
 # Exact-ID detection qualification audit — GA-09bk
 
-**Current denominator (2026-11-16): 1,000 registered core rules.** The [registry reconciliation](REGISTRY_RECONCILIATION_20261116.md) and [per-ID CSV](registry-reconciliation.csv) now cover every source ID. This historical audit remains bounded; the machine-readable Windows exact-ID inventory has 27 records (17 reviewed historical passes, 4 authored-unexecuted, 6 missing). The 20 portable paired rules are accounted separately. Do not infer current-SHA executions or independent accuracy from the historical rows below.
+**Current denominator (2026-11-16): 1,000 registered core rules.** The [registry reconciliation](REGISTRY_RECONCILIATION_20261116.md) and [per-ID CSV](registry-reconciliation.csv) now cover every source ID. This historical audit remains bounded; the machine-readable Windows exact-ID inventory has 27 records (17 historical test-run attestations, 4 authored-unexecuted, 6 missing). Schema v2 separates positive and negative detector outcomes per exact ID. The 17 positive synthetic cases matched; the negative side contains six Q7 SMB2 benign-lookalike false positives and eleven other historical controls that rejected. The 17 historical records are reviewed ledger attestations without original TRX artifacts; zero artifact-backed executions and zero independent validation are admitted. The 20 portable paired rules are accounted separately. Do not read a historical test-suite pass as both detector polarities passing, or infer field accuracy from synthetic evidence.
 
 Evidence snapshot: `b7e12d829df243cb40b6612af140bcd42f7d3712` (2026-11-15). This is a bounded audit, not the complete registry inventory. A row is not a promotion or a new verification result. The rule qualification stream owns Q4–Q9 implementation; this audit consumes its evidence without duplicating its tests.
+
+## GA-09bm — polarity-separated exact-ID evidence
+
+The schema-v2 inventory stores `positiveEvidence` and `negativeEvidence` independently. Each polarity is explicitly `executed-pass`, `executed-fail`, `authored-unexecuted`, or `missing`, with an outcome, execution source SHA, test reference and provenance. An executed SHA in the current inventory is a reviewed historical test-run source SHA, not a retained TRX digest or proof of independent accuracy. The six Q7 SMB2 negative lookalikes are detector-level false positives even though the test suite itself passed; Shadow alert suppression is reported separately. R275/R295/R343/R437/R508/R516 remain producer-limited missing evidence, not detector failures.
 
 ## First six IDs: SMB2 Q7/Q9
 
