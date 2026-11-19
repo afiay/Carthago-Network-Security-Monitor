@@ -86,7 +86,13 @@ function Test-QualificationTrx([byte[]]$bytes, [string]$digest, [string[]]$names
             $observedCount = @($observed | Where-Object { $_.GetAttribute('outcome') -ceq $outcomeName }).Count
             $reportedCount = 0
             $counterValue = $counters.GetAttribute($counterName)
-            if ($counterValue -cnotmatch '^(0|[1-9][0-9]*) -eq 0 -or $names.Count -gt 1000) { throw 'Invalid selection size' }
+            if (-not [regex]::IsMatch($counterValue, '\A(?:0|[1-9][0-9]*)\z') -or
+                -not [int]::TryParse($counterValue, [ref]$reportedCount) -or
+                $reportedCount -ne $observedCount) { throw 'TRX terminal counter mismatch or invalid syntax' }
+        }
+        if ($passed + $failed -gt $observed.Count) { throw 'Invalid TRX result accounting' }
+    }
+    if ($names.Count -eq 0 -or $names.Count -gt 1000) { throw 'Invalid selection size' }
     $seen = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
     foreach ($name in $names) {
         if ([string]::IsNullOrWhiteSpace($name) -or $name.Length -gt 4096 -or $name -match '[\x00-\x1f\x7f*?]' -or -not $seen.Add($name)) { throw 'Invalid, wildcard, oversized or duplicate requested test' }
