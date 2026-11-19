@@ -226,6 +226,7 @@ internal static class EnrichmentHealthPresentation
             $"UDP binding only: {c.ProcessUdpBinding:N0}/{c.ProcessEligible:N0} eligible. Process-eligible records are a subset of published records, not a second publication count. " +
             "Coverage is observed evidence availability, not protocol recall; UDP binding is not remote tuple proof. " +
             (c.LocalKnown > c.Published || c.InterfaceKnown > c.Published || c.DnsCorrelated > c.Published || c.TlsCorrelated > c.Published || c.EtwPublished > c.Published || c.ProcessEligible > c.Published || c.ProcessStrong > c.ProcessEligible || c.ProcessUdpBinding > c.ProcessEligible ||
+             (decimal)c.ProcessStrong + c.ProcessUdpBinding > c.ProcessEligible ||
              c.Published < 0 || c.LocalKnown < 0 || c.InterfaceKnown < 0 || c.DnsCorrelated < 0 ||
              c.TlsCorrelated < 0 || c.ProcessEligible < 0 || c.ProcessStrong < 0 ||
              c.ProcessUdpBinding < 0 || c.EtwPublished < 0
