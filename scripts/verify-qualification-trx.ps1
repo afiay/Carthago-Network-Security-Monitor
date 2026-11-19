@@ -92,6 +92,16 @@ function Test-QualificationTrx([byte[]]$bytes, [string]$digest, [string[]]$names
                 -not [int]::TryParse($counterValue, [ref]$reportedCount) -or
                 $reportedCount -ne $observedCount) { throw 'TRX terminal counter mismatch or invalid syntax' }
         }
+        # Pending is a distinct non-executed outcome; if the producer reports
+        # its optional count it must agree with the actual result nodes.
+        if ($counters.HasAttribute('pending')) {
+            $pendingCount = @($observed | Where-Object { $_.GetAttribute('outcome') -ceq 'Pending' }).Count
+            $reportedPending = 0
+            $pendingValue = $counters.GetAttribute('pending')
+            if (-not [regex]::IsMatch($pendingValue, '\\A(?:0|[1-9][0-9]*)\\z') -or
+                -not [int]::TryParse($pendingValue, [ref]$reportedPending) -or
+                $reportedPending -ne $pendingCount) { throw 'TRX pending counter mismatch or invalid syntax' }
+        }
         if ($passed + $failed -gt $observed.Count) { throw 'Invalid TRX result accounting' }
     }
     if ($names.Count -eq 0 -or $names.Count -gt 1000) { throw 'Invalid selection size' }
@@ -162,6 +172,12 @@ if ($SelfTest) {
     Reject-Fixture { Invoke-Fixture ($terminalCounted.Replace('timeout="0"','timeout="+0"')) @('Exact.Test') 'Passed' }
     Reject-Fixture { Invoke-Fixture ($terminalCounted.Replace('aborted="0"','aborted="00"')) @('Exact.Test') 'Passed' }
     Reject-Fixture { Invoke-Fixture ($terminalCounted.Replace('notExecuted="0"','notExecuted="2147483648"')) @('Exact.Test') 'Passed' }
+    # A declared Pending count is independently checked, not inferred as executed.
+    $pendingCounted = $counted.Replace('failed="0"','failed="0" pending="0"')
+    $pendingOk = Invoke-Fixture $pendingCounted @('Exact.Test') 'Passed'
+    if ($pendingOk.matchedTests -ne 1) { throw 'Pending-counter positive fixture failed' }
+    Reject-Fixture { Invoke-Fixture ($pendingCounted.Replace('pending="0"','pending="1"')) @('Exact.Test') 'Passed' }
+    Reject-Fixture { Invoke-Fixture ($pendingCounted.Replace('pending="0"','pending="+0"')) @('Exact.Test') 'Passed' }
     # Selected success must not override an inconsistent terminal run outcome.
     Reject-Fixture { Invoke-Fixture ($xml.Replace('outcome="Completed"','outcome="Failed"')) @('Exact.Test') 'Passed' }
     $mixed = $xml.Replace('</Results>','<UnitTestResult testName="Other.Failed" outcome="Failed"/></Results>')
