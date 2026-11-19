@@ -40,5 +40,29 @@ namespace Carthago.Tests
                 new JournalCapacityMonitor(journal, 1024, 10, TimeSpan.FromSeconds(1),
                     () => false, null!));
         }
+        [Fact]
+        public async Task ConcurrentOwnerIsRejectedAndMonitorCanRestartAfterCancellation()
+        {
+            var journal = new DetectionJournal(new DetectionJournalOptions());
+            var monitor = new JournalCapacityMonitor(
+                journal, 1024, 10, TimeSpan.FromMilliseconds(50),
+                () => true, (_, _, _) => { });
+            using var owner = new CancellationTokenSource();
+            var running = monitor.RunAsync(owner.Token);
+            try
+            {
+                await Assert.ThrowsAsync<InvalidOperationException>(
+                    () => monitor.RunAsync(CancellationToken.None));
+            }
+            finally
+            {
+                owner.Cancel();
+                await running;
+            }
+            using var nextOwner = new CancellationTokenSource();
+            nextOwner.Cancel();
+            await monitor.RunAsync(nextOwner.Token);
+        }
+
     }
 }
