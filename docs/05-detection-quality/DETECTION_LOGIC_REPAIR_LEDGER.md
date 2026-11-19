@@ -641,3 +641,46 @@ The actual `DetectionJournal` now exposes `TryReadConfiguredVolumeCapacity`, rea
 **Tests authored: 0; tests executed: 0.** No local Windows runner/build available; compilation unverified. No GitHub Actions, live invasive tests, force push or changes to R102/R118/R163 floors and frozen holdout.
 
 **Still missing R531:** application-owned startup registration, trusted maintenance policy, configured thresholds, provenance-protected typed health-event delivery, dedicated RuleEngine evaluation and positive/benign-negative tests. **R536:** trusted owned parser-attempt/failure counters, stable parser attribution and RuleEngine integration. **Next cursor:** unresolved carryover R531/R536 and other blocked IDs, not new ordered IDs. Ledger commit is the commit containing this entry.
+
+
+## Carryover integration pass 03 — R531 typed journal producer and RuleEngine admission (2026-11-19)
+
+**Source snapshot:** branch HEAD `8a55e072c237fe5fefe2333e39e66a7aa6aa4987`. The fixed 187-ID review cursor is exhausted; this is a carryover implementation pass, not a new ordered ten-ID batch. R531 remains **IN-PROGRESS / source-connected but unverified**. No detector is promoted to operationally complete.
+
+**Actual source integration:**
+- `Carthago/Models/TrafficRecord.cs` adds an internal, non-serialized `JournalCapacityHealthEvidence` slot and immutable typed evidence object. Public/imported TrafficRecord fields cannot assert this evidence.
+- `Carthago/Services/Journaling/DetectionJournal.cs` creates evidence only for a UTC OS-volume sample that breaches both configured byte and percentage limits. It binds the sample to a SHA-256-derived identity of this DetectionJournal's configured path without disclosing the raw path.
+- `Carthago/Services/Journaling/JournalCapacityMonitor.cs` now hands off the typed evidence object only after the existing two-distinct-sample gate; it no longer passes loose timestamp/byte values to an untyped callback.
+- `Carthago/Engine/Rules/Abstractions/RulePrecisionProfile.cs` maps R531's three required fields to the internal typed evidence, not packet strings.
+- `Carthago/Engine/RuleEngine.Core.cs` adds an internal local-health entry point, selects only R531 for that typed record, and avoids feeding the synthetic health record into packet telemetry coverage or source-learning state.
+- `Carthago/Engine/Rules/Expansion/R531_DetectionJournalDiskSpaceLowRule.cs` now evaluates only the typed journal-owner evidence. Without it, the rule returns the existing producer-missing reason; mutable `Info`, HTTP, process and packet text cannot produce a match.
+- `Carthago/Services/Journaling/JournalCapacityMonitorHost.cs` and `Carthago/App.xaml.cs` wire an opt-in WPF application-lifetime owner with cancellation on exit. No threshold defaults are invented; invalid or absent settings prevent startup, and missing/unknown maintenance state is fail-closed.
+
+**Explicit operator configuration required before the WPF monitor starts:**
+- `CARTHAGO_JOURNAL_HEALTH_MONITOR_ENABLED=true`
+- `CARTHAGO_JOURNAL_MIN_FREE_BYTES=<positive integer>`
+- `CARTHAGO_JOURNAL_MIN_FREE_PERCENT=<number greater than 0 and at most 100>`
+- `CARTHAGO_JOURNAL_HEALTH_INTERVAL_SECONDS=<integer from 1 to 86400>`
+- `CARTHAGO_JOURNAL_MAINTENANCE=false`
+
+The maintenance setting is re-read each sample; anything other than explicit `false` is treated as maintenance/unknown and resets the gate. No automatic production threshold was selected. WPF startup is wired; CLI/headless host registration and cross-platform Windows/Linux runtime support are not established.
+
+**Persistence limitation:** the typed event enters the existing RuleEngine persistence path. If its configured journal append fails under low-space conditions, the host writes a concise console warning; this is not an independent durable out-of-band sink. Do not claim guaranteed durable delivery until an approved alternate sink exists.
+
+**Changed files and commits (sequential SHA-guarded file writes on the existing branch):**
+- `Carthago/Models/TrafficRecord.cs` — `82f4c5e9af8d4e2d6eb9abacfe77d162535c2fe3`
+- `Carthago/Engine/Rules/Abstractions/RulePrecisionProfile.cs` — `eaad5783ad887b7fcd3221e94bc83e0ad67cf090`
+- `Carthago/Services/Journaling/DetectionJournal.cs` — `cb2b1149ea141284b2d4c79646494f22f6a7778b`
+- `Carthago/Services/Journaling/JournalCapacityMonitor.cs` — `5b363eee5ad430ade3fcb4f128288d0a2f70a733`
+- `Carthago/Engine/RuleEngine.Core.cs` — `943e0a4808690db1be9b8ee95d804bcb0bb2c782`
+- `Carthago/Engine/Rules/Expansion/R531_DetectionJournalDiskSpaceLowRule.cs` — `d3499e61654d7a3c827d6ad094db689658c5f865`
+- `Carthago/Services/Journaling/JournalCapacityMonitorHost.cs` — `085705842d31c002a9c1f2693fb4a916bc014b2d`
+- `Carthago/App.xaml.cs` — `614eeca798e89a7f46f6bba3041e9336c87f7713`
+- `Carthago.Tests/JournalCapacityMonitorTests.cs` — `3404fb1b9630d10b7a2ca08c24742ca5a2d31b05` (updated callback contract)
+- `Carthago.Tests/R531JournalCapacityHealthEvidenceTests.cs` — `8a55e072c237fe5fefe2333e39e66a7aa6aa4987`
+
+**Tests:** four new xUnit methods authored (dual-threshold rejection, valid path-bound evidence, mutable-text negative, typed-evidence positive/profile validation). Existing monitor tests were updated for the typed callback. **Tests executed: 0.** No local Windows runner/build was available; compilation and RuleEngine runtime acceptance remain unverified. No GitHub Actions, live capture or invasive tests were run.
+
+**Safety invariants:** R531's 90% minimum-confidence floor, Critical severity and 20-minute cooldown are unchanged. R102/R118/R163 floors and frozen holdout were not modified. No other rule was marked complete.
+
+**Carryover state:** R531 remains IN-PROGRESS until Windows compile/tests, actual configured startup, CLI/headless ownership and durable delivery behavior are verified. R536 remains PRODUCER-BLOCKED on owned per-parser attempt/failure counters, stable parser epoch, replay/maintenance exclusion and RuleEngine admission. The ordered queue is exhausted; next carryover review priority is R531 acceptance, R536, then unresolved IDs in original queue order beginning `R270,R273,R274,R276,R277,R278,R279,R280,R281,R282`. Blocked is not complete.
