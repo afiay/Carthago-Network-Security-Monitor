@@ -567,6 +567,24 @@ public sealed class EnrichmentHealthPresentationTests
             Assert.Contains("worker elapsed mean/max ms (completed workers: ", summary);
     }
 
+    [Theory]
+    [InlineData(3, 2, 1, 12, 8, 20, 10)]
+    [InlineData(3, 2, 0, 12, 13, 20, 10)]
+    [InlineData(3, 2, 0, 12, 8, 20, 21)]
+    public void Worker_Invalid_Gauges_Suppress_Derived_Means(
+        long started, long returned, long skipped, long waitTotal, long waitMax,
+        long elapsedTotal, long elapsedMax)
+    {
+        var summary = EnrichmentHealthPresentation.WorkerSummary(
+            new EnrichmentWorkerSnapshot(started, returned, 0, 0, -skipped, waitTotal, waitMax,
+                elapsedTotal, elapsedMax));
+        if (skipped > 0 || waitMax > waitTotal)
+            Assert.Contains($"Queue wait mean/max ms (started workers: {started}): — / {waitMax}", summary);
+        if (skipped > 0 || elapsedMax > elapsedTotal)
+            Assert.Contains($"worker elapsed mean/max ms (completed workers: {returned}): — / {elapsedMax}", summary);
+        Assert.Contains("WARNING: invalid worker counters or duration accounting", summary);
+    }
+
     [Fact]
     public void Worker_Summary_Without_Snapshot_Does_Not_Invent_Denominators()
     {
