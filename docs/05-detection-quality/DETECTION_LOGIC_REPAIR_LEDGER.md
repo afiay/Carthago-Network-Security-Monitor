@@ -630,3 +630,14 @@ The actual `DetectionJournal` now exposes `TryReadConfiguredVolumeCapacity`, rea
 **Test source authored:** `Carthago.Tests/JournalCapacityMonitorTests.cs` (commit `67a334d1e3ca8e21bd80af73c6b9742a6c95b1e6`) adds one xUnit test for concurrent owner rejection and restart after cancellation. **Tests authored: 1; tests executed: 0.** No local Windows runner or build; compilation unverified. No GitHub Actions, live invasive tests, force push, precision-floor or frozen holdout changes.
 
 **Still missing:** R531 application startup ownership, production threshold/maintenance configuration, typed provenance-protected health-event admission, actual RuleEngine integration, and positive/benign-negative detector tests. R536 remains producer-blocked on owned parser-attempt/failure counters, parser attribution and engine integration. Other blocked IDs remain carryover. **Next cursor:** unresolved R531/R536 and remaining blocked IDs; no new ordered IDs.
+
+
+## Carryover R531 — polling ownership initialization boundary (2026-11-19)
+
+**Status:** IN-PROGRESS / PRODUCER-BLOCKED; **functional detector completions: 0**. Fixed ordered 187-ID inspection cursor remains exhausted; no additional ten-ID batch or rule promotion. R536 and all other producer-blocked IDs remain in carryover.
+
+**Production change:** `Carthago/Services/Journaling/JournalCapacityMonitor.cs` moves `PeriodicTimer` initialization inside the existing `try/finally` owner cleanup boundary. If timer construction throws after acquiring the single-owner guard, `_running` now resets instead of permanently locking out the monitor. Source commit `7d11872680800dd49308f3a1cd2bccccd3b9ce69`. This is a lifecycle robustness fix, not trusted event admission.
+
+**Tests authored: 0; tests executed: 0.** No local Windows runner/build available; compilation unverified. No GitHub Actions, live invasive tests, force push or changes to R102/R118/R163 floors and frozen holdout.
+
+**Still missing R531:** application-owned startup registration, trusted maintenance policy, configured thresholds, provenance-protected typed health-event delivery, dedicated RuleEngine evaluation and positive/benign-negative tests. **R536:** trusted owned parser-attempt/failure counters, stable parser attribution and RuleEngine integration. **Next cursor:** unresolved carryover R531/R536 and other blocked IDs, not new ordered IDs. Ledger commit is the commit containing this entry.
