@@ -49,7 +49,7 @@ function Test-QualificationTrx([byte[]]$bytes, [string]$digest, [string[]]$names
     foreach ($resultNode in $results) {
         $resultName = $resultNode.GetAttribute('testName')
         if ([string]::IsNullOrWhiteSpace($resultName) -or $resultName.Length -gt 4096 -or
-            -not $resultNames.Add($resultName)) { throw 'Missing, oversized or duplicate TRX result name' }
+            $resultName -match '[\x00-\x1f\x7f]' -or -not $resultNames.Add($resultName)) { throw 'Missing, oversized or duplicate TRX result name' }
     }
     $nonPassing = @($results | Where-Object { $_.GetAttribute('outcome') -cne 'Passed' }).Count
     $observedFailures = @($results | Where-Object { $_.GetAttribute('outcome') -cin @('Failed','Error','Timeout','Aborted') }).Count
@@ -147,6 +147,8 @@ if ($SelfTest) {
     Reject-Fixture { Invoke-Fixture $xml @('Exact.' + ('A' * 4097)) 'Passed' }
     Reject-Fixture { Invoke-Fixture $xml @("Exact.`nTest") 'Passed' }
     Reject-Fixture { Invoke-Fixture ($xml.Replace('</Results>','<UnitTestResult testName="Exact.Test" outcome="Passed"/></Results>')) @('Exact.Test') 'Passed' }
+    # Unselected result identities must not contain control characters either.
+    Reject-Fixture { Invoke-Fixture ($xml.Replace('</Results>','<UnitTestResult testName="Other.&#10;Test" outcome="Passed"/></Results>')) @('Exact.Test') 'Passed' }
     # Duplicate names outside the requested selection must also be rejected.
     $unrelatedDuplicate = $xml.Replace('</Results>','<UnitTestResult testName="Other.Test" outcome="Passed"/><UnitTestResult testName="Other.Test" outcome="Failed"/></Results>')
     Reject-Fixture { Invoke-Fixture $unrelatedDuplicate @('Exact.Test') 'Passed' }
