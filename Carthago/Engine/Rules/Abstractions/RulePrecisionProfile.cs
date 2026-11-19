@@ -728,6 +728,9 @@ namespace Carthago.Engine.Rules
                         StringComparison.Ordinal) && !string.IsNullOrEmpty(record.ApplicationProtocol),
                 "source" => HasAny(record.Source),
                 "destination" => HasAny(record.Destination),
+                "platform_health_event" => record.TrustedJournalCapacityEvidence?.IsValid == true,
+                "detection_journal" => !string.IsNullOrWhiteSpace(record.TrustedJournalCapacityEvidence?.JournalIdentity),
+                "disk_space_signal" => record.TrustedJournalCapacityEvidence?.IsLowSpace == true,
                 // These provenance fields are set only by PacketHandler after
                 // bounded wire decoding. Importable labels/Info cannot satisfy
                 // a live capture requirement.
