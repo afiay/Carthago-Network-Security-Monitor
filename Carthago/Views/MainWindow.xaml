@@ -122,22 +122,28 @@
                 <TextBlock x:Name="DashboardKpiCardTitle" Text="{Binding Title}"
                            Style="{StaticResource MicroLabel}" TextWrapping="Wrap"/>
               </DockPanel>
-              <TextBlock Text="{Binding Value}" FontSize="25" FontWeight="Bold"
-                         TextWrapping="Wrap" Margin="0,3,0,0"
-                         AutomationProperties.LabeledBy="{Binding ElementName=DashboardKpiCardTitle}"
-                         AutomationProperties.HelpText="{Binding InformationText}"/>
-              <TextBlock Text="{Binding DeltaText}" Foreground="{Binding AccentBrush}"
-                         FontSize="11" FontWeight="SemiBold" TextWrapping="Wrap">
-                <TextBlock.Style>
-                  <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
-                    <Style.Triggers>
-                      <DataTrigger Binding="{Binding DeltaText}" Value="">
-                        <Setter Property="Visibility" Value="Collapsed"/>
-                      </DataTrigger>
-                    </Style.Triggers>
-                  </Style>
-                </TextBlock.Style>
-              </TextBlock>
+              <!-- UI-238: visually group the live metric and its optional delta without changing bindings. -->
+              <Border Background="#0A1B2B" BorderBrush="#24475B" BorderThickness="1"
+                      CornerRadius="7" Padding="8,4" Margin="0,5,0,0">
+                <StackPanel>
+                  <TextBlock Text="{Binding Value}" FontSize="27" FontWeight="SemiBold"
+                             TextWrapping="Wrap"
+                             AutomationProperties.LabeledBy="{Binding ElementName=DashboardKpiCardTitle}"
+                             AutomationProperties.HelpText="{Binding InformationText}"/>
+                  <TextBlock Text="{Binding DeltaText}" Foreground="{Binding AccentBrush}"
+                             FontSize="11" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,2,0,0">
+                    <TextBlock.Style>
+                      <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding DeltaText}" Value="">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </TextBlock.Style>
+                  </TextBlock>
+                </StackPanel>
+              </Border>
             </StackPanel>
             <Border Grid.Row="1" Grid.ColumnSpan="2" BorderBrush="#29475D"
                     BorderThickness="0,1,0,0" Margin="0,4,0,0" Padding="0,3,0,0">
