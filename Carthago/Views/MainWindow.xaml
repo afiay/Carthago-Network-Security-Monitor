@@ -1209,7 +1209,31 @@
 
                             <Border x:Name="DashboardEvidenceCard0" Grid.Row="0" Grid.Column="0" Style="{StaticResource DetailGridCard}" Background="{StaticResource CardElevatedBg}" BorderBrush="{StaticResource AccentBrush}" BorderThickness="3,1,1,1" CornerRadius="9" Margin="0,0,0,8" Padding="10,8">
                               <StackPanel>
-                                <TextBlock x:Name="DashboardDetailReasonsLabel" Text="Reasons" Style="{StaticResource SocSubHeader}"/>
+                                <!-- GA UI-243: distinguish local scoring rationale from reported evidence. -->
+                                <Grid Margin="0,0,0,7">
+                                  <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                  </Grid.ColumnDefinitions>
+                                  <TextBlock x:Name="DashboardDetailReasonsLabel"
+                                             Grid.Column="0"
+                                             Text="Triage reasons"
+                                             Style="{StaticResource SocSubHeader}"
+                                             TextWrapping="Wrap"
+                                             VerticalAlignment="Center"/>
+                                  <Border Grid.Column="1"
+                                          Background="{StaticResource PillAccentBgBrush}"
+                                          BorderBrush="{StaticResource SoftDividerBrush}"
+                                          BorderThickness="1"
+                                          CornerRadius="5"
+                                          Padding="6,3"
+                                          Margin="8,0,0,0"
+                                          VerticalAlignment="Center">
+                                    <TextBlock Text="LOCAL CONTEXT"
+                                               Style="{StaticResource MicroLabel}"
+                                               Foreground="{StaticResource AccentBrush}"/>
+                                  </Border>
+                                </Grid>
                                 <ItemsControl x:Name="DashboardDetailReasonsItems"
                                               AutomationProperties.LabeledBy="{Binding ElementName=DashboardDetailReasonsLabel}"
                                               AutomationProperties.HelpText="Local triage explanations for the selected incident or anomaly signal; not independently verified evidence.">
