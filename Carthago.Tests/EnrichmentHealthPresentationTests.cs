@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Carthago.Services;
+using Carthago.Views;
 
 namespace Carthago.Tests;
 
@@ -1065,6 +1066,19 @@ public sealed class EnrichmentHealthPresentationTests
         Assert.Contains("TCP metadata-cache metrics unavailable", display.Diagnostics);
         Assert.Contains("Provider outcomes: capture-service lifetime", display.Summary);
         Assert.Contains("Provider success is not proof of detection accuracy or endpoint trust", display.Summary);
+    }
+
+
+    [Theory]
+    [InlineData(0d, 1)]
+    [InlineData(679.999d, 1)]
+    [InlineData(680d, 2)]
+    [InlineData(1024d, 2)]
+    [InlineData(1440d, 2)]
+    public void Diagnostics_Grid_Uses_Page_Local_Width_Breakpoint(double availableWidth, int expectedColumns)
+    {
+        Assert.Equal(expectedColumns,
+            MonitoringHealthPage.GetEnrichmentDiagnosticsColumnCount(availableWidth));
     }
 
 }

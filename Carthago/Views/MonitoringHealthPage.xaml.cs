@@ -21,10 +21,12 @@ namespace Carthago.Views
             InitializeComponent();
         }
 
+        internal static int GetEnrichmentDiagnosticsColumnCount(double availableWidth)
+            => availableWidth < 680d ? 1 : 2;
         private void EnrichmentDiagnosticsGrid_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             if (sender is not UniformGrid grid) return;
-            var columns = e.NewSize.Width < 680 ? 1 : 2;
+            var columns = GetEnrichmentDiagnosticsColumnCount(e.NewSize.Width);
             if (grid.Columns != columns)
                 grid.Columns = columns;
         }
