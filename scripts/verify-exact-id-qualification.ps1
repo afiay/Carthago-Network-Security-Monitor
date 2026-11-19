@@ -288,6 +288,8 @@ if ($SelfTest) {
     Assert-Qualification (@($failureEntry).Count -eq 1) 'Missing failure fixture evidence'
     $failureRow.detector.status = 'failed'
     $failureRow.detector.executedSha = $historicalSha
+    $failureRow.positiveEvidence.executedSha = $historicalSha
+    $failureRow.negativeEvidence.executedSha = $historicalSha
     $failureEntry.outcome = 'fail'
     $failureEntry.executedSha = $historicalSha
     $failureResult = Test-Qualification $failureDoc $inventory $historicalSha $failureManifest
@@ -315,13 +317,17 @@ if ($SelfTest) {
             checkoutReview='Synthetic integration fixture only'
             casePolarity='positive-detector'
         })
-        $fixtureResult = Test-Qualification $doc $inventory $sha $fixtureManifest
+        $fixtureDoc = Copy-Document
+        $fixtureDoc.records[0].positiveEvidence.provenance = 'sha256-verified-trx'
+        $fixtureResult = Test-Qualification $fixtureDoc $inventory $sha $fixtureManifest
         Assert-Qualification ($fixtureResult.artifactPositiveCases -eq 1 -and $fixtureResult.artifactNegativeCases -eq 0 -and $fixtureResult.legacyExecutionAttestations -eq ($result.legacyExecutionAttestations - 1)) 'Positive TRX provenance count mismatch'
         Assert-Qualification ($fixtureResult.auditedCount -eq $result.auditedCount -and $fixtureResult.historicalExecutionRecords -eq $result.historicalExecutionRecords -and $fixtureResult.currentExecutionRecords -eq $result.currentExecutionRecords) 'Artifact integration changed evidence accounting'
         $fixtureEntry.artifact.casePolarity = 'unknown'
         Expect-ManifestRejection $fixtureManifest
         $fixtureEntry.artifact.casePolarity = 'negative-detector'
-        $negativeFixture = Test-Qualification $doc $inventory $sha $fixtureManifest
+        $negativeDoc = Copy-Document
+        $negativeDoc.records[0].negativeEvidence.provenance = 'sha256-verified-trx'
+        $negativeFixture = Test-Qualification $negativeDoc $inventory $sha $fixtureManifest
         Assert-Qualification ($negativeFixture.auditedCount -eq $result.auditedCount -and $negativeFixture.artifactNegativeCases -eq 1 -and $negativeFixture.artifactPositiveCases -eq 0) 'Negative TRX provenance count mismatch'
         $fixtureEntry.artifact.PSObject.Properties.Remove('casePolarity')
         Expect-ManifestRejection $fixtureManifest
