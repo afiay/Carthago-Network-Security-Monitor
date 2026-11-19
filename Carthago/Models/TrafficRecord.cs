@@ -420,7 +420,10 @@ namespace Carthago.Models
     // It is deliberately not a public DTO and is never serialized with TrafficRecord.
     internal sealed class JournalCapacityHealthEvidence
     {
+        private readonly object _ownerToken;
+
         internal JournalCapacityHealthEvidence(
+            object ownerToken,
             string journalIdentity,
             DateTime sampledAtUtc,
             long availableBytes,
@@ -428,6 +431,7 @@ namespace Carthago.Models
             long minimumFreeBytes,
             double minimumFreePercent)
         {
+            _ownerToken = ownerToken ?? throw new ArgumentNullException(nameof(ownerToken));
             if (string.IsNullOrWhiteSpace(journalIdentity) ||
                 sampledAtUtc.Kind != DateTimeKind.Utc ||
                 totalBytes <= 0 || availableBytes < 0 || availableBytes > totalBytes ||
@@ -444,6 +448,9 @@ namespace Carthago.Models
             MinimumFreeBytes = minimumFreeBytes;
             MinimumFreePercent = minimumFreePercent;
         }
+
+        internal bool IsOwnedBy(object ownerToken)
+            => ReferenceEquals(_ownerToken, ownerToken);
 
         internal string JournalIdentity { get; }
         internal DateTime SampledAtUtc { get; }

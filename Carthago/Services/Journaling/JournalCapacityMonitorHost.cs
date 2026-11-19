@@ -56,8 +56,11 @@ namespace Carthago.Services
                 return null;
             }
 
+            // Resolve the same owner used by RuleEngine persistence. The monitor
+            // must never sample one journal volume while detections are written to another.
+            var journal = RuleEngine.GetActiveDetectionJournalForHealthMonitor();
             var monitor = new JournalCapacityMonitor(
-                DetectionJournal.Current,
+                journal,
                 minimumFreeBytes,
                 minimumFreePercent,
                 interval,
@@ -65,7 +68,7 @@ namespace Carthago.Services
                 evidence =>
                 {
                     var detections = RuleEngine.EvaluateJournalCapacityHealth(
-                        evidence, Sensitivity.Balanced);
+                        journal, evidence, Sensitivity.Balanced);
                     foreach (var detection in detections)
                     {
                         if (detection.DeliveryStatus == DetectionDeliveryStatus.FailedToPersist)

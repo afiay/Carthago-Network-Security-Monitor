@@ -16,6 +16,7 @@ namespace Carthago.Services
     {
         private static readonly Lazy<DetectionJournal> _current = new(() => new DetectionJournal(new DetectionJournalOptions()));
         private readonly DetectionJournalOptions _options;
+        private readonly object _ownerToken = new();
         private readonly SemaphoreSlim _writeGate = new(1, 1);
         private readonly JsonSerializerOptions _jsonOptions = new()
         {
@@ -27,6 +28,9 @@ namespace Carthago.Services
 
         public DetectionJournal(DetectionJournalOptions options) => _options = options ?? throw new ArgumentNullException(nameof(options));
         public static DetectionJournal Current => _current.Value;
+
+        internal bool Owns(JournalCapacityHealthEvidence? evidence)
+            => evidence is not null && evidence.IsOwnedBy(_ownerToken);
 
         /// <summary>
         /// Read OS-reported capacity for this journal instance's configured directory.
@@ -88,7 +92,7 @@ namespace Carthago.Services
                 var digest = SHA256.HashData(Encoding.UTF8.GetBytes(configuredPath));
                 var identity = Convert.ToHexString(digest.AsSpan(0, 16));
                 return new JournalCapacityHealthEvidence(
-                    identity, sampledAtUtc, availableBytes, totalBytes,
+                    _ownerToken, identity, sampledAtUtc, availableBytes, totalBytes,
                     minimumFreeBytes, minimumFreePercent);
             }
             catch (Exception ex) when (ex is ArgumentException ||

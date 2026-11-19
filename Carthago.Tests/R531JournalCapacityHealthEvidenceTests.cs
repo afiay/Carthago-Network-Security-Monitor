@@ -79,6 +79,42 @@ namespace Carthago.Tests
         }
 
         [Fact]
+        public void RuleEngineRejectsHealthEvidenceFromAnotherJournalOwner()
+        {
+            var directory = Path.Combine(
+                Path.GetTempPath(), "carthago-r531-shared-" + Guid.NewGuid().ToString("N"));
+            var producerJournal = new DetectionJournal(new DetectionJournalOptions
+            {
+                DirectoryPath = directory
+            });
+            var persistenceJournal = new DetectionJournal(new DetectionJournalOptions
+            {
+                DirectoryPath = directory
+            });
+            var evidence = producerJournal.CreateConfirmedLowCapacityEvidence(
+                DateTime.UtcNow, 50, 1000, 100, 10);
+
+            Assert.NotNull(evidence);
+            using (RuleEngine.PushDetectionJournalForTests(persistenceJournal))
+            {
+                Assert.Same(persistenceJournal,
+                    RuleEngine.GetActiveDetectionJournalForHealthMonitor());
+
+                // Same configured path is insufficient: distinct journal instances
+                // have distinct write ownership and cannot exchange health evidence.
+                Assert.Throws<InvalidOperationException>(() =>
+                    RuleEngine.EvaluateJournalCapacityHealth(
+                        persistenceJournal, evidence!, Sensitivity.Balanced));
+
+                // Even the evidence's creator cannot dispatch while a different
+                // persistence owner is active in this execution context.
+                Assert.Throws<InvalidOperationException>(() =>
+                    RuleEngine.EvaluateJournalCapacityHealth(
+                        producerJournal, evidence!, Sensitivity.Balanced));
+            }
+        }
+
+        [Fact]
         public async Task R531MatchesTypedJournalEvidenceAndPrecisionProfileAcceptsIt()
         {
             var rule = new R531_DetectionJournalDiskSpaceLowRule();

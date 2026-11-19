@@ -13,6 +13,9 @@ namespace Carthago.Services
         private static DetectionJournal ActiveDetectionJournal
             => DetectionJournalOverride.Value ?? DetectionJournal.Current;
 
+        internal static DetectionJournal GetActiveDetectionJournalForHealthMonitor()
+            => ActiveDetectionJournal;
+
         internal static IDisposable PushDetectionJournalForTests(
             DetectionJournal journal)
         {

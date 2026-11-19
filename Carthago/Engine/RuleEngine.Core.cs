@@ -117,11 +117,17 @@ namespace Carthago.Services
         }
 
         internal static List<DetectionEvent> EvaluateJournalCapacityHealth(
+            DetectionJournal owner,
             JournalCapacityHealthEvidence evidence,
             Sensitivity sensitivity)
         {
+            if (owner == null)
+                throw new ArgumentNullException(nameof(owner));
             if (evidence == null)
                 throw new ArgumentNullException(nameof(evidence));
+            if (!owner.Owns(evidence) || !ReferenceEquals(owner, ActiveDetectionJournal))
+                throw new InvalidOperationException(
+                    "R531 evidence producer and RuleEngine persistence must use the same DetectionJournal owner.");
 
             var record = new TrafficRecord
             {
