@@ -27,6 +27,8 @@ internal static class EnrichmentHealthPresentation
             sampledUtc = sampledUtc.ToUniversalTime(),
             processId,
             processStartedUtc = processStartedUtc.ToUniversalTime(),
+            // Clock-order diagnostic only: never treat an invalid sampling window as qualified evidence.
+            sampleAfterProcessStart = sampledUtc >= processStartedUtc,
             scope = "service lifetime except queue depth and current/last session registry gauges",
             queueDepth = stats.EnrichmentQueueDepth,
             fallbacks = stats.EnrichmentFallbacks,
