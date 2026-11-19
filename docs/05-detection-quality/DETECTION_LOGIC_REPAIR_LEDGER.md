@@ -619,3 +619,14 @@ The actual `DetectionJournal` now exposes `TryReadConfiguredVolumeCapacity`, rea
 **Tests authored: 0; tests executed: 0.** No Windows runner/build available; compilation and runtime behavior remain unverified. No GitHub Actions, invasive tests, force pushes, or changes to R102/R118/R163 precision floors or frozen holdout.
 
 **Still required:** R531 application lifecycle registration, production thresholds and trusted maintenance policy, provenance-protected typed local-health event, RuleEngine predicate and positive/benign-negative integration tests. R536 still requires owned parser-attempt/failure counters, stable parser identity and RuleEngine admission. Other producer-blocked IDs remain carryover. **Next cursor:** R531/R536 and remaining producer-blocked IDs; no new ordered IDs.
+
+
+## Carryover R531 — single-owner monitor polling (2026-11-19)
+
+**Status:** IN-PROGRESS / PRODUCER-BLOCKED; **functional detector completions: 0**. The fixed ordered 187-ID inspection cursor remains exhausted; no blocked item is marked implemented.
+
+**Production source changed:** `Carthago/Services/Journaling/JournalCapacityMonitor.cs` (commit `2fdfb5e87a1c8fc3e11ed67a0b1eb7fc8270ae7b`) now rejects concurrent `RunAsync` owners using an atomic guard and releases ownership on shutdown. This prevents overlapping application loops from sharing the same two-reading episode state. It does **not** wire the monitor into startup or authenticate health events.
+
+**Test source authored:** `Carthago.Tests/JournalCapacityMonitorTests.cs` (commit `67a334d1e3ca8e21bd80af73c6b9742a6c95b1e6`) adds one xUnit test for concurrent owner rejection and restart after cancellation. **Tests authored: 1; tests executed: 0.** No local Windows runner or build; compilation unverified. No GitHub Actions, live invasive tests, force push, precision-floor or frozen holdout changes.
+
+**Still missing:** R531 application startup ownership, production threshold/maintenance configuration, typed provenance-protected health-event admission, actual RuleEngine integration, and positive/benign-negative detector tests. R536 remains producer-blocked on owned parser-attempt/failure counters, parser attribution and engine integration. Other blocked IDs remain carryover. **Next cursor:** unresolved R531/R536 and remaining blocked IDs; no new ordered IDs.
