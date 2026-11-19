@@ -608,3 +608,14 @@ The actual `DetectionJournal` now exposes `TryReadConfiguredVolumeCapacity`, rea
 **Changed test source:** `Carthago.Tests/JournalCapacityMonitorTests.cs`, commit `6c3b859e154a73f6bd0f35b8de6752c13005a04b`. Two xUnit facts authored: already-cancelled owner token must terminate without sampling/delivery; invalid cadence and missing maintenance/delivery callbacks must fail construction. **Tests authored: 2; tests executed: 0.** No Windows runner or local build available; compile and execution unverified. No GitHub Actions, live invasive tests, force pushes or precision-floor/holdout changes.
 
 **No production source change in this run.** R531 still requires application lifecycle wiring, owned policy/maintenance provenance, configured thresholds and dedicated typed RuleEngine health-event evaluation. R536 still requires trusted parser-attempt/failure counters, parser identity and engine integration. No blocked ID promoted. **Next cursor:** R531/R536 and remaining producer-blocked carryover; no new ordered IDs.
+
+
+## Carryover R531 — cancellation-race health handoff guard (2026-11-19)
+
+**Status:** IN-PROGRESS / PRODUCER-BLOCKED; **functional detector completions: 0**. Ordered inspection cursor remains exhausted; no new ten-ID batch and no blocked ID promoted.
+
+**Production source changed:** `Carthago/Services/Journaling/JournalCapacityMonitor.cs`, commit `d928a7d6ce59219e82795350c4ca56d47086ee37`. Explicit owner-token checks after maintenance policy evaluation and immediately before confirmed-low callback prevent polling/delivery if shutdown races an in-flight tick. Existing cancellation catch and finally reset the gate. This is a bounded lifecycle safety repair, **not** trusted RuleEngine admission.
+
+**Tests authored: 0; tests executed: 0.** No Windows runner/build available; compilation and runtime behavior remain unverified. No GitHub Actions, invasive tests, force pushes, or changes to R102/R118/R163 precision floors or frozen holdout.
+
+**Still required:** R531 application lifecycle registration, production thresholds and trusted maintenance policy, provenance-protected typed local-health event, RuleEngine predicate and positive/benign-negative integration tests. R536 still requires owned parser-attempt/failure counters, stable parser identity and RuleEngine admission. Other producer-blocked IDs remain carryover. **Next cursor:** R531/R536 and remaining producer-blocked IDs; no new ordered IDs.
