@@ -990,6 +990,17 @@ public sealed class EnrichmentHealthPresentationTests
     }
 
     [Fact]
+    public void Negative_Skipped_Workers_Invalidates_InFlight_Gauge()
+    {
+        // A negative skipped count is invalid lifecycle telemetry even when
+        // started and completed outcomes independently reconcile.
+        var summary = EnrichmentHealthPresentation.WorkerSummary(
+            new EnrichmentWorkerSnapshot(3, 2, 0, 0, -1, 3, 2, 2, 2));
+        Assert.Contains("in flight at snapshot: —", summary);
+        Assert.Contains("WARNING: invalid worker counters or duration accounting", summary);
+    }
+
+    [Fact]
     public void Valid_Queue_And_Fallback_Counters_Are_Not_Flagged()
     {
         var summary = EnrichmentHealthPresentation.Build(new TrafficCaptureService.StatsSnapshot
