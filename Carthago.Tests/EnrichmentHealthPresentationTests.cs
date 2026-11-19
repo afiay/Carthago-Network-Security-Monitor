@@ -397,6 +397,26 @@ public sealed class EnrichmentHealthPresentationTests
         Assert.Contains("WARNING: GeoIP lookup outcome counters invalid or exceed Int64", summary);
     }
 
+    [Theory]
+    [InlineData(-1L, 2L, 0L)]
+    [InlineData(2L, -1L, 0L)]
+    [InlineData(2L, 0L, -1L)]
+    public void Geo_Lookup_Negative_Outcome_Does_Not_Publish_Failure_Share(
+        long found, long notFound, long failed)
+    {
+        // Raw lifetime telemetry is retained for diagnosis, but a negative
+        // outcome invalidates any derived failure percentage.
+        var summary = EnrichmentHealthPresentation.Build(new TrafficCaptureService.StatsSnapshot
+        {
+            GeoCityLookupHealth = new(found, notFound, failed),
+            GeoAsnLookupHealth = new(1, 1, 0)
+        }).Summary;
+        Assert.Contains("WARNING: GeoIP lookup outcome counters invalid or exceed Int64", summary);
+        Assert.Contains("City:", summary);
+        Assert.Contains("failed (failure share —)", summary);
+        Assert.Contains("ASN: 2 attempts, 1 found, 1 not found, 0 failed (failure share 0.0%)", summary);
+    }
+
     [Fact]
     public void Cancellation_Remains_A_Distinct_Outcome()
     {
