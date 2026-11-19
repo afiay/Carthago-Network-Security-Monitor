@@ -154,6 +154,10 @@ if ($SelfTest) {
     foreach ($terminalName in @('timeout','aborted','inconclusive','notExecuted')) {
         Reject-Fixture { Invoke-Fixture ($terminalCounted.Replace(($terminalName + '="0"'),($terminalName + '="1"'))) @('Exact.Test') 'Passed' }
     }
+    # Noncanonical and overflowing optional counters must fail even when observed zero.
+    Reject-Fixture { Invoke-Fixture ($terminalCounted.Replace('timeout="0"','timeout="+0"')) @('Exact.Test') 'Passed' }
+    Reject-Fixture { Invoke-Fixture ($terminalCounted.Replace('aborted="0"','aborted="00"')) @('Exact.Test') 'Passed' }
+    Reject-Fixture { Invoke-Fixture ($terminalCounted.Replace('notExecuted="0"','notExecuted="2147483648"')) @('Exact.Test') 'Passed' }
     # Selected success must not override an inconsistent terminal run outcome.
     Reject-Fixture { Invoke-Fixture ($xml.Replace('outcome="Completed"','outcome="Failed"')) @('Exact.Test') 'Passed' }
     $mixed = $xml.Replace('</Results>','<UnitTestResult testName="Other.Failed" outcome="Failed"/></Results>')
@@ -167,7 +171,7 @@ if ($SelfTest) {
     }
     Reject-Fixture { Invoke-Fixture ($xml.Replace('outcome="Passed"/></Results>','outcome="Unknown"/></Results>')) @('Exact.Test') 'Passed' }
     Reject-Fixture { Invoke-Fixture ('<!DOCTYPE TestRun [<!ENTITY x "bad">]>' + $xml) @('Exact.Test') 'Passed' }
-    [pscustomobject]@{ selfTestsPassed=37; detectorTestsExecuted=0 } | ConvertTo-Json
+    [pscustomobject]@{ selfTestsPassed=40; detectorTestsExecuted=0 } | ConvertTo-Json
 } else {
     $item = Get-Item -LiteralPath $Artifact
     if ($item.PSIsContainer -or $item.Length -gt 16777216) { throw 'Invalid artifact size or type' }
