@@ -106,6 +106,22 @@ public sealed class EnrichmentHealthPresentationTests
     }
 
     [Fact]
+    public void Geo_Lookup_Overflow_Does_Not_Publish_A_Failure_Percentage()
+    {
+        // An Int64-overflowed outcome population is diagnostic telemetry,
+        // not a qualified denominator for a derived failure percentage.
+        var stats = new TrafficCaptureService.StatsSnapshot
+        {
+            GeoCityLookupHealth = new(long.MaxValue, 0, long.MaxValue),
+            GeoAsnLookupHealth = new(1, 0, 1)
+        };
+        var summary = EnrichmentHealthPresentation.GeoSummary(stats);
+        Assert.Contains("WARNING: GeoIP lookup outcome counters invalid or exceed Int64", summary);
+        Assert.Contains("failure share —", summary);
+        Assert.Contains("ASN: 2 attempts, 1 found, 0 not found, 1 failed (failure share 50.0%)", summary);
+    }
+
+    [Fact]
     public void Aggregate_Export_Preserves_Exact_GeoIp_Lifetime_Totals()
     {
         var stats = new TrafficCaptureService.StatsSnapshot
