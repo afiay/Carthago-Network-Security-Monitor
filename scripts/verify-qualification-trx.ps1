@@ -60,15 +60,18 @@ function Test-QualificationTrx([byte[]]$bytes, [string]$digest, [string[]]$names
         foreach ($pair in @(@('total',$observed.Count),@('passed',$passed),@('failed',$failed))) {
             $value = $counters.GetAttribute($pair[0])
             $parsed = 0
-            if ($value -cnotmatch '^(0|[1-9][0-9]*)
+            if ($value -cnotmatch '^(0|[1-9][0-9]*)$' -or
+                -not [int]::TryParse($value, [ref]$parsed) -or
+                $parsed -ne [int]$pair[1]) { throw 'TRX counter mismatch or invalid syntax' }
         }
-        # Optional terminal error counter must agree with observed error nodes.
-        # A forged zero cannot conceal a failing unrelated test in a reviewed run.
+        # The optional error counter must match observed Error results.
         if ($counters.HasAttribute('error')) {
             $errors = @($observed | Where-Object { $_.GetAttribute('outcome') -ceq 'Error' }).Count
             $reportedErrors = 0
             $errorValue = $counters.GetAttribute('error')
-            if ($errorValue -cnotmatch '^(0|[1-9][0-9]*)
+            if ($errorValue -cnotmatch '^(0|[1-9][0-9]*)$' -or
+                -not [int]::TryParse($errorValue, [ref]$reportedErrors) -or
+                $reportedErrors -ne $errors) { throw 'TRX error counter mismatch or invalid syntax' }
         }
         if ($passed + $failed -gt $observed.Count) { throw 'Invalid TRX result accounting' }
     }
