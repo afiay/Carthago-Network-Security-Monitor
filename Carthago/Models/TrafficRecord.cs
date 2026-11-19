@@ -115,6 +115,8 @@ namespace Carthago.Models
         // Packet-processor-only NetBIOS first-level question identity. Never imported or exported.
         // Hash is transient and used only by bounded in-process distinct-name windows.
         internal string? NbnsQueryNameDigest { get; set; }
+        // Non-serialized local-health evidence. Imported records and packet metadata cannot set it.
+        internal JournalCapacityHealthEvidence? TrustedJournalCapacityEvidence { get; set; }
         public string? CaptureBackend { get; set; }
         public string? CaptureInterfaceId { get; set; }
         public string? CaptureInterfaceName { get; set; }
@@ -412,5 +414,54 @@ namespace Carthago.Models
         public DateTime? TcpSynAt { get; set; }
         public DateTime? TcpSynAckAt { get; set; }
         public double? RttEstimateMs { get; set; }
+    }
+
+    // Internal immutable evidence produced only by the configured DetectionJournal owner.
+    // It is deliberately not a public DTO and is never serialized with TrafficRecord.
+    internal sealed class JournalCapacityHealthEvidence
+    {
+        internal JournalCapacityHealthEvidence(
+            string journalIdentity,
+            DateTime sampledAtUtc,
+            long availableBytes,
+            long totalBytes,
+            long minimumFreeBytes,
+            double minimumFreePercent)
+        {
+            if (string.IsNullOrWhiteSpace(journalIdentity) ||
+                sampledAtUtc.Kind != DateTimeKind.Utc ||
+                totalBytes <= 0 || availableBytes < 0 || availableBytes > totalBytes ||
+                minimumFreeBytes <= 0 || !double.IsFinite(minimumFreePercent) ||
+                minimumFreePercent <= 0 || minimumFreePercent > 100 ||
+                availableBytes >= minimumFreeBytes ||
+                (double)availableBytes / totalBytes * 100 >= minimumFreePercent)
+                throw new ArgumentException("Journal capacity evidence must be a valid confirmed low-space sample.");
+
+            JournalIdentity = journalIdentity;
+            SampledAtUtc = sampledAtUtc;
+            AvailableBytes = availableBytes;
+            TotalBytes = totalBytes;
+            MinimumFreeBytes = minimumFreeBytes;
+            MinimumFreePercent = minimumFreePercent;
+        }
+
+        internal string JournalIdentity { get; }
+        internal DateTime SampledAtUtc { get; }
+        internal long AvailableBytes { get; }
+        internal long TotalBytes { get; }
+        internal long MinimumFreeBytes { get; }
+        internal double MinimumFreePercent { get; }
+
+        internal bool IsLowSpace =>
+            AvailableBytes < MinimumFreeBytes &&
+            (double)AvailableBytes / TotalBytes * 100 < MinimumFreePercent;
+
+        internal bool IsValid =>
+            !string.IsNullOrWhiteSpace(JournalIdentity) &&
+            SampledAtUtc.Kind == DateTimeKind.Utc &&
+            TotalBytes > 0 && AvailableBytes >= 0 && AvailableBytes <= TotalBytes &&
+            MinimumFreeBytes > 0 && double.IsFinite(MinimumFreePercent) &&
+            MinimumFreePercent > 0 && MinimumFreePercent <= 100 &&
+            IsLowSpace;
     }
 }
