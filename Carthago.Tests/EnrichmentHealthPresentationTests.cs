@@ -1063,9 +1063,8 @@ public sealed class EnrichmentHealthPresentationTests
         Assert.Contains("GeoIP databases (reader startup)", display.Diagnostics);
         Assert.Contains("Native process lookup metrics unavailable", display.Diagnostics);
         Assert.Contains("TCP metadata-cache metrics unavailable", display.Diagnostics);
-        Assert.Contains(display.Operations, display.Summary);
-        Assert.Contains(display.Evidence, display.Summary);
-        Assert.Contains(display.Storage, display.Summary);
+        Assert.Contains("Provider outcomes: capture-service lifetime", display.Summary);
+        Assert.Contains("Provider success is not proof of detection accuracy or endpoint trust", display.Summary);
     }
 
 }
