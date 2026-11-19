@@ -245,6 +245,30 @@ public sealed class EnrichmentWorkerHealthTests
     }
 
     [Fact]
+    public async System.Threading.Tasks.Task Worker_Drain_Continues_After_Asynchronous_Item_Fault_Without_Replaying_Items()
+    {
+        var channel = System.Threading.Channels.Channel.CreateBounded<int>(3);
+        foreach (var item in new[] { 1, 2, 3 })
+            Assert.True(channel.Writer.TryWrite(item));
+        channel.Writer.Complete();
+
+        var attempts = new System.Collections.Generic.List<int>();
+        var errors = new System.Collections.Generic.List<System.Exception>();
+        await TrafficCaptureService.DrainEnrichmentItemsAsync(channel.Reader, async item =>
+        {
+            attempts.Add(item);
+            await System.Threading.Tasks.Task.Yield();
+            if (item == 2)
+                throw new System.InvalidOperationException("asynchronous item fault");
+        }, errors.Add, System.Threading.CancellationToken.None);
+
+        Assert.Equal(new[] { 1, 2, 3 }, attempts);
+        var failure = Assert.Single(errors);
+        Assert.IsType<System.InvalidOperationException>(failure);
+        Assert.Equal("asynchronous item fault", failure.Message);
+    }
+
+    [Fact]
     public async System.Threading.Tasks.Task Worker_Drain_Stops_On_Service_Cancellation()
     {
         using var stop = new System.Threading.CancellationTokenSource();
