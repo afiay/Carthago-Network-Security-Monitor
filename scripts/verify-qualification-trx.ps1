@@ -70,7 +70,7 @@ function Test-QualificationTrx([byte[]]$bytes, [string]$digest, [string[]]$names
         foreach ($pair in @(@('total',$observed.Count),@('passed',$passed),@('failed',$failed))) {
             $value = $counters.GetAttribute($pair[0])
             $parsed = 0
-            if ($value -cnotmatch '^(0|[1-9][0-9]*)$' -or
+            if (-not [regex]::IsMatch($value, '\A(?:0|[1-9][0-9]*)\z') -or
                 -not [int]::TryParse($value, [ref]$parsed) -or
                 $parsed -ne [int]$pair[1]) { throw 'TRX counter mismatch or invalid syntax' }
         }
@@ -79,7 +79,7 @@ function Test-QualificationTrx([byte[]]$bytes, [string]$digest, [string[]]$names
             $errors = @($observed | Where-Object { $_.GetAttribute('outcome') -ceq 'Error' }).Count
             $reportedErrors = 0
             $errorValue = $counters.GetAttribute('error')
-            if ($errorValue -cnotmatch '^(0|[1-9][0-9]*)$' -or
+            if (-not [regex]::IsMatch($errorValue, '\A(?:0|[1-9][0-9]*)\z') -or
                 -not [int]::TryParse($errorValue, [ref]$reportedErrors) -or
                 $reportedErrors -ne $errors) { throw 'TRX error counter mismatch or invalid syntax' }
         }
@@ -165,6 +165,72 @@ if ($SelfTest) {
     Reject-Fixture { Invoke-Fixture ($counted.Replace('total="1"','total="+1"')) @('Exact.Test') 'Passed' }
     Reject-Fixture { Invoke-Fixture ($counted.Replace('passed="1"','passed=" 1 "')) @('Exact.Test') 'Passed' }
     Reject-Fixture { Invoke-Fixture ($counted.Replace('failed="0"','failed="00"')) @('Exact.Test') 'Passed' }
+    # XML character references preserve a trailing newline; canonical decimal
+    # counters must reject it even though regex '
+    $withError = $counted.Replace('</Results>','<UnitTestResult testName="Other.Error" outcome="Error"/></Results>').Replace('total="1"','total="2"')
+    $withError = $withError.Replace('failed="0"','failed="0"').Replace('passed="1"','passed="1"').Replace('failed="0"','failed="0"')
+    $errorCounted = $withError.Replace('failed="0"','failed="0" error="1"')
+    $errorOk = Invoke-Fixture $errorCounted @('Exact.Test') 'Passed'
+    if ($errorOk.matchedTests -ne 1) { throw 'Error-counter positive fixture failed' }
+    Reject-Fixture { Invoke-Fixture ($errorCounted.Replace('error="1"','error="0"')) @('Exact.Test') 'Passed' }
+    Reject-Fixture { Invoke-Fixture ($errorCounted.Replace('error="1"','error="invalid"')) @('Exact.Test') 'Passed' }
+    Reject-Fixture { Invoke-Fixture ($errorCounted.Replace('error="1"','error="+1"')) @('Exact.Test') 'Passed' }
+    Reject-Fixture { Invoke-Fixture ($errorCounted.Replace('error="1"','error="1&#10;"')) @('Exact.Test') 'Passed' }
+    # Optional terminal counters are exact; a zero control must pass and
+    # each contradictory nonzero terminal count must fail closed.
+    $terminalCounted = $counted.Replace('failed="0"','failed="0" timeout="0" aborted="0" inconclusive="0" notExecuted="0"')
+    $terminalOk = Invoke-Fixture $terminalCounted @('Exact.Test') 'Passed'
+    if ($terminalOk.matchedTests -ne 1) { throw 'Terminal-counter positive fixture failed' }
+    foreach ($terminalName in @('timeout','aborted','inconclusive','notExecuted')) {
+        Reject-Fixture { Invoke-Fixture ($terminalCounted.Replace(($terminalName + '="0"'),($terminalName + '="1"'))) @('Exact.Test') 'Passed' }
+    }
+    # Noncanonical and overflowing optional counters must fail even when observed zero.
+    Reject-Fixture { Invoke-Fixture ($terminalCounted.Replace('timeout="0"','timeout="+0"')) @('Exact.Test') 'Passed' }
+    Reject-Fixture { Invoke-Fixture ($terminalCounted.Replace('aborted="0"','aborted="00"')) @('Exact.Test') 'Passed' }
+    Reject-Fixture { Invoke-Fixture ($terminalCounted.Replace('notExecuted="0"','notExecuted="2147483648"')) @('Exact.Test') 'Passed' }
+    # A declared Pending count is independently checked, not inferred as executed.
+    $pendingCounted = $counted.Replace('failed="0"','failed="0" pending="0"')
+    $pendingOk = Invoke-Fixture $pendingCounted @('Exact.Test') 'Passed'
+    if ($pendingOk.matchedTests -ne 1) { throw 'Pending-counter positive fixture failed' }
+    Reject-Fixture { Invoke-Fixture ($pendingCounted.Replace('pending="0"','pending="1"')) @('Exact.Test') 'Passed' }
+    Reject-Fixture { Invoke-Fixture ($pendingCounted.Replace('pending="0"','pending="+0"')) @('Exact.Test') 'Passed' }
+    # Selected success must not override an inconsistent terminal run outcome.
+    Reject-Fixture { Invoke-Fixture ($xml.Replace('outcome="Completed"','outcome="Failed"')) @('Exact.Test') 'Passed' }
+    $mixed = $xml.Replace('</Results>','<UnitTestResult testName="Other.Failed" outcome="Failed"/></Results>')
+    Reject-Fixture { Invoke-Fixture ($mixed.Replace('outcome="Completed"','outcome="Passed"')) @('Exact.Test') 'Passed' }
+    $mixedOk = Invoke-Fixture $mixed @('Exact.Test') 'Passed'
+    if ($mixedOk.matchedTests -ne 1) { throw 'Completed mixed-result control failed' }
+    # Terminal Passed must not conceal error/timeout/non-executed nodes.
+    foreach ($outcome in @('Error','Timeout','Aborted','Inconclusive','NotExecuted')) {
+        $withOther = $xml.Replace('</Results>',('<UnitTestResult testName="Other.Case" outcome="' + $outcome + '"/></Results>'))
+        Reject-Fixture { Invoke-Fixture ($withOther.Replace('outcome="Completed"','outcome="Passed"')) @('Exact.Test') 'Passed' }
+    }
+    Reject-Fixture { Invoke-Fixture ($xml.Replace('outcome="Passed"/></Results>','outcome="Unknown"/></Results>')) @('Exact.Test') 'Passed' }
+    Reject-Fixture { Invoke-Fixture ('<!DOCTYPE TestRun [<!ENTITY x "bad">]>' + $xml) @('Exact.Test') 'Passed' }
+    [pscustomobject]@{ selfTestsPassed=42; detectorTestsExecuted=0 } | ConvertTo-Json
+} else {
+    $item = Get-Item -LiteralPath $Artifact
+    if ($item.PSIsContainer -or $item.Length -gt 16777216) { throw 'Invalid artifact size or type' }
+    # Enforce the 16 MiB limit on the read itself, not only on a racy pre-read stat.
+    $limit = 16777216
+    $stream = [IO.File]::Open($item.FullName, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read)
+    try {
+        $buffer = New-Object byte[] 65536
+        $output = [IO.MemoryStream]::new()
+        try {
+            while (($count = $stream.Read($buffer, 0, $buffer.Length)) -gt 0) {
+                if ($output.Length + $count -gt $limit) { throw 'TRX size outside bounds during read' }
+                $output.Write($buffer, 0, $count)
+            }
+            $bytes = $output.ToArray()
+        } finally { $output.Dispose() }
+    } finally { $stream.Dispose() }
+    Test-QualificationTrx $bytes $ExpectedSha256 $TestName $Outcome | ConvertTo-Json
+}
+ can match before final LF.
+    Reject-Fixture { Invoke-Fixture ($counted.Replace('total="1"','total="1&#10;"')) @('Exact.Test') 'Passed' }
+    Reject-Fixture { Invoke-Fixture ($counted.Replace('passed="1"','passed="1&#10;"')) @('Exact.Test') 'Passed' }
+    Reject-Fixture { Invoke-Fixture ($counted.Replace('failed="0"','failed="0&#10;"')) @('Exact.Test') 'Passed' }
     # Optional error counter is independently reconciled; absent counter stays compatible.
     $withError = $counted.Replace('</Results>','<UnitTestResult testName="Other.Error" outcome="Error"/></Results>').Replace('total="1"','total="2"')
     $withError = $withError.Replace('failed="0"','failed="0"').Replace('passed="1"','passed="1"').Replace('failed="0"','failed="0"')
