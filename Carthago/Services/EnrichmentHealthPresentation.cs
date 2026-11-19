@@ -237,6 +237,12 @@ internal static class EnrichmentHealthPresentation
         bool invalidLifecycle = w.Started < 0 || w.Returned < 0 || w.Cancelled < 0 || w.Faulted < 0 || completed > w.Started;
         // Do not silently clamp impossible lifecycle populations to zero in flight.
         string inFlight = invalidLifecycle ? "—" : (w.Started - completed).ToString("N0", CultureInfo.InvariantCulture);
+        // A negative skipped count or contradictory duration gauges invalidates the
+        // corresponding derived mean even when the lifecycle denominator is positive.
+        bool invalidWait = invalidLifecycle || w.Skipped < 0 || w.WaitTotalMs < 0 || w.WaitMaxMs < 0 ||
+            w.WaitMaxMs > w.WaitTotalMs || (w.Started == 0 && (w.WaitTotalMs != 0 || w.WaitMaxMs != 0));
+        bool invalidElapsed = invalidLifecycle || w.Skipped < 0 || w.ElapsedTotalMs < 0 || w.ElapsedMaxMs < 0 ||
+            w.ElapsedMaxMs > w.ElapsedTotalMs || (completed == 0 && (w.ElapsedTotalMs != 0 || w.ElapsedMaxMs != 0));
         string accounting = completed > w.Started
             ? $" WARNING: completed outcomes exceed started workers by {completed - w.Started:N0}; inspect worker lifecycle accounting."
             : string.Empty;
@@ -248,8 +254,8 @@ internal static class EnrichmentHealthPresentation
             accounting += " WARNING: invalid worker counters or duration accounting; inspect worker lifecycle accounting.";
         return $"Workers (lifetime): {w.Started:N0} started, {w.Returned:N0} returned, {w.Cancelled:N0} cancelled, {w.Faulted:N0} faulted; " +
             $"in flight at snapshot: {inFlight}; " +
-            $"{w.Skipped:N0} cancelled before processing. Queue wait mean/max ms (started workers: {w.Started:N0}): {Mean(w.WaitTotalMs, invalidLifecycle ? 0 : w.Started, w.WaitMaxMs)} / {w.WaitMaxMs}; " +
-            $"worker elapsed mean/max ms (completed workers: {completed:N0}): {Mean(w.ElapsedTotalMs, invalidLifecycle ? 0 : completed, w.ElapsedMaxMs)} / {w.ElapsedMaxMs}. " +
+            $"{w.Skipped:N0} cancelled before processing. Queue wait mean/max ms (started workers: {w.Started:N0}): {Mean(w.WaitTotalMs, invalidWait ? 0 : w.Started, w.WaitMaxMs)} / {w.WaitMaxMs}; " +
+            $"worker elapsed mean/max ms (completed workers: {completed:N0}): {Mean(w.ElapsedTotalMs, invalidElapsed ? 0 : completed, w.ElapsedMaxMs)} / {w.ElapsedMaxMs}. " +
             "Returned does not imply provider success; worker elapsed includes rule evaluation." + accounting;
     }
 }
