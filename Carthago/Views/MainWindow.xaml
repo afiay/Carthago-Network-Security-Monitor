@@ -1168,11 +1168,32 @@
                           </StackPanel>
                         </Border>
                       </Grid>
-                        <!-- GA UI-226: separate observed path facts from reported triage context. -->
-                        <TextBlock Text="Reported context"
-                                   Style="{StaticResource SocSubHeader}"
-                                   Margin="0,10,0,8"
-                                   AutomationProperties.HeadingLevel="Level3"/>
+                        <!-- GA UI-242: distinguish reported triage context from observed network facts. -->
+                        <Border Margin="0,10,0,9" Padding="10,8"
+                                Background="#102A39" BorderBrush="{StaticResource SoftDividerBrush}"
+                                BorderThickness="1" CornerRadius="7">
+                          <Grid>
+                            <Grid.ColumnDefinitions>
+                              <ColumnDefinition Width="*"/>
+                              <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                              <TextBlock Text="Reported context"
+                                         Style="{StaticResource SocSubHeader}"
+                                         AutomationProperties.HeadingLevel="Level3"/>
+                              <TextBlock Text="Local explanations, tags and rule references"
+                                         Foreground="{StaticResource TextSubtleBrush}" FontSize="11"
+                                         TextWrapping="Wrap" Margin="0,3,8,0"/>
+                            </StackPanel>
+                            <Border Grid.Column="1" VerticalAlignment="Top" Padding="7,3"
+                                    Background="{StaticResource CardElevatedBg}"
+                                    BorderBrush="{StaticResource SoftDividerBrush}"
+                                    BorderThickness="1" CornerRadius="5">
+                              <TextBlock Text="TRIAGE CONTEXT" Style="{StaticResource MicroLabel}"
+                                         Foreground="{StaticResource AccentBrush}"/>
+                            </Border>
+                          </Grid>
+                        </Border>
                         <Grid x:Name="DashboardDetailEvidenceGrid">
                             <Grid.ColumnDefinitions>
                               <ColumnDefinition x:Name="DashboardEvidencePrimaryColumn" Width="*"/>

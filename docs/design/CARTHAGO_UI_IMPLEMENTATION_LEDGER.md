@@ -6664,3 +6664,14 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Responsive:** Wide >=1440 and Standard 1100–1439 retain the investigation column; Compact 1024–1099 and below retain the existing flow and scrolling. The explanatory line wraps beside the auto-sized marker without fixed panel width. **Ownership:** only `Carthago/Views/MainWindow.xaml` and this ledger; no VMs, Engine/Models/Services, rules, capture, telemetry, security, local PPS ScottPlot 10/120, Events 80/500, visual-only CLI or Cisco/WebView2 changes.
 
 **Static risks/unexecuted acceptance:** marker can constrain the explanatory line at narrow widths; added header height can reduce immediately visible facts. Verify 1920/1440/1100/1099/1024/1023/640 widths, 100/125/150/200% DPI, empty and selected findings, text wrapping, contrast, focus and scroll reachability. Builds/tests/CI/capture/render: zero; runtime acceptance unexecuted. **Next UI-242:** next substantive Dashboard or Incidents composition slice from live ledger.
+
+
+## GA UI-242 — Dashboard investigation reported-context section hierarchy
+
+**2026-11-19 · SOURCE CANDIDATE — UNVERIFIED.** Approved Library image `libfile_b0a34361560c8191b641e432b3e6b15c` visually inspected. Baseline HEAD `4af35373f3861fd97608698ba4f4ad7694704a6e`; actual commit TREE `5e8f493cfede778009e44ed48f403b85eef2bd85`. UI-241 latest recorded. Reference mapping: the approved dark SOC investigation column distinguishes evidence facts and secondary explanation with navy bounded sections and cyan labels; DEMO DATA in the reference is illustrative, never telemetry.
+
+**Before → after:** the Reported context heading was a standalone text line below the Network path fact cards. It now occupies a matching navy bordered section header with a secondary description and TRIAGE CONTEXT micro-label, making the hierarchy and provenance distinction explicit. Existing reasons, tags, rule IDs, evidence/provenance cards, named controls, binding/automation consumers, scrolling and event handling remain unchanged. No data or confidence claims added.
+
+**Responsive:** Wide >=1440, Standard 1100–1439, Compact 1024–1099 and below preserve existing panel flow; description wraps alongside the auto-sized label, without fixed width or new breakpoint. **Ownership:** only `Carthago/Views/MainWindow.xaml` and this existing ledger. No VMs, Engine/Models/Services, rules, capture, telemetry, security, ScottPlot PPS 10/120, Events 80/500, visual-only CLI or Cisco/WebView2 changes.
+
+**Static risks/unexecuted acceptance:** taller header reduces visible evidence area; long labels can constrain wrapping in narrow layouts. Verify clipping, contrast, focus and scroll reachability at 1920/1440/1100/1099/1024/1023/640 widths and 100/125/150/200% DPI. Builds/tests/CI/capture/render: zero; runtime acceptance unexecuted. **Next UI-243:** next substantive Dashboard or Incidents composition slice from live ledger.
