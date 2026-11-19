@@ -701,6 +701,27 @@ public sealed class EnrichmentHealthPresentationTests
 
 
     [Theory]
+    [InlineData(-1, 10, 10)]
+    [InlineData(0, 10, 11)]
+    [InlineData(0, -1, 0)]
+    public void Provider_Invalid_Cache_Or_Duration_Accounting_Suppresses_Both_Derived_Rates(
+        long cacheHits, long elapsedMs, long maxElapsedMs)
+    {
+        var stats = new TrafficCaptureService.StatsSnapshot
+        {
+            EnrichmentProviders = new Dictionary<string, EnrichmentProviderSnapshot>
+            {
+                ["whois"] = new(1, 0, 0, 0, 0, cacheHits, elapsedMs, maxElapsedMs)
+            }
+        };
+        var display = EnrichmentHealthPresentation.Build(stats);
+        var provider = Assert.Single(display.Providers, p => p.Provider == "whois");
+        Assert.Equal("—", provider.SuccessShare);
+        Assert.Equal("—", provider.Latency);
+        Assert.Contains("WARNING: invalid provider outcome, cache-path or latency counters", display.Summary);
+    }
+
+    [Theory]
     [InlineData(1, 0, 0, 0, 0, -1, 0)]
     [InlineData(1, 0, 0, 0, 0, 5, -1)]
     [InlineData(1, 0, 0, 0, 0, 5, 6)]
