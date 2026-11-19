@@ -43,8 +43,10 @@ namespace Carthago.Services
         internal async Task RunAsync(CancellationToken cancellationToken)
         {
             using var timer = new PeriodicTimer(_interval);
-            while (await timer.WaitForNextTickAsync(cancellationToken).ConfigureAwait(false))
+            try
             {
+                while (await timer.WaitForNextTickAsync(cancellationToken).ConfigureAwait(false))
+                {
                 bool maintenance;
                 try { maintenance = _maintenance(); }
                 catch (Exception ex) when (ex is not OperationCanceledException)
@@ -57,8 +59,25 @@ namespace Carthago.Services
                 if (_gate.TrySample(utc, maintenance, out var confirmed,
                     out var available, out var total) && confirmed)
                 {
-                    _confirmedLow(utc, available, total);
+                    // A failed handoff must not retain a confirmed episode as if
+                    // the downstream owner had accepted it. Fail visibly; never
+                    // convert a callback failure into a detection event.
+                    try { _confirmedLow(utc, available, total); }
+                    catch
+                    {
+                        _gate.Reset();
+                        throw;
+                    }
                 }
+                }
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                // Expected application shutdown, not a sampling failure.
+            }
+            finally
+            {
+                _gate.Reset();
             }
         }
     }
