@@ -128,6 +128,31 @@ public sealed class EnrichmentHealthPresentationTests
     }
 
     [Fact]
+    public void Aggregate_Export_Preserves_Provider_Outcome_Counters_Without_Long_Sum_Overflow()
+    {
+        // Each lifetime counter is valid even when their combined outcome population
+        // cannot fit in Int64. Export the raw independent counts, never a wrapped sum.
+        var stats = new TrafficCaptureService.StatsSnapshot
+        {
+            EnrichmentProviders = new Dictionary<string, EnrichmentProviderSnapshot>
+            {
+                ["whois"] = new(long.MaxValue, long.MaxValue, 0, 0, 1, 3, 0, 0)
+            }
+        };
+        var sampled = System.DateTimeOffset.Parse("2026-11-19T10:00:00Z");
+        using var doc = System.Text.Json.JsonDocument.Parse(
+            EnrichmentHealthPresentation.ExportCounters(stats, sampled, 42, sampled));
+        var whois = doc.RootElement.GetProperty("providers").GetProperty("whois");
+        Assert.Equal(long.MaxValue, whois.GetProperty("Success").GetInt64());
+        Assert.Equal(long.MaxValue, whois.GetProperty("Unavailable").GetInt64());
+        Assert.Equal(1L, whois.GetProperty("Cancelled").GetInt64());
+        Assert.Equal(3L, whois.GetProperty("CacheHits").GetInt64());
+        Assert.Equal(0L, whois.GetProperty("TotalElapsedMs").GetInt64());
+        Assert.Equal("observational-telemetry-not-qualified-detection",
+            doc.RootElement.GetProperty("evidenceStatus").GetString());
+    }
+
+    [Fact]
     public void Aggregate_Export_Without_Registry_Identity_Does_Not_Invent_One()
     {
         var stats = new TrafficCaptureService.StatsSnapshot { EnrichmentStorage = new(new(0, 32, 0), new(0, 32, 0), new(0, 0, null)) };
