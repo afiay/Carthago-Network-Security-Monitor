@@ -181,6 +181,29 @@ public sealed class EnrichmentHealthPresentationTests
     }
 
     [Fact]
+    public void Invalid_Provider_Does_Not_Invalidate_Independent_Provider_Rates()
+    {
+        // Each provider has an independent outcome population. A malformed
+        // provider must not suppress a different provider's valid telemetry.
+        var stats = new TrafficCaptureService.StatsSnapshot
+        {
+            EnrichmentProviders = new Dictionary<string, EnrichmentProviderSnapshot>
+            {
+                ["whois"] = new(2, 1, 0, 1, 0, 3, 40, 20),
+                ["reputation"] = new(1, -1, 0, 0, 0, 0, 10, 10)
+            }
+        };
+        var display = EnrichmentHealthPresentation.Build(stats);
+        var whois = display.Providers.Single(p => p.Provider == "whois");
+        var reputation = display.Providers.Single(p => p.Provider == "reputation");
+        Assert.Equal("50.0%", whois.SuccessShare);
+        Assert.Equal("10.0 / 20 ms (4 outcomes)", whois.Latency);
+        Assert.Equal("—", reputation.SuccessShare);
+        Assert.Equal("—", reputation.Latency);
+        Assert.Contains("WARNING: invalid provider outcome", display.Summary);
+    }
+
+    [Fact]
     public void Missing_Snapshot_Does_Not_Invent_Provider_Health()
     {
         Assert.Empty(EnrichmentHealthPresentation.Build(null).Providers);
