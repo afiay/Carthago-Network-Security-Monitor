@@ -167,7 +167,7 @@ internal static class EnrichmentHealthPresentation
         decimal accountedRequests = (decimal)h.PositiveHits + h.NegativeHits + h.Misses;
         string rate = accountedRequests <= 0 || h.PositiveHits < 0 || h.NegativeHits < 0 || h.Misses < 0 ||
             h.Expired < 0 || h.Evicted < 0 || h.Occupancy < 0 || h.Capacity < 0 || h.Occupancy > h.Capacity ||
-            accountedRequests > long.MaxValue
+            h.Requests < 0 || (decimal)h.Requests != accountedRequests || accountedRequests > long.MaxValue
             ? "—"
             : (((decimal)h.PositiveHits + h.NegativeHits) / accountedRequests).ToString("P1", CultureInfo.InvariantCulture);
         // Each eligible request follows exactly one cache path: positive hit,
