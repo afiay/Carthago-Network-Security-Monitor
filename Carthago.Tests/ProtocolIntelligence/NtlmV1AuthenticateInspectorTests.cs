@@ -19,10 +19,11 @@ namespace Carthago.Tests.ProtocolIntelligence
             bytes.AsSpan(64, 48).Fill(0x39);
             return bytes;
         }
-        private static void Buffer(byte[] bytes, int field, int offset, ushort length)
+        private static void Buffer(byte[] bytes, int field, int offset, ushort length,
+            ushort? capacity = null)
         {
             BinaryPrimitives.WriteUInt16LittleEndian(bytes.AsSpan(field), length);
-            BinaryPrimitives.WriteUInt16LittleEndian(bytes.AsSpan(field + 2), length);
+            BinaryPrimitives.WriteUInt16LittleEndian(bytes.AsSpan(field + 2), capacity ?? length);
             BinaryPrimitives.WriteUInt32LittleEndian(bytes.AsSpan(field + 4), (uint)offset);
         }
 
@@ -59,6 +60,42 @@ namespace Carthago.Tests.ProtocolIntelligence
             Buffer(bytes, 20, 100, 24);
             Assert.False(NtlmV1AuthenticateInspector.TryInspect(bytes, true, out _));
         }
+        [Fact] public void AncillarySecurityBufferCannotOverlapResponseBytes()
+        {
+            var bytes = Candidate();
+            Buffer(bytes, 28, 70, 4);
+            Assert.False(NtlmV1AuthenticateInspector.TryInspect(bytes, true, out _));
+        }
+
+        [Fact] public void SecurityBufferMaximumLengthMustFitInsideMessage()
+        {
+            var bytes = Candidate();
+            Buffer(bytes, 12, 64, 24, 49);
+            Assert.False(NtlmV1AuthenticateInspector.TryInspect(bytes, true, out _));
+        }
+
+        [Fact] public void VersionFieldCannotBeReusedAsResponseBytes()
+        {
+            var bytes = Candidate();
+            BinaryPrimitives.WriteUInt32LittleEndian(bytes.AsSpan(60), 0x02000002);
+            Assert.False(NtlmV1AuthenticateInspector.TryInspect(bytes, true, out _));
+        }
+
+        [Fact] public void VersionedHeaderWithDisjointResponsesIsAccepted()
+        {
+            var bytes = new byte[120];
+            "NTLMSSP\0"u8.CopyTo(bytes.AsSpan());
+            BinaryPrimitives.WriteUInt32LittleEndian(bytes.AsSpan(8), 3);
+            Buffer(bytes, 12, 72, 24);
+            Buffer(bytes, 20, 96, 24);
+            BinaryPrimitives.WriteUInt32LittleEndian(bytes.AsSpan(60), 0x02000002);
+            bytes.AsSpan(72, 48).Fill(0x39);
+
+            Assert.True(NtlmV1AuthenticateInspector.TryInspect(bytes, true, out var result));
+            Assert.True(result.IsLegacyV1Compatible);
+            Assert.False(result.IsAuthenticated);
+        }
+
         [Fact] public void ZeroPasswordResponsesAndWrongMessageTypeFailClosed()
         {
             var bytes = Candidate();

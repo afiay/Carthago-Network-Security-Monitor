@@ -13,6 +13,7 @@ namespace Carthago.Services.ProtocolIntelligence
     public static class NtlmV1AuthenticateInspector
     {
         private const uint ExtendedSessionSecurity = 0x00080000;
+        private const uint NegotiateVersion = 0x02000000;
         private const uint Unicode = 0x00000001;
         private const uint Oem = 0x00000002;
         private const int MaximumMessageBytes = 65536;
@@ -31,14 +32,35 @@ namespace Carthago.Services.ProtocolIntelligence
                 (flags & (Unicode | Oem)) == 0)
                 return false;
 
-            if (!TryBuffer(message, 12, out int lmOffset, out int lmLength) ||
-                !TryBuffer(message, 20, out int ntOffset, out int ntLength) ||
-                !TryBuffer(message, 28, out _, out _) ||
-                !TryBuffer(message, 36, out _, out _) ||
-                !TryBuffer(message, 44, out _, out _) ||
-                !TryBuffer(message, 52, out _, out _) ||
-                lmLength != 24 || ntLength != 24 ||
-                Overlaps(lmOffset, lmLength, ntOffset, ntLength))
+            // Type-3 has six security buffers. Validate every descriptor, not
+            // only LM/NT responses: ancillary fields must not alias response bytes.
+            // NEGOTIATE_VERSION inserts an eight-byte version field at offset 64.
+            int minimumDataOffset = (flags & NegotiateVersion) != 0 ? 72 : 64;
+            Span<int> offsets = stackalloc int[6];
+            Span<int> lengths = stackalloc int[6];
+            for (int i = 0; i < 6; i++)
+            {
+                if (!TryBuffer(message, 12 + (i * 8), minimumDataOffset,
+                    out int dataOffset, out int length))
+                    return false;
+                offsets[i] = dataOffset;
+                lengths[i] = length;
+            }
+
+            for (int i = 0; i < lengths.Length; i++)
+            {
+                if (lengths[i] == 0) continue;
+                for (int j = i + 1; j < lengths.Length; j++)
+                {
+                    if (lengths[j] != 0 &&
+                        Overlaps(offsets[i], lengths[i], offsets[j], lengths[j]))
+                        return false;
+                }
+            }
+
+            int lmOffset = offsets[0], lmLength = lengths[0];
+            int ntOffset = offsets[1], ntLength = lengths[1];
+            if (lmLength != 24 || ntLength != 24)
                 return false;
 
             // A 24-byte NT response alone cannot distinguish NTLMv1 from
@@ -55,16 +77,18 @@ namespace Carthago.Services.ProtocolIntelligence
         }
 
         private static bool TryBuffer(ReadOnlySpan<byte> message, int offset,
-            out int dataOffset, out int length)
+            int minimumDataOffset, out int dataOffset, out int length)
         {
             dataOffset = 0;
             length = 0;
             ushort size = BinaryPrimitives.ReadUInt16LittleEndian(message.Slice(offset, 2));
             ushort capacity = BinaryPrimitives.ReadUInt16LittleEndian(message.Slice(offset + 2, 2));
             uint start = BinaryPrimitives.ReadUInt32LittleEndian(message.Slice(offset + 4, 4));
-            if (size > capacity || start > (uint)message.Length ||
-                size > message.Length - (long)start ||
-                (size != 0 && start < 64))
+            long available = start <= (uint)message.Length
+                ? message.Length - (long)start : -1;
+            if (size > capacity || available < 0 ||
+                capacity > available || size > available ||
+                (size != 0 && start < (uint)minimumDataOffset))
                 return false;
             dataOffset = (int)start;
             length = size;
