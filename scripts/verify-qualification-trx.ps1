@@ -43,6 +43,14 @@ function Test-QualificationTrx([byte[]]$bytes, [string]$digest, [string[]]$names
     foreach ($resultNode in $results) {
         if ($resultNode.GetAttribute('outcome') -cnotin $terminalOutcomes) { throw 'Unknown TRX test outcome' }
     }
+    # Every result name must identify one outcome, including unselected tests.
+    # Otherwise an unrelated duplicate can undermine run-level accounting.
+    $resultNames = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+    foreach ($resultNode in $results) {
+        $resultName = $resultNode.GetAttribute('testName')
+        if ([string]::IsNullOrWhiteSpace($resultName) -or $resultName.Length -gt 4096 -or
+            -not $resultNames.Add($resultName)) { throw 'Missing, oversized or duplicate TRX result name' }
+    }
     $nonPassing = @($results | Where-Object { $_.GetAttribute('outcome') -cne 'Passed' }).Count
     $observedFailures = @($results | Where-Object { $_.GetAttribute('outcome') -cin @('Failed','Error','Timeout','Aborted') }).Count
     if (($summary[0].GetAttribute('outcome') -ceq 'Passed' -and $nonPassing -gt 0) -or
@@ -139,6 +147,10 @@ if ($SelfTest) {
     Reject-Fixture { Invoke-Fixture $xml @('Exact.' + ('A' * 4097)) 'Passed' }
     Reject-Fixture { Invoke-Fixture $xml @("Exact.`nTest") 'Passed' }
     Reject-Fixture { Invoke-Fixture ($xml.Replace('</Results>','<UnitTestResult testName="Exact.Test" outcome="Passed"/></Results>')) @('Exact.Test') 'Passed' }
+    # Duplicate names outside the requested selection must also be rejected.
+    $unrelatedDuplicate = $xml.Replace('</Results>','<UnitTestResult testName="Other.Test" outcome="Passed"/><UnitTestResult testName="Other.Test" outcome="Failed"/></Results>')
+    Reject-Fixture { Invoke-Fixture $unrelatedDuplicate @('Exact.Test') 'Passed' }
+
     Reject-Fixture { Invoke-Fixture ($xml.Replace('Completed','Aborted')) @('Exact.Test') 'Passed' }
     $counted = $xml.Replace('<ResultSummary outcome="Completed"/>','<ResultSummary outcome="Completed"><Counters total="1" passed="1" failed="0"/></ResultSummary>')
     $countedOk = Invoke-Fixture $counted @('Exact.Test') 'Passed'
@@ -191,7 +203,7 @@ if ($SelfTest) {
     }
     Reject-Fixture { Invoke-Fixture ($xml.Replace('outcome="Passed"/></Results>','outcome="Unknown"/></Results>')) @('Exact.Test') 'Passed' }
     Reject-Fixture { Invoke-Fixture ('<!DOCTYPE TestRun [<!ENTITY x "bad">]>' + $xml) @('Exact.Test') 'Passed' }
-    [pscustomobject]@{ selfTestsPassed=41; detectorTestsExecuted=0 } | ConvertTo-Json
+    [pscustomobject]@{ selfTestsPassed=42; detectorTestsExecuted=0 } | ConvertTo-Json
 } else {
     $item = Get-Item -LiteralPath $Artifact
     if ($item.PSIsContainer -or $item.Length -gt 16777216) { throw 'Invalid artifact size or type' }
