@@ -684,3 +684,6 @@ The maintenance setting is re-read each sample; anything other than explicit `fa
 **Safety invariants:** R531's 90% minimum-confidence floor, Critical severity and 20-minute cooldown are unchanged. R102/R118/R163 floors and frozen holdout were not modified. No other rule was marked complete.
 
 **Carryover state:** R531 remains IN-PROGRESS until Windows compile/tests, actual configured startup, CLI/headless ownership and durable delivery behavior are verified. R536 remains PRODUCER-BLOCKED on owned per-parser attempt/failure counters, stable parser epoch, replay/maintenance exclusion and RuleEngine admission. The ordered queue is exhausted; next carryover review priority is R531 acceptance, R536, then unresolved IDs in original queue order beginning `R270,R273,R274,R276,R277,R278,R279,R280,R281,R282`. Blocked is not complete.
+
+
+**Additional runtime identity check:** the monitor currently samples `DetectionJournal.Current`; the RuleEngine persistence call uses its `ActiveDetectionJournal` member. Their configured-path identity is not asserted by a regression test in this pass. Verify they resolve to the same intended journal (or route both through one owner/provider) before promoting R531 beyond IN-PROGRESS.
