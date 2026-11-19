@@ -35,6 +35,18 @@ function Test-QualificationTrx([byte[]]$bytes, [string]$digest, [string[]]$names
     # conflicting outcomes when a consumer assumes one canonical result set.
     $resultContainers = $run.SelectNodes('t:Results',$ns)
     if ($resultContainers.Count -ne 1) { throw 'Missing or duplicate TRX Results container' }
+    # Do not silently ignore unsupported or nested result elements in a signed run.
+    # Every direct result child must be a native UnitTestResult, and there must
+    # be no nested result nodes hidden outside the canonical Results container.
+    foreach ($child in $resultContainers[0].ChildNodes) {
+        if ($child.NodeType -eq [Xml.XmlNodeType]::Element -and
+            ($child.LocalName -cne 'UnitTestResult' -or $child.NamespaceURI -cne 'http://microsoft.com/schemas/VisualStudio/TeamTest/2010')) {
+            throw 'Unsupported TRX result element'
+        }
+    }
+    if ($run.SelectNodes('.//t:UnitTestResult',$ns).Count -ne $resultContainers[0].SelectNodes('t:UnitTestResult',$ns).Count) {
+        throw 'Nested or displaced TRX result node'
+    }
     $results = $run.SelectNodes('t:Results/t:UnitTestResult',$ns)
     $summary = $run.SelectNodes('t:ResultSummary',$ns)
     if ($summary.Count -ne 1 -or $summary[0].GetAttribute('outcome') -cnotin @('Completed','Passed','Failed')) { throw 'Incomplete TRX run' }
@@ -153,6 +165,10 @@ if ($SelfTest) {
     Reject-Fixture { Invoke-Fixture $xml @('Exact.' + ('A' * 4097)) 'Passed' }
     Reject-Fixture { Invoke-Fixture $xml @("Exact.`nTest") 'Passed' }
     Reject-Fixture { Invoke-Fixture ($xml.Replace('</Results>','<UnitTestResult testName="Exact.Test" outcome="Passed"/></Results>')) @('Exact.Test') 'Passed' }
+    # Unsupported result types and displaced nested result nodes cannot be
+    # silently omitted from run accounting.
+    Reject-Fixture { Invoke-Fixture ($xml.Replace('</Results>','<GenericTestResult testName="Other.Test" outcome="Failed"/></Results>')) @('Exact.Test') 'Passed' }
+    Reject-Fixture { Invoke-Fixture ($xml.Replace('</Results>','<Other><UnitTestResult testName="Other.Test" outcome="Failed"/></Other></Results>')) @('Exact.Test') 'Passed' }
     # Unselected result identities must not contain control characters either.
     Reject-Fixture { Invoke-Fixture ($xml.Replace('</Results>','<UnitTestResult testName="Other.&#10;Test" outcome="Passed"/></Results>')) @('Exact.Test') 'Passed' }
     # Duplicate names outside the requested selection must also be rejected.
@@ -223,7 +239,7 @@ if ($SelfTest) {
     }
     Reject-Fixture { Invoke-Fixture ($xml.Replace('outcome="Passed"/></Results>','outcome="Unknown"/></Results>')) @('Exact.Test') 'Passed' }
     Reject-Fixture { Invoke-Fixture ('<!DOCTYPE TestRun [<!ENTITY x "bad">]>' + $xml) @('Exact.Test') 'Passed' }
-    [pscustomobject]@{ selfTestsPassed=43; detectorTestsExecuted=0 } | ConvertTo-Json
+    [pscustomobject]@{ selfTestsPassed=45; detectorTestsExecuted=0 } | ConvertTo-Json
 } else {
     $item = Get-Item -LiteralPath $Artifact
     if ($item.PSIsContainer -or $item.Length -gt 16777216) { throw 'Invalid artifact size or type' }
