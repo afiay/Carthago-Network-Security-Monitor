@@ -674,6 +674,28 @@ public sealed class EnrichmentHealthPresentationTests
     }
 
     [Fact]
+    public void Process_Coverage_Flags_Combined_Tcp_And_Udp_Evidence_Exceeding_Eligible_Records()
+    {
+        // TCP socket ownership and UDP binding are mutually exclusive evidence
+        // classes. Each count can fit the eligible population independently
+        // while their combined population is impossible.
+        var invalid = new TrafficCaptureService.StatsSnapshot
+        {
+            EnrichmentCoverage = new(100, 40, 20, 10, 5, 8, 6, 5, 7)
+        };
+        var summary = EnrichmentHealthPresentation.Build(invalid).Summary;
+        Assert.Contains("TCP socket ownership: 6/8 eligible", summary);
+        Assert.Contains("UDP binding only: 5/8 eligible", summary);
+        Assert.Contains("WARNING: evidence coverage counters are negative or exceed", summary);
+
+        var valid = new TrafficCaptureService.StatsSnapshot
+        {
+            EnrichmentCoverage = new(100, 40, 20, 10, 5, 8, 5, 3, 7)
+        };
+        Assert.DoesNotContain("WARNING: evidence coverage counters", EnrichmentHealthPresentation.Build(valid).Summary);
+    }
+
+    [Fact]
     public void Evidence_Coverage_Flags_Negative_Counters_Without_Clamping_Them()
     {
         var negativePublished = new TrafficCaptureService.StatsSnapshot
