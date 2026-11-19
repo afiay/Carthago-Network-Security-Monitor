@@ -590,3 +590,12 @@ The actual `DetectionJournal` now exposes `TryReadConfiguredVolumeCapacity`, rea
 **Tests authored: 0; tests executed: 0.** No local Windows runner, build, GitHub Actions or invasive tests; compilation unverified. Existing R102/R118/R163 floors and frozen holdout not modified.
 
 **Required before R531 functional:** production lifecycle ownership, configured byte/percent/interval policy, trusted maintenance context, provenance-protected typed health event, dedicated RuleEngine admission and positive/benign-negative regression tests. **R536:** parser attempt/failure counters and trusted engine integration remain missing. **Next cursor:** R531/R536 and remaining producer-blocked carryover, no new ordered IDs. Ledger commit is the commit containing this entry.
+
+
+## Carryover R531 — monitor shutdown and failed-handoff safety (2026-11-19)
+
+- **Status:** IN-PROGRESS / PRODUCER-BLOCKED. Functional detectors completed: **0**. The fixed ordered inspection cursor is exhausted; this is carryover, not a new ten-ID batch.
+- **Production source changed:** `Carthago/Services/Journaling/JournalCapacityMonitor.cs` in commit `c4bb5b1ac1a027d8d9f454d1ad7f8639abff5a20`. The polling loop now treats application cancellation as normal shutdown and clears the gate in `finally`. A failed confirmation handoff resets the gate and rethrows instead of retaining an acknowledged low-space episode. This is lifecycle integrity only; the callback is not authenticated RuleEngine admission.
+- **Tests authored: 0. Tests executed: 0.** No local Windows runner/build; compilation unverified. No GitHub Actions, invasive tests, force pushes, precision-floor changes or frozen holdout changes.
+- **Still missing R531:** actual startup ownership, production policy and trusted maintenance context, provenance-protected typed health event and RuleEngine evaluation, plus positive and benign-negative tests. **R536:** owned parser attempt/failure counters and typed engine admission. Other producer-blocked IDs remain carryover; do not mark any implemented.
+- **Next cursor:** unresolved carryover R531/R536 and other blocked IDs; no new ordered IDs. Ledger commit is the commit containing this entry.
