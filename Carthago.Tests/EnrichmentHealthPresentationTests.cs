@@ -25,6 +25,8 @@ public sealed class EnrichmentHealthPresentationTests
         using var doc = System.Text.Json.JsonDocument.Parse(json);
         var root = doc.RootElement;
         Assert.Equal(1, root.GetProperty("schemaVersion").GetInt32());
+        Assert.Equal("aggregate-enrichment-health", root.GetProperty("exportKind").GetString());
+        Assert.Equal("observational-telemetry-not-qualified-detection", root.GetProperty("evidenceStatus").GetString());
         Assert.Equal(42, root.GetProperty("processId").GetInt32());
         Assert.Equal(time, root.GetProperty("sampledUtc").GetDateTimeOffset());
         Assert.Equal(10, root.GetProperty("coverage").GetProperty("Published").GetInt64());
