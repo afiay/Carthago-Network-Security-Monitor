@@ -13,6 +13,7 @@ namespace Carthago.Services
     internal sealed class JournalCapacityMonitor
     {
         private readonly JournalCapacitySamplingGate _gate;
+        private int _running;
         private readonly TimeSpan _interval;
         private readonly Func<bool> _maintenance;
         private readonly Action<DateTime, long, long> _confirmedLow;
@@ -42,6 +43,11 @@ namespace Carthago.Services
         /// </summary>
         internal async Task RunAsync(CancellationToken cancellationToken)
         {
+            // A single monitor instance must never run multiple independent polling
+            // loops: overlapping loops could consume one another's confirmation
+            // state and misattribute an episode to the wrong application owner.
+            if (Interlocked.CompareExchange(ref _running, 1, 0) != 0)
+                throw new InvalidOperationException("Journal capacity monitor is already running.");
             using var timer = new PeriodicTimer(_interval);
             try
             {
@@ -82,6 +88,7 @@ namespace Carthago.Services
             finally
             {
                 _gate.Reset();
+                Volatile.Write(ref _running, 0);
             }
         }
     }
