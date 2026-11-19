@@ -1503,7 +1503,7 @@
                                 HeadersVisibility="Column"
                                 GridLinesVisibility="Horizontal"
                                 HorizontalGridLinesBrush="{StaticResource SoftDividerBrush}"
-                                RowHeight="38"
+                                RowHeight="56"
                                 AlternationCount="2"
                                 ColumnHeaderHeight="30"
                                 VirtualizingPanel.IsVirtualizing="True"
@@ -1518,7 +1518,7 @@
                                 AutomationProperties.ItemStatus="{Binding Text, ElementName=DashboardLiveEventsStatusText}">
                         <!-- GA UI-15: reuse the theme's keyboard-only focus outline for the read-only event cells. -->
                         <!-- GA UI-155: layered, scannable operational evidence rows; no new event state. -->
-                        <!-- GA UI-171: severity-first 62px scan rows and a 610px viewport, preserving the 80-row displayed limit. -->
+                        <!-- GA UI-234: 56px rows allow two-line reported endpoints without changing the 80-row displayed limit. -->
                         <DataGrid.RowStyle>
                           <Style TargetType="{x:Type DataGridRow}" BasedOn="{StaticResource {x:Type DataGridRow}}">
                             <Setter Property="Background" Value="#102537"/>
@@ -1602,6 +1602,7 @@
                                       <TextBlock Text="{Binding Source}"
                                                  FontFamily="Consolas" FontSize="12" FontWeight="SemiBold"
                                                  Foreground="{StaticResource TextBrush}"
+                                                 TextWrapping="Wrap" MaxHeight="32"
                                                  TextTrimming="CharacterEllipsis"
                                                  ToolTip="{Binding Source}"/>
                                     </StackPanel>
@@ -1637,6 +1638,7 @@
                                       <TextBlock Text="{Binding Destination}"
                                                  FontFamily="Consolas" FontSize="12" FontWeight="SemiBold"
                                                  Foreground="{StaticResource TextBrush}"
+                                                 TextWrapping="Wrap" MaxHeight="32"
                                                  TextTrimming="CharacterEllipsis"
                                                  ToolTip="{Binding Destination}"/>
                                     </StackPanel>
