@@ -22,6 +22,8 @@ internal static class EnrichmentHealthPresentation
         return System.Text.Json.JsonSerializer.Serialize(new
         {
             schemaVersion = 1,
+            exportKind = "aggregate-enrichment-health",
+            evidenceStatus = "observational-telemetry-not-qualified-detection",
             sampledUtc = sampledUtc.ToUniversalTime(),
             processId,
             processStartedUtc = processStartedUtc.ToUniversalTime(),
