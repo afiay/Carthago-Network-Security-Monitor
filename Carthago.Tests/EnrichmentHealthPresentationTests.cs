@@ -55,6 +55,28 @@ public sealed class EnrichmentHealthPresentationTests
         Assert.Equal(startedUtc, root.GetProperty("processStartedUtc").GetDateTimeOffset());
     }
 
+    [Theory]
+    [InlineData("2026-11-19T12:00:00+02:00", "2026-11-19T09:59:59Z", true)]
+    [InlineData("2026-11-19T12:00:00+02:00", "2026-11-19T11:00:00+01:00", true)]
+    [InlineData("2026-11-19T12:00:00+02:00", "2026-11-19T10:00:01Z", false)]
+    public void Aggregate_Export_Compares_Instants_Across_Offsets_And_Normalizes_Utc(
+        string sampled, string started, bool expected)
+    {
+        var sample = System.DateTimeOffset.Parse(sampled, System.Globalization.CultureInfo.InvariantCulture);
+        var start = System.DateTimeOffset.Parse(started, System.Globalization.CultureInfo.InvariantCulture);
+        using var doc = System.Text.Json.JsonDocument.Parse(
+            EnrichmentHealthPresentation.ExportCounters(new TrafficCaptureService.StatsSnapshot(),
+                sample, 42, start));
+        var root = doc.RootElement;
+        Assert.Equal(expected, root.GetProperty("sampleAfterProcessStart").GetBoolean());
+        var exportedSample = root.GetProperty("sampledUtc").GetDateTimeOffset();
+        var exportedStart = root.GetProperty("processStartedUtc").GetDateTimeOffset();
+        Assert.Equal(System.TimeSpan.Zero, exportedSample.Offset);
+        Assert.Equal(System.TimeSpan.Zero, exportedStart.Offset);
+        Assert.Equal(sample.ToUniversalTime(), exportedSample);
+        Assert.Equal(start.ToUniversalTime(), exportedStart);
+    }
+
     [Fact]
     public void Aggregate_Export_Excludes_Unrecognized_Providers_And_Diagnostic_Payloads()
     {
