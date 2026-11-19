@@ -323,6 +323,20 @@ public sealed class EnrichmentHealthPresentationTests
     }
 
     [Fact]
+    public void Geo_Cache_Valid_Request_Paths_Retain_Their_Hit_Share()
+    {
+        // The snapshot derives Requests from its three mutually exclusive paths.
+        // Keep valid percentages visible while guarding inconsistent totals.
+        var summary = EnrichmentHealthPresentation.Build(new TrafficCaptureService.StatsSnapshot
+        {
+            GeoCacheHealth = new(3, 1, 4, 0, 0, 0, 8)
+        }).Summary;
+        Assert.Contains("8 accounted eligible requests", summary);
+        Assert.Contains("hit share 50.0%", summary);
+        Assert.DoesNotContain("WARNING: GeoIP cache request-path", summary);
+    }
+
+    [Fact]
     public void Geo_Cache_Requests_Are_Separate_From_Database_Attempts()
     {
         var stats = new TrafficCaptureService.StatsSnapshot
