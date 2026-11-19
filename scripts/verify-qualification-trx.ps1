@@ -12,7 +12,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 function Test-QualificationTrx([byte[]]$bytes, [string]$digest, [string[]]$names, [string]$expected) {
     if ($bytes.Length -eq 0 -or $bytes.Length -gt 16777216) { throw 'TRX size outside bounds' }
-    if ($digest -cnotmatch '^[a-f0-9]{64}$') { throw 'Invalid SHA256' }
+    if (-not [regex]::IsMatch($digest, '\A[a-f0-9]{64}\z')) { throw 'Invalid SHA256' }
     $sha = [Security.Cryptography.SHA256]::Create()
     try { $actual = [BitConverter]::ToString($sha.ComputeHash($bytes)).Replace('-','').ToLowerInvariant() } finally { $sha.Dispose() }
     if ($actual -cne $digest) { throw 'TRX digest mismatch' }
@@ -124,11 +124,12 @@ function Test-QualificationTrx([byte[]]$bytes, [string]$digest, [string[]]$names
 }
 if ($SelfTest) {
     $xml = '<TestRun xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010"><Results><UnitTestResult testName="Exact.Test" outcome="Passed"/></Results><ResultSummary outcome="Completed"/></TestRun>'
-    function Invoke-Fixture([string]$body,[string[]]$names,[string]$outcome,[switch]$WrongHash) {
+    function Invoke-Fixture([string]$body,[string[]]$names,[string]$outcome,[switch]$WrongHash,[switch]$TrailingHashLf) {
         $bytes = [Text.Encoding]::UTF8.GetBytes($body)
         $h = [Security.Cryptography.SHA256]::Create()
         try { $digest = [BitConverter]::ToString($h.ComputeHash($bytes)).Replace('-','').ToLowerInvariant() } finally { $h.Dispose() }
         if ($WrongHash) { $digest = '0' * 64 }
+        if ($TrailingHashLf) { $digest += "`n" }
         Test-QualificationTrx $bytes $digest $names $outcome
     }
     function Reject-Fixture([scriptblock]$action) {
@@ -139,6 +140,7 @@ if ($SelfTest) {
     $ok = Invoke-Fixture $xml @('Exact.Test') 'Passed'
     if ($ok.matchedTests -ne 1 -or $ok.evidenceAdmitted) { throw 'Positive fixture failed' }
     Reject-Fixture { Invoke-Fixture $xml @('Exact.Test') 'Passed' -WrongHash }
+    Reject-Fixture { Invoke-Fixture $xml @('Exact.Test') 'Passed' -TrailingHashLf }
     Reject-Fixture { Invoke-Fixture $xml @('exact.test') 'Passed' }
     Reject-Fixture { Invoke-Fixture $xml @('Exact.Test') 'Failed' }
     Reject-Fixture { Invoke-Fixture $xml @('Exact.Test','Exact.Test') 'Passed' }
@@ -214,7 +216,7 @@ if ($SelfTest) {
     }
     Reject-Fixture { Invoke-Fixture ($xml.Replace('outcome="Passed"/></Results>','outcome="Unknown"/></Results>')) @('Exact.Test') 'Passed' }
     Reject-Fixture { Invoke-Fixture ('<!DOCTYPE TestRun [<!ENTITY x "bad">]>' + $xml) @('Exact.Test') 'Passed' }
-    [pscustomobject]@{ selfTestsPassed=42; detectorTestsExecuted=0 } | ConvertTo-Json
+    [pscustomobject]@{ selfTestsPassed=43; detectorTestsExecuted=0 } | ConvertTo-Json
 } else {
     $item = Get-Item -LiteralPath $Artifact
     if ($item.PSIsContainer -or $item.Length -gt 16777216) { throw 'Invalid artifact size or type' }
