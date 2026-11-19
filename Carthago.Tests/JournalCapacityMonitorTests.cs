@@ -18,7 +18,7 @@ namespace Carthago.Tests
             var monitor = new JournalCapacityMonitor(
                 journal, 1024, 10, TimeSpan.FromMilliseconds(20),
                 () => { Interlocked.Increment(ref policyReads); return false; },
-                (_, _, _) => Interlocked.Increment(ref deliveries));
+                _ => Interlocked.Increment(ref deliveries));
             using var owner = new CancellationTokenSource();
             owner.Cancel();
             await monitor.RunAsync(owner.Token);
@@ -46,7 +46,7 @@ namespace Carthago.Tests
             var journal = new DetectionJournal(new DetectionJournalOptions());
             var monitor = new JournalCapacityMonitor(
                 journal, 1024, 10, TimeSpan.FromMilliseconds(50),
-                () => true, (_, _, _) => { });
+                () => true, _ => { });
             using var owner = new CancellationTokenSource();
             var running = monitor.RunAsync(owner.Token);
             try
