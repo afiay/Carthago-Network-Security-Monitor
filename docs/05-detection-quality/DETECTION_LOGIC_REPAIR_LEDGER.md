@@ -687,3 +687,60 @@ The maintenance setting is re-read each sample; anything other than explicit `fa
 
 
 **Additional runtime identity check:** the monitor currently samples `DetectionJournal.Current`; the RuleEngine persistence call uses its `ActiveDetectionJournal` member. Their configured-path identity is not asserted by a regression test in this pass. Verify they resolve to the same intended journal (or route both through one owner/provider) before promoting R531 beyond IN-PROGRESS.
+
+## Carryover integration pass 04 — R531 owner binding, R288 parser bounds, R536 producer review (2026-11-19)
+
+**Source snapshot:** branch HEAD before this pass `1d9dc28621407f5da60edd0ca4908d63b03731d8`. The ordered 187-ID review cursor is exhausted. This is a carryover engineering pass, not a new ten-ID batch. No blocked rule is promoted to functional completion.
+
+### R531 — bind sampler and persistence to one journal instance
+
+**Status:** IN-PROGRESS / runtime verification pending.
+
+- `Carthago/Models/TrafficRecord.cs`: `JournalCapacityHealthEvidence` now carries a private per-`DetectionJournal` owner token and exposes only an internal reference-equality check.
+- `Carthago/Services/Journaling/DetectionJournal.cs`: each journal instance owns a unique token; only that exact instance can validate evidence it created. Two journal objects pointing at the same directory are not interchangeable owners.
+- `Carthago/Engine/RuleEngine.TestIsolation.cs`: exposes the active journal provider used by RuleEngine persistence to the health-monitor host.
+- `Carthago/Services/Journaling/JournalCapacityMonitorHost.cs`: resolves the same active journal owner used by RuleEngine, passes that instance to the sampler and to health-event admission.
+- `Carthago/Engine/RuleEngine.Core.cs`: rejects evidence unless both the evidence owner token and active persistence journal are the same instance. A mismatched producer/persistence owner fails closed before rule evaluation or append.
+- `Carthago.Tests/R531JournalCapacityHealthEvidenceTests.cs`: adds a regression test proving that two distinct journal instances with the same configured path cannot exchange health evidence, and that the host's active-owner provider resolves the RuleEngine persistence owner.
+
+**Production/test commit:** `44de77f4ce0162e4e0f05150c0df7c5e75b34412`.
+
+**Still unresolved R531:** no CLI/headless host registration; no approved independent durable sink if the configured journal cannot append while the volume is low; no Windows compile/test/runtime execution. R531 remains IN-PROGRESS and is not counted functionally complete.
+
+### R288 — tighten NTLMSSP type-3 security-buffer validation
+
+**Status:** IN-PROGRESS / producer- and engine-blocked.
+
+- `Carthago/Services/ProtocolIntelligence/NtlmV1AuthenticateInspector.cs`: validates all six type-3 security-buffer descriptors, checks both actual and maximum buffer lengths against the complete message, rejects pairwise overlap between every non-empty field, and accounts for the optional eight-byte NEGOTIATE_VERSION field before accepting response offsets.
+- `Carthago.Tests/ProtocolIntelligence/NtlmV1AuthenticateInspectorTests.cs`: adds four tests for ancillary-buffer overlap, out-of-message maximum length, version-field overlap, and a valid versioned/disjoint response shape.
+
+**Production/test commit:** `9b4f1c318f5de3af13bf20b5df3299601dbaa8d4`.
+
+This inspector still reports only a legacy-compatible response shape; it does not prove server acceptance or authenticated user identity. It is not connected to `PortablePacketProcessor`, a trusted flow event, or R288 RuleEngine evaluation. R288 remains IN-PROGRESS / PRODUCER-BLOCKED. Do not turn the new parser result into an alert.
+
+### R536 — producer review
+
+**Status:** PRODUCER-BLOCKED.
+
+The current `ParserFailureRateWindow` is a pure cumulative-counter comparison and correctly rejects epoch mismatch, rollback, impossible deltas and insufficient denominators. It has no trusted counter owner or producer. `R536_ParserErrorSpikeRule.EvaluatePrecision` remains behind `PlatformHealthProducerEvidenceBoundary` and its later text-based branch is unreachable while the producer is missing. `PortablePacketProcessor` exposes a broad L7 exception diagnostic, but the inspected path does not provide per-parser attempt/failure counters, stable parser epoch, replay/maintenance exclusion, or a typed RuleEngine event. A diagnostic meter or generic parse-failure message is not an acceptable denominator. No alert predicate was enabled.
+
+### Revisited ordered carryover
+
+The first queue batch remains unresolved: R270 is still only a typed missing-producer diagnostic; R273/R274 require authenticated IdP/MFA events; R276 requires a successful consent-grant audit; R277 requires parser-attributed AUTH or trusted server outcome; R278 requires account-linked failed sign-ins; R279 requires authenticated failure IDs and privacy-safe UA correlation; R280 requires accepted session events and protected token digests; R281 requires privileged cloud sign-in audit; R282 requires authenticated VPN session identity joined to an independent internal scan series. Their current rule predicates remain fail-closed; no generic URI, port, header or packet text fallback was introduced.
+
+The already-reviewed Batch 02 rules R283, R284, R285, R287, R289, R290, R291, R292 and R293 remain producer-blocked on their previously documented authenticated IdP, MFA, KDC, RADIUS, appliance-signature/version, or Kubernetes API-server audit sources. R288 is the parser prerequisite above, not a functional detector.
+
+**Changed files this pass:**
+- `Carthago/Models/TrafficRecord.cs`
+- `Carthago/Services/Journaling/DetectionJournal.cs`
+- `Carthago/Engine/RuleEngine.Core.cs`
+- `Carthago/Engine/RuleEngine.TestIsolation.cs`
+- `Carthago/Services/Journaling/JournalCapacityMonitorHost.cs`
+- `Carthago.Tests/R531JournalCapacityHealthEvidenceTests.cs`
+- `Carthago/Services/ProtocolIntelligence/NtlmV1AuthenticateInspector.cs`
+- `Carthago.Tests/ProtocolIntelligence/NtlmV1AuthenticateInspectorTests.cs`
+- `docs/05-detection-quality/DETECTION_LOGIC_REPAIR_LEDGER.md`
+
+**Tests authored:** 5 new xUnit methods (one R531 owner-binding test; four R288 parser-boundary tests). **Tests executed:** 0. No local Windows runner/build was available; compilation remains unverified. No GitHub Actions, live capture, invasive tests, force push, new branch, precision-floor reduction, or frozen-holdout change.
+
+**Carryover order:** finish R531 acceptance (Windows build/tests, configured WPF startup, CLI/headless ownership and durable failure sink), then R536's owned per-parser counters and typed RuleEngine admission, then continue unresolved IDs in original queue order beginning R270, R273, R274, R276–R282. The fixed ordered cursor is exhausted; no new ten-ID batch is claimed. No rule was marked functionally complete.
