@@ -2,21 +2,24 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Carthago.Models;
 
 namespace Carthago.Services
 {
     /// <summary>
-    /// Lifecycle-owned journal capacity sampler. This is health telemetry, not a
-    /// packet detection or an R531 alert. No externally supplied capacity reader
-    /// is accepted on the production path.
+    /// Lifecycle-owned journal capacity sampler. It reads only the configured
+    /// DetectionJournal volume and hands off immutable, owner-bound evidence.
     /// </summary>
     internal sealed class JournalCapacityMonitor
     {
+        private readonly DetectionJournal _journal;
         private readonly JournalCapacitySamplingGate _gate;
+        private readonly long _minimumFreeBytes;
+        private readonly double _minimumFreePercent;
         private int _running;
         private readonly TimeSpan _interval;
         private readonly Func<bool> _maintenance;
-        private readonly Action<DateTime, long, long> _confirmedLow;
+        private readonly Action<JournalCapacityHealthEvidence> _confirmedLow;
 
         internal JournalCapacityMonitor(
             DetectionJournal journal,
@@ -24,63 +27,64 @@ namespace Carthago.Services
             double minimumFreePercent,
             TimeSpan interval,
             Func<bool> maintenance,
-            Action<DateTime, long, long> confirmedLow)
+            Action<JournalCapacityHealthEvidence> confirmedLow)
         {
+            _journal = journal ?? throw new ArgumentNullException(nameof(journal));
             if (interval <= TimeSpan.Zero)
                 throw new ArgumentOutOfRangeException(nameof(interval));
             _maintenance = maintenance ?? throw new ArgumentNullException(nameof(maintenance));
             _confirmedLow = confirmedLow ?? throw new ArgumentNullException(nameof(confirmedLow));
+            _minimumFreeBytes = minimumFreeBytes;
+            _minimumFreePercent = minimumFreePercent;
             _interval = interval;
-            _gate = new JournalCapacitySamplingGate(journal, minimumFreeBytes,
-                minimumFreePercent, interval);
+            _gate = new JournalCapacitySamplingGate(
+                _journal, minimumFreeBytes, minimumFreePercent, interval);
         }
 
         /// <summary>
-        /// Run only under an application-owned cancellation token. A failed
-        /// maintenance-policy read cannot be interpreted as non-maintenance.
-        /// The callback is an internal handoff prerequisite, not RuleEngine
-        /// admission; the caller must still enforce provenance and policy.
+        /// Run only under an application-owned cancellation token. Missing or
+        /// failing maintenance policy is fail-closed. The handoff is typed and
+        /// bound to the configured journal path; it is not a packet record.
         /// </summary>
         internal async Task RunAsync(CancellationToken cancellationToken)
         {
-            // A single monitor instance must never run multiple independent polling
-            // loops: overlapping loops could consume one another's confirmation
-            // state and misattribute an episode to the wrong application owner.
             if (Interlocked.CompareExchange(ref _running, 1, 0) != 0)
                 throw new InvalidOperationException("Journal capacity monitor is already running.");
+
             try
             {
-                // Timer construction belongs inside the ownership cleanup boundary.
-                // A construction failure must not permanently strand _running at 1.
                 using var timer = new PeriodicTimer(_interval);
                 while (await timer.WaitForNextTickAsync(cancellationToken).ConfigureAwait(false))
                 {
-                bool maintenance;
-                try { maintenance = _maintenance(); }
-                catch (Exception ex) when (ex is not OperationCanceledException)
-                {
-                    _gate.Reset();
-                    continue;
-                }
+                    bool maintenance;
+                    try { maintenance = _maintenance(); }
+                    catch (Exception ex) when (ex is not OperationCanceledException)
+                    {
+                        _gate.Reset();
+                        continue;
+                    }
 
-                // Shutdown can race with the maintenance provider. Never sample or
-                // deliver a health confirmation after the owner has cancelled.
-                cancellationToken.ThrowIfCancellationRequested();
-                var utc = DateTime.UtcNow;
-                if (_gate.TrySample(utc, maintenance, out var confirmed,
-                    out var available, out var total) && confirmed)
-                {
-                    // A failed handoff must not retain a confirmed episode as if
-                    // the downstream owner had accepted it. Fail visibly; never
-                    // convert a callback failure into a detection event.
                     cancellationToken.ThrowIfCancellationRequested();
-                    try { _confirmedLow(utc, available, total); }
+                    var utc = DateTime.UtcNow;
+                    if (!_gate.TrySample(utc, maintenance, out var confirmed,
+                        out var available, out var total) || !confirmed)
+                        continue;
+
+                    cancellationToken.ThrowIfCancellationRequested();
+                    var evidence = _journal.CreateConfirmedLowCapacityEvidence(
+                        utc, available, total, _minimumFreeBytes, _minimumFreePercent);
+                    if (evidence is null)
+                    {
+                        _gate.Reset();
+                        continue;
+                    }
+
+                    try { _confirmedLow(evidence); }
                     catch
                     {
                         _gate.Reset();
                         throw;
                     }
-                }
                 }
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
