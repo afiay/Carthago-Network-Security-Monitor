@@ -1,5 +1,8 @@
 # Carthago Development and Deferred Validation Ledger
 
+> **2026-11-19 enrichment export clock-order increment:** Source commit `d08dda62b00279bef64892c9c88fea4a891ddb39` adds the additive `sampleAfterProcessStart` boolean to the aggregate health export. Test commit `2677ed39be2238888d98ae2668c3b90c0773d24c` authors three UTC ordering regressions (before/equal/after) and checks original timestamps remain unchanged. This flag is an operational clock-order diagnostic, **not** evidence qualification, runtime provenance certification or a detector signal. Tests **AUTHORED-UNEXECUTED**: no Windows build, xUnit, runtime or performance execution in this increment. Next owner-authorized Windows gate: `dotnet build .\Carthago.sln -c Release`; `dotnet test .\Carthago.Tests\Carthago.Tests.csproj -c Release --filter "FullyQualifiedName~EnrichmentHealthPresentationTests"`; review JSON consumers for additive-field compatibility and capture actual runtime samples. Detection rules unchanged.
+
+
 > **Current-status overlay (2026-11-16):** [Reconciled current status](CURRENT_STATUS.md) supersedes this file's October 29–30 *summary*, not its historical evidence. Later owner-authorized Windows, Linux, CLI, sensor, V2 synthetic and Stage 8 tests supersede original PARKED/NOT RUN wording only for their own scopes. Compiler-guarded DNS Stages 2–4, R102 V2 external capture, SCM/release and exact rule qualification remain open.
 
 
