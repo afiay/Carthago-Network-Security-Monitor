@@ -48,9 +48,11 @@ namespace Carthago.Services
             // state and misattribute an episode to the wrong application owner.
             if (Interlocked.CompareExchange(ref _running, 1, 0) != 0)
                 throw new InvalidOperationException("Journal capacity monitor is already running.");
-            using var timer = new PeriodicTimer(_interval);
             try
             {
+                // Timer construction belongs inside the ownership cleanup boundary.
+                // A construction failure must not permanently strand _running at 1.
+                using var timer = new PeriodicTimer(_interval);
                 while (await timer.WaitForNextTickAsync(cancellationToken).ConfigureAwait(false))
                 {
                 bool maintenance;
