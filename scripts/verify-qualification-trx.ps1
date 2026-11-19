@@ -165,8 +165,15 @@ if ($SelfTest) {
     Reject-Fixture { Invoke-Fixture ($counted.Replace('total="1"','total="+1"')) @('Exact.Test') 'Passed' }
     Reject-Fixture { Invoke-Fixture ($counted.Replace('passed="1"','passed=" 1 "')) @('Exact.Test') 'Passed' }
     Reject-Fixture { Invoke-Fixture ($counted.Replace('failed="0"','failed="00"')) @('Exact.Test') 'Passed' }
-    # XML character references preserve a trailing newline; canonical decimal
-    # counters must reject it even though regex '
+    # XML character references preserve trailing LF; all mandatory numeric
+    # attributes must reject noncanonical values even when node counts agree.
+    foreach ($counterName in @('total','passed','failed')) {
+        $originalValue = if ($counterName -eq 'total' -or $counterName -eq 'passed') { '1' } else { '0' }
+        $needle = $counterName + '="' + $originalValue + '"'
+        $replacement = $counterName + '="' + $originalValue + '&#10;"'
+        Reject-Fixture { Invoke-Fixture ($counted.Replace($needle,$replacement)) @('Exact.Test') 'Passed' }
+    }
+
     $withError = $counted.Replace('</Results>','<UnitTestResult testName="Other.Error" outcome="Error"/></Results>').Replace('total="1"','total="2"')
     $withError = $withError.Replace('failed="0"','failed="0"').Replace('passed="1"','passed="1"').Replace('failed="0"','failed="0"')
     $errorCounted = $withError.Replace('failed="0"','failed="0" error="1"')
