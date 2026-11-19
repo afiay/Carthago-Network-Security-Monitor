@@ -1001,6 +1001,20 @@ public sealed class EnrichmentHealthPresentationTests
     }
 
     [Fact]
+    public void Skipped_Before_Worker_Start_Does_Not_Inflate_InFlight_Or_Queue_Wait_Denominator()
+    {
+        // Cancellation before worker entry is not a started worker and must
+        // remain separate from the queue-wait and in-flight populations.
+        var summary = EnrichmentHealthPresentation.WorkerSummary(
+            new EnrichmentWorkerSnapshot(2, 1, 0, 0, 7, 30, 20, 12, 12));
+        Assert.Contains("2 started, 1 returned, 0 cancelled, 0 faulted", summary);
+        Assert.Contains("in flight at snapshot: 1", summary);
+        Assert.Contains("7 cancelled before processing", summary);
+        Assert.Contains("Queue wait mean/max ms (started workers: 2): 15.0 / 20", summary);
+        Assert.DoesNotContain("WARNING: invalid worker counters", summary);
+    }
+
+    [Fact]
     public void Valid_Queue_And_Fallback_Counters_Are_Not_Flagged()
     {
         var summary = EnrichmentHealthPresentation.Build(new TrafficCaptureService.StatsSnapshot
