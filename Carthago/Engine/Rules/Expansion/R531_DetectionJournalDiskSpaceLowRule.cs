@@ -2,6 +2,7 @@
 // File: Engine/Rules/Expansion/R531_DetectionJournalDiskSpaceLowRule.cs
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using Carthago.Models;
 
 namespace Carthago.Engine.Rules.Expansion
@@ -13,32 +14,65 @@ namespace Carthago.Engine.Rules.Expansion
         private static readonly RulePrecisionProfile Profile = CreatePlatformHealthProfile("R531", RulePrecisionMaturity.Validated, RuleRuntimeMode.Alert,
             new[] { RuleTelemetryKind.Flow }, new[] { "platform_health_event", "detection_journal", "disk_space_signal" },
             new[] { "journal.path", "matched_conditions" },
-            new[] { "The event must reference the detection journal or durable event store.", "The event must include low disk, low free space, write risk, or retention failure semantics." },
-            new[] { "Do not alert on generic disk messages unrelated to the detection journal.", "Do not alert on informational retention cleanup success." },
+            new[] { "A confirmed OS capacity sample must be bound to the configured DetectionJournal path.", "Both configured byte and percentage thresholds must be breached after two distinct samples." },
+            new[] { "Packet text, journal write exceptions, unrelated volumes and maintenance samples are not low-space evidence." },
             90, 1, TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(20), "journal-path",
             new[] { "Small lab disks can trigger this during replay testing; production sensors should still alert." },
             new[] { "Mode", "CooldownSeconds", "MinimumFreeDiskPercent", "MinimumFreeDiskBytes" },
             new[] { "positive detection journal disk low", "negative unrelated disk log" });
         public R531_DetectionJournalDiskSpaceLowRule() : base(Rule, Profile) { }
+
         protected override RuleEvaluationResult EvaluatePrecision(RuleEvaluationContext context)
         {
-            // GA R531-R540 — SOURCE CANDIDATE — UNVERIFIED.
-            // Mutable packet text is not authenticated platform-health evidence.
-            // Fail closed before counters, cooldowns or event construction.
-            var missingProducer = PlatformHealthProducerEvidenceBoundary.GetMissingProducer(Descriptor.RuleId);
-            if (missingProducer is { } missing)
-                return RuleEvaluationResult.NoMatch(Descriptor.RuleId,
-                    RuleNoMatchReasonCategory.InsufficientEvidence, missing.Code, missing.Detail);
+            var evidence = context.Record.TrustedJournalCapacityEvidence;
+            if (evidence is null)
+            {
+                var missing = PlatformHealthProducerEvidenceBoundary.GetMissingProducer(Descriptor.RuleId);
+                return RuleEvaluationResult.NoMatch(
+                    Descriptor.RuleId,
+                    RuleNoMatchReasonCategory.InsufficientEvidence,
+                    missing?.Code ?? "JOURNAL_FREE_SPACE_TRUSTED_VOLUME_METRIC_UNAVAILABLE",
+                    missing?.Detail ?? "A typed OS capacity observation from the configured DetectionJournal owner is required.");
+            }
 
-            var r = context.Record; var text = Text(r);
-            if (!IsPlatformHealthRecord(r) || !ContainsAny(text, "journal", "detection journal", "event journal", "detections-", "durable event store")) return NoMatch();
-            if (!ContainsAny(text, "disk space low", "low disk", "free space", "out of space", "no space", "write risk", "retention failed")) return NoMatch();
-            if (ContainsAny(text, "cleanup succeeded", "retention success")) return NoMatch();
-            var journal = MetricKey(r);
-            var e = new List<DetectionEvidenceItem> { new("journal.path", journal, "platform-health"), new("matched_conditions", "platform_health,detection_journal,low_disk", "rule") };
-            e.AddRange(AnalystContext("The durable detection journal reported low disk/free-space risk.", "Severity is Critical because confirmed detections must never be lost due to local storage exhaustion.", "Replay tests on small lab disks can be expected, but production sensors require immediate remediation.", "Free disk space or move journal storage to a larger volume.", "Verify journal write health and retention policy after cleanup."));
-            return MatchPlatformHealth(context, SeverityLevel.Critical, "Detection journal disk space low", "DetectionJournalDiskSpaceLow", e,
-                c => { c.AddEvidence(0.34, "platform-health-anchor"); c.AddEvidence(0.30, "detection-journal-context"); c.AddEvidence(0.26, "low-disk-signal"); }, cooldownKey: journal);
+            if (!evidence.IsValid)
+                return RuleEvaluationResult.NoMatch(
+                    Descriptor.RuleId,
+                    RuleNoMatchReasonCategory.InsufficientEvidence,
+                    "JOURNAL_CAPACITY_EVIDENCE_INVALID",
+                    "The journal capacity observation failed its immutable owner, timestamp, bounds or dual-threshold checks.");
+
+            var journal = "sha256:" + evidence.JournalIdentity;
+            var items = new List<DetectionEvidenceItem>
+            {
+                new("journal.path", journal, "configured-journal-owner"),
+                new("journal.availableBytes", evidence.AvailableBytes.ToString(CultureInfo.InvariantCulture), "os-volume-capacity"),
+                new("journal.totalBytes", evidence.TotalBytes.ToString(CultureInfo.InvariantCulture), "os-volume-capacity"),
+                new("journal.minimumFreeBytes", evidence.MinimumFreeBytes.ToString(CultureInfo.InvariantCulture), "configured-policy"),
+                new("journal.minimumFreePercent", evidence.MinimumFreePercent.ToString("R", CultureInfo.InvariantCulture), "configured-policy"),
+                new("journal.sampledAtUtc", evidence.SampledAtUtc.ToString("O", CultureInfo.InvariantCulture), "os-volume-capacity"),
+                new("matched_conditions", "trusted_os_volume_capacity,two_sample_confirmation,below_byte_and_percent_thresholds", "rule")
+            };
+            items.AddRange(AnalystContext(
+                "The configured DetectionJournal volume remained below both operator-configured free-space thresholds across two distinct samples.",
+                "Critical because journal capacity exhaustion can prevent durable recording of detections.",
+                "Unrelated volumes, packet text, failed writes and maintenance intervals are excluded.",
+                "Free space on the configured journal volume or move the journal using an approved configuration change.",
+                "Verify the journal's durable write path after remediation."));
+
+            return MatchPlatformHealth(
+                context,
+                SeverityLevel.Critical,
+                "Detection journal disk space low",
+                "DetectionJournalDiskSpaceLow",
+                items,
+                confidence =>
+                {
+                    confidence.AddEvidence(0.34, "platform-health-anchor");
+                    confidence.AddEvidence(0.30, "configured-journal-identity");
+                    confidence.AddEvidence(0.26, "confirmed-dual-threshold-os-capacity");
+                },
+                cooldownKey: journal);
         }
     }
 }
