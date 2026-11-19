@@ -116,13 +116,36 @@ namespace Carthago.Services
                 ApprovedAssetRegistry.Current.Options);
         }
 
+        internal static List<DetectionEvent> EvaluateJournalCapacityHealth(
+            JournalCapacityHealthEvidence evidence,
+            Sensitivity sensitivity)
+        {
+            if (evidence == null)
+                throw new ArgumentNullException(nameof(evidence));
+
+            var record = new TrafficRecord
+            {
+                Source = "carthago-local-journal-health",
+                Destination = "configured-journal:" + evidence.JournalIdentity,
+                Protocol = "platform-health",
+                ApplicationProtocol = "platform-health",
+                ApplicationService = "detection-journal",
+                Info = "OS-backed configured journal capacity observation",
+                Length = 1
+            };
+            record.TrustedJournalCapacityEvidence = evidence;
+            return Evaluate(record, sensitivity);
+        }
+
         public static List<DetectionEvent> Evaluate(TrafficRecord record, Sensitivity sensitivity)
         {
             var results = new List<DetectionEvent>(capacity: 8);
             if (record == null) return results;
 
+            var trustedJournalCapacity = record.TrustedJournalCapacityEvidence != null;
             var now = DateTime.UtcNow;
-            RuleTelemetryCoverageStore.ObserveRecord(record, now);
+            if (!trustedJournalCapacity)
+                RuleTelemetryCoverageStore.ObserveRecord(record, now);
             var healthSnapshot = RuleEngineHealthState.Snapshot(now);
             RuleEngineHealthState.RecordEvaluationStart(now);
             var context = RuleEvaluationContext.CreateForEngine(record, sensitivity, now, healthSnapshot);
@@ -146,8 +169,11 @@ namespace Carthago.Services
                         Console.WriteLine("[RuleEngine/diag] Record has no Protocol and empty Info; HTTP/DNS heuristics may miss.");
                 }
 
-                Touch(record.Source, now);
-                TryLearnFromRecord(record);
+                if (!trustedJournalCapacity)
+                {
+                    Touch(record.Source, now);
+                    TryLearnFromRecord(record);
+                }
 
                 if ((now - _lastCleanup).TotalSeconds >= (_cfg.CleanupIntervalSeconds ?? CleanupIntervalSeconds))
                 {
@@ -155,7 +181,14 @@ namespace Carthago.Services
                     _lastCleanup = now;
                 }
 
-                var executionPlan = _candidateSelector.CreatePlan(GetActiveRules(trace), record);
+                var activeRules = GetActiveRules(trace);
+                if (trustedJournalCapacity)
+                    activeRules = activeRules
+                        .Where(static rule => string.Equals(
+                            rule.Descriptor.RuleId, "R531", StringComparison.Ordinal))
+                        .ToArray();
+
+                var executionPlan = _candidateSelector.CreatePlan(activeRules, record);
                 trace.RulesConsideredCount = executionPlan.ConsideredCount;
                 trace.RulesSelectedCount = executionPlan.SelectedCount;
 
