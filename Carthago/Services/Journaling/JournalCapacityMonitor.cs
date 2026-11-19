@@ -55,6 +55,9 @@ namespace Carthago.Services
                     continue;
                 }
 
+                // Shutdown can race with the maintenance provider. Never sample or
+                // deliver a health confirmation after the owner has cancelled.
+                cancellationToken.ThrowIfCancellationRequested();
                 var utc = DateTime.UtcNow;
                 if (_gate.TrySample(utc, maintenance, out var confirmed,
                     out var available, out var total) && confirmed)
@@ -62,6 +65,7 @@ namespace Carthago.Services
                     // A failed handoff must not retain a confirmed episode as if
                     // the downstream owner had accepted it. Fail visibly; never
                     // convert a callback failure into a detection event.
+                    cancellationToken.ThrowIfCancellationRequested();
                     try { _confirmedLow(utc, available, total); }
                     catch
                     {
