@@ -37,6 +37,24 @@ public sealed class EnrichmentHealthPresentationTests
         Assert.Equal(System.Text.Json.JsonValueKind.Null, root.GetProperty("workers").ValueKind);
     }
 
+    [Theory]
+    [InlineData("2026-11-19T10:00:00Z", "2026-11-19T09:59:59Z", true)]
+    [InlineData("2026-11-19T10:00:00Z", "2026-11-19T10:00:00Z", true)]
+    [InlineData("2026-11-19T10:00:00Z", "2026-11-19T10:00:01Z", false)]
+    public void Aggregate_Export_Reports_Sample_Clock_Order_Without_Rewriting_Timestamps(
+        string sampled, string started, bool expected)
+    {
+        var sampledUtc = System.DateTimeOffset.Parse(sampled);
+        var startedUtc = System.DateTimeOffset.Parse(started);
+        using var doc = System.Text.Json.JsonDocument.Parse(
+            EnrichmentHealthPresentation.ExportCounters(new TrafficCaptureService.StatsSnapshot(),
+                sampledUtc, 42, startedUtc));
+        var root = doc.RootElement;
+        Assert.Equal(expected, root.GetProperty("sampleAfterProcessStart").GetBoolean());
+        Assert.Equal(sampledUtc, root.GetProperty("sampledUtc").GetDateTimeOffset());
+        Assert.Equal(startedUtc, root.GetProperty("processStartedUtc").GetDateTimeOffset());
+    }
+
     [Fact]
     public void Aggregate_Export_Excludes_Unrecognized_Providers_And_Diagnostic_Payloads()
     {
