@@ -599,3 +599,12 @@ The actual `DetectionJournal` now exposes `TryReadConfiguredVolumeCapacity`, rea
 - **Tests authored: 0. Tests executed: 0.** No local Windows runner/build; compilation unverified. No GitHub Actions, invasive tests, force pushes, precision-floor changes or frozen holdout changes.
 - **Still missing R531:** actual startup ownership, production policy and trusted maintenance context, provenance-protected typed health event and RuleEngine evaluation, plus positive and benign-negative tests. **R536:** owned parser attempt/failure counters and typed engine admission. Other producer-blocked IDs remain carryover; do not mark any implemented.
 - **Next cursor:** unresolved carryover R531/R536 and other blocked IDs; no new ordered IDs. Ledger commit is the commit containing this entry.
+
+
+## Carryover R531 — monitor lifecycle contract regression (2026-11-19)
+
+**Status:** IN-PROGRESS / PRODUCER-BLOCKED; functional detectors completed: **0**. The ordered 187-ID inspection cursor remains exhausted; unresolved producer carryover is not complete. This run adds a narrowly scoped monitor contract test but **does not** establish startup registration, typed health-event admission, or an R531 detector-positive.
+
+**Changed test source:** `Carthago.Tests/JournalCapacityMonitorTests.cs`, commit `6c3b859e154a73f6bd0f35b8de6752c13005a04b`. Two xUnit facts authored: already-cancelled owner token must terminate without sampling/delivery; invalid cadence and missing maintenance/delivery callbacks must fail construction. **Tests authored: 2; tests executed: 0.** No Windows runner or local build available; compile and execution unverified. No GitHub Actions, live invasive tests, force pushes or precision-floor/holdout changes.
+
+**No production source change in this run.** R531 still requires application lifecycle wiring, owned policy/maintenance provenance, configured thresholds and dedicated typed RuleEngine health-event evaluation. R536 still requires trusted parser-attempt/failure counters, parser identity and engine integration. No blocked ID promoted. **Next cursor:** R531/R536 and remaining producer-blocked carryover; no new ordered IDs.
