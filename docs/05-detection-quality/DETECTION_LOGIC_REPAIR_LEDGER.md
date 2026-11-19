@@ -579,3 +579,14 @@ The actual `DetectionJournal` now exposes `TryReadConfiguredVolumeCapacity`, rea
 **Unresolved:** R531 still requires lifecycle-owned periodic sampling, authenticated maintenance/clock context, configured thresholds, typed health-event admission and RuleEngine integration. R536 still requires owned parser numerator/denominator counters, trusted parser attribution and engine admission. Neither is functionally complete. No precision floors or frozen holdout modified.
 
 **Next cursor:** carryover R531/R536 and other producer-blocked IDs; no new ordered IDs. Ledger update commit is the commit containing this entry.
+
+
+## Carryover R531 — lifecycle-bound capacity polling prerequisite (2026-11-19)
+
+**Status:** IN-PROGRESS / PRODUCER-BLOCKED; **functional detectors completed: 0**. Ordered 187-ID review cursor remains exhausted; no blocked ID promoted and no new ten-ID batch claimed.
+
+**Source authored:** `Carthago/Services/Journaling/JournalCapacityMonitor.cs` (commit `f49fc110c971d032a971d222c91497f7aa1c8b52`). Internal `PeriodicTimer` polling loop binds a journal-owned OS capacity reader through the existing two-reading gate, accepts application-owned cancellation, and resets pending evidence if the maintenance-policy provider fails. This is a **non-wired prerequisite**: it has no startup registration, no trusted policy provider, no authenticated event admission and no RuleEngine dispatch. Its callback must not be treated as a detection or trusted provenance by itself.
+
+**Tests authored: 0; tests executed: 0.** No local Windows runner, build, GitHub Actions or invasive tests; compilation unverified. Existing R102/R118/R163 floors and frozen holdout not modified.
+
+**Required before R531 functional:** production lifecycle ownership, configured byte/percent/interval policy, trusted maintenance context, provenance-protected typed health event, dedicated RuleEngine admission and positive/benign-negative regression tests. **R536:** parser attempt/failure counters and trusted engine integration remain missing. **Next cursor:** R531/R536 and remaining producer-blocked carryover, no new ordered IDs. Ledger commit is the commit containing this entry.
