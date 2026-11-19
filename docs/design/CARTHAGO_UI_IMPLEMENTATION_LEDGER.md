@@ -6631,3 +6631,14 @@ No `Carthago.csproj`, Engine, Models, Services, detection/protocol rules, teleme
 **Responsive:** Wide >=1440, Standard 1100–1439, Compact 1024–1099 and below 1024 preserve existing KPI ItemsPanel breakpoints and wrapping; inset consumes some card width without introducing fixed widths or new scrolling. **Ownership:** only `Carthago/Views/MainWindow.xaml` and this existing ledger. No UI VMs, Engine/Models/Services, rules, capture, telemetry, security, ScottPlot local PPS 10/120, Events 80/500, visual-only CLI or Cisco/WebView2 changes.
 
 **Static risks/unexecuted acceptance:** additional inset padding and 27px metric type may increase card height or cause awkward long values at compact widths. Verify clipping, text contrast, keyboard focus, metric label accessibility and KPI density at 1920/1440/1100/1099/1024/1023/640 widths and 100/125/150/200% DPI. Zero builds/tests/CI/capture/renders; runtime acceptance unexecuted. **Next UI-239:** next substantive Dashboard or Incidents visible composition slice from live ledger.
+
+
+## GA UI-239 — Dashboard priority queue local risk-score chip
+
+**2026-11-19 · SOURCE CANDIDATE — UNVERIFIED.** Approved Library image `libfile_b0a34361560c8191b641e432b3e6b15c` visually inspected. Source baseline HEAD `aabcf58a946a8b3feda8dcea31b55f83bee45dc9`; actual commit TREE `ebfa001f5d5b2911a3daeb814155d193f08ffd3c`. UI-238 latest recorded. Reference mapping: approved dark SOC priority queue visually separates severity, incident title and numeric context; screenshot DEMO DATA is illustrative only, never telemetry. Local risk remains distinct from detection confidence.
+
+**Before → after:** the local risk score was an unbounded 17px bold value beside severity/kind. It now has a bounded navy chip with restrained divider border, 8x4 inset, 6px radius and 18px semibold score. RiskScore, AccentBrush, /100, severity, kind, title, subtitle, timestamp, selection, ranking, accessibility and navigation remain unchanged; original risk-vs-confidence tooltip is preserved on the chip. No new telemetry or focus stop.
+
+**Responsive:** Wide >=1440, Standard 1100–1439, Compact 1024–1099 and below 1024 retain existing queue composition and scrolling; chip uses additional width in the existing auto-sized score column, while kind text still ellipsizes. **Ownership:** `Carthago/Views/MainWindow.xaml` and this ledger only; no UI VMs, Engine/Models/Services, rules, capture, telemetry, security, ScottPlot local PPS 10/120, Events 80 displayed/500 retained, visual-only CLI or Cisco/WebView2 changes.
+
+**Static risks/unexecuted acceptance:** chip can reduce space for kind labels in narrow cards. Verify 0/100 score, clipping, contrast, selection, focus and scroll at 1920/1440/1100/1099/1024/1023/640 widths and 100/125/150/200% DPI. Builds/tests/CI/capture/render: zero; runtime acceptance unexecuted. **Next UI-240:** next substantive Dashboard or Incidents composition slice from live ledger.

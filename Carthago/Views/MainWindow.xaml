@@ -931,14 +931,18 @@
                                                VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                                                ToolTip="{Binding Kind}"/>
                                   </Grid>
-                                  <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
-                                              Margin="10,0,0,0">
-                                    <TextBlock Text="{Binding RiskScore}" FontSize="17" FontWeight="Bold"
-                                               Foreground="{Binding AccentBrush}"
-                                               ToolTip="Local risk score (0–100); not detection confidence"/>
-                                    <TextBlock Text="/100" FontSize="10" Foreground="{StaticResource TextMutedBrush}"
-                                               VerticalAlignment="Bottom" Margin="3,0,0,3"/>
-                                  </StackPanel>
+                                  <!-- GA UI-239: bounded local risk chip, distinct from severity. -->
+                                  <Border Grid.Column="1" Margin="10,0,0,0" Padding="8,4"
+                                          Background="#102A39" BorderBrush="{StaticResource SoftDividerBrush}"
+                                          BorderThickness="1" CornerRadius="6" VerticalAlignment="Center"
+                                          ToolTip="Local risk score (0–100); not detection confidence">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                      <TextBlock Text="{Binding RiskScore}" FontSize="18" FontWeight="SemiBold"
+                                                 Foreground="{Binding AccentBrush}"/>
+                                      <TextBlock Text="/100" FontSize="10" Foreground="{StaticResource TextMutedBrush}"
+                                                 VerticalAlignment="Bottom" Margin="3,0,0,3"/>
+                                    </StackPanel>
+                                  </Border>
                                   <TextBlock Grid.Row="1" Grid.ColumnSpan="2"
                                              Text="{Binding Title}" FontWeight="SemiBold" FontSize="14"
                                              TextWrapping="Wrap" TextTrimming="CharacterEllipsis"
