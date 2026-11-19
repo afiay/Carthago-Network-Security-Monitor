@@ -7,7 +7,13 @@ namespace Carthago.Services;
 
 internal sealed record EnrichmentProviderDisplay(string Provider, long Success, long Unavailable, long Failed,
     long TimedOut, long Cancelled, long CacheHits, string SuccessShare, string Latency);
-internal sealed record EnrichmentHealthDisplay(string Summary, IReadOnlyList<EnrichmentProviderDisplay> Providers);
+internal sealed record EnrichmentHealthDisplay(
+    string Summary,
+    IReadOnlyList<EnrichmentProviderDisplay> Providers,
+    string Operations,
+    string Evidence,
+    string Storage,
+    string Diagnostics);
 
 internal static class EnrichmentHealthPresentation
 {
@@ -54,7 +60,12 @@ internal static class EnrichmentHealthPresentation
     internal static EnrichmentHealthDisplay Build(TrafficCaptureService.StatsSnapshot? stats)
     {
         var providers = new List<EnrichmentProviderDisplay>();
-        if (stats is null) return new("No enrichment snapshot available.", providers);
+        if (stats is null)
+            return new("No enrichment snapshot available.", providers,
+                "Queue and worker metrics unavailable.",
+                "Evidence coverage unavailable.",
+                "Storage diagnostics unavailable.",
+                "GeoIP and process diagnostics unavailable.");
         foreach (string name in new[] { "whois", "reputation", "vpn-proxy" })
         {
             if (!stats.EnrichmentProviders.TryGetValue(name, out var p)) p = new(0,0,0,0,0,0,0,0);
@@ -88,14 +99,27 @@ internal static class EnrichmentHealthPresentation
                  (p.TotalElapsedMs != 0 || p.MaxElapsedMs != 0)) ||
                 (p.TotalElapsedMs >= 0 && p.MaxElapsedMs > p.TotalElapsedMs);
         }
-        return new("Provider outcomes: capture-service lifetime; success share includes cancelled outcomes. " +
+        string queue = $"Enrichment queue depth: {stats.EnrichmentQueueDepth?.ToString(CultureInfo.InvariantCulture) ?? "unknown"}; " +
+            $"fallback records (lifetime): {stats.EnrichmentFallbacks:N0}.";
+        string workers = WorkerSummary(stats.EnrichmentWorkers);
+        string operations = queue + " " + workers;
+        string evidence = CoverageSummary(stats.EnrichmentCoverage);
+        string storage = StorageSummary(stats.EnrichmentStorage) + " " + TlsCapacitySummary(stats.TlsCapacity);
+        string diagnostics = GeoSummary(stats) + " " + NativeProcessSummary(stats.NativeProcessLookups) + " " +
+            ProcessMetadataCacheSummary(stats.ProcessMetadataCache) + " " +
+            ProcessMetadataCacheCapacitySummary(stats.ProcessMetadataCacheCapacity);
+        string summary = "Provider outcomes: capture-service lifetime; success share includes cancelled outcomes. " +
             "Cache hits are lookup-path events, not additional outcomes. No attempts means no rate. " +
-            $"Enrichment queue depth: {stats.EnrichmentQueueDepth?.ToString(CultureInfo.InvariantCulture) ?? "unknown"}; " +
-            $"fallback records (lifetime): {stats.EnrichmentFallbacks:N0}. " +
+            queue + " " +
             "Provider success is not proof of detection accuracy or endpoint trust. " +
             (stats.EnrichmentQueueDepth < 0 || stats.EnrichmentFallbacks < 0 ? "WARNING: invalid enrichment queue depth or fallback counters; inspect queue accounting. " : string.Empty) +
             (invalidProviderCounters ? "WARNING: invalid provider outcome, cache-path or latency counters; investigate provider accounting. " : string.Empty) +
-            WorkerSummary(stats.EnrichmentWorkers) + " " + CoverageSummary(stats.EnrichmentCoverage) + " " + StorageSummary(stats.EnrichmentStorage) + " " + GeoSummary(stats) + " " + NativeProcessSummary(stats.NativeProcessLookups) + " " + ProcessMetadataCacheSummary(stats.ProcessMetadataCache) + " " + ProcessMetadataCacheCapacitySummary(stats.ProcessMetadataCacheCapacity) + " " + TlsCapacitySummary(stats.TlsCapacity), providers);
+            workers + " " + evidence + " " + StorageSummary(stats.EnrichmentStorage) + " " +
+            GeoSummary(stats) + " " + NativeProcessSummary(stats.NativeProcessLookups) + " " +
+            ProcessMetadataCacheSummary(stats.ProcessMetadataCache) + " " +
+            ProcessMetadataCacheCapacitySummary(stats.ProcessMetadataCacheCapacity) + " " +
+            TlsCapacitySummary(stats.TlsCapacity);
+        return new(summary, providers, operations, evidence, storage, diagnostics);
     }
 
     internal static string ProcessMetadataCacheSummary(WindowsProcessResolver.MetadataCacheMetrics.Snapshot? snapshot)

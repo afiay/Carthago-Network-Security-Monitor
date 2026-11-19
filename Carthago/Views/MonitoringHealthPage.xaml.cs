@@ -100,6 +100,10 @@ namespace Carthago.Views
             var enrichment = EnrichmentHealthPresentation.Build(uiStats);
             EnrichmentSummaryText.Text = enrichment.Summary;
             EnrichmentProviderGrid.ItemsSource = enrichment.Providers;
+            EnrichmentOperationsText.Text = enrichment.Operations;
+            EnrichmentEvidenceText.Text = enrichment.Evidence;
+            EnrichmentStorageText.Text = enrichment.Storage;
+            EnrichmentDiagnosticsText.Text = enrichment.Diagnostics;
         }
 
         private void CopyEnrichmentCounters_Click(object sender, RoutedEventArgs e)

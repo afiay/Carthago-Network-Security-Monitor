@@ -1024,4 +1024,48 @@ public sealed class EnrichmentHealthPresentationTests
         }).Summary;
         Assert.DoesNotContain("WARNING: invalid enrichment queue depth or fallback counters", summary);
     }
+    [Fact]
+    public void Build_Separates_Operational_Evidence_Storage_And_Diagnostics_For_Monitoring_Page()
+    {
+        var stats = new TrafficCaptureService.StatsSnapshot
+        {
+            EnrichmentQueueDepth = 3,
+            EnrichmentFallbacks = 4,
+            EnrichmentWorkers = new EnrichmentWorkerSnapshot(10, 4, 1, 1, 2, 60, 30, 80, 40),
+            EnrichmentCoverage = new EnrichmentCoverageSnapshot(100, 90, 80, 70, 60, 50, 30, 20, 10),
+            EnrichmentStorage = new EnrichmentStorageSnapshot(
+                new RegistryCapacitySnapshot(4, 2048, 2),
+                new RegistryCapacitySnapshot(7, 4096, 3),
+                new CheckpointHealthSnapshot(9, 1, null)),
+            TlsCapacity = (5, 2, 6)
+        };
+
+        var display = EnrichmentHealthPresentation.Build(stats);
+
+        Assert.Contains("Enrichment queue depth: 3; fallback records (lifetime): 4", display.Operations);
+        Assert.Contains("10 started, 4 returned, 1 cancelled, 1 faulted", display.Operations);
+        Assert.Contains("in flight at snapshot: 4", display.Operations);
+        Assert.Contains("2 cancelled before processing", display.Operations);
+        Assert.Contains("Queue wait mean/max ms (started workers: 10): 6.0 / 30", display.Operations);
+
+        Assert.Contains("Published records (lifetime): 100", display.Evidence);
+        Assert.Contains("DNS correlated: 70/100", display.Evidence);
+        Assert.Contains("TLS correlated: 60/100", display.Evidence);
+        Assert.Contains("TCP socket ownership: 30/50", display.Evidence);
+        Assert.Contains("UDP binding only: 20/50", display.Evidence);
+        Assert.Contains("ETW published records (lifetime): 10/100", display.Evidence);
+
+        Assert.Contains("Current/last session assets: 7/4096, capacity-rejected observations: 3", display.Storage);
+        Assert.Contains("external destinations: 4/2048, capacity-rejected observations: 2", display.Storage);
+        Assert.Contains("Checkpoint writes: 9, failures: 1", display.Storage);
+        Assert.Contains("capacity-rejected SYN attempts (session lifetime): 6", display.Storage);
+
+        Assert.Contains("GeoIP databases (reader startup)", display.Diagnostics);
+        Assert.Contains("Native process lookup metrics unavailable", display.Diagnostics);
+        Assert.Contains("TCP metadata-cache metrics unavailable", display.Diagnostics);
+        Assert.Contains(display.Operations, display.Summary);
+        Assert.Contains(display.Evidence, display.Summary);
+        Assert.Contains(display.Storage, display.Summary);
+    }
+
 }
