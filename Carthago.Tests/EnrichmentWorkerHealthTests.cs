@@ -130,7 +130,7 @@ public sealed class EnrichmentWorkerHealthTests
         // not evidence that a production worker has over-completed.
         var invalid = new EnrichmentWorkerSnapshot(1, 1, 1, 0, 0, 5, 5, 10, 10);
         var summary = EnrichmentHealthPresentation.WorkerSummary(invalid);
-        Assert.Contains("in flight at snapshot: 0", summary);
+        Assert.Contains("in flight at snapshot: —", summary);
         Assert.Contains("WARNING: completed outcomes exceed started workers by 1", summary);
         Assert.Contains("completed workers: 2", summary);
 
@@ -153,7 +153,7 @@ public sealed class EnrichmentWorkerHealthTests
         var snapshot = new EnrichmentWorkerSnapshot(started, returned, cancelled, faulted,
             skipped, waitTotal, waitMax, elapsedTotal, elapsedMax);
         var summary = EnrichmentHealthPresentation.WorkerSummary(snapshot);
-        Assert.Contains("WARNING: negative worker counters or durations", summary);
+        Assert.Contains("WARNING: invalid worker counters or duration accounting", summary);
         Assert.Contains("-1", summary);
     }
 
@@ -274,7 +274,7 @@ public sealed class EnrichmentWorkerHealthTests
             long.MaxValue, long.MaxValue, long.MaxValue, 0, 0, 0, 0, 0, 0);
         var summary = EnrichmentHealthPresentation.WorkerSummary(snapshot);
         Assert.Contains("completed workers: " + (2m * long.MaxValue).ToString("N0"), summary);
-        Assert.Contains("in flight at snapshot: 0", summary);
+        Assert.Contains("in flight at snapshot: —", summary);
         Assert.Contains("completed outcomes exceed started workers by " + long.MaxValue.ToString("N0"), summary);
         Assert.Contains("worker elapsed mean/max ms (completed workers:", summary);
     }
