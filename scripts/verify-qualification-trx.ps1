@@ -31,6 +31,10 @@ function Test-QualificationTrx([byte[]]$bytes, [string]$digest, [string[]]$names
     $ns.AddNamespace('t','http://microsoft.com/schemas/VisualStudio/TeamTest/2010')
     $run = $xml.SelectSingleNode('/t:TestRun',$ns)
     if ($null -eq $run) { throw 'Unsupported TRX root' }
+    # A single Results container is required; multiple containers can conceal
+    # conflicting outcomes when a consumer assumes one canonical result set.
+    $resultContainers = $run.SelectNodes('t:Results',$ns)
+    if ($resultContainers.Count -ne 1) { throw 'Missing or duplicate TRX Results container' }
     $results = $run.SelectNodes('t:Results/t:UnitTestResult',$ns)
     $summary = $run.SelectNodes('t:ResultSummary',$ns)
     if ($summary.Count -ne 1 -or $summary[0].GetAttribute('outcome') -cnotin @('Completed','Passed','Failed')) { throw 'Incomplete TRX run' }
@@ -155,6 +159,9 @@ if ($SelfTest) {
     $unrelatedDuplicate = $xml.Replace('</Results>','<UnitTestResult testName="Other.Test" outcome="Passed"/><UnitTestResult testName="Other.Test" outcome="Failed"/></Results>')
     Reject-Fixture { Invoke-Fixture $unrelatedDuplicate @('Exact.Test') 'Passed' }
 
+    # Missing or duplicated Results containers must not be admitted as a run.
+    Reject-Fixture { Invoke-Fixture ($xml.Replace('<Results><UnitTestResult testName="Exact.Test" outcome="Passed"/></Results>','')) @('Exact.Test') 'Passed' }
+    Reject-Fixture { Invoke-Fixture ($xml.Replace('</Results>','</Results><Results><UnitTestResult testName="Other.Test" outcome="Failed"/></Results>')) @('Exact.Test') 'Passed' }
     Reject-Fixture { Invoke-Fixture ($xml.Replace('Completed','Aborted')) @('Exact.Test') 'Passed' }
     $counted = $xml.Replace('<ResultSummary outcome="Completed"/>','<ResultSummary outcome="Completed"><Counters total="1" passed="1" failed="0"/></ResultSummary>')
     $countedOk = Invoke-Fixture $counted @('Exact.Test') 'Passed'
