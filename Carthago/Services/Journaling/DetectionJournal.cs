@@ -5,6 +5,7 @@ using System.IO;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using Carthago.Models;
@@ -59,6 +60,45 @@ namespace Carthago.Services
             belowBothLimits = ProtocolIntelligence.JournalVolumeCapacityProbe.IsBelowBothConfiguredLimits(
                 availableBytes, totalBytes, minimumFreeBytes, minimumFreePercent);
             return true;
+        }
+
+        internal JournalCapacityHealthEvidence? CreateConfirmedLowCapacityEvidence(
+            DateTime sampledAtUtc,
+            long availableBytes,
+            long totalBytes,
+            long minimumFreeBytes,
+            double minimumFreePercent)
+        {
+            if (sampledAtUtc.Kind != DateTimeKind.Utc ||
+                totalBytes <= 0 || availableBytes < 0 || availableBytes > totalBytes ||
+                minimumFreeBytes <= 0 || !double.IsFinite(minimumFreePercent) ||
+                minimumFreePercent <= 0 || minimumFreePercent > 100 ||
+                !ProtocolIntelligence.JournalVolumeCapacityProbe.IsBelowBothConfiguredLimits(
+                    availableBytes, totalBytes, minimumFreeBytes, minimumFreePercent))
+                return null;
+
+            try
+            {
+                var configuredPath = Path.TrimEndingDirectorySeparator(
+                    Path.GetFullPath(_options.DirectoryPath));
+                if (string.IsNullOrWhiteSpace(configuredPath))
+                    return null;
+
+                // Keep the configured path private while binding evidence to this journal owner.
+                var digest = SHA256.HashData(Encoding.UTF8.GetBytes(configuredPath));
+                var identity = Convert.ToHexString(digest.AsSpan(0, 16));
+                return new JournalCapacityHealthEvidence(
+                    identity, sampledAtUtc, availableBytes, totalBytes,
+                    minimumFreeBytes, minimumFreePercent);
+            }
+            catch (Exception ex) when (ex is ArgumentException ||
+                                       ex is NotSupportedException ||
+                                       ex is IOException ||
+                                       ex is UnauthorizedAccessException ||
+                                       ex is System.Security.SecurityException)
+            {
+                return null;
+            }
         }
 
         public string GetJournalPath(DateTime timestampUtc)
