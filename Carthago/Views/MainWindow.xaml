@@ -1691,7 +1691,7 @@
                                     <StackPanel Grid.Column="1" Margin="5,0,0,0">
                                       <TextBlock Text="REPORTED EVIDENCE" FontSize="9" FontWeight="Bold" Foreground="#93B9CB"/>
                                       <TextBlock Text="{Binding EvidenceSummary}" FontSize="12" FontWeight="SemiBold"
-                                                 Foreground="{StaticResource TextBrush}" TextTrimming="CharacterEllipsis"
+                                                 Foreground="{StaticResource TextBrush}" TextWrapping="Wrap" MaxHeight="32" TextTrimming="CharacterEllipsis"
                                                  ToolTip="{Binding EvidenceSummary}"/>
                                     </StackPanel>
                                   </Grid>
@@ -1716,7 +1716,7 @@
                                     <StackPanel Grid.Column="1" Margin="5,0,0,0">
                                       <TextBlock Text="TRANSPORT STATUS" FontSize="9" FontWeight="Bold" Foreground="#73C9BD"/>
                                       <TextBlock Text="{Binding DeliveryStatus}" FontSize="12" FontWeight="SemiBold"
-                                                 Foreground="{StaticResource TextBrush}" TextTrimming="CharacterEllipsis"
+                                                 Foreground="{StaticResource TextBrush}" TextWrapping="Wrap" MaxHeight="32" TextTrimming="CharacterEllipsis"
                                                  ToolTip="{Binding DeliveryStatus}"/>
                                     </StackPanel>
                                   </Grid>
