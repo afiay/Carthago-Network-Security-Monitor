@@ -52,7 +52,9 @@ function Test-QualificationTrx([byte[]]$bytes, [string]$digest, [string[]]$names
     # When a producer supplies TRX counters, reconcile them with the actual
     # result nodes. A selected passing test cannot override a contradictory
     # run summary. Older minimal fixtures without counters remain supported.
-    $counters = $summary[0].SelectSingleNode('t:Counters',$ns)
+    $counterNodes = $summary[0].SelectNodes('t:Counters',$ns)
+    if ($counterNodes.Count -gt 1) { throw 'Duplicate TRX counters' }
+    $counters = if ($counterNodes.Count -eq 1) { $counterNodes[0] } else { $null }
     if ($null -ne $counters) {
         $observed = @($results)
         $passed = @($observed | Where-Object { $_.GetAttribute('outcome') -ceq 'Passed' }).Count
@@ -131,6 +133,8 @@ if ($SelfTest) {
     $counted = $xml.Replace('<ResultSummary outcome="Completed"/>','<ResultSummary outcome="Completed"><Counters total="1" passed="1" failed="0"/></ResultSummary>')
     $countedOk = Invoke-Fixture $counted @('Exact.Test') 'Passed'
     if ($countedOk.matchedTests -ne 1) { throw 'Counted positive fixture failed' }
+    # A second Counters node must not override or evade the reviewed accounting.
+    Reject-Fixture { Invoke-Fixture ($counted.Replace('</ResultSummary>','<Counters total="0" passed="0" failed="0"/></ResultSummary>')) @('Exact.Test') 'Passed' }
     Reject-Fixture { Invoke-Fixture ($counted.Replace('passed="1"','passed="0"')) @('Exact.Test') 'Passed' }
     Reject-Fixture { Invoke-Fixture ($counted.Replace('total="1"','total="2"')) @('Exact.Test') 'Passed' }
     Reject-Fixture { Invoke-Fixture ($counted.Replace('failed="0"','failed="1"')) @('Exact.Test') 'Passed' }
@@ -171,7 +175,7 @@ if ($SelfTest) {
     }
     Reject-Fixture { Invoke-Fixture ($xml.Replace('outcome="Passed"/></Results>','outcome="Unknown"/></Results>')) @('Exact.Test') 'Passed' }
     Reject-Fixture { Invoke-Fixture ('<!DOCTYPE TestRun [<!ENTITY x "bad">]>' + $xml) @('Exact.Test') 'Passed' }
-    [pscustomobject]@{ selfTestsPassed=40; detectorTestsExecuted=0 } | ConvertTo-Json
+    [pscustomobject]@{ selfTestsPassed=41; detectorTestsExecuted=0 } | ConvertTo-Json
 } else {
     $item = Get-Item -LiteralPath $Artifact
     if ($item.PSIsContainer -or $item.Length -gt 16777216) { throw 'Invalid artifact size or type' }
