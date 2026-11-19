@@ -3,6 +3,7 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using Carthago.Services;
 
@@ -18,6 +19,14 @@ namespace Carthago.Views
         public MonitoringHealthPage()
         {
             InitializeComponent();
+        }
+
+        private void EnrichmentDiagnosticsGrid_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            if (sender is not UniformGrid grid) return;
+            var columns = e.NewSize.Width < 680 ? 1 : 2;
+            if (grid.Columns != columns)
+                grid.Columns = columns;
         }
 
         public void UpdateSnapshot(
