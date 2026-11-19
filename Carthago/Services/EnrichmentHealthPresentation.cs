@@ -244,6 +244,9 @@ internal static class EnrichmentHealthPresentation
         // counter overflowing. Keep lifecycle reconciliation in a widened domain.
         decimal completed = (decimal)w.Returned + w.Cancelled + w.Faulted;
         bool invalidLifecycle = w.Started < 0 || w.Returned < 0 || w.Cancelled < 0 || w.Faulted < 0 || completed > w.Started;
+        // Skipped operations never entered the worker. A negative skipped counter
+        // invalidates worker lifecycle telemetry, not only duration means.
+        invalidLifecycle |= w.Skipped < 0;
         // Do not silently clamp impossible lifecycle populations to zero in flight.
         string inFlight = invalidLifecycle ? "—" : (w.Started - completed).ToString("N0", CultureInfo.InvariantCulture);
         // A negative skipped count or contradictory duration gauges invalidates the
